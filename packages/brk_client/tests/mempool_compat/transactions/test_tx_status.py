@@ -49,3 +49,29 @@ def test_tx_status_malformed_unknown(brk):
     with pytest.raises(BrkError) as exc_info:
         brk.get_text(f"/api/tx/{bad}/status")
     assert exc_info.value.status == 404
+
+
+def test_tx_status_mempool_unconfirmed(brk, mempool):
+    """Unconfirmed mempool tx: status must be confirmed=false with no block fields."""
+    txids = mempool.get_json("/api/mempool/txids")
+    if not txids:
+        pytest.skip("mempool.space mempool currently empty")
+
+    for txid in txids[:25]:
+        try:
+            b = brk.get_tx_status(txid)
+        except BrkError:
+            continue
+        if b.get("confirmed"):
+            continue
+        try:
+            m = mempool.get_json(f"/api/tx/{txid}/status")
+        except Exception:
+            continue
+        if m.get("confirmed"):
+            continue
+        show("GET", f"/api/tx/{txid}/status", b, m)
+        assert_same_values(b, m)
+        assert b["confirmed"] is False
+        return
+    pytest.skip("no shared unconfirmed tx between brk and mempool.space")

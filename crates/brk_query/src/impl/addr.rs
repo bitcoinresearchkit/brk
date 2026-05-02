@@ -90,19 +90,20 @@ impl Query {
     }
 
     /// Esplora `/address/:address/txs` first page: up to `mempool_limit`
-    /// mempool (newest first) followed by the first `chain_limit`
-    /// confirmed. Pagination is path-style via `/txs/chain/:after_txid`.
+    /// mempool entries (newest first), then chain entries fill the response
+    /// up to `total_limit`. Pagination is path-style via `/txs/chain/:after_txid`.
     pub fn addr_txs(
         &self,
         addr: Addr,
+        total_limit: usize,
         mempool_limit: usize,
-        chain_limit: usize,
     ) -> Result<Vec<Transaction>> {
         let mut out = if self.mempool().is_some() {
             self.addr_mempool_txs(&addr, mempool_limit)?
         } else {
             Vec::new()
         };
+        let chain_limit = total_limit.saturating_sub(out.len());
         out.extend(self.addr_txs_chain(&addr, None, chain_limit)?);
         Ok(out)
     }

@@ -69,8 +69,8 @@ def test_difficulty_adjustment_invariants(brk):
     assert 1_000 <= d["timeAvg"] <= 3_600_000
     assert 1_000 <= d["adjustedTimeAvg"] <= 3_600_000
 
-    # remainingTime is constructed as remainingBlocks * timeAvg in brk.
-    assert d["remainingTime"] == d["remainingBlocks"] * d["timeAvg"]
+    # remainingTime is remainingBlocks * adjustedTimeAvg (matches mempool.space).
+    assert d["remainingTime"] == d["remainingBlocks"] * d["adjustedTimeAvg"]
 
     assert d["estimatedRetargetDate"] > now_ms
     assert d["previousTime"] * 1000 < now_ms

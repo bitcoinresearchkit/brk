@@ -7793,7 +7793,7 @@ class BrkClient(BrkClientBase):
     def get_address_txs(self, address: Addr) -> List[Transaction]:
         """Address transactions.
 
-        Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+        Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 

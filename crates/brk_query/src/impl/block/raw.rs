@@ -16,7 +16,9 @@ impl Query {
 
         let max_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
         if height > max_height {
-            return Err(Error::OutOfRange("Block height out of range".into()));
+            return Err(Error::OutOfRange(format!(
+                "Block height {height} out of range (tip {max_height})"
+            )));
         }
 
         let position = indexer.vecs.blocks.position.collect_one(height).data()?;

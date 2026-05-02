@@ -50,12 +50,12 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, 50, 25)).await
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, 50, 50)).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
                 .summary("Address transactions")
-                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 mempool transactions plus the first 25 confirmed transactions. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
+                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
                 .json_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()

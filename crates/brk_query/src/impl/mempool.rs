@@ -13,25 +13,25 @@ use crate::Query;
 const RECENT_REPLACEMENTS_LIMIT: usize = 25;
 
 impl Query {
+    fn require_mempool(&self) -> Result<&Mempool> {
+        self.mempool().ok_or(Error::MempoolNotAvailable)
+    }
+
     pub fn mempool_info(&self) -> Result<MempoolInfo> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        Ok(mempool.info())
+        Ok(self.require_mempool()?.info())
     }
 
     pub fn mempool_txids(&self) -> Result<Vec<Txid>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        let txs = mempool.txs();
+        let txs = self.require_mempool()?.txs();
         Ok(txs.keys().cloned().collect())
     }
 
     pub fn recommended_fees(&self) -> Result<RecommendedFees> {
-        self.mempool()
-            .map(|mempool| mempool.fees())
-            .ok_or(Error::MempoolNotAvailable)
+        self.require_mempool().map(|m| m.fees())
     }
 
     pub fn mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
+        let mempool = self.require_mempool()?;
 
         let block_stats = mempool.block_stats();
 
@@ -90,8 +90,7 @@ impl Query {
     }
 
     pub fn mempool_recent(&self) -> Result<Vec<MempoolRecentTx>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        Ok(mempool.txs().recent().to_vec())
+        Ok(self.require_mempool()?.txs().recent().to_vec())
     }
 
     /// CPFP cluster for `txid`. Returns the mempool cluster when the txid is
@@ -289,7 +288,7 @@ impl Query {
     /// walks `predecessors_of` backward to build the tree. `replaces`
     /// is the requested tx's own direct predecessors.
     pub fn tx_rbf(&self, txid: &Txid) -> Result<RbfResponse> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
+        let mempool = self.require_mempool()?;
         let txs = mempool.txs();
         let entries = mempool.entries();
         let graveyard = mempool.graveyard();
@@ -422,7 +421,7 @@ impl Query {
     /// true, only trees with at least one non-signaling predecessor
     /// are returned.
     pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
+        let mempool = self.require_mempool()?;
         let txs = mempool.txs();
         let entries = mempool.entries();
         let graveyard = mempool.graveyard();
@@ -450,15 +449,17 @@ impl Query {
             .collect())
     }
 
+    /// `first_seen` Unix-second timestamps for each txid, matching
+    /// mempool.space's `POST /api/v1/transaction-times`. Returns 0 for
+    /// unknown txids, in input order.
     pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
-        let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        let entries = mempool.entries();
+        let entries = self.require_mempool()?.entries();
         Ok(txids
             .iter()
             .map(|txid| {
                 entries
                     .get(&TxidPrefix::from(txid))
-                    .map(|e| usize::from(e.first_seen) as u64)
+                    .map(|e| u64::from(e.first_seen))
                     .unwrap_or(0)
             })
             .collect())

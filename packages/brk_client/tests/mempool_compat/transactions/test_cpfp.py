@@ -55,3 +55,26 @@ def test_cpfp_malformed_short(brk, bad):
     with pytest.raises(BrkError) as exc_info:
         brk.get_text(f"/api/v1/cpfp/{bad}")
     assert exc_info.value.status == 400
+
+
+def test_cpfp_mempool_unconfirmed(brk, mempool):
+    """Unconfirmed mempool tx: brk and mempool.space agree on cpfp shape."""
+    txids = mempool.get_json("/api/mempool/txids")
+    if not txids:
+        pytest.skip("mempool.space mempool currently empty")
+
+    for txid in txids[:50]:
+        try:
+            b = brk.get_cpfp(txid)
+        except BrkError:
+            continue
+        try:
+            m = mempool.get_json(f"/api/v1/cpfp/{txid}")
+        except Exception:
+            continue
+        show("GET", f"/api/v1/cpfp/{txid}", b, m)
+        assert_same_structure(b, m)
+        assert isinstance(b.get("ancestors"), list)
+        assert isinstance(b.get("descendants", []), list)
+        return
+    pytest.skip("no shared unconfirmed tx between brk and mempool.space")

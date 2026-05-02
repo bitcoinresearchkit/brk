@@ -65,8 +65,17 @@ impl Query {
             TARGET_BLOCK_TIME
         };
 
+        // Per-block time needed over remaining blocks to land the epoch at
+        // 2016 * TARGET_BLOCK_TIME. Matches mempool.space's adjustedTimeAvg.
+        let target_total = BLOCKS_PER_EPOCH as u64 * TARGET_BLOCK_TIME;
+        let adjusted_time_avg = if remaining_blocks > 0 {
+            target_total.saturating_sub(elapsed_time) / remaining_blocks as u64
+        } else {
+            TARGET_BLOCK_TIME
+        };
+
         // Estimate remaining time and retarget date
-        let remaining_time = remaining_blocks as u64 * time_avg;
+        let remaining_time = remaining_blocks as u64 * adjusted_time_avg;
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
@@ -131,7 +140,7 @@ impl Query {
             previous_time,
             next_retarget_height: Height::from(next_retarget_height),
             time_avg: time_avg * 1000,
-            adjusted_time_avg: time_avg * 1000,
+            adjusted_time_avg: adjusted_time_avg * 1000,
             time_offset,
             expected_blocks,
         })

@@ -49,67 +49,44 @@ def test_address_txs_shape_dynamic(brk, mempool, live_addrs):
 
 @pytest.mark.parametrize("addr", STATIC_ADDRS)
 def test_address_txs_ordering(brk, addr):
-    """All entries must be confirmed and heights monotonically non-increasing."""
+    """Response is mempool-prefix (unconfirmed, newest-first) + chain-suffix (confirmed, height-desc)."""
     b = brk.get_address_txs(addr)
     if not b:
         pytest.skip(f"{addr} has no txs in brk")
-    for tx in b:
-        assert tx["status"]["confirmed"] is True, (
-            f"{addr} returned unconfirmed tx {tx['txid']} (this endpoint is chain-only on brk)"
-        )
-    heights = [tx["status"]["block_height"] for tx in b]
+
+    confirmed_flags = [tx["status"]["confirmed"] for tx in b]
+    assert confirmed_flags == sorted(confirmed_flags), (
+        f"{addr}: confirmed flags must be False*..*True* (mempool prefix then chain), got "
+        f"{confirmed_flags[:10]}..."
+    )
+
+    chain = [tx for tx in b if tx["status"]["confirmed"]]
+    heights = [tx["status"]["block_height"] for tx in chain]
     assert heights == sorted(heights, reverse=True), (
-        f"{addr} not newest-first by height: {heights[:5]}..."
+        f"{addr} chain segment not newest-first by height: {heights[:5]}..."
     )
 
 
 @pytest.mark.parametrize("addr", STATIC_ADDRS)
 def test_address_txs_limit(brk, addr):
-    """Hard cap of 50 confirmed txs per call."""
+    """Hard cap of 50 entries per call (mempool first, chain fills remainder)."""
     b = brk.get_address_txs(addr)
     assert len(b) <= 50, f"{addr} returned {len(b)} txs, exceeds 50-cap"
 
 
 @pytest.mark.parametrize("addr", STABLE_ADDRS)
 def test_address_txs_top_match_stable(brk, mempool, addr):
-    """For inactive historical addresses, brk and mempool agree on first-page order."""
-    b_txids = [t["txid"] for t in brk.get_address_txs(addr)]
-    m_txids = [t["txid"] for t in mempool.get_json(f"/api/address/{addr}/txs")]
-    assert b_txids == m_txids, (
-        f"{addr} first-page txid order diverges:\n"
-        f"  brk:     {b_txids[:5]}...\n"
-        f"  mempool: {m_txids[:5]}..."
-    )
-
-
-def test_address_txs_pagination(brk, mempool):
-    """`after_txid` returns a fresh, strictly-older page; matches mempool.space."""
-    addr = "3D2oetdNuZUqQHPJmcMDDHYoqkyNVsFk9r"
-    first = brk.get_address_txs(addr)
-    assert len(first) == 50, f"expected full first page, got {len(first)}"
-    last_txid = first[-1]["txid"]
-    last_height = first[-1]["status"]["block_height"]
-
-    second = brk.get_address_txs(addr, after_txid=last_txid)
-    assert second, "second page must be non-empty for a 5700-tx address"
-
-    first_txids = {t["txid"] for t in first}
-    second_txids = {t["txid"] for t in second}
-    assert not (first_txids & second_txids), "pagination must not return overlapping txs"
-
-    for tx in second:
-        assert tx["status"]["block_height"] <= last_height, (
-            f"page 2 tx {tx['txid']} at height {tx['status']['block_height']} "
-            f"exceeds page-1 tail height {last_height}"
-        )
-
-    m_second = mempool.get_json(f"/api/address/{addr}/txs?after_txid={last_txid}")
-    b_ids = [t["txid"] for t in second]
-    m_ids = [t["txid"] for t in m_second]
-    assert b_ids == m_ids, (
-        f"page-2 order diverges from mempool:\n"
-        f"  brk:     {b_ids[:5]}...\n"
-        f"  mempool: {m_ids[:5]}..."
+    """For inactive historical addresses, the confirmed tail must agree exactly with mempool.space."""
+    b_chain = [t["txid"] for t in brk.get_address_txs(addr) if t["status"]["confirmed"]]
+    m_chain = [
+        t["txid"]
+        for t in mempool.get_json(f"/api/address/{addr}/txs")
+        if t["status"]["confirmed"]
+    ]
+    assert b_chain == m_chain, (
+        f"{addr} confirmed-tail txid order diverges:\n"
+        f"  brk:     {b_chain[:5]}...\n"
+        f"  mempool: {m_chain[:5]}..."
     )
 
 
