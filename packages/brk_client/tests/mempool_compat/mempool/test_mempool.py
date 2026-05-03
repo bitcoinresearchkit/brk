@@ -28,8 +28,10 @@ def test_mempool_info_invariants(brk):
             f"histogram entry {i} not a 2-element list: {entry}"
         )
         rate, bvs = entry
-        assert isinstance(rate, (int, float)) and rate > 0, (
-            f"non-positive rate at bin {i}: {rate}"
+        # Zero-rate bins are legitimate (CPFP/package-relay anchors with
+        # zero-fee parents); mempool.space's API returns them too.
+        assert isinstance(rate, (int, float)) and rate >= 0, (
+            f"negative rate at bin {i}: {rate}"
         )
         assert isinstance(bvs, int) and bvs > 0, f"non-positive vsize at bin {i}: {bvs}"
         rates.append(rate)

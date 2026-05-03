@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
+};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -122,6 +125,12 @@ impl Add for Weight {
 impl AddAssign for Weight {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Sum for Weight {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|w| w.0).sum())
     }
 }
 

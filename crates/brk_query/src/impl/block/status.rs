@@ -1,6 +1,5 @@
 use brk_error::{OptionData, Result};
 use brk_types::{BlockHash, BlockStatus, Height};
-use vecdb::AnyVec;
 
 use crate::Query;
 
@@ -11,9 +10,7 @@ impl Query {
     }
 
     fn block_status_by_height(&self, height: Height) -> Result<BlockStatus> {
-        let indexer = self.indexer();
-
-        let max_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
+        let max_height = self.tip_height();
 
         if height > max_height {
             return Ok(BlockStatus::not_in_best_chain());
@@ -21,7 +18,7 @@ impl Query {
 
         let next_best = if height < max_height {
             Some(
-                indexer
+                self.indexer()
                     .vecs
                     .blocks
                     .blockhash

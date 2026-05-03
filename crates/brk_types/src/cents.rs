@@ -1,5 +1,9 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+};
 
+use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco};
@@ -11,6 +15,7 @@ use super::{CentsSats, Dollars, Sats, StoredF64};
 #[derive(
     Debug,
     Default,
+    Deref,
     Clone,
     Copy,
     PartialEq,
@@ -184,6 +189,12 @@ impl AddAssign for Cents {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         self.0 += rhs.0;
+    }
+}
+
+impl Sum for Cents {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|c| c.0).sum())
     }
 }
 

@@ -1,5 +1,7 @@
 """GET /api/v1/transaction-times?txId[]=..."""
 
+import time
+
 import pytest
 from brk_client import BrkError
 
@@ -65,3 +67,39 @@ def test_transaction_times_malformed_short(brk):
     with pytest.raises(BrkError) as exc_info:
         brk.get_transaction_times(["abc"])
     assert exc_info.value.status == 400
+
+
+def test_transaction_times_mempool_unconfirmed(brk, mempool):
+    """Unconfirmed mempool tx: first-seen timestamp must be a plausible
+    Unix-second value (post-genesis, not in the future). Cross-observer
+    agreement is not asserted: each server records when *it* first saw
+    the tx, and rebroadcasts/restarts can put two independent observers
+    days or weeks apart on the same txid."""
+    txids = mempool.get_json("/api/mempool/txids")
+    if not txids:
+        pytest.skip("mempool.space mempool currently empty")
+
+    GENESIS_TS = 1231006505
+    now = int(time.time())
+    skew = 5 * 60
+
+    for txid in txids[:25]:
+        try:
+            b = brk.get_transaction_times([txid])
+        except BrkError:
+            continue
+        if not b or b[0] == 0:
+            continue
+        try:
+            m = mempool.get_json(
+                "/api/v1/transaction-times", params=[("txId[]", txid)]
+            )
+        except Exception:
+            continue
+        if not m or m[0] == 0:
+            continue
+        show("GET", f"/api/v1/transaction-times?txId[]={txid[:16]}...", b, m)
+        assert GENESIS_TS <= b[0] <= now + skew, f"brk first-seen out of plausible range: {b[0]}"
+        assert GENESIS_TS <= m[0] <= now + skew, f"mempool first-seen out of plausible range: {m[0]}"
+        return
+    pytest.skip("no shared unconfirmed tx between brk and mempool.space")

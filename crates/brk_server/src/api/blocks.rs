@@ -327,7 +327,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                         state
-                            .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.blocks(None))
+                            .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.blocks(None, 10))
                             .await
                     },
                     |op| {
@@ -348,7 +348,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            _: Empty, State(state): State<AppState>| {
-                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), &uri, move |q| q.blocks(Some(path.height))).await
+                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), &uri, move |q| q.blocks(Some(path.height), 10)).await
                     },
                     |op| {
                         op.id("get_blocks_from_height")
@@ -369,14 +369,14 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                         state
-                            .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.blocks_v1(None))
+                            .respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.blocks_v1(None, 15))
                             .await
                     },
                     |op| {
                         op.id("get_blocks_v1")
                             .blocks_tag()
                             .summary("Recent blocks with extras")
-                            .description("Retrieve the last 10 blocks with extended data including pool identification and fee statistics.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
+                            .description("Retrieve the last 15 blocks with extended data including pool identification and fee statistics.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
                             .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .server_error()
@@ -390,13 +390,13 @@ impl BlockRoutes for ApiRouter<AppState> {
                            headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            _: Empty, State(state): State<AppState>| {
-                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), &uri, move |q| q.blocks_v1(Some(path.height))).await
+                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), &uri, move |q| q.blocks_v1(Some(path.height), 15)).await
                     },
                     |op| {
                         op.id("get_blocks_v1_from_height")
                             .blocks_tag()
                             .summary("Blocks from height with extras")
-                            .description("Retrieve up to 10 blocks with extended data going backwards from the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
+                            .description("Retrieve up to 15 blocks with extended data going backwards from the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
                             .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .bad_request()

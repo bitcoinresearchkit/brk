@@ -496,7 +496,10 @@ class BrkClientBase {{
         const value = await parse(res);
         this._memSet(url, netEtag, value);
         if (onValue) onValue(value);
-        if (cloned) _runIdle(() => browserCache.put(url, cloned));
+        if (cloned && browserCache) {{
+          const cache = browserCache;
+          _runIdle(() => cache.put(url, cloned));
+        }}
         return value;
       }} catch {{
         return memHit.value;
@@ -527,7 +530,10 @@ class BrkClientBase {{
       const value = await parse(res);
       this._memSet(url, netEtag, value);
       if (onValue) onValue(value);
-      if (cloned) _runIdle(() => browserCache.put(url, cloned));
+      if (cloned && browserCache) {{
+        const cache = browserCache;
+        _runIdle(() => cache.put(url, cloned));
+      }}
       return value;
     }} catch (e) {{
       const stale = await stalePromise;

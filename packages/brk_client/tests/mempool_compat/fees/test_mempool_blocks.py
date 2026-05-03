@@ -4,7 +4,7 @@ from _lib import assert_same_structure, show
 
 
 MAX_PROJECTED_BLOCKS = 8
-BRK_FEE_RANGE_LEN = 7
+FEE_RANGE_LEN = 7
 
 
 def test_fees_mempool_blocks_structure(brk, mempool):
@@ -36,8 +36,8 @@ def test_fees_mempool_blocks_invariants(brk):
         assert block["totalFees"] >= 0, f"block {i} has negative totalFees"
         assert block["medianFee"] > 0, f"block {i} has non-positive medianFee"
         fr = block["feeRange"]
-        assert len(fr) == BRK_FEE_RANGE_LEN, (
-            f"block {i} feeRange has {len(fr)} items, expected {BRK_FEE_RANGE_LEN}"
+        assert len(fr) == FEE_RANGE_LEN, (
+            f"block {i} feeRange has {len(fr)} items, expected {FEE_RANGE_LEN}"
         )
         assert fr == sorted(fr), f"block {i} feeRange not ascending: {fr}"
         assert fr[0] <= block["medianFee"] <= fr[-1], (

@@ -10,7 +10,7 @@ use brk_cohort::{
     OVER_AMOUNT_NAMES, PROFIT_NAMES, PROFITABILITY_RANGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES,
     UNDER_AGE_NAMES, UNDER_AMOUNT_NAMES,
 };
-use brk_types::{Index, PoolSlug, pools};
+use brk_types::{Index, pools};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -20,7 +20,7 @@ use crate::{VERSION, to_camel_case};
 pub struct ClientConstants {
     pub version: String,
     pub indexes: Vec<&'static str>,
-    pub pool_map: BTreeMap<PoolSlug, &'static str>,
+    pub pool_map: BTreeMap<String, &'static str>,
 }
 
 impl ClientConstants {
@@ -32,8 +32,10 @@ impl ClientConstants {
         let pools = pools();
         let mut sorted_pools: Vec<_> = pools.iter().collect();
         sorted_pools.sort_by_key(|p| p.name.to_lowercase());
-        let pool_map: BTreeMap<PoolSlug, &'static str> =
-            sorted_pools.iter().map(|p| (p.slug(), p.name)).collect();
+        let pool_map: BTreeMap<String, &'static str> = sorted_pools
+            .iter()
+            .map(|p| (p.slug().to_string(), p.name))
+            .collect();
 
         Self {
             version: format!("v{}", VERSION),

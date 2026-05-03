@@ -1,6 +1,6 @@
 use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockHash, Height};
-use vecdb::{AnyVec, ReadableVec};
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -11,19 +11,17 @@ impl Query {
     }
 
     fn block_raw_by_height(&self, height: Height) -> Result<Vec<u8>> {
-        let indexer = self.indexer();
-        let reader = self.reader();
-
-        let max_height = Height::from(indexer.vecs.blocks.blockhash.len().saturating_sub(1));
+        let max_height = self.tip_height();
         if height > max_height {
             return Err(Error::OutOfRange(format!(
                 "Block height {height} out of range (tip {max_height})"
             )));
         }
 
+        let indexer = self.indexer();
         let position = indexer.vecs.blocks.position.collect_one(height).data()?;
         let size = indexer.vecs.blocks.total.collect_one(height).data()?;
 
-        reader.read_raw_bytes(position, *size as usize)
+        self.reader().read_raw_bytes(position, *size as usize)
     }
 }

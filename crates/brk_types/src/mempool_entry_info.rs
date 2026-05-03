@@ -1,4 +1,4 @@
-use crate::{Sats, Txid};
+use crate::{Sats, Timestamp, Txid};
 
 /// Mempool entry info from Bitcoin Core's getrawmempool verbose
 #[derive(Debug, Clone)]
@@ -7,6 +7,7 @@ pub struct MempoolEntryInfo {
     pub vsize: u64,
     pub weight: u64,
     pub fee: Sats,
+    pub first_seen: Timestamp,
     pub ancestor_count: u64,
     pub ancestor_size: u64,
     pub ancestor_fee: Sats,

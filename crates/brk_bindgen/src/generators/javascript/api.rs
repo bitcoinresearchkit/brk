@@ -36,10 +36,16 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
         let optional = if param.required { "" } else { "=" };
         let desc = format_param_desc(param.description.as_deref());
         let ty = jsdoc_normalize(&param.param_type);
+        let ident = sanitize_ident(&param.name);
+        let name_decl = if param.required {
+            ident
+        } else {
+            format!("[{}]", ident)
+        };
         writeln!(
             output,
-            "   * @param {{{}{}}} [{}]{}",
-            ty, optional, param.name, desc
+            "   * @param {{{}{}}} {}{}",
+            ty, optional, name_decl, desc
         )
         .unwrap();
     }
@@ -67,7 +73,7 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
     } else if endpoint.returns_json() {
         "this.getJson(path, { signal, onValue })".to_string()
     } else if endpoint.response_kind.text_is_numeric() {
-        "Number(await this.getText(path, { signal, onValue }))".to_string()
+        "Number(await this.getText(path, { signal, onValue: onValue ? (v) => onValue(Number(v)) : undefined }))".to_string()
     } else {
         "this.getText(path, { signal, onValue })".to_string()
     };
@@ -214,12 +220,21 @@ fn write_path_assignment(output: &mut String, endpoint: &Endpoint, path: &str) {
             let ident = sanitize_ident(&param.name);
             let is_array = param.param_type.ends_with("[]");
             if is_array {
-                writeln!(
-                    output,
-                    "    for (const _v of {}) params.append('{}', String(_v));",
-                    ident, param.name
-                )
-                .unwrap();
+                if param.required {
+                    writeln!(
+                        output,
+                        "    for (const _v of {}) params.append('{}', String(_v));",
+                        ident, param.name
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(
+                        output,
+                        "    if ({}) for (const _v of {}) params.append('{}', String(_v));",
+                        ident, ident, param.name
+                    )
+                    .unwrap();
+                }
             } else if param.required {
                 writeln!(
                     output,

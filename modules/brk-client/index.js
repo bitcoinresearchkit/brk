@@ -367,6 +367,37 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
  */
 /**
+ * CPFP cluster output for an unconfirmed tx: the connected component
+ * the seed belongs to, plus its SFL linearization.
+ *
+ * @typedef {Object} CpfpCluster
+ * @property {CpfpClusterTx[]} txs - All txs in the cluster, in topological order (parents before children).
+ * @property {CpfpClusterChunk[]} chunks - SFL-emitted chunks ordered by descending feerate.
+ * @property {number} chunkIndex - Index into `chunks` of the chunk containing the seed tx.
+ */
+/**
+ * One SFL chunk inside a `CpfpCluster`.
+ *
+ * @typedef {Object} CpfpClusterChunk
+ * @property {CpfpClusterTxIndex[]} txs - Txs in this chunk.
+ * @property {FeeRate} feerate - Combined feerate of the chunk (sat/vB).
+ */
+/**
+ * One entry in a `CpfpCluster.txs` array.
+ *
+ * @typedef {Object} CpfpClusterTx
+ * @property {Txid} txid
+ * @property {Sats} fee
+ * @property {Weight} weight
+ * @property {CpfpClusterTxIndex[]} parents - In-cluster parents of this tx.
+ */
+/**
+ * Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
+ * has no meaning outside the enclosing cluster.
+ *
+ * @typedef {number} CpfpClusterTxIndex
+ */
+/**
  * A transaction in a CPFP relationship
  *
  * @typedef {Object} CpfpEntry
@@ -382,8 +413,11 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any
  * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain
  * @property {(FeeRate|null)=} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB)
+ * @property {?number=} sigops - Total signature operation count for the seed tx
  * @property {(Sats|null)=} fee - Transaction fee (sats)
  * @property {(VSize|null)=} adjustedVsize - Adjusted virtual size (accounting for sigops)
+ * @property {(CpfpCluster|null)=} cluster - Mempool cluster the seed belongs to: full tx list, SFL-linearized
+chunks, and the seed's chunk index. Only set for unconfirmed txs.
  */
 /**
  * Range parameters with output format for API query parameters.
@@ -1805,7 +1839,10 @@ class BrkClientBase {
         const value = await parse(res);
         this._memSet(url, netEtag, value);
         if (onValue) onValue(value);
-        if (cloned) _runIdle(() => browserCache.put(url, cloned));
+        if (cloned && browserCache) {
+          const cache = browserCache;
+          _runIdle(() => cache.put(url, cloned));
+        }
         return value;
       } catch {
         return memHit.value;
@@ -1836,7 +1873,10 @@ class BrkClientBase {
       const value = await parse(res);
       this._memSet(url, netEtag, value);
       if (onValue) onValue(value);
-      if (cloned) _runIdle(() => browserCache.put(url, cloned));
+      if (cloned && browserCache) {
+        const cache = browserCache;
+        _runIdle(() => cache.put(url, cloned));
+      }
       return value;
     } catch (e) {
       const stale = await stalePromise;
@@ -7476,171 +7516,171 @@ class BrkClient extends BrkClientBase {
   ]);
 
   POOL_ID_TO_POOL_NAME = /** @type {const} */ ({
-    "unknown": "Unknown",
-    "blockfills": "BlockFills",
-    "ultimuspool": "ULTIMUSPOOL",
-    "terrapool": "Terra Pool",
-    "luxor": "Luxor",
-    "1thash": "1THash",
-    "btccom": "BTC.com",
-    "bitfarms": "Bitfarms",
-    "huobipool": "Huobi.pool",
-    "wayicn": "WAYI.CN",
-    "canoepool": "CanoePool",
-    "btctop": "BTC.TOP",
-    "bitcoincom": "Bitcoin.com",
-    "175btc": "175btc",
-    "gbminers": "GBMiners",
-    "axbt": "A-XBT",
-    "asicminer": "ASICMiner",
-    "bitminter": "BitMinter",
-    "bitcoinrussia": "BitcoinRussia",
-    "btcserv": "BTCServ",
-    "simplecoinus": "simplecoin.us",
-    "btcguild": "BTC Guild",
-    "eligius": "Eligius",
-    "ozcoin": "OzCoin",
-    "eclipsemc": "EclipseMC",
-    "maxbtc": "MaxBTC",
-    "triplemining": "TripleMining",
-    "coinlab": "CoinLab",
-    "50btc": "50BTC",
-    "ghashio": "GHash.IO",
-    "stminingcorp": "ST Mining Corp",
-    "bitparking": "Bitparking",
-    "mmpool": "mmpool",
-    "polmine": "Polmine",
-    "kncminer": "KnCMiner",
-    "bitalo": "Bitalo",
-    "f2pool": "F2Pool",
-    "hhtt": "HHTT",
-    "megabigpower": "MegaBigPower",
-    "mtred": "Mt Red",
-    "nmcbit": "NMCbit",
-    "yourbtcnet": "Yourbtc.net",
-    "givemecoins": "Give Me Coins",
-    "braiinspool": "Braiins Pool",
+    "aaopool": "AAO Pool",
     "antpool": "AntPool",
-    "multicoinco": "MultiCoin.co",
+    "arkpool": "ArkPool",
+    "asicminer": "ASICMiner",
+    "axbt": "A-XBT",
+    "batpool": "BATPOOL",
+    "bcmonster": "BCMonster",
     "bcpoolio": "bcpool.io",
-    "cointerra": "Cointerra",
-    "kanopool": "KanoPool",
-    "solock": "Solo CK",
-    "ckpool": "CKPool",
-    "nicehash": "NiceHash",
+    "binancepool": "Binance Pool",
+    "bitalo": "Bitalo",
     "bitclub": "BitClub",
     "bitcoinaffiliatenetwork": "Bitcoin Affiliate Network",
-    "btcc": "BTCC",
-    "bwpool": "BWPool",
-    "exxbw": "EXX&BW",
-    "bitsolo": "Bitsolo",
-    "bitfury": "BitFury",
-    "21inc": "21 Inc.",
-    "digitalbtc": "digitalBTC",
-    "8baochi": "8baochi",
-    "mybtccoinpool": "myBTCcoin Pool",
-    "tbdice": "TBDice",
-    "hashpool": "HASHPOOL",
-    "nexious": "Nexious",
-    "bravomining": "Bravo Mining",
-    "hotpool": "HotPool",
-    "okexpool": "OKExPool",
-    "bcmonster": "BCMonster",
-    "1hash": "1Hash",
-    "bixin": "Bixin",
-    "tatmaspool": "TATMAS Pool",
-    "viabtc": "ViaBTC",
-    "connectbtc": "ConnectBTC",
-    "batpool": "BATPOOL",
-    "waterhole": "Waterhole",
-    "dcexploration": "DCExploration",
-    "dcex": "DCEX",
-    "btpool": "BTPOOL",
-    "58coin": "58COIN",
+    "bitcoincom": "Bitcoin.com",
     "bitcoinindia": "Bitcoin India",
-    "shawnp0wers": "shawnp0wers",
-    "phashio": "PHash.IO",
-    "rigpool": "RigPool",
-    "haozhuzhu": "HAOZHUZHU",
-    "7pool": "7pool",
-    "miningkings": "MiningKings",
-    "hashbx": "HashBX",
-    "dpool": "DPOOL",
-    "rawpool": "Rawpool",
-    "haominer": "haominer",
-    "helix": "Helix",
-    "bitcoinukraine": "Bitcoin-Ukraine",
-    "poolin": "Poolin",
-    "secretsuperstar": "SecretSuperstar",
-    "tigerpoolnet": "tigerpool.net",
-    "sigmapoolcom": "Sigmapool.com",
-    "okpooltop": "okpool.top",
-    "hummerpool": "Hummerpool",
-    "tangpool": "Tangpool",
-    "bytepool": "BytePool",
-    "spiderpool": "SpiderPool",
-    "novablock": "NovaBlock",
-    "miningcity": "MiningCity",
-    "binancepool": "Binance Pool",
-    "minerium": "Minerium",
-    "lubiancom": "Lubian.com",
-    "okkong": "OKKONG",
-    "aaopool": "AAO Pool",
-    "emcdpool": "EMCDPool",
-    "foundryusa": "Foundry USA",
-    "sbicrypto": "SBI Crypto",
-    "arkpool": "ArkPool",
-    "purebtccom": "PureBTC.COM",
-    "marapool": "MARA Pool",
-    "kucoinpool": "KuCoinPool",
-    "entrustcharitypool": "Entrust Charity Pool",
-    "okminer": "OKMINER",
-    "titan": "Titan",
-    "pegapool": "PEGA Pool",
-    "btcnuggets": "BTC Nuggets",
-    "cloudhashing": "CloudHashing",
-    "digitalxmintsy": "digitalX Mintsy",
-    "telco214": "Telco 214",
-    "btcpoolparty": "BTC Pool Party",
-    "multipool": "Multipool",
-    "transactioncoinmining": "transactioncoinmining",
-    "btcdig": "BTCDig",
-    "trickysbtcpool": "Tricky's BTC Pool",
-    "btcmp": "BTCMP",
-    "eobot": "Eobot",
-    "unomp": "UNOMP",
-    "patels": "Patels",
-    "gogreenlight": "GoGreenLight",
     "bitcoinindiapool": "BitcoinIndia",
-    "ekanembtc": "EkanemBTC",
+    "bitcoinrussia": "BitcoinRussia",
+    "bitcoinukraine": "Bitcoin-Ukraine",
+    "bitfarms": "Bitfarms",
+    "bitfufupool": "BitFuFuPool",
+    "bitfury": "BitFury",
+    "bitminter": "BitMinter",
+    "bitparking": "Bitparking",
+    "bitsolo": "Bitsolo",
+    "bixin": "Bixin",
+    "blockfills": "BlockFills",
+    "braiinspool": "Braiins Pool",
+    "braiinssolo": "Braiins Solo",
+    "bravomining": "Bravo Mining",
+    "btcc": "BTCC",
+    "btccom": "BTC.com",
+    "btcdig": "BTCDig",
+    "btcguild": "BTC Guild",
+    "btclab": "BTCLab",
+    "btcmp": "BTCMP",
+    "btcnuggets": "BTC Nuggets",
+    "btcpoolparty": "BTC Pool Party",
+    "btcserv": "BTCServ",
+    "btctop": "BTC.TOP",
+    "btpool": "BTPOOL",
+    "bwpool": "BWPool",
+    "bytepool": "BytePool",
     "canoe": "CANOE",
-    "tiger": "tiger",
-    "1m1x": "1M1X",
-    "zulupool": "Zulupool",
-    "secpool": "SECPOOL",
+    "canoepool": "CanoePool",
+    "carbonnegative": "Carbon Negative",
+    "ckpool": "CKPool",
+    "cloudhashing": "CloudHashing",
+    "coinlab": "CoinLab",
+    "cointerra": "Cointerra",
+    "connectbtc": "ConnectBTC",
+    "dcex": "DCEX",
+    "dcexploration": "DCExploration",
+    "digitalbtc": "digitalBTC",
+    "digitalxmintsy": "digitalX Mintsy",
+    "dpool": "DPOOL",
+    "eclipsemc": "EclipseMC",
+    "eightbaochi": "8baochi",
+    "ekanembtc": "EkanemBTC",
+    "eligius": "Eligius",
+    "emcdpool": "EMCDPool",
+    "entrustcharitypool": "Entrust Charity Pool",
+    "eobot": "Eobot",
+    "est3lar": "Est3lar",
+    "exxbw": "EXX&BW",
+    "f2pool": "F2Pool",
+    "fiftyeightcoin": "58COIN",
+    "foundryusa": "Foundry USA",
+    "futurebitapollosolo": "FutureBit Apollo Solo",
+    "gbminers": "GBMiners",
+    "gdpool": "GDPool",
+    "ghashio": "GHash.IO",
+    "givemecoins": "Give Me Coins",
+    "gogreenlight": "GoGreenLight",
+    "haominer": "haominer",
+    "haozhuzhu": "HAOZHUZHU",
+    "hashbx": "HashBX",
+    "hashpool": "HASHPOOL",
+    "helix": "Helix",
+    "hhtt": "HHTT",
+    "hotpool": "HotPool",
+    "hummerpool": "Hummerpool",
+    "huobipool": "Huobi.pool",
+    "innopolistech": "Innopolis Tech",
+    "kanopool": "KanoPool",
+    "kncminer": "KnCMiner",
+    "kucoinpool": "KuCoinPool",
+    "lubiancom": "Lubian.com",
+    "luxor": "Luxor",
+    "marapool": "MARA Pool",
+    "maxbtc": "MaxBTC",
+    "maxipool": "MaxiPool",
+    "megabigpower": "MegaBigPower",
+    "minerium": "Minerium",
+    "miningcity": "MiningCity",
+    "miningdutch": "Mining-Dutch",
+    "miningkings": "MiningKings",
+    "miningsquared": "Mining Squared",
+    "mmpool": "mmpool",
+    "mtred": "Mt Red",
+    "multicoinco": "MultiCoin.co",
+    "multipool": "Multipool",
+    "mybtccoinpool": "myBTCcoin Pool",
+    "neopool": "Neopool",
+    "nexious": "Nexious",
+    "nicehash": "NiceHash",
+    "nmcbit": "NMCbit",
+    "noderunners": "Noderunners",
+    "novablock": "NovaBlock",
     "ocean": "OCEAN",
+    "okexpool": "OKExPool",
+    "okkong": "OKKONG",
+    "okminer": "OKMINER",
+    "okpooltop": "okpool.top",
+    "onehash": "1Hash",
+    "onem1x": "1M1X",
+    "onethash": "1THash",
+    "ozcoin": "OzCoin",
+    "parasite": "Parasite",
+    "patels": "Patels",
+    "pegapool": "PEGA Pool",
+    "phashio": "PHash.IO",
+    "phoenix": "Phoenix",
+    "polmine": "Polmine",
+    "pool175btc": "175btc",
+    "pool50btc": "50BTC",
+    "poolin": "Poolin",
+    "portlandhodl": "Portland.HODL",
+    "publicpool": "Public Pool",
+    "purebtccom": "PureBTC.COM",
+    "rawpool": "Rawpool",
+    "redrockpool": "RedRock Pool",
+    "rigpool": "RigPool",
+    "sbicrypto": "SBI Crypto",
+    "secpool": "SECPOOL",
+    "secretsuperstar": "SecretSuperstar",
+    "sevenpool": "7pool",
+    "shawnp0wers": "shawnp0wers",
+    "sigmapoolcom": "Sigmapool.com",
+    "simplecoinus": "simplecoin.us",
+    "solock": "Solo CK",
+    "solopool": "SoloPool.com",
+    "spiderpool": "SpiderPool",
+    "stminingcorp": "ST Mining Corp",
+    "tangpool": "Tangpool",
+    "tatmaspool": "TATMAS Pool",
+    "tbdice": "TBDice",
+    "telco214": "Telco 214",
+    "terrapool": "Terra Pool",
+    "tiger": "tiger",
+    "tigerpoolnet": "tigerpool.net",
+    "titan": "Titan",
+    "transactioncoinmining": "transactioncoinmining",
+    "trickysbtcpool": "Tricky's BTC Pool",
+    "triplemining": "TripleMining",
+    "twentyoneinc": "21 Inc.",
+    "ultimuspool": "ULTIMUSPOOL",
+    "unknown": "Unknown",
+    "unomp": "UNOMP",
+    "viabtc": "ViaBTC",
+    "waterhole": "Waterhole",
+    "wayicn": "WAYI.CN",
     "whitepool": "WhitePool",
     "wiz": "wiz",
     "wk057": "wk057",
-    "futurebitapollosolo": "FutureBit Apollo Solo",
-    "carbonnegative": "Carbon Negative",
-    "portlandhodl": "Portland.HODL",
-    "phoenix": "Phoenix",
-    "neopool": "Neopool",
-    "maxipool": "MaxiPool",
-    "bitfufupool": "BitFuFuPool",
-    "gdpool": "GDPool",
-    "miningdutch": "Mining-Dutch",
-    "publicpool": "Public Pool",
-    "miningsquared": "Mining Squared",
-    "innopolistech": "Innopolis Tech",
-    "btclab": "BTCLab",
-    "parasite": "Parasite",
-    "redrockpool": "RedRock Pool",
-    "est3lar": "Est3lar",
-    "braiinssolo": "Braiins Solo",
-    "solopoolcom": "SoloPool.com",
-    "noderunners": "Noderunners"
+    "yourbtcnet": "Yourbtc.net",
+    "zulupool": "Zulupool"
   });
 
   TERM_NAMES = /** @type {const} */ ({
@@ -10739,7 +10779,7 @@ class BrkClient extends BrkClientBase {
    */
   async getBlockTipHeight({ signal, onValue } = {}) {
     const path = `/api/blocks/tip/height`;
-    return Number(await this.getText(path, { signal, onValue }));
+    return Number(await this.getText(path, { signal, onValue: onValue ? (v) => onValue(Number(v)) : undefined }));
   }
 
   /**
@@ -10843,8 +10883,8 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/bulk`
    *
-   * @param {SeriesList} [series] - Requested series
-   * @param {Index} [index] - Index to query
+   * @param {SeriesList} series - Requested series
+   * @param {Index} index - Index to query
    * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
    * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
    * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
@@ -10922,7 +10962,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/series/search`
    *
-   * @param {SeriesName} [q] - Search query string
+   * @param {SeriesName} q - Search query string
    * @param {Limit=} [limit] - Maximum number of results
    * @param {{ signal?: AbortSignal, onValue?: (value: string[]) => void }} [options]
    * @returns {Promise<string[]>}
@@ -11362,7 +11402,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Recent blocks with extras
    *
-   * Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+   * Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
    *
@@ -11378,7 +11418,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Blocks from height with extras
    *
-   * Retrieve up to 10 blocks with extended data going backwards from the given height.
+   * Retrieve up to 15 blocks with extended data going backwards from the given height.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
    *
@@ -11870,7 +11910,7 @@ class BrkClient extends BrkClientBase {
    *
    * Endpoint: `GET /api/v1/transaction-times`
    *
-   * @param {Txid[]} [txId[]] - Transaction IDs to look up (max 250 per request).
+   * @param {Txid[]} txId - Transaction IDs to look up (max 250 per request).
    * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
    * @returns {Promise<number[]>}
    */

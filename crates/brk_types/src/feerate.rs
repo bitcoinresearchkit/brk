@@ -1,5 +1,6 @@
 use std::{
     cmp::Ordering,
+    iter::Sum,
     ops::{Add, AddAssign, Div, Mul},
 };
 
@@ -100,6 +101,12 @@ impl Add for FeeRate {
 impl AddAssign for FeeRate {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Sum for FeeRate {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|r| r.0).sum())
     }
 }
 

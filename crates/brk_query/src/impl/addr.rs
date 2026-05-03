@@ -250,7 +250,7 @@ impl Query {
                 (first_seen, txid)
             })
             .collect();
-        ordered.sort_unstable_by(|a, b| b.0.cmp(&a.0));
+        ordered.sort_unstable_by_key(|b| std::cmp::Reverse(b.0));
         let txs = mempool.txs();
         Ok(ordered
             .into_iter()

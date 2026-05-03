@@ -26,14 +26,14 @@ pub struct TxEntry {
 }
 
 impl TxEntry {
-    pub(super) fn new(info: &MempoolEntryInfo, size: u64, rbf: bool, first_seen: Timestamp) -> Self {
+    pub(super) fn new(info: &MempoolEntryInfo, size: u64, rbf: bool) -> Self {
         Self {
             txid: info.txid.clone(),
             fee: info.fee,
             vsize: VSize::from(info.vsize),
             size,
             depends: info.depends.iter().map(TxidPrefix::from).collect(),
-            first_seen,
+            first_seen: info.first_seen,
             rbf,
         }
     }

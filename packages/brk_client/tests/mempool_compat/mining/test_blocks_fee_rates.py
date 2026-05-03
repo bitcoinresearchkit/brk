@@ -1,4 +1,10 @@
-"""GET /api/v1/mining/blocks/fee-rates/{time_period}"""
+"""GET /api/v1/mining/blocks/fee-rates/{time_period}
+
+Note: there is no values_match test here. brk emits float bucket means; mempool
+stores integer per-block percentiles, averages, then casts to INT. Beyond
+rounding, the per-block max (avgFee_100) also drifts by several sat/vB,
+indicating a real methodology difference (effective fee-rate definition,
+RBF/ancestor-fee handling) that no test tolerance should hide."""
 
 import pytest
 

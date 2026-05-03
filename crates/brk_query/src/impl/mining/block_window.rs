@@ -1,155 +1,117 @@
-use brk_types::{Cents, Dollars, Height, Sats, TimePeriod, Timestamp};
-use vecdb::{ReadableVec, VecIndex};
+use std::{
+    collections::BTreeMap,
+    iter::Sum,
+    ops::{Deref, Div},
+};
+
+use brk_types::{Height, TimePeriod, Timestamp};
+use vecdb::{ReadableVec, VecValue};
 
 use crate::Query;
 
-/// Number of blocks per aggregation window, matching mempool.space's granularity.
-fn block_window(period: TimePeriod) -> usize {
+/// Mempool.space's `GROUP BY UNIX_TIMESTAMP(blockTimestamp) DIV ${div}` divisor in seconds.
+/// `div = 1` puts each block in its own bucket.
+fn time_div(period: TimePeriod) -> u32 {
     match period {
-        TimePeriod::Day | TimePeriod::ThreeDays | TimePeriod::Week => 1,
-        TimePeriod::Month => 3,
-        TimePeriod::ThreeMonths => 12,
-        TimePeriod::SixMonths => 18,
-        TimePeriod::Year | TimePeriod::TwoYears => 48,
-        TimePeriod::ThreeYears => 72,
-        TimePeriod::All => 144,
+        TimePeriod::Day | TimePeriod::ThreeDays => 1,
+        TimePeriod::Week => 300,
+        TimePeriod::Month => 1800,
+        TimePeriod::ThreeMonths => 7200,
+        TimePeriod::SixMonths => 10800,
+        TimePeriod::Year | TimePeriod::TwoYears => 28800,
+        TimePeriod::ThreeYears => 43200,
+        TimePeriod::All => 86400,
     }
 }
 
-/// Per-window average with metadata.
-pub struct WindowAvg {
-    pub avg_height: Height,
-    pub timestamp: Timestamp,
-    pub avg_value: Sats,
-    pub usd: Dollars,
+/// Round-half-up integer division, matching MySQL's `CAST(AVG(...) AS INT)`.
+const fn round_half_up(sum: u64, n: u64) -> u64 {
+    (sum + n / 2) / n
 }
 
-/// Block range and window size for a time period.
+/// One time-bucket of blocks in a `BlockWindow`.
+pub struct BlockBucket {
+    pub avg_height: Height,
+    pub avg_timestamp: Timestamp,
+    /// Offsets into the parent `BlockWindow`'s prefetched `[start, end)` slice.
+    offsets: Vec<usize>,
+}
+
+impl BlockBucket {
+    /// Float arithmetic mean of `values[offset]` across this bucket's blocks.
+    /// Use for float-backed types like `FeeRate`.
+    pub fn mean<T>(&self, values: &[T]) -> T
+    where
+        T: Copy + Sum + Div<usize, Output = T>,
+    {
+        self.offsets.iter().map(|&i| values[i]).sum::<T>() / self.offsets.len()
+    }
+
+    /// Round-half-up arithmetic mean for u64-backed integer types, matching
+    /// mempool.space's `CAST(AVG(...) AS INT)`.
+    pub fn mean_rounded<T>(&self, values: &[T]) -> T
+    where
+        T: Copy + Deref<Target = u64> + From<u64>,
+    {
+        let n = self.offsets.len() as u64;
+        let sum: u64 = self.offsets.iter().map(|&i| *values[i]).sum();
+        T::from(round_half_up(sum, n))
+    }
+}
+
+/// Mempool-compatible time-bucketed block window. Groups blocks by
+/// `block.timestamp / div` and exposes arithmetic means per bucket.
 pub struct BlockWindow {
-    pub start: usize,
-    pub end: usize,
-    pub window: usize,
+    pub start: Height,
+    pub end: Height,
+    pub buckets: Vec<BlockBucket>,
 }
 
 impl BlockWindow {
-    pub fn new(query: &Query, time_period: TimePeriod) -> Self {
-        let current_height = query.height();
-        let computer = query.computer();
-        let lookback = &computer.blocks.lookback;
+    pub fn new(query: &Query, period: TimePeriod) -> Self {
+        let start = query.start_height(period);
+        let end = query.height() + 1usize;
+        let div = time_div(period);
 
-        // Use pre-computed timestamp-based lookback for accurate time boundaries.
-        // 24h, 1w, 1m, 1y use in-memory CachedVec; others fall back to PcoVec.
-        let start_height = match time_period {
-            TimePeriod::Day => lookback._24h.collect_one(current_height),
-            TimePeriod::ThreeDays => lookback._3d.collect_one(current_height),
-            TimePeriod::Week => lookback._1w.collect_one(current_height),
-            TimePeriod::Month => lookback._1m.collect_one(current_height),
-            TimePeriod::ThreeMonths => lookback._3m.collect_one(current_height),
-            TimePeriod::SixMonths => lookback._6m.collect_one(current_height),
-            TimePeriod::Year => lookback._1y.collect_one(current_height),
-            TimePeriod::TwoYears => lookback._2y.collect_one(current_height),
-            TimePeriod::ThreeYears => lookback._3y.collect_one(current_height),
-            TimePeriod::All => None,
-        }
-        .unwrap_or_default();
-
-        Self {
-            start: start_height.to_usize(),
-            end: current_height.to_usize() + 1,
-            window: block_window(time_period),
-        }
-    }
-
-    /// Compute per-window averages from a cumulative sats vec.
-    /// Batch-reads timestamps, prices, and the cumulative in one pass.
-    pub fn cumulative_averages(
-        &self,
-        query: &Query,
-        cumulative: &impl ReadableVec<Height, Sats>,
-    ) -> Vec<WindowAvg> {
-        let indexer = query.indexer();
-        let computer = query.computer();
-
-        // Batch read all needed data for the range
-        let all_ts = indexer
-            .vecs
-            .blocks
-            .timestamp
-            .collect_range_at(self.start, self.end);
-        let all_prices: Vec<Cents> = computer
-            .prices
-            .spot
-            .cents
-            .height
-            .collect_range_at(self.start, self.end);
-        let read_start = self.start.saturating_sub(1);
-        let all_cum = cumulative.collect_range_at(read_start, self.end);
-        let offset = if self.start > 0 { 1 } else { 0 };
-
-        let mut results = Vec::with_capacity(self.count());
-        let mut pos = 0;
-        let total = all_ts.len();
-
-        while pos < total {
-            let window_end = (pos + self.window).min(total);
-            let block_count = (window_end - pos) as u64;
-            let mid = (pos + window_end) / 2;
-            let cum_end = all_cum[window_end - 1 + offset];
-            let cum_start = if pos + offset > 0 {
-                all_cum[pos + offset - 1]
-            } else {
-                Sats::ZERO
-            };
-            let total_sats = cum_end - cum_start;
-            if let Some(avg) = (*total_sats).checked_div(block_count) {
-                results.push(WindowAvg {
-                    avg_height: Height::from(self.start + mid),
-                    timestamp: all_ts[mid],
-                    avg_value: Sats::from(avg),
-                    usd: Dollars::from(all_prices[mid]),
-                });
-            }
-            pos = window_end;
-        }
-
-        results
-    }
-
-    /// Batch-read timestamps for the midpoint of each window.
-    pub fn timestamps(&self, query: &Query) -> Vec<Timestamp> {
-        let all_ts = query
+        let timestamps: Vec<Timestamp> = query
             .indexer()
             .vecs
             .blocks
             .timestamp
-            .collect_range_at(self.start, self.end);
-        let mut timestamps = Vec::with_capacity(self.count());
-        let mut pos = 0;
-        while pos < all_ts.len() {
-            let window_end = (pos + self.window).min(all_ts.len());
-            timestamps.push(all_ts[(pos + window_end) / 2]);
-            pos = window_end;
+            .collect_range(start, end);
+
+        let mut groups: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
+        for (i, ts) in timestamps.iter().enumerate() {
+            groups.entry(**ts / div).or_default().push(i);
         }
-        timestamps
+
+        let buckets = groups
+            .into_values()
+            .map(|offsets| {
+                let n = offsets.len() as u64;
+                let sum_h: u64 = offsets.iter().map(|&i| u64::from(start + i)).sum();
+                let sum_ts: u64 = offsets.iter().map(|&i| u64::from(timestamps[i])).sum();
+                BlockBucket {
+                    avg_height: Height::from(round_half_up(sum_h, n)),
+                    avg_timestamp: Timestamp::from(round_half_up(sum_ts, n) as u32),
+                    offsets,
+                }
+            })
+            .collect();
+
+        Self {
+            start,
+            end,
+            buckets,
+        }
     }
 
-    /// Number of windows in this range.
-    fn count(&self) -> usize {
-        (self.end - self.start).div_ceil(self.window)
-    }
-
-    /// Iterate windows, yielding (avg_height, window_start, window_end) for each.
-    pub fn iter(&self) -> impl Iterator<Item = (Height, usize, usize)> + '_ {
-        let mut pos = self.start;
-        std::iter::from_fn(move || {
-            if pos >= self.end {
-                return None;
-            }
-            let window_end = (pos + self.window).min(self.end);
-            let avg_height = Height::from((pos + window_end) / 2);
-            let start = pos;
-            pos = window_end;
-            Some((avg_height, start, window_end))
-        })
+    /// Read a height-keyed vec over this window's `[start, end)` range.
+    pub fn read<V, T>(&self, vec: &V) -> Vec<T>
+    where
+        V: ReadableVec<Height, T>,
+        T: VecValue,
+    {
+        vec.collect_range(self.start, self.end)
     }
 }

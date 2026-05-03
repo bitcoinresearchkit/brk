@@ -25,6 +25,7 @@ pub fn generate_rust_client(
     writeln!(output, "// Auto-generated BRK Rust client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
     writeln!(output, "#![allow(non_camel_case_types)]").unwrap();
+    writeln!(output, "#![allow(non_snake_case)]").unwrap();
     writeln!(output, "#![allow(dead_code)]").unwrap();
     writeln!(output, "#![allow(unused_variables)]").unwrap();
     writeln!(output, "#![allow(clippy::useless_format)]").unwrap();

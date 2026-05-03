@@ -59,3 +59,34 @@ def test_mining_blocks_sizes_weights_malformed(brk, bad):
     assert exc_info.value.status == 400, (
         f"expected status=400 for {bad!r}, got {exc_info.value.status}"
     )
+
+
+@pytest.mark.parametrize("period", PERIODS)
+def test_mining_blocks_sizes_weights_values_match(brk, mempool, period):
+    """For shared buckets (keyed by timestamp), avgSize and avgWeight must equal mempool.space."""
+    path = f"/api/v1/mining/blocks/sizes-weights/{period}"
+    b = brk.get_block_sizes_weights(period)
+    m = mempool.get_json(path)
+    show("GET", path, summary(b), summary(m))
+
+    sizes_by_ts = {e["timestamp"]: e for e in m["sizes"]}
+    weights_by_ts = {e["timestamp"]: e for e in m["weights"]}
+
+    matched = 0
+    for s, w in zip(b["sizes"], b["weights"]):
+        ts = s["timestamp"]
+        ms = sizes_by_ts.get(ts)
+        mw = weights_by_ts.get(ts)
+        if ms is None or mw is None:
+            continue
+        matched += 1
+        assert s["avgHeight"] == ms["avgHeight"], (
+            f"size avgHeight drift at timestamp {ts}: brk={s['avgHeight']} mempool={ms['avgHeight']}"
+        )
+        assert s["avgSize"] == ms["avgSize"], (
+            f"avgSize mismatch at timestamp {ts}: brk={s['avgSize']} mempool={ms['avgSize']}"
+        )
+        assert w["avgWeight"] == mw["avgWeight"], (
+            f"avgWeight mismatch at timestamp {ts}: brk={w['avgWeight']} mempool={mw['avgWeight']}"
+        )
+    assert matched > 0, "no overlapping bucket timestamps between brk and mempool"

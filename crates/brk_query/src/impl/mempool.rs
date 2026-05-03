@@ -250,8 +250,10 @@ impl Query {
             best_descendant,
             descendants,
             effective_fee_per_vsize: Some(effective),
+            sigops: None,
             fee: Some(seed_fee),
             adjusted_vsize: Some(seed_vsize),
+            cluster: None,
         }
     }
 

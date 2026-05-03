@@ -126,7 +126,7 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
         )
         .unwrap();
     } else {
-        write_query_assembly(output, endpoint, &path, &index_arg);
+        write_query_assembly(output, endpoint, &path, index_arg);
 
         if endpoint.supports_csv {
             writeln!(output, "        if format == Some(Format::CSV) {{").unwrap();
@@ -190,7 +190,7 @@ fn generate_post_method(output: &mut String, endpoint: &Endpoint) {
         )
         .unwrap();
     } else {
-        write_query_assembly(output, endpoint, &path, &index_arg);
+        write_query_assembly(output, endpoint, &path, index_arg);
         writeln!(
             output,
             "        self.base.{}(&path, {})",

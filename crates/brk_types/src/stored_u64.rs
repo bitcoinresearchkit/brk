@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
+use std::{
+    iter::Sum,
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
+};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -96,6 +99,12 @@ impl Add for StoredU64 {
 impl AddAssign for StoredU64 {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
+    }
+}
+
+impl Sum for StoredU64 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        Self(iter.map(|v| v.0).sum())
     }
 }
 

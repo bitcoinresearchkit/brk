@@ -7,5 +7,6 @@ mod difficulty;
 mod difficulty_adjustments;
 mod epochs;
 mod hashrate;
+mod period_start;
 mod pools;
 mod reward_stats;

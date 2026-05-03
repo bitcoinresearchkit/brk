@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{BlockFeesEntry, TimePeriod};
+use brk_types::{BlockFeesEntry, Cents, Dollars, Sats, TimePeriod};
 
 use super::block_window::BlockWindow;
 use crate::Query;
@@ -7,15 +7,17 @@ use crate::Query;
 impl Query {
     pub fn block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
         let bw = BlockWindow::new(self, time_period);
-        let cumulative = &self.computer().mining.rewards.fees.cumulative.sats.height;
+        let fees: Vec<Sats> = bw.read(&self.computer().mining.rewards.fees.block.sats);
+        let prices: Vec<Cents> = bw.read(&self.computer().prices.spot.cents.height);
+
         Ok(bw
-            .cumulative_averages(self, cumulative)
-            .into_iter()
-            .map(|w| BlockFeesEntry {
-                avg_height: w.avg_height,
-                timestamp: w.timestamp,
-                avg_fees: w.avg_value,
-                usd: w.usd,
+            .buckets
+            .iter()
+            .map(|b| BlockFeesEntry {
+                avg_height: b.avg_height,
+                timestamp: b.avg_timestamp,
+                avg_fees: b.mean_rounded(&fees),
+                usd: Dollars::from(b.mean_rounded(&prices)),
             })
             .collect())
     }

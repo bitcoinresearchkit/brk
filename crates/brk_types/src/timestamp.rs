@@ -102,6 +102,15 @@ impl From<u32> for Timestamp {
     }
 }
 
+impl From<i64> for Timestamp {
+    #[inline]
+    fn from(value: i64) -> Self {
+        let value = value.max(0);
+        debug_assert!(value <= u32::MAX as i64);
+        Self(value as u32)
+    }
+}
+
 impl From<jiff::Timestamp> for Timestamp {
     #[inline]
     fn from(value: jiff::Timestamp) -> Self {

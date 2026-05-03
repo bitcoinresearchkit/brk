@@ -102,6 +102,9 @@ CostBasisValue = Literal["supply", "realized", "unrealized"]
 # Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
 # log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
 UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200"]
+# Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
+# has no meaning outside the enclosing cluster.
+CpfpClusterTxIndex = int
 # Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 VSize = int
 # Date in YYYYMMDD format stored as u32
@@ -650,6 +653,43 @@ class CostBasisQuery(TypedDict):
     bucket: UrpdAggregation
     value: CostBasisValue
 
+class CpfpClusterChunk(TypedDict):
+    """
+    One SFL chunk inside a `CpfpCluster`.
+
+    Attributes:
+        txs: Txs in this chunk.
+        feerate: Combined feerate of the chunk (sat/vB).
+    """
+    txs: List[CpfpClusterTxIndex]
+    feerate: FeeRate
+
+class CpfpClusterTx(TypedDict):
+    """
+    One entry in a `CpfpCluster.txs` array.
+
+    Attributes:
+        parents: In-cluster parents of this tx.
+    """
+    txid: Txid
+    fee: Sats
+    weight: Weight
+    parents: List[CpfpClusterTxIndex]
+
+class CpfpCluster(TypedDict):
+    """
+    CPFP cluster output for an unconfirmed tx: the connected component
+    the seed belongs to, plus its SFL linearization.
+
+    Attributes:
+        txs: All txs in the cluster, in topological order (parents before children).
+        chunks: SFL-emitted chunks ordered by descending feerate.
+        chunkIndex: Index into `chunks` of the chunk containing the seed tx.
+    """
+    txs: List[CpfpClusterTx]
+    chunks: List[CpfpClusterChunk]
+    chunkIndex: int
+
 class CpfpEntry(TypedDict):
     """
     A transaction in a CPFP relationship
@@ -672,15 +712,20 @@ class CpfpInfo(TypedDict):
         bestDescendant: Best (highest fee rate) descendant, if any
         descendants: Descendant transactions in the CPFP chain
         effectiveFeePerVsize: Effective fee rate considering CPFP relationships (sat/vB)
+        sigops: Total signature operation count for the seed tx
         fee: Transaction fee (sats)
         adjustedVsize: Adjusted virtual size (accounting for sigops)
+        cluster: Mempool cluster the seed belongs to: full tx list, SFL-linearized
+chunks, and the seed's chunk index. Only set for unconfirmed txs.
     """
     ancestors: List[CpfpEntry]
     bestDescendant: Union[CpfpEntry, None]
     descendants: List[CpfpEntry]
     effectiveFeePerVsize: Union[FeeRate, None]
+    sigops: Optional[int]
     fee: Union[Sats, None]
     adjustedVsize: Union[VSize, None]
+    cluster: Union[CpfpCluster, None]
 
 class DataRangeFormat(TypedDict):
     """
@@ -8314,7 +8359,7 @@ class BrkClient(BrkClientBase):
     def get_blocks_v1(self) -> List[BlockInfoV1]:
         """Recent blocks with extras.
 
-        Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+        Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
 
@@ -8324,7 +8369,7 @@ class BrkClient(BrkClientBase):
     def get_blocks_v1_from_height(self, height: Height) -> List[BlockInfoV1]:
         """Blocks from height with extras.
 
-        Retrieve up to 10 blocks with extended data going backwards from the given height.
+        Retrieve up to 15 blocks with extended data going backwards from the given height.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
 

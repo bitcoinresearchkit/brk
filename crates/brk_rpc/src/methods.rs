@@ -2,7 +2,7 @@ use std::{thread::sleep, time::Duration};
 
 use bitcoin::{consensus::encode, hex::FromHex};
 use brk_error::{Error, Result};
-use brk_types::{Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Txid, Vout};
+use brk_types::{Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Timestamp, Txid, Vout};
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::v30::{
     GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
@@ -211,6 +211,7 @@ impl Client {
                     vsize: entry.vsize as u64,
                     weight: entry.weight as u64,
                     fee: Sats::from(Bitcoin::from(entry.fees.base)),
+                    first_seen: Timestamp::from(entry.time),
                     ancestor_count: entry.ancestor_count as u64,
                     ancestor_size: entry.ancestor_size as u64,
                     ancestor_fee: Sats::from(Bitcoin::from(entry.fees.ancestor)),

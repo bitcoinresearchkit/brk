@@ -52,3 +52,30 @@ def test_mining_difficulty_adjustments_malformed(brk, bad):
     assert exc_info.value.status == 400, (
         f"expected status=400 for {bad!r}, got {exc_info.value.status}"
     )
+
+
+# `all`: mempool.space's `difficulty_adjustments` table begins from when their tracker
+# started, not genesis, so series length and earliest entries diverge by construction.
+@pytest.mark.parametrize("period", [p for p in PERIODS if p != "all"])
+def test_mining_difficulty_adjustments_values_match(brk, mempool, period):
+    """For every bounded period, every retarget entry must match mempool.space:
+    same height, same timestamp, and difficulty/change-ratio within float tolerance."""
+    path = f"/api/v1/mining/difficulty-adjustments/{period}"
+    b = brk.get_difficulty_adjustments_by_period(period)
+    m = mempool.get_json(path)
+    show("GET", path, summary(b), summary(m))
+    assert len(b) == len(m), f"length mismatch: brk={len(b)} mempool={len(m)}"
+
+    for be, me in zip(b, m):
+        bt, bh, bd, br = be
+        mt, mh, md, mr = me
+        assert bh == mh, f"height mismatch at retarget: brk={bh} mempool={mh}"
+        assert bt == mt, f"timestamp mismatch at height {bh}: brk={bt} mempool={mt}"
+        # mempool.space serializes difficulty/change_ratio with limited precision,
+        # so only require parity within mempool.space's ~6-decimal rounding window.
+        assert abs(bd - md) / max(md, 1.0) < 1e-5, (
+            f"difficulty drift at height {bh}: brk={bd} mempool={md}"
+        )
+        assert abs(br - mr) < 1e-5, (
+            f"change_ratio drift at height {bh}: brk={br} mempool={mr}"
+        )

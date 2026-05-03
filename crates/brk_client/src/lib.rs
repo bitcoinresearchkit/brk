@@ -2,6 +2,7 @@
 // Do not edit manually
 
 #![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(clippy::useless_format)]
@@ -9604,7 +9605,7 @@ impl BrkClient {
 
     /// Recent blocks with extras
     ///
-    /// Retrieve the last 10 blocks with extended data including pool identification and fee statistics.
+    /// Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
     ///
@@ -9615,7 +9616,7 @@ impl BrkClient {
 
     /// Blocks from height with extras
     ///
-    /// Retrieve up to 10 blocks with extended data going backwards from the given height.
+    /// Retrieve up to 15 blocks with extended data going backwards from the given height.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
     ///

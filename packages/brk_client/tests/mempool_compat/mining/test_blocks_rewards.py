@@ -45,3 +45,29 @@ def test_mining_blocks_rewards_malformed(brk, bad):
     assert exc_info.value.status == 400, (
         f"expected status=400 for {bad!r}, got {exc_info.value.status}"
     )
+
+
+@pytest.mark.parametrize("period", PERIODS)
+def test_mining_blocks_rewards_values_match(brk, mempool, period):
+    """For shared buckets (keyed by timestamp), avgHeight and avgRewards must equal mempool.space."""
+    path = f"/api/v1/mining/blocks/rewards/{period}"
+    b = brk.get_block_rewards(period)
+    m = mempool.get_json(path)
+    show("GET", path, summary(b), summary(m))
+
+    m_by_ts = {e["timestamp"]: e for e in m}
+    matched = 0
+    for be in b:
+        me = m_by_ts.get(be["timestamp"])
+        if me is None:
+            continue
+        matched += 1
+        assert be["avgHeight"] == me["avgHeight"], (
+            f"avgHeight drift at timestamp {be['timestamp']}: "
+            f"brk={be['avgHeight']} mempool={me['avgHeight']}"
+        )
+        assert be["avgRewards"] == me["avgRewards"], (
+            f"avgRewards mismatch at timestamp {be['timestamp']}: "
+            f"brk={be['avgRewards']} mempool={me['avgRewards']}"
+        )
+    assert matched > 0, "no overlapping bucket timestamps between brk and mempool"

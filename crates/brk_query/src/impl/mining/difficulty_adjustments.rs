@@ -10,10 +10,11 @@ impl Query {
         &self,
         time_period: Option<TimePeriod>,
     ) -> Result<Vec<DifficultyAdjustmentEntry>> {
-        let current_height = self.height();
-        let end = current_height.to_usize();
+        let end = self.height().to_usize();
+        // Match mempool.space's wall-clock `time > NOW() - INTERVAL ${period}` cutoff
+        // by walking back through real block timestamps, not estimating via block count.
         let start = match time_period {
-            Some(tp) => end.saturating_sub(tp.block_count()),
+            Some(tp) => self.start_height(tp).to_usize(),
             None => 0,
         };
 

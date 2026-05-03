@@ -4,13 +4,13 @@
 //!   prevouts against `known` or `parent_raws`, build a full
 //!   `Transaction` + `Entry`.
 //! - **Revived** - tx in the graveyard. Rebuild the `Entry` only
-//!   (preserving `first_seen`, `rbf`, `size`). The Applier exhumes
-//!   the cached tx body. No raw decoding.
+//!   (preserving `rbf`, `size`). The Applier exhumes the cached tx
+//!   body. No raw decoding.
 
 use std::mem;
 
 use brk_rpc::RawTx;
-use brk_types::{MempoolEntryInfo, Timestamp, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
+use brk_types::{MempoolEntryInfo, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 use rustc_hash::FxHashMap;
 
 use crate::{TxTombstone, stores::TxStore};
@@ -35,7 +35,7 @@ impl TxAddition {
         let total_size = raw.hex.len() / 2;
         let rbf = raw.tx.input.iter().any(|i| i.sequence.is_rbf());
         let tx = Self::build_tx(info, raw, total_size, mempool_txs, parent_raws);
-        let entry = TxEntry::new(info, total_size as u64, rbf, Timestamp::now());
+        let entry = TxEntry::new(info, total_size as u64, rbf);
         Self::Fresh { tx, entry }
     }
 
@@ -68,7 +68,7 @@ impl TxAddition {
     }
 
     pub(super) fn revived(info: &MempoolEntryInfo, tomb: &TxTombstone) -> Self {
-        let entry = TxEntry::new(info, tomb.entry.size, tomb.entry.rbf, tomb.entry.first_seen);
+        let entry = TxEntry::new(info, tomb.entry.size, tomb.entry.rbf);
         Self::Revived { entry }
     }
 

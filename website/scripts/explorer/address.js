@@ -113,7 +113,9 @@ export async function update(address, signal) {
       if (currentAddr !== address) return;
       loading = true;
       try {
-        const txs = await brk.getAddressTxs(address, afterTxid, { signal });
+        const txs = afterTxid
+          ? await brk.getAddressConfirmedTxsAfter(address, afterTxid, { signal })
+          : await brk.getAddressTxs(address, { signal });
         if (currentAddr !== address) return;
         for (const tx of txs) txSection.append(renderTx(tx));
         pageIndex++;

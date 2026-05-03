@@ -11,62 +11,76 @@ use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
 
-const DEFAULT_BLOCK_COUNT: u32 = 10;
-const DEFAULT_V1_BLOCK_COUNT: u32 = 15;
 const HEADER_SIZE: usize = 80;
 
 impl Query {
+    /// Block by hash. Unknown hash → 404 via `height_by_hash`.
     pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
         let height = self.height_by_hash(hash)?;
         self.block_by_height(height)
     }
 
+    /// Block by height. Height > tip → `OutOfRange`.
     pub fn block_by_height(&self, height: Height) -> Result<BlockInfo> {
-        let max_height = self.indexed_height();
-        if height > max_height {
+        if height > self.tip_height() {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
-        self.blocks_range(height.to_usize(), height.to_usize() + 1)?
+        let h = height.to_usize();
+        self.blocks_range(h, h + 1)?
             .pop()
             .ok_or(Error::NotFound("Block not found".into()))
     }
 
+    /// V1 block by height. Ceiling is `min(indexed, computed)` because
+    /// `blocks_v1_range` reads computer-stamped series (pools, fees,
+    /// supply state). Anything past `computed_height` would short-read.
     pub fn block_by_height_v1(&self, height: Height) -> Result<BlockInfoV1> {
-        let max_height = self.height();
-        if height > max_height {
+        if height > self.height() {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
-        self.blocks_v1_range(height.to_usize(), height.to_usize() + 1)?
+        let h = height.to_usize();
+        self.blocks_v1_range(h, h + 1)?
             .pop()
             .ok_or(Error::NotFound("Block not found".into()))
     }
 
+    /// Hex-encoded 80-byte block header. Decode-then-encode roundtrip
+    /// doubles as a corruption check on the on-disk bytes.
     pub fn block_header_hex(&self, hash: &BlockHash) -> Result<String> {
         let height = self.height_by_hash(hash)?;
         let header = self.read_block_header(height)?;
         Ok(bitcoin::consensus::encode::serialize_hex(&header))
     }
 
+    /// Block hash by height. Cheap typed-index read with a semantic
+    /// bounds gate (`OutOfRange` for past-tip, `Internal` if the data
+    /// is unexpectedly missing inside the gate).
     pub fn block_hash_by_height(&self, height: Height) -> Result<BlockHash> {
-        let max_height = self.indexed_height();
-        if height > max_height {
+        if height > self.tip_height() {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
         self.indexer().vecs.blocks.blockhash.get(height).data()
     }
 
-    pub fn blocks(&self, start_height: Option<Height>) -> Result<Vec<BlockInfo>> {
-        let (begin, end) = self.resolve_block_range(start_height, DEFAULT_BLOCK_COUNT);
+    /// Most recent `count` blocks ending at `start_height` (default tip),
+    /// returned in descending-height order.
+    pub fn blocks(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfo>> {
+        let (begin, end) = self.resolve_block_range(start_height, count);
         self.blocks_range(begin, end)
     }
 
-    pub fn blocks_v1(&self, start_height: Option<Height>) -> Result<Vec<BlockInfoV1>> {
-        let (begin, end) = self.resolve_block_range(start_height, DEFAULT_V1_BLOCK_COUNT);
+    /// V1 most recent `count` blocks with extras ending at `start_height`
+    /// (default tip), returned in descending-height order.
+    pub fn blocks_v1(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfoV1>> {
+        let (begin, end) = self.resolve_block_range(start_height, count);
         self.blocks_v1_range(begin, end)
     }
 
     // === Range queries (bulk reads) ===
 
+    /// Build `BlockInfo` rows for `[begin, end)` in descending-height order.
+    /// Caller must bounds-check `end <= tip + 1`. Returns `Internal` if any
+    /// bulk read short-returns under per-vec stamp races.
     fn blocks_range(&self, begin: usize, end: usize) -> Result<Vec<BlockInfo>> {
         if begin >= end {
             return Ok(Vec::new());
@@ -75,6 +89,7 @@ impl Query {
         let indexer = self.indexer();
         let computer = self.computer();
         let reader = self.reader();
+        let count = end - begin;
 
         // Bulk read all indexed data
         let blockhashes = indexer.vecs.blocks.blockhash.collect_range_at(begin, end);
@@ -83,6 +98,15 @@ impl Query {
         let sizes = indexer.vecs.blocks.total.collect_range_at(begin, end);
         let weights = indexer.vecs.blocks.weight.collect_range_at(begin, end);
         let positions = indexer.vecs.blocks.position.collect_range_at(begin, end);
+        if blockhashes.len() != count
+            || difficulties.len() != count
+            || timestamps.len() != count
+            || sizes.len() != count
+            || weights.len() != count
+            || positions.len() != count
+        {
+            return Err(Error::Internal("blocks_range: short read on per-block vecs"));
+        }
 
         // Bulk read tx indexes for tx_count
         let max_height = self.indexed_height();
@@ -96,6 +120,9 @@ impl Query {
             .transactions
             .first_tx_index
             .collect_range_at(begin, tx_index_end);
+        if first_tx_indexes.len() < count {
+            return Err(Error::Internal("blocks_range: short read on first_tx_index"));
+        }
         let total_txs = computer.indexes.tx_index.identity.len();
 
         // Bulk read median time window
@@ -105,8 +132,10 @@ impl Query {
             .blocks
             .timestamp
             .collect_range_at(median_start, end);
+        if median_timestamps.len() != end - median_start {
+            return Err(Error::Internal("blocks_range: short read on median window"));
+        }
 
-        let count = end - begin;
         let mut blocks = Vec::with_capacity(count);
 
         for i in (0..count).rev() {
@@ -430,6 +459,10 @@ impl Query {
     }
 
     // === Helper methods ===
+
+    pub fn tip_height(&self) -> Height {
+        Height::from(self.indexer().vecs.blocks.blockhash.len().saturating_sub(1))
+    }
 
     pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
         let indexer = self.indexer();
