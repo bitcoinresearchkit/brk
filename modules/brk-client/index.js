@@ -5261,6 +5261,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesPattern19<RawLockTime>} rawLocktime
  * @property {SeriesPattern19<StoredU32>} baseSize
  * @property {SeriesPattern19<StoredU32>} totalSize
+ * @property {SeriesPattern19<SigOps>} totalSigopCost
  * @property {SeriesPattern19<StoredBool>} isExplicitlyRbf
  * @property {SeriesPattern19<TxInIndex>} firstTxinIndex
  * @property {SeriesPattern19<TxOutIndex>} firstTxoutIndex
@@ -8796,6 +8797,7 @@ class BrkClient extends BrkClientBase {
           rawLocktime: createSeriesPattern19(this, 'raw_locktime'),
           baseSize: createSeriesPattern19(this, 'base_size'),
           totalSize: createSeriesPattern19(this, 'total_size'),
+          totalSigopCost: createSeriesPattern19(this, 'total_sigop_cost'),
           isExplicitlyRbf: createSeriesPattern19(this, 'is_explicitly_rbf'),
           firstTxinIndex: createSeriesPattern19(this, 'first_txin_index'),
           firstTxoutIndex: createSeriesPattern19(this, 'first_txout_index'),

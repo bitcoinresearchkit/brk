@@ -1,8 +1,8 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
 use brk_types::{
-    BlkPosition, Height, RawLockTime, StoredBool, StoredU32, TxInIndex, TxIndex, TxOutIndex,
-    TxVersion, Txid, Version,
+    BlkPosition, Height, RawLockTime, SigOps, StoredBool, StoredU32, TxInIndex, TxIndex,
+    TxOutIndex, TxVersion, Txid, Version,
 };
 use rayon::prelude::*;
 use vecdb::{
@@ -19,6 +19,7 @@ pub struct TransactionsVecs<M: StorageMode = Rw> {
     pub raw_locktime: M::Stored<PcoVec<TxIndex, RawLockTime>>,
     pub base_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
     pub total_size: M::Stored<PcoVec<TxIndex, StoredU32>>,
+    pub total_sigop_cost: M::Stored<PcoVec<TxIndex, SigOps>>,
     pub is_explicitly_rbf: M::Stored<PcoVec<TxIndex, StoredBool>>,
     pub first_txin_index: M::Stored<PcoVec<TxIndex, TxInIndex>>,
     pub first_txout_index: M::Stored<BytesVec<TxIndex, TxOutIndex>>,
@@ -32,6 +33,7 @@ pub struct TxMetadataVecs<'a> {
     pub raw_locktime: &'a mut PcoVec<TxIndex, RawLockTime>,
     pub base_size: &'a mut PcoVec<TxIndex, StoredU32>,
     pub total_size: &'a mut PcoVec<TxIndex, StoredU32>,
+    pub total_sigop_cost: &'a mut PcoVec<TxIndex, SigOps>,
     pub is_explicitly_rbf: &'a mut PcoVec<TxIndex, StoredBool>,
 }
 
@@ -52,6 +54,7 @@ impl TransactionsVecs {
                 raw_locktime: &mut self.raw_locktime,
                 base_size: &mut self.base_size,
                 total_size: &mut self.total_size,
+                total_sigop_cost: &mut self.total_sigop_cost,
                 is_explicitly_rbf: &mut self.is_explicitly_rbf,
             },
         )
@@ -65,6 +68,7 @@ impl TransactionsVecs {
             raw_locktime,
             base_size,
             total_size,
+            total_sigop_cost,
             is_explicitly_rbf,
             first_txin_index,
             first_txout_index,
@@ -76,6 +80,7 @@ impl TransactionsVecs {
             raw_locktime = PcoVec::forced_import(db, "raw_locktime", version),
             base_size = PcoVec::forced_import(db, "base_size", version),
             total_size = PcoVec::forced_import(db, "total_size", version),
+            total_sigop_cost = PcoVec::forced_import(db, "total_sigop_cost", version),
             is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
             first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             first_txout_index = BytesVec::forced_import(db, "first_txout_index", version),
@@ -88,6 +93,7 @@ impl TransactionsVecs {
             raw_locktime,
             base_size,
             total_size,
+            total_sigop_cost,
             is_explicitly_rbf,
             first_txin_index,
             first_txout_index,
@@ -106,6 +112,8 @@ impl TransactionsVecs {
         self.base_size
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.total_size
+            .truncate_if_needed_with_stamp(tx_index, stamp)?;
+        self.total_sigop_cost
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
         self.is_explicitly_rbf
             .truncate_if_needed_with_stamp(tx_index, stamp)?;
@@ -126,6 +134,7 @@ impl TransactionsVecs {
             &mut self.raw_locktime,
             &mut self.base_size,
             &mut self.total_size,
+            &mut self.total_sigop_cost,
             &mut self.is_explicitly_rbf,
             &mut self.first_txin_index,
             &mut self.first_txout_index,

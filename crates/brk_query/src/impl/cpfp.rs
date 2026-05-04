@@ -9,14 +9,10 @@
 //! — the same wire converter the mempool path uses, so both produce
 //! identical `CpfpInfo` shapes.
 
-use std::io::Cursor;
-
-use bitcoin::consensus::Decodable;
 use brk_error::{Error, OptionData, Result};
 use brk_mempool::cluster::{Cluster, ClusterNode, LocalIdx};
 use brk_types::{
-    CpfpInfo, FeeRate, Height, OutPoint, OutputType, Sats, SigOps, TxIndex, TxInIndex, TypeIndex,
-    Txid, TxidPrefix, VSize, Weight,
+    CpfpInfo, FeeRate, Height, TxIndex, TxInIndex, Txid, TxidPrefix, VSize, Weight,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
@@ -106,76 +102,17 @@ impl Query {
     /// the result so `effectiveFeePerVsize` matches the live path's
     /// chunk-rate semantics.
     fn confirmed_cpfp(&self, txid: &Txid) -> Result<CpfpInfo> {
-        let seed = self.resolve_tx_index(txid)?;
-        let height = self.confirmed_status_height(seed)?;
-        let (cluster, seed_local) = self.build_confirmed_cluster(seed, height)?;
-        let sigops = self.seed_sigop_cost(seed)?;
+        let tx_index = self.resolve_tx_index(txid)?;
+        let height = self.confirmed_status_height(tx_index)?;
+        let (cluster, seed_local) = self.build_confirmed_cluster(tx_index, height)?;
+        let sigops = self
+            .indexer()
+            .vecs
+            .transactions
+            .total_sigop_cost
+            .collect_one(tx_index)
+            .data()?;
         Ok(cluster.to_cpfp_info(seed_local, sigops))
-    }
-
-    /// BIP-141 sigop cost for a single confirmed tx, computed on demand:
-    /// re-decode the raw tx, rebuild its prevout map from `inputs.*` +
-    /// addr vecs, then defer the actual count to `SigOps::of_bitcoin_tx`.
-    /// Cost is one BLK read plus `n_inputs` cursor hops, so a few hundred
-    /// microseconds per CPFP request.
-    fn seed_sigop_cost(&self, tx_index: TxIndex) -> Result<SigOps> {
-        let indexer = self.indexer();
-        let total_size = indexer
-            .vecs
-            .transactions
-            .total_size
-            .collect_one(tx_index)
-            .data()?;
-        let position = indexer
-            .vecs
-            .transactions
-            .position
-            .collect_one(tx_index)
-            .data()?;
-        let buffer = self.reader().read_raw_bytes(position, *total_size as usize)?;
-        let decoded = bitcoin::Transaction::consensus_decode(&mut Cursor::new(buffer))
-            .map_err(|_| Error::Parse("Failed to decode transaction".into()))?;
-
-        let first_txin = indexer
-            .vecs
-            .transactions
-            .first_txin_index
-            .collect_one(tx_index)
-            .data()?;
-        let start = usize::from(first_txin);
-        let count = decoded.input.len();
-
-        let mut outpoint_cursor = indexer.vecs.inputs.outpoint.cursor();
-        let mut output_type_cursor = indexer.vecs.inputs.output_type.cursor();
-        let mut type_index_cursor = indexer.vecs.inputs.type_index.cursor();
-        let mut value_cursor = self.computer().inputs.spent.value.cursor();
-
-        let addr_readers = indexer.vecs.addrs.addr_readers();
-
-        let mut prevout_map: FxHashMap<bitcoin::OutPoint, bitcoin::TxOut> =
-            FxHashMap::with_capacity_and_hasher(count, FxBuildHasher);
-
-        for (j, txin) in decoded.input.iter().enumerate() {
-            let op: OutPoint = outpoint_cursor.get(start + j).data()?;
-            if op.is_coinbase() {
-                continue;
-            }
-            let ot: OutputType = output_type_cursor.get(start + j).data()?;
-            let ti: TypeIndex = type_index_cursor.get(start + j).data()?;
-            let val: Sats = value_cursor.get(start + j).data()?;
-            let script_pubkey = addr_readers.script_pubkey(ot, ti);
-            prevout_map.insert(
-                txin.previous_output,
-                bitcoin::TxOut {
-                    value: bitcoin::Amount::from_sat(u64::from(val)),
-                    script_pubkey,
-                },
-            );
-        }
-
-        Ok(SigOps::of_bitcoin_tx(&decoded, |outpoint| {
-            prevout_map.get(outpoint).cloned()
-        }))
     }
 
     /// Walk the seed's same-block parent/child edges, materialize each

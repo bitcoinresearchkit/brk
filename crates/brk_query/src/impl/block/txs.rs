@@ -105,7 +105,7 @@ impl Query {
     ///            metadata (sorted by tx_index).
     ///   Phase 2: resolve each prevout's script_pubkey (sorted by
     ///            output_type, then type_index, for sequential addr-vec reads).
-    ///   Phase 3: assemble `Transaction` objects, compute sigops + fees.
+    ///   Phase 3: assemble `Transaction` objects, compute fees.
     ///
     /// The final `unwrap` is provably safe: `order` is a permutation of
     /// `0..len`, Phase 1 produces exactly one `DecodedTx` per position, and
@@ -129,6 +129,7 @@ impl Query {
 
         let mut txid_cursor = indexer.vecs.transactions.txid.cursor();
         let mut total_size_cursor = indexer.vecs.transactions.total_size.cursor();
+        let mut sigops_cursor = indexer.vecs.transactions.total_sigop_cost.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
         let mut position_cursor = indexer.vecs.transactions.position.cursor();
 
@@ -137,6 +138,7 @@ impl Query {
             tx_index: TxIndex,
             txid: Txid,
             total_size: StoredU32,
+            total_sigop_cost: SigOps,
             status: TxStatus,
             decoded: bitcoin::Transaction,
             first_txin_index: TxInIndex,
@@ -154,6 +156,7 @@ impl Query {
 
             let txid: Txid = txid_cursor.get(idx).data()?;
             let total_size: StoredU32 = total_size_cursor.get(idx).data()?;
+            let total_sigop_cost: SigOps = sigops_cursor.get(idx).data()?;
             let first_txin_index: TxInIndex = first_txin_cursor.get(idx).data()?;
             let position: BlkPosition = position_cursor.get(idx).data()?;
 
@@ -179,6 +182,7 @@ impl Query {
                 tx_index,
                 txid,
                 total_size,
+                total_sigop_cost,
                 status,
                 decoded,
                 first_txin_index,
@@ -277,25 +281,6 @@ impl Query {
 
             let weight = Weight::from(dtx.decoded.weight());
 
-            // O(n) sigop cost via FxHashMap instead of O(n²) linear scan
-            let outpoint_to_idx: FxHashMap<bitcoin::OutPoint, usize> = dtx
-                .decoded
-                .input
-                .iter()
-                .enumerate()
-                .map(|(j, txin)| (txin.previous_output, j))
-                .collect();
-
-            let total_sigop_cost = SigOps::of_bitcoin_tx(&dtx.decoded, |outpoint| {
-                outpoint_to_idx
-                    .get(outpoint)
-                    .and_then(|&j| input[j].prevout.as_ref())
-                    .map(|p| bitcoin::TxOut {
-                        value: bitcoin::Amount::from_sat(u64::from(p.value)),
-                        script_pubkey: p.script_pubkey.clone(),
-                    })
-            });
-
             let output: Vec<TxOut> = dtx.decoded.output.into_iter().map(TxOut::from).collect();
 
             let mut transaction = Transaction {
@@ -305,7 +290,7 @@ impl Query {
                 lock_time: RawLockTime::from(dtx.decoded.lock_time),
                 total_size: *dtx.total_size as usize,
                 weight,
-                total_sigop_cost,
+                total_sigop_cost: dtx.total_sigop_cost,
                 fee: Sats::ZERO,
                 input,
                 output,

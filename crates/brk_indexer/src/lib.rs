@@ -309,10 +309,13 @@ impl Indexer {
 
             processor.check_txid_collisions(&txs)?;
 
+            let sigops = processor.compute_sigops(&txins);
+
             processor.finalize_and_store_metadata(
                 txs,
                 txouts,
                 txins,
+                sigops,
                 &buffers.same_block_spent,
                 &mut buffers.already_added_addrs,
                 &mut buffers.same_block_output_info,

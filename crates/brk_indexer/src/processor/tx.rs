@@ -1,6 +1,6 @@
 use brk_error::{Error, Result};
 use brk_store::Store;
-use brk_types::{StoredBool, TxIndex, Txid, TxidPrefix};
+use brk_types::{SigOps, StoredBool, TxIndex, Txid, TxidPrefix};
 use rayon::prelude::*;
 use tracing::error;
 use vecdb::{AnyVec, WritableVec, likely};
@@ -90,10 +90,12 @@ impl<'a> BlockProcessor<'a> {
 
 pub(super) fn store_tx_metadata(
     txs: Vec<ComputedTx>,
+    sigops: Vec<SigOps>,
     store: &mut Store<TxidPrefix, TxIndex>,
     md: &mut TxMetadataVecs<'_>,
 ) -> Result<()> {
-    for ct in txs {
+    debug_assert_eq!(txs.len(), sigops.len());
+    for (ct, sigops) in txs.into_iter().zip(sigops) {
         if ct.prev_tx_index_opt.is_none() {
             store.insert(ct.txid_prefix, ct.tx_index);
         }
@@ -106,6 +108,7 @@ pub(super) fn store_tx_metadata(
             .checked_push(ct.tx_index, ct.base_size.into())?;
         md.total_size
             .checked_push(ct.tx_index, ct.total_size.into())?;
+        md.total_sigop_cost.checked_push(ct.tx_index, sigops)?;
         md.is_explicitly_rbf
             .checked_push(ct.tx_index, StoredBool::from(ct.tx.is_explicitly_rbf()))?;
     }

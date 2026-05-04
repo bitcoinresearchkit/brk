@@ -1,4 +1,5 @@
 mod metadata;
+mod sigops;
 mod tx;
 mod txin;
 mod txout;
@@ -8,7 +9,9 @@ pub use types::*;
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
-use brk_types::{AddrHash, Block, Height, OutPoint, TxInIndex, TxIndex, TxOutIndex, TypeIndex};
+use brk_types::{
+    AddrHash, Block, Height, OutPoint, SigOps, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
+};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{Indexes, Readers, Stores, Vecs};
@@ -39,6 +42,7 @@ impl BlockProcessor<'_> {
         txs: Vec<ComputedTx>,
         txouts: Vec<ProcessedOutput>,
         txins: Vec<(TxInIndex, InputSource)>,
+        sigops: Vec<SigOps>,
         same_block_spent_outpoints: &FxHashSet<OutPoint>,
         already_added: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
         same_block_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
@@ -84,7 +88,7 @@ impl BlockProcessor<'_> {
                     same_block_info,
                 )
             },
-            || tx::store_tx_metadata(txs, txid_prefix_store, &mut tx_metadata),
+            || tx::store_tx_metadata(txs, sigops, txid_prefix_store, &mut tx_metadata),
         );
 
         finalize_result?;

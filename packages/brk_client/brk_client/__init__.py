@@ -4183,6 +4183,7 @@ class SeriesTree_Transactions_Raw:
         self.raw_locktime: SeriesPattern19[RawLockTime] = SeriesPattern19(client, 'raw_locktime')
         self.base_size: SeriesPattern19[StoredU32] = SeriesPattern19(client, 'base_size')
         self.total_size: SeriesPattern19[StoredU32] = SeriesPattern19(client, 'total_size')
+        self.total_sigop_cost: SeriesPattern19[SigOps] = SeriesPattern19(client, 'total_sigop_cost')
         self.is_explicitly_rbf: SeriesPattern19[StoredBool] = SeriesPattern19(client, 'is_explicitly_rbf')
         self.first_txin_index: SeriesPattern19[TxInIndex] = SeriesPattern19(client, 'first_txin_index')
         self.first_txout_index: SeriesPattern19[TxOutIndex] = SeriesPattern19(client, 'first_txout_index')
