@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -18,5 +20,5 @@ pub struct PoolHashrateEntry {
     /// Pool name
     #[serde(rename = "poolName")]
     #[schemars(example = &"Foundry USA")]
-    pub pool_name: String,
+    pub pool_name: Cow<'static, str>,
 }

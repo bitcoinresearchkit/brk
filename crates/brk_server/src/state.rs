@@ -25,6 +25,7 @@ pub struct AppState {
     pub started_at: Timestamp,
     pub started_instant: Instant,
     pub max_weight: usize,
+    pub max_utxos: usize,
 }
 
 impl AppState {

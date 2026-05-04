@@ -1,6 +1,6 @@
 use brk_types::{FeeRate, Sats, VSize};
 
-use super::{Chunk, LocalIdx, Sfl, make_cluster, run};
+use super::{Chunk, make_cluster, run};
 
 fn to_typed(fv: &[(u64, u64)]) -> Vec<(Sats, VSize)> {
     fv.iter()
@@ -29,37 +29,37 @@ fn canonical_chunking(path: &[(Sats, VSize)]) -> Vec<(Sats, VSize)> {
     chunks
 }
 
-fn all_topo_orders(parents: &[Vec<LocalIdx>]) -> Vec<Vec<LocalIdx>> {
+fn all_topo_orders(parents: &[Vec<u32>]) -> Vec<Vec<u32>> {
     let n = parents.len();
     let indegree: Vec<u32> = parents.iter().map(|p| p.len() as u32).collect();
-    let children: Vec<Vec<LocalIdx>> = {
+    let children: Vec<Vec<u32>> = {
         let mut out = vec![Vec::new(); n];
         for (c, ps) in parents.iter().enumerate() {
             for &p in ps {
-                out[p as usize].push(c as LocalIdx);
+                out[p as usize].push(c as u32);
             }
         }
         out
     };
 
     let mut results = Vec::new();
-    let mut current: Vec<LocalIdx> = Vec::new();
+    let mut current: Vec<u32> = Vec::new();
     let mut indeg = indegree.clone();
     walk(&children, &mut indeg, &mut current, n, &mut results);
     return results;
 
     fn walk(
-        children: &[Vec<LocalIdx>],
+        children: &[Vec<u32>],
         indeg: &mut [u32],
-        current: &mut Vec<LocalIdx>,
+        current: &mut Vec<u32>,
         n: usize,
-        out: &mut Vec<Vec<LocalIdx>>,
+        out: &mut Vec<Vec<u32>>,
     ) {
         if current.len() == n {
             out.push(current.clone());
             return;
         }
-        let ready: Vec<LocalIdx> = (0..n as LocalIdx)
+        let ready: Vec<u32> = (0..n as u32)
             .filter(|&i| indeg[i as usize] == 0)
             .collect();
         for v in ready {
@@ -78,10 +78,7 @@ fn all_topo_orders(parents: &[Vec<LocalIdx>]) -> Vec<Vec<LocalIdx>> {
     }
 }
 
-fn oracle_best(
-    fees_vsizes: &[(Sats, VSize)],
-    edges: &[(LocalIdx, LocalIdx)],
-) -> Vec<(Sats, VSize)> {
+fn oracle_best(fees_vsizes: &[(Sats, VSize)], edges: &[(u32, u32)]) -> Vec<(Sats, VSize)> {
     let n = fees_vsizes.len();
     let mut parents = vec![Vec::new(); n];
     for &(p, c) in edges {
@@ -166,10 +163,10 @@ fn chunk_rate(chunks: &[Chunk]) -> Vec<(Sats, VSize)> {
     chunks.iter().map(|c| (c.fee, c.vsize)).collect()
 }
 
-fn assert_matches_oracle(fees_vsizes: &[(u64, u64)], edges: &[(LocalIdx, LocalIdx)]) {
+fn assert_matches_oracle(fees_vsizes: &[(u64, u64)], edges: &[(u32, u32)]) {
     let cluster = make_cluster(fees_vsizes, edges);
     let chunks = run(&cluster);
-    let got = chunk_rate(&chunks);
+    let got = chunk_rate(chunks);
     let want = oracle_best(&to_typed(fees_vsizes), edges);
 
     let got_cum = cumulative(&got);
@@ -265,7 +262,7 @@ impl DagRng {
     }
 }
 
-type FvAndEdges = (Vec<(u64, u64)>, Vec<(LocalIdx, LocalIdx)>);
+type FvAndEdges = (Vec<(u64, u64)>, Vec<(u32, u32)>);
 
 fn random_dag(n: usize, seed: u64) -> FvAndEdges {
     let mut rng = DagRng::new(seed);
@@ -279,15 +276,15 @@ fn random_dag(n: usize, seed: u64) -> FvAndEdges {
     let mut edges = Vec::new();
     for i in 1..n {
         let k = rng.range(4) as usize;
-        let mut picks: Vec<LocalIdx> = Vec::new();
+        let mut picks: Vec<u32> = Vec::new();
         for _ in 0..k {
-            let p = rng.range(i as u64) as LocalIdx;
+            let p = rng.range(i as u64) as u32;
             if !picks.contains(&p) {
                 picks.push(p);
             }
         }
         for p in picks {
-            edges.push((p, i as LocalIdx));
+            edges.push((p, i as u32));
         }
     }
     (fees_vsizes, edges)
@@ -301,7 +298,7 @@ fn assert_optimal_on_random(n: usize, seed: u64) {
     let (fv, edges) = random_dag(n, seed);
     let cluster = make_cluster(&fv, &edges);
     let chunks = run(&cluster);
-    let got = chunk_rate(&chunks);
+    let got = chunk_rate(chunks);
 
     let want = oracle_best(&to_typed(&fv), &edges);
 
@@ -355,7 +352,7 @@ fn optimality_gap_of(got: &[(Sats, VSize)], want: &[(Sats, VSize)]) -> Option<u1
 fn optimality_gap(n: usize, seed: u64) -> Option<u128> {
     let (fv, edges) = random_dag(n, seed);
     let cluster = make_cluster(&fv, &edges);
-    let chunks = Sfl::linearize(&cluster);
+    let chunks = run(&cluster);
     let got: Vec<(Sats, VSize)> = chunks.iter().map(|c| (c.fee, c.vsize)).collect();
     let want = oracle_best(&to_typed(&fv), &edges);
     optimality_gap_of(&got, &want)
@@ -433,7 +430,7 @@ fn perf_linearize() {
         let t = Instant::now();
         let mut sink = 0u64;
         for c in &clusters {
-            for chunk in Sfl::linearize(c) {
+            for chunk in &c.chunks {
                 sink = sink.wrapping_add(u64::from(chunk.fee));
             }
         }

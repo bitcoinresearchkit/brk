@@ -5,7 +5,7 @@ use std::{fs, path::Path, thread, time::Instant};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Height, Version};
 use tracing::info;
 use vecdb::{AnyExportableVec, Exit, Ro, Rw, StorageMode};
 
@@ -477,6 +477,14 @@ impl Computer {
 
         info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
+    }
+}
+
+impl Computer<Ro> {
+    /// Last height whose computed-side state is durably stamped, derived
+    /// from `distribution.supply_state`'s stamp.
+    pub fn computed_height(&self) -> Height {
+        Height::from(self.distribution.supply_state.stamp())
     }
 }
 

@@ -72,7 +72,7 @@ impl Fetcher {
             .iter()
             .filter(|info| !known.contains(&info.txid) && !graveyard.contains(&info.txid))
             .take(MAX_TX_FETCHES_PER_CYCLE)
-            .map(|info| info.txid.clone())
+            .map(|info| info.txid)
             .collect()
     }
 

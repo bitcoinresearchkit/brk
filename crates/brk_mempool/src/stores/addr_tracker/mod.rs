@@ -83,7 +83,7 @@ impl AddrTracker {
         update_stats: impl FnOnce(&mut AddrMempoolStats),
     ) {
         let entry = self.0.entry(bytes).or_default();
-        entry.txids.insert(txid.clone());
+        entry.txids.insert(*txid);
         update_stats(&mut entry.stats);
         entry.stats.update_tx_count(entry.txids.len() as u32);
     }

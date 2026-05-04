@@ -4,13 +4,15 @@ use std::{
     ops::{Deref, Div},
 };
 
+use brk_error::{Error, Result};
 use brk_types::{Height, TimePeriod, Timestamp};
 use vecdb::{ReadableVec, VecValue};
 
 use crate::Query;
 
-/// Mempool.space's `GROUP BY UNIX_TIMESTAMP(blockTimestamp) DIV ${div}` divisor in seconds.
-/// `div = 1` puts each block in its own bucket.
+/// Time-bucket divisor in seconds: blocks are grouped by `timestamp / div`.
+/// `div = 1` puts each block in its own bucket; coarser values down-sample
+/// long windows so the response stays bounded.
 fn time_div(period: TimePeriod) -> u32 {
     match period {
         TimePeriod::Day | TimePeriod::ThreeDays => 1,
@@ -39,7 +41,10 @@ pub struct BlockBucket {
 
 impl BlockBucket {
     /// Float arithmetic mean of `values[offset]` across this bucket's blocks.
-    /// Use for float-backed types like `FeeRate`.
+    /// Use for float-backed types like `FeeRate`. Soundness: `offsets.len() >= 1`
+    /// is guaranteed by `BlockWindow::new` (only non-empty groups become buckets),
+    /// and indexing `values[i]` is in range when `values` was obtained via
+    /// `BlockWindow::read` (which validates `values.len() >= window.len`).
     pub fn mean<T>(&self, values: &[T]) -> T
     where
         T: Copy + Sum + Div<usize, Output = T>,
@@ -47,8 +52,11 @@ impl BlockBucket {
         self.offsets.iter().map(|&i| values[i]).sum::<T>() / self.offsets.len()
     }
 
-    /// Round-half-up arithmetic mean for u64-backed integer types, matching
-    /// mempool.space's `CAST(AVG(...) AS INT)`.
+    /// Round-half-up arithmetic mean for u64-backed integer types: returns
+    /// `T::from((sum + n/2) / n)`. Use when truncating integer division would
+    /// bias rolling averages downward. Soundness: `offsets.len() >= 1` is
+    /// guaranteed by `BlockWindow::new`, and `values[i]` is in range when
+    /// `values` was obtained via `BlockWindow::read`.
     pub fn mean_rounded<T>(&self, values: &[T]) -> T
     where
         T: Copy + Deref<Target = u64> + From<u64>,
@@ -65,11 +73,22 @@ pub struct BlockWindow {
     pub start: Height,
     pub end: Height,
     pub buckets: Vec<BlockBucket>,
+    /// Number of blocks observed in `[start, end)` at construction. Equals
+    /// `timestamps.len()` after the prefetch; may be less than `end - start`
+    /// when the timestamp vec lags under per-vec stamp race. Every value vec
+    /// passed to `read` must yield at least this many elements.
+    pub len: usize,
 }
 
 impl BlockWindow {
-    pub fn new(query: &Query, period: TimePeriod) -> Self {
-        let start = query.start_height(period);
+    /// Build a time-bucketed window over `[start_height(period), tip + 1)`.
+    /// Prefetches `blocks.timestamp` once, groups block indices by
+    /// `ts / div(period)` (chronological), and stores per-bucket offsets
+    /// into the prefetched slice. Downstream metric reads (`BlockWindow::read`)
+    /// reuse the same `[start, end)` so each bucket's offsets index directly
+    /// into the value vec without a second walk.
+    pub fn new(query: &Query, period: TimePeriod) -> Result<Self> {
+        let start = query.start_height(period)?;
         let end = query.height() + 1usize;
         let div = time_div(period);
 
@@ -85,6 +104,8 @@ impl BlockWindow {
             groups.entry(**ts / div).or_default().push(i);
         }
 
+        let len = timestamps.len();
+
         let buckets = groups
             .into_values()
             .map(|offsets| {
@@ -99,19 +120,29 @@ impl BlockWindow {
             })
             .collect();
 
-        Self {
+        Ok(Self {
             start,
             end,
             buckets,
-        }
+            len,
+        })
     }
 
     /// Read a height-keyed vec over this window's `[start, end)` range.
-    pub fn read<V, T>(&self, vec: &V) -> Vec<T>
+    /// Errors if the vec returns fewer elements than the window observed at
+    /// construction (per-vec stamp lag): bucket offsets reach up to `len - 1`
+    /// and would otherwise panic in `BlockBucket::mean(&values)`.
+    pub fn read<V, T>(&self, vec: &V) -> Result<Vec<T>>
     where
         V: ReadableVec<Height, T>,
         T: VecValue,
     {
-        vec.collect_range(self.start, self.end)
+        let values = vec.collect_range(self.start, self.end);
+        if values.len() < self.len {
+            return Err(Error::Internal(
+                "BlockWindow::read: value vec shorter than window (per-vec stamp lag)",
+            ));
+        }
+        Ok(values)
     }
 }

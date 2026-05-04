@@ -70,10 +70,12 @@ impl Reader {
         }
     }
 
+    #[inline]
     pub fn client(&self) -> &Client {
         &self.0.client
     }
 
+    #[inline]
     pub fn blocks_dir(&self) -> &Path {
         &self.0.blocks_dir
     }
@@ -140,9 +142,9 @@ impl Reader {
     ) -> Result<Receiver<Result<ReadBlock>>> {
         let tip = self.0.client.get_last_height()?;
         if end > tip {
-            return Err(Error::OutOfRange(format!(
-                "range end {end} is past current tip {tip}"
-            )));
+            return Err(Error::OutOfRange(
+                format!("range end {end} is past current tip {tip}").into(),
+            ));
         }
         let canonical = CanonicalRange::between(&self.0.client, start, end)?;
         pipeline::spawn(self.0.clone(), canonical, parser_threads)

@@ -142,7 +142,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | {
                 let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr, 1000)).await
+                let max_utxos = state.max_utxos;
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr, max_utxos)).await
             }, |op| op
                 .id("get_address_utxos")
                 .addrs_tag()

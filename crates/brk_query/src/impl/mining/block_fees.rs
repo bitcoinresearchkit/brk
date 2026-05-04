@@ -5,10 +5,15 @@ use super::block_window::BlockWindow;
 use crate::Query;
 
 impl Query {
+    /// Time-bucketed average block fees over `time_period`. One entry per
+    /// bucket, ordered chronologically. Each entry carries the bucket's
+    /// average height/timestamp, the round-half-up mean of block fees in
+    /// sats, and the bucket-mean USD spot price (the spot price, not
+    /// fees-in-USD: clients multiply).
     pub fn block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
-        let bw = BlockWindow::new(self, time_period);
-        let fees: Vec<Sats> = bw.read(&self.computer().mining.rewards.fees.block.sats);
-        let prices: Vec<Cents> = bw.read(&self.computer().prices.spot.cents.height);
+        let bw = BlockWindow::new(self, time_period)?;
+        let fees: Vec<Sats> = bw.read(&self.computer().mining.rewards.fees.block.sats)?;
+        let prices: Vec<Cents> = bw.read(&self.computer().prices.spot.cents.height)?;
 
         Ok(bw
             .buckets

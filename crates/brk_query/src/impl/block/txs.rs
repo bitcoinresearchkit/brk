@@ -3,22 +3,34 @@ use std::io::Cursor;
 use bitcoin::consensus::Decodable;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlkPosition, BlockHash, Height, OutPoint, OutputType, RawLockTime, Sats, StoredU32,
-    Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout, Weight,
+    BlkPosition, BlockHash, BlockTxIndex, Height, OutPoint, OutputType, RawLockTime, Sats, SigOps,
+    StoredU32, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout,
+    Weight,
 };
 use rustc_hash::FxHashMap;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
-use super::BLOCK_TXS_PAGE_SIZE;
 use crate::Query;
 
 impl Query {
+    /// All txids in the block, canonical order (coinbase first).
+    /// `NotFound` if the hash is unknown (or only collides on the 8-byte
+    /// prefix), `OutOfRange` if the resolved height is past the indexed tip.
+    /// Unpaginated by design.
     pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
         let height = self.height_by_hash(hash)?;
         self.block_txids_by_height(height)
     }
 
-    pub fn block_txs(&self, hash: &BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
+    /// Up to `count` transactions from the block, starting at the in-block
+    /// offset `start_index` (0 = coinbase). `OutOfRange` when `start_index`
+    /// is past the last tx in the block. Caller (route layer) sets `count`.
+    pub fn block_txs(
+        &self,
+        hash: &BlockHash,
+        start_index: BlockTxIndex,
+        count: u32,
+    ) -> Result<Vec<Transaction>> {
         let height = self.height_by_hash(hash)?;
         let (first, tx_count) = self.block_tx_range(height)?;
         let start: usize = start_index.into();
@@ -27,51 +39,77 @@ impl Query {
                 "start index past last transaction in block".into(),
             ));
         }
-        let count = BLOCK_TXS_PAGE_SIZE.min(tx_count - start);
+        let count = (count as usize).min(tx_count - start);
         let indices: Vec<TxIndex> = (first + start..first + start + count)
             .map(TxIndex::from)
             .collect();
         self.transactions_by_indices(&indices)
     }
 
-    pub fn block_txid_at_index(&self, hash: &BlockHash, index: TxIndex) -> Result<Txid> {
+    /// Txid at an in-block offset (`index` is the position within the block,
+    /// 0 = coinbase). `NotFound` if the hash is unknown or only collides on
+    /// the 8-byte prefix; `OutOfRange` if `index` is past the last tx in
+    /// the block.
+    pub fn block_txid_at_index(&self, hash: &BlockHash, index: BlockTxIndex) -> Result<Txid> {
         let height = self.height_by_hash(hash)?;
         self.block_txid_at_index_by_height(height, index.into())
     }
 
     // === Helper methods ===
 
+    /// All txids in the block at `height`, canonical order. `OutOfRange`
+    /// when `height` is past the indexed tip; `Internal` if any read hits
+    /// the stamp-before-data race or short-returns. Used by both the
+    /// hash-keyed and height-keyed entry points so they share bounds
+    /// semantics.
     pub(crate) fn block_txids_by_height(&self, height: Height) -> Result<Vec<Txid>> {
         let (first, tx_count) = self.block_tx_range(height)?;
-        Ok(self
+        let txids = self
             .indexer()
             .vecs
             .transactions
             .txid
-            .collect_range_at(first, first + tx_count))
+            .collect_range_at(first, first + tx_count);
+        if txids.len() != tx_count {
+            return Err(Error::Internal(
+                "block_txids_by_height: short txid read",
+            ));
+        }
+        Ok(txids)
     }
 
+    /// Single txid at an in-block offset. `OutOfRange` when `index` is past
+    /// the last tx in the block. `Internal` if the underlying read finds
+    /// the stamp-before-data race (`first_tx_index` flushed ahead of `txid`).
     fn block_txid_at_index_by_height(&self, height: Height, index: usize) -> Result<Txid> {
         let (first, tx_count) = self.block_tx_range(height)?;
         if index >= tx_count {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
-        Ok(self
-            .indexer()
+        self.indexer()
             .vecs
             .transactions
             .txid
             .reader()
-            .get(first + index))
+            .try_get(first + index)
+            .ok_or(Error::Internal(
+                "block_txid_at_index_by_height: txid index past data",
+            ))
     }
 
     /// Batch-read transactions at arbitrary indices.
     /// Reads in ascending index order for I/O locality, returns in caller's order.
     ///
-    /// Three-phase approach for optimal I/O:
-    ///   Phase 1 — Decode transactions & collect outpoints (sorted by tx_index)
-    ///   Phase 2 — Batch-read all prevout data (sorted by prev_tx_index, then txout_index)
-    ///   Phase 3 — Assemble Transaction objects from pre-fetched data
+    /// Three-phase approach for sequential cursor I/O:
+    ///   Phase 1: decode transactions, collect outpoints + per-input prevout
+    ///            metadata (sorted by tx_index).
+    ///   Phase 2: resolve each prevout's script_pubkey (sorted by
+    ///            output_type, then type_index, for sequential addr-vec reads).
+    ///   Phase 3: assemble `Transaction` objects, compute sigops + fees.
+    ///
+    /// The final `unwrap` is provably safe: `order` is a permutation of
+    /// `0..len`, Phase 1 produces exactly one `DecodedTx` per position, and
+    /// Phase 3 assigns each `txs[pos]` once before the collect.
     pub fn transactions_by_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
         if indices.is_empty() {
             return Ok(Vec::new());
@@ -84,6 +122,7 @@ impl Query {
         order.sort_unstable_by_key(|&i| indices[i]);
 
         let indexer = self.indexer();
+        // BLK file reader, distinct from the vec cursors below.
         let reader = self.reader();
 
         // ── Phase 1: Decode all transactions, collect outpoints ─────────
@@ -147,8 +186,8 @@ impl Query {
             });
         }
 
-        // Phase 1b: Batch-read outpoints + prevout data via cursors (PcoVec —
-        // sequential cursor avoids re-decompressing the same pages).
+        // Phase 1b: Batch-read outpoints + prevout data via cursors. PcoVec
+        // sequential cursors avoid re-decompressing the same pages.
         // Reading output_type/type_index/value HERE from inputs vecs (sequential)
         // avoids random-reading them from outputs vecs in Phase 2.
         let mut outpoint_cursor = indexer.vecs.inputs.outpoint.cursor();
@@ -247,7 +286,7 @@ impl Query {
                 .map(|(j, txin)| (txin.previous_output, j))
                 .collect();
 
-            let total_sigop_cost = dtx.decoded.total_sigop_cost(|outpoint| {
+            let total_sigop_cost = SigOps::of_bitcoin_tx(&dtx.decoded, |outpoint| {
                 outpoint_to_idx
                     .get(outpoint)
                     .and_then(|&j| input[j].prevout.as_ref())
@@ -280,7 +319,15 @@ impl Query {
         Ok(txs.into_iter().map(Option::unwrap).collect())
     }
 
-    /// Returns (first_tx_raw_index, tx_count) for a block at `height`.
+    /// Half-open `[first, first + tx_count)` window into the flat tx vecs
+    /// for the block at `height`. Single source of truth for the four
+    /// `block_*` callers in this file.
+    ///
+    /// `OutOfRange` when `height` is past the indexed-tip stamp.
+    /// `Internal` when `first_tx_index[height]` is missing under the
+    /// stamp-before-data race. For the tip block (where
+    /// `first_tx_index[height+1]` is not yet written), `next` falls back
+    /// to `txid.len()`.
     fn block_tx_range(&self, height: Height) -> Result<(usize, usize)> {
         let indexer = self.indexer();
         if height > self.indexed_height() {

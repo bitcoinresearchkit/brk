@@ -7,7 +7,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use vecdb::{Bytes, Formattable};
 
 /// Transaction ID (hash)
-#[derive(Debug, Deref, Clone, PartialEq, Eq, JsonSchema, Bytes, Hash)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, JsonSchema, Bytes, Hash)]
 #[schemars(
     example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
     example = "2bb85f4b004be6da54f766c17c1e855187327112c231ef2ff35ebad0ea67c69e",
@@ -20,6 +20,14 @@ pub struct Txid([u8; 32]);
 impl Txid {
     /// Coinbase transaction "txid" - all zeros (used for coinbase inputs)
     pub const COINBASE: Self = Self([0u8; 32]);
+
+    /// Reinterpret a slice of `Txid`s as a slice of `bitcoin::Txid`s.
+    /// Both are `#[repr(C)]` newtypes over `[u8; 32]` with identical
+    /// layout, so this is a zero-cost view (no allocation, no copy).
+    #[inline]
+    pub fn as_bitcoin_slice(slice: &[Txid]) -> &[bitcoin::Txid] {
+        unsafe { &*(slice as *const [Txid] as *const [bitcoin::Txid]) }
+    }
 }
 
 impl From<bitcoin::Txid> for Txid {

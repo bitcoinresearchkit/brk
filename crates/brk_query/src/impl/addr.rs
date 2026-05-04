@@ -13,9 +13,7 @@ use crate::Query;
 
 impl Query {
     pub fn addr(&self, addr: Addr) -> Result<AddrStats> {
-        let indexer = self.indexer();
         let computer = self.computer();
-        let stores = &indexer.stores;
 
         let script = if let Ok(addr) = bitcoin::Address::from_str(&addr) {
             if !addr.is_valid_for_network(Network::Bitcoin) {
@@ -34,13 +32,7 @@ impl Query {
             return Err(Error::InvalidAddr);
         };
         let hash = AddrHash::from(&bytes);
-
-        let Some(store) = stores.addr_type_to_addr_hash_to_addr_index.get(output_type) else {
-            return Err(Error::InvalidAddr);
-        };
-        let Some(type_index) = store.get(&hash)?.map(|cow| cow.into_owned()) else {
-            return Err(Error::UnknownAddr);
-        };
+        let type_index = self.type_index_for(output_type, &hash)?;
 
         let any_addr_index = computer
             .distribution
@@ -158,9 +150,8 @@ impl Query {
                 .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
                 .collect())
         } else {
-            let prefix = u32::from(type_index).to_be_bytes();
             Ok(store
-                .prefix(prefix)
+                .prefix(type_index)
                 .rev()
                 .take(limit)
                 .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
@@ -180,10 +171,8 @@ impl Query {
             .get(output_type)
             .data()?;
 
-        let prefix = u32::from(type_index).to_be_bytes();
-
         let outpoints: Vec<(TxIndex, Vout)> = store
-            .prefix(prefix)
+            .prefix(type_index)
             .map(|(key, _): (AddrIndexOutPoint, Unit)| (key.tx_index(), key.vout()))
             .take(max_utxos + 1)
             .collect();
@@ -268,9 +257,8 @@ impl Query {
             .addr_type_to_addr_index_and_tx_index
             .get(output_type)
             .data()?;
-        let prefix = u32::from(type_index).to_be_bytes();
         let last_tx_index = store
-            .prefix(prefix)
+            .prefix(type_index)
             .next_back()
             .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
             .ok_or(Error::UnknownAddr)?;
@@ -278,22 +266,23 @@ impl Query {
     }
 
     fn resolve_addr(&self, addr: &Addr) -> Result<(OutputType, TypeIndex)> {
-        let stores = &self.indexer().stores;
-
         let bytes = AddrBytes::from_str(addr)?;
         let output_type = OutputType::from(&bytes);
         let hash = AddrHash::from(&bytes);
+        let type_index = self.type_index_for(output_type, &hash)?;
+        Ok((output_type, type_index))
+    }
 
-        let Some(type_index) = stores
+    /// Lookup the per-type index of an address by `(output_type, hash)`.
+    /// Returns `UnknownAddr` if the hash is absent from the type's index.
+    fn type_index_for(&self, output_type: OutputType, hash: &AddrHash) -> Result<TypeIndex> {
+        self.indexer()
+            .stores
             .addr_type_to_addr_hash_to_addr_index
             .get(output_type)
             .data()?
-            .get(&hash)?
+            .get(hash)?
             .map(|cow| cow.into_owned())
-        else {
-            return Err(Error::UnknownAddr);
-        };
-
-        Ok((output_type, type_index))
+            .ok_or(Error::UnknownAddr)
     }
 }

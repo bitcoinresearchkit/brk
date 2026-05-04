@@ -7,12 +7,18 @@ use super::block_window::BlockWindow;
 use crate::Query;
 
 impl Query {
+    /// Time-bucketed average block size and weight over `time_period`. Returns
+    /// two parallel vecs (one entry per bucket, ordered chronologically): byte
+    /// size in `sizes`, weight units in `weights`. Each entry carries the
+    /// bucket's average height/timestamp and the round-half-up mean of the
+    /// corresponding metric. Single bucket-pass: built via `.map(...).unzip()`
+    /// to avoid re-walking buckets.
     pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
         let blocks = &self.indexer().vecs.blocks;
-        let bw = BlockWindow::new(self, time_period);
+        let bw = BlockWindow::new(self, time_period)?;
 
-        let block_sizes: Vec<StoredU64> = bw.read(&blocks.total);
-        let block_weights: Vec<Weight> = bw.read(&blocks.weight);
+        let block_sizes: Vec<StoredU64> = bw.read(&blocks.total)?;
+        let block_weights: Vec<Weight> = bw.read(&blocks.weight)?;
 
         let (sizes, weights) = bw
             .buckets

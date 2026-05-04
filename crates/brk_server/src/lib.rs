@@ -50,7 +50,7 @@ pub use brk_types::Port;
 pub use brk_website::Website;
 pub use cache::CdnCacheMode;
 use cache::{CacheParams, CacheStrategy};
-pub use config::{DEFAULT_MAX_WEIGHT, ServerConfig};
+pub use config::{DEFAULT_MAX_UTXOS, DEFAULT_MAX_WEIGHT, ServerConfig};
 pub use error::{Error, Result};
 use state::*;
 
@@ -84,6 +84,7 @@ impl Server {
             started_at: jiff::Timestamp::now(),
             started_instant: Instant::now(),
             max_weight: config.max_weight,
+            max_utxos: config.max_utxos,
         })
     }
 

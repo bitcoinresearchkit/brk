@@ -90,7 +90,7 @@ impl Resolver {
                         Some((Vin::from(i), out.clone()))
                     })
                     .collect();
-                (!fills.is_empty()).then_some((txid.clone(), fills))
+                (!fills.is_empty()).then_some((*txid, fills))
             })
             .collect()
     }
@@ -108,9 +108,9 @@ impl Resolver {
                     .iter()
                     .enumerate()
                     .filter(|(_, txin)| txin.prevout.is_none())
-                    .map(|(i, txin)| (Vin::from(i), txin.txid.clone(), txin.vout))
+                    .map(|(i, txin)| (Vin::from(i), txin.txid, txin.vout))
                     .collect();
-                (!holes.is_empty()).then_some((txid.clone(), holes))
+                (!holes.is_empty()).then_some((*txid, holes))
             })
             .collect()
     }

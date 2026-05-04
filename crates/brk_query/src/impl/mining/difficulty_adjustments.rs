@@ -6,21 +6,23 @@ use super::epochs::iter_difficulty_epochs;
 use crate::Query;
 
 impl Query {
+    /// All difficulty adjustments (one entry per retarget) whose first block
+    /// lies within `time_period`, in reverse chronological order (newest
+    /// first). `None` walks every epoch from genesis. The window cutoff is
+    /// wall-clock (via `start_height`) rather than block-count, so the
+    /// returned set is "epochs whose first block lies within the period",
+    /// not "the last N epochs".
     pub fn difficulty_adjustments(
         &self,
         time_period: Option<TimePeriod>,
     ) -> Result<Vec<DifficultyAdjustmentEntry>> {
         let end = self.height().to_usize();
-        // Match mempool.space's wall-clock `time > NOW() - INTERVAL ${period}` cutoff
-        // by walking back through real block timestamps, not estimating via block count.
         let start = match time_period {
-            Some(tp) => self.start_height(tp).to_usize(),
+            Some(tp) => self.start_height(tp)?.to_usize(),
             None => 0,
         };
 
-        let mut entries = iter_difficulty_epochs(self.computer(), start, end);
-
-        // Return in reverse chronological order (newest first)
+        let mut entries = iter_difficulty_epochs(self.computer(), start, end)?;
         entries.reverse();
         Ok(entries)
     }

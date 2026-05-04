@@ -10,7 +10,7 @@
 use std::mem;
 
 use brk_rpc::RawTx;
-use brk_types::{MempoolEntryInfo, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
+use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 use rustc_hash::FxHashMap;
 
 use crate::{TxTombstone, stores::TxStore};
@@ -52,10 +52,10 @@ impl TxAddition {
             .collect();
         let mut tx = Transaction {
             index: None,
-            txid: info.txid.clone(),
+            txid: info.txid,
             version: raw.tx.version.into(),
-            total_sigop_cost: 0,
-            weight: info.weight.into(),
+            total_sigop_cost: SigOps::ZERO,
+            weight: info.weight,
             lock_time: raw.tx.lock_time.into(),
             total_size,
             fee: info.fee,

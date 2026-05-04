@@ -45,7 +45,7 @@ impl TxRemoval {
     fn find_removal(tx: &Transaction, spent_by: &SpentBy) -> Self {
         tx.input
             .iter()
-            .find_map(|i| spent_by.get(&(i.txid.clone(), i.vout)).cloned())
+            .find_map(|i| spent_by.get(&(i.txid, i.vout)).cloned())
             .map_or(Self::Vanished, |by| Self::Replaced { by })
     }
 
@@ -56,7 +56,7 @@ impl TxRemoval {
         for addition in added {
             if let TxAddition::Fresh { tx, .. } = addition {
                 for txin in &tx.input {
-                    spent_by.insert((txin.txid.clone(), txin.vout), tx.txid.clone());
+                    spent_by.insert((txin.txid, txin.vout), tx.txid);
                 }
             }
         }

@@ -1,13 +1,14 @@
 use brk_types::{Sats, VSize};
 
 use super::{Chunk, chunk_shapes, make_cluster, run};
+use crate::cluster::LocalIdx;
 
 #[test]
 fn singleton() {
     let cluster = make_cluster(&[(100, 10)], &[]);
     let chunks = run(&cluster);
     assert_eq!(chunks.len(), 1);
-    assert_eq!(chunks[0].nodes.len(), 1);
+    assert_eq!(chunks[0].txs.len(), 1);
     assert_eq!(chunks[0].fee, Sats::from(100u64));
     assert_eq!(chunks[0].vsize, VSize::from(10u64));
 }
@@ -17,9 +18,9 @@ fn two_chain_parent_richer() {
     let cluster = make_cluster(&[(100, 10), (1, 1)], &[(0, 1)]);
     let chunks = run(&cluster);
     assert_eq!(chunks.len(), 2);
-    assert!(chunks[0].nodes.contains(&0));
+    assert!(chunks[0].txs.contains(&LocalIdx::from(0u32)));
     assert_eq!(chunks[0].vsize, VSize::from(10u64));
-    assert!(chunks[1].nodes.contains(&1));
+    assert!(chunks[1].txs.contains(&LocalIdx::from(1u32)));
     assert_eq!(chunks[1].vsize, VSize::from(1u64));
 }
 
@@ -28,7 +29,7 @@ fn two_chain_child_pays_parent_cpfp() {
     let cluster = make_cluster(&[(1, 10), (100, 1)], &[(0, 1)]);
     let chunks = run(&cluster);
     assert_eq!(chunks.len(), 1);
-    assert_eq!(chunks[0].nodes.len(), 2);
+    assert_eq!(chunks[0].txs.len(), 2);
     assert_eq!(chunks[0].fee, Sats::from(101u64));
     assert_eq!(chunks[0].vsize, VSize::from(11u64));
 }
@@ -38,7 +39,7 @@ fn v_shape_two_parents_one_child() {
     let cluster = make_cluster(&[(1, 1), (1, 1), (100, 1)], &[(0, 2), (1, 2)]);
     let chunks = run(&cluster);
     assert_eq!(chunks.len(), 1);
-    assert_eq!(chunks[0].nodes.len(), 3);
+    assert_eq!(chunks[0].txs.len(), 3);
     assert_eq!(chunks[0].fee, Sats::from(102u64));
     assert_eq!(chunks[0].vsize, VSize::from(3u64));
 }
@@ -60,7 +61,7 @@ fn diamond() {
     );
     let chunks = run(&cluster);
     assert_eq!(chunks.len(), 1);
-    assert_eq!(chunks[0].nodes.len(), 4);
+    assert_eq!(chunks[0].txs.len(), 4);
     assert_eq!(chunks[0].fee, Sats::from(103u64));
     assert_eq!(chunks[0].vsize, VSize::from(4u64));
 }
@@ -72,9 +73,9 @@ fn chain_alternating_high_low() {
         &[(0, 1), (1, 2), (2, 3)],
     );
     let chunks = run(&cluster);
-    assert_eq!(chunks_total_fee(&chunks), Sats::from(22u64));
-    assert_eq!(chunks_total_vsize(&chunks), VSize::from(4u64));
-    assert_non_increasing(&chunks);
+    assert_eq!(chunks_total_fee(chunks), Sats::from(22u64));
+    assert_eq!(chunks_total_vsize(chunks), VSize::from(4u64));
+    assert_non_increasing(chunks);
 }
 
 #[test]
@@ -84,9 +85,9 @@ fn chain_starts_low_ends_high() {
         &[(0, 1), (1, 2), (2, 3)],
     );
     let chunks = run(&cluster);
-    assert_eq!(chunks_total_fee(&chunks), Sats::from(202u64));
-    assert_eq!(chunks_total_vsize(&chunks), VSize::from(4u64));
-    assert_non_increasing(&chunks);
+    assert_eq!(chunks_total_fee(chunks), Sats::from(202u64));
+    assert_eq!(chunks_total_vsize(chunks), VSize::from(4u64));
+    assert_non_increasing(chunks);
 }
 
 #[test]
@@ -96,13 +97,13 @@ fn two_disconnected_clusters_would_each_be_separate() {
         &[(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)],
     );
     let chunks = run(&cluster);
-    assert_eq!(chunks_total_fee(&chunks), Sats::from(151u64));
-    assert_eq!(chunks_total_vsize(&chunks), VSize::from(6u64));
-    assert_non_increasing(&chunks);
+    assert_eq!(chunks_total_fee(chunks), Sats::from(151u64));
+    assert_eq!(chunks_total_vsize(chunks), VSize::from(6u64));
+    assert_non_increasing(chunks);
     let mut seen: Vec<usize> = Vec::new();
-    for ch in &chunks {
-        for &n in &ch.nodes {
-            seen.push(n as usize);
+    for ch in chunks {
+        for &local in &ch.txs {
+            seen.push(local.as_usize());
         }
     }
     seen.sort_unstable();
@@ -127,9 +128,42 @@ fn shapes_are_stable_on_identical_input() {
         &[(1, 1), (100, 1), (1, 1), (100, 1)],
         &[(0, 1), (1, 2), (2, 3)],
     );
-    let a = chunk_shapes(&run(&cluster));
-    let b = chunk_shapes(&run(&cluster));
+    let a = chunk_shapes(run(&cluster));
+    let b = chunk_shapes(run(&cluster));
     assert_eq!(a, b);
+}
+
+#[test]
+fn singleton_zero_fee() {
+    let cluster = make_cluster(&[(0, 10)], &[]);
+    let chunks = run(&cluster);
+    assert_eq!(chunks.len(), 1);
+    assert_eq!(chunks[0].txs.len(), 1);
+    assert_eq!(chunks[0].fee, Sats::from(0u64));
+}
+
+#[test]
+fn zero_fee_leftover_after_paying_chunk() {
+    let cluster = make_cluster(&[(0, 1), (10, 1), (0, 1)], &[(0, 1), (1, 2)]);
+    let chunks = run(&cluster);
+    assert_eq!(chunks_total_vsize(chunks), VSize::from(3u64));
+    assert_eq!(chunks_total_fee(chunks), Sats::from(10u64));
+    let mut seen: Vec<usize> = Vec::new();
+    for ch in chunks {
+        for &local in &ch.txs {
+            seen.push(local.as_usize());
+        }
+    }
+    seen.sort_unstable();
+    assert_eq!(seen, vec![0, 1, 2]);
+}
+
+#[test]
+fn all_zero_fee_chain() {
+    let cluster = make_cluster(&[(0, 1), (0, 1), (0, 1)], &[(0, 1), (1, 2)]);
+    let chunks = run(&cluster);
+    assert_eq!(chunks_total_vsize(chunks), VSize::from(3u64));
+    assert_eq!(chunks_total_fee(chunks), Sats::from(0u64));
 }
 
 fn chunks_total_fee(chunks: &[Chunk]) -> Sats {

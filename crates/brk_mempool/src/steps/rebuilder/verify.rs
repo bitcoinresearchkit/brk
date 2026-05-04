@@ -3,8 +3,9 @@ use brk_types::{Sats, SatsSigned, TxidPrefix, VSize};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::{debug, warn};
 
-use super::linearize::Package;
-use crate::{TxEntry, stores::TxIndex};
+use crate::TxEntry;
+use crate::cluster::{Cluster, ClusterRef};
+use crate::stores::TxIndex;
 
 type PrefixSet = FxHashSet<TxidPrefix>;
 type FeeByPrefix = FxHashMap<TxidPrefix, Sats>;
@@ -12,12 +13,23 @@ type FeeByPrefix = FxHashMap<TxidPrefix, Sats>;
 pub struct Verifier;
 
 impl Verifier {
-    pub fn check(client: &Client, blocks: &[Vec<Package>], entries: &[Option<TxEntry>]) {
-        Self::check_structure(blocks, entries);
+    pub fn check(
+        client: &Client,
+        blocks: &[Vec<TxIndex>],
+        clusters: &[Cluster<TxIndex>],
+        cluster_of: &[Option<ClusterRef>],
+        entries: &[Option<TxEntry>],
+    ) {
+        Self::check_structure(blocks, clusters, cluster_of, entries);
         Self::compare_to_core(client, blocks, entries);
     }
 
-    fn check_structure(blocks: &[Vec<Package>], entries: &[Option<TxEntry>]) {
+    fn check_structure(
+        blocks: &[Vec<TxIndex>],
+        clusters: &[Cluster<TxIndex>],
+        cluster_of: &[Option<ClusterRef>],
+        entries: &[Option<TxEntry>],
+    ) {
         let in_pool: PrefixSet = entries
             .iter()
             .filter_map(|e| e.as_ref().map(TxEntry::txid_prefix))
@@ -25,30 +37,35 @@ impl Verifier {
         let mut placed = PrefixSet::default();
 
         for (b, block) in blocks.iter().enumerate() {
-            for (p, pkg) in block.iter().enumerate() {
-                let mut summed_vsize = VSize::default();
-                for &tx_index in &pkg.txs {
-                    let entry = Self::live_entry(entries, tx_index, b, p);
-                    Self::assert_parents_placed_first(entry, &in_pool, &placed, b, p);
-                    Self::place(entry, &mut placed, b, p);
-                    summed_vsize += entry.vsize;
-                }
-                assert_eq!(
-                    pkg.vsize, summed_vsize,
-                    "block {b} pkg {p}: pkg.vsize {} != sum {summed_vsize}",
-                    pkg.vsize
-                );
+            let mut block_vsize = VSize::default();
+            for &tx_index in block {
+                let entry = Self::live_entry(entries, tx_index, b);
+                Self::assert_parents_placed_first(entry, &in_pool, &placed, b);
+                Self::place(entry, &mut placed, b);
+                Self::assert_in_a_chunk(clusters, cluster_of, tx_index, b);
+                block_vsize += entry.vsize;
             }
             if b + 1 < blocks.len() {
-                Self::assert_block_fits_budget(block, b);
+                Self::assert_block_fits_budget(block_vsize, block.len(), b);
             }
         }
     }
 
-    fn live_entry(entries: &[Option<TxEntry>], tx_index: TxIndex, b: usize, p: usize) -> &TxEntry {
+    fn assert_in_a_chunk(
+        clusters: &[Cluster<TxIndex>],
+        cluster_of: &[Option<ClusterRef>],
+        tx_index: TxIndex,
+        b: usize,
+    ) {
+        let cref = cluster_of[tx_index.as_usize()]
+            .unwrap_or_else(|| panic!("block {b}: tx_index {tx_index:?} has no cluster"));
+        let _ = clusters[cref.cluster_id.as_usize()].chunk_of(cref.local);
+    }
+
+    fn live_entry(entries: &[Option<TxEntry>], tx_index: TxIndex, b: usize) -> &TxEntry {
         entries[tx_index.as_usize()]
             .as_ref()
-            .unwrap_or_else(|| panic!("block {b} pkg {p}: dead tx_index {tx_index:?}"))
+            .unwrap_or_else(|| panic!("block {b}: dead tx_index {tx_index:?}"))
     }
 
     fn assert_parents_placed_first(
@@ -56,28 +73,26 @@ impl Verifier {
         in_pool: &PrefixSet,
         placed: &PrefixSet,
         b: usize,
-        p: usize,
     ) {
         for parent in &entry.depends {
             assert!(
                 !in_pool.contains(parent) || placed.contains(parent),
-                "block {b} pkg {p}: {} placed before its parent",
+                "block {b}: {} placed before its parent",
                 entry.txid,
             );
         }
     }
 
-    fn place(entry: &TxEntry, placed: &mut PrefixSet, b: usize, p: usize) {
+    fn place(entry: &TxEntry, placed: &mut PrefixSet, b: usize) {
         assert!(
             placed.insert(entry.txid_prefix()),
-            "block {b} pkg {p}: duplicate txid {}",
+            "block {b}: duplicate txid {}",
             entry.txid
         );
     }
 
-    fn assert_block_fits_budget(block: &[Package], b: usize) {
-        let total: VSize = block.iter().map(|pkg| pkg.vsize).sum();
-        let is_oversized_singleton = block.len() == 1 && total > VSize::MAX_BLOCK;
+    fn assert_block_fits_budget(total: VSize, tx_count: usize, b: usize) {
+        let is_oversized_singleton = tx_count == 1 && total > VSize::MAX_BLOCK;
         if is_oversized_singleton {
             return;
         }
@@ -88,7 +103,7 @@ impl Verifier {
         );
     }
 
-    fn compare_to_core(client: &Client, blocks: &[Vec<Package>], entries: &[Option<TxEntry>]) {
+    fn compare_to_core(client: &Client, blocks: &[Vec<TxIndex>], entries: &[Option<TxEntry>]) {
         let Some(next_block) = blocks.first() else {
             return;
         };
@@ -104,7 +119,6 @@ impl Verifier {
         };
         let ours: FeeByPrefix = next_block
             .iter()
-            .flat_map(|pkg| &pkg.txs)
             .filter_map(|&i| entries[i.as_usize()].as_ref())
             .map(|e| (e.txid_prefix(), e.fee))
             .collect();

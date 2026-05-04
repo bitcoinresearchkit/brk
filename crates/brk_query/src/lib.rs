@@ -20,7 +20,7 @@ mod r#impl;
 
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-pub use r#impl::{BLOCK_TXS_PAGE_SIZE, ResolvedQuery};
+pub use r#impl::ResolvedQuery;
 pub use vecs::Vecs;
 
 #[derive(Clone)]
@@ -59,12 +59,12 @@ impl Query {
 
     /// Current indexed height
     pub fn indexed_height(&self) -> Height {
-        Height::from(self.indexer().vecs.blocks.blockhash.inner.stamp())
+        self.indexer().indexed_height()
     }
 
     /// Current computed height (series)
     pub fn computed_height(&self) -> Height {
-        Height::from(self.computer().distribution.supply_state.stamp())
+        self.computer().computed_height()
     }
 
     /// Minimum of indexed and computed heights

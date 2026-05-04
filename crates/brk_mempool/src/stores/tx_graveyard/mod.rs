@@ -27,6 +27,14 @@ impl TxGraveyard {
         self.tombstones.contains_key(txid)
     }
 
+    pub fn tombstones_len(&self) -> usize {
+        self.tombstones.len()
+    }
+
+    pub fn order_len(&self) -> usize {
+        self.order.len()
+    }
+
     pub fn get(&self, txid: &Txid) -> Option<&TxTombstone> {
         self.tombstones.get(txid)
     }
@@ -63,7 +71,7 @@ impl TxGraveyard {
     pub fn bury(&mut self, txid: Txid, tx: Transaction, entry: TxEntry, removal: TxRemoval) {
         let now = Instant::now();
         self.tombstones
-            .insert(txid.clone(), TxTombstone::new(tx, entry, removal, now));
+            .insert(txid, TxTombstone::new(tx, entry, removal, now));
         self.order.push_back((now, txid));
     }
 

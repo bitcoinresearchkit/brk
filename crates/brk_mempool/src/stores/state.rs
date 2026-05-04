@@ -14,7 +14,7 @@ pub struct MempoolState {
     pub(crate) txs: RwLock<TxStore>,
     pub(crate) addrs: RwLock<AddrTracker>,
     pub(crate) entries: RwLock<EntryPool>,
-    pub(crate) outpoint_spends: RwLock<OutpointSpends>,
+    pub outpoint_spends: RwLock<OutpointSpends>,
     pub(crate) graveyard: RwLock<TxGraveyard>,
 }
 

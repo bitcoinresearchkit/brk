@@ -57,7 +57,7 @@ fn main() -> Result<()> {
 
         let mut first: Option<RunStats> = None;
         for &p in PARSER_COUNTS {
-            let stats = bench(REPEATS, || reader.after_with(anchor.clone(), p))?;
+            let stats = bench(REPEATS, || reader.after_with(anchor, p))?;
             print_row(n, p, &stats);
             if let Some(baseline) = &first {
                 sanity_check(n, baseline, &stats);

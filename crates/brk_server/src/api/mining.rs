@@ -15,6 +15,9 @@ use crate::{
     params::{BlockCountParam, Empty, PoolSlugAndHeightParam, PoolSlugParam, TimePeriodParam},
 };
 
+const HASHRATE_MAX_POINTS: usize = 200;
+const POOL_BLOCKS_LIMIT: usize = 100;
+
 pub trait MiningRoutes {
     fn add_mining_routes(self) -> Self;
 }
@@ -132,7 +135,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pool/{slug}/blocks",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.pool_blocks(path.slug, None)).await
+                    state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.pool_blocks(path.slug, None, POOL_BLOCKS_LIMIT)).await
                 },
                 |op| {
                     op.id("get_pool_blocks")
@@ -150,7 +153,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pool/{slug}/blocks/{height}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(PoolSlugAndHeightParam {slug, height}): Path<PoolSlugAndHeightParam>, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, state.height_strategy(Version::ONE, height), &uri, move |q| q.pool_blocks(slug, Some(height))).await
+                    state.respond_json(&headers, state.height_strategy(Version::ONE, height), &uri, move |q| q.pool_blocks(slug, Some(height), POOL_BLOCKS_LIMIT)).await
                 },
                 |op| {
                     op.id("get_pool_blocks_from")
@@ -168,7 +171,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/hashrate",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, CacheStrategy::Tip, &uri, |q| q.hashrate(None)).await
+                    state.respond_json(&headers, CacheStrategy::Tip, &uri, |q| q.hashrate(None, HASHRATE_MAX_POINTS)).await
                 },
                 |op| {
                     op.id("get_hashrate")
@@ -185,7 +188,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/hashrate/{time_period}",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.hashrate(Some(path.time_period))).await
+                    state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.hashrate(Some(path.time_period), HASHRATE_MAX_POINTS)).await
                 },
                 |op| {
                     op.id("get_hashrate_by_period")

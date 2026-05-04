@@ -65,8 +65,9 @@ Height = int
 Timestamp = int
 # Block hash
 BlockHash = str
-# Transaction index within a block (0 = coinbase)
-TxIndex = int
+# Position of a transaction within a single block (0 = coinbase).
+# Distinct from `TxIndex`, which is the chain-wide global tx index.
+BlockTxIndex = int
 # Unsigned cents (u64) - for values that should never be negative.
 # Used for invested capital, realized cap, etc.
 Cents = int
@@ -105,6 +106,13 @@ UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50"
 # Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
 # has no meaning outside the enclosing cluster.
 CpfpClusterTxIndex = int
+# BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
+# fits a single tx's count with room to spare.
+# 
+# Witness sigops count as 1; legacy and P2SH-redeem sigops count as 4.
+# Five vbytes per sigop is the policy adjustment Core applies in
+# `nSigOpCost` to discourage sigop-heavy txs (`max(weight/4, sigops*5)`).
+SigOps = int
 # Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 VSize = int
 # Date in YYYYMMDD format stored as u32
@@ -221,6 +229,9 @@ Vout = int
 # and matching brk's `script_sig: ScriptBuf` (bytes internally, hex
 # on the wire).
 Witness = List[str]
+# Chain-wide transaction index (0 = the genesis coinbase). For an
+# in-block position, use `BlockTxIndex` instead.
+TxIndex = int
 # Raw transaction version (i32) from Bitcoin protocol.
 # Unlike TxVersion (u8, indexed), this preserves non-standard values
 # used in coinbase txs for miner signaling/branding.
@@ -481,7 +492,7 @@ class BlockHashStartIndex(TypedDict):
         start_index: Starting transaction index within the block (0-based)
     """
     hash: BlockHash
-    start_index: TxIndex
+    start_index: BlockTxIndex
 
 class BlockHashTxIndex(TypedDict):
     """
@@ -492,7 +503,7 @@ class BlockHashTxIndex(TypedDict):
         index: Transaction index within the block (0-based)
     """
     hash: BlockHash
-    index: TxIndex
+    index: BlockTxIndex
 
 class BlockInfo(TypedDict):
     """
@@ -655,11 +666,9 @@ class CostBasisQuery(TypedDict):
 
 class CpfpClusterChunk(TypedDict):
     """
-    One SFL chunk inside a `CpfpCluster`.
-
-    Attributes:
-        txs: Txs in this chunk.
-        feerate: Combined feerate of the chunk (sat/vB).
+    One SFL chunk inside a `CpfpCluster`. `txs` is in topological order
+    (matches `CpfpCluster.txs` ordering); the chunk's `feerate` is the
+    per-chunk SFL feerate and is the same for every tx in this chunk.
     """
     txs: List[CpfpClusterTxIndex]
     feerate: FeeRate
@@ -672,14 +681,14 @@ class CpfpClusterTx(TypedDict):
         parents: In-cluster parents of this tx.
     """
     txid: Txid
-    fee: Sats
     weight: Weight
+    fee: Sats
     parents: List[CpfpClusterTxIndex]
 
 class CpfpCluster(TypedDict):
     """
-    CPFP cluster output for an unconfirmed tx: the connected component
-    the seed belongs to, plus its SFL linearization.
+    CPFP cluster: the connected component the seed belongs to, plus its
+    SFL linearization.
 
     Attributes:
         txs: All txs in the cluster, in topological order (parents before children).
@@ -692,12 +701,7 @@ class CpfpCluster(TypedDict):
 
 class CpfpEntry(TypedDict):
     """
-    A transaction in a CPFP relationship
-
-    Attributes:
-        txid: Transaction ID
-        weight: Transaction weight
-        fee: Transaction fee (sats)
+    A transaction in a CPFP relationship.
     """
     txid: Txid
     weight: Weight
@@ -705,27 +709,30 @@ class CpfpEntry(TypedDict):
 
 class CpfpInfo(TypedDict):
     """
-    CPFP (Child Pays For Parent) information for a transaction
+    CPFP (Child Pays For Parent) information for a transaction.
 
     Attributes:
-        ancestors: Ancestor transactions in the CPFP chain
-        bestDescendant: Best (highest fee rate) descendant, if any
-        descendants: Descendant transactions in the CPFP chain
-        effectiveFeePerVsize: Effective fee rate considering CPFP relationships (sat/vB)
-        sigops: Total signature operation count for the seed tx
-        fee: Transaction fee (sats)
-        adjustedVsize: Adjusted virtual size (accounting for sigops)
-        cluster: Mempool cluster the seed belongs to: full tx list, SFL-linearized
-chunks, and the seed's chunk index. Only set for unconfirmed txs.
+        ancestors: Ancestor transactions in the CPFP chain.
+        bestDescendant: Best (highest fee rate) descendant, if any.
+        descendants: Descendant transactions in the CPFP chain.
+        effectiveFeePerVsize: Effective fee rate considering CPFP relationships (sat/vB).
+        sigops: BIP-141 sigop cost for the seed tx (witness sigops count as 1,
+legacy and P2SH-redeem sigops count as 4).
+        fee: Transaction fee (sats).
+        vsize: Virtual size of the seed tx (vbytes).
+        adjustedVsize: Policy-adjusted virtual size: `max(vsize, sigops * 5)`.
+        cluster: Cluster the seed belongs to: full tx list, SFL-linearized chunks,
+and the seed's chunk index.
     """
     ancestors: List[CpfpEntry]
     bestDescendant: Union[CpfpEntry, None]
     descendants: List[CpfpEntry]
-    effectiveFeePerVsize: Union[FeeRate, None]
-    sigops: Optional[int]
-    fee: Union[Sats, None]
-    adjustedVsize: Union[VSize, None]
-    cluster: Union[CpfpCluster, None]
+    effectiveFeePerVsize: FeeRate
+    sigops: SigOps
+    fee: Sats
+    vsize: VSize
+    adjustedVsize: VSize
+    cluster: CpfpCluster
 
 class DataRangeFormat(TypedDict):
     """
@@ -1589,7 +1596,7 @@ class Transaction(TypedDict):
     vout: List[TxOut]
     size: int
     weight: Weight
-    sigops: int
+    sigops: SigOps
     fee: Sats
     status: TxStatus
 
@@ -7935,7 +7942,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/status`"""
         return self.get_json(f'/api/block/{hash}/status')
 
-    def get_block_txid(self, hash: BlockHash, index: TxIndex) -> Txid:
+    def get_block_txid(self, hash: BlockHash, index: BlockTxIndex) -> Txid:
         """Transaction ID at index.
 
         Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
@@ -7965,7 +7972,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/block/{hash}/txs`"""
         return self.get_json(f'/api/block/{hash}/txs')
 
-    def get_block_txs_from_index(self, hash: BlockHash, start_index: TxIndex) -> List[Transaction]:
+    def get_block_txs_from_index(self, hash: BlockHash, start_index: BlockTxIndex) -> List[Transaction]:
         """Block transactions (paginated).
 
         Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.

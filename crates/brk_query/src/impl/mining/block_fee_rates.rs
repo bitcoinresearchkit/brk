@@ -5,8 +5,12 @@ use super::block_window::BlockWindow;
 use crate::Query;
 
 impl Query {
+    /// Time-bucketed fee-rate percentiles over `time_period`. One entry per
+    /// bucket, ordered chronologically. Each entry carries the bucket's
+    /// average height/timestamp and the seven percentile means
+    /// (`min, pct10, pct25, median, pct75, pct90, max`).
     pub fn block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
-        let bw = BlockWindow::new(self, time_period);
+        let bw = BlockWindow::new(self, time_period)?;
         let frd = &self
             .computer()
             .transactions
@@ -15,13 +19,13 @@ impl Query {
             .distribution
             .block;
 
-        let min = bw.read(&frd.min.height);
-        let pct10 = bw.read(&frd.pct10.height);
-        let pct25 = bw.read(&frd.pct25.height);
-        let median = bw.read(&frd.median.height);
-        let pct75 = bw.read(&frd.pct75.height);
-        let pct90 = bw.read(&frd.pct90.height);
-        let max = bw.read(&frd.max.height);
+        let min = bw.read(&frd.min.height)?;
+        let pct10 = bw.read(&frd.pct10.height)?;
+        let pct25 = bw.read(&frd.pct25.height)?;
+        let median = bw.read(&frd.median.height)?;
+        let pct75 = bw.read(&frd.pct75.height)?;
+        let pct90 = bw.read(&frd.pct90.height)?;
+        let max = bw.read(&frd.max.height)?;
 
         Ok(bw
             .buckets

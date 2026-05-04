@@ -13,13 +13,18 @@ const BLOCKS_PER_EPOCH: u32 = 2016;
 const TARGET_BLOCK_TIME: u64 = 600;
 
 impl Query {
+    /// Live difficulty-adjustment snapshot for the current epoch. Bundles
+    /// progress through the 2016-block window, the projected next-retarget
+    /// percentage from observed pace, an estimated wall-clock retarget time,
+    /// remaining blocks/time, the previous retarget percentage (current epoch
+    /// vs previous epoch first-block difficulty), and the time offset from a
+    /// 600s/block schedule. Output time fields are in milliseconds.
     pub fn difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
         let indexer = self.indexer();
         let computer = self.computer();
         let current_height = self.height();
         let current_height_u32: u32 = current_height.into();
 
-        // Get current epoch
         let current_epoch = computer
             .indexes
             .height
@@ -28,7 +33,6 @@ impl Query {
             .data()?;
         let current_epoch_usize: usize = current_epoch.into();
 
-        // Get epoch start height
         let epoch_start_height = computer
             .indexes
             .epoch
@@ -37,13 +41,11 @@ impl Query {
             .data()?;
         let epoch_start_u32: u32 = epoch_start_height.into();
 
-        // Calculate epoch progress
         let next_retarget_height = epoch_start_u32 + BLOCKS_PER_EPOCH;
         let blocks_into_epoch = current_height_u32 - epoch_start_u32;
         let remaining_blocks = next_retarget_height - current_height_u32;
         let progress_percent = (blocks_into_epoch as f64 / BLOCKS_PER_EPOCH as f64) * 100.0;
 
-        // Get timestamps using difficulty_to_timestamp for epoch start
         let epoch_start_timestamp = computer
             .indexes
             .timestamp
@@ -57,8 +59,11 @@ impl Query {
             .collect_one(current_height)
             .data()?;
 
-        // Calculate average block time in current epoch
-        let elapsed_time = (*current_timestamp - *epoch_start_timestamp) as u64;
+        // Bitcoin block timestamps can step backward within MTP rules, so
+        // saturate the subtraction to avoid u32 underflow on a backwards-going
+        // first block of an epoch.
+        let elapsed_time =
+            u64::from((*current_timestamp).saturating_sub(*epoch_start_timestamp));
         let time_avg = if blocks_into_epoch > 0 {
             elapsed_time / blocks_into_epoch as u64
         } else {
@@ -66,7 +71,8 @@ impl Query {
         };
 
         // Per-block time needed over remaining blocks to land the epoch at
-        // 2016 * TARGET_BLOCK_TIME. Matches mempool.space's adjustedTimeAvg.
+        // BLOCKS_PER_EPOCH * TARGET_BLOCK_TIME (the convergence path that
+        // client UIs render as adjustedTimeAvg).
         let target_total = BLOCKS_PER_EPOCH as u64 * TARGET_BLOCK_TIME;
         let adjusted_time_avg = if remaining_blocks > 0 {
             target_total.saturating_sub(elapsed_time) / remaining_blocks as u64
@@ -74,15 +80,13 @@ impl Query {
             TARGET_BLOCK_TIME
         };
 
-        // Estimate remaining time and retarget date
         let remaining_time = remaining_blocks as u64 * adjusted_time_avg;
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs())
-            .unwrap_or(*current_timestamp as u64);
+            .unwrap_or(u64::from(*current_timestamp));
         let estimated_retarget_date = now + remaining_time;
 
-        // Calculate expected vs actual time for difficulty change estimate
         let expected_time = blocks_into_epoch as u64 * TARGET_BLOCK_TIME;
         let difficulty_change = if elapsed_time > 0 && blocks_into_epoch > 0 {
             ((expected_time as f64 / elapsed_time as f64) - 1.0) * 100.0
@@ -90,10 +94,8 @@ impl Query {
             0.0
         };
 
-        // Time offset from expected schedule
         let time_offset = expected_time as i64 - elapsed_time as i64;
 
-        // Calculate previous retarget using stored difficulty values
         let (previous_retarget, previous_time) = if current_epoch_usize > 0 {
             let prev_epoch = Epoch::from(current_epoch_usize - 1);
             let prev_epoch_start = computer
@@ -127,7 +129,6 @@ impl Query {
             (0.0, epoch_start_timestamp)
         };
 
-        // Expected blocks based on wall clock time since epoch start
         let expected_blocks = elapsed_time as f64 / TARGET_BLOCK_TIME as f64;
 
         Ok(DifficultyAdjustment {

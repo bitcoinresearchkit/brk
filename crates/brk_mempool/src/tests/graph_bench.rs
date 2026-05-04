@@ -1,10 +1,10 @@
 use std::time::Instant;
 
 use bitcoin::hashes::Hash;
-use brk_types::{Sats, Timestamp, Txid, TxidPrefix, VSize};
+use brk_types::{Sats, Timestamp, Txid, TxidPrefix, VSize, Weight};
 use smallvec::SmallVec;
 
-use crate::{TxEntry, steps::rebuilder::graph::Graph};
+use crate::TxEntry;
 
 fn synthetic_mempool(n: usize) -> Vec<Option<TxEntry>> {
     let make_txid = |i: usize| -> Txid {
@@ -18,7 +18,7 @@ fn synthetic_mempool(n: usize) -> Vec<Option<TxEntry>> {
     let mut txids: Vec<Txid> = Vec::with_capacity(n);
     for i in 0..n {
         let txid = make_txid(i);
-        txids.push(txid.clone());
+        txids.push(txid);
 
         let depends: SmallVec<[TxidPrefix; 2]> = match i % 100 {
             0..=94 => SmallVec::new(),
@@ -40,6 +40,7 @@ fn synthetic_mempool(n: usize) -> Vec<Option<TxEntry>> {
             txid,
             fee: Sats::from((i as u64).wrapping_mul(137) % 10_000 + 1),
             vsize: VSize::from(250u64),
+            weight: Weight::from(1000u64),
             size: 250,
             depends,
             first_seen: Timestamp::now(),
@@ -51,18 +52,20 @@ fn synthetic_mempool(n: usize) -> Vec<Option<TxEntry>> {
 
 #[test]
 #[ignore = "perf benchmark; run with --ignored --nocapture"]
-fn perf_build_graph() {
+fn perf_build_clusters() {
+    use crate::steps::rebuilder::clusters::build_clusters;
+
     let sizes = [1_000usize, 10_000, 50_000, 100_000, 300_000];
     eprintln!();
-    eprintln!("Graph::build perf (release, single call):");
+    eprintln!("build_clusters perf (release, single call):");
     eprintln!("  n          build");
     eprintln!("  ------------------------");
     for &n in &sizes {
         let entries = synthetic_mempool(n);
-        let _ = Graph::build(&entries);
+        let _ = build_clusters(&entries);
 
         let t = Instant::now();
-        let g = Graph::build(&entries);
+        let (clusters, _) = build_clusters(&entries);
         let dt = t.elapsed();
         let ns = dt.as_nanos();
         let pretty = if ns >= 1_000_000 {
@@ -70,7 +73,7 @@ fn perf_build_graph() {
         } else {
             format!("{:.2} µs", ns as f64 / 1_000.0)
         };
-        eprintln!("  {:<10} {:<10} ({} nodes)", n, pretty, g.len());
+        eprintln!("  {:<10} {:<10} ({} clusters)", n, pretty, clusters.len());
     }
     eprintln!();
 }

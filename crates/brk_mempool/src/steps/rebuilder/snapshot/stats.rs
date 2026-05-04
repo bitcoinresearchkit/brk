@@ -1,8 +1,8 @@
 use brk_types::{FeeRate, Sats, VSize};
 
 use crate::TxEntry;
-
-use super::super::linearize::Package;
+use crate::cluster::{Cluster, ClusterRef};
+use crate::stores::TxIndex;
 
 /// Percentile points reported in [`BlockStats::fee_range`], in the
 /// same order: 0% (min), 10%, 25%, median, 75%, 90%, 100% (max).
@@ -20,24 +20,31 @@ pub struct BlockStats {
 }
 
 impl BlockStats {
-    /// Each tx contributes its containing package's `fee_rate` to the
+    /// Each tx contributes its containing chunk's `fee_rate` to the
     /// percentile distribution, since that's the rate the miner
     /// collects per vsize.
-    pub fn compute(block: &[Package], entries: &[Option<TxEntry>]) -> Self {
+    pub fn compute(
+        block: &[TxIndex],
+        clusters: &[Cluster<TxIndex>],
+        cluster_of: &[Option<ClusterRef>],
+        entries: &[Option<TxEntry>],
+    ) -> Self {
         let mut total_fee = Sats::default();
         let mut total_vsize = VSize::default();
         let mut total_size: u64 = 0;
         let mut fee_rates: Vec<FeeRate> = Vec::new();
 
-        for pkg in block {
-            for &tx_index in &pkg.txs {
-                if let Some(entry) = &entries[tx_index.as_usize()] {
-                    total_fee += entry.fee;
-                    total_vsize += entry.vsize;
-                    total_size += entry.size;
-                    fee_rates.push(pkg.fee_rate);
-                }
-            }
+        for &tx_index in block {
+            let Some(entry) = &entries[tx_index.as_usize()] else {
+                continue;
+            };
+            let Some(cref) = cluster_of[tx_index.as_usize()] else {
+                continue;
+            };
+            total_fee += entry.fee;
+            total_vsize += entry.vsize;
+            total_size += entry.size;
+            fee_rates.push(clusters[cref.cluster_id.as_usize()].chunk_of(cref.local).fee_rate());
         }
 
         let tx_count = fee_rates.len() as u32;

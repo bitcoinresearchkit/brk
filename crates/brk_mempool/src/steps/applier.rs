@@ -35,7 +35,7 @@ impl Applier {
         let Some((idx, entry)) = s.entries.remove(prefix) else {
             return;
         };
-        let txid = entry.txid.clone();
+        let txid = entry.txid;
         let Some(tx) = s.txs.remove(&txid) else {
             return;
         };
@@ -71,7 +71,7 @@ impl Applier {
     fn publish_one(s: &mut LockedState, tx: Transaction, entry: TxEntry) -> (Txid, Transaction) {
         s.info.add(&tx, entry.fee);
         s.addrs.add_tx(&tx, &entry.txid);
-        let txid = entry.txid.clone();
+        let txid = entry.txid;
         let idx = s.entries.insert(entry);
         s.outpoint_spends.insert_spends(&tx, idx);
         (txid, tx)

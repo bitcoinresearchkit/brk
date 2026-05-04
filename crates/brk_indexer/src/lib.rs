@@ -43,7 +43,15 @@ pub struct Indexer<M: StorageMode = Rw> {
 
 impl<M: StorageMode> Indexer<M> {
     pub fn tip_blockhash(&self) -> BlockHash {
-        self.tip_blockhash.read().clone()
+        *self.tip_blockhash.read()
+    }
+}
+
+impl Indexer<Ro> {
+    /// Last height whose data is durably indexed, derived from the
+    /// `blockhash` vec's stamp.
+    pub fn indexed_height(&self) -> Height {
+        Height::from(self.vecs.blocks.blockhash.inner.stamp())
     }
 }
 
@@ -197,7 +205,7 @@ impl Indexer {
         self.vecs.rollback_if_needed(&starting_indexes)?;
         debug!("Rollback vecs done.");
         if let Some(hash) = prev_hash.as_ref() {
-            *self.tip_blockhash.write() = hash.clone();
+            *self.tip_blockhash.write() = *hash;
         }
         drop(lock);
 

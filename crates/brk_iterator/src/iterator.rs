@@ -40,7 +40,7 @@ impl Iterator for BlockIterator {
                     )));
                 }
 
-                prev_hash.replace(hash.clone());
+                prev_hash.replace(hash);
 
                 Some(Ok(Block::from((height, hash, block))))
             }

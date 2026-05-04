@@ -32,7 +32,7 @@ impl BlockProcessor<'_> {
             .blocks
             .blockhash
             .inner
-            .checked_push(height, blockhash.clone())?;
+            .checked_push(height, *blockhash)?;
         self.vecs
             .blocks
             .coinbase_tag

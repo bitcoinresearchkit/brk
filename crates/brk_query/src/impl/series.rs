@@ -39,18 +39,19 @@ impl Query {
                 .collect::<Vec<_>>()
                 .join(", ");
             return Error::SeriesUnsupportedIndex {
-                series: series.to_string(),
+                series: brk_error::truncate_series_name(series.to_string()),
                 supported,
             };
         }
 
-        let matches = self
-            .vecs()
-            .matches(series, Limit::DEFAULT)
-            .into_iter()
-            .map(|s| s.to_string())
-            .collect();
-        Error::SeriesNotFound(brk_error::SeriesNotFound::new(series.to_string(), matches))
+        let matches = self.vecs().matches(series, Limit::DEFAULT);
+        let total_matches = matches.len();
+        let suggestions = matches.into_iter().take(3).collect();
+        Error::SeriesNotFound(brk_error::SeriesNotFound::new(
+            series.to_string(),
+            suggestions,
+            total_matches,
+        ))
     }
 
     pub(crate) fn columns_to_csv(
@@ -345,7 +346,7 @@ impl Query {
         }
     }
 
-    pub fn indexes(&self) -> &[IndexInfo] {
+    pub fn indexes(&self) -> &'static [IndexInfo] {
         &self.vecs().indexes
     }
 
@@ -353,7 +354,7 @@ impl Query {
         self.vecs().series(pagination)
     }
 
-    pub fn series_catalog(&self) -> &TreeNode {
+    pub fn series_catalog(&self) -> &'static TreeNode {
         self.vecs().catalog()
     }
 

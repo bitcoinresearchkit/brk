@@ -193,14 +193,14 @@ Matches mempool.space/bitcoin-cli behavior.
  *
  * @typedef {Object} BlockHashStartIndex
  * @property {BlockHash} hash - Bitcoin block hash
- * @property {TxIndex} startIndex - Starting transaction index within the block (0-based)
+ * @property {BlockTxIndex} startIndex - Starting transaction index within the block (0-based)
  */
 /**
  * Block hash + transaction index path parameters
  *
  * @typedef {Object} BlockHashTxIndex
  * @property {BlockHash} hash - Bitcoin block hash
- * @property {TxIndex} index - Transaction index within the block (0-based)
+ * @property {BlockTxIndex} index - Transaction index within the block (0-based)
  */
 /**
  * Block information matching mempool.space /api/block/{hash}
@@ -290,6 +290,12 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {string} timestamp - Block timestamp in ISO 8601 format
  */
 /**
+ * Position of a transaction within a single block (0 = coinbase).
+ * Distinct from `TxIndex`, which is the chain-wide global tx index.
+ *
+ * @typedef {number} BlockTxIndex
+ */
+/**
  * A single block weight data point.
  *
  * @typedef {Object} BlockWeightEntry
@@ -367,8 +373,8 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
  */
 /**
- * CPFP cluster output for an unconfirmed tx: the connected component
- * the seed belongs to, plus its SFL linearization.
+ * CPFP cluster: the connected component the seed belongs to, plus its
+ * SFL linearization.
  *
  * @typedef {Object} CpfpCluster
  * @property {CpfpClusterTx[]} txs - All txs in the cluster, in topological order (parents before children).
@@ -376,19 +382,21 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {number} chunkIndex - Index into `chunks` of the chunk containing the seed tx.
  */
 /**
- * One SFL chunk inside a `CpfpCluster`.
+ * One SFL chunk inside a `CpfpCluster`. `txs` is in topological order
+ * (matches `CpfpCluster.txs` ordering); the chunk's `feerate` is the
+ * per-chunk SFL feerate and is the same for every tx in this chunk.
  *
  * @typedef {Object} CpfpClusterChunk
- * @property {CpfpClusterTxIndex[]} txs - Txs in this chunk.
- * @property {FeeRate} feerate - Combined feerate of the chunk (sat/vB).
+ * @property {CpfpClusterTxIndex[]} txs
+ * @property {FeeRate} feerate
  */
 /**
  * One entry in a `CpfpCluster.txs` array.
  *
  * @typedef {Object} CpfpClusterTx
  * @property {Txid} txid
- * @property {Sats} fee
  * @property {Weight} weight
+ * @property {Sats} fee
  * @property {CpfpClusterTxIndex[]} parents - In-cluster parents of this tx.
  */
 /**
@@ -398,26 +406,28 @@ Matches mempool.space/bitcoin-cli behavior.
  * @typedef {number} CpfpClusterTxIndex
  */
 /**
- * A transaction in a CPFP relationship
+ * A transaction in a CPFP relationship.
  *
  * @typedef {Object} CpfpEntry
- * @property {Txid} txid - Transaction ID
- * @property {Weight} weight - Transaction weight
- * @property {Sats} fee - Transaction fee (sats)
+ * @property {Txid} txid
+ * @property {Weight} weight
+ * @property {Sats} fee
  */
 /**
- * CPFP (Child Pays For Parent) information for a transaction
+ * CPFP (Child Pays For Parent) information for a transaction.
  *
  * @typedef {Object} CpfpInfo
- * @property {CpfpEntry[]} ancestors - Ancestor transactions in the CPFP chain
- * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any
- * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain
- * @property {(FeeRate|null)=} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB)
- * @property {?number=} sigops - Total signature operation count for the seed tx
- * @property {(Sats|null)=} fee - Transaction fee (sats)
- * @property {(VSize|null)=} adjustedVsize - Adjusted virtual size (accounting for sigops)
- * @property {(CpfpCluster|null)=} cluster - Mempool cluster the seed belongs to: full tx list, SFL-linearized
-chunks, and the seed's chunk index. Only set for unconfirmed txs.
+ * @property {CpfpEntry[]} ancestors - Ancestor transactions in the CPFP chain.
+ * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any.
+ * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain.
+ * @property {FeeRate} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB).
+ * @property {SigOps} sigops - BIP-141 sigop cost for the seed tx (witness sigops count as 1,
+legacy and P2SH-redeem sigops count as 4).
+ * @property {Sats} fee - Transaction fee (sats).
+ * @property {VSize} vsize - Virtual size of the seed tx (vbytes).
+ * @property {VSize} adjustedVsize - Policy-adjusted virtual size: `max(vsize, sigops * 5)`.
+ * @property {CpfpCluster} cluster - Cluster the seed belongs to: full tx list, SFL-linearized chunks,
+and the seed's chunk index.
  */
 /**
  * Range parameters with output format for API query parameters.
@@ -1050,6 +1060,16 @@ on serialization otherwise.
  * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
  * @property {Format=} format - Format of the output
  */
+/**
+ * BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
+ * fits a single tx's count with room to spare.
+ *
+ * Witness sigops count as 1; legacy and P2SH-redeem sigops count as 4.
+ * Five vbytes per sigop is the policy adjustment Core applies in
+ * `nSigOpCost` to discourage sigop-heavy txs (`max(weight/4, sigops*5)`).
+ *
+ * @typedef {number} SigOps
+ */
 /** @typedef {boolean} StoredBool */
 /**
  * Stored 32-bit floating point value
@@ -1133,7 +1153,7 @@ on serialization otherwise.
  * @property {TxOut[]} vout - Transaction outputs
  * @property {number} size - Transaction size in bytes
  * @property {Weight} weight - Transaction weight
- * @property {number} sigops - Number of signature operations
+ * @property {SigOps} sigops - Number of signature operations
  * @property {Sats} fee - Transaction fee in satoshis
  * @property {TxStatus} status - Confirmation status (confirmed, block height/hash/time)
  */
@@ -1159,7 +1179,8 @@ on serialization otherwise.
  */
 /** @typedef {number} TxInIndex */
 /**
- * Transaction index within a block (0 = coinbase)
+ * Chain-wide transaction index (0 = the genesis coinbase). For an
+ * in-block position, use `BlockTxIndex` instead.
  *
  * @typedef {number} TxIndex
  */
@@ -10670,7 +10691,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/txid/{index}`
    *
    * @param {BlockHash} hash - Bitcoin block hash
-   * @param {TxIndex} index - Transaction index within the block (0-based)
+   * @param {BlockTxIndex} index - Transaction index within the block (0-based)
    * @param {{ signal?: AbortSignal, onValue?: (value: Txid) => void }} [options]
    * @returns {Promise<Txid>}
    */
@@ -10725,7 +10746,7 @@ class BrkClient extends BrkClientBase {
    * Endpoint: `GET /api/block/{hash}/txs/{start_index}`
    *
    * @param {BlockHash} hash - Bitcoin block hash
-   * @param {TxIndex} start_index - Starting transaction index within the block (0-based)
+   * @param {BlockTxIndex} start_index - Starting transaction index within the block (0-based)
    * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
    * @returns {Promise<Transaction[]>}
    */

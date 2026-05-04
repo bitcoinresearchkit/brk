@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize};
+use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize, Weight};
 use smallvec::SmallVec;
 
 /// A mempool transaction entry.
@@ -12,6 +12,7 @@ pub struct TxEntry {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
+    pub weight: Weight,
     /// Serialized tx size in bytes (witness + non-witness), from the raw tx.
     pub size: u64,
     /// Parent txid prefixes (most txs have 0-2 parents).
@@ -28,9 +29,10 @@ pub struct TxEntry {
 impl TxEntry {
     pub(super) fn new(info: &MempoolEntryInfo, size: u64, rbf: bool) -> Self {
         Self {
-            txid: info.txid.clone(),
+            txid: info.txid,
             fee: info.fee,
-            vsize: VSize::from(info.vsize),
+            vsize: info.vsize,
+            weight: info.weight,
             size,
             depends: info.depends.iter().map(TxidPrefix::from).collect(),
             first_seen: info.first_seen,

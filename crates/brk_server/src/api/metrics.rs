@@ -44,7 +44,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
             "/api/metrics",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog().clone())).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.series_catalog())).await
                 },
                 |op| op
                     .id("get_metrics_tree_deprecated")
@@ -92,7 +92,7 @@ impl ApiMetricsLegacyRoutes for ApiRouter<AppState> {
                     _: Empty,
                     State(state): State<AppState>
                 | {
-                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes().to_vec())).await
+                    state.respond_json(&headers, CacheStrategy::Deploy, &uri, |q| Ok(q.indexes())).await
                 },
                 |op| op
                     .id("get_indexes_deprecated")

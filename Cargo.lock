@@ -491,6 +491,7 @@ dependencies = [
 name = "brk_iterator"
 version = "0.3.0-beta.7"
 dependencies = [
+ "bitcoin",
  "brk_error",
  "brk_reader",
  "brk_rpc",
@@ -553,6 +554,7 @@ dependencies = [
  "quickmatch",
  "rustc-hash",
  "serde_json",
+ "smallvec",
  "tokio",
  "vecdb",
 ]

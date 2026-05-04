@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, TimePeriod, Timestamp, Version};
+use brk_types::{Height, Indexes, Timestamp, Version};
 use vecdb::{
     AnyVec, CachedVec, Cursor, Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw,
     StorageMode, VecIndex,
@@ -56,26 +56,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub _12y: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 4380d
     pub _14y: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 5110d
     pub _26y: M::Stored<EagerVec<PcoVec<Height, Height>>>, // 9490d
-}
-
-impl<M: StorageMode> Vecs<M> {
-    /// First block height inside `period` looking back from `tip`; `None` for `All`.
-    /// Walks real block timestamps, matching mempool.space's wall-clock
-    /// `time > NOW() - INTERVAL ${period}` cutoff.
-    pub fn start_height(&self, period: TimePeriod, tip: Height) -> Option<Height> {
-        match period {
-            TimePeriod::Day => self._24h.collect_one(tip),
-            TimePeriod::ThreeDays => self._3d.collect_one(tip),
-            TimePeriod::Week => self._1w.collect_one(tip),
-            TimePeriod::Month => self._1m.collect_one(tip),
-            TimePeriod::ThreeMonths => self._3m.collect_one(tip),
-            TimePeriod::SixMonths => self._6m.collect_one(tip),
-            TimePeriod::Year => self._1y.collect_one(tip),
-            TimePeriod::TwoYears => self._2y.collect_one(tip),
-            TimePeriod::ThreeYears => self._3y.collect_one(tip),
-            TimePeriod::All => None,
-        }
-    }
 }
 
 impl Vecs {

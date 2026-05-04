@@ -64,4 +64,12 @@ impl EntryPool {
     pub fn entries(&self) -> &[Option<TxEntry>] {
         &self.entries
     }
+
+    pub fn active_count(&self) -> usize {
+        self.prefix_to_idx.len()
+    }
+
+    pub fn free_slots_count(&self) -> usize {
+        self.free_slots.len()
+    }
 }

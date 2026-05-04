@@ -38,15 +38,15 @@ def test_cpfp_invariants(brk, live):
         assert int(c["adjustedVsize"]) > 0
 
 
-def test_cpfp_unknown_tx_returns_empty(brk, mempool):
-    """Both servers return {ancestors: []} for any 64-char hex (no 404)."""
+def test_cpfp_unknown_txid(brk, mempool):
+    """mempool.space returns 200 with {ancestors: []}; brk distinguishes
+    'unknown txid' from 'tx with no neighbors' and returns an error."""
     bad = "0" * 64
     path = f"/api/v1/cpfp/{bad}"
-    b = brk.get_cpfp(bad)
     m = mempool.get_json(path)
-    show("GET", path, b, m)
-    assert b.get("ancestors") == []
     assert m.get("ancestors") == []
+    with pytest.raises(BrkError):
+        brk.get_cpfp(bad)
 
 
 @pytest.mark.parametrize("bad", ["abc", "deadbeef"])

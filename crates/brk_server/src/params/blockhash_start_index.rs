@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use brk_types::{BlockHash, TxIndex};
+use brk_types::{BlockHash, BlockTxIndex};
 
 /// Block hash + starting transaction index path parameters
 #[derive(Deserialize, JsonSchema)]
@@ -11,5 +11,5 @@ pub struct BlockHashStartIndex {
 
     /// Starting transaction index within the block (0-based)
     #[schemars(example = 0)]
-    pub start_index: TxIndex,
+    pub start_index: BlockTxIndex,
 }

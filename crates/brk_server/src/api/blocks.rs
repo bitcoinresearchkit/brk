@@ -3,10 +3,9 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_query::BLOCK_TXS_PAGE_SIZE;
 use brk_types::{
-    BlockHash, BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, Height, Hex, Transaction,
-    TxIndex, Txid, Version,
+    BlockHash, BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, BlockTxIndex, Height, Hex,
+    Transaction, Txid, Version,
 };
 
 use crate::{
@@ -16,6 +15,8 @@ use crate::{
         BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, Empty, HeightParam, TimestampParam,
     },
 };
+
+const BLOCK_TXS_PAGE_SIZE: u32 = 25;
 
 pub trait BlockRoutes {
     fn add_block_routes(self) -> Self;
@@ -278,7 +279,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            Path(path): Path<BlockHashParam>,
                            _: Empty, State(state): State<AppState>| {
                         let strategy = state.block_strategy(Version::ONE, &path.hash);
-                        state.respond_json(&headers, strategy, &uri, move |q| q.block_txs(&path.hash, TxIndex::default())).await
+                        state.respond_json(&headers, strategy, &uri, move |q| q.block_txs(&path.hash, BlockTxIndex::default(), BLOCK_TXS_PAGE_SIZE)).await
                     },
                     |op| {
                         op.id("get_block_txs")
@@ -304,7 +305,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            Path(path): Path<BlockHashStartIndex>,
                            _: Empty, State(state): State<AppState>| {
                         let strategy = state.block_strategy(Version::ONE, &path.hash);
-                        state.respond_json(&headers, strategy, &uri, move |q| q.block_txs(&path.hash, path.start_index)).await
+                        state.respond_json(&headers, strategy, &uri, move |q| q.block_txs(&path.hash, path.start_index, BLOCK_TXS_PAGE_SIZE)).await
                     },
                     |op| {
                         op.id("get_block_txs_from_index")

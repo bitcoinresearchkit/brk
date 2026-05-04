@@ -5,7 +5,7 @@ use std::{
 
 use brk_error::{Error, Result};
 use brk_rpc::{Auth, Client};
-use brk_server::{CdnCacheMode, DEFAULT_MAX_WEIGHT, Website};
+use brk_server::{CdnCacheMode, DEFAULT_MAX_UTXOS, DEFAULT_MAX_WEIGHT, Website};
 use brk_types::Port;
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
@@ -29,6 +29,9 @@ pub struct Config {
 
     #[serde(default)]
     maxweight: Option<usize>,
+
+    #[serde(default)]
+    maxutxos: Option<usize>,
 
     #[serde(default)]
     bitcoindir: Option<String>,
@@ -79,6 +82,9 @@ impl Config {
         if let Some(v) = config_args.maxweight {
             config.maxweight = Some(v);
         }
+        if let Some(v) = config_args.maxutxos {
+            config.maxutxos = Some(v);
+        }
         if let Some(v) = config_args.bitcoindir {
             config.bitcoindir = Some(v);
         }
@@ -128,6 +134,9 @@ impl Config {
                 Long("cdn") => config.cdn = Some(parser.value().unwrap().parse().unwrap()),
                 Long("maxweight") => {
                     config.maxweight = Some(parser.value().unwrap().parse().unwrap())
+                }
+                Long("maxutxos") => {
+                    config.maxutxos = Some(parser.value().unwrap().parse().unwrap())
                 }
                 Long("bitcoindir") => {
                     config.bitcoindir = Some(parser.value().unwrap().parse().unwrap())
@@ -194,9 +203,14 @@ impl Config {
             "[false]".bright_black()
         );
         println!(
-            "    --maxweight {}       Max series response weight in bytes {}",
+            "    --maxweight {}       Server cap on series response weight in bytes; rejects /api/{{series,metric}}/... over the limit {}",
             "<BYTES>".bright_black(),
             format!("[{}]", DEFAULT_MAX_WEIGHT).bright_black()
+        );
+        println!(
+            "    --maxutxos {}        Server cap on UTXOs per address; /api/address/{{addr}}/utxo errors past the limit {}",
+            "<COUNT>".bright_black(),
+            format!("[{}]", DEFAULT_MAX_UTXOS).bright_black()
         );
         println!();
         println!(
@@ -378,6 +392,10 @@ Finally, you can run the program with '-h' for help."
 
     pub fn max_weight(&self) -> usize {
         self.maxweight.unwrap_or(DEFAULT_MAX_WEIGHT)
+    }
+
+    pub fn max_utxos(&self) -> usize {
+        self.maxutxos.unwrap_or(DEFAULT_MAX_UTXOS)
     }
 
     pub fn brkport(&self) -> Option<Port> {

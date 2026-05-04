@@ -2,7 +2,10 @@ use std::{thread::sleep, time::Duration};
 
 use bitcoin::{consensus::encode, hex::FromHex};
 use brk_error::{Error, Result};
-use brk_types::{Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Timestamp, Txid, Vout};
+use brk_types::{
+    Bitcoin, BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Timestamp, Txid, VSize, Vout,
+    Weight,
+};
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::v30::{
     GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
@@ -208,8 +211,8 @@ impl Client {
                     .collect::<Result<Vec<_>>>()?;
                 Ok(MempoolEntryInfo {
                     txid: Self::parse_txid(&txid_str, "mempool txid")?,
-                    vsize: entry.vsize as u64,
-                    weight: entry.weight as u64,
+                    vsize: VSize::from(entry.vsize as u64),
+                    weight: Weight::from(entry.weight as u64),
                     fee: Sats::from(Bitcoin::from(entry.fees.base)),
                     first_seen: Timestamp::from(entry.time),
                     ancestor_count: entry.ancestor_count as u64,
@@ -292,7 +295,7 @@ impl Client {
                     })
                 }) {
                     Ok(raw) => {
-                        out.insert(txid.clone(), raw);
+                        out.insert(*txid, raw);
                     }
                     Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc)))
                         if rpc.code == RPC_NOT_FOUND => {}

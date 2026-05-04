@@ -44,7 +44,7 @@ impl TxStore {
 
     fn track_unresolved(&mut self, txid: &Txid, tx: &Transaction) {
         if tx.input.iter().any(|i| i.prevout.is_none()) {
-            self.unresolved.insert(txid.clone());
+            self.unresolved.insert(*txid);
         }
     }
 

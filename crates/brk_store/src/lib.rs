@@ -236,12 +236,13 @@ where
     }
 
     #[inline]
-    pub fn prefix<P: AsRef<[u8]>>(
+    pub fn prefix<P: Into<ByteView>>(
         &self,
         prefix: P,
     ) -> impl DoubleEndedIterator<Item = (K, V)> + '_ {
+        let prefix: ByteView = prefix.into();
         self.keyspace
-            .prefix(prefix)
+            .prefix(&*prefix)
             .map(|res| res.into_inner().unwrap())
             .map(|(k, v)| (K::from(ByteView::from(&*k)), V::from(ByteView::from(&*v))))
     }

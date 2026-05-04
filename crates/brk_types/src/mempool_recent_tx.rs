@@ -19,7 +19,7 @@ pub struct MempoolRecentTx {
 impl From<(&Txid, &Transaction)> for MempoolRecentTx {
     fn from((txid, tx): (&Txid, &Transaction)) -> Self {
         Self {
-            txid: txid.clone(),
+            txid: *txid,
             fee: tx.fee,
             vsize: tx.vsize(),
             value: tx.output.iter().map(|o| o.value).sum(),

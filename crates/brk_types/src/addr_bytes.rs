@@ -35,7 +35,7 @@ impl AddrBytes {
     }
 
     pub fn hash(&self) -> u64 {
-        rapidhash::v3::rapidhash_v3(self.as_slice()).to_le()
+        rapidhash::v3::rapidhash_v3(self.as_slice())
     }
 
     /// Reconstruct the script_pubkey from the address bytes

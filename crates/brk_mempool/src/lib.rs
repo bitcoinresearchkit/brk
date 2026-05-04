@@ -21,6 +21,7 @@ use brk_types::{AddrBytes, MempoolInfo, OutpointPrefix, TxOut, Txid, TxidPrefix,
 use parking_lot::RwLockReadGuard;
 use tracing::error;
 
+pub mod cluster;
 mod cpfp;
 pub(crate) mod steps;
 pub(crate) mod stores;
@@ -28,7 +29,7 @@ pub(crate) mod stores;
 mod tests;
 
 use steps::{Applier, Fetcher, Preparer, Rebuilder, Resolver};
-pub use steps::{BlkIndex, BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
+pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
 use stores::{AddrTracker, MempoolState};
 pub use stores::{EntryPool, TxGraveyard, TxStore, TxTombstone};
 
@@ -59,6 +60,14 @@ impl Mempool {
         self.0.rebuilder.snapshot()
     }
 
+    pub fn rebuild_count(&self) -> u64 {
+        self.0.rebuilder.rebuild_count()
+    }
+
+    pub fn skip_counts(&self) -> (u64, u64) {
+        self.0.rebuilder.skip_counts()
+    }
+
     pub fn fees(&self) -> RecommendedFees {
         self.snapshot().fees.clone()
     }
@@ -85,7 +94,7 @@ impl Mempool {
         let entries = self.0.state.entries.read();
         let outpoint_spends = self.0.state.outpoint_spends.read();
         let idx = outpoint_spends.get(&key)?;
-        let spender_txid = entries.slot(idx)?.txid.clone();
+        let spender_txid = entries.slot(idx)?.txid;
         let spender_tx = txs.get(&spender_txid)?;
         let vin_pos = spender_tx
             .input
@@ -139,7 +148,11 @@ impl Mempool {
 
     /// One sync cycle: fetch, prepare, apply, resolve, maybe rebuild.
     pub fn update(&self) -> Result<()> {
-        let Inner { client, state, rebuilder } = &*self.0;
+        let Inner {
+            client,
+            state,
+            rebuilder,
+        } = &*self.0;
 
         let fetched = Fetcher::fetch(client, state)?;
         let pulled = Preparer::prepare(fetched, state);
@@ -148,5 +161,9 @@ impl Mempool {
         rebuilder.tick(client, state, changed);
 
         Ok(())
+    }
+
+    pub fn state(&self) -> &MempoolState {
+        &self.0.state
     }
 }

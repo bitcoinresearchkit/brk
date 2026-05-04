@@ -9142,7 +9142,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
     ///
     /// Endpoint: `GET /api/block/{hash}/txid/{index}`
-    pub fn get_block_txid(&self, hash: BlockHash, index: TxIndex) -> Result<String> {
+    pub fn get_block_txid(&self, hash: BlockHash, index: BlockTxIndex) -> Result<String> {
         self.base.get_text(&format!("/api/block/{hash}/txid/{index}"))
     }
 
@@ -9175,7 +9175,7 @@ impl BrkClient {
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
     ///
     /// Endpoint: `GET /api/block/{hash}/txs/{start_index}`
-    pub fn get_block_txs_from_index(&self, hash: BlockHash, start_index: TxIndex) -> Result<Vec<Transaction>> {
+    pub fn get_block_txs_from_index(&self, hash: BlockHash, start_index: BlockTxIndex) -> Result<Vec<Transaction>> {
         self.base.get_json(&format!("/api/block/{hash}/txs/{start_index}"))
     }
 

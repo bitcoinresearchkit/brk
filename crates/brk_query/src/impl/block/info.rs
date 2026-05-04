@@ -13,6 +13,29 @@ use crate::Query;
 
 const HEADER_SIZE: usize = 80;
 
+/// Decoded coinbase fields consumed by `blocks_v1_range`.
+///
+/// Returned by `Query::parse_coinbase_from_read`. On decode failure the
+/// caller hard-fails on header reads but accepts a `Coinbase::default()`
+/// here (manifests as missing `extras` rather than a 5xx).
+#[derive(Default)]
+struct Coinbase {
+    /// Hex-encoded scriptsig bytes.
+    raw_hex: String,
+    /// Primary payout address (first non-duplicate output address).
+    primary_address: Option<String>,
+    /// Deduped payout address list (consecutive duplicates collapsed).
+    addresses: Vec<String>,
+    /// Payout-output `asm` (first non-OP_RETURN output, or first output).
+    payout_asm: String,
+    /// Scriptsig rendered as ASCII chars (one byte per char).
+    scriptsig_ascii: String,
+    /// Raw scriptsig bytes (used for Datum miner-name parsing).
+    scriptsig_bytes: Vec<u8>,
+    /// On-disk total size of the coinbase tx.
+    total_size: usize,
+}
+
 impl Query {
     /// Block by hash. Unknown hash → 404 via `height_by_hash`.
     pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
@@ -65,14 +88,14 @@ impl Query {
     /// Most recent `count` blocks ending at `start_height` (default tip),
     /// returned in descending-height order.
     pub fn blocks(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfo>> {
-        let (begin, end) = self.resolve_block_range(start_height, count);
+        let (begin, end) = self.resolve_block_range(start_height, count, self.tip_height());
         self.blocks_range(begin, end)
     }
 
     /// V1 most recent `count` blocks with extras ending at `start_height`
     /// (default tip), returned in descending-height order.
     pub fn blocks_v1(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfoV1>> {
-        let (begin, end) = self.resolve_block_range(start_height, count);
+        let (begin, end) = self.resolve_block_range(start_height, count, self.height());
         self.blocks_v1_range(begin, end)
     }
 
@@ -152,7 +175,7 @@ impl Query {
                 Self::compute_median_time(&median_timestamps, begin + i, median_start);
 
             blocks.push(BlockInfo {
-                id: blockhashes[i].clone(),
+                id: blockhashes[i],
                 height: Height::from(begin + i),
                 version: header.version,
                 timestamp: timestamps[i],
@@ -171,9 +194,12 @@ impl Query {
         Ok(blocks)
     }
 
+    /// Build `BlockInfoV1` rows for `[begin, end)` in descending-height order.
+    /// Caller must bounds-check `end <= min(indexed, computed) + 1`. Returns
+    /// `Internal` on bulk-read short returns or per-block header read failures.
     pub(crate) fn blocks_v1_range(&self, begin: usize, end: usize) -> Result<Vec<BlockInfoV1>> {
         if begin >= end {
-            return Ok(vec![]);
+            return Ok(Vec::new());
         }
 
         let count = end - begin;
@@ -289,6 +315,50 @@ impl Query {
             .timestamp
             .collect_range_at(median_start, end);
 
+        let per_block_lens = [
+            blockhashes.len(),
+            difficulties.len(),
+            timestamps.len(),
+            sizes.len(),
+            weights.len(),
+            positions.len(),
+            pool_slugs.len(),
+            segwit_txs.len(),
+            segwit_sizes.len(),
+            segwit_weights.len(),
+            fee_sats.len(),
+            subsidy_sats.len(),
+            input_counts.len(),
+            output_counts.len(),
+            utxo_set_sizes.len(),
+            input_volumes.len(),
+            prices.len(),
+            output_volumes.len(),
+            fr_min.len(),
+            fr_pct10.len(),
+            fr_pct25.len(),
+            fr_median.len(),
+            fr_pct75.len(),
+            fr_pct90.len(),
+            fr_max.len(),
+            fa_min.len(),
+            fa_pct10.len(),
+            fa_pct25.len(),
+            fa_median.len(),
+            fa_pct75.len(),
+            fa_pct90.len(),
+            fa_max.len(),
+        ];
+        if per_block_lens.iter().any(|&l| l != count) {
+            return Err(Error::Internal("blocks_v1_range: short read on per-block vecs"));
+        }
+        if first_tx_indexes.len() < count {
+            return Err(Error::Internal("blocks_v1_range: short read on first_tx_index"));
+        }
+        if median_timestamps.len() != end - median_start {
+            return Err(Error::Internal("blocks_v1_range: short read on median window"));
+        }
+
         let mut blocks = Vec::with_capacity(count);
 
         for i in (0..count).rev() {
@@ -298,53 +368,26 @@ impl Query {
                 (total_txs - first_tx_indexes[i].to_usize()) as u32
             };
 
-            // Single reader for header + coinbase (adjacent in blk file)
+            // Single reader for header + coinbase (adjacent in blk file).
+            // Header read errors hard-fail; coinbase parsing silent-degrades.
             let varint_len = Self::compact_size_len(tx_count) as usize;
-            let (
-                raw_header,
-                coinbase_raw,
-                coinbase_address,
-                coinbase_addresses,
-                coinbase_signature,
-                coinbase_signature_ascii,
+            let mut blk = reader
+                .reader_at(positions[i])
+                .map_err(|_| Error::Internal("blocks_v1_range: failed to open block reader"))?;
+            let mut raw_header = [0u8; HEADER_SIZE];
+            blk.read_exact(&mut raw_header)
+                .map_err(|_| Error::Internal("blocks_v1_range: failed to read block header"))?;
+            let mut skip = [0u8; 5];
+            let _ = blk.read_exact(&mut skip[..varint_len]);
+            let Coinbase {
+                raw_hex: coinbase_raw,
+                primary_address: coinbase_address,
+                addresses: coinbase_addresses,
+                payout_asm: coinbase_signature,
+                scriptsig_ascii: coinbase_signature_ascii,
                 scriptsig_bytes,
-                coinbase_total_size,
-            ) = match reader.reader_at(positions[i]) {
-                Ok(mut blk) => {
-                    let mut header_buf = [0u8; HEADER_SIZE];
-                    if blk.read_exact(&mut header_buf).is_err() {
-                        (
-                            [0u8; HEADER_SIZE],
-                            String::new(),
-                            None,
-                            vec![],
-                            String::new(),
-                            String::new(),
-                            vec![],
-                            0,
-                        )
-                    } else {
-                        // Skip tx count varint
-                        let mut skip = [0u8; 5];
-                        let _ = blk.read_exact(&mut skip[..varint_len]);
-                        let coinbase = Self::parse_coinbase_from_read(blk);
-                        (
-                            header_buf, coinbase.0, coinbase.1, coinbase.2, coinbase.3, coinbase.4,
-                            coinbase.5, coinbase.6,
-                        )
-                    }
-                }
-                Err(_) => (
-                    [0u8; HEADER_SIZE],
-                    String::new(),
-                    None,
-                    vec![],
-                    String::new(),
-                    String::new(),
-                    vec![],
-                    0,
-                ),
-            };
+                total_size: coinbase_total_size,
+            } = Self::parse_coinbase_from_read(blk);
             let header = Self::decode_header(&raw_header)?;
 
             let weight = weights[i];
@@ -370,7 +413,7 @@ impl Query {
                 Self::compute_median_time(&median_timestamps, begin + i, median_start);
 
             let info = BlockInfo {
-                id: blockhashes[i].clone(),
+                id: blockhashes[i],
                 height: Height::from(begin + i),
                 version: header.version,
                 timestamp: timestamps[i],
@@ -464,17 +507,29 @@ impl Query {
         Height::from(self.indexer().vecs.blocks.blockhash.len().saturating_sub(1))
     }
 
+    /// Hash to height. The prefix store keys on the first 8 bytes of
+    /// the hash, so the resolved height is verified against the full
+    /// `blockhash[height]` before being returned. Prefix collisions
+    /// (or unknown hashes) surface as `NotFound`.
     pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
         let indexer = self.indexer();
         let prefix = BlockHashPrefix::from(hash);
-        indexer
+        let height = indexer
             .stores
             .blockhash_prefix_to_height
             .get(&prefix)?
             .map(|h| *h)
-            .ok_or(Error::NotFound("Block not found".into()))
+            .ok_or(Error::NotFound("Block not found".into()))?;
+        match indexer.vecs.blocks.blockhash.get(height) {
+            Some(stored) if &stored == hash => Ok(height),
+            _ => Err(Error::NotFound("Block not found".into())),
+        }
     }
 
+    /// Read the on-disk 80-byte header at `height` and decode it.
+    /// Caller must bounds-check `height` (no `OutOfRange` mapping here).
+    /// Returns `bitcoin::block::Header` because callers feed it into
+    /// upstream consensus-encoding APIs (`serialize_hex`, `MerkleBlock`).
     pub fn read_block_header(&self, height: Height) -> Result<bitcoin::block::Header> {
         let position = self
             .indexer()
@@ -488,9 +543,21 @@ impl Query {
             .map_err(|_| Error::Internal("Failed to decode block header"))
     }
 
-    fn resolve_block_range(&self, start_height: Option<Height>, count: u32) -> (usize, usize) {
-        let max_height = self.height();
-        let start = start_height.unwrap_or(max_height).min(max_height);
+    /// `(begin, end)` half-open window of up to `count` blocks ending
+    /// at `start_height` (default `cap`), clamped to `[0, cap]`. Caller
+    /// supplies `cap`: `tip_height()` when reading indexer-only series,
+    /// `height() = min(indexed, computed)` when reading computer-stamped
+    /// series too.
+    fn resolve_block_range(
+        &self,
+        start_height: Option<Height>,
+        count: u32,
+        cap: Height,
+    ) -> (usize, usize) {
+        let start = match start_height {
+            Some(h) => h.min(cap),
+            None => cap,
+        };
         let start_u32: u32 = start.into();
         let count = count.min(start_u32 + 1) as usize;
         let end = start_u32 as usize + 1;
@@ -498,12 +565,23 @@ impl Query {
         (begin, end)
     }
 
+    /// Consensus-decodes 80 raw header bytes into the crate's `BlockHeader`.
+    /// Failure means on-disk corruption (the bytes already passed indexer
+    /// validation), so it surfaces as `Error::Internal`, not `OutOfRange`.
     fn decode_header(bytes: &[u8]) -> Result<BlockHeader> {
         let raw = bitcoin::block::Header::consensus_decode(&mut &bytes[..])
             .map_err(|_| Error::Internal("Failed to decode block header"))?;
         Ok(BlockHeader::from(raw))
     }
 
+    /// BIP113 Median Time Past for `height`: median of timestamps over
+    /// `[height-10, height]` (11 blocks). For `height < 10` the window is
+    /// shorter and the median is the upper-middle of available data, matching
+    /// Bitcoin Core's behavior.
+    ///
+    /// `all_timestamps` is the contiguous slab covering `[window_start, ..)`
+    /// pre-fetched by the caller, so this helper only translates absolute
+    /// heights into relative slice indices.
     fn compute_median_time(
         all_timestamps: &[Timestamp],
         height: usize,
@@ -511,14 +589,15 @@ impl Query {
     ) -> Timestamp {
         let rel_start = height.saturating_sub(10) - window_start;
         let rel_end = height + 1 - window_start;
-        let mut sorted: Vec<usize> = all_timestamps[rel_start..rel_end]
-            .iter()
-            .map(|t| usize::from(*t))
-            .collect();
+        let mut sorted = all_timestamps[rel_start..rel_end].to_vec();
         sorted.sort_unstable();
-        Timestamp::from(sorted[sorted.len() / 2])
+        sorted[sorted.len() / 2]
     }
 
+    /// Byte length of Bitcoin's CompactSize varint for a tx count.
+    /// `1` for `<= 0xFC`, `3` for the `0xFD`-prefixed u16 form, `5` for
+    /// the `0xFE`-prefixed u32 form. The 9-byte `0xFF`-prefixed u64 form
+    /// is unreachable here because the input is `u32`.
     fn compact_size_len(tx_count: u32) -> u32 {
         if tx_count <= 0xFC {
             1
@@ -529,8 +608,18 @@ impl Query {
         }
     }
 
-    /// Parse OCEAN DATUM protocol miner names from coinbase scriptsig.
-    /// Skips BIP34 height push, reads tag payload, splits on 0x0F delimiter.
+    /// Parse OCEAN DATUM protocol miner names from a coinbase scriptsig.
+    ///
+    /// Layout: `[height_len][height_bytes][tags_push][tags_bytes...]`.
+    /// `tags_push` is either a direct push length (`<= 0x4b`) or
+    /// `OP_PUSHDATA1 (0x4c)` followed by a length byte. `tags_bytes` is
+    /// split on `0x0F` and each segment is sanitized to ASCII alphanumeric
+    /// plus space.
+    ///
+    /// Any structural mismatch (truncation, missing fields) returns `None`.
+    /// `OP_PUSHDATA2`/`OP_PUSHDATA4` are not handled: today's payloads are
+    /// well under 255 bytes, so this only matters if OCEAN ever publishes
+    /// a longer tag list.
     fn parse_datum_miner_names(scriptsig: &[u8]) -> Option<Vec<String>> {
         if scriptsig.is_empty() {
             return None;
@@ -558,19 +647,13 @@ impl Query {
             return None;
         }
 
-        // Decode tag bytes, strip nulls, split on 0x0F, keep only alphanumeric + space
         let tag_bytes = &scriptsig[tag_start..tag_start + tags_len];
-        let tag_string: String = tag_bytes
-            .iter()
-            .filter(|&&b| b != 0x00)
-            .map(|&b| b as char)
-            .collect();
-
-        let names: Vec<String> = tag_string
-            .split('\x0f')
-            .map(|s| {
-                s.chars()
-                    .filter(|c| c.is_ascii_alphanumeric() || *c == ' ')
+        let names: Vec<String> = tag_bytes
+            .split(|&b| b == 0x0f)
+            .map(|seg| {
+                seg.iter()
+                    .filter(|&&b| b.is_ascii_alphanumeric() || b == b' ')
+                    .map(|&b| b as char)
                     .collect::<String>()
             })
             .filter(|s| !s.trim().is_empty())
@@ -579,34 +662,18 @@ impl Query {
         if names.is_empty() { None } else { Some(names) }
     }
 
-    fn parse_coinbase_from_read(
-        reader: impl Read,
-    ) -> (
-        String,
-        Option<String>,
-        Vec<String>,
-        String,
-        String,
-        Vec<u8>,
-        usize,
-    ) {
-        let empty = (
-            String::new(),
-            None,
-            vec![],
-            String::new(),
-            String::new(),
-            vec![],
-            0,
-        );
+    /// Decode a coinbase transaction off the block reader into a
+    /// `Coinbase` struct. Decode failure is silent: returns
+    /// `Coinbase::default()`. The caller hard-fails on header-read errors
+    /// but accepts coinbase parse failures (they manifest as missing
+    /// `extras` rather than a 5xx).
+    fn parse_coinbase_from_read(reader: impl Read) -> Coinbase {
+        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
+            Ok(tx) => tx,
+            Err(_) => return Coinbase::default(),
+        };
 
-        let tx =
-            match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
-                Ok(tx) => tx,
-                Err(_) => return empty,
-            };
-
-        let coinbase_total_size = tx.total_size();
+        let total_size = tx.total_size();
 
         let scriptsig_bytes: Vec<u8> = tx
             .input
@@ -614,11 +681,11 @@ impl Query {
             .map(|input| input.script_sig.as_bytes().to_vec())
             .unwrap_or_default();
 
-        let coinbase_raw = scriptsig_bytes.to_lower_hex_string();
+        let raw_hex = scriptsig_bytes.to_lower_hex_string();
 
-        let coinbase_signature_ascii: String = scriptsig_bytes.iter().map(|&b| b as char).collect();
+        let scriptsig_ascii: String = scriptsig_bytes.iter().map(|&b| b as char).collect();
 
-        let mut coinbase_addresses: Vec<String> = tx
+        let mut addresses: Vec<String> = tx
             .output
             .iter()
             .filter_map(|output| {
@@ -627,10 +694,12 @@ impl Query {
                     .map(|a| a.to_string())
             })
             .collect();
-        coinbase_addresses.dedup();
-        let coinbase_address = coinbase_addresses.first().cloned();
+        // Collapse consecutive duplicates only: padding outputs to the same
+        // payout get merged, multi-payout pools keep distinct order.
+        addresses.dedup();
+        let primary_address = addresses.first().cloned();
 
-        let coinbase_signature = tx
+        let payout_asm = tx
             .output
             .iter()
             .find(|output| !output.script_pubkey.is_op_return())
@@ -638,14 +707,14 @@ impl Query {
             .map(|output| output.script_pubkey.to_asm_string())
             .unwrap_or_default();
 
-        (
-            coinbase_raw,
-            coinbase_address,
-            coinbase_addresses,
-            coinbase_signature,
-            coinbase_signature_ascii,
+        Coinbase {
+            raw_hex,
+            primary_address,
+            addresses,
+            payout_asm,
+            scriptsig_ascii,
             scriptsig_bytes,
-            coinbase_total_size,
-        )
+            total_size,
+        }
     }
 }

@@ -2,44 +2,47 @@ mod basic;
 mod oracle;
 mod stress;
 
-use brk_types::{Sats, VSize};
+use brk_types::{Sats, Txid, VSize, Weight};
 use smallvec::SmallVec;
 
-use crate::{
-    steps::rebuilder::linearize::{
-        LocalIdx, chunk::Chunk, cluster::Cluster, cluster_node::ClusterNode, sfl::Sfl,
-    },
-    stores::TxIndex,
-};
+use crate::cluster::{Chunk, Cluster, ClusterNode, LocalIdx};
 
-pub(super) fn make_cluster(fees_vsizes: &[(u64, u64)], edges: &[(LocalIdx, LocalIdx)]) -> Cluster {
-    let mut nodes: Vec<ClusterNode> = fees_vsizes
+/// Test cluster: each node carries its input position as `id`, so
+/// invariant checks can map `LocalIdx` (post-permutation) back to the
+/// caller's `fees_vsizes` / `edges` index space.
+pub(super) type TestCluster = Cluster<u32>;
+
+pub(super) fn make_cluster(fees_vsizes: &[(u64, u64)], edges: &[(u32, u32)]) -> TestCluster {
+    let mut parents: Vec<SmallVec<[LocalIdx; 2]>> =
+        (0..fees_vsizes.len()).map(|_| SmallVec::new()).collect();
+    for &(p, c) in edges {
+        parents[c as usize].push(LocalIdx::from(p));
+    }
+
+    let nodes: Vec<ClusterNode<u32>> = fees_vsizes
         .iter()
+        .zip(parents)
         .enumerate()
-        .map(|(i, &(fee, vsize))| ClusterNode {
-            tx_index: TxIndex::from(i),
+        .map(|(i, (&(fee, vsize), parents))| ClusterNode {
+            id: i as u32,
+            txid: Txid::COINBASE,
             fee: Sats::from(fee),
             vsize: VSize::from(vsize),
-            parents: SmallVec::new(),
-            children: SmallVec::new(),
+            weight: Weight::from(vsize * 4),
+            parents,
         })
         .collect();
-
-    for &(p, c) in edges {
-        nodes[c as usize].parents.push(p);
-        nodes[p as usize].children.push(c);
-    }
 
     Cluster::new(nodes)
 }
 
-pub(super) fn run(cluster: &Cluster) -> Vec<Chunk> {
-    Sfl::linearize(cluster)
+pub(super) fn run(cluster: &TestCluster) -> &[Chunk] {
+    &cluster.chunks
 }
 
 pub(super) fn chunk_shapes(chunks: &[Chunk]) -> Vec<(usize, Sats, VSize)> {
     chunks
         .iter()
-        .map(|c| (c.nodes.len(), c.fee, c.vsize))
+        .map(|c| (c.txs.len(), c.fee, c.vsize))
         .collect()
 }

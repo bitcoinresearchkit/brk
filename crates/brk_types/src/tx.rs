@@ -1,6 +1,6 @@
 use crate::{
-    FeeRate, RawLockTime, Sats, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize, Weight,
-    Witness,
+    FeeRate, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize,
+    Weight, Witness,
 };
 use bitcoin::Script;
 use schemars::JsonSchema;
@@ -45,9 +45,9 @@ pub struct Transaction {
     pub weight: Weight,
 
     /// Number of signature operations
-    #[schemars(example = 1)]
+    #[schemars(example = SigOps::new(1))]
     #[serde(rename = "sigops")]
-    pub total_sigop_cost: usize,
+    pub total_sigop_cost: SigOps,
 
     /// Transaction fee in satoshis
     #[schemars(example = Sats::new(31))]
@@ -105,7 +105,7 @@ impl Transaction {
     /// `Script::redeem_script` (push-only check + last-push extraction
     /// in one). Inputs whose `prevout` is `None` skip the P2SH and
     /// witness components - legacy script-sig sigops are still counted.
-    pub fn total_sigop_cost(&self) -> usize {
+    pub fn total_sigop_cost(&self) -> SigOps {
         let mut legacy: usize = 0;
         let mut redeem: usize = 0;
         let mut witness: usize = 0;
@@ -143,10 +143,12 @@ impl Transaction {
             legacy = legacy.saturating_add(output.script_pubkey.count_sigops_legacy());
         }
 
-        legacy
-            .saturating_mul(4)
-            .saturating_add(redeem.saturating_mul(4))
-            .saturating_add(witness)
+        SigOps::from(
+            legacy
+                .saturating_mul(4)
+                .saturating_add(redeem.saturating_mul(4))
+                .saturating_add(witness),
+        )
     }
 }
 

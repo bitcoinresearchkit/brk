@@ -1,6 +1,6 @@
 use std::{
     iter::Sum,
-    ops::{Add, AddAssign, Div, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
 use derive_more::Deref;
@@ -54,6 +54,13 @@ impl From<u64> for VSize {
     #[inline]
     fn from(value: u64) -> Self {
         Self(value)
+    }
+}
+
+impl From<u32> for VSize {
+    #[inline]
+    fn from(value: u32) -> Self {
+        Self(u64::from(value))
     }
 }
 
@@ -124,6 +131,13 @@ impl Div<usize> for VSize {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self(self.0 / rhs as u64)
+    }
+}
+
+impl Mul<u32> for VSize {
+    type Output = Self;
+    fn mul(self, rhs: u32) -> Self::Output {
+        Self(self.0 * u64::from(rhs))
     }
 }
 

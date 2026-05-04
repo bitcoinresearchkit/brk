@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{fmt, io, path::PathBuf, result, time};
+use std::{borrow::Cow, fmt, io, path::PathBuf, result, time};
 
 use thiserror::Error;
 
@@ -126,7 +126,7 @@ pub enum Error {
     NotFound(String),
 
     #[error("{0}")]
-    OutOfRange(String),
+    OutOfRange(Cow<'static, str>),
 
     #[error("{0}")]
     Parse(String),
@@ -234,23 +234,33 @@ fn is_io_error_permanent(e: &std::io::Error) -> bool {
     }
 }
 
+/// Maximum length of a user-supplied series name in error messages before
+/// truncating with an ellipsis.
+const SERIES_NAME_MAX_DISPLAY_LEN: usize = 100;
+
+/// Truncate a user-supplied series name for inclusion in an error message,
+/// appending an ellipsis if it exceeds the display cap. Used for both
+/// `SeriesNotFound` and `SeriesUnsupportedIndex` so far-too-long names don't
+/// blow up the response body.
+pub fn truncate_series_name(mut series: String) -> String {
+    if series.len() > SERIES_NAME_MAX_DISPLAY_LEN {
+        series.truncate(SERIES_NAME_MAX_DISPLAY_LEN);
+        series.push_str("...");
+    }
+    series
+}
+
 #[derive(Debug)]
 pub struct SeriesNotFound {
     pub series: String,
-    pub suggestions: Vec<String>,
+    pub suggestions: Vec<&'static str>,
     pub total_matches: usize,
 }
 
 impl SeriesNotFound {
-    pub fn new(mut series: String, all_matches: Vec<String>) -> Self {
-        let total_matches = all_matches.len();
-        let suggestions = all_matches.into_iter().take(3).collect();
-        if series.len() > 100 {
-            series.truncate(100);
-            series.push_str("...");
-        }
+    pub fn new(series: String, suggestions: Vec<&'static str>, total_matches: usize) -> Self {
         Self {
-            series,
+            series: truncate_series_name(series),
             suggestions,
             total_matches,
         }

@@ -13,6 +13,13 @@ const MIN_INCREMENT: FeeRate = FeeRate::new(0.001);
 const PRIORITY_FACTOR: FeeRate = FeeRate::new(0.5);
 const MIN_FASTEST_FEE: FeeRate = FeeRate::new(1.0);
 const MIN_HALF_HOUR_FEE: FeeRate = FeeRate::new(0.5);
+/// At or below this projected-block vsize, the block carries no fee
+/// signal and the tier collapses to `min_fee`.
+const EMPTY_BLOCK_VSIZE: u64 = 500_000;
+/// Above this projected-block vsize, no taper applies. Between
+/// `EMPTY_BLOCK_VSIZE` and this threshold, the final-block fee is
+/// scaled linearly by `(vsize - EMPTY_BLOCK_VSIZE) / EMPTY_BLOCK_VSIZE`.
+const FULL_BLOCK_VSIZE: u64 = 950_000;
 
 pub struct Fees;
 
@@ -70,11 +77,11 @@ impl Fees {
         let median = block.median_fee_rate();
         let use_fee = previous_fee.map_or(median, |prev| FeeRate::mean(median, prev));
         let vsize = u64::from(block.total_vsize);
-        if vsize <= 500_000 || median < min_fee {
+        if vsize <= EMPTY_BLOCK_VSIZE || median < min_fee {
             return min_fee;
         }
-        if vsize <= 950_000 && next_block.is_none() {
-            let multiplier = (vsize - 500_000) as f64 / 500_000.0;
+        if vsize <= FULL_BLOCK_VSIZE && next_block.is_none() {
+            let multiplier = (vsize - EMPTY_BLOCK_VSIZE) as f64 / EMPTY_BLOCK_VSIZE as f64;
             return (use_fee * multiplier).round_to(MIN_INCREMENT).max(min_fee);
         }
         use_fee.ceil_to(MIN_INCREMENT).max(min_fee)

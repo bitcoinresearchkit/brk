@@ -206,10 +206,10 @@ impl Query {
             let (block_hash, block_time) = if let Some((h, ref bh, bt)) = cached_status
                 && h == spending_height
             {
-                (bh.clone(), bt)
+                (*bh, bt)
             } else {
                 let (bh, bt) = self.block_hash_and_time(spending_height)?;
-                cached_status = Some((spending_height, bh.clone(), bt));
+                cached_status = Some((spending_height, bh, bt));
                 (bh, bt)
             };
 
@@ -315,10 +315,11 @@ impl Query {
         let txids = self.block_txids_by_height(height)?;
 
         let target: bitcoin::Txid = txid.into();
-        let btxids: Vec<bitcoin::Txid> = txids.iter().map(bitcoin::Txid::from).collect();
-        let mb = bitcoin::MerkleBlock::from_header_txids_with_predicate(&header, &btxids, |t| {
-            *t == target
-        });
+        let mb = bitcoin::MerkleBlock::from_header_txids_with_predicate(
+            &header,
+            Txid::as_bitcoin_slice(&txids),
+            |t| *t == target,
+        );
         Ok(bitcoin::consensus::encode::serialize_hex(&mb))
     }
 
