@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Indexes, Version};
+use brk_types::{Cents, Dollars, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableCloneableVec, Rw, StorageMode, WritableVec};
 
@@ -67,12 +68,12 @@ impl UnrealizedBasic {
 
     pub(crate) fn compute_from_sources(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; profit.cents.height);
-        sum_others!(self, starting_indexes, others, exit; loss.cents.height);
+        sum_others!(self, starting_lengths, others, exit; profit.cents.height);
+        sum_others!(self, starting_lengths, others, exit; loss.cents.height);
         Ok(())
     }
 }

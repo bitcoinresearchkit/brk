@@ -1,7 +1,7 @@
 use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockTimestamp, Date, Day1, Height, Timestamp};
 use jiff::Timestamp as JiffTimestamp;
-use vecdb::{AnyVec, ReadableVec};
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -23,10 +23,10 @@ impl Query {
         let indexer = self.indexer();
         let computer = self.computer();
 
-        if indexer.vecs.blocks.blockhash.len() == 0 {
+        if self.safe_lengths().height == Height::ZERO {
             return Err(Error::NotFound("No blocks indexed".into()));
         }
-        let tip: usize = self.tip_height().into();
+        let tip: usize = self.height().into();
 
         let target = timestamp;
         let date = Date::from(target);

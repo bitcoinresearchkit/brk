@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -15,20 +14,16 @@ impl Vecs {
         blocks: &blocks::Vecs,
         inputs: &inputs::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
         let (r1, (r2, r3)) = rayon::join(
-            || {
-                self.count
-                    .compute(indexer, &blocks.lookback, starting_indexes, exit)
-            },
+            || self.count.compute(indexer, &blocks.lookback, exit),
             || {
                 rayon::join(
-                    || self.versions.compute(indexer, starting_indexes, exit),
-                    || self.size.compute(indexer, indexes, starting_indexes, exit),
+                    || self.versions.compute(indexer, exit),
+                    || self.size.compute(indexer, indexes, exit),
                 )
             },
         );
@@ -36,24 +31,11 @@ impl Vecs {
         r2?;
         r3?;
 
-        self.fees.compute(
-            indexer,
-            indexes,
-            &inputs.spent,
-            &self.size,
-            starting_indexes,
-            exit,
-        )?;
+        self.fees
+            .compute(indexer, indexes, &inputs.spent, &self.size, exit)?;
 
-        self.volume.compute(
-            indexer,
-            indexes,
-            prices,
-            &self.count,
-            &self.fees,
-            starting_indexes,
-            exit,
-        )?;
+        self.volume
+            .compute(indexer, indexes, prices, &self.count, &self.fees, exit)?;
 
         let exit = exit.clone();
         self.db.run_bg(move |db| {

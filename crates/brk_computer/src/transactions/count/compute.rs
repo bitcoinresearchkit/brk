@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -11,14 +10,15 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         lookback: &blocks::LookbackVecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         let window_starts = lookback.window_starts();
         self.total
-            .compute(starting_indexes.height, &window_starts, exit, |height| {
+            .compute(starting_height, &window_starts, exit, |height| {
                 Ok(height.compute_count_from_indexes(
-                    starting_indexes.height,
+                    starting_height,
                     &indexer.vecs.transactions.first_tx_index,
                     &indexer.vecs.transactions.txid,
                     exit,

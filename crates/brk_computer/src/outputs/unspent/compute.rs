@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Height, Indexes, StoredU64};
+use brk_indexer::Lengths;
+use brk_types::{Height, StoredU64};
 use vecdb::Exit;
 
 use super::Vecs;
@@ -15,14 +16,14 @@ impl Vecs {
         count: &CountVecs,
         inputs_count: &inputs::CountVecs,
         by_type: &ByTypeVecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         let op_return: &PerBlockCumulativeRolling<StoredU64, StoredU64> =
             &by_type.output_count.by_type.unspendable.op_return;
 
         self.count.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             &count.total.cumulative.height,
             &inputs_count.cumulative.height,
             &op_return.cumulative.height,

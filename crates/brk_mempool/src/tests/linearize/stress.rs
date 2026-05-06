@@ -72,16 +72,8 @@ fn check_invariants(fees_vsizes: &[(u64, u64)], edges: &[(u32, u32)], cluster: &
     }
 
     for chunk in chunks {
-        let fee: u64 = chunk
-            .txs
-            .iter()
-            .map(|&l| fees_vsizes[input_of(l)].0)
-            .sum();
-        let vsize: u64 = chunk
-            .txs
-            .iter()
-            .map(|&l| fees_vsizes[input_of(l)].1)
-            .sum();
+        let fee: u64 = chunk.txs.iter().map(|&l| fees_vsizes[input_of(l)].0).sum();
+        let vsize: u64 = chunk.txs.iter().map(|&l| fees_vsizes[input_of(l)].1).sum();
         assert_eq!(chunk.fee, Sats::from(fee), "chunk fee mismatch");
         assert_eq!(chunk.vsize, VSize::from(vsize), "chunk vsize mismatch");
     }

@@ -4,8 +4,9 @@
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, Version};
+use brk_types::{Height, Sats, Version};
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec};
@@ -83,12 +84,12 @@ where
     }
 
     /// Compute `all.height` as the per-block sum of the per-type vecs.
-    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, starting_lengths: &Lengths, exit: &Exit) -> Result<()> {
         let sources: Vec<&EagerVec<PcoVec<Height, T>>> =
             self.by_addr_type.values().map(|v| &v.height).collect();
         self.all
             .height
-            .compute_sum_of_others(starting_indexes.height, &sources, exit)?;
+            .compute_sum_of_others(starting_lengths.height, &sources, exit)?;
         Ok(())
     }
 }

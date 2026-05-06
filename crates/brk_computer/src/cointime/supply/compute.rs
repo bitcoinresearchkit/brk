@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Indexes;
+use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::super::activity;
@@ -9,12 +9,13 @@ use crate::{distribution, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let circulating_supply = &distribution
             .utxo_cohorts
             .all
@@ -25,22 +26,21 @@ impl Vecs {
             .height;
 
         self.vaulted.sats.height.compute_multiply(
-            starting_indexes.height,
+            starting_height,
             circulating_supply,
             &activity.vaultedness.height,
             exit,
         )?;
 
         self.active.sats.height.compute_multiply(
-            starting_indexes.height,
+            starting_height,
             circulating_supply,
             &activity.liveliness.height,
             exit,
         )?;
 
-        self.vaulted
-            .compute(prices, starting_indexes.height, exit)?;
-        self.active.compute(prices, starting_indexes.height, exit)?;
+        self.vaulted.compute(prices, starting_height, exit)?;
+        self.active.compute(prices, starting_height, exit)?;
 
         Ok(())
     }

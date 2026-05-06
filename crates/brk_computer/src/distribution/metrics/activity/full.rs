@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, StoredF32, StoredF64, Version};
+use brk_types::{StoredF32, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
@@ -78,22 +79,22 @@ impl ActivityFull {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&ActivityCore],
         exit: &Exit,
     ) -> Result<()> {
         self.inner
-            .compute_from_stateful(starting_indexes, others, exit)
+            .compute_from_stateful(starting_lengths, others, exit)
     }
 
     pub(crate) fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.inner
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_lengths, exit)?;
 
         for ((dormancy, cdd_sum), tv_sum) in self
             .dormancy
@@ -103,7 +104,7 @@ impl ActivityFull {
             .zip(self.inner.minimal.transfer_volume.sum.0.as_array())
         {
             dormancy.height.compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 &cdd_sum.height,
                 &tv_sum.btc.height,
                 |(i, rolling_cdd, rolling_btc, ..)| {

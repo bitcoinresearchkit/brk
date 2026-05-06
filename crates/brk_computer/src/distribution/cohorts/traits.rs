@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Cents, Height, Indexes, Sats, StoredU64, Version};
+use brk_indexer::Lengths;
+use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::prices;
@@ -31,7 +32,7 @@ pub trait DynCohortVecs: Send + Sync {
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()>;
 
@@ -52,7 +53,7 @@ pub trait CohortVecs: DynCohortVecs {
     /// Compute aggregate cohort from component cohorts.
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()>;
@@ -61,7 +62,7 @@ pub trait CohortVecs: DynCohortVecs {
     fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,

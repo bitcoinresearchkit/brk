@@ -270,9 +270,7 @@ fn extract_response_kind(operation: &Operation, spec: &Spec) -> ResponseKind {
 
 fn schema_name_from_content(content: &oas3::spec::MediaType) -> Option<String> {
     match content.schema.as_ref()? {
-        ObjectOrReference::Ref { ref_path, .. } => {
-            Some(ref_to_type_name(ref_path)?.to_string())
-        }
+        ObjectOrReference::Ref { ref_path, .. } => Some(ref_to_type_name(ref_path)?.to_string()),
         ObjectOrReference::Object(schema) => schema_to_type_name(schema),
     }
 }
@@ -288,7 +286,9 @@ fn is_numeric_schema(spec: &Spec, name: &str) -> bool {
     };
     matches!(
         schema.schema_type.as_ref(),
-        Some(SchemaTypeSet::Single(SchemaType::Integer | SchemaType::Number))
+        Some(SchemaTypeSet::Single(
+            SchemaType::Integer | SchemaType::Number
+        ))
     )
 }
 

@@ -1,21 +1,17 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{CheckedSub, Indexes, Timestamp};
+use brk_types::{CheckedSub, Timestamp};
 use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
 
 impl Vecs {
-    pub(crate) fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let mut prev_timestamp = None;
-        self.0.compute(starting_indexes.height, exit, |vec| {
+        self.0.compute(starting_height, exit, |vec| {
             vec.compute_transform(
-                starting_indexes.height,
+                starting_height,
                 &indexer.vecs.blocks.timestamp,
                 |(h, timestamp, ..)| {
                     let interval = if let Some(prev_h) = h.decremented() {

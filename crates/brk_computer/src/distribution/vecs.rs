@@ -5,8 +5,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height, Indexes,
-    StoredF64, SupplyState, Timestamp, TxIndex, Version,
+    Cents, EmptyAddrData, EmptyAddrIndex, FundedAddrData, FundedAddrIndex, Height, StoredF64,
+    SupplyState, Timestamp, TxIndex, Version,
 };
 use rayon::prelude::*;
 use tracing::{debug, info};
@@ -317,18 +317,19 @@ impl Vecs {
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
+
+        let starting_lengths = indexer.safe_lengths();
 
         // 1. Find minimum height we have data for across stateful vecs
         let current_height = Height::from(self.supply_state.len());
         let min_stateful = self.min_stateful_len();
 
         // 2. Determine start mode and recover/reset state
-        // Clamp to starting_indexes.height to handle reorg (indexer may require earlier start)
-        let resume_target = current_height.min(starting_indexes.height);
+        // Clamp to starting_lengths.height to handle reorg (indexer may require earlier start)
+        let resume_target = current_height.min(starting_lengths.height);
         if resume_target < current_height {
             info!(
                 "Reorg detected: rolling back from {} to {}",
@@ -451,11 +452,6 @@ impl Vecs {
             recovered_height
         };
 
-        // Update starting_indexes if we need to recompute from an earlier point
-        if starting_height < starting_indexes.height {
-            starting_indexes.height = starting_height;
-        }
-
         // 2c. Validate computed versions
         debug!("validating computed versions");
         let base_version = VERSION;
@@ -510,11 +506,11 @@ impl Vecs {
             let (r1, r2) = rayon::join(
                 || {
                     self.utxo_cohorts
-                        .compute_overlapping_vecs(starting_indexes, exit)
+                        .compute_overlapping_vecs(&starting_lengths, exit)
                 },
                 || {
                     self.addr_cohorts
-                        .compute_overlapping_vecs(starting_indexes, exit)
+                        .compute_overlapping_vecs(&starting_lengths, exit)
                 },
             );
             r1?;
@@ -523,7 +519,7 @@ impl Vecs {
 
         // 5b. Compute coinblocks_destroyed cumulative from raw
         self.coinblocks_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
 
         // 6. Compute rest part1 (day1 mappings)
         info!("Computing rest part 1...");
@@ -531,11 +527,11 @@ impl Vecs {
             let (r1, r2) = rayon::join(
                 || {
                     self.utxo_cohorts
-                        .compute_rest_part1(prices, starting_indexes, exit)
+                        .compute_rest_part1(prices, &starting_lengths, exit)
                 },
                 || {
                     self.addr_cohorts
-                        .compute_rest_part1(prices, starting_indexes, exit)
+                        .compute_rest_part1(prices, &starting_lengths, exit)
                 },
             );
             r1?;
@@ -543,8 +539,8 @@ impl Vecs {
         }
 
         // 6b. Compute address count sum (by addr_type -> all)
-        self.addrs.funded.compute_rest(starting_indexes, exit)?;
-        self.addrs.empty.compute_rest(starting_indexes, exit)?;
+        self.addrs.funded.compute_rest(&starting_lengths, exit)?;
+        self.addrs.empty.compute_rest(&starting_lengths, exit)?;
         let t = &self.utxo_cohorts.type_;
         let type_supply_sats = ByAddrType::new(|filter| {
             let Filter::Type(ot) = filter else {
@@ -554,7 +550,7 @@ impl Vecs {
         });
         let all_supply_sats = &self.utxo_cohorts.all.metrics.supply.total.sats.height;
         self.addrs.reused.compute_rest(
-            starting_indexes,
+            &starting_lengths,
             &outputs.by_type,
             &inputs.by_type,
             prices,
@@ -563,7 +559,7 @@ impl Vecs {
             exit,
         )?;
         self.addrs.respent.compute_rest(
-            starting_indexes,
+            &starting_lengths,
             &outputs.by_type,
             &inputs.by_type,
             prices,
@@ -572,7 +568,7 @@ impl Vecs {
             exit,
         )?;
         self.addrs.exposed.compute_rest(
-            starting_indexes,
+            &starting_lengths,
             prices,
             all_supply_sats,
             &type_supply_sats,
@@ -586,7 +582,7 @@ impl Vecs {
             &all_m.supply.total.sats.height,
             &all_m.outputs.unspent_count.height,
             &self.addrs.funded.all.height,
-            starting_indexes.height,
+            starting_lengths.height,
             exit,
         )?;
         for ((ot, avg), (_, funded)) in self
@@ -602,14 +598,14 @@ impl Vecs {
                 &type_m.supply.total.sats.height,
                 &type_m.outputs.unspent_count.height,
                 &funded.height,
-                starting_indexes.height,
+                starting_lengths.height,
                 exit,
             )?;
         }
 
         // 6c. Compute total_addr_count = addr_count + empty_addr_count
         self.addrs.total.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.addrs.funded,
             &self.addrs.empty,
             exit,
@@ -617,10 +613,10 @@ impl Vecs {
 
         self.addrs
             .activity
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.addrs
             .new
-            .compute(starting_indexes.height, &self.addrs.total, exit)?;
+            .compute(starting_lengths.height, &self.addrs.total, exit)?;
 
         // 7. Compute rest part2 (relative metrics)
         let height_to_market_cap = self
@@ -637,7 +633,7 @@ impl Vecs {
         self.utxo_cohorts.compute_rest_part2(
             blocks,
             prices,
-            starting_indexes,
+            &starting_lengths,
             &height_to_market_cap,
             exit,
         )?;
@@ -661,7 +657,7 @@ impl Vecs {
             .read_only_clone();
         self.addr_cohorts.compute_rest_part2(
             prices,
-            starting_indexes,
+            &starting_lengths,
             &all_supply_sats,
             &all_utxo_count,
             exit,

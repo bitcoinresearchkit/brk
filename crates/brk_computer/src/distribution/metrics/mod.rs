@@ -140,7 +140,8 @@ pub use unrealized::{
 
 use brk_cohort::Filter;
 use brk_error::Result;
-use brk_types::{Cents, Indexes, Version};
+use brk_indexer::Lengths;
+use brk_types::{Cents, Version};
 use vecdb::{AnyStoredVec, Exit, StorageMode};
 
 use crate::{
@@ -270,23 +271,23 @@ pub trait CohortMetricsBase:
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.supply_mut()
-            .compute(prices, starting_indexes.height, exit)?;
+            .compute(prices, starting_lengths.height, exit)?;
         self.outputs_mut()
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.activity_mut()
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_lengths, exit)?;
 
         self.realized_mut()
-            .compute_rest_part1(starting_indexes, exit)?;
+            .compute_rest_part1(starting_lengths, exit)?;
 
         let (supply, unrealized) = self.supply_and_unrealized_mut();
         unrealized.compute_rest(
             prices,
-            starting_indexes,
+            starting_lengths,
             &supply.in_profit.sats.height,
             &supply.in_loss.sats.height,
             exit,
@@ -298,32 +299,32 @@ pub trait CohortMetricsBase:
     /// Compute aggregate base metrics from source cohorts.
     fn compute_base_from_others<T: CohortMetricsBase>(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&T],
         exit: &Exit,
     ) -> Result<()> {
         self.supply_mut().compute_from_stateful(
-            starting_indexes,
+            starting_lengths,
             &others.iter().map(|v| v.supply()).collect::<Vec<_>>(),
             exit,
         )?;
         self.outputs_mut().compute_from_stateful(
-            starting_indexes,
+            starting_lengths,
             &others.iter().map(|v| v.outputs()).collect::<Vec<_>>(),
             exit,
         )?;
         self.activity_mut().compute_from_stateful(
-            starting_indexes,
+            starting_lengths,
             &others.iter().map(|v| v.activity_core()).collect::<Vec<_>>(),
             exit,
         )?;
         self.realized_mut().compute_from_stateful(
-            starting_indexes,
+            starting_lengths,
             &others.iter().map(|v| v.realized_core()).collect::<Vec<_>>(),
             exit,
         )?;
         self.unrealized_core_mut().compute_from_stateful(
-            starting_indexes,
+            starting_lengths,
             &others
                 .iter()
                 .map(|v| v.unrealized_core())

@@ -1,27 +1,68 @@
 use std::{
-    fs::OpenOptions,
+    fs::{File, OpenOptions, create_dir_all},
     io::{self, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicU64, Ordering},
     },
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use jiff::{Timestamp, tz};
+use tracing::{Level, Metadata};
 use tracing_subscriber::fmt::MakeWriter;
 
 const MAX_WRITES_PER_SEC: u64 = 100;
+const LEVELS: usize = 5;
+const LEVEL_SUFFIX: [&str; LEVELS] = ["error", "warn", "info", "debug", "trace"];
 
-struct Inner {
-    dir: PathBuf,
-    prefix: String,
+const fn level_index(level: Level) -> usize {
+    match level {
+        Level::ERROR => 0,
+        Level::WARN => 1,
+        Level::INFO => 2,
+        Level::DEBUG => 3,
+        Level::TRACE => 4,
+    }
+}
+
+/// Returns true if `name` matches a file produced by this writer:
+/// `YYYY-MM-DD.txt` or `YYYY-MM-DD_<level>.txt`.
+pub(crate) fn is_log_file(name: &str) -> bool {
+    let Some(stem) = name.strip_suffix(".txt") else {
+        return false;
+    };
+    if stem.len() < 10 {
+        return false;
+    }
+    let (date, rest) = stem.split_at(10);
+    if !is_date_yyyymmdd(date) {
+        return false;
+    }
+    rest.is_empty()
+        || rest
+            .strip_prefix('_')
+            .is_some_and(|s| LEVEL_SUFFIX.contains(&s))
+}
+
+fn is_date_yyyymmdd(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() == 10
+        && b[0..4].iter().all(u8::is_ascii_digit)
+        && b[4] == b'-'
+        && b[5..7].iter().all(u8::is_ascii_digit)
+        && b[7] == b'-'
+        && b[8..10].iter().all(u8::is_ascii_digit)
+}
+
+#[derive(Default)]
+struct RateLimit {
     count: AtomicU64,
     last_second: AtomicU64,
 }
 
-impl Inner {
+impl RateLimit {
     fn can_write(&self) -> bool {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -37,43 +78,112 @@ impl Inner {
             self.count.fetch_add(1, Ordering::Relaxed) < MAX_WRITES_PER_SEC
         }
     }
+}
 
-    fn path(&self) -> PathBuf {
-        let date = Timestamp::now()
-            .to_zoned(tz::TimeZone::system())
-            .strftime("%Y-%m-%d")
-            .to_string();
-        self.dir.join(format!("{}_{}.txt", self.prefix, date))
+struct Cached {
+    date: String,
+    file: File,
+}
+
+#[derive(Default)]
+struct FileSlot(Mutex<Option<Cached>>);
+
+fn open_append(path: &Path) -> io::Result<File> {
+    OpenOptions::new().create(true).append(true).open(path)
+}
+
+impl FileSlot {
+    fn write(
+        &self,
+        dir: &Path,
+        date: &str,
+        buf: &[u8],
+        path: impl FnOnce() -> PathBuf,
+    ) -> io::Result<()> {
+        let mut guard = self.0.lock().unwrap();
+        let cached = match guard.as_mut() {
+            Some(c) if c.date == date => c,
+            _ => {
+                let p = path();
+                let file = match open_append(&p) {
+                    Ok(f) => f,
+                    Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                        create_dir_all(dir)?;
+                        open_append(&p)?
+                    }
+                    Err(e) => return Err(e),
+                };
+                guard.insert(Cached {
+                    date: date.to_string(),
+                    file,
+                })
+            }
+        };
+        cached.file.write_all(buf)
     }
 }
 
-#[derive(Clone)]
+fn today() -> String {
+    Timestamp::now()
+        .to_zoned(tz::TimeZone::system())
+        .strftime("%Y-%m-%d")
+        .to_string()
+}
+
+struct Inner {
+    dir: PathBuf,
+    level_limits: [RateLimit; LEVELS],
+    combined_slot: FileSlot,
+    level_slots: [FileSlot; LEVELS],
+}
+
+/// Rate-limited daily log files: one combined file plus one per tracing level.
+/// Each level has its own 100/sec limiter so a chatty level cannot starve the
+/// others; the combined file is a true superset, written iff a per-level write
+/// is permitted (or unconditionally for events with no associated level).
 pub struct RateLimitedFile(Arc<Inner>);
 
 impl RateLimitedFile {
-    pub fn new(dir: &std::path::Path, prefix: &str) -> Self {
-        Self(Arc::new(Inner {
+    pub fn new(dir: &Path) -> io::Result<Self> {
+        create_dir_all(dir)?;
+        Ok(Self(Arc::new(Inner {
             dir: dir.to_path_buf(),
-            prefix: prefix.to_string(),
-            count: AtomicU64::new(0),
-            last_second: AtomicU64::new(0),
-        }))
+            level_limits: Default::default(),
+            combined_slot: FileSlot::default(),
+            level_slots: Default::default(),
+        })))
     }
 }
 
-pub struct FileWriter(Arc<Inner>);
+pub struct FileWriter {
+    inner: Arc<Inner>,
+    level: Option<Level>,
+}
 
 impl Write for FileWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if !self.0.can_write() {
+        let level_idx = self.level.map(level_index);
+
+        if let Some(i) = level_idx
+            && !self.inner.level_limits[i].can_write()
+        {
             return Ok(buf.len());
         }
 
-        OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(self.0.path())?
-            .write(buf)
+        let date = today();
+        let dir = &self.inner.dir;
+
+        self.inner
+            .combined_slot
+            .write(dir, &date, buf, || dir.join(format!("{date}.txt")))?;
+
+        if let Some(i) = level_idx {
+            self.inner.level_slots[i].write(dir, &date, buf, || {
+                dir.join(format!("{date}_{}.txt", LEVEL_SUFFIX[i]))
+            })?;
+        }
+
+        Ok(buf.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
@@ -84,7 +194,56 @@ impl Write for FileWriter {
 impl<'a> MakeWriter<'a> for RateLimitedFile {
     type Writer = FileWriter;
 
+    /// Fallback used only by callers that bypass `make_writer_for`. The fmt
+    /// layer always provides metadata, so this path is unused in practice; it
+    /// writes to the combined file only and skips per-level routing.
     fn make_writer(&'a self) -> Self::Writer {
-        FileWriter(Arc::clone(&self.0))
+        FileWriter {
+            inner: Arc::clone(&self.0),
+            level: None,
+        }
+    }
+
+    fn make_writer_for(&'a self, meta: &Metadata<'_>) -> Self::Writer {
+        FileWriter {
+            inner: Arc::clone(&self.0),
+            level: Some(*meta.level()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_log_file_accepts_combined() {
+        assert!(is_log_file("2026-05-06.txt"));
+    }
+
+    #[test]
+    fn is_log_file_accepts_each_level() {
+        for suffix in LEVEL_SUFFIX {
+            assert!(is_log_file(&format!("2026-05-06_{suffix}.txt")));
+        }
+    }
+
+    #[test]
+    fn is_log_file_rejects_unknown_level() {
+        assert!(!is_log_file("2026-05-06_notice.txt"));
+    }
+
+    #[test]
+    fn is_log_file_rejects_bad_date() {
+        assert!(!is_log_file("2026-5-06.txt"));
+        assert!(!is_log_file("abcd-ef-gh.txt"));
+        assert!(!is_log_file("2026/05/06.txt"));
+    }
+
+    #[test]
+    fn is_log_file_rejects_user_files() {
+        assert!(!is_log_file("notes.txt"));
+        assert!(!is_log_file("README"));
+        assert!(!is_log_file("2026-05-06.log"));
     }
 }

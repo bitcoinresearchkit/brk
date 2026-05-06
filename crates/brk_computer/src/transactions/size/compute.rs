@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -11,11 +10,12 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
+
         self.vsize
-            .derive_from(indexer, indexes, starting_indexes, exit)?;
+            .derive_from(indexer, indexes, &starting_lengths, exit)?;
 
         Ok(())
     }

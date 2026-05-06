@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::{
-    Cents, Close, Day1, Day3, Epoch, Halving, High, Hour1, Hour4, Hour12, Indexes, Low, Minute10,
-    Minute30, Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1, Year10,
+    Cents, Close, Day1, Day3, Epoch, Halving, High, Hour1, Hour4, Hour12, Low, Minute10, Minute30,
+    Month1, Month3, Month6, OHLCCents, Open, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -81,7 +82,7 @@ impl OhlcVecs<OHLCCents> {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_from_split(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         indexes: &indexes::Vecs,
         open: &EagerIndexes<Cents>,
         high: &EagerIndexes<Cents>,
@@ -89,7 +90,7 @@ impl OhlcVecs<OHLCCents> {
         close: &Resolutions<Cents>,
         exit: &Exit,
     ) -> Result<()> {
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_lengths.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {

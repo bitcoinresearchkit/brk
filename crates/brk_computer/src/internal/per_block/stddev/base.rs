@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, StoredF32, Version};
+use brk_types::{Height, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, indexes, internal::PerBlock};
@@ -35,20 +36,20 @@ impl StdDevPerBlock {
     pub(crate) fn compute_all(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         if self.days == usize::MAX {
             self.sma.height.compute_sma_(
-                starting_indexes.height,
+                starting_lengths.height,
                 source,
                 usize::MAX,
                 exit,
                 None,
             )?;
             self.sd.height.compute_expanding_sd(
-                starting_indexes.height,
+                starting_lengths.height,
                 source,
                 &self.sma.height,
                 exit,
@@ -59,14 +60,14 @@ impl StdDevPerBlock {
         let window_starts = blocks.lookback.start_vec(self.days);
 
         self.sma.height.compute_rolling_average(
-            starting_indexes.height,
+            starting_lengths.height,
             window_starts,
             source,
             exit,
         )?;
 
         self.sd.height.compute_rolling_sd(
-            starting_indexes.height,
+            starting_lengths.height,
             window_starts,
             source,
             &self.sma.height,

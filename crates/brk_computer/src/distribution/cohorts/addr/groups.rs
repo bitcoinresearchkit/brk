@@ -2,8 +2,9 @@ use std::path::Path;
 
 use brk_cohort::{AddrGroups, AmountRange, Filter, Filtered, OverAmount, UnderAmount};
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, StoredU64, Version};
+use brk_types::{Height, Sats, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
@@ -83,11 +84,11 @@ impl AddrCohorts {
     /// Compute overlapping cohorts from component amount_range cohorts.
     pub(crate) fn compute_overlapping_vecs(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.for_each_aggregate(|vecs, sources| {
-            vecs.compute_from_stateful(starting_indexes, &sources, exit)
+            vecs.compute_from_stateful(starting_lengths, &sources, exit)
         })
     }
 
@@ -95,11 +96,11 @@ impl AddrCohorts {
     pub(crate) fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.par_iter_mut()
-            .try_for_each(|v| v.compute_rest_part1(prices, starting_indexes, exit))?;
+            .try_for_each(|v| v.compute_rest_part1(prices, starting_lengths, exit))?;
 
         Ok(())
     }
@@ -108,7 +109,7 @@ impl AddrCohorts {
     pub(crate) fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
@@ -116,7 +117,7 @@ impl AddrCohorts {
         self.0.par_iter_mut().try_for_each(|v| {
             v.compute_rest_part2(
                 prices,
-                starting_indexes,
+                starting_lengths,
                 all_supply_sats,
                 all_utxo_count,
                 exit,

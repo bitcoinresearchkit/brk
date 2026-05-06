@@ -44,13 +44,13 @@ pub fn main() -> Result<()> {
     });
 
     let i = Instant::now();
-    let starting_indexes = indexer.index(&reader, &client, &exit)?;
+    indexer.index(&reader, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
     Mimalloc::collect();
 
     let i = Instant::now();
-    computer.compute(&indexer, starting_indexes, &exit)?;
+    computer.compute(&indexer, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
     // We want to benchmark the drop too

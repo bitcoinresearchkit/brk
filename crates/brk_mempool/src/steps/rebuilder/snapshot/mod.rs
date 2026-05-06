@@ -88,6 +88,10 @@ impl Snapshot {
     /// the full `CpfpInfo`.
     pub fn chunk_rate_of(&self, idx: TxIndex) -> Option<FeeRate> {
         let ClusterRef { cluster_id, local } = self.cluster_of(idx)?;
-        Some(self.clusters[cluster_id.as_usize()].chunk_of(local).fee_rate())
+        Some(
+            self.clusters[cluster_id.as_usize()]
+                .chunk_of(local)
+                .fee_rate(),
+        )
     }
 }

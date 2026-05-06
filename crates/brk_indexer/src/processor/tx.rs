@@ -13,7 +13,7 @@ use super::{BlockProcessor, ComputedTx};
 impl<'a> BlockProcessor<'a> {
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
         let will_check_collisions = self.check_collisions;
-        let base_tx_index = self.indexes.tx_index;
+        let base_tx_index = self.lengths.tx_index;
 
         self.block
             .txdata

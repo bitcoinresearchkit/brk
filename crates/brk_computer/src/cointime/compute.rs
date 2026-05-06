@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Indexes;
+use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -9,7 +9,7 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
@@ -20,29 +20,23 @@ impl Vecs {
         self.db.sync_bg_tasks()?;
 
         // Activity computes first (liveliness, vaultedness, etc.)
-        self.activity
-            .compute(starting_indexes, distribution, exit)?;
+        self.activity.compute(indexer, distribution, exit)?;
 
         // Phase 2: supply, adjusted, value are independent (all depend only on activity)
         let (r1, r2) = rayon::join(
             || {
                 self.supply
-                    .compute(starting_indexes, prices, distribution, &self.activity, exit)
+                    .compute(indexer, prices, distribution, &self.activity, exit)
             },
             || {
                 rayon::join(
                     || {
                         self.adjusted
-                            .compute(starting_indexes, supply_vecs, &self.activity, exit)
+                            .compute(indexer, supply_vecs, &self.activity, exit)
                     },
                     || {
-                        self.value.compute(
-                            starting_indexes,
-                            prices,
-                            distribution,
-                            &self.activity,
-                            exit,
-                        )
+                        self.value
+                            .compute(indexer, prices, distribution, &self.activity, exit)
                     },
                 )
             },
@@ -53,7 +47,7 @@ impl Vecs {
 
         // Cap depends on activity + value
         self.cap.compute(
-            starting_indexes,
+            indexer,
             mining,
             distribution,
             &self.activity,
@@ -65,7 +59,7 @@ impl Vecs {
         let (r3, r4) = rayon::join(
             || {
                 self.prices.compute(
-                    starting_indexes,
+                    indexer,
                     prices,
                     distribution,
                     &self.activity,
@@ -76,7 +70,7 @@ impl Vecs {
             },
             || {
                 self.reserve_risk
-                    .compute(starting_indexes, blocks, prices, &self.value, exit)
+                    .compute(indexer, blocks, prices, &self.value, exit)
             },
         );
         r3?;

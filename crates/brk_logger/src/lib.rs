@@ -10,12 +10,18 @@ use tracing_subscriber::{filter::Targets, fmt, layer::SubscriberExt, util::Subsc
 
 use format::Formatter;
 use hook::{HookLayer, LOG_HOOK};
-use rate_limit::RateLimitedFile;
+use rate_limit::{RateLimitedFile, is_log_file};
 
 /// Days to keep log files before cleanup
 const MAX_LOG_AGE_DAYS: u64 = 7;
 
-pub fn init(path: Option<&Path>) -> io::Result<()> {
+/// Initialize the global tracing subscriber with a colorized console layer.
+///
+/// If `dir` is `Some`, also writes daily log files to that directory:
+/// `YYYY-MM-DD.txt` for the combined log and `YYYY-MM-DD_<level>.txt` for each
+/// tracing level. The directory is created if it does not exist, and any
+/// `*.txt` file older than 7 days is pruned on startup.
+pub fn init(dir: Option<&Path>) -> io::Result<()> {
     tracing_log::LogTracer::init().ok();
 
     #[cfg(debug_assertions)]
@@ -40,16 +46,10 @@ pub fn init(path: Option<&Path>) -> io::Result<()> {
         .with(fmt::layer().event_format(Formatter::<true>))
         .with(HookLayer);
 
-    if let Some(path) = path {
-        let dir = path.parent().unwrap_or(Path::new("."));
-        let prefix = path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or("app.log");
+    if let Some(dir) = dir {
+        let writer = RateLimitedFile::new(dir)?;
 
-        cleanup_old_logs(dir, prefix);
-
-        let writer = RateLimitedFile::new(dir, prefix);
+        cleanup_old_logs(dir);
 
         registry
             .with(
@@ -75,7 +75,7 @@ where
         .map_err(|_| "Hook already registered")
 }
 
-fn cleanup_old_logs(dir: &Path, prefix: &str) {
+fn cleanup_old_logs(dir: &Path) {
     let max_age = Duration::from_secs(MAX_LOG_AGE_DAYS * 24 * 60 * 60);
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
@@ -86,8 +86,7 @@ fn cleanup_old_logs(dir: &Path, prefix: &str) {
         let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
             continue;
         };
-
-        if !name.starts_with(prefix) || name == prefix {
+        if !is_log_file(name) {
             continue;
         }
 

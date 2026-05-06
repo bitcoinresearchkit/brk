@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Indexes, Sats, StoredU64, Version};
+use brk_indexer::Indexer;
+use brk_types::{BasisPoints16, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use crate::{distribution, internal::PercentPerBlock};
@@ -7,9 +8,10 @@ use crate::{distribution, internal::PercentPerBlock};
 pub(super) fn compute(
     gini: &mut PercentPerBlock<BasisPoints16>,
     distribution: &distribution::Vecs,
-    starting_indexes: &Indexes,
+    indexer: &Indexer,
     exit: &Exit,
 ) -> Result<()> {
+    let starting_height = indexer.safe_lengths().height;
     let amount_range = &distribution.utxo_cohorts.amount_range;
 
     let supply_vecs: Vec<&_> = amount_range
@@ -36,11 +38,7 @@ pub(super) fn compute(
         .height
         .validate_computed_version_or_reset(source_version)?;
 
-    let min_len = gini
-        .bps
-        .height
-        .len()
-        .min(starting_indexes.height.to_usize());
+    let min_len = gini.bps.height.len().min(starting_height.to_usize());
 
     gini.bps.height.truncate_if_needed_at(min_len)?;
 

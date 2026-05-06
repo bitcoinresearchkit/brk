@@ -44,8 +44,9 @@ mod r#type;
 
 use brk_cohort::{Filter, Filtered};
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, Version};
+use brk_types::{Cents, Height, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::{
@@ -186,11 +187,11 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_lengths, exit)?;
         Ok(())
     }
 

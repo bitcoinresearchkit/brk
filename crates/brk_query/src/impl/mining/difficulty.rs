@@ -62,8 +62,7 @@ impl Query {
         // Bitcoin block timestamps can step backward within MTP rules, so
         // saturate the subtraction to avoid u32 underflow on a backwards-going
         // first block of an epoch.
-        let elapsed_time =
-            u64::from((*current_timestamp).saturating_sub(*epoch_start_timestamp));
+        let elapsed_time = u64::from((*current_timestamp).saturating_sub(*epoch_start_timestamp));
         let time_avg = if blocks_into_epoch > 0 {
             elapsed_time / blocks_into_epoch as u64
         } else {

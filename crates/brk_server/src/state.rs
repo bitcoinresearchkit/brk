@@ -53,7 +53,7 @@ impl AppState {
     /// date's day, then settle once the tip crosses the day boundary.
     pub fn date_strategy(&self, version: Version, date: Date) -> CacheStrategy {
         self.sync(|q| {
-            let height = q.indexed_height();
+            let height = q.height();
             q.indexer()
                 .vecs
                 .blocks
@@ -76,9 +76,7 @@ impl AppState {
     /// - Unknown address → `Tip`
     pub fn addr_strategy(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
         self.sync(|q| {
-            if !chain_only
-                && let Some(mempool_hash) = q.addr_mempool_hash(addr)
-            {
+            if !chain_only && let Some(mempool_hash) = q.addr_mempool_hash(addr) {
                 return CacheStrategy::MempoolHash(mempool_hash);
             }
             q.addr_last_activity_height(addr)

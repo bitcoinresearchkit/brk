@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Height, Indexes, OutputType, Sats, TxOutIndex};
+use brk_types::{Height, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
@@ -11,11 +11,11 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
         self.op_return
-            .compute_with(starting_indexes.height, prices, exit, |height_vec| {
+            .compute_with(starting_lengths.height, prices, exit, |height_vec| {
                 // Validate computed versions against dependencies
                 let dep_version = indexer.vecs.outputs.first_txout_index.version()
                     + indexer.vecs.outputs.output_type.version()
@@ -32,7 +32,7 @@ impl Vecs {
                 // Find starting height for this vec
                 let current_len = height_vec.len();
                 let starting_height =
-                    Height::from(current_len.min(starting_indexes.height.to_usize()));
+                    Height::from(current_len.min(starting_lengths.height.to_usize()));
 
                 if starting_height > target_height {
                     return Ok(());

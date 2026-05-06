@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Indexes, Sats};
+use brk_indexer::Indexer;
+use brk_types::Sats;
 use vecdb::{Exit, VecIndex};
 
 use super::Vecs;
@@ -8,16 +9,18 @@ use crate::{mining, outputs, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         outputs: &outputs::Vecs,
         mining: &mining::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         self.total
-            .compute_with(starting_indexes.height, prices, exit, |sats| {
+            .compute_with(starting_height, prices, exit, |sats| {
                 Ok(sats.compute_transform2(
-                    starting_indexes.height,
+                    starting_height,
                     &outputs.value.op_return.block.sats,
                     &mining.rewards.unclaimed.block.sats,
                     |(h, op_return, unclaimed, ..)| {

@@ -9,32 +9,23 @@ pub use types::*;
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
-use brk_types::{
-    AddrHash, Block, Height, OutPoint, SigOps, TxInIndex, TxIndex, TxOutIndex, TypeIndex,
-};
+use brk_types::{AddrHash, Block, Height, OutPoint, SigOps, TxInIndex, TypeIndex};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{Indexes, Readers, Stores, Vecs};
+use crate::{Lengths, Readers, Stores, Vecs};
 
 /// Processes a single block, extracting and storing all indexed data.
 pub struct BlockProcessor<'a> {
     pub block: &'a Block,
     pub height: Height,
     pub check_collisions: bool,
-    pub indexes: &'a mut Indexes,
+    pub lengths: &'a mut Lengths,
     pub vecs: &'a mut Vecs,
     pub stores: &'a mut Stores,
     pub readers: &'a Readers,
 }
 
 impl BlockProcessor<'_> {
-    /// Update global indexes after processing a block.
-    pub fn update_indexes(&mut self, tx_count: usize, input_count: usize, output_count: usize) {
-        self.indexes.tx_index += TxIndex::from(tx_count);
-        self.indexes.txin_index += TxInIndex::from(input_count);
-        self.indexes.txout_index += TxOutIndex::from(output_count);
-    }
-
     /// Finalizes outputs/inputs in parallel with storing tx metadata.
     #[allow(clippy::too_many_arguments)]
     pub fn finalize_and_store_metadata(
@@ -47,7 +38,7 @@ impl BlockProcessor<'_> {
         already_added: &mut ByAddrType<FxHashMap<AddrHash, TypeIndex>>,
         same_block_info: &mut FxHashMap<OutPoint, SameBlockOutputInfo>,
     ) -> Result<()> {
-        let indexes = &mut *self.indexes;
+        let lengths = &mut *self.lengths;
 
         // Split transactions vecs: finalize needs first_txout_index/first_txin_index, metadata needs the rest
         let (first_txout_index, first_txin_index, mut tx_metadata) =
@@ -66,7 +57,7 @@ impl BlockProcessor<'_> {
         let (finalize_result, metadata_result) = rayon::join(
             || -> Result<()> {
                 txout::finalize_outputs(
-                    indexes,
+                    lengths,
                     first_txout_index,
                     outputs,
                     addrs,

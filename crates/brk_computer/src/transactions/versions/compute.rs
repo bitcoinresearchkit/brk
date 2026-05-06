@@ -1,23 +1,20 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Indexes, StoredU64, TxVersion};
+use brk_types::{StoredU64, TxVersion};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 
 impl Vecs {
-    pub(crate) fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         let dep_version = indexer.vecs.transactions.tx_version.version()
             + indexer.vecs.transactions.first_tx_index.version()
             + indexer.vecs.transactions.txid.version();
 
         for vec in [&mut self.v1.block, &mut self.v2.block, &mut self.v3.block] {
-            vec.validate_and_truncate(dep_version, starting_indexes.height)?;
+            vec.validate_and_truncate(dep_version, starting_height)?;
         }
 
         let skip = self
@@ -84,9 +81,9 @@ impl Vecs {
         }
 
         // Derive cumulative + sums from base
-        self.v1.compute_rest(starting_indexes.height, exit)?;
-        self.v2.compute_rest(starting_indexes.height, exit)?;
-        self.v3.compute_rest(starting_indexes.height, exit)?;
+        self.v1.compute_rest(starting_height, exit)?;
+        self.v2.compute_rest(starting_height, exit)?;
+        self.v3.compute_rest(starting_height, exit)?;
 
         Ok(())
     }

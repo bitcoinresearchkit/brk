@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Dollars, Indexes};
+use brk_indexer::Indexer;
+use brk_types::Dollars;
 use vecdb::Exit;
 
 use super::{
@@ -16,13 +17,14 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         returns: &returns::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         moving_average: &moving_average::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let daily_returns = &returns.periods._24h.ratio.height;
         for (rsi_chain, &m) in self
             .rsi
@@ -32,11 +34,11 @@ impl Vecs {
         {
             rsi::compute(
                 rsi_chain,
+                indexer,
                 blocks,
                 daily_returns,
                 14 * m,
                 3 * m,
-                starting_indexes,
                 exit,
             )?;
         }
@@ -49,12 +51,12 @@ impl Vecs {
         {
             macd::compute(
                 macd_chain,
+                indexer,
                 blocks,
                 prices,
                 12 * m,
                 26 * m,
                 9 * m,
-                starting_indexes,
                 exit,
             )?;
         }
@@ -62,7 +64,7 @@ impl Vecs {
         self.pi_cycle
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_height,
                 &moving_average.sma._111d.usd.height,
                 &moving_average.sma._350d_x2.usd.height,
                 exit,

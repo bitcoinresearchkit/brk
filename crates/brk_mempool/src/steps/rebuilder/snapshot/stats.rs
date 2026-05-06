@@ -44,7 +44,11 @@ impl BlockStats {
             total_fee += entry.fee;
             total_vsize += entry.vsize;
             total_size += entry.size;
-            fee_rates.push(clusters[cref.cluster_id.as_usize()].chunk_of(cref.local).fee_rate());
+            fee_rates.push(
+                clusters[cref.cluster_id.as_usize()]
+                    .chunk_of(cref.local)
+                    .fee_rate(),
+            );
         }
 
         let tx_count = fee_rates.len() as u32;

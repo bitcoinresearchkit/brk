@@ -7,7 +7,7 @@ use brk_types::{
     BlockExtras, BlockHash, BlockHashPrefix, BlockHeader, BlockInfo, BlockInfoV1, BlockPool,
     FeeRate, Height, PoolSlug, Sats, Timestamp, TxIndex, VSize, pools,
 };
-use vecdb::{AnyVec, ReadableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -43,9 +43,9 @@ impl Query {
         self.block_by_height(height)
     }
 
-    /// Block by height. Height > tip → `OutOfRange`.
+    /// Block by height. Height past tip (or pre-genesis) → `OutOfRange`.
     pub fn block_by_height(&self, height: Height) -> Result<BlockInfo> {
-        if height > self.tip_height() {
+        if height >= self.safe_lengths().height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
         let h = height.to_usize();
@@ -58,7 +58,7 @@ impl Query {
     /// `blocks_v1_range` reads computer-stamped series (pools, fees,
     /// supply state). Anything past `computed_height` would short-read.
     pub fn block_by_height_v1(&self, height: Height) -> Result<BlockInfoV1> {
-        if height > self.height() {
+        if height >= self.safe_lengths().height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
         let h = height.to_usize();
@@ -71,6 +71,9 @@ impl Query {
     /// doubles as a corruption check on the on-disk bytes.
     pub fn block_header_hex(&self, hash: &BlockHash) -> Result<String> {
         let height = self.height_by_hash(hash)?;
+        if height >= self.safe_lengths().height {
+            return Err(Error::OutOfRange("Block height out of range".into()));
+        }
         let header = self.read_block_header(height)?;
         Ok(bitcoin::consensus::encode::serialize_hex(&header))
     }
@@ -79,7 +82,7 @@ impl Query {
     /// bounds gate (`OutOfRange` for past-tip, `Internal` if the data
     /// is unexpectedly missing inside the gate).
     pub fn block_hash_by_height(&self, height: Height) -> Result<BlockHash> {
-        if height > self.tip_height() {
+        if height >= self.safe_lengths().height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
         self.indexer().vecs.blocks.blockhash.get(height).data()
@@ -88,7 +91,7 @@ impl Query {
     /// Most recent `count` blocks ending at `start_height` (default tip),
     /// returned in descending-height order.
     pub fn blocks(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfo>> {
-        let (begin, end) = self.resolve_block_range(start_height, count, self.tip_height());
+        let (begin, end) = self.resolve_block_range(start_height, count, self.height());
         self.blocks_range(begin, end)
     }
 
@@ -102,51 +105,45 @@ impl Query {
     // === Range queries (bulk reads) ===
 
     /// Build `BlockInfo` rows for `[begin, end)` in descending-height order.
-    /// Caller must bounds-check `end <= tip + 1`. Returns `Internal` if any
-    /// bulk read short-returns under per-vec stamp races.
+    /// `end` is re-clamped to `safe.height` (single snapshot) so two-snapshot
+    /// tearing under a concurrent reorg cannot short-read past the loop guards.
     fn blocks_range(&self, begin: usize, end: usize) -> Result<Vec<BlockInfo>> {
+        let safe = self.safe_lengths();
+        let height_len = safe.height.to_usize();
+        let tx_index_len = safe.tx_index.to_usize();
+        let end = end.min(height_len);
         if begin >= end {
             return Ok(Vec::new());
         }
 
         let indexer = self.indexer();
-        let computer = self.computer();
         let reader = self.reader();
         let count = end - begin;
 
-        // Bulk read all indexed data
+        // Bulk read all indexed data. `end <= safe.height` ⇒ these per-block
+        // vecs are populated for `[begin, end)`, so short reads are impossible.
         let blockhashes = indexer.vecs.blocks.blockhash.collect_range_at(begin, end);
         let difficulties = indexer.vecs.blocks.difficulty.collect_range_at(begin, end);
         let timestamps = indexer.vecs.blocks.timestamp.collect_range_at(begin, end);
         let sizes = indexer.vecs.blocks.total.collect_range_at(begin, end);
         let weights = indexer.vecs.blocks.weight.collect_range_at(begin, end);
         let positions = indexer.vecs.blocks.position.collect_range_at(begin, end);
-        if blockhashes.len() != count
-            || difficulties.len() != count
-            || timestamps.len() != count
-            || sizes.len() != count
-            || weights.len() != count
-            || positions.len() != count
-        {
-            return Err(Error::Internal("blocks_range: short read on per-block vecs"));
-        }
+        debug_assert_eq!(blockhashes.len(), count);
+        debug_assert_eq!(difficulties.len(), count);
+        debug_assert_eq!(timestamps.len(), count);
+        debug_assert_eq!(sizes.len(), count);
+        debug_assert_eq!(weights.len(), count);
+        debug_assert_eq!(positions.len(), count);
 
-        // Bulk read tx indexes for tx_count
-        let max_height = self.indexed_height();
-        let tx_index_end = if end <= max_height.to_usize() {
-            end + 1
-        } else {
-            end
-        };
+        // Read one past the last block for its tx-count, capped by the snapshot's
+        // exclusive height bound. Tip block falls back to `tx_index_len` in the loop.
+        let tx_index_end = (end + 1).min(height_len);
         let first_tx_indexes: Vec<TxIndex> = indexer
             .vecs
             .transactions
             .first_tx_index
             .collect_range_at(begin, tx_index_end);
-        if first_tx_indexes.len() < count {
-            return Err(Error::Internal("blocks_range: short read on first_tx_index"));
-        }
-        let total_txs = computer.indexes.tx_index.identity.len();
+        debug_assert!(first_tx_indexes.len() >= count);
 
         // Bulk read median time window
         let median_start = begin.saturating_sub(10);
@@ -155,9 +152,7 @@ impl Query {
             .blocks
             .timestamp
             .collect_range_at(median_start, end);
-        if median_timestamps.len() != end - median_start {
-            return Err(Error::Internal("blocks_range: short read on median window"));
-        }
+        debug_assert_eq!(median_timestamps.len(), end - median_start);
 
         let mut blocks = Vec::with_capacity(count);
 
@@ -168,7 +163,7 @@ impl Query {
             let tx_count = if i + 1 < first_tx_indexes.len() {
                 (first_tx_indexes[i + 1].to_usize() - first_tx_indexes[i].to_usize()) as u32
             } else {
-                (total_txs - first_tx_indexes[i].to_usize()) as u32
+                (tx_index_len - first_tx_indexes[i].to_usize()) as u32
             };
 
             let median_time =
@@ -195,9 +190,15 @@ impl Query {
     }
 
     /// Build `BlockInfoV1` rows for `[begin, end)` in descending-height order.
-    /// Caller must bounds-check `end <= min(indexed, computed) + 1`. Returns
-    /// `Internal` on bulk-read short returns or per-block header read failures.
+    /// `end` is re-clamped to `bound.height` (single snapshot covering both
+    /// indexer-stamped and computer-stamped vecs, since `safe_lengths` only
+    /// advances after compute). Returns `Internal` on per-block header read
+    /// failures.
     pub(crate) fn blocks_v1_range(&self, begin: usize, end: usize) -> Result<Vec<BlockInfoV1>> {
+        let safe = self.safe_lengths();
+        let height_len = safe.height.to_usize();
+        let tx_index_len = safe.tx_index.to_usize();
+        let end = end.min(height_len);
         if begin >= end {
             return Ok(Vec::new());
         }
@@ -217,19 +218,14 @@ impl Query {
         let positions = indexer.vecs.blocks.position.collect_range_at(begin, end);
         let pool_slugs = computer.pools.pool.collect_range_at(begin, end);
 
-        // Bulk read tx indexes
-        let max_height = self.indexed_height();
-        let tx_index_end = if end <= max_height.to_usize() {
-            end + 1
-        } else {
-            end
-        };
+        // Read one past the last block for its tx-count, capped by the snapshot's
+        // exclusive height bound. Tip block falls back to `tx_index_len` in the loop.
+        let tx_index_end = (end + 1).min(height_len);
         let first_tx_indexes: Vec<TxIndex> = indexer
             .vecs
             .transactions
             .first_tx_index
             .collect_range_at(begin, tx_index_end);
-        let total_txs = computer.indexes.tx_index.identity.len();
 
         // Bulk read segwit stats
         let segwit_txs = indexer.vecs.blocks.segwit_txs.collect_range_at(begin, end);
@@ -315,49 +311,49 @@ impl Query {
             .timestamp
             .collect_range_at(median_start, end);
 
-        let per_block_lens = [
-            blockhashes.len(),
-            difficulties.len(),
-            timestamps.len(),
-            sizes.len(),
-            weights.len(),
-            positions.len(),
-            pool_slugs.len(),
-            segwit_txs.len(),
-            segwit_sizes.len(),
-            segwit_weights.len(),
-            fee_sats.len(),
-            subsidy_sats.len(),
-            input_counts.len(),
-            output_counts.len(),
-            utxo_set_sizes.len(),
-            input_volumes.len(),
-            prices.len(),
-            output_volumes.len(),
-            fr_min.len(),
-            fr_pct10.len(),
-            fr_pct25.len(),
-            fr_median.len(),
-            fr_pct75.len(),
-            fr_pct90.len(),
-            fr_max.len(),
-            fa_min.len(),
-            fa_pct10.len(),
-            fa_pct25.len(),
-            fa_median.len(),
-            fa_pct75.len(),
-            fa_pct90.len(),
-            fa_max.len(),
-        ];
-        if per_block_lens.iter().any(|&l| l != count) {
-            return Err(Error::Internal("blocks_v1_range: short read on per-block vecs"));
-        }
-        if first_tx_indexes.len() < count {
-            return Err(Error::Internal("blocks_v1_range: short read on first_tx_index"));
-        }
-        if median_timestamps.len() != end - median_start {
-            return Err(Error::Internal("blocks_v1_range: short read on median window"));
-        }
+        // All bulk reads above span `[begin, end)` (or `[median_start, end)`).
+        // Caller's `end <= bound.height + 1` precondition guarantees populated
+        // slots, so short reads are impossible.
+        debug_assert!(
+            [
+                blockhashes.len(),
+                difficulties.len(),
+                timestamps.len(),
+                sizes.len(),
+                weights.len(),
+                positions.len(),
+                pool_slugs.len(),
+                segwit_txs.len(),
+                segwit_sizes.len(),
+                segwit_weights.len(),
+                fee_sats.len(),
+                subsidy_sats.len(),
+                input_counts.len(),
+                output_counts.len(),
+                utxo_set_sizes.len(),
+                input_volumes.len(),
+                prices.len(),
+                output_volumes.len(),
+                fr_min.len(),
+                fr_pct10.len(),
+                fr_pct25.len(),
+                fr_median.len(),
+                fr_pct75.len(),
+                fr_pct90.len(),
+                fr_max.len(),
+                fa_min.len(),
+                fa_pct10.len(),
+                fa_pct25.len(),
+                fa_median.len(),
+                fa_pct75.len(),
+                fa_pct90.len(),
+                fa_max.len(),
+            ]
+            .iter()
+            .all(|&l| l == count)
+        );
+        debug_assert!(first_tx_indexes.len() >= count);
+        debug_assert_eq!(median_timestamps.len(), end - median_start);
 
         let mut blocks = Vec::with_capacity(count);
 
@@ -365,7 +361,7 @@ impl Query {
             let tx_count = if i + 1 < first_tx_indexes.len() {
                 (first_tx_indexes[i + 1].to_usize() - first_tx_indexes[i].to_usize()) as u32
             } else {
-                (total_txs - first_tx_indexes[i].to_usize()) as u32
+                (tx_index_len - first_tx_indexes[i].to_usize()) as u32
             };
 
             // Single reader for header + coinbase (adjacent in blk file).
@@ -503,10 +499,6 @@ impl Query {
 
     // === Helper methods ===
 
-    pub fn tip_height(&self) -> Height {
-        Height::from(self.indexer().vecs.blocks.blockhash.len().saturating_sub(1))
-    }
-
     /// Hash to height. The prefix store keys on the first 8 bytes of
     /// the hash, so the resolved height is verified against the full
     /// `blockhash[height]` before being returned. Prefix collisions
@@ -545,9 +537,8 @@ impl Query {
 
     /// `(begin, end)` half-open window of up to `count` blocks ending
     /// at `start_height` (default `cap`), clamped to `[0, cap]`. Caller
-    /// supplies `cap`: `tip_height()` when reading indexer-only series,
-    /// `height() = min(indexed, computed)` when reading computer-stamped
-    /// series too.
+    /// supplies `cap`: typically [`Query::height`] (the highest fully-written
+    /// height per the safe-lengths snapshot).
     fn resolve_block_range(
         &self,
         start_height: Option<Height>,
@@ -668,10 +659,11 @@ impl Query {
     /// but accepts coinbase parse failures (they manifest as missing
     /// `extras` rather than a 5xx).
     fn parse_coinbase_from_read(reader: impl Read) -> Coinbase {
-        let tx = match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
-            Ok(tx) => tx,
-            Err(_) => return Coinbase::default(),
-        };
+        let tx =
+            match bitcoin::Transaction::consensus_decode(&mut bitcoin::io::FromStd::new(reader)) {
+                Ok(tx) => tx,
+                Err(_) => return Coinbase::default(),
+            };
 
         let total_size = tx.total_size();
 

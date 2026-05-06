@@ -5,7 +5,7 @@ use std::{path::Path, sync::Arc};
 
 use brk_computer::Computer;
 use brk_error::{OptionData, Result};
-use brk_indexer::Indexer;
+use brk_indexer::{Indexer, Lengths};
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::Client;
@@ -57,19 +57,24 @@ impl Query {
         }))
     }
 
-    /// Current indexed height
-    pub fn indexed_height(&self) -> Height {
-        self.indexer().indexed_height()
-    }
-
-    /// Current computed height (series)
-    pub fn computed_height(&self) -> Height {
-        self.computer().computed_height()
-    }
-
-    /// Minimum of indexed and computed heights
+    /// Pipeline-safe ceiling: the highest height for which both the
+    /// indexer and computer have committed durable data. Backed by
+    /// `Indexer::safe_lengths()`, advanced by `main.rs` after each
+    /// compute pass and lowered before any rollback.
+    ///
+    /// Returns a height (the last fully-written block), not a length.
+    /// `safe_lengths().height` is a count: `N` means heights `0..N` are
+    /// committed, so the highest is `N-1`. Pre-genesis (`N == 0`) falls
+    /// back to `Height::default()` and clients treat it as "nothing
+    /// indexed yet".
     pub fn height(&self) -> Height {
-        self.indexed_height().min(self.computed_height())
+        self.safe_lengths().height.decremented().unwrap_or_default()
+    }
+
+    /// Snapshot of the pipeline-safe `Lengths`. Hot paths that need
+    /// multiple bound fields should call this once at entry and reuse.
+    pub(crate) fn safe_lengths(&self) -> Lengths {
+        self.indexer().safe_lengths()
     }
 
     /// Tip block hash, cached in the indexer.
@@ -84,17 +89,20 @@ impl Query {
         BlockHashPrefix::from(&self.tip_blockhash())
     }
 
-    /// Build sync status with the given tip height
+    /// Build sync status with the given tip height. `indexed_height` and
+    /// `computed_height` reflect live per-vec stamps (diagnostic) and may be
+    /// briefly ahead of fully-flushed data; the timestamp data read uses the
+    /// safe-lengths-derived height so it never outruns committed bytes.
     pub fn sync_status(&self, tip_height: Height) -> Result<SyncStatus> {
-        let indexed_height = self.indexed_height();
-        let computed_height = self.computed_height();
+        let indexed_height = self.indexer().indexed_height();
+        let computed_height = self.computer().computed_height();
         let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
         let last_indexed_at_unix = self
             .indexer()
             .vecs
             .blocks
             .timestamp
-            .collect_one(indexed_height)
+            .collect_one(self.height())
             .data()?;
 
         Ok(SyncStatus {

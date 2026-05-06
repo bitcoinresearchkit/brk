@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Height, Indexes, TxInIndex, TxOutIndex};
+use brk_types::{Height, TxInIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ExitGuard, ReadableVec, Stamp, VecIndex, WritableVec};
 
@@ -14,9 +14,10 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         inputs: &inputs::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<ExitGuard> {
+        let starting_lengths = indexer.safe_lengths();
+
         let target_height = indexer.vecs.blocks.blockhash.len();
         if target_height == 0 {
             return Ok(exit.lock());
@@ -25,9 +26,9 @@ impl Vecs {
 
         // Find min_height from current vec length
         let current_txout_index = self.txin_index.len();
-        let min_txout_index = current_txout_index.min(starting_indexes.txout_index.to_usize());
+        let min_txout_index = current_txout_index.min(starting_lengths.txout_index.to_usize());
 
-        let starting_stamp = Stamp::from(starting_indexes.height);
+        let starting_stamp = Stamp::from(starting_lengths.height);
         let _ = self.txin_index.rollback_before(starting_stamp);
 
         self.txin_index
@@ -39,11 +40,11 @@ impl Vecs {
         let first_txout_index_vec = &indexer.vecs.outputs.first_txout_index;
         let min_height = if min_txout_index == 0 {
             Height::ZERO
-        } else if min_txout_index >= starting_indexes.txout_index.to_usize() {
-            starting_indexes.height
+        } else if min_txout_index >= starting_lengths.txout_index.to_usize() {
+            starting_lengths.height
         } else {
             let mut lo = 0usize;
-            let mut hi = starting_indexes.height.to_usize() + 1;
+            let mut hi = starting_lengths.height.to_usize() + 1;
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
                 if first_txout_index_vec
@@ -72,10 +73,10 @@ impl Vecs {
 
         // Validate: computed height must not exceed starting height
         assert!(
-            min_height <= starting_indexes.height,
-            "txouts min_height ({}) exceeds starting_indexes.height ({})",
+            min_height <= starting_lengths.height,
+            "txouts min_height ({}) exceeds starting_lengths.height ({})",
             min_height,
-            starting_indexes.height
+            starting_lengths.height
         );
 
         let mut pairs: Vec<(TxOutIndex, TxInIndex)> = Vec::new();

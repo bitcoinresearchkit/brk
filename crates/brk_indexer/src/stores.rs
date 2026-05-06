@@ -14,7 +14,7 @@ use rayon::prelude::*;
 use tracing::{debug, info};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
-use crate::{Indexes, constants::DUPLICATE_TXID_PREFIXES};
+use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES};
 
 use super::Vecs;
 
@@ -119,7 +119,7 @@ impl Stores {
         Ok(stores)
     }
 
-    pub fn starting_height(&self) -> Height {
+    pub fn next_height(&self) -> Height {
         self.iter_any()
             .map(|store| store.height().map(Height::incremented).unwrap_or_default())
             .min()
@@ -220,24 +220,26 @@ impl Stores {
         Ok(tasks)
     }
 
+    /// Rewrites reverse-key entries below the lowered bound. In-flight
+    /// readers may briefly see torn state.
     pub fn rollback_if_needed(
         &mut self,
         vecs: &mut Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
     ) -> Result<()> {
         if self.is_empty()? {
             return Ok(());
         }
 
-        debug_assert!(starting_indexes.height != Height::ZERO);
-        debug_assert!(starting_indexes.tx_index != TxIndex::ZERO);
-        debug_assert!(starting_indexes.txout_index != TxOutIndex::ZERO);
+        debug_assert!(starting_lengths.height != Height::ZERO);
+        debug_assert!(starting_lengths.tx_index != TxIndex::ZERO);
+        debug_assert!(starting_lengths.txout_index != TxOutIndex::ZERO);
 
-        self.rollback_block_metadata(vecs, starting_indexes)?;
-        self.rollback_txids(vecs, starting_indexes);
-        self.rollback_outputs_and_inputs(vecs, starting_indexes);
+        self.rollback_block_metadata(vecs, starting_lengths)?;
+        self.rollback_txids(vecs, starting_lengths);
+        self.rollback_outputs_and_inputs(vecs, starting_lengths);
 
-        let rollback_height = starting_indexes.height.decremented().unwrap_or_default();
+        let rollback_height = starting_lengths.height.decremented().unwrap_or_default();
         self.par_iter_any_mut()
             .try_for_each(|store| store.export_meta(rollback_height))?;
         self.commit(rollback_height)?;
@@ -265,10 +267,10 @@ impl Stores {
     fn rollback_block_metadata(
         &mut self,
         vecs: &mut Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
     ) -> Result<()> {
         vecs.blocks.blockhash.for_each_range_at(
-            starting_indexes.height.to_usize(),
+            starting_lengths.height.to_usize(),
             vecs.blocks.blockhash.len(),
             |blockhash| {
                 self.blockhash_prefix_to_height
@@ -277,7 +279,7 @@ impl Stores {
         );
 
         for addr_type in OutputType::ADDR_TYPES {
-            for hash in vecs.iter_addr_hashes_from(addr_type, starting_indexes.height)? {
+            for hash in vecs.iter_addr_hashes_from(addr_type, starting_lengths.height)? {
                 self.addr_type_to_addr_hash_to_addr_index
                     .get_mut_unwrap(addr_type)
                     .remove(hash);
@@ -287,8 +289,8 @@ impl Stores {
         Ok(())
     }
 
-    fn rollback_txids(&mut self, vecs: &mut Vecs, starting_indexes: &Indexes) {
-        let start = starting_indexes.tx_index.to_usize();
+    fn rollback_txids(&mut self, vecs: &mut Vecs, starting_lengths: &Lengths) {
+        let start = starting_lengths.tx_index.to_usize();
         let end = vecs.transactions.txid.len();
         let mut current_index = start;
         vecs.transactions
@@ -313,7 +315,7 @@ impl Stores {
         self.txid_prefix_to_tx_index.clear_caches();
     }
 
-    fn rollback_outputs_and_inputs(&mut self, vecs: &mut Vecs, starting_indexes: &Indexes) {
+    fn rollback_outputs_and_inputs(&mut self, vecs: &mut Vecs, starting_lengths: &Lengths) {
         let tx_index_to_first_txout_index_reader = vecs.transactions.first_txout_index.reader();
         let txout_index_to_output_type_reader = vecs.outputs.output_type.reader();
         let txout_index_to_type_index_reader = vecs.outputs.type_index.reader();
@@ -321,7 +323,7 @@ impl Stores {
         let mut addr_index_tx_index_to_remove: FxHashSet<(OutputType, TypeIndex, TxIndex)> =
             FxHashSet::default();
 
-        let rollback_start = starting_indexes.txout_index.to_usize();
+        let rollback_start = starting_lengths.txout_index.to_usize();
         let rollback_end = vecs.outputs.output_type.len();
 
         let tx_indexes: Vec<TxIndex> = vecs
@@ -354,7 +356,7 @@ impl Stores {
                 .remove(AddrIndexOutPoint::from((addr_index, outpoint)));
         }
 
-        let start = starting_indexes.txin_index.to_usize();
+        let start = starting_lengths.txin_index.to_usize();
         let end = vecs.inputs.outpoint.len();
         let outpoints: Vec<OutPoint> = vecs.inputs.outpoint.collect_range_at(start, end);
         let spending_tx_indexes: Vec<TxIndex> = vecs.inputs.tx_index.collect_range_at(start, end);
@@ -372,7 +374,7 @@ impl Stores {
                 let txout_index =
                     tx_index_to_first_txout_index_reader.get(output_tx_index.to_usize()) + vout;
 
-                if txout_index < starting_indexes.txout_index {
+                if txout_index < starting_lengths.txout_index {
                     let output_type = txout_index_to_output_type_reader.get(txout_index.to_usize());
                     let type_index = txout_index_to_type_index_reader.get(txout_index.to_usize());
                     Some((outpoint, output_type, type_index, spending_tx_index))

@@ -50,14 +50,16 @@ fn main() -> Result<()> {
     indexer.index(&reader, &client, &exit)?;
     info!("Done in {:?}", i.elapsed());
 
+    sleep(Duration::from_secs(60));
+
     // We want to benchmark the drop too
     drop(indexer);
 
-    sleep(Duration::from_secs(10));
+    sleep(Duration::from_secs(60));
 
     Mimalloc::collect();
 
-    sleep(Duration::from_secs(10));
+    sleep(Duration::from_secs(60));
 
     Ok(())
 }

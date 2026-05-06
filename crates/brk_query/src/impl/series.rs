@@ -102,11 +102,7 @@ impl Query {
         Ok(csv)
     }
 
-    fn get_vec(
-        &self,
-        series: &SeriesName,
-        index: Index,
-    ) -> Result<&'static dyn AnyExportableVec> {
+    fn get_vec(&self, series: &SeriesName, index: Index) -> Result<&'static dyn AnyExportableVec> {
         self.vecs()
             .get(series, index)
             .ok_or_else(|| self.series_not_found_error(series))
@@ -158,7 +154,11 @@ impl Query {
 
         let resolve_bound = |ri: RangeIndex, fallback: usize| -> Result<usize> {
             let i = self.range_index_to_i64(ri, index)?;
-            Ok(vecs.iter().map(|v| v.i64_to_usize(i)).min().unwrap_or(fallback))
+            Ok(vecs
+                .iter()
+                .map(|v| v.i64_to_usize(i))
+                .min()
+                .unwrap_or(fallback))
         };
 
         let start = match params.start() {
@@ -186,7 +186,7 @@ impl Query {
         // Snapshot tip-derived state together so the historical-branch ETag stays
         // self-consistent: stable_count is computed from tip_height, hash_prefix
         // is the live tip.
-        let tip_height = self.indexed_height();
+        let tip_height = self.height();
         let hash_prefix = self.tip_hash_prefix();
         let stable_count = self.stable_count(params.index, total, tip_height);
 
@@ -213,12 +213,7 @@ impl Query {
     ///   its live tail as stable.
     /// - Mutable (Funded/Empty addr): `None`. No immutable region exists, so
     ///   the caller must use the tip-bound ETag for every range.
-    pub fn stable_count(
-        &self,
-        index: Index,
-        total: usize,
-        tip_height: Height,
-    ) -> Option<usize> {
+    pub fn stable_count(&self, index: Index, total: usize, tip_height: Height) -> Option<usize> {
         match index.cache_class() {
             CacheClass::Bucket { margin } => Some(total.saturating_sub(margin)),
             CacheClass::Entity => {
@@ -232,13 +227,27 @@ impl Query {
     fn entity_index_at(&self, index: Index, h: Height) -> Option<usize> {
         let v = &self.indexer().vecs;
         match index {
-            Index::TxIndex => v.transactions.first_tx_index.collect_one(h).map(usize::from),
+            Index::TxIndex => v
+                .transactions
+                .first_tx_index
+                .collect_one(h)
+                .map(usize::from),
             Index::TxInIndex => v.inputs.first_txin_index.collect_one(h).map(usize::from),
             Index::TxOutIndex => v.outputs.first_txout_index.collect_one(h).map(usize::from),
             Index::EmptyOutputIndex => v.scripts.empty.first_index.collect_one(h).map(usize::from),
-            Index::OpReturnIndex => v.scripts.op_return.first_index.collect_one(h).map(usize::from),
+            Index::OpReturnIndex => v
+                .scripts
+                .op_return
+                .first_index
+                .collect_one(h)
+                .map(usize::from),
             Index::P2MSOutputIndex => v.scripts.p2ms.first_index.collect_one(h).map(usize::from),
-            Index::UnknownOutputIndex => v.scripts.unknown.first_index.collect_one(h).map(usize::from),
+            Index::UnknownOutputIndex => v
+                .scripts
+                .unknown
+                .first_index
+                .collect_one(h)
+                .map(usize::from),
             Index::P2AAddrIndex => v.addrs.p2a.first_index.collect_one(h).map(usize::from),
             Index::P2PK33AddrIndex => v.addrs.p2pk33.first_index.collect_one(h).map(usize::from),
             Index::P2PK65AddrIndex => v.addrs.p2pk65.first_index.collect_one(h).map(usize::from),

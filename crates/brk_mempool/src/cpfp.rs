@@ -22,7 +22,6 @@ use brk_types::{
     VSize,
 };
 
-
 use crate::Mempool;
 use crate::cluster::{Cluster, ClusterRef, LocalIdx};
 
@@ -81,7 +80,11 @@ impl<I> Cluster<I> {
         let mut reachable = 1u128 << seed.inner();
         let mut out: Vec<CpfpEntry> = Vec::new();
         for (i, node) in self.nodes.iter().enumerate().skip(seed_pos + 1) {
-            if node.parents.iter().any(|&p| reachable & (1u128 << p.inner()) != 0) {
+            if node
+                .parents
+                .iter()
+                .any(|&p| reachable & (1u128 << p.inner()) != 0)
+            {
                 reachable |= 1u128 << i;
                 out.push(CpfpEntry::from(node));
             }
@@ -108,7 +111,10 @@ impl Mempool {
     pub fn cpfp_info(&self, prefix: &TxidPrefix) -> Option<CpfpInfo> {
         let snapshot = self.snapshot();
         let seed_idx = self.entries().idx_of(prefix)?;
-        let ClusterRef { cluster_id, local: seed_local } = snapshot.cluster_of(seed_idx)?;
+        let ClusterRef {
+            cluster_id,
+            local: seed_local,
+        } = snapshot.cluster_of(seed_idx)?;
         let cluster = &snapshot.clusters[cluster_id.as_usize()];
         let seed_txid = &cluster.nodes[seed_local.as_usize()].txid;
 

@@ -80,7 +80,10 @@ fn flood_component(
 
     while let Some(pos) = stack.pop() {
         members.push(pos);
-        for &n in parents[pos as usize].iter().chain(children[pos as usize].iter()) {
+        for &n in parents[pos as usize]
+            .iter()
+            .chain(children[pos as usize].iter())
+        {
             if !seen[n as usize] {
                 seen[n as usize] = true;
                 stack.push(n);

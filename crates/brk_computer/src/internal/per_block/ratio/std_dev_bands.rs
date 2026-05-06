@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{blocks, indexes, internal::StdDevPerBlockExtended};
@@ -43,7 +44,7 @@ impl RatioPerBlockStdDevBands {
     pub(crate) fn compute(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
         series_price: &impl ReadableVec<Height, Cents>,
@@ -55,8 +56,8 @@ impl RatioPerBlockStdDevBands {
             (&mut self._2y, &sma._2y.ratio.height),
             (&mut self._1y, &sma._1y.ratio.height),
         ] {
-            sd.compute_all(blocks, starting_indexes, exit, ratio_source, sma_ratio)?;
-            sd.compute_cents_bands(starting_indexes, series_price, sma_ratio, exit)?;
+            sd.compute_all(blocks, starting_lengths, exit, ratio_source, sma_ratio)?;
+            sd.compute_cents_bands(starting_lengths, series_price, sma_ratio, exit)?;
         }
 
         Ok(())

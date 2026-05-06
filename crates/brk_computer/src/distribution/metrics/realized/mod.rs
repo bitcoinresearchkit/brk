@@ -9,7 +9,7 @@ pub use full::{RealizedFull, RealizedFullAccum};
 pub use minimal::RealizedMinimal;
 
 use brk_error::Result;
-use brk_types::Indexes;
+use brk_indexer::Lengths;
 use vecdb::Exit;
 
 use crate::distribution::state::{CohortState, CostBasisData, RealizedState, WithCapital};
@@ -19,10 +19,10 @@ pub trait RealizedLike: Send + Sync {
     fn as_core_mut(&mut self) -> &mut RealizedCore;
     fn min_stateful_len(&self) -> usize;
     fn push_state(&mut self, state: &CohortState<RealizedState, CostBasisData<WithCapital>>);
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
+    fn compute_rest_part1(&mut self, starting_lengths: &Lengths, exit: &Exit) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&RealizedCore],
         exit: &Exit,
     ) -> Result<()>;
@@ -42,16 +42,16 @@ impl RealizedLike for RealizedCore {
     fn push_state(&mut self, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) {
         self.push_state(state)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, starting_lengths: &Lengths, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(starting_lengths, exit)
     }
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&RealizedCore],
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_from_stateful(starting_indexes, others, exit)
+        self.compute_from_stateful(starting_lengths, others, exit)
     }
 }
 
@@ -69,15 +69,15 @@ impl RealizedLike for RealizedFull {
     fn push_state(&mut self, state: &CohortState<RealizedState, CostBasisData<WithCapital>>) {
         self.push_state(state)
     }
-    fn compute_rest_part1(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.compute_rest_part1(starting_indexes, exit)
+    fn compute_rest_part1(&mut self, starting_lengths: &Lengths, exit: &Exit) -> Result<()> {
+        self.compute_rest_part1(starting_lengths, exit)
     }
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&RealizedCore],
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_from_stateful(starting_indexes, others, exit)
+        self.compute_from_stateful(starting_lengths, others, exit)
     }
 }

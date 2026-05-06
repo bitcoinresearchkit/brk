@@ -1,7 +1,8 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::CentsSquaredSats;
-use brk_types::{BasisPoints16, Cents, Height, Indexes, Sats, Version};
+use brk_types::{BasisPoints16, Cents, Height, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::internal::{PERCENTILES_LEN, PerBlock, PercentPerBlock, PercentilesVecs, Price};
@@ -147,7 +148,7 @@ impl CostBasis {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_prices(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         spot: &impl ReadableVec<Height, Cents>,
         invested_cap_in_profit: &impl ReadableVec<Height, Cents>,
         invested_cap_in_loss: &impl ReadableVec<Height, Cents>,
@@ -158,7 +159,7 @@ impl CostBasis {
         exit: &Exit,
     ) -> Result<()> {
         self.in_profit.per_coin.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             invested_cap_in_profit,
             supply_in_profit_sats,
             spot,
@@ -175,7 +176,7 @@ impl CostBasis {
             exit,
         )?;
         self.in_loss.per_coin.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             invested_cap_in_loss,
             supply_in_loss_sats,
             spot,
@@ -192,7 +193,7 @@ impl CostBasis {
             exit,
         )?;
         self.in_profit.per_dollar.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             capitalized_cap_in_profit_raw,
             invested_cap_in_profit,
             spot,
@@ -209,7 +210,7 @@ impl CostBasis {
             exit,
         )?;
         self.in_loss.per_dollar.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             capitalized_cap_in_loss_raw,
             invested_cap_in_loss,
             spot,

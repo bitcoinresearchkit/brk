@@ -10,13 +10,14 @@ impl Query {
     }
 
     fn block_status_by_height(&self, height: Height) -> Result<BlockStatus> {
-        let max_height = self.tip_height();
+        let bound = self.safe_lengths().height;
 
-        if height > max_height {
+        if height >= bound {
             return Ok(BlockStatus::not_in_best_chain());
         }
 
-        let next_best = if height < max_height {
+        let tip = self.height();
+        let next_best = if height < tip {
             Some(
                 self.indexer()
                     .vecs

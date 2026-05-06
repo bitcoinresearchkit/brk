@@ -135,7 +135,9 @@ impl<'a> Vecs<'a> {
     }
 
     pub fn series_info(&self, series: &SeriesName) -> Option<SeriesInfo> {
-        let index_to_vec = self.series_to_index_to_vec.get(series.normalize().as_ref())?;
+        let index_to_vec = self
+            .series_to_index_to_vec
+            .get(series.normalize().as_ref())?;
         let value_type = index_to_vec.values().next()?.value_type_to_string();
         let indexes = index_to_vec.keys().copied().collect();
         Some(SeriesInfo {
@@ -191,7 +193,10 @@ impl<'a> Builder<'a> {
             .entry(name)
             .or_default()
             .insert(index, vec);
-        assert!(prev.is_none(), "Duplicate series: {name} for index {index:?}");
+        assert!(
+            prev.is_none(),
+            "Duplicate series: {name} for index {index:?}"
+        );
 
         self.index_to_series_to_vec
             .entry(index)

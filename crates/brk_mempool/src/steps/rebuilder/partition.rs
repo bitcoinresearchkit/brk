@@ -114,7 +114,9 @@ impl<'a> Partitioner<'a> {
     fn try_fill_with_smaller(&mut self, start: usize, remaining_space: VSize) -> bool {
         let end = (start + LOOK_AHEAD_COUNT).min(self.slots.len());
         for idx in (start + 1)..end {
-            let Some(cand) = self.slots[idx] else { continue };
+            let Some(cand) = self.slots[idx] else {
+                continue;
+            };
             if cand.vsize > remaining_space {
                 continue;
             }

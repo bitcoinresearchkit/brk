@@ -42,8 +42,7 @@ pub async fn handler(
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    let mut response =
-        super::series::serve(state, uri, headers, params, legacy_bytes).await?;
+    let mut response = super::series::serve(state, uri, headers, params, legacy_bytes).await?;
     if response.status() == StatusCode::OK {
         response.headers_mut().insert_deprecation(SUNSET);
     }

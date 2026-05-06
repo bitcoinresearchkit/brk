@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Indexes, Sats};
+use brk_indexer::Indexer;
+use brk_types::Sats;
 use vecdb::Exit;
 
 /// Initial block subsidy (50 BTC) in sats, as f64 for floating-point comparisons.
@@ -12,20 +13,22 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         outputs: &outputs::Vecs,
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         transactions: &transactions::Vecs,
         prices: &prices::Vecs,
         distribution: &distribution::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
+        let starting_height = indexer.safe_lengths().height;
+
         // 1. Compute burned/unspendable supply
         self.burned
-            .compute(outputs, mining, prices, starting_indexes, exit)?;
+            .compute(indexer, outputs, mining, prices, exit)?;
 
         // 2. Compute inflation rate: (supply[h] / supply[1y_ago]) - 1
         // Skip when lookback supply <= first block (50 BTC = 5B sats),
@@ -35,7 +38,7 @@ impl Vecs {
             .bps
             .height
             .compute_rolling_from_window_starts(
-                starting_indexes.height,
+                starting_height,
                 &blocks.lookback._1y,
                 &circulating_supply.height,
                 exit,
@@ -50,7 +53,7 @@ impl Vecs {
 
         // 3. Compute velocity at height level
         self.velocity
-            .compute(blocks, transactions, distribution, starting_indexes, exit)?;
+            .compute(indexer, blocks, transactions, distribution, exit)?;
 
         // 4. market_cap_rate - realized_cap_rate per window
         let all_realized = &distribution.utxo_cohorts.all.metrics.realized;
@@ -66,7 +69,7 @@ impl Vecs {
 
         for i in 0..4 {
             diff_arr[i].height.compute_subtract(
-                starting_indexes.height,
+                starting_height,
                 &mcr_arr[i].bps.height,
                 rcr_rates[i],
                 exit,

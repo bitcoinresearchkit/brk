@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, Version};
+use brk_types::Version;
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -44,12 +45,12 @@ impl ActivityMinimal {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         self.transfer_volume.block.sats.compute_sum_of_others(
-            starting_indexes.height,
+            starting_lengths.height,
             &others
                 .iter()
                 .map(|v| &v.transfer_volume.block.sats)
@@ -63,11 +64,11 @@ impl ActivityMinimal {
     pub(crate) fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.transfer_volume
-            .compute_rest(starting_indexes.height, prices, exit)?;
+            .compute_rest(starting_lengths.height, prices, exit)?;
         Ok(())
     }
 }

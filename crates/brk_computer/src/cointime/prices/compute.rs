@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Cents, Indexes};
+use brk_indexer::Indexer;
+use brk_types::Cents;
 use vecdb::Exit;
 
 use super::super::{activity, cap, supply};
@@ -10,7 +11,7 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
@@ -18,14 +19,15 @@ impl Vecs {
         cap: &cap::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let circulating_supply = &all_metrics.supply.total.btc.height;
         let realized_price = &all_metrics.realized.price.cents.height;
 
         self.vaulted
-            .compute_all(prices, starting_indexes, exit, |v| {
+            .compute_all(prices, &starting_lengths, exit, |v| {
                 Ok(v.compute_transform2(
-                    starting_indexes.height,
+                    starting_lengths.height,
                     realized_price,
                     &activity.vaultedness.height,
                     |(i, price, vaultedness, ..)| {
@@ -36,9 +38,9 @@ impl Vecs {
             })?;
 
         self.active
-            .compute_all(prices, starting_indexes, exit, |v| {
+            .compute_all(prices, &starting_lengths, exit, |v| {
                 Ok(v.compute_transform2(
-                    starting_indexes.height,
+                    starting_lengths.height,
                     realized_price,
                     &activity.liveliness.height,
                     |(i, price, liveliness, ..)| {
@@ -49,9 +51,9 @@ impl Vecs {
             })?;
 
         self.true_market_mean
-            .compute_all(prices, starting_indexes, exit, |v| {
+            .compute_all(prices, &starting_lengths, exit, |v| {
                 Ok(v.compute_transform2(
-                    starting_indexes.height,
+                    starting_lengths.height,
                     &cap.investor.cents.height,
                     &supply.active.btc.height,
                     |(i, cap_cents, supply_btc, ..)| {
@@ -62,9 +64,9 @@ impl Vecs {
             })?;
 
         self.cointime
-            .compute_all(prices, starting_indexes, exit, |v| {
+            .compute_all(prices, &starting_lengths, exit, |v| {
                 Ok(v.compute_transform2(
-                    starting_indexes.height,
+                    starting_lengths.height,
                     &cap.cointime.cents.height,
                     circulating_supply,
                     |(i, cap_cents, supply_btc, ..)| {

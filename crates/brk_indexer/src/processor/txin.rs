@@ -22,8 +22,8 @@ impl<'a> BlockProcessor<'a> {
         txid_prefix_to_tx_index.clear();
         txid_prefix_to_tx_index.extend(txs.iter().map(|ct| (ct.txid_prefix, ct.tx_index)));
 
-        let base_tx_index = self.indexes.tx_index;
-        let base_txin_index = self.indexes.txin_index;
+        let base_tx_index = self.lengths.tx_index;
+        let base_txin_index = self.lengths.txin_index;
 
         let total_inputs: usize = self.block.txdata.iter().map(|tx| tx.input.len()).sum();
         let mut items = Vec::with_capacity(total_inputs);
@@ -79,11 +79,11 @@ impl<'a> BlockProcessor<'a> {
                         .map(|v| *v);
 
                     let prev_tx_index = match store_result {
-                        Some(tx_index) if tx_index < self.indexes.tx_index => tx_index,
+                        Some(tx_index) if tx_index < self.lengths.tx_index => tx_index,
                         _ => {
                             error!(
                                 "UnknownTxid: txid={}, prefix={:?}, store_result={:?}, current_tx_index={:?}",
-                                txid, txid_prefix, store_result, self.indexes.tx_index
+                                txid, txid_prefix, store_result, self.lengths.tx_index
                             );
                             return Err(Error::UnknownTxid);
                         }

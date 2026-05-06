@@ -67,6 +67,9 @@ impl Query {
 
         let indexer = self.indexer();
         let stores = &indexer.stores;
+        let safe = self.safe_lengths();
+        let tx_index_len = safe.tx_index;
+        let txout_index_len = safe.txout_index;
         let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
         let output_type_reader = indexer.vecs.outputs.output_type.reader();
         let type_index_reader = indexer.vecs.outputs.type_index.reader();
@@ -79,8 +82,15 @@ impl Query {
                 .get(&TxidPrefix::from(prev_txid))
                 .ok()??
                 .into_owned();
+            if prev_tx_index >= tx_index_len {
+                return None;
+            }
             let first_txout: TxOutIndex = first_txout_index_reader.get(prev_tx_index.to_usize());
-            let txout_index = usize::from(first_txout + vout);
+            let txout = first_txout + vout;
+            if txout >= txout_index_len {
+                return None;
+            }
+            let txout_index = usize::from(txout);
             let output_type: OutputType = output_type_reader.get(txout_index);
             let type_index: TypeIndex = type_index_reader.get(txout_index);
             let value: Sats = value_reader.get(txout_index);
@@ -106,10 +116,7 @@ impl Query {
 
         let root_txid = Self::walk_to_replacement_root(&graveyard, *txid);
 
-        let replaces_vec: Vec<Txid> = graveyard
-            .predecessors_of(txid)
-            .map(|(p, _)| *p)
-            .collect();
+        let replaces_vec: Vec<Txid> = graveyard.predecessors_of(txid).map(|(p, _)| *p).collect();
         let replaces = (!replaces_vec.is_empty()).then_some(replaces_vec);
 
         let replacements = self.build_rbf_node(&root_txid, None, &txs, &entries, &graveyard);
@@ -124,9 +131,7 @@ impl Query {
     /// replacer of an RBF chain. Returns `txid` itself if it's already
     /// the root.
     fn walk_to_replacement_root(graveyard: &TxGraveyard, mut root: Txid) -> Txid {
-        while let Some(TxRemoval::Replaced { by }) =
-            graveyard.get(&root).map(TxTombstone::reason)
-        {
+        while let Some(TxRemoval::Replaced { by }) = graveyard.get(&root).map(TxTombstone::reason) {
             root = *by;
         }
         root

@@ -105,9 +105,7 @@ fn main() -> Result<()> {
     let t2 = Instant::now();
     let mut sum_hi: u64 = 0;
     for tx in &all_txs {
-        sum_hi += tx
-            .total_sigop_cost(|_op: &OutPoint| Some(synthetic_txout.clone()))
-            as u64;
+        sum_hi += tx.total_sigop_cost(|_op: &OutPoint| Some(synthetic_txout.clone())) as u64;
     }
     let elapsed_hi = t2.elapsed();
     println!(

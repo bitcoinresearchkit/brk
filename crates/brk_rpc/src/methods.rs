@@ -297,8 +297,7 @@ impl Client {
                     Ok(raw) => {
                         out.insert(*txid, raw);
                     }
-                    Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc)))
-                        if rpc.code == RPC_NOT_FOUND => {}
+                    Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc))) if rpc.code == RPC_NOT_FOUND => {}
                     Err(e) => {
                         debug!(txid = %txid, error = %e, "getrawtransaction batch: item failed")
                     }

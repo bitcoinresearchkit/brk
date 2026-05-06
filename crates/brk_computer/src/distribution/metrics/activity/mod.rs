@@ -7,7 +7,8 @@ pub use full::ActivityFull;
 pub use minimal::ActivityMinimal;
 
 use brk_error::Result;
-use brk_types::{Indexes, Version};
+use brk_indexer::Lengths;
+use brk_types::Version;
 use vecdb::Exit;
 
 use crate::{
@@ -23,14 +24,14 @@ pub trait ActivityLike: Send + Sync {
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()>;
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&ActivityCore],
         exit: &Exit,
     ) -> Result<()>;
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()>;
 }
@@ -53,19 +54,19 @@ impl ActivityLike for ActivityCore {
     }
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&ActivityCore],
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_from_stateful(starting_indexes, others, exit)
+        self.compute_from_stateful(starting_lengths, others, exit)
     }
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest_part1(prices, starting_indexes, exit)
+        self.compute_rest_part1(prices, starting_lengths, exit)
     }
 }
 
@@ -87,18 +88,18 @@ impl ActivityLike for ActivityFull {
     }
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&ActivityCore],
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_from_stateful(starting_indexes, others, exit)
+        self.compute_from_stateful(starting_lengths, others, exit)
     }
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest_part1(prices, starting_indexes, exit)
+        self.compute_rest_part1(prices, starting_lengths, exit)
     }
 }

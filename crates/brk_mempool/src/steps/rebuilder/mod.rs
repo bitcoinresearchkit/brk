@@ -11,11 +11,11 @@ use brk_types::FeeRate;
 use parking_lot::{Mutex, RwLock};
 use tracing::warn;
 
+use crate::stores::MempoolState;
 use clusters::build_clusters;
 use partition::Partitioner;
 #[cfg(debug_assertions)]
 use verify::Verifier;
-use crate::stores::MempoolState;
 
 pub(crate) mod clusters;
 mod partition;

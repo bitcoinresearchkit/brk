@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Bitcoin, Indexes, StoredF64, Version};
+use brk_types::{Bitcoin, StoredF64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
@@ -80,17 +81,17 @@ impl ActivityCore {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         let minimal_refs: Vec<&ActivityMinimal> = others.iter().map(|o| &o.minimal).collect();
         self.minimal
-            .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
+            .compute_from_stateful(starting_lengths, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; coindays_destroyed.block);
-        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_profit.block.sats);
-        sum_others!(self, starting_indexes, others, exit; transfer_volume_in_loss.block.sats);
+        sum_others!(self, starting_lengths, others, exit; coindays_destroyed.block);
+        sum_others!(self, starting_lengths, others, exit; transfer_volume_in_profit.block.sats);
+        sum_others!(self, starting_lengths, others, exit; transfer_volume_in_loss.block.sats);
 
         Ok(())
     }
@@ -98,17 +99,17 @@ impl ActivityCore {
     pub(crate) fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
-            .compute_rest_part1(prices, starting_indexes, exit)?;
+            .compute_rest_part1(prices, starting_lengths, exit)?;
         self.coindays_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.transfer_volume_in_profit
-            .compute_rest(starting_indexes.height, prices, exit)?;
+            .compute_rest(starting_lengths.height, prices, exit)?;
         self.transfer_volume_in_loss
-            .compute_rest(starting_indexes.height, prices, exit)?;
+            .compute_rest(starting_lengths.height, prices, exit)?;
         Ok(())
     }
 }

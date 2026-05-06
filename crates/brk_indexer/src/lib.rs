@@ -4,7 +4,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::Arc,
-    thread::{self, sleep},
+    thread,
     time::{Duration, Instant},
 };
 
@@ -19,18 +19,19 @@ use vecdb::{
     Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode, WritableVec, unlikely,
 };
 mod constants;
-mod indexes;
+mod lengths;
 mod processor;
 mod readers;
+mod safe_lengths;
 mod stores;
 mod vecs;
 
 use constants::*;
-use indexes::IndexesExt;
 use processor::{BlockBuffers, BlockProcessor};
 use readers::Readers;
 
-pub use brk_types::Indexes;
+pub use lengths::Lengths;
+pub use safe_lengths::SafeLengths;
 pub use stores::Stores;
 pub use vecs::*;
 
@@ -39,32 +40,27 @@ pub struct Indexer<M: StorageMode = Rw> {
     pub vecs: Vecs<M>,
     pub stores: Stores,
     tip_blockhash: Arc<RwLock<BlockHash>>,
+    safe_lengths: SafeLengths,
 }
 
 impl<M: StorageMode> Indexer<M> {
     pub fn tip_blockhash(&self) -> BlockHash {
         *self.tip_blockhash.read()
     }
-}
 
-impl Indexer<Ro> {
-    /// Last height whose data is durably indexed, derived from the
-    /// `blockhash` vec's stamp.
-    pub fn indexed_height(&self) -> Height {
-        Height::from(self.vecs.blocks.blockhash.inner.stamp())
+    /// Pipeline-safe `Lengths` snapshot shared with `Query`. Writers
+    /// advance and lower this internally; readers clamp non-series
+    /// answers against this loaded snapshot.
+    pub fn safe_lengths(&self) -> Lengths {
+        self.safe_lengths.load()
     }
 }
 
-impl ReadOnlyClone for Indexer {
-    type ReadOnly = Indexer<Ro>;
-
-    fn read_only_clone(&self) -> Indexer<Ro> {
-        Indexer {
-            path: self.path.clone(),
-            vecs: self.vecs.read_only_clone(),
-            stores: self.stores.clone(),
-            tip_blockhash: self.tip_blockhash.clone(),
-        }
+impl Indexer<Ro> {
+    /// Live indexer stamp for diagnostics. For data reads use
+    /// [`crate::SafeLengths::load`] (via `Query::height`).
+    pub fn indexed_height(&self) -> Height {
+        Height::from(self.vecs.blocks.blockhash.inner.stamp())
     }
 }
 
@@ -94,6 +90,7 @@ impl Indexer {
                 vecs,
                 stores,
                 tip_blockhash: Arc::new(RwLock::new(tip_blockhash)),
+                safe_lengths: SafeLengths::new(),
             })
         };
 
@@ -119,6 +116,8 @@ impl Indexer {
     /// record that gets replayed on every recovery), this cleanly recreates.
     fn full_reset(&mut self) -> Result<()> {
         info!("Full reset...");
+        self.safe_lengths.reset();
+        *self.tip_blockhash.write() = BlockHash::default();
         self.vecs.reset()?;
         let stores_path = self.path.join("stores");
         fs::remove_dir_all(&stores_path).ok();
@@ -126,32 +125,12 @@ impl Indexer {
         Ok(())
     }
 
-    pub fn index(&mut self, reader: &Reader, client: &Client, exit: &Exit) -> Result<Indexes> {
+    pub fn index(&mut self, reader: &Reader, client: &Client, exit: &Exit) -> Result<()> {
         self.index_(reader, client, exit, false)
     }
 
-    pub fn checked_index(
-        &mut self,
-        reader: &Reader,
-        client: &Client,
-        exit: &Exit,
-    ) -> Result<Indexes> {
+    pub fn checked_index(&mut self, reader: &Reader, client: &Client, exit: &Exit) -> Result<()> {
         self.index_(reader, client, exit, true)
-    }
-
-    fn check_xor_bytes(&mut self, reader: &Reader) -> Result<()> {
-        let current = reader.xor_bytes();
-        let cached = XORBytes::from(self.path.as_path());
-
-        if cached == current {
-            return Ok(());
-        }
-
-        self.full_reset()?;
-
-        fs::write(self.path.join("xor.dat"), *current)?;
-
-        Ok(())
     }
 
     fn index_(
@@ -160,7 +139,7 @@ impl Indexer {
         client: &Client,
         exit: &Exit,
         check_collisions: bool,
-    ) -> Result<Indexes> {
+    ) -> Result<()> {
         self.vecs.db.sync_bg_tasks()?;
 
         self.check_xor_bytes(reader)?;
@@ -176,42 +155,40 @@ impl Indexer {
         //     .collect_one_at(self.vecs.blocks.blockhash.len() - 2);
         debug!("Last block hash found.");
 
-        let (starting_indexes, prev_hash) = if let Some(hash) = last_blockhash {
+        let (starting_lengths, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
-            match Indexes::from_vecs_and_stores(height.incremented(), &mut self.vecs, &self.stores)
-            {
-                Some(starting_indexes) => {
-                    if starting_indexes.height > client.get_last_height()? {
+            match Lengths::resume_at(height.incremented(), &mut self.vecs, &self.stores) {
+                Some(starting_lengths) => {
+                    if starting_lengths.height > client.get_last_height()? {
                         info!("Up to date, nothing to index.");
-                        return Ok(starting_indexes);
+                        return Ok(());
                     }
-                    (starting_indexes, Some(hash))
+                    (starting_lengths, Some(hash))
                 }
                 None => {
                     info!("Data inconsistency detected, resetting indexer...");
                     self.full_reset()?;
-                    (Indexes::default(), None)
+                    (Lengths::default(), None)
                 }
             }
         } else {
-            (Indexes::default(), None)
+            (Lengths::default(), None)
         };
-        debug!("Starting indexes set.");
+        debug!("Starting lengths set.");
 
         let lock = exit.lock();
+        self.safe_lengths.lower_before(&starting_lengths);
         self.stores
-            .rollback_if_needed(&mut self.vecs, &starting_indexes)?;
+            .rollback_if_needed(&mut self.vecs, &starting_lengths)?;
         debug!("Rollback stores done.");
-        self.vecs.rollback_if_needed(&starting_indexes)?;
+        self.vecs.rollback_if_needed(&starting_lengths)?;
         debug!("Rollback vecs done.");
         if let Some(hash) = prev_hash.as_ref() {
             *self.tip_blockhash.write() = *hash;
         }
         drop(lock);
 
-        // Cloned because we want to return starting indexes for the computer
-        let mut indexes = starting_indexes.clone();
-        debug!("Indexes cloned.");
+        let mut lengths = starting_lengths;
 
         let is_export_height =
             |height: Height| -> bool { height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0 };
@@ -268,7 +245,7 @@ impl Indexer {
                 debug!("Indexing block {height}...");
             }
 
-            indexes.height = height;
+            lengths.height = height;
 
             vecs.blocks.position.push(block.metadata().position());
             block.tx_metadata().iter().for_each(|m| {
@@ -279,7 +256,7 @@ impl Indexer {
                 block: &block,
                 height,
                 check_collisions,
-                indexes: &mut indexes,
+                lengths: &mut lengths,
                 vecs,
                 stores,
                 readers: &readers,
@@ -309,7 +286,7 @@ impl Indexer {
 
             processor.check_txid_collisions(&txs)?;
 
-            let sigops = processor.compute_sigops(&txins);
+            let sigops = processor.compute_sigops(&txins, &txouts);
 
             processor.finalize_and_store_metadata(
                 txs,
@@ -321,16 +298,14 @@ impl Indexer {
                 &mut buffers.same_block_output_info,
             )?;
 
-            processor.update_indexes(tx_count, input_count, output_count);
+            processor
+                .lengths
+                .add_block(tx_count, input_count, output_count);
 
             if is_export_height(height) {
                 drop(readers);
                 export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
-
-                if height == Height::new(500_000) {
-                    break;
-                }
             }
 
             *self.tip_blockhash.write() = block.block_hash().into();
@@ -339,14 +314,14 @@ impl Indexer {
         drop(readers);
 
         let lock = exit.lock();
-        let tasks = self.stores.take_all_pending_ingests(indexes.height)?;
-        self.vecs.stamped_write(indexes.height)?;
+        let tasks = self.stores.take_all_pending_ingests(lengths.height)?;
+        self.vecs.stamped_write(lengths.height)?;
         let fjall_db = self.stores.db.clone();
 
         self.vecs.db.run_bg(move |db| {
             let _lock = lock;
 
-            sleep(Duration::from_secs(5));
+            db.bg_sleep(Duration::from_secs(3));
 
             info!("Exporting...");
             let i = Instant::now();
@@ -371,6 +346,45 @@ impl Indexer {
             Ok(())
         });
 
-        Ok(starting_indexes)
+        Ok(())
+    }
+
+    fn check_xor_bytes(&mut self, reader: &Reader) -> Result<()> {
+        let current = reader.xor_bytes();
+        let cached = XORBytes::from(self.path.as_path());
+
+        if cached == current {
+            return Ok(());
+        }
+
+        self.full_reset()?;
+
+        fs::write(self.path.join("xor.dat"), *current)?;
+
+        Ok(())
+    }
+
+    /// Publish disk state as the new safe-lengths snapshot. Drains pending
+    /// bg ingest first so stores are queryable at the new bound.
+    pub fn advance_safe_lengths(&mut self) -> Result<()> {
+        self.vecs.db.sync_bg_tasks()?;
+        if let Some(lengths) = Lengths::from_local(&mut self.vecs, &self.stores) {
+            self.safe_lengths.advance(lengths);
+        }
+        Ok(())
+    }
+}
+
+impl ReadOnlyClone for Indexer {
+    type ReadOnly = Indexer<Ro>;
+
+    fn read_only_clone(&self) -> Indexer<Ro> {
+        Indexer {
+            path: self.path.clone(),
+            vecs: self.vecs.read_only_clone(),
+            stores: self.stores.clone(),
+            tip_blockhash: self.tip_blockhash.clone(),
+            safe_lengths: self.safe_lengths.clone(),
+        }
     }
 }

@@ -1,6 +1,7 @@
 use brk_cohort::{Filter, Filtered};
 use brk_error::Result;
-use brk_types::{Cents, Height, Indexes, Version};
+use brk_indexer::Lengths;
+use brk_types::{Cents, Height, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::{
@@ -49,11 +50,11 @@ impl DynCohortVecs for UTXOCohortVecs<MinimalCohortMetrics> {
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(prices, starting_indexes, exit)
+            .compute_rest_part1(prices, starting_lengths, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {

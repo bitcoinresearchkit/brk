@@ -2,8 +2,9 @@ use std::path::Path;
 
 use brk_cohort::{CohortContext, Filter, Filtered};
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Cents, Height, Indexes, Sats, StoredI64, StoredU64, Version};
+use brk_types::{BasisPointsSigned32, Cents, Height, Sats, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
@@ -174,11 +175,11 @@ impl DynCohortVecs for AddrCohortVecs {
     fn compute_rest_part1(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics
-            .compute_rest_part1(prices, starting_indexes, exit)
+            .compute_rest_part1(prices, starting_lengths, exit)
     }
 
     fn write_state(&mut self, height: Height, cleanup: bool) -> Result<()> {
@@ -205,12 +206,12 @@ impl DynCohortVecs for AddrCohortVecs {
 impl CohortVecs for AddrCohortVecs {
     fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         self.addr_count.height.compute_sum_of_others(
-            starting_indexes.height,
+            starting_lengths.height,
             others
                 .iter()
                 .map(|v| &v.addr_count.height)
@@ -219,7 +220,7 @@ impl CohortVecs for AddrCohortVecs {
             exit,
         )?;
         self.metrics.compute_from_sources(
-            starting_indexes,
+            starting_lengths,
             &others.iter().map(|v| &v.metrics).collect::<Vec<_>>(),
             exit,
         )?;
@@ -229,14 +230,14 @@ impl CohortVecs for AddrCohortVecs {
     fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.metrics.compute_rest_part2(
             prices,
-            starting_indexes,
+            starting_lengths,
             all_supply_sats,
             all_utxo_count,
             exit,

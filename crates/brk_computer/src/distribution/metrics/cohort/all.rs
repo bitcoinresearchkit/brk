@@ -1,7 +1,8 @@
 use brk_cohort::Filter;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Dollars, Height, Indexes, Version};
+use brk_types::{Cents, Dollars, Height, Version};
 use vecdb::{AnyStoredVec, Exit, ReadOnlyClone, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -100,7 +101,7 @@ impl AllCohortMetrics {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         under_1h_value_created: &impl ReadableVec<Height, Cents>,
         under_1h_value_destroyed: &impl ReadableVec<Height, Cents>,
@@ -109,7 +110,7 @@ impl AllCohortMetrics {
         self.realized.compute_rest_part2(
             blocks,
             prices,
-            starting_indexes,
+            starting_lengths,
             &self.supply.total.btc.height,
             height_to_market_cap,
             &self.activity.transfer_volume,
@@ -117,14 +118,14 @@ impl AllCohortMetrics {
         )?;
 
         self.unrealized.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &prices.spot.cents.height,
             &self.realized.price.cents.height,
             exit,
         )?;
 
         self.asopr.compute_rest_part2(
-            starting_indexes,
+            starting_lengths,
             &self.activity.transfer_volume.block.cents,
             &self.realized.core.sopr.value_destroyed.block,
             under_1h_value_created,
@@ -134,10 +135,10 @@ impl AllCohortMetrics {
 
         let all_utxo_count = self.outputs.unspent_count.height.read_only_clone();
         self.outputs
-            .compute_part2(starting_indexes.height, &all_utxo_count, exit)?;
+            .compute_part2(starting_lengths.height, &all_utxo_count, exit)?;
 
         self.cost_basis.compute_prices(
-            starting_indexes,
+            starting_lengths,
             &prices.spot.cents.height,
             &self.unrealized.invested_capital.in_profit.cents.height,
             &self.unrealized.invested_capital.in_loss.cents.height,
@@ -149,14 +150,14 @@ impl AllCohortMetrics {
         )?;
 
         self.unrealized
-            .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
+            .compute_sentiment(starting_lengths, &prices.spot.cents.height, exit)?;
 
         let own_supply_sats = self.supply.total.sats.height.read_only_clone();
         self.supply
-            .compute_dominance(starting_indexes.height, &own_supply_sats, exit)?;
+            .compute_dominance(starting_lengths.height, &own_supply_sats, exit)?;
 
         self.relative.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.supply,
             &self.unrealized,
             &self.realized,

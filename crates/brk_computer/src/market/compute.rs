@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Indexes;
+use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use crate::{blocks, indexes, prices};
@@ -9,10 +9,10 @@ use super::Vecs;
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
@@ -21,20 +21,14 @@ impl Vecs {
         let (r1, r2) = rayon::join(
             || {
                 rayon::join(
-                    || self.ath.compute(prices, indexes, starting_indexes, exit),
-                    || {
-                        self.lookback
-                            .compute(blocks, prices, starting_indexes, exit)
-                    },
+                    || self.ath.compute(indexer, prices, indexes, exit),
+                    || self.lookback.compute(indexer, blocks, prices, exit),
                 )
             },
             || {
                 rayon::join(
-                    || self.range.compute(prices, blocks, starting_indexes, exit),
-                    || {
-                        self.moving_average
-                            .compute(blocks, prices, starting_indexes, exit)
-                    },
+                    || self.range.compute(indexer, prices, blocks, exit),
+                    || self.moving_average.compute(indexer, blocks, prices, exit),
                 )
             },
         );
@@ -45,15 +39,15 @@ impl Vecs {
 
         // Phase 2: Depend on lookback
         self.returns
-            .compute(prices, blocks, &self.lookback, starting_indexes, exit)?;
+            .compute(indexer, prices, blocks, &self.lookback, exit)?;
 
         // Phase 3: Depends on returns, moving_average
         self.technical.compute(
+            indexer,
             &self.returns,
             prices,
             blocks,
             &self.moving_average,
-            starting_indexes,
             exit,
         )?;
 

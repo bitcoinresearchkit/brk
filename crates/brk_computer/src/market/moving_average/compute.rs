@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::Indexes;
+use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -8,11 +8,12 @@ use crate::{blocks, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
         let close = &prices.spot.cents.height;
 
         for (sma, period) in [
@@ -34,8 +35,8 @@ impl Vecs {
             (&mut self.sma._4y, 4 * 365),
         ] {
             let window_starts = blocks.lookback.start_vec(period);
-            sma.compute_all(prices, starting_indexes, exit, |v| {
-                v.compute_rolling_average(starting_indexes.height, window_starts, close, exit)?;
+            sma.compute_all(prices, &starting_lengths, exit, |v| {
+                v.compute_rolling_average(starting_lengths.height, window_starts, close, exit)?;
                 Ok(())
             })?;
         }
@@ -59,8 +60,8 @@ impl Vecs {
             (&mut self.ema._4y, 4 * 365),
         ] {
             let window_starts = blocks.lookback.start_vec(period);
-            ema.compute_all(prices, starting_indexes, exit, |v| {
-                v.compute_rolling_ema(starting_indexes.height, window_starts, close, exit)?;
+            ema.compute_all(prices, &starting_lengths, exit, |v| {
+                v.compute_rolling_ema(starting_lengths.height, window_starts, close, exit)?;
                 Ok(())
             })?;
         }

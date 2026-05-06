@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Indexes, StoredF32};
+use brk_indexer::Lengths;
+use brk_types::StoredF32;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -9,10 +10,10 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         count: &CountVecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        let h = starting_indexes.height;
+        let h = starting_lengths.height;
         let sums = count.total.rolling.sum.0.as_array();
         let per_sec = self.0.as_mut_array();
         for (i, &secs) in Windows::<()>::SECS.iter().enumerate() {

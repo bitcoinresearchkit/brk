@@ -1,7 +1,8 @@
 use brk_cohort::Filter;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Dollars, Height, Indexes, Sats, StoredU64, Version};
+use brk_types::{Dollars, Height, Sats, StoredU64, Version};
 use vecdb::AnyStoredVec;
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
@@ -90,7 +91,7 @@ impl ExtendedCohortMetrics {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
@@ -99,7 +100,7 @@ impl ExtendedCohortMetrics {
         self.realized.compute_rest_part2(
             blocks,
             prices,
-            starting_indexes,
+            starting_lengths,
             &self.supply.total.btc.height,
             height_to_market_cap,
             &self.activity.transfer_volume,
@@ -107,14 +108,14 @@ impl ExtendedCohortMetrics {
         )?;
 
         self.unrealized.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &prices.spot.cents.height,
             &self.realized.price.cents.height,
             exit,
         )?;
 
         self.cost_basis.compute_prices(
-            starting_indexes,
+            starting_lengths,
             &prices.spot.cents.height,
             &self.unrealized.invested_capital.in_profit.cents.height,
             &self.unrealized.invested_capital.in_loss.cents.height,
@@ -126,13 +127,13 @@ impl ExtendedCohortMetrics {
         )?;
 
         self.unrealized
-            .compute_sentiment(starting_indexes, &prices.spot.cents.height, exit)?;
+            .compute_sentiment(starting_lengths, &prices.spot.cents.height, exit)?;
 
         self.supply
-            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
+            .compute_dominance(starting_lengths.height, all_supply_sats, exit)?;
 
         self.relative.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.supply,
             &self.unrealized,
             &self.realized,
@@ -142,7 +143,7 @@ impl ExtendedCohortMetrics {
         )?;
 
         self.outputs
-            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+            .compute_part2(starting_lengths.height, all_utxo_count, exit)?;
 
         Ok(())
     }

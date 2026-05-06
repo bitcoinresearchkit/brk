@@ -59,9 +59,7 @@ fn all_topo_orders(parents: &[Vec<u32>]) -> Vec<Vec<u32>> {
             out.push(current.clone());
             return;
         }
-        let ready: Vec<u32> = (0..n as u32)
-            .filter(|&i| indeg[i as usize] == 0)
-            .collect();
+        let ready: Vec<u32> = (0..n as u32).filter(|&i| indeg[i as usize] == 0).collect();
         for v in ready {
             indeg[v as usize] = u32::MAX;
             current.push(v);

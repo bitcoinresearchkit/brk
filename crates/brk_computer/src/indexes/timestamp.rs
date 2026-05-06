@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30, Month1,
-    Month3, Month6, Timestamp, Week1, Year1, Year10,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
+    Month6, Timestamp, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
@@ -129,10 +130,10 @@ impl Timestamps {
         height: &super::HeightVecs,
         halving_vecs: &super::HalvingVecs,
         epoch_vecs: &super::EpochVecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_lengths.height.decremented().unwrap_or_default();
         self.resolutions.halving.compute_indirect_sequential(
             height.halving.collect_one(prev_height).unwrap_or_default(),
             &halving_vecs.first_height,

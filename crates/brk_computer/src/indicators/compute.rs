@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Dollars, Indexes, StoredF32};
+use brk_indexer::Indexer;
+use brk_types::{Bitcoin, Dollars, StoredF32};
 use vecdb::Exit;
 
 use super::{Vecs, gini};
@@ -9,33 +10,35 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         mining: &mining::Vecs,
         distribution: &distribution::Vecs,
         transactions: &transactions::Vecs,
         market: &market::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
+
+        let starting_lengths = indexer.safe_lengths();
 
         // Puell Multiple: daily_subsidy_usd / sma_365d_subsidy_usd
         self.puell_multiple
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &mining.rewards.subsidy.block.usd,
                 &mining.rewards.subsidy.average._1y.usd.height,
                 exit,
             )?;
 
         // Gini coefficient (UTXO distribution inequality)
-        gini::compute(&mut self.gini, distribution, starting_indexes, exit)?;
+        gini::compute(&mut self.gini, distribution, indexer, exit)?;
 
         // RHODL Ratio: 1d-1w realized cap / 1y-2y realized cap
         self.rhodl_ratio
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &distribution
                     .utxo_cohorts
                     .age_range
@@ -69,7 +72,7 @@ impl Vecs {
         self.nvt
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 market_cap,
                 &transactions.volume.transfer_volume.sum._24h.usd.height,
                 exit,
@@ -79,7 +82,7 @@ impl Vecs {
         self.thermo_cap_multiple
             .bps
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 market_cap,
                 &mining.rewards.subsidy.cumulative.usd.height,
                 exit,
@@ -93,7 +96,7 @@ impl Vecs {
         self.coindays_destroyed_supply_adj
             .height
             .compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 &all_activity.coindays_destroyed.sum._24h.height,
                 supply_total_sats,
                 |(i, cdd_24h, supply_sats, ..)| {
@@ -111,7 +114,7 @@ impl Vecs {
         self.coinyears_destroyed_supply_adj
             .height
             .compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 &all_activity.coinyears_destroyed.height,
                 supply_total_sats,
                 |(i, cyd, supply_sats, ..)| {
@@ -127,7 +130,7 @@ impl Vecs {
 
         // Supply-Adjusted Dormancy = dormancy / circulating_supply_btc
         self.dormancy.supply_adj.height.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             &all_activity.dormancy._24h.height,
             supply_total_sats,
             |(i, dormancy, supply_sats, ..)| {
@@ -144,7 +147,7 @@ impl Vecs {
         // Stock-to-Flow: supply / annual_issuance
         // annual_issuance ≈ subsidy_per_block × 52560 (blocks/year)
         self.stock_to_flow.height.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             supply_total_sats,
             &mining.rewards.subsidy.block.sats,
             |(i, supply_sats, subsidy_sats, ..)| {
@@ -163,7 +166,7 @@ impl Vecs {
 
         // Dormancy Flow: supply_btc / dormancy
         self.dormancy.flow.height.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             supply_total_sats,
             &all_activity.dormancy._24h.height,
             |(i, supply_sats, dormancy, ..)| {
@@ -180,7 +183,7 @@ impl Vecs {
 
         // Seller Exhaustion Constant: % supply_in_profit × 30d_volatility
         self.seller_exhaustion.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             &all_metrics.supply.in_profit.sats.height,
             &market.volatility._1m.height,
             supply_total_sats,

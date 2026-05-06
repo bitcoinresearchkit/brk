@@ -49,9 +49,9 @@ pub(super) fn iter_difficulty_epochs(
         // Epochs that start before the window are skipped; we still record
         // their difficulty so the next in-window entry can compute its ratio.
         if epoch_height.to_usize() < start_height {
-            prev_difficulty = Some(*difficulty_cursor.get(epoch_usize).ok_or(
-                Error::Internal("iter_difficulty_epochs: missing pre-window epoch difficulty"),
-            )?);
+            prev_difficulty = Some(*difficulty_cursor.get(epoch_usize).ok_or(Error::Internal(
+                "iter_difficulty_epochs: missing pre-window epoch difficulty",
+            ))?);
             continue;
         }
 

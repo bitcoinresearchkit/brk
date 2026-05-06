@@ -22,7 +22,7 @@ Compute 1000+ on-chain metrics from indexed blockchain data: supply breakdowns, 
 let mut computer = Computer::forced_import(&outputs_path, &indexer)?;
 
 // Compute all metrics for new blocks
-computer.compute(&indexer, starting_indexes, &reader, &exit)?;
+computer.compute(&indexer, &exit)?;
 
 // Access computed data via traversable vecs
 let supply = computer.distribution.utxo_cohorts.all.metrics.supply.total.sats.height;

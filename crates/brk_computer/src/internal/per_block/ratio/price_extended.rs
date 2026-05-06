@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints32, Cents, Dollars, Height, Indexes, SatsFract, StoredF32, Version};
+use brk_types::{BasisPoints32, Cents, Dollars, Height, SatsFract, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
@@ -39,12 +40,12 @@ impl PriceWithRatioPerBlock {
     /// Compute ratio from close price and this metric's price.
     pub(crate) fn compute_ratio(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         close_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.bps.height.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             close_price,
             &self.cents.height,
             |(i, close, price, ..)| {
@@ -63,7 +64,7 @@ impl PriceWithRatioPerBlock {
     pub(crate) fn compute_all<F>(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         mut compute_price: F,
     ) -> Result<()>
@@ -71,7 +72,7 @@ impl PriceWithRatioPerBlock {
         F: FnMut(&mut EagerVec<PcoVec<Height, Cents>>) -> Result<()>,
     {
         compute_price(&mut self.cents.height)?;
-        self.compute_ratio(starting_indexes, &prices.spot.cents.height, exit)
+        self.compute_ratio(starting_lengths, &prices.spot.cents.height, exit)
     }
 }
 
@@ -101,14 +102,14 @@ impl PriceWithRatioExtendedPerBlock {
     pub(crate) fn compute_rest(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         let close_price = &prices.spot.cents.height;
         self.base
-            .compute_ratio(starting_indexes, close_price, exit)?;
+            .compute_ratio(starting_lengths, close_price, exit)?;
         self.percentiles.compute(
-            starting_indexes,
+            starting_lengths,
             exit,
             &self.base.ratio.height,
             &self.base.cents.height,
@@ -120,7 +121,7 @@ impl PriceWithRatioExtendedPerBlock {
     pub(crate) fn compute_all<F>(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         mut compute_price: F,
     ) -> Result<()>
@@ -128,6 +129,6 @@ impl PriceWithRatioExtendedPerBlock {
         F: FnMut(&mut EagerVec<PcoVec<Height, Cents>>) -> Result<()>,
     {
         compute_price(&mut self.base.cents.height)?;
-        self.compute_rest(prices, starting_indexes, exit)
+        self.compute_rest(prices, starting_lengths, exit)
     }
 }

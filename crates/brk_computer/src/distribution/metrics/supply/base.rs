@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, BasisPointsSigned32, Height, Indexes, Sats, SatsSigned, Version};
+use brk_types::{BasisPoints16, BasisPointsSigned32, Height, Sats, SatsSigned, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -86,12 +87,12 @@ impl SupplyBase {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         self.total.sats.height.compute_sum_of_others(
-            starting_indexes.height,
+            starting_lengths.height,
             &others
                 .iter()
                 .map(|v| &v.total.sats.height)

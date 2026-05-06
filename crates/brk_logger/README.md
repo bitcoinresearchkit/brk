@@ -8,7 +8,10 @@ Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall,
 
 ## Key Features
 
-- **Dual output**: Console (colorized) + optional file logging with size-based rotation (42MB, 2 files)
+- **Dual output**: Console (colorized) + optional file logging with daily rotation
+- **Per-level files**: One combined log plus one file per tracing level (error/warn/info/debug/trace)
+- **Per-level rate limit**: 100 writes/sec per level so a chatty level can't starve the others; combined file mirrors what the per-level files accept
+- **Auto-cleanup**: `*.txt` files older than 7 days are pruned on startup
 - **Log hooks**: Register callbacks to intercept log messages programmatically
 - **Sensible defaults**: Pre-configured filters silence common verbose libraries
 - **Timestamp formatting**: Uses system timezone via jiff
@@ -21,8 +24,8 @@ Drop-in logging initialization that silences noisy dependencies (bitcoin, fjall,
 ## Core API
 
 ```rust,ignore
-brk_logger::init(Some(Path::new("app.log")))?;  // Console + file
-brk_logger::init(None)?;                         // Console only
+brk_logger::init(Some(Path::new("logs")))?;  // Console + files in logs/
+brk_logger::init(None)?;                      // Console only
 
 brk_logger::register_hook(|msg| {
     // React to log messages

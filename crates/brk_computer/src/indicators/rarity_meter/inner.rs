@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredI8, Version};
+use brk_types::{Cents, Height, StoredI8, Version};
 use vecdb::{AnyVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -47,60 +48,61 @@ impl RarityMeterInner {
         &mut self,
         models: &[&RatioPerBlockPercentiles],
         spot: &impl ReadableVec<Height, Cents>,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let gather = |f: fn(&RatioPerBlockPercentiles) -> &_| -> Vec<_> {
             models.iter().map(|m| f(m)).collect()
         };
 
         // Lower percentiles: max across all models (tightest lower bound)
         self.pct0_5.cents.height.compute_max_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct0_5.price.cents.height),
             exit,
         )?;
         self.pct1.cents.height.compute_max_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct1.price.cents.height),
             exit,
         )?;
         self.pct2.cents.height.compute_max_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct2.price.cents.height),
             exit,
         )?;
         self.pct5.cents.height.compute_max_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct5.price.cents.height),
             exit,
         )?;
 
         // Upper percentiles: min across all models (tightest upper bound)
         self.pct95.cents.height.compute_min_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct95.price.cents.height),
             exit,
         )?;
         self.pct98.cents.height.compute_min_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct98.price.cents.height),
             exit,
         )?;
         self.pct99.cents.height.compute_min_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct99.price.cents.height),
             exit,
         )?;
         self.pct99_5.cents.height.compute_min_of_others(
-            starting_indexes.height,
+            starting_height,
             &gather(|m| &m.pct99_5.price.cents.height),
             exit,
         )?;
 
-        self.compute_index(spot, starting_indexes, exit)?;
+        self.compute_index(spot, indexer, exit)?;
 
-        self.compute_score(models, spot, starting_indexes, exit)?;
+        self.compute_score(models, spot, indexer, exit)?;
 
         Ok(())
     }
@@ -108,9 +110,10 @@ impl RarityMeterInner {
     fn compute_index(
         &mut self,
         spot: &impl ReadableVec<Height, Cents>,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let bands = [
             &self.pct0_5.cents.height,
             &self.pct1.cents.height,
@@ -128,9 +131,7 @@ impl RarityMeterInner {
         self.index
             .height
             .validate_computed_version_or_reset(dep_version)?;
-        self.index
-            .height
-            .truncate_if_needed(starting_indexes.height)?;
+        self.index.height.truncate_if_needed(starting_height)?;
 
         self.index.height.repeat_until_complete(exit, |vec| {
             let skip = vec.len();
@@ -186,9 +187,10 @@ impl RarityMeterInner {
         &mut self,
         models: &[&RatioPerBlockPercentiles],
         spot: &impl ReadableVec<Height, Cents>,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let dep_version: Version = models
             .iter()
             .map(|p| {
@@ -207,9 +209,7 @@ impl RarityMeterInner {
         self.score
             .height
             .validate_computed_version_or_reset(dep_version)?;
-        self.score
-            .height
-            .truncate_if_needed(starting_indexes.height)?;
+        self.score.height.truncate_if_needed(starting_height)?;
 
         self.score.height.repeat_until_complete(exit, |vec| {
             let skip = vec.len();

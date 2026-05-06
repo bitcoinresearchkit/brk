@@ -11,15 +11,15 @@ use tracing::error;
 use vecdb::{BytesVec, WritableVec};
 
 use super::{BlockProcessor, ProcessedOutput, SameBlockOutputInfo};
-use crate::{AddrsVecs, Indexes, OutputsVecs, ScriptsVecs};
+use crate::{AddrsVecs, Lengths, OutputsVecs, ScriptsVecs};
 
 impl<'a> BlockProcessor<'a> {
     pub fn process_outputs(&self) -> Result<Vec<ProcessedOutput<'a>>> {
         let height = self.height;
         let check_collisions = self.check_collisions;
 
-        let base_tx_index = self.indexes.tx_index;
-        let base_txout_index = self.indexes.txout_index;
+        let base_tx_index = self.lengths.tx_index;
+        let base_txout_index = self.lengths.txout_index;
 
         let total_outputs: usize = self.block.txdata.iter().map(|tx| tx.output.len()).sum();
         let mut items = Vec::with_capacity(total_outputs);
@@ -63,7 +63,7 @@ impl<'a> BlockProcessor<'a> {
                         .get(&addr_hash)?
                         .map(|v| *v)
                         .and_then(|type_index_local| {
-                            (type_index_local < self.indexes.to_type_index(addr_type))
+                            (type_index_local < self.lengths.to_type_index(addr_type))
                                 .then_some(type_index_local)
                         });
 
@@ -106,7 +106,7 @@ impl<'a> BlockProcessor<'a> {
 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn finalize_outputs(
-    indexes: &mut Indexes,
+    lengths: &mut Lengths,
     first_txout_index: &mut BytesVec<TxIndex, TxOutIndex>,
     outputs: &mut OutputsVecs,
     addrs: &mut AddrsVecs,
@@ -150,7 +150,7 @@ pub(super) fn finalize_outputs(
             {
                 ti
             } else {
-                let ti = indexes.increment_addr_index(addr_type);
+                let ti = lengths.increment_addr_index(addr_type);
 
                 already_added_addr_hash
                     .get_mut_unwrap(addr_type)
@@ -168,29 +168,29 @@ pub(super) fn finalize_outputs(
                     scripts
                         .p2ms
                         .to_tx_index
-                        .checked_push(indexes.p2ms_output_index, tx_index)?;
-                    indexes.p2ms_output_index.copy_then_increment()
+                        .checked_push(lengths.p2ms_output_index, tx_index)?;
+                    lengths.p2ms_output_index.copy_then_increment()
                 }
                 OutputType::OpReturn => {
                     scripts
                         .op_return
                         .to_tx_index
-                        .checked_push(indexes.op_return_index, tx_index)?;
-                    indexes.op_return_index.copy_then_increment()
+                        .checked_push(lengths.op_return_index, tx_index)?;
+                    lengths.op_return_index.copy_then_increment()
                 }
                 OutputType::Empty => {
                     scripts
                         .empty
                         .to_tx_index
-                        .checked_push(indexes.empty_output_index, tx_index)?;
-                    indexes.empty_output_index.copy_then_increment()
+                        .checked_push(lengths.empty_output_index, tx_index)?;
+                    lengths.empty_output_index.copy_then_increment()
                 }
                 OutputType::Unknown => {
                     scripts
                         .unknown
                         .to_tx_index
-                        .checked_push(indexes.unknown_output_index, tx_index)?;
-                    indexes.unknown_output_index.copy_then_increment()
+                        .checked_push(lengths.unknown_output_index, tx_index)?;
+                    lengths.unknown_output_index.copy_then_increment()
                 }
                 _ => unreachable!(),
             }

@@ -4,9 +4,9 @@
 //! and stored rather than lazily derived.
 
 use brk_error::Result;
-use brk_indexer::Indexer;
+use brk_indexer::{Indexer, Lengths};
 use brk_traversable::Traversable;
-use brk_types::{Indexes, TxIndex, VSize};
+use brk_types::{TxIndex, VSize};
 use schemars::JsonSchema;
 use vecdb::{
     Database, EagerVec, Exit, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version,
@@ -50,7 +50,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         skip_count: usize,
     ) -> Result<()>
@@ -61,7 +61,7 @@ where
         self.distribution.derive_from_with_skip(
             indexer,
             indexes,
-            starting_indexes,
+            starting_lengths,
             &self.tx_index,
             exit,
             skip_count,
@@ -73,7 +73,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         vsize_source: &impl ReadableVec<TxIndex, VSize>,
         exit: &Exit,
         skip_count: usize,
@@ -85,7 +85,7 @@ where
         self.distribution.derive_from_with_skip_weighted(
             indexer,
             indexes,
-            starting_indexes,
+            starting_lengths,
             &self.tx_index,
             vsize_source,
             exit,

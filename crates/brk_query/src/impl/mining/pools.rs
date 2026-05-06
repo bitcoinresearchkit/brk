@@ -194,7 +194,15 @@ impl Query {
         let estimated_hashrate = (share_24h * network_hr as f64) as u128;
 
         let total_reward = if let Some(major) = computer.pools.major.get(&slug) {
-            Some(major.rewards.cumulative.sats.height.collect_one(current_height).data()?)
+            Some(
+                major
+                    .rewards
+                    .cumulative
+                    .sats
+                    .height
+                    .collect_one(current_height)
+                    .data()?,
+            )
         } else {
             None
         };
@@ -232,7 +240,7 @@ impl Query {
         let computer = self.computer();
         let tip = self.height().to_usize();
         let upper = before_height.map(|h| h.to_usize()).unwrap_or(tip);
-        let end = upper.min(computer.pools.pool.len().saturating_sub(1));
+        let end = upper.min(tip);
 
         let heights: Vec<usize> = computer
             .pools

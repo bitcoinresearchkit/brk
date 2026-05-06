@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::{
     BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSats, CentsSigned, CentsSquaredSats,
-    Dollars, Height, Indexes, StoredF64, Version,
+    Dollars, Height, StoredF64, Version,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
@@ -194,12 +195,12 @@ impl RealizedFull {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&RealizedCore],
         exit: &Exit,
     ) -> Result<()> {
         self.core
-            .compute_from_stateful(starting_indexes, others, exit)?;
+            .compute_from_stateful(starting_lengths, others, exit)?;
 
         Ok(())
     }
@@ -224,14 +225,14 @@ impl RealizedFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        self.core.compute_rest_part1(starting_indexes, exit)?;
+        self.core.compute_rest_part1(starting_lengths, exit)?;
 
         self.peak_regret
             .value
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         Ok(())
     }
 
@@ -240,7 +241,7 @@ impl RealizedFull {
         &mut self,
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         activity_transfer_volume: &ValuePerBlockCumulativeRolling,
@@ -248,7 +249,7 @@ impl RealizedFull {
     ) -> Result<()> {
         self.core.compute_rest_part2(
             prices,
-            starting_indexes,
+            starting_lengths,
             height_to_supply,
             &activity_transfer_volume.sum._24h.cents.height,
             exit,
@@ -264,7 +265,7 @@ impl RealizedFull {
             .zip(self.core.sopr.value_destroyed.sum.as_array()[1..].iter())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &vc.cents.height,
                 &vd.height,
                 exit,
@@ -273,18 +274,18 @@ impl RealizedFull {
 
         // Gross PnL
         self.gross_pnl.block.cents.compute_add(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.core.minimal.profit.block.cents,
             &self.core.minimal.loss.block.cents,
             exit,
         )?;
-        self.gross_pnl.compute_rest(starting_indexes.height, exit)?;
+        self.gross_pnl.compute_rest(starting_lengths.height, exit)?;
 
         // Net PnL 1m change relative to rcap and mcap
         self.net_pnl
             .change_1m_to_rcap
             .compute_binary::<CentsSigned, Cents, RatioCentsSignedCentsBps32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &self.core.net_pnl.delta.absolute._1m.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
@@ -292,7 +293,7 @@ impl RealizedFull {
         self.net_pnl
             .change_1m_to_mcap
             .compute_binary::<CentsSigned, Dollars, RatioCentsSignedDollarsBps32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &self.core.net_pnl.delta.absolute._1m.cents.height,
                 height_to_market_cap,
                 exit,
@@ -301,7 +302,7 @@ impl RealizedFull {
         // Capitalized price ratio, percentiles and bands
         self.capitalized
             .price
-            .compute_rest(prices, starting_indexes, exit)?;
+            .compute_rest(prices, starting_lengths, exit)?;
 
         // Sell-side risk ratios
         for (ssrr, rv) in self
@@ -311,7 +312,7 @@ impl RealizedFull {
             .zip(self.gross_pnl.sum.as_array())
         {
             ssrr.compute_binary::<Cents, Cents, RatioCentsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &rv.cents.height,
                 &self.core.minimal.cap.cents.height,
                 exit,
@@ -321,7 +322,7 @@ impl RealizedFull {
         // Realized cap relative to own market cap
         self.cap_to_own_mcap
             .compute_binary::<Dollars, Dollars, RatioDollarsBp32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &self.core.minimal.cap.usd.height,
                 height_to_market_cap,
                 exit,
@@ -336,7 +337,7 @@ impl RealizedFull {
             .zip(self.core.minimal.loss.sum.as_array())
         {
             ratio.compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &profit.cents.height,
                 &loss.cents.height,
                 exit,
@@ -345,7 +346,7 @@ impl RealizedFull {
 
         // Price ratio: percentiles, sma and std dev bands
         self.price_ratio_percentiles.compute(
-            starting_indexes,
+            starting_lengths,
             exit,
             &self.core.minimal.price.ratio.height,
             &self.core.minimal.price.cents.height,
@@ -353,14 +354,14 @@ impl RealizedFull {
 
         self.price_ratio_sma.compute(
             blocks,
-            starting_indexes,
+            starting_lengths,
             exit,
             &self.core.minimal.price.ratio.height,
         )?;
 
         self.price_ratio_std_dev.compute(
             blocks,
-            starting_indexes,
+            starting_lengths,
             exit,
             &self.core.minimal.price.ratio.height,
             &self.core.minimal.price.cents.height,

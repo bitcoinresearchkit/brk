@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSigned, CentsSquaredSats, Height, Indexes, Sats, Version};
+use brk_types::{Cents, CentsSigned, CentsSquaredSats, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, BytesVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
@@ -99,16 +100,16 @@ impl UnrealizedFull {
     pub(crate) fn compute_rest_all(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
         supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.inner.compute_rest(starting_indexes, exit)?;
+        self.inner.compute_rest(starting_lengths, exit)?;
 
         // gross_pnl = profit + loss
         self.gross_pnl.cents.height.compute_add(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.inner.basic.profit.cents.height,
             &self.inner.basic.loss.cents.height,
             exit,
@@ -120,7 +121,7 @@ impl UnrealizedFull {
             .cents
             .height
             .compute_transform3(
-                starting_indexes.height,
+                starting_lengths.height,
                 supply_in_profit_sats,
                 &prices.spot.cents.height,
                 &self.inner.basic.profit.cents.height,
@@ -140,7 +141,7 @@ impl UnrealizedFull {
             .cents
             .height
             .compute_transform3(
-                starting_indexes.height,
+                starting_lengths.height,
                 supply_in_loss_sats,
                 &prices.spot.cents.height,
                 &self.inner.basic.loss.cents.height,
@@ -158,7 +159,7 @@ impl UnrealizedFull {
     /// Called after cost_basis.in_profit/loss are computed at the cohort level.
     pub(crate) fn compute_sentiment(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         spot: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
@@ -166,7 +167,7 @@ impl UnrealizedFull {
         // capitalized_price = capitalized_cap / invested_cap
         // invested_cap is in Cents (already / ONE_BTC), multiply back for CentsSats scale
         self.sentiment.greed_index.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.capitalized_cap_in_profit_raw,
             &self.invested_capital.in_profit.cents.height,
             spot,
@@ -187,7 +188,7 @@ impl UnrealizedFull {
 
         // pain = capitalized_price_losers - spot
         self.sentiment.pain_index.cents.height.compute_transform3(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.capitalized_cap_in_loss_raw,
             &self.invested_capital.in_loss.cents.height,
             spot,
@@ -212,7 +213,7 @@ impl UnrealizedFull {
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &self.sentiment.greed_index.cents.height,
                 &self.sentiment.pain_index.cents.height,
                 exit,

@@ -277,42 +277,28 @@ impl Computer {
         Ok(())
     }
 
-    pub fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: brk_indexer::Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
         internal::cache_clear_all();
 
         let compute_start = Instant::now();
 
-        let mut starting_indexes = timed("Computed indexes", || {
-            self.indexes.compute(indexer, starting_indexes, exit)
-        })?;
+        timed("Computed indexes", || self.indexes.compute(indexer, exit))?;
 
         thread::scope(|scope| -> Result<()> {
             timed("Computed blocks", || {
-                self.blocks
-                    .compute(indexer, &self.indexes, &starting_indexes, exit)
+                self.blocks.compute(indexer, &self.indexes, exit)
             })?;
 
             let (inputs_result, prices_result) = rayon::join(
                 || {
                     timed("Computed inputs", || {
-                        self.inputs.compute(
-                            indexer,
-                            &self.indexes,
-                            &self.blocks,
-                            &starting_indexes,
-                            exit,
-                        )
+                        self.inputs
+                            .compute(indexer, &self.indexes, &self.blocks, exit)
                     })
                 },
                 || {
                     timed("Computed prices", || {
-                        self.prices
-                            .compute(indexer, &self.indexes, &starting_indexes, exit)
+                        self.prices.compute(indexer, &self.indexes, exit)
                     })
                 },
             );
@@ -323,13 +309,8 @@ impl Computer {
             // independent. Run all three in parallel.
             let market = scope.spawn(|| {
                 timed("Computed market", || {
-                    self.market.compute(
-                        &self.prices,
-                        &self.indexes,
-                        &self.blocks,
-                        &starting_indexes,
-                        exit,
-                    )
+                    self.market
+                        .compute(indexer, &self.prices, &self.indexes, &self.blocks, exit)
                 })
             });
 
@@ -341,7 +322,6 @@ impl Computer {
                         &self.blocks,
                         &self.inputs,
                         &self.prices,
-                        &starting_indexes,
                         exit,
                     )
                 })?;
@@ -352,7 +332,6 @@ impl Computer {
                         &self.blocks,
                         &self.transactions,
                         &self.prices,
-                        &starting_indexes,
                         exit,
                     )
                 })
@@ -365,7 +344,6 @@ impl Computer {
                     &self.inputs,
                     &self.blocks,
                     &self.prices,
-                    &starting_indexes,
                     exit,
                 )
             })?;
@@ -375,7 +353,6 @@ impl Computer {
             Ok(())
         })?;
 
-        let starting_indexes_clone = starting_indexes.clone();
         thread::scope(|scope| -> Result<()> {
             let pools = scope.spawn(|| {
                 timed("Computed pools", || {
@@ -385,7 +362,6 @@ impl Computer {
                         &self.blocks,
                         &self.prices,
                         &self.mining,
-                        &starting_indexes_clone,
                         exit,
                     )
                 })
@@ -394,11 +370,11 @@ impl Computer {
             let investing = scope.spawn(|| {
                 timed("Computed investing", || {
                     self.investing.compute(
+                        indexer,
                         &self.indexes,
                         &self.prices,
                         &self.blocks,
                         &self.market.lookback,
-                        &starting_indexes_clone,
                         exit,
                     )
                 })
@@ -413,7 +389,6 @@ impl Computer {
                     &self.transactions,
                     &self.blocks,
                     &self.prices,
-                    &mut starting_indexes,
                     exit,
                 )
             })?;
@@ -429,11 +404,11 @@ impl Computer {
             let indicators = scope.spawn(|| {
                 timed("Computed indicators", || {
                     self.indicators.compute(
+                        indexer,
                         &self.mining,
                         &self.distribution,
                         &self.transactions,
                         &self.market,
-                        &starting_indexes,
                         exit,
                     )
                 })
@@ -441,20 +416,20 @@ impl Computer {
 
             timed("Computed supply", || {
                 self.supply.compute(
+                    indexer,
                     &self.outputs,
                     &self.blocks,
                     &self.mining,
                     &self.transactions,
                     &self.prices,
                     &self.distribution,
-                    &starting_indexes,
                     exit,
                 )
             })?;
 
             timed("Computed cointime", || {
                 self.cointime.compute(
-                    &starting_indexes,
+                    indexer,
                     &self.prices,
                     &self.blocks,
                     &self.mining,
@@ -468,12 +443,9 @@ impl Computer {
             Ok(())
         })?;
 
-        self.indicators.rarity_meter.compute(
-            &self.distribution,
-            &self.prices,
-            &starting_indexes,
-            exit,
-        )?;
+        self.indicators
+            .rarity_meter
+            .compute(indexer, &self.distribution, &self.prices, exit)?;
 
         info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
@@ -481,8 +453,9 @@ impl Computer {
 }
 
 impl Computer<Ro> {
-    /// Last height whose computed-side state is durably stamped, derived
-    /// from `distribution.supply_state`'s stamp.
+    /// Live computer stamp for diagnostics. Derived from
+    /// `distribution.supply_state`'s stamp. For data reads use
+    /// `Query::height` (clamped against the safe-lengths snapshot).
     pub fn computed_height(&self) -> Height {
         Height::from(self.distribution.supply_state.stamp())
     }

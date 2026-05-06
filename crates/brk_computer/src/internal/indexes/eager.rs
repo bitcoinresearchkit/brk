@@ -1,9 +1,10 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 
 use brk_traversable::Traversable;
 use brk_types::{
-    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30, Month1,
-    Month3, Month6, Version, Week1, Year1, Year10,
+    Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
+    Month6, Version, Week1, Year1, Year10,
 };
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
@@ -74,12 +75,12 @@ where
 
     pub(crate) fn compute_first(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_lengths.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {
@@ -117,13 +118,13 @@ where
 
     pub(crate) fn compute_max(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let src_len = height_source.len();
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_lengths.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {
@@ -164,13 +165,13 @@ where
 
     pub(crate) fn compute_min(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_source: &impl ReadableVec<Height, T>,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let src_len = height_source.len();
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_lengths.height.decremented().unwrap_or_default();
 
         macro_rules! period {
             ($field:ident) => {

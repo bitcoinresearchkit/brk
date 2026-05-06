@@ -1,7 +1,7 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
+use brk_indexer::{Indexer, Lengths};
 use brk_traversable::Traversable;
-use brk_types::{Indexes, TxIndex};
+use brk_types::TxIndex;
 use schemars::JsonSchema;
 use vecdb::{Database, Exit, LazyVecFrom2, ReadableVec, Rw, StorageMode, Version};
 
@@ -46,7 +46,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -55,6 +55,6 @@ where
         LazyVecFrom2<TxIndex, T, TxIndex, S1, TxIndex, S2>: ReadableVec<TxIndex, T>,
     {
         self.distribution
-            .derive_from(indexer, indexes, starting_indexes, &self.tx_index, exit)
+            .derive_from(indexer, indexes, starting_lengths, &self.tx_index, exit)
     }
 }

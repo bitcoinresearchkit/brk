@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::Path};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Addr, AddrBytes, Height, Indexes, OutputType, PoolSlug, Pools, TxOutIndex, pools};
+use brk_types::{Addr, AddrBytes, Height, OutputType, PoolSlug, Pools, TxOutIndex, pools};
 use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, Exit, ImportableVec, ReadableVec, Rw, StorageMode,
@@ -92,20 +92,19 @@ impl Vecs {
         blocks: &blocks::Vecs,
         prices: &prices::Vecs,
         mining: &mining::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
-        self.compute_pool(indexer, indexes, starting_indexes, exit)?;
+        self.compute_pool(indexer, indexes, exit)?;
 
         self.major.par_iter_mut().try_for_each(|(_, vecs)| {
-            vecs.compute(starting_indexes, &self.pool, blocks, prices, mining, exit)
+            vecs.compute(indexer, &self.pool, blocks, prices, mining, exit)
         })?;
 
         self.minor
             .par_iter_mut()
-            .try_for_each(|(_, vecs)| vecs.compute(starting_indexes, &self.pool, blocks, exit))?;
+            .try_for_each(|(_, vecs)| vecs.compute(indexer, &self.pool, blocks, exit))?;
 
         let exit = exit.clone();
         self.db.run_bg(move |db| {
@@ -119,9 +118,10 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         let dep_version = indexer.vecs.blocks.coinbase_tag.version();
         let pool_vec_version = self.pool.header().vec_version();
         let pool_computed = self.pool.header().computed_version();
@@ -148,7 +148,7 @@ impl Vecs {
 
         let unknown = self.pools.get_unknown();
 
-        let min = starting_indexes.height.to_usize().min(self.pool.len());
+        let min = starting_height.to_usize().min(self.pool.len());
 
         // Cursors avoid per-height PcoVec page decompression.
         // Heights are sequential, tx_index values derived from them are monotonically

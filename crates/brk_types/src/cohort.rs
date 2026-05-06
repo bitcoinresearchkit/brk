@@ -24,7 +24,11 @@ impl Cohort {
     /// Returns `Some(Cohort)` iff `s` is non-empty ASCII `[a-z0-9_]+`.
     pub fn new(s: impl Into<String>) -> Option<Self> {
         let s = s.into();
-        if s.is_empty() || !s.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_') {
+        if s.is_empty()
+            || !s
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+        {
             return None;
         }
         Some(Self(s))

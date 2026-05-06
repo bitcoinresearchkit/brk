@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Indexes, StoredF32, Timestamp};
+use brk_indexer::Indexer;
+use brk_types::{StoredF32, Timestamp};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -8,20 +9,22 @@ use crate::{indexes, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         self.high.cents.height.compute_all_time_high(
-            starting_indexes.height,
+            starting_height,
             &prices.spot.cents.height,
             exit,
         )?;
 
         let mut ath_ts: Option<Timestamp> = None;
         self.days_since.height.compute_transform3(
-            starting_indexes.height,
+            starting_height,
             &self.high.cents.height,
             &prices.spot.cents.height,
             &indexes.timestamp.monotonic,
@@ -48,7 +51,7 @@ impl Vecs {
 
         let mut prev = None;
         self.max_days_between.height.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.days_since.height,
             |(i, days, slf)| {
                 if prev.is_none() {
@@ -67,7 +70,7 @@ impl Vecs {
         )?;
 
         self.drawdown.compute_drawdown(
-            starting_indexes.height,
+            starting_height,
             &prices.spot.cents.height,
             &self.high.cents.height,
             exit,

@@ -7,7 +7,7 @@ use brk_types::{
     BlockHash, Height, MerkleProof, Timestamp, Transaction, TxInIndex, TxIndex, TxOutIndex,
     TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
 };
-use vecdb::{AnyVec, ReadableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -15,6 +15,10 @@ impl Query {
     // ── Txid → TxIndex resolution (single source of truth) ─────────
 
     /// Resolve a txid to its internal TxIndex via prefix lookup.
+    /// Raw store hit — caller should prefer [`Self::resolve_tx_index_bounded`]
+    /// when subsequent reads dereference indexer/computer vecs by `tx_index`.
+    /// Use this raw form only for "is this mined?" probes that don't deref
+    /// derived data (mempool merge, cpfp fee-rate fall-through).
     #[inline]
     pub(crate) fn resolve_tx_index(&self, txid: &Txid) -> Result<TxIndex> {
         self.indexer()
@@ -25,7 +29,23 @@ impl Query {
             .ok_or(Error::UnknownTxid)
     }
 
+    /// `resolve_tx_index` clamped against the safe-lengths snapshot.
+    /// Returns `UnknownTxid` for tx_indices the store knows but the snapshot
+    /// has not yet covered. Use this from any path that will subsequently
+    /// dereference indexer/computer vecs by `tx_index`.
+    #[inline]
+    pub(crate) fn resolve_tx_index_bounded(&self, txid: &Txid) -> Result<TxIndex> {
+        let tx_index = self.resolve_tx_index(txid)?;
+        if tx_index >= self.safe_lengths().tx_index {
+            return Err(Error::UnknownTxid);
+        }
+        Ok(tx_index)
+    }
+
     pub fn txid_by_index(&self, index: TxIndex) -> Result<Txid> {
+        if index >= self.safe_lengths().tx_index {
+            return Err(Error::OutOfRange("Transaction index out of range".into()));
+        }
         self.indexer()
             .vecs
             .transactions
@@ -36,7 +56,7 @@ impl Query {
 
     /// Resolve a txid to (TxIndex, Height).
     pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        let tx_index = self.resolve_tx_index(txid)?;
+        let tx_index = self.resolve_tx_index_bounded(txid)?;
         let height = self.confirmed_status_height(tx_index)?;
         Ok((tx_index, height))
     }
@@ -44,8 +64,14 @@ impl Query {
     // ── TxStatus construction (single source of truth) ─────────────
 
     /// Height for a confirmed tx_index via in-memory TxHeights lookup.
+    /// Bounded against the safe-lengths snapshot so rejected tx_indices
+    /// never dereference slots a concurrent writer might be populating.
     #[inline]
     pub(crate) fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
+        let bound = self.safe_lengths();
+        if tx_index >= bound.tx_index {
+            return Err(Error::UnknownTxid);
+        }
         self.computer()
             .indexes
             .tx_heights
@@ -81,7 +107,7 @@ impl Query {
         if let Some(tx) = self.map_mempool_tx(txid, Transaction::clone) {
             return Ok(tx);
         }
-        self.transaction_by_index(self.resolve_tx_index(txid)?)
+        self.transaction_by_index(self.resolve_tx_index_bounded(txid)?)
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
@@ -96,14 +122,14 @@ impl Query {
         if let Some(bytes) = self.map_mempool_tx(txid, Transaction::encode_bytes) {
             return Ok(bytes);
         }
-        self.transaction_raw_by_index(self.resolve_tx_index(txid)?)
+        self.transaction_raw_by_index(self.resolve_tx_index_bounded(txid)?)
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
         if let Some(hex) = self.map_mempool_tx(txid, |tx| tx.encode_bytes().to_lower_hex_string()) {
             return Ok(hex);
         }
-        self.transaction_hex_by_index(self.resolve_tx_index(txid)?)
+        self.transaction_hex_by_index(self.resolve_tx_index_bounded(txid)?)
     }
 
     // ── Outspend queries ───────────────────────────────────────────
@@ -142,8 +168,7 @@ impl Query {
     }
 
     fn mempool_outspend(&self, txid: &Txid, vout: Vout) -> TxOutspend {
-        let Some((spender_txid, vin)) =
-            self.mempool().and_then(|m| m.lookup_spender(txid, vout))
+        let Some((spender_txid, vin)) = self.mempool().and_then(|m| m.lookup_spender(txid, vout))
         else {
             return TxOutspend::UNSPENT;
         };
@@ -187,6 +212,8 @@ impl Query {
         let mut input_tx_cursor = indexer.vecs.inputs.tx_index.cursor();
         let mut first_txin_cursor = indexer.vecs.transactions.first_txin_index.cursor();
 
+        let bound = self.safe_lengths();
+
         let mut cached_status: Option<(Height, BlockHash, Timestamp)> = None;
         let mut outspends = Vec::with_capacity(output_count);
         for i in 0..output_count {
@@ -198,6 +225,10 @@ impl Query {
             }
 
             let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).data()?;
+            if spending_tx_index >= bound.tx_index {
+                outspends.push(TxOutspend::UNSPENT);
+                continue;
+            }
             let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).data()?;
             let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
             let spending_txid = txid_reader.get(spending_tx_index.to_usize());
@@ -258,16 +289,23 @@ impl Query {
     }
 
     /// Resolve txid to (tx_index, first_txout_index, output_count).
+    /// Snapshots `safe_lengths` once and uses `safe.txout_index` as the
+    /// upper bound for the tip-of-safe tx, so the fallback never reads past
+    /// the writer's stamped boundary (`vecs.outputs.value.len()` can be
+    /// ahead of `safe.txout_index` when the writer is mid-block).
     fn resolve_tx_outputs(&self, txid: &Txid) -> Result<(TxIndex, TxOutIndex, usize)> {
+        let safe = self.safe_lengths();
         let tx_index = self.resolve_tx_index(txid)?;
-        let indexer = self.indexer();
-        let first_txout_vec = &indexer.vecs.transactions.first_txout_index;
+        if tx_index >= safe.tx_index {
+            return Err(Error::UnknownTxid);
+        }
+        let first_txout_vec = &self.indexer().vecs.transactions.first_txout_index;
         let first = first_txout_vec.read_once(tx_index)?;
         let next_tx = tx_index.incremented();
-        let next = if next_tx.to_usize() < first_txout_vec.len() {
+        let next = if next_tx < safe.tx_index {
             first_txout_vec.read_once(next_tx)?
         } else {
-            TxOutIndex::from(indexer.vecs.outputs.value.len())
+            safe.txout_index
         };
         Ok((tx_index, first, usize::from(next) - usize::from(first)))
     }

@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredF64, Version};
+use brk_types::{Cents, Height, StoredF64, Version};
 use vecdb::{Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -27,7 +28,7 @@ impl AdjustedSopr {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest_part2(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         base_transfer_volume: &impl ReadableVec<Height, Cents>,
         base_value_destroyed: &impl ReadableVec<Height, Cents>,
         under_1h_transfer_volume: &impl ReadableVec<Height, Cents>,
@@ -35,22 +36,22 @@ impl AdjustedSopr {
         exit: &Exit,
     ) -> Result<()> {
         self.transfer_volume.block.compute_subtract(
-            starting_indexes.height,
+            starting_lengths.height,
             base_transfer_volume,
             under_1h_transfer_volume,
             exit,
         )?;
         self.value_destroyed.block.compute_subtract(
-            starting_indexes.height,
+            starting_lengths.height,
             base_value_destroyed,
             under_1h_value_destroyed,
             exit,
         )?;
 
         self.transfer_volume
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.value_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
 
         for ((sopr, tv), vd) in self
             .ratio
@@ -60,7 +61,7 @@ impl AdjustedSopr {
             .zip(self.value_destroyed.sum.as_array())
         {
             sopr.compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &tv.height,
                 &vd.height,
                 exit,

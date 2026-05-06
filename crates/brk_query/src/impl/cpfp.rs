@@ -11,12 +11,10 @@
 
 use brk_error::{Error, OptionData, Result};
 use brk_mempool::cluster::{Cluster, ClusterNode, LocalIdx};
-use brk_types::{
-    CpfpInfo, FeeRate, Height, TxIndex, TxInIndex, Txid, TxidPrefix, VSize, Weight,
-};
+use brk_types::{CpfpInfo, FeeRate, Height, TxInIndex, TxIndex, Txid, TxidPrefix, VSize, Weight};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
-use vecdb::{AnyVec, ReadableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -128,18 +126,15 @@ impl Query {
     ) -> Result<(Cluster<TxIndex>, LocalIdx)> {
         let indexer = self.indexer();
         let computer = self.computer();
-        let block_first = indexer
-            .vecs
-            .transactions
-            .first_tx_index
-            .collect_one(height)
-            .data()?;
-        let block_end = indexer
-            .vecs
-            .transactions
-            .first_tx_index
-            .collect_one(height.incremented())
-            .unwrap_or_else(|| TxIndex::from(indexer.vecs.transactions.txid.len()));
+        let safe = self.safe_lengths();
+        let first_tx_index_vec = &indexer.vecs.transactions.first_tx_index;
+        let block_first = first_tx_index_vec.collect_one(height).data()?;
+        let next_height = height.incremented();
+        let block_end = if next_height < safe.height {
+            first_tx_index_vec.collect_one(next_height).data()?
+        } else {
+            safe.tx_index
+        };
         let same_block = |idx: TxIndex| idx >= block_first && idx < block_end;
 
         let WalkResult { nodes, seed_local } = self.walk_same_block_edges(seed, same_block);
@@ -153,7 +148,8 @@ impl Query {
             .into_iter()
             .map(|(tx_index, parents)| {
                 let i = tx_index.to_usize();
-                let weight = Weight::from_sizes(*base_size.get(i).data()?, *total_size.get(i).data()?);
+                let weight =
+                    Weight::from_sizes(*base_size.get(i).data()?, *total_size.get(i).data()?);
                 Ok(ClusterNode {
                     id: tx_index,
                     txid: txid_reader.get(i),
@@ -189,10 +185,16 @@ impl Query {
 
         let mut walk_inputs = |tx: TxIndex| -> SmallVec<[TxIndex; 2]> {
             let mut out: SmallVec<[TxIndex; 2]> = SmallVec::new();
-            let Ok(start) = first_txin.get(tx.to_usize()).data() else { return out };
-            let Ok(end) = first_txin.get(tx.to_usize() + 1).data() else { return out };
+            let Ok(start) = first_txin.get(tx.to_usize()).data() else {
+                return out;
+            };
+            let Ok(end) = first_txin.get(tx.to_usize() + 1).data() else {
+                return out;
+            };
             for i in usize::from(start)..usize::from(end) {
-                let Ok(op) = outpoint.get(i).data() else { continue };
+                let Ok(op) = outpoint.get(i).data() else {
+                    continue;
+                };
                 if op.is_coinbase() {
                     continue;
                 }
@@ -237,14 +239,22 @@ impl Query {
         let mut stack: Vec<TxIndex> = vec![seed];
         let mut descendant_count = 0;
         'd: while let Some(cur) = stack.pop() {
-            let Ok(start) = first_txout.get(cur.to_usize()).data() else { continue };
-            let Ok(end) = first_txout.get(cur.to_usize() + 1).data() else { continue };
+            let Ok(start) = first_txout.get(cur.to_usize()).data() else {
+                continue;
+            };
+            let Ok(end) = first_txout.get(cur.to_usize() + 1).data() else {
+                continue;
+            };
             for i in usize::from(start)..usize::from(end) {
-                let Ok(txin_idx) = spent.get(i).data() else { continue };
+                let Ok(txin_idx) = spent.get(i).data() else {
+                    continue;
+                };
                 if txin_idx == TxInIndex::UNSPENT {
                     continue;
                 }
-                let Ok(child) = spending_tx.get(usize::from(txin_idx)).data() else { continue };
+                let Ok(child) = spending_tx.get(usize::from(txin_idx)).data() else {
+                    continue;
+                };
                 if local_of.contains_key(&child) || !same_block(child) {
                     continue;
                 }

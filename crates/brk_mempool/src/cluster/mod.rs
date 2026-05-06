@@ -71,8 +71,7 @@ impl<I> Cluster<I> {
     /// strictly less than `i`.
     fn permute_to_topo_order(mut nodes: Vec<ClusterNode<I>>) -> Vec<ClusterNode<I>> {
         let n = nodes.len();
-        let mut children: Vec<SmallVec<[LocalIdx; 2]>> =
-            (0..n).map(|_| SmallVec::new()).collect();
+        let mut children: Vec<SmallVec<[LocalIdx; 2]>> = (0..n).map(|_| SmallVec::new()).collect();
         let mut indegree: Vec<u32> = vec![0; n];
         for (i, node) in nodes.iter().enumerate() {
             indegree[i] = node.parents.len() as u32;
@@ -118,10 +117,7 @@ impl<I> Cluster<I> {
     /// `trailing_zeros` visits each chunk's bits in ascending order, and
     /// nodes are stored in topo order (`LocalIdx == position`), so each
     /// pushed `LocalIdx` lands parents-first in `chunk.txs`.
-    fn materialize_chunks(
-        chunk_masks: &[sfl::ChunkMask],
-        n: usize,
-    ) -> (Vec<Chunk>, Vec<ChunkId>) {
+    fn materialize_chunks(chunk_masks: &[sfl::ChunkMask], n: usize) -> (Vec<Chunk>, Vec<ChunkId>) {
         let mut chunks: Vec<Chunk> = Vec::with_capacity(chunk_masks.len());
         let mut node_to_chunk = vec![ChunkId::ZERO; n];
         for (cid, cm) in chunk_masks.iter().enumerate() {

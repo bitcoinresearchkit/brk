@@ -1,7 +1,8 @@
 use brk_cohort::ByAddrType;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Indexes, OutputType, StoredF32, StoredU32, StoredU64, Version};
+use brk_types::{BasisPoints16, OutputType, StoredF32, StoredU32, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
@@ -205,37 +206,37 @@ impl AddrEventsVecs {
 
     pub(crate) fn compute_rest(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         outputs_by_type: &outputs::ByTypeVecs,
         inputs_by_type: &inputs::ByTypeVecs,
         exit: &Exit,
     ) -> Result<()> {
         self.output_to_reused_addr_count
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.input_from_reused_addr_count
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.active_reused_addr_count
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
         self.active_reused_addr_share
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
 
         self.output_to_reused_addr_share.all.compute_count_ratio(
             &self.output_to_reused_addr_count.all,
             &outputs_by_type.output_count.all,
-            starting_indexes.height,
+            starting_lengths.height,
             exit,
         )?;
         self.spendable_output_to_reused_addr_share
             .compute_count_ratio(
                 &self.output_to_reused_addr_count.all,
                 &outputs_by_type.spendable_output_count,
-                starting_indexes.height,
+                starting_lengths.height,
                 exit,
             )?;
         self.input_from_reused_addr_share.all.compute_count_ratio(
             &self.input_from_reused_addr_count.all,
             &inputs_by_type.input_count.all,
-            starting_indexes.height,
+            starting_lengths.height,
             exit,
         )?;
         for otype in OutputType::ADDR_TYPES {
@@ -247,7 +248,7 @@ impl AddrEventsVecs {
                         .by_addr_type
                         .get_unwrap(otype),
                     outputs_by_type.output_count.by_type.get(otype),
-                    starting_indexes.height,
+                    starting_lengths.height,
                     exit,
                 )?;
             self.input_from_reused_addr_share
@@ -258,7 +259,7 @@ impl AddrEventsVecs {
                         .by_addr_type
                         .get_unwrap(otype),
                     inputs_by_type.input_count.by_type.get(otype),
-                    starting_indexes.height,
+                    starting_lengths.height,
                     exit,
                 )?;
         }

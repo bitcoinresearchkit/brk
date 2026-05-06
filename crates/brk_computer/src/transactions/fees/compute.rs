@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{FeeRate, Indexes, OutPoint, Sats, TxInIndex, TxIndex, VSize};
+use brk_types::{FeeRate, OutPoint, Sats, TxInIndex, TxIndex, VSize};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec, unlikely};
 
 use super::super::size;
@@ -15,37 +15,38 @@ impl Vecs {
         indexes: &indexes::Vecs,
         spent: &inputs::SpentVecs,
         size_vecs: &size::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
+
         self.input_value.compute_sum_from_indexes(
-            starting_indexes.tx_index,
+            starting_lengths.tx_index,
             &indexer.vecs.transactions.first_txin_index,
             &indexes.tx_index.input_count,
             &spent.value,
             exit,
         )?;
         self.output_value.compute_sum_from_indexes(
-            starting_indexes.tx_index,
+            starting_lengths.tx_index,
             &indexer.vecs.transactions.first_txout_index,
             &indexes.tx_index.output_count,
             &indexer.vecs.outputs.value,
             exit,
         )?;
 
-        self.compute_fees(indexer, indexes, size_vecs, starting_indexes, exit)?;
+        self.compute_fees(indexer, indexes, size_vecs, exit)?;
 
         let vsize_source = &size_vecs.vsize.tx_index;
         let (r1, r2) = rayon::join(
             || {
                 self.fee
-                    .derive_from_with_skip(indexer, indexes, starting_indexes, exit, 1)
+                    .derive_from_with_skip(indexer, indexes, &starting_lengths, exit, 1)
             },
             || {
                 self.effective_fee_rate.derive_from_with_skip_weighted(
                     indexer,
                     indexes,
-                    starting_indexes,
+                    &starting_lengths,
                     vsize_source,
                     exit,
                     1,
@@ -63,9 +64,10 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         size_vecs: &size::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
+
         let dep_version = self.input_value.version()
             + self.output_value.version()
             + size_vecs.vsize.tx_index.version();
@@ -90,7 +92,7 @@ impl Vecs {
             .len()
             .min(self.fee_rate.len())
             .min(self.effective_fee_rate.tx_index.len())
-            .min(starting_indexes.tx_index.to_usize());
+            .min(starting_lengths.tx_index.to_usize());
 
         if min >= target {
             return Ok(());
@@ -98,12 +100,12 @@ impl Vecs {
 
         self.fee
             .tx_index
-            .truncate_if_needed(starting_indexes.tx_index)?;
+            .truncate_if_needed(starting_lengths.tx_index)?;
         self.fee_rate
-            .truncate_if_needed(starting_indexes.tx_index)?;
+            .truncate_if_needed(starting_lengths.tx_index)?;
         self.effective_fee_rate
             .tx_index
-            .truncate_if_needed(starting_indexes.tx_index)?;
+            .truncate_if_needed(starting_lengths.tx_index)?;
 
         let start_tx = self.fee.tx_index.len();
         let max_height = indexer.vecs.transactions.first_tx_index.len();

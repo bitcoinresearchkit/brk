@@ -37,7 +37,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     // Pre-run indexer if too far behind, then drop and reimport to reduce memory
     let chain_height = client.get_last_height()?;
-    let indexed_height = indexer.vecs.starting_height();
+    let indexed_height = indexer.vecs.next_height();
     if u32::from(chain_height).saturating_sub(u32::from(indexed_height)) > 1000 {
         indexer.checked_index(&reader, &client, &exit)?;
         drop(indexer);
@@ -49,11 +49,11 @@ pub fn main() -> color_eyre::Result<()> {
 
     loop {
         let i = Instant::now();
-        let starting_indexes = indexer.checked_index(&reader, &client, &exit)?;
+        indexer.checked_index(&reader, &client, &exit)?;
 
         Mimalloc::collect();
 
-        computer.compute(&indexer, starting_indexes, &exit)?;
+        computer.compute(&indexer, &exit)?;
         dbg!(i.elapsed());
         sleep(Duration::from_secs(10));
     }

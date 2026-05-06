@@ -85,7 +85,13 @@ mod tests {
 
     #[test]
     fn parses_single_and_multi() {
-        assert_eq!(TxidsParam::from_query(&format!("txId[]={T1}")).unwrap().txids.len(), 1);
+        assert_eq!(
+            TxidsParam::from_query(&format!("txId[]={T1}"))
+                .unwrap()
+                .txids
+                .len(),
+            1
+        );
         assert_eq!(
             TxidsParam::from_query(&format!("txId%5B%5D={T1}&txId[]={T2}"))
                 .unwrap()

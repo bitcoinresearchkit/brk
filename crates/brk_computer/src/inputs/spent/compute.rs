@@ -1,6 +1,6 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::{Indexes, Sats, TxIndex, TxOutIndex, Vout};
+use brk_types::{Sats, TxIndex, TxOutIndex, Vout};
 use rayon::prelude::*;
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
@@ -10,12 +10,8 @@ use super::Vecs;
 const BATCH_SIZE: usize = 2 * 1024 * 1024 * 1024 / size_of::<Entry>();
 
 impl Vecs {
-    pub(crate) fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
         // Validate computed versions against dependencies
         let dep_version = indexer.vecs.inputs.outpoint.version()
             + indexer.vecs.transactions.first_txout_index.version()
@@ -31,7 +27,7 @@ impl Vecs {
 
         let len1 = self.txout_index.len();
         let len2 = self.value.len();
-        let starting = starting_indexes.txin_index.to_usize();
+        let starting = starting_lengths.txin_index.to_usize();
         let min = len1.min(len2).min(starting);
 
         if min >= target {

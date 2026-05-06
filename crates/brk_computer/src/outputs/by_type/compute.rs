@@ -1,30 +1,27 @@
 use brk_error::{OptionData, Result};
 use brk_indexer::Indexer;
-use brk_types::{Indexes, OutputType, StoredU64};
+use brk_types::{OutputType, StoredU64};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::{Vecs, WithOutputTypes};
 use crate::internal::{CoinbasePolicy, PerBlockCumulativeRolling, walk_blocks};
 
 impl Vecs {
-    pub(crate) fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub(crate) fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
+
         let dep_version = indexer.vecs.outputs.output_type.version()
             + indexer.vecs.transactions.first_tx_index.version()
             + indexer.vecs.transactions.first_txout_index.version()
             + indexer.vecs.transactions.txid.version();
 
         self.output_count
-            .validate_and_truncate(dep_version, starting_indexes.height)?;
+            .validate_and_truncate(dep_version, starting_lengths.height)?;
         self.spendable_output_count
             .block
-            .validate_and_truncate(dep_version, starting_indexes.height)?;
+            .validate_and_truncate(dep_version, starting_lengths.height)?;
         self.tx_count
-            .validate_and_truncate(dep_version, starting_indexes.height)?;
+            .validate_and_truncate(dep_version, starting_lengths.height)?;
 
         let skip = self
             .output_count
@@ -98,17 +95,17 @@ impl Vecs {
             }
 
             self.output_count
-                .compute_rest(starting_indexes.height, exit)?;
+                .compute_rest(starting_lengths.height, exit)?;
             self.spendable_output_count
-                .compute_rest(starting_indexes.height, exit)?;
-            self.tx_count.compute_rest(starting_indexes.height, exit)?;
+                .compute_rest(starting_lengths.height, exit)?;
+            self.tx_count.compute_rest(starting_lengths.height, exit)?;
         }
 
         for (otype, source) in self.output_count.by_type.iter_typed() {
             self.output_share.get_mut(otype).compute_count_ratio(
                 source,
                 &self.output_count.all,
-                starting_indexes.height,
+                starting_lengths.height,
                 exit,
             )?;
         }
@@ -117,7 +114,7 @@ impl Vecs {
             self.tx_share.get_mut(otype).compute_count_ratio(
                 source,
                 &self.tx_count.all,
-                starting_indexes.height,
+                starting_lengths.height,
                 exit,
             )?;
         }

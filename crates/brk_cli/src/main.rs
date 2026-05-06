@@ -42,7 +42,7 @@ pub fn main() -> anyhow::Result<()> {
     {
         // Pre-run indexer if too far behind, then drop and reimport to reduce memory
         let chain_height = client.get_last_height()?;
-        let indexed_height = indexer.vecs.starting_height();
+        let indexed_height = indexer.vecs.next_height();
         let blocks_behind = chain_height.saturating_sub(*indexed_height);
         if blocks_behind > 10_000 {
             info!("---");
@@ -105,15 +105,17 @@ pub fn main() -> anyhow::Result<()> {
 
         let total_start = Instant::now();
 
-        let starting_indexes = if cfg!(debug_assertions) {
-            indexer.checked_index(&reader, &client, &exit)?
+        if cfg!(debug_assertions) {
+            indexer.checked_index(&reader, &client, &exit)?;
         } else {
-            indexer.index(&reader, &client, &exit)?
-        };
+            indexer.index(&reader, &client, &exit)?;
+        }
 
         Mimalloc::collect();
 
-        computer.compute(&indexer, starting_indexes, &exit)?;
+        computer.compute(&indexer, &exit)?;
+
+        indexer.advance_safe_lengths()?;
 
         info!("Total time: {:?}", total_start.elapsed());
         info!("Waiting for new blocks...");

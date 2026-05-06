@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints32, Cents, Height, Indexes, StoredF32, Version};
+use brk_types::{BasisPoints32, Cents, Height, StoredF32, Version};
 use vecdb::{Database, Exit, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -50,13 +51,13 @@ impl<B: BpsType> RatioPerBlock<B> {
 impl RatioPerBlock<BasisPoints32> {
     pub(crate) fn compute_ratio(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         close_price: &impl ReadableVec<Height, Cents>,
         series_price: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.bps.height.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             close_price,
             series_price,
             |(i, close, price, ..)| {

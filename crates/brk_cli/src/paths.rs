@@ -6,7 +6,7 @@ pub fn dot_brk_path() -> PathBuf {
 }
 
 pub fn dot_brk_log_path() -> PathBuf {
-    dot_brk_path().join("log")
+    dot_brk_path().join("logs")
 }
 
 pub fn default_brk_path() -> PathBuf {

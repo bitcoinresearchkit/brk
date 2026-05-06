@@ -1,7 +1,8 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, Indexes, StoredF64, Version,
+    BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Dollars, Height, StoredF64, Version,
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
@@ -124,31 +125,31 @@ impl RealizedCore {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         let minimal_refs: Vec<&RealizedMinimal> = others.iter().map(|o| &o.minimal).collect();
         self.minimal
-            .compute_from_stateful(starting_indexes, &minimal_refs, exit)?;
+            .compute_from_stateful(starting_lengths, &minimal_refs, exit)?;
 
-        sum_others!(self, starting_indexes, others, exit; sopr.value_destroyed.block);
+        sum_others!(self, starting_lengths, others, exit; sopr.value_destroyed.block);
         Ok(())
     }
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        self.minimal.compute_rest_part1(starting_indexes, exit)?;
+        self.minimal.compute_rest_part1(starting_lengths, exit)?;
 
         self.sopr
             .value_destroyed
-            .compute_rest(starting_indexes.height, exit)?;
+            .compute_rest(starting_lengths.height, exit)?;
 
         self.net_pnl.block.cents.compute_transform2(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.minimal.profit.block.cents,
             &self.minimal.loss.block.cents,
             |(i, profit, loss, ..)| {
@@ -166,21 +167,21 @@ impl RealizedCore {
     pub(crate) fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         transfer_volume_sum_24h_cents: &impl ReadableVec<Height, Cents>,
         exit: &Exit,
     ) -> Result<()> {
         self.minimal
-            .compute_rest_part2(prices, starting_indexes, height_to_supply, exit)?;
+            .compute_rest_part2(prices, starting_lengths, height_to_supply, exit)?;
 
-        self.net_pnl.compute_rest(starting_indexes.height, exit)?;
+        self.net_pnl.compute_rest(starting_lengths.height, exit)?;
 
         self.sopr
             .ratio
             ._24h
             .compute_binary::<Cents, Cents, RatioCents64>(
-                starting_indexes.height,
+                starting_lengths.height,
                 transfer_volume_sum_24h_cents,
                 &self.sopr.value_destroyed.sum._24h.height,
                 exit,

@@ -11,10 +11,10 @@ impl Query {
     }
 
     fn block_raw_by_height(&self, height: Height) -> Result<Vec<u8>> {
-        let max_height = self.tip_height();
-        if height > max_height {
+        let bound = self.safe_lengths().height;
+        if height >= bound {
             return Err(Error::OutOfRange(
-                format!("Block height {height} out of range (tip {max_height})").into(),
+                format!("Block height {height} out of range (tip {})", self.height()).into(),
             ));
         }
 

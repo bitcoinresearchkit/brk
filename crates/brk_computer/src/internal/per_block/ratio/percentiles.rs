@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints32, Cents, Height, Indexes, StoredF32, Version};
+use brk_types::{BasisPoints32, Cents, Height, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
     WritableVec,
@@ -86,7 +87,7 @@ impl RatioPerBlockPercentiles {
 
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         ratio_source: &impl ReadableVec<Height, StoredF32>,
         series_price: &impl ReadableVec<Height, Cents>,
@@ -102,7 +103,7 @@ impl RatioPerBlockPercentiles {
             .map(|v| Height::from(v.len()))
             .min()
             .unwrap()
-            .min(starting_indexes.height);
+            .min(starting_lengths.height);
 
         let start = starting_height.to_usize();
         let ratio_len = ratio_source.len();
@@ -159,7 +160,7 @@ impl RatioPerBlockPercentiles {
                     .price
                     .cents
                     .compute_binary::<Cents, BasisPoints32, PriceTimesRatioBp32Cents>(
-                        starting_indexes.height,
+                        starting_lengths.height,
                         series_price,
                         &self.$band.ratio.bps.height,
                         exit,

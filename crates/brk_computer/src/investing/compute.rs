@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Indexes, Sats};
+use brk_indexer::Indexer;
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Sats};
 use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::{ByDcaPeriod, Vecs};
@@ -10,15 +11,16 @@ const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         indexes: &indexes::Vecs,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
         lookback: &market::lookback::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
+        let starting_lengths = indexer.safe_lengths();
         let h2d = &indexes.height.day1;
         let close = &prices.split.close.usd.day1;
 
@@ -29,7 +31,7 @@ impl Vecs {
         {
             let mut last_di: Option<Day1> = None;
             self.sats_per_day.compute_transform(
-                starting_indexes.height,
+                starting_lengths.height,
                 h2d,
                 |(h, di, _)| {
                     if last_di.is_none() && h.to_usize() > 0 {
@@ -55,7 +57,7 @@ impl Vecs {
         for (stack, days) in self.period.dca_stack.iter_mut_with_days() {
             let window_starts = blocks.lookback.start_vec(days as usize);
             stack.sats.height.compute_rolling_sum(
-                starting_indexes.height,
+                starting_lengths.height,
                 window_starts,
                 &self.sats_per_day,
                 exit,
@@ -64,11 +66,11 @@ impl Vecs {
 
         // DCA by period - stack cents (sats × price)
         for stack in self.period.dca_stack.iter_mut() {
-            stack.compute(prices, starting_indexes.height, exit)?;
+            stack.compute(prices, starting_lengths.height, exit)?;
         }
 
         // DCA by period - average price (derived from stack)
-        let starting_height = starting_indexes.height.to_usize();
+        let starting_height_usize = starting_lengths.height.to_usize();
         for (average_price, stack, days) in self
             .period
             .dca_cost_basis
@@ -76,7 +78,7 @@ impl Vecs {
         {
             let days = days as usize;
             average_price.cents.height.compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 h2d,
                 &stack.sats.height,
                 |(h, di, stack_sats, ..)| {
@@ -101,7 +103,7 @@ impl Vecs {
             .zip(self.period.dca_cost_basis.iter_with_days())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &prices.spot.cents.height,
                 &average_price.cents.height,
                 exit,
@@ -116,7 +118,7 @@ impl Vecs {
         {
             let years = days as f64 / 365.0;
             cagr.bps.height.compute_transform(
-                starting_indexes.height,
+                starting_lengths.height,
                 &returns.bps.height,
                 |(h, r, ..)| {
                     let ratio = f64::from(r);
@@ -134,7 +136,7 @@ impl Vecs {
         {
             let total_invested = DCA_AMOUNT * days as usize;
             stack.sats.height.compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 h2d,
                 &lookback_price.cents.height,
                 |(h, _di, lp, ..)| {
@@ -151,7 +153,7 @@ impl Vecs {
 
         // Lump sum by period - stack cents (sats × price)
         for stack in self.period.lump_sum_stack.iter_mut() {
-            stack.compute(prices, starting_indexes.height, exit)?;
+            stack.compute(prices, starting_lengths.height, exit)?;
         }
 
         // Lump sum by period - returns (compute from lookback price)
@@ -162,7 +164,7 @@ impl Vecs {
             .zip(lookback_dca.iter_with_days())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &prices.spot.cents.height,
                 &lookback_price.cents.height,
                 exit,
@@ -173,7 +175,7 @@ impl Vecs {
         let start_days = super::ByDcaClass::<()>::start_days();
         for (stack, day1) in self.class.dca_stack.iter_mut().zip(start_days) {
             let mut last_di: Option<Day1> = None;
-            let cls_start = stack.sats.height.len().min(starting_height);
+            let cls_start = stack.sats.height.len().min(starting_height_usize);
             let mut prev_value = if cls_start > 0 {
                 stack
                     .sats
@@ -185,7 +187,7 @@ impl Vecs {
             };
 
             stack.sats.height.compute_transform(
-                starting_indexes.height,
+                starting_lengths.height,
                 h2d,
                 |(h, di, _)| {
                     let hi = h.to_usize();
@@ -227,7 +229,7 @@ impl Vecs {
 
         // DCA by year class - stack cents (sats × price)
         for stack in self.class.dca_stack.iter_mut() {
-            stack.compute(prices, starting_indexes.height, exit)?;
+            stack.compute(prices, starting_lengths.height, exit)?;
         }
 
         // DCA by year class - average price (derived from stack)
@@ -241,7 +243,7 @@ impl Vecs {
         {
             let from_usize = from.to_usize();
             average_price.cents.height.compute_transform2(
-                starting_indexes.height,
+                starting_lengths.height,
                 h2d,
                 &stack.sats.height,
                 |(h, di, stack_sats, ..)| {
@@ -265,7 +267,7 @@ impl Vecs {
             .zip(self.class.dca_cost_basis.iter())
         {
             returns.compute_binary::<Cents, Cents, RatioDiffCentsBps32>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &prices.spot.cents.height,
                 &average_price.cents.height,
                 exit,

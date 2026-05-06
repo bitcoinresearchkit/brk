@@ -13,8 +13,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
 use brk_types::{
-    Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Indexes, Minute10, Minute30,
-    Month1, Month3, Month6, Version, Week1, Year1, Year10,
+    Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
+    Month3, Month6, Version, Week1, Year1, Year10,
 };
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -141,38 +141,34 @@ impl Vecs {
         Ok(this)
     }
 
-    pub(crate) fn compute(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: Indexes,
-        exit: &Exit,
-    ) -> Result<Indexes> {
+    pub(crate) fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
-        self.tx_heights.update(indexer, starting_indexes.height);
+        let starting_height = indexer.safe_lengths().height;
+
+        self.tx_heights.update(indexer, starting_height);
 
         // timestamp_monotonic must be computed first — other mappings read it
         self.timestamp
-            .compute_monotonic(indexer, starting_indexes.height, exit)?;
+            .compute_monotonic(indexer, starting_height, exit)?;
 
-        self.compute_tx_indexes(indexer, &starting_indexes, exit)?;
-        self.compute_height_indexes(indexer, &starting_indexes, exit)?;
+        self.compute_tx_indexes(indexer, exit)?;
+        self.compute_height_indexes(indexer, exit)?;
 
-        let prev_height = starting_indexes.height.decremented().unwrap_or_default();
+        let prev_height = starting_height.decremented().unwrap_or_default();
 
-        self.compute_timestamp_mappings(&starting_indexes, exit)?;
+        self.compute_timestamp_mappings(indexer, exit)?;
 
-        let starting_day1 =
-            self.compute_calendar_mappings(indexer, &starting_indexes, prev_height, exit)?;
+        let starting_day1 = self.compute_calendar_mappings(indexer, prev_height, exit)?;
 
-        self.compute_period_vecs(&starting_indexes, prev_height, starting_day1, exit)?;
+        self.compute_period_vecs(indexer, prev_height, starting_day1, exit)?;
 
         self.timestamp.compute_per_resolution(
             indexer,
             &self.height,
             &self.halving,
             &self.epoch,
-            &starting_indexes,
+            &indexer.safe_lengths(),
             exit,
         )?;
 
@@ -181,19 +177,15 @@ impl Vecs {
             let _lock = exit.lock();
             db.compact_deferred_default()
         });
-        Ok(starting_indexes)
+        Ok(())
     }
 
-    fn compute_tx_indexes(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    fn compute_tx_indexes(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_lengths = indexer.safe_lengths();
         let (r1, r2) = rayon::join(
             || {
                 self.tx_index.input_count.compute_count_from_indexes(
-                    starting_indexes.tx_index,
+                    starting_lengths.tx_index,
                     &indexer.vecs.transactions.first_txin_index,
                     &indexer.vecs.inputs.outpoint,
                     exit,
@@ -201,7 +193,7 @@ impl Vecs {
             },
             || {
                 self.tx_index.output_count.compute_count_from_indexes(
-                    starting_indexes.tx_index,
+                    starting_lengths.tx_index,
                     &indexer.vecs.transactions.first_txout_index,
                     &indexer.vecs.outputs.value,
                     exit,
@@ -213,14 +205,10 @@ impl Vecs {
         Ok(())
     }
 
-    fn compute_height_indexes(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    fn compute_height_indexes(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         self.height.tx_index_count.compute_count_from_indexes(
-            starting_indexes.height,
+            starting_height,
             &indexer.vecs.transactions.first_tx_index,
             &indexer.vecs.transactions.txid,
             exit,
@@ -228,15 +216,13 @@ impl Vecs {
         Ok(())
     }
 
-    fn compute_timestamp_mappings(
-        &mut self,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
+    fn compute_timestamp_mappings(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         macro_rules! from_timestamp {
             ($field:ident, $period:ty) => {
                 self.height.$field.compute_transform(
-                    starting_indexes.height,
+                    starting_height,
                     &self.timestamp.monotonic,
                     |(h, ts, _)| (h, <$period>::from_timestamp(ts)),
                     exit,
@@ -257,10 +243,11 @@ impl Vecs {
     fn compute_calendar_mappings(
         &mut self,
         indexer: &Indexer,
-        starting_indexes: &Indexes,
         prev_height: Height,
         exit: &Exit,
     ) -> Result<Day1> {
+        let starting_height = indexer.safe_lengths().height;
+
         let starting_day1 = self
             .height
             .day1
@@ -268,7 +255,7 @@ impl Vecs {
             .unwrap_or_default();
 
         self.height.day1.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.timestamp.monotonic,
             |(h, ts, ..)| (h, Day1::try_from(Date::from(ts)).unwrap()),
             exit,
@@ -280,40 +267,40 @@ impl Vecs {
             starting_day1
         };
 
-        self.compute_epoch(indexer, starting_indexes, exit)?;
+        self.compute_epoch(indexer, exit)?;
 
         self.height.week1.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.day1,
             |(h, di, _)| (h, Week1::from(di)),
             exit,
         )?;
         self.height.month1.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.day1,
             |(h, di, _)| (h, Month1::from(di)),
             exit,
         )?;
         self.height.month3.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.month1,
             |(h, mi, _)| (h, Month3::from(mi)),
             exit,
         )?;
         self.height.month6.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.month1,
             |(h, mi, _)| (h, Month6::from(mi)),
             exit,
         )?;
         self.height.year1.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.month1,
             |(h, mi, _)| (h, Year1::from(mi)),
             exit,
         )?;
         self.height.year10.compute_transform(
-            starting_indexes.height,
+            starting_height,
             &self.height.year1,
             |(h, yi, _)| (h, Year10::from(yi)),
             exit,
@@ -322,30 +309,25 @@ impl Vecs {
         Ok(starting_day1)
     }
 
-    fn compute_epoch(
-        &mut self,
-        indexer: &Indexer,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.height.epoch.compute_from_index(
-            starting_indexes.height,
-            &indexer.vecs.blocks.weight,
-            exit,
-        )?;
+    fn compute_epoch(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
+        self.height
+            .epoch
+            .compute_from_index(starting_height, &indexer.vecs.blocks.weight, exit)?;
         self.epoch.first_height.inner.compute_first_per_index(
-            starting_indexes.height,
+            starting_height,
             &self.height.epoch,
             exit,
         )?;
 
         self.height.halving.compute_from_index(
-            starting_indexes.height,
+            starting_height,
             &indexer.vecs.blocks.weight,
             exit,
         )?;
         self.halving.first_height.inner.compute_first_per_index(
-            starting_indexes.height,
+            starting_height,
             &self.height.halving,
             exit,
         )?;
@@ -354,15 +336,17 @@ impl Vecs {
 
     fn compute_period_vecs(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         prev_height: Height,
         starting_day1: Day1,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         macro_rules! basic_period {
             ($period:ident) => {
                 self.$period.first_height.inner.compute_first_per_index(
-                    starting_indexes.height,
+                    starting_height,
                     &self.height.$period,
                     exit,
                 )?;
@@ -376,7 +360,7 @@ impl Vecs {
         basic_period!(hour12);
 
         self.day1.first_height.inner.compute_first_per_index(
-            starting_indexes.height,
+            starting_height,
             &self.height.day1,
             exit,
         )?;
@@ -391,7 +375,7 @@ impl Vecs {
         macro_rules! dated_period {
             ($period:ident) => {{
                 self.$period.first_height.inner.compute_first_per_index(
-                    starting_indexes.height,
+                    starting_height,
                     &self.height.$period,
                     exit,
                 )?;

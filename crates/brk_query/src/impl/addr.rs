@@ -34,6 +34,10 @@ impl Query {
         let hash = AddrHash::from(&bytes);
         let type_index = self.type_index_for(output_type, &hash)?;
 
+        if type_index >= self.safe_lengths().to_type_index(output_type) {
+            return Err(Error::UnknownAddr);
+        }
+
         let any_addr_index = computer
             .distribution
             .any_addr_indexes
@@ -139,22 +143,26 @@ impl Query {
             .get(output_type)
             .data()?;
 
+        let tx_index_len = self.safe_lengths().tx_index;
+
         if let Some(after_txid) = after_txid {
             let after_tx_index = self.resolve_tx_index(&after_txid)?;
             let min = AddrIndexTxIndex::min_for_addr(type_index);
-            let bound = AddrIndexTxIndex::from((type_index, after_tx_index));
+            let cursor = AddrIndexTxIndex::from((type_index, after_tx_index));
             Ok(store
-                .range(min..bound)
+                .range(min..cursor)
                 .rev()
-                .take(limit)
                 .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+                .filter(|tx_index| *tx_index < tx_index_len)
+                .take(limit)
                 .collect())
         } else {
             Ok(store
                 .prefix(type_index)
                 .rev()
-                .take(limit)
                 .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+                .filter(|tx_index| *tx_index < tx_index_len)
+                .take(limit)
                 .collect())
         }
     }
@@ -171,9 +179,11 @@ impl Query {
             .get(output_type)
             .data()?;
 
+        let tx_index_len = self.safe_lengths().tx_index;
         let outpoints: Vec<(TxIndex, Vout)> = store
             .prefix(type_index)
             .map(|(key, _): (AddrIndexOutPoint, Unit)| (key.tx_index(), key.vout()))
+            .filter(|(tx_index, _)| *tx_index < tx_index_len)
             .take(max_utxos + 1)
             .collect();
         if outpoints.len() > max_utxos {
@@ -257,10 +267,12 @@ impl Query {
             .addr_type_to_addr_index_and_tx_index
             .get(output_type)
             .data()?;
+        let tx_index_len = self.safe_lengths().tx_index;
         let last_tx_index = store
             .prefix(type_index)
-            .next_back()
+            .rev()
             .map(|(key, _): (AddrIndexTxIndex, Unit)| key.tx_index())
+            .find(|tx_index| *tx_index < tx_index_len)
             .ok_or(Error::UnknownAddr)?;
         self.confirmed_status_height(last_tx_index)
     }

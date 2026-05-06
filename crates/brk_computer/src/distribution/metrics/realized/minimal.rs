@@ -1,8 +1,9 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
 use brk_types::{
-    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Height, Indexes, Sats,
-    StoredF32, Version,
+    BasisPoints32, BasisPointsSigned32, Bitcoin, Cents, CentsSigned, Height, Sats, StoredF32,
+    Version,
 };
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
@@ -81,38 +82,38 @@ impl RealizedMinimal {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
-        sum_others!(self, starting_indexes, others, exit; cap.cents.height);
-        sum_others!(self, starting_indexes, others, exit; profit.block.cents);
-        sum_others!(self, starting_indexes, others, exit; loss.block.cents);
+        sum_others!(self, starting_lengths, others, exit; cap.cents.height);
+        sum_others!(self, starting_lengths, others, exit; profit.block.cents);
+        sum_others!(self, starting_lengths, others, exit; loss.block.cents);
         Ok(())
     }
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
-        self.profit.compute_rest(starting_indexes.height, exit)?;
-        self.loss.compute_rest(starting_indexes.height, exit)?;
+        self.profit.compute_rest(starting_lengths.height, exit)?;
+        self.loss.compute_rest(starting_lengths.height, exit)?;
         Ok(())
     }
 
     pub(crate) fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         exit: &Exit,
     ) -> Result<()> {
         let cap = &self.cap.cents.height;
         self.price
-            .compute_all(prices, starting_indexes, exit, |v| {
+            .compute_all(prices, starting_lengths, exit, |v| {
                 Ok(v.compute_transform2(
-                    starting_indexes.height,
+                    starting_lengths.height,
                     cap,
                     height_to_supply,
                     |(i, cap_cents, supply, ..)| {

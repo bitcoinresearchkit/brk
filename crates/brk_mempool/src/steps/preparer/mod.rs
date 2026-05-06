@@ -43,7 +43,10 @@ impl Preparer {
     }
 
     fn live_set(entries_info: &[MempoolEntryInfo]) -> FxHashSet<TxidPrefix> {
-        entries_info.iter().map(|info| TxidPrefix::from(&info.txid)).collect()
+        entries_info
+            .iter()
+            .map(|info| TxidPrefix::from(&info.txid))
+            .collect()
     }
 
     fn classify_additions(
@@ -59,9 +62,7 @@ impl Preparer {
 
         entries_info
             .iter()
-            .filter_map(|info| {
-                Self::classify(info, known, graveyard, &mut new_raws, &parent_raws)
-            })
+            .filter_map(|info| Self::classify(info, known, graveyard, &mut new_raws, &parent_raws))
             .collect()
     }
 

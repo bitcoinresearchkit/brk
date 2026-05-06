@@ -22,8 +22,9 @@ pub use events::{AddrEventsVecs, AddrTypeToAddrEventCount};
 
 use brk_cohort::ByAddrType;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, Version};
+use brk_types::{Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode};
 
@@ -108,7 +109,7 @@ impl ReusedAddrVecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute_rest(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         outputs_by_type: &outputs::ByTypeVecs,
         inputs_by_type: &inputs::ByTypeVecs,
         prices: &prices::Vecs,
@@ -116,13 +117,13 @@ impl ReusedAddrVecs {
         type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.count.compute_rest(starting_indexes, exit)?;
+        self.count.compute_rest(starting_lengths, exit)?;
         self.events
-            .compute_rest(starting_indexes, outputs_by_type, inputs_by_type, exit)?;
+            .compute_rest(starting_lengths, outputs_by_type, inputs_by_type, exit)?;
         self.supply
-            .compute_rest(starting_indexes.height, prices, exit)?;
+            .compute_rest(starting_lengths.height, prices, exit)?;
         self.supply_share.compute_rest(
-            starting_indexes.height,
+            starting_lengths.height,
             &self.supply,
             all_supply_sats,
             type_supply_sats,

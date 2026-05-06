@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Dollars, Height, Indexes, Sats, StoredF32, StoredF64};
+use brk_indexer::Indexer;
+use brk_types::{Dollars, Height, Sats, StoredF32, StoredF64};
 use vecdb::{Exit, ReadableVec};
 
 use super::Vecs;
@@ -12,16 +13,18 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         count_vecs: &blocks::CountVecs,
         lookback: &blocks::LookbackVecs,
         difficulty_vecs: &blocks::DifficultyVecs,
         coinbase_sats_24h_sum: &impl ReadableVec<Height, Sats>,
         coinbase_usd_24h_sum: &impl ReadableVec<Height, Dollars>,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
+
         self.rate.base.height.compute_transform2(
-            starting_indexes.height,
+            starting_height,
             &count_vecs.total.sum._24h.height,
             &difficulty_vecs.hashrate.height,
             |(i, block_count_sum, difficulty_as_hash, ..)| {
@@ -43,24 +46,24 @@ impl Vecs {
             (&mut self.rate.sma._2m.height, &lookback._2m),
             (&mut self.rate.sma._1y.height, &lookback._1y.inner),
         ] {
-            sma.compute_rolling_average(starting_indexes.height, window, hash_rate, exit)?;
+            sma.compute_rolling_average(starting_height, window, hash_rate, exit)?;
         }
 
         self.rate.ath.height.compute_all_time_high(
-            starting_indexes.height,
+            starting_height,
             &self.rate.base.height,
             exit,
         )?;
 
         self.rate.drawdown.compute_drawdown(
-            starting_indexes.height,
+            starting_height,
             &self.rate.base.height,
             &self.rate.ath.height,
             exit,
         )?;
 
         self.price.ths.height.compute_transform2(
-            starting_indexes.height,
+            starting_height,
             coinbase_usd_24h_sum,
             &self.rate.base.height,
             |(i, coinbase_sum, hashrate, ..)| {
@@ -76,7 +79,7 @@ impl Vecs {
         )?;
 
         self.value.ths.height.compute_transform2(
-            starting_indexes.height,
+            starting_height,
             coinbase_sats_24h_sum,
             &self.rate.base.height,
             |(i, coinbase_sum, hashrate, ..)| {
@@ -95,13 +98,13 @@ impl Vecs {
             (&mut self.price.ths_min.height, &self.price.ths.height),
             (&mut self.value.ths_min.height, &self.value.ths.height),
         ] {
-            min_vec.compute_all_time_low_(starting_indexes.height, src_vec, exit, true)?;
+            min_vec.compute_all_time_low_(starting_height, src_vec, exit, true)?;
         }
 
         self.price
             .rebound
             .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
-                starting_indexes.height,
+                starting_height,
                 &self.price.phs.height,
                 &self.price.phs_min.height,
                 exit,
@@ -110,7 +113,7 @@ impl Vecs {
         self.value
             .rebound
             .compute_binary::<StoredF32, StoredF32, RatioDiffF32Bps32>(
-                starting_indexes.height,
+                starting_height,
                 &self.value.phs.height,
                 &self.value.phs_min.height,
                 exit,

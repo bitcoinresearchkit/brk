@@ -25,7 +25,7 @@ pub use outputs::*;
 pub use scripts::*;
 pub use transactions::*;
 
-use crate::Indexes;
+use crate::Lengths;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -80,40 +80,40 @@ impl Vecs {
         Ok(this)
     }
 
-    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> Result<()> {
-        let saved_height = starting_indexes.height.decremented().unwrap_or_default();
+    pub fn rollback_if_needed(&mut self, starting_lengths: &Lengths) -> Result<()> {
+        let saved_height = starting_lengths.height.decremented().unwrap_or_default();
         let stamp = Stamp::from(u64::from(saved_height));
 
-        self.blocks.truncate(starting_indexes.height, stamp)?;
+        self.blocks.truncate(starting_lengths.height, stamp)?;
 
         self.transactions
-            .truncate(starting_indexes.height, starting_indexes.tx_index, stamp)?;
+            .truncate(starting_lengths.height, starting_lengths.tx_index, stamp)?;
 
         self.inputs
-            .truncate(starting_indexes.height, starting_indexes.txin_index, stamp)?;
+            .truncate(starting_lengths.height, starting_lengths.txin_index, stamp)?;
 
         self.outputs
-            .truncate(starting_indexes.height, starting_indexes.txout_index, stamp)?;
+            .truncate(starting_lengths.height, starting_lengths.txout_index, stamp)?;
 
         self.addrs.truncate(
-            starting_indexes.height,
-            starting_indexes.p2pk65_addr_index,
-            starting_indexes.p2pk33_addr_index,
-            starting_indexes.p2pkh_addr_index,
-            starting_indexes.p2sh_addr_index,
-            starting_indexes.p2wpkh_addr_index,
-            starting_indexes.p2wsh_addr_index,
-            starting_indexes.p2tr_addr_index,
-            starting_indexes.p2a_addr_index,
+            starting_lengths.height,
+            starting_lengths.p2pk65_addr_index,
+            starting_lengths.p2pk33_addr_index,
+            starting_lengths.p2pkh_addr_index,
+            starting_lengths.p2sh_addr_index,
+            starting_lengths.p2wpkh_addr_index,
+            starting_lengths.p2wsh_addr_index,
+            starting_lengths.p2tr_addr_index,
+            starting_lengths.p2a_addr_index,
             stamp,
         )?;
 
         self.scripts.truncate(
-            starting_indexes.height,
-            starting_indexes.empty_output_index,
-            starting_indexes.op_return_index,
-            starting_indexes.p2ms_output_index,
-            starting_indexes.unknown_output_index,
+            starting_lengths.height,
+            starting_lengths.empty_output_index,
+            starting_lengths.op_return_index,
+            starting_lengths.p2ms_output_index,
+            starting_lengths.unknown_output_index,
             stamp,
         )?;
 
@@ -126,7 +126,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn starting_height(&mut self) -> Height {
+    pub fn next_height(&mut self) -> Height {
         self.par_iter_mut_any_stored_vec()
             .map(|vec| {
                 let h = Height::from(vec.stamp());

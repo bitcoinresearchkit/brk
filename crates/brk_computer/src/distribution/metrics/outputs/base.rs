@@ -1,8 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{
-    BasisPointsSigned32, Height, Indexes, StoredF32, StoredI64, StoredU32, StoredU64, Version,
-};
+use brk_types::{BasisPointsSigned32, Height, StoredF32, StoredI64, StoredU32, StoredU64, Version};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -83,19 +82,19 @@ impl OutputsBase {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         self.unspent_count.height.compute_sum_of_others(
-            starting_indexes.height,
+            starting_lengths.height,
             &others
                 .iter()
                 .map(|v| &v.unspent_count.height)
                 .collect::<Vec<_>>(),
             exit,
         )?;
-        sum_others!(self, starting_indexes, others, exit; spent_count.block);
+        sum_others!(self, starting_lengths, others, exit; spent_count.block);
         Ok(())
     }
 }

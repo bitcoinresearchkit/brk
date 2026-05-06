@@ -4,7 +4,6 @@ use tracing::error;
 use vecdb::WritableVec;
 
 use super::{BlockProcessor, ComputedTx};
-use crate::IndexesExt;
 
 impl BlockProcessor<'_> {
     pub fn process_block_metadata(&mut self) -> Result<()> {
@@ -22,7 +21,7 @@ impl BlockProcessor<'_> {
             return Err(Error::Internal("BlockHash prefix collision"));
         }
 
-        self.indexes.checked_push(self.vecs)?;
+        self.lengths.checked_push(self.vecs)?;
 
         self.stores
             .blockhash_prefix_to_height

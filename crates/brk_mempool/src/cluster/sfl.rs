@@ -84,7 +84,10 @@ fn extract_chunks(t: &Tables) -> Vec<ChunkMask> {
 /// `0..n`; since the cluster is stored in topological order, that *is*
 /// a topological sweep.
 fn best_subset(t: &Tables, remaining: u128) -> (u128, Sats, VSize) {
-    let ctx = Ctx { tables: t, remaining };
+    let ctx = Ctx {
+        tables: t,
+        remaining,
+    };
     let mut best = (0u128, Sats::ZERO, VSize::default());
     recurse(&ctx, 0, 0, Sats::ZERO, VSize::default(), &mut best);
     best
@@ -99,8 +102,7 @@ fn recurse(
     best: &mut (u128, Sats, VSize),
 ) {
     if idx == ctx.tables.n {
-        if included != 0
-            && (best.0 == 0 || FeeRate::from((f, v)) > FeeRate::from((best.1, best.2)))
+        if included != 0 && (best.0 == 0 || FeeRate::from((f, v)) > FeeRate::from((best.1, best.2)))
         {
             *best = (included, f, v);
         }
@@ -110,8 +112,7 @@ fn recurse(
 
     // Not in remaining, or a parent (within remaining) is excluded:
     // this node is forced-excluded, no branching.
-    if (bit & ctx.remaining) == 0
-        || (ctx.tables.parents_mask[idx] & ctx.remaining & !included) != 0
+    if (bit & ctx.remaining) == 0 || (ctx.tables.parents_mask[idx] & ctx.remaining & !included) != 0
     {
         recurse(ctx, idx + 1, included, f, v, best);
         return;

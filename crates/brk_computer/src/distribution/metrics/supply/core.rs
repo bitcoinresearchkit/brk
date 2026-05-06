@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Version};
+use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
@@ -87,15 +88,15 @@ impl SupplyCore {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         let base_refs: Vec<&SupplyBase> = others.iter().map(|o| &o.base).collect();
         self.base
-            .compute_from_stateful(starting_indexes, &base_refs, exit)?;
-        sum_others!(self, starting_indexes, others, exit; in_profit.sats.height);
-        sum_others!(self, starting_indexes, others, exit; in_loss.sats.height);
+            .compute_from_stateful(starting_lengths, &base_refs, exit)?;
+        sum_others!(self, starting_lengths, others, exit; in_profit.sats.height);
+        sum_others!(self, starting_lengths, others, exit; in_loss.sats.height);
         Ok(())
     }
 }

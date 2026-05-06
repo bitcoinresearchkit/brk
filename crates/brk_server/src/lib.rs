@@ -67,8 +67,7 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 /// like `; charset=utf-8`. Used to skip JSON-error rewriting for already-JSON bodies.
 fn is_json_content_type(s: &str) -> bool {
     let mime = s.split(';').next().unwrap_or("").trim();
-    mime == "application/json"
-        || (mime.starts_with("application/") && mime.ends_with("+json"))
+    mime == "application/json" || (mime.starts_with("application/") && mime.ends_with("+json"))
 }
 
 pub struct Server(AppState);
@@ -300,7 +299,11 @@ impl Server {
         // NormalizePath must wrap the router (not be a layer) to run before route matching
         let app = NormalizePathLayer::trim_trailing_slash().layer(router);
 
-        serve(listener, ServiceExt::<Request<Body>>::into_make_service(app)).await?;
+        serve(
+            listener,
+            ServiceExt::<Request<Body>>::into_make_service(app),
+        )
+        .await?;
 
         Ok(())
     }
@@ -336,7 +339,9 @@ mod tests {
         assert!(is_json_content_type("application/json; charset=utf-8"));
         assert!(is_json_content_type("  application/json  "));
         assert!(is_json_content_type("application/problem+json"));
-        assert!(is_json_content_type("application/vnd.api+json; charset=utf-8"));
+        assert!(is_json_content_type(
+            "application/vnd.api+json; charset=utf-8"
+        ));
     }
 
     #[test]

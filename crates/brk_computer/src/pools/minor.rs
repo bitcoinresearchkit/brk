@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{BasisPoints16, Height, Indexes, PoolSlug, StoredU32, StoredU64};
+use brk_types::{BasisPoints16, Height, PoolSlug, StoredU32, StoredU64};
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
 use crate::{
@@ -46,34 +47,35 @@ impl Vecs {
 
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
         exit: &Exit,
     ) -> Result<()> {
-        self.blocks_mined
-            .compute(starting_indexes.height, exit, |vec| {
-                vec.compute_transform(
-                    starting_indexes.height,
-                    pool,
-                    |(h, id, ..)| {
-                        (
-                            h,
-                            if id == self.slug {
-                                StoredU32::ONE
-                            } else {
-                                StoredU32::ZERO
-                            },
-                        )
-                    },
-                    exit,
-                )?;
-                Ok(())
-            })?;
+        let starting_height = indexer.safe_lengths().height;
+
+        self.blocks_mined.compute(starting_height, exit, |vec| {
+            vec.compute_transform(
+                starting_height,
+                pool,
+                |(h, id, ..)| {
+                    (
+                        h,
+                        if id == self.slug {
+                            StoredU32::ONE
+                        } else {
+                            StoredU32::ZERO
+                        },
+                    )
+                },
+                exit,
+            )?;
+            Ok(())
+        })?;
 
         self.dominance
             .compute_binary::<StoredU64, StoredU64, RatioU64Bp16>(
-                starting_indexes.height,
+                starting_height,
                 &self.blocks_mined.cumulative.height,
                 &blocks.count.total.cumulative.height,
                 exit,

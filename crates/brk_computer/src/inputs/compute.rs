@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -12,16 +11,16 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
-        self.spent.compute(indexer, starting_indexes, exit)?;
-        self.count
-            .compute(indexer, indexes, blocks, starting_indexes, exit)?;
-        self.per_sec.compute(&self.count, starting_indexes, exit)?;
-        self.by_type.compute(indexer, starting_indexes, exit)?;
+        let starting_lengths = indexer.safe_lengths();
+
+        self.spent.compute(indexer, exit)?;
+        self.count.compute(indexer, indexes, blocks, exit)?;
+        self.per_sec.compute(&self.count, &starting_lengths, exit)?;
+        self.by_type.compute(indexer, exit)?;
 
         let exit = exit.clone();
         self.db.run_bg(move |db| {

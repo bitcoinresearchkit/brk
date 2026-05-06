@@ -9,7 +9,8 @@ pub use full::UnrealizedFull;
 pub use minimal::UnrealizedMinimal;
 
 use brk_error::Result;
-use brk_types::{Height, Indexes, Sats};
+use brk_indexer::Lengths;
+use brk_types::{Height, Sats};
 use vecdb::{Exit, ReadableVec};
 
 use crate::{distribution::state::UnrealizedState, prices};
@@ -22,7 +23,7 @@ pub trait UnrealizedLike: Send + Sync {
     fn compute_rest(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
         supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
@@ -46,12 +47,12 @@ impl UnrealizedLike for UnrealizedCore {
     fn compute_rest(
         &mut self,
         _prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         _supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
         _supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
-        self.compute_rest(starting_indexes, exit)
+        self.compute_rest(starting_lengths, exit)
     }
 }
 
@@ -72,14 +73,14 @@ impl UnrealizedLike for UnrealizedFull {
     fn compute_rest(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         supply_in_profit_sats: &(impl ReadableVec<Height, Sats> + Sync),
         supply_in_loss_sats: &(impl ReadableVec<Height, Sats> + Sync),
         exit: &Exit,
     ) -> Result<()> {
         self.compute_rest_all(
             prices,
-            starting_indexes,
+            starting_lengths,
             supply_in_profit_sats,
             supply_in_loss_sats,
             exit,

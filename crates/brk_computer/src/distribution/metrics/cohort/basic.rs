@@ -1,7 +1,8 @@
 use brk_cohort::Filter;
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Height, Indexes, Sats, StoredU64};
+use brk_types::{Height, Sats, StoredU64};
 use vecdb::{AnyStoredVec, Exit, ReadableVec, Rw, StorageMode};
 
 use crate::{
@@ -61,31 +62,31 @@ impl BasicCohortMetrics {
     pub(crate) fn compute_rest_part2(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,
         exit: &Exit,
     ) -> Result<()> {
         self.realized.compute_rest_part2(
             prices,
-            starting_indexes,
+            starting_lengths,
             &self.supply.total.btc.height,
             &self.activity.transfer_volume.sum._24h.cents.height,
             exit,
         )?;
 
         self.unrealized.compute(
-            starting_indexes.height,
+            starting_lengths.height,
             &prices.spot.cents.height,
             &self.realized.price.cents.height,
             exit,
         )?;
 
         self.supply
-            .compute_dominance(starting_indexes.height, all_supply_sats, exit)?;
+            .compute_dominance(starting_lengths.height, all_supply_sats, exit)?;
 
         self.outputs
-            .compute_part2(starting_indexes.height, all_utxo_count, exit)?;
+            .compute_part2(starting_lengths.height, all_utxo_count, exit)?;
 
         Ok(())
     }

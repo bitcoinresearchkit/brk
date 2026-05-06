@@ -8,7 +8,7 @@ use brk_types::{
     Weight,
 };
 use rustc_hash::FxHashMap;
-use vecdb::{AnyVec, ReadableVec, VecIndex};
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
 
@@ -71,9 +71,7 @@ impl Query {
             .txid
             .collect_range_at(first, first + tx_count);
         if txids.len() != tx_count {
-            return Err(Error::Internal(
-                "block_txids_by_height: short txid read",
-            ));
+            return Err(Error::Internal("block_txids_by_height: short txid read"));
         }
         Ok(txids)
     }
@@ -310,28 +308,22 @@ impl Query {
     ///
     /// `OutOfRange` when `height` is past the indexed-tip stamp.
     /// `Internal` when `first_tx_index[height]` is missing under the
-    /// stamp-before-data race. For the tip block (where
-    /// `first_tx_index[height+1]` is not yet written), `next` falls back
-    /// to `txid.len()`.
+    /// stamp-before-data race. The tip-of-safe block falls back to
+    /// `safe.tx_index` (not live `txid.len()`, which can be ahead of the
+    /// writer's stamped boundary mid-block).
     fn block_tx_range(&self, height: Height) -> Result<(usize, usize)> {
-        let indexer = self.indexer();
-        if height > self.indexed_height() {
+        let safe = self.safe_lengths();
+        if height >= safe.height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }
-        let first: usize = indexer
-            .vecs
-            .transactions
-            .first_tx_index
-            .collect_one(height)
-            .data()?
-            .into();
-        let next: usize = indexer
-            .vecs
-            .transactions
-            .first_tx_index
-            .collect_one(height.incremented())
-            .unwrap_or_else(|| TxIndex::from(indexer.vecs.transactions.txid.len()))
-            .into();
+        let first_tx_index_vec = &self.indexer().vecs.transactions.first_tx_index;
+        let first: usize = first_tx_index_vec.collect_one(height).data()?.into();
+        let next_height = height.incremented();
+        let next: usize = if next_height < safe.height {
+            first_tx_index_vec.collect_one(next_height).data()?.into()
+        } else {
+            safe.tx_index.to_usize()
+        };
         Ok((first, next - first))
     }
 }

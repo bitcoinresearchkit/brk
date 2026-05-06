@@ -33,7 +33,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                             let tip_height = q
                                 .client()
                                 .get_last_height()
-                                .unwrap_or(q.indexed_height());
+                                .unwrap_or(q.height());
                             q.sync_status(tip_height)
                         })
                         .await

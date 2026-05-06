@@ -1,7 +1,8 @@
 use brk_cohort::{Loss, Profit, ProfitabilityRange};
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Dollars, Indexes, Sats, Version};
+use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Dollars, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, Database, Exit, Rw, StorageMode, WritableVec};
 
 use crate::{
@@ -115,11 +116,11 @@ impl ProfitabilityBucket {
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         is_profit: bool,
         exit: &Exit,
     ) -> Result<()> {
-        let max_from = starting_indexes.height;
+        let max_from = starting_lengths.height;
 
         self.supply.all.compute(prices, max_from, exit)?;
         self.supply.sth.compute(prices, max_from, exit)?;
@@ -176,12 +177,12 @@ impl ProfitabilityBucket {
     pub(crate) fn compute_from_ranges(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         is_profit: bool,
         sources: &[&ProfitabilityBucket],
         exit: &Exit,
     ) -> Result<()> {
-        let max_from = starting_indexes.height;
+        let max_from = starting_lengths.height;
 
         self.supply.all.sats.height.compute_sum_of_others(
             max_from,
@@ -216,7 +217,7 @@ impl ProfitabilityBucket {
             exit,
         )?;
 
-        self.compute(prices, starting_indexes, is_profit, exit)
+        self.compute(prices, starting_lengths, is_profit, exit)
     }
 
     pub(crate) fn collect_all_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
@@ -293,20 +294,20 @@ impl ProfitabilityMetrics {
     pub(crate) fn compute(
         &mut self,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
         for (is_profit, bucket) in self.range.iter_mut_with_is_profit() {
-            bucket.compute(prices, starting_indexes, is_profit, exit)?;
+            bucket.compute(prices, starting_lengths, is_profit, exit)?;
         }
 
         let range_arr = self.range.as_array();
 
         for (threshold, sources) in self.profit.iter_mut_with_growing_prefix(&range_arr) {
-            threshold.compute_from_ranges(prices, starting_indexes, true, sources, exit)?;
+            threshold.compute_from_ranges(prices, starting_lengths, true, sources, exit)?;
         }
         for (threshold, sources) in self.loss.iter_mut_with_growing_suffix(&range_arr) {
-            threshold.compute_from_ranges(prices, starting_indexes, false, sources, exit)?;
+            threshold.compute_from_ranges(prices, starting_lengths, false, sources, exit)?;
         }
 
         Ok(())

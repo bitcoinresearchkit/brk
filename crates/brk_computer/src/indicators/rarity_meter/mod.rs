@@ -1,8 +1,9 @@
 mod inner;
 
 use brk_error::Result;
+use brk_indexer::Indexer;
 use brk_traversable::Traversable;
-use brk_types::{Indexes, Version};
+use brk_types::Version;
 use vecdb::{Database, Exit, Rw, StorageMode};
 
 use crate::{distribution, indexes, prices};
@@ -34,9 +35,9 @@ impl RarityMeter {
 
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         distribution: &distribution::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         let realized = &distribution.utxo_cohorts.all.metrics.realized;
@@ -55,7 +56,7 @@ impl RarityMeter {
                 &lth_realized.capitalized.price.percentiles,
             ],
             spot,
-            starting_indexes,
+            indexer,
             exit,
         )?;
 
@@ -66,7 +67,7 @@ impl RarityMeter {
                 &sth_realized.capitalized.price.percentiles,
             ],
             spot,
-            starting_indexes,
+            indexer,
             exit,
         )?;
 
@@ -79,7 +80,7 @@ impl RarityMeter {
                 &lth_realized.capitalized.price.percentiles,
             ],
             spot,
-            starting_indexes,
+            indexer,
             exit,
         )?;
 

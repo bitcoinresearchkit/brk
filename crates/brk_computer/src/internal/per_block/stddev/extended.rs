@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, Height, Indexes, StoredF32, Version};
+use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode, VecIndex,
     WritableVec,
@@ -95,7 +96,7 @@ impl StdDevPerBlockExtended {
     pub(crate) fn compute_all(
         &mut self,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         source: &impl ReadableVec<Height, StoredF32>,
         sma: &impl ReadableVec<Height, StoredF32>,
@@ -103,11 +104,11 @@ impl StdDevPerBlockExtended {
         if self.days == usize::MAX {
             self.sd
                 .height
-                .compute_expanding_sd(starting_indexes.height, source, sma, exit)?;
+                .compute_expanding_sd(starting_lengths.height, source, sma, exit)?;
         } else {
             let window_starts = blocks.lookback.start_vec(self.days);
             self.sd.height.compute_rolling_sd(
-                starting_indexes.height,
+                starting_lengths.height,
                 window_starts,
                 source,
                 sma,
@@ -115,12 +116,12 @@ impl StdDevPerBlockExtended {
             )?;
         }
 
-        self.compute_bands(starting_indexes, exit, sma, source)
+        self.compute_bands(starting_lengths, exit, sma, source)
     }
 
     fn compute_bands(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         exit: &Exit,
         sma: &impl ReadableVec<Height, StoredF32>,
         source: &impl ReadableVec<Height, StoredF32>,
@@ -138,7 +139,7 @@ impl StdDevPerBlockExtended {
             .map(|v| Height::from(v.len()))
             .min()
             .unwrap()
-            .min(starting_indexes.height);
+            .min(starting_lengths.height);
 
         let start = starting_height.to_usize();
 
@@ -167,7 +168,7 @@ impl StdDevPerBlockExtended {
         }
 
         self.zscore.height.compute_zscore(
-            starting_indexes.height,
+            starting_lengths.height,
             source,
             sma,
             &self.sd.height,
@@ -179,7 +180,7 @@ impl StdDevPerBlockExtended {
 
     pub(crate) fn compute_cents_bands(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         series_price: &impl ReadableVec<Height, Cents>,
         sma: &impl ReadableVec<Height, StoredF32>,
         exit: &Exit,
@@ -189,7 +190,7 @@ impl StdDevPerBlockExtended {
                 $price
                     .cents
                     .compute_binary::<Cents, StoredF32, PriceTimesRatioCents>(
-                        starting_indexes.height,
+                        starting_lengths.height,
                         series_price,
                         $band_source,
                         exit,

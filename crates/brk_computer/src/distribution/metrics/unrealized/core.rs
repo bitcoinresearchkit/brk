@@ -1,6 +1,7 @@
 use brk_error::Result;
+use brk_indexer::Lengths;
 use brk_traversable::Traversable;
-use brk_types::{Cents, CentsSigned, Indexes, Version};
+use brk_types::{Cents, CentsSigned, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, Exit, Rw, StorageMode};
 
@@ -47,22 +48,22 @@ impl UnrealizedCore {
 
     pub(crate) fn compute_from_stateful(
         &mut self,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         others: &[&Self],
         exit: &Exit,
     ) -> Result<()> {
         let basic_refs: Vec<&UnrealizedBasic> = others.iter().map(|o| &o.basic).collect();
         self.basic
-            .compute_from_sources(starting_indexes, &basic_refs, exit)?;
+            .compute_from_sources(starting_lengths, &basic_refs, exit)?;
         Ok(())
     }
 
-    pub(crate) fn compute_rest(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    pub(crate) fn compute_rest(&mut self, starting_lengths: &Lengths, exit: &Exit) -> Result<()> {
         self.net_pnl
             .cents
             .height
             .compute_binary::<Cents, Cents, CentsSubtractToCentsSigned>(
-                starting_indexes.height,
+                starting_lengths.height,
                 &self.basic.profit.cents.height,
                 &self.basic.loss.cents.height,
                 exit,

@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{Bitcoin, Dollars, Indexes, StoredF64};
+use brk_indexer::Indexer;
+use brk_types::{Bitcoin, Dollars, StoredF64};
 use vecdb::Exit;
 
 use super::super::activity;
@@ -9,31 +10,31 @@ use crate::{distribution, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
-        starting_indexes: &Indexes,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let all_metrics = &distribution.utxo_cohorts.all.metrics;
         let coinblocks_destroyed = &distribution.coinblocks_destroyed;
         let coindays_destroyed = &all_metrics.activity.coindays_destroyed;
         let circulating_supply = &all_metrics.supply.total.btc.height;
 
-        self.destroyed
-            .compute(starting_indexes.height, exit, |vec| {
-                vec.compute_multiply(
-                    starting_indexes.height,
-                    &prices.spot.usd.height,
-                    &coinblocks_destroyed.block,
-                    exit,
-                )?;
-                Ok(())
-            })?;
-
-        self.created.compute(starting_indexes.height, exit, |vec| {
+        self.destroyed.compute(starting_height, exit, |vec| {
             vec.compute_multiply(
-                starting_indexes.height,
+                starting_height,
+                &prices.spot.usd.height,
+                &coinblocks_destroyed.block,
+                exit,
+            )?;
+            Ok(())
+        })?;
+
+        self.created.compute(starting_height, exit, |vec| {
+            vec.compute_multiply(
+                starting_height,
                 &prices.spot.usd.height,
                 &activity.coinblocks_created.block,
                 exit,
@@ -41,9 +42,9 @@ impl Vecs {
             Ok(())
         })?;
 
-        self.stored.compute(starting_indexes.height, exit, |vec| {
+        self.stored.compute(starting_height, exit, |vec| {
             vec.compute_multiply(
-                starting_indexes.height,
+                starting_height,
                 &prices.spot.usd.height,
                 &activity.coinblocks_stored.block,
                 exit,
@@ -54,9 +55,9 @@ impl Vecs {
         // VOCDD: Value of Coin Days Destroyed = price × (CDD / circulating_supply)
         // Supply-adjusted to account for growing supply over time
         // This is a key input for Reserve Risk / HODL Bank calculation
-        self.vocdd.compute(starting_indexes.height, exit, |vec| {
+        self.vocdd.compute(starting_height, exit, |vec| {
             vec.compute_transform3(
-                starting_indexes.height,
+                starting_height,
                 &prices.spot.usd.height,
                 &coindays_destroyed.block,
                 circulating_supply,

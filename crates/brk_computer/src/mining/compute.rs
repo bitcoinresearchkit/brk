@@ -1,6 +1,5 @@
 use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_types::Indexes;
 use vecdb::Exit;
 
 use super::Vecs;
@@ -15,7 +14,6 @@ impl Vecs {
         blocks: &blocks::Vecs,
         transactions: &transactions::Vecs,
         prices: &prices::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;
@@ -27,17 +25,16 @@ impl Vecs {
             &blocks.lookback,
             transactions,
             prices,
-            starting_indexes,
             exit,
         )?;
 
         self.hashrate.compute(
+            indexer,
             &blocks.count,
             &blocks.lookback,
             &blocks.difficulty,
             &self.rewards.coinbase.sum._24h.sats.height,
             &self.rewards.coinbase.sum._24h.usd.height,
-            starting_indexes,
             exit,
         )?;
 

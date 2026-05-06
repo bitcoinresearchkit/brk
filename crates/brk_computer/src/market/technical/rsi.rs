@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Height, Indexes, StoredF32};
+use brk_indexer::Indexer;
+use brk_types::{BasisPoints16, Height, StoredF32};
 use vecdb::{Exit, ReadableVec};
 
 use super::RsiChain;
@@ -7,46 +8,47 @@ use crate::blocks;
 
 pub(super) fn compute(
     chain: &mut RsiChain,
+    indexer: &Indexer,
     blocks: &blocks::Vecs,
     returns_source: &impl ReadableVec<Height, StoredF32>,
     rma_days: usize,
     stoch_sma_days: usize,
-    starting_indexes: &Indexes,
     exit: &Exit,
 ) -> Result<()> {
+    let starting_height = indexer.safe_lengths().height;
     let ws_rma = blocks.lookback.start_vec(rma_days);
     let ws_sma = blocks.lookback.start_vec(stoch_sma_days);
 
     chain.gains.height.compute_transform(
-        starting_indexes.height,
+        starting_height,
         returns_source,
         |(h, r, ..)| (h, StoredF32::from((*r).max(0.0))),
         exit,
     )?;
 
     chain.losses.height.compute_transform(
-        starting_indexes.height,
+        starting_height,
         returns_source,
         |(h, r, ..)| (h, StoredF32::from((-*r).max(0.0))),
         exit,
     )?;
 
     chain.average_gain.height.compute_rolling_rma(
-        starting_indexes.height,
+        starting_height,
         ws_rma,
         &chain.gains.height,
         exit,
     )?;
 
     chain.average_loss.height.compute_rolling_rma(
-        starting_indexes.height,
+        starting_height,
         ws_rma,
         &chain.losses.height,
         exit,
     )?;
 
     chain.rsi.bps.height.compute_transform2(
-        starting_indexes.height,
+        starting_height,
         &chain.average_gain.height,
         &chain.average_loss.height,
         |(h, g, l, ..)| {
@@ -58,21 +60,21 @@ pub(super) fn compute(
     )?;
 
     chain.rsi_min.bps.height.compute_rolling_min_from_starts(
-        starting_indexes.height,
+        starting_height,
         ws_rma,
         &chain.rsi.bps.height,
         exit,
     )?;
 
     chain.rsi_max.bps.height.compute_rolling_max_from_starts(
-        starting_indexes.height,
+        starting_height,
         ws_rma,
         &chain.rsi.bps.height,
         exit,
     )?;
 
     chain.stoch_rsi.bps.height.compute_transform3(
-        starting_indexes.height,
+        starting_height,
         &chain.rsi.bps.height,
         &chain.rsi_min.bps.height,
         &chain.rsi_max.bps.height,
@@ -89,14 +91,14 @@ pub(super) fn compute(
     )?;
 
     chain.stoch_rsi_k.bps.height.compute_rolling_average(
-        starting_indexes.height,
+        starting_height,
         ws_sma,
         &chain.stoch_rsi.bps.height,
         exit,
     )?;
 
     chain.stoch_rsi_d.bps.height.compute_rolling_average(
-        starting_indexes.height,
+        starting_height,
         ws_sma,
         &chain.stoch_rsi_k.bps.height,
         exit,

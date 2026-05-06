@@ -1,5 +1,6 @@
 use brk_error::Result;
-use brk_types::{BasisPoints16, Indexes, StoredF32};
+use brk_indexer::Indexer;
+use brk_types::{BasisPoints16, StoredF32};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
@@ -8,11 +9,12 @@ use crate::{blocks, prices};
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
+        indexer: &Indexer,
         prices: &prices::Vecs,
         blocks: &blocks::Vecs,
-        starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        let starting_height = indexer.safe_lengths().height;
         let price = &prices.spot.cents.height;
 
         for (min_vec, max_vec, starts) in [
@@ -37,24 +39,14 @@ impl Vecs {
                 &blocks.lookback._1y.inner,
             ),
         ] {
-            min_vec.compute_rolling_min_from_starts(
-                starting_indexes.height,
-                starts,
-                price,
-                exit,
-            )?;
-            max_vec.compute_rolling_max_from_starts(
-                starting_indexes.height,
-                starts,
-                price,
-                exit,
-            )?;
+            min_vec.compute_rolling_min_from_starts(starting_height, starts, price, exit)?;
+            max_vec.compute_rolling_max_from_starts(starting_height, starts, price, exit)?;
         }
 
         // True range at block level: |price[h] - price[h-1]|
         let mut prev_price = None;
         self.true_range.height.compute_transform(
-            starting_indexes.height,
+            starting_height,
             price,
             |(h, current, ..)| {
                 let prev = prev_price.unwrap_or_else(|| {
@@ -74,14 +66,14 @@ impl Vecs {
 
         // 2w rolling sum of true range
         self.true_range_sum_2w.height.compute_rolling_sum(
-            starting_indexes.height,
+            starting_height,
             &blocks.lookback._2w,
             &self.true_range.height,
             exit,
         )?;
 
         self.choppiness_index_2w.bps.height.compute_transform4(
-            starting_indexes.height,
+            starting_height,
             &self.true_range_sum_2w.height,
             &self.max._2w.cents.height,
             &self.min._2w.cents.height,

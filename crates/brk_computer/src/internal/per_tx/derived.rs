@@ -1,8 +1,8 @@
 use brk_error::Result;
-use brk_indexer::Indexer;
+use brk_indexer::{Indexer, Lengths};
 
 use brk_traversable::Traversable;
-use brk_types::{Indexes, TxIndex, VSize};
+use brk_types::{TxIndex, VSize};
 use schemars::JsonSchema;
 use vecdb::{Database, Exit, ReadableVec, Rw, StorageMode, Version};
 
@@ -68,7 +68,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         tx_index_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
     ) -> Result<()>
@@ -76,7 +76,7 @@ where
         T: Copy + Ord + From<f64> + Default,
         f64: From<T>,
     {
-        self.derive_from_with_skip(indexer, indexes, starting_indexes, tx_index_source, exit, 0)
+        self.derive_from_with_skip(indexer, indexes, starting_lengths, tx_index_source, exit, 0)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -84,7 +84,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         tx_index_source: &impl ReadableVec<TxIndex, T>,
         exit: &Exit,
         skip_count: usize,
@@ -94,7 +94,7 @@ where
         f64: From<T>,
     {
         self.block.compute_with_skip(
-            starting_indexes.height,
+            starting_lengths.height,
             tx_index_source,
             &indexer.vecs.transactions.first_tx_index,
             &indexes.height.tx_index_count,
@@ -103,7 +103,7 @@ where
         )?;
 
         self.distribution._6b.compute_from_nblocks(
-            starting_indexes.height,
+            starting_lengths.height,
             tx_index_source,
             &indexer.vecs.transactions.first_tx_index,
             &indexes.height.tx_index_count,
@@ -121,7 +121,7 @@ where
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
+        starting_lengths: &Lengths,
         tx_index_source: &impl ReadableVec<TxIndex, T>,
         vsize_source: &impl ReadableVec<TxIndex, VSize>,
         exit: &Exit,
@@ -132,7 +132,7 @@ where
         f64: From<T>,
     {
         self.block.compute_with_skip_weighted(
-            starting_indexes.height,
+            starting_lengths.height,
             tx_index_source,
             vsize_source,
             &indexer.vecs.transactions.first_tx_index,
@@ -142,7 +142,7 @@ where
         )?;
 
         self.distribution._6b.compute_from_nblocks(
-            starting_indexes.height,
+            starting_lengths.height,
             tx_index_source,
             &indexer.vecs.transactions.first_tx_index,
             &indexes.height.tx_index_count,
