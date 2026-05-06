@@ -23,6 +23,12 @@ pub struct EntryPool {
 impl EntryPool {
     pub fn insert(&mut self, entry: TxEntry) -> TxIndex {
         let prefix = entry.txid_prefix();
+        debug_assert!(
+            !self.prefix_to_idx.contains_key(&prefix),
+            "TxidPrefix collision in EntryPool: prefix {prefix:?} already mapped. \
+             Birthday-rare on SHA-256d, but if it ever fires the previous slot \
+             leaks because outpoint_spends still references it."
+        );
         let idx = self.claim_slot(entry);
         self.prefix_to_idx.insert(prefix, idx);
         idx

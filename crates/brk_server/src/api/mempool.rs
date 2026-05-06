@@ -33,6 +33,25 @@ impl MempoolRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
+            "/api/mempool/hash",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    state
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| q.mempool_hash())
+                        .await
+                },
+                |op| {
+                    op.id("get_mempool_hash")
+                        .mempool_tag()
+                        .summary("Mempool content hash")
+                        .description("Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.")
+                        .json_response::<u64>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
             "/api/mempool/txids",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {

@@ -5,7 +5,7 @@ pub use fetched::Fetched;
 use brk_error::Result;
 use brk_rpc::{Client, RawTx};
 use brk_types::{MempoolEntryInfo, Txid};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::stores::{MempoolState, TxGraveyard, TxStore};
 
@@ -77,13 +77,16 @@ impl Fetcher {
     }
 
     fn unique_confirmed_parents(new_raws: &FxHashMap<Txid, RawTx>, known: &TxStore) -> Vec<Txid> {
-        let mut v = new_raws
+        // Iterating new_raws.values() yields txs in arbitrary FxHashMap order,
+        // so duplicates of the same parent are typically non-adjacent. Dedup
+        // via a FxHashSet so a parent shared by N new txs is fetched once.
+        let mut seen: FxHashSet<Txid> = FxHashSet::default();
+        new_raws
             .values()
             .flat_map(|raw| &raw.tx.input)
             .map(|txin| Txid::from(txin.previous_output.txid))
             .filter(|prev| !known.contains(prev) && !new_raws.contains_key(prev))
-            .collect::<Vec<_>>();
-        v.dedup();
-        v
+            .filter(|prev| seen.insert(*prev))
+            .collect()
     }
 }

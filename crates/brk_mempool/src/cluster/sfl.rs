@@ -27,7 +27,7 @@ use super::ClusterNode;
 const BRUTE_FORCE_LIMIT: usize = 18;
 /// Cluster nodes are indexed by `u128` bitmask, so `n < 128`. Bitcoin
 /// Core's cluster cap is 100, so this leaves comfortable margin.
-const BITMASK_LIMIT: usize = 128;
+pub(super) const BITMASK_LIMIT: usize = 128;
 
 /// Raw SFL output: a chunk's bitmask plus its totals. `Cluster::new`
 /// converts these into final `Chunk`s with topo-ordered `txs`, so the
@@ -45,8 +45,12 @@ impl ChunkMask {
 }
 
 /// Linearize a cluster into SFL chunks.
+///
+/// Precondition: `nodes.len() < BITMASK_LIMIT`. `Cluster::new` enforces
+/// this by dispatching oversized clusters to a trivial fallback before
+/// reaching here, so the check is `debug_assert!` rather than runtime.
 pub(super) fn linearize<I>(nodes: &[ClusterNode<I>]) -> Vec<ChunkMask> {
-    assert!(
+    debug_assert!(
         nodes.len() < BITMASK_LIMIT,
         "cluster size {} exceeds u128 capacity",
         nodes.len()

@@ -254,4 +254,13 @@ impl Query {
             })
             .collect())
     }
+
+    /// Opaque content hash that changes whenever the projected next
+    /// block changes. Same value used as the mempool ETag, surfaced as
+    /// JSON so external monitors can detect a frozen update loop by
+    /// polling: if the value doesn't change for tens of seconds on a
+    /// live network, the mempool sync has stalled.
+    pub fn mempool_hash(&self) -> Result<u64> {
+        Ok(self.require_mempool()?.next_block_hash())
+    }
 }

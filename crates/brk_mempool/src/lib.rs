@@ -13,7 +13,12 @@
 //! 5. [`steps::rebuilder::Rebuilder`] - throttled rebuild of the
 //!    projected-blocks `Snapshot`.
 
-use std::{sync::Arc, thread, time::Duration};
+use std::{
+    panic::{AssertUnwindSafe, catch_unwind},
+    sync::Arc,
+    thread,
+    time::Duration,
+};
 
 use brk_error::Result;
 use brk_rpc::Client;
@@ -125,12 +130,29 @@ impl Mempool {
     }
 
     /// Variant of `start` that runs `after_update` after every cycle.
+    ///
+    /// `update` and `after_update` are wrapped in `catch_unwind` so an
+    /// unexpected panic in either step doesn't kill the loop and freeze
+    /// the mempool snapshot. `parking_lot` locks don't poison, so state
+    /// remains usable after a panic.
     pub fn start_with(&self, mut after_update: impl FnMut()) {
         loop {
-            if let Err(e) = self.update() {
-                error!("update failed: {e}");
+            let outcome = catch_unwind(AssertUnwindSafe(|| {
+                if let Err(e) = self.update() {
+                    error!("update failed: {e}");
+                }
+                after_update();
+            }));
+            if let Err(payload) = outcome {
+                let msg = if let Some(s) = payload.downcast_ref::<&'static str>() {
+                    (*s).to_string()
+                } else if let Some(s) = payload.downcast_ref::<String>() {
+                    s.clone()
+                } else {
+                    "<non-string panic payload>".to_string()
+                };
+                error!("mempool update panicked, continuing loop: {msg}");
             }
-            after_update();
             thread::sleep(Duration::from_secs(1));
         }
     }

@@ -23,6 +23,7 @@ pub use cluster_ref::ClusterRef;
 pub use local_idx::LocalIdx;
 
 use smallvec::SmallVec;
+use tracing::warn;
 
 /// A connected component of the mempool graph, stored in topological
 /// order (parents before children) and SFL-linearized into chunks.
@@ -47,13 +48,66 @@ pub struct Cluster<I> {
 impl<I> Cluster<I> {
     pub fn new(nodes: Vec<ClusterNode<I>>) -> Self {
         let nodes = Self::permute_to_topo_order(nodes);
-        let chunk_masks = sfl::linearize(&nodes);
-        let (chunks, node_to_chunk) = Self::materialize_chunks(&chunk_masks, nodes.len());
+        let (chunks, node_to_chunk) = if nodes.len() < sfl::BITMASK_LIMIT {
+            let chunk_masks = sfl::linearize(&nodes);
+            Self::materialize_chunks(&chunk_masks, nodes.len())
+        } else {
+            // Bitcoin Core 30+ caps clusters at 100, but pre-BIP431 nodes
+            // (or relay-policy edge cases) can produce larger connected
+            // components. Fall back to a trivial linearization so the
+            // mempool loop survives instead of panicking.
+            warn!(
+                "cluster size {} >= u128 capacity, using trivial linearization",
+                nodes.len()
+            );
+            Self::trivial_chunks(&nodes)
+        };
         Self {
             nodes,
             chunks,
             node_to_chunk,
         }
+    }
+
+    /// Fallback linearization for oversized clusters: emit each node as
+    /// its own chunk (topo-ordered), then run the same stack-merge as
+    /// `sfl::canonicalize` to restore the non-increasing fee_rate
+    /// invariant the partitioner relies on. Suboptimal partitioning
+    /// for that one cluster, but topology is preserved (merges only
+    /// join consecutive topo-ordered runs).
+    fn trivial_chunks(nodes: &[ClusterNode<I>]) -> (Vec<Chunk>, Vec<ChunkId>) {
+        let mut out: Vec<Chunk> = Vec::with_capacity(nodes.len());
+        for (i, node) in nodes.iter().enumerate() {
+            let mut txs: SmallVec<[LocalIdx; 4]> = SmallVec::new();
+            txs.push(LocalIdx::from(i));
+            let mut cur = Chunk {
+                txs,
+                fee: node.fee,
+                vsize: node.vsize,
+            };
+            while let Some(top) = out.last() {
+                if cur.fee_rate() <= top.fee_rate() {
+                    break;
+                }
+                let prev = out.pop().unwrap();
+                let mut merged_txs = prev.txs;
+                merged_txs.extend(cur.txs.iter().copied());
+                cur = Chunk {
+                    txs: merged_txs,
+                    fee: prev.fee + cur.fee,
+                    vsize: prev.vsize + cur.vsize,
+                };
+            }
+            out.push(cur);
+        }
+        let mut node_to_chunk = vec![ChunkId::ZERO; nodes.len()];
+        for (cid, chunk) in out.iter().enumerate() {
+            let chunk_id = ChunkId::from(cid);
+            for &local in &chunk.txs {
+                node_to_chunk[local.as_usize()] = chunk_id;
+            }
+        }
+        (out, node_to_chunk)
     }
 
     /// O(1) chunk lookup for a node.

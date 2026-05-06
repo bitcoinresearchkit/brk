@@ -1,4 +1,5 @@
 use brk_types::{Transaction, Txid, TxidPrefix};
+use tracing::warn;
 
 use crate::{
     TxEntry, TxRemoval,
@@ -37,6 +38,17 @@ impl Applier {
         };
         let txid = entry.txid;
         let Some(tx) = s.txs.remove(&txid) else {
+            // entries had this prefix but txs didn't — a state divergence
+            // that should be impossible: publish/bury both touch them
+            // together under one write_all guard. Reaching this branch
+            // means a prior cycle left the two stores out of sync (panic
+            // mid-publish, prefix collision, etc). The slot has been
+            // freed by entries.remove, but addrs/outpoint_spends/info may
+            // still hold stale references that we can't repair without
+            // the tx body. Log loudly so the corruption is visible.
+            warn!(
+                "mempool bury: entry present but tx missing for txid={txid} - addr/outpoint state may be stale"
+            );
             return;
         };
         s.info.remove(&tx, entry.fee);
