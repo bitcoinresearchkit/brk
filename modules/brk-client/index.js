@@ -421,13 +421,16 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {(CpfpEntry|null)=} bestDescendant - Best (highest fee rate) descendant, if any.
  * @property {CpfpEntry[]} descendants - Descendant transactions in the CPFP chain.
  * @property {FeeRate} effectiveFeePerVsize - Effective fee rate considering CPFP relationships (sat/vB).
+This is the seed's chunk feerate after lift-merging, i.e. the
+rate Core/mempool.space would surface for this tx.
  * @property {SigOps} sigops - BIP-141 sigop cost for the seed tx (witness sigops count as 1,
 legacy and P2SH-redeem sigops count as 4).
  * @property {Sats} fee - Transaction fee (sats).
  * @property {VSize} vsize - Virtual size of the seed tx (vbytes).
  * @property {VSize} adjustedVsize - Policy-adjusted virtual size: `max(vsize, sigops * 5)`.
- * @property {CpfpCluster} cluster - Cluster the seed belongs to: full tx list, SFL-linearized chunks,
-and the seed's chunk index.
+ * @property {(CpfpCluster|null)=} cluster - Cluster the seed belongs to: full tx list, SFL-linearized chunks,
+and the seed's chunk index. Omitted when the seed has no
+ancestors and no descendants (matches mempool.space).
  */
 /**
  * Range parameters with output format for API query parameters.

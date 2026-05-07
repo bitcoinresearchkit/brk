@@ -23,10 +23,6 @@ use super::{SnapTx, TxIndex};
 pub type PrefixIndex = FxHashMap<TxidPrefix, TxIndex>;
 
 pub fn build_txs(txs: &TxStore) -> (Vec<SnapTx>, PrefixIndex) {
-    if txs.is_empty() {
-        return (Vec::new(), PrefixIndex::default());
-    }
-
     let (prefix_to_idx, ordered) = compact_index(txs);
     let mut snap_txs: Vec<SnapTx> = ordered.iter().map(|e| live_tx(e, &prefix_to_idx)).collect();
 

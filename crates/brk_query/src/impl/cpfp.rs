@@ -10,9 +10,10 @@
 //! carries the same chunk-rate semantics the live mempool produces.
 
 use brk_error::{Error, OptionData, Result};
+use brk_mempool::{ChunkInput, linearize};
 use brk_types::{
-    CpfpCluster, CpfpClusterChunk, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate,
-    Height, Sats, TxInIndex, TxIndex, Txid, TxidPrefix, VSize, Weight,
+    CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate, Height, Sats,
+    TxInIndex, TxIndex, Txid, TxidPrefix, VSize, Weight,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
@@ -323,65 +324,52 @@ fn build_cpfp_info(
         .max_by_key(|e| FeeRate::from((e.fee, e.weight)))
         .cloned();
 
-    let cluster_txs: Vec<CpfpClusterTx> = members
-        .iter()
-        .map(|m| CpfpClusterTx {
-            txid: m.txid,
-            weight: m.weight,
-            fee: m.fee,
-            parents: m.parents.iter().copied().collect(),
-        })
-        .collect();
-    let chunks = chunk_groups(members);
-    let chunk_index = chunks
-        .iter()
-        .position(|ch| ch.txs.contains(&seed_local))
-        .map(|i| i as u32)
-        .unwrap_or(0);
+    let (cluster, effective_fee_per_vsize) = if members.len() <= 1 {
+        (None, seed.rate)
+    } else {
+        let inputs: Vec<ChunkInput<'_>> = members
+            .iter()
+            .map(|m| ChunkInput {
+                fee: m.fee,
+                vsize: m.vsize,
+                parents: m.parents.as_slice(),
+            })
+            .collect();
+        let chunks = linearize(&inputs);
+        let (chunk_index, seed_rate) = chunks
+            .iter()
+            .enumerate()
+            .find(|(_, ch)| ch.txs.contains(&seed_local))
+            .map(|(i, ch)| (i as u32, ch.feerate))
+            .unwrap_or((0, seed.rate));
+        let cluster_txs: Vec<CpfpClusterTx> = members
+            .iter()
+            .map(|m| CpfpClusterTx {
+                txid: m.txid,
+                weight: m.weight,
+                fee: m.fee,
+                parents: m.parents.iter().copied().collect(),
+            })
+            .collect();
+        (
+            Some(CpfpCluster {
+                txs: cluster_txs,
+                chunks,
+                chunk_index,
+            }),
+            seed_rate,
+        )
+    };
 
     CpfpInfo {
         ancestors,
         best_descendant,
         descendants,
-        effective_fee_per_vsize: seed.rate,
+        effective_fee_per_vsize,
         sigops,
         fee: seed.fee,
         vsize: seed.vsize,
         adjusted_vsize: sigops.adjust_vsize(seed.vsize),
-        cluster: CpfpCluster {
-            txs: cluster_txs,
-            chunks,
-            chunk_index,
-        },
+        cluster,
     }
-}
-
-fn chunk_groups(members: &[Member]) -> Vec<CpfpClusterChunk> {
-    let mut groups: FxHashMap<u64, (FeeRate, SmallVec<[CpfpClusterTxIndex; 4]>)> =
-        FxHashMap::with_capacity_and_hasher(members.len(), FxBuildHasher);
-    let mut order: Vec<u64> = Vec::new();
-    for (i, m) in members.iter().enumerate() {
-        let key = f64::from(m.rate).to_bits();
-        let local = CpfpClusterTxIndex::from(i as u32);
-        groups
-            .entry(key)
-            .and_modify(|(_, v)| v.push(local))
-            .or_insert_with(|| {
-                order.push(key);
-                let mut v: SmallVec<[CpfpClusterTxIndex; 4]> = SmallVec::new();
-                v.push(local);
-                (m.rate, v)
-            });
-    }
-    order.sort_by_key(|k| std::cmp::Reverse(groups[k].0));
-    order
-        .into_iter()
-        .map(|k| {
-            let (rate, txs) = groups.remove(&k).unwrap();
-            CpfpClusterChunk {
-                txs: txs.into_vec(),
-                feerate: rate,
-            }
-        })
-        .collect()
 }

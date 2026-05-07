@@ -16,6 +16,8 @@ pub struct CpfpInfo {
     /// Descendant transactions in the CPFP chain.
     pub descendants: Vec<CpfpEntry>,
     /// Effective fee rate considering CPFP relationships (sat/vB).
+    /// This is the seed's chunk feerate after lift-merging, i.e. the
+    /// rate Core/mempool.space would surface for this tx.
     pub effective_fee_per_vsize: FeeRate,
     /// BIP-141 sigop cost for the seed tx (witness sigops count as 1,
     /// legacy and P2SH-redeem sigops count as 4).
@@ -27,6 +29,8 @@ pub struct CpfpInfo {
     /// Policy-adjusted virtual size: `max(vsize, sigops * 5)`.
     pub adjusted_vsize: VSize,
     /// Cluster the seed belongs to: full tx list, SFL-linearized chunks,
-    /// and the seed's chunk index.
-    pub cluster: CpfpCluster,
+    /// and the seed's chunk index. Omitted when the seed has no
+    /// ancestors and no descendants (matches mempool.space).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cluster: Option<CpfpCluster>,
 }

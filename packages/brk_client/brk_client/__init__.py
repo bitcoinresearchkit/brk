@@ -716,13 +716,16 @@ class CpfpInfo(TypedDict):
         bestDescendant: Best (highest fee rate) descendant, if any.
         descendants: Descendant transactions in the CPFP chain.
         effectiveFeePerVsize: Effective fee rate considering CPFP relationships (sat/vB).
+This is the seed's chunk feerate after lift-merging, i.e. the
+rate Core/mempool.space would surface for this tx.
         sigops: BIP-141 sigop cost for the seed tx (witness sigops count as 1,
 legacy and P2SH-redeem sigops count as 4).
         fee: Transaction fee (sats).
         vsize: Virtual size of the seed tx (vbytes).
         adjustedVsize: Policy-adjusted virtual size: `max(vsize, sigops * 5)`.
         cluster: Cluster the seed belongs to: full tx list, SFL-linearized chunks,
-and the seed's chunk index.
+and the seed's chunk index. Omitted when the seed has no
+ancestors and no descendants (matches mempool.space).
     """
     ancestors: List[CpfpEntry]
     bestDescendant: Union[CpfpEntry, None]
@@ -732,7 +735,7 @@ and the seed's chunk index.
     fee: Sats
     vsize: VSize
     adjustedVsize: VSize
-    cluster: CpfpCluster
+    cluster: Union[CpfpCluster, None]
 
 class DataRangeFormat(TypedDict):
     """

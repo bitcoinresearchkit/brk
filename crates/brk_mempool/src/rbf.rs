@@ -103,8 +103,7 @@ fn resolve_node<'a>(
     txs: &'a TxStore,
     graveyard: &'a TxGraveyard,
 ) -> Option<(&'a Transaction, &'a TxEntry)> {
-    if let Some(record) = txs.record_by_prefix(&TxidPrefix::from(txid)) {
-        return Some((&record.tx, &record.entry));
-    }
-    graveyard.get(txid).map(|tomb| (&tomb.tx, &tomb.entry))
+    txs.record_by_prefix(&TxidPrefix::from(txid))
+        .map(|r| (&r.tx, &r.entry))
+        .or_else(|| graveyard.get(txid).map(|t| (&t.tx, &t.entry)))
 }

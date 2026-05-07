@@ -11,6 +11,17 @@ const CORE_PERCENTILES: [f64; 7] = [0.0, 0.10, 0.25, 0.50, 0.75, 0.90, 1.00];
 /// columns of an otherwise tightly clustered fee tier.
 const PROJECTED_PERCENTILES: [f64; 7] = [0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95];
 
+/// Per-block aggregate stats for a projected block.
+///
+/// `block_stats[0]` mirrors Bitcoin Core's `getblocktemplate` - the
+/// node's actual next-block selection. `fee_range` spans the full
+/// 0..100 percentiles.
+///
+/// `block_stats[1..]` are a coarse greedy-packed projection by
+/// descending chunk rate, useful as a client-facing fee-tier gradient
+/// but not a prediction of what miners will include. Their `fee_range`
+/// is clipped to 5..95 percentiles so a single stale-GBT leftover or
+/// CPFP orphan doesn't dominate the min/max columns.
 #[derive(Debug, Clone, Default)]
 pub struct BlockStats {
     pub tx_count: u32,

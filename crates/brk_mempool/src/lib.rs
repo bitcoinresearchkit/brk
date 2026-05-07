@@ -11,14 +11,15 @@
 //!    `TxsPulled { added, removed }`. Pure CPU.
 //! 3. [`steps::applier::Applier`] - apply the diff to
 //!    [`state::State`] under a single write lock.
-//! 4. [`prevouts::fill`] - fills `prevout: None` inputs in one pass,
-//!    using same-cycle in-mempool parents directly and the
+//! 4. [`steps::Prevouts::fill`] - fills `prevout: None` inputs in one
+//!    pass, using same-cycle in-mempool parents directly and the
 //!    caller-supplied resolver (default: `getrawtransaction`) for
 //!    confirmed parents.
 //! 5. [`steps::rebuilder::Rebuilder`] - throttled rebuild of the
 //!    projected-blocks `Snapshot` from the same-cycle GBT and min fee.
 
 use std::{
+    any::Any,
     cmp::Reverse,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
@@ -35,17 +36,18 @@ use brk_types::{
 use parking_lot::{RwLock, RwLockReadGuard};
 use tracing::error;
 
+pub mod chunking;
 mod cpfp;
 mod diagnostics;
-mod prevouts;
 mod rbf;
 mod state;
 pub(crate) mod steps;
 pub(crate) mod stores;
 
+pub use chunking::{ChunkInput, linearize};
 pub use diagnostics::MempoolStats;
 pub use rbf::{RbfForTx, RbfNode};
-use steps::{Applier, Fetched, Fetcher, Preparer, Rebuilder};
+use steps::{Applier, Fetched, Fetcher, Preparer, Prevouts, Rebuilder};
 pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
 pub use stores::{TxGraveyard, TxStore, TxTombstone};
 
@@ -166,23 +168,19 @@ impl Mempool {
         let Some(entry) = state.addrs.get(addr) else {
             return vec![];
         };
-        let mut ordered: Vec<(Timestamp, &Txid)> = entry
+        let mut ordered: Vec<(Timestamp, &Transaction)> = entry
             .txids
             .iter()
-            .map(|txid| {
-                let first_seen = state
-                    .txs
-                    .entry(txid)
-                    .map(|e| e.first_seen)
-                    .unwrap_or_default();
-                (first_seen, txid)
+            .filter_map(|txid| {
+                let record = state.txs.record_by_prefix(&TxidPrefix::from(txid))?;
+                Some((record.entry.first_seen, &record.tx))
             })
             .collect();
         ordered.sort_unstable_by_key(|b| Reverse(b.0));
         ordered
             .into_iter()
-            .filter_map(|(_, txid)| state.txs.get(txid).cloned())
             .take(limit)
+            .map(|(_, tx)| tx.clone())
             .collect()
     }
 
@@ -238,7 +236,7 @@ impl Mempool {
     /// confirmed-parent prevouts via the default `getrawtransaction`
     /// resolver; requires bitcoind started with `txindex=1`.
     pub fn start(&self) {
-        self.start_with(prevouts::rpc_resolver(self.0.client.clone()));
+        self.start_with(Prevouts::rpc_resolver(self.0.client.clone()));
     }
 
     /// Variant of `start` that uses a caller-supplied resolver for
@@ -256,14 +254,7 @@ impl Mempool {
                 }
             }));
             if let Err(payload) = outcome {
-                let msg = if let Some(s) = payload.downcast_ref::<&'static str>() {
-                    (*s).to_string()
-                } else if let Some(s) = payload.downcast_ref::<String>() {
-                    s.clone()
-                } else {
-                    "<non-string panic payload>".to_string()
-                };
-                error!("mempool update panicked, continuing loop: {msg}");
+                error!("mempool update panicked, continuing loop: {}", panic_msg(&payload));
             }
             thread::sleep(Duration::from_secs(1));
         }
@@ -273,7 +264,7 @@ impl Mempool {
     /// `update_with(rpc_resolver)`. Standalone consumers (Core +
     /// `txindex=1`) get a one-line driver loop.
     pub fn update(&self) -> Result<()> {
-        self.update_with(prevouts::rpc_resolver(self.0.client.clone()))
+        self.update_with(Prevouts::rpc_resolver(self.0.client.clone()))
     }
 
     /// One sync cycle: fetch, prepare, apply, fill prevouts, maybe
@@ -301,9 +292,17 @@ impl Mempool {
         };
         let pulled = Preparer::prepare(entries_info, new_raws, state);
         let changed = Applier::apply(state, pulled);
-        prevouts::fill(state, resolver);
+        Prevouts::fill(state, resolver);
         rebuilder.tick(state, changed, &gbt, min_fee);
 
         Ok(())
     }
+}
+
+fn panic_msg(payload: &(dyn Any + Send)) -> &str {
+    payload
+        .downcast_ref::<&'static str>()
+        .copied()
+        .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
+        .unwrap_or("<non-string panic payload>")
 }

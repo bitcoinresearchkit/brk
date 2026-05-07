@@ -17,37 +17,27 @@ pub struct AddrTracker(FxHashMap<AddrBytes, AddrEntry>);
 impl AddrTracker {
     pub fn add_tx(&mut self, tx: &Transaction, txid: &Txid) {
         for txin in &tx.input {
-            let Some(prevout) = txin.prevout.as_ref() else {
-                continue;
-            };
-            let Some(bytes) = prevout.addr_bytes() else {
-                continue;
-            };
-            self.apply_add(bytes, txid, |stats| stats.sending(prevout));
+            if let Some(prevout) = txin.prevout.as_ref() {
+                self.add_input(txid, prevout);
+            }
         }
         for txout in &tx.output {
-            let Some(bytes) = txout.addr_bytes() else {
-                continue;
-            };
-            self.apply_add(bytes, txid, |stats| stats.receiving(txout));
+            if let Some(bytes) = txout.addr_bytes() {
+                self.apply_add(bytes, txid, |stats| stats.receiving(txout));
+            }
         }
     }
 
     pub fn remove_tx(&mut self, tx: &Transaction, txid: &Txid) {
         for txin in &tx.input {
-            let Some(prevout) = txin.prevout.as_ref() else {
-                continue;
-            };
-            let Some(bytes) = prevout.addr_bytes() else {
-                continue;
-            };
-            self.apply_remove(bytes, txid, |stats| stats.sent(prevout));
+            if let Some(prevout) = txin.prevout.as_ref() {
+                self.remove_input(txid, prevout);
+            }
         }
         for txout in &tx.output {
-            let Some(bytes) = txout.addr_bytes() else {
-                continue;
-            };
-            self.apply_remove(bytes, txid, |stats| stats.received(txout));
+            if let Some(bytes) = txout.addr_bytes() {
+                self.apply_remove(bytes, txid, |stats| stats.received(txout));
+            }
         }
     }
 
@@ -67,13 +57,21 @@ impl AddrTracker {
 
     /// Fold a single newly-resolved input into the per-address stats.
     /// Called by the prevout-fill paths after a prevout that was
-    /// previously `None` has been filled. Inputs whose prevout doesn't
-    /// resolve to an addr are no-ops.
+    /// previously `None` has been filled, and by `add_tx` for each
+    /// resolved input. Inputs whose prevout doesn't resolve to an addr
+    /// are no-ops.
     pub fn add_input(&mut self, txid: &Txid, prevout: &TxOut) {
         let Some(bytes) = prevout.addr_bytes() else {
             return;
         };
         self.apply_add(bytes, txid, |stats| stats.sending(prevout));
+    }
+
+    fn remove_input(&mut self, txid: &Txid, prevout: &TxOut) {
+        let Some(bytes) = prevout.addr_bytes() else {
+            return;
+        };
+        self.apply_remove(bytes, txid, |stats| stats.sent(prevout));
     }
 
     fn apply_add(

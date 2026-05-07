@@ -52,7 +52,7 @@ impl Partitioner {
 }
 
 fn sorted_indices(txs: &[SnapTx], excluded: &FxHashSet<TxIndex>) -> Vec<(TxIndex, VSize)> {
-    let mut cands: Vec<(TxIndex, VSize, brk_types::FeeRate)> = txs
+    let mut cands: Vec<(TxIndex, VSize, _)> = txs
         .iter()
         .enumerate()
         .filter_map(|(i, t)| {
@@ -61,8 +61,5 @@ fn sorted_indices(txs: &[SnapTx], excluded: &FxHashSet<TxIndex>) -> Vec<(TxIndex
         })
         .collect();
     cands.sort_by_key(|(_, _, rate)| Reverse(*rate));
-    cands
-        .into_iter()
-        .map(|(idx, vsize, _)| (idx, vsize))
-        .collect()
+    cands.into_iter().map(|(i, v, _)| (i, v)).collect()
 }

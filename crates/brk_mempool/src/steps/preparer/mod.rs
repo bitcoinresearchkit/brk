@@ -41,18 +41,14 @@ impl Preparer {
     ) -> TxsPulled {
         let state = lock.read();
 
-        let live = Self::live_set(&entries_info);
+        let live: FxHashSet<TxidPrefix> = entries_info
+            .iter()
+            .map(|info| TxidPrefix::from(&info.txid))
+            .collect();
         let added = Self::classify_additions(entries_info, new_raws, &state.txs, &state.graveyard);
         let removed = TxRemoval::classify(&live, &added, &state.txs);
 
         TxsPulled { added, removed }
-    }
-
-    fn live_set(entries_info: &[MempoolEntryInfo]) -> FxHashSet<TxidPrefix> {
-        entries_info
-            .iter()
-            .map(|info| TxidPrefix::from(&info.txid))
-            .collect()
     }
 
     fn classify_additions(
