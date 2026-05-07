@@ -50,6 +50,7 @@ impl Rebuilder {
             return;
         }
         self.publish(Self::build_snapshot(client, state));
+        self.dirty.store(false, Ordering::Release);
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
 
@@ -89,9 +90,9 @@ impl Rebuilder {
     }
 
     /// Returns true iff dirty and the throttle window has elapsed. On
-    /// success, clears the dirty bit and starts a new throttle window;
-    /// on failure, leaves all state untouched so the next cycle can
-    /// retry.
+    /// success, starts a new throttle window. The dirty bit is cleared
+    /// by `tick` only after `publish` returns, so a panic in
+    /// `build_snapshot` leaves dirty set and the next cycle retries.
     fn try_claim_rebuild(&self) -> bool {
         if !self.dirty.load(Ordering::Acquire) {
             self.skip_clean.fetch_add(1, Ordering::Relaxed);
@@ -103,7 +104,6 @@ impl Rebuilder {
             return false;
         }
         *last = Some(Instant::now());
-        self.dirty.store(false, Ordering::Release);
         true
     }
 

@@ -162,7 +162,7 @@ impl<I> Cluster<I> {
             }
         }
 
-        debug_assert_eq!(out.len(), n, "cluster contained a cycle");
+        assert_eq!(out.len(), n, "cluster contained a cycle");
         out
     }
 

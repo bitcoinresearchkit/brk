@@ -122,7 +122,7 @@ impl AppState {
     pub fn tx_strategy(&self, version: Version, txid: &Txid) -> CacheStrategy {
         self.sync(|q| {
             if let Some(mempool) = q.mempool()
-                && mempool.txs().contains(txid)
+                && mempool.contains_txid(txid)
             {
                 return CacheStrategy::MempoolHash(mempool.next_block_hash());
             }

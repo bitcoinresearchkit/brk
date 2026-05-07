@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 
 use brk_error::Result;
-use brk_mempool::Mempool;
+use brk_mempool::{Mempool, MempoolStats};
 use brk_rpc::{Auth, Client};
 
 fn main() -> Result<()> {
@@ -23,12 +23,7 @@ fn main() -> Result<()> {
     loop {
         thread::sleep(Duration::from_secs(5));
 
-        let info = mempool.info();
-        let entries = mempool.entries();
-        let txs = mempool.txs();
-        let addrs = mempool.addrs();
-        let graveyard = mempool.graveyard();
-        let outpoint_spends = mempool.state().outpoint_spends.read();
+        let stats = MempoolStats::from(&mempool);
         let snapshot = mempool.snapshot();
 
         let cluster_nodes_total: usize = snapshot.clusters.iter().map(|c| c.nodes.len()).sum();
@@ -42,16 +37,16 @@ fn main() -> Result<()> {
              snap.clusters={} snap.cluster_nodes={} snap.cluster_of.len={} snap.cluster_of.active={} \
              snap.blocks={} snap.blocks_txs={} \
              rebuilds={} skip.clean={} skip.throttled={}",
-            info.count,
-            entries.entries().len(),
-            entries.active_count(),
-            entries.free_slots_count(),
-            txs.len(),
-            txs.unresolved().len(),
-            addrs.len(),
-            outpoint_spends.len(),
-            graveyard.tombstones_len(),
-            graveyard.order_len(),
+            stats.info_count,
+            stats.entry_slot_count,
+            stats.entry_active_count,
+            stats.entry_free_count,
+            stats.tx_count,
+            stats.unresolved_count,
+            stats.addr_count,
+            stats.outpoint_spend_count,
+            stats.graveyard_tombstone_count,
+            stats.graveyard_order_count,
             snapshot.clusters.len(),
             cluster_nodes_total,
             snapshot.cluster_of_len(),

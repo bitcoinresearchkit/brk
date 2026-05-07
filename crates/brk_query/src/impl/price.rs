@@ -11,12 +11,7 @@ impl Query {
         let mut oracle = self.computer().prices.live_oracle(self.indexer())?;
 
         if let Some(mempool) = self.mempool() {
-            let txs = mempool.txs();
-            oracle.process_outputs(
-                txs.values()
-                    .flat_map(|tx| &tx.output)
-                    .map(|txout| (txout.value, txout.type_())),
-            );
+            mempool.process_live_outputs(|iter| oracle.process_outputs(iter));
         }
 
         Ok(oracle.price_dollars())

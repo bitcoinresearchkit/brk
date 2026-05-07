@@ -97,21 +97,40 @@ impl Query {
 
     // ── Transaction queries ────────────────────────────────────────
 
-    /// Map a mempool transaction by txid through `f`, returning `None`
-    /// if no mempool is attached or the txid is not in mempool.
-    fn map_mempool_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
-        self.mempool()?.txs().get(txid).map(f)
+    /// Resolve a tx body across the three sources in order: live mempool,
+    /// indexer (via `indexed`), then `Vanished` graveyard tombstone.
+    /// The graveyard fallback only fires when the indexer reports
+    /// `UnknownTxid`, covering the brief race where a mined tx has been
+    /// buried by `Applier` but `safe_lengths.tx_index` has not yet
+    /// advanced to cover it. `Replaced` tombstones are excluded — those
+    /// txs will never confirm.
+    fn lookup_tx<R>(
+        &self,
+        txid: &Txid,
+        f: impl Fn(&Transaction) -> R,
+        indexed: impl FnOnce(TxIndex) -> Result<R>,
+    ) -> Result<R> {
+        if let Some(mempool) = self.mempool()
+            && let Some(r) = mempool.with_tx(txid, &f)
+        {
+            return Ok(r);
+        }
+        match self.resolve_tx_index_bounded(txid) {
+            Ok(idx) => indexed(idx),
+            Err(Error::UnknownTxid) => self
+                .mempool()
+                .and_then(|m| m.with_vanished_tx(txid, &f))
+                .ok_or(Error::UnknownTxid),
+            Err(e) => Err(e),
+        }
     }
 
     pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        if let Some(tx) = self.map_mempool_tx(txid, Transaction::clone) {
-            return Ok(tx);
-        }
-        self.transaction_by_index(self.resolve_tx_index_bounded(txid)?)
+        self.lookup_tx(txid, Transaction::clone, |idx| self.transaction_by_index(idx))
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
-        if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
+        if self.mempool().is_some_and(|m| m.contains_txid(txid)) {
             return Ok(TxStatus::UNCONFIRMED);
         }
         let (_, height) = self.resolve_tx(txid)?;
@@ -119,23 +138,23 @@ impl Query {
     }
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
-        if let Some(bytes) = self.map_mempool_tx(txid, Transaction::encode_bytes) {
-            return Ok(bytes);
-        }
-        self.transaction_raw_by_index(self.resolve_tx_index_bounded(txid)?)
+        self.lookup_tx(txid, Transaction::encode_bytes, |idx| {
+            self.transaction_raw_by_index(idx)
+        })
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
-        if let Some(hex) = self.map_mempool_tx(txid, |tx| tx.encode_bytes().to_lower_hex_string()) {
-            return Ok(hex);
-        }
-        self.transaction_hex_by_index(self.resolve_tx_index_bounded(txid)?)
+        self.lookup_tx(
+            txid,
+            |tx| tx.encode_bytes().to_lower_hex_string(),
+            |idx| self.transaction_hex_by_index(idx),
+        )
     }
 
     // ── Outspend queries ───────────────────────────────────────────
 
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        if self.mempool().is_some_and(|m| m.txs().contains_key(txid)) {
+        if self.mempool().is_some_and(|m| m.contains_txid(txid)) {
             return Ok(self.mempool_outspend(txid, vout));
         }
         let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
@@ -151,7 +170,7 @@ impl Query {
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
         if let Some(mempool) = self.mempool()
-            && let Some(output_count) = mempool.txs().get(txid).map(|tx| tx.output.len())
+            && let Some(output_count) = mempool.with_tx(txid, |tx| tx.output.len())
         {
             return Ok((0..output_count)
                 .map(|i| self.mempool_outspend(txid, Vout::from(i)))

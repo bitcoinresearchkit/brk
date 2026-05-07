@@ -33,24 +33,25 @@ impl Applier {
     }
 
     fn bury_one(s: &mut LockedState, prefix: &TxidPrefix, reason: TxRemoval) {
-        let Some((idx, entry)) = s.entries.remove(prefix) else {
+        let Some(txid) = s.entries.get(prefix).map(|e| e.txid) else {
             return;
         };
-        let txid = entry.txid;
-        let Some(tx) = s.txs.remove(&txid) else {
+        if !s.txs.contains(&txid) {
             // entries had this prefix but txs didn't — a state divergence
             // that should be impossible: publish/bury both touch them
             // together under one write_all guard. Reaching this branch
-            // means a prior cycle left the two stores out of sync (panic
-            // mid-publish, prefix collision, etc). The slot has been
-            // freed by entries.remove, but addrs/outpoint_spends/info may
-            // still hold stale references that we can't repair without
-            // the tx body. Log loudly so the corruption is visible.
+            // means a prior cycle left the two stores out of sync (e.g.
+            // panic mid-publish before `txs.extend` ran). Skip the bury
+            // entirely: freeing the entries slot here would let
+            // outpoint_spends point at a slot the next insert recycles
+            // for an unrelated tx.
             warn!(
-                "mempool bury: entry present but tx missing for txid={txid} - addr/outpoint state may be stale"
+                "mempool bury: entry present but tx missing for txid={txid} - skipping bury to preserve outpoint_spends integrity"
             );
             return;
-        };
+        }
+        let (idx, entry) = s.entries.remove(prefix).expect("entry present");
+        let tx = s.txs.remove(&txid).expect("tx present");
         s.info.remove(&tx, entry.fee);
         s.addrs.remove_tx(&tx, &txid);
         s.outpoint_spends.remove_spends(&tx, idx);

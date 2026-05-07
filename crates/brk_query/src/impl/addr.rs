@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, AddrStats,
-    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Timestamp, Transaction, TxIndex, TxStatus,
-    Txid, TxidPrefix, TypeIndex, Unit, Utxo, Vout,
+    AnyAddrDataIndexEnum, Dollars, Height, OutputType, Transaction, TxIndex, TxStatus, Txid,
+    TypeIndex, Unit, Utxo, Vout,
 };
 use vecdb::VecIndex;
 
@@ -80,7 +80,7 @@ impl Query {
             },
             mempool_stats: self
                 .mempool()
-                .and_then(|m| m.addrs().get(&bytes).map(|e| e.stats.clone()))
+                .and_then(|m| m.addr_stats(&bytes))
                 .unwrap_or_default(),
         })
     }
@@ -233,29 +233,7 @@ impl Query {
     pub fn addr_mempool_txs(&self, addr: &Addr, limit: usize) -> Result<Vec<Transaction>> {
         let bytes = AddrBytes::from_str(addr)?;
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        let addrs = mempool.addrs();
-        let Some(entry) = addrs.get(&bytes) else {
-            return Ok(vec![]);
-        };
-        let entries = mempool.entries();
-        let mut ordered: Vec<(Timestamp, &Txid)> = entry
-            .txids
-            .iter()
-            .map(|txid| {
-                let first_seen = entries
-                    .get(&TxidPrefix::from(txid))
-                    .map(|e| e.first_seen)
-                    .unwrap_or_default();
-                (first_seen, txid)
-            })
-            .collect();
-        ordered.sort_unstable_by_key(|b| std::cmp::Reverse(b.0));
-        let txs = mempool.txs();
-        Ok(ordered
-            .into_iter()
-            .filter_map(|(_, txid)| txs.get(txid).cloned())
-            .take(limit)
-            .collect())
+        Ok(mempool.addr_txs(&bytes, limit))
     }
 
     /// Height of the last on-chain activity for an address (last tx_index → height).

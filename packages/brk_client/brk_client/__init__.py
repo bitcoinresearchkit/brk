@@ -8033,6 +8033,14 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/mempool`"""
         return self.get_json('/api/mempool')
 
+    def get_mempool_hash(self) -> int:
+        """Mempool content hash.
+
+        Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+
+        Endpoint: `GET /api/mempool/hash`"""
+        return self.get_json('/api/mempool/hash')
+
     def get_live_price(self) -> Dollars:
         """Live BTC/USD price.
 

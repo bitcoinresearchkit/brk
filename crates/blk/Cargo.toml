@@ -1,0 +1,14 @@
+[package]
+name = "blk"
+description = "A command line tool to inspect Bitcoin Core blocks"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[[bin]]
+name = "blk"
+path = "src/main.rs"

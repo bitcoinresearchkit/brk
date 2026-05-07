@@ -22,17 +22,24 @@ use std::{
 
 use brk_error::Result;
 use brk_rpc::Client;
-use brk_types::{AddrBytes, MempoolInfo, OutpointPrefix, TxOut, Txid, TxidPrefix, Vin, Vout};
+use brk_types::{
+    AddrBytes, AddrMempoolStats, FeeRate, MempoolInfo, MempoolRecentTx, OutpointPrefix, OutputType,
+    Sats, Timestamp, Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
+};
 use parking_lot::RwLockReadGuard;
 use tracing::error;
 
 pub mod cluster;
 mod cpfp;
+mod rbf;
+mod stats;
 pub(crate) mod steps;
 pub(crate) mod stores;
 #[cfg(test)]
 mod tests;
 
+pub use rbf::{RbfForTx, RbfNode};
+pub use stats::MempoolStats;
 use steps::{Applier, Fetcher, Preparer, Rebuilder, Resolver};
 pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
 use stores::{AddrTracker, MempoolState};
@@ -108,20 +115,143 @@ impl Mempool {
         Some((spender_txid, Vin::from(vin_pos)))
     }
 
-    pub fn txs(&self) -> RwLockReadGuard<'_, TxStore> {
+    pub(crate) fn txs(&self) -> RwLockReadGuard<'_, TxStore> {
         self.0.state.txs.read()
     }
 
-    pub fn entries(&self) -> RwLockReadGuard<'_, EntryPool> {
+    pub(crate) fn entries(&self) -> RwLockReadGuard<'_, EntryPool> {
         self.0.state.entries.read()
     }
 
-    pub fn addrs(&self) -> RwLockReadGuard<'_, AddrTracker> {
+    pub(crate) fn addrs(&self) -> RwLockReadGuard<'_, AddrTracker> {
         self.0.state.addrs.read()
     }
 
-    pub fn graveyard(&self) -> RwLockReadGuard<'_, TxGraveyard> {
+    pub(crate) fn graveyard(&self) -> RwLockReadGuard<'_, TxGraveyard> {
         self.0.state.graveyard.read()
+    }
+
+    pub fn contains_txid(&self, txid: &Txid) -> bool {
+        self.txs().contains(txid)
+    }
+
+    /// Apply `f` to the live tx body if present.
+    pub fn with_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
+        self.txs().get(txid).map(f)
+    }
+
+    /// Apply `f` to a `Vanished` tombstone's tx body if present.
+    /// `Replaced` tombstones return `None` because the tx will not confirm.
+    pub fn with_vanished_tx<R>(
+        &self,
+        txid: &Txid,
+        f: impl FnOnce(&Transaction) -> R,
+    ) -> Option<R> {
+        let graveyard = self.graveyard();
+        let tomb = graveyard.get(txid)?;
+        matches!(tomb.reason(), TxRemoval::Vanished).then(|| f(&tomb.tx))
+    }
+
+    /// Snapshot of all live mempool txids.
+    pub fn txids(&self) -> Vec<Txid> {
+        self.txs().keys().cloned().collect()
+    }
+
+    /// Snapshot of recent live txs.
+    pub fn recent_txs(&self) -> Vec<MempoolRecentTx> {
+        self.txs().recent().to_vec()
+    }
+
+    /// Per-address mempool stats. `None` if the address has no live mempool activity.
+    pub fn addr_stats(&self, addr: &AddrBytes) -> Option<AddrMempoolStats> {
+        self.addrs().get(addr).map(|e| e.stats.clone())
+    }
+
+    /// Live mempool txs touching `addr`, newest first by `first_seen`,
+    /// capped at `limit`. Acquires `txs`, `addrs`, `entries` in canonical
+    /// order; returns owned `Transaction`s so the lock is released
+    /// before the caller does anything else with them.
+    pub fn addr_txs(&self, addr: &AddrBytes, limit: usize) -> Vec<Transaction> {
+        let txs = self.txs();
+        let addrs = self.addrs();
+        let entries = self.entries();
+        let Some(entry) = addrs.get(addr) else {
+            return vec![];
+        };
+        let mut ordered: Vec<(Timestamp, &Txid)> = entry
+            .txids
+            .iter()
+            .map(|txid| {
+                let first_seen = entries
+                    .get(&TxidPrefix::from(txid))
+                    .map(|e| e.first_seen)
+                    .unwrap_or_default();
+                (first_seen, txid)
+            })
+            .collect();
+        ordered.sort_unstable_by_key(|b| std::cmp::Reverse(b.0));
+        ordered
+            .into_iter()
+            .filter_map(|(_, txid)| txs.get(txid).cloned())
+            .take(limit)
+            .collect()
+    }
+
+    /// Apply `f` to an iterator over `(value, output_type)` for every output
+    /// of every live mempool tx. The lock is held for the duration of the call.
+    pub fn process_live_outputs<R>(
+        &self,
+        f: impl FnOnce(&mut dyn Iterator<Item = (Sats, OutputType)>) -> R,
+    ) -> R {
+        let txs = self.txs();
+        let mut iter = txs
+            .values()
+            .flat_map(|tx| &tx.output)
+            .map(|txout| (txout.value, txout.type_()));
+        f(&mut iter)
+    }
+
+    /// Effective fee rate for a live mempool tx: the seed's chunk rate from
+    /// the latest snapshot, with fall-back to the entry's simple `fee/vsize`
+    /// when the snapshot doesn't yet contain it.
+    pub fn live_effective_fee_rate(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
+        let entries = self.entries();
+        if let Some(seed_idx) = entries.idx_of(prefix)
+            && let Some(rate) = self.snapshot().chunk_rate_of(seed_idx)
+        {
+            return Some(rate);
+        }
+        entries.get(prefix).map(|e| e.fee_rate())
+    }
+
+    /// Fee rate snapshotted into a graveyard tomb at burial.
+    pub fn graveyard_fee_rate(&self, txid: &Txid) -> Option<FeeRate> {
+        self.graveyard()
+            .get(txid)
+            .map(|tomb| tomb.entry.fee_rate())
+    }
+
+    /// `first_seen` Unix-second timestamps for `txids`, in input order.
+    /// Returns 0 for unknown txids. `Vanished` graveyard tombstones fall
+    /// back to the buried entry's `first_seen` so a tx doesn't flicker
+    /// to 0 in the brief window between mempool drop and indexer catch-up.
+    pub fn transaction_times(&self, txids: &[Txid]) -> Vec<u64> {
+        let entries = self.entries();
+        let graveyard = self.graveyard();
+        txids
+            .iter()
+            .map(|txid| {
+                if let Some(e) = entries.get(&TxidPrefix::from(txid)) {
+                    return u64::from(e.first_seen);
+                }
+                if let Some(tomb) = graveyard.get(txid)
+                    && matches!(tomb.reason(), TxRemoval::Vanished)
+                {
+                    return u64::from(tomb.entry.first_seen);
+                }
+                0
+            })
+            .collect()
     }
 
     /// Infinite update loop with a 1 second interval.
@@ -185,7 +315,7 @@ impl Mempool {
         Ok(())
     }
 
-    pub fn state(&self) -> &MempoolState {
+    pub(crate) fn state(&self) -> &MempoolState {
         &self.0.state
     }
 }

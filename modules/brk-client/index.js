@@ -10840,6 +10840,20 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Mempool content hash
+   *
+   * Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+   *
+   * Endpoint: `GET /api/mempool/hash`
+   * @param {{ signal?: AbortSignal, onValue?: (value: number) => void }} [options]
+   * @returns {Promise<number>}
+   */
+  async getMempoolHash({ signal, onValue } = {}) {
+    const path = `/api/mempool/hash`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
    * Live BTC/USD price
    *
    * Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.

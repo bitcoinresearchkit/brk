@@ -9236,6 +9236,15 @@ impl BrkClient {
         self.base.get_json(&format!("/api/mempool"))
     }
 
+    /// Mempool content hash
+    ///
+    /// Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+    ///
+    /// Endpoint: `GET /api/mempool/hash`
+    pub fn get_mempool_hash(&self) -> Result<i64> {
+        self.base.get_json(&format!("/api/mempool/hash"))
+    }
+
     /// Live BTC/USD price
     ///
     /// Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.

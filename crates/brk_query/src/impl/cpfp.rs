@@ -62,16 +62,10 @@ impl Query {
     pub fn effective_fee_rate(&self, txid: &Txid) -> Result<FeeRate> {
         let prefix = TxidPrefix::from(txid);
 
-        if let Some(mempool) = self.mempool() {
-            let entries = mempool.entries();
-            if let Some(seed_idx) = entries.idx_of(&prefix)
-                && let Some(rate) = mempool.snapshot().chunk_rate_of(seed_idx)
-            {
-                return Ok(rate);
-            }
-            if let Some(entry) = entries.get(&prefix) {
-                return Ok(entry.fee_rate());
-            }
+        if let Some(mempool) = self.mempool()
+            && let Some(rate) = mempool.live_effective_fee_rate(&prefix)
+        {
+            return Ok(rate);
         }
 
         if let Ok(idx) = self.resolve_tx_index(txid)
@@ -87,9 +81,9 @@ impl Query {
         }
 
         if let Some(mempool) = self.mempool()
-            && let Some(tomb) = mempool.graveyard().get(txid)
+            && let Some(rate) = mempool.graveyard_fee_rate(txid)
         {
-            return Ok(tomb.entry.fee_rate());
+            return Ok(rate);
         }
 
         Err(Error::UnknownTxid)
