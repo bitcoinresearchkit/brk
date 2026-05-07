@@ -8,6 +8,6 @@
 
 > **TimePeriod** = `"24h"` \| `"3d"` \| `"1w"` \| `"1m"` \| `"3m"` \| `"6m"` \| `"1y"` \| `"2y"` \| `"3y"` \| `"all"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1052](https://github.com/bitcoinresearchkit/brk/blob/76869ed2b6aad1e1c3da7aff4c90e9b5788fb606/modules/brk-client/index.js#L1052)
+Defined in: [Developer/brk/modules/brk-client/index.js:1128](https://github.com/bitcoinresearchkit/brk/blob/6e8be1af2225890fe02f0a4598e3a4fa8251f535/modules/brk-client/index.js#L1128)
 
 ## Type Parameters
