@@ -52,7 +52,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
                     .map(|arr| arr.iter().any(|v| v.as_str() == Some(prop_name)))
                     .unwrap_or(false);
                 let optional = if required { "" } else { "=" };
-                let safe_name = to_camel_case(prop_name);
+                let safe_name = to_camel_case(&prop_name.replace(['[', ']'], ""));
                 let prop_desc = prop_schema
                     .get("description")
                     .and_then(|d| d.as_str())

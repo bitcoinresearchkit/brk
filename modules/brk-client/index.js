@@ -1258,7 +1258,7 @@ on serialization otherwise.
  * generated client SDKs see `txids: List[Txid]`.
  *
  * @typedef {Object} TxidsParam
- * @property {Txid[]} txId[] - Transaction IDs to look up (max 250 per request).
+ * @property {Txid[]} txId - Transaction IDs to look up (max 250 per request).
  */
 /**
  * Index within its type (e.g., 0 for first P2WPKH address)
