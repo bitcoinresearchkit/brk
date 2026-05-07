@@ -23,9 +23,10 @@ impl Formatter {
     }
 
     fn bare(&self, ctx: &Ctx) -> Result<String> {
-        let mut out = String::new();
-        flatten(&ctx.resolve(&self.fields[0])?, &mut out);
-        Ok(out)
+        Ok(match ctx.resolve(&self.fields[0])? {
+            Value::String(s) => s,
+            other => other.to_string(),
+        })
     }
 
     fn tsv(&self, ctx: &Ctx) -> Result<String> {
@@ -50,17 +51,3 @@ impl Formatter {
     }
 }
 
-fn flatten(v: &Value, out: &mut String) {
-    match v {
-        Value::Array(arr) => arr.iter().for_each(|item| flatten(item, out)),
-        Value::String(s) => push_line(out, s),
-        other => push_line(out, &other.to_string()),
-    }
-}
-
-fn push_line(out: &mut String, s: &str) {
-    if !out.is_empty() {
-        out.push('\n');
-    }
-    out.push_str(s);
-}
