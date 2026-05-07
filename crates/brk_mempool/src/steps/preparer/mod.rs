@@ -1,5 +1,5 @@
 //! Turn `Fetched` raws into a typed diff for the Applier. Pure CPU,
-//! holds a read guard on `MempoolInner` for the cycle. New txs are
+//! holds a read guard on `State` for the cycle. New txs are
 //! classified into three buckets:
 //!
 //! - **live** - already in `known`, skipped.
@@ -17,7 +17,7 @@ use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    MempoolInner,
+    State,
     stores::{TxGraveyard, TxStore},
 };
 
@@ -37,13 +37,13 @@ impl Preparer {
     pub fn prepare(
         entries_info: Vec<MempoolEntryInfo>,
         new_raws: FxHashMap<Txid, RawTx>,
-        lock: &RwLock<MempoolInner>,
+        lock: &RwLock<State>,
     ) -> TxsPulled {
-        let inner = lock.read();
+        let state = lock.read();
 
         let live = Self::live_set(&entries_info);
-        let added = Self::classify_additions(entries_info, new_raws, &inner.txs, &inner.graveyard);
-        let removed = TxRemoval::classify(&live, &added, &inner.txs);
+        let added = Self::classify_additions(entries_info, new_raws, &state.txs, &state.graveyard);
+        let removed = TxRemoval::classify(&live, &added, &state.txs);
 
         TxsPulled { added, removed }
     }

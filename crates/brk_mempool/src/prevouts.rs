@@ -25,7 +25,7 @@ use brk_types::{TxOut, Txid, TxidPrefix, Vin, Vout};
 use parking_lot::RwLock;
 use tracing::warn;
 
-use crate::{MempoolInner, stores::TxStore};
+use crate::{State, stores::TxStore};
 
 /// Default resolver: per-call `getrawtransaction` against the bitcoind
 /// RPC client `Mempool` already holds. Requires `txindex=1`. On any
@@ -61,13 +61,13 @@ type HoleBatch = Vec<(TxidPrefix, Txid, Holes)>;
 /// in-mempool parents are filled lock-locally; the remainder go
 /// through `resolver` outside any lock. Returns true iff anything
 /// was written.
-pub(crate) fn fill<F>(lock: &RwLock<MempoolInner>, resolver: F) -> bool
+pub(crate) fn fill<F>(lock: &RwLock<State>, resolver: F) -> bool
 where
     F: Fn(&Txid, Vout) -> Option<TxOut>,
 {
     let (in_mempool, holes) = {
-        let inner = lock.read();
-        gather(&inner.txs)
+        let state = lock.read();
+        gather(&state.txs)
     };
     let external = resolve_external(holes, resolver);
 
@@ -75,9 +75,9 @@ where
         return false;
     }
 
-    let mut inner = lock.write();
-    write_fills(&mut inner, in_mempool);
-    write_fills(&mut inner, external);
+    let mut state = lock.write();
+    write_fills(&mut state, in_mempool);
+    write_fills(&mut state, external);
     true
 }
 
@@ -136,10 +136,10 @@ where
         .collect()
 }
 
-fn write_fills(inner: &mut MempoolInner, fills: FillBatch) {
+fn write_fills(state: &mut State, fills: FillBatch) {
     for (prefix, txid, tx_fills) in fills {
-        for prevout in inner.txs.apply_fills(&prefix, tx_fills) {
-            inner.addrs.add_input(&txid, &prevout);
+        for prevout in state.txs.apply_fills(&prefix, tx_fills) {
+            state.addrs.add_input(&txid, &prevout);
         }
     }
 }

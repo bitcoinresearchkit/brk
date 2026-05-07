@@ -8,7 +8,7 @@ use brk_types::{MempoolEntryInfo, Txid};
 use parking_lot::RwLock;
 
 use crate::{
-    MempoolInner,
+    State,
     stores::{TxGraveyard, TxStore},
 };
 
@@ -29,7 +29,7 @@ const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 pub struct Fetcher;
 
 impl Fetcher {
-    pub fn fetch(client: &Client, lock: &RwLock<MempoolInner>) -> Result<Option<Fetched>> {
+    pub fn fetch(client: &Client, lock: &RwLock<State>) -> Result<Option<Fetched>> {
         let Some(MempoolState {
             entries,
             gbt,
@@ -39,8 +39,8 @@ impl Fetcher {
             return Ok(None);
         };
         let new_txids = {
-            let inner = lock.read();
-            Self::new_txids(&entries, &inner.txs, &inner.graveyard)
+            let state = lock.read();
+            Self::new_txids(&entries, &state.txs, &state.graveyard)
         };
         let new_raws = client.get_raw_transactions(&new_txids)?;
         Ok(Some(Fetched {

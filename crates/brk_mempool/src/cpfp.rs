@@ -5,12 +5,13 @@
 //! the proxy fallback). The walk is a pair of capped DFSes, then the
 //! cluster wire shape is materialized from the visited set.
 
+use std::cmp::Reverse;
+
 use brk_types::{
     CpfpCluster, CpfpClusterChunk, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate,
     SigOps, TxidPrefix, VSize,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
-use smallvec::SmallVec;
 
 use crate::Mempool;
 use crate::steps::{SnapTx, TxIndex};
@@ -39,7 +40,7 @@ impl Mempool {
     }
 }
 
-pub(crate) fn build_cpfp_info(
+fn build_cpfp_info(
     txs: &[SnapTx],
     seed_idx: TxIndex,
     seed: &SnapTx,
@@ -158,39 +159,29 @@ fn build_cluster(
     }
 }
 
+/// Group cluster members into chunks by descending `chunk_rate`. Cluster
+/// size is bounded by `2 * MAX + 1` so a sort-then-fold is cheaper and
+/// simpler than a hashmap keyed on `f64` bits.
 fn chunk_groups(
     members: &[TxIndex],
     txs: &[SnapTx],
     local_of: &FxHashMap<TxIndex, CpfpClusterTxIndex>,
 ) -> Vec<CpfpClusterChunk> {
-    let mut groups: FxHashMap<u64, (FeeRate, SmallVec<[CpfpClusterTxIndex; 4]>)> =
-        FxHashMap::with_capacity_and_hasher(members.len(), FxBuildHasher);
-    let mut order: Vec<u64> = Vec::new();
-    for &idx in members {
-        let Some(t) = txs.get(idx.as_usize()) else {
-            continue;
-        };
-        let key = f64::from(t.chunk_rate).to_bits();
-        let local = local_of[&idx];
-        groups
-            .entry(key)
-            .and_modify(|(_, v)| v.push(local))
-            .or_insert_with(|| {
-                order.push(key);
-                let mut v: SmallVec<[CpfpClusterTxIndex; 4]> = SmallVec::new();
-                v.push(local);
-                (t.chunk_rate, v)
-            });
-    }
-    order.sort_by_key(|k| std::cmp::Reverse(groups[k].0));
-    order
-        .into_iter()
-        .map(|k| {
-            let (rate, txs) = groups.remove(&k).unwrap();
-            CpfpClusterChunk {
-                txs: txs.into_vec(),
+    let mut entries: Vec<(FeeRate, CpfpClusterTxIndex)> = members
+        .iter()
+        .filter_map(|&idx| Some((txs.get(idx.as_usize())?.chunk_rate, local_of[&idx])))
+        .collect();
+    entries.sort_by_key(|e| Reverse(e.0));
+
+    let mut chunks: Vec<CpfpClusterChunk> = Vec::new();
+    for (rate, local) in entries {
+        match chunks.last_mut() {
+            Some(last) if last.feerate == rate => last.txs.push(local),
+            _ => chunks.push(CpfpClusterChunk {
+                txs: vec![local],
                 feerate: rate,
-            }
-        })
-        .collect()
+            }),
+        }
+    }
+    chunks
 }

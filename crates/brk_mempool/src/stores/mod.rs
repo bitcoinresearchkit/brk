@@ -1,6 +1,6 @@
 //! Stateful in-memory holders. After Phase 3 they're plain owned
-//! types (no internal locks) — `MempoolInner` aggregates them under a
-//! single `RwLock` in `crate::inner`.
+//! types (no internal locks) — `State` aggregates them under a
+//! single `RwLock` in `crate::state`.
 
 pub mod addr_tracker;
 pub(crate) mod outpoint_spends;

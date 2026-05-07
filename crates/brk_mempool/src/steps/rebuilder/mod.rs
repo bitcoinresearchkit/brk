@@ -8,7 +8,7 @@ use brk_types::{FeeRate, TxidPrefix};
 use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
 
-use crate::inner::MempoolInner;
+use crate::State;
 
 use partition::Partitioner;
 use snapshot::{PrefixIndex, builder};
@@ -32,10 +32,12 @@ pub struct Rebuilder {
 impl Rebuilder {
     /// Mark dirty if the cycle changed mempool state, then rebuild iff
     /// the dirty bit is set. Cycle pacing is the driver loop's job; the
-    /// rebuild itself is pure CPU on already-fetched data.
+    /// rebuild itself is pure CPU on already-fetched data. The dirty
+    /// bit is cleared only after the snapshot is published, so a panic
+    /// in `build_snapshot` retries on the next cycle.
     pub fn tick(
         &self,
-        lock: &RwLock<MempoolInner>,
+        lock: &RwLock<State>,
         changed: bool,
         gbt: &[BlockTemplateTx],
         min_fee: FeeRate,
@@ -43,7 +45,8 @@ impl Rebuilder {
         if changed {
             self.dirty.store(true, Ordering::Release);
         }
-        if !self.try_claim_rebuild() {
+        if !self.dirty.load(Ordering::Acquire) {
+            self.skip_clean.fetch_add(1, Ordering::Relaxed);
             return;
         }
         *self.snapshot.write() = Arc::new(Self::build_snapshot(lock, gbt, min_fee));
@@ -60,13 +63,13 @@ impl Rebuilder {
     }
 
     fn build_snapshot(
-        lock: &RwLock<MempoolInner>,
+        lock: &RwLock<State>,
         gbt: &[BlockTemplateTx],
         min_fee: FeeRate,
     ) -> Snapshot {
         let (txs, prefix_to_idx) = {
-            let inner = lock.read();
-            builder::build_txs(&inner.txs)
+            let state = lock.read();
+            builder::build_txs(&state.txs)
         };
 
         let block0 = Self::block_from_gbt(gbt, &prefix_to_idx);
@@ -93,16 +96,5 @@ impl Rebuilder {
 
     pub fn snapshot(&self) -> Arc<Snapshot> {
         self.snapshot.read().clone()
-    }
-
-    /// True iff dirty. The dirty bit is cleared in `tick` only after
-    /// the snapshot is published, so a panic in `build_snapshot`
-    /// retries on the next cycle.
-    fn try_claim_rebuild(&self) -> bool {
-        if !self.dirty.load(Ordering::Acquire) {
-            self.skip_clean.fetch_add(1, Ordering::Relaxed);
-            return false;
-        }
-        true
     }
 }

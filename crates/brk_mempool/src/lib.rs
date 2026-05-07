@@ -10,7 +10,7 @@
 //! 2. [`steps::preparer::Preparer`] - decode and classify into
 //!    `TxsPulled { added, removed }`. Pure CPU.
 //! 3. [`steps::applier::Applier`] - apply the diff to
-//!    [`inner::MempoolInner`] under a single write lock.
+//!    [`state::State`] under a single write lock.
 //! 4. [`prevouts::fill`] - fills `prevout: None` inputs in one pass,
 //!    using same-cycle in-mempool parents directly and the
 //!    caller-supplied resolver (default: `getrawtransaction`) for
@@ -19,6 +19,7 @@
 //!    projected-blocks `Snapshot` from the same-cycle GBT and min fee.
 
 use std::{
+    cmp::Reverse,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
     thread,
@@ -35,12 +36,14 @@ use parking_lot::{RwLock, RwLockReadGuard};
 use tracing::error;
 
 mod cpfp;
-mod inner;
+mod diagnostics;
 mod prevouts;
 mod rbf;
+mod state;
 pub(crate) mod steps;
 pub(crate) mod stores;
 
+pub use diagnostics::MempoolStats;
 pub use rbf::{RbfForTx, RbfNode};
 use steps::{Applier, Fetched, Fetcher, Preparer, Rebuilder};
 pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
@@ -51,23 +54,23 @@ pub use stores::{TxGraveyard, TxStore, TxTombstone};
 /// `TxOut` if the parent is reachable, `None` otherwise.
 pub type PrevoutResolver = Box<dyn Fn(&Txid, Vout) -> Option<TxOut> + Send + Sync>;
 
-pub(crate) use inner::MempoolInner;
+pub(crate) use state::State;
 
 /// Cheaply cloneable: clones share one live mempool via `Arc`.
 #[derive(Clone)]
-pub struct Mempool(Arc<Inner>);
+pub struct Mempool(Arc<Shared>);
 
-struct Inner {
+struct Shared {
     client: Client,
-    lock: RwLock<MempoolInner>,
+    state: RwLock<State>,
     rebuilder: Rebuilder,
 }
 
 impl Mempool {
     pub fn new(client: &Client) -> Self {
-        Self(Arc::new(Inner {
+        Self(Arc::new(Shared {
             client: client.clone(),
-            lock: RwLock::new(MempoolInner::default()),
+            state: RwLock::new(State::default()),
             rebuilder: Rebuilder::default(),
         }))
     }
@@ -80,12 +83,13 @@ impl Mempool {
         self.0.rebuilder.snapshot()
     }
 
-    pub fn rebuild_count(&self) -> u64 {
-        self.0.rebuilder.rebuild_count()
+    /// One-shot diagnostic counters captured under a single read guard.
+    pub fn stats(&self) -> MempoolStats {
+        MempoolStats::from(self)
     }
 
-    pub fn skip_clean_count(&self) -> u64 {
-        self.0.rebuilder.skip_clean_count()
+    pub(crate) fn rebuilder(&self) -> &Rebuilder {
+        &self.0.rebuilder
     }
 
     pub fn fees(&self) -> RecommendedFees {
@@ -108,9 +112,9 @@ impl Mempool {
     /// input list is walked to rule out `TxidPrefix` collisions.
     pub fn lookup_spender(&self, txid: &Txid, vout: Vout) -> Option<(Txid, Vin)> {
         let key = OutpointPrefix::new(TxidPrefix::from(txid), vout);
-        let inner = self.read();
-        let spender_prefix = inner.outpoint_spends.get(&key)?;
-        let spender = inner.txs.record_by_prefix(&spender_prefix)?;
+        let state = self.read();
+        let spender_prefix = state.outpoint_spends.get(&key)?;
+        let spender = state.txs.record_by_prefix(&spender_prefix)?;
         let vin_pos = spender
             .tx
             .input
@@ -119,32 +123,8 @@ impl Mempool {
         Some((spender.entry.txid, Vin::from(vin_pos)))
     }
 
-    pub(crate) fn read(&self) -> RwLockReadGuard<'_, MempoolInner> {
-        self.0.lock.read()
-    }
-
-    pub fn tx_count(&self) -> usize {
-        self.read().txs.len()
-    }
-
-    pub fn unresolved_count(&self) -> usize {
-        self.read().txs.unresolved().len()
-    }
-
-    pub fn addr_count(&self) -> usize {
-        self.read().addrs.len()
-    }
-
-    pub fn outpoint_spend_count(&self) -> usize {
-        self.read().outpoint_spends.len()
-    }
-
-    pub fn graveyard_tombstone_count(&self) -> usize {
-        self.read().graveyard.tombstones_len()
-    }
-
-    pub fn graveyard_order_count(&self) -> usize {
-        self.read().graveyard.order_len()
+    pub(crate) fn read(&self) -> RwLockReadGuard<'_, State> {
+        self.0.state.read()
     }
 
     pub fn contains_txid(&self, txid: &Txid) -> bool {
@@ -159,8 +139,8 @@ impl Mempool {
     /// Apply `f` to a `Vanished` tombstone's tx body if present.
     /// `Replaced` tombstones return `None` because the tx will not confirm.
     pub fn with_vanished_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
-        let inner = self.read();
-        let tomb = inner.graveyard.get(txid)?;
+        let state = self.read();
+        let tomb = state.graveyard.get(txid)?;
         matches!(tomb.reason(), TxRemoval::Vanished).then(|| f(&tomb.tx))
     }
 
@@ -182,15 +162,15 @@ impl Mempool {
     /// Live mempool txs touching `addr`, newest first by `first_seen`,
     /// capped at `limit`. Returns owned `Transaction`s.
     pub fn addr_txs(&self, addr: &AddrBytes, limit: usize) -> Vec<Transaction> {
-        let inner = self.read();
-        let Some(entry) = inner.addrs.get(addr) else {
+        let state = self.read();
+        let Some(entry) = state.addrs.get(addr) else {
             return vec![];
         };
         let mut ordered: Vec<(Timestamp, &Txid)> = entry
             .txids
             .iter()
             .map(|txid| {
-                let first_seen = inner
+                let first_seen = state
                     .txs
                     .entry(txid)
                     .map(|e| e.first_seen)
@@ -198,10 +178,10 @@ impl Mempool {
                 (first_seen, txid)
             })
             .collect();
-        ordered.sort_unstable_by_key(|b| std::cmp::Reverse(b.0));
+        ordered.sort_unstable_by_key(|b| Reverse(b.0));
         ordered
             .into_iter()
-            .filter_map(|(_, txid)| inner.txs.get(txid).cloned())
+            .filter_map(|(_, txid)| state.txs.get(txid).cloned())
             .take(limit)
             .collect()
     }
@@ -247,20 +227,10 @@ impl Mempool {
     /// the buried entry's `first_seen` to avoid flicker between drop
     /// and indexer catch-up.
     pub fn transaction_times(&self, txids: &[Txid]) -> Vec<u64> {
-        let inner = self.read();
+        let state = self.read();
         txids
             .iter()
-            .map(|txid| {
-                if let Some(e) = inner.txs.entry(txid) {
-                    return u64::from(e.first_seen);
-                }
-                if let Some(tomb) = inner.graveyard.get(txid)
-                    && matches!(tomb.reason(), TxRemoval::Vanished)
-                {
-                    return u64::from(tomb.entry.first_seen);
-                }
-                0
-            })
+            .map(|txid| state.first_seen(txid).map_or(0, u64::from))
             .collect()
     }
 
@@ -314,9 +284,9 @@ impl Mempool {
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,
     {
-        let Inner {
+        let Shared {
             client,
-            lock,
+            state,
             rebuilder,
         } = &*self.0;
 
@@ -325,14 +295,14 @@ impl Mempool {
             new_raws,
             gbt,
             min_fee,
-        }) = Fetcher::fetch(client, lock)?
+        }) = Fetcher::fetch(client, state)?
         else {
             return Ok(());
         };
-        let pulled = Preparer::prepare(entries_info, new_raws, lock);
-        let changed = Applier::apply(lock, pulled);
-        prevouts::fill(lock, resolver);
-        rebuilder.tick(lock, changed, &gbt, min_fee);
+        let pulled = Preparer::prepare(entries_info, new_raws, state);
+        let changed = Applier::apply(state, pulled);
+        prevouts::fill(state, resolver);
+        rebuilder.tick(state, changed, &gbt, min_fee);
 
         Ok(())
     }

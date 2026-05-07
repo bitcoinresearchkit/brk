@@ -87,10 +87,6 @@ impl Snapshot {
         self.prefix_to_idx.get(prefix).copied()
     }
 
-    pub fn txs_len(&self) -> usize {
-        self.txs.len()
-    }
-
     /// Effective chunk rate for a live tx by prefix, or `None` if the
     /// tx isn't in this snapshot.
     pub fn chunk_rate_for(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
