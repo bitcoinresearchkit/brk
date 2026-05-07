@@ -74,6 +74,40 @@ impl<'a> Ctx<'a> {
         })
     }
 
+    pub fn full(&self) -> Value {
+        let b = self.block;
+        let (size, weight) = self.size_and_weight();
+        let tx: Vec<Value> = b
+            .txdata
+            .iter()
+            .enumerate()
+            .map(|(i, tx)| tx_to_value(tx, i == 0))
+            .collect();
+        json!({
+            "height": *b.height(),
+            "hash": b.hash().to_string(),
+            "version": b.header.version.to_consensus(),
+            "version_hex": format!("{:08x}", b.header.version.to_consensus() as u32),
+            "merkle": b.header.merkle_root.to_string(),
+            "time": b.header.time,
+            "nonce": b.header.nonce,
+            "bits": b.header.bits.to_consensus(),
+            "difficulty": b.header.difficulty_float(),
+            "prev": b.header.prev_blockhash.to_string(),
+            "txs": b.txdata.len(),
+            "n_inputs": b.txdata.iter().map(|t| t.input.len()).sum::<usize>(),
+            "n_outputs": b.txdata.iter().map(|t| t.output.len()).sum::<usize>(),
+            "witness_txs": b.txdata.iter().filter(|t| tx_has_witness(t)).count(),
+            "size": size,
+            "strippedsize": (weight - size) / 3,
+            "weight": weight,
+            "subsidy": subsidy_sats(*b.height()),
+            "coinbase": b.coinbase_tag().as_str(),
+            "header_hex": serialize_hex(&b.header),
+            "tx": tx,
+        })
+    }
+
     fn size_and_weight(&self) -> (usize, usize) {
         *self
             .size_weight

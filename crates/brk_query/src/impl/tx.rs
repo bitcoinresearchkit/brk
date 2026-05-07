@@ -123,7 +123,9 @@ impl Query {
     }
 
     pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        self.lookup_tx(txid, Transaction::clone, |idx| self.transaction_by_index(idx))
+        self.lookup_tx(txid, Transaction::clone, |idx| {
+            self.transaction_by_index(idx)
+        })
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {

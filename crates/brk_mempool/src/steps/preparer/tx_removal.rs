@@ -31,13 +31,12 @@ impl TxRemoval {
         let spent_by = Self::build_spent_by(added);
 
         known
-            .iter()
-            .filter_map(|(txid, tx)| {
-                let prefix = TxidPrefix::from(txid);
-                if live.contains(&prefix) {
+            .records()
+            .filter_map(|(prefix, record)| {
+                if live.contains(prefix) {
                     return None;
                 }
-                Some((prefix, Self::find_removal(tx, &spent_by)))
+                Some((*prefix, Self::find_removal(&record.tx, &spent_by)))
             })
             .collect()
     }

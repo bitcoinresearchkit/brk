@@ -7825,249 +7825,37 @@ class BrkClient(BrkClientBase):
         """Convert a date/datetime to an index value for date-based indexes."""
         return _date_to_index(index, d)
 
-    def get_api(self) -> Any:
-        """Compact OpenAPI specification.
+    def get_health(self) -> Health:
+        """Health check.
 
-        Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
+        Returns the health status of the API server, including uptime information.
 
-        Endpoint: `GET /api.json`"""
-        return self.get_json('/api.json')
+        Endpoint: `GET /health`"""
+        return self.get_json('/health')
 
-    def get_address(self, address: Addr) -> AddrStats:
-        """Address information.
+    def get_version(self) -> str:
+        """API version.
 
-        Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+        Returns the current version of the API server
 
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
+        Endpoint: `GET /version`"""
+        return self.get_json('/version')
 
-        Endpoint: `GET /api/address/{address}`"""
-        return self.get_json(f'/api/address/{address}')
+    def get_sync_status(self) -> SyncStatus:
+        """Sync status.
 
-    def get_address_txs(self, address: Addr) -> List[Transaction]:
-        """Address transactions.
+        Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
 
-        Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+        Endpoint: `GET /api/server/sync`"""
+        return self.get_json('/api/server/sync')
 
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
+    def get_disk_usage(self) -> DiskUsage:
+        """Disk usage.
 
-        Endpoint: `GET /api/address/{address}/txs`"""
-        return self.get_json(f'/api/address/{address}/txs')
+        Returns the disk space used by BRK and Bitcoin data.
 
-    def get_address_confirmed_txs(self, address: Addr) -> List[Transaction]:
-        """Address confirmed transactions.
-
-        Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-
-        Endpoint: `GET /api/address/{address}/txs/chain`"""
-        return self.get_json(f'/api/address/{address}/txs/chain')
-
-    def get_address_confirmed_txs_after(self, address: Addr, after_txid: Txid) -> List[Transaction]:
-        """Address confirmed transactions (paginated).
-
-        Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-
-        Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`"""
-        return self.get_json(f'/api/address/{address}/txs/chain/{after_txid}')
-
-    def get_address_mempool_txs(self, address: Addr) -> List[Transaction]:
-        """Address mempool transactions.
-
-        Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
-
-        Endpoint: `GET /api/address/{address}/txs/mempool`"""
-        return self.get_json(f'/api/address/{address}/txs/mempool')
-
-    def get_address_utxos(self, address: Addr) -> List[Utxo]:
-        """Address UTXOs.
-
-        Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
-
-        Endpoint: `GET /api/address/{address}/utxo`"""
-        return self.get_json(f'/api/address/{address}/utxo')
-
-    def get_block_by_height(self, height: Height) -> BlockHash:
-        """Block hash by height.
-
-        Retrieve the block hash at a given height. Returns the hash as plain text.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
-
-        Endpoint: `GET /api/block-height/{height}`"""
-        return self.get_text(f'/api/block-height/{height}')
-
-    def get_block(self, hash: BlockHash) -> BlockInfo:
-        """Block information.
-
-        Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
-
-        Endpoint: `GET /api/block/{hash}`"""
-        return self.get_json(f'/api/block/{hash}')
-
-    def get_block_header(self, hash: BlockHash) -> Hex:
-        """Block header.
-
-        Returns the hex-encoded 80-byte block header.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
-
-        Endpoint: `GET /api/block/{hash}/header`"""
-        return self.get_text(f'/api/block/{hash}/header')
-
-    def get_block_raw(self, hash: BlockHash) -> bytes:
-        """Raw block.
-
-        Returns the raw block data in binary format.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
-
-        Endpoint: `GET /api/block/{hash}/raw`"""
-        return self.get(f'/api/block/{hash}/raw')
-
-    def get_block_status(self, hash: BlockHash) -> BlockStatus:
-        """Block status.
-
-        Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
-
-        Endpoint: `GET /api/block/{hash}/status`"""
-        return self.get_json(f'/api/block/{hash}/status')
-
-    def get_block_txid(self, hash: BlockHash, index: BlockTxIndex) -> Txid:
-        """Transaction ID at index.
-
-        Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
-
-        Endpoint: `GET /api/block/{hash}/txid/{index}`"""
-        return self.get_text(f'/api/block/{hash}/txid/{index}')
-
-    def get_block_txids(self, hash: BlockHash) -> List[Txid]:
-        """Block transaction IDs.
-
-        Retrieve all transaction IDs in a block. Returns an array of txids in block order.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
-
-        Endpoint: `GET /api/block/{hash}/txids`"""
-        return self.get_json(f'/api/block/{hash}/txids')
-
-    def get_block_txs(self, hash: BlockHash) -> List[Transaction]:
-        """Block transactions.
-
-        Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-
-        Endpoint: `GET /api/block/{hash}/txs`"""
-        return self.get_json(f'/api/block/{hash}/txs')
-
-    def get_block_txs_from_index(self, hash: BlockHash, start_index: BlockTxIndex) -> List[Transaction]:
-        """Block transactions (paginated).
-
-        Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-
-        Endpoint: `GET /api/block/{hash}/txs/{start_index}`"""
-        return self.get_json(f'/api/block/{hash}/txs/{start_index}')
-
-    def get_blocks(self) -> List[BlockInfo]:
-        """Recent blocks.
-
-        Retrieve the last 10 blocks. Returns block metadata for each block.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-
-        Endpoint: `GET /api/blocks`"""
-        return self.get_json('/api/blocks')
-
-    def get_block_tip_hash(self) -> BlockHash:
-        """Block tip hash.
-
-        Returns the hash of the last block.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
-
-        Endpoint: `GET /api/blocks/tip/hash`"""
-        return self.get_text('/api/blocks/tip/hash')
-
-    def get_block_tip_height(self) -> Height:
-        """Block tip height.
-
-        Returns the height of the last block.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
-
-        Endpoint: `GET /api/blocks/tip/height`"""
-        return int(self.get_text('/api/blocks/tip/height'))
-
-    def get_blocks_from_height(self, height: Height) -> List[BlockInfo]:
-        """Blocks from height.
-
-        Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-
-        Endpoint: `GET /api/blocks/{height}`"""
-        return self.get_json(f'/api/blocks/{height}')
-
-    def get_mempool(self) -> MempoolInfo:
-        """Mempool statistics.
-
-        Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
-
-        Endpoint: `GET /api/mempool`"""
-        return self.get_json('/api/mempool')
-
-    def get_mempool_hash(self) -> int:
-        """Mempool content hash.
-
-        Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
-
-        Endpoint: `GET /api/mempool/hash`"""
-        return self.get_json('/api/mempool/hash')
-
-    def get_live_price(self) -> Dollars:
-        """Live BTC/USD price.
-
-        Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
-
-        Endpoint: `GET /api/mempool/price`"""
-        return self.get_json('/api/mempool/price')
-
-    def get_mempool_recent(self) -> List[MempoolRecentTx]:
-        """Recent mempool transactions.
-
-        Get the last 10 transactions to enter the mempool.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
-
-        Endpoint: `GET /api/mempool/recent`"""
-        return self.get_json('/api/mempool/recent')
-
-    def get_mempool_txids(self) -> List[Txid]:
-        """Mempool transaction IDs.
-
-        Get all transaction IDs currently in the mempool.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
-
-        Endpoint: `GET /api/mempool/txids`"""
-        return self.get_json('/api/mempool/txids')
+        Endpoint: `GET /api/server/disk`"""
+        return self.get_json('/api/server/disk')
 
     def get_series_tree(self) -> TreeNode:
         """Series catalog.
@@ -8076,25 +7864,6 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/series`"""
         return self.get_json('/api/series')
-
-    def get_series_bulk(self, series: SeriesList, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[AnySeriesData], str]:
-        """Bulk series data.
-
-        Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
-
-        Endpoint: `GET /api/series/bulk`"""
-        params = []
-        params.append(f'series={series}')
-        params.append(f'index={index}')
-        if start is not None: params.append(f'start={start}')
-        if end is not None: params.append(f'end={end}')
-        if limit is not None: params.append(f'limit={limit}')
-        if format is not None: params.append(f'format={format}')
-        query = '&'.join(params)
-        path = f'/api/series/bulk{"?" + query if query else ""}'
-        if format == 'csv':
-            return self.get_text(path)
-        return self.get_json(path)
 
     def get_series_count(self) -> List[SeriesCount]:
         """Series count.
@@ -8204,31 +7973,608 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/series/{series}/{index}/version`"""
         return self.get_json(f'/api/series/{series}/{index}/version')
 
-    def get_disk_usage(self) -> DiskUsage:
-        """Disk usage.
+    def get_series_bulk(self, series: SeriesList, index: Index, start: Optional[RangeIndex] = None, end: Optional[RangeIndex] = None, limit: Optional[Limit] = None, format: Optional[Format] = None) -> Union[List[AnySeriesData], str]:
+        """Bulk series data.
 
-        Returns the disk space used by BRK and Bitcoin data.
+        Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
 
-        Endpoint: `GET /api/server/disk`"""
-        return self.get_json('/api/server/disk')
+        Endpoint: `GET /api/series/bulk`"""
+        params = []
+        params.append(f'series={series}')
+        params.append(f'index={index}')
+        if start is not None: params.append(f'start={start}')
+        if end is not None: params.append(f'end={end}')
+        if limit is not None: params.append(f'limit={limit}')
+        if format is not None: params.append(f'format={format}')
+        query = '&'.join(params)
+        path = f'/api/series/bulk{"?" + query if query else ""}'
+        if format == 'csv':
+            return self.get_text(path)
+        return self.get_json(path)
 
-    def get_sync_status(self) -> SyncStatus:
-        """Sync status.
+    def list_urpd_cohorts(self) -> List[Cohort]:
+        """Available URPD cohorts.
 
-        Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+        Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
 
-        Endpoint: `GET /api/server/sync`"""
-        return self.get_json('/api/server/sync')
+        Endpoint: `GET /api/urpd`"""
+        return self.get_json('/api/urpd')
 
-    def post_tx(self, body: str) -> Txid:
-        """Broadcast transaction.
+    def list_urpd_dates(self, cohort: Cohort) -> List[Date]:
+        """Available URPD dates.
 
-        Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+        Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
 
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+        Endpoint: `GET /api/urpd/{cohort}/dates`"""
+        return self.get_json(f'/api/urpd/{cohort}/dates')
 
-        Endpoint: `POST /api/tx`"""
-        return self.post_json('/api/tx', body)
+    def get_urpd(self, cohort: Cohort, agg: Optional[UrpdAggregation] = None) -> Urpd:
+        """Latest URPD.
+
+        URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+
+        See the URPD tag description for the response shape and `agg` options.
+
+        Endpoint: `GET /api/urpd/{cohort}`"""
+        params = []
+        if agg is not None: params.append(f'agg={agg}')
+        query = '&'.join(params)
+        path = f'/api/urpd/{cohort}{"?" + query if query else ""}'
+        return self.get_json(path)
+
+    def get_urpd_at(self, cohort: Cohort, date: str, agg: Optional[UrpdAggregation] = None) -> Urpd:
+        """URPD at date.
+
+        URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+
+        See the URPD tag description for unit conventions and `agg` options.
+
+        Endpoint: `GET /api/urpd/{cohort}/{date}`"""
+        params = []
+        if agg is not None: params.append(f'agg={agg}')
+        query = '&'.join(params)
+        path = f'/api/urpd/{cohort}/{date}{"?" + query if query else ""}'
+        return self.get_json(path)
+
+    def get_difficulty_adjustment(self) -> DifficultyAdjustment:
+        """Difficulty adjustment.
+
+        Get current difficulty adjustment progress and estimates.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
+
+        Endpoint: `GET /api/v1/difficulty-adjustment`"""
+        return self.get_json('/api/v1/difficulty-adjustment')
+
+    def get_prices(self) -> Prices:
+        """Current BTC price.
+
+        Returns bitcoin latest price (on-chain derived, USD only).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+
+        Endpoint: `GET /api/v1/prices`"""
+        return self.get_json('/api/v1/prices')
+
+    def get_historical_price(self, timestamp: Optional[Timestamp] = None) -> HistoricalPrice:
+        """Historical price.
+
+        Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+
+        Endpoint: `GET /api/v1/historical-price`"""
+        params = []
+        if timestamp is not None: params.append(f'timestamp={timestamp}')
+        query = '&'.join(params)
+        path = f'/api/v1/historical-price{"?" + query if query else ""}'
+        return self.get_json(path)
+
+    def get_address(self, address: Addr) -> AddrStats:
+        """Address information.
+
+        Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
+
+        Endpoint: `GET /api/address/{address}`"""
+        return self.get_json(f'/api/address/{address}')
+
+    def get_address_txs(self, address: Addr) -> List[Transaction]:
+        """Address transactions.
+
+        Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
+
+        Endpoint: `GET /api/address/{address}/txs`"""
+        return self.get_json(f'/api/address/{address}/txs')
+
+    def get_address_confirmed_txs(self, address: Addr) -> List[Transaction]:
+        """Address confirmed transactions.
+
+        Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+
+        Endpoint: `GET /api/address/{address}/txs/chain`"""
+        return self.get_json(f'/api/address/{address}/txs/chain')
+
+    def get_address_confirmed_txs_after(self, address: Addr, after_txid: Txid) -> List[Transaction]:
+        """Address confirmed transactions (paginated).
+
+        Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+
+        Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`"""
+        return self.get_json(f'/api/address/{address}/txs/chain/{after_txid}')
+
+    def get_address_mempool_txs(self, address: Addr) -> List[Transaction]:
+        """Address mempool transactions.
+
+        Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
+
+        Endpoint: `GET /api/address/{address}/txs/mempool`"""
+        return self.get_json(f'/api/address/{address}/txs/mempool')
+
+    def get_address_utxos(self, address: Addr) -> List[Utxo]:
+        """Address UTXOs.
+
+        Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
+
+        Endpoint: `GET /api/address/{address}/utxo`"""
+        return self.get_json(f'/api/address/{address}/utxo')
+
+    def validate_address(self, address: str) -> AddrValidation:
+        """Validate address.
+
+        Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
+
+        Endpoint: `GET /api/v1/validate-address/{address}`"""
+        return self.get_json(f'/api/v1/validate-address/{address}')
+
+    def get_block(self, hash: BlockHash) -> BlockInfo:
+        """Block information.
+
+        Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
+
+        Endpoint: `GET /api/block/{hash}`"""
+        return self.get_json(f'/api/block/{hash}')
+
+    def get_block_v1(self, hash: BlockHash) -> BlockInfoV1:
+        """Block (v1).
+
+        Returns block details with extras by hash.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+
+        Endpoint: `GET /api/v1/block/{hash}`"""
+        return self.get_json(f'/api/v1/block/{hash}')
+
+    def get_block_header(self, hash: BlockHash) -> Hex:
+        """Block header.
+
+        Returns the hex-encoded 80-byte block header.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+
+        Endpoint: `GET /api/block/{hash}/header`"""
+        return self.get_text(f'/api/block/{hash}/header')
+
+    def get_block_by_height(self, height: Height) -> BlockHash:
+        """Block hash by height.
+
+        Retrieve the block hash at a given height. Returns the hash as plain text.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
+
+        Endpoint: `GET /api/block-height/{height}`"""
+        return self.get_text(f'/api/block-height/{height}')
+
+    def get_block_by_timestamp(self, timestamp: Timestamp) -> BlockTimestamp:
+        """Block by timestamp.
+
+        Find the block closest to a given UNIX timestamp.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
+
+        Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`"""
+        return self.get_json(f'/api/v1/mining/blocks/timestamp/{timestamp}')
+
+    def get_block_raw(self, hash: BlockHash) -> bytes:
+        """Raw block.
+
+        Returns the raw block data in binary format.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
+
+        Endpoint: `GET /api/block/{hash}/raw`"""
+        return self.get(f'/api/block/{hash}/raw')
+
+    def get_block_status(self, hash: BlockHash) -> BlockStatus:
+        """Block status.
+
+        Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
+
+        Endpoint: `GET /api/block/{hash}/status`"""
+        return self.get_json(f'/api/block/{hash}/status')
+
+    def get_block_tip_height(self) -> Height:
+        """Block tip height.
+
+        Returns the height of the last block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+
+        Endpoint: `GET /api/blocks/tip/height`"""
+        return int(self.get_text('/api/blocks/tip/height'))
+
+    def get_block_tip_hash(self) -> BlockHash:
+        """Block tip hash.
+
+        Returns the hash of the last block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+
+        Endpoint: `GET /api/blocks/tip/hash`"""
+        return self.get_text('/api/blocks/tip/hash')
+
+    def get_block_txid(self, hash: BlockHash, index: BlockTxIndex) -> Txid:
+        """Transaction ID at index.
+
+        Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
+
+        Endpoint: `GET /api/block/{hash}/txid/{index}`"""
+        return self.get_text(f'/api/block/{hash}/txid/{index}')
+
+    def get_block_txids(self, hash: BlockHash) -> List[Txid]:
+        """Block transaction IDs.
+
+        Retrieve all transaction IDs in a block. Returns an array of txids in block order.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
+
+        Endpoint: `GET /api/block/{hash}/txids`"""
+        return self.get_json(f'/api/block/{hash}/txids')
+
+    def get_block_txs(self, hash: BlockHash) -> List[Transaction]:
+        """Block transactions.
+
+        Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+
+        Endpoint: `GET /api/block/{hash}/txs`"""
+        return self.get_json(f'/api/block/{hash}/txs')
+
+    def get_block_txs_from_index(self, hash: BlockHash, start_index: BlockTxIndex) -> List[Transaction]:
+        """Block transactions (paginated).
+
+        Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+
+        Endpoint: `GET /api/block/{hash}/txs/{start_index}`"""
+        return self.get_json(f'/api/block/{hash}/txs/{start_index}')
+
+    def get_blocks(self) -> List[BlockInfo]:
+        """Recent blocks.
+
+        Retrieve the last 10 blocks. Returns block metadata for each block.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+
+        Endpoint: `GET /api/blocks`"""
+        return self.get_json('/api/blocks')
+
+    def get_blocks_from_height(self, height: Height) -> List[BlockInfo]:
+        """Blocks from height.
+
+        Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+
+        Endpoint: `GET /api/blocks/{height}`"""
+        return self.get_json(f'/api/blocks/{height}')
+
+    def get_blocks_v1(self) -> List[BlockInfoV1]:
+        """Recent blocks with extras.
+
+        Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+        Endpoint: `GET /api/v1/blocks`"""
+        return self.get_json('/api/v1/blocks')
+
+    def get_blocks_v1_from_height(self, height: Height) -> List[BlockInfoV1]:
+        """Blocks from height with extras.
+
+        Retrieve up to 15 blocks with extended data going backwards from the given height.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+
+        Endpoint: `GET /api/v1/blocks/{height}`"""
+        return self.get_json(f'/api/v1/blocks/{height}')
+
+    def get_pools(self) -> List[PoolInfo]:
+        """List all mining pools.
+
+        Get list of all known mining pools with their identifiers.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+
+        Endpoint: `GET /api/v1/mining/pools`"""
+        return self.get_json('/api/v1/mining/pools')
+
+    def get_pool_stats(self, time_period: TimePeriod) -> PoolsSummary:
+        """Mining pool statistics.
+
+        Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+
+        Endpoint: `GET /api/v1/mining/pools/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/pools/{time_period}')
+
+    def get_pool(self, slug: PoolSlug) -> PoolDetail:
+        """Mining pool details.
+
+        Get detailed information about a specific mining pool including block counts and shares for different time periods.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}')
+
+    def get_pools_hashrate(self) -> List[PoolHashrateEntry]:
+        """All pools hashrate (all time).
+
+        Get hashrate data for all mining pools.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+        Endpoint: `GET /api/v1/mining/hashrate/pools`"""
+        return self.get_json('/api/v1/mining/hashrate/pools')
+
+    def get_pools_hashrate_by_period(self, time_period: TimePeriod) -> List[PoolHashrateEntry]:
+        """All pools hashrate.
+
+        Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+
+        Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/hashrate/pools/{time_period}')
+
+    def get_pool_hashrate(self, slug: PoolSlug) -> List[PoolHashrateEntry]:
+        """Mining pool hashrate.
+
+        Get hashrate history for a specific mining pool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/hashrate')
+
+    def get_pool_blocks(self, slug: PoolSlug) -> List[BlockInfoV1]:
+        """Mining pool blocks.
+
+        Get the 10 most recent blocks mined by a specific pool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks')
+
+    def get_pool_blocks_from(self, slug: PoolSlug, height: Height) -> List[BlockInfoV1]:
+        """Mining pool blocks from height.
+
+        Get 10 blocks mined by a specific pool before (and including) the given height.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+
+        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`"""
+        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks/{height}')
+
+    def get_hashrate(self) -> HashrateSummary:
+        """Network hashrate (all time).
+
+        Get network hashrate and difficulty data for all time.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+
+        Endpoint: `GET /api/v1/mining/hashrate`"""
+        return self.get_json('/api/v1/mining/hashrate')
+
+    def get_hashrate_by_period(self, time_period: TimePeriod) -> HashrateSummary:
+        """Network hashrate.
+
+        Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+
+        Endpoint: `GET /api/v1/mining/hashrate/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/hashrate/{time_period}')
+
+    def get_difficulty_adjustments(self) -> List[DifficultyAdjustmentEntry]:
+        """Difficulty adjustments (all time).
+
+        Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+
+        Endpoint: `GET /api/v1/mining/difficulty-adjustments`"""
+        return self.get_json('/api/v1/mining/difficulty-adjustments')
+
+    def get_difficulty_adjustments_by_period(self, time_period: TimePeriod) -> List[DifficultyAdjustmentEntry]:
+        """Difficulty adjustments.
+
+        Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+
+        Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/difficulty-adjustments/{time_period}')
+
+    def get_reward_stats(self, block_count: int) -> RewardStats:
+        """Mining reward statistics.
+
+        Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
+
+        Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`"""
+        return self.get_json(f'/api/v1/mining/reward-stats/{block_count}')
+
+    def get_block_fees(self, time_period: TimePeriod) -> List[BlockFeesEntry]:
+        """Block fees.
+
+        Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
+
+        Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/blocks/fees/{time_period}')
+
+    def get_block_rewards(self, time_period: TimePeriod) -> List[BlockRewardsEntry]:
+        """Block rewards.
+
+        Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
+
+        Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/blocks/rewards/{time_period}')
+
+    def get_block_fee_rates(self, time_period: TimePeriod) -> List[BlockFeeRatesEntry]:
+        """Block fee rates.
+
+        Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
+
+        Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/blocks/fee-rates/{time_period}')
+
+    def get_block_sizes_weights(self, time_period: TimePeriod) -> BlockSizesWeights:
+        """Block sizes and weights.
+
+        Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
+
+        Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`"""
+        return self.get_json(f'/api/v1/mining/blocks/sizes-weights/{time_period}')
+
+    def get_mempool_blocks(self) -> List[MempoolBlock]:
+        """Projected mempool blocks.
+
+        Get projected blocks from the mempool for fee estimation.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
+
+        Endpoint: `GET /api/v1/fees/mempool-blocks`"""
+        return self.get_json('/api/v1/fees/mempool-blocks')
+
+    def get_recommended_fees(self) -> RecommendedFees:
+        """Recommended fees.
+
+        Get recommended fee rates for different confirmation targets.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
+
+        Endpoint: `GET /api/v1/fees/recommended`"""
+        return self.get_json('/api/v1/fees/recommended')
+
+    def get_precise_fees(self) -> RecommendedFees:
+        """Precise recommended fees.
+
+        Get recommended fee rates with up to 3 decimal places.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+
+        Endpoint: `GET /api/v1/fees/precise`"""
+        return self.get_json('/api/v1/fees/precise')
+
+    def get_mempool(self) -> MempoolInfo:
+        """Mempool statistics.
+
+        Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
+
+        Endpoint: `GET /api/mempool`"""
+        return self.get_json('/api/mempool')
+
+    def get_mempool_hash(self) -> int:
+        """Mempool content hash.
+
+        Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+
+        Endpoint: `GET /api/mempool/hash`"""
+        return self.get_json('/api/mempool/hash')
+
+    def get_mempool_txids(self) -> List[Txid]:
+        """Mempool transaction IDs.
+
+        Get all transaction IDs currently in the mempool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
+
+        Endpoint: `GET /api/mempool/txids`"""
+        return self.get_json('/api/mempool/txids')
+
+    def get_mempool_recent(self) -> List[MempoolRecentTx]:
+        """Recent mempool transactions.
+
+        Get the last 10 transactions to enter the mempool.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+
+        Endpoint: `GET /api/mempool/recent`"""
+        return self.get_json('/api/mempool/recent')
+
+    def get_replacements(self) -> List[ReplacementNode]:
+        """Recent RBF replacements.
+
+        Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+
+        Endpoint: `GET /api/v1/replacements`"""
+        return self.get_json('/api/v1/replacements')
+
+    def get_fullrbf_replacements(self) -> List[ReplacementNode]:
+        """Recent full-RBF replacements.
+
+        Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+
+        Endpoint: `GET /api/v1/fullrbf/replacements`"""
+        return self.get_json('/api/v1/fullrbf/replacements')
+
+    def get_live_price(self) -> Dollars:
+        """Live BTC/USD price.
+
+        Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+
+        Endpoint: `GET /api/mempool/price`"""
+        return self.get_json('/api/mempool/price')
 
     def get_tx_by_index(self, index: TxIndex) -> Txid:
         """Txid by index.
@@ -8237,6 +8583,26 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/tx-index/{index}`"""
         return self.get_text(f'/api/tx-index/{index}')
+
+    def get_cpfp(self, txid: Txid) -> CpfpInfo:
+        """CPFP info.
+
+        Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+
+        Endpoint: `GET /api/v1/cpfp/{txid}`"""
+        return self.get_json(f'/api/v1/cpfp/{txid}')
+
+    def get_tx_rbf(self, txid: Txid) -> RbfResponse:
+        """RBF replacement history.
+
+        Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+
+        Endpoint: `GET /api/v1/tx/{txid}/rbf`"""
+        return self.get_json(f'/api/v1/tx/{txid}/rbf')
 
     def get_tx(self, txid: Txid) -> Transaction:
         """Transaction information.
@@ -8258,16 +8624,6 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/hex`"""
         return self.get_text(f'/api/tx/{txid}/hex')
 
-    def get_tx_merkle_proof(self, txid: Txid) -> MerkleProof:
-        """Transaction merkle proof.
-
-        Get the merkle inclusion proof for a transaction.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
-
-        Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
-        return self.get_json(f'/api/tx/{txid}/merkle-proof')
-
     def get_tx_merkleblock_proof(self, txid: Txid) -> Hex:
         """Transaction merkleblock proof.
 
@@ -8277,6 +8633,16 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/tx/{txid}/merkleblock-proof`"""
         return self.get_text(f'/api/tx/{txid}/merkleblock-proof')
+
+    def get_tx_merkle_proof(self, txid: Txid) -> MerkleProof:
+        """Transaction merkle proof.
+
+        Get the merkle inclusion proof for a transaction.
+
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+
+        Endpoint: `GET /api/tx/{txid}/merkle-proof`"""
+        return self.get_json(f'/api/tx/{txid}/merkle-proof')
 
     def get_tx_outspend(self, txid: Txid, vout: Vout) -> TxOutspend:
         """Output spend status.
@@ -8318,354 +8684,6 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/tx/{txid}/status`"""
         return self.get_json(f'/api/tx/{txid}/status')
 
-    def list_urpd_cohorts(self) -> List[Cohort]:
-        """Available URPD cohorts.
-
-        Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
-
-        Endpoint: `GET /api/urpd`"""
-        return self.get_json('/api/urpd')
-
-    def get_urpd(self, cohort: Cohort, agg: Optional[UrpdAggregation] = None) -> Urpd:
-        """Latest URPD.
-
-        URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
-
-        See the URPD tag description for the response shape and `agg` options.
-
-        Endpoint: `GET /api/urpd/{cohort}`"""
-        params = []
-        if agg is not None: params.append(f'agg={agg}')
-        query = '&'.join(params)
-        path = f'/api/urpd/{cohort}{"?" + query if query else ""}'
-        return self.get_json(path)
-
-    def list_urpd_dates(self, cohort: Cohort) -> List[Date]:
-        """Available URPD dates.
-
-        Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
-
-        Endpoint: `GET /api/urpd/{cohort}/dates`"""
-        return self.get_json(f'/api/urpd/{cohort}/dates')
-
-    def get_urpd_at(self, cohort: Cohort, date: str, agg: Optional[UrpdAggregation] = None) -> Urpd:
-        """URPD at date.
-
-        URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
-
-        See the URPD tag description for unit conventions and `agg` options.
-
-        Endpoint: `GET /api/urpd/{cohort}/{date}`"""
-        params = []
-        if agg is not None: params.append(f'agg={agg}')
-        query = '&'.join(params)
-        path = f'/api/urpd/{cohort}/{date}{"?" + query if query else ""}'
-        return self.get_json(path)
-
-    def get_block_v1(self, hash: BlockHash) -> BlockInfoV1:
-        """Block (v1).
-
-        Returns block details with extras by hash.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
-
-        Endpoint: `GET /api/v1/block/{hash}`"""
-        return self.get_json(f'/api/v1/block/{hash}')
-
-    def get_blocks_v1(self) -> List[BlockInfoV1]:
-        """Recent blocks with extras.
-
-        Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-
-        Endpoint: `GET /api/v1/blocks`"""
-        return self.get_json('/api/v1/blocks')
-
-    def get_blocks_v1_from_height(self, height: Height) -> List[BlockInfoV1]:
-        """Blocks from height with extras.
-
-        Retrieve up to 15 blocks with extended data going backwards from the given height.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-
-        Endpoint: `GET /api/v1/blocks/{height}`"""
-        return self.get_json(f'/api/v1/blocks/{height}')
-
-    def get_cpfp(self, txid: Txid) -> CpfpInfo:
-        """CPFP info.
-
-        Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
-
-        Endpoint: `GET /api/v1/cpfp/{txid}`"""
-        return self.get_json(f'/api/v1/cpfp/{txid}')
-
-    def get_difficulty_adjustment(self) -> DifficultyAdjustment:
-        """Difficulty adjustment.
-
-        Get current difficulty adjustment progress and estimates.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
-
-        Endpoint: `GET /api/v1/difficulty-adjustment`"""
-        return self.get_json('/api/v1/difficulty-adjustment')
-
-    def get_mempool_blocks(self) -> List[MempoolBlock]:
-        """Projected mempool blocks.
-
-        Get projected blocks from the mempool for fee estimation.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
-
-        Endpoint: `GET /api/v1/fees/mempool-blocks`"""
-        return self.get_json('/api/v1/fees/mempool-blocks')
-
-    def get_precise_fees(self) -> RecommendedFees:
-        """Precise recommended fees.
-
-        Get recommended fee rates with up to 3 decimal places.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
-
-        Endpoint: `GET /api/v1/fees/precise`"""
-        return self.get_json('/api/v1/fees/precise')
-
-    def get_recommended_fees(self) -> RecommendedFees:
-        """Recommended fees.
-
-        Get recommended fee rates for different confirmation targets.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
-
-        Endpoint: `GET /api/v1/fees/recommended`"""
-        return self.get_json('/api/v1/fees/recommended')
-
-    def get_fullrbf_replacements(self) -> List[ReplacementNode]:
-        """Recent full-RBF replacements.
-
-        Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
-
-        Endpoint: `GET /api/v1/fullrbf/replacements`"""
-        return self.get_json('/api/v1/fullrbf/replacements')
-
-    def get_historical_price(self, timestamp: Optional[Timestamp] = None) -> HistoricalPrice:
-        """Historical price.
-
-        Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
-
-        Endpoint: `GET /api/v1/historical-price`"""
-        params = []
-        if timestamp is not None: params.append(f'timestamp={timestamp}')
-        query = '&'.join(params)
-        path = f'/api/v1/historical-price{"?" + query if query else ""}'
-        return self.get_json(path)
-
-    def get_block_fee_rates(self, time_period: TimePeriod) -> List[BlockFeeRatesEntry]:
-        """Block fee rates.
-
-        Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
-
-        Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/blocks/fee-rates/{time_period}')
-
-    def get_block_fees(self, time_period: TimePeriod) -> List[BlockFeesEntry]:
-        """Block fees.
-
-        Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
-
-        Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/blocks/fees/{time_period}')
-
-    def get_block_rewards(self, time_period: TimePeriod) -> List[BlockRewardsEntry]:
-        """Block rewards.
-
-        Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
-
-        Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/blocks/rewards/{time_period}')
-
-    def get_block_sizes_weights(self, time_period: TimePeriod) -> BlockSizesWeights:
-        """Block sizes and weights.
-
-        Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
-
-        Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/blocks/sizes-weights/{time_period}')
-
-    def get_block_by_timestamp(self, timestamp: Timestamp) -> BlockTimestamp:
-        """Block by timestamp.
-
-        Find the block closest to a given UNIX timestamp.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
-
-        Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`"""
-        return self.get_json(f'/api/v1/mining/blocks/timestamp/{timestamp}')
-
-    def get_difficulty_adjustments(self) -> List[DifficultyAdjustmentEntry]:
-        """Difficulty adjustments (all time).
-
-        Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-
-        Endpoint: `GET /api/v1/mining/difficulty-adjustments`"""
-        return self.get_json('/api/v1/mining/difficulty-adjustments')
-
-    def get_difficulty_adjustments_by_period(self, time_period: TimePeriod) -> List[DifficultyAdjustmentEntry]:
-        """Difficulty adjustments.
-
-        Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-
-        Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/difficulty-adjustments/{time_period}')
-
-    def get_hashrate(self) -> HashrateSummary:
-        """Network hashrate (all time).
-
-        Get network hashrate and difficulty data for all time.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-
-        Endpoint: `GET /api/v1/mining/hashrate`"""
-        return self.get_json('/api/v1/mining/hashrate')
-
-    def get_pools_hashrate(self) -> List[PoolHashrateEntry]:
-        """All pools hashrate (all time).
-
-        Get hashrate data for all mining pools.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-
-        Endpoint: `GET /api/v1/mining/hashrate/pools`"""
-        return self.get_json('/api/v1/mining/hashrate/pools')
-
-    def get_pools_hashrate_by_period(self, time_period: TimePeriod) -> List[PoolHashrateEntry]:
-        """All pools hashrate.
-
-        Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-
-        Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/hashrate/pools/{time_period}')
-
-    def get_hashrate_by_period(self, time_period: TimePeriod) -> HashrateSummary:
-        """Network hashrate.
-
-        Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-
-        Endpoint: `GET /api/v1/mining/hashrate/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/hashrate/{time_period}')
-
-    def get_pool(self, slug: PoolSlug) -> PoolDetail:
-        """Mining pool details.
-
-        Get detailed information about a specific mining pool including block counts and shares for different time periods.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
-
-        Endpoint: `GET /api/v1/mining/pool/{slug}`"""
-        return self.get_json(f'/api/v1/mining/pool/{slug}')
-
-    def get_pool_blocks(self, slug: PoolSlug) -> List[BlockInfoV1]:
-        """Mining pool blocks.
-
-        Get the 10 most recent blocks mined by a specific pool.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-
-        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`"""
-        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks')
-
-    def get_pool_blocks_from(self, slug: PoolSlug, height: Height) -> List[BlockInfoV1]:
-        """Mining pool blocks from height.
-
-        Get 10 blocks mined by a specific pool before (and including) the given height.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-
-        Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`"""
-        return self.get_json(f'/api/v1/mining/pool/{slug}/blocks/{height}')
-
-    def get_pool_hashrate(self, slug: PoolSlug) -> List[PoolHashrateEntry]:
-        """Mining pool hashrate.
-
-        Get hashrate history for a specific mining pool.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
-
-        Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`"""
-        return self.get_json(f'/api/v1/mining/pool/{slug}/hashrate')
-
-    def get_pools(self) -> List[PoolInfo]:
-        """List all mining pools.
-
-        Get list of all known mining pools with their identifiers.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-
-        Endpoint: `GET /api/v1/mining/pools`"""
-        return self.get_json('/api/v1/mining/pools')
-
-    def get_pool_stats(self, time_period: TimePeriod) -> PoolsSummary:
-        """Mining pool statistics.
-
-        Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-
-        Endpoint: `GET /api/v1/mining/pools/{time_period}`"""
-        return self.get_json(f'/api/v1/mining/pools/{time_period}')
-
-    def get_reward_stats(self, block_count: int) -> RewardStats:
-        """Mining reward statistics.
-
-        Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
-
-        Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`"""
-        return self.get_json(f'/api/v1/mining/reward-stats/{block_count}')
-
-    def get_prices(self) -> Prices:
-        """Current BTC price.
-
-        Returns bitcoin latest price (on-chain derived, USD only).
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
-
-        Endpoint: `GET /api/v1/prices`"""
-        return self.get_json('/api/v1/prices')
-
-    def get_replacements(self) -> List[ReplacementNode]:
-        """Recent RBF replacements.
-
-        Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
-
-        Endpoint: `GET /api/v1/replacements`"""
-        return self.get_json('/api/v1/replacements')
-
     def get_transaction_times(self, txId: List[Txid]) -> List[int]:
         """Transaction first-seen times.
 
@@ -8680,33 +8698,15 @@ class BrkClient(BrkClientBase):
         path = f'/api/v1/transaction-times{"?" + query if query else ""}'
         return self.get_json(path)
 
-    def get_tx_rbf(self, txid: Txid) -> RbfResponse:
-        """RBF replacement history.
+    def post_tx(self, body: str) -> Txid:
+        """Broadcast transaction.
 
-        Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+        Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
 
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+        *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
 
-        Endpoint: `GET /api/v1/tx/{txid}/rbf`"""
-        return self.get_json(f'/api/v1/tx/{txid}/rbf')
-
-    def validate_address(self, address: str) -> AddrValidation:
-        """Validate address.
-
-        Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
-
-        *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
-
-        Endpoint: `GET /api/v1/validate-address/{address}`"""
-        return self.get_json(f'/api/v1/validate-address/{address}')
-
-    def get_health(self) -> Health:
-        """Health check.
-
-        Returns the health status of the API server, including uptime information.
-
-        Endpoint: `GET /health`"""
-        return self.get_json('/health')
+        Endpoint: `POST /api/tx`"""
+        return self.post_json('/api/tx', body)
 
     def get_openapi(self) -> str:
         """OpenAPI specification.
@@ -8716,11 +8716,11 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /openapi.json`"""
         return self.get_text('/openapi.json')
 
-    def get_version(self) -> str:
-        """API version.
+    def get_api(self) -> Any:
+        """Compact OpenAPI specification.
 
-        Returns the current version of the API server
+        Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
 
-        Endpoint: `GET /version`"""
-        return self.get_json('/version')
+        Endpoint: `GET /api.json`"""
+        return self.get_json('/api.json')
 

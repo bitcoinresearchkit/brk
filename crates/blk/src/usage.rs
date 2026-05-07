@@ -12,9 +12,13 @@ pub fn print() {
 
     section("USAGE");
     println!(
-        "    blk {} {} [field ...] [OPTIONS]",
+        "    blk {} [{} ...] [OPTIONS]",
         "<selector>".bright_black(),
         "<field>".bright_black()
+    );
+    println!(
+        "    {}",
+        "no fields = full block as JSON (analog of `bitcoin-cli getblock <hash> 2`)".bright_black()
     );
     println!();
 
@@ -28,8 +32,7 @@ pub fn print() {
     section("FIELDS");
     println!(
         "    {}",
-        "dotted paths drill into nested data; omit an index for arrays"
-            .bright_black()
+        "dotted paths drill into nested data; omit an index for arrays".bright_black()
     );
     println!();
     group("block");
@@ -58,29 +61,48 @@ pub fn print() {
     println!();
     println!(
         "    {}",
-        "Naked tx / tx.i / vin / vout returns the whole sub-object as JSON."
-            .bright_black()
+        "Naked tx / tx.i / vin / vout returns the whole sub-object as JSON.".bright_black()
     );
     println!();
 
     section("OUTPUT");
+    out("no fields", "full block JSON object, one per line (NDJSON)");
     out("1 field", "bare value, one per line");
     out("2+ fields", "compact JSON object, one per line (NDJSON)");
     out("-p, --pretty", "pretty JSON object instead");
-    out("-c, --compact", "tab-separated values, no field names (TSV)");
+    out(
+        "-c, --compact",
+        "tab-separated values, no field names (TSV)",
+    );
     println!();
 
     section("OPTIONS");
-    opt("--bitcoindir", "<PATH>", "Bitcoin directory", Some("[OS default]"));
-    opt("--blocksdir", "<PATH>", "Blocks directory", Some("[<bitcoindir>/blocks]"));
+    opt(
+        "--bitcoindir",
+        "<PATH>",
+        "Bitcoin directory",
+        Some("[OS default]"),
+    );
+    opt(
+        "--blocksdir",
+        "<PATH>",
+        "Blocks directory",
+        Some("[<bitcoindir>/blocks]"),
+    );
     opt("--rpcconnect", "<IP>", "RPC host", Some("[localhost]"));
     opt("--rpcport", "<PORT>", "RPC port", Some("[8332]"));
-    opt("--rpccookiefile", "<PATH>", "RPC cookie file", Some("[<bitcoindir>/.cookie]"));
+    opt(
+        "--rpccookiefile",
+        "<PATH>",
+        "RPC cookie file",
+        Some("[<bitcoindir>/.cookie]"),
+    );
     opt("--rpcuser", "<USERNAME>", "RPC username", None);
     opt("--rpcpassword", "<PASSWORD>", "RPC password", None);
     println!();
 
     section("EXAMPLES");
+    ex("blk 800000", "full block as JSON");
     ex("blk 800000 hash", "bare hash");
     ex("blk 800000 height hash time", "one compact JSON line");
     ex("blk 800000 tx.0.txid", "coinbase txid");
@@ -128,7 +150,11 @@ fn sel(token: &str, desc: &str) {
 }
 
 fn out(label: &str, desc: &str) {
-    println!("    {label}{}{}{desc}", pad(label, LABEL_W), " ".repeat(GAP));
+    println!(
+        "    {label}{}{}{desc}",
+        pad(label, LABEL_W),
+        " ".repeat(GAP)
+    );
 }
 
 fn opt(flag: &str, ph: &str, desc: &str, default: Option<&str>) {

@@ -1,8 +1,33 @@
 use std::{thread, time::Duration};
 
 use brk_error::Result;
-use brk_mempool::{Mempool, MempoolStats};
+use brk_mempool::Mempool;
 use brk_rpc::{Auth, Client};
+
+#[derive(Debug, Clone)]
+struct MempoolStats {
+    info_count: usize,
+    tx_count: usize,
+    unresolved_count: usize,
+    addr_count: usize,
+    outpoint_spend_count: usize,
+    graveyard_tombstone_count: usize,
+    graveyard_order_count: usize,
+}
+
+impl From<&Mempool> for MempoolStats {
+    fn from(mempool: &Mempool) -> Self {
+        Self {
+            info_count: mempool.info().count,
+            tx_count: mempool.tx_count(),
+            unresolved_count: mempool.unresolved_count(),
+            addr_count: mempool.addr_count(),
+            outpoint_spend_count: mempool.outpoint_spend_count(),
+            graveyard_tombstone_count: mempool.graveyard_tombstone_count(),
+            graveyard_order_count: mempool.graveyard_order_count(),
+        }
+    }
+}
 
 fn main() -> Result<()> {
     brk_logger::init(None)?;
@@ -26,36 +51,25 @@ fn main() -> Result<()> {
         let stats = MempoolStats::from(&mempool);
         let snapshot = mempool.snapshot();
 
-        let cluster_nodes_total: usize = snapshot.clusters.iter().map(|c| c.nodes.len()).sum();
         let blocks_tx_total: usize = snapshot.blocks.iter().map(|b| b.len()).sum();
-        let (skip_clean, skip_throttled) = mempool.skip_counts();
 
         println!(
-            "info.count={} entries.slots={} entries.active={} entries.free={} \
-             txs={} unresolved={} addrs={} outpoints={} \
+            "info.count={} txs={} unresolved={} addrs={} outpoints={} \
              graveyard.tombstones={} graveyard.order={} \
-             snap.clusters={} snap.cluster_nodes={} snap.cluster_of.len={} snap.cluster_of.active={} \
-             snap.blocks={} snap.blocks_txs={} \
-             rebuilds={} skip.clean={} skip.throttled={}",
+             snap.txs.len={} snap.blocks={} snap.blocks_txs={} \
+             rebuilds={} skip.clean={}",
             stats.info_count,
-            stats.entry_slot_count,
-            stats.entry_active_count,
-            stats.entry_free_count,
             stats.tx_count,
             stats.unresolved_count,
             stats.addr_count,
             stats.outpoint_spend_count,
             stats.graveyard_tombstone_count,
             stats.graveyard_order_count,
-            snapshot.clusters.len(),
-            cluster_nodes_total,
-            snapshot.cluster_of_len(),
-            snapshot.cluster_of_active(),
+            snapshot.txs_len(),
             snapshot.blocks.len(),
             blocks_tx_total,
             mempool.rebuild_count(),
-            skip_clean,
-            skip_throttled,
+            mempool.skip_clean_count(),
         );
     }
 }

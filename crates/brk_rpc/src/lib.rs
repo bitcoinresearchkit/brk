@@ -13,6 +13,7 @@ mod client;
 mod methods;
 
 use client::ClientInner;
+pub use methods::MempoolState;
 
 #[derive(Debug, Clone)]
 pub struct BlockchainInfo {

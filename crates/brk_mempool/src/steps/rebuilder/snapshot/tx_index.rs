@@ -1,4 +1,6 @@
-/// Index into the mempool entries storage.
+/// Compact index into a `Snapshot`'s dense `txs` vec. Snapshot-internal:
+/// rebuilt fresh each tick from the live `TxStore`, so consumers
+/// can't hold one across rebuilds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TxIndex(u32);
 

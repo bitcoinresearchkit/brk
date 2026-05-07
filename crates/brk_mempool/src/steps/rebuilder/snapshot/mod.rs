@@ -1,62 +1,72 @@
+pub mod builder;
 mod fees;
 mod stats;
+mod tx;
+mod tx_index;
 
+pub use builder::PrefixIndex;
 pub use stats::BlockStats;
+pub use tx::SnapTx;
+pub use tx_index::TxIndex;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use brk_types::{FeeRate, RecommendedFees};
-
-use crate::TxEntry;
-use crate::cluster::{Cluster, ClusterRef};
-use crate::stores::TxIndex;
+use brk_types::{FeeRate, RecommendedFees, TxidPrefix};
 
 use fees::Fees;
 
 #[derive(Default)]
 pub struct Snapshot {
-    /// SFL-linearized cluster forest. Snapshot is `Arc`'d, so consumers
-    /// share the cluster data without cloning. Each `ClusterNode.id`
-    /// is the live `TxIndex` (pool slot) of that node.
-    pub clusters: Vec<Cluster<TxIndex>>,
-    /// Reverse of `clusters`: indexed by `TxIndex.as_usize()`. `None`
-    /// means the slot is empty (between two cycles a tx confirmed/was
-    /// evicted) or never made it into the live pool. Read via
-    /// `cluster_of(idx)` from outside the snapshot.
-    cluster_of: Vec<Option<ClusterRef>>,
+    /// Dense per-tx data indexed by `TxIndex`. Each entry carries the
+    /// chunk rate (Core's chunk-mempool truth or proxy fallback) plus
+    /// resolved parent/child adjacency, so CPFP queries don't re-read
+    /// any external state.
+    pub txs: Vec<SnapTx>,
+    /// Projected blocks. `blocks[0]` is Core's `getblocktemplate`
+    /// (Bitcoin Core's actual selection); the rest are greedy-packed
+    /// by descending chunk rate, with a final overflow block.
     pub blocks: Vec<Vec<TxIndex>>,
     pub block_stats: Vec<BlockStats>,
     pub fees: RecommendedFees,
-    /// ETag-like cache key for the first projected block. A hash of
-    /// the tx ordering, not a Bitcoin block header hash (no header
-    /// exists yet, it's a projection). `0` iff no projected blocks.
+    /// Content hash of the projected next block. Same value as the
+    /// mempool ETag.
     pub next_block_hash: u64,
+    /// Per-snapshot `TxidPrefix -> TxIndex` index, so live queries can
+    /// resolve a prefix to the snapshot's compact index without
+    /// re-walking `txs`. Built once by `builder::build_txs` and reused
+    /// by the rebuilder for GBT mapping.
+    prefix_to_idx: PrefixIndex,
 }
 
 impl Snapshot {
     /// `min_fee` is bitcoind's live `mempoolminfee`, used as the floor
     /// for every recommended-fee tier.
     pub fn build(
-        clusters: Vec<Cluster<TxIndex>>,
-        cluster_of: Vec<Option<ClusterRef>>,
+        txs: Vec<SnapTx>,
         blocks: Vec<Vec<TxIndex>>,
-        entries: &[Option<TxEntry>],
+        prefix_to_idx: PrefixIndex,
         min_fee: FeeRate,
     ) -> Self {
         let block_stats: Vec<BlockStats> = blocks
             .iter()
-            .map(|block| BlockStats::compute(block, &clusters, &cluster_of, entries))
+            .enumerate()
+            .map(|(i, block)| {
+                if i == 0 {
+                    BlockStats::compute_core(block, &txs)
+                } else {
+                    BlockStats::compute_projected(block, &txs)
+                }
+            })
             .collect();
         let fees = Fees::compute(&block_stats, min_fee);
         let next_block_hash = Self::hash_next_block(&blocks);
-
         Self {
-            clusters,
-            cluster_of,
+            txs,
             blocks,
             block_stats,
             fees,
             next_block_hash,
+            prefix_to_idx,
         }
     }
 
@@ -69,29 +79,22 @@ impl Snapshot {
         hasher.finish()
     }
 
-    /// Cluster + local position for a live tx, or `None` if the slot
-    /// is empty or `idx` is out of range.
-    pub fn cluster_of(&self, idx: TxIndex) -> Option<ClusterRef> {
-        self.cluster_of.get(idx.as_usize()).copied().flatten()
+    pub fn tx(&self, idx: TxIndex) -> Option<&SnapTx> {
+        self.txs.get(idx.as_usize())
     }
 
-    pub fn cluster_of_len(&self) -> usize {
-        self.cluster_of.len()
+    pub fn idx_of(&self, prefix: &TxidPrefix) -> Option<TxIndex> {
+        self.prefix_to_idx.get(prefix).copied()
     }
 
-    pub fn cluster_of_active(&self) -> usize {
-        self.cluster_of.iter().filter(|c| c.is_some()).count()
+    pub fn txs_len(&self) -> usize {
+        self.txs.len()
     }
 
-    /// SFL chunk feerate for a live tx, or `None` if it isn't in any
-    /// cluster. Cheap shortcut for callers that need the rate but not
-    /// the full `CpfpInfo`.
-    pub fn chunk_rate_of(&self, idx: TxIndex) -> Option<FeeRate> {
-        let ClusterRef { cluster_id, local } = self.cluster_of(idx)?;
-        Some(
-            self.clusters[cluster_id.as_usize()]
-                .chunk_of(local)
-                .fee_rate(),
-        )
+    /// Effective chunk rate for a live tx by prefix, or `None` if the
+    /// tx isn't in this snapshot.
+    pub fn chunk_rate_for(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
+        let idx = self.idx_of(prefix)?;
+        Some(self.txs[idx.as_usize()].chunk_rate)
     }
 }

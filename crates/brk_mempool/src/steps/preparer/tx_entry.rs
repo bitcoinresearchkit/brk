@@ -1,29 +1,27 @@
 use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize, Weight};
 use smallvec::SmallVec;
 
-/// A mempool transaction entry.
-///
-/// Stores only immutable per-tx facts. Ancestor aggregates are
-/// deliberately not cached: they're derivable from the live
-/// dependency graph, and any cached copy would go stale the moment
-/// any ancestor confirms or is replaced.
+/// A mempool transaction entry. Carries the per-tx facts needed for
+/// projection, plus the snapshot-time `chunk_rate` (Core's cluster-mempool
+/// chunk fee rate, or the proxy fallback) used as the effective rate
+/// for partitioning, fee tiers, and CPFP.
 #[derive(Debug, Clone)]
 pub struct TxEntry {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
     pub weight: Weight,
-    /// Serialized tx size in bytes (witness + non-witness), from the raw tx.
+    /// Serialized tx size in bytes (witness + non-witness).
     pub size: u64,
-    /// Parent txid prefixes (most txs have 0-2 parents).
-    ///
-    /// May reference parents no longer in the pool. Consumers resolve
-    /// against the live pool and drop misses, so staleness here is
-    /// self-healing.
     pub depends: SmallVec<[TxidPrefix; 2]>,
     pub first_seen: Timestamp,
     /// BIP-125 explicit signaling: any input has sequence < 0xfffffffe.
     pub rbf: bool,
+    /// Effective per-vbyte rate Core would mine this tx at. From
+    /// `MempoolEntryInfo::chunk_rate()`: Core 31+ uses `fees.chunk /
+    /// (chunkweight/4)`, older Core falls back to
+    /// `max(ancestor_rate, descendant_pkg_rate)`.
+    pub chunk_rate: FeeRate,
 }
 
 impl TxEntry {
@@ -37,6 +35,7 @@ impl TxEntry {
             depends: info.depends.iter().map(TxidPrefix::from).collect(),
             first_seen: info.first_seen,
             rbf,
+            chunk_rate: info.chunk_rate(),
         }
     }
 

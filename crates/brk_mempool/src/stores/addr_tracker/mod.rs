@@ -66,9 +66,9 @@ impl AddrTracker {
     }
 
     /// Fold a single newly-resolved input into the per-address stats.
-    /// Called by the Resolver after a prevout that was previously
-    /// `None` has been filled. Inputs whose prevout doesn't resolve
-    /// to an addr are no-ops.
+    /// Called by the prevout-fill paths after a prevout that was
+    /// previously `None` has been filled. Inputs whose prevout doesn't
+    /// resolve to an addr are no-ops.
     pub fn add_input(&mut self, txid: &Txid, prevout: &TxOut) {
         let Some(bytes) = prevout.addr_bytes() else {
             return;

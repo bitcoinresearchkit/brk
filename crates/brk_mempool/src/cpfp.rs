@@ -1,108 +1,23 @@
-//! CPFP (Child Pays For Parent) cluster reasoning.
+//! CPFP (Child Pays For Parent) walk over a `Snapshot`'s adjacency.
 //!
-//! Two consumers, one shared converter:
-//!
-//! - **Mempool path** (`Mempool::cpfp_info`): looks up the seed in the
-//!   `Snapshot.cluster_of` map, which already contains the SFL-linearized
-//!   connected component built once per snapshot cycle. No graph walk,
-//!   no SFL recomputation.
-//! - **Confirmed path** (`brk_query::Query::confirmed_cpfp`): builds a
-//!   `Cluster` from same-block parent/child edges on demand.
-//!
-//! Both feed `Cluster::to_cpfp_info`, which walks the cluster from the
-//! seed (parents → ancestors, topo-sweep → descendants), reads the seed's
-//! chunk feerate as `effectiveFeePerVsize`, and emits the wire shape.
-//!
-//! The cluster spans the full connected component (matches mempool.space);
-//! we don't scope to the seed's projected block, which would drop info
-//! when a cluster crosses the projection floor.
+//! The snapshot stores per-tx parent/child edges in `TxIndex` space and
+//! a per-tx `chunk_rate` (Core's `fees.chunk` / `chunkweight` truth, or
+//! the proxy fallback). The walk is a pair of capped DFSes, then the
+//! cluster wire shape is materialized from the visited set.
 
 use brk_types::{
-    CpfpCluster, CpfpClusterChunk, CpfpClusterTx, CpfpEntry, CpfpInfo, FeeRate, SigOps, TxidPrefix,
-    VSize,
+    CpfpCluster, CpfpClusterChunk, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate,
+    SigOps, TxidPrefix, VSize,
 };
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 
 use crate::Mempool;
-use crate::cluster::{Cluster, ClusterRef, LocalIdx};
+use crate::steps::{SnapTx, TxIndex};
 
-impl<I> Cluster<I> {
-    /// Wire-shape `CpfpInfo` for `seed` inside this cluster. `txid` and
-    /// `weight` come straight off each `ClusterNode`, so the converter
-    /// is self-contained — no parallel `members` slice required.
-    pub fn to_cpfp_info(&self, seed: LocalIdx, sigops: SigOps) -> CpfpInfo {
-        let descendants = self.walk_descendants(seed);
-        let best_descendant = descendants
-            .iter()
-            .max_by_key(|e| FeeRate::from((e.fee, e.weight)))
-            .cloned();
-        let seed_node = &self.nodes[seed.as_usize()];
-
-        let vsize = VSize::from(seed_node.weight);
-        let adjusted_vsize = sigops.adjust_vsize(vsize);
-
-        CpfpInfo {
-            ancestors: self.walk_ancestors(seed),
-            best_descendant,
-            descendants,
-            effective_fee_per_vsize: self.chunk_of(seed).fee_rate(),
-            sigops,
-            fee: seed_node.fee,
-            vsize,
-            adjusted_vsize,
-            cluster: self.cluster_view(seed),
-        }
-    }
-
-    /// DFS up the parent edges from `seed`, exclusive. Cluster size is
-    /// capped at 128 by SFL, so a `u128` covers the visited set.
-    fn walk_ancestors(&self, seed: LocalIdx) -> Vec<CpfpEntry> {
-        let mut visited = 1u128 << seed.inner();
-        let mut out: Vec<CpfpEntry> = Vec::new();
-        let mut stack: Vec<LocalIdx> = self.nodes[seed.as_usize()].parents.to_vec();
-        while let Some(idx) = stack.pop() {
-            let b = 1u128 << idx.inner();
-            if visited & b != 0 {
-                continue;
-            }
-            visited |= b;
-            let node = &self.nodes[idx.as_usize()];
-            out.push(CpfpEntry::from(node));
-            stack.extend(node.parents.iter().copied());
-        }
-        out
-    }
-
-    /// Forward sweep over the topo-ordered tail after `seed`. A node is
-    /// a descendant iff any of its parents is `seed` or already-reached.
-    /// Nodes before `seed` can't reach it, so they're skipped entirely.
-    fn walk_descendants(&self, seed: LocalIdx) -> Vec<CpfpEntry> {
-        let seed_pos = seed.as_usize();
-        let mut reachable = 1u128 << seed.inner();
-        let mut out: Vec<CpfpEntry> = Vec::new();
-        for (i, node) in self.nodes.iter().enumerate().skip(seed_pos + 1) {
-            if node
-                .parents
-                .iter()
-                .any(|&p| reachable & (1u128 << p.inner()) != 0)
-            {
-                reachable |= 1u128 << i;
-                out.push(CpfpEntry::from(node));
-            }
-        }
-        out
-    }
-
-    /// Wire-shape `CpfpCluster`. Cluster nodes are stored in topological
-    /// order, so `LocalIdx` maps directly onto `CpfpClusterTxIndex`
-    /// without a permutation lookup.
-    fn cluster_view(&self, seed: LocalIdx) -> CpfpCluster {
-        CpfpCluster {
-            txs: self.nodes.iter().map(CpfpClusterTx::from).collect(),
-            chunks: self.chunks.iter().map(CpfpClusterChunk::from).collect(),
-            chunk_index: self.node_to_chunk[seed.as_usize()].inner(),
-        }
-    }
-}
+/// Cap matches Bitcoin Core's default mempool ancestor/descendant
+/// chain limits and mempool.space's truncation.
+const MAX: usize = 25;
 
 impl Mempool {
     /// CPFP info for a live mempool tx. Returns `None` only when the
@@ -110,20 +25,172 @@ impl Mempool {
     /// confirmed path.
     pub fn cpfp_info(&self, prefix: &TxidPrefix) -> Option<CpfpInfo> {
         let snapshot = self.snapshot();
-        let seed_idx = self.entries().idx_of(prefix)?;
-        let ClusterRef {
-            cluster_id,
-            local: seed_local,
-        } = snapshot.cluster_of(seed_idx)?;
-        let cluster = &snapshot.clusters[cluster_id.as_usize()];
-        let seed_txid = &cluster.nodes[seed_local.as_usize()].txid;
+        let seed_idx = snapshot.idx_of(prefix)?;
+        let seed = snapshot.tx(seed_idx)?;
 
         let sigops = self
-            .txs()
-            .get(seed_txid)
+            .read()
+            .txs
+            .get(&seed.txid)
             .map(|tx| tx.total_sigop_cost)
             .unwrap_or(SigOps::ZERO);
 
-        Some(cluster.to_cpfp_info(seed_local, sigops))
+        Some(build_cpfp_info(&snapshot.txs, seed_idx, seed, sigops))
     }
+}
+
+pub(crate) fn build_cpfp_info(
+    txs: &[SnapTx],
+    seed_idx: TxIndex,
+    seed: &SnapTx,
+    sigops: SigOps,
+) -> CpfpInfo {
+    let ancestors_idx = walk(txs, seed_idx, |t| &t.parents);
+    let descendants_idx = walk(txs, seed_idx, |t| &t.children);
+
+    let ancestors: Vec<CpfpEntry> = ancestors_idx
+        .iter()
+        .filter_map(|&i| txs.get(i.as_usize()).map(CpfpEntry::from))
+        .collect();
+    let descendants: Vec<CpfpEntry> = descendants_idx
+        .iter()
+        .filter_map(|&i| txs.get(i.as_usize()).map(CpfpEntry::from))
+        .collect();
+    let best_descendant = descendants
+        .iter()
+        .max_by_key(|e| FeeRate::from((e.fee, e.weight)))
+        .cloned();
+
+    let cluster = build_cluster(txs, seed_idx, &ancestors_idx, &descendants_idx);
+    let vsize = VSize::from(seed.weight);
+
+    CpfpInfo {
+        ancestors,
+        best_descendant,
+        descendants,
+        effective_fee_per_vsize: seed.chunk_rate,
+        sigops,
+        fee: seed.fee,
+        vsize,
+        adjusted_vsize: sigops.adjust_vsize(vsize),
+        cluster,
+    }
+}
+
+/// Capped DFS from `seed` (exclusive), following the neighbors yielded
+/// by `next`. Used for both the ancestor and descendant walks.
+fn walk(txs: &[SnapTx], seed: TxIndex, next: impl Fn(&SnapTx) -> &[TxIndex]) -> Vec<TxIndex> {
+    let mut visited: FxHashSet<TxIndex> =
+        FxHashSet::with_capacity_and_hasher(MAX + 1, FxBuildHasher);
+    visited.insert(seed);
+    let mut out: Vec<TxIndex> = Vec::with_capacity(MAX);
+    let mut stack: Vec<TxIndex> = txs
+        .get(seed.as_usize())
+        .map(|t| next(t).to_vec())
+        .unwrap_or_default();
+    while let Some(idx) = stack.pop() {
+        if out.len() >= MAX {
+            break;
+        }
+        if !visited.insert(idx) {
+            continue;
+        }
+        out.push(idx);
+        if let Some(t) = txs.get(idx.as_usize()) {
+            stack.extend(next(t).iter().copied());
+        }
+    }
+    out
+}
+
+/// Wire-shape `CpfpCluster`. Members are emitted in `[ancestors..., seed,
+/// descendants...]` order so the seed's index inside the cluster is
+/// `ancestors.len()`. Chunks group txs by exact `chunk_rate` value: under
+/// Core 31 this matches Core's actual chunks; under proxy fallback it
+/// produces a fine-grained but consistent breakdown.
+fn build_cluster(
+    txs: &[SnapTx],
+    seed_idx: TxIndex,
+    ancestors: &[TxIndex],
+    descendants: &[TxIndex],
+) -> CpfpCluster {
+    let members: Vec<TxIndex> = ancestors
+        .iter()
+        .copied()
+        .chain(std::iter::once(seed_idx))
+        .chain(descendants.iter().copied())
+        .collect();
+
+    let local_of: FxHashMap<TxIndex, CpfpClusterTxIndex> = members
+        .iter()
+        .enumerate()
+        .map(|(i, &idx)| (idx, CpfpClusterTxIndex::from(i as u32)))
+        .collect();
+
+    let cluster_txs: Vec<CpfpClusterTx> = members
+        .iter()
+        .filter_map(|&idx| {
+            let t = txs.get(idx.as_usize())?;
+            Some(CpfpClusterTx {
+                txid: t.txid,
+                weight: t.weight,
+                fee: t.fee,
+                parents: t
+                    .parents
+                    .iter()
+                    .filter_map(|p| local_of.get(p).copied())
+                    .collect(),
+            })
+        })
+        .collect();
+
+    let chunks = chunk_groups(&members, txs, &local_of);
+    let seed_local = local_of[&seed_idx];
+    let chunk_index = chunks
+        .iter()
+        .position(|ch| ch.txs.contains(&seed_local))
+        .unwrap_or(0) as u32;
+
+    CpfpCluster {
+        txs: cluster_txs,
+        chunks,
+        chunk_index,
+    }
+}
+
+fn chunk_groups(
+    members: &[TxIndex],
+    txs: &[SnapTx],
+    local_of: &FxHashMap<TxIndex, CpfpClusterTxIndex>,
+) -> Vec<CpfpClusterChunk> {
+    let mut groups: FxHashMap<u64, (FeeRate, SmallVec<[CpfpClusterTxIndex; 4]>)> =
+        FxHashMap::with_capacity_and_hasher(members.len(), FxBuildHasher);
+    let mut order: Vec<u64> = Vec::new();
+    for &idx in members {
+        let Some(t) = txs.get(idx.as_usize()) else {
+            continue;
+        };
+        let key = f64::from(t.chunk_rate).to_bits();
+        let local = local_of[&idx];
+        groups
+            .entry(key)
+            .and_modify(|(_, v)| v.push(local))
+            .or_insert_with(|| {
+                order.push(key);
+                let mut v: SmallVec<[CpfpClusterTxIndex; 4]> = SmallVec::new();
+                v.push(local);
+                (t.chunk_rate, v)
+            });
+    }
+    order.sort_by_key(|k| std::cmp::Reverse(groups[k].0));
+    order
+        .into_iter()
+        .map(|k| {
+            let (rate, txs) = groups.remove(&k).unwrap();
+            CpfpClusterChunk {
+                txs: txs.into_vec(),
+                feerate: rate,
+            }
+        })
+        .collect()
 }

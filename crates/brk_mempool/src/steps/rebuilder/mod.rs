@@ -1,55 +1,52 @@
-use std::{
-    sync::{
-        Arc,
-        atomic::{AtomicBool, AtomicU64, Ordering},
-    },
-    time::{Duration, Instant},
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, AtomicU64, Ordering},
 };
 
-use brk_rpc::Client;
-use brk_types::FeeRate;
-use parking_lot::{Mutex, RwLock};
-use tracing::warn;
+use brk_rpc::BlockTemplateTx;
+use brk_types::{FeeRate, TxidPrefix};
+use parking_lot::RwLock;
+use rustc_hash::FxHashSet;
 
-use crate::stores::MempoolState;
-use clusters::build_clusters;
+use crate::inner::MempoolInner;
+
 use partition::Partitioner;
-#[cfg(debug_assertions)]
-use verify::Verifier;
+use snapshot::{PrefixIndex, builder};
 
-pub(crate) mod clusters;
 mod partition;
 mod snapshot;
-#[cfg(debug_assertions)]
-mod verify;
 
 pub use brk_types::RecommendedFees;
-pub use snapshot::{BlockStats, Snapshot};
+pub use snapshot::{BlockStats, SnapTx, Snapshot, TxIndex};
 
-const MIN_REBUILD_INTERVAL: Duration = Duration::from_secs(1);
 const NUM_BLOCKS: usize = 8;
 
 #[derive(Default)]
 pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
     dirty: AtomicBool,
-    last_rebuild: Mutex<Option<Instant>>,
     rebuild_count: AtomicU64,
-    skip_throttled: AtomicU64,
     skip_clean: AtomicU64,
 }
 
 impl Rebuilder {
     /// Mark dirty if the cycle changed mempool state, then rebuild iff
-    /// the throttle window has elapsed. Marking is sticky: a throttled
-    /// `changed=true` cycle keeps the bit set so a later quiet cycle
-    /// can still trigger the rebuild.
-    pub fn tick(&self, client: &Client, state: &MempoolState, changed: bool) {
-        self.mark_dirty(changed);
+    /// the dirty bit is set. Cycle pacing is the driver loop's job; the
+    /// rebuild itself is pure CPU on already-fetched data.
+    pub fn tick(
+        &self,
+        lock: &RwLock<MempoolInner>,
+        changed: bool,
+        gbt: &[BlockTemplateTx],
+        min_fee: FeeRate,
+    ) {
+        if changed {
+            self.dirty.store(true, Ordering::Release);
+        }
         if !self.try_claim_rebuild() {
             return;
         }
-        self.publish(Self::build_snapshot(client, state));
+        *self.snapshot.write() = Arc::new(Self::build_snapshot(lock, gbt, min_fee));
         self.dirty.store(false, Ordering::Release);
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
@@ -58,62 +55,54 @@ impl Rebuilder {
         self.rebuild_count.load(Ordering::Relaxed)
     }
 
-    pub fn skip_counts(&self) -> (u64, u64) {
-        (
-            self.skip_clean.load(Ordering::Relaxed),
-            self.skip_throttled.load(Ordering::Relaxed),
-        )
+    pub fn skip_clean_count(&self) -> u64 {
+        self.skip_clean.load(Ordering::Relaxed)
     }
 
-    fn build_snapshot(client: &Client, state: &MempoolState) -> Snapshot {
-        let min_fee = Self::fetch_min_fee(client);
-        let entries = state.entries.read();
-        let entries_slice = entries.entries();
+    fn build_snapshot(
+        lock: &RwLock<MempoolInner>,
+        gbt: &[BlockTemplateTx],
+        min_fee: FeeRate,
+    ) -> Snapshot {
+        let (txs, prefix_to_idx) = {
+            let inner = lock.read();
+            builder::build_txs(&inner.txs)
+        };
 
-        let (clusters, cluster_of) = build_clusters(entries_slice);
-        let blocks = Partitioner::partition(&clusters, NUM_BLOCKS);
+        let block0 = Self::block_from_gbt(gbt, &prefix_to_idx);
+        let excluded: FxHashSet<TxIndex> = block0.iter().copied().collect();
+        let rest = Partitioner::partition(&txs, &excluded, NUM_BLOCKS.saturating_sub(1));
 
-        #[cfg(debug_assertions)]
-        Verifier::check(client, &blocks, &clusters, &cluster_of, entries_slice);
+        let mut blocks = Vec::with_capacity(NUM_BLOCKS);
+        blocks.push(block0);
+        blocks.extend(rest);
 
-        Snapshot::build(clusters, cluster_of, blocks, entries_slice, min_fee)
+        Snapshot::build(txs, blocks, prefix_to_idx, min_fee)
+    }
+
+    /// Block 0 from `getblocktemplate`: Core's actual selection. Maps
+    /// each GBT txid back to its `TxIndex` via the per-build prefix
+    /// index. Fetcher already validated GBT ⊆ verbose mempool, so any
+    /// drop here is a same-cycle race and the partitioner picks up the
+    /// slack so callers always see eight blocks.
+    fn block_from_gbt(gbt: &[BlockTemplateTx], prefix_to_idx: &PrefixIndex) -> Vec<TxIndex> {
+        gbt.iter()
+            .filter_map(|t| prefix_to_idx.get(&TxidPrefix::from(&t.txid)).copied())
+            .collect()
     }
 
     pub fn snapshot(&self) -> Arc<Snapshot> {
         self.snapshot.read().clone()
     }
 
-    fn mark_dirty(&self, changed: bool) {
-        if changed {
-            self.dirty.store(true, Ordering::Release);
-        }
-    }
-
-    /// True iff dirty and the throttle window has elapsed. The dirty
-    /// bit is cleared in `tick` only after `publish` returns, so a
-    /// panic in `build_snapshot` retries on the next cycle.
+    /// True iff dirty. The dirty bit is cleared in `tick` only after
+    /// the snapshot is published, so a panic in `build_snapshot`
+    /// retries on the next cycle.
     fn try_claim_rebuild(&self) -> bool {
         if !self.dirty.load(Ordering::Acquire) {
             self.skip_clean.fetch_add(1, Ordering::Relaxed);
             return false;
         }
-        let mut last = self.last_rebuild.lock();
-        if last.is_some_and(|t| t.elapsed() < MIN_REBUILD_INTERVAL) {
-            self.skip_throttled.fetch_add(1, Ordering::Relaxed);
-            return false;
-        }
-        *last = Some(Instant::now());
         true
-    }
-
-    fn fetch_min_fee(client: &Client) -> FeeRate {
-        client.get_mempool_min_fee().unwrap_or_else(|e| {
-            warn!("getmempoolinfo failed, falling back to FeeRate::MIN: {e}");
-            FeeRate::MIN
-        })
-    }
-
-    fn publish(&self, snapshot: Snapshot) {
-        *self.snapshot.write() = Arc::new(snapshot);
     }
 }

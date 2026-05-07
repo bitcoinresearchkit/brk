@@ -14,7 +14,9 @@ impl Selector {
             }
         };
         if end < start {
-            return Err(Error::Parse(format!("range end {end} before start {start}")));
+            return Err(Error::Parse(format!(
+                "range end {end} before start {start}"
+            )));
         }
         Ok((start, end))
     }

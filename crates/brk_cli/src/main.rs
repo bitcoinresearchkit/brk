@@ -63,11 +63,9 @@ pub fn main() -> anyhow::Result<()> {
     let query = AsyncQuery::build(&reader, &indexer, &computer, Some(mempool.clone()));
 
     let mempool_clone = mempool.clone();
-    let query_clone = query.clone();
+    let resolver = query.sync(|q| q.indexer_prevout_resolver());
     thread::spawn(move || {
-        mempool_clone.start_with(|| {
-            query_clone.sync(|q| q.fill_mempool_prevouts());
-        });
+        mempool_clone.start_with(resolver);
     });
 
     let server_config = ServerConfig {

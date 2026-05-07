@@ -194,4 +194,37 @@ impl ClientInner {
             })
             .collect())
     }
+
+    /// Mixed-method batch: each `(method, args)` pair becomes one request
+    /// in a single round-trip. Each result is independently parsed by the
+    /// caller using its own `T`. Outer `Result` fails on transport errors;
+    /// inner `Result`s fail on per-item RPC errors.
+    pub(crate) fn call_mixed_batch(
+        &self,
+        requests: &[(&str, Vec<Value>)],
+    ) -> Result<Vec<Result<Box<RawValue>>>> {
+        let params: Vec<Box<RawValue>> = requests
+            .iter()
+            .map(|(_, args)| serde_json::value::to_raw_value(args).map_err(Error::from))
+            .collect::<Result<Vec<_>>>()?;
+
+        let client = self.client.read();
+        let built: Vec<Request> = requests
+            .iter()
+            .zip(&params)
+            .map(|((method, _), p)| client.build_request(method, Some(p)))
+            .collect();
+
+        let responses = client
+            .send_batch(&built)
+            .map_err(|e| Error::Parse(format!("mixed batch failed: {e}")))?;
+
+        Ok(responses
+            .into_iter()
+            .map(|resp| {
+                let resp = resp.ok_or(Error::Internal("Missing response in JSON-RPC batch"))?;
+                resp.result::<Box<RawValue>>().map_err(Error::from)
+            })
+            .collect())
+    }
 }

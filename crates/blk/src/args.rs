@@ -46,9 +46,8 @@ impl Args {
                     Some((k, v)) => (k.to_string(), v.to_string()),
                     None => (
                         rest.to_string(),
-                        iter.next().ok_or_else(|| {
-                            Error::Parse(format!("--{rest} requires a value"))
-                        })?,
+                        iter.next()
+                            .ok_or_else(|| Error::Parse(format!("--{rest} requires a value")))?,
                     ),
                 };
                 match key.as_str() {
@@ -75,11 +74,6 @@ impl Args {
             .next()
             .ok_or_else(|| Error::Parse("missing selector".into()))?;
         let paths: Vec<Path> = iter.map(|f| Path::parse(&f)).collect::<Result<_>>()?;
-        if paths.is_empty() {
-            return Err(Error::Parse(
-                "missing field. ask for at least one (e.g. `blk 0 hash`)".into(),
-            ));
-        }
         Ok(Self {
             selector,
             paths,
@@ -117,9 +111,7 @@ impl Args {
             .unwrap_or_else(|| self.bitcoin_dir().join(".cookie"));
         let auth = if cookie.is_file() {
             Auth::CookieFile(cookie)
-        } else if let (Some(u), Some(p)) =
-            (self.rpcuser.as_deref(), self.rpcpassword.as_deref())
-        {
+        } else if let (Some(u), Some(p)) = (self.rpcuser.as_deref(), self.rpcpassword.as_deref()) {
             Auth::UserPass(u.to_string(), p.to_string())
         } else {
             return Err(Error::Parse(

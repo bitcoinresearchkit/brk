@@ -1,21 +1,24 @@
 //! Turn `Fetched` raws into a typed diff for the Applier. Pure CPU,
-//! holds read locks on `txs` and `graveyard` for the cycle. New txs
-//! are classified into three buckets:
+//! holds a read guard on `MempoolInner` for the cycle. New txs are
+//! classified into three buckets:
 //!
 //! - **live** - already in `known`, skipped.
 //! - **revivable** - in the graveyard, resurrected from the tombstone.
 //! - **fresh** - decoded from `new_raws`, prevouts resolved against
-//!   `known` or `parent_raws`.
+//!   the live mempool only. Confirmed-parent prevouts land as
+//!   `prevout: None` and are filled post-apply by the resolver passed
+//!   to `Mempool::update_with`.
 //!
 //! Removals are inferred by cross-referencing inputs.
 
 use brk_rpc::RawTx;
 use brk_types::{MempoolEntryInfo, Txid, TxidPrefix};
+use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    steps::fetcher::Fetched,
-    stores::{MempoolState, TxGraveyard, TxStore},
+    MempoolInner,
+    stores::{TxGraveyard, TxStore},
 };
 
 mod tx_addition;
@@ -31,13 +34,16 @@ pub use txs_pulled::TxsPulled;
 pub struct Preparer;
 
 impl Preparer {
-    pub fn prepare(fetched: Fetched, state: &MempoolState) -> TxsPulled {
-        let known = state.txs.read();
-        let graveyard = state.graveyard.read();
+    pub fn prepare(
+        entries_info: Vec<MempoolEntryInfo>,
+        new_raws: FxHashMap<Txid, RawTx>,
+        lock: &RwLock<MempoolInner>,
+    ) -> TxsPulled {
+        let inner = lock.read();
 
-        let live = Self::live_set(&fetched.entries_info);
-        let added = Self::classify_additions(fetched, &known, &graveyard);
-        let removed = TxRemoval::classify(&live, &added, &known);
+        let live = Self::live_set(&entries_info);
+        let added = Self::classify_additions(entries_info, new_raws, &inner.txs, &inner.graveyard);
+        let removed = TxRemoval::classify(&live, &added, &inner.txs);
 
         TxsPulled { added, removed }
     }
@@ -50,19 +56,14 @@ impl Preparer {
     }
 
     fn classify_additions(
-        fetched: Fetched,
+        entries_info: Vec<MempoolEntryInfo>,
+        mut new_raws: FxHashMap<Txid, RawTx>,
         known: &TxStore,
         graveyard: &TxGraveyard,
     ) -> Vec<TxAddition> {
-        let Fetched {
-            entries_info,
-            mut new_raws,
-            parent_raws,
-        } = fetched;
-
         entries_info
             .iter()
-            .filter_map(|info| Self::classify(info, known, graveyard, &mut new_raws, &parent_raws))
+            .filter_map(|info| Self::classify(info, known, graveyard, &mut new_raws))
             .collect()
     }
 
@@ -71,7 +72,6 @@ impl Preparer {
         known: &TxStore,
         graveyard: &TxGraveyard,
         new_raws: &mut FxHashMap<Txid, RawTx>,
-        parent_raws: &FxHashMap<Txid, RawTx>,
     ) -> Option<TxAddition> {
         if known.contains(&info.txid) {
             return None;
@@ -80,6 +80,6 @@ impl Preparer {
             return Some(TxAddition::revived(info, tomb));
         }
         let raw = new_raws.remove(&info.txid)?;
-        Some(TxAddition::fresh(info, raw, parent_raws, known))
+        Some(TxAddition::fresh(info, raw, known))
     }
 }

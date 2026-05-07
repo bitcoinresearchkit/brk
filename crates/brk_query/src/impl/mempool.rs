@@ -1,13 +1,11 @@
+use crate::Query;
 use brk_error::{Error, Result};
-use brk_mempool::{Mempool, RbfForTx, RbfNode};
+use brk_mempool::{Mempool, PrevoutResolver, RbfForTx, RbfNode};
 use brk_types::{
-    CheckedSub, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx, OutputType, RbfResponse, RbfTx,
-    RecommendedFees, ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix,
+    CheckedSub, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx, OutputType, RbfResponse,
+    RbfTx, RecommendedFees, ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix,
     TypeIndex,
 };
-use vecdb::VecIndex;
-
-use crate::Query;
 
 const RECENT_REPLACEMENTS_LIMIT: usize = 25;
 
@@ -49,44 +47,52 @@ impl Query {
         Ok(blocks)
     }
 
-    /// Fill any `prevout == None` inputs on live mempool txs from the
-    /// indexer. Driver calls this once per cycle right after
-    /// `mempool.update()`. Returns true if at least one was filled.
-    pub fn fill_mempool_prevouts(&self) -> bool {
-        let Some(mempool) = self.mempool() else {
-            return false;
-        };
+    /// Indexer-backed resolver for confirmed-parent prevouts. Pass
+    /// the returned closure to `Mempool::start_with` /
+    /// `Mempool::update_with`; the mempool driver calls it post-apply
+    /// for every still-unfilled `prevout == None` input.
+    ///
+    /// Reads go through `read_once` rather than a captured
+    /// `VecReader`: `VecReader::stored_len` is snapshotted at
+    /// construction, so a long-lived reader paired with fresh
+    /// `safe_lengths` would let `safe.tx_index` / `safe.txout_index`
+    /// advance past the reader's frozen length and panic in
+    /// `reader.get()`. `read_once` rebinds against the current vec
+    /// length per call and lets newly indexed parents become
+    /// resolvable on the next cycle.
+    pub fn indexer_prevout_resolver(&self) -> PrevoutResolver {
+        let query = self.clone();
+        let indexer = self.0.indexer;
 
-        let indexer = self.indexer();
-        let stores = &indexer.stores;
-        let safe = self.safe_lengths();
-        let tx_index_len = safe.tx_index;
-        let txout_index_len = safe.txout_index;
-        let first_txout_index_reader = indexer.vecs.transactions.first_txout_index.reader();
-        let output_type_reader = indexer.vecs.outputs.output_type.reader();
-        let type_index_reader = indexer.vecs.outputs.type_index.reader();
-        let value_reader = indexer.vecs.outputs.value.reader();
-        let addr_readers = indexer.vecs.addrs.addr_readers();
-
-        mempool.fill_prevouts(|prev_txid, vout| {
-            let prev_tx_index = stores
+        Box::new(move |prev_txid, vout| {
+            let safe = query.safe_lengths();
+            let prev_tx_index = indexer
+                .stores
                 .txid_prefix_to_tx_index
                 .get(&TxidPrefix::from(prev_txid))
                 .ok()??
                 .into_owned();
-            if prev_tx_index >= tx_index_len {
+            if prev_tx_index >= safe.tx_index {
                 return None;
             }
-            let first_txout: TxOutIndex = first_txout_index_reader.get(prev_tx_index.to_usize());
+            let first_txout: TxOutIndex = indexer
+                .vecs
+                .transactions
+                .first_txout_index
+                .read_once(prev_tx_index)
+                .ok()?;
             let txout = first_txout + vout;
-            if txout >= txout_index_len {
+            if txout >= safe.txout_index {
                 return None;
             }
-            let txout_index = usize::from(txout);
-            let output_type: OutputType = output_type_reader.get(txout_index);
-            let type_index: TypeIndex = type_index_reader.get(txout_index);
-            let value: Sats = value_reader.get(txout_index);
-            let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
+            let output_type: OutputType = indexer.vecs.outputs.output_type.read_once(txout).ok()?;
+            let type_index: TypeIndex = indexer.vecs.outputs.type_index.read_once(txout).ok()?;
+            let value: Sats = indexer.vecs.outputs.value.read_once(txout).ok()?;
+            let script_pubkey = indexer
+                .vecs
+                .addrs
+                .addr_readers()
+                .script_pubkey(output_type, type_index);
             Some(TxOut::from((script_pubkey, value)))
         })
     }
@@ -125,11 +131,7 @@ impl Query {
     /// Layer `mined` + effective fee rate onto an `RbfNode` tree.
     /// Must run after the mempool lock has dropped (effective_fee_rate
     /// re-enters Mempool).
-    fn enrich_rbf_node(
-        &self,
-        node: RbfNode,
-        successor_time: Option<Timestamp>,
-    ) -> ReplacementNode {
+    fn enrich_rbf_node(&self, node: RbfNode, successor_time: Option<Timestamp>) -> ReplacementNode {
         let interval = successor_time
             .and_then(|st| st.checked_sub(node.first_seen))
             .map(|d| *d);

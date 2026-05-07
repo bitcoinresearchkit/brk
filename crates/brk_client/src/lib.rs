@@ -9007,273 +9007,40 @@ impl BrkClient {
         ))
     }
 
-    /// Compact OpenAPI specification
+    /// Health check
     ///
-    /// Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
+    /// Returns the health status of the API server, including uptime information.
     ///
-    /// Endpoint: `GET /api.json`
-    pub fn get_api(&self) -> Result<serde_json::Value> {
-        self.base.get_json(&format!("/api.json"))
+    /// Endpoint: `GET /health`
+    pub fn get_health(&self) -> Result<Health> {
+        self.base.get_json(&format!("/health"))
     }
 
-    /// Address information
+    /// API version
     ///
-    /// Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+    /// Returns the current version of the API server
     ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
-    ///
-    /// Endpoint: `GET /api/address/{address}`
-    pub fn get_address(&self, address: Addr) -> Result<AddrStats> {
-        self.base.get_json(&format!("/api/address/{address}"))
+    /// Endpoint: `GET /version`
+    pub fn get_version(&self) -> Result<String> {
+        self.base.get_json(&format!("/version"))
     }
 
-    /// Address transactions
+    /// Sync status
     ///
-    /// Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+    /// Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
     ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
-    ///
-    /// Endpoint: `GET /api/address/{address}/txs`
-    pub fn get_address_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/address/{address}/txs"))
+    /// Endpoint: `GET /api/server/sync`
+    pub fn get_sync_status(&self) -> Result<SyncStatus> {
+        self.base.get_json(&format!("/api/server/sync"))
     }
 
-    /// Address confirmed transactions
+    /// Disk usage
     ///
-    /// Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
+    /// Returns the disk space used by BRK and Bitcoin data.
     ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-    ///
-    /// Endpoint: `GET /api/address/{address}/txs/chain`
-    pub fn get_address_confirmed_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/address/{address}/txs/chain"))
-    }
-
-    /// Address confirmed transactions (paginated)
-    ///
-    /// Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-    ///
-    /// Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
-    pub fn get_address_confirmed_txs_after(&self, address: Addr, after_txid: Txid) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/address/{address}/txs/chain/{after_txid}"))
-    }
-
-    /// Address mempool transactions
-    ///
-    /// Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
-    ///
-    /// Endpoint: `GET /api/address/{address}/txs/mempool`
-    pub fn get_address_mempool_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/address/{address}/txs/mempool"))
-    }
-
-    /// Address UTXOs
-    ///
-    /// Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
-    ///
-    /// Endpoint: `GET /api/address/{address}/utxo`
-    pub fn get_address_utxos(&self, address: Addr) -> Result<Vec<Utxo>> {
-        self.base.get_json(&format!("/api/address/{address}/utxo"))
-    }
-
-    /// Block hash by height
-    ///
-    /// Retrieve the block hash at a given height. Returns the hash as plain text.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
-    ///
-    /// Endpoint: `GET /api/block-height/{height}`
-    pub fn get_block_by_height(&self, height: Height) -> Result<String> {
-        self.base.get_text(&format!("/api/block-height/{height}"))
-    }
-
-    /// Block information
-    ///
-    /// Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}`
-    pub fn get_block(&self, hash: BlockHash) -> Result<BlockInfo> {
-        self.base.get_json(&format!("/api/block/{hash}"))
-    }
-
-    /// Block header
-    ///
-    /// Returns the hex-encoded 80-byte block header.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/header`
-    pub fn get_block_header(&self, hash: BlockHash) -> Result<String> {
-        self.base.get_text(&format!("/api/block/{hash}/header"))
-    }
-
-    /// Raw block
-    ///
-    /// Returns the raw block data in binary format.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/raw`
-    pub fn get_block_raw(&self, hash: BlockHash) -> Result<Vec<u8>> {
-        self.base.get_bytes(&format!("/api/block/{hash}/raw"))
-    }
-
-    /// Block status
-    ///
-    /// Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/status`
-    pub fn get_block_status(&self, hash: BlockHash) -> Result<BlockStatus> {
-        self.base.get_json(&format!("/api/block/{hash}/status"))
-    }
-
-    /// Transaction ID at index
-    ///
-    /// Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/txid/{index}`
-    pub fn get_block_txid(&self, hash: BlockHash, index: BlockTxIndex) -> Result<String> {
-        self.base.get_text(&format!("/api/block/{hash}/txid/{index}"))
-    }
-
-    /// Block transaction IDs
-    ///
-    /// Retrieve all transaction IDs in a block. Returns an array of txids in block order.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/txids`
-    pub fn get_block_txids(&self, hash: BlockHash) -> Result<Vec<Txid>> {
-        self.base.get_json(&format!("/api/block/{hash}/txids"))
-    }
-
-    /// Block transactions
-    ///
-    /// Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/txs`
-    pub fn get_block_txs(&self, hash: BlockHash) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/block/{hash}/txs"))
-    }
-
-    /// Block transactions (paginated)
-    ///
-    /// Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-    ///
-    /// Endpoint: `GET /api/block/{hash}/txs/{start_index}`
-    pub fn get_block_txs_from_index(&self, hash: BlockHash, start_index: BlockTxIndex) -> Result<Vec<Transaction>> {
-        self.base.get_json(&format!("/api/block/{hash}/txs/{start_index}"))
-    }
-
-    /// Recent blocks
-    ///
-    /// Retrieve the last 10 blocks. Returns block metadata for each block.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-    ///
-    /// Endpoint: `GET /api/blocks`
-    pub fn get_blocks(&self) -> Result<Vec<BlockInfo>> {
-        self.base.get_json(&format!("/api/blocks"))
-    }
-
-    /// Block tip hash
-    ///
-    /// Returns the hash of the last block.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
-    ///
-    /// Endpoint: `GET /api/blocks/tip/hash`
-    pub fn get_block_tip_hash(&self) -> Result<String> {
-        self.base.get_text(&format!("/api/blocks/tip/hash"))
-    }
-
-    /// Block tip height
-    ///
-    /// Returns the height of the last block.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
-    ///
-    /// Endpoint: `GET /api/blocks/tip/height`
-    pub fn get_block_tip_height(&self) -> Result<String> {
-        self.base.get_text(&format!("/api/blocks/tip/height"))
-    }
-
-    /// Blocks from height
-    ///
-    /// Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-    ///
-    /// Endpoint: `GET /api/blocks/{height}`
-    pub fn get_blocks_from_height(&self, height: Height) -> Result<Vec<BlockInfo>> {
-        self.base.get_json(&format!("/api/blocks/{height}"))
-    }
-
-    /// Mempool statistics
-    ///
-    /// Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
-    ///
-    /// Endpoint: `GET /api/mempool`
-    pub fn get_mempool(&self) -> Result<MempoolInfo> {
-        self.base.get_json(&format!("/api/mempool"))
-    }
-
-    /// Mempool content hash
-    ///
-    /// Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
-    ///
-    /// Endpoint: `GET /api/mempool/hash`
-    pub fn get_mempool_hash(&self) -> Result<i64> {
-        self.base.get_json(&format!("/api/mempool/hash"))
-    }
-
-    /// Live BTC/USD price
-    ///
-    /// Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
-    ///
-    /// Endpoint: `GET /api/mempool/price`
-    pub fn get_live_price(&self) -> Result<Dollars> {
-        self.base.get_json(&format!("/api/mempool/price"))
-    }
-
-    /// Recent mempool transactions
-    ///
-    /// Get the last 10 transactions to enter the mempool.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
-    ///
-    /// Endpoint: `GET /api/mempool/recent`
-    pub fn get_mempool_recent(&self) -> Result<Vec<MempoolRecentTx>> {
-        self.base.get_json(&format!("/api/mempool/recent"))
-    }
-
-    /// Mempool transaction IDs
-    ///
-    /// Get all transaction IDs currently in the mempool.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
-    ///
-    /// Endpoint: `GET /api/mempool/txids`
-    pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
-        self.base.get_json(&format!("/api/mempool/txids"))
+    /// Endpoint: `GET /api/server/disk`
+    pub fn get_disk_usage(&self) -> Result<DiskUsage> {
+        self.base.get_json(&format!("/api/server/disk"))
     }
 
     /// Series catalog
@@ -9283,28 +9050,6 @@ impl BrkClient {
     /// Endpoint: `GET /api/series`
     pub fn get_series_tree(&self) -> Result<TreeNode> {
         self.base.get_json(&format!("/api/series"))
-    }
-
-    /// Bulk series data
-    ///
-    /// Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
-    ///
-    /// Endpoint: `GET /api/series/bulk`
-    pub fn get_series_bulk(&self, series: SeriesList, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<SeriesData>>> {
-        let mut query = Vec::new();
-        query.push(format!("series={}", series));
-        query.push(format!("index={}", index));
-        if let Some(v) = start { query.push(format!("start={}", v)); }
-        if let Some(v) = end { query.push(format!("end={}", v)); }
-        if let Some(v) = limit { query.push(format!("limit={}", v)); }
-        if let Some(v) = format { query.push(format!("format={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/series/bulk{}", query_str);
-        if format == Some(Format::CSV) {
-            self.base.get_text(&path).map(FormatResponse::Csv)
-        } else {
-            self.base.get_json(&path).map(FormatResponse::Json)
-        }
     }
 
     /// Series count
@@ -9429,33 +9174,668 @@ impl BrkClient {
         self.base.get_json(&format!("/api/series/{series}/{}/version", index.name()))
     }
 
-    /// Disk usage
+    /// Bulk series data
     ///
-    /// Returns the disk space used by BRK and Bitcoin data.
+    /// Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
     ///
-    /// Endpoint: `GET /api/server/disk`
-    pub fn get_disk_usage(&self) -> Result<DiskUsage> {
-        self.base.get_json(&format!("/api/server/disk"))
+    /// Endpoint: `GET /api/series/bulk`
+    pub fn get_series_bulk(&self, series: SeriesList, index: Index, start: Option<RangeIndex>, end: Option<RangeIndex>, limit: Option<Limit>, format: Option<Format>) -> Result<FormatResponse<Vec<SeriesData>>> {
+        let mut query = Vec::new();
+        query.push(format!("series={}", series));
+        query.push(format!("index={}", index));
+        if let Some(v) = start { query.push(format!("start={}", v)); }
+        if let Some(v) = end { query.push(format!("end={}", v)); }
+        if let Some(v) = limit { query.push(format!("limit={}", v)); }
+        if let Some(v) = format { query.push(format!("format={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/series/bulk{}", query_str);
+        if format == Some(Format::CSV) {
+            self.base.get_text(&path).map(FormatResponse::Csv)
+        } else {
+            self.base.get_json(&path).map(FormatResponse::Json)
+        }
     }
 
-    /// Sync status
+    /// Available URPD cohorts
     ///
-    /// Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+    /// Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
     ///
-    /// Endpoint: `GET /api/server/sync`
-    pub fn get_sync_status(&self) -> Result<SyncStatus> {
-        self.base.get_json(&format!("/api/server/sync"))
+    /// Endpoint: `GET /api/urpd`
+    pub fn list_urpd_cohorts(&self) -> Result<Vec<Cohort>> {
+        self.base.get_json(&format!("/api/urpd"))
     }
 
-    /// Broadcast transaction
+    /// Available URPD dates
     ///
-    /// Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+    /// Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
     ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+    /// Endpoint: `GET /api/urpd/{cohort}/dates`
+    pub fn list_urpd_dates(&self, cohort: Cohort) -> Result<Vec<Date>> {
+        self.base.get_json(&format!("/api/urpd/{cohort}/dates"))
+    }
+
+    /// Latest URPD
     ///
-    /// Endpoint: `POST /api/tx`
-    pub fn post_tx(&self, body: &str) -> Result<Txid> {
-        self.base.post_json(&format!("/api/tx"), body)
+    /// URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+    ///
+    /// See the URPD tag description for the response shape and `agg` options.
+    ///
+    /// Endpoint: `GET /api/urpd/{cohort}`
+    pub fn get_urpd(&self, cohort: Cohort, agg: Option<UrpdAggregation>) -> Result<Urpd> {
+        let mut query = Vec::new();
+        if let Some(v) = agg { query.push(format!("agg={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/urpd/{cohort}{}", query_str);
+        self.base.get_json(&path)
+    }
+
+    /// URPD at date
+    ///
+    /// URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+    ///
+    /// See the URPD tag description for unit conventions and `agg` options.
+    ///
+    /// Endpoint: `GET /api/urpd/{cohort}/{date}`
+    pub fn get_urpd_at(&self, cohort: Cohort, date: &str, agg: Option<UrpdAggregation>) -> Result<Urpd> {
+        let mut query = Vec::new();
+        if let Some(v) = agg { query.push(format!("agg={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/urpd/{cohort}/{date}{}", query_str);
+        self.base.get_json(&path)
+    }
+
+    /// Difficulty adjustment
+    ///
+    /// Get current difficulty adjustment progress and estimates.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
+    ///
+    /// Endpoint: `GET /api/v1/difficulty-adjustment`
+    pub fn get_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
+        self.base.get_json(&format!("/api/v1/difficulty-adjustment"))
+    }
+
+    /// Current BTC price
+    ///
+    /// Returns bitcoin latest price (on-chain derived, USD only).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+    ///
+    /// Endpoint: `GET /api/v1/prices`
+    pub fn get_prices(&self) -> Result<Prices> {
+        self.base.get_json(&format!("/api/v1/prices"))
+    }
+
+    /// Historical price
+    ///
+    /// Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+    ///
+    /// Endpoint: `GET /api/v1/historical-price`
+    pub fn get_historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
+        let mut query = Vec::new();
+        if let Some(v) = timestamp { query.push(format!("timestamp={}", v)); }
+        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
+        let path = format!("/api/v1/historical-price{}", query_str);
+        self.base.get_json(&path)
+    }
+
+    /// Address information
+    ///
+    /// Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
+    ///
+    /// Endpoint: `GET /api/address/{address}`
+    pub fn get_address(&self, address: Addr) -> Result<AddrStats> {
+        self.base.get_json(&format!("/api/address/{address}"))
+    }
+
+    /// Address transactions
+    ///
+    /// Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs`
+    pub fn get_address_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs"))
+    }
+
+    /// Address confirmed transactions
+    ///
+    /// Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/chain`
+    pub fn get_address_confirmed_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs/chain"))
+    }
+
+    /// Address confirmed transactions (paginated)
+    ///
+    /// Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
+    pub fn get_address_confirmed_txs_after(&self, address: Addr, after_txid: Txid) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs/chain/{after_txid}"))
+    }
+
+    /// Address mempool transactions
+    ///
+    /// Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/txs/mempool`
+    pub fn get_address_mempool_txs(&self, address: Addr) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/address/{address}/txs/mempool"))
+    }
+
+    /// Address UTXOs
+    ///
+    /// Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
+    ///
+    /// Endpoint: `GET /api/address/{address}/utxo`
+    pub fn get_address_utxos(&self, address: Addr) -> Result<Vec<Utxo>> {
+        self.base.get_json(&format!("/api/address/{address}/utxo"))
+    }
+
+    /// Validate address
+    ///
+    /// Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
+    ///
+    /// Endpoint: `GET /api/v1/validate-address/{address}`
+    pub fn validate_address(&self, address: &str) -> Result<AddrValidation> {
+        self.base.get_json(&format!("/api/v1/validate-address/{address}"))
+    }
+
+    /// Block information
+    ///
+    /// Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}`
+    pub fn get_block(&self, hash: BlockHash) -> Result<BlockInfo> {
+        self.base.get_json(&format!("/api/block/{hash}"))
+    }
+
+    /// Block (v1)
+    ///
+    /// Returns block details with extras by hash.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/block/{hash}`
+    pub fn get_block_v1(&self, hash: BlockHash) -> Result<BlockInfoV1> {
+        self.base.get_json(&format!("/api/v1/block/{hash}"))
+    }
+
+    /// Block header
+    ///
+    /// Returns the hex-encoded 80-byte block header.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/header`
+    pub fn get_block_header(&self, hash: BlockHash) -> Result<String> {
+        self.base.get_text(&format!("/api/block/{hash}/header"))
+    }
+
+    /// Block hash by height
+    ///
+    /// Retrieve the block hash at a given height. Returns the hash as plain text.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
+    ///
+    /// Endpoint: `GET /api/block-height/{height}`
+    pub fn get_block_by_height(&self, height: Height) -> Result<String> {
+        self.base.get_text(&format!("/api/block-height/{height}"))
+    }
+
+    /// Block by timestamp
+    ///
+    /// Find the block closest to a given UNIX timestamp.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
+    pub fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/timestamp/{timestamp}"))
+    }
+
+    /// Raw block
+    ///
+    /// Returns the raw block data in binary format.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/raw`
+    pub fn get_block_raw(&self, hash: BlockHash) -> Result<Vec<u8>> {
+        self.base.get_bytes(&format!("/api/block/{hash}/raw"))
+    }
+
+    /// Block status
+    ///
+    /// Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/status`
+    pub fn get_block_status(&self, hash: BlockHash) -> Result<BlockStatus> {
+        self.base.get_json(&format!("/api/block/{hash}/status"))
+    }
+
+    /// Block tip height
+    ///
+    /// Returns the height of the last block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+    ///
+    /// Endpoint: `GET /api/blocks/tip/height`
+    pub fn get_block_tip_height(&self) -> Result<String> {
+        self.base.get_text(&format!("/api/blocks/tip/height"))
+    }
+
+    /// Block tip hash
+    ///
+    /// Returns the hash of the last block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+    ///
+    /// Endpoint: `GET /api/blocks/tip/hash`
+    pub fn get_block_tip_hash(&self) -> Result<String> {
+        self.base.get_text(&format!("/api/blocks/tip/hash"))
+    }
+
+    /// Transaction ID at index
+    ///
+    /// Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txid/{index}`
+    pub fn get_block_txid(&self, hash: BlockHash, index: BlockTxIndex) -> Result<String> {
+        self.base.get_text(&format!("/api/block/{hash}/txid/{index}"))
+    }
+
+    /// Block transaction IDs
+    ///
+    /// Retrieve all transaction IDs in a block. Returns an array of txids in block order.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txids`
+    pub fn get_block_txids(&self, hash: BlockHash) -> Result<Vec<Txid>> {
+        self.base.get_json(&format!("/api/block/{hash}/txids"))
+    }
+
+    /// Block transactions
+    ///
+    /// Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txs`
+    pub fn get_block_txs(&self, hash: BlockHash) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/block/{hash}/txs"))
+    }
+
+    /// Block transactions (paginated)
+    ///
+    /// Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+    ///
+    /// Endpoint: `GET /api/block/{hash}/txs/{start_index}`
+    pub fn get_block_txs_from_index(&self, hash: BlockHash, start_index: BlockTxIndex) -> Result<Vec<Transaction>> {
+        self.base.get_json(&format!("/api/block/{hash}/txs/{start_index}"))
+    }
+
+    /// Recent blocks
+    ///
+    /// Retrieve the last 10 blocks. Returns block metadata for each block.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+    ///
+    /// Endpoint: `GET /api/blocks`
+    pub fn get_blocks(&self) -> Result<Vec<BlockInfo>> {
+        self.base.get_json(&format!("/api/blocks"))
+    }
+
+    /// Blocks from height
+    ///
+    /// Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+    ///
+    /// Endpoint: `GET /api/blocks/{height}`
+    pub fn get_blocks_from_height(&self, height: Height) -> Result<Vec<BlockInfo>> {
+        self.base.get_json(&format!("/api/blocks/{height}"))
+    }
+
+    /// Recent blocks with extras
+    ///
+    /// Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/blocks`
+    pub fn get_blocks_v1(&self) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/blocks"))
+    }
+
+    /// Blocks from height with extras
+    ///
+    /// Retrieve up to 15 blocks with extended data going backwards from the given height.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+    ///
+    /// Endpoint: `GET /api/v1/blocks/{height}`
+    pub fn get_blocks_v1_from_height(&self, height: Height) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/blocks/{height}"))
+    }
+
+    /// List all mining pools
+    ///
+    /// Get list of all known mining pools with their identifiers.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pools`
+    pub fn get_pools(&self) -> Result<Vec<PoolInfo>> {
+        self.base.get_json(&format!("/api/v1/mining/pools"))
+    }
+
+    /// Mining pool statistics
+    ///
+    /// Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pools/{time_period}`
+    pub fn get_pool_stats(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
+        self.base.get_json(&format!("/api/v1/mining/pools/{time_period}"))
+    }
+
+    /// Mining pool details
+    ///
+    /// Get detailed information about a specific mining pool including block counts and shares for different time periods.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}`
+    pub fn get_pool(&self, slug: PoolSlug) -> Result<PoolDetail> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}"))
+    }
+
+    /// All pools hashrate (all time)
+    ///
+    /// Get hashrate data for all mining pools.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/pools`
+    pub fn get_pools_hashrate(&self) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate/pools"))
+    }
+
+    /// All pools hashrate
+    ///
+    /// Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
+    pub fn get_pools_hashrate_by_period(&self, time_period: TimePeriod) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate/pools/{time_period}"))
+    }
+
+    /// Mining pool hashrate
+    ///
+    /// Get hashrate history for a specific mining pool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
+    pub fn get_pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/hashrate"))
+    }
+
+    /// Mining pool blocks
+    ///
+    /// Get the 10 most recent blocks mined by a specific pool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
+    pub fn get_pool_blocks(&self, slug: PoolSlug) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks"))
+    }
+
+    /// Mining pool blocks from height
+    ///
+    /// Get 10 blocks mined by a specific pool before (and including) the given height.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
+    pub fn get_pool_blocks_from(&self, slug: PoolSlug, height: Height) -> Result<Vec<BlockInfoV1>> {
+        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks/{height}"))
+    }
+
+    /// Network hashrate (all time)
+    ///
+    /// Get network hashrate and difficulty data for all time.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate`
+    pub fn get_hashrate(&self) -> Result<HashrateSummary> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate"))
+    }
+
+    /// Network hashrate
+    ///
+    /// Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
+    pub fn get_hashrate_by_period(&self, time_period: TimePeriod) -> Result<HashrateSummary> {
+        self.base.get_json(&format!("/api/v1/mining/hashrate/{time_period}"))
+    }
+
+    /// Difficulty adjustments (all time)
+    ///
+    /// Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments`
+    pub fn get_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/difficulty-adjustments"))
+    }
+
+    /// Difficulty adjustments
+    ///
+    /// Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
+    pub fn get_difficulty_adjustments_by_period(&self, time_period: TimePeriod) -> Result<Vec<DifficultyAdjustmentEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/difficulty-adjustments/{time_period}"))
+    }
+
+    /// Mining reward statistics
+    ///
+    /// Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
+    pub fn get_reward_stats(&self, block_count: i64) -> Result<RewardStats> {
+        self.base.get_json(&format!("/api/v1/mining/reward-stats/{block_count}"))
+    }
+
+    /// Block fees
+    ///
+    /// Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
+    pub fn get_block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/fees/{time_period}"))
+    }
+
+    /// Block rewards
+    ///
+    /// Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
+    pub fn get_block_rewards(&self, time_period: TimePeriod) -> Result<Vec<BlockRewardsEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/rewards/{time_period}"))
+    }
+
+    /// Block fee rates
+    ///
+    /// Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
+    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
+    }
+
+    /// Block sizes and weights
+    ///
+    /// Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
+    ///
+    /// Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
+    pub fn get_block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
+        self.base.get_json(&format!("/api/v1/mining/blocks/sizes-weights/{time_period}"))
+    }
+
+    /// Projected mempool blocks
+    ///
+    /// Get projected blocks from the mempool for fee estimation.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/mempool-blocks`
+    pub fn get_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
+        self.base.get_json(&format!("/api/v1/fees/mempool-blocks"))
+    }
+
+    /// Recommended fees
+    ///
+    /// Get recommended fee rates for different confirmation targets.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/recommended`
+    pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
+        self.base.get_json(&format!("/api/v1/fees/recommended"))
+    }
+
+    /// Precise recommended fees
+    ///
+    /// Get recommended fee rates with up to 3 decimal places.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+    ///
+    /// Endpoint: `GET /api/v1/fees/precise`
+    pub fn get_precise_fees(&self) -> Result<RecommendedFees> {
+        self.base.get_json(&format!("/api/v1/fees/precise"))
+    }
+
+    /// Mempool statistics
+    ///
+    /// Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
+    ///
+    /// Endpoint: `GET /api/mempool`
+    pub fn get_mempool(&self) -> Result<MempoolInfo> {
+        self.base.get_json(&format!("/api/mempool"))
+    }
+
+    /// Mempool content hash
+    ///
+    /// Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+    ///
+    /// Endpoint: `GET /api/mempool/hash`
+    pub fn get_mempool_hash(&self) -> Result<i64> {
+        self.base.get_json(&format!("/api/mempool/hash"))
+    }
+
+    /// Mempool transaction IDs
+    ///
+    /// Get all transaction IDs currently in the mempool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
+    ///
+    /// Endpoint: `GET /api/mempool/txids`
+    pub fn get_mempool_txids(&self) -> Result<Vec<Txid>> {
+        self.base.get_json(&format!("/api/mempool/txids"))
+    }
+
+    /// Recent mempool transactions
+    ///
+    /// Get the last 10 transactions to enter the mempool.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+    ///
+    /// Endpoint: `GET /api/mempool/recent`
+    pub fn get_mempool_recent(&self) -> Result<Vec<MempoolRecentTx>> {
+        self.base.get_json(&format!("/api/mempool/recent"))
+    }
+
+    /// Recent RBF replacements
+    ///
+    /// Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+    ///
+    /// Endpoint: `GET /api/v1/replacements`
+    pub fn get_replacements(&self) -> Result<Vec<ReplacementNode>> {
+        self.base.get_json(&format!("/api/v1/replacements"))
+    }
+
+    /// Recent full-RBF replacements
+    ///
+    /// Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+    ///
+    /// Endpoint: `GET /api/v1/fullrbf/replacements`
+    pub fn get_fullrbf_replacements(&self) -> Result<Vec<ReplacementNode>> {
+        self.base.get_json(&format!("/api/v1/fullrbf/replacements"))
+    }
+
+    /// Live BTC/USD price
+    ///
+    /// Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+    ///
+    /// Endpoint: `GET /api/mempool/price`
+    pub fn get_live_price(&self) -> Result<Dollars> {
+        self.base.get_json(&format!("/api/mempool/price"))
     }
 
     /// Txid by index
@@ -9465,6 +9845,28 @@ impl BrkClient {
     /// Endpoint: `GET /api/tx-index/{index}`
     pub fn get_tx_by_index(&self, index: TxIndex) -> Result<String> {
         self.base.get_text(&format!("/api/tx-index/{index}"))
+    }
+
+    /// CPFP info
+    ///
+    /// Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+    ///
+    /// Endpoint: `GET /api/v1/cpfp/{txid}`
+    pub fn get_cpfp(&self, txid: Txid) -> Result<CpfpInfo> {
+        self.base.get_json(&format!("/api/v1/cpfp/{txid}"))
+    }
+
+    /// RBF replacement history
+    ///
+    /// Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+    ///
+    /// Endpoint: `GET /api/v1/tx/{txid}/rbf`
+    pub fn get_tx_rbf(&self, txid: Txid) -> Result<RbfResponse> {
+        self.base.get_json(&format!("/api/v1/tx/{txid}/rbf"))
     }
 
     /// Transaction information
@@ -9489,17 +9891,6 @@ impl BrkClient {
         self.base.get_text(&format!("/api/tx/{txid}/hex"))
     }
 
-    /// Transaction merkle proof
-    ///
-    /// Get the merkle inclusion proof for a transaction.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
-    ///
-    /// Endpoint: `GET /api/tx/{txid}/merkle-proof`
-    pub fn get_tx_merkle_proof(&self, txid: Txid) -> Result<MerkleProof> {
-        self.base.get_json(&format!("/api/tx/{txid}/merkle-proof"))
-    }
-
     /// Transaction merkleblock proof
     ///
     /// Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
@@ -9509,6 +9900,17 @@ impl BrkClient {
     /// Endpoint: `GET /api/tx/{txid}/merkleblock-proof`
     pub fn get_tx_merkleblock_proof(&self, txid: Txid) -> Result<String> {
         self.base.get_text(&format!("/api/tx/{txid}/merkleblock-proof"))
+    }
+
+    /// Transaction merkle proof
+    ///
+    /// Get the merkle inclusion proof for a transaction.
+    ///
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+    ///
+    /// Endpoint: `GET /api/tx/{txid}/merkle-proof`
+    pub fn get_tx_merkle_proof(&self, txid: Txid) -> Result<MerkleProof> {
+        self.base.get_json(&format!("/api/tx/{txid}/merkle-proof"))
     }
 
     /// Output spend status
@@ -9555,388 +9957,6 @@ impl BrkClient {
         self.base.get_json(&format!("/api/tx/{txid}/status"))
     }
 
-    /// Available URPD cohorts
-    ///
-    /// Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
-    ///
-    /// Endpoint: `GET /api/urpd`
-    pub fn list_urpd_cohorts(&self) -> Result<Vec<Cohort>> {
-        self.base.get_json(&format!("/api/urpd"))
-    }
-
-    /// Latest URPD
-    ///
-    /// URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
-    ///
-    /// See the URPD tag description for the response shape and `agg` options.
-    ///
-    /// Endpoint: `GET /api/urpd/{cohort}`
-    pub fn get_urpd(&self, cohort: Cohort, agg: Option<UrpdAggregation>) -> Result<Urpd> {
-        let mut query = Vec::new();
-        if let Some(v) = agg { query.push(format!("agg={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/urpd/{cohort}{}", query_str);
-        self.base.get_json(&path)
-    }
-
-    /// Available URPD dates
-    ///
-    /// Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
-    ///
-    /// Endpoint: `GET /api/urpd/{cohort}/dates`
-    pub fn list_urpd_dates(&self, cohort: Cohort) -> Result<Vec<Date>> {
-        self.base.get_json(&format!("/api/urpd/{cohort}/dates"))
-    }
-
-    /// URPD at date
-    ///
-    /// URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
-    ///
-    /// See the URPD tag description for unit conventions and `agg` options.
-    ///
-    /// Endpoint: `GET /api/urpd/{cohort}/{date}`
-    pub fn get_urpd_at(&self, cohort: Cohort, date: &str, agg: Option<UrpdAggregation>) -> Result<Urpd> {
-        let mut query = Vec::new();
-        if let Some(v) = agg { query.push(format!("agg={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/urpd/{cohort}/{date}{}", query_str);
-        self.base.get_json(&path)
-    }
-
-    /// Block (v1)
-    ///
-    /// Returns block details with extras by hash.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
-    ///
-    /// Endpoint: `GET /api/v1/block/{hash}`
-    pub fn get_block_v1(&self, hash: BlockHash) -> Result<BlockInfoV1> {
-        self.base.get_json(&format!("/api/v1/block/{hash}"))
-    }
-
-    /// Recent blocks with extras
-    ///
-    /// Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-    ///
-    /// Endpoint: `GET /api/v1/blocks`
-    pub fn get_blocks_v1(&self) -> Result<Vec<BlockInfoV1>> {
-        self.base.get_json(&format!("/api/v1/blocks"))
-    }
-
-    /// Blocks from height with extras
-    ///
-    /// Retrieve up to 15 blocks with extended data going backwards from the given height.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-    ///
-    /// Endpoint: `GET /api/v1/blocks/{height}`
-    pub fn get_blocks_v1_from_height(&self, height: Height) -> Result<Vec<BlockInfoV1>> {
-        self.base.get_json(&format!("/api/v1/blocks/{height}"))
-    }
-
-    /// CPFP info
-    ///
-    /// Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
-    ///
-    /// Endpoint: `GET /api/v1/cpfp/{txid}`
-    pub fn get_cpfp(&self, txid: Txid) -> Result<CpfpInfo> {
-        self.base.get_json(&format!("/api/v1/cpfp/{txid}"))
-    }
-
-    /// Difficulty adjustment
-    ///
-    /// Get current difficulty adjustment progress and estimates.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
-    ///
-    /// Endpoint: `GET /api/v1/difficulty-adjustment`
-    pub fn get_difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
-        self.base.get_json(&format!("/api/v1/difficulty-adjustment"))
-    }
-
-    /// Projected mempool blocks
-    ///
-    /// Get projected blocks from the mempool for fee estimation.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
-    ///
-    /// Endpoint: `GET /api/v1/fees/mempool-blocks`
-    pub fn get_mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
-        self.base.get_json(&format!("/api/v1/fees/mempool-blocks"))
-    }
-
-    /// Precise recommended fees
-    ///
-    /// Get recommended fee rates with up to 3 decimal places.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
-    ///
-    /// Endpoint: `GET /api/v1/fees/precise`
-    pub fn get_precise_fees(&self) -> Result<RecommendedFees> {
-        self.base.get_json(&format!("/api/v1/fees/precise"))
-    }
-
-    /// Recommended fees
-    ///
-    /// Get recommended fee rates for different confirmation targets.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
-    ///
-    /// Endpoint: `GET /api/v1/fees/recommended`
-    pub fn get_recommended_fees(&self) -> Result<RecommendedFees> {
-        self.base.get_json(&format!("/api/v1/fees/recommended"))
-    }
-
-    /// Recent full-RBF replacements
-    ///
-    /// Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
-    ///
-    /// Endpoint: `GET /api/v1/fullrbf/replacements`
-    pub fn get_fullrbf_replacements(&self) -> Result<Vec<ReplacementNode>> {
-        self.base.get_json(&format!("/api/v1/fullrbf/replacements"))
-    }
-
-    /// Historical price
-    ///
-    /// Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
-    ///
-    /// Endpoint: `GET /api/v1/historical-price`
-    pub fn get_historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
-        let mut query = Vec::new();
-        if let Some(v) = timestamp { query.push(format!("timestamp={}", v)); }
-        let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
-        let path = format!("/api/v1/historical-price{}", query_str);
-        self.base.get_json(&path)
-    }
-
-    /// Block fee rates
-    ///
-    /// Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
-    pub fn get_block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/fee-rates/{time_period}"))
-    }
-
-    /// Block fees
-    ///
-    /// Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
-    pub fn get_block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/fees/{time_period}"))
-    }
-
-    /// Block rewards
-    ///
-    /// Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
-    pub fn get_block_rewards(&self, time_period: TimePeriod) -> Result<Vec<BlockRewardsEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/rewards/{time_period}"))
-    }
-
-    /// Block sizes and weights
-    ///
-    /// Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
-    pub fn get_block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/sizes-weights/{time_period}"))
-    }
-
-    /// Block by timestamp
-    ///
-    /// Find the block closest to a given UNIX timestamp.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
-    pub fn get_block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
-        self.base.get_json(&format!("/api/v1/mining/blocks/timestamp/{timestamp}"))
-    }
-
-    /// Difficulty adjustments (all time)
-    ///
-    /// Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments`
-    pub fn get_difficulty_adjustments(&self) -> Result<Vec<DifficultyAdjustmentEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/difficulty-adjustments"))
-    }
-
-    /// Difficulty adjustments
-    ///
-    /// Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
-    pub fn get_difficulty_adjustments_by_period(&self, time_period: TimePeriod) -> Result<Vec<DifficultyAdjustmentEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/difficulty-adjustments/{time_period}"))
-    }
-
-    /// Network hashrate (all time)
-    ///
-    /// Get network hashrate and difficulty data for all time.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/hashrate`
-    pub fn get_hashrate(&self) -> Result<HashrateSummary> {
-        self.base.get_json(&format!("/api/v1/mining/hashrate"))
-    }
-
-    /// All pools hashrate (all time)
-    ///
-    /// Get hashrate data for all mining pools.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/hashrate/pools`
-    pub fn get_pools_hashrate(&self) -> Result<Vec<PoolHashrateEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/hashrate/pools"))
-    }
-
-    /// All pools hashrate
-    ///
-    /// Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
-    pub fn get_pools_hashrate_by_period(&self, time_period: TimePeriod) -> Result<Vec<PoolHashrateEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/hashrate/pools/{time_period}"))
-    }
-
-    /// Network hashrate
-    ///
-    /// Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
-    pub fn get_hashrate_by_period(&self, time_period: TimePeriod) -> Result<HashrateSummary> {
-        self.base.get_json(&format!("/api/v1/mining/hashrate/{time_period}"))
-    }
-
-    /// Mining pool details
-    ///
-    /// Get detailed information about a specific mining pool including block counts and shares for different time periods.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pool/{slug}`
-    pub fn get_pool(&self, slug: PoolSlug) -> Result<PoolDetail> {
-        self.base.get_json(&format!("/api/v1/mining/pool/{slug}"))
-    }
-
-    /// Mining pool blocks
-    ///
-    /// Get the 10 most recent blocks mined by a specific pool.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
-    pub fn get_pool_blocks(&self, slug: PoolSlug) -> Result<Vec<BlockInfoV1>> {
-        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks"))
-    }
-
-    /// Mining pool blocks from height
-    ///
-    /// Get 10 blocks mined by a specific pool before (and including) the given height.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
-    pub fn get_pool_blocks_from(&self, slug: PoolSlug, height: Height) -> Result<Vec<BlockInfoV1>> {
-        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/blocks/{height}"))
-    }
-
-    /// Mining pool hashrate
-    ///
-    /// Get hashrate history for a specific mining pool.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
-    pub fn get_pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
-        self.base.get_json(&format!("/api/v1/mining/pool/{slug}/hashrate"))
-    }
-
-    /// List all mining pools
-    ///
-    /// Get list of all known mining pools with their identifiers.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pools`
-    pub fn get_pools(&self) -> Result<Vec<PoolInfo>> {
-        self.base.get_json(&format!("/api/v1/mining/pools"))
-    }
-
-    /// Mining pool statistics
-    ///
-    /// Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/pools/{time_period}`
-    pub fn get_pool_stats(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
-        self.base.get_json(&format!("/api/v1/mining/pools/{time_period}"))
-    }
-
-    /// Mining reward statistics
-    ///
-    /// Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
-    ///
-    /// Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
-    pub fn get_reward_stats(&self, block_count: i64) -> Result<RewardStats> {
-        self.base.get_json(&format!("/api/v1/mining/reward-stats/{block_count}"))
-    }
-
-    /// Current BTC price
-    ///
-    /// Returns bitcoin latest price (on-chain derived, USD only).
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
-    ///
-    /// Endpoint: `GET /api/v1/prices`
-    pub fn get_prices(&self) -> Result<Prices> {
-        self.base.get_json(&format!("/api/v1/prices"))
-    }
-
-    /// Recent RBF replacements
-    ///
-    /// Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
-    ///
-    /// Endpoint: `GET /api/v1/replacements`
-    pub fn get_replacements(&self) -> Result<Vec<ReplacementNode>> {
-        self.base.get_json(&format!("/api/v1/replacements"))
-    }
-
     /// Transaction first-seen times
     ///
     /// Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -9952,35 +9972,15 @@ impl BrkClient {
         self.base.get_json(&path)
     }
 
-    /// RBF replacement history
+    /// Broadcast transaction
     ///
-    /// Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+    /// Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
     ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
     ///
-    /// Endpoint: `GET /api/v1/tx/{txid}/rbf`
-    pub fn get_tx_rbf(&self, txid: Txid) -> Result<RbfResponse> {
-        self.base.get_json(&format!("/api/v1/tx/{txid}/rbf"))
-    }
-
-    /// Validate address
-    ///
-    /// Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
-    ///
-    /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
-    ///
-    /// Endpoint: `GET /api/v1/validate-address/{address}`
-    pub fn validate_address(&self, address: &str) -> Result<AddrValidation> {
-        self.base.get_json(&format!("/api/v1/validate-address/{address}"))
-    }
-
-    /// Health check
-    ///
-    /// Returns the health status of the API server, including uptime information.
-    ///
-    /// Endpoint: `GET /health`
-    pub fn get_health(&self) -> Result<Health> {
-        self.base.get_json(&format!("/health"))
+    /// Endpoint: `POST /api/tx`
+    pub fn post_tx(&self, body: &str) -> Result<Txid> {
+        self.base.post_json(&format!("/api/tx"), body)
     }
 
     /// OpenAPI specification
@@ -9992,13 +9992,13 @@ impl BrkClient {
         self.base.get_text(&format!("/openapi.json"))
     }
 
-    /// API version
+    /// Compact OpenAPI specification
     ///
-    /// Returns the current version of the API server
+    /// Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
     ///
-    /// Endpoint: `GET /version`
-    pub fn get_version(&self) -> Result<String> {
-        self.base.get_json(&format!("/version"))
+    /// Endpoint: `GET /api.json`
+    pub fn get_api(&self) -> Result<serde_json::Value> {
+        self.base.get_json(&format!("/api.json"))
     }
 
 }

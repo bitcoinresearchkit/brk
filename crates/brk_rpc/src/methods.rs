@@ -9,8 +9,7 @@ use brk_types::{
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::v30::{
     GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
-    GetBlockVerboseZero, GetBlockchainInfo, GetMempoolInfo, GetRawMempool, GetRawMempoolVerbose,
-    GetTxOut,
+    GetBlockVerboseZero, GetBlockchainInfo, GetMempoolInfo, GetRawMempool, GetTxOut,
 };
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -30,6 +29,94 @@ use crate::{
 /// JSON request body stays well under a megabyte and bitcoind doesn't
 /// spend too long on a single batch before yielding results.
 const BATCH_CHUNK: usize = 2000;
+
+/// Live mempool state fetched in one batched bitcoind round-trip:
+/// `getrawmempool verbose` + `getblocktemplate` + `getmempoolinfo`.
+/// `gbt` is validated to be a subset of `entries` before construction;
+/// callers that want strict consistency should rely on this fact.
+pub struct MempoolState {
+    pub entries: Vec<MempoolEntryInfo>,
+    pub gbt: Vec<BlockTemplateTx>,
+    pub min_fee: FeeRate,
+}
+
+#[derive(Deserialize)]
+struct VerboseEntryRaw {
+    vsize: VSize,
+    weight: Weight,
+    time: Timestamp,
+    #[serde(rename = "ancestorcount")]
+    ancestor_count: u64,
+    #[serde(rename = "ancestorsize")]
+    ancestor_size: VSize,
+    #[serde(rename = "descendantsize")]
+    descendant_size: VSize,
+    fees: VerboseFeesRaw,
+    depends: Vec<String>,
+    #[serde(rename = "chunkweight", default)]
+    chunk_weight: Option<Weight>,
+}
+
+#[derive(Deserialize)]
+struct VerboseFeesRaw {
+    base: Bitcoin,
+    ancestor: Bitcoin,
+    descendant: Bitcoin,
+    #[serde(default)]
+    chunk: Option<Bitcoin>,
+}
+
+#[derive(Deserialize)]
+struct GbtResponseRaw {
+    transactions: Vec<GbtTxRaw>,
+}
+
+#[derive(Deserialize)]
+struct GbtTxRaw {
+    txid: bitcoin::Txid,
+    fee: u64,
+}
+
+fn build_verbose(raw: FxHashMap<String, VerboseEntryRaw>) -> Result<Vec<MempoolEntryInfo>> {
+    raw.into_iter()
+        .map(|(txid_str, e)| {
+            let depends = e
+                .depends
+                .iter()
+                .map(|s| Client::parse_txid(s, "depends txid"))
+                .collect::<Result<Vec<_>>>()?;
+            Ok(MempoolEntryInfo {
+                txid: Client::parse_txid(&txid_str, "mempool txid")?,
+                vsize: e.vsize,
+                weight: e.weight,
+                fee: Sats::from(e.fees.base),
+                first_seen: e.time,
+                ancestor_count: e.ancestor_count,
+                ancestor_size: e.ancestor_size,
+                ancestor_fee: Sats::from(e.fees.ancestor),
+                descendant_size: e.descendant_size,
+                descendant_fee: Sats::from(e.fees.descendant),
+                chunk_fee: e.fees.chunk.map(Sats::from),
+                chunk_weight: e.chunk_weight,
+                depends,
+            })
+        })
+        .collect()
+}
+
+fn build_gbt(raw: GbtResponseRaw) -> Vec<BlockTemplateTx> {
+    raw.transactions
+        .into_iter()
+        .map(|t| BlockTemplateTx {
+            txid: Txid::from(t.txid),
+            fee: Sats::from(t.fee),
+        })
+        .collect()
+}
+
+fn build_min_fee(raw: GetMempoolInfo) -> FeeRate {
+    FeeRate::from(raw.mempool_min_fee * 100_000.0)
+}
 
 impl Client {
     pub fn get_blockchain_info(&self) -> Result<BlockchainInfo> {
@@ -181,46 +268,10 @@ impl Client {
         }
     }
 
-    /// Live `mempoolminfee` in sat/vB, already maxed against `minrelaytxfee`
-    /// per Core's contract. Wallets must pay at least this rate or bitcoind
-    /// will reject the broadcast; rises above the relay floor when the
-    /// mempool is purging by fee.
-    pub fn get_mempool_min_fee(&self) -> Result<FeeRate> {
-        let r: GetMempoolInfo = self.0.call_with_retry("getmempoolinfo", &[])?;
-        Ok(FeeRate::from(r.mempool_min_fee * 100_000.0))
-    }
-
     pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
         let r: GetRawMempool = self.0.call_with_retry("getrawmempool", &[])?;
         r.0.iter()
             .map(|s| Self::parse_txid(s, "mempool txid"))
-            .collect()
-    }
-
-    /// Get all mempool entries with their fee data in a single RPC call
-    pub fn get_raw_mempool_verbose(&self) -> Result<Vec<MempoolEntryInfo>> {
-        let r: GetRawMempoolVerbose = self
-            .0
-            .call_with_retry("getrawmempool", &[Value::Bool(true)])?;
-        r.0.into_iter()
-            .map(|(txid_str, entry)| {
-                let depends = entry
-                    .depends
-                    .iter()
-                    .map(|s| Self::parse_txid(s, "depends txid"))
-                    .collect::<Result<Vec<_>>>()?;
-                Ok(MempoolEntryInfo {
-                    txid: Self::parse_txid(&txid_str, "mempool txid")?,
-                    vsize: VSize::from(entry.vsize as u64),
-                    weight: Weight::from(entry.weight as u64),
-                    fee: Sats::from(Bitcoin::from(entry.fees.base)),
-                    first_seen: Timestamp::from(entry.time),
-                    ancestor_count: entry.ancestor_count as u64,
-                    ancestor_size: entry.ancestor_size as u64,
-                    ancestor_fee: Sats::from(Bitcoin::from(entry.fees.ancestor)),
-                    depends,
-                })
-            })
             .collect()
     }
 
@@ -327,29 +378,50 @@ impl Client {
         Ok(Txid::from(txid))
     }
 
-    /// Transactions (txid + fee) Bitcoin Core would include in the next
-    /// block it would mine, via `getblocktemplate`. Core requires the
-    /// `segwit` rule to be declared.
-    pub fn get_block_template_txs(&self) -> Result<Vec<BlockTemplateTx>> {
-        #[derive(Deserialize)]
-        struct Response {
-            transactions: Vec<Tx>,
-        }
-        #[derive(Deserialize)]
-        struct Tx {
-            txid: bitcoin::Txid,
-            fee: u64,
+    /// Verbose mempool listing + Core's projected next block + live
+    /// `mempoolminfee`, fetched in a single bitcoind round-trip.
+    /// Validates that every GBT txid is present in the verbose listing
+    /// and returns `Ok(None)` on mismatch so the caller can skip the
+    /// cycle (within-batch races inside bitcoind are rare; persistent
+    /// drift is bug-shaped). Other failures bubble up as `Err`.
+    pub fn fetch_mempool_state(&self) -> Result<Option<MempoolState>> {
+        let requests: [(&str, Vec<Value>); 3] = [
+            ("getrawmempool", vec![Value::Bool(true)]),
+            (
+                "getblocktemplate",
+                vec![serde_json::json!({ "rules": ["segwit"] })],
+            ),
+            ("getmempoolinfo", vec![]),
+        ];
+        let mut out = self.0.call_mixed_batch(&requests)?.into_iter();
+        let verbose_raw = out.next().ok_or(Error::Internal("missing verbose"))??;
+        let gbt_raw = out.next().ok_or(Error::Internal("missing gbt"))??;
+        let info_raw = out.next().ok_or(Error::Internal("missing mempoolinfo"))??;
+
+        let verbose: FxHashMap<String, VerboseEntryRaw> = serde_json::from_str(verbose_raw.get())?;
+        let entries = build_verbose(verbose)?;
+        let gbt = build_gbt(serde_json::from_str(gbt_raw.get())?);
+        let min_fee = build_min_fee(serde_json::from_str(info_raw.get())?);
+
+        #[cfg(debug_assertions)]
+        {
+            let entry_set: rustc_hash::FxHashSet<Txid> = entries.iter().map(|e| e.txid).collect();
+            let missing = gbt.iter().filter(|t| !entry_set.contains(&t.txid)).count();
+            if missing > 0 {
+                tracing::warn!(
+                    missing,
+                    gbt_total = gbt.len(),
+                    "getblocktemplate has {missing} txids not in verbose mempool; skipping cycle"
+                );
+                return Ok(None);
+            }
         }
 
-        let args = [serde_json::json!({ "rules": ["segwit"] })];
-        let r: Response = self.0.call_with_retry("getblocktemplate", &args)?;
-        Ok(r.transactions
-            .into_iter()
-            .map(|t| BlockTemplateTx {
-                txid: Txid::from(t.txid),
-                fee: Sats::from(t.fee),
-            })
-            .collect())
+        Ok(Some(MempoolState {
+            entries,
+            gbt,
+            min_fee,
+        }))
     }
 
     pub fn get_closest_valid_height(&self, hash: BlockHash) -> Result<(Height, BlockHash)> {

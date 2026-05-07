@@ -41,7 +41,11 @@ fn run() -> Result<()> {
     let mode = Mode::pick(args.pretty, args.compact, args.paths.len());
     let reader = Reader::new(args.blocks_dir(), &client);
     let formatter = Formatter::new(mode, args.paths);
-    for block in reader.range(start, end)?.iter() {
+    let parser_threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(2)
+        / 2;
+    for block in reader.range_with(start, end, parser_threads)?.iter() {
         let block = block?;
         let line = formatter.format(&Ctx::new(&block))?;
         if !line.is_empty() {

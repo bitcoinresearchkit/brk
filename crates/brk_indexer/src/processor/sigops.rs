@@ -54,8 +54,7 @@ impl BlockProcessor<'_> {
                     let prev_kind = match source {
                         InputSource::PreviousBlock { output_type, .. } => *output_type,
                         InputSource::SameBlock { outpoint, .. } => {
-                            let local =
-                                (u32::from(outpoint.tx_index()) - base_tx_index) as usize;
+                            let local = (u32::from(outpoint.tx_index()) - base_tx_index) as usize;
                             let vout = u32::from(outpoint.vout()) as usize;
                             txouts[tx_output_offsets[local] + vout].output_type
                         }
@@ -91,8 +90,8 @@ impl BlockProcessor<'_> {
                             } else if rs.is_p2wsh()
                                 && let Some(last) = input.witness.last()
                             {
-                                witness = witness
-                                    .saturating_add(Script::from_bytes(last).count_sigops());
+                                witness =
+                                    witness.saturating_add(Script::from_bytes(last).count_sigops());
                             }
                         }
                         OutputType::P2WPKH => {
@@ -100,14 +99,13 @@ impl BlockProcessor<'_> {
                         }
                         OutputType::P2WSH => {
                             if let Some(last) = input.witness.last() {
-                                witness = witness
-                                    .saturating_add(Script::from_bytes(last).count_sigops());
+                                witness =
+                                    witness.saturating_add(Script::from_bytes(last).count_sigops());
                             }
                         }
                         OutputType::P2TR => {}
                         _ => {
-                            legacy = legacy
-                                .saturating_add(input.script_sig.count_sigops_legacy());
+                            legacy = legacy.saturating_add(input.script_sig.count_sigops_legacy());
                         }
                     }
                 }

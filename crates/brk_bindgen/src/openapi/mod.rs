@@ -218,12 +218,7 @@ fn extract_parameters(operation: &Operation, location: ParameterIn) -> Vec<Param
                 let param_type = param
                     .schema
                     .as_ref()
-                    .and_then(|s| match s {
-                        ObjectOrReference::Ref { ref_path, .. } => {
-                            ref_to_type_name(ref_path).map(|s| s.to_string())
-                        }
-                        ObjectOrReference::Object(obj_schema) => schema_to_type_name(obj_schema),
-                    })
+                    .and_then(schema_type_from_schema)
                     .unwrap_or_else(|| "string".to_string());
                 Some(Parameter {
                     name: param.name.clone(),
@@ -269,10 +264,7 @@ fn extract_response_kind(operation: &Operation, spec: &Spec) -> ResponseKind {
 }
 
 fn schema_name_from_content(content: &oas3::spec::MediaType) -> Option<String> {
-    match content.schema.as_ref()? {
-        ObjectOrReference::Ref { ref_path, .. } => Some(ref_to_type_name(ref_path)?.to_string()),
-        ObjectOrReference::Object(schema) => schema_to_type_name(schema),
-    }
+    schema_type_from_schema(content.schema.as_ref()?)
 }
 
 /// Resolves `name` against `components.schemas` and reports whether the
@@ -281,7 +273,10 @@ fn is_numeric_schema(spec: &Spec, name: &str) -> bool {
     let Some(components) = spec.components.as_ref() else {
         return false;
     };
-    let Some(ObjectOrReference::Object(schema)) = components.schemas.get(name) else {
+    let Some(Schema::Object(obj_or_ref)) = components.schemas.get(name) else {
+        return false;
+    };
+    let ObjectOrReference::Object(schema) = obj_or_ref.as_ref() else {
         return false;
     };
     matches!(
@@ -333,19 +328,21 @@ fn schema_to_type_name(schema: &ObjectSchema) -> Option<String> {
     let types: Vec<String> = variants
         .iter()
         .filter_map(|v| match v {
-            ObjectOrReference::Ref { ref_path, .. } => {
-                ref_to_type_name(ref_path).map(|s| s.to_string())
-            }
-            ObjectOrReference::Object(obj) => {
-                // Skip null variants
-                if matches!(
-                    obj.schema_type.as_ref(),
-                    Some(SchemaTypeSet::Single(SchemaType::Null))
-                ) {
-                    return None;
+            Schema::Boolean(_) => None,
+            Schema::Object(obj_or_ref) => match obj_or_ref.as_ref() {
+                ObjectOrReference::Ref { ref_path, .. } => {
+                    ref_to_type_name(ref_path).map(|s| s.to_string())
                 }
-                schema_to_type_name(obj)
-            }
+                ObjectOrReference::Object(obj) => {
+                    if matches!(
+                        obj.schema_type.as_ref(),
+                        Some(SchemaTypeSet::Single(SchemaType::Null))
+                    ) {
+                        return None;
+                    }
+                    schema_to_type_name(obj)
+                }
+            },
         })
         .collect();
 

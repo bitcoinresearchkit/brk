@@ -36,13 +36,20 @@ impl Formatter {
                 row.push('\t');
             }
             for c in ctx.resolve_str(path)?.chars() {
-                row.push(if matches!(c, '\t' | '\n' | '\r') { ' ' } else { c });
+                row.push(if matches!(c, '\t' | '\n' | '\r') {
+                    ' '
+                } else {
+                    c
+                });
             }
         }
         Ok(row)
     }
 
     fn object(&self, ctx: &Ctx) -> Result<Value> {
+        if self.fields.is_empty() {
+            return Ok(ctx.full());
+        }
         let mut obj = Map::with_capacity(self.fields.len());
         for path in &self.fields {
             obj.insert(path.raw.clone(), ctx.resolve(path)?);
@@ -50,4 +57,3 @@ impl Formatter {
         Ok(Value::Object(obj))
     }
 }
-

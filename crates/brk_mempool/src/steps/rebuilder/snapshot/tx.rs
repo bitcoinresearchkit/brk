@@ -1,0 +1,33 @@
+use brk_types::{CpfpEntry, FeeRate, Sats, Txid, VSize, Weight};
+use smallvec::SmallVec;
+
+use super::TxIndex;
+
+/// Frozen per-tx view used by the snapshot. Holds the chunk rate
+/// (Core's `fees.chunk` / `chunkweight` when available, else proxy)
+/// plus resolved parent/child adjacency in `TxIndex` space, so
+/// CPFP queries are a pure walk over `Snapshot.txs`.
+#[derive(Clone, Debug)]
+pub struct SnapTx {
+    pub txid: Txid,
+    pub fee: Sats,
+    pub vsize: VSize,
+    pub weight: Weight,
+    /// Serialized tx size in bytes (witness + non-witness).
+    pub size: u64,
+    pub chunk_rate: FeeRate,
+    /// Direct parents in the live pool (resolved against entry slots
+    /// at build time; cross-pool / confirmed parents are dropped).
+    pub parents: SmallVec<[TxIndex; 2]>,
+    pub children: SmallVec<[TxIndex; 4]>,
+}
+
+impl From<&SnapTx> for CpfpEntry {
+    fn from(t: &SnapTx) -> Self {
+        Self {
+            txid: t.txid,
+            weight: t.weight,
+            fee: t.fee,
+        }
+    }
+}

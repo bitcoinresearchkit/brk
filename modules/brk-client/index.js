@@ -10471,431 +10471,58 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Compact OpenAPI specification
+   * Health check
    *
-   * Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
+   * Returns the health status of the API server, including uptime information.
    *
-   * Endpoint: `GET /api.json`
-   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
-   * @returns {Promise<*>}
+   * Endpoint: `GET /health`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Health) => void }} [options]
+   * @returns {Promise<Health>}
    */
-  async getApi({ signal, onValue } = {}) {
-    const path = `/api.json`;
+  async getHealth({ signal, onValue } = {}) {
+    const path = `/health`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
-   * Address information
+   * API version
    *
-   * Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+   * Returns the current version of the API server
    *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
-   *
-   * Endpoint: `GET /api/address/{address}`
-   *
-   * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: AddrStats) => void }} [options]
-   * @returns {Promise<AddrStats>}
+   * Endpoint: `GET /version`
+   * @param {{ signal?: AbortSignal, onValue?: (value: string) => void }} [options]
+   * @returns {Promise<string>}
    */
-  async getAddress(address, { signal, onValue } = {}) {
-    const path = `/api/address/${address}`;
+  async getVersion({ signal, onValue } = {}) {
+    const path = `/version`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
-   * Address transactions
+   * Sync status
    *
-   * Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+   * Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
    *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
-   *
-   * Endpoint: `GET /api/address/{address}/txs`
-   *
-   * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
+   * Endpoint: `GET /api/server/sync`
+   * @param {{ signal?: AbortSignal, onValue?: (value: SyncStatus) => void }} [options]
+   * @returns {Promise<SyncStatus>}
    */
-  async getAddressTxs(address, { signal, onValue } = {}) {
-    const path = `/api/address/${address}/txs`;
+  async getSyncStatus({ signal, onValue } = {}) {
+    const path = `/api/server/sync`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
-   * Address confirmed transactions
+   * Disk usage
    *
-   * Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
+   * Returns the disk space used by BRK and Bitcoin data.
    *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-   *
-   * Endpoint: `GET /api/address/{address}/txs/chain`
-   *
-   * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
+   * Endpoint: `GET /api/server/disk`
+   * @param {{ signal?: AbortSignal, onValue?: (value: DiskUsage) => void }} [options]
+   * @returns {Promise<DiskUsage>}
    */
-  async getAddressConfirmedTxs(address, { signal, onValue } = {}) {
-    const path = `/api/address/${address}/txs/chain`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Address confirmed transactions (paginated)
-   *
-   * Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
-   *
-   * Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
-   *
-   * @param {Addr} address
-   * @param {Txid} after_txid - Last txid from the previous page (return transactions strictly older than this)
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
-   */
-  async getAddressConfirmedTxsAfter(address, after_txid, { signal, onValue } = {}) {
-    const path = `/api/address/${address}/txs/chain/${after_txid}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Address mempool transactions
-   *
-   * Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
-   *
-   * Endpoint: `GET /api/address/{address}/txs/mempool`
-   *
-   * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
-   */
-  async getAddressMempoolTxs(address, { signal, onValue } = {}) {
-    const path = `/api/address/${address}/txs/mempool`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Address UTXOs
-   *
-   * Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
-   *
-   * Endpoint: `GET /api/address/{address}/utxo`
-   *
-   * @param {Addr} address
-   * @param {{ signal?: AbortSignal, onValue?: (value: Utxo[]) => void }} [options]
-   * @returns {Promise<Utxo[]>}
-   */
-  async getAddressUtxos(address, { signal, onValue } = {}) {
-    const path = `/api/address/${address}/utxo`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block hash by height
-   *
-   * Retrieve the block hash at a given height. Returns the hash as plain text.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
-   *
-   * Endpoint: `GET /api/block-height/{height}`
-   *
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
-   * @returns {Promise<BlockHash>}
-   */
-  async getBlockByHeight(height, { signal, onValue } = {}) {
-    const path = `/api/block-height/${height}`;
-    return this.getText(path, { signal, onValue });
-  }
-
-  /**
-   * Block information
-   *
-   * Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
-   *
-   * Endpoint: `GET /api/block/{hash}`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo) => void }} [options]
-   * @returns {Promise<BlockInfo>}
-   */
-  async getBlock(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block header
-   *
-   * Returns the hex-encoded 80-byte block header.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
-   *
-   * Endpoint: `GET /api/block/{hash}/header`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: Hex) => void }} [options]
-   * @returns {Promise<Hex>}
-   */
-  async getBlockHeader(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/header`;
-    return this.getText(path, { signal, onValue });
-  }
-
-  /**
-   * Raw block
-   *
-   * Returns the raw block data in binary format.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
-   *
-   * Endpoint: `GET /api/block/{hash}/raw`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: Uint8Array) => void }} [options]
-   * @returns {Promise<Uint8Array>}
-   */
-  async getBlockRaw(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/raw`;
-    return this.getBytes(path, { signal, onValue });
-  }
-
-  /**
-   * Block status
-   *
-   * Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
-   *
-   * Endpoint: `GET /api/block/{hash}/status`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockStatus) => void }} [options]
-   * @returns {Promise<BlockStatus>}
-   */
-  async getBlockStatus(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/status`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Transaction ID at index
-   *
-   * Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
-   *
-   * Endpoint: `GET /api/block/{hash}/txid/{index}`
-   *
-   * @param {BlockHash} hash - Bitcoin block hash
-   * @param {BlockTxIndex} index - Transaction index within the block (0-based)
-   * @param {{ signal?: AbortSignal, onValue?: (value: Txid) => void }} [options]
-   * @returns {Promise<Txid>}
-   */
-  async getBlockTxid(hash, index, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/txid/${index}`;
-    return this.getText(path, { signal, onValue });
-  }
-
-  /**
-   * Block transaction IDs
-   *
-   * Retrieve all transaction IDs in a block. Returns an array of txids in block order.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
-   *
-   * Endpoint: `GET /api/block/{hash}/txids`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: Txid[]) => void }} [options]
-   * @returns {Promise<Txid[]>}
-   */
-  async getBlockTxids(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/txids`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block transactions
-   *
-   * Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-   *
-   * Endpoint: `GET /api/block/{hash}/txs`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
-   */
-  async getBlockTxs(hash, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/txs`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block transactions (paginated)
-   *
-   * Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
-   *
-   * Endpoint: `GET /api/block/{hash}/txs/{start_index}`
-   *
-   * @param {BlockHash} hash - Bitcoin block hash
-   * @param {BlockTxIndex} start_index - Starting transaction index within the block (0-based)
-   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
-   * @returns {Promise<Transaction[]>}
-   */
-  async getBlockTxsFromIndex(hash, start_index, { signal, onValue } = {}) {
-    const path = `/api/block/${hash}/txs/${start_index}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recent blocks
-   *
-   * Retrieve the last 10 blocks. Returns block metadata for each block.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-   *
-   * Endpoint: `GET /api/blocks`
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo[]) => void }} [options]
-   * @returns {Promise<BlockInfo[]>}
-   */
-  async getBlocks({ signal, onValue } = {}) {
-    const path = `/api/blocks`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block tip hash
-   *
-   * Returns the hash of the last block.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
-   *
-   * Endpoint: `GET /api/blocks/tip/hash`
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
-   * @returns {Promise<BlockHash>}
-   */
-  async getBlockTipHash({ signal, onValue } = {}) {
-    const path = `/api/blocks/tip/hash`;
-    return this.getText(path, { signal, onValue });
-  }
-
-  /**
-   * Block tip height
-   *
-   * Returns the height of the last block.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
-   *
-   * Endpoint: `GET /api/blocks/tip/height`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Height) => void }} [options]
-   * @returns {Promise<Height>}
-   */
-  async getBlockTipHeight({ signal, onValue } = {}) {
-    const path = `/api/blocks/tip/height`;
-    return Number(await this.getText(path, { signal, onValue: onValue ? (v) => onValue(Number(v)) : undefined }));
-  }
-
-  /**
-   * Blocks from height
-   *
-   * Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
-   *
-   * Endpoint: `GET /api/blocks/{height}`
-   *
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo[]) => void }} [options]
-   * @returns {Promise<BlockInfo[]>}
-   */
-  async getBlocksFromHeight(height, { signal, onValue } = {}) {
-    const path = `/api/blocks/${height}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mempool statistics
-   *
-   * Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
-   *
-   * Endpoint: `GET /api/mempool`
-   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolInfo) => void }} [options]
-   * @returns {Promise<MempoolInfo>}
-   */
-  async getMempool({ signal, onValue } = {}) {
-    const path = `/api/mempool`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mempool content hash
-   *
-   * Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
-   *
-   * Endpoint: `GET /api/mempool/hash`
-   * @param {{ signal?: AbortSignal, onValue?: (value: number) => void }} [options]
-   * @returns {Promise<number>}
-   */
-  async getMempoolHash({ signal, onValue } = {}) {
-    const path = `/api/mempool/hash`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Live BTC/USD price
-   *
-   * Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
-   *
-   * Endpoint: `GET /api/mempool/price`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Dollars) => void }} [options]
-   * @returns {Promise<Dollars>}
-   */
-  async getLivePrice({ signal, onValue } = {}) {
-    const path = `/api/mempool/price`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recent mempool transactions
-   *
-   * Get the last 10 transactions to enter the mempool.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
-   *
-   * Endpoint: `GET /api/mempool/recent`
-   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolRecentTx[]) => void }} [options]
-   * @returns {Promise<MempoolRecentTx[]>}
-   */
-  async getMempoolRecent({ signal, onValue } = {}) {
-    const path = `/api/mempool/recent`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mempool transaction IDs
-   *
-   * Get all transaction IDs currently in the mempool.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
-   *
-   * Endpoint: `GET /api/mempool/txids`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Txid[]) => void }} [options]
-   * @returns {Promise<Txid[]>}
-   */
-  async getMempoolTxids({ signal, onValue } = {}) {
-    const path = `/api/mempool/txids`;
+  async getDiskUsage({ signal, onValue } = {}) {
+    const path = `/api/server/disk`;
     return this.getJson(path, { signal, onValue });
   }
 
@@ -10910,36 +10537,6 @@ class BrkClient extends BrkClientBase {
    */
   async getSeriesTree({ signal, onValue } = {}) {
     const path = `/api/series`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Bulk series data
-   *
-   * Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
-   *
-   * Endpoint: `GET /api/series/bulk`
-   *
-   * @param {SeriesList} series - Requested series
-   * @param {Index} index - Index to query
-   * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
-   * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
-   * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
-   * @param {Format=} [format] - Format of the output
-   * @param {{ signal?: AbortSignal, onValue?: (value: AnySeriesData[] | string) => void }} [options]
-   * @returns {Promise<AnySeriesData[] | string>}
-   */
-  async getSeriesBulk(series, index, start, end, limit, format, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    params.set('series', String(series));
-    params.set('index', String(index));
-    if (start !== undefined) params.set('start', String(start));
-    if (end !== undefined) params.set('end', String(end));
-    if (limit !== undefined) params.set('limit', String(limit));
-    if (format !== undefined) params.set('format', String(format));
-    const query = params.toString();
-    const path = `/api/series/bulk${query ? '?' + query : ''}`;
-    if (format === 'csv') return this.getText(path, { signal, onValue });
     return this.getJson(path, { signal, onValue });
   }
 
@@ -11137,49 +10734,1043 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Disk usage
+   * Bulk series data
    *
-   * Returns the disk space used by BRK and Bitcoin data.
+   * Fetch multiple series in a single request. Supports filtering by index and date range. Returns an array of SeriesData objects. For a single series, use `get_series` instead.
    *
-   * Endpoint: `GET /api/server/disk`
-   * @param {{ signal?: AbortSignal, onValue?: (value: DiskUsage) => void }} [options]
-   * @returns {Promise<DiskUsage>}
+   * Endpoint: `GET /api/series/bulk`
+   *
+   * @param {SeriesList} series - Requested series
+   * @param {Index} index - Index to query
+   * @param {RangeIndex=} [start] - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
+   * @param {RangeIndex=} [end] - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
+   * @param {Limit=} [limit] - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
+   * @param {Format=} [format] - Format of the output
+   * @param {{ signal?: AbortSignal, onValue?: (value: AnySeriesData[] | string) => void }} [options]
+   * @returns {Promise<AnySeriesData[] | string>}
    */
-  async getDiskUsage({ signal, onValue } = {}) {
-    const path = `/api/server/disk`;
+  async getSeriesBulk(series, index, start, end, limit, format, { signal, onValue } = {}) {
+    const params = new URLSearchParams();
+    params.set('series', String(series));
+    params.set('index', String(index));
+    if (start !== undefined) params.set('start', String(start));
+    if (end !== undefined) params.set('end', String(end));
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (format !== undefined) params.set('format', String(format));
+    const query = params.toString();
+    const path = `/api/series/bulk${query ? '?' + query : ''}`;
+    if (format === 'csv') return this.getText(path, { signal, onValue });
     return this.getJson(path, { signal, onValue });
   }
 
   /**
-   * Sync status
+   * Available URPD cohorts
    *
-   * Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+   * Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
    *
-   * Endpoint: `GET /api/server/sync`
-   * @param {{ signal?: AbortSignal, onValue?: (value: SyncStatus) => void }} [options]
-   * @returns {Promise<SyncStatus>}
+   * Endpoint: `GET /api/urpd`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Cohort[]) => void }} [options]
+   * @returns {Promise<Cohort[]>}
    */
-  async getSyncStatus({ signal, onValue } = {}) {
-    const path = `/api/server/sync`;
+  async listUrpdCohorts({ signal, onValue } = {}) {
+    const path = `/api/urpd`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
-   * Broadcast transaction
+   * Available URPD dates
    *
-   * Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+   * Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
    *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+   * Endpoint: `GET /api/urpd/{cohort}/dates`
    *
-   * Endpoint: `POST /api/tx`
+   * @param {Cohort} cohort
+   * @param {{ signal?: AbortSignal, onValue?: (value: Date[]) => void }} [options]
+   * @returns {Promise<Date[]>}
+   */
+  async listUrpdDates(cohort, { signal, onValue } = {}) {
+    const path = `/api/urpd/${cohort}/dates`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Latest URPD
    *
-   * @param {string} body - Request body
-   * @param {{ signal?: AbortSignal }} [options]
+   * URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
+   *
+   * See the URPD tag description for the response shape and `agg` options.
+   *
+   * Endpoint: `GET /api/urpd/{cohort}`
+   *
+   * @param {Cohort} cohort
+   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+   * @param {{ signal?: AbortSignal, onValue?: (value: Urpd) => void }} [options]
+   * @returns {Promise<Urpd>}
+   */
+  async getUrpd(cohort, agg, { signal, onValue } = {}) {
+    const params = new URLSearchParams();
+    if (agg !== undefined) params.set('agg', String(agg));
+    const query = params.toString();
+    const path = `/api/urpd/${cohort}${query ? '?' + query : ''}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * URPD at date
+   *
+   * URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
+   *
+   * See the URPD tag description for unit conventions and `agg` options.
+   *
+   * Endpoint: `GET /api/urpd/{cohort}/{date}`
+   *
+   * @param {Cohort} cohort
+   * @param {string} date
+   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
+   * @param {{ signal?: AbortSignal, onValue?: (value: Urpd) => void }} [options]
+   * @returns {Promise<Urpd>}
+   */
+  async getUrpdAt(cohort, date, agg, { signal, onValue } = {}) {
+    const params = new URLSearchParams();
+    if (agg !== undefined) params.set('agg', String(agg));
+    const query = params.toString();
+    const path = `/api/urpd/${cohort}/${date}${query ? '?' + query : ''}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Difficulty adjustment
+   *
+   * Get current difficulty adjustment progress and estimates.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
+   *
+   * Endpoint: `GET /api/v1/difficulty-adjustment`
+   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustment) => void }} [options]
+   * @returns {Promise<DifficultyAdjustment>}
+   */
+  async getDifficultyAdjustment({ signal, onValue } = {}) {
+    const path = `/api/v1/difficulty-adjustment`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Current BTC price
+   *
+   * Returns bitcoin latest price (on-chain derived, USD only).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
+   *
+   * Endpoint: `GET /api/v1/prices`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Prices) => void }} [options]
+   * @returns {Promise<Prices>}
+   */
+  async getPrices({ signal, onValue } = {}) {
+    const path = `/api/v1/prices`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Historical price
+   *
+   * Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+   *
+   * Endpoint: `GET /api/v1/historical-price`
+   *
+   * @param {Timestamp=} [timestamp]
+   * @param {{ signal?: AbortSignal, onValue?: (value: HistoricalPrice) => void }} [options]
+   * @returns {Promise<HistoricalPrice>}
+   */
+  async getHistoricalPrice(timestamp, { signal, onValue } = {}) {
+    const params = new URLSearchParams();
+    if (timestamp !== undefined) params.set('timestamp', String(timestamp));
+    const query = params.toString();
+    const path = `/api/v1/historical-price${query ? '?' + query : ''}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address information
+   *
+   * Retrieve address information including balance and transaction counts. Supports all standard Bitcoin address types (P2PKH, P2SH, P2WPKH, P2WSH, P2TR).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address)*
+   *
+   * Endpoint: `GET /api/address/{address}`
+   *
+   * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onValue?: (value: AddrStats) => void }} [options]
+   * @returns {Promise<AddrStats>}
+   */
+  async getAddress(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address transactions
+   *
+   * Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
+   *
+   * Endpoint: `GET /api/address/{address}/txs`
+   *
+   * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getAddressTxs(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address confirmed transactions
+   *
+   * Get the first 25 confirmed transactions for an address. For pagination, use the path-style form `/txs/chain/{last_seen_txid}`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+   *
+   * Endpoint: `GET /api/address/{address}/txs/chain`
+   *
+   * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getAddressConfirmedTxs(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs/chain`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address confirmed transactions (paginated)
+   *
+   * Get the next 25 confirmed transactions strictly older than `after_txid` (Esplora-canonical pagination form, matches mempool.space).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-chain)*
+   *
+   * Endpoint: `GET /api/address/{address}/txs/chain/{after_txid}`
+   *
+   * @param {Addr} address
+   * @param {Txid} after_txid - Last txid from the previous page (return transactions strictly older than this)
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getAddressConfirmedTxsAfter(address, after_txid, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs/chain/${after_txid}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address mempool transactions
+   *
+   * Get unconfirmed transactions for an address from the mempool, newest first (up to 50).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions-mempool)*
+   *
+   * Endpoint: `GET /api/address/{address}/txs/mempool`
+   *
+   * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getAddressMempoolTxs(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/txs/mempool`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Address UTXOs
+   *
+   * Get unspent transaction outputs (UTXOs) for an address. Returns txid, vout, value, and confirmation status for each UTXO.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-utxo)*
+   *
+   * Endpoint: `GET /api/address/{address}/utxo`
+   *
+   * @param {Addr} address
+   * @param {{ signal?: AbortSignal, onValue?: (value: Utxo[]) => void }} [options]
+   * @returns {Promise<Utxo[]>}
+   */
+  async getAddressUtxos(address, { signal, onValue } = {}) {
+    const path = `/api/address/${address}/utxo`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Validate address
+   *
+   * Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
+   *
+   * Endpoint: `GET /api/v1/validate-address/{address}`
+   *
+   * @param {string} address - Bitcoin address to validate (can be any string)
+   * @param {{ signal?: AbortSignal, onValue?: (value: AddrValidation) => void }} [options]
+   * @returns {Promise<AddrValidation>}
+   */
+  async validateAddress(address, { signal, onValue } = {}) {
+    const path = `/api/v1/validate-address/${address}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block information
+   *
+   * Retrieve block information by block hash. Returns block metadata including height, timestamp, difficulty, size, weight, and transaction count.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block)*
+   *
+   * Endpoint: `GET /api/block/{hash}`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo) => void }} [options]
+   * @returns {Promise<BlockInfo>}
+   */
+  async getBlock(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block (v1)
+   *
+   * Returns block details with extras by hash.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
+   *
+   * Endpoint: `GET /api/v1/block/{hash}`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1) => void }} [options]
+   * @returns {Promise<BlockInfoV1>}
+   */
+  async getBlockV1(hash, { signal, onValue } = {}) {
+    const path = `/api/v1/block/${hash}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block header
+   *
+   * Returns the hex-encoded 80-byte block header.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-header)*
+   *
+   * Endpoint: `GET /api/block/{hash}/header`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: Hex) => void }} [options]
+   * @returns {Promise<Hex>}
+   */
+  async getBlockHeader(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/header`;
+    return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * Block hash by height
+   *
+   * Retrieve the block hash at a given height. Returns the hash as plain text.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-height)*
+   *
+   * Endpoint: `GET /api/block-height/{height}`
+   *
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
+   * @returns {Promise<BlockHash>}
+   */
+  async getBlockByHeight(height, { signal, onValue } = {}) {
+    const path = `/api/block-height/${height}`;
+    return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * Block by timestamp
+   *
+   * Find the block closest to a given UNIX timestamp.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
+   *
+   * Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
+   *
+   * @param {Timestamp} timestamp
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockTimestamp) => void }} [options]
+   * @returns {Promise<BlockTimestamp>}
+   */
+  async getBlockByTimestamp(timestamp, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/blocks/timestamp/${timestamp}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Raw block
+   *
+   * Returns the raw block data in binary format.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-raw)*
+   *
+   * Endpoint: `GET /api/block/{hash}/raw`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: Uint8Array) => void }} [options]
+   * @returns {Promise<Uint8Array>}
+   */
+  async getBlockRaw(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/raw`;
+    return this.getBytes(path, { signal, onValue });
+  }
+
+  /**
+   * Block status
+   *
+   * Retrieve the status of a block. Returns whether the block is in the best chain and, if so, its height and the hash of the next block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-status)*
+   *
+   * Endpoint: `GET /api/block/{hash}/status`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockStatus) => void }} [options]
+   * @returns {Promise<BlockStatus>}
+   */
+  async getBlockStatus(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/status`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block tip height
+   *
+   * Returns the height of the last block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-height)*
+   *
+   * Endpoint: `GET /api/blocks/tip/height`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Height) => void }} [options]
+   * @returns {Promise<Height>}
+   */
+  async getBlockTipHeight({ signal, onValue } = {}) {
+    const path = `/api/blocks/tip/height`;
+    return Number(await this.getText(path, { signal, onValue: onValue ? (v) => onValue(Number(v)) : undefined }));
+  }
+
+  /**
+   * Block tip hash
+   *
+   * Returns the hash of the last block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-tip-hash)*
+   *
+   * Endpoint: `GET /api/blocks/tip/hash`
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockHash) => void }} [options]
+   * @returns {Promise<BlockHash>}
+   */
+  async getBlockTipHash({ signal, onValue } = {}) {
+    const path = `/api/blocks/tip/hash`;
+    return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * Transaction ID at index
+   *
+   * Retrieve a single transaction ID at a specific index within a block. Returns plain text txid.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-id)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txid/{index}`
+   *
+   * @param {BlockHash} hash - Bitcoin block hash
+   * @param {BlockTxIndex} index - Transaction index within the block (0-based)
+   * @param {{ signal?: AbortSignal, onValue?: (value: Txid) => void }} [options]
    * @returns {Promise<Txid>}
    */
-  async postTx(body, { signal } = {}) {
-    const path = `/api/tx`;
-    return this.postJson(path, body, { signal });
+  async getBlockTxid(hash, index, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/txid/${index}`;
+    return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * Block transaction IDs
+   *
+   * Retrieve all transaction IDs in a block. Returns an array of txids in block order.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transaction-ids)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txids`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: Txid[]) => void }} [options]
+   * @returns {Promise<Txid[]>}
+   */
+  async getBlockTxids(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/txids`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block transactions
+   *
+   * Retrieve transactions in a block by block hash. Returns up to 25 transactions starting from index 0.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txs`
+   *
+   * @param {BlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getBlockTxs(hash, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/txs`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block transactions (paginated)
+   *
+   * Retrieve transactions in a block by block hash, starting from the specified index. Returns up to 25 transactions at a time.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-transactions)*
+   *
+   * Endpoint: `GET /api/block/{hash}/txs/{start_index}`
+   *
+   * @param {BlockHash} hash - Bitcoin block hash
+   * @param {BlockTxIndex} start_index - Starting transaction index within the block (0-based)
+   * @param {{ signal?: AbortSignal, onValue?: (value: Transaction[]) => void }} [options]
+   * @returns {Promise<Transaction[]>}
+   */
+  async getBlockTxsFromIndex(hash, start_index, { signal, onValue } = {}) {
+    const path = `/api/block/${hash}/txs/${start_index}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent blocks
+   *
+   * Retrieve the last 10 blocks. Returns block metadata for each block.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+   *
+   * Endpoint: `GET /api/blocks`
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo[]) => void }} [options]
+   * @returns {Promise<BlockInfo[]>}
+   */
+  async getBlocks({ signal, onValue } = {}) {
+    const path = `/api/blocks`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Blocks from height
+   *
+   * Retrieve up to 10 blocks going backwards from the given height. For example, height=100 returns blocks 100, 99, 98, ..., 91. Height=0 returns only block 0.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*
+   *
+   * Endpoint: `GET /api/blocks/{height}`
+   *
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfo[]) => void }} [options]
+   * @returns {Promise<BlockInfo[]>}
+   */
+  async getBlocksFromHeight(height, { signal, onValue } = {}) {
+    const path = `/api/blocks/${height}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent blocks with extras
+   *
+   * Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+   *
+   * Endpoint: `GET /api/v1/blocks`
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getBlocksV1({ signal, onValue } = {}) {
+    const path = `/api/v1/blocks`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Blocks from height with extras
+   *
+   * Retrieve up to 15 blocks with extended data going backwards from the given height.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
+   *
+   * Endpoint: `GET /api/v1/blocks/{height}`
+   *
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getBlocksV1FromHeight(height, { signal, onValue } = {}) {
+    const path = `/api/v1/blocks/${height}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * List all mining pools
+   *
+   * Get list of all known mining pools with their identifiers.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+   *
+   * Endpoint: `GET /api/v1/mining/pools`
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolInfo[]) => void }} [options]
+   * @returns {Promise<PoolInfo[]>}
+   */
+  async getPools({ signal, onValue } = {}) {
+    const path = `/api/v1/mining/pools`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining pool statistics
+   *
+   * Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
+   *
+   * Endpoint: `GET /api/v1/mining/pools/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolsSummary) => void }} [options]
+   * @returns {Promise<PoolsSummary>}
+   */
+  async getPoolStats(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/pools/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining pool details
+   *
+   * Get detailed information about a specific mining pool including block counts and shares for different time periods.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}`
+   *
+   * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolDetail) => void }} [options]
+   * @returns {Promise<PoolDetail>}
+   */
+  async getPool(slug, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/pool/${slug}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * All pools hashrate (all time)
+   *
+   * Get hashrate data for all mining pools.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate/pools`
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolsHashrate({ signal, onValue } = {}) {
+    const path = `/api/v1/mining/hashrate/pools`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * All pools hashrate
+   *
+   * Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolsHashrateByPeriod(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/hashrate/pools/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining pool hashrate
+   *
+   * Get hashrate history for a specific mining pool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
+   *
+   * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
+   * @returns {Promise<PoolHashrateEntry[]>}
+   */
+  async getPoolHashrate(slug, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/pool/${slug}/hashrate`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining pool blocks
+   *
+   * Get the 10 most recent blocks mined by a specific pool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
+   *
+   * @param {PoolSlug} slug
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getPoolBlocks(slug, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/pool/${slug}/blocks`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining pool blocks from height
+   *
+   * Get 10 blocks mined by a specific pool before (and including) the given height.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+   *
+   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
+   *
+   * @param {PoolSlug} slug
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
+   * @returns {Promise<BlockInfoV1[]>}
+   */
+  async getPoolBlocksFrom(slug, height, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/pool/${slug}/blocks/${height}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Network hashrate (all time)
+   *
+   * Get network hashrate and difficulty data for all time.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate`
+   * @param {{ signal?: AbortSignal, onValue?: (value: HashrateSummary) => void }} [options]
+   * @returns {Promise<HashrateSummary>}
+   */
+  async getHashrate({ signal, onValue } = {}) {
+    const path = `/api/v1/mining/hashrate`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Network hashrate
+   *
+   * Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
+   *
+   * Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: HashrateSummary) => void }} [options]
+   * @returns {Promise<HashrateSummary>}
+   */
+  async getHashrateByPeriod(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/hashrate/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Difficulty adjustments (all time)
+   *
+   * Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+   *
+   * Endpoint: `GET /api/v1/mining/difficulty-adjustments`
+   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
+   * @returns {Promise<DifficultyAdjustmentEntry[]>}
+   */
+  async getDifficultyAdjustments({ signal, onValue } = {}) {
+    const path = `/api/v1/mining/difficulty-adjustments`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Difficulty adjustments
+   *
+   * Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
+   *
+   * Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
+   * @returns {Promise<DifficultyAdjustmentEntry[]>}
+   */
+  async getDifficultyAdjustmentsByPeriod(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/difficulty-adjustments/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mining reward statistics
+   *
+   * Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
+   *
+   * Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
+   *
+   * @param {number} block_count - Number of recent blocks to include
+   * @param {{ signal?: AbortSignal, onValue?: (value: RewardStats) => void }} [options]
+   * @returns {Promise<RewardStats>}
+   */
+  async getRewardStats(block_count, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/reward-stats/${block_count}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block fees
+   *
+   * Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
+   *
+   * Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockFeesEntry[]) => void }} [options]
+   * @returns {Promise<BlockFeesEntry[]>}
+   */
+  async getBlockFees(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/blocks/fees/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block rewards
+   *
+   * Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
+   *
+   * Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockRewardsEntry[]) => void }} [options]
+   * @returns {Promise<BlockRewardsEntry[]>}
+   */
+  async getBlockRewards(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/blocks/rewards/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block fee rates
+   *
+   * Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
+   *
+   * Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockFeeRatesEntry[]) => void }} [options]
+   * @returns {Promise<BlockFeeRatesEntry[]>}
+   */
+  async getBlockFeeRates(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/blocks/fee-rates/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block sizes and weights
+   *
+   * Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
+   *
+   * Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
+   *
+   * @param {TimePeriod} time_period
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockSizesWeights) => void }} [options]
+   * @returns {Promise<BlockSizesWeights>}
+   */
+  async getBlockSizesWeights(time_period, { signal, onValue } = {}) {
+    const path = `/api/v1/mining/blocks/sizes-weights/${time_period}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Projected mempool blocks
+   *
+   * Get projected blocks from the mempool for fee estimation.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
+   *
+   * Endpoint: `GET /api/v1/fees/mempool-blocks`
+   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolBlock[]) => void }} [options]
+   * @returns {Promise<MempoolBlock[]>}
+   */
+  async getMempoolBlocks({ signal, onValue } = {}) {
+    const path = `/api/v1/fees/mempool-blocks`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recommended fees
+   *
+   * Get recommended fee rates for different confirmation targets.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
+   *
+   * Endpoint: `GET /api/v1/fees/recommended`
+   * @param {{ signal?: AbortSignal, onValue?: (value: RecommendedFees) => void }} [options]
+   * @returns {Promise<RecommendedFees>}
+   */
+  async getRecommendedFees({ signal, onValue } = {}) {
+    const path = `/api/v1/fees/recommended`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Precise recommended fees
+   *
+   * Get recommended fee rates with up to 3 decimal places.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
+   *
+   * Endpoint: `GET /api/v1/fees/precise`
+   * @param {{ signal?: AbortSignal, onValue?: (value: RecommendedFees) => void }} [options]
+   * @returns {Promise<RecommendedFees>}
+   */
+  async getPreciseFees({ signal, onValue } = {}) {
+    const path = `/api/v1/fees/precise`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mempool statistics
+   *
+   * Get current mempool statistics including transaction count, total vsize, total fees, and fee histogram.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool)*
+   *
+   * Endpoint: `GET /api/mempool`
+   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolInfo) => void }} [options]
+   * @returns {Promise<MempoolInfo>}
+   */
+  async getMempool({ signal, onValue } = {}) {
+    const path = `/api/mempool`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mempool content hash
+   *
+   * Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+   *
+   * Endpoint: `GET /api/mempool/hash`
+   * @param {{ signal?: AbortSignal, onValue?: (value: number) => void }} [options]
+   * @returns {Promise<number>}
+   */
+  async getMempoolHash({ signal, onValue } = {}) {
+    const path = `/api/mempool/hash`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Mempool transaction IDs
+   *
+   * Get all transaction IDs currently in the mempool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-transaction-ids)*
+   *
+   * Endpoint: `GET /api/mempool/txids`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Txid[]) => void }} [options]
+   * @returns {Promise<Txid[]>}
+   */
+  async getMempoolTxids({ signal, onValue } = {}) {
+    const path = `/api/mempool/txids`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent mempool transactions
+   *
+   * Get the last 10 transactions to enter the mempool.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-recent)*
+   *
+   * Endpoint: `GET /api/mempool/recent`
+   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolRecentTx[]) => void }} [options]
+   * @returns {Promise<MempoolRecentTx[]>}
+   */
+  async getMempoolRecent({ signal, onValue } = {}) {
+    const path = `/api/mempool/recent`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent RBF replacements
+   *
+   * Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
+   *
+   * Endpoint: `GET /api/v1/replacements`
+   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
+   * @returns {Promise<ReplacementNode[]>}
+   */
+  async getReplacements({ signal, onValue } = {}) {
+    const path = `/api/v1/replacements`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Recent full-RBF replacements
+   *
+   * Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
+   *
+   * Endpoint: `GET /api/v1/fullrbf/replacements`
+   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
+   * @returns {Promise<ReplacementNode[]>}
+   */
+  async getFullrbfReplacements({ signal, onValue } = {}) {
+    const path = `/api/v1/fullrbf/replacements`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Live BTC/USD price
+   *
+   * Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
+   *
+   * Endpoint: `GET /api/mempool/price`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Dollars) => void }} [options]
+   * @returns {Promise<Dollars>}
+   */
+  async getLivePrice({ signal, onValue } = {}) {
+    const path = `/api/mempool/price`;
+    return this.getJson(path, { signal, onValue });
   }
 
   /**
@@ -11196,6 +11787,42 @@ class BrkClient extends BrkClientBase {
   async getTxByIndex(index, { signal, onValue } = {}) {
     const path = `/api/tx-index/${index}`;
     return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * CPFP info
+   *
+   * Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
+   *
+   * Endpoint: `GET /api/v1/cpfp/{txid}`
+   *
+   * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onValue?: (value: CpfpInfo) => void }} [options]
+   * @returns {Promise<CpfpInfo>}
+   */
+  async getCpfp(txid, { signal, onValue } = {}) {
+    const path = `/api/v1/cpfp/${txid}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * RBF replacement history
+   *
+   * Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+   *
+   * Endpoint: `GET /api/v1/tx/{txid}/rbf`
+   *
+   * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onValue?: (value: RbfResponse) => void }} [options]
+   * @returns {Promise<RbfResponse>}
+   */
+  async getTxRbf(txid, { signal, onValue } = {}) {
+    const path = `/api/v1/tx/${txid}/rbf`;
+    return this.getJson(path, { signal, onValue });
   }
 
   /**
@@ -11235,24 +11862,6 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Transaction merkle proof
-   *
-   * Get the merkle inclusion proof for a transaction.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
-   *
-   * Endpoint: `GET /api/tx/{txid}/merkle-proof`
-   *
-   * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: MerkleProof) => void }} [options]
-   * @returns {Promise<MerkleProof>}
-   */
-  async getTxMerkleProof(txid, { signal, onValue } = {}) {
-    const path = `/api/tx/${txid}/merkle-proof`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
    * Transaction merkleblock proof
    *
    * Get the merkleblock proof for a transaction (BIP37 format, hex encoded).
@@ -11268,6 +11877,24 @@ class BrkClient extends BrkClientBase {
   async getTxMerkleblockProof(txid, { signal, onValue } = {}) {
     const path = `/api/tx/${txid}/merkleblock-proof`;
     return this.getText(path, { signal, onValue });
+  }
+
+  /**
+   * Transaction merkle proof
+   *
+   * Get the merkle inclusion proof for a transaction.
+   *
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-merkle-proof)*
+   *
+   * Endpoint: `GET /api/tx/{txid}/merkle-proof`
+   *
+   * @param {Txid} txid
+   * @param {{ signal?: AbortSignal, onValue?: (value: MerkleProof) => void }} [options]
+   * @returns {Promise<MerkleProof>}
+   */
+  async getTxMerkleProof(txid, { signal, onValue } = {}) {
+    const path = `/api/tx/${txid}/merkle-proof`;
+    return this.getJson(path, { signal, onValue });
   }
 
   /**
@@ -11344,601 +11971,6 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Available URPD cohorts
-   *
-   * Cohorts for which URPD data is available. Returns names like `all`, `sth`, `lth`, `utxos_under_1h_old`.
-   *
-   * Endpoint: `GET /api/urpd`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Cohort[]) => void }} [options]
-   * @returns {Promise<Cohort[]>}
-   */
-  async listUrpdCohorts({ signal, onValue } = {}) {
-    const path = `/api/urpd`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Latest URPD
-   *
-   * URPD for the most recent available date in the cohort. The response's `date` field echoes which date was served.
-   *
-   * See the URPD tag description for the response shape and `agg` options.
-   *
-   * Endpoint: `GET /api/urpd/{cohort}`
-   *
-   * @param {Cohort} cohort
-   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
-   * @param {{ signal?: AbortSignal, onValue?: (value: Urpd) => void }} [options]
-   * @returns {Promise<Urpd>}
-   */
-  async getUrpd(cohort, agg, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    if (agg !== undefined) params.set('agg', String(agg));
-    const query = params.toString();
-    const path = `/api/urpd/${cohort}${query ? '?' + query : ''}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Available URPD dates
-   *
-   * Dates for which a URPD snapshot is available for the cohort. One entry per UTC day, sorted ascending.
-   *
-   * Endpoint: `GET /api/urpd/{cohort}/dates`
-   *
-   * @param {Cohort} cohort
-   * @param {{ signal?: AbortSignal, onValue?: (value: Date[]) => void }} [options]
-   * @returns {Promise<Date[]>}
-   */
-  async listUrpdDates(cohort, { signal, onValue } = {}) {
-    const path = `/api/urpd/${cohort}/dates`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * URPD at date
-   *
-   * URPD for a (cohort, date) pair. Returns `{ cohort, date, aggregation, close, total_supply, buckets }` where each bucket is `{ price_floor, supply, realized_cap, unrealized_pnl }`.
-   *
-   * See the URPD tag description for unit conventions and `agg` options.
-   *
-   * Endpoint: `GET /api/urpd/{cohort}/{date}`
-   *
-   * @param {Cohort} cohort
-   * @param {string} date
-   * @param {UrpdAggregation=} [agg] - Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.
-   * @param {{ signal?: AbortSignal, onValue?: (value: Urpd) => void }} [options]
-   * @returns {Promise<Urpd>}
-   */
-  async getUrpdAt(cohort, date, agg, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    if (agg !== undefined) params.set('agg', String(agg));
-    const query = params.toString();
-    const path = `/api/urpd/${cohort}/${date}${query ? '?' + query : ''}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block (v1)
-   *
-   * Returns block details with extras by hash.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-v1)*
-   *
-   * Endpoint: `GET /api/v1/block/{hash}`
-   *
-   * @param {BlockHash} hash
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1) => void }} [options]
-   * @returns {Promise<BlockInfoV1>}
-   */
-  async getBlockV1(hash, { signal, onValue } = {}) {
-    const path = `/api/v1/block/${hash}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recent blocks with extras
-   *
-   * Retrieve the last 15 blocks with extended data including pool identification and fee statistics.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-   *
-   * Endpoint: `GET /api/v1/blocks`
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
-   * @returns {Promise<BlockInfoV1[]>}
-   */
-  async getBlocksV1({ signal, onValue } = {}) {
-    const path = `/api/v1/blocks`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Blocks from height with extras
-   *
-   * Retrieve up to 15 blocks with extended data going backwards from the given height.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*
-   *
-   * Endpoint: `GET /api/v1/blocks/{height}`
-   *
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
-   * @returns {Promise<BlockInfoV1[]>}
-   */
-  async getBlocksV1FromHeight(height, { signal, onValue } = {}) {
-    const path = `/api/v1/blocks/${height}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * CPFP info
-   *
-   * Returns ancestors and descendants for a CPFP (Child Pays For Parent) transaction, including the effective fee rate of the package.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-children-pay-for-parent)*
-   *
-   * Endpoint: `GET /api/v1/cpfp/{txid}`
-   *
-   * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: CpfpInfo) => void }} [options]
-   * @returns {Promise<CpfpInfo>}
-   */
-  async getCpfp(txid, { signal, onValue } = {}) {
-    const path = `/api/v1/cpfp/${txid}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Difficulty adjustment
-   *
-   * Get current difficulty adjustment progress and estimates.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustment)*
-   *
-   * Endpoint: `GET /api/v1/difficulty-adjustment`
-   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustment) => void }} [options]
-   * @returns {Promise<DifficultyAdjustment>}
-   */
-  async getDifficultyAdjustment({ signal, onValue } = {}) {
-    const path = `/api/v1/difficulty-adjustment`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Projected mempool blocks
-   *
-   * Get projected blocks from the mempool for fee estimation.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
-   *
-   * Endpoint: `GET /api/v1/fees/mempool-blocks`
-   * @param {{ signal?: AbortSignal, onValue?: (value: MempoolBlock[]) => void }} [options]
-   * @returns {Promise<MempoolBlock[]>}
-   */
-  async getMempoolBlocks({ signal, onValue } = {}) {
-    const path = `/api/v1/fees/mempool-blocks`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Precise recommended fees
-   *
-   * Get recommended fee rates with up to 3 decimal places.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
-   *
-   * Endpoint: `GET /api/v1/fees/precise`
-   * @param {{ signal?: AbortSignal, onValue?: (value: RecommendedFees) => void }} [options]
-   * @returns {Promise<RecommendedFees>}
-   */
-  async getPreciseFees({ signal, onValue } = {}) {
-    const path = `/api/v1/fees/precise`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recommended fees
-   *
-   * Get recommended fee rates for different confirmation targets.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
-   *
-   * Endpoint: `GET /api/v1/fees/recommended`
-   * @param {{ signal?: AbortSignal, onValue?: (value: RecommendedFees) => void }} [options]
-   * @returns {Promise<RecommendedFees>}
-   */
-  async getRecommendedFees({ signal, onValue } = {}) {
-    const path = `/api/v1/fees/recommended`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recent full-RBF replacements
-   *
-   * Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
-   *
-   * Endpoint: `GET /api/v1/fullrbf/replacements`
-   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
-   * @returns {Promise<ReplacementNode[]>}
-   */
-  async getFullrbfReplacements({ signal, onValue } = {}) {
-    const path = `/api/v1/fullrbf/replacements`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Historical price
-   *
-   * Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
-   *
-   * Endpoint: `GET /api/v1/historical-price`
-   *
-   * @param {Timestamp=} [timestamp]
-   * @param {{ signal?: AbortSignal, onValue?: (value: HistoricalPrice) => void }} [options]
-   * @returns {Promise<HistoricalPrice>}
-   */
-  async getHistoricalPrice(timestamp, { signal, onValue } = {}) {
-    const params = new URLSearchParams();
-    if (timestamp !== undefined) params.set('timestamp', String(timestamp));
-    const query = params.toString();
-    const path = `/api/v1/historical-price${query ? '?' + query : ''}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block fee rates
-   *
-   * Get block fee rate percentiles (min, 10th, 25th, median, 75th, 90th, max) for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-feerates)*
-   *
-   * Endpoint: `GET /api/v1/mining/blocks/fee-rates/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockFeeRatesEntry[]) => void }} [options]
-   * @returns {Promise<BlockFeeRatesEntry[]>}
-   */
-  async getBlockFeeRates(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/blocks/fee-rates/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block fees
-   *
-   * Get average total fees per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-fees)*
-   *
-   * Endpoint: `GET /api/v1/mining/blocks/fees/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockFeesEntry[]) => void }} [options]
-   * @returns {Promise<BlockFeesEntry[]>}
-   */
-  async getBlockFees(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/blocks/fees/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block rewards
-   *
-   * Get average coinbase reward (subsidy + fees) per block for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-rewards)*
-   *
-   * Endpoint: `GET /api/v1/mining/blocks/rewards/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockRewardsEntry[]) => void }} [options]
-   * @returns {Promise<BlockRewardsEntry[]>}
-   */
-  async getBlockRewards(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/blocks/rewards/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block sizes and weights
-   *
-   * Get average block sizes and weights for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-sizes-weights)*
-   *
-   * Endpoint: `GET /api/v1/mining/blocks/sizes-weights/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockSizesWeights) => void }} [options]
-   * @returns {Promise<BlockSizesWeights>}
-   */
-  async getBlockSizesWeights(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/blocks/sizes-weights/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Block by timestamp
-   *
-   * Find the block closest to a given UNIX timestamp.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
-   *
-   * Endpoint: `GET /api/v1/mining/blocks/timestamp/{timestamp}`
-   *
-   * @param {Timestamp} timestamp
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockTimestamp) => void }} [options]
-   * @returns {Promise<BlockTimestamp>}
-   */
-  async getBlockByTimestamp(timestamp, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/blocks/timestamp/${timestamp}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Difficulty adjustments (all time)
-   *
-   * Get historical difficulty adjustments including timestamp, block height, difficulty value, and percentage change.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-   *
-   * Endpoint: `GET /api/v1/mining/difficulty-adjustments`
-   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
-   * @returns {Promise<DifficultyAdjustmentEntry[]>}
-   */
-  async getDifficultyAdjustments({ signal, onValue } = {}) {
-    const path = `/api/v1/mining/difficulty-adjustments`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Difficulty adjustments
-   *
-   * Get historical difficulty adjustments for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-difficulty-adjustments)*
-   *
-   * Endpoint: `GET /api/v1/mining/difficulty-adjustments/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: DifficultyAdjustmentEntry[]) => void }} [options]
-   * @returns {Promise<DifficultyAdjustmentEntry[]>}
-   */
-  async getDifficultyAdjustmentsByPeriod(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/difficulty-adjustments/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Network hashrate (all time)
-   *
-   * Get network hashrate and difficulty data for all time.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-   *
-   * Endpoint: `GET /api/v1/mining/hashrate`
-   * @param {{ signal?: AbortSignal, onValue?: (value: HashrateSummary) => void }} [options]
-   * @returns {Promise<HashrateSummary>}
-   */
-  async getHashrate({ signal, onValue } = {}) {
-    const path = `/api/v1/mining/hashrate`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * All pools hashrate (all time)
-   *
-   * Get hashrate data for all mining pools.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-   *
-   * Endpoint: `GET /api/v1/mining/hashrate/pools`
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
-   * @returns {Promise<PoolHashrateEntry[]>}
-   */
-  async getPoolsHashrate({ signal, onValue } = {}) {
-    const path = `/api/v1/mining/hashrate/pools`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * All pools hashrate
-   *
-   * Get hashrate data for all mining pools for a time period. Valid periods: `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrates)*
-   *
-   * Endpoint: `GET /api/v1/mining/hashrate/pools/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
-   * @returns {Promise<PoolHashrateEntry[]>}
-   */
-  async getPoolsHashrateByPeriod(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/hashrate/pools/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Network hashrate
-   *
-   * Get network hashrate and difficulty data for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-hashrate)*
-   *
-   * Endpoint: `GET /api/v1/mining/hashrate/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: HashrateSummary) => void }} [options]
-   * @returns {Promise<HashrateSummary>}
-   */
-  async getHashrateByPeriod(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/hashrate/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining pool details
-   *
-   * Get detailed information about a specific mining pool including block counts and shares for different time periods.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool)*
-   *
-   * Endpoint: `GET /api/v1/mining/pool/{slug}`
-   *
-   * @param {PoolSlug} slug
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolDetail) => void }} [options]
-   * @returns {Promise<PoolDetail>}
-   */
-  async getPool(slug, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/pool/${slug}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining pool blocks
-   *
-   * Get the 10 most recent blocks mined by a specific pool.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-   *
-   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks`
-   *
-   * @param {PoolSlug} slug
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
-   * @returns {Promise<BlockInfoV1[]>}
-   */
-  async getPoolBlocks(slug, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/pool/${slug}/blocks`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining pool blocks from height
-   *
-   * Get 10 blocks mined by a specific pool before (and including) the given height.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
-   *
-   * Endpoint: `GET /api/v1/mining/pool/{slug}/blocks/{height}`
-   *
-   * @param {PoolSlug} slug
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: BlockInfoV1[]) => void }} [options]
-   * @returns {Promise<BlockInfoV1[]>}
-   */
-  async getPoolBlocksFrom(slug, height, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/pool/${slug}/blocks/${height}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining pool hashrate
-   *
-   * Get hashrate history for a specific mining pool.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-hashrate)*
-   *
-   * Endpoint: `GET /api/v1/mining/pool/{slug}/hashrate`
-   *
-   * @param {PoolSlug} slug
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolHashrateEntry[]) => void }} [options]
-   * @returns {Promise<PoolHashrateEntry[]>}
-   */
-  async getPoolHashrate(slug, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/pool/${slug}/hashrate`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * List all mining pools
-   *
-   * Get list of all known mining pools with their identifiers.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-   *
-   * Endpoint: `GET /api/v1/mining/pools`
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolInfo[]) => void }} [options]
-   * @returns {Promise<PoolInfo[]>}
-   */
-  async getPools({ signal, onValue } = {}) {
-    const path = `/api/v1/mining/pools`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining pool statistics
-   *
-   * Get mining pool statistics for a time period. Valid periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pools)*
-   *
-   * Endpoint: `GET /api/v1/mining/pools/{time_period}`
-   *
-   * @param {TimePeriod} time_period
-   * @param {{ signal?: AbortSignal, onValue?: (value: PoolsSummary) => void }} [options]
-   * @returns {Promise<PoolsSummary>}
-   */
-  async getPoolStats(time_period, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/pools/${time_period}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Mining reward statistics
-   *
-   * Get mining reward statistics for the last N blocks including total rewards, fees, and transaction count.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-reward-stats)*
-   *
-   * Endpoint: `GET /api/v1/mining/reward-stats/{block_count}`
-   *
-   * @param {number} block_count - Number of recent blocks to include
-   * @param {{ signal?: AbortSignal, onValue?: (value: RewardStats) => void }} [options]
-   * @returns {Promise<RewardStats>}
-   */
-  async getRewardStats(block_count, { signal, onValue } = {}) {
-    const path = `/api/v1/mining/reward-stats/${block_count}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Current BTC price
-   *
-   * Returns bitcoin latest price (on-chain derived, USD only).
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-price)*
-   *
-   * Endpoint: `GET /api/v1/prices`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Prices) => void }} [options]
-   * @returns {Promise<Prices>}
-   */
-  async getPrices({ signal, onValue } = {}) {
-    const path = `/api/v1/prices`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Recent RBF replacements
-   *
-   * Returns up to 25 most-recent RBF replacement trees across the whole mempool. Each entry has the same shape as `tx_rbf().replacements`.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-replacements)*
-   *
-   * Endpoint: `GET /api/v1/replacements`
-   * @param {{ signal?: AbortSignal, onValue?: (value: ReplacementNode[]) => void }} [options]
-   * @returns {Promise<ReplacementNode[]>}
-   */
-  async getReplacements({ signal, onValue } = {}) {
-    const path = `/api/v1/replacements`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
    * Transaction first-seen times
    *
    * Returns timestamps when transactions were first seen in the mempool. Returns 0 for mined or unknown transactions.
@@ -11960,53 +11992,21 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * RBF replacement history
+   * Broadcast transaction
    *
-   * Returns the RBF replacement tree for a transaction, if any. Both `replacements` and `replaces` are null when the tx has no known RBF history within the mempool monitor's retention window.
+   * Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
    *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-transaction-rbf-history)*
+   * *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
    *
-   * Endpoint: `GET /api/v1/tx/{txid}/rbf`
+   * Endpoint: `POST /api/tx`
    *
-   * @param {Txid} txid
-   * @param {{ signal?: AbortSignal, onValue?: (value: RbfResponse) => void }} [options]
-   * @returns {Promise<RbfResponse>}
+   * @param {string} body - Request body
+   * @param {{ signal?: AbortSignal }} [options]
+   * @returns {Promise<Txid>}
    */
-  async getTxRbf(txid, { signal, onValue } = {}) {
-    const path = `/api/v1/tx/${txid}/rbf`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Validate address
-   *
-   * Validate a Bitcoin address and get information about its type and scriptPubKey. Returns `isvalid: false` with an error message for invalid addresses.
-   *
-   * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-validate)*
-   *
-   * Endpoint: `GET /api/v1/validate-address/{address}`
-   *
-   * @param {string} address - Bitcoin address to validate (can be any string)
-   * @param {{ signal?: AbortSignal, onValue?: (value: AddrValidation) => void }} [options]
-   * @returns {Promise<AddrValidation>}
-   */
-  async validateAddress(address, { signal, onValue } = {}) {
-    const path = `/api/v1/validate-address/${address}`;
-    return this.getJson(path, { signal, onValue });
-  }
-
-  /**
-   * Health check
-   *
-   * Returns the health status of the API server, including uptime information.
-   *
-   * Endpoint: `GET /health`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Health) => void }} [options]
-   * @returns {Promise<Health>}
-   */
-  async getHealth({ signal, onValue } = {}) {
-    const path = `/health`;
-    return this.getJson(path, { signal, onValue });
+  async postTx(body, { signal } = {}) {
+    const path = `/api/tx`;
+    return this.postJson(path, body, { signal });
   }
 
   /**
@@ -12024,16 +12024,16 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * API version
+   * Compact OpenAPI specification
    *
-   * Returns the current version of the API server
+   * Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
    *
-   * Endpoint: `GET /version`
-   * @param {{ signal?: AbortSignal, onValue?: (value: string) => void }} [options]
-   * @returns {Promise<string>}
+   * Endpoint: `GET /api.json`
+   * @param {{ signal?: AbortSignal, onValue?: (value: *) => void }} [options]
+   * @returns {Promise<*>}
    */
-  async getVersion({ signal, onValue } = {}) {
-    const path = `/version`;
+  async getApi({ signal, onValue } = {}) {
+    const path = `/api.json`;
     return this.getJson(path, { signal, onValue });
   }
 

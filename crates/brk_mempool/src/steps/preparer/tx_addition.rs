@@ -1,8 +1,10 @@
 //! Two arrival kinds:
 //!
 //! - **Fresh** - tx unknown to us. Decode the raw bytes, resolve
-//!   prevouts against `known` or `parent_raws`, build a full
-//!   `Transaction` + `Entry`.
+//!   prevouts against the live mempool (same-cycle parents), build a
+//!   full `Transaction` + `Entry`. Confirmed parents land as
+//!   `prevout: None` and are filled post-apply by the resolver passed
+//!   to `Mempool::update_with`.
 //! - **Revived** - tx in the graveyard. Rebuild the `Entry` only
 //!   (preserving `rbf`, `size`). The Applier exhumes the cached tx
 //!   body. No raw decoding.
@@ -11,7 +13,6 @@ use std::mem;
 
 use brk_rpc::RawTx;
 use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
-use rustc_hash::FxHashMap;
 
 use crate::{TxTombstone, stores::TxStore};
 
@@ -23,18 +24,13 @@ pub enum TxAddition {
 }
 
 impl TxAddition {
-    /// Resolves prevouts against the live mempool first, then `parent_raws`.
-    /// Unresolved inputs land with `prevout: None` for later filling by
-    /// the Resolver or by `brk_query` at read time.
-    pub(super) fn fresh(
-        info: &MempoolEntryInfo,
-        raw: RawTx,
-        parent_raws: &FxHashMap<Txid, RawTx>,
-        mempool_txs: &TxStore,
-    ) -> Self {
+    /// Resolves prevouts against the live mempool only. Confirmed
+    /// parents land with `prevout: None` and are filled by the
+    /// resolver supplied to `Mempool::update_with` in the same cycle.
+    pub(super) fn fresh(info: &MempoolEntryInfo, raw: RawTx, mempool_txs: &TxStore) -> Self {
         let total_size = raw.hex.len() / 2;
         let rbf = raw.tx.input.iter().any(|i| i.sequence.is_rbf());
-        let tx = Self::build_tx(info, raw, total_size, mempool_txs, parent_raws);
+        let tx = Self::build_tx(info, raw, total_size, mempool_txs);
         let entry = TxEntry::new(info, total_size as u64, rbf);
         Self::Fresh { tx, entry }
     }
@@ -44,11 +40,10 @@ impl TxAddition {
         mut raw: RawTx,
         total_size: usize,
         mempool_txs: &TxStore,
-        parent_raws: &FxHashMap<Txid, RawTx>,
     ) -> Transaction {
         let input = mem::take(&mut raw.tx.input)
             .into_iter()
-            .map(|txin| Self::build_txin(txin, mempool_txs, parent_raws))
+            .map(|txin| Self::build_txin(txin, mempool_txs))
             .collect();
         let mut tx = Transaction {
             index: None,
@@ -72,14 +67,10 @@ impl TxAddition {
         Self::Revived { entry }
     }
 
-    fn build_txin(
-        txin: bitcoin::TxIn,
-        mempool_txs: &TxStore,
-        parent_raws: &FxHashMap<Txid, RawTx>,
-    ) -> TxIn {
+    fn build_txin(txin: bitcoin::TxIn, mempool_txs: &TxStore) -> TxIn {
         let prev_txid: Txid = txin.previous_output.txid.into();
         let prev_vout = usize::from(Vout::from(txin.previous_output.vout));
-        let prevout = Self::resolve_prevout(&prev_txid, prev_vout, mempool_txs, parent_raws);
+        let prevout = Self::resolve_prevout(&prev_txid, prev_vout, mempool_txs);
 
         TxIn {
             // Mempool txs are never coinbase (Core rejects them
@@ -97,24 +88,10 @@ impl TxAddition {
         }
     }
 
-    fn resolve_prevout(
-        prev_txid: &Txid,
-        prev_vout: usize,
-        mempool_txs: &TxStore,
-        parent_raws: &FxHashMap<Txid, RawTx>,
-    ) -> Option<TxOut> {
-        if let Some(prev) = mempool_txs.get(prev_txid) {
-            return prev
-                .output
-                .get(prev_vout)
-                .map(|o| TxOut::from((o.script_pubkey.clone(), o.value)));
-        }
-        parent_raws.get(prev_txid).and_then(|parent| {
-            parent
-                .tx
-                .output
-                .get(prev_vout)
-                .map(|o| TxOut::from((o.script_pubkey.clone(), o.value.into())))
-        })
+    fn resolve_prevout(prev_txid: &Txid, prev_vout: usize, mempool_txs: &TxStore) -> Option<TxOut> {
+        let prev = mempool_txs.get(prev_txid)?;
+        prev.output
+            .get(prev_vout)
+            .map(|o| TxOut::from((o.script_pubkey.clone(), o.value)))
     }
 }

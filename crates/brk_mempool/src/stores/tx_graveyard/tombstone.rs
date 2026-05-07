@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use brk_types::{Transaction, Txid};
 
@@ -30,10 +30,6 @@ impl TxTombstone {
 
     pub fn reason(&self) -> &TxRemoval {
         &self.removal
-    }
-
-    pub fn age(&self) -> Duration {
-        self.removed_at.elapsed()
     }
 
     pub(crate) fn removed_at(&self) -> Instant {
