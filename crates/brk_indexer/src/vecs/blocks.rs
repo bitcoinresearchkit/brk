@@ -109,4 +109,20 @@ impl BlocksVecs {
         ]
         .into_par_iter()
     }
+
+    pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        [
+            &self.blockhash.inner as &dyn AnyStoredVec,
+            &self.coinbase_tag,
+            &self.difficulty,
+            &self.timestamp.inner,
+            &self.total,
+            &self.weight,
+            &self.position,
+            &self.segwit_txs,
+            &self.segwit_size,
+            &self.segwit_weight,
+        ]
+        .into_iter()
+    }
 }

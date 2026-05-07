@@ -64,4 +64,15 @@ impl OutputsVecs {
         ]
         .into_par_iter()
     }
+
+    pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        [
+            &self.first_txout_index as &dyn AnyStoredVec,
+            &self.value,
+            &self.output_type,
+            &self.type_index,
+            &self.tx_index,
+        ]
+        .into_iter()
+    }
 }

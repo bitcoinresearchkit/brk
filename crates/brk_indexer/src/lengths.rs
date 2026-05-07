@@ -138,7 +138,7 @@ impl Lengths {
     }
 
     /// Read current local lengths. `None` pre-genesis.
-    pub fn from_local(vecs: &mut Vecs, stores: &Stores) -> Option<Self> {
+    pub fn from_local(vecs: &Vecs, stores: &Stores) -> Option<Self> {
         let height = vecs.next_height().min(stores.next_height());
         Self::collect_at(height, vecs)
     }
@@ -146,7 +146,7 @@ impl Lengths {
     /// Read lengths to resume at `required_height`. Reorg-aware:
     /// - if local is ahead, clamp down to `required_height`;
     /// - if local is behind, return `None` (caller must full-reset).
-    pub fn resume_at(required_height: Height, vecs: &mut Vecs, stores: &Stores) -> Option<Self> {
+    pub fn resume_at(required_height: Height, vecs: &Vecs, stores: &Stores) -> Option<Self> {
         let local = vecs.next_height().min(stores.next_height());
         if local < required_height {
             return None;
@@ -163,7 +163,7 @@ impl Lengths {
         Self::collect_at(height, vecs)
     }
 
-    fn collect_at(height: Height, vecs: &mut Vecs) -> Option<Self> {
+    fn collect_at(height: Height, vecs: &Vecs) -> Option<Self> {
         Some(Self {
             empty_output_index: next_index(
                 &vecs.scripts.empty.first_index,

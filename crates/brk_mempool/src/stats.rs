@@ -17,8 +17,6 @@ pub struct MempoolStats {
 }
 
 impl From<&Mempool> for MempoolStats {
-    /// Acquires every sub-lock in canonical order to build a coherent
-    /// snapshot. Cheap; locks are released as soon as the counts are read.
     fn from(mempool: &Mempool) -> Self {
         let state = mempool.state();
         let info = state.info.read();

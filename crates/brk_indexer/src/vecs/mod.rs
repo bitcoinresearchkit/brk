@@ -126,8 +126,8 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn next_height(&mut self) -> Height {
-        self.par_iter_mut_any_stored_vec()
+    pub fn next_height(&self) -> Height {
+        self.iter_any_stored_vec()
             .map(|vec| {
                 let h = Height::from(vec.stamp());
                 if h > Height::ZERO { h.incremented() } else { h }
@@ -171,5 +171,15 @@ impl Vecs {
             .chain(self.outputs.par_iter_mut_any())
             .chain(self.addrs.par_iter_mut_any())
             .chain(self.scripts.par_iter_mut_any())
+    }
+
+    fn iter_any_stored_vec(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        self.blocks
+            .iter_any()
+            .chain(self.transactions.iter_any())
+            .chain(self.inputs.iter_any())
+            .chain(self.outputs.iter_any())
+            .chain(self.addrs.iter_any())
+            .chain(self.scripts.iter_any())
     }
 }

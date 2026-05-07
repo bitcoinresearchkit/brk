@@ -50,14 +50,8 @@ impl Query {
     }
 
     /// Fill any `prevout == None` inputs on live mempool txs from the
-    /// indexer, mutating them in place. Cheap when the unresolved set
-    /// is empty (the steady-state with `-txindex` on); otherwise resolves
-    /// each missing prevout via the same lookup chain used for confirmed
-    /// txs: `txid → tx_index → first_txout_index + vout → output_type
-    /// / type_index / value → script_pubkey`.
-    ///
-    /// Driver calls this once per cycle, right after `mempool.update()`.
-    /// Returns true if at least one prevout was filled.
+    /// indexer. Driver calls this once per cycle right after
+    /// `mempool.update()`. Returns true if at least one was filled.
     pub fn fill_mempool_prevouts(&self) -> bool {
         let Some(mempool) = self.mempool() else {
             return false;
@@ -101,12 +95,10 @@ impl Query {
         Ok(self.require_mempool()?.recent_txs())
     }
 
-    /// RBF history for a tx, matching mempool.space's
-    /// `GET /api/v1/tx/:txid/rbf`. The mempool builds the owned
-    /// replacement tree (terminal replacer + recursive predecessors)
-    /// under one read-lock window; this method then enriches each node
-    /// with `mined` + effective fee rate, both of which need the
-    /// indexer/computer.
+    /// RBF history for a tx. Matches mempool.space's
+    /// `GET /api/v1/tx/:txid/rbf`. Mempool builds the owned tree under
+    /// one read-lock window; this then layers on `mined` + effective
+    /// fee rate from the indexer/computer.
     pub fn tx_rbf(&self, txid: &Txid) -> Result<RbfResponse> {
         let RbfForTx { root, replaces } = self.require_mempool()?.rbf_for_tx(txid);
         let replacements = root.map(|n| self.enrich_rbf_node(n, None));
@@ -117,14 +109,10 @@ impl Query {
         })
     }
 
-    /// Recent RBF replacements across the whole mempool, matching
-    /// mempool.space's `GET /api/v1/replacements` and
-    /// `GET /api/v1/fullrbf/replacements`. Each entry is a complete
-    /// replacement tree rooted at the terminal replacer; same shape as
-    /// `tx_rbf().replacements`. Ordered by most-recent replacement
-    /// event first and capped at 25 entries. When `full_rbf_only` is
-    /// true, only trees with at least one non-signaling predecessor
-    /// are returned.
+    /// Recent RBF replacements. Matches mempool.space's
+    /// `GET /api/v1/replacements` and `GET /api/v1/fullrbf/replacements`.
+    /// Most-recent first, capped at 25. `full_rbf_only` keeps only
+    /// trees with at least one non-signaling predecessor.
     pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
         Ok(self
             .require_mempool()?
@@ -134,10 +122,9 @@ impl Query {
             .collect())
     }
 
-    /// Layer indexer-resident data (`mined`, effective fee rate) onto
-    /// a `RbfNode` tree. Runs after the mempool lock window has closed
-    /// because `effective_fee_rate` re-enters `Mempool` and would
-    /// recursively acquire the same read locks otherwise.
+    /// Layer `mined` + effective fee rate onto an `RbfNode` tree.
+    /// Must run after the mempool lock has dropped (effective_fee_rate
+    /// re-enters Mempool).
     fn enrich_rbf_node(
         &self,
         node: RbfNode,
@@ -176,18 +163,14 @@ impl Query {
         }
     }
 
-    /// `first_seen` Unix-second timestamps for each txid, matching
-    /// mempool.space's `POST /api/v1/transaction-times`. Returns 0 for
-    /// unknown txids, in input order.
+    /// `first_seen` Unix-second timestamps. Matches mempool.space's
+    /// `POST /api/v1/transaction-times`. Returns 0 for unknowns.
     pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
         Ok(self.require_mempool()?.transaction_times(txids))
     }
 
-    /// Opaque content hash that changes whenever the projected next
-    /// block changes. Same value used as the mempool ETag, surfaced as
-    /// JSON so external monitors can detect a frozen update loop by
-    /// polling: if the value doesn't change for tens of seconds on a
-    /// live network, the mempool sync has stalled.
+    /// Content hash of the projected next block. Same value as the
+    /// mempool ETag. Polling lets monitors detect a stalled sync.
     pub fn mempool_hash(&self) -> Result<u64> {
         Ok(self.require_mempool()?.next_block_hash())
     }

@@ -199,6 +199,28 @@ impl AddrsVecs {
         .into_par_iter()
     }
 
+    pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        [
+            &self.p2pk65.first_index as &dyn AnyStoredVec,
+            &self.p2pk33.first_index,
+            &self.p2pkh.first_index,
+            &self.p2sh.first_index,
+            &self.p2wpkh.first_index,
+            &self.p2wsh.first_index,
+            &self.p2tr.first_index,
+            &self.p2a.first_index,
+            &self.p2pk65.bytes,
+            &self.p2pk33.bytes,
+            &self.p2pkh.bytes,
+            &self.p2sh.bytes,
+            &self.p2wpkh.bytes,
+            &self.p2wsh.bytes,
+            &self.p2tr.bytes,
+            &self.p2a.bytes,
+        ]
+        .into_iter()
+    }
+
     /// Get address bytes by output type, using the cached VecReader for the specific address type.
     /// Returns None if the index doesn't exist yet.
     pub fn get_bytes_by_type(

@@ -37,17 +37,10 @@ impl Applier {
             return;
         };
         if !s.txs.contains(&txid) {
-            // entries had this prefix but txs didn't — a state divergence
-            // that should be impossible: publish/bury both touch them
-            // together under one write_all guard. Reaching this branch
-            // means a prior cycle left the two stores out of sync (e.g.
-            // panic mid-publish before `txs.extend` ran). Skip the bury
-            // entirely: freeing the entries slot here would let
-            // outpoint_spends point at a slot the next insert recycles
-            // for an unrelated tx.
-            warn!(
-                "mempool bury: entry present but tx missing for txid={txid} - skipping bury to preserve outpoint_spends integrity"
-            );
+            // Skip bury on entries/txs divergence: freeing the slot here
+            // would let outpoint_spends point at a slot the next insert
+            // recycles for an unrelated tx.
+            warn!("mempool bury: entry present but tx missing for txid={txid}");
             return;
         }
         let (idx, entry) = s.entries.remove(prefix).expect("entry present");

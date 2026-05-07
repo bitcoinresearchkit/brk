@@ -1,13 +1,7 @@
-//! RBF (Replace-By-Fee) tree extraction from the live mempool +
-//! graveyard.
-//!
-//! Both methods return owned, lock-free `RbfNode` trees so the caller
-//! (typically `brk_query`) can enrich each node with indexer-resident
-//! data (`mined`, effective fee rate) after the mempool lock window
-//! closes. Doing the enrichment under the lock would re-enter
-//! `Mempool` indirectly via `effective_fee_rate` and recursively
-//! acquire the same `entries`/`graveyard` read locks, which can
-//! deadlock against a queued writer in `parking_lot`.
+//! RBF tree extraction. Returns owned trees so the caller can enrich
+//! with indexer data (`mined`, effective fee rate) after the lock
+//! drops: enriching under the lock re-enters `Mempool` and would
+//! recursively acquire the same read locks.
 
 use brk_types::{Sats, Timestamp, Transaction, Txid, TxidPrefix, VSize};
 use rustc_hash::FxHashSet;
@@ -17,15 +11,11 @@ use crate::{
     stores::{EntryPool, TxGraveyard},
 };
 
-/// One node in an RBF replacement tree, populated entirely from
-/// mempool state. The caller layers on `mined` and effective fee rate
-/// after the lock has been released.
 #[derive(Debug, Clone)]
 pub struct RbfNode {
     pub txid: Txid,
     pub fee: Sats,
     pub vsize: VSize,
-    /// Sum of the tx's output amounts.
     pub value: Sats,
     pub first_seen: Timestamp,
     /// BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
@@ -35,21 +25,18 @@ pub struct RbfNode {
     pub replaces: Vec<RbfNode>,
 }
 
-/// Result of [`Mempool::rbf_for_tx`].
 #[derive(Debug, Clone, Default)]
 pub struct RbfForTx {
-    /// Tree rooted at the requested tx's terminal replacer. `None` if
-    /// the tx is unknown to both the live pool and the graveyard.
+    /// Tree rooted at the terminal replacer. `None` if `txid` is unknown.
     pub root: Option<RbfNode>,
     /// Direct predecessors of the requested tx (txids only).
     pub replaces: Vec<Txid>,
 }
 
 impl Mempool {
-    /// Build the RBF tree relevant to `txid`: walk forward through
-    /// `Replaced { by }` links to the terminal replacer, return its
-    /// full predecessor tree, plus the requested tx's own direct
-    /// predecessors. Single read-lock window in canonical order.
+    /// Walk forward through `Replaced { by }` to the terminal replacer
+    /// and return its full predecessor tree, plus the requested tx's
+    /// direct predecessors. Single read-lock window in canonical order.
     pub fn rbf_for_tx(&self, txid: &Txid) -> RbfForTx {
         let txs = self.txs();
         let entries = self.entries();
@@ -61,10 +48,9 @@ impl Mempool {
         RbfForTx { root, replaces }
     }
 
-    /// Recent terminal-replacer trees, most-recent replacement first,
-    /// deduplicated by tree root, capped at `limit`. When
-    /// `full_rbf_only` is true, drops trees with no non-signaling
-    /// predecessor anywhere.
+    /// Recent terminal-replacer trees, most-recent first, deduplicated
+    /// by root, capped at `limit`. `full_rbf_only` drops trees with no
+    /// non-signaling predecessor.
     pub fn recent_rbf_trees(&self, full_rbf_only: bool, limit: usize) -> Vec<RbfNode> {
         let txs = self.txs();
         let entries = self.entries();

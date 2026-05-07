@@ -120,4 +120,18 @@ impl ScriptsVecs {
         ]
         .into_par_iter()
     }
+
+    pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        [
+            &self.empty.first_index as &dyn AnyStoredVec,
+            &self.op_return.first_index,
+            &self.p2ms.first_index,
+            &self.unknown.first_index,
+            &self.empty.to_tx_index,
+            &self.op_return.to_tx_index,
+            &self.p2ms.to_tx_index,
+            &self.unknown.to_tx_index,
+        ]
+        .into_iter()
+    }
 }

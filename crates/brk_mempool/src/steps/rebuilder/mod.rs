@@ -89,10 +89,9 @@ impl Rebuilder {
         }
     }
 
-    /// Returns true iff dirty and the throttle window has elapsed. On
-    /// success, starts a new throttle window. The dirty bit is cleared
-    /// by `tick` only after `publish` returns, so a panic in
-    /// `build_snapshot` leaves dirty set and the next cycle retries.
+    /// True iff dirty and the throttle window has elapsed. The dirty
+    /// bit is cleared in `tick` only after `publish` returns, so a
+    /// panic in `build_snapshot` retries on the next cycle.
     fn try_claim_rebuild(&self) -> bool {
         if !self.dirty.load(Ordering::Acquire) {
             self.skip_clean.fetch_add(1, Ordering::Relaxed);

@@ -48,7 +48,9 @@ impl Query {
         for h in start..=tip {
             let block_ts = ts_cursor.get(h).data()?;
             if block_ts <= target {
-                best = Some((h, block_ts));
+                if best.is_none_or(|(_, bts)| block_ts > bts) {
+                    best = Some((h, block_ts));
+                }
                 above_streak = 0;
             } else {
                 above_streak += 1;
@@ -63,12 +65,15 @@ impl Query {
             for h in (0..start).rev() {
                 let block_ts = ts_cursor.get(h).data()?;
                 if block_ts <= target {
-                    best = Some((h, block_ts));
-                    break;
-                }
-                above_streak += 1;
-                if above_streak >= MTP_TERMINAL_STREAK {
-                    break;
+                    if best.is_none_or(|(_, bts)| block_ts > bts) {
+                        best = Some((h, block_ts));
+                    }
+                    above_streak = 0;
+                } else {
+                    above_streak += 1;
+                    if above_streak >= MTP_TERMINAL_STREAK {
+                        break;
+                    }
                 }
             }
         }

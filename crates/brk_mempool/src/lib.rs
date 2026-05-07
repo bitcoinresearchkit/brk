@@ -96,14 +96,12 @@ impl Mempool {
         self.0.state.addrs.read().stats_hash(addr)
     }
 
-    /// Look up the mempool tx that spends `(txid, vout)`. Returns
-    /// `(spender_txid, vin)` if the outpoint is spent in the mempool,
-    /// `None` otherwise. The spender's input list is walked to rule
-    /// out a `TxidPrefix` collision before returning a match.
+    /// Mempool tx spending `(txid, vout)`, or `None`. The spender's
+    /// input list is walked to rule out `TxidPrefix` collisions.
     pub fn lookup_spender(&self, txid: &Txid, vout: Vout) -> Option<(Txid, Vin)> {
         let key = OutpointPrefix::new(TxidPrefix::from(txid), vout);
-        let txs = self.0.state.txs.read();
-        let entries = self.0.state.entries.read();
+        let txs = self.txs();
+        let entries = self.entries();
         let outpoint_spends = self.0.state.outpoint_spends.read();
         let idx = outpoint_spends.get(&key)?;
         let spender_txid = entries.slot(idx)?.txid;
@@ -168,9 +166,7 @@ impl Mempool {
     }
 
     /// Live mempool txs touching `addr`, newest first by `first_seen`,
-    /// capped at `limit`. Acquires `txs`, `addrs`, `entries` in canonical
-    /// order; returns owned `Transaction`s so the lock is released
-    /// before the caller does anything else with them.
+    /// capped at `limit`. Returns owned `Transaction`s.
     pub fn addr_txs(&self, addr: &AddrBytes, limit: usize) -> Vec<Transaction> {
         let txs = self.txs();
         let addrs = self.addrs();
@@ -211,9 +207,8 @@ impl Mempool {
         f(&mut iter)
     }
 
-    /// Effective fee rate for a live mempool tx: the seed's chunk rate from
-    /// the latest snapshot, with fall-back to the entry's simple `fee/vsize`
-    /// when the snapshot doesn't yet contain it.
+    /// Effective fee rate for a live tx: seed's snapshot chunk rate,
+    /// falling back to the entry's `fee/vsize` if not yet in the snapshot.
     pub fn live_effective_fee_rate(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
         let entries = self.entries();
         if let Some(seed_idx) = entries.idx_of(prefix)
@@ -232,9 +227,9 @@ impl Mempool {
     }
 
     /// `first_seen` Unix-second timestamps for `txids`, in input order.
-    /// Returns 0 for unknown txids. `Vanished` graveyard tombstones fall
-    /// back to the buried entry's `first_seen` so a tx doesn't flicker
-    /// to 0 in the brief window between mempool drop and indexer catch-up.
+    /// Returns 0 for unknown txids. `Vanished` tombstones fall back to
+    /// the buried entry's `first_seen` to avoid flicker between drop
+    /// and indexer catch-up.
     pub fn transaction_times(&self, txids: &[Txid]) -> Vec<u64> {
         let entries = self.entries();
         let graveyard = self.graveyard();
@@ -260,11 +255,8 @@ impl Mempool {
     }
 
     /// Variant of `start` that runs `after_update` after every cycle.
-    ///
-    /// `update` and `after_update` are wrapped in `catch_unwind` so an
-    /// unexpected panic in either step doesn't kill the loop and freeze
-    /// the mempool snapshot. `parking_lot` locks don't poison, so state
-    /// remains usable after a panic.
+    /// Both steps are wrapped in `catch_unwind` so a panic doesn't
+    /// freeze the snapshot; `parking_lot` locks don't poison.
     pub fn start_with(&self, mut after_update: impl FnMut()) {
         loop {
             let outcome = catch_unwind(AssertUnwindSafe(|| {
@@ -288,9 +280,8 @@ impl Mempool {
     }
 
     /// Fill remaining `prevout == None` inputs via an external
-    /// resolver (typically the brk indexer for confirmed parents).
-    /// Same-cycle in-mempool parents are filled automatically by
-    /// `Resolver::resolve_in_mempool` after each `Applier::apply`.
+    /// resolver (typically the indexer for confirmed parents).
+    /// In-mempool parents are filled automatically each cycle.
     pub fn fill_prevouts<F>(&self, resolver: F) -> bool
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,

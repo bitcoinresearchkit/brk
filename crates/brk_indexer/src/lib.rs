@@ -85,12 +85,17 @@ impl Indexer {
 
             let tip_blockhash = vecs.blocks.blockhash.collect_last().unwrap_or_default();
 
+            let safe_lengths = SafeLengths::new();
+            if let Some(lengths) = Lengths::from_local(&vecs, &stores) {
+                safe_lengths.advance(lengths);
+            }
+
             Ok(Self {
                 path: indexed_path.clone(),
                 vecs,
                 stores,
                 tip_blockhash: Arc::new(RwLock::new(tip_blockhash)),
-                safe_lengths: SafeLengths::new(),
+                safe_lengths,
             })
         };
 
@@ -157,7 +162,7 @@ impl Indexer {
 
         let (starting_lengths, prev_hash) = if let Some(hash) = last_blockhash {
             let (height, hash) = client.get_closest_valid_height(hash)?;
-            match Lengths::resume_at(height.incremented(), &mut self.vecs, &self.stores) {
+            match Lengths::resume_at(height.incremented(), &self.vecs, &self.stores) {
                 Some(starting_lengths) => {
                     if starting_lengths.height > client.get_last_height()? {
                         info!("Up to date, nothing to index.");
@@ -368,7 +373,7 @@ impl Indexer {
     /// bg ingest first so stores are queryable at the new bound.
     pub fn advance_safe_lengths(&mut self) -> Result<()> {
         self.vecs.db.sync_bg_tasks()?;
-        if let Some(lengths) = Lengths::from_local(&mut self.vecs, &self.stores) {
+        if let Some(lengths) = Lengths::from_local(&self.vecs, &self.stores) {
             self.safe_lengths.advance(lengths);
         }
         Ok(())

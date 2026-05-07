@@ -142,4 +142,21 @@ impl TransactionsVecs {
         ]
         .into_par_iter()
     }
+
+    pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
+        [
+            &self.first_tx_index as &dyn AnyStoredVec,
+            &self.txid,
+            &self.tx_version,
+            &self.raw_locktime,
+            &self.base_size,
+            &self.total_size,
+            &self.total_sigop_cost,
+            &self.is_explicitly_rbf,
+            &self.first_txin_index,
+            &self.first_txout_index,
+            &self.position,
+        ]
+        .into_iter()
+    }
 }

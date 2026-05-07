@@ -97,13 +97,10 @@ impl Query {
 
     // ── Transaction queries ────────────────────────────────────────
 
-    /// Resolve a tx body across the three sources in order: live mempool,
-    /// indexer (via `indexed`), then `Vanished` graveyard tombstone.
-    /// The graveyard fallback only fires when the indexer reports
-    /// `UnknownTxid`, covering the brief race where a mined tx has been
-    /// buried by `Applier` but `safe_lengths.tx_index` has not yet
-    /// advanced to cover it. `Replaced` tombstones are excluded — those
-    /// txs will never confirm.
+    /// Resolve a tx body: live mempool → indexer → `Vanished` tombstone.
+    /// The tombstone fallback covers the race where a mined tx has been
+    /// buried but `safe_lengths.tx_index` hasn't caught up. `Replaced`
+    /// tombstones are excluded since they will never confirm.
     fn lookup_tx<R>(
         &self,
         txid: &Txid,
