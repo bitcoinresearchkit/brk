@@ -7499,7 +7499,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-beta.8";
+  VERSION = "v0.3.0-beta.9";
 
   INDEXES = /** @type {const} */ ([
     "minute10",
