@@ -21,11 +21,6 @@ pub struct RbfTx {
     /// this tx displaced at least one non-signaling predecessor.
     #[serde(rename = "fullRbf", skip_serializing_if = "Option::is_none", default)]
     pub full_rbf: Option<bool>,
-    /// `Some(true)` iff the tx is currently confirmed in the indexed
-    /// chain. Absent on serialization when the tx is still pending or
-    /// has been evicted without confirming.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub mined: Option<bool>,
 }
 
 /// One node in an RBF replacement tree. The node's `tx` replaced each

@@ -930,9 +930,6 @@ ancestors and no descendants (matches mempool.space).
  * @property {boolean} rbf - BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
  * @property {?boolean=} fullRbf - Only populated on the root `tx` of an RBF response. `true` iff
 this tx displaced at least one non-signaling predecessor.
- * @property {?boolean=} mined - `Some(true)` iff the tx is currently confirmed in the indexed
-chain. Absent on serialization when the tx is still pending or
-has been evicted without confirming.
  */
 /**
  * Recommended fee rates in sat/vB
@@ -7502,7 +7499,7 @@ function createTransferPattern(client, acc) {
  * @extends BrkClientBase
  */
 class BrkClient extends BrkClientBase {
-  VERSION = "v0.3.0-beta.7";
+  VERSION = "v0.3.0-beta.8";
 
   INDEXES = /** @type {const} */ ([
     "minute10",

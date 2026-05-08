@@ -155,7 +155,6 @@ impl Query {
                 time: first_seen,
                 rbf: node.rbf,
                 full_rbf: Some(node.full_rbf),
-                mined,
             },
             time: first_seen,
             full_rbf: node.full_rbf,

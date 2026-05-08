@@ -16,12 +16,6 @@ use client::ClientInner;
 pub use methods::MempoolState;
 
 #[derive(Debug, Clone)]
-pub struct BlockchainInfo {
-    pub headers: u64,
-    pub blocks: u64,
-}
-
-#[derive(Debug, Clone)]
 pub struct BlockInfo {
     pub height: usize,
     pub confirmations: i64,

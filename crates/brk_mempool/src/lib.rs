@@ -212,12 +212,16 @@ impl Mempool {
             .map(|e| e.fee_rate())
     }
 
-    /// Fee rate snapshotted into a graveyard tomb at burial.
+    /// Effective fee rate (Core's chunk rate) snapshotted into the
+    /// tomb's entry at burial - same value `live_effective_fee_rate`
+    /// returns while the tx is alive, so an evicted RBF predecessor
+    /// reports the package-effective rate it had in the mempool, not a
+    /// misleading isolated `fee/vsize`.
     pub fn graveyard_fee_rate(&self, txid: &Txid) -> Option<FeeRate> {
         self.read()
             .graveyard
             .get(txid)
-            .map(|tomb| tomb.entry.fee_rate())
+            .map(|tomb| tomb.entry.chunk_rate)
     }
 
     /// `first_seen` Unix-second timestamps for `txids`, in input order.

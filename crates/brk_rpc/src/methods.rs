@@ -7,9 +7,12 @@ use brk_types::{
     Weight,
 };
 use corepc_jsonrpc::error::Error as JsonRpcError;
-use corepc_types::v30::{
-    GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
-    GetBlockVerboseZero, GetBlockchainInfo, GetMempoolInfo, GetRawMempool, GetTxOut,
+use corepc_types::{
+    v17::{
+        GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
+        GetBlockVerboseZero, GetRawMempool, GetTxOut,
+    },
+    v24::GetMempoolInfo,
 };
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -21,9 +24,7 @@ use tracing::{debug, info};
 /// The mempool fetcher tolerates these per-item failures silently.
 const RPC_NOT_FOUND: i32 = -5;
 
-use crate::{
-    BlockHeaderInfo, BlockInfo, BlockTemplateTx, BlockchainInfo, Client, RawTx, TxOutInfo,
-};
+use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, RawTx, TxOutInfo};
 
 /// Per-batch request count for `get_block_hashes_range`. Sized so the
 /// JSON request body stays well under a megabyte and bitcoind doesn't
@@ -119,14 +120,6 @@ fn build_min_fee(raw: GetMempoolInfo) -> FeeRate {
 }
 
 impl Client {
-    pub fn get_blockchain_info(&self) -> Result<BlockchainInfo> {
-        let r: GetBlockchainInfo = self.0.call_with_retry("getblockchaininfo", &[])?;
-        Ok(BlockchainInfo {
-            headers: r.headers as u64,
-            blocks: r.blocks as u64,
-        })
-    }
-
     /// Returns the numbers of block in the longest chain.
     pub fn get_block_count(&self) -> Result<u64> {
         let r: GetBlockCount = self.0.call_with_retry("getblockcount", &[])?;
@@ -440,9 +433,14 @@ impl Client {
     }
 
     pub fn wait_for_synced_node(&self) -> Result<()> {
+        #[derive(Deserialize)]
+        struct SyncProgress {
+            headers: u64,
+            blocks: u64,
+        }
         let is_synced = || -> Result<bool> {
-            let info = self.get_blockchain_info()?;
-            Ok(info.headers == info.blocks)
+            let p: SyncProgress = self.0.call_with_retry("getblockchaininfo", &[])?;
+            Ok(p.headers == p.blocks)
         };
 
         if !is_synced()? {

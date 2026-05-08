@@ -1318,9 +1318,6 @@ class RbfTx(TypedDict):
         rbf: BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
         fullRbf: Only populated on the root `tx` of an RBF response. `true` iff
 this tx displaced at least one non-signaling predecessor.
-        mined: `Some(true)` iff the tx is currently confirmed in the indexed
-chain. Absent on serialization when the tx is still pending or
-has been evicted without confirming.
     """
     txid: Txid
     fee: Sats
@@ -1330,7 +1327,6 @@ has been evicted without confirming.
     time: Timestamp
     rbf: bool
     fullRbf: Optional[bool]
-    mined: Optional[bool]
 
 class ReplacementNode(TypedDict):
     """
@@ -6653,7 +6649,7 @@ class SeriesTree:
 class BrkClient(BrkClientBase):
     """Main BRK client with series tree and API methods."""
 
-    VERSION = "v0.3.0-beta.7"
+    VERSION = "v0.3.0-beta.8"
 
     INDEXES = [
       "minute10",
