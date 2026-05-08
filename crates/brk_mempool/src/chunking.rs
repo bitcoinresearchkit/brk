@@ -41,45 +41,25 @@ pub fn linearize(items: &[ChunkInput<'_>]) -> Vec<CpfpClusterChunk> {
     }
     let mut remaining: Vec<bool> = vec![true; n];
     let mut chunks: Vec<CpfpClusterChunk> = Vec::new();
-    let empty: FxHashSet<u32> = FxHashSet::default();
 
     while remaining.iter().any(|&r| r) {
-        // Pick the top single-anchored ancestor-closed set. On rate
-        // ties the larger set wins so a uniform-rate chain emits one
-        // chunk instead of n singletons. The extension loop below
-        // catches the same case at zero extra cost, but starting big
-        // shaves iterations.
-        let mut best: Option<(FeeRate, FxHashSet<u32>, Sats, VSize)> = None;
-        for i in 0..n {
-            if !remaining[i] {
-                continue;
-            }
-            let anc = closure(items, &remaining, &empty, i as u32);
-            let (fee, vsize) = sum_fee_vsize(items, &anc);
-            let rate = FeeRate::from((fee, vsize));
-            let replace = match &best {
-                None => true,
-                Some((br, ba, _, _)) => rate > *br || (rate == *br && anc.len() > ba.len()),
-            };
-            if replace {
-                best = Some((rate, anc, fee, vsize));
-            }
-        }
+        // Build one chunk by repeatedly absorbing the highest-rate
+        // ancestor-closed extension. Starting from empty: the first
+        // pick is the top-rate single-anchor closure (Phase 1 of
+        // canonical SFL); subsequent picks merge in disjoint
+        // components whose rate is >= the chunk's current rate, which
+        // is what makes a parent + chain + same-rate siblings collapse
+        // into one chunk instead of trailing same-rate singletons that
+        // can even sort "above" the main chunk under integer-vsize
+        // rounding. Size tiebreak ensures a uniform-rate chain is
+        // taken in one swallow.
+        let mut anc: FxHashSet<u32> = FxHashSet::default();
+        let mut chunk_fee = Sats::ZERO;
+        let mut chunk_vsize = VSize::from(0u64);
+        let mut chunk_rate: Option<FeeRate> = None;
 
-        let (mut chunk_rate, mut anc, mut chunk_fee, mut chunk_vsize) =
-            best.expect("at least one remaining tx");
-
-        // Extend the chunk with any other remaining ancestor-closed
-        // subset whose union keeps the chunk rate >= current rate.
-        // SFL chunks are the *maximum* ancestor-closed set at the top
-        // rate, but a single anchor only sees one connected component
-        // up to the cluster root: a parent with one long chain plus
-        // additional same-rate sibling children leaves the siblings
-        // stranded as same-rate singleton chunks - which can even
-        // appear "above" the main chunk under integer-vsize rounding,
-        // breaking the descending-rate invariant.
         loop {
-            let mut best_ext: Option<(FeeRate, FxHashSet<u32>, Sats, VSize)> = None;
+            let mut best: Option<(FeeRate, FxHashSet<u32>, Sats, VSize)> = None;
             for i in 0..n {
                 if !remaining[i] || anc.contains(&(i as u32)) {
                     continue;
@@ -92,23 +72,25 @@ pub fn linearize(items: &[ChunkInput<'_>]) -> Vec<CpfpClusterChunk> {
                 let new_fee = chunk_fee + ef;
                 let new_vsize = chunk_vsize + ev;
                 let new_rate = FeeRate::from((new_fee, new_vsize));
-                if new_rate < chunk_rate {
+                if chunk_rate.is_some_and(|cr| new_rate < cr) {
                     continue;
                 }
-                let replace = match &best_ext {
+                let replace = match &best {
                     None => true,
-                    Some((br, _, _, _)) => new_rate > *br,
+                    Some((br, ba, _, _)) => {
+                        new_rate > *br || (new_rate == *br && extra.len() > ba.len())
+                    }
                 };
                 if replace {
-                    best_ext = Some((new_rate, extra, new_fee, new_vsize));
+                    best = Some((new_rate, extra, new_fee, new_vsize));
                 }
             }
-            match best_ext {
+            match best {
                 Some((r, e, f, v)) => {
                     anc.extend(&e);
                     chunk_fee = f;
                     chunk_vsize = v;
-                    chunk_rate = r;
+                    chunk_rate = Some(r);
                 }
                 None => break,
             }
@@ -121,7 +103,10 @@ pub fn linearize(items: &[ChunkInput<'_>]) -> Vec<CpfpClusterChunk> {
         }
         let txs: Vec<CpfpClusterTxIndex> =
             indices.into_iter().map(CpfpClusterTxIndex::from).collect();
-        chunks.push(CpfpClusterChunk { txs, feerate: chunk_rate });
+        chunks.push(CpfpClusterChunk {
+            txs,
+            feerate: chunk_rate.expect("at least one remaining tx"),
+        });
     }
     chunks
 }
