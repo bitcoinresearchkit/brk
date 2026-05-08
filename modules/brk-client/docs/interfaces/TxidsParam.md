@@ -6,7 +6,7 @@
 
 # Interface: TxidsParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1260](https://github.com/bitcoinresearchkit/brk/blob/6e8be1af2225890fe02f0a4598e3a4fa8251f535/modules/brk-client/index.js#L1260)
+Defined in: [Developer/brk/modules/brk-client/index.js:1257](https://github.com/bitcoinresearchkit/brk/blob/25b226856307047c5c10a075ec57219ca9987c38/modules/brk-client/index.js#L1257)
 
 ## Properties
 
@@ -14,6 +14,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1260](https://github.com/
 
 > **txId**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1261](https://github.com/bitcoinresearchkit/brk/blob/6e8be1af2225890fe02f0a4598e3a4fa8251f535/modules/brk-client/index.js#L1261)
+Defined in: [Developer/brk/modules/brk-client/index.js:1258](https://github.com/bitcoinresearchkit/brk/blob/25b226856307047c5c10a075ec57219ca9987c38/modules/brk-client/index.js#L1258)
 
 Transaction IDs to look up (max 250 per request).
