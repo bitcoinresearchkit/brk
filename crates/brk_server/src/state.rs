@@ -124,7 +124,7 @@ impl AppState {
             if let Some(mempool) = q.mempool()
                 && mempool.contains_txid(txid)
             {
-                return CacheStrategy::MempoolHash(mempool.next_block_hash());
+                return CacheStrategy::MempoolHash(mempool.next_block_hash().into());
             }
             if let Ok((_, height)) = q.resolve_tx(txid)
                 && let Ok(block_hash) = q.block_hash_by_height(height)
@@ -136,7 +136,7 @@ impl AppState {
     }
 
     pub fn mempool_strategy(&self) -> CacheStrategy {
-        let hash = self.sync(|q| q.mempool().map(|m| m.next_block_hash()).unwrap_or(0));
+        let hash = self.sync(|q| q.mempool().map(|m| m.next_block_hash().into()).unwrap_or(0));
         CacheStrategy::MempoolHash(hash)
     }
 

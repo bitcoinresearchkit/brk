@@ -2,9 +2,9 @@ use crate::Query;
 use brk_error::{Error, Result};
 use brk_mempool::{Mempool, PrevoutResolver, RbfForTx, RbfNode};
 use brk_types::{
-    CheckedSub, FeeRate, MempoolBlock, MempoolInfo, MempoolRecentTx, OutputType, RbfResponse,
-    RbfTx, RecommendedFees, ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix,
-    TypeIndex,
+    BlockTemplate, BlockTemplateDiff, CheckedSub, FeeRate, MempoolBlock, MempoolInfo,
+    MempoolRecentTx, NextBlockHash, OutputType, RbfResponse, RbfTx, RecommendedFees,
+    ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix, TypeIndex,
 };
 
 const RECENT_REPLACEMENTS_LIMIT: usize = 25;
@@ -28,23 +28,7 @@ impl Query {
 
     pub fn mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
         let mempool = self.require_mempool()?;
-
-        let block_stats = mempool.block_stats();
-
-        let blocks = block_stats
-            .into_iter()
-            .map(|stats| {
-                MempoolBlock::new(
-                    stats.tx_count,
-                    stats.total_size,
-                    stats.total_vsize,
-                    stats.total_fee,
-                    stats.fee_range,
-                )
-            })
-            .collect();
-
-        Ok(blocks)
+        Ok(mempool.block_stats().iter().map(MempoolBlock::from).collect())
     }
 
     /// Indexer-backed resolver for confirmed-parent prevouts. Pass
@@ -172,7 +156,22 @@ impl Query {
 
     /// Content hash of the projected next block. Same value as the
     /// mempool ETag. Polling lets monitors detect a stalled sync.
-    pub fn mempool_hash(&self) -> Result<u64> {
+    pub fn mempool_hash(&self) -> Result<NextBlockHash> {
         Ok(self.require_mempool()?.next_block_hash())
+    }
+
+    /// Full projected next block (Core's `getblocktemplate` selection)
+    /// with stats and full tx bodies in GBT order.
+    pub fn block_template(&self) -> Result<BlockTemplate> {
+        Ok(self.require_mempool()?.block_template())
+    }
+
+    /// Delta of the projected next block since `since`. `NotFound`
+    /// when `since` has aged out (client should fall back to
+    /// `block_template`).
+    pub fn block_template_diff(&self, since: NextBlockHash) -> Result<BlockTemplateDiff> {
+        self.require_mempool()?
+            .block_template_diff(since)
+            .ok_or_else(|| Error::NotFound(format!("unknown since hash: {since}")))
     }
 }

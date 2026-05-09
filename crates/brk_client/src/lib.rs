@@ -8953,7 +8953,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0-beta.8";
+    pub const VERSION: &'static str = "v0.3.0-beta.9";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -9734,7 +9734,7 @@ impl BrkClient {
 
     /// Projected mempool blocks
     ///
-    /// Get projected blocks from the mempool for fee estimation.
+    /// Projected blocks for fee estimation. Block 0 reflects Bitcoin Core's actual next-block selection; blocks 1+ are a fee-tier approximation.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
     ///
@@ -9745,7 +9745,7 @@ impl BrkClient {
 
     /// Recommended fees
     ///
-    /// Get recommended fee rates for different confirmation targets.
+    /// Recommended fee rates by confirmation target.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
     ///
@@ -9756,7 +9756,7 @@ impl BrkClient {
 
     /// Precise recommended fees
     ///
-    /// Get recommended fee rates with up to 3 decimal places.
+    /// Recommended fee rates with sub-integer precision.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
     ///
@@ -9778,10 +9778,10 @@ impl BrkClient {
 
     /// Mempool content hash
     ///
-    /// Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+    /// Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
     ///
     /// Endpoint: `GET /api/mempool/hash`
-    pub fn get_mempool_hash(&self) -> Result<i64> {
+    pub fn get_mempool_hash(&self) -> Result<NextBlockHash> {
         self.base.get_json(&format!("/api/mempool/hash"))
     }
 
@@ -9827,6 +9827,24 @@ impl BrkClient {
     /// Endpoint: `GET /api/v1/fullrbf/replacements`
     pub fn get_fullrbf_replacements(&self) -> Result<Vec<ReplacementNode>> {
         self.base.get_json(&format!("/api/v1/fullrbf/replacements"))
+    }
+
+    /// Projected next block template
+    ///
+    /// Bitcoin Core's `getblocktemplate` selection: full transaction bodies in GBT order with aggregate stats. The returned `hash` is an opaque content token; pass it as `<hash>` on `/api/v1/mempool/block-template/diff/{hash}` to fetch deltas instead of refetching the whole template.
+    ///
+    /// Endpoint: `GET /api/v1/mempool/block-template`
+    pub fn get_block_template(&self) -> Result<BlockTemplate> {
+        self.base.get_json(&format!("/api/v1/mempool/block-template"))
+    }
+
+    /// Block template diff since hash
+    ///
+    /// Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+    ///
+    /// Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`
+    pub fn get_block_template_diff(&self, hash: NextBlockHash) -> Result<BlockTemplateDiff> {
+        self.base.get_json(&format!("/api/v1/mempool/block-template/diff/{hash}"))
     }
 
     /// Live BTC/USD price

@@ -1,10 +1,13 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, AtomicU64, Ordering},
+use std::{
+    collections::VecDeque,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU64, Ordering},
+    },
 };
 
 use brk_rpc::BlockTemplateTx;
-use brk_types::{FeeRate, TxidPrefix};
+use brk_types::{FeeRate, NextBlockHash, Txid, TxidPrefix};
 use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
 
@@ -20,10 +23,13 @@ pub use brk_types::RecommendedFees;
 pub use snapshot::{BlockStats, SnapTx, Snapshot, TxIndex};
 
 const NUM_BLOCKS: usize = 8;
+const HISTORY: usize = 10;
 
 #[derive(Default)]
 pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
+    /// Past block-0 txid sets keyed by `next_block_hash`, oldest first.
+    history: RwLock<VecDeque<(NextBlockHash, FxHashSet<Txid>)>>,
     dirty: AtomicBool,
     rebuild_count: AtomicU64,
     skip_clean: AtomicU64,
@@ -49,9 +55,36 @@ impl Rebuilder {
             self.skip_clean.fetch_add(1, Ordering::Relaxed);
             return;
         }
-        *self.snapshot.write() = Arc::new(Self::build_snapshot(lock, gbt, min_fee));
+        let snap = Self::build_snapshot(lock, gbt, min_fee);
+        let block0_set: FxHashSet<Txid> = snap.blocks[0]
+            .iter()
+            .map(|idx| snap.txs[idx.as_usize()].txid)
+            .collect();
+        let next_hash = snap.next_block_hash;
+        *self.snapshot.write() = Arc::new(snap);
+        self.push_history(next_hash, block0_set);
         self.dirty.store(false, Ordering::Release);
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
+    }
+
+    fn push_history(&self, hash: NextBlockHash, set: FxHashSet<Txid>) {
+        let mut hist = self.history.write();
+        hist.retain(|(h, _)| *h != hash);
+        hist.push_back((hash, set));
+        while hist.len() > HISTORY {
+            hist.pop_front();
+        }
+    }
+
+    /// Past block-0 txid set for `hash`, or `None` if it has aged out
+    /// (or was never seen). Used by `block_template_diff` to decide
+    /// 200 vs 404.
+    pub fn historical_block0(&self, hash: NextBlockHash) -> Option<FxHashSet<Txid>> {
+        self.history
+            .read()
+            .iter()
+            .find(|(h, _)| *h == hash)
+            .map(|(_, set)| set.clone())
     }
 
     pub fn rebuild_count(&self) -> u64 {

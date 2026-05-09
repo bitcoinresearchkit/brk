@@ -23,6 +23,7 @@ const MAX_LOG_AGE_DAYS: u64 = 7;
 /// `*.txt` file older than 7 days is pruned on startup.
 pub fn init(dir: Option<&Path>) -> io::Result<()> {
     tracing_log::LogTracer::init().ok();
+    install_panic_hook();
 
     #[cfg(debug_assertions)]
     const DEFAULT_LEVEL: &str = "debug";
@@ -63,6 +64,24 @@ pub fn init(dir: Option<&Path>) -> io::Result<()> {
     }
 
     Ok(())
+}
+
+fn install_panic_hook() {
+    std::panic::set_hook(Box::new(|info| {
+        let location = info
+            .location()
+            .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+            .unwrap_or_else(|| "unknown".to_string());
+        let payload = info.payload();
+        let msg = payload
+            .downcast_ref::<&str>()
+            .copied()
+            .map(str::to_owned)
+            .or_else(|| payload.downcast_ref::<String>().cloned())
+            .unwrap_or_else(|| "Box<dyn Any>".to_owned());
+        let backtrace = std::backtrace::Backtrace::capture();
+        tracing::error!(location, backtrace = %backtrace, "panic: {msg}");
+    }));
 }
 
 /// Register a hook that gets called for every log message.

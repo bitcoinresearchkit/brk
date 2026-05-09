@@ -373,22 +373,25 @@ impl Client {
 
     /// Verbose mempool listing + Core's projected next block + live
     /// `mempoolminfee`, fetched in a single bitcoind round-trip.
-    /// Validates that every GBT txid is present in the verbose listing
-    /// and returns `Ok(None)` on mismatch so the caller can skip the
-    /// cycle (within-batch races inside bitcoind are rare; persistent
-    /// drift is bug-shaped). Other failures bubble up as `Err`.
+    /// `getblocktemplate` runs first so that any tx arriving between
+    /// the two intra-batch calls lands in the verbose listing only,
+    /// preserving GBT ⊆ verbose for the common race. Validates that
+    /// every GBT txid is present in the verbose listing and returns
+    /// `Ok(None)` on mismatch so the caller can skip the cycle:
+    /// republishing block 0 with missing txids would diverge from
+    /// Core's exact selection. Other failures bubble up as `Err`.
     pub fn fetch_mempool_state(&self) -> Result<Option<MempoolState>> {
         let requests: [(&str, Vec<Value>); 3] = [
-            ("getrawmempool", vec![Value::Bool(true)]),
             (
                 "getblocktemplate",
                 vec![serde_json::json!({ "rules": ["segwit"] })],
             ),
+            ("getrawmempool", vec![Value::Bool(true)]),
             ("getmempoolinfo", vec![]),
         ];
         let mut out = self.0.call_mixed_batch(&requests)?.into_iter();
-        let verbose_raw = out.next().ok_or(Error::Internal("missing verbose"))??;
         let gbt_raw = out.next().ok_or(Error::Internal("missing gbt"))??;
+        let verbose_raw = out.next().ok_or(Error::Internal("missing verbose"))??;
         let info_raw = out.next().ok_or(Error::Internal("missing mempoolinfo"))??;
 
         let verbose: FxHashMap<String, VerboseEntryRaw> = serde_json::from_str(verbose_raw.get())?;

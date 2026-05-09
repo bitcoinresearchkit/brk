@@ -30,9 +30,11 @@ use std::{
 use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{
-    AddrBytes, AddrMempoolStats, FeeRate, MempoolInfo, MempoolRecentTx, OutpointPrefix, OutputType,
-    Sats, Timestamp, Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
+    AddrBytes, AddrMempoolStats, BlockTemplate, BlockTemplateDiff, FeeRate, MempoolBlock,
+    MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, OutputType, Sats, Timestamp,
+    Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
 };
+use rustc_hash::FxHashSet;
 use parking_lot::{RwLock, RwLockReadGuard};
 use tracing::error;
 
@@ -102,8 +104,56 @@ impl Mempool {
         self.snapshot().block_stats.clone()
     }
 
-    pub fn next_block_hash(&self) -> u64 {
+    pub fn next_block_hash(&self) -> NextBlockHash {
         self.snapshot().next_block_hash
+    }
+
+    /// Full projected next block: Core's `getblocktemplate` selection
+    /// (block 0) with aggregate stats and full tx bodies in GBT order.
+    pub fn block_template(&self) -> BlockTemplate {
+        let snap = self.snapshot();
+        let stats = MempoolBlock::from(&snap.block_stats[0]);
+        let txids: Vec<Txid> = snap.blocks[0]
+            .iter()
+            .map(|idx| snap.txs[idx.as_usize()].txid)
+            .collect();
+        let transactions = self.collect_txs(&txids);
+        BlockTemplate {
+            hash: snap.next_block_hash,
+            stats,
+            transactions,
+        }
+    }
+
+    /// Delta of the projected next block since `since`. `None` when
+    /// `since` has aged out of the rebuilder's history (server should
+    /// 404 → client falls back to `block_template`). `removed` is just
+    /// txids; `added` carries full bodies so clients can patch their
+    /// local view in one round trip.
+    pub fn block_template_diff(&self, since: NextBlockHash) -> Option<BlockTemplateDiff> {
+        let past = self.0.rebuilder.historical_block0(since)?;
+        let snap = self.snapshot();
+        let current: FxHashSet<Txid> = snap.blocks[0]
+            .iter()
+            .map(|idx| snap.txs[idx.as_usize()].txid)
+            .collect();
+        let added_txids: Vec<Txid> = current.difference(&past).copied().collect();
+        let removed: Vec<Txid> = past.difference(&current).copied().collect();
+        let added = self.collect_txs(&added_txids);
+        Some(BlockTemplateDiff {
+            hash: snap.next_block_hash,
+            since,
+            added,
+            removed,
+        })
+    }
+
+    fn collect_txs(&self, txids: &[Txid]) -> Vec<Transaction> {
+        let state = self.read();
+        txids
+            .iter()
+            .filter_map(|txid| state.txs.get(txid).cloned())
+            .collect()
     }
 
     pub fn addr_state_hash(&self, addr: &AddrBytes) -> u64 {

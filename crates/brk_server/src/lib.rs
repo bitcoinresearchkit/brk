@@ -102,9 +102,11 @@ impl Server {
         let response_time_layer = axum::middleware::from_fn(
             async |request: Request<Body>, next: Next| -> Response<Body> {
                 let uri = request.uri().clone();
+                let method = request.method().clone();
                 let start = Instant::now();
                 let mut response = next.run(request).await;
                 response.extensions_mut().insert(uri);
+                response.extensions_mut().insert(method);
                 response.headers_mut().insert(
                     "X-Response-Time",
                     format!("{}us", start.elapsed().as_micros())
@@ -182,14 +184,19 @@ impl Server {
             .on_response(
                 |response: &Response<Body>, latency: Duration, _: &tracing::Span| {
                     let status = response.status().as_u16();
-                    let unknown = Uri::from_static("/unknown");
-                    let uri = response.extensions().get::<Uri>().unwrap_or(&unknown);
+                    let unknown_uri = Uri::from_static("/unknown");
+                    let unknown_method = axum::http::Method::default();
+                    let uri = response.extensions().get::<Uri>().unwrap_or(&unknown_uri);
+                    let method = response
+                        .extensions()
+                        .get::<axum::http::Method>()
+                        .unwrap_or(&unknown_method);
                     match response.status() {
-                        StatusCode::OK => info!(status, %uri, ?latency),
+                        StatusCode::OK => info!(%method, status, %uri, ?latency),
                         StatusCode::NOT_MODIFIED
                         | StatusCode::TEMPORARY_REDIRECT
-                        | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
-                        _ => error!(status, %uri, ?latency),
+                        | StatusCode::PERMANENT_REDIRECT => info!(%method, status, %uri, ?latency),
+                        _ => error!(%method, status, %uri, ?latency),
                     }
                 },
             )
@@ -209,8 +216,6 @@ impl Server {
         let router = router
             .with_state(state)
             .merge(website_router)
-            .layer(response_time_layer)
-            .layer(trace_layer)
             .layer(TimeoutLayer::with_status_code(
                 StatusCode::GATEWAY_TIMEOUT,
                 REQUEST_TIMEOUT,
@@ -242,7 +247,9 @@ impl Server {
                     .or_else(|| panic.downcast_ref::<&str>().copied())
                     .unwrap_or("Unknown panic");
                 Error::internal(msg).into_response()
-            }));
+            }))
+            .layer(response_time_layer)
+            .layer(trace_layer);
 
         let (listener, port) = match port {
             Some(port) => {

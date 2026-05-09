@@ -282,6 +282,30 @@ Matches mempool.space/bitcoin-cli behavior.
  * @property {(BlockHash|null)=} nextBest - Hash of the next block in the best chain (null if tip)
  */
 /**
+ * Projected next-block contents from Bitcoin Core's `getblocktemplate`
+ * (block 0 of the snapshot). Returned by
+ * `GET /api/v1/mining/block-template`.
+ *
+ * @typedef {Object} BlockTemplate
+ * @property {NextBlockHash} hash - Pass back as `<hash>` on
+`/api/v1/mining/block-template/diff/{hash}` to fetch deltas.
+ * @property {MempoolBlock} stats - Aggregate stats for this block (size, vsize, fee range, ...).
+ * @property {Transaction[]} transactions - Full transaction bodies in `getblocktemplate` order.
+ */
+/**
+ * Delta between the current `getblocktemplate` projection and a prior
+ * one identified by `since`. Returned by
+ * `GET /api/v1/mining/block-template/diff/{hash}`.
+ *
+ * @typedef {Object} BlockTemplateDiff
+ * @property {NextBlockHash} hash - Current next-block hash. Use as `since` on the next diff call.
+ * @property {NextBlockHash} since - Echoed prior hash the diff was computed against.
+ * @property {Transaction[]} added - Full bodies of transactions that joined the projected next
+block since `since`.
+ * @property {Txid[]} removed - Txids that left the projected next block since `since`
+(confirmed, evicted, replaced, or pushed past block 0).
+ */
+/**
  * Block information returned for timestamp queries
  *
  * @typedef {Object} BlockTimestamp
@@ -711,6 +735,20 @@ ancestors and no descendants (matches mempool.space).
 /** @typedef {number} Month1 */
 /** @typedef {number} Month3 */
 /** @typedef {number} Month6 */
+/**
+ * Content hash of the projected next block (block 0 of the mempool
+ * snapshot). Same value as the mempool ETag. Opaque token: pass back
+ * as `since` on `/api/v1/mining/block-template/diff/{hash}` to fetch
+ * deltas.
+ *
+ * @typedef {number} NextBlockHash
+ */
+/**
+ * `since` hash for `/api/v1/mining/block-template/diff/{hash}`.
+ *
+ * @typedef {Object} NextBlockHashParam
+ * @property {NextBlockHash} hash
+ */
 /**
  * OHLC (Open, High, Low, Close) data in cents
  *
@@ -11620,7 +11658,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Projected mempool blocks
    *
-   * Get projected blocks from the mempool for fee estimation.
+   * Projected blocks for fee estimation. Block 0 reflects Bitcoin Core's actual next-block selection; blocks 1+ are a fee-tier approximation.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
    *
@@ -11636,7 +11674,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Recommended fees
    *
-   * Get recommended fee rates for different confirmation targets.
+   * Recommended fee rates by confirmation target.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
    *
@@ -11652,7 +11690,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Precise recommended fees
    *
-   * Get recommended fee rates with up to 3 decimal places.
+   * Recommended fee rates with sub-integer precision.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
    *
@@ -11684,11 +11722,11 @@ class BrkClient extends BrkClientBase {
   /**
    * Mempool content hash
    *
-   * Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+   * Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
    *
    * Endpoint: `GET /api/mempool/hash`
-   * @param {{ signal?: AbortSignal, onValue?: (value: number) => void }} [options]
-   * @returns {Promise<number>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: NextBlockHash) => void }} [options]
+   * @returns {Promise<NextBlockHash>}
    */
   async getMempoolHash({ signal, onValue } = {}) {
     const path = `/api/mempool/hash`;
@@ -11756,6 +11794,36 @@ class BrkClient extends BrkClientBase {
    */
   async getFullrbfReplacements({ signal, onValue } = {}) {
     const path = `/api/v1/fullrbf/replacements`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Projected next block template
+   *
+   * Bitcoin Core's `getblocktemplate` selection: full transaction bodies in GBT order with aggregate stats. The returned `hash` is an opaque content token; pass it as `<hash>` on `/api/v1/mempool/block-template/diff/{hash}` to fetch deltas instead of refetching the whole template.
+   *
+   * Endpoint: `GET /api/v1/mempool/block-template`
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockTemplate) => void }} [options]
+   * @returns {Promise<BlockTemplate>}
+   */
+  async getBlockTemplate({ signal, onValue } = {}) {
+    const path = `/api/v1/mempool/block-template`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Block template diff since hash
+   *
+   * Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+   *
+   * Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`
+   *
+   * @param {NextBlockHash} hash
+   * @param {{ signal?: AbortSignal, onValue?: (value: BlockTemplateDiff) => void }} [options]
+   * @returns {Promise<BlockTemplateDiff>}
+   */
+  async getBlockTemplateDiff(hash, { signal, onValue } = {}) {
+    const path = `/api/v1/mempool/block-template/diff/${hash}`;
     return this.getJson(path, { signal, onValue });
   }
 

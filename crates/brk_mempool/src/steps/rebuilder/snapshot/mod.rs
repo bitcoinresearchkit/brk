@@ -11,7 +11,7 @@ pub use tx_index::TxIndex;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use brk_types::{FeeRate, RecommendedFees, TxidPrefix};
+use brk_types::{FeeRate, NextBlockHash, RecommendedFees, TxidPrefix};
 
 use fees::Fees;
 
@@ -30,7 +30,7 @@ pub struct Snapshot {
     pub fees: RecommendedFees,
     /// Content hash of the projected next block. Same value as the
     /// mempool ETag.
-    pub next_block_hash: u64,
+    pub next_block_hash: NextBlockHash,
     /// Per-snapshot `TxidPrefix -> TxIndex` index, so live queries can
     /// resolve a prefix to the snapshot's compact index without
     /// re-walking `txs`. Built once by `builder::build_txs` and reused
@@ -70,13 +70,13 @@ impl Snapshot {
         }
     }
 
-    fn hash_next_block(blocks: &[Vec<TxIndex>]) -> u64 {
+    fn hash_next_block(blocks: &[Vec<TxIndex>]) -> NextBlockHash {
         let Some(block) = blocks.first() else {
-            return 0;
+            return NextBlockHash::ZERO;
         };
         let mut hasher = DefaultHasher::new();
         block.hash(&mut hasher);
-        hasher.finish()
+        NextBlockHash::new(hasher.finish())
     }
 
     pub fn tx(&self, idx: TxIndex) -> Option<&SnapTx> {

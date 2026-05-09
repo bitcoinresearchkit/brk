@@ -68,6 +68,37 @@ BlockHash = str
 # Position of a transaction within a single block (0 = coinbase).
 # Distinct from `TxIndex`, which is the chain-wide global tx index.
 BlockTxIndex = int
+# Content hash of the projected next block (block 0 of the mempool
+# snapshot). Same value as the mempool ETag. Opaque token: pass back
+# as `since` on `/api/v1/mining/block-template/diff/{hash}` to fetch
+# deltas.
+NextBlockHash = int
+# Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
+RawLockTime = int
+# BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
+# fits a single tx's count with room to spare.
+# 
+# Witness sigops count as 1; legacy and P2SH-redeem sigops count as 4.
+# Five vbytes per sigop is the policy adjustment Core applies in
+# `nSigOpCost` to discourage sigop-heavy txs (`max(weight/4, sigops*5)`).
+SigOps = int
+# Index of the output being spent in the previous transaction
+Vout = int
+# Transaction witness: a stack of byte arrays, one per witness item.
+# 
+# Wraps `bitcoin::Witness` (single-buffer layout with offsets, much
+# more compact than `Vec<Vec<u8>>`). Serializes as a JSON array of
+# hex strings - the format used by Bitcoin Core REST and mempool.space
+# and matching brk's `script_sig: ScriptBuf` (bytes internally, hex
+# on the wire).
+Witness = List[str]
+# Chain-wide transaction index (0 = the genesis coinbase). For an
+# in-block position, use `BlockTxIndex` instead.
+TxIndex = int
+# Raw transaction version (i32) from Bitcoin protocol.
+# Unlike TxVersion (u8, indexed), this preserves non-standard values
+# used in coinbase txs for miner signaling/branding.
+TxVersionRaw = int
 # Unsigned cents (u64) - for values that should never be negative.
 # Used for invested capital, realized cap, etc.
 Cents = int
@@ -106,13 +137,6 @@ UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50"
 # Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
 # has no meaning outside the enclosing cluster.
 CpfpClusterTxIndex = int
-# BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
-# fits a single tx's count with room to spare.
-# 
-# Witness sigops count as 1; legacy and P2SH-redeem sigops count as 4.
-# Five vbytes per sigop is the policy adjustment Core applies in
-# `nSigOpCost` to discourage sigop-heavy txs (`max(weight/4, sigops*5)`).
-SigOps = int
 # Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 VSize = int
 # Date in YYYYMMDD format stored as u32
@@ -179,8 +203,6 @@ P2WPKHAddrIndex = TypeIndex
 P2WPKHBytes = U8x20
 P2WSHAddrIndex = TypeIndex
 P2WSHBytes = U8x32
-# Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
-RawLockTime = int
 # Fractional satoshis (f64) - for representing USD prices in sats
 # 
 # Formula: `sats_fract = usd_value * 100_000_000 / btc_price`
@@ -219,23 +241,6 @@ StoredU64 = int
 # Used to specify the lookback window for pool statistics, hashrate calculations,
 # and other time-based mining series.
 TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y", "all"]
-# Index of the output being spent in the previous transaction
-Vout = int
-# Transaction witness: a stack of byte arrays, one per witness item.
-# 
-# Wraps `bitcoin::Witness` (single-buffer layout with offsets, much
-# more compact than `Vec<Vec<u8>>`). Serializes as a JSON array of
-# hex strings - the format used by Bitcoin Core REST and mempool.space
-# and matching brk's `script_sig: ScriptBuf` (bytes internally, hex
-# on the wire).
-Witness = List[str]
-# Chain-wide transaction index (0 = the genesis coinbase). For an
-# in-block position, use `BlockTxIndex` instead.
-TxIndex = int
-# Raw transaction version (i32) from Bitcoin protocol.
-# Unlike TxVersion (u8, indexed), this preserves non-standard values
-# used in coinbase txs for miner signaling/branding.
-TxVersionRaw = int
 # Hierarchical tree node for organizing series into categories
 TreeNode = Union[dict[str, "TreeNode"], "SeriesLeafWithSchema"]
 TxInIndex = int
@@ -640,6 +645,142 @@ class BlockStatus(TypedDict):
     height: Union[Height, None]
     next_best: Union[BlockHash, None]
 
+class MempoolBlock(TypedDict):
+    """
+    Block info in a mempool.space like format for fee estimation.
+
+    Attributes:
+        blockSize: Total serialized block size in bytes (witness + non-witness).
+        blockVSize: Total block virtual size in vbytes
+        nTx: Number of transactions in the projected block
+        totalFees: Total fees in satoshis
+        medianFee: Median fee rate in sat/vB
+        feeRange: Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
+    """
+    blockSize: int
+    blockVSize: float
+    nTx: int
+    totalFees: Sats
+    medianFee: FeeRate
+    feeRange: List[FeeRate]
+
+class TxOut(TypedDict):
+    """
+    Transaction output
+
+    Attributes:
+        scriptpubkey: Script pubkey (locking script)
+        value: Value of the output in satoshis
+    """
+    scriptpubkey: str
+    value: Sats
+
+class TxIn(TypedDict):
+    """
+    Transaction input
+
+    Attributes:
+        txid: Transaction ID of the output being spent
+        vout: Output index being spent (u16: coinbase is 65535, mempool.space uses u32: 4294967295)
+        prevout: Information about the previous output being spent
+        scriptsig: Signature script (hex, for non-SegWit inputs)
+        scriptsig_asm: Signature script in assembly format
+        witness: Witness data (stack items, present for SegWit inputs; hex-encoded on the wire)
+        is_coinbase: Whether this input is a coinbase (block reward) input
+        sequence: Input sequence number
+        inner_redeemscript_asm: Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
+        inner_witnessscript_asm: Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
+    """
+    txid: Txid
+    vout: Vout
+    prevout: Union[TxOut, None]
+    scriptsig: str
+    scriptsig_asm: str
+    witness: Witness
+    is_coinbase: bool
+    sequence: int
+    inner_redeemscript_asm: str
+    inner_witnessscript_asm: str
+
+class TxStatus(TypedDict):
+    """
+    Transaction confirmation status
+
+    Attributes:
+        confirmed: Whether the transaction is confirmed
+        block_height: Block height (only present if confirmed)
+        block_hash: Block hash (only present if confirmed)
+        block_time: Block timestamp (only present if confirmed)
+    """
+    confirmed: bool
+    block_height: Union[Height, None]
+    block_hash: Union[BlockHash, None]
+    block_time: Union[Timestamp, None]
+
+class Transaction(TypedDict):
+    """
+    Transaction information compatible with mempool.space API format
+
+    Attributes:
+        index: Internal transaction index (brk-specific, not in mempool.space)
+        txid: Transaction ID
+        version: Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
+        locktime: Transaction lock time
+        vin: Transaction inputs
+        vout: Transaction outputs
+        size: Transaction size in bytes
+        weight: Transaction weight
+        sigops: Number of signature operations
+        fee: Transaction fee in satoshis
+        status: Confirmation status (confirmed, block height/hash/time)
+    """
+    index: Union[TxIndex, None]
+    txid: Txid
+    version: TxVersionRaw
+    locktime: RawLockTime
+    vin: List[TxIn]
+    vout: List[TxOut]
+    size: int
+    weight: Weight
+    sigops: SigOps
+    fee: Sats
+    status: TxStatus
+
+class BlockTemplate(TypedDict):
+    """
+    Projected next-block contents from Bitcoin Core's `getblocktemplate`
+    (block 0 of the snapshot). Returned by
+    `GET /api/v1/mining/block-template`.
+
+    Attributes:
+        hash: Pass back as `<hash>` on
+`/api/v1/mining/block-template/diff/{hash}` to fetch deltas.
+        stats: Aggregate stats for this block (size, vsize, fee range, ...).
+        transactions: Full transaction bodies in `getblocktemplate` order.
+    """
+    hash: NextBlockHash
+    stats: MempoolBlock
+    transactions: List[Transaction]
+
+class BlockTemplateDiff(TypedDict):
+    """
+    Delta between the current `getblocktemplate` projection and a prior
+    one identified by `since`. Returned by
+    `GET /api/v1/mining/block-template/diff/{hash}`.
+
+    Attributes:
+        hash: Current next-block hash. Use as `since` on the next diff call.
+        since: Echoed prior hash the diff was computed against.
+        added: Full bodies of transactions that joined the projected next
+block since `since`.
+        removed: Txids that left the projected next block since `since`
+(confirmed, evicted, replaced, or pushed past block 0).
+    """
+    hash: NextBlockHash
+    since: NextBlockHash
+    added: List[Transaction]
+    removed: List[Txid]
+
 class BlockTimestamp(TypedDict):
     """
     Block information returned for timestamp queries
@@ -1022,25 +1163,6 @@ class LegacySeriesWithIndex(TypedDict):
     metric: SeriesName
     index: Index
 
-class MempoolBlock(TypedDict):
-    """
-    Block info in a mempool.space like format for fee estimation.
-
-    Attributes:
-        blockSize: Total serialized block size in bytes (witness + non-witness).
-        blockVSize: Total block virtual size in vbytes
-        nTx: Number of transactions in the projected block
-        totalFees: Total fees in satoshis
-        medianFee: Median fee rate in sat/vB
-        feeRange: Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
-    """
-    blockSize: int
-    blockVSize: float
-    nTx: int
-    totalFees: Sats
-    medianFee: FeeRate
-    feeRange: List[FeeRate]
-
 class MempoolInfo(TypedDict):
     """
     Mempool statistics with incrementally maintained fee histogram.
@@ -1083,6 +1205,12 @@ class MerkleProof(TypedDict):
     block_height: Height
     merkle: List[str]
     pos: int
+
+class NextBlockHashParam(TypedDict):
+    """
+    `since` hash for `/api/v1/mining/block-template/diff/{hash}`.
+    """
+    hash: NextBlockHash
 
 class OHLCCents(TypedDict):
     """
@@ -1516,88 +1644,6 @@ class TimestampParam(TypedDict):
     UNIX timestamp path parameter
     """
     timestamp: Timestamp
-
-class TxOut(TypedDict):
-    """
-    Transaction output
-
-    Attributes:
-        scriptpubkey: Script pubkey (locking script)
-        value: Value of the output in satoshis
-    """
-    scriptpubkey: str
-    value: Sats
-
-class TxIn(TypedDict):
-    """
-    Transaction input
-
-    Attributes:
-        txid: Transaction ID of the output being spent
-        vout: Output index being spent (u16: coinbase is 65535, mempool.space uses u32: 4294967295)
-        prevout: Information about the previous output being spent
-        scriptsig: Signature script (hex, for non-SegWit inputs)
-        scriptsig_asm: Signature script in assembly format
-        witness: Witness data (stack items, present for SegWit inputs; hex-encoded on the wire)
-        is_coinbase: Whether this input is a coinbase (block reward) input
-        sequence: Input sequence number
-        inner_redeemscript_asm: Inner redeemscript in assembly (for P2SH-wrapped SegWit: scriptsig + witness both present)
-        inner_witnessscript_asm: Inner witnessscript in assembly (for P2WSH: last witness item decoded as script)
-    """
-    txid: Txid
-    vout: Vout
-    prevout: Union[TxOut, None]
-    scriptsig: str
-    scriptsig_asm: str
-    witness: Witness
-    is_coinbase: bool
-    sequence: int
-    inner_redeemscript_asm: str
-    inner_witnessscript_asm: str
-
-class TxStatus(TypedDict):
-    """
-    Transaction confirmation status
-
-    Attributes:
-        confirmed: Whether the transaction is confirmed
-        block_height: Block height (only present if confirmed)
-        block_hash: Block hash (only present if confirmed)
-        block_time: Block timestamp (only present if confirmed)
-    """
-    confirmed: bool
-    block_height: Union[Height, None]
-    block_hash: Union[BlockHash, None]
-    block_time: Union[Timestamp, None]
-
-class Transaction(TypedDict):
-    """
-    Transaction information compatible with mempool.space API format
-
-    Attributes:
-        index: Internal transaction index (brk-specific, not in mempool.space)
-        txid: Transaction ID
-        version: Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
-        locktime: Transaction lock time
-        vin: Transaction inputs
-        vout: Transaction outputs
-        size: Transaction size in bytes
-        weight: Transaction weight
-        sigops: Number of signature operations
-        fee: Transaction fee in satoshis
-        status: Confirmation status (confirmed, block height/hash/time)
-    """
-    index: Union[TxIndex, None]
-    txid: Txid
-    version: TxVersionRaw
-    locktime: RawLockTime
-    vin: List[TxIn]
-    vout: List[TxOut]
-    size: int
-    weight: Weight
-    sigops: SigOps
-    fee: Sats
-    status: TxStatus
 
 class TxIndexParam(TypedDict):
     """
@@ -8482,7 +8528,7 @@ class BrkClient(BrkClientBase):
     def get_mempool_blocks(self) -> List[MempoolBlock]:
         """Projected mempool blocks.
 
-        Get projected blocks from the mempool for fee estimation.
+        Projected blocks for fee estimation. Block 0 reflects Bitcoin Core's actual next-block selection; blocks 1+ are a fee-tier approximation.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
 
@@ -8492,7 +8538,7 @@ class BrkClient(BrkClientBase):
     def get_recommended_fees(self) -> RecommendedFees:
         """Recommended fees.
 
-        Get recommended fee rates for different confirmation targets.
+        Recommended fee rates by confirmation target.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
 
@@ -8502,7 +8548,7 @@ class BrkClient(BrkClientBase):
     def get_precise_fees(self) -> RecommendedFees:
         """Precise recommended fees.
 
-        Get recommended fee rates with up to 3 decimal places.
+        Recommended fee rates with sub-integer precision.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
 
@@ -8519,10 +8565,10 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/mempool`"""
         return self.get_json('/api/mempool')
 
-    def get_mempool_hash(self) -> int:
+    def get_mempool_hash(self) -> NextBlockHash:
         """Mempool content hash.
 
-        Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+        Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
 
         Endpoint: `GET /api/mempool/hash`"""
         return self.get_json('/api/mempool/hash')
@@ -8566,6 +8612,22 @@ class BrkClient(BrkClientBase):
 
         Endpoint: `GET /api/v1/fullrbf/replacements`"""
         return self.get_json('/api/v1/fullrbf/replacements')
+
+    def get_block_template(self) -> BlockTemplate:
+        """Projected next block template.
+
+        Bitcoin Core's `getblocktemplate` selection: full transaction bodies in GBT order with aggregate stats. The returned `hash` is an opaque content token; pass it as `<hash>` on `/api/v1/mempool/block-template/diff/{hash}` to fetch deltas instead of refetching the whole template.
+
+        Endpoint: `GET /api/v1/mempool/block-template`"""
+        return self.get_json('/api/v1/mempool/block-template')
+
+    def get_block_template_diff(self, hash: NextBlockHash) -> BlockTemplateDiff:
+        """Block template diff since hash.
+
+        Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+
+        Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`"""
+        return self.get_json(f'/api/v1/mempool/block-template/diff/{hash}')
 
     def get_live_price(self) -> Dollars:
         """Live BTC/USD price.

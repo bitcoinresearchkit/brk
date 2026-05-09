@@ -1,11 +1,18 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    extract::State,
+    extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{Dollars, MempoolInfo, MempoolRecentTx, ReplacementNode, Txid};
+use brk_types::{
+    BlockTemplate, BlockTemplateDiff, Dollars, MempoolInfo, MempoolRecentTx, NextBlockHash,
+    ReplacementNode, Txid,
+};
 
-use crate::{AppState, extended::TransformResponseExtended, params::Empty};
+use crate::{
+    AppState,
+    extended::TransformResponseExtended,
+    params::{Empty, NextBlockHashParam},
+};
 
 pub trait MempoolRoutes {
     fn add_mempool_routes(self) -> Self;
@@ -44,8 +51,8 @@ impl MempoolRoutes for ApiRouter<AppState> {
                     op.id("get_mempool_hash")
                         .mempool_tag()
                         .summary("Mempool content hash")
-                        .description("Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.")
-                        .json_response::<u64>()
+                        .description("Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.")
+                        .json_response::<NextBlockHash>()
                         .not_modified()
                         .server_error()
                 },
@@ -127,6 +134,53 @@ impl MempoolRoutes for ApiRouter<AppState> {
                         .description("Like `/api/v1/replacements`, but limited to trees where at least one predecessor was non-signaling (full-RBF).\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*")
                         .json_response::<Vec<ReplacementNode>>()
                         .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/mempool/block-template",
+            get_with(
+                async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    state
+                        .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
+                            q.block_template()
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_block_template")
+                        .mempool_tag()
+                        .summary("Projected next block template")
+                        .description("Bitcoin Core's `getblocktemplate` selection: full transaction bodies in GBT order with aggregate stats. The returned `hash` is an opaque content token; pass it as `<hash>` on `/api/v1/mempool/block-template/diff/{hash}` to fetch deltas instead of refetching the whole template.")
+                        .json_response::<BlockTemplate>()
+                        .not_modified()
+                        .server_error()
+                },
+            ),
+        )
+        .api_route(
+            "/api/v1/mempool/block-template/diff/{hash}",
+            get_with(
+                async |uri: Uri,
+                       headers: HeaderMap,
+                       Path(path): Path<NextBlockHashParam>,
+                       _: Empty,
+                       State(state): State<AppState>| {
+                    state
+                        .respond_json(&headers, state.mempool_strategy(), &uri, move |q| {
+                            q.block_template_diff(path.hash)
+                        })
+                        .await
+                },
+                |op| {
+                    op.id("get_block_template_diff")
+                        .mempool_tag()
+                        .summary("Block template diff since hash")
+                        .description("Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.")
+                        .json_response::<BlockTemplateDiff>()
+                        .not_modified()
+                        .not_found()
                         .server_error()
                 },
             ),

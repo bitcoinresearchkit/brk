@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, Sats, VSize, get_weighted_percentile};
+use brk_types::{FeeRate, MempoolBlock, Sats, VSize, get_weighted_percentile};
 
 use super::{SnapTx, TxIndex};
 
@@ -81,5 +81,11 @@ impl BlockStats {
 
     pub fn median_fee_rate(&self) -> FeeRate {
         self.fee_range[3]
+    }
+}
+
+impl From<&BlockStats> for MempoolBlock {
+    fn from(s: &BlockStats) -> Self {
+        Self::new(s.tx_count, s.total_size, s.total_vsize, s.total_fee, s.fee_range)
     }
 }
