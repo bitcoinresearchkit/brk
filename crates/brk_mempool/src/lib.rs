@@ -24,7 +24,7 @@ use std::{
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use brk_error::Result;
@@ -297,11 +297,17 @@ impl Mempool {
     /// confirmed-parent prevouts (typically backed by an indexer).
     /// Each cycle is wrapped in `catch_unwind` so a panic doesn't
     /// freeze the snapshot; `parking_lot` locks don't poison.
+    ///
+    /// Sleep is `PERIOD - work_duration`, so a 700ms cycle followed by
+    /// a 200ms cycle still ticks roughly every `PERIOD`. When work
+    /// overruns `PERIOD`, the next cycle starts immediately.
     pub fn start_with<F>(&self, resolver: F)
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,
     {
+        const PERIOD: Duration = Duration::from_secs(1);
         loop {
+            let started = Instant::now();
             let outcome = catch_unwind(AssertUnwindSafe(|| {
                 if let Err(e) = self.update_with(&resolver) {
                     error!("update failed: {e}");
@@ -310,7 +316,9 @@ impl Mempool {
             if let Err(payload) = outcome {
                 error!("mempool update panicked, continuing loop: {}", panic_msg(&payload));
             }
-            thread::sleep(Duration::from_secs(1));
+            if let Some(rest) = PERIOD.checked_sub(started.elapsed()) {
+                thread::sleep(rest);
+            }
         }
     }
 
