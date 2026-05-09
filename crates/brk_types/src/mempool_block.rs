@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{FeeRate, Sats, VSize};
 
 /// Block info in a mempool.space like format for fee estimation.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct MempoolBlock {
     /// Total serialized block size in bytes (witness + non-witness).

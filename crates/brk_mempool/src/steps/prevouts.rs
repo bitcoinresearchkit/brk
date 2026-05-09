@@ -54,8 +54,12 @@ impl Prevouts {
         }
 
         let mut state = lock.write();
-        Self::write_fills(&mut state, in_mempool);
-        Self::write_fills(&mut state, external);
+        for (txid, fills) in in_mempool.into_iter().chain(external) {
+            let prefix = TxidPrefix::from(&txid);
+            for prevout in state.txs.apply_fills(&prefix, fills) {
+                state.addrs.add_input(&txid, &prevout);
+            }
+        }
         true
     }
 
@@ -139,14 +143,5 @@ impl Prevouts {
                 (!fills.is_empty()).then_some((txid, fills))
             })
             .collect()
-    }
-
-    fn write_fills(state: &mut State, fills: FillBatch) {
-        for (txid, tx_fills) in fills {
-            let prefix = TxidPrefix::from(&txid);
-            for prevout in state.txs.apply_fills(&prefix, tx_fills) {
-                state.addrs.add_input(&txid, &prevout);
-            }
-        }
     }
 }

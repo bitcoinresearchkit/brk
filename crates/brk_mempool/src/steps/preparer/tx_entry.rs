@@ -2,9 +2,8 @@ use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VS
 use smallvec::SmallVec;
 
 /// A mempool transaction entry. Carries the per-tx facts needed for
-/// projection, plus the snapshot-time `chunk_rate` (Core's cluster-mempool
-/// chunk fee rate, or the proxy fallback) used as the effective rate
-/// for partitioning, fee tiers, and CPFP.
+/// projection. Chunk rates live on the snapshot (linearized fresh each
+/// cycle) - not stored here.
 #[derive(Debug, Clone)]
 pub struct TxEntry {
     pub txid: Txid,
@@ -17,11 +16,6 @@ pub struct TxEntry {
     pub first_seen: Timestamp,
     /// BIP-125 explicit signaling: any input has sequence < 0xfffffffe.
     pub rbf: bool,
-    /// Effective per-vbyte rate Core would mine this tx at. From
-    /// `MempoolEntryInfo::chunk_rate()`: Core 31+ uses `fees.chunk /
-    /// (chunkweight/4)`, older Core falls back to
-    /// `max(ancestor_rate, descendant_pkg_rate)`.
-    pub chunk_rate: FeeRate,
 }
 
 impl TxEntry {
@@ -35,7 +29,6 @@ impl TxEntry {
             depends: info.depends.iter().map(TxidPrefix::from).collect(),
             first_seen: info.first_seen,
             rbf,
-            chunk_rate: info.chunk_rate(),
         }
     }
 

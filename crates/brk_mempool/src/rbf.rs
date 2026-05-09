@@ -6,7 +6,7 @@
 use brk_types::{Sats, Timestamp, Transaction, Txid, TxidPrefix, VSize};
 use rustc_hash::FxHashSet;
 
-use crate::{Mempool, TxEntry, TxRemoval, TxStore, stores::TxGraveyard};
+use crate::{Mempool, TxEntry, TxStore, stores::TxGraveyard};
 
 #[derive(Debug, Clone)]
 pub struct RbfNode {
@@ -35,15 +35,15 @@ impl Mempool {
     /// and return its full predecessor tree, plus the requested tx's
     /// direct predecessors. Single read-lock window.
     pub fn rbf_for_tx(&self, txid: &Txid) -> RbfForTx {
-        let inner = self.read();
+        let state = self.read();
 
-        let root_txid = walk_to_replacement_root(&inner.graveyard, *txid);
-        let replaces: Vec<Txid> = inner
+        let root_txid = state.graveyard.replacement_root_of(*txid);
+        let replaces: Vec<Txid> = state
             .graveyard
             .predecessors_of(txid)
             .map(|(p, _)| *p)
             .collect();
-        let root = build_node(&root_txid, &inner.txs, &inner.graveyard);
+        let root = build_node(&root_txid, &state.txs, &state.graveyard);
         RbfForTx { root, replaces }
     }
 
@@ -51,28 +51,21 @@ impl Mempool {
     /// by root, capped at `limit`. `full_rbf_only` drops trees with no
     /// non-signaling predecessor.
     pub fn recent_rbf_trees(&self, full_rbf_only: bool, limit: usize) -> Vec<RbfNode> {
-        let inner = self.read();
+        let state = self.read();
 
         let mut seen: FxHashSet<Txid> = FxHashSet::default();
-        inner
+        state
             .graveyard
             .replaced_iter_recent_first()
             .filter_map(|(_, by)| {
-                let root = walk_to_replacement_root(&inner.graveyard, *by);
+                let root = state.graveyard.replacement_root_of(*by);
                 seen.insert(root).then_some(root)
             })
-            .filter_map(|root| build_node(&root, &inner.txs, &inner.graveyard))
+            .filter_map(|root| build_node(&root, &state.txs, &state.graveyard))
             .filter(|n| !full_rbf_only || n.full_rbf)
             .take(limit)
             .collect()
     }
-}
-
-fn walk_to_replacement_root(graveyard: &TxGraveyard, mut root: Txid) -> Txid {
-    while let Some(TxRemoval::Replaced { by }) = graveyard.get(&root).map(|t| t.reason()) {
-        root = *by;
-    }
-    root
 }
 
 fn build_node(txid: &Txid, txs: &TxStore, graveyard: &TxGraveyard) -> Option<RbfNode> {

@@ -69,7 +69,7 @@ impl TxAddition {
 
     fn build_txin(txin: bitcoin::TxIn, mempool_txs: &TxStore) -> TxIn {
         let prev_txid: Txid = txin.previous_output.txid.into();
-        let prev_vout = usize::from(Vout::from(txin.previous_output.vout));
+        let prev_vout = Vout::from(txin.previous_output.vout);
         let prevout = Self::resolve_prevout(&prev_txid, prev_vout, mempool_txs);
 
         TxIn {
@@ -78,7 +78,7 @@ impl TxAddition {
             is_coinbase: false,
             prevout,
             txid: prev_txid,
-            vout: txin.previous_output.vout.into(),
+            vout: prev_vout,
             script_sig: txin.script_sig,
             script_sig_asm: (),
             witness: txin.witness.into(),
@@ -88,10 +88,10 @@ impl TxAddition {
         }
     }
 
-    fn resolve_prevout(prev_txid: &Txid, prev_vout: usize, mempool_txs: &TxStore) -> Option<TxOut> {
+    fn resolve_prevout(prev_txid: &Txid, prev_vout: Vout, mempool_txs: &TxStore) -> Option<TxOut> {
         let prev = mempool_txs.get(prev_txid)?;
         prev.output
-            .get(prev_vout)
+            .get(usize::from(prev_vout))
             .map(|o| TxOut::from((o.script_pubkey.clone(), o.value)))
     }
 }

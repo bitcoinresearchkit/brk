@@ -7,10 +7,7 @@
 
 use brk_types::{MempoolInfo, Timestamp, Txid};
 
-use crate::{
-    TxRemoval,
-    stores::{AddrTracker, OutpointSpends, TxGraveyard, TxStore},
-};
+use crate::stores::{AddrTracker, OutpointSpends, TxGraveyard, TxStore};
 
 #[derive(Default)]
 pub struct State {
@@ -29,7 +26,6 @@ impl State {
         if let Some(e) = self.txs.entry(txid) {
             return Some(e.first_seen);
         }
-        let tomb = self.graveyard.get(txid)?;
-        matches!(tomb.reason(), TxRemoval::Vanished).then_some(tomb.entry.first_seen)
+        self.graveyard.get_vanished(txid).map(|t| t.entry.first_seen)
     }
 }

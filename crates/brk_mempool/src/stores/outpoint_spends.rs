@@ -13,11 +13,7 @@ pub struct OutpointSpends(FxHashMap<OutpointPrefix, TxidPrefix>);
 
 impl OutpointSpends {
     pub fn insert_spends(&mut self, tx: &Transaction, spender: TxidPrefix) {
-        for input in &tx.input {
-            if input.is_coinbase {
-                continue;
-            }
-            let key = OutpointPrefix::new(TxidPrefix::from(&input.txid), input.vout);
+        for key in spent_outpoints(tx) {
             self.0.insert(key, spender);
         }
     }
@@ -25,11 +21,7 @@ impl OutpointSpends {
     /// Only removes entries whose stored prefix still matches `spender`,
     /// so an outpoint already re-claimed by a later spender is left alone.
     pub fn remove_spends(&mut self, tx: &Transaction, spender: TxidPrefix) {
-        for input in &tx.input {
-            if input.is_coinbase {
-                continue;
-            }
-            let key = OutpointPrefix::new(TxidPrefix::from(&input.txid), input.vout);
+        for key in spent_outpoints(tx) {
             if self.0.get(&key) == Some(&spender) {
                 self.0.remove(&key);
             }
@@ -40,4 +32,11 @@ impl OutpointSpends {
     pub fn get(&self, key: &OutpointPrefix) -> Option<TxidPrefix> {
         self.0.get(key).copied()
     }
+}
+
+fn spent_outpoints(tx: &Transaction) -> impl Iterator<Item = OutpointPrefix> + '_ {
+    tx.input
+        .iter()
+        .filter(|i| !i.is_coinbase)
+        .map(|i| OutpointPrefix::new(TxidPrefix::from(&i.txid), i.vout))
 }

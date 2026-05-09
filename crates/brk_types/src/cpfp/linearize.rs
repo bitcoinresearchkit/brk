@@ -1,34 +1,21 @@
-//! Cluster mempool linearization (Core 31's "Single Fee Linearization").
+//! Single Fee Linearization (Bitcoin Core 31's cluster mempool SFL).
 //!
-//! Given a topologically ordered cluster (parents before children) with
-//! per-tx `(fee, vsize)` and parent edges as local indices, partition the
-//! cluster into chunks ordered by descending feerate, where each chunk is
-//! the highest-rate ancestor-closed set of remaining txs.
+//! Partition a topo-ordered cluster into chunks ordered by descending
+//! feerate, where each chunk is the highest-rate ancestor-closed set
+//! of remaining txs. Spec-equivalent to Core's `fees.chunk` /
+//! `chunkweight`; works on any Core version.
 //!
-//! The "lift" merging this implements is what makes CPFP visible at the
-//! cluster level: a child whose rate exceeds its parent's rate gets folded
-//! into a chunk with the parent, and the chunk's rate is the combined
-//! `(parent_fee + child_fee) / (parent_vsize + child_vsize)`. Cascades
-//! upward through any further parents until rates are non-increasing.
+//! The "lift" this implements is what makes CPFP visible at the
+//! cluster level: a child whose rate exceeds its parent's gets folded
+//! into a chunk with the parent at the combined `(parent_fee +
+//! child_fee) / (parent_vsize + child_vsize)`. Cascades upward through
+//! any further parents until rates are non-increasing.
 //!
-//! This is the proxy-fallback case; under Core 31+ each tx's `fees.chunk`
-//! / `chunkweight` already encodes the chunked rate, so all members of a
-//! chunk would share that rate. Computing locally from `(fee, vsize)`
-//! gives the same answer either way and works on older Core too.
-//!
-//! Complexity is `O(n^2)` per linearization (n bounded by cluster cap),
-//! matching mempool.space's frontend implementation.
+//! `O(n^2)` per linearization, `n` bounded by the cluster cap.
 
-use brk_types::{CpfpClusterChunk, CpfpClusterTxIndex, FeeRate, Sats, VSize};
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-/// One cluster member: its `(fee, vsize)` and parent edges as
-/// local indices into the same array.
-pub struct ChunkInput<'a> {
-    pub fee: Sats,
-    pub vsize: VSize,
-    pub parents: &'a [CpfpClusterTxIndex],
-}
+use crate::{ChunkInput, CpfpClusterChunk, CpfpClusterTxIndex, FeeRate, Sats, VSize};
 
 /// Linearize `items` into chunks. `items` must be in topological order
 /// (parents before children); `parents` indices must point earlier in

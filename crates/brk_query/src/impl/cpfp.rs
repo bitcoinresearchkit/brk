@@ -10,20 +10,16 @@
 //! carries the same chunk-rate semantics the live mempool produces.
 
 use brk_error::{Error, OptionData, Result};
-use brk_mempool::{ChunkInput, linearize};
 use brk_types::{
-    CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate, Height, Sats,
-    TxInIndex, TxIndex, Txid, TxidPrefix, VSize, Weight,
+    CPFP_CHAIN_LIMIT, ChunkInput, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry,
+    CpfpInfo, FeeRate, Height, Sats, TxInIndex, TxIndex, Txid, TxidPrefix, VSize, Weight,
+    find_seed_chunk, linearize,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
 use vecdb::{ReadableVec, VecIndex};
 
 use crate::Query;
-
-/// Cap matches Bitcoin Core's default mempool ancestor/descendant
-/// chain limits and mempool.space's truncation.
-const MAX: usize = 25;
 
 struct WalkResult {
     /// Cluster members in `[ancestors..., seed, descendants...]` order,
@@ -58,13 +54,12 @@ impl Query {
     /// Effective fee rate for `txid` using the same chunk-rate semantics
     /// across paths:
     ///
-    /// - Live mempool: snapshot's per-tx `chunk_rate` (Core's
-    ///   `fees.chunk` / `chunkweight`, or proxy fallback). If the tx is
-    ///   in the pool but not in the latest snapshot (e.g. just added),
-    ///   falls back to the entry's simple `fee/vsize`.
+    /// - Live mempool: snapshot's per-tx linearized `chunk_rate`. If
+    ///   the tx is in the pool but not in the latest snapshot (e.g.
+    ///   just added), falls back to the entry's simple `fee/vsize`.
     /// - Confirmed: precomputed `effective_fee_rate.tx_index`.
-    /// - Graveyard-only RBF predecessor: simple `fee/vsize` snapshotted
-    ///   at burial.
+    /// - Graveyard-only RBF predecessor: linearized chunk rate
+    ///   captured at burial.
     ///
     /// Returns `Error::UnknownTxid` for txids not seen in any of those.
     pub fn effective_fee_rate(&self, txid: &Txid) -> Result<FeeRate> {
@@ -158,7 +153,7 @@ impl Query {
 
     /// BFS the seed's same-block ancestors (via `outpoint`) and
     /// descendants (via `spent.txin_index` -> `spending_tx`), capped
-    /// at `MAX` each side to match Core/mempool.space. Returns members
+    /// at `CPFP_CHAIN_LIMIT` each side to match Core/mempool.space. Returns members
     /// laid out as `[ancestors..., seed, descendants...]` so the seed's
     /// local index is `ancestors.len()`.
     fn walk_same_block_cluster(&self, seed: TxIndex, height: Height) -> Result<WalkResult> {
@@ -202,7 +197,7 @@ impl Query {
         };
 
         let mut visited: FxHashMap<TxIndex, ()> =
-            FxHashMap::with_capacity_and_hasher(2 * MAX + 1, FxBuildHasher);
+            FxHashMap::with_capacity_and_hasher(2 * CPFP_CHAIN_LIMIT + 1, FxBuildHasher);
         visited.insert(seed, ());
 
         // Ancestor BFS: each push records (tx_index, raw parent tx_indices)
@@ -212,7 +207,7 @@ impl Query {
         let mut stack: Vec<SmallVec<[TxIndex; 2]>> = vec![seed_inputs.clone()];
         'a: while let Some(parents) = stack.pop() {
             for parent in parents {
-                if ancestors.len() >= MAX {
+                if ancestors.len() >= CPFP_CHAIN_LIMIT {
                     break 'a;
                 }
                 if visited.insert(parent, ()).is_some() || !same_block(parent) {
@@ -249,7 +244,7 @@ impl Query {
                 }
                 descendants.push((child, walk_inputs(child)));
                 stack.push(child);
-                if descendants.len() >= MAX {
+                if descendants.len() >= CPFP_CHAIN_LIMIT {
                     break 'd;
                 }
             }
@@ -336,12 +331,7 @@ fn build_cpfp_info(
             })
             .collect();
         let chunks = linearize(&inputs);
-        let (chunk_index, seed_rate) = chunks
-            .iter()
-            .enumerate()
-            .find(|(_, ch)| ch.txs.contains(&seed_local))
-            .map(|(i, ch)| (i as u32, ch.feerate))
-            .unwrap_or((0, seed.rate));
+        let (chunk_index, seed_rate) = find_seed_chunk(&chunks, seed_local, seed.rate);
         let cluster_txs: Vec<CpfpClusterTx> = members
             .iter()
             .map(|m| CpfpClusterTx {

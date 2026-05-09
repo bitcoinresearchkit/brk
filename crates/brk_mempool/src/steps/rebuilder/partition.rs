@@ -4,9 +4,10 @@
 //! `/api/v1/fees/mempool-blocks` as a coarse fee-tier gradient.
 //!
 //! No topological gate: a child can sit before its parent within a
-//! tied-rate run, but cluster members share a `chunk_rate` so they
-//! land in the same block in the common case, and the only output is
-//! a per-block rate distribution where intra-block order is invisible.
+//! tied-rate run, but every cluster member shares its chunk's
+//! `chunk_rate` (linearized at snapshot time) so chunk-mates land in
+//! the same block, and the only output is a per-block rate
+//! distribution where intra-block order is invisible.
 //!
 //! The final block is a catch-all (no vsize cap) so leftover tail
 //! vsize is accounted for instead of silently dropped.
@@ -17,7 +18,7 @@
 
 use std::cmp::Reverse;
 
-use brk_types::VSize;
+use brk_types::{FeeRate, VSize};
 use rustc_hash::FxHashSet;
 
 use super::snapshot::{SnapTx, TxIndex};
@@ -33,12 +34,12 @@ impl Partitioner {
         if num_remaining_blocks == 0 {
             return Vec::new();
         }
-        let sorted = sorted_indices(txs, excluded);
+        let sorted = sorted_candidates(txs, excluded);
         let mut blocks: Vec<Vec<TxIndex>> = (0..num_remaining_blocks).map(|_| Vec::new()).collect();
         let mut block_vsize = VSize::default();
         let mut current = 0;
         let last = num_remaining_blocks - 1;
-        for (idx, vsize) in sorted {
+        for (idx, vsize, _) in sorted {
             let fits = vsize <= VSize::MAX_BLOCK.saturating_sub(block_vsize);
             if !fits && current < last && !blocks[current].is_empty() {
                 current += 1;
@@ -51,8 +52,11 @@ impl Partitioner {
     }
 }
 
-fn sorted_indices(txs: &[SnapTx], excluded: &FxHashSet<TxIndex>) -> Vec<(TxIndex, VSize)> {
-    let mut cands: Vec<(TxIndex, VSize, _)> = txs
+fn sorted_candidates(
+    txs: &[SnapTx],
+    excluded: &FxHashSet<TxIndex>,
+) -> Vec<(TxIndex, VSize, FeeRate)> {
+    let mut cands: Vec<(TxIndex, VSize, FeeRate)> = txs
         .iter()
         .enumerate()
         .filter_map(|(i, t)| {
@@ -61,5 +65,5 @@ fn sorted_indices(txs: &[SnapTx], excluded: &FxHashSet<TxIndex>) -> Vec<(TxIndex
         })
         .collect();
     cands.sort_by_key(|(_, _, rate)| Reverse(*rate));
-    cands.into_iter().map(|(i, v, _)| (i, v)).collect()
+    cands
 }

@@ -14,7 +14,7 @@ use rustc_hash::FxHashSet;
 use crate::State;
 
 use partition::Partitioner;
-use snapshot::{PrefixIndex, builder};
+use snapshot::build_txs;
 
 mod partition;
 mod snapshot;
@@ -56,24 +56,20 @@ impl Rebuilder {
             return;
         }
         let snap = Self::build_snapshot(lock, gbt, min_fee);
-        let block0_set: FxHashSet<Txid> = snap.blocks[0]
-            .iter()
-            .map(|idx| snap.txs[idx.as_usize()].txid)
-            .collect();
+        let block0_set: FxHashSet<Txid> = snap.block0_txids().collect();
         let next_hash = snap.next_block_hash;
         *self.snapshot.write() = Arc::new(snap);
-        self.push_history(next_hash, block0_set);
-        self.dirty.store(false, Ordering::Release);
-        self.rebuild_count.fetch_add(1, Ordering::Relaxed);
-    }
 
-    fn push_history(&self, hash: NextBlockHash, set: FxHashSet<Txid>) {
         let mut hist = self.history.write();
-        hist.retain(|(h, _)| *h != hash);
-        hist.push_back((hash, set));
+        hist.retain(|(h, _)| *h != next_hash);
+        hist.push_back((next_hash, block0_set));
         while hist.len() > HISTORY {
             hist.pop_front();
         }
+        drop(hist);
+
+        self.dirty.store(false, Ordering::Release);
+        self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
 
     /// Past block-0 txid set for `hash`, or `None` if it has aged out
@@ -102,10 +98,17 @@ impl Rebuilder {
     ) -> Snapshot {
         let (txs, prefix_to_idx) = {
             let state = lock.read();
-            builder::build_txs(&state.txs)
+            build_txs(&state.txs)
         };
 
-        let block0 = Self::block_from_gbt(gbt, &prefix_to_idx);
+        // Block 0 from `getblocktemplate`: Core's actual selection.
+        // Fetcher already validated GBT ⊆ live txid listing, so any
+        // drop here is a same-cycle race and the partitioner picks up
+        // the slack so callers always see NUM_BLOCKS blocks.
+        let block0: Vec<TxIndex> = gbt
+            .iter()
+            .filter_map(|t| prefix_to_idx.get(&TxidPrefix::from(&t.txid)).copied())
+            .collect();
         let excluded: FxHashSet<TxIndex> = block0.iter().copied().collect();
         let rest = Partitioner::partition(&txs, &excluded, NUM_BLOCKS.saturating_sub(1));
 
@@ -114,17 +117,6 @@ impl Rebuilder {
         blocks.extend(rest);
 
         Snapshot::build(txs, blocks, prefix_to_idx, min_fee)
-    }
-
-    /// Block 0 from `getblocktemplate`: Core's actual selection. Maps
-    /// each GBT txid back to its `TxIndex` via the per-build prefix
-    /// index. Fetcher already validated GBT ⊆ verbose mempool, so any
-    /// drop here is a same-cycle race and the partitioner picks up the
-    /// slack so callers always see eight blocks.
-    fn block_from_gbt(gbt: &[BlockTemplateTx], prefix_to_idx: &PrefixIndex) -> Vec<TxIndex> {
-        gbt.iter()
-            .filter_map(|t| prefix_to_idx.get(&TxidPrefix::from(&t.txid)).copied())
-            .collect()
     }
 
     pub fn snapshot(&self) -> Arc<Snapshot> {

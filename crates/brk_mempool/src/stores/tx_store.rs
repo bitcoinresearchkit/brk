@@ -34,10 +34,6 @@ impl TxStore {
         self.records.len()
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.records.is_empty()
-    }
-
     pub fn get(&self, txid: &Txid) -> Option<&Transaction> {
         self.records.get(&TxidPrefix::from(txid)).map(|r| &r.tx)
     }

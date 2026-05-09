@@ -3,12 +3,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use brk_types::{Transaction, Txid};
+use brk_types::{FeeRate, Transaction, Txid};
 use rustc_hash::FxHashMap;
 
 mod tombstone;
 
-pub use tombstone::TxTombstone;
+pub(crate) use tombstone::TxTombstone;
 
 use crate::{TxEntry, TxRemoval};
 
@@ -23,10 +23,6 @@ pub struct TxGraveyard {
 }
 
 impl TxGraveyard {
-    pub fn contains(&self, txid: &Txid) -> bool {
-        self.tombstones.contains_key(txid)
-    }
-
     pub fn tombstones_len(&self) -> usize {
         self.tombstones.len()
     }
@@ -37,6 +33,25 @@ impl TxGraveyard {
 
     pub fn get(&self, txid: &Txid) -> Option<&TxTombstone> {
         self.tombstones.get(txid)
+    }
+
+    /// Tombstone iff the tx vanished from the pool (mined, expired, or
+    /// dropped). `Replaced` tombstones return `None` because the tx
+    /// will not confirm.
+    pub fn get_vanished(&self, txid: &Txid) -> Option<&TxTombstone> {
+        let tomb = self.tombstones.get(txid)?;
+        matches!(tomb.removal, TxRemoval::Vanished).then_some(tomb)
+    }
+
+    /// Walk forward through `Replaced { by }` to the terminal replacer.
+    /// Returns `txid` itself if it isn't replaced (live or `Vanished`).
+    pub fn replacement_root_of(&self, mut txid: Txid) -> Txid {
+        while let Some(TxRemoval::Replaced { by }) =
+            self.tombstones.get(&txid).map(|t| &t.removal)
+        {
+            txid = *by;
+        }
+        txid
     }
 
     /// Tombstones marked as `Replaced { by: replacer }`. Used to walk
@@ -61,18 +76,33 @@ impl TxGraveyard {
     pub fn replaced_iter_recent_first(&self) -> impl Iterator<Item = (&Txid, &Txid)> {
         self.order.iter().rev().filter_map(|(t, txid)| {
             let ts = self.tombstones.get(txid)?;
-            if ts.removed_at() != *t {
+            if ts.removed_at != *t {
                 return None;
             }
             Some((txid, ts.replaced_by()?))
         })
     }
 
-    pub fn bury(&mut self, txid: Txid, tx: Transaction, entry: TxEntry, removal: TxRemoval) {
-        let now = Instant::now();
-        self.tombstones
-            .insert(txid, TxTombstone::new(tx, entry, removal, now));
-        self.order.push_back((now, txid));
+    pub fn bury(
+        &mut self,
+        tx: Transaction,
+        entry: TxEntry,
+        chunk_rate: FeeRate,
+        removal: TxRemoval,
+    ) {
+        let txid = entry.txid;
+        let removed_at = Instant::now();
+        self.tombstones.insert(
+            txid,
+            TxTombstone {
+                tx,
+                entry,
+                chunk_rate,
+                removal,
+                removed_at,
+            },
+        );
+        self.order.push_back((removed_at, txid));
     }
 
     /// Remove and return the tombstone, e.g. when the tx comes back to life.
@@ -92,7 +122,7 @@ impl TxGraveyard {
             }
             let (_, txid) = self.order.pop_front().unwrap();
             if let Some(ts) = self.tombstones.get(&txid)
-                && ts.removed_at() == t
+                && ts.removed_at == t
             {
                 self.tombstones.remove(&txid);
             }

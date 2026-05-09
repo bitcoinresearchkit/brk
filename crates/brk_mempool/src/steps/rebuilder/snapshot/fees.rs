@@ -74,7 +74,7 @@ impl Fees {
         previous_fee: Option<FeeRate>,
         min_fee: FeeRate,
     ) -> FeeRate {
-        let median = block.median_fee_rate();
+        let median = block.fee_range[3];
         let use_fee = previous_fee.map_or(median, |prev| FeeRate::mean(median, prev));
         let vsize = u64::from(block.total_vsize);
         if vsize <= EMPTY_BLOCK_VSIZE || median < min_fee {

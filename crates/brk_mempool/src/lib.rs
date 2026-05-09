@@ -3,10 +3,10 @@
 //! One pull cycle, five steps:
 //!
 //! 1. [`steps::fetcher::Fetcher`] - one mixed batched RPC for
-//!    `getrawmempool verbose` + `getblocktemplate` + `getmempoolinfo`,
-//!    then a second batch for `getrawtransaction` on new entries. The
-//!    GBT is validated to be a subset of the verbose listing; on
-//!    mismatch the cycle is skipped.
+//!    `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`,
+//!    then a `getmempoolentry` batch and a `getrawtransaction` batch
+//!    on new txids only. The GBT is validated to be a subset of the
+//!    txid listing; on mismatch the cycle is skipped.
 //! 2. [`steps::preparer::Preparer`] - decode and classify into
 //!    `TxsPulled { added, removed }`. Pure CPU.
 //! 3. [`steps::applier::Applier`] - apply the diff to
@@ -38,7 +38,7 @@ use rustc_hash::FxHashSet;
 use parking_lot::{RwLock, RwLockReadGuard};
 use tracing::error;
 
-pub mod chunking;
+mod cluster;
 mod cpfp;
 mod diagnostics;
 mod rbf;
@@ -46,12 +46,12 @@ mod state;
 pub(crate) mod steps;
 pub(crate) mod stores;
 
-pub use chunking::{ChunkInput, linearize};
 pub use diagnostics::MempoolStats;
 pub use rbf::{RbfForTx, RbfNode};
+pub use steps::Snapshot;
 use steps::{Applier, Fetched, Fetcher, Preparer, Prevouts, Rebuilder};
-pub use steps::{BlockStats, RecommendedFees, Snapshot, TxEntry, TxRemoval};
-pub use stores::{TxGraveyard, TxStore, TxTombstone};
+pub(crate) use steps::{BlockStats, RecommendedFees, TxEntry, TxRemoval};
+pub(crate) use stores::{TxStore, TxTombstone};
 
 /// Confirmed-parent prevout resolver passed to [`Mempool::update_with`] /
 /// [`Mempool::start_with`]. Receives `(parent_txid, vout)`, returns the
@@ -62,9 +62,9 @@ pub(crate) use state::State;
 
 /// Cheaply cloneable: clones share one live mempool via `Arc`.
 #[derive(Clone)]
-pub struct Mempool(Arc<Shared>);
+pub struct Mempool(Arc<Inner>);
 
-struct Shared {
+struct Inner {
     client: Client,
     state: RwLock<State>,
     rebuilder: Rebuilder,
@@ -72,7 +72,7 @@ struct Shared {
 
 impl Mempool {
     pub fn new(client: &Client) -> Self {
-        Self(Arc::new(Shared {
+        Self(Arc::new(Inner {
             client: client.clone(),
             state: RwLock::new(State::default()),
             rebuilder: Rebuilder::default(),
@@ -112,16 +112,14 @@ impl Mempool {
     /// (block 0) with aggregate stats and full tx bodies in GBT order.
     pub fn block_template(&self) -> BlockTemplate {
         let snap = self.snapshot();
-        let stats = MempoolBlock::from(&snap.block_stats[0]);
-        let txids: Vec<Txid> = snap.blocks[0]
-            .iter()
-            .map(|idx| snap.txs[idx.as_usize()].txid)
-            .collect();
-        let transactions = self.collect_txs(&txids);
         BlockTemplate {
             hash: snap.next_block_hash,
-            stats,
-            transactions,
+            stats: snap
+                .block_stats
+                .first()
+                .map(MempoolBlock::from)
+                .unwrap_or_default(),
+            transactions: self.collect_txs(snap.block0_txids()),
         }
     }
 
@@ -133,26 +131,20 @@ impl Mempool {
     pub fn block_template_diff(&self, since: NextBlockHash) -> Option<BlockTemplateDiff> {
         let past = self.0.rebuilder.historical_block0(since)?;
         let snap = self.snapshot();
-        let current: FxHashSet<Txid> = snap.blocks[0]
-            .iter()
-            .map(|idx| snap.txs[idx.as_usize()].txid)
-            .collect();
-        let added_txids: Vec<Txid> = current.difference(&past).copied().collect();
-        let removed: Vec<Txid> = past.difference(&current).copied().collect();
-        let added = self.collect_txs(&added_txids);
+        let current: FxHashSet<Txid> = snap.block0_txids().collect();
         Some(BlockTemplateDiff {
             hash: snap.next_block_hash,
             since,
-            added,
-            removed,
+            added: self.collect_txs(current.difference(&past).copied()),
+            removed: past.difference(&current).copied().collect(),
         })
     }
 
-    fn collect_txs(&self, txids: &[Txid]) -> Vec<Transaction> {
+    fn collect_txs(&self, txids: impl IntoIterator<Item = Txid>) -> Vec<Transaction> {
         let state = self.read();
         txids
-            .iter()
-            .filter_map(|txid| state.txs.get(txid).cloned())
+            .into_iter()
+            .filter_map(|txid| state.txs.get(&txid).cloned())
             .collect()
     }
 
@@ -191,9 +183,7 @@ impl Mempool {
     /// Apply `f` to a `Vanished` tombstone's tx body if present.
     /// `Replaced` tombstones return `None` because the tx will not confirm.
     pub fn with_vanished_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
-        let state = self.read();
-        let tomb = state.graveyard.get(txid)?;
-        matches!(tomb.reason(), TxRemoval::Vanished).then(|| f(&tomb.tx))
+        self.read().graveyard.get_vanished(txid).map(|t| f(&t.tx))
     }
 
     /// Snapshot of all live mempool txids.
@@ -240,8 +230,8 @@ impl Mempool {
         &self,
         f: impl FnOnce(&mut dyn Iterator<Item = (Sats, OutputType)>) -> R,
     ) -> R {
-        let inner = self.read();
-        let mut iter = inner
+        let state = self.read();
+        let mut iter = state
             .txs
             .values()
             .flat_map(|tx| &tx.output)
@@ -249,9 +239,9 @@ impl Mempool {
         f(&mut iter)
     }
 
-    /// Effective fee rate for a live tx: snapshot's chunk rate when
-    /// the tx is in the latest snapshot, falling back to the entry's
-    /// `fee/vsize` if not yet ingested.
+    /// Effective fee rate for a live tx: snapshot's linearized chunk
+    /// rate. Falls back to `fee/vsize` for txs added since the latest
+    /// snapshot was built (apply -> same-cycle tick gap).
     pub fn live_effective_fee_rate(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
         if let Some(rate) = self.snapshot().chunk_rate_for(prefix) {
             return Some(rate);
@@ -262,16 +252,15 @@ impl Mempool {
             .map(|e| e.fee_rate())
     }
 
-    /// Effective fee rate (Core's chunk rate) snapshotted into the
-    /// tomb's entry at burial - same value `live_effective_fee_rate`
-    /// returns while the tx is alive, so an evicted RBF predecessor
-    /// reports the package-effective rate it had in the mempool, not a
-    /// misleading isolated `fee/vsize`.
+    /// Linearized chunk rate captured at burial - same value
+    /// `live_effective_fee_rate` returned while the tx was alive, so an
+    /// evicted RBF predecessor reports the package-effective rate it
+    /// had in the mempool, not a misleading isolated `fee/vsize`.
     pub fn graveyard_fee_rate(&self, txid: &Txid) -> Option<FeeRate> {
         self.read()
             .graveyard
             .get(txid)
-            .map(|tomb| tomb.entry.chunk_rate)
+            .map(|tomb| tomb.chunk_rate)
     }
 
     /// `first_seen` Unix-second timestamps for `txids`, in input order.
@@ -286,7 +275,7 @@ impl Mempool {
             .collect()
     }
 
-    /// Infinite update loop with a 1 second interval. Resolves
+    /// Infinite update loop with a 500ms interval. Resolves
     /// confirmed-parent prevouts via the default `getrawtransaction`
     /// resolver; requires bitcoind started with `txindex=1`.
     pub fn start(&self) {
@@ -298,14 +287,14 @@ impl Mempool {
     /// Each cycle is wrapped in `catch_unwind` so a panic doesn't
     /// freeze the snapshot; `parking_lot` locks don't poison.
     ///
-    /// Sleep is `PERIOD - work_duration`, so a 700ms cycle followed by
-    /// a 200ms cycle still ticks roughly every `PERIOD`. When work
+    /// Sleep is `PERIOD - work_duration`, so a 350ms cycle followed by
+    /// a 100ms cycle still ticks roughly every `PERIOD`. When work
     /// overruns `PERIOD`, the next cycle starts immediately.
     pub fn start_with<F>(&self, resolver: F)
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,
     {
-        const PERIOD: Duration = Duration::from_secs(1);
+        const PERIOD: Duration = Duration::from_millis(500);
         loop {
             let started = Instant::now();
             let outcome = catch_unwind(AssertUnwindSafe(|| {
@@ -337,14 +326,15 @@ impl Mempool {
     where
         F: Fn(&Txid, Vout) -> Option<TxOut>,
     {
-        let Shared {
+        let Inner {
             client,
             state,
             rebuilder,
         } = &*self.0;
 
         let Some(Fetched {
-            entries_info,
+            live_txids,
+            new_entries,
             new_raws,
             gbt,
             min_fee,
@@ -352,8 +342,8 @@ impl Mempool {
         else {
             return Ok(());
         };
-        let pulled = Preparer::prepare(entries_info, new_raws, state);
-        let changed = Applier::apply(state, pulled);
+        let pulled = Preparer::prepare(&live_txids, new_entries, new_raws, state);
+        let changed = Applier::apply(state, rebuilder, pulled);
         Prevouts::fill(state, resolver);
         rebuilder.tick(state, changed, &gbt, min_fee);
 

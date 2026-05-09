@@ -18,15 +18,15 @@ pub struct MempoolStats {
 
 impl From<&Mempool> for MempoolStats {
     fn from(mempool: &Mempool) -> Self {
-        let inner = mempool.read();
+        let state = mempool.read();
         let rebuilder = mempool.rebuilder();
         Self {
-            txs: inner.txs.len(),
-            unresolved: inner.txs.unresolved().len(),
-            addrs: inner.addrs.len(),
-            outpoint_spends: inner.outpoint_spends.len(),
-            graveyard_tombstones: inner.graveyard.tombstones_len(),
-            graveyard_order: inner.graveyard.order_len(),
+            txs: state.txs.len(),
+            unresolved: state.txs.unresolved().len(),
+            addrs: state.addrs.len(),
+            outpoint_spends: state.outpoint_spends.len(),
+            graveyard_tombstones: state.graveyard.tombstones_len(),
+            graveyard_order: state.graveyard.order_len(),
             rebuilds: rebuilder.rebuild_count(),
             skip_cleans: rebuilder.skip_clean_count(),
         }

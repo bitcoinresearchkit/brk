@@ -3,7 +3,10 @@ use parking_lot::RwLock;
 
 use crate::{
     State, TxEntry, TxRemoval,
-    steps::preparer::{TxAddition, TxsPulled},
+    steps::{
+        preparer::{TxAddition, TxsPulled},
+        rebuilder::{Rebuilder, Snapshot},
+    },
 };
 
 /// Applies a prepared diff to in-memory mempool state under one write
@@ -12,33 +15,48 @@ pub struct Applier;
 
 impl Applier {
     /// Returns true iff anything changed.
-    pub fn apply(lock: &RwLock<State>, pulled: TxsPulled) -> bool {
+    ///
+    /// `rebuilder` supplies the previous cycle's snapshot. Burial reads
+    /// each tomb's `chunk_rate` from the snapshot (always-fresh,
+    /// package-aware via local linearization). The fallback to
+    /// `entry.fee_rate()` is unreachable in steady state - every burial
+    /// target was alive at the previous tick, so the snapshot has it.
+    pub fn apply(lock: &RwLock<State>, rebuilder: &Rebuilder, pulled: TxsPulled) -> bool {
         let TxsPulled { added, removed } = pulled;
         let has_changes = !added.is_empty() || !removed.is_empty();
 
         let mut state = lock.write();
-        Self::bury_removals(&mut state, removed);
+        Self::bury_removals(&mut state, rebuilder, removed);
         Self::publish_additions(&mut state, added);
         state.graveyard.evict_old();
 
         has_changes
     }
 
-    fn bury_removals(state: &mut State, removed: Vec<(TxidPrefix, TxRemoval)>) {
+    fn bury_removals(
+        state: &mut State,
+        rebuilder: &Rebuilder,
+        removed: Vec<(TxidPrefix, TxRemoval)>,
+    ) {
+        let snapshot = rebuilder.snapshot();
         for (prefix, reason) in removed {
-            Self::bury_one(state, &prefix, reason);
+            Self::bury_one(state, &snapshot, &prefix, reason);
         }
     }
 
-    fn bury_one(state: &mut State, prefix: &TxidPrefix, reason: TxRemoval) {
+    fn bury_one(state: &mut State, snapshot: &Snapshot, prefix: &TxidPrefix, reason: TxRemoval) {
         let Some(record) = state.txs.remove_by_prefix(prefix) else {
             return;
         };
-        let txid = record.entry.txid;
+        let chunk_rate = snapshot
+            .chunk_rate_for(prefix)
+            .unwrap_or_else(|| record.entry.fee_rate());
         state.info.remove(&record.tx, record.entry.fee);
-        state.addrs.remove_tx(&record.tx, &txid);
+        state.addrs.remove_tx(&record.tx);
         state.outpoint_spends.remove_spends(&record.tx, *prefix);
-        state.graveyard.bury(txid, record.tx, record.entry, reason);
+        state
+            .graveyard
+            .bury(record.tx, record.entry, chunk_rate, reason);
     }
 
     fn publish_additions(state: &mut State, added: Vec<TxAddition>) {
@@ -62,7 +80,7 @@ impl Applier {
     fn publish_one(state: &mut State, tx: Transaction, entry: TxEntry) {
         let prefix = entry.txid_prefix();
         state.info.add(&tx, entry.fee);
-        state.addrs.add_tx(&tx, &entry.txid);
+        state.addrs.add_tx(&tx);
         state.outpoint_spends.insert_spends(&tx, prefix);
         state.txs.insert(tx, entry);
     }

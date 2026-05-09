@@ -32,14 +32,18 @@ pub struct BlockStats {
 }
 
 impl BlockStats {
-    /// Block 0 (Core's actual selection): exact 0/10/25/50/75/90/100.
-    pub fn compute_core(block: &[TxIndex], txs: &[SnapTx]) -> Self {
-        Self::compute(block, txs, CORE_PERCENTILES)
-    }
-
-    /// Blocks 1..N (projected): clipped 5/95 bounds to hide outliers.
-    pub fn compute_projected(block: &[TxIndex], txs: &[SnapTx]) -> Self {
-        Self::compute(block, txs, PROJECTED_PERCENTILES)
+    /// Stats for every projected block in `blocks`, in order. `blocks[0]`
+    /// uses Core's exact 0..100 percentiles; the rest use the clipped
+    /// 5..95 range to hide CPFP / stale-GBT outliers.
+    pub fn for_blocks(blocks: &[Vec<TxIndex>], txs: &[SnapTx]) -> Vec<Self> {
+        blocks
+            .iter()
+            .enumerate()
+            .map(|(i, block)| {
+                let pct = if i == 0 { CORE_PERCENTILES } else { PROJECTED_PERCENTILES };
+                Self::compute(block, txs, pct)
+            })
+            .collect()
     }
 
     /// Vsize-weighted percentile distribution over `chunk_rate` -
@@ -77,10 +81,6 @@ impl BlockStats {
             total_fee,
             fee_range,
         }
-    }
-
-    pub fn median_fee_rate(&self) -> FeeRate {
-        self.fee_range[3]
     }
 }
 

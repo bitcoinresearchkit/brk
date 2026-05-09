@@ -1,13 +1,14 @@
-//! Stateful in-memory holders. After Phase 3 they're plain owned
-//! types (no internal locks) — `State` aggregates them under a
-//! single `RwLock` in `crate::state`.
+//! In-memory holders for live mempool state. Plain owned types with
+//! no internal locks: `crate::state::State` aggregates them under a
+//! single `RwLock` so the cycle steps and read-side accessors share
+//! one lock-order discipline.
 
-pub mod addr_tracker;
+pub(crate) mod addr_tracker;
 pub(crate) mod outpoint_spends;
-pub mod tx_graveyard;
-pub mod tx_store;
+pub(crate) mod tx_graveyard;
+pub(crate) mod tx_store;
 
-pub use addr_tracker::AddrTracker;
+pub(crate) use addr_tracker::AddrTracker;
 pub(crate) use outpoint_spends::OutpointSpends;
-pub use tx_graveyard::{TxGraveyard, TxTombstone};
-pub use tx_store::TxStore;
+pub(crate) use tx_graveyard::{TxGraveyard, TxTombstone};
+pub(crate) use tx_store::TxStore;

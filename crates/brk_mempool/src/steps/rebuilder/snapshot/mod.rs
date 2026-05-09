@@ -1,26 +1,26 @@
-pub mod builder;
+mod builder;
 mod fees;
 mod stats;
 mod tx;
 mod tx_index;
 
-pub use builder::PrefixIndex;
+pub(crate) use builder::{PrefixIndex, build_txs};
 pub use stats::BlockStats;
 pub use tx::SnapTx;
 pub use tx_index::TxIndex;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use brk_types::{FeeRate, NextBlockHash, RecommendedFees, TxidPrefix};
+use brk_types::{FeeRate, NextBlockHash, RecommendedFees, Txid, TxidPrefix};
 
 use fees::Fees;
 
 #[derive(Default)]
 pub struct Snapshot {
     /// Dense per-tx data indexed by `TxIndex`. Each entry carries the
-    /// chunk rate (Core's chunk-mempool truth or proxy fallback) plus
-    /// resolved parent/child adjacency, so CPFP queries don't re-read
-    /// any external state.
+    /// linearized chunk rate (computed locally at snapshot build time)
+    /// plus resolved parent/child adjacency, so CPFP queries don't
+    /// re-read any external state.
     pub txs: Vec<SnapTx>,
     /// Projected blocks. `blocks[0]` is Core's `getblocktemplate`
     /// (Bitcoin Core's actual selection); the rest are greedy-packed
@@ -33,8 +33,8 @@ pub struct Snapshot {
     pub next_block_hash: NextBlockHash,
     /// Per-snapshot `TxidPrefix -> TxIndex` index, so live queries can
     /// resolve a prefix to the snapshot's compact index without
-    /// re-walking `txs`. Built once by `builder::build_txs` and reused
-    /// by the rebuilder for GBT mapping.
+    /// re-walking `txs`. Built once by `build_txs` and reused by the
+    /// rebuilder for GBT mapping.
     prefix_to_idx: PrefixIndex,
 }
 
@@ -47,17 +47,7 @@ impl Snapshot {
         prefix_to_idx: PrefixIndex,
         min_fee: FeeRate,
     ) -> Self {
-        let block_stats: Vec<BlockStats> = blocks
-            .iter()
-            .enumerate()
-            .map(|(i, block)| {
-                if i == 0 {
-                    BlockStats::compute_core(block, &txs)
-                } else {
-                    BlockStats::compute_projected(block, &txs)
-                }
-            })
-            .collect();
+        let block_stats = BlockStats::for_blocks(&blocks, &txs);
         let fees = Fees::compute(&block_stats, min_fee);
         let next_block_hash = Self::hash_next_block(&blocks);
         Self {
@@ -87,8 +77,20 @@ impl Snapshot {
         self.prefix_to_idx.get(prefix).copied()
     }
 
-    /// Effective chunk rate for a live tx by prefix, or `None` if the
-    /// tx isn't in this snapshot.
+    /// Txids of `blocks[0]` (Core's `getblocktemplate` selection),
+    /// in template order. Empty for a default snapshot.
+    pub fn block0_txids(&self) -> impl Iterator<Item = Txid> + '_ {
+        self.blocks
+            .first()
+            .into_iter()
+            .flatten()
+            .map(|idx| self.txs[idx.as_usize()].txid)
+    }
+
+    /// Linearized chunk rate for a live tx by prefix. Always fresh
+    /// (recomputed each snapshot), package-aware (CPFP and ancestor
+    /// chains lift correctly), and equals `fee/vsize` for singletons.
+    /// Returns `None` if the tx isn't in this snapshot.
     pub fn chunk_rate_for(&self, prefix: &TxidPrefix) -> Option<FeeRate> {
         let idx = self.idx_of(prefix)?;
         Some(self.txs[idx.as_usize()].chunk_rate)

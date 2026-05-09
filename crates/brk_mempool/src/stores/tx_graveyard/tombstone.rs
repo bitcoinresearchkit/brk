@@ -1,41 +1,23 @@
 use std::time::Instant;
 
-use brk_types::{Transaction, Txid};
+use brk_types::{FeeRate, Transaction, Txid};
 
 use crate::{TxEntry, TxRemoval};
 
 /// A buried mempool tx, retained for reappearance detection and
-/// post-mine analytics.
+/// post-mine analytics. `chunk_rate` is the linearized chunk feerate at
+/// burial time - same value `live_effective_fee_rate` reported while
+/// the tx was alive, so an evicted RBF predecessor reports the
+/// package-effective rate, not a misleading isolated `fee/vsize`.
 pub struct TxTombstone {
     pub tx: Transaction,
     pub entry: TxEntry,
-    removal: TxRemoval,
-    removed_at: Instant,
+    pub chunk_rate: FeeRate,
+    pub removal: TxRemoval,
+    pub removed_at: Instant,
 }
 
 impl TxTombstone {
-    pub(crate) fn new(
-        tx: Transaction,
-        entry: TxEntry,
-        removal: TxRemoval,
-        removed_at: Instant,
-    ) -> Self {
-        Self {
-            tx,
-            entry,
-            removal,
-            removed_at,
-        }
-    }
-
-    pub fn reason(&self) -> &TxRemoval {
-        &self.removal
-    }
-
-    pub(crate) fn removed_at(&self) -> Instant {
-        self.removed_at
-    }
-
     pub(crate) fn replaced_by(&self) -> Option<&Txid> {
         match &self.removal {
             TxRemoval::Replaced { by } => Some(by),

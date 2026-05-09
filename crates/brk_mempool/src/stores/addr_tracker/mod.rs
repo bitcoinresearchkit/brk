@@ -15,7 +15,8 @@ use addr_entry::AddrEntry;
 pub struct AddrTracker(FxHashMap<AddrBytes, AddrEntry>);
 
 impl AddrTracker {
-    pub fn add_tx(&mut self, tx: &Transaction, txid: &Txid) {
+    pub fn add_tx(&mut self, tx: &Transaction) {
+        let txid = &tx.txid;
         for txin in &tx.input {
             if let Some(prevout) = txin.prevout.as_ref() {
                 self.add_input(txid, prevout);
@@ -28,7 +29,8 @@ impl AddrTracker {
         }
     }
 
-    pub fn remove_tx(&mut self, tx: &Transaction, txid: &Txid) {
+    pub fn remove_tx(&mut self, tx: &Transaction) {
+        let txid = &tx.txid;
         for txin in &tx.input {
             if let Some(prevout) = txin.prevout.as_ref() {
                 self.remove_input(txid, prevout);

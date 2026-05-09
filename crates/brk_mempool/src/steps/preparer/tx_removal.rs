@@ -1,12 +1,7 @@
-//! Why a tx left the mempool between two pull cycles, plus the
-//! classifier that diffs the live prefix set against `known` to
-//! produce one [`TxRemoval`] per loser.
+//! Why a tx left the mempool between two pull cycles. The diff that
+//! produces one [`TxRemoval`] per loser lives on [`super::Preparer`].
 
-use brk_types::{Transaction, Txid, TxidPrefix, Vout};
-use rustc_hash::{FxHashMap, FxHashSet};
-
-use super::TxAddition;
-use crate::stores::TxStore;
+use brk_types::Txid;
 
 /// `Replaced` = at least one freshly added tx this cycle spends one of
 /// its inputs (BIP-125 replacement inferred from conflicting outpoints).
@@ -17,48 +12,4 @@ use crate::stores::TxStore;
 pub enum TxRemoval {
     Replaced { by: Txid },
     Vanished,
-}
-
-type SpentBy = FxHashMap<(Txid, Vout), Txid>;
-
-impl TxRemoval {
-    /// Returns `(prefix, reason)` pairs in iteration order of `known`.
-    pub(super) fn classify(
-        live: &FxHashSet<TxidPrefix>,
-        added: &[TxAddition],
-        known: &TxStore,
-    ) -> Vec<(TxidPrefix, Self)> {
-        let spent_by = Self::build_spent_by(added);
-
-        known
-            .records()
-            .filter_map(|(prefix, record)| {
-                if live.contains(prefix) {
-                    return None;
-                }
-                Some((*prefix, Self::find_removal(&record.tx, &spent_by)))
-            })
-            .collect()
-    }
-
-    fn find_removal(tx: &Transaction, spent_by: &SpentBy) -> Self {
-        tx.input
-            .iter()
-            .find_map(|i| spent_by.get(&(i.txid, i.vout)).cloned())
-            .map_or(Self::Vanished, |by| Self::Replaced { by })
-    }
-
-    /// Only `Fresh` additions carry tx input data. Revived txs were
-    /// already in-pool, so they can't be new spenders of anything.
-    fn build_spent_by(added: &[TxAddition]) -> SpentBy {
-        let mut spent_by: SpentBy = FxHashMap::default();
-        for addition in added {
-            if let TxAddition::Fresh { tx, .. } = addition {
-                for txin in &tx.input {
-                    spent_by.insert((txin.txid, txin.vout), tx.txid);
-                }
-            }
-        }
-        spent_by
-    }
 }
