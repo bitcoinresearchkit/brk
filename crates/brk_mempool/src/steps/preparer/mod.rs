@@ -12,7 +12,6 @@
 //! state on the live store. Removals are inferred by cross-referencing
 //! inputs against the full `live_txids` set from the cycle's pull.
 
-use brk_rpc::RawTx;
 use brk_types::{MempoolEntryInfo, Transaction, Txid, TxidPrefix, Vout};
 use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -40,13 +39,13 @@ impl Preparer {
     pub fn prepare(
         live_txids: &[Txid],
         new_entries: Vec<MempoolEntryInfo>,
-        new_raws: FxHashMap<Txid, RawTx>,
+        new_txs: FxHashMap<Txid, bitcoin::Transaction>,
         lock: &RwLock<State>,
     ) -> TxsPulled {
         let state = lock.read();
 
         let live: FxHashSet<TxidPrefix> = live_txids.iter().map(TxidPrefix::from).collect();
-        let added = Self::classify_additions(new_entries, new_raws, &state.txs, &state.graveyard);
+        let added = Self::classify_additions(new_entries, new_txs, &state.txs, &state.graveyard);
         let removed = Self::classify_removals(&live, &added, &state.txs);
 
         TxsPulled { added, removed }
@@ -54,13 +53,13 @@ impl Preparer {
 
     fn classify_additions(
         new_entries: Vec<MempoolEntryInfo>,
-        mut new_raws: FxHashMap<Txid, RawTx>,
+        mut new_txs: FxHashMap<Txid, bitcoin::Transaction>,
         known: &TxStore,
         graveyard: &TxGraveyard,
     ) -> Vec<TxAddition> {
         new_entries
             .iter()
-            .filter_map(|info| Self::classify_addition(info, known, graveyard, &mut new_raws))
+            .filter_map(|info| Self::classify_addition(info, known, graveyard, &mut new_txs))
             .collect()
     }
 
@@ -68,7 +67,7 @@ impl Preparer {
         info: &MempoolEntryInfo,
         known: &TxStore,
         graveyard: &TxGraveyard,
-        new_raws: &mut FxHashMap<Txid, RawTx>,
+        new_txs: &mut FxHashMap<Txid, bitcoin::Transaction>,
     ) -> Option<TxAddition> {
         if known.contains(&info.txid) {
             return None;
@@ -76,8 +75,8 @@ impl Preparer {
         if let Some(tomb) = graveyard.get(&info.txid) {
             return Some(TxAddition::revived(info, tomb));
         }
-        let raw = new_raws.remove(&info.txid)?;
-        Some(TxAddition::fresh(info, raw, known))
+        let tx = new_txs.remove(&info.txid)?;
+        Some(TxAddition::fresh(info, tx, known))
     }
 
     /// One `(prefix, reason)` per known tx that's gone from the live set,

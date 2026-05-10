@@ -22,7 +22,10 @@ use std::{
     any::Any,
     cmp::Reverse,
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -34,8 +37,8 @@ use brk_types::{
     MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, OutputType, Sats, Timestamp,
     Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
 };
-use rustc_hash::FxHashSet;
 use parking_lot::{RwLock, RwLockReadGuard};
+use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::error;
 
 mod cluster;
@@ -54,9 +57,15 @@ pub(crate) use steps::{BlockStats, RecommendedFees, TxEntry, TxRemoval};
 pub(crate) use stores::{TxStore, TxTombstone};
 
 /// Confirmed-parent prevout resolver passed to [`Mempool::update_with`] /
-/// [`Mempool::start_with`]. Receives `(parent_txid, vout)`, returns the
-/// `TxOut` if the parent is reachable, `None` otherwise.
-pub type PrevoutResolver = Box<dyn Fn(&Txid, Vout) -> Option<TxOut> + Send + Sync>;
+/// [`Mempool::start_with`]. Receives a slice of `(parent_txid, vout)`
+/// holes and returns the subset that resolved. Unresolved holes are
+/// simply omitted from the map; the next cycle retries automatically.
+///
+/// Batched so the RPC implementation can pack one round-trip per cycle
+/// (deduping by parent txid so a tx with N inputs from one parent costs
+/// one fetch); the indexer implementation just loops over local reads.
+pub type PrevoutResolver =
+    Box<dyn Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut> + Send + Sync>;
 
 pub(crate) use state::State;
 
@@ -68,6 +77,7 @@ struct Inner {
     client: Client,
     state: RwLock<State>,
     rebuilder: Rebuilder,
+    started: AtomicBool,
 }
 
 impl Mempool {
@@ -76,6 +86,7 @@ impl Mempool {
             client: client.clone(),
             state: RwLock::new(State::default()),
             rebuilder: Rebuilder::default(),
+            started: AtomicBool::new(false),
         }))
     }
 
@@ -257,10 +268,7 @@ impl Mempool {
     /// evicted RBF predecessor reports the package-effective rate it
     /// had in the mempool, not a misleading isolated `fee/vsize`.
     pub fn graveyard_fee_rate(&self, txid: &Txid) -> Option<FeeRate> {
-        self.read()
-            .graveyard
-            .get(txid)
-            .map(|tomb| tomb.chunk_rate)
+        self.read().graveyard.get(txid).map(|tomb| tomb.chunk_rate)
     }
 
     /// `first_seen` Unix-second timestamps for `txids`, in input order.
@@ -292,8 +300,16 @@ impl Mempool {
     /// overruns `PERIOD`, the next cycle starts immediately.
     pub fn start_with<F>(&self, resolver: F)
     where
-        F: Fn(&Txid, Vout) -> Option<TxOut>,
+        F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
+        if self
+            .0
+            .started
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .is_err()
+        {
+            panic!("Mempool::start_with already running on this instance");
+        }
         const PERIOD: Duration = Duration::from_millis(500);
         loop {
             let started = Instant::now();
@@ -303,7 +319,10 @@ impl Mempool {
                 }
             }));
             if let Err(payload) = outcome {
-                error!("mempool update panicked, continuing loop: {}", panic_msg(&payload));
+                error!(
+                    "mempool update panicked, continuing loop: {}",
+                    panic_msg(&payload)
+                );
             }
             if let Some(rest) = PERIOD.checked_sub(started.elapsed()) {
                 thread::sleep(rest);
@@ -311,38 +330,32 @@ impl Mempool {
         }
     }
 
-    /// One sync cycle with the default RPC resolver. Equivalent to
-    /// `update_with(rpc_resolver)`. Standalone consumers (Core +
-    /// `txindex=1`) get a one-line driver loop.
-    pub fn update(&self) -> Result<()> {
-        self.update_with(Prevouts::rpc_resolver(self.0.client.clone()))
-    }
-
     /// One sync cycle: fetch, prepare, apply, fill prevouts, maybe
     /// rebuild. The resolver MUST resolve confirmed prevouts only;
     /// mempool-to-mempool chains are wired internally and the
     /// resolver is never called for them.
-    pub fn update_with<F>(&self, resolver: F) -> Result<()>
+    fn update_with<F>(&self, resolver: F) -> Result<()>
     where
-        F: Fn(&Txid, Vout) -> Option<TxOut>,
+        F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
         let Inner {
             client,
             state,
             rebuilder,
+            ..
         } = &*self.0;
 
         let Some(Fetched {
             live_txids,
             new_entries,
-            new_raws,
+            new_txs,
             gbt,
             min_fee,
         }) = Fetcher::fetch(client, state)?
         else {
             return Ok(());
         };
-        let pulled = Preparer::prepare(&live_txids, new_entries, new_raws, state);
+        let pulled = Preparer::prepare(&live_txids, new_entries, new_txs, state);
         let changed = Applier::apply(state, rebuilder, pulled);
         Prevouts::fill(state, resolver);
         rebuilder.tick(state, changed, &gbt, min_fee);

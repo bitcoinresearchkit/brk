@@ -44,7 +44,9 @@ impl TxGraveyard {
     }
 
     /// Walk forward through `Replaced { by }` to the terminal replacer.
-    /// Returns `txid` itself if it isn't replaced (live or `Vanished`).
+    /// Returns the first txid in the chain that isn't a `Replaced`
+    /// tombstone: live, `Vanished`, or unknown (chain broken because an
+    /// intermediate `by` aged out of the graveyard).
     pub fn replacement_root_of(&self, mut txid: Txid) -> Txid {
         while let Some(TxRemoval::Replaced { by }) =
             self.tombstones.get(&txid).map(|t| &t.removal)

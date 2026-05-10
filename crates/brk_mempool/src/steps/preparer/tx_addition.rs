@@ -9,9 +9,6 @@
 //!   (preserving `rbf`, `size`). The Applier exhumes the cached tx
 //!   body. No raw decoding.
 
-use std::mem;
-
-use brk_rpc::RawTx;
 use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 
 use crate::{TxTombstone, stores::TxStore};
@@ -27,39 +24,44 @@ impl TxAddition {
     /// Resolves prevouts against the live mempool only. Confirmed
     /// parents land with `prevout: None` and are filled by the
     /// resolver supplied to `Mempool::update_with` in the same cycle.
-    pub(super) fn fresh(info: &MempoolEntryInfo, raw: RawTx, mempool_txs: &TxStore) -> Self {
-        let total_size = raw.hex.len() / 2;
-        let rbf = raw.tx.input.iter().any(|i| i.sequence.is_rbf());
-        let tx = Self::build_tx(info, raw, total_size, mempool_txs);
+    pub(super) fn fresh(
+        info: &MempoolEntryInfo,
+        tx: bitcoin::Transaction,
+        mempool_txs: &TxStore,
+    ) -> Self {
+        let total_size = tx.total_size();
+        let rbf = tx.input.iter().any(|i| i.sequence.is_rbf());
+        let built = Self::build_tx(info, tx, total_size, mempool_txs);
         let entry = TxEntry::new(info, total_size as u64, rbf);
-        Self::Fresh { tx, entry }
+        Self::Fresh { tx: built, entry }
     }
 
     fn build_tx(
         info: &MempoolEntryInfo,
-        mut raw: RawTx,
+        tx: bitcoin::Transaction,
         total_size: usize,
         mempool_txs: &TxStore,
     ) -> Transaction {
-        let input = mem::take(&mut raw.tx.input)
+        let input = tx
+            .input
             .into_iter()
             .map(|txin| Self::build_txin(txin, mempool_txs))
             .collect();
-        let mut tx = Transaction {
+        let mut built = Transaction {
             index: None,
             txid: info.txid,
-            version: raw.tx.version.into(),
+            version: tx.version.into(),
             total_sigop_cost: SigOps::ZERO,
             weight: info.weight,
-            lock_time: raw.tx.lock_time.into(),
+            lock_time: tx.lock_time.into(),
             total_size,
             fee: info.fee,
             input,
-            output: raw.tx.output.into_iter().map(TxOut::from).collect(),
+            output: tx.output.into_iter().map(TxOut::from).collect(),
             status: TxStatus::UNCONFIRMED,
         };
-        tx.total_sigop_cost = tx.total_sigop_cost();
-        tx
+        built.total_sigop_cost = built.total_sigop_cost();
+        built
     }
 
     pub(super) fn revived(info: &MempoolEntryInfo, tomb: &TxTombstone) -> Self {

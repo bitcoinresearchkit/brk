@@ -41,11 +41,11 @@ impl Fetcher {
             Self::new_txids(&live_txids, &state.txs)
         };
         let new_entries = client.fetch_mempool_entries(&new_txids)?;
-        let new_raws = client.get_raw_transactions(&new_txids)?;
+        let new_txs = client.get_raw_transactions(&new_txids)?;
         Ok(Some(Fetched {
             live_txids,
             new_entries,
-            new_raws,
+            new_txs,
             gbt,
             min_fee,
         }))

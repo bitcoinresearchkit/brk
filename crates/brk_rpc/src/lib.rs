@@ -7,7 +7,7 @@ use std::{
 
 use bitcoin::ScriptBuf;
 use brk_error::Result;
-use brk_types::{BlockHash, Hex, Sats, Txid};
+use brk_types::{BlockHash, Sats, Txid};
 
 mod client;
 mod methods;
@@ -39,15 +39,6 @@ pub struct TxOutInfo {
 pub struct BlockTemplateTx {
     pub txid: Txid,
     pub fee: Sats,
-}
-
-/// A transaction fetched from Core alongside the exact hex bytes Core
-/// returned, so downstream code can re-emit the raw tx without re-
-/// serializing (which could diverge on segwit flag encoding, etc.).
-#[derive(Debug, Clone)]
-pub struct RawTx {
-    pub tx: bitcoin::Transaction,
-    pub hex: Hex,
 }
 
 #[derive(Clone, Debug)]

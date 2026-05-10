@@ -4,8 +4,9 @@ use brk_mempool::{Mempool, PrevoutResolver, RbfForTx, RbfNode};
 use brk_types::{
     BlockTemplate, BlockTemplateDiff, CheckedSub, FeeRate, MempoolBlock, MempoolInfo,
     MempoolRecentTx, NextBlockHash, OutputType, RbfResponse, RbfTx, RecommendedFees,
-    ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix, TypeIndex,
+    ReplacementNode, Sats, Timestamp, TxOut, TxOutIndex, Txid, TxidPrefix, TypeIndex, Vout,
 };
+use rustc_hash::FxHashMap;
 
 const RECENT_REPLACEMENTS_LIMIT: usize = 25;
 
@@ -31,53 +32,46 @@ impl Query {
         Ok(mempool.block_stats().iter().map(MempoolBlock::from).collect())
     }
 
-    /// Indexer-backed resolver for confirmed-parent prevouts. Pass
-    /// the returned closure to `Mempool::start_with` /
-    /// `Mempool::update_with`; the mempool driver calls it post-apply
-    /// for every still-unfilled `prevout == None` input.
-    ///
-    /// Reads go through `read_once` rather than a captured
-    /// `VecReader`: `VecReader::stored_len` is snapshotted at
-    /// construction, so a long-lived reader paired with fresh
-    /// `safe_lengths` would let `safe.tx_index` / `safe.txout_index`
-    /// advance past the reader's frozen length and panic in
-    /// `reader.get()`. `read_once` rebinds against the current vec
-    /// length per call and lets newly indexed parents become
-    /// resolvable on the next cycle.
+    /// Indexer-backed resolver for confirmed-parent prevouts.
     pub fn indexer_prevout_resolver(&self) -> PrevoutResolver {
-        let query = self.clone();
         let indexer = self.0.indexer;
 
-        Box::new(move |prev_txid, vout| {
-            let safe = query.safe_lengths();
-            let prev_tx_index = indexer
-                .stores
-                .txid_prefix_to_tx_index
-                .get(&TxidPrefix::from(prev_txid))
-                .ok()??
-                .into_owned();
-            if prev_tx_index >= safe.tx_index {
-                return None;
+        Box::new(move |holes: &[(Txid, Vout)]| {
+            if holes.is_empty() {
+                return FxHashMap::default();
             }
-            let first_txout: TxOutIndex = indexer
-                .vecs
-                .transactions
-                .first_txout_index
-                .read_once(prev_tx_index)
-                .ok()?;
-            let txout = first_txout + vout;
-            if txout >= safe.txout_index {
-                return None;
-            }
-            let output_type: OutputType = indexer.vecs.outputs.output_type.read_once(txout).ok()?;
-            let type_index: TypeIndex = indexer.vecs.outputs.type_index.read_once(txout).ok()?;
-            let value: Sats = indexer.vecs.outputs.value.read_once(txout).ok()?;
-            let script_pubkey = indexer
-                .vecs
-                .addrs
-                .addr_readers()
-                .script_pubkey(output_type, type_index);
-            Some(TxOut::from((script_pubkey, value)))
+            let safe = indexer.safe_lengths();
+            let first_txout_reader = indexer.vecs.transactions.first_txout_index.reader();
+            let output_type_reader = indexer.vecs.outputs.output_type.reader();
+            let type_index_reader = indexer.vecs.outputs.type_index.reader();
+            let value_reader = indexer.vecs.outputs.value.reader();
+            let addr_readers = indexer.vecs.addrs.addr_readers();
+            holes
+                .iter()
+                .filter_map(|(prev_txid, vout)| {
+                    let prev_tx_index = indexer
+                        .stores
+                        .txid_prefix_to_tx_index
+                        .get(&TxidPrefix::from(prev_txid))
+                        .ok()??
+                        .into_owned();
+                    if prev_tx_index >= safe.tx_index {
+                        return None;
+                    }
+                    let first_txout: TxOutIndex =
+                        first_txout_reader.try_get(usize::from(prev_tx_index))?;
+                    let txout = first_txout + *vout;
+                    if txout >= safe.txout_index {
+                        return None;
+                    }
+                    let txout_idx = usize::from(txout);
+                    let output_type: OutputType = output_type_reader.try_get(txout_idx)?;
+                    let type_index: TypeIndex = type_index_reader.try_get(txout_idx)?;
+                    let value: Sats = value_reader.try_get(txout_idx)?;
+                    let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
+                    Some(((*prev_txid, *vout), TxOut::from((script_pubkey, value))))
+                })
+                .collect()
         })
     }
 

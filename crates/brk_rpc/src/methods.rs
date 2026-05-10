@@ -24,7 +24,7 @@ use tracing::{debug, info};
 /// The mempool fetcher tolerates these per-item failures silently.
 const RPC_NOT_FOUND: i32 = -5;
 
-use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, RawTx, TxOutInfo};
+use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, TxOutInfo};
 
 /// Per-batch request count for `get_block_hashes_range`,
 /// `fetch_mempool_entries`, and `fetch_raw_transactions`. Sized so the
@@ -94,8 +94,13 @@ fn build_gbt(raw: GbtResponseRaw) -> Vec<BlockTemplateTx> {
         .collect()
 }
 
+/// Convert bitcoind's `mempoolminfee` (BTC/kvB f64) to sat/vB. Round-trip
+/// via integer sat/kvB (bitcoind's native CFeeRate unit) so the f64 drift
+/// in the JSON-decoded value can't push 1.0 sat/vB to 1.0...e-13 above 1.0
+/// and trip `ceil_to(0.001)` downstream.
 fn build_min_fee(raw: GetMempoolInfo) -> FeeRate {
-    FeeRate::from(raw.mempool_min_fee * 100_000.0)
+    let sat_per_kvb = (raw.mempool_min_fee * 100_000_000.0).round() as u64;
+    FeeRate::from(sat_per_kvb as f64 / 1000.0)
 }
 
 impl Client {
@@ -247,55 +252,70 @@ impl Client {
             .collect()
     }
 
-    pub fn get_raw_transaction<'a, T, H>(
+    pub fn get_raw_transaction<'a, T>(&self, txid: &'a T) -> Result<bitcoin::Transaction>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+    {
+        let hex = self.get_raw_transaction_hex(txid)?;
+        Ok(encode::deserialize_hex::<bitcoin::Transaction>(&hex)?)
+    }
+
+    pub fn get_raw_transaction_from<'a, T, H>(
         &self,
         txid: &'a T,
-        block_hash: Option<&'a H>,
+        block_hash: &'a H,
     ) -> Result<bitcoin::Transaction>
     where
         &'a T: Into<&'a bitcoin::Txid>,
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
-        let hex = self.get_raw_transaction_hex(txid, block_hash)?;
-        let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-        Ok(tx)
+        let hex = self.get_raw_transaction_hex_from(txid, block_hash)?;
+        Ok(encode::deserialize_hex::<bitcoin::Transaction>(&hex)?)
     }
 
-    pub fn get_raw_transaction_hex<'a, T, H>(
+    pub fn get_raw_transaction_hex<'a, T>(&self, txid: &'a T) -> Result<String>
+    where
+        &'a T: Into<&'a bitcoin::Txid>,
+    {
+        let txid: &bitcoin::Txid = txid.into();
+        let args = [serde_json::to_value(txid)?, Value::Bool(false)];
+        self.0.call_with_retry("getrawtransaction", &args)
+    }
+
+    pub fn get_raw_transaction_hex_from<'a, T, H>(
         &self,
         txid: &'a T,
-        block_hash: Option<&'a H>,
+        block_hash: &'a H,
     ) -> Result<String>
     where
         &'a T: Into<&'a bitcoin::Txid>,
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
         let txid: &bitcoin::Txid = txid.into();
-        let mut args: Vec<Value> = vec![serde_json::to_value(txid)?, Value::Bool(false)];
-        if let Some(bh) = block_hash {
-            let bh: &bitcoin::BlockHash = bh.into();
-            args.push(serde_json::to_value(bh)?);
-        }
+        let bh: &bitcoin::BlockHash = block_hash.into();
+        let args = [
+            serde_json::to_value(txid)?,
+            Value::Bool(false),
+            serde_json::to_value(bh)?,
+        ];
         self.0.call_with_retry("getrawtransaction", &args)
     }
 
-    pub fn get_mempool_raw_tx(&self, txid: &Txid) -> Result<RawTx> {
-        let hex = self.get_raw_transaction_hex(txid, None as Option<&BlockHash>)?;
-        let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-        Ok(RawTx {
-            tx,
-            hex: hex.into(),
-        })
+    pub fn get_mempool_raw_tx(&self, txid: &Txid) -> Result<bitcoin::Transaction> {
+        self.get_raw_transaction(txid)
     }
 
     /// Batched `getrawtransaction` over a slice of txids. Returns a map keyed
-    /// by txid containing the deserialized tx and its raw hex. Individual
-    /// failures (e.g. a tx that evicted between the listing and this call)
-    /// are logged and dropped so a single bad entry doesn't kill the batch.
+    /// by txid containing the deserialized tx. Individual failures (e.g. a
+    /// tx that evicted between the listing and this call) are logged and
+    /// dropped so a single bad entry doesn't kill the batch.
     ///
     /// Chunked at `BATCH_CHUNK` requests per round-trip.
-    pub fn get_raw_transactions(&self, txids: &[Txid]) -> Result<FxHashMap<Txid, RawTx>> {
-        let mut out: FxHashMap<Txid, RawTx> =
+    pub fn get_raw_transactions(
+        &self,
+        txids: &[Txid],
+    ) -> Result<FxHashMap<Txid, bitcoin::Transaction>> {
+        let mut out: FxHashMap<Txid, bitcoin::Transaction> =
             FxHashMap::with_capacity_and_hasher(txids.len(), Default::default());
 
         for chunk in txids.chunks(BATCH_CHUNK) {
@@ -311,14 +331,10 @@ impl Client {
 
             for (txid, res) in chunk.iter().zip(results) {
                 match res.and_then(|hex| {
-                    let tx = encode::deserialize_hex::<bitcoin::Transaction>(&hex)?;
-                    Ok::<_, Error>(RawTx {
-                        tx,
-                        hex: hex.into(),
-                    })
+                    Ok(encode::deserialize_hex::<bitcoin::Transaction>(&hex)?)
                 }) {
-                    Ok(raw) => {
-                        out.insert(*txid, raw);
+                    Ok(tx) => {
+                        out.insert(*txid, tx);
                     }
                     Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc))) if rpc.code == RPC_NOT_FOUND => {}
                     Err(e) => {

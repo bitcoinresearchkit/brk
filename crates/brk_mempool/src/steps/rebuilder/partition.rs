@@ -16,8 +16,6 @@
 //! block if it fits; otherwise advance to the next block (unless we
 //! are already on the last one, which absorbs everything remaining).
 
-use std::cmp::Reverse;
-
 use brk_types::{FeeRate, VSize};
 use rustc_hash::FxHashSet;
 
@@ -64,6 +62,10 @@ fn sorted_candidates(
             (!excluded.contains(&idx)).then_some((idx, t.vsize, t.chunk_rate))
         })
         .collect();
-    cands.sort_by_key(|(_, _, rate)| Reverse(*rate));
+    cands.sort_by(|(a_idx, _, a_rate), (b_idx, _, b_rate)| {
+        b_rate
+            .cmp(a_rate)
+            .then_with(|| txs[a_idx.as_usize()].txid.cmp(&txs[b_idx.as_usize()].txid))
+    });
     cands
 }

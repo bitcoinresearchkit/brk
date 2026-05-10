@@ -23,6 +23,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use brk_rpc::Client;
 use brk_types::{TxOut, Txid, TxidPrefix, Vin, Vout};
 use parking_lot::RwLock;
+use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::warn;
 
 use crate::{State, stores::TxStore};
@@ -33,15 +34,16 @@ type Fills = Vec<(Vin, TxOut)>;
 type Holes = Vec<(Vin, Txid, Vout)>;
 type FillBatch = Vec<(Txid, Fills)>;
 type HoleBatch = Vec<(Txid, Holes)>;
+type Resolved = FxHashMap<(Txid, Vout), TxOut>;
 
 impl Prevouts {
     /// Fill every unfilled prevout the cycle can resolve. Same-cycle
     /// in-mempool parents are filled lock-locally; the remainder go
-    /// through `resolver` outside any lock. Returns true iff anything
-    /// was written.
+    /// through `resolver` (one batched call) outside any lock. Returns
+    /// true iff anything was written.
     pub fn fill<F>(lock: &RwLock<State>, resolver: F) -> bool
     where
-        F: Fn(&Txid, Vout) -> Option<TxOut>,
+        F: Fn(&[(Txid, Vout)]) -> Resolved,
     {
         let (in_mempool, holes) = {
             let state = lock.read();
@@ -63,28 +65,41 @@ impl Prevouts {
         true
     }
 
-    /// Default resolver: per-call `getrawtransaction` against the
-    /// bitcoind RPC client `Mempool` already holds. Requires
-    /// `txindex=1`. On any failure logs once with a hint, then returns
-    /// `None`; the next cycle retries automatically.
-    pub fn rpc_resolver(client: Client) -> impl Fn(&Txid, Vout) -> Option<TxOut> {
+    /// Default resolver: one batched `getrawtransaction` per cycle,
+    /// deduped by parent txid. Requires bitcoind with `txindex=1`.
+    pub fn rpc_resolver(client: Client) -> impl Fn(&[(Txid, Vout)]) -> Resolved {
         let warned = AtomicBool::new(false);
-        move |txid, vout| {
-            let bt: &bitcoin::Txid = txid.into();
-            match client.get_raw_transaction(bt, None as Option<&bitcoin::BlockHash>) {
-                Ok(tx) => tx
-                    .output
-                    .get(usize::from(vout))
-                    .map(|o| TxOut::from((o.script_pubkey.clone(), o.value.into()))),
+        move |holes: &[(Txid, Vout)]| {
+            if holes.is_empty() {
+                return Resolved::default();
+            }
+            let mut seen: FxHashSet<Txid> = FxHashSet::default();
+            let unique: Vec<Txid> = holes
+                .iter()
+                .filter_map(|(t, _)| seen.insert(*t).then_some(*t))
+                .collect();
+            let parents = match client.get_raw_transactions(&unique) {
+                Ok(map) => {
+                    warned.store(false, Ordering::Relaxed);
+                    map
+                }
                 Err(_) => {
                     if !warned.swap(true, Ordering::Relaxed) {
                         warn!(
-                            "mempool: getrawtransaction missed for {txid}; ensure bitcoind is running with txindex=1"
+                            "mempool: getrawtransaction batch failed; ensure bitcoind is running with txindex=1"
                         );
                     }
-                    None
+                    return Resolved::default();
                 }
-            }
+            };
+            holes
+                .iter()
+                .filter_map(|(txid, vout)| {
+                    let o = parents.get(txid)?.output.get(usize::from(*vout))?;
+                    let txout = TxOut::from((o.script_pubkey.clone(), o.value.into()));
+                    Some(((*txid, *vout), txout))
+                })
+                .collect()
         }
     }
 
@@ -92,9 +107,6 @@ impl Prevouts {
     /// same-cycle in-mempool fill (parent is live) or an external hole
     /// (parent is confirmed or unknown).
     fn gather(txs: &TxStore) -> (FillBatch, HoleBatch) {
-        if txs.unresolved().is_empty() {
-            return (Vec::new(), Vec::new());
-        }
         let mut filled: FillBatch = Vec::new();
         let mut holes: HoleBatch = Vec::new();
         for prefix in txs.unresolved() {
@@ -127,17 +139,33 @@ impl Prevouts {
         (filled, holes)
     }
 
+    /// Flatten holes into one `(prev_txid, vout)` slice, invoke the
+    /// resolver once, then re-attribute resolved entries to their
+    /// consumer txs. Mempool double-spend rules guarantee every
+    /// `(prev_txid, vout)` key is unique across the batch, so no
+    /// dedup is needed before calling.
     fn resolve_external<F>(holes: HoleBatch, resolver: F) -> FillBatch
     where
-        F: Fn(&Txid, Vout) -> Option<TxOut>,
+        F: Fn(&[(Txid, Vout)]) -> Resolved,
     {
+        let total: usize = holes.iter().map(|(_, h)| h.len()).sum();
+        let mut flat: Vec<(Txid, Vout)> = Vec::with_capacity(total);
+        for (_, tx_holes) in &holes {
+            for (_, prev_txid, vout) in tx_holes {
+                flat.push((*prev_txid, *vout));
+            }
+        }
+        let mut resolved = resolver(&flat);
+        if resolved.is_empty() {
+            return Vec::new();
+        }
         holes
             .into_iter()
-            .filter_map(|(txid, holes)| {
-                let fills: Fills = holes
+            .filter_map(|(txid, tx_holes)| {
+                let fills: Fills = tx_holes
                     .into_iter()
                     .filter_map(|(vin, prev_txid, vout)| {
-                        resolver(&prev_txid, vout).map(|o| (vin, o))
+                        resolved.remove(&(prev_txid, vout)).map(|o| (vin, o))
                     })
                     .collect();
                 (!fills.is_empty()).then_some((txid, fills))

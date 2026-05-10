@@ -9,9 +9,10 @@ pub use stats::BlockStats;
 pub use tx::SnapTx;
 pub use tx_index::TxIndex;
 
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::{Hash, Hasher};
 
 use brk_types::{FeeRate, NextBlockHash, RecommendedFees, Txid, TxidPrefix};
+use rustc_hash::FxHasher;
 
 use fees::Fees;
 
@@ -49,7 +50,7 @@ impl Snapshot {
     ) -> Self {
         let block_stats = BlockStats::for_blocks(&blocks, &txs);
         let fees = Fees::compute(&block_stats, min_fee);
-        let next_block_hash = Self::hash_next_block(&blocks);
+        let next_block_hash = Self::hash_next_block(&blocks, &txs);
         Self {
             txs,
             blocks,
@@ -60,12 +61,18 @@ impl Snapshot {
         }
     }
 
-    fn hash_next_block(blocks: &[Vec<TxIndex>]) -> NextBlockHash {
+    /// Content tag over block 0 in template order. Hashes txids, not
+    /// `TxIndex` slots, because slot assignment is per-cycle and
+    /// unstable; the txid set is the actual identity of "what's in the
+    /// next block".
+    fn hash_next_block(blocks: &[Vec<TxIndex>], txs: &[SnapTx]) -> NextBlockHash {
         let Some(block) = blocks.first() else {
             return NextBlockHash::ZERO;
         };
-        let mut hasher = DefaultHasher::new();
-        block.hash(&mut hasher);
+        let mut hasher = FxHasher::default();
+        for idx in block {
+            txs[idx.as_usize()].txid.hash(&mut hasher);
+        }
         NextBlockHash::new(hasher.finish())
     }
 

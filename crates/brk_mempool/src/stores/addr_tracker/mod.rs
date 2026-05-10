@@ -1,11 +1,11 @@
 use std::{
     collections::hash_map::Entry as MapEntry,
-    hash::{DefaultHasher, Hash, Hasher},
+    hash::{Hash, Hasher},
 };
 
 use brk_types::{AddrBytes, AddrMempoolStats, Transaction, TxOut, Txid};
 use derive_more::Deref;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHasher};
 
 mod addr_entry;
 
@@ -52,7 +52,7 @@ impl AddrTracker {
         let Some(entry) = self.0.get(addr) else {
             return 0;
         };
-        let mut hasher = DefaultHasher::new();
+        let mut hasher = FxHasher::default();
         entry.stats.hash(&mut hasher);
         hasher.finish()
     }
