@@ -27,16 +27,18 @@ const RPC_NOT_FOUND: i32 = -5;
 use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, TxOutInfo};
 
 /// Per-batch request count for `get_block_hashes_range`,
-/// `fetch_mempool_entries`, and `fetch_raw_transactions`. Sized so the
-/// JSON request body stays well under a megabyte and bitcoind doesn't
-/// spend too long on a single batch before yielding results.
+/// `fetch_new_pool_data`, and `get_raw_transactions`. Sized so the JSON
+/// request body stays well under a megabyte and bitcoind doesn't spend
+/// too long on a single batch before yielding results. For the mixed
+/// `getmempoolentry`+`getrawtransaction` batch this is the *txid* count;
+/// the wire batch is twice that.
 const BATCH_CHUNK: usize = 2000;
 
 /// Live mempool state fetched in one batched bitcoind round-trip:
-/// `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`.
-/// `gbt` is validated to be a subset of `live_txids` before
-/// construction; on mismatch the cycle is skipped (`Ok(None)`) so we
-/// never publish a block 0 missing txids Core would actually mine.
+/// `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`. Each
+/// `gbt` entry carries the full decoded tx and stats so block 0 is
+/// projected directly from Core's selection without a follow-up entry
+/// fetch that could race the eviction of one of those txs.
 pub struct MempoolState {
     pub live_txids: Vec<Txid>,
     pub gbt: Vec<BlockTemplateTx>,
@@ -64,8 +66,11 @@ struct GbtResponseRaw {
 
 #[derive(Deserialize)]
 struct GbtTxRaw {
+    data: String,
     txid: bitcoin::Txid,
     fee: u64,
+    weight: u64,
+    depends: Vec<u32>,
 }
 
 fn build_entry(txid: Txid, e: MempoolEntryRaw) -> Result<MempoolEntryInfo> {
@@ -84,14 +89,32 @@ fn build_entry(txid: Txid, e: MempoolEntryRaw) -> Result<MempoolEntryInfo> {
     })
 }
 
-fn build_gbt(raw: GbtResponseRaw) -> Vec<BlockTemplateTx> {
-    raw.transactions
-        .into_iter()
-        .map(|t| BlockTemplateTx {
+fn build_gbt(raw: GbtResponseRaw) -> Result<Vec<BlockTemplateTx>> {
+    // Pass 1: decode bodies and stash the 1-based GBT-array indices
+    // aside so we can drop each `data` hex string and `GbtTxRaw` as
+    // soon as the tx is pushed.
+    let n = raw.transactions.len();
+    let mut depends_idx: Vec<Vec<u32>> = Vec::with_capacity(n);
+    let mut result: Vec<BlockTemplateTx> = Vec::with_capacity(n);
+    for t in raw.transactions {
+        depends_idx.push(t.depends);
+        result.push(BlockTemplateTx {
             txid: Txid::from(t.txid),
             fee: Sats::from(t.fee),
-        })
-        .collect()
+            weight: Weight::from(t.weight),
+            depends: Vec::new(),
+            tx: encode::deserialize_hex(&t.data)?,
+        });
+    }
+    // Pass 2: resolve indices to txids now that the array is complete.
+    for (i, indices) in depends_idx.iter().enumerate() {
+        let resolved: Vec<Txid> = indices
+            .iter()
+            .filter_map(|d| result.get((*d as usize).checked_sub(1)?).map(|t| t.txid))
+            .collect();
+        result[i].depends = resolved;
+    }
+    Ok(result)
 }
 
 /// Convert bitcoind's `mempoolminfee` (BTC/kvB f64) to sat/vB. Round-trip
@@ -367,15 +390,11 @@ impl Client {
     }
 
     /// Core's projected next block + live mempool txid set +
-    /// `mempoolminfee`, fetched in a single bitcoind round-trip.
-    /// `getblocktemplate` runs first so any tx arriving between the
-    /// intra-batch calls lands in the txid listing only, preserving
-    /// GBT ⊆ txids for the common race. Validates that every GBT txid
-    /// is present in the txid listing and returns `Ok(None)` on
-    /// mismatch so the caller can skip the cycle: republishing block 0
-    /// with missing txids would diverge from Core's exact selection.
-    /// Other failures bubble up as `Err`.
-    pub fn fetch_mempool_state(&self) -> Result<Option<MempoolState>> {
+    /// `mempoolminfee`, fetched in a single bitcoind round-trip. GBT
+    /// carries each tx's full body and stats, so block 0 is exact even
+    /// when a tx vanishes from the mempool listing between the GBT and
+    /// `getrawmempool` calls; no follow-up entry fetch can race it.
+    pub fn fetch_mempool_state(&self) -> Result<MempoolState> {
         let requests: [(&str, Vec<Value>); 3] = [
             (
                 "getblocktemplate",
@@ -394,56 +413,72 @@ impl Client {
             .iter()
             .map(|s| Self::parse_txid(s, "mempool txid"))
             .collect::<Result<Vec<_>>>()?;
-        let gbt = build_gbt(serde_json::from_str(gbt_raw.get())?);
+        let gbt = build_gbt(serde_json::from_str(gbt_raw.get())?)?;
         let min_fee = build_min_fee(serde_json::from_str(info_raw.get())?);
 
-        let live_set: rustc_hash::FxHashSet<Txid> = live_txids.iter().copied().collect();
-        let missing = gbt.iter().filter(|t| !live_set.contains(&t.txid)).count();
-        if missing > 0 {
-            #[cfg(debug_assertions)]
-            tracing::warn!(
-                missing,
-                gbt_total = gbt.len(),
-                "getblocktemplate has {missing} txids not in mempool listing; skipping cycle"
-            );
-            return Ok(None);
-        }
-
-        Ok(Some(MempoolState {
+        Ok(MempoolState {
             live_txids,
             gbt,
             min_fee,
-        }))
+        })
     }
 
-    /// Batched `getmempoolentry` for the given txids. Returns
-    /// `MempoolEntryInfo` per successful lookup. Per-item -5 (NOT_FOUND
-    /// — tx evicted/replaced between the txid listing and this call)
-    /// drops silently; transport-level failures still propagate.
-    /// Chunked at `BATCH_CHUNK` requests per round-trip.
-    pub fn fetch_mempool_entries(&self, txids: &[Txid]) -> Result<Vec<MempoolEntryInfo>> {
-        let mut out: Vec<MempoolEntryInfo> = Vec::with_capacity(txids.len());
+    /// Mixed batch of `getmempoolentry` + `getrawtransaction` for the
+    /// same txid set in one round-trip. Returns the entries vec and the
+    /// raw-tx map keyed by txid. Per-item -5 (NOT_FOUND — tx evicted
+    /// between the listing and this call) drops silently for either leg;
+    /// transport-level failures still propagate. Chunked at `BATCH_CHUNK`
+    /// txids per round-trip (2× that on the wire).
+    pub fn fetch_new_pool_data(
+        &self,
+        txids: &[Txid],
+    ) -> Result<(Vec<MempoolEntryInfo>, FxHashMap<Txid, bitcoin::Transaction>)> {
+        let mut entries: Vec<MempoolEntryInfo> = Vec::with_capacity(txids.len());
+        let mut txs: FxHashMap<Txid, bitcoin::Transaction> =
+            FxHashMap::with_capacity_and_hasher(txids.len(), Default::default());
 
         for chunk in txids.chunks(BATCH_CHUNK) {
-            let args = chunk.iter().map(|t| {
-                let bt: &bitcoin::Txid = t.into();
-                vec![serde_json::to_value(bt).unwrap_or(Value::Null)]
-            });
-            let results: Vec<Result<MempoolEntryRaw>> =
-                self.0.call_batch_per_item("getmempoolentry", args)?;
+            let mut requests: Vec<(&str, Vec<Value>)> = Vec::with_capacity(chunk.len() * 2);
+            for txid in chunk {
+                let bt: &bitcoin::Txid = txid.into();
+                let tv = serde_json::to_value(bt).unwrap_or(Value::Null);
+                requests.push(("getmempoolentry", vec![tv.clone()]));
+                requests.push(("getrawtransaction", vec![tv, Value::Bool(false)]));
+            }
 
-            for (txid, res) in chunk.iter().zip(results) {
-                match res {
-                    Ok(raw) => out.push(build_entry(*txid, raw)?),
+            let results = self.0.call_mixed_batch(&requests)?;
+            let mut iter = results.into_iter();
+            for txid in chunk {
+                let entry_res = iter.next().ok_or(Error::Internal("missing entry"))?;
+                let raw_res = iter.next().ok_or(Error::Internal("missing raw"))?;
+
+                match entry_res.and_then(|raw| {
+                    let me: MempoolEntryRaw = serde_json::from_str(raw.get())?;
+                    build_entry(*txid, me)
+                }) {
+                    Ok(info) => entries.push(info),
                     Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc))) if rpc.code == RPC_NOT_FOUND => {}
                     Err(e) => {
-                        debug!(txid = %txid, error = %e, "getmempoolentry batch: item failed")
+                        debug!(txid = %txid, error = %e, "getmempoolentry mixed batch: item failed")
+                    }
+                }
+
+                match raw_res.and_then(|raw| {
+                    let hex: String = serde_json::from_str(raw.get())?;
+                    Ok(encode::deserialize_hex::<bitcoin::Transaction>(&hex)?)
+                }) {
+                    Ok(tx) => {
+                        txs.insert(*txid, tx);
+                    }
+                    Err(Error::CorepcRPC(JsonRpcError::Rpc(rpc))) if rpc.code == RPC_NOT_FOUND => {}
+                    Err(e) => {
+                        debug!(txid = %txid, error = %e, "getrawtransaction mixed batch: item failed")
                     }
                 }
             }
         }
 
-        Ok(out)
+        Ok((entries, txs))
     }
 
     pub fn get_closest_valid_height(&self, hash: BlockHash) -> Result<(Height, BlockHash)> {

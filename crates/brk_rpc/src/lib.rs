@@ -7,7 +7,7 @@ use std::{
 
 use bitcoin::ScriptBuf;
 use brk_error::Result;
-use brk_types::{BlockHash, Sats, Txid};
+use brk_types::{BlockHash, Sats, Txid, Weight};
 
 mod client;
 mod methods;
@@ -35,10 +35,19 @@ pub struct TxOutInfo {
     pub script_pub_key: ScriptBuf,
 }
 
+/// One transaction from `getblocktemplate`. Carries the full decoded
+/// body and stats so block 0 can be projected without a follow-up
+/// `getmempoolentry`/`getrawtransaction` per tx; that follow-up was the
+/// source of the GBT/listing race that used to skip cycles.
 #[derive(Debug, Clone)]
 pub struct BlockTemplateTx {
     pub txid: Txid,
     pub fee: Sats,
+    pub weight: Weight,
+    /// Parent txids also in this template (Core's own ancestor
+    /// accounting, resolved from the wire-level 1-based indices).
+    pub depends: Vec<Txid>,
+    pub tx: bitcoin::Transaction,
 }
 
 #[derive(Clone, Debug)]

@@ -77,7 +77,7 @@ impl Query {
         self.indexer().safe_lengths()
     }
 
-    /// Tip block hash, cached in the indexer.
+    /// Tip block hash at the pipeline-safe ceiling.
     #[inline]
     pub fn tip_blockhash(&self) -> BlockHash {
         self.indexer().tip_blockhash()

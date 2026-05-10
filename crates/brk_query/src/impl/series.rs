@@ -184,8 +184,8 @@ impl Query {
         }
 
         // Snapshot tip-derived state together so the historical-branch ETag stays
-        // self-consistent: stable_count is computed from tip_height, hash_prefix
-        // is the live tip.
+        // self-consistent: tip_height and hash_prefix both reflect the safe-bound
+        // tip, and stable_count is computed from tip_height.
         let tip_height = self.height();
         let hash_prefix = self.tip_hash_prefix();
         let stable_count = self.stable_count(params.index, total, tip_height);

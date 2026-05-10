@@ -3,7 +3,6 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::Arc,
     thread,
     time::{Duration, Instant},
 };
@@ -13,7 +12,6 @@ use brk_reader::{Reader, XORBytes};
 use brk_rpc::Client;
 use brk_types::{BlockHash, Height};
 use fjall::PersistMode;
-use parking_lot::RwLock;
 use tracing::{debug, error, info};
 use vecdb::{
     Exit, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode, WritableVec, unlikely,
@@ -39,13 +37,25 @@ pub struct Indexer<M: StorageMode = Rw> {
     path: PathBuf,
     pub vecs: Vecs<M>,
     pub stores: Stores,
-    tip_blockhash: Arc<RwLock<BlockHash>>,
     safe_lengths: SafeLengths,
 }
 
 impl<M: StorageMode> Indexer<M> {
+    /// Tip block hash at the pipeline-safe ceiling.
+    ///
+    /// Reads the on-disk blockhash vec at `safe_lengths.height - 1` so
+    /// the answer always agrees with `safe_lengths`. The indexer's loop
+    /// pushes new hashes per block before `safe_lengths` advances (that
+    /// only happens after the compute pass via
+    /// [`Indexer::advance_safe_lengths`]); reading from a live cache
+    /// here would mint a tip ahead of every safe-bound endpoint and
+    /// cause cache etags to invalidate before the data they cover is
+    /// actually queryable.
     pub fn tip_blockhash(&self) -> BlockHash {
-        *self.tip_blockhash.read()
+        match self.safe_lengths().height.decremented() {
+            Some(h) => self.vecs.blocks.blockhash.collect_one(h).unwrap_or_default(),
+            None => BlockHash::default(),
+        }
     }
 
     /// Pipeline-safe `Lengths` snapshot shared with `Query`. Writers
@@ -83,8 +93,6 @@ impl Indexer {
             let stores = Stores::forced_import(&indexed_path, VERSION)?;
             info!("Imported stores in {:?}", i.elapsed());
 
-            let tip_blockhash = vecs.blocks.blockhash.collect_last().unwrap_or_default();
-
             let safe_lengths = SafeLengths::new();
             if let Some(lengths) = Lengths::from_local(&vecs, &stores) {
                 safe_lengths.advance(lengths);
@@ -94,7 +102,6 @@ impl Indexer {
                 path: indexed_path.clone(),
                 vecs,
                 stores,
-                tip_blockhash: Arc::new(RwLock::new(tip_blockhash)),
                 safe_lengths,
             })
         };
@@ -122,7 +129,6 @@ impl Indexer {
     fn full_reset(&mut self) -> Result<()> {
         info!("Full reset...");
         self.safe_lengths.reset();
-        *self.tip_blockhash.write() = BlockHash::default();
         self.vecs.reset()?;
         let stores_path = self.path.join("stores");
         fs::remove_dir_all(&stores_path).ok();
@@ -188,9 +194,6 @@ impl Indexer {
         debug!("Rollback stores done.");
         self.vecs.rollback_if_needed(&starting_lengths)?;
         debug!("Rollback vecs done.");
-        if let Some(hash) = prev_hash.as_ref() {
-            *self.tip_blockhash.write() = *hash;
-        }
         drop(lock);
 
         let mut lengths = starting_lengths;
@@ -312,8 +315,6 @@ impl Indexer {
                 export(stores, vecs, height)?;
                 readers = Readers::new(vecs);
             }
-
-            *self.tip_blockhash.write() = block.block_hash().into();
         }
 
         drop(readers);
@@ -388,7 +389,6 @@ impl ReadOnlyClone for Indexer {
             path: self.path.clone(),
             vecs: self.vecs.read_only_clone(),
             stores: self.stores.clone(),
-            tip_blockhash: self.tip_blockhash.clone(),
             safe_lengths: self.safe_lengths.clone(),
         }
     }

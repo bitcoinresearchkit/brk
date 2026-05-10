@@ -499,10 +499,11 @@ impl Query {
 
     // === Helper methods ===
 
-    /// Hash to height. The prefix store keys on the first 8 bytes of
-    /// the hash, so the resolved height is verified against the full
-    /// `blockhash[height]` before being returned. Prefix collisions
-    /// (or unknown hashes) surface as `NotFound`.
+    /// Hash to height, clamped to the safe-lengths snapshot. The prefix
+    /// store keys on the first 8 bytes of the hash, so the resolved
+    /// height is verified against the full `blockhash[height]` before
+    /// being returned. Prefix collisions, unknown hashes, and hashes
+    /// past the snapshot all surface as `NotFound`.
     pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
         let indexer = self.indexer();
         let prefix = BlockHashPrefix::from(hash);
@@ -512,6 +513,9 @@ impl Query {
             .get(&prefix)?
             .map(|h| *h)
             .ok_or(Error::NotFound("Block not found".into()))?;
+        if height >= self.safe_lengths().height {
+            return Err(Error::NotFound("Block not found".into()));
+        }
         match indexer.vecs.blocks.blockhash.get(height) {
             Some(stored) if &stored == hash => Ok(height),
             _ => Err(Error::NotFound("Block not found".into())),

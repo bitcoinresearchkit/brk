@@ -4,9 +4,10 @@
 //!
 //! 1. [`steps::fetcher::Fetcher`] - one mixed batched RPC for
 //!    `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`,
-//!    then a `getmempoolentry` batch and a `getrawtransaction` batch
-//!    on new txids only. The GBT is validated to be a subset of the
-//!    txid listing; on mismatch the cycle is skipped.
+//!    then a single mixed `getmempoolentry`+`getrawtransaction` batch
+//!    on new txids only. GBT-only txs are synthesized inline from the
+//!    GBT payload so block 0 matches Core's selection exactly without
+//!    a follow-up entry fetch that could race the listing.
 //! 2. [`steps::preparer::Preparer`] - decode and classify into
 //!    `TxsPulled { added, removed }`. Pure CPU.
 //! 3. [`steps::applier::Applier`] - apply the diff to
@@ -345,20 +346,17 @@ impl Mempool {
             ..
         } = &*self.0;
 
-        let Some(Fetched {
+        let Fetched {
             live_txids,
             new_entries,
             new_txs,
-            gbt,
+            gbt_txids,
             min_fee,
-        }) = Fetcher::fetch(client, state)?
-        else {
-            return Ok(());
-        };
+        } = Fetcher::fetch(client, state)?;
         let pulled = Preparer::prepare(&live_txids, new_entries, new_txs, state);
         let changed = Applier::apply(state, rebuilder, pulled);
         Prevouts::fill(state, resolver);
-        rebuilder.tick(state, changed, &gbt, min_fee);
+        rebuilder.tick(state, changed, &gbt_txids, min_fee);
 
         Ok(())
     }
