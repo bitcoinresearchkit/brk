@@ -14,23 +14,17 @@ use crate::{
 pub struct Applier;
 
 impl Applier {
-    /// Returns true iff anything changed.
-    ///
     /// `rebuilder` supplies the previous cycle's snapshot. Burial reads
     /// each tomb's `chunk_rate` from the snapshot (always-fresh,
     /// package-aware via local linearization). The fallback to
     /// `entry.fee_rate()` is unreachable in steady state - every burial
     /// target was alive at the previous tick, so the snapshot has it.
-    pub fn apply(lock: &RwLock<State>, rebuilder: &Rebuilder, pulled: TxsPulled) -> bool {
+    pub fn apply(lock: &RwLock<State>, rebuilder: &Rebuilder, pulled: TxsPulled) {
         let TxsPulled { added, removed } = pulled;
-        let has_changes = !added.is_empty() || !removed.is_empty();
-
         let mut state = lock.write();
         Self::bury_removals(&mut state, rebuilder, removed);
         Self::publish_additions(&mut state, added);
         state.graveyard.evict_old();
-
-        has_changes
     }
 
     fn bury_removals(

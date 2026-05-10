@@ -2,7 +2,7 @@ use std::{
     collections::VecDeque,
     sync::{
         Arc,
-        atomic::{AtomicBool, AtomicU64, Ordering},
+        atomic::{AtomicU64, Ordering},
     },
 };
 
@@ -29,31 +29,16 @@ pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
     /// Past block-0 txid sets keyed by `next_block_hash`, oldest first.
     history: RwLock<VecDeque<(NextBlockHash, FxHashSet<Txid>)>>,
-    dirty: AtomicBool,
     rebuild_count: AtomicU64,
-    skip_clean: AtomicU64,
 }
 
 impl Rebuilder {
-    /// Mark dirty if the cycle changed mempool state, then rebuild iff
-    /// the dirty bit is set. Cycle pacing is the driver loop's job; the
-    /// rebuild itself is pure CPU on already-fetched data. The dirty
-    /// bit is cleared only after the snapshot is published, so a panic
-    /// in `build_snapshot` retries on the next cycle.
-    pub fn tick(
-        &self,
-        lock: &RwLock<State>,
-        changed: bool,
-        gbt_txids: &[Txid],
-        min_fee: FeeRate,
-    ) {
-        if changed {
-            self.dirty.store(true, Ordering::Release);
-        }
-        if !self.dirty.load(Ordering::Acquire) {
-            self.skip_clean.fetch_add(1, Ordering::Relaxed);
-            return;
-        }
+    /// Rebuild the snapshot every cycle. The build is pure CPU on
+    /// already-fetched data and `min_fee` participates in the result,
+    /// so a "skip if no add/remove" gate would freeze the served fees
+    /// when Core's `mempoolminfee` drifts on a quiet pool. Cycle pacing
+    /// is the driver loop's job.
+    pub fn tick(&self, lock: &RwLock<State>, gbt_txids: &[Txid], min_fee: FeeRate) {
         let snap = Self::build_snapshot(lock, gbt_txids, min_fee);
         let block0_set: FxHashSet<Txid> = snap.block0_txids().collect();
         let next_hash = snap.next_block_hash;
@@ -67,7 +52,6 @@ impl Rebuilder {
         }
         drop(hist);
 
-        self.dirty.store(false, Ordering::Release);
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
 
@@ -84,10 +68,6 @@ impl Rebuilder {
 
     pub fn rebuild_count(&self) -> u64 {
         self.rebuild_count.load(Ordering::Relaxed)
-    }
-
-    pub fn skip_clean_count(&self) -> u64 {
-        self.skip_clean.load(Ordering::Relaxed)
     }
 
     fn build_snapshot(

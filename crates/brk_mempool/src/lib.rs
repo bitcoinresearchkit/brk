@@ -354,9 +354,9 @@ impl Mempool {
             min_fee,
         } = Fetcher::fetch(client, state)?;
         let pulled = Preparer::prepare(&live_txids, new_entries, new_txs, state);
-        let changed = Applier::apply(state, rebuilder, pulled);
+        Applier::apply(state, rebuilder, pulled);
         Prevouts::fill(state, resolver);
-        rebuilder.tick(state, changed, &gbt_txids, min_fee);
+        rebuilder.tick(state, &gbt_txids, min_fee);
 
         Ok(())
     }

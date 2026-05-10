@@ -32,7 +32,7 @@ fn main() -> Result<()> {
             "info.count={} txs={} unresolved={} addrs={} outpoints={} \
              graveyard.tombstones={} graveyard.order={} \
              snap.txs.len={} snap.blocks={} snap.blocks_txs={} \
-             rebuilds={} skip.clean={}",
+             rebuilds={}",
             info_count,
             stats.txs,
             stats.unresolved,
@@ -44,7 +44,6 @@ fn main() -> Result<()> {
             snapshot.blocks.len(),
             blocks_tx_total,
             stats.rebuilds,
-            stats.skip_cleans,
         );
     }
 }

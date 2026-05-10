@@ -13,7 +13,6 @@ pub struct MempoolStats {
     pub graveyard_tombstones: usize,
     pub graveyard_order: usize,
     pub rebuilds: u64,
-    pub skip_cleans: u64,
 }
 
 impl From<&Mempool> for MempoolStats {
@@ -28,7 +27,6 @@ impl From<&Mempool> for MempoolStats {
             graveyard_tombstones: state.graveyard.tombstones_len(),
             graveyard_order: state.graveyard.order_len(),
             rebuilds: rebuilder.rebuild_count(),
-            skip_cleans: rebuilder.skip_clean_count(),
         }
     }
 }
