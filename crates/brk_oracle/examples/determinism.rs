@@ -11,7 +11,9 @@
 use std::path::PathBuf;
 
 use brk_indexer::Indexer;
-use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
+use brk_oracle::{
+    Config, Histogram, Oracle, PRICES, START_HEIGHT, cents_to_bin, default_eligible_bin,
+};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -51,8 +53,6 @@ fn main() {
 
     let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();
     let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txout_index.collect();
-
-    let ref_config = Config::default();
 
     // Reference oracle at 575k.
     let ref_start = START_HEIGHT;
@@ -112,18 +112,10 @@ fn main() {
             .output_type
             .collect_range_at(out_start, out_end);
 
-        let mut hist = [0u32; NUM_BINS];
+        let mut hist = Histogram::zeros();
         for (sats, output_type) in values.into_iter().zip(output_types) {
-            if ref_config.excluded_output_types.contains(&output_type) {
-                continue;
-            }
-            if *sats < ref_config.min_sats
-                || (ref_config.exclude_common_round_values && sats.is_common_round_value())
-            {
-                continue;
-            }
-            if let Some(bin) = sats_to_bin(sats) {
-                hist[bin] += 1;
+            if let Some(bin) = default_eligible_bin(sats, output_type) {
+                hist.increment(bin as usize);
             }
         }
 

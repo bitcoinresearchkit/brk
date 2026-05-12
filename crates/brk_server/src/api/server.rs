@@ -29,13 +29,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                     let uptime = state.started_instant.elapsed();
                     let started_at = state.started_at.to_string();
                     let sync = state
-                        .run(move |q| {
-                            let tip_height = q
-                                .client()
-                                .get_last_height()
-                                .unwrap_or(q.height());
-                            q.sync_status(tip_height)
-                        })
+                        .run(move |q| q.sync_status(q.height()))
                         .await
                         .expect("health sync task panicked");
                     let mut response = axum::Json(Health {
@@ -57,7 +51,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                     op.id("get_health")
                         .server_tag()
                         .summary("Health check")
-                        .description("Returns the health status of the API server, including uptime information.")
+                        .description("Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, see `/api/server/sync`.")
                         .json_response::<Health>()
                 },
             ),

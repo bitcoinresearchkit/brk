@@ -3,7 +3,14 @@
 //! Detects round-dollar transaction patterns ($1, $5, $10, ... $10,000) in Bitcoin
 //! block outputs to derive the current price without any exchange data.
 
-use brk_types::{Block, Cents, Dollars, OutputType, Sats};
+use brk_types::{Cents, Dollars, OutputType, Sats};
+
+mod config;
+mod histogram;
+
+use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
+pub use config::Config;
+pub use histogram::Histogram;
 
 /// Pre-oracle dollar prices, one per line, heights 0..630_000.
 pub const PRICES: &str = include_str!("prices.txt");
@@ -53,6 +60,33 @@ pub fn sats_to_bin(sats: Sats) -> Option<usize> {
     } else {
         None
     }
+}
+
+/// Bitmask form of `DEFAULT_EXCLUDED_OUTPUT_TYPES`, evaluated at compile
+/// time so `default_eligible_bin` checks membership with a single AND.
+const DEFAULT_EXCLUDED_MASK: u16 = {
+    let mut mask = 0u16;
+    let mut i = 0;
+    while i < DEFAULT_EXCLUDED_OUTPUT_TYPES.len() {
+        mask |= 1u16 << DEFAULT_EXCLUDED_OUTPUT_TYPES[i] as u8;
+        i += 1;
+    }
+    mask
+};
+
+/// Bin index for `(sats, output_type)` under `Config::default()` rules.
+/// Returns `None` for excluded types (P2TR/P2WSH), dust, round-BTC values,
+/// or out-of-range bins. Mirror of `Oracle::output_to_bin` for callers that
+/// can pre-bin outputs at write time and don't have an `Oracle` handle.
+#[inline(always)]
+pub fn default_eligible_bin(sats: Sats, output_type: OutputType) -> Option<u16> {
+    if DEFAULT_EXCLUDED_MASK & (1u16 << output_type as u8) != 0 {
+        return None;
+    }
+    if *sats < DEFAULT_MIN_SATS || sats.is_common_round_value() {
+        return None;
+    }
+    sats_to_bin(sats).map(|b| b as u16)
 }
 
 /// Converts a fractional bin to a USD price in cents.
@@ -141,39 +175,8 @@ fn find_best_bin(
 }
 
 #[derive(Clone)]
-pub struct Config {
-    /// EMA decay: 2/(N+1) where N is span in blocks. 2/7 = 6-block span.
-    pub alpha: f64,
-    /// Ring buffer depth. 12 blocks for deterministic convergence at any start height.
-    pub window_size: usize,
-    /// Search window bins below/above previous estimate. Asymmetric for log-scale.
-    pub search_below: usize,
-    pub search_above: usize,
-    /// Minimum output value in sats (dust filter).
-    pub min_sats: u64,
-    /// Exclude round BTC amounts that create false stencil matches.
-    pub exclude_common_round_values: bool,
-    /// Output types to ignore (e.g. P2TR, P2WSH are noisy).
-    pub excluded_output_types: Vec<OutputType>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            alpha: 2.0 / 7.0,
-            window_size: 12,
-            search_below: 9,
-            search_above: 11,
-            min_sats: 1000,
-            exclude_common_round_values: true,
-            excluded_output_types: vec![OutputType::P2TR, OutputType::P2WSH],
-        }
-    }
-}
-
-#[derive(Clone)]
 pub struct Oracle {
-    histograms: Vec<[u32; NUM_BINS]>,
+    histograms: Vec<Histogram>,
     ema: Box<[f64; NUM_BINS]>,
     cursor: usize,
     filled: usize,
@@ -196,7 +199,7 @@ impl Oracle {
             .iter()
             .fold(0u16, |mask, ot| mask | (1 << *ot as u8));
         Self {
-            histograms: vec![[0u32; NUM_BINS]; window_size],
+            histograms: vec![Histogram::zeros(); window_size],
             ema: Box::new([0.0; NUM_BINS]),
             cursor: 0,
             filled: 0,
@@ -208,81 +211,21 @@ impl Oracle {
         }
     }
 
-    pub fn process_block(&mut self, block: &Block) -> f64 {
-        self.process_outputs(
-            block
-                .txdata
-                .iter()
-                .skip(1) // skip coinbase
-                .flat_map(|tx| &tx.output)
-                .map(|txout| {
-                    (
-                        Sats::from(txout.value),
-                        OutputType::from(&txout.script_pubkey),
-                    )
-                }),
-        )
-    }
-
-    pub fn process_outputs(&mut self, outputs: impl Iterator<Item = (Sats, OutputType)>) -> f64 {
-        let mut hist = [0u32; NUM_BINS];
-        for (sats, output_type) in outputs {
-            if let Some(bin) = self.eligible_bin(sats, output_type) {
-                hist[bin] += 1;
-            }
-        }
-        self.ingest(&hist)
-    }
-
-    /// Create an oracle restored from a known price.
-    /// `fill` should feed warmup blocks to populate the ring buffer.
-    /// ref_bin is anchored to the checkpoint regardless of warmup drift.
+    /// Create an oracle restored from a known price. `fill` should call
+    /// `process_histogram` for the warmup blocks; during warmup the ring
+    /// fills without recomputing EMA or searching, then we recompute once
+    /// at the end so the first non-warmup call has a primed EMA.
     pub fn from_checkpoint(ref_bin: f64, config: Config, fill: impl FnOnce(&mut Self)) -> Self {
         let mut oracle = Self::new(ref_bin, config);
         oracle.warmup = true;
         fill(&mut oracle);
         oracle.warmup = false;
         oracle.recompute_ema();
-        oracle.ref_bin = ref_bin;
         oracle
     }
 
-    pub fn process_histogram(&mut self, hist: &[u32; NUM_BINS]) -> f64 {
-        self.ingest(hist)
-    }
-
-    pub fn ref_bin(&self) -> f64 {
-        self.ref_bin
-    }
-
-    pub fn price_cents(&self) -> Cents {
-        bin_to_cents(self.ref_bin).into()
-    }
-
-    pub fn price_dollars(&self) -> Dollars {
-        self.price_cents().into()
-    }
-
-    #[inline(always)]
-    pub fn output_to_bin(&self, sats: Sats, output_type: OutputType) -> Option<usize> {
-        self.eligible_bin(sats, output_type)
-    }
-
-    #[inline(always)]
-    fn eligible_bin(&self, sats: Sats, output_type: OutputType) -> Option<usize> {
-        if self.excluded_mask & (1 << output_type as u8) != 0 {
-            return None;
-        }
-        if *sats < self.config.min_sats
-            || (self.config.exclude_common_round_values && sats.is_common_round_value())
-        {
-            return None;
-        }
-        sats_to_bin(sats)
-    }
-
-    fn ingest(&mut self, hist: &[u32; NUM_BINS]) -> f64 {
-        self.histograms[self.cursor] = *hist;
+    pub fn process_histogram(&mut self, hist: &Histogram) -> f64 {
+        self.histograms[self.cursor] = hist.clone();
         self.cursor = (self.cursor + 1) % self.config.window_size;
         if self.filled < self.config.window_size {
             self.filled += 1;
@@ -299,6 +242,35 @@ impl Oracle {
             );
         }
         self.ref_bin
+    }
+
+    pub fn ref_bin(&self) -> f64 {
+        self.ref_bin
+    }
+
+    pub fn price_cents(&self) -> Cents {
+        bin_to_cents(self.ref_bin).into()
+    }
+
+    pub fn price_dollars(&self) -> Dollars {
+        self.price_cents().into()
+    }
+
+    /// Config-aware bin index for `(sats, output_type)`. Returns `None`
+    /// for excluded types, dust, round-BTC values, or out-of-range bins.
+    /// Callers under `Config::default()` should use `default_eligible_bin`
+    /// (free function) to skip the `&self` indirection.
+    #[inline(always)]
+    pub fn output_to_bin(&self, sats: Sats, output_type: OutputType) -> Option<usize> {
+        if self.excluded_mask & (1 << output_type as u8) != 0 {
+            return None;
+        }
+        if *sats < self.config.min_sats
+            || (self.config.exclude_common_round_values && sats.is_common_round_value())
+        {
+            return None;
+        }
+        sats_to_bin(sats)
     }
 
     fn recompute_ema(&mut self) {

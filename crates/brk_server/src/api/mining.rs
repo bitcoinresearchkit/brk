@@ -135,7 +135,8 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/pool/{slug}/blocks",
             get_with(
                 async |uri: Uri, headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, State(state): State<AppState>| {
-                    state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| q.pool_blocks(path.slug, None, POOL_BLOCKS_LIMIT)).await
+                    let strategy = state.pool_blocks_strategy(Version::ONE, path.slug);
+                    state.respond_json(&headers, strategy, &uri, move |q| q.pool_blocks(path.slug, None, POOL_BLOCKS_LIMIT)).await
                 },
                 |op| {
                     op.id("get_pool_blocks")

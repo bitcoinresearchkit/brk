@@ -1,8 +1,8 @@
 use std::ops::Range;
 
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
-use brk_oracle::{Config, NUM_BINS, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
+use brk_oracle::{Config, Histogram, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, VecIndex, WritableVec};
@@ -112,7 +112,7 @@ impl Vecs {
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
         let warmup = config.window_size.min(committed - START_HEIGHT);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
-            Self::feed_blocks(o, indexer, (committed - warmup)..committed);
+            Self::feed_blocks(o, indexer, (committed - warmup)..committed, None);
         });
 
         let num_new = total_heights - committed;
@@ -121,7 +121,8 @@ impl Vecs {
             committed, total_heights
         );
 
-        let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights);
+        let ref_bins =
+            Self::feed_blocks(&mut oracle, indexer, committed..total_heights, None);
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
             self.spot
@@ -150,32 +151,14 @@ impl Vecs {
     }
 
     /// Feed a range of blocks from the indexer into an Oracle (skipping coinbase),
-    /// returning per-block ref_bin values. Uncapped: derives boundaries from
-    /// raw indexer vec lengths. Use during compute, when the indexer is
-    /// quiescent and `safe_lengths` is still pinned at the pre-pass value.
-    fn feed_blocks<M: StorageMode>(
+    /// returning per-block ref_bin values.
+    ///
+    /// Pass `cap = None` from compute paths, when the indexer is quiescent and
+    /// raw vec lengths are authoritative. Pass `cap = Some(&safe_lengths)` from
+    /// reader paths so concurrent writer pushes past the cap are invisible.
+    pub fn feed_blocks<IM: StorageMode>(
         oracle: &mut Oracle,
-        indexer: &Indexer<M>,
-        range: Range<usize>,
-    ) -> Vec<f64> {
-        Self::feed_blocks_inner(oracle, indexer, range, None)
-    }
-
-    /// Capped variant: derives boundaries from `cap` instead of raw vec
-    /// lengths, so concurrent writer pushes past `cap` are invisible.
-    /// Reader paths (live_oracle) use this with the current `safe_lengths`.
-    fn feed_blocks_capped<M: StorageMode>(
-        oracle: &mut Oracle,
-        indexer: &Indexer<M>,
-        range: Range<usize>,
-        cap: &Lengths,
-    ) -> Vec<f64> {
-        Self::feed_blocks_inner(oracle, indexer, range, Some(cap))
-    }
-
-    fn feed_blocks_inner<M: StorageMode>(
-        oracle: &mut Oracle,
-        indexer: &Indexer<M>,
+        indexer: &Indexer<IM>,
         range: Range<usize>,
         cap: Option<&Lengths>,
     ) -> Vec<f64> {
@@ -208,24 +191,24 @@ impl Vecs {
 
         let mut ref_bins = Vec::with_capacity(range.len());
 
-        // Cursor avoids per-block PcoVec page decompression for
-        // the tx-indexed first_txout_index lookup.  The accessed
-        // tx_index values (first_tx_index + 1) are strictly increasing
-        // across blocks, so the cursor only advances forward.
+        // Cursor avoids per-block PcoVec page decompression for the
+        // tx-indexed first_txout_index lookup. Accessed tx_index values
+        // (first_tx_index + 1) are strictly increasing across blocks,
+        // so the cursor only advances forward.
         let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
 
-        // Reusable buffers — avoid per-block allocation
+        // Reusable buffers: avoid per-block allocation
         let mut values: Vec<Sats> = Vec::new();
         let mut output_types: Vec<OutputType> = Vec::new();
 
-        for (idx, _h) in range.enumerate() {
+        for idx in 0..range.len() {
             let first_tx_index = first_tx_indexes[idx];
             let next_first_tx_index = first_tx_indexes
                 .get(idx + 1)
                 .copied()
                 .unwrap_or(TxIndex::from(total_txs));
 
-            let next_out_first = out_firsts
+            let out_end = out_firsts
                 .get(idx + 1)
                 .copied()
                 .unwrap_or(TxOutIndex::from(total_outputs))
@@ -235,9 +218,8 @@ impl Vecs {
                 txout_cursor.advance(target - txout_cursor.position());
                 txout_cursor.next().unwrap().to_usize()
             } else {
-                next_out_first
+                out_end
             };
-            let out_end = next_out_first;
 
             indexer
                 .vecs
@@ -250,10 +232,10 @@ impl Vecs {
                 &mut output_types,
             );
 
-            let mut hist = [0u32; NUM_BINS];
-            for i in 0..values.len() {
-                if let Some(bin) = oracle.output_to_bin(values[i], output_types[i]) {
-                    hist[bin] += 1;
+            let mut hist = Histogram::zeros();
+            for (sats, output_type) in values.iter().zip(&output_types) {
+                if let Some(bin) = oracle.output_to_bin(*sats, *output_type) {
+                    hist.increment(bin);
                 }
             }
 
@@ -261,44 +243,5 @@ impl Vecs {
         }
 
         ref_bins
-    }
-}
-
-impl<M: StorageMode> Vecs<M> {
-    /// Returns an Oracle seeded from the last committed price, with the last
-    /// window_size blocks already processed. Ready for additional blocks (e.g. mempool).
-    pub fn live_oracle<IM: StorageMode>(&self, indexer: &Indexer<IM>) -> Result<Oracle> {
-        let config = Config::default();
-        let safe_lengths = indexer.safe_lengths();
-        let height = safe_lengths.height.to_usize();
-        let last_idx = self
-            .spot
-            .cents
-            .height
-            .len()
-            .checked_sub(1)
-            .ok_or(Error::NotFound(
-                "oracle prices not yet computed".to_string(),
-            ))?;
-        let last_cents = self
-            .spot
-            .cents
-            .height
-            .collect_one_at(last_idx)
-            .ok_or(Error::NotFound(
-                "oracle prices not yet computed".to_string(),
-            ))?;
-        let seed_bin = cents_to_bin(last_cents.inner() as f64);
-        let window_size = config.window_size;
-        let oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
-            Vecs::feed_blocks_capped(
-                o,
-                indexer,
-                height.saturating_sub(window_size)..height,
-                &safe_lengths,
-            );
-        });
-
-        Ok(oracle)
     }
 }

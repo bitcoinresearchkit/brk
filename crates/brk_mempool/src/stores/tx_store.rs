@@ -1,15 +1,28 @@
 use brk_types::{MempoolRecentTx, Transaction, TxOut, Txid, TxidPrefix, Vin};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::TxEntry;
+use crate::{TxEntry, stores::OutputBins};
 
 const RECENT_CAP: usize = 10;
 
-/// Per-tx record: live tx body and its mempool entry, kept under one
-/// key so a single map probe returns both.
+/// Per-tx record: live tx body, its mempool entry, and the pre-bucketed
+/// oracle bins for its outputs. Kept under one key so a single map probe
+/// returns everything readers need.
 pub struct TxRecord {
     pub tx: Transaction,
     pub entry: TxEntry,
+    pub output_bins: OutputBins,
+}
+
+impl TxRecord {
+    pub fn new(tx: Transaction, entry: TxEntry) -> Self {
+        let output_bins = OutputBins::from_tx(&tx);
+        Self {
+            tx,
+            entry,
+            output_bins,
+        }
+    }
 }
 
 /// Live-pool index keyed by `TxidPrefix`. The full `Txid` lives in
@@ -63,10 +76,6 @@ impl TxStore {
         self.records.values().map(|r| &r.entry.txid)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &Transaction> {
-        self.records.values().map(|r| &r.tx)
-    }
-
     pub fn insert(&mut self, tx: Transaction, entry: TxEntry) {
         let prefix = entry.txid_prefix();
         debug_assert!(
@@ -77,7 +86,7 @@ impl TxStore {
         if tx.input.iter().any(|i| i.prevout.is_none()) {
             self.unresolved.insert(prefix);
         }
-        self.records.insert(prefix, TxRecord { tx, entry });
+        self.records.insert(prefix, TxRecord::new(tx, entry));
     }
 
     fn sample_recent(&mut self, txid: &Txid, tx: &Transaction) {

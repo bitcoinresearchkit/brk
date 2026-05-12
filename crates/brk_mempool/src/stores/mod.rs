@@ -5,10 +5,12 @@
 
 pub(crate) mod addr_tracker;
 pub(crate) mod outpoint_spends;
+pub(crate) mod output_bins;
 pub(crate) mod tx_graveyard;
 pub(crate) mod tx_store;
 
 pub(crate) use addr_tracker::AddrTracker;
 pub(crate) use outpoint_spends::OutpointSpends;
+pub(crate) use output_bins::OutputBins;
 pub(crate) use tx_graveyard::{TxGraveyard, TxTombstone};
 pub(crate) use tx_store::TxStore;

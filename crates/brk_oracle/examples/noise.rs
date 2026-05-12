@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use brk_indexer::Indexer;
-use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, cents_to_bin, sats_to_bin};
+use brk_oracle::{Config, Histogram, Oracle, PRICES, cents_to_bin, default_eligible_bin};
 use brk_types::{Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -19,7 +19,7 @@ fn bins_to_pct(bins: f64) -> f64 {
     (10.0_f64.powf(bins / BPD) - 1.0) * 100.0
 }
 
-fn price_seed_bin(start_height: usize) -> f64 {
+fn seed_bin(start_height: usize) -> f64 {
     let price: f64 = PRICES
         .lines()
         .nth(start_height - 1)
@@ -30,9 +30,7 @@ fn price_seed_bin(start_height: usize) -> f64 {
 }
 
 /// Clamp the top N bins in `src` down to the (N+1)th highest value, writing into `dst`.
-fn clamp_top_n(src: &[u32; NUM_BINS], dst: &mut [u32; NUM_BINS], n: usize) {
-    // Find the (n+1)th largest value.
-    // Collect non-zero counts, sort descending, take the (n+1)th.
+fn clamp_top_n(src: &Histogram, dst: &mut Histogram, n: usize) {
     let mut top: Vec<u32> = src.iter().copied().filter(|&v| v > 0).collect();
     top.sort_unstable_by(|a, b| b.cmp(a));
     let clamp_to = if top.len() > n { top[n] } else { 0 };
@@ -102,7 +100,7 @@ fn main() {
     let total_blocks = total_heights - lowest;
 
     struct BlockData {
-        hist: Box<[u32; NUM_BINS]>,
+        hist: Histogram,
         high_bin: f64,
         low_bin: f64,
     }
@@ -144,21 +142,12 @@ fn main() {
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
-        let mut hist = Box::new([0u32; NUM_BINS]);
+        let mut hist = Histogram::zeros();
         for i in out_start..out_end {
             let sats: Sats = value_reader.get(i);
             let output_type = output_type_reader.get(i);
-            if config.excluded_output_types.contains(&output_type) {
-                continue;
-            }
-            if *sats < config.min_sats {
-                continue;
-            }
-            if config.exclude_common_round_values && sats.is_common_round_value() {
-                continue;
-            }
-            if let Some(bin) = sats_to_bin(sats) {
-                hist[bin] += 1;
+            if let Some(bin) = default_eligible_bin(sats, output_type) {
+                hist.increment(bin as usize);
             }
         }
 
@@ -206,7 +195,7 @@ fn main() {
         println!("{}", "-".repeat(72));
 
         for &start_height in &start_heights {
-            let mut oracle = Oracle::new(price_seed_bin(start_height), config.clone());
+            let mut oracle = Oracle::new(seed_bin(start_height), config.clone());
             let block_offset = start_height - lowest;
 
             let mut worst_err: f64 = 0.0;
@@ -217,7 +206,7 @@ fn main() {
             let mut total_sq_err: f64 = 0.0;
             let mut total_measured: u64 = 0;
 
-            let mut clamped_hist = [0u32; NUM_BINS];
+            let mut clamped_hist = Histogram::zeros();
             for (i, bd) in blocks[block_offset..].iter().enumerate() {
                 if clamp_n > 0 {
                     clamp_top_n(&bd.hist, &mut clamped_hist, clamp_n);

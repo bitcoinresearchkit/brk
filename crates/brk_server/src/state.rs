@@ -6,13 +6,13 @@ use axum::{
 };
 use brk_query::AsyncQuery;
 use brk_types::{
-    Addr, BlockHash, BlockHashPrefix, Date, Height, ONE_HOUR_IN_SEC, Timestamp as BrkTimestamp,
-    Txid, Version,
+    Addr, BlockHash, BlockHashPrefix, Date, Height, ONE_HOUR_IN_SEC, PoolSlug,
+    Timestamp as BrkTimestamp, Txid, Version,
 };
 use derive_more::Deref;
 use jiff::Timestamp;
 use serde::Serialize;
-use vecdb::ReadableVec;
+use vecdb::{ReadableVec, VecIndex};
 
 use crate::{CacheParams, CacheStrategy, Error, Website, extended::ResponseExtended};
 
@@ -70,16 +70,26 @@ impl AppState {
         })
     }
 
-    /// Smart address caching: checks mempool activity first (unless `chain_only`), then on-chain.
-    /// - Address has mempool txs → `MempoolHash(addr_specific_hash)`
-    /// - No mempool, has on-chain activity → `BlockBound(last_activity_block)`
-    /// - Unknown address → `Tip`
-    pub fn addr_strategy(&self, version: Version, addr: &Addr, chain_only: bool) -> CacheStrategy {
+    /// Smart address caching. Checks mempool activity first (unless `chain_only`), then on-chain.
+    /// - Address has mempool txs: `MempoolHash(addr_specific_hash)`
+    /// - No mempool, has on-chain activity: `BlockBound(last_activity_block)`
+    /// - Unknown address: `Tip`
+    ///
+    /// `before_txid` narrows the on-chain branch to the newest activity strictly
+    /// older than the cursor, so paginated chain pages stay cacheable when newer
+    /// activity arrives above the cursor.
+    pub fn addr_strategy(
+        &self,
+        version: Version,
+        addr: &Addr,
+        chain_only: bool,
+        before_txid: Option<&Txid>,
+    ) -> CacheStrategy {
         self.sync(|q| {
             if !chain_only && let Some(mempool_hash) = q.addr_mempool_hash(addr) {
                 return CacheStrategy::MempoolHash(mempool_hash);
             }
-            q.addr_last_activity_height(addr)
+            q.addr_last_activity_height(addr, before_txid)
                 .and_then(|h| {
                     let block_hash = q.block_hash_by_height(h)?;
                     Ok(CacheStrategy::BlockBound(
@@ -132,6 +142,29 @@ impl AppState {
                 return CacheStrategy::BlockBound(version, BlockHashPrefix::from(&block_hash));
             }
             CacheStrategy::Tip
+        })
+    }
+
+    /// `BlockBound` on the pool's last-mined block hash, `Tip` if the pool has
+    /// never mined. Lets the no-cursor pool-blocks page stay cached when *other*
+    /// pools mine; only invalidates when this pool itself mines.
+    pub fn pool_blocks_strategy(&self, version: Version, slug: PoolSlug) -> CacheStrategy {
+        self.sync(|q| {
+            let tip = q.height().to_usize();
+            let last = q
+                .computer()
+                .pools
+                .pool_heights
+                .read()
+                .get(&slug)
+                .and_then(|heights| {
+                    let pos = heights.partition_point(|h| h.to_usize() <= tip);
+                    pos.checked_sub(1).map(|i| heights[i])
+                });
+            match last.and_then(|h| q.block_hash_by_height(h).ok()) {
+                Some(hash) => CacheStrategy::BlockBound(version, BlockHashPrefix::from(&hash)),
+                None => CacheStrategy::Tip,
+            }
         })
     }
 

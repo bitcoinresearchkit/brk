@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use brk_indexer::Indexer;
-use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
+use brk_oracle::{Config, Histogram, Oracle, PRICES, cents_to_bin, sats_to_bin};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -117,7 +117,7 @@ impl Stats {
 }
 
 struct BlockData {
-    full_hist: Box<[u32; NUM_BINS]>,
+    full_hist: Histogram,
     /// (bin_index, leading_digit) for outputs that are round values.
     round_outputs: Vec<(u16, u8)>,
     high_bin: f64,
@@ -173,7 +173,7 @@ fn main() {
     let total_blocks = total_heights - sweep_start;
     let mut blocks: Vec<BlockData> = Vec::with_capacity(total_blocks);
 
-    for h in START_HEIGHT..total_heights {
+    for h in sweep_start..total_heights {
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -201,10 +201,6 @@ fn main() {
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
-        if h < sweep_start {
-            continue;
-        }
-
         let values: Vec<Sats> = indexer
             .vecs
             .outputs
@@ -216,7 +212,7 @@ fn main() {
             .output_type
             .collect_range_at(out_start, out_end);
 
-        let mut full_hist = Box::new([0u32; NUM_BINS]);
+        let mut full_hist = Histogram::zeros();
         let mut round_outputs = Vec::new();
 
         for (sats, output_type) in values.into_iter().zip(output_types) {
@@ -227,7 +223,7 @@ fn main() {
                 continue;
             }
             if let Some(bin) = sats_to_bin(sats) {
-                full_hist[bin] += 1;
+                full_hist.increment(bin);
                 if is_round(*sats) {
                     let d = leading_digit(*sats);
                     if (1..=9).contains(&d) {
@@ -260,7 +256,7 @@ fn main() {
         }
     }
 
-    let mem_hists = blocks.len() * std::mem::size_of::<[u32; NUM_BINS]>();
+    let mem_hists = blocks.len() * std::mem::size_of::<Histogram>();
     let mem_rounds: usize = blocks.iter().map(|b| b.round_outputs.len() * 3).sum();
     eprintln!(
         "\r  {} blocks precomputed ({:.1} GB hists + {:.0} MB rounds) in {:.1}s",
@@ -308,7 +304,7 @@ fn main() {
                         let mut stats = Stats::new();
 
                         for bd in blocks.iter() {
-                            let mut hist = *bd.full_hist;
+                            let mut hist = bd.full_hist.clone();
                             for &(bin, digit) in &bd.round_outputs {
                                 if mask & (1 << (digit - 1)) != 0 {
                                     hist[bin as usize] -= 1;

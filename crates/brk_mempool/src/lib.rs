@@ -32,11 +32,12 @@ use std::{
 };
 
 use brk_error::Result;
+use brk_oracle::Histogram;
 use brk_rpc::Client;
 use brk_types::{
     AddrBytes, AddrMempoolStats, BlockTemplate, BlockTemplateDiff, FeeRate, MempoolBlock,
-    MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, OutputType, Sats, Timestamp,
-    Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
+    MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, Timestamp, Transaction, TxOut,
+    Txid, TxidPrefix, Vin, Vout,
 };
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -236,19 +237,20 @@ impl Mempool {
             .collect()
     }
 
-    /// Apply `f` to an iterator over `(value, output_type)` for every output
-    /// of every live mempool tx. The lock is held for the duration of the call.
-    pub fn process_live_outputs<R>(
-        &self,
-        f: impl FnOnce(&mut dyn Iterator<Item = (Sats, OutputType)>) -> R,
-    ) -> R {
+    /// Histogram of pre-bucketed oracle bins across all live mempool tx
+    /// outputs. Bins are computed once on insert (see `OutputBins`), so this
+    /// hot path is `O(eligible outputs)` of integer increments. Used by
+    /// `live_price` to blend the mempool into the committed oracle without
+    /// re-parsing scripts per request.
+    pub fn live_histogram(&self) -> Histogram {
+        let mut hist = Histogram::zeros();
         let state = self.read();
-        let mut iter = state
-            .txs
-            .values()
-            .flat_map(|tx| &tx.output)
-            .map(|txout| (txout.value, txout.type_()));
-        f(&mut iter)
+        for (_, record) in state.txs.records() {
+            for bin in record.output_bins.iter() {
+                hist.increment(bin as usize);
+            }
+        }
+        hist
     }
 
     /// Effective fee rate for a live tx: snapshot's linearized chunk

@@ -11,6 +11,14 @@ use crate::{
     params::{AddrAfterTxidParam, AddrParam, Empty, ValidateAddrParam},
 };
 
+/// Esplora `/txs` and `/txs/chain` page sizes. Wire-protocol constants from
+/// mempool.space/esplora, not deployment policy. `/txs` returns up to
+/// `MEMPOOL_PAGE` mempool entries plus a chain page sized to reach
+/// `TXS_TOTAL_TARGET` total, floored at `CHAIN_PAGE`.
+const MEMPOOL_PAGE: usize = 50;
+const CHAIN_PAGE: usize = 25;
+const TXS_TOTAL_TARGET: usize = 50;
+
 pub trait AddrRoutes {
     fn add_addr_routes(self) -> Self;
 }
@@ -26,7 +34,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false, None);
                 state.respond_json(&headers, strategy, &uri, move |q| q.addr(path.addr)).await
             }, |op| op
                 .id("get_address")
@@ -49,13 +57,24 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs(path.addr, 50, 50)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false, None);
+                state.respond_json(&headers, strategy, &uri, move |q| {
+                    let mempool_txs = if q.mempool().is_some() {
+                        q.addr_mempool_txs(&path.addr, MEMPOOL_PAGE)?
+                    } else {
+                        Vec::new()
+                    };
+                    let chain_limit = TXS_TOTAL_TARGET.saturating_sub(mempool_txs.len()).max(CHAIN_PAGE);
+                    let chain_txs = q.addr_txs_chain(&path.addr, None, chain_limit)?;
+                    let mut out = mempool_txs;
+                    out.extend(chain_txs);
+                    Ok(out)
+                }).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
                 .summary("Address transactions")
-                .description("Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
+                .description("Get transaction history for an address, newest first. Returns up to 50 mempool transactions plus a confirmed page sized to fill the response to 50 total (chain floor of 25, so 25-50 confirmed depending on mempool weight). To paginate further confirmed history, use `/address/{address}/txs/chain/{last_seen_txid}`.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*")
                 .json_response::<Vec<Transaction>>()
                 .not_modified()
                 .bad_request()
@@ -72,8 +91,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_strategy(Version::ONE, &path.addr, true);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, None, 25)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, true, None);
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, None, CHAIN_PAGE)).await
             }, |op| op
                 .id("get_address_confirmed_txs")
                 .addrs_tag()
@@ -95,8 +114,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_strategy(Version::ONE, &path.addr, true);
-                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, Some(path.after_txid), 25)).await
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, true, Some(&path.after_txid));
+                state.respond_json(&headers, strategy, &uri, move |q| q.addr_txs_chain(&path.addr, Some(path.after_txid), CHAIN_PAGE)).await
             }, |op| op
                 .id("get_address_confirmed_txs_after")
                 .addrs_tag()
@@ -119,7 +138,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | {
                 let hash = state.sync(|q| q.addr_mempool_hash(&path.addr)).unwrap_or(0);
-                state.respond_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txs(&path.addr, 50)).await
+                state.respond_json(&headers, CacheStrategy::MempoolHash(hash), &uri, move |q| q.addr_mempool_txs(&path.addr, MEMPOOL_PAGE)).await
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addrs_tag()
@@ -141,7 +160,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                let strategy = state.addr_strategy(Version::ONE, &path.addr, false);
+                let strategy = state.addr_strategy(Version::ONE, &path.addr, false, None);
                 let max_utxos = state.max_utxos;
                 state.respond_json(&headers, strategy, &uri, move |q| q.addr_utxos(path.addr, max_utxos)).await
             }, |op| op

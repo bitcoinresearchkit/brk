@@ -9009,7 +9009,7 @@ impl BrkClient {
 
     /// Health check
     ///
-    /// Returns the health status of the API server, including uptime information.
+    /// Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, see `/api/server/sync`.
     ///
     /// Endpoint: `GET /health`
     pub fn get_health(&self) -> Result<Health> {
@@ -9294,7 +9294,7 @@ impl BrkClient {
 
     /// Address transactions
     ///
-    /// Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+    /// Get transaction history for an address, newest first. Returns up to 50 mempool transactions plus a confirmed page sized to fill the response to 50 total (chain floor of 25, so 25-50 confirmed depending on mempool weight). To paginate further confirmed history, use `/address/{address}/txs/chain/{last_seen_txid}`.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
     ///

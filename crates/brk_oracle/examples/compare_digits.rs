@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use brk_indexer::Indexer;
-use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
+use brk_oracle::{Config, Histogram, NUM_BINS, Oracle, PRICES, cents_to_bin, sats_to_bin};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -159,7 +159,7 @@ fn main() {
     let ref_config = Config::default();
     let earliest_start = *start_heights.iter().min().unwrap();
 
-    for h in START_HEIGHT..total_heights {
+    for h in earliest_start..total_heights {
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -187,10 +187,6 @@ fn main() {
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
-        if h < earliest_start {
-            continue;
-        }
-
         let values: Vec<Sats> = indexer
             .vecs
             .outputs
@@ -203,8 +199,8 @@ fn main() {
             .collect_range_at(out_start, out_end);
 
         // Build full histogram and per-digit histograms.
-        let mut full_hist = [0u32; NUM_BINS];
-        let mut digit_hist = [[0u32; NUM_BINS]; 9];
+        let mut full_hist = Histogram::zeros();
+        let mut digit_hist: [Histogram; 9] = std::array::from_fn(|_| Histogram::zeros());
 
         for (sats, output_type) in values.into_iter().zip(output_types) {
             if ref_config.excluded_output_types.contains(&output_type) {
@@ -214,11 +210,11 @@ fn main() {
                 continue;
             }
             if let Some(bin) = sats_to_bin(sats) {
-                full_hist[bin] += 1;
+                full_hist.increment(bin);
                 if is_round(*sats) {
                     let d = leading_digit(*sats);
                     if (1..=9).contains(&d) {
-                        digit_hist[(d - 1) as usize][bin] += 1;
+                        digit_hist[(d - 1) as usize].increment(bin);
                     }
                 }
             }
@@ -227,7 +223,7 @@ fn main() {
         // Feed each (mask, start_height) combo.
         for (mi, &(mask, _)) in masks.iter().enumerate() {
             // Build filtered histogram for this mask.
-            let mut hist = full_hist;
+            let mut hist = full_hist.clone();
             (0..9usize).for_each(|d| {
                 if mask & (1 << d) != 0 {
                     for bin in 0..NUM_BINS {

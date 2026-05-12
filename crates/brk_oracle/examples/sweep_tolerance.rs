@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use brk_indexer::Indexer;
-use brk_oracle::{Config, NUM_BINS, Oracle, PRICES, START_HEIGHT, cents_to_bin, sats_to_bin};
+use brk_oracle::{Config, Histogram, Oracle, PRICES, cents_to_bin, sats_to_bin};
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
@@ -114,7 +114,7 @@ struct RoundOutput {
 }
 
 struct BlockData {
-    full_hist: Box<[u32; NUM_BINS]>,
+    full_hist: Histogram,
     round_outputs: Vec<RoundOutput>,
     high_bin: f64,
     low_bin: f64,
@@ -175,7 +175,7 @@ fn main() {
     // Outputs beyond 5% relative error will never be filtered at any tolerance.
     let max_tolerance: f64 = 0.05;
 
-    for h in START_HEIGHT..total_heights {
+    for h in sweep_start..total_heights {
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -203,10 +203,6 @@ fn main() {
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
-        if h < sweep_start {
-            continue;
-        }
-
         let values: Vec<Sats> = indexer
             .vecs
             .outputs
@@ -218,7 +214,7 @@ fn main() {
             .output_type
             .collect_range_at(out_start, out_end);
 
-        let mut full_hist = Box::new([0u32; NUM_BINS]);
+        let mut full_hist = Histogram::zeros();
         let mut round_outputs = Vec::new();
 
         for (sats, output_type) in values.into_iter().zip(output_types) {
@@ -229,7 +225,7 @@ fn main() {
                 continue;
             }
             if let Some(bin) = sats_to_bin(sats) {
-                full_hist[bin] += 1;
+                full_hist.increment(bin);
                 let d = leading_digit(*sats);
                 if (1..=9).contains(&d) {
                     let rel_err = relative_roundness(*sats);
@@ -267,7 +263,7 @@ fn main() {
         }
     }
 
-    let mem_hists = blocks.len() * std::mem::size_of::<[u32; NUM_BINS]>();
+    let mem_hists = blocks.len() * std::mem::size_of::<Histogram>();
     let mem_rounds: usize = blocks
         .iter()
         .map(|b| b.round_outputs.len() * std::mem::size_of::<RoundOutput>())
@@ -350,7 +346,7 @@ fn main() {
                         let mut stats = Stats::new();
 
                         for bd in blocks.iter() {
-                            let mut hist = *bd.full_hist;
+                            let mut hist = bd.full_hist.clone();
 
                             // Remove outputs matching this tolerance + mask.
                             let tol_f32 = tolerance as f32;

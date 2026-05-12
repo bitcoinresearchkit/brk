@@ -1,12 +1,16 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::module_inception)]
 
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{Arc, RwLock},
+};
 
 use brk_computer::Computer;
 use brk_error::{OptionData, Result};
 use brk_indexer::{Indexer, Lengths};
 use brk_mempool::Mempool;
+use brk_oracle::Oracle;
 use brk_reader::Reader;
 use brk_rpc::Client;
 use brk_types::{BlockHash, BlockHashPrefix, Height, SyncStatus};
@@ -32,6 +36,7 @@ struct QueryInner<'a> {
     indexer: &'a Indexer<Ro>,
     computer: &'a Computer<Ro>,
     mempool: Option<Mempool>,
+    live_oracle: RwLock<Option<(Height, Arc<Oracle>)>>,
 }
 
 impl Query {
@@ -54,6 +59,7 @@ impl Query {
             indexer,
             computer,
             mempool,
+            live_oracle: RwLock::new(None),
         }))
     }
 
