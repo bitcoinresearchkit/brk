@@ -6,7 +6,7 @@ import {
   poll,
   selectCube,
   deselectCube,
-} from "./chain.js";
+} from "../../src/explorer/chain/index.js";
 import {
   initBlockDetails,
   update as updateBlock,

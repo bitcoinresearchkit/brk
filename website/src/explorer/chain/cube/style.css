@@ -1,0 +1,191 @@
+:root {
+  --cube-size: 4.5rem;
+  --iso-scale: calc(sqrt(3) / 2);
+  --cube-empty-alpha: 0.4;
+  --cube-ease: 50ms cubic-bezier(0.4, 0, 0.2, 1);
+  --face-step: 0.033;
+}
+
+@keyframes cube-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.1); }
+}
+
+.cube {
+  --cube-width:  calc(var(--cube-size) * 2 * var(--iso-scale));
+  --cube-height: calc(var(--cube-size) * 2);
+
+  --face-base-light:  var(--light-gray);
+  --face-base-dark:   var(--dark-gray);
+  --face-bottom-base: var(--border-color);
+
+  /* Light mode darkens from base, dark mode lightens. The asymmetry
+     can't be encoded in a single base, so each face picks its branch
+     from the matching flat base. State classes swap the bases only,
+     the per-face pattern stays. */
+  --face-top: light-dark(
+    var(--face-base-light),
+    oklch(from var(--face-base-dark) calc(l + var(--face-step) * 2) c h)
+  );
+  --face-right: light-dark(
+    oklch(from var(--face-base-light) calc(l - var(--face-step) * 2) c h),
+    var(--face-base-dark)
+  );
+  --face-left: light-dark(
+    oklch(from var(--face-base-light) calc(l - var(--face-step)) c h),
+    oklch(from var(--face-base-dark) calc(l + var(--face-step)) c h)
+  );
+  --face-bottom: oklch(from var(--face-bottom-base) calc(l - var(--face-step) * 3) c h);
+
+  --is-full:  round(down, var(--fill), 1);
+  --is-empty: round(down, calc(1 - var(--fill)), 1);
+
+  flex-shrink: 0;
+  position: relative;
+  width: var(--cube-width);
+  height: var(--cube-height);
+  /* .cube can be an <a>; reset anchor styles that would clip the iso
+     silhouette or underline the empty link. */
+  overflow: visible;
+  text-decoration: none;
+  color: var(--color);
+  transition: color var(--cube-ease);
+  user-select: none;
+  pointer-events: none;
+
+  &:hover {
+    color: var(--background-color);
+    --face-base-light:  var(--dark-gray);
+    --face-base-dark:   var(--light-gray);
+    --face-bottom-base: var(--inv-border-color);
+  }
+
+  /* Color states: override --face-* directly with a fixed
+     darken-from-base derivation so the cube renders identically in
+     light and dark mode (no theme-flip on the colored faces). */
+  &:active,
+  &.selected { color: var(--black); --face-color-base: var(--orange);    }
+  &.next     {                      --face-color-base: var(--cyan);      }
+  &.projected{                      --face-color-base: var(--off-color); }
+
+  &:active,
+  &.selected,
+  &.next,
+  &.projected {
+    --face-top:    var(--face-color-base);
+    --face-right:  oklch(from var(--face-color-base) calc(l - var(--face-step) * 2) c h);
+    --face-left:   oklch(from var(--face-color-base) calc(l - var(--face-step)) c h);
+    --face-bottom: oklch(from var(--face-color-base) calc(l - var(--face-step) * 3) c h);
+  }
+
+  &.next,
+  &.projected {
+    animation: cube-pulse 2.5s ease-in-out infinite;
+  }
+
+  /* visibility (not color:transparent) so child <img> hides too */
+  &.skeleton .face-text {
+    visibility: hidden;
+  }
+
+  .face {
+    position: absolute;
+    transform-origin: 0 0;
+    box-sizing: border-box;
+    width: var(--cube-size);
+    height: var(--cube-size);
+    transform:
+      translateY(50%)
+      var(--face-orient)
+      translate(calc(var(--cube-size) * var(--face-x)), calc(var(--cube-size) * var(--face-y)))
+      scale(var(--face-scale-x, 1), var(--face-scale-y));
+    pointer-events: auto;
+  }
+
+  /* will-change on painted roles only so each gets its own compositor
+     layer for snappy hover/select repaints. */
+  .liquid,
+  .glass {
+    will-change: background-color;
+    transition: background-color var(--cube-ease);
+  }
+  .liquid {
+    background: var(--face-color);
+    opacity: calc(1 - var(--is-empty));
+    --face-scale-y:     calc(var(--iso-scale) * var(--fill));
+    --face-stack-shift: calc(var(--iso-scale) * (1 - var(--fill)));
+  }
+  .glass {
+    background: oklch(from var(--face-color) l c h / var(--cube-empty-alpha));
+    --face-scale-y:     calc(var(--iso-scale) * (1 - var(--fill)));
+    --face-stack-shift: 0;
+  }
+  .glass.top {
+    opacity: calc(1 - var(--is-full));
+  }
+
+  .face-text {
+    --face-scale-y:     var(--iso-scale);
+    --face-stack-shift: 0;
+    pointer-events: none;
+    padding: 0.1rem;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 450;
+  }
+  .face-text.top,
+  .face-text.right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .face-text.top {
+    justify-content: center;
+    text-transform: uppercase;
+  }
+  .face-text.right {
+    justify-content: space-between;
+  }
+  .face-text p {
+    margin: 0;
+  }
+
+  .top,
+  .bottom {
+    --face-orient:  rotate(30deg) skewX(-30deg);
+    --face-scale-y: var(--iso-scale);
+  }
+  .right,
+  .rear-left {
+    --face-orient: rotate(-30deg) skewX(-30deg);
+  }
+  .left,
+  .rear-right {
+    --face-orient: rotate(30deg) skewX(30deg);
+  }
+
+  .top,
+  .rear-right {
+    --face-y: calc(var(--face-stack-shift) - var(--iso-scale));
+  }
+  .left,
+  .rear-left {
+    --face-y: var(--face-stack-shift);
+  }
+  .right {
+    --face-y: calc(var(--face-stack-shift) + var(--iso-scale));
+  }
+  .bottom {
+    --face-y: 0;
+  }
+
+  .top        { --face-color: var(--face-top);    --face-x: 0; }
+  .bottom     { --face-color: var(--face-bottom); --face-x: 1; }
+  .right      { --face-color: var(--face-right);  --face-x: 1; }
+  .left       { --face-color: var(--face-left);   --face-x: 0; }
+  .rear-right { --face-color: var(--face-left);   --face-x: 1; }
+  .rear-left  { --face-color: var(--face-top);    --face-x: 1; --face-scale-x: -1; }
+  /* Top liquid face slides as fill drops, animating the surface level. */
+  .liquid.top { --face-x: calc(1 - var(--fill)); }
+}

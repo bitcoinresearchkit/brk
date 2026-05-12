@@ -1,6 +1,7 @@
 import { brk } from "../utils/client.js";
 import { onPlainClick } from "../utils/dom.js";
 import { createCube } from "./cube.js";
+import { initMempool, renderMempool } from "./mempool.js";
 import { createHeightElement, formatFeeRate } from "./render.js";
 
 const LOOKAHEAD = 15;
@@ -58,6 +59,8 @@ export function initChain(parent, callbacks) {
   blocksEl = document.createElement("div");
   blocksEl.classList.add("blocks");
   scrollEl.append(blocksEl);
+
+  initMempool(scrollEl);
 
   olderObserver = new IntersectionObserver(
     (entries) => {
@@ -208,7 +211,10 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
 }
 
 export async function poll() {
-  if (newestHeight === -1 || !reachedTip) return;
+  if (!reachedTip) return;
+  brk.getMempoolBlocks()
+    .then(renderMempool)
+    .catch((e) => console.error("mempool poll:", e));
   try {
     const blocks = await brk.getBlocksV1();
     appendNewerBlocks(blocks);

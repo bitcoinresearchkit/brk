@@ -21,7 +21,7 @@ Open-source Bitcoin data toolkit that can parse blocks, index the chain, compute
 
 **Blockchain:** Blocks, transactions, addresses, UTXOs.
 
-**Metrics:** Supply distributions, holder cohorts, network activity, fee markets, mining, and market indicators (realized cap, MVRV, SOPR, NVT).
+**Metrics:** Supply distributions, holder cohorts, network activity, fee markets, mining, and market indicators.
 
 **Indexes:** Date, height, halving epoch, address type, UTXO age.
 
@@ -67,7 +67,7 @@ Build custom applications in Rust. Use the full stack or individual components (
 
 ## Supporters
 
-- [OpenSats](https://opensats.org/) (December 2024 - June 2026)
+- [OpenSats](https://opensats.org/) (December 2024 - May 2027)
 
 [Become a supporter](mailto:support@bitcoinresearchkit.org)
 

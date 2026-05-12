@@ -14,80 +14,15 @@
     flex-direction: column;
   }
 
-  --cube: 4.5rem;
-  /* Iso geometry. --iso-scale is the half-width ratio of the hex
-     silhouette (= cos(30deg) = sqrt(3)/2); the silhouette spans
-     2·iso-scale wide and 2 tall in cube-face units. The per-face
-     transforms use the HTML-demo math with ox=oy=0, so the outer
-     compensation on `.face` is just translateY(50%). */
-  --iso-scale: calc(sqrt(3) / 2);
-  --cube-w: calc(var(--cube) * 2 * var(--iso-scale));
-  --cube-h: calc(var(--cube) * 2);
-  --face-step: 0.033;
-
-  /* Cube face-color derivations, resolved once at the #explorer
-     level so .cube state changes (hover / selected) don't force
-     Safari to re-evaluate `oklch(from var …)` on every paint — a
-     known source of jank there. Each interaction state gets its own
-     set; the .cube rule below just swaps which set --face-right /
-     --face-left / --face-top / --face-bottom reference. */
-  --cube-neutral-right: light-dark(
-    oklch(from var(--light-gray) calc(l - var(--face-step) * 2) c h),
-    var(--dark-gray)
-  );
-  --cube-neutral-left: light-dark(
-    oklch(from var(--light-gray) calc(l - var(--face-step)) c h),
-    oklch(from var(--dark-gray) calc(l + var(--face-step)) c h)
-  );
-  --cube-neutral-top: light-dark(
-    var(--light-gray),
-    oklch(from var(--dark-gray) calc(l + var(--face-step) * 2) c h)
-  );
-  --cube-neutral-bottom: oklch(
-    from var(--border-color) calc(l - var(--face-step) * 3) c h
-  );
-
-  --cube-hover-right: light-dark(
-    oklch(from var(--dark-gray) calc(l - var(--face-step) * 2) c h),
-    var(--light-gray)
-  );
-  --cube-hover-left: light-dark(
-    oklch(from var(--dark-gray) calc(l - var(--face-step)) c h),
-    oklch(from var(--light-gray) calc(l + var(--face-step)) c h)
-  );
-  --cube-hover-top: light-dark(
-    var(--dark-gray),
-    oklch(from var(--light-gray) calc(l + var(--face-step) * 2) c h)
-  );
-  --cube-hover-bottom: oklch(
-    from var(--inv-border-color) calc(l - var(--face-step) * 3) c h
-  );
-
-  --cube-selected-right: light-dark(
-    oklch(from var(--orange) calc(l - var(--face-step) * 2) c h),
-    var(--orange)
-  );
-  --cube-selected-left: light-dark(
-    oklch(from var(--orange) calc(l - var(--face-step)) c h),
-    oklch(from var(--orange) calc(l + var(--face-step)) c h)
-  );
-  --cube-selected-top: light-dark(
-    var(--orange),
-    oklch(from var(--orange) calc(l + var(--face-step) * 2) c h)
-  );
-  --cube-selected-bottom: oklch(
-    from var(--orange) calc(l - var(--face-step) * 3) c h
-  );
-
-  > * {
+  /*> * {
     padding: 0 var(--main-padding);
 
     @container aside (min-width: 768px) {
       padding: var(--main-padding);
     }
-  }
+  }*/
 
-  #chain {
+  /*#chain {
     flex-shrink: 0;
     position: relative;
     padding: 0;
@@ -141,13 +76,22 @@
     }
 
     .tip {
-      @container aside (min-width: 768px) { top: 0; }
-      @container aside (max-width: 767px) { left: 0; }
+      @container aside (min-width: 768px) {
+        top: 0;
+      }
+      @container aside (max-width: 767px) {
+        left: 0;
+      }
     }
 
     .gen {
-      @container aside (min-width: 768px) { bottom: 0; }
-      @container aside (max-width: 767px) { top: 0; right: 0; }
+      @container aside (min-width: 768px) {
+        bottom: 0;
+      }
+      @container aside (max-width: 767px) {
+        top: 0;
+        right: 0;
+      }
     }
 
     .blocks {
@@ -183,18 +127,11 @@
       );
       --empty-alpha: 0.4;
 
-      /* Face colors reference the precomputed sets on #explorer
-         (see top of file). Hover / selected rules just switch which
-         set each --face-* points at. */
       --face-right: var(--cube-neutral-right);
       --face-left: var(--cube-neutral-left);
       --face-top: var(--cube-neutral-top);
       --face-bottom: var(--cube-neutral-bottom);
 
-      /* Fill-driven state. --liquid-y is the liquid's vertical scale;
-         --glass-y the glass-above-liquid's. --is-full / --is-empty
-         are 1 only at the exact endpoints (fill == 1 / fill == 0)
-         and drive opacity so those roles hide cleanly there. */
       --liquid-y: calc(var(--iso-scale) * var(--fill));
       --glass-y: calc(var(--iso-scale) * (1 - var(--fill)));
       --is-full: round(down, var(--fill), 1);
@@ -205,9 +142,6 @@
       cursor: pointer;
       width: var(--cube-w);
       height: var(--cube-h);
-      /* .cube is an <a>; reset the global anchor styles in
-         elements.css that would clip the iso silhouette
-         (overflow:hidden) and underline the empty link. */
       overflow: visible;
       text-decoration: none;
       --state-ease: 50ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -233,40 +167,22 @@
         --face-bottom: var(--cube-selected-bottom);
       }
 
-      /* Skeleton state (cube painted but data is stale while a new
-         chunk loads): hide text AND the pool logo. Using visibility
-         rather than color:transparent so the raw <img> logo hides too. */
       &.skeleton .face-text {
         visibility: hidden;
       }
 
-      /* Shared face-transform template. Each face div sets --orient,
-         --x, --y, --sx, --sy and its role (liquid/glass/face-text)
-         supplies --y-offset. Faces extend outside .cube's layout box
-         — the iso silhouette spans ~2·iso·cube × 2·cube, offset into
-         what would be the next cube's space. Clicks land only on the
-         transformed face rectangles, not the .cube's empty corners. */
       .face {
         position: absolute;
         transform-origin: 0 0;
         box-sizing: border-box;
         width: var(--cube);
         height: var(--cube);
-        transform:
-          translateY(50%)
-          var(--orient)
+        transform: translateY(50%) var(--orient)
           translate(calc(var(--cube) * var(--x)), calc(var(--cube) * var(--y)))
           scale(var(--sx, 1), var(--sy));
         pointer-events: auto;
       }
 
-      /* Roles:
-           .liquid  opaque liquid (scales with fill)
-           .glass  translucent glass shell
-           .face-text  text overlay spanning the full rhombus
-         will-change is on the painted roles only (not .face-text,
-         whose background never changes) so each liquid/glass gets its
-         own compositor layer for snappy hover/select repaints. */
       .liquid,
       .glass {
         will-change: background-color;
@@ -324,7 +240,6 @@
         justify-content: center;
         align-items: center;
       }
-      /* Pool line: raw (un-tinted) logo + miner name, ellipsis-clipped. */
       .face-text .pool {
         display: flex;
         align-items: center;
@@ -345,8 +260,6 @@
         line-height: 1;
       }
 
-      /* Per-face geometry. 3 orientations × 4 vertical anchors. Each
-         face picks one of each (plus its color/horizontal anchor). */
       .top,
       .bottom {
         --orient: rotate(30deg) skewX(-30deg);
@@ -361,9 +274,6 @@
         --orient: rotate(30deg) skewX(30deg);
       }
 
-      /* Vertical anchors (cube-face units from the layout origin).
-         --y-offset is the role-specific fill shift (liquid sides
-         get glass-y, everything else 0). */
       .top,
       .rear-right {
         --y: calc(var(--y-offset) - var(--iso-scale));
@@ -379,14 +289,34 @@
         --y: 0;
       }
 
-      /* Per-face color + horizontal anchor. */
-      .top        { --fc: var(--face-top);    --x: var(--top-x-shift, 0); }
-      .bottom     { --fc: var(--face-bottom); --x: 1; }
-      .right      { --fc: var(--face-right);  --x: 1; }
-      .left       { --fc: var(--face-left);   --x: 0; }
-      .rear-right { --fc: var(--face-left);   --x: 1; }
-      .rear-left  { --fc: var(--face-top);    --x: 1; --sx: -1; }
-      .liquid.top { --top-x-shift: calc(1 - var(--fill)); }
+      .top {
+        --fc: var(--face-top);
+        --x: var(--top-x-shift, 0);
+      }
+      .bottom {
+        --fc: var(--face-bottom);
+        --x: 1;
+      }
+      .right {
+        --fc: var(--face-right);
+        --x: 1;
+      }
+      .left {
+        --fc: var(--face-left);
+        --x: 0;
+      }
+      .rear-right {
+        --fc: var(--face-left);
+        --x: 1;
+      }
+      .rear-left {
+        --fc: var(--face-top);
+        --x: 1;
+        --sx: -1;
+      }
+      .liquid.top {
+        --top-x-shift: calc(1 - var(--fill));
+      }
 
       & + & {
         margin-bottom: var(--block-gap);
@@ -417,7 +347,7 @@
         }
       }
     }
-  }
+  }*/
 
   #block-details,
   #tx-details,

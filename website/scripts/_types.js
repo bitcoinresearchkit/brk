@@ -63,6 +63,9 @@
  * @typedef {Brk.AddrStats} AddrStats
  * @typedef {Brk.TxIn} TxIn
  * @typedef {Brk.TxOut} TxOut
+ * @typedef {Brk.BlockTemplate} BlockTemplate
+ * @typedef {Brk.MempoolBlock} MempoolBlock
+ * @typedef {Brk.NextBlockHash} NextBlockHash
  * ActivePriceRatioPattern: ratio pattern with price (extended)
  * @typedef {Brk.BpsPriceRatioPattern} ActivePriceRatioPattern
  * PriceRatioPercentilesPattern: price pattern with ratio + percentiles (no SMAs/stdDev)
