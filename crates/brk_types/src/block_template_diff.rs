@@ -1,11 +1,20 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{NextBlockHash, Transaction, Txid};
+use crate::{BlockTemplateDiffEntry, NextBlockHash, Txid};
 
 /// Delta between the current `getblocktemplate` projection and a prior
 /// one identified by `since`. Returned by
-/// `GET /api/v1/mining/block-template/diff/{hash}`.
+/// `GET /api/v1/mempool/block-template/diff/{hash}`.
+///
+/// `order` carries the full new template in template order: each entry
+/// is either a `Retained(idx)` pointing into the prior template (which
+/// the client cached at `since`) or a `New(tx)` inline body. Walk it
+/// once to rebuild the new template; no separate `added` array to
+/// cross-reference.
+///
+/// `removed` is redundant (computable from `order` by collecting prior
+/// indices that don't appear) but shipped for cache-eviction ergonomics.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockTemplateDiff {
@@ -15,9 +24,9 @@ pub struct BlockTemplateDiff {
     /// Echoed prior hash the diff was computed against.
     pub since: NextBlockHash,
 
-    /// Full bodies of transactions that joined the projected next
-    /// block since `since`.
-    pub added: Vec<Transaction>,
+    /// New template in order. Each entry is either an index into the
+    /// prior template's transactions or a full transaction body.
+    pub order: Vec<BlockTemplateDiffEntry>,
 
     /// Txids that left the projected next block since `since`
     /// (confirmed, evicted, replaced, or pushed past block 0).

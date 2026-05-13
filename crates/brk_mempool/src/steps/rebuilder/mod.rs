@@ -27,8 +27,10 @@ const HISTORY: usize = 10;
 #[derive(Default)]
 pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
-    /// Past block-0 txid sets keyed by `next_block_hash`, oldest first.
-    history: RwLock<VecDeque<(NextBlockHash, FxHashSet<Txid>)>>,
+    /// Past block-0 txid lists keyed by `next_block_hash`, oldest first.
+    /// Ordered so `block_template_diff` can emit `Retained(prior_index)`
+    /// entries that line up with the client's cached prior template.
+    history: RwLock<VecDeque<(NextBlockHash, Vec<Txid>)>>,
     rebuild_count: AtomicU64,
 }
 
@@ -40,13 +42,13 @@ impl Rebuilder {
     /// is the driver loop's job.
     pub fn tick(&self, lock: &RwLock<State>, gbt_txids: &[Txid], min_fee: FeeRate) {
         let snap = Self::build_snapshot(lock, gbt_txids, min_fee);
-        let block0_set: FxHashSet<Txid> = snap.block0_txids().collect();
+        let block0: Vec<Txid> = snap.block0_txids().collect();
         let next_hash = snap.next_block_hash;
         *self.snapshot.write() = Arc::new(snap);
 
         let mut hist = self.history.write();
         hist.retain(|(h, _)| *h != next_hash);
-        hist.push_back((next_hash, block0_set));
+        hist.push_back((next_hash, block0));
         while hist.len() > HISTORY {
             hist.pop_front();
         }
@@ -55,15 +57,15 @@ impl Rebuilder {
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
 
-    /// Past block-0 txid set for `hash`, or `None` if it has aged out
-    /// (or was never seen). Used by `block_template_diff` to decide
-    /// 200 vs 404.
-    pub fn historical_block0(&self, hash: NextBlockHash) -> Option<FxHashSet<Txid>> {
+    /// Past block-0 ordered txid list for `hash`, or `None` if it has
+    /// aged out (or was never seen). Used by `block_template_diff` to
+    /// decide 200 vs 404 and to resolve `Retained(prior_index)` entries.
+    pub fn historical_block0(&self, hash: NextBlockHash) -> Option<Vec<Txid>> {
         self.history
             .read()
             .iter()
             .find(|(h, _)| *h == hash)
-            .map(|(_, set)| set.clone())
+            .map(|(_, block0)| block0.clone())
     }
 
     pub fn rebuild_count(&self) -> u64 {

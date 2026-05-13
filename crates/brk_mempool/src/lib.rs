@@ -35,9 +35,9 @@ use brk_error::Result;
 use brk_oracle::Histogram;
 use brk_rpc::Client;
 use brk_types::{
-    AddrBytes, AddrMempoolStats, BlockTemplate, BlockTemplateDiff, FeeRate, MempoolBlock,
-    MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, Timestamp, Transaction, TxOut,
-    Txid, TxidPrefix, Vin, Vout,
+    AddrBytes, AddrMempoolStats, BlockTemplate, BlockTemplateDiff, BlockTemplateDiffEntry, FeeRate,
+    MempoolBlock, MempoolInfo, MempoolRecentTx, NextBlockHash, OutpointPrefix, Timestamp,
+    Transaction, TxOut, Txid, TxidPrefix, Vin, Vout,
 };
 use parking_lot::{RwLock, RwLockReadGuard};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -138,18 +138,41 @@ impl Mempool {
 
     /// Delta of the projected next block since `since`. `None` when
     /// `since` has aged out of the rebuilder's history (server should
-    /// 404 → client falls back to `block_template`). `removed` is just
-    /// txids; `added` carries full bodies so clients can patch their
-    /// local view in one round trip.
+    /// 404 → client falls back to `block_template`).
+    ///
+    /// `order` walks the new template in template order; each entry is
+    /// either a `Retained` index into the prior template (which the
+    /// client cached when it obtained `since`) or a `New` inline body.
+    /// `removed` is the convenience list of txids that left.
     pub fn block_template_diff(&self, since: NextBlockHash) -> Option<BlockTemplateDiff> {
         let past = self.0.rebuilder.historical_block0(since)?;
+        let prior_index: FxHashMap<Txid, u32> = past
+            .iter()
+            .enumerate()
+            .map(|(idx, txid)| (*txid, idx as u32))
+            .collect();
         let snap = self.snapshot();
-        let current: FxHashSet<Txid> = snap.block0_txids().collect();
+        let state = self.read();
+        let mut order = Vec::with_capacity(snap.blocks.first().map_or(0, Vec::len));
+        let mut current: FxHashSet<Txid> = FxHashSet::default();
+        for txid in snap.block0_txids() {
+            current.insert(txid);
+            match prior_index.get(&txid) {
+                Some(&idx) => order.push(BlockTemplateDiffEntry::Retained(idx)),
+                None => {
+                    let tx = Self::lookup_body(&state, &txid)
+                        .expect("snapshot tx body must be in txs or graveyard");
+                    order.push(BlockTemplateDiffEntry::New(tx));
+                }
+            }
+        }
+        drop(state);
+        let removed = past.into_iter().filter(|t| !current.contains(t)).collect();
         Some(BlockTemplateDiff {
             hash: snap.next_block_hash,
             since,
-            added: self.collect_txs(current.difference(&past).copied()),
-            removed: past.difference(&current).copied().collect(),
+            order,
+            removed,
         })
     }
 
@@ -157,8 +180,23 @@ impl Mempool {
         let state = self.read();
         txids
             .into_iter()
-            .filter_map(|txid| state.txs.get(&txid).cloned())
+            .map(|txid| {
+                Self::lookup_body(&state, &txid)
+                    .expect("snapshot tx body must be in txs or graveyard")
+            })
             .collect()
+    }
+
+    /// Body for a txid in a published snapshot. Graveyard fallback
+    /// covers the eviction race: an Applier may have buried the tx
+    /// after the snapshot was built. Burial retention (1h) >> snapshot
+    /// cycle (~1s), so reachability is guaranteed.
+    fn lookup_body(state: &State, txid: &Txid) -> Option<Transaction> {
+        state
+            .txs
+            .get(txid)
+            .or_else(|| state.graveyard.get(txid).map(|t| &t.tx))
+            .cloned()
     }
 
     pub fn addr_state_hash(&self, addr: &AddrBytes) -> u64 {

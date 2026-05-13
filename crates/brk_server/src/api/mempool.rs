@@ -177,7 +177,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                     op.id("get_block_template_diff")
                         .mempool_tag()
                         .summary("Block template diff since hash")
-                        .description("Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.")
+                        .description("Delta of the projected next block since `<hash>`. `order` is the full new template in order: each entry is either a number (index into the prior template the client cached at `<hash>`) or a transaction object (new body to insert at this position). Walk `order` once to rebuild; `removed` is a convenience list of txids that left so clients can evict cached bodies. After applying, use the response `hash` as `<hash>` on the next call to keep iterating. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.")
                         .json_response::<BlockTemplateDiff>()
                         .not_modified()
                         .not_found()
