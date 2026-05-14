@@ -9,13 +9,14 @@ use brk_types::{
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::{
     v17::{
-        GetBlockCount, GetBlockHash, GetBlockHeader, GetBlockHeaderVerbose, GetBlockVerboseOne,
-        GetBlockVerboseZero, GetRawMempool, GetTxOut,
+        BlockTemplateTransaction, GetBlockCount, GetBlockHash, GetBlockHeader,
+        GetBlockHeaderVerbose, GetBlockTemplate, GetBlockVerboseOne, GetBlockVerboseZero,
+        GetRawMempool, GetTxOut,
     },
-    v24::GetMempoolInfo,
+    v28::GetBlockchainInfo,
+    v24::{GetMempoolInfo, MempoolEntry},
 };
 use rustc_hash::FxHashMap;
-use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, info};
 
@@ -24,7 +25,7 @@ use tracing::{debug, info};
 /// The mempool fetcher tolerates these per-item failures silently.
 const RPC_NOT_FOUND: i32 = -5;
 
-use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, TxOutInfo};
+use crate::{BlockTemplateTx, Client};
 
 /// Per-batch request count for `get_block_hashes_range`,
 /// `fetch_new_pool_data`, and `get_raw_transactions`. Sized so the JSON
@@ -34,46 +35,21 @@ use crate::{BlockHeaderInfo, BlockInfo, BlockTemplateTx, Client, TxOutInfo};
 /// the wire batch is twice that.
 const BATCH_CHUNK: usize = 2000;
 
-/// Live mempool state fetched in one batched bitcoind round-trip:
-/// `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`. Each
-/// `gbt` entry carries the full decoded tx and stats so block 0 is
-/// projected directly from Core's selection without a follow-up entry
-/// fetch that could race the eviction of one of those txs.
+/// Mempool snapshot data that survives one fetch cycle: the live
+/// txid set, fee floor, and chain tip. Returned alongside the raw
+/// `block_template` (which Fetcher consumes for GBT synthesis) by
+/// `Client::fetch_mempool_state`.
 pub struct MempoolState {
     pub live_txids: Vec<Txid>,
-    pub gbt: Vec<BlockTemplateTx>,
     pub min_fee: FeeRate,
+    /// Chain tip's hash (block-template's `previousblockhash`).
+    /// Compared between cycles to detect newly mined blocks.
+    pub tip_hash: BlockHash,
+    /// Chain tip's height (block-template's `height` minus one).
+    pub tip_height: Height,
 }
 
-#[derive(Deserialize)]
-struct MempoolEntryRaw {
-    vsize: VSize,
-    weight: Weight,
-    time: Timestamp,
-    fees: MempoolEntryFeesRaw,
-    depends: Vec<String>,
-}
-
-#[derive(Deserialize)]
-struct MempoolEntryFeesRaw {
-    base: Bitcoin,
-}
-
-#[derive(Deserialize)]
-struct GbtResponseRaw {
-    transactions: Vec<GbtTxRaw>,
-}
-
-#[derive(Deserialize)]
-struct GbtTxRaw {
-    data: String,
-    txid: bitcoin::Txid,
-    fee: u64,
-    weight: u64,
-    depends: Vec<u32>,
-}
-
-fn build_entry(txid: Txid, e: MempoolEntryRaw) -> Result<MempoolEntryInfo> {
+fn build_entry(txid: Txid, e: MempoolEntry) -> Result<MempoolEntryInfo> {
     let depends = e
         .depends
         .iter()
@@ -81,36 +57,47 @@ fn build_entry(txid: Txid, e: MempoolEntryRaw) -> Result<MempoolEntryInfo> {
         .collect::<Result<Vec<_>>>()?;
     Ok(MempoolEntryInfo {
         txid,
-        vsize: e.vsize,
-        weight: e.weight,
-        fee: Sats::from(e.fees.base),
-        first_seen: e.time,
+        vsize: VSize::from(e.vsize as u64),
+        weight: Weight::from(e.weight as u64),
+        fee: Sats::from(Bitcoin::from(e.fees.base)),
+        first_seen: Timestamp::from(e.time),
         depends,
     })
 }
 
-fn build_gbt(raw: GbtResponseRaw) -> Result<Vec<BlockTemplateTx>> {
-    // Pass 1: decode bodies and stash the 1-based GBT-array indices
-    // aside so we can drop each `data` hex string and `GbtTxRaw` as
+fn build_gbt(raw: GetBlockTemplate) -> Result<Vec<BlockTemplateTx>> {
+    // Pass 1: decode bodies and stash the 1-based GBT-array indices aside
+    // so each `data` hex string and `BlockTemplateTransaction` drops as
     // soon as the tx is pushed.
     let n = raw.transactions.len();
-    let mut depends_idx: Vec<Vec<u32>> = Vec::with_capacity(n);
+    let mut depends_idx: Vec<Vec<i64>> = Vec::with_capacity(n);
     let mut result: Vec<BlockTemplateTx> = Vec::with_capacity(n);
     for t in raw.transactions {
-        depends_idx.push(t.depends);
+        let BlockTemplateTransaction {
+            data,
+            txid,
+            depends,
+            fee,
+            weight,
+            ..
+        } = t;
+        depends_idx.push(depends);
         result.push(BlockTemplateTx {
-            txid: Txid::from(t.txid),
-            fee: Sats::from(t.fee),
-            weight: Weight::from(t.weight),
+            txid: Client::parse_txid(&txid, "gbt txid")?,
+            fee: Sats::from(fee as u64),
+            weight: Weight::from(weight),
             depends: Vec::new(),
-            tx: encode::deserialize_hex(&t.data)?,
+            tx: encode::deserialize_hex(&data)?,
         });
     }
     // Pass 2: resolve indices to txids now that the array is complete.
     for (i, indices) in depends_idx.iter().enumerate() {
         let resolved: Vec<Txid> = indices
             .iter()
-            .filter_map(|d| result.get((*d as usize).checked_sub(1)?).map(|t| t.txid))
+            .filter_map(|d| {
+                let idx = usize::try_from(*d).ok()?.checked_sub(1)?;
+                result.get(idx).map(|t| t.txid)
+            })
             .collect();
         result[i].depends = resolved;
     }
@@ -150,18 +137,13 @@ impl Client {
             .map_err(|e| Error::Parse(format!("decode getblock: {e}")))
     }
 
-    pub fn get_block_info<'a, H>(&self, hash: &'a H) -> Result<BlockInfo>
+    pub fn get_block_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockVerboseOne>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
         let hash: &bitcoin::BlockHash = hash.into();
-        let r: GetBlockVerboseOne = self
-            .0
-            .call_with_retry("getblock", &[serde_json::to_value(hash)?, Value::from(1u8)])?;
-        Ok(BlockInfo {
-            height: r.height as usize,
-            confirmations: r.confirmations,
-        })
+        self.0
+            .call_with_retry("getblock", &[serde_json::to_value(hash)?, Value::from(1u8)])
     }
 
     pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<bitcoin::block::Header>
@@ -177,23 +159,13 @@ impl Client {
         bitcoin::consensus::deserialize::<bitcoin::block::Header>(&bytes).map_err(Error::from)
     }
 
-    pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<BlockHeaderInfo>
+    pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockHeaderVerbose>
     where
         &'a H: Into<&'a bitcoin::BlockHash>,
     {
         let hash: &bitcoin::BlockHash = hash.into();
-        let r: GetBlockHeaderVerbose = self
-            .0
-            .call_with_retry("getblockheader", &[serde_json::to_value(hash)?])?;
-        let previous_block_hash = r
-            .previous_block_hash
-            .map(|s| Self::parse_block_hash(&s, "previousblockhash"))
-            .transpose()?;
-        Ok(BlockHeaderInfo {
-            height: r.height as usize,
-            confirmations: r.confirmations,
-            previous_block_hash,
-        })
+        self.0
+            .call_with_retry("getblockheader", &[serde_json::to_value(hash)?])
     }
 
     pub fn get_block_hash<H>(&self, height: H) -> Result<BlockHash>
@@ -244,7 +216,7 @@ impl Client {
         txid: &Txid,
         vout: Vout,
         include_mempool: Option<bool>,
-    ) -> Result<Option<TxOutInfo>> {
+    ) -> Result<Option<GetTxOut>> {
         let txid: &bitcoin::Txid = txid.into();
         let mut args: Vec<Value> = vec![
             serde_json::to_value(txid)?,
@@ -253,19 +225,7 @@ impl Client {
         if let Some(mempool) = include_mempool {
             args.push(Value::Bool(mempool));
         }
-        let r: Option<GetTxOut> = self.0.call_with_retry("gettxout", &args)?;
-        match r {
-            Some(r) => {
-                let script_pub_key = bitcoin::ScriptBuf::from_hex(&r.script_pubkey.hex)
-                    .map_err(|e| Error::Parse(format!("script hex: {e}")))?;
-                Ok(Some(TxOutInfo {
-                    coinbase: r.coinbase,
-                    value: Sats::from(Bitcoin::from(r.value)),
-                    script_pub_key,
-                }))
-            }
-            None => Ok(None),
-        }
+        self.0.call_with_retry("gettxout", &args)
     }
 
     pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
@@ -394,7 +354,11 @@ impl Client {
     /// carries each tx's full body and stats, so block 0 is exact even
     /// when a tx vanishes from the mempool listing between the GBT and
     /// `getrawmempool` calls; no follow-up entry fetch can race it.
-    pub fn fetch_mempool_state(&self) -> Result<MempoolState> {
+    /// Returns the passthrough `MempoolState` and the raw
+    /// `block_template` (consumed downstream by GBT synthesis), in one
+    /// batched round-trip: `getblocktemplate` + `getrawmempool false`
+    /// + `getmempoolinfo`.
+    pub fn fetch_mempool_state(&self) -> Result<(MempoolState, Vec<BlockTemplateTx>)> {
         let requests: [(&str, Vec<Value>); 3] = [
             (
                 "getblocktemplate",
@@ -404,7 +368,7 @@ impl Client {
             ("getmempoolinfo", vec![]),
         ];
         let mut out = self.0.call_mixed_batch(&requests)?.into_iter();
-        let gbt_raw = out.next().ok_or(Error::Internal("missing gbt"))??;
+        let template_raw = out.next().ok_or(Error::Internal("missing gbt"))??;
         let txids_raw = out.next().ok_or(Error::Internal("missing rawmempool"))??;
         let info_raw = out.next().ok_or(Error::Internal("missing mempoolinfo"))??;
 
@@ -413,14 +377,23 @@ impl Client {
             .iter()
             .map(|s| Self::parse_txid(s, "mempool txid"))
             .collect::<Result<Vec<_>>>()?;
-        let gbt = build_gbt(serde_json::from_str(gbt_raw.get())?)?;
+        let template: GetBlockTemplate = serde_json::from_str(template_raw.get())?;
+        let tip_hash = Self::parse_block_hash(&template.previous_block_hash, "previousblockhash")?;
+        let tip_height = Height::from(u64::try_from(template.height - 1).map_err(|_| {
+            Error::Parse(format!("gbt height out of range: {}", template.height))
+        })?);
+        let block_template = build_gbt(template)?;
         let min_fee = build_min_fee(serde_json::from_str(info_raw.get())?);
 
-        Ok(MempoolState {
-            live_txids,
-            gbt,
-            min_fee,
-        })
+        Ok((
+            MempoolState {
+                live_txids,
+                min_fee,
+                tip_hash,
+                tip_height,
+            },
+            block_template,
+        ))
     }
 
     /// Mixed batch of `getmempoolentry` + `getrawtransaction` for the
@@ -453,7 +426,7 @@ impl Client {
                 let raw_res = iter.next().ok_or(Error::Internal("missing raw"))?;
 
                 match entry_res.and_then(|raw| {
-                    let me: MempoolEntryRaw = serde_json::from_str(raw.get())?;
+                    let me: MempoolEntry = serde_json::from_str(raw.get())?;
                     build_entry(*txid, me)
                 }) {
                     Ok(info) => entries.push(info),
@@ -488,23 +461,31 @@ impl Client {
         loop {
             let info = self.get_block_header_info(&current)?;
             if info.confirmations > 0 {
-                return Ok((info.height.into(), current));
+                return Ok((Height::from(info.height as u64), current));
             }
-            current = info.previous_block_hash.ok_or(Error::NotFound(
+            let prev = info.previous_block_hash.ok_or(Error::NotFound(
                 "Reached genesis without finding main chain".into(),
             ))?;
+            current = Self::parse_block_hash(&prev, "previousblockhash")?;
         }
     }
 
+    pub fn get_blockchain_info(&self) -> Result<GetBlockchainInfo> {
+        self.0.call_with_retry("getblockchaininfo", &[])
+    }
+
+    /// Bitcoin network the connected node is running on, derived from
+    /// `getblockchaininfo.chain`.
+    pub fn get_network(&self) -> Result<bitcoin::Network> {
+        let chain = self.get_blockchain_info()?.chain;
+        bitcoin::Network::from_core_arg(&chain)
+            .map_err(|e| Error::Parse(format!("getblockchaininfo.chain '{chain}': {e}")))
+    }
+
     pub fn wait_for_synced_node(&self) -> Result<()> {
-        #[derive(Deserialize)]
-        struct SyncProgress {
-            headers: u64,
-            blocks: u64,
-        }
         let is_synced = || -> Result<bool> {
-            let p: SyncProgress = self.0.call_with_retry("getblockchaininfo", &[])?;
-            Ok(p.headers == p.blocks)
+            let info = self.get_blockchain_info()?;
+            Ok(info.headers == info.blocks)
         };
 
         if !is_synced()? {

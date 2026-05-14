@@ -1,6 +1,6 @@
 [package]
-name = "blk"
-description = "A CLI to inspect Bitcoin Core blocks"
+name = "mmpl"
+description = "A CLI to stream Bitcoin mempool events as NDJSON"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,14 +8,14 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-bitcoin = { workspace = true }
 brk_error = { workspace = true }
-brk_reader = { workspace = true }
+brk_mempool = { workspace = true }
 brk_rpc = { workspace = true }
 brk_types = { workspace = true }
-owo-colors = { workspace = true, features = ["supports-colors"] }
+rustc-hash = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 [[bin]]
-name = "blk"
+name = "mmpl"
 path = "src/main.rs"

@@ -1,10 +1,13 @@
-use brk_types::{FeeRate, MempoolEntryInfo, Txid};
+use brk_rpc::MempoolState;
+use brk_types::{MempoolEntryInfo, Txid};
 use rustc_hash::FxHashMap;
 
 pub struct Fetched {
-    /// Every txid currently in the mempool (from `getrawmempool false`).
-    /// Used to derive the `live` set for removal classification.
-    pub live_txids: Vec<Txid>,
+    /// Passthrough fields from the batched RPC fetch: live txid set,
+    /// fee floor, chain tip. `live_txids` is the union of
+    /// `getrawmempool` and `getblocktemplate` (see [`super::Fetcher::fetch`]),
+    /// so downstream sees a single coherent "live" view.
+    pub state: MempoolState,
     /// `MempoolEntryInfo` for newly-observed txids only (existing ones
     /// keep their first-sight entry on the live store).
     pub new_entries: Vec<MempoolEntryInfo>,
@@ -13,6 +16,5 @@ pub struct Fetched {
     /// already been folded into `new_entries`/`new_txs` (or were already
     /// in the pool); the Rebuilder only needs the txid sequence to
     /// project Core's exact selection.
-    pub gbt_txids: Vec<Txid>,
-    pub min_fee: FeeRate,
+    pub block_template_txids: Vec<Txid>,
 }

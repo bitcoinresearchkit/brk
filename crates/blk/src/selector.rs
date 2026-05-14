@@ -6,13 +6,15 @@ pub struct Selector;
 
 impl Selector {
     pub fn parse(s: &str, client: &Client) -> Result<(Height, Height)> {
-        let (start, end) = match s.split_once("..") {
-            Some((a, b)) => (Self::endpoint(a, client)?, Self::endpoint(b, client)?),
-            None => {
-                let h = Self::endpoint(s, client)?;
-                (h, h)
-            }
+        let (a, b) = s.split_once("..").unwrap_or((s, s));
+        let needs_tip = |p: &str| p == "tip" || p.starts_with("tip-");
+        let tip = if needs_tip(a) || needs_tip(b) {
+            Some(client.get_last_height()?)
+        } else {
+            None
         };
+        let start = Self::endpoint(a, tip)?;
+        let end = Self::endpoint(b, tip)?;
         if end < start {
             return Err(Error::Parse(format!(
                 "range end {end} before start {start}"
@@ -21,15 +23,15 @@ impl Selector {
         Ok((start, end))
     }
 
-    fn endpoint(s: &str, client: &Client) -> Result<Height> {
+    fn endpoint(s: &str, tip: Option<Height>) -> Result<Height> {
         if s == "tip" {
-            return client.get_last_height();
+            return Ok(tip.expect("tip pre-resolved when input contains 'tip'"));
         }
         if let Some(rest) = s.strip_prefix("tip-") {
             let n: u32 = rest
                 .parse()
                 .map_err(|_| Error::Parse(format!("bad tip offset: {s}")))?;
-            let tip = client.get_last_height()?;
+            let tip = tip.expect("tip pre-resolved when input contains 'tip'");
             return tip
                 .checked_sub(n)
                 .ok_or_else(|| Error::Parse(format!("tip-{n} underflows genesis")));

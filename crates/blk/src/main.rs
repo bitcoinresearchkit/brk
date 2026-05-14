@@ -37,17 +37,19 @@ fn run() -> Result<()> {
 
     let client = args.rpc()?;
     let (start, end) = Selector::parse(&args.selector, &client)?;
+    let network = client.get_network()?;
 
-    let mode = Mode::pick(args.pretty, args.compact, args.paths.len());
+    let mode = Mode::pick(args.pretty, args.compact, args.paths.len())?;
     let reader = Reader::new(args.blocks_dir(), &client);
     let formatter = Formatter::new(mode, args.paths);
-    let parser_threads = std::thread::available_parallelism()
+    let parser_threads = (std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(2)
-        / 2;
+        / 2)
+        .max(1);
     for block in reader.range_with(start, end, parser_threads)?.iter() {
         let block = block?;
-        let line = formatter.format(&Ctx::new(&block))?;
+        let line = formatter.format(&Ctx::new(&block, network))?;
         if !line.is_empty() {
             println!("{line}");
         }

@@ -65,14 +65,14 @@ brk_website = { version = "0.3.0-beta.9", path = "crates/brk_website" }
 byteview = "0.10.1"
 color-eyre = "0.6.5"
 corepc-jsonrpc = { package = "jsonrpc", version = "0.19.0", features = ["simple_http"], default-features = false }
-corepc-types = { version = "0.12.0", features = ["std"], default-features = false }
+corepc-types = { version = "0.13.0", features = ["std"], default-features = false }
 derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = "=3.0.4"
 indexmap = { version = "2.14.0", features = ["serde"] }
 jiff = { version = "0.2.24", features = ["perf-inline", "tz-system"], default-features = false }
 owo-colors = "4.3.0"
 parking_lot = "0.12.5"
-pco = "1.0.1"
+pco = "1.0.2"
 rayon = "1.12.0"
 rustc-hash = "2.1.2"
 schemars = { version = "1.2.1", features = ["indexmap2"] }
@@ -81,7 +81,7 @@ serde_bytes = "0.11.19"
 serde_derive = "1.0.228"
 serde_json = { version = "1.0.149", features = ["float_roundtrip", "preserve_order"] }
 smallvec = "1.15.1"
-tokio = { version = "1.52.2", features = ["rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["rt-multi-thread"] }
 tower-http = { version = "0.6.10", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
 tracing = { version = "0.1", default-features = false, features = ["std"] }

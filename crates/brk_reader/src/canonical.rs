@@ -14,7 +14,7 @@ pub struct CanonicalRange {
 impl CanonicalRange {
     pub fn walk(client: &Client, anchor: Option<&BlockHash>, tip: Height) -> Result<Self> {
         let start = match anchor {
-            Some(hash) => Height::from(client.get_block_header_info(hash)?.height + 1),
+            Some(hash) => Height::from((client.get_block_header_info(hash)?.height + 1) as u64),
             None => Height::ZERO,
         };
         let mut range = Self::between(client, start, tip)?;

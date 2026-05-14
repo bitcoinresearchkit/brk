@@ -8,7 +8,7 @@ use super::{
     P2WSHBytes,
 };
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AddrBytes {
     P2PK65(P2PK65Bytes), // 65
     P2PK33(P2PK33Bytes), // 33

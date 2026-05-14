@@ -26,7 +26,7 @@ use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::warn;
 
-use crate::{State, stores::TxStore};
+use crate::{CycleDiff, State, stores::TxStore};
 
 pub struct Prevouts;
 
@@ -41,7 +41,7 @@ impl Prevouts {
     /// in-mempool parents are filled lock-locally; the remainder go
     /// through `resolver` (one batched call) outside any lock. Returns
     /// true iff anything was written.
-    pub fn fill<F>(lock: &RwLock<State>, resolver: F) -> bool
+    pub fn fill<F>(lock: &RwLock<State>, diff: &mut CycleDiff, resolver: F) -> bool
     where
         F: Fn(&[(Txid, Vout)]) -> Resolved,
     {
@@ -59,7 +59,7 @@ impl Prevouts {
         for (txid, fills) in in_mempool.into_iter().chain(external) {
             let prefix = TxidPrefix::from(&txid);
             for prevout in state.txs.apply_fills(&prefix, fills) {
-                state.addrs.add_input(&txid, &prevout);
+                state.addrs.add_input(&mut diff.addrs, &txid, &prevout);
             }
         }
         true

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::FeeRate;
 
 /// Recommended fee rates in sat/vB
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RecommendedFees {
     /// Fee rate for fastest confirmation (next block)

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashSet, path::PathBuf};
 
 use brk_error::{Error, Result};
 use brk_rpc::{Auth, Client};
@@ -66,6 +66,9 @@ impl Args {
                 }
                 continue;
             }
+            if a.starts_with('-') {
+                return Err(Error::Parse(format!("unknown flag {a}")));
+            }
             positional.push(a);
         }
 
@@ -74,6 +77,12 @@ impl Args {
             .next()
             .ok_or_else(|| Error::Parse("missing selector".into()))?;
         let paths: Vec<Path> = iter.map(|f| Path::parse(&f)).collect::<Result<_>>()?;
+        let mut seen = HashSet::with_capacity(paths.len());
+        for p in &paths {
+            if !seen.insert(p.raw.as_str()) {
+                return Err(Error::Parse(format!("duplicate field '{}'", p.raw)));
+            }
+        }
         Ok(Self {
             selector,
             paths,

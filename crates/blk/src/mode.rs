@@ -1,3 +1,5 @@
+use brk_error::{Error, Result};
+
 #[derive(Clone, Copy)]
 pub enum Mode {
     Bare,
@@ -7,8 +9,18 @@ pub enum Mode {
 }
 
 impl Mode {
-    pub fn pick(pretty: bool, compact: bool, n_fields: usize) -> Self {
-        if pretty {
+    pub fn pick(pretty: bool, compact: bool, n_fields: usize) -> Result<Self> {
+        if pretty && compact {
+            return Err(Error::Parse(
+                "--pretty and --compact are mutually exclusive".into(),
+            ));
+        }
+        if compact && n_fields == 0 {
+            return Err(Error::Parse(
+                "--compact requires at least one field".into(),
+            ));
+        }
+        Ok(if pretty {
             Self::Pretty
         } else if n_fields == 0 {
             Self::Json
@@ -18,6 +30,6 @@ impl Mode {
             Self::Tsv
         } else {
             Self::Json
-        }
+        })
     }
 }

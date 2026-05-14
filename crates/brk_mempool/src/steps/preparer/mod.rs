@@ -6,7 +6,7 @@
 //! - **fresh** - decoded from `new_raws`, prevouts resolved against
 //!   the live mempool only. Confirmed-parent prevouts land as
 //!   `prevout: None` and are filled post-apply by the resolver passed
-//!   to `Mempool::update_with`.
+//!   to `Mempool::tick_with`.
 //!
 //! Existing entries are not re-classified - they keep their first-sight
 //! state on the live store. Removals are inferred by cross-referencing

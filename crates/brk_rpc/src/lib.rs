@@ -5,35 +5,15 @@ use std::{
     time::Duration,
 };
 
-use bitcoin::ScriptBuf;
 use brk_error::Result;
-use brk_types::{BlockHash, Sats, Txid, Weight};
+use brk_types::{Sats, Txid, Weight};
 
 mod client;
 mod methods;
 
 use client::ClientInner;
+pub use corepc_types::v17::{GetBlockHeaderVerbose, GetBlockVerboseOne, GetTxOut};
 pub use methods::MempoolState;
-
-#[derive(Debug, Clone)]
-pub struct BlockInfo {
-    pub height: usize,
-    pub confirmations: i64,
-}
-
-#[derive(Debug, Clone)]
-pub struct BlockHeaderInfo {
-    pub height: usize,
-    pub confirmations: i64,
-    pub previous_block_hash: Option<BlockHash>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TxOutInfo {
-    pub coinbase: bool,
-    pub value: Sats,
-    pub script_pub_key: ScriptBuf,
-}
 
 /// One transaction from `getblocktemplate`. Carries the full decoded
 /// body and stats so block 0 can be projected without a follow-up

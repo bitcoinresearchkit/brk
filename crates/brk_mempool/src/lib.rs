@@ -16,8 +16,8 @@
 //!    pass, using same-cycle in-mempool parents directly and the
 //!    caller-supplied resolver (default: `getrawtransaction`) for
 //!    confirmed parents.
-//! 5. [`steps::rebuilder::Rebuilder`] - throttled rebuild of the
-//!    projected-blocks `Snapshot` from the same-cycle GBT and min fee.
+//! 5. [`steps::rebuilder::Rebuilder`] - rebuild of the projected-blocks
+//!    `Snapshot` from the same-cycle GBT and min fee.
 
 use std::{
     any::Any,
@@ -45,20 +45,24 @@ use tracing::error;
 
 mod cluster;
 mod cpfp;
+mod cycle;
+mod cycle_diff;
 mod diagnostics;
 mod rbf;
 mod state;
 pub(crate) mod steps;
 pub(crate) mod stores;
 
+pub use cycle::{AddedKind, Cycle, TxAdded, TxRemoved};
 pub use diagnostics::MempoolStats;
 pub use rbf::{RbfForTx, RbfNode};
-pub use steps::Snapshot;
+pub use steps::{Snapshot, TxRemoval};
 use steps::{Applier, Fetched, Fetcher, Preparer, Prevouts, Rebuilder};
-pub(crate) use steps::{BlockStats, RecommendedFees, TxEntry, TxRemoval};
-pub(crate) use stores::{TxStore, TxTombstone};
+pub(crate) use cycle_diff::CycleDiff;
+pub(crate) use steps::{BlockStats, RecommendedFees, TxEntry};
+pub(crate) use stores::{AddrTransitions, TxStore, TxTombstone};
 
-/// Confirmed-parent prevout resolver passed to [`Mempool::update_with`] /
+/// Confirmed-parent prevout resolver passed to [`Mempool::tick_with`] /
 /// [`Mempool::start_with`]. Receives a slice of `(parent_txid, vout)`
 /// holes and returns the subset that resolved. Unresolved holes are
 /// simply omitted from the map; the next cycle retries automatically.
@@ -326,7 +330,9 @@ impl Mempool {
 
     /// Infinite update loop with a 500ms interval. Resolves
     /// confirmed-parent prevouts via the default `getrawtransaction`
-    /// resolver; requires bitcoind started with `txindex=1`.
+    /// resolver; requires bitcoind started with `txindex=1`. Drops
+    /// per-cycle [`Cycle`] events on the floor - use [`Mempool::tick`]
+    /// to consume them.
     pub fn start(&self) {
         self.start_with(Prevouts::rpc_resolver(self.0.client.clone()));
     }
@@ -355,7 +361,7 @@ impl Mempool {
         loop {
             let started = Instant::now();
             let outcome = catch_unwind(AssertUnwindSafe(|| {
-                if let Err(e) = self.update_with(&resolver) {
+                if let Err(e) = self.tick_with(&resolver) {
                     error!("update failed: {e}");
                 }
             }));
@@ -371,14 +377,23 @@ impl Mempool {
         }
     }
 
-    /// One sync cycle: fetch, prepare, apply, fill prevouts, maybe
-    /// rebuild. The resolver MUST resolve confirmed prevouts only;
-    /// mempool-to-mempool chains are wired internally and the
-    /// resolver is never called for them.
-    fn update_with<F>(&self, resolver: F) -> Result<()>
+    /// One sync cycle: fetch, prepare, apply, fill prevouts, rebuild.
+    /// Returns a [`Cycle`] reporting everything that changed. Uses the
+    /// default `getrawtransaction` resolver for confirmed-parent
+    /// prevouts (requires `txindex=1`).
+    pub fn tick(&self) -> Result<Cycle> {
+        self.tick_with(Prevouts::rpc_resolver(self.0.client.clone()))
+    }
+
+    /// Variant of [`Mempool::tick`] with a caller-supplied resolver for
+    /// confirmed-parent prevouts. The resolver MUST resolve confirmed
+    /// prevouts only; mempool-to-mempool chains are wired internally
+    /// and the resolver is never called for them.
+    pub fn tick_with<F>(&self, resolver: F) -> Result<Cycle>
     where
         F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
+        let started = Instant::now();
         let Inner {
             client,
             state,
@@ -387,18 +402,30 @@ impl Mempool {
         } = &*self.0;
 
         let Fetched {
-            live_txids,
+            state: rpc,
             new_entries,
             new_txs,
-            gbt_txids,
-            min_fee,
+            block_template_txids,
         } = Fetcher::fetch(client, state)?;
-        let pulled = Preparer::prepare(&live_txids, new_entries, new_txs, state);
-        Applier::apply(state, rebuilder, pulled);
-        Prevouts::fill(state, resolver);
-        rebuilder.tick(state, &gbt_txids, min_fee);
+        let pulled = Preparer::prepare(&rpc.live_txids, new_entries, new_txs, state);
+        let mut diff = CycleDiff::default();
+        Applier::apply(state, rebuilder, pulled, &mut diff);
+        Prevouts::fill(state, &mut diff, resolver);
+        rebuilder.tick(state, &block_template_txids, rpc.min_fee);
+        let CycleDiff { added, removed, addrs } = diff;
+        let (addr_enters, addr_leaves) = addrs.into_vecs();
 
-        Ok(())
+        Ok(Cycle {
+            added,
+            removed,
+            addr_enters,
+            addr_leaves,
+            tip_hash: rpc.tip_hash,
+            tip_height: rpc.tip_height,
+            info: self.info(),
+            snapshot: rebuilder.snapshot(),
+            took: started.elapsed(),
+        })
     }
 }
 

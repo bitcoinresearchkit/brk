@@ -1,4 +1,4 @@
-use owo_colors::OwoColorize;
+use owo_colors::{OwoColorize, Stream};
 
 const SEL_W: usize = 5; // longest selector token: "tip-N"
 const LABEL_W: usize = 28; // longest label across OUTPUT/OPTIONS/EXAMPLES (= example cmd "blk 800000 tx.0.vout.0.value")
@@ -7,18 +7,18 @@ const PH_W: usize = LABEL_W - FLAG_W - 1; // placeholder column width so flag+ph
 const GAP: usize = 4;
 
 pub fn print() {
-    println!("{} - inspect a Bitcoin Core block", "blk".bold());
+    println!("{} - inspect a Bitcoin Core block", bold("blk"));
     println!();
 
     section("USAGE");
     println!(
         "    blk {} [{} ...] [OPTIONS]",
-        "<selector>".bright_black(),
-        "<field>".bright_black()
+        dim("<selector>"),
+        dim("<field>")
     );
     println!(
         "    {}",
-        "no fields = full block as JSON (analog of `bitcoin-cli getblock <hash> 2`)".bright_black()
+        dim("no fields = full block as JSON (analog of `bitcoin-cli getblock <hash> 2`)")
     );
     println!();
 
@@ -32,15 +32,15 @@ pub fn print() {
     section("FIELDS");
     println!(
         "    {}",
-        "dotted paths drill into nested data; omit an index for arrays".bright_black()
+        dim("dotted paths drill into nested data, omit an index for arrays")
     );
     println!();
     group("block");
     fields(&[
         "height, hash, time, version, version_hex, bits, nonce,",
         "prev, merkle, difficulty, txs, n_inputs, n_outputs,",
-        "witness_txs, size, strippedsize, weight, subsidy, coinbase,",
-        "header_hex, hex",
+        "witness_txs, size, strippedsize, weight, subsidy,",
+        "coinbase, coinbase_hex, header_hex, hex",
     ]);
     println!();
     group_note("tx.i", "omit i for all txs");
@@ -61,14 +61,14 @@ pub fn print() {
     println!();
     println!(
         "    {}",
-        "Naked tx / tx.i / vin / vout returns the whole sub-object as JSON.".bright_black()
+        dim("Naked tx / tx.i / vin / vout returns the whole sub-object as JSON.")
     );
     println!();
 
     section("OUTPUT");
     out("no fields", "full block JSON object, one per line (NDJSON)");
     out("1 field", "bare value, one per line");
-    out("2+ fields", "compact JSON object, one per line (NDJSON)");
+    out("2+ fields", "JSON object, one per line (NDJSON)");
     out("-p, --pretty", "pretty JSON object instead");
     out(
         "-c, --compact",
@@ -115,18 +115,18 @@ pub fn print() {
 }
 
 fn section(name: &str) {
-    println!("{}", format!("{name}:").bold());
+    println!("{}", bold(&format!("{name}:")));
 }
 
 fn group(name: &str) {
-    println!("  {}", format!("{name}:").bold());
+    println!("  {}", bold(&format!("{name}:")));
 }
 
 fn group_note(name: &str, note: &str) {
     println!(
         "  {}  {}",
-        format!("{name}:").bold(),
-        format!("({note})").bright_black()
+        bold(&format!("{name}:")),
+        dim(&format!("({note})"))
     );
 }
 
@@ -143,7 +143,7 @@ fn pad(s: &str, width: usize) -> String {
 fn sel(token: &str, desc: &str) {
     println!(
         "    {}{}{}{desc}",
-        token.bright_black(),
+        dim(token),
         pad(token, SEL_W),
         " ".repeat(GAP),
     );
@@ -161,12 +161,12 @@ fn opt(flag: &str, ph: &str, desc: &str, default: Option<&str>) {
     let head = format!(
         "    {flag}{} {}{}{}",
         pad(flag, FLAG_W),
-        ph.bright_black(),
+        dim(ph),
         pad(ph, PH_W),
         " ".repeat(GAP),
     );
     match default {
-        Some(d) => println!("{head}{desc} {}", d.bright_black()),
+        Some(d) => println!("{head}{desc} {}", dim(d)),
         None => println!("{head}{desc}"),
     }
 }
@@ -176,6 +176,15 @@ fn ex(cmd: &str, note: &str) {
         "    {cmd}{}{}{}",
         pad(cmd, LABEL_W),
         " ".repeat(GAP),
-        format!("# {note}").bright_black()
+        dim(&format!("# {note}"))
     );
+}
+
+fn bold(s: &str) -> String {
+    s.if_supports_color(Stream::Stdout, |t| t.bold()).to_string()
+}
+
+fn dim(s: &str) -> String {
+    s.if_supports_color(Stream::Stdout, |t| t.bright_black())
+        .to_string()
 }

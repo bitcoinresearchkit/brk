@@ -9,7 +9,8 @@ mod rebuilder;
 
 pub(crate) use applier::Applier;
 pub(crate) use fetcher::{Fetched, Fetcher};
-pub(crate) use preparer::{Preparer, TxEntry, TxRemoval};
+pub(crate) use preparer::{Preparer, TxEntry};
+pub use preparer::TxRemoval;
 pub(crate) use prevouts::Prevouts;
 pub(crate) use rebuilder::{BlockStats, RecommendedFees, Rebuilder, SnapTx, TxIndex};
 pub use rebuilder::Snapshot;

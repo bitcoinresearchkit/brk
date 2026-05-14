@@ -4,14 +4,14 @@
 //!   prevouts against the live mempool (same-cycle parents), build a
 //!   full `Transaction` + `Entry`. Confirmed parents land as
 //!   `prevout: None` and are filled post-apply by the resolver passed
-//!   to `Mempool::update_with`.
+//!   to `Mempool::tick_with`.
 //! - **Revived** - tx in the graveyard. Rebuild the `Entry` only
 //!   (preserving `rbf`, `size`). The Applier exhumes the cached tx
 //!   body. No raw decoding.
 
 use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 
-use crate::{TxTombstone, stores::TxStore};
+use crate::{TxTombstone, cycle::AddedKind, stores::TxStore};
 
 use super::TxEntry;
 
@@ -21,9 +21,16 @@ pub enum TxAddition {
 }
 
 impl TxAddition {
+    pub fn kind(&self) -> AddedKind {
+        match self {
+            Self::Fresh { .. } => AddedKind::Fresh,
+            Self::Revived { .. } => AddedKind::Revived,
+        }
+    }
+
     /// Resolves prevouts against the live mempool only. Confirmed
     /// parents land with `prevout: None` and are filled by the
-    /// resolver supplied to `Mempool::update_with` in the same cycle.
+    /// resolver supplied to `Mempool::tick_with` in the same cycle.
     pub(super) fn fresh(
         info: &MempoolEntryInfo,
         tx: bitcoin::Transaction,
@@ -64,8 +71,12 @@ impl TxAddition {
         built
     }
 
+    /// Preserves the tomb's original `first_seen`: bitcoind resets the
+    /// timestamp on re-acceptance (and GBT synthesis carries "now"), but
+    /// the consumer wants the first-ever sighting, not the latest one.
     pub(super) fn revived(info: &MempoolEntryInfo, tomb: &TxTombstone) -> Self {
-        let entry = TxEntry::new(info, tomb.entry.size, tomb.entry.rbf);
+        let mut entry = TxEntry::new(info, tomb.entry.size, tomb.entry.rbf);
+        entry.first_seen = tomb.entry.first_seen;
         Self::Revived { entry }
     }
 

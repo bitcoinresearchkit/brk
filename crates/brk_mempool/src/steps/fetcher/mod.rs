@@ -3,7 +3,7 @@ mod fetched;
 pub use fetched::Fetched;
 
 use brk_error::Result;
-use brk_rpc::{Client, MempoolState};
+use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, Timestamp, Txid, VSize};
 use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
@@ -28,37 +28,31 @@ const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 /// Core's exact selection because we never ask for that data twice.
 ///
 /// Confirmed prevouts are resolved post-apply by the caller-supplied
-/// resolver passed to `Mempool::update_with`, so the in-crate path no
+/// resolver passed to `Mempool::tick_with`, so the in-crate path no
 /// longer issues a third batch for parents.
 pub struct Fetcher;
 
 impl Fetcher {
     pub fn fetch(client: &Client, lock: &RwLock<State>) -> Result<Fetched> {
-        let MempoolState {
-            live_txids,
-            gbt,
-            min_fee,
-        } = client.fetch_mempool_state()?;
+        let (mut state, block_template) = client.fetch_mempool_state()?;
 
         // One read snapshot decides both the RPC fetch list and the
         // GBT-synthesis set, so they agree on what's "already known".
-        // Graveyard txs are treated as known so a re-broadcast still
-        // flows through `Preparer::classify_addition` and lands as
-        // [`crate::TxAddition::Revived`].
         let (new_txids, gbt_synth_set) = {
-            let state = lock.read();
+            let mempool = lock.read();
             let mut gbt_txids: FxHashSet<Txid> =
-                FxHashSet::with_capacity_and_hasher(gbt.len(), Default::default());
+                FxHashSet::with_capacity_and_hasher(block_template.len(), Default::default());
             let mut gbt_synth_set: FxHashSet<Txid> = FxHashSet::default();
-            for g in &gbt {
+            for g in &block_template {
                 gbt_txids.insert(g.txid);
-                if !state.txs.contains(&g.txid) {
+                if !mempool.txs.contains(&g.txid) {
                     gbt_synth_set.insert(g.txid);
                 }
             }
-            let new_txids: Vec<Txid> = live_txids
+            let new_txids: Vec<Txid> = state
+                .live_txids
                 .iter()
-                .filter(|t| !state.txs.contains(t) && !gbt_txids.contains(t))
+                .filter(|t| !mempool.txs.contains(t) && !gbt_txids.contains(t))
                 .take(MAX_TX_FETCHES_PER_CYCLE)
                 .copied()
                 .collect();
@@ -69,17 +63,18 @@ impl Fetcher {
         new_entries.reserve(gbt_synth_set.len());
         new_txs.reserve(gbt_synth_set.len());
 
-        // Consume `gbt` by value: GBT-only txs move their body and
-        // depends into the synthesis path (no clones), and the GBT
-        // ordering is captured as a `Vec<Txid>` for the Rebuilder, which
-        // is the only downstream consumer and only reads txids.
+        // Consume `block_template` by value: GBT-only txs move their
+        // body and depends into the synthesis path (no clones), and
+        // the GBT ordering is captured as a `Vec<Txid>` for the
+        // Rebuilder, which is the only downstream consumer and only
+        // reads txids.
         //
         // GBT carries no per-tx arrival timestamp. `now` is correct to
         // within ~1 cycle for a tx that just entered Core's mempool
         // (the only kind that triggers synthesis: not in our pool yet
         // means it just appeared this cycle).
         let now = Timestamp::now();
-        let gbt_txids: Vec<Txid> = gbt
+        let block_template_txids: Vec<Txid> = block_template
             .into_iter()
             .map(|g| {
                 let txid = g.txid;
@@ -98,12 +93,19 @@ impl Fetcher {
             })
             .collect();
 
+        // Promote `live_txids` to the union of `getrawmempool` and GBT:
+        // the two RPC views can disagree by a cycle, so a tx visible to
+        // GBT but missing from `getrawmempool` (or vice versa) is still
+        // alive. Without the union, GBT-only txs would oscillate enter ↔
+        // leave every cycle as `Preparer::classify_removals` buried what
+        // GBT had just resurrected.
+        state.live_txids.extend(block_template_txids.iter().copied());
+
         Ok(Fetched {
-            live_txids,
+            state,
             new_entries,
             new_txs,
-            gbt_txids,
-            min_fee,
+            block_template_txids,
         })
     }
 }

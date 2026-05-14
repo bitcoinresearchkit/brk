@@ -118,7 +118,7 @@ impl Blocks {
             BlockRange::After { hash } => {
                 let start = if let Some(hash) = hash.as_ref() {
                     let block_info = client.get_block_header_info(hash)?;
-                    (block_info.height + 1).into()
+                    Height::from((block_info.height + 1) as u64)
                 } else {
                     Height::ZERO
                 };

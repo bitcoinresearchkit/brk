@@ -15,16 +15,18 @@ impl Formatter {
 
     pub fn format(&self, ctx: &Ctx) -> Result<String> {
         match self.mode {
-            Mode::Bare => self.bare(ctx),
+            Mode::Bare => self.bare(ctx, false),
             Mode::Tsv => self.tsv(ctx),
             Mode::Json => Ok(serde_json::to_string(&self.object(ctx)?)?),
+            Mode::Pretty if self.fields.len() == 1 => self.bare(ctx, true),
             Mode::Pretty => Ok(serde_json::to_string_pretty(&self.object(ctx)?)?),
         }
     }
 
-    fn bare(&self, ctx: &Ctx) -> Result<String> {
+    fn bare(&self, ctx: &Ctx, pretty: bool) -> Result<String> {
         Ok(match ctx.resolve(&self.fields[0])? {
             Value::String(s) => s,
+            other if pretty => serde_json::to_string_pretty(&other)?,
             other => other.to_string(),
         })
     }

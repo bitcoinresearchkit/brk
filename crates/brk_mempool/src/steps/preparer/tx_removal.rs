@@ -11,7 +11,7 @@ use brk_types::Txid;
 /// `Vanished` = any other reason we can't distinguish from the data at
 /// hand (mined, expired, evicted, or replaced by a tx we didn't fetch
 /// due to the per-cycle fetch cap).
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TxRemoval {
     Replaced { by: Txid },
     Vanished,
