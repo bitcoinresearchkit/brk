@@ -14,7 +14,7 @@ pub struct Fetched {
     pub new_txs: FxHashMap<Txid, bitcoin::Transaction>,
     /// Block 0 ordering from `getblocktemplate`. Bodies and stats have
     /// already been folded into `new_entries`/`new_txs` (or were already
-    /// in the pool); the Rebuilder only needs the txid sequence to
+    /// in the pool). The Rebuilder only needs the txid sequence to
     /// project Core's exact selection.
     pub block_template_txids: Vec<Txid>,
 }

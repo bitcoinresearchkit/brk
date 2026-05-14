@@ -7,17 +7,18 @@ use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, Timestamp, Txid, VSize};
 use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
+use tracing::warn;
 
 use crate::State;
 
 /// Cap before the batch RPC so we never hand bitcoind an unbounded batch.
-/// GBT-synthesized entries are not subject to this cap; they're bounded
+/// GBT-synthesized entries are not subject to this cap: they're bounded
 /// by the block weight limit Core enforces on its own template.
 const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 
 /// Two batched round-trips per cycle, scaling with churn rather than
 /// mempool size: `getblocktemplate` + `getrawmempool false` +
-/// `getmempoolinfo` in one mixed batch; then `getmempoolentry` +
+/// `getmempoolinfo` in one mixed batch, then `getmempoolentry` +
 /// `getrawtransaction` for *new* non-GBT txids in a second mixed batch.
 ///
 /// GBT entries already carry the full tx body and stats, so any GBT tx
@@ -56,6 +57,12 @@ impl Fetcher {
                 .take(MAX_TX_FETCHES_PER_CYCLE)
                 .copied()
                 .collect();
+            if new_txids.len() == MAX_TX_FETCHES_PER_CYCLE {
+                warn!(
+                    cap = MAX_TX_FETCHES_PER_CYCLE,
+                    "Fetcher: new-tx batch hit the per-cycle cap; remainder defers to the next cycle"
+                );
+            }
             (new_txids, gbt_synth_set)
         };
 

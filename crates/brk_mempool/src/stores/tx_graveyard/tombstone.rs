@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use brk_types::{FeeRate, Transaction, Txid};
 
-use crate::{TxEntry, TxRemoval};
+use crate::{TxRemoval, state::TxEntry};
 
 /// A buried mempool tx, retained for reappearance detection and
 /// post-mine analytics. `chunk_rate` is the linearized chunk feerate at
@@ -18,7 +18,7 @@ pub struct TxTombstone {
 }
 
 impl TxTombstone {
-    pub(crate) fn replaced_by(&self) -> Option<&Txid> {
+    pub fn replaced_by(&self) -> Option<&Txid> {
         match &self.removal {
             TxRemoval::Replaced { by } => Some(by),
             TxRemoval::Vanished => None,

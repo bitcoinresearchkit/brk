@@ -532,7 +532,6 @@ dependencies = [
  "brk_oracle",
  "brk_rpc",
  "brk_types",
- "derive_more",
  "parking_lot",
  "rustc-hash",
  "smallvec",

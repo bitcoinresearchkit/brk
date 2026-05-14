@@ -1,3 +1,13 @@
+//! # Locking
+//!
+//! Two locks live on `Rebuilder`: `history` and `snapshot`. Writes always
+//! land on `history` first, then `snapshot`, so any `next_block_hash` a
+//! reader sees in the published snapshot is already recorded in
+//! `historical_block0`. No read path ever holds both, and no path holds
+//! a `State` guard together with either Rebuilder lock - the cycle reads
+//! `State` once to build the snapshot, then drops it before touching
+//! these locks.
+
 use std::{
     collections::VecDeque,
     sync::{
@@ -12,14 +22,7 @@ use rustc_hash::FxHashSet;
 
 use crate::State;
 
-use partition::Partitioner;
-use snapshot::build_txs;
-
-mod partition;
-mod snapshot;
-
-pub use brk_types::RecommendedFees;
-pub use snapshot::{BlockStats, SnapTx, Snapshot, TxIndex};
+use super::{Partitioner, Snapshot, TxIndex};
 
 const NUM_BLOCKS: usize = 8;
 const HISTORY: usize = 10;
@@ -35,16 +38,18 @@ pub struct Rebuilder {
 }
 
 impl Rebuilder {
-    /// Rebuild the snapshot every cycle. The build is pure CPU on
-    /// already-fetched data and `min_fee` participates in the result,
-    /// so a "skip if no add/remove" gate would freeze the served fees
-    /// when Core's `mempoolminfee` drifts on a quiet pool. Cycle pacing
-    /// is the driver loop's job.
+    /// Rebuild every cycle. `min_fee` participates in the result, so a
+    /// "skip if no add/remove" gate would freeze served fees when Core's
+    /// `mempoolminfee` drifts on a quiet pool.
+    ///
+    /// History is updated before the snapshot Arc is swapped so a reader
+    /// can never observe a `next_block_hash` that hasn't been recorded
+    /// yet. `block_template_diff(current_hash)` returning 404 in the
+    /// publish gap would force unnecessary client refetches.
     pub fn tick(&self, lock: &RwLock<State>, gbt_txids: &[Txid], min_fee: FeeRate) {
         let snap = Self::build_snapshot(lock, gbt_txids, min_fee);
         let block0: Vec<Txid> = snap.block0_txids().collect();
         let next_hash = snap.next_block_hash;
-        *self.snapshot.write() = Arc::new(snap);
 
         let mut hist = self.history.write();
         hist.retain(|(h, _)| *h != next_hash);
@@ -53,6 +58,8 @@ impl Rebuilder {
             hist.pop_front();
         }
         drop(hist);
+
+        *self.snapshot.write() = Arc::new(snap);
 
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
@@ -79,16 +86,9 @@ impl Rebuilder {
     ) -> Snapshot {
         let (txs, prefix_to_idx) = {
             let state = lock.read();
-            build_txs(&state.txs)
+            Snapshot::build_txs(&state.txs)
         };
 
-        // Block 0 from `getblocktemplate`: Core's actual selection.
-        // The Fetcher synthesizes pool entries for GBT txs that aren't
-        // already present (using GBT's inline body + stats), so this
-        // lookup always resolves and block 0 matches Core exactly.
-        // The `filter_map` only drops if a tx was concurrently evicted
-        // from `txs` between `build_txs` and the rebuild, which the
-        // partitioner backfills so callers still see `NUM_BLOCKS`.
         let block0: Vec<TxIndex> = gbt_txids
             .iter()
             .filter_map(|txid| prefix_to_idx.get(&TxidPrefix::from(txid)).copied())

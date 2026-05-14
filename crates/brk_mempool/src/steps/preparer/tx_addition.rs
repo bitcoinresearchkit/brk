@@ -11,9 +11,11 @@
 
 use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 
-use crate::{TxTombstone, cycle::AddedKind, stores::TxStore};
-
-use super::TxEntry;
+use crate::{
+    cycle::AddedKind,
+    state::TxEntry,
+    stores::{TxStore, TxTombstone},
+};
 
 pub enum TxAddition {
     Fresh { tx: Transaction, entry: TxEntry },
@@ -67,7 +69,7 @@ impl TxAddition {
             output: tx.output.into_iter().map(TxOut::from).collect(),
             status: TxStatus::UNCONFIRMED,
         };
-        built.total_sigop_cost = built.total_sigop_cost();
+        built.refresh_sigops();
         built
     }
 

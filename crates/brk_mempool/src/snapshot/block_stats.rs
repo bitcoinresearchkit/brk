@@ -33,7 +33,7 @@ pub struct BlockStats {
 
 impl BlockStats {
     /// Stats for every projected block in `blocks`, in order. `blocks[0]`
-    /// uses Core's exact 0..100 percentiles; the rest use the clipped
+    /// uses Core's exact 0..100 percentiles. The rest use the clipped
     /// 5..95 range to hide CPFP / stale-GBT outliers.
     pub fn for_blocks(blocks: &[Vec<TxIndex>], txs: &[SnapTx]) -> Vec<Self> {
         blocks

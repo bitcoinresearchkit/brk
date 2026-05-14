@@ -5,7 +5,7 @@ use super::TxIndex;
 
 /// Frozen per-tx view used by the snapshot. `chunk_rate` is the
 /// linearized chunk feerate (local Single Fee Linearization, run fresh
-/// every snapshot); singletons report `fee/vsize`. Parent/child
+/// every snapshot). Singletons report `fee/vsize`. Parent/child
 /// adjacency in `TxIndex` space, so CPFP queries are a pure walk over
 /// `Snapshot.txs`.
 #[derive(Clone, Debug)]
@@ -18,7 +18,7 @@ pub struct SnapTx {
     pub size: u64,
     pub chunk_rate: FeeRate,
     /// Direct parents in the live pool (resolved against entry slots
-    /// at build time; cross-pool / confirmed parents are dropped).
+    /// at build time. Cross-pool / confirmed parents are dropped).
     pub parents: SmallVec<[TxIndex; 2]>,
     pub children: SmallVec<[TxIndex; 4]>,
 }

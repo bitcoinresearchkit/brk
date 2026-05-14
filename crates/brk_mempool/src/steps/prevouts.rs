@@ -11,7 +11,7 @@
 //!    a fill directly (cheap, lock-local). Otherwise we record the
 //!    hole for external resolution.
 //! 2. Drop the read guard. Call `resolver` on the remaining holes
-//!    (typically `getrawtransaction` or an indexer lookup); failures
+//!    (typically `getrawtransaction` or an indexer lookup). Failures
 //!    are simply skipped and retried next cycle.
 //! 3. Take the write guard once and fold both fill batches into the
 //!    `TxStore` via `apply_fills` -> `add_input`. Idempotent: each
@@ -26,7 +26,7 @@ use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::warn;
 
-use crate::{CycleDiff, State, stores::TxStore};
+use crate::{cycle::CycleDiff, state::State, stores::TxStore};
 
 pub struct Prevouts;
 
@@ -38,10 +38,9 @@ type Resolved = FxHashMap<(Txid, Vout), TxOut>;
 
 impl Prevouts {
     /// Fill every unfilled prevout the cycle can resolve. Same-cycle
-    /// in-mempool parents are filled lock-locally; the remainder go
-    /// through `resolver` (one batched call) outside any lock. Returns
-    /// true iff anything was written.
-    pub fn fill<F>(lock: &RwLock<State>, diff: &mut CycleDiff, resolver: F) -> bool
+    /// in-mempool parents are filled lock-locally. The remainder go
+    /// through `resolver` (one batched call) outside any lock.
+    pub fn fill<F>(lock: &RwLock<State>, diff: &mut CycleDiff, resolver: F)
     where
         F: Fn(&[(Txid, Vout)]) -> Resolved,
     {
@@ -52,7 +51,7 @@ impl Prevouts {
         let external = Self::resolve_external(holes, resolver);
 
         if in_mempool.is_empty() && external.is_empty() {
-            return false;
+            return;
         }
 
         let mut state = lock.write();
@@ -62,7 +61,6 @@ impl Prevouts {
                 state.addrs.add_input(&mut diff.addrs, &txid, &prevout);
             }
         }
-        true
     }
 
     /// Default resolver: one batched `getrawtransaction` per cycle,

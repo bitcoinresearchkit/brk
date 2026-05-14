@@ -3,14 +3,14 @@
 //! single `RwLock` so the cycle steps and read-side accessors share
 //! one lock-order discipline.
 
-pub(crate) mod addr_tracker;
-pub(crate) mod outpoint_spends;
-pub(crate) mod output_bins;
-pub(crate) mod tx_graveyard;
-pub(crate) mod tx_store;
+mod addr_tracker;
+mod outpoint_spends;
+mod output_bins;
+mod tx_graveyard;
+mod tx_store;
 
-pub(crate) use addr_tracker::{AddrTracker, AddrTransitions};
-pub(crate) use outpoint_spends::OutpointSpends;
-pub(crate) use output_bins::OutputBins;
-pub(crate) use tx_graveyard::{TxGraveyard, TxTombstone};
-pub(crate) use tx_store::TxStore;
+pub use addr_tracker::AddrTracker;
+pub use outpoint_spends::OutpointSpends;
+pub use output_bins::OutputBins;
+pub use tx_graveyard::{TxGraveyard, TxTombstone};
+pub use tx_store::TxStore;

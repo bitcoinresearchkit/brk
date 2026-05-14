@@ -1,9 +1,8 @@
 use brk_types::{FeeRate, MempoolEntryInfo, Sats, Timestamp, Txid, TxidPrefix, VSize, Weight};
 use smallvec::SmallVec;
 
-/// A mempool transaction entry. Carries the per-tx facts needed for
-/// projection. Chunk rates live on the snapshot (linearized fresh each
-/// cycle) - not stored here.
+/// Per-tx facts needed for projection. Chunk rates live on the snapshot
+/// (linearized fresh each cycle), not here.
 #[derive(Debug, Clone)]
 pub struct TxEntry {
     pub txid: Txid,
@@ -19,7 +18,7 @@ pub struct TxEntry {
 }
 
 impl TxEntry {
-    pub(super) fn new(info: &MempoolEntryInfo, size: u64, rbf: bool) -> Self {
+    pub fn new(info: &MempoolEntryInfo, size: u64, rbf: bool) -> Self {
         Self {
             txid: info.txid,
             fee: info.fee,

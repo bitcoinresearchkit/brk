@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         let info_count = mempool.info().count;
         let stats = mempool.stats();
         let snapshot = mempool.snapshot();
-        let blocks_tx_total: usize = snapshot.blocks.iter().map(|b| b.len()).sum();
+        let blocks_tx_total: usize = snapshot.blocks.iter().map(Vec::len).sum();
 
         println!(
             "info.count={} txs={} unresolved={} addrs={} outpoints={} \
