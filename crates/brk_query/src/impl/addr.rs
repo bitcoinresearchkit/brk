@@ -208,7 +208,7 @@ impl Query {
     pub fn addr_mempool_hash(&self, addr: &Addr) -> Option<u64> {
         let mempool = self.mempool()?;
         let bytes = AddrBytes::from_str(addr).ok()?;
-        Some(mempool.addr_state_hash(&bytes))
+        mempool.addr_state_hash(&bytes)
     }
 
     pub fn addr_mempool_txs(&self, addr: &Addr, limit: usize) -> Result<Vec<Transaction>> {

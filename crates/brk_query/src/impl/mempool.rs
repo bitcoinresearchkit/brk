@@ -1,6 +1,6 @@
 use crate::Query;
 use brk_error::{Error, Result};
-use brk_mempool::{Mempool, PrevoutResolver, RbfForTx, RbfNode};
+use brk_mempool::{Mempool, RbfForTx, RbfNode};
 use brk_types::{
     BlockTemplate, BlockTemplateDiff, CheckedSub, FeeRate, MempoolBlock, MempoolInfo,
     MempoolRecentTx, NextBlockHash, OutputType, RbfResponse, RbfTx, RecommendedFees,
@@ -32,8 +32,12 @@ impl Query {
         Ok(mempool.block_stats().iter().map(MempoolBlock::from).collect())
     }
 
-    /// Indexer-backed resolver for confirmed-parent prevouts.
-    pub fn indexer_prevout_resolver(&self) -> PrevoutResolver {
+    /// Indexer-backed resolver for confirmed-parent prevouts. Boxed so
+    /// the caller (typically [`Mempool::start_with`]) can stash one
+    /// resolver behind a stable type for the lifetime of the loop.
+    pub fn indexer_prevout_resolver(
+        &self,
+    ) -> Box<dyn Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut> + Send + Sync> {
         let indexer = self.0.indexer;
 
         Box::new(move |holes: &[(Txid, Vout)]| {

@@ -98,6 +98,14 @@ impl Transaction {
         FeeRate::from((self.fee, self.vsize()))
     }
 
+    /// Recompute `total_sigop_cost` from current inputs/outputs and
+    /// write it back into the field. Cheaper than rebuilding the
+    /// transaction when prevouts arrive; the only mutator paired with
+    /// [`Self::total_sigop_cost`].
+    pub fn refresh_sigops(&mut self) {
+        self.total_sigop_cost = self.total_sigop_cost();
+    }
+
     /// Total sigop cost (BIP-141 weight units).
     ///
     /// Mirrors `bitcoin::Transaction::total_sigop_cost`, but reads
