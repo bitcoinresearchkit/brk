@@ -24,10 +24,10 @@ const MONTHS = [
   "Dec",
 ];
 
+/** @type {HTMLElement} */ let explorerEl;
 /** @type {HTMLDivElement} */ let chainEl;
 /** @type {HTMLDivElement} */ let scrollEl;
-/** @type {HTMLDivElement} */ let confirmedEl;
-/** @type {HTMLDivElement} */ let projectedEl;
+/** @type {HTMLDivElement} */ let blocksEl;
 /** @type {HTMLAnchorElement | null} */ let selectedCube = null;
 /** @type {IntersectionObserver} */ let olderEdgeObserver;
 /** @type {(block: BlockInfoV1) => void} */ let onSelect = () => {};
@@ -37,7 +37,7 @@ const MONTHS = [
 
 /** @type {Map<BlockHash, BlockInfoV1>} */
 const blocksByHash = new Map();
-/** @type {Array<{ el: HTMLDivElement, topFace: HTMLDivElement, rightFace: HTMLDivElement, leftFace: HTMLDivElement }>} */
+/** @type {ReturnType<typeof createProjectedCube>[]} */
 const projectedCubes = [];
 
 let newestHeight = -1;
@@ -61,6 +61,7 @@ export function initChain(parent, callbacks) {
   onCubeClick = callbacks.onCubeClick;
   onTip = callbacks.onTip;
   onGenesis = callbacks.onGenesis;
+  explorerEl = parent;
 
   chainEl = document.createElement("div");
   chainEl.id = "chain";
@@ -72,17 +73,12 @@ export function initChain(parent, callbacks) {
   );
 
   scrollEl = document.createElement("div");
-  scrollEl.classList.add("chain-scroll");
+  scrollEl.classList.add("scroll");
   chainEl.append(scrollEl);
 
-  projectedEl = document.createElement("div");
-  projectedEl.classList.add("projected");
-  projectedEl.hidden = true;
-  scrollEl.append(projectedEl);
-
-  confirmedEl = document.createElement("div");
-  confirmedEl.classList.add("confirmed");
-  scrollEl.append(confirmedEl);
+  blocksEl = document.createElement("div");
+  blocksEl.classList.add("blocks");
+  scrollEl.append(blocksEl);
 
   olderEdgeObserver = new IntersectionObserver(
     (entries) => {
@@ -140,7 +136,10 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
     selectCube(cube, { scroll: "smooth", silent });
     return;
   }
-  for (const cube of confirmedEl.children) cube.classList.add("skeleton");
+  for (const cube of blocksEl.children) {
+    if (!cube.classList.contains("projected")) cube.classList.add("skeleton");
+  }
+  explorerEl.classList.add("loading");
   let startHash;
   try {
     const height = await resolveHeight(hashOrHeight);
@@ -149,6 +148,7 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
     try {
       startHash = await loadInitial(null);
     } catch (_) {
+      explorerEl.classList.remove("loading");
       return;
     }
   }
@@ -156,14 +156,12 @@ export async function goToCube(hashOrHeight, { silent } = {}) {
     scroll: "instant",
     silent,
   });
+  explorerEl.classList.remove("loading");
 }
 
 export async function poll() {
   if (!reachedTip) return;
-  brk
-    .getMempoolBlocks()
-    .then(renderProjected)
-    .catch((e) => console.error("mempool poll:", e));
+  pollProjected();
   try {
     const blocks = await brk.getBlocksV1();
     appendNewerBlocks(blocks);
@@ -172,16 +170,32 @@ export async function poll() {
   }
 }
 
+function pollProjected() {
+  return brk
+    .getMempoolBlocks()
+    .then(renderProjected)
+    .catch((e) => console.error("mempool poll:", e));
+}
+
 /** @param {BlockHash | Height | null} [hashOrHeight] */
 function findCube(hashOrHeight) {
   if (hashOrHeight == null) {
-    return reachedTip && newestHeight >= 0
-      ? /** @type {HTMLAnchorElement | null} */ (confirmedEl.lastElementChild)
-      : null;
+    return reachedTip && newestHeight >= 0 ? newestConfirmedCube() : null;
   }
   const attr = typeof hashOrHeight === "number" ? "height" : "hash";
   return /** @type {HTMLAnchorElement | null} */ (
-    confirmedEl.querySelector(`[data-${attr}="${hashOrHeight}"]`)
+    blocksEl.querySelector(`[data-${attr}="${hashOrHeight}"]`)
+  );
+}
+
+function firstProjectedCube() {
+  return projectedCubes[0]?.el ?? null;
+}
+
+function newestConfirmedCube() {
+  const firstProj = firstProjectedCube();
+  return /** @type {HTMLAnchorElement | null} */ (
+    firstProj ? firstProj.previousElementSibling : blocksEl.lastElementChild
   );
 }
 
@@ -193,20 +207,21 @@ function clear() {
   loadingNewer = false;
   reachedTip = false;
   selectedCube = null;
-  confirmedEl.innerHTML = "";
+  blocksEl.innerHTML = "";
+  projectedCubes.length = 0;
   olderEdgeObserver.disconnect();
 }
 
 function observeOldestEdge() {
   olderEdgeObserver.disconnect();
-  const oldest = confirmedEl.firstElementChild;
+  const oldest = blocksEl.firstElementChild;
   if (oldest) olderEdgeObserver.observe(oldest);
 }
 
 /** @param {BlockInfoV1[]} blocks */
 function appendNewerBlocks(blocks) {
   if (!blocks.length) return false;
-  const anchor = confirmedEl.lastElementChild;
+  const anchor = newestConfirmedCube();
   const anchorRect = anchor?.getBoundingClientRect();
   for (let i = blocks.length - 1; i >= 0; i--) {
     const b = blocks[i];
@@ -215,7 +230,7 @@ function appendNewerBlocks(blocks) {
   }
   newestHeight = Math.max(newestHeight, blocks[0].height);
   newestTimestamp = blocks[0].timestamp;
-  refreshProjectedIntervals();
+  refreshProjected();
   if (anchor && anchorRect) {
     const r = anchor.getBoundingClientRect();
     scrollEl.scrollTop += r.top - anchorRect.top;
@@ -240,6 +255,9 @@ async function loadInitial(height) {
   observeOldestEdge();
 
   if (!reachedTip) await loadNewer();
+  // Await the projected cubes so the layout is complete before the caller
+  // scrolls to the tip; otherwise they load late and push the tip out of view.
+  else await pollProjected();
   return blocks[0].id;
 }
 
@@ -278,8 +296,10 @@ async function loadNewer() {
   try {
     const prevNewest = newestHeight;
     const blocks = await brk.getBlocksV1FromHeight(newestHeight + LOOKAHEAD);
-    if (!appendNewerBlocks(blocks) || newestHeight === prevNewest)
+    if (!appendNewerBlocks(blocks) || newestHeight === prevNewest) {
       reachedTip = true;
+      await pollProjected();
+    }
   } catch (e) {
     console.error("explorer loadNewer:", e);
   }
@@ -354,99 +374,111 @@ function setConfirmedInterval(cube) {
 
 /** @param {HTMLAnchorElement} cube */
 function prependConfirmed(cube) {
-  const next = /** @type {HTMLElement | null} */ (
-    confirmedEl.firstElementChild
-  );
-  confirmedEl.prepend(cube);
-  if (next) setConfirmedInterval(next);
+  const oldFirst = /** @type {HTMLElement | null} */ (blocksEl.firstElementChild);
+  blocksEl.insertBefore(cube, oldFirst);
+  if (oldFirst) setConfirmedInterval(oldFirst);
 }
 
 /** @param {HTMLAnchorElement} cube */
 function appendConfirmed(cube) {
-  confirmedEl.append(cube);
+  blocksEl.insertBefore(cube, firstProjectedCube());
   setConfirmedInterval(cube);
 }
 
 /** @param {MempoolBlock[]} blocks */
 function renderProjected(blocks) {
   const want = Math.min(blocks.length, PROJECTED_LIMIT);
-  projectedEl.hidden = want === 0;
 
   while (projectedCubes.length > want) {
     const last = projectedCubes.pop();
     if (last) last.el.remove();
   }
   while (projectedCubes.length < want) {
-    const cube = createProjectedCube(projectedCubes.length);
+    const cube = createProjectedCube();
     projectedCubes.push(cube);
-    projectedEl.append(cube.el);
+    blocksEl.append(cube.el);
   }
-  for (let i = 0; i < want; i++)
-    updateProjectedCube(projectedCubes[i], blocks[i], i);
-  refreshProjectedIntervals();
+  for (let i = 0; i < want; i++) updateProjectedCube(projectedCubes[i], blocks[i]);
+  refreshProjected();
 }
 
-/** @param {number} index */
-function createProjectedCube(index) {
-  const { el, topFace, rightFace, leftFace } = createCubeDiv(0);
-  el.classList.add("projected");
-  if (index === 0) el.classList.add("next");
-  return { el, topFace, rightFace, leftFace };
+function createProjectedCube() {
+  const cube = createCubeDiv();
+  cube.el.classList.add("projected");
+
+  const date = document.createTextNode("");
+  const hh = document.createTextNode("");
+  const mm = document.createTextNode("");
+  const dateP = document.createElement("p");
+  dateP.append(date);
+  const timeP = document.createElement("p");
+  timeP.append(hh, span(":", "dim"), mm);
+  cube.topFace.append(dateP, timeP);
+
+  const txs = document.createTextNode("");
+  const txsUnit = document.createTextNode("");
+  const txsP = document.createElement("p");
+  txsP.append(txs);
+  const txsUnitP = document.createElement("p");
+  txsUnitP.classList.add("dim");
+  txsUnitP.append(txsUnit);
+  cube.rightFace.append(txsP, txsUnitP);
+
+  const median = document.createTextNode("");
+  const rangeLo = document.createTextNode("");
+  const rangeHi = document.createTextNode("");
+  const medianP = document.createElement("p");
+  medianP.append(span("~", "dim"), median);
+  const rangeP = document.createElement("p");
+  rangeP.append(rangeLo, span("-", "dim"), rangeHi);
+  const unitP = document.createElement("p");
+  unitP.classList.add("dim");
+  unitP.textContent = "sat/vB";
+  cube.leftFace.append(medianP, rangeP, unitP);
+
+  return {
+    ...cube,
+    parts: { date, hh, mm, txs, txsUnit, median, rangeLo, rangeHi },
+  };
 }
 
 /**
- * @param {{ el: HTMLDivElement, topFace: HTMLDivElement, rightFace: HTMLDivElement, leftFace: HTMLDivElement }} cube
+ * @param {ReturnType<typeof createProjectedCube>} cube
  * @param {MempoolBlock} block
- * @param {number} index
  */
-function updateProjectedCube(cube, block, index) {
-  const fill = Math.min(1, block.blockVSize / 1_000_000);
-  cube.el.style.setProperty("--fill", String(fill));
-
-  cube.topFace.textContent = "";
-  const label = document.createElement("p");
-  label.textContent = index === 0 ? "next" : `+${index}`;
-  cube.topFace.append(label);
-
-  cube.rightFace.textContent = "";
-  const txs = document.createElement("p");
-  txs.textContent = block.nTx.toLocaleString();
-  const txsUnit = document.createElement("p");
-  txsUnit.classList.add("dim");
-  txsUnit.textContent = block.nTx === 1 ? "tx" : "txs";
-  cube.rightFace.append(txs, txsUnit);
-
-  cube.leftFace.textContent = "";
-  const median = document.createElement("p");
-  median.append(span("~", "dim"), formatFeeRate(block.medianFee));
-  const range = document.createElement("p");
-  range.append(
-    formatFeeRate(block.feeRange[0]),
-    span("-", "dim"),
-    formatFeeRate(block.feeRange[6]),
+function updateProjectedCube(cube, block) {
+  cube.el.style.setProperty(
+    "--fill",
+    String(Math.min(1, block.blockVSize / 1_000_000)),
   );
-  const unit = document.createElement("p");
-  unit.classList.add("dim");
-  unit.textContent = "sat/vB";
-  cube.leftFace.append(median, range, unit);
+  const p = cube.parts;
+  p.txs.nodeValue = block.nTx.toLocaleString();
+  p.txsUnit.nodeValue = block.nTx === 1 ? "tx" : "txs";
+  p.median.nodeValue = formatFeeRate(block.medianFee);
+  p.rangeLo.nodeValue = formatFeeRate(block.feeRange[0]);
+  p.rangeHi.nodeValue = formatFeeRate(block.feeRange[6]);
 }
 
-function refreshProjectedIntervals() {
+function refreshProjected() {
   if (!projectedCubes.length || !newestTimestamp) return;
-  const elapsed = Math.max(0, Math.floor(Date.now() / 1000) - newestTimestamp);
+  const now = Math.floor(Date.now() / 1000);
+  const elapsed = Math.max(0, now - newestTimestamp);
   for (let i = 0; i < projectedCubes.length; i++) {
-    const interval = TARGET_BLOCK_SECONDS * i + elapsed;
-    projectedCubes[i].el.style.setProperty(
-      "--block-interval",
-      String(interval),
-    );
+    const cube = projectedCubes[i];
+    const interval = i === 0 ? elapsed : TARGET_BLOCK_SECONDS;
+    cube.el.style.setProperty("--block-interval", String(interval));
+    const ts = now + i * TARGET_BLOCK_SECONDS;
+    const [hh, mm] = formatHHMM(ts);
+    cube.parts.date.nodeValue = formatShortDate(ts);
+    cube.parts.hh.nodeValue = hh;
+    cube.parts.mm.nodeValue = mm;
   }
 }
 
 /** @param {"tip" | "gen"} label @param {string} href @param {string} title @param {() => void} handler */
 function createEdgeLink(label, href, title, handler) {
   const a = document.createElement("a");
-  a.classList.add("chain-edge", label);
+  a.classList.add("edge", label);
   a.href = href;
   a.title = title;
   a.textContent = label;

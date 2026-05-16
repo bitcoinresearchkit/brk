@@ -19,16 +19,33 @@ export function onChange(callback) {
   return () => callbacks.delete(callback);
 }
 
+const themeButton = /** @type {HTMLButtonElement | null} */ (
+  document.getElementById("theme-button")
+);
+let running = false;
+
 /** @param {boolean} value */
 function setDark(value) {
-  if (dark === value) return;
+  if (running || dark === value) return;
   dark = value;
+  running = true;
+  if (themeButton) themeButton.disabled = true;
   const swap = () => {
     apply(value);
     callbacks.forEach((cb) => cb());
   };
-  if (document.startViewTransition) document.startViewTransition(swap);
-  else swap();
+  document.documentElement.classList.add("no-transitions");
+  const restore = () => {
+    document.documentElement.classList.remove("no-transitions");
+    running = false;
+    if (themeButton) themeButton.disabled = false;
+  };
+  if (document.startViewTransition) {
+    document.startViewTransition(swap).finished.finally(restore);
+  } else {
+    swap();
+    requestAnimationFrame(restore);
+  }
 }
 
 /** @param {boolean} isDark */
@@ -53,4 +70,4 @@ function invert() {
   }
 }
 
-document.getElementById("theme-button")?.addEventListener("click", invert);
+themeButton?.addEventListener("click", invert);

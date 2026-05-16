@@ -29,7 +29,7 @@ export function initPrice(brk) {
   }
 
   poll();
-  setInterval(poll, 5_000);
+  setInterval(poll, 1_000);
   document.addEventListener("visibilitychange", () => {
     !document.hidden && poll();
   });

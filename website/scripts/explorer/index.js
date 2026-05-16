@@ -114,7 +114,7 @@ export function init(selected) {
 function startPolling() {
   stopPolling();
   poll();
-  pollInterval = setInterval(poll, 5_000);
+  pollInterval = setInterval(poll, 1_000);
 }
 
 function stopPolling() {

@@ -3,6 +3,13 @@
   height: 100%;
   display: flex;
   overflow: hidden;
+  transition: opacity 200ms ease;
+
+  /* Held invisible while the chain rebuilds and scrolls to the target,
+     then faded in so the layout settling isn't visible. */
+  &.loading {
+    opacity: 0;
+  }
 
   .dim {
     opacity: 0.5;
@@ -356,8 +363,16 @@
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
 
+    /* #explorer supplies only vertical padding on mobile. */
+    @container aside (max-width: 767px) {
+      padding: 0 var(--main-padding);
+    }
+
+    /* Full padding, halved on the side facing the chain so its halved
+       right padding and this halved left padding form one gutter. */
     @container aside (min-width: 768px) {
       overflow-y: auto;
+      padding: var(--main-padding);
       padding-left: calc(var(--main-padding) / 2);
     }
 

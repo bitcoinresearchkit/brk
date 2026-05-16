@@ -1,6 +1,5 @@
 /**
  * @param {number} [fill]
- * @returns {{ el: HTMLAnchorElement, topFace: HTMLDivElement, rightFace: HTMLDivElement, leftFace: HTMLDivElement }}
  */
 export function createCubeAnchor(fill = 1) {
   const el = document.createElement("a");
@@ -9,7 +8,6 @@ export function createCubeAnchor(fill = 1) {
 
 /**
  * @param {number} [fill]
- * @returns {{ el: HTMLDivElement, topFace: HTMLDivElement, rightFace: HTMLDivElement, leftFace: HTMLDivElement }}
  */
 export function createCubeDiv(fill = 1) {
   const el = document.createElement("div");

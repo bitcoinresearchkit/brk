@@ -388,7 +388,7 @@ export function initOptions() {
         summary.append(node.name);
 
         const count = window.document.createElement("small");
-        count.textContent = `(${node.count.toLocaleString("en-us")})`;
+        count.textContent = `[${node.count.toLocaleString("en-us")}]`;
         summary.append(count);
 
         let built = false;
