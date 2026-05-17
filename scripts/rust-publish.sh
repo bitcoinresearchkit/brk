@@ -9,7 +9,6 @@ CRATES=(
     brk_types
     brk_fetcher
     brk_rpc
-    brk_mempool
     brk_reader
     brk_iterator
     brk_store
@@ -19,6 +18,7 @@ CRATES=(
     brk_cohort
     brk_indexer
     brk_oracle
+    brk_mempool
     brk_computer
     brk_query
     brk_bindgen
@@ -27,6 +27,8 @@ CRATES=(
     brk_client
     brk
     brk_cli
+    blk
+    mmpl
 )
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
