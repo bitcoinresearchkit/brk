@@ -96,6 +96,8 @@
     * [get\_mempool\_recent](#brk_client.BrkClient.get_mempool_recent)
     * [get\_replacements](#brk_client.BrkClient.get_replacements)
     * [get\_fullrbf\_replacements](#brk_client.BrkClient.get_fullrbf_replacements)
+    * [get\_block\_template](#brk_client.BrkClient.get_block_template)
+    * [get\_block\_template\_diff](#brk_client.BrkClient.get_block_template_diff)
     * [get\_live\_price](#brk_client.BrkClient.get_live_price)
     * [get\_tx\_by\_index](#brk_client.BrkClient.get_tx_by_index)
     * [get\_cpfp](#brk_client.BrkClient.get_cpfp)
@@ -252,7 +254,7 @@ def get_health() -> Health
 
 Health check.
 
-Returns the health status of the API server, including uptime information.
+Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, see `/api/server/sync`.
 
 Endpoint: `GET /health`
 
@@ -620,7 +622,7 @@ def get_address_txs(address: Addr) -> List[Transaction]
 
 Address transactions.
 
-Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+Get transaction history for an address, newest first. Returns up to 50 mempool transactions plus a confirmed page sized to fill the response to 50 total (chain floor of 25, so 25-50 confirmed depending on mempool weight). To paginate further confirmed history, use `/address/{address}/txs/chain/{last_seen_txid}`.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 
@@ -1264,7 +1266,7 @@ def get_mempool_blocks() -> List[MempoolBlock]
 
 Projected mempool blocks.
 
-Get projected blocks from the mempool for fee estimation.
+Projected blocks for fee estimation. Block 0 reflects Bitcoin Core's actual next-block selection; blocks 1+ are a fee-tier approximation.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mempool-blocks-fees)*
 
@@ -1280,7 +1282,7 @@ def get_recommended_fees() -> RecommendedFees
 
 Recommended fees.
 
-Get recommended fee rates for different confirmation targets.
+Recommended fee rates by confirmation target.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees)*
 
@@ -1296,7 +1298,7 @@ def get_precise_fees() -> RecommendedFees
 
 Precise recommended fees.
 
-Get recommended fee rates with up to 3 decimal places.
+Recommended fee rates with sub-integer precision.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-recommended-fees-precise)*
 
@@ -1323,12 +1325,12 @@ Endpoint: `GET /api/mempool`
 #### get\_mempool\_hash
 
 ```python
-def get_mempool_hash() -> int
+def get_mempool_hash() -> NextBlockHash
 ```
 
 Mempool content hash.
 
-Returns an opaque `u64` that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
 
 Endpoint: `GET /api/mempool/hash`
 
@@ -1395,6 +1397,34 @@ Like `/api/v1/replacements`, but limited to trees where at least one predecessor
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-fullrbf-replacements)*
 
 Endpoint: `GET /api/v1/fullrbf/replacements`
+
+<a id="brk_client.BrkClient.get_block_template"></a>
+
+#### get\_block\_template
+
+```python
+def get_block_template() -> BlockTemplate
+```
+
+Projected next block template.
+
+Bitcoin Core's `getblocktemplate` selection: full transaction bodies in GBT order with aggregate stats. The returned `hash` is an opaque content token; pass it as `<hash>` on `/api/v1/mempool/block-template/diff/{hash}` to fetch deltas instead of refetching the whole template.
+
+Endpoint: `GET /api/v1/mempool/block-template`
+
+<a id="brk_client.BrkClient.get_block_template_diff"></a>
+
+#### get\_block\_template\_diff
+
+```python
+def get_block_template_diff(hash: NextBlockHash) -> BlockTemplateDiff
+```
+
+Block template diff since hash.
+
+Delta of the projected next block since `<hash>`. `order` is the full new template in order: each entry is either a number (index into the prior template the client cached at `<hash>`) or a transaction object (new body to insert at this position). Walk `order` once to rebuild; `removed` is a convenience list of txids that left so clients can evict cached bodies. After applying, use the response `hash` as `<hash>` on the next call to keep iterating. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+
+Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`
 
 <a id="brk_client.BrkClient.get_live_price"></a>
 

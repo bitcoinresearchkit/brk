@@ -8,6 +8,6 @@
 
 > **P2AAddrIndex** = [`TypeIndex`](TypeIndex.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:759](https://github.com/bitcoinresearchkit/brk/blob/25b226856307047c5c10a075ec57219ca9987c38/modules/brk-client/index.js#L759)
+Defined in: [Developer/brk/modules/brk-client/index.js:821](https://github.com/bitcoinresearchkit/brk/blob/1a706da13cc492eee123fc28fd358f02b56918b6/modules/brk-client/index.js#L821)
 
 ## Type Parameters
