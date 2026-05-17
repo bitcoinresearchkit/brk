@@ -12,11 +12,15 @@ use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
 pub use config::Config;
 pub use histogram::Histogram;
 
+/// Oracle algorithm version. Bump on any change that alters computed prices
+/// so downstream consumers can invalidate cached results.
+pub const VERSION: u32 = 2;
+
 /// Pre-oracle dollar prices, one per line, heights 0..630_000.
 pub const PRICES: &str = include_str!("prices.txt");
 
 /// First height where the oracle computes from on-chain data.
-pub const START_HEIGHT: usize = 550_000;
+pub const START_HEIGHT: usize = 525_000;
 
 pub const BINS_PER_DECADE: usize = 200;
 const MIN_LOG_BTC: i32 = -8;

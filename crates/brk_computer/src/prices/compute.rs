@@ -61,8 +61,8 @@ impl Vecs {
     fn compute_prices(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;
 
-        let source_version =
-            indexer.vecs.outputs.value.version() + indexer.vecs.outputs.output_type.version();
+        let source_version = indexer.vecs.outputs.value.version()
+            + indexer.vecs.outputs.output_type.version();
         self.spot
             .cents
             .height
@@ -153,6 +153,10 @@ impl Vecs {
     /// Feed a range of blocks from the indexer into an Oracle (skipping coinbase),
     /// returning per-block ref_bin values.
     ///
+    /// A transaction carrying an `OP_RETURN` output is protocol machinery, not a
+    /// dollar-denominated payment, so all of its outputs are dropped from the
+    /// histogram. This needs per-transaction grouping of a block's outputs.
+    ///
     /// Pass `cap = None` from compute paths, when the indexer is quiescent and
     /// raw vec lengths are authoritative. Pass `cap = Some(&safe_lengths)` from
     /// reader paths so concurrent writer pushes past the cap are invisible.
@@ -193,33 +197,36 @@ impl Vecs {
 
         // Cursor avoids per-block PcoVec page decompression for the
         // tx-indexed first_txout_index lookup. Accessed tx_index values
-        // (first_tx_index + 1) are strictly increasing across blocks,
-        // so the cursor only advances forward.
+        // are strictly increasing across blocks, so it only advances forward.
         let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
 
-        // Reusable buffers: avoid per-block allocation
+        // Reusable buffers: avoid per-block allocation. `tx_starts` holds the
+        // first txout index of each non-coinbase tx in the current block.
         let mut values: Vec<Sats> = Vec::new();
         let mut output_types: Vec<OutputType> = Vec::new();
+        let mut tx_starts: Vec<usize> = Vec::new();
 
         for idx in 0..range.len() {
-            let first_tx_index = first_tx_indexes[idx];
             let next_first_tx_index = first_tx_indexes
                 .get(idx + 1)
                 .copied()
-                .unwrap_or(TxIndex::from(total_txs));
+                .unwrap_or(TxIndex::from(total_txs))
+                .to_usize();
+            let block_first_tx = first_tx_indexes[idx].to_usize() + 1;
+            let tx_count = next_first_tx_index - block_first_tx;
 
             let out_end = out_firsts
                 .get(idx + 1)
                 .copied()
                 .unwrap_or(TxOutIndex::from(total_outputs))
                 .to_usize();
-            let out_start = if first_tx_index.to_usize() + 1 < next_first_tx_index.to_usize() {
-                let target = first_tx_index.to_usize() + 1;
-                txout_cursor.advance(target - txout_cursor.position());
-                txout_cursor.next().unwrap().to_usize()
-            } else {
-                out_end
-            };
+
+            txout_cursor.advance(block_first_tx - txout_cursor.position());
+            tx_starts.clear();
+            for _ in 0..tx_count {
+                tx_starts.push(txout_cursor.next().unwrap().to_usize());
+            }
+            let out_start = tx_starts.first().copied().unwrap_or(out_end);
 
             indexer
                 .vecs
@@ -233,9 +240,19 @@ impl Vecs {
             );
 
             let mut hist = Histogram::zeros();
-            for (sats, output_type) in values.iter().zip(&output_types) {
-                if let Some(bin) = oracle.output_to_bin(*sats, *output_type) {
-                    hist.increment(bin);
+            for tx in 0..tx_count {
+                let lo = tx_starts[tx] - out_start;
+                let hi = tx_starts
+                    .get(tx + 1)
+                    .map(|s| s - out_start)
+                    .unwrap_or(out_end - out_start);
+                if output_types[lo..hi].contains(&OutputType::OpReturn) {
+                    continue;
+                }
+                for i in lo..hi {
+                    if let Some(bin) = oracle.output_to_bin(values[i], output_types[i]) {
+                        hist.increment(bin);
+                    }
                 }
             }
 

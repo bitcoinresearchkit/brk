@@ -185,9 +185,12 @@ fn main() {
     let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
 
-    // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too large.
+    // Pre-collect height-indexed vecs (small). Transaction-indexed vecs are too
+    // large, so the tx-indexed first_txout_index is read through a forward cursor.
     let first_tx_index: Vec<TxIndex> = indexer.vecs.transactions.first_tx_index.collect();
     let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txout_index.collect();
+    let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
+    let mut tx_starts: Vec<usize> = Vec::new();
 
     let mut year_stats: Vec<YearStats> = Vec::new();
     let mut overall = YearStats::new(0);
@@ -205,26 +208,21 @@ fn main() {
             .copied()
             .unwrap_or(TxIndex::from(total_txs));
 
-        let out_start = if ft.to_usize() + 1 < next_ft.to_usize() {
-            indexer
-                .vecs
-                .transactions
-                .first_txout_index
-                .collect_one(ft + 1)
-                .unwrap()
-                .to_usize()
-        } else {
-            out_first
-                .get(h + 1)
-                .copied()
-                .unwrap_or(TxOutIndex::from(total_outputs))
-                .to_usize()
-        };
+        let block_first_tx = ft.to_usize() + 1;
+        let tx_count = next_ft.to_usize() - block_first_tx;
         let out_end = out_first
             .get(h + 1)
             .copied()
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
+
+        // First txout index of each non-coinbase tx, for per-tx grouping.
+        txout_cursor.advance(block_first_tx - txout_cursor.position());
+        tx_starts.clear();
+        for _ in 0..tx_count {
+            tx_starts.push(txout_cursor.next().unwrap().to_usize());
+        }
+        let out_start = tx_starts.first().copied().unwrap_or(out_end);
 
         let values: Vec<Sats> = indexer
             .vecs
@@ -237,10 +235,21 @@ fn main() {
             .output_type
             .collect_range_at(out_start, out_end);
 
+        // Drop every output of a tx carrying an OP_RETURN (protocol machinery).
         let mut hist = Histogram::zeros();
-        for (sats, output_type) in values.into_iter().zip(output_types) {
-            if let Some(bin) = default_eligible_bin(sats, output_type) {
-                hist.increment(bin as usize);
+        for tx in 0..tx_count {
+            let lo = tx_starts[tx] - out_start;
+            let hi = tx_starts
+                .get(tx + 1)
+                .map(|s| s - out_start)
+                .unwrap_or(out_end - out_start);
+            if output_types[lo..hi].contains(&OutputType::OpReturn) {
+                continue;
+            }
+            for i in lo..hi {
+                if let Some(bin) = default_eligible_bin(values[i], output_types[i]) {
+                    hist.increment(bin as usize);
+                }
             }
         }
 

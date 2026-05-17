@@ -70,7 +70,7 @@ BlockHash = str
 BlockTxIndex = int
 # Content hash of the projected next block (block 0 of the mempool
 # snapshot). Same value as the mempool ETag. Opaque token: pass back
-# as `since` on `/api/v1/mining/block-template/diff/{hash}` to fetch
+# as `since` on `/api/v1/mempool/block-template/diff/{hash}` to fetch
 # deltas.
 NextBlockHash = int
 # Transaction locktime. Values below 500,000,000 are interpreted as block heights; values at or above are Unix timestamps.
@@ -99,6 +99,18 @@ TxIndex = int
 # Unlike TxVersion (u8, indexed), this preserves non-standard values
 # used in coinbase txs for miner signaling/branding.
 TxVersionRaw = int
+# One slot of the new template in a `BlockTemplateDiff`.
+# 
+# Untagged on the wire so JSON type disambiguates the variants:
+# - `Retained(idx)` serializes as a bare integer - index into the
+#   transactions of the prior template (which the client cached at
+#   `since`).
+# - `New(tx)` serializes as a transaction object - a body that was
+#   not in the prior template and must be added at this position.
+# 
+# Reconstruction is a single pass: for each entry, either copy
+# `prior[idx]` or append the inline body.
+BlockTemplateDiffEntry = Union[int, "Transaction"]
 # Unsigned cents (u64) - for values that should never be negative.
 # Used for invested capital, realized cap, etc.
 Cents = int
@@ -750,11 +762,11 @@ class BlockTemplate(TypedDict):
     """
     Projected next-block contents from Bitcoin Core's `getblocktemplate`
     (block 0 of the snapshot). Returned by
-    `GET /api/v1/mining/block-template`.
+    `GET /api/v1/mempool/block-template`.
 
     Attributes:
         hash: Pass back as `<hash>` on
-`/api/v1/mining/block-template/diff/{hash}` to fetch deltas.
+`/api/v1/mempool/block-template/diff/{hash}` to fetch deltas.
         stats: Aggregate stats for this block (size, vsize, fee range, ...).
         transactions: Full transaction bodies in `getblocktemplate` order.
     """
@@ -766,19 +778,28 @@ class BlockTemplateDiff(TypedDict):
     """
     Delta between the current `getblocktemplate` projection and a prior
     one identified by `since`. Returned by
-    `GET /api/v1/mining/block-template/diff/{hash}`.
+    `GET /api/v1/mempool/block-template/diff/{hash}`.
+    
+    `order` carries the full new template in template order: each entry
+    is either a `Retained(idx)` pointing into the prior template (which
+    the client cached at `since`) or a `New(tx)` inline body. Walk it
+    once to rebuild the new template; no separate `added` array to
+    cross-reference.
+    
+    `removed` is redundant (computable from `order` by collecting prior
+    indices that don't appear) but shipped for cache-eviction ergonomics.
 
     Attributes:
         hash: Current next-block hash. Use as `since` on the next diff call.
         since: Echoed prior hash the diff was computed against.
-        added: Full bodies of transactions that joined the projected next
-block since `since`.
+        order: New template in order. Each entry is either an index into the
+prior template's transactions or a full transaction body.
         removed: Txids that left the projected next block since `since`
 (confirmed, evicted, replaced, or pushed past block 0).
     """
     hash: NextBlockHash
     since: NextBlockHash
-    added: List[Transaction]
+    order: List[BlockTemplateDiffEntry]
     removed: List[Txid]
 
 class BlockTimestamp(TypedDict):
@@ -1208,7 +1229,7 @@ class MerkleProof(TypedDict):
 
 class NextBlockHashParam(TypedDict):
     """
-    `since` hash for `/api/v1/mining/block-template/diff/{hash}`.
+    `since` hash for `/api/v1/mempool/block-template/diff/{hash}`.
     """
     hash: NextBlockHash
 
@@ -7873,7 +7894,7 @@ class BrkClient(BrkClientBase):
     def get_health(self) -> Health:
         """Health check.
 
-        Returns the health status of the API server, including uptime information.
+        Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, see `/api/server/sync`.
 
         Endpoint: `GET /health`"""
         return self.get_json('/health')
@@ -8128,7 +8149,7 @@ class BrkClient(BrkClientBase):
     def get_address_txs(self, address: Addr) -> List[Transaction]:
         """Address transactions.
 
-        Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+        Get transaction history for an address, newest first. Returns up to 50 mempool transactions plus a confirmed page sized to fill the response to 50 total (chain floor of 25, so 25-50 confirmed depending on mempool weight). To paginate further confirmed history, use `/address/{address}/txs/chain/{last_seen_txid}`.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
 
@@ -8624,7 +8645,7 @@ class BrkClient(BrkClientBase):
     def get_block_template_diff(self, hash: NextBlockHash) -> BlockTemplateDiff:
         """Block template diff since hash.
 
-        Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+        Delta of the projected next block since `<hash>`. `order` is the full new template in order: each entry is either a number (index into the prior template the client cached at `<hash>`) or a transaction object (new body to insert at this position). Walk `order` once to rebuild; `removed` is a convenience list of txids that left so clients can evict cached bodies. After applying, use the response `hash` as `<hash>` on the next call to keep iterating. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
 
         Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`"""
         return self.get_json(f'/api/v1/mempool/block-template/diff/{hash}')

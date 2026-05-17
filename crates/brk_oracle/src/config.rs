@@ -3,10 +3,9 @@ use brk_types::OutputType;
 /// Dust floor used by `Config::default()` and `default_eligible_bin`.
 pub(crate) const DEFAULT_MIN_SATS: u64 = 1000;
 
-/// Output types skipped by `Config::default()` (noisy) and the source of
-/// truth for `default_eligible_bin`'s precomputed exclusion mask.
-pub(crate) const DEFAULT_EXCLUDED_OUTPUT_TYPES: &[OutputType] =
-    &[OutputType::P2TR, OutputType::P2WSH];
+/// Output types skipped by `Config::default()` (protocol-dominated) and the
+/// source of truth for `default_eligible_bin`'s precomputed exclusion mask.
+pub(crate) const DEFAULT_EXCLUDED_OUTPUT_TYPES: &[OutputType] = &[OutputType::P2TR];
 
 #[derive(Clone)]
 pub struct Config {

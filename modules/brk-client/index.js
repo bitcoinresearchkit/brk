@@ -284,26 +284,50 @@ Matches mempool.space/bitcoin-cli behavior.
 /**
  * Projected next-block contents from Bitcoin Core's `getblocktemplate`
  * (block 0 of the snapshot). Returned by
- * `GET /api/v1/mining/block-template`.
+ * `GET /api/v1/mempool/block-template`.
  *
  * @typedef {Object} BlockTemplate
  * @property {NextBlockHash} hash - Pass back as `<hash>` on
-`/api/v1/mining/block-template/diff/{hash}` to fetch deltas.
+`/api/v1/mempool/block-template/diff/{hash}` to fetch deltas.
  * @property {MempoolBlock} stats - Aggregate stats for this block (size, vsize, fee range, ...).
  * @property {Transaction[]} transactions - Full transaction bodies in `getblocktemplate` order.
  */
 /**
  * Delta between the current `getblocktemplate` projection and a prior
  * one identified by `since`. Returned by
- * `GET /api/v1/mining/block-template/diff/{hash}`.
+ * `GET /api/v1/mempool/block-template/diff/{hash}`.
+ *
+ * `order` carries the full new template in template order: each entry
+ * is either a `Retained(idx)` pointing into the prior template (which
+ * the client cached at `since`) or a `New(tx)` inline body. Walk it
+ * once to rebuild the new template; no separate `added` array to
+ * cross-reference.
+ *
+ * `removed` is redundant (computable from `order` by collecting prior
+ * indices that don't appear) but shipped for cache-eviction ergonomics.
  *
  * @typedef {Object} BlockTemplateDiff
  * @property {NextBlockHash} hash - Current next-block hash. Use as `since` on the next diff call.
  * @property {NextBlockHash} since - Echoed prior hash the diff was computed against.
- * @property {Transaction[]} added - Full bodies of transactions that joined the projected next
-block since `since`.
+ * @property {BlockTemplateDiffEntry[]} order - New template in order. Each entry is either an index into the
+prior template's transactions or a full transaction body.
  * @property {Txid[]} removed - Txids that left the projected next block since `since`
 (confirmed, evicted, replaced, or pushed past block 0).
+ */
+/**
+ * One slot of the new template in a `BlockTemplateDiff`.
+ *
+ * Untagged on the wire so JSON type disambiguates the variants:
+ * - `Retained(idx)` serializes as a bare integer - index into the
+ *   transactions of the prior template (which the client cached at
+ *   `since`).
+ * - `New(tx)` serializes as a transaction object - a body that was
+ *   not in the prior template and must be added at this position.
+ *
+ * Reconstruction is a single pass: for each entry, either copy
+ * `prior[idx]` or append the inline body.
+ *
+ * @typedef {(number|Transaction)} BlockTemplateDiffEntry
  */
 /**
  * Block information returned for timestamp queries
@@ -738,13 +762,13 @@ ancestors and no descendants (matches mempool.space).
 /**
  * Content hash of the projected next block (block 0 of the mempool
  * snapshot). Same value as the mempool ETag. Opaque token: pass back
- * as `since` on `/api/v1/mining/block-template/diff/{hash}` to fetch
+ * as `since` on `/api/v1/mempool/block-template/diff/{hash}` to fetch
  * deltas.
  *
  * @typedef {number} NextBlockHash
  */
 /**
- * `since` hash for `/api/v1/mining/block-template/diff/{hash}`.
+ * `since` hash for `/api/v1/mempool/block-template/diff/{hash}`.
  *
  * @typedef {Object} NextBlockHashParam
  * @property {NextBlockHash} hash
@@ -10511,7 +10535,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Health check
    *
-   * Returns the health status of the API server, including uptime information.
+   * Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, see `/api/server/sync`.
    *
    * Endpoint: `GET /health`
    * @param {{ signal?: AbortSignal, onValue?: (value: Health) => void }} [options]
@@ -10950,7 +10974,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Address transactions
    *
-   * Get transaction history for an address, sorted with newest first. Returns up to 50 entries: mempool transactions first, then confirmed transactions filling the remainder. To paginate further confirmed transactions, use `/address/{address}/txs/chain/{last_seen_txid}`.
+   * Get transaction history for an address, newest first. Returns up to 50 mempool transactions plus a confirmed page sized to fill the response to 50 total (chain floor of 25, so 25-50 confirmed depending on mempool weight). To paginate further confirmed history, use `/address/{address}/txs/chain/{last_seen_txid}`.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-address-transactions)*
    *
@@ -11814,7 +11838,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Block template diff since hash
    *
-   * Delta of the projected next block since `<hash>`. `added` carries full transaction bodies; `removed` is just txids. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
+   * Delta of the projected next block since `<hash>`. `order` is the full new template in order: each entry is either a number (index into the prior template the client cached at `<hash>`) or a transaction object (new body to insert at this position). Walk `order` once to rebuild; `removed` is a convenience list of txids that left so clients can evict cached bodies. After applying, use the response `hash` as `<hash>` on the next call to keep iterating. Returns `404` when `<hash>` has aged out of server history; clients should fall back to `/api/v1/mempool/block-template`.
    *
    * Endpoint: `GET /api/v1/mempool/block-template/diff/{hash}`
    *

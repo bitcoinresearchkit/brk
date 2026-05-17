@@ -29,12 +29,17 @@ impl Query {
 
     pub fn mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
         let mempool = self.require_mempool()?;
-        Ok(mempool.block_stats().iter().map(MempoolBlock::from).collect())
+        Ok(mempool
+            .block_stats()
+            .iter()
+            .map(MempoolBlock::from)
+            .collect())
     }
 
     /// Indexer-backed resolver for confirmed-parent prevouts. Boxed so
     /// the caller (typically [`Mempool::start_with`]) can stash one
     /// resolver behind a stable type for the lifetime of the loop.
+    #[allow(clippy::type_complexity)]
     pub fn indexer_prevout_resolver(
         &self,
     ) -> Box<dyn Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut> + Send + Sync> {
