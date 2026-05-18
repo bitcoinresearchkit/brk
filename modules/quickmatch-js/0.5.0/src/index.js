@@ -102,6 +102,10 @@ export class QuickMatch {
 
       for (let i = 0; i < words.length - 1; i++) {
         const compound = words[i] + words[i + 1];
+        // A joined-word query ("hashrate") can be longer than any single
+        // word. Capping at the longest index key keeps the DDoS guard
+        // data-bounded while still letting it match.
+        if (compound.length > maxWordLen) maxWordLen = compound.length;
         const from = words[i].length + 1;
         for (let len = from; len <= compound.length; len++) {
           addToIndex(this.wordIndex, compound.slice(0, len), idx);
@@ -238,24 +242,29 @@ export class QuickMatch {
    */
   _rank(indices, minScore, qwords, sep, limit) {
     const { items, _scores: scores } = this;
-    /** @type {[number[], number[], number[]]} */
-    const buckets = [[], [], []]; // ps=0, ps=1, ps=2
+    /** @type {[number, number][][]} */
+    const buckets = Array.from({ length: qwords.length + 1 }, () => []);
 
     for (let i = 0; i < indices.length; i++) {
       const idx = indices[i];
       if (minScore !== null && scores[idx] < minScore) continue;
-      buckets[prefixScore(items[idx], qwords, sep)].push(idx);
+      const [matched, position] = wordMatch(items[idx], qwords, sep);
+      buckets[matched].push([idx, position]);
     }
 
     const results = [];
-    for (let ps = 2; ps >= 0 && results.length < limit; ps--) {
+    for (let ps = buckets.length - 1; ps >= 0 && results.length < limit; ps--) {
       const bucket = buckets[ps];
       if (!bucket.length) continue;
       bucket.sort(
-        (a, b) => scores[b] - scores[a] || items[a].length - items[b].length,
+        ([a, pa], [b, pb]) =>
+          scores[b] - scores[a] ||
+          pa - pb ||
+          items[a].length - items[b].length ||
+          (items[a] < items[b] ? -1 : 1), // item text, asc (total order)
       );
       const take = Math.min(bucket.length, limit - results.length);
-      for (let i = 0; i < take; i++) results.push(items[bucket[i]]);
+      for (let i = 0; i < take; i++) results.push(items[bucket[i][0]]);
     }
 
     return results;
@@ -377,29 +386,35 @@ function bsearch(arr, val) {
   return false;
 }
 
-/** @param {string} item @param {string[]} qwords @param {Uint8Array} sep */
-function prefixScore(item, qwords, sep) {
-  let qi = 0,
-    pos = 0;
+/**
+ * Aligns query words against the item's words, in order.
+ * @param {string} item @param {string[]} qwords @param {Uint8Array} sep
+ * @returns {[number, number]} `[matched, position]` - query words matched as
+ *   an in-order subsequence, and the item-word index where that run starts
+ *   (or the item's word count when nothing matched).
+ */
+function wordMatch(item, qwords, sep) {
   const len = item.length;
+  let matched = 0;
+  let position = 0;
+  let pos = 0;
 
-  while (qi < qwords.length) {
+  while (pos < len) {
     while (pos < len && sep[item.charCodeAt(pos)]) pos++;
-    if (pos >= len) return 0;
+    if (pos >= len) break;
 
     const ws = pos;
     while (pos < len && !sep[item.charCodeAt(pos)]) pos++;
 
-    const qw = qwords[qi];
-    if (pos - ws < qw.length) return 0;
-    for (let j = 0; j < qw.length; j++) {
-      if (item.charCodeAt(ws + j) !== qw.charCodeAt(j)) return 0;
+    const qw = qwords[matched];
+    if (qw !== undefined && pos - ws >= qw.length && item.startsWith(qw, ws)) {
+      matched++;
+    } else if (matched === 0) {
+      position++;
     }
-    qi++;
   }
 
-  while (pos < len && sep[item.charCodeAt(pos)]) pos++;
-  return pos >= len ? 2 : 1;
+  return [matched, position];
 }
 
 /** @param {number} len @param {number} round */

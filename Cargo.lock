@@ -1066,9 +1066,9 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "dashmap"
-version = "6.1.0"
+version = "6.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5041cc499144891f3790297212f32a74fb938e5136a14943f338ef9e0ae276cf"
+checksum = "e6361d5c062261c78a176addb82d4c821ae42bed6089de0e12603cd25de2059c"
 dependencies = [
  "cfg-if",
  "crossbeam-utils",
@@ -1251,9 +1251,9 @@ checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
 
 [[package]]
 name = "fjall"
-version = "3.0.4"
+version = "3.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ebf22b812878dcd767879cb19e03124fd62563dce6410f96538175fba0c132d"
+checksum = "b62b25b4d815ae178d7d9e4aa32ee59f072efd5431c736abede1e6ee13c8c453"
 dependencies = [
  "byteorder-lite",
  "byteview",
@@ -1261,7 +1261,7 @@ dependencies = [
  "flume",
  "log",
  "lsm-tree",
- "lz4_flex 0.11.6",
+ "lz4_flex",
  "tempfile",
  "xxhash-rust",
 ]
@@ -2010,9 +2010,9 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "lsm-tree"
-version = "3.0.4"
+version = "3.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9bfd2a6ea0c1d430c13643002f35800a87f200fc8ac4827f18a2db9d9fd0644"
+checksum = "e447ac67ff6aef4ec07fc19e507b219336cbba90a697c0dbeb1bf51b91536b67"
 dependencies = [
  "byteorder-lite",
  "byteview",
@@ -2020,7 +2020,7 @@ dependencies = [
  "enum_dispatch",
  "interval-heap",
  "log",
- "lz4_flex 0.11.6",
+ "lz4_flex",
  "quick_cache",
  "rustc-hash",
  "self_cell",
@@ -2032,18 +2032,12 @@ dependencies = [
 
 [[package]]
 name = "lz4_flex"
-version = "0.11.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "373f5eceeeab7925e0c1098212f2fbc4d416adec9d35051a6ab251e824c1854a"
-dependencies = [
- "twox-hash",
-]
-
-[[package]]
-name = "lz4_flex"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ef0d4ed8669f8f8826eb00dc878084aa8f253506c4fd5e8f58f5bce72ddb97e"
+dependencies = [
+ "twox-hash",
+]
 
 [[package]]
 name = "matchit"
@@ -2387,9 +2381,9 @@ dependencies = [
 
 [[package]]
 name = "quickmatch"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "848244615004bddb7273545dfe909ead495ed734f9faf130c43a7daccca2bf99"
+checksum = "d6abd98fde5c9aa23590316caedc9e90be29da035d33905cdae71a54f034aaac"
 dependencies = [
  "rustc-hash",
 ]
@@ -3150,9 +3144,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.10"
+version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68d6fdd9f81c2819c9a8b0e0cd91660e7746a8e6ea2ba7c6b2b057985f6bcb51"
+checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
  "async-compression",
  "bitflags 2.11.1",
@@ -3360,7 +3354,7 @@ dependencies = [
  "itoa",
  "libc",
  "log",
- "lz4_flex 0.13.1",
+ "lz4_flex",
  "parking_lot",
  "pco",
  "rawdb",

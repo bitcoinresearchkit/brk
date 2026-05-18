@@ -3,7 +3,7 @@ import {
   searchLabelElement,
   searchResultsElement,
 } from "../utils/elements.js";
-import { QuickMatch } from "../modules/quickmatch-js/0.4.1/src/index.js";
+import { QuickMatch } from "../modules/quickmatch-js/0.5.0/src/index.js";
 import { brk } from "../utils/client.js";
 
 /**
@@ -64,14 +64,18 @@ export function init(options) {
         brk.getTx(needle, { signal }),
       ]);
       if (signal.aborted) return;
-      if (blockRes.status === "fulfilled") results.push(["Block", `/block/${needle}`]);
-      if (txRes.status === "fulfilled") results.push(["Transaction", `/tx/${needle}`]);
+      if (blockRes.status === "fulfilled")
+        results.push(["Block", `/block/${needle}`]);
+      if (txRes.status === "fulfilled")
+        results.push(["Transaction", `/tx/${needle}`]);
     } else if (ADDR_RE.test(needle)) {
       try {
         const { isvalid } = await brk.validateAddress(needle, { signal });
         if (signal.aborted || !isvalid) return;
         results.push(["Address", `/address/${needle}`]);
-      } catch { return; }
+      } catch {
+        return;
+      }
     } else {
       return;
     }
