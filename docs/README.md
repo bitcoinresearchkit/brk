@@ -67,7 +67,7 @@ Build custom applications in Rust. Use the full stack or individual components (
 
 ## Supporters
 
-- [OpenSats](https://opensats.org/) (December 2024 - May 2027)
+- [OpenSats](https://opensats.org/) (December 2024 - June 2027)
 
 [Become a supporter](mailto:support@bitcoinresearchkit.org)
 
