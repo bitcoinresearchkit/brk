@@ -6,7 +6,7 @@
 
 # Interface: CostBasisCohortParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:405](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L405)
+Defined in: [Developer/brk/modules/brk-client/index.js:405](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L405)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:405](https://github.com/b
 
 > **cohort**: [`Cohort`](../type-aliases/Cohort.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:406](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L406)
+Defined in: [Developer/brk/modules/brk-client/index.js:406](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L406)

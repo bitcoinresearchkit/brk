@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs\_Activity\_All
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5644](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5644)
+Defined in: [Developer/brk/modules/brk-client/index.js:5644](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5644)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5644](https://github.com/
 
 > **active**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5649](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5649)
+Defined in: [Developer/brk/modules/brk-client/index.js:5649](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5649)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5649](https://github.com/
 
 > **bidirectional**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5648](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5648)
+Defined in: [Developer/brk/modules/brk-client/index.js:5648](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5648)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5648](https://github.com/
 
 > **reactivated**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5645](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5645)
+Defined in: [Developer/brk/modules/brk-client/index.js:5645](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5645)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5645](https://github.com/
 
 > **receiving**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5647](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5647)
+Defined in: [Developer/brk/modules/brk-client/index.js:5647](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5647)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5647](https://github.com/
 
 > **sending**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5646](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5646)
+Defined in: [Developer/brk/modules/brk-client/index.js:5646](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5646)

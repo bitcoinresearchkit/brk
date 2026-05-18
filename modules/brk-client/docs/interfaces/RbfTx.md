@@ -6,7 +6,7 @@
 
 # Interface: RbfTx
 
-Defined in: [Developer/brk/modules/brk-client/index.js:985](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L985)
+Defined in: [Developer/brk/modules/brk-client/index.js:985](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L985)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:985](https://github.com/b
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:987](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L987)
+Defined in: [Developer/brk/modules/brk-client/index.js:987](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L987)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:987](https://github.com/b
 
 > `optional` **fullRbf?**: `boolean` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:993](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L993)
+Defined in: [Developer/brk/modules/brk-client/index.js:993](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L993)
 
 Only populated on the root `tx` of an RBF response. `true` iff
 this tx displaced at least one non-signaling predecessor.
@@ -33,7 +33,7 @@ this tx displaced at least one non-signaling predecessor.
 
 > **rate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:990](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L990)
+Defined in: [Developer/brk/modules/brk-client/index.js:990](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L990)
 
 ***
 
@@ -41,7 +41,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:990](https://github.com/b
 
 > **rbf**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:992](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L992)
+Defined in: [Developer/brk/modules/brk-client/index.js:992](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L992)
 
 BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
 
@@ -51,7 +51,7 @@ BIP-125 signaling: at least one input has sequence < 0xffffffff-1.
 
 > **time**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:991](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L991)
+Defined in: [Developer/brk/modules/brk-client/index.js:991](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L991)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:991](https://github.com/b
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:986](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L986)
+Defined in: [Developer/brk/modules/brk-client/index.js:986](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L986)
 
 ***
 
@@ -67,7 +67,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:986](https://github.com/b
 
 > **value**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:989](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L989)
+Defined in: [Developer/brk/modules/brk-client/index.js:989](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L989)
 
 Sum of output amounts.
 
@@ -77,4 +77,4 @@ Sum of output amounts.
 
 > **vsize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:988](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L988)
+Defined in: [Developer/brk/modules/brk-client/index.js:988](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L988)

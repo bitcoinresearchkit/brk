@@ -6,7 +6,7 @@
 
 # Interface: DateSeriesEndpoint\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1676](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1676)
+Defined in: [Developer/brk/modules/brk-client/index.js:1676](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1676)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1676](https://github.com/
 
 > **fetch**: (`onValue?`) => `Promise`\<[`DateSeriesData`](../type-aliases/DateSeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1682](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1682)
+Defined in: [Developer/brk/modules/brk-client/index.js:1682](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1682)
 
 Fetch all data
 
@@ -40,7 +40,7 @@ Fetch all data
 
 > **fetchCsv**: () => `Promise`\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1683](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1683)
+Defined in: [Developer/brk/modules/brk-client/index.js:1683](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1683)
 
 Fetch all data as CSV
 
@@ -54,7 +54,7 @@ Fetch all data as CSV
 
 > **first**: (`n`) => [`DateRangeBuilder`](DateRangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1679](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1679)
+Defined in: [Developer/brk/modules/brk-client/index.js:1679](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1679)
 
 Get first n items
 
@@ -74,7 +74,7 @@ Get first n items
 
 > **get**: (`index`) => [`DateSingleItemBuilder`](DateSingleItemBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1677](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1677)
+Defined in: [Developer/brk/modules/brk-client/index.js:1677](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1677)
 
 Get single item at index or Date
 
@@ -94,7 +94,7 @@ Get single item at index or Date
 
 > **last**: (`n`) => [`DateRangeBuilder`](DateRangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1680](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1680)
+Defined in: [Developer/brk/modules/brk-client/index.js:1680](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1680)
 
 Get last n items
 
@@ -114,7 +114,7 @@ Get last n items
 
 > **len**: () => `Promise`\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1684](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1684)
+Defined in: [Developer/brk/modules/brk-client/index.js:1684](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1684)
 
 Get total number of data points
 
@@ -128,7 +128,7 @@ Get total number of data points
 
 > **path**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1687](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1687)
+Defined in: [Developer/brk/modules/brk-client/index.js:1687](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1687)
 
 The endpoint path
 
@@ -138,7 +138,7 @@ The endpoint path
 
 > **skip**: (`n`) => [`DateSkippedBuilder`](DateSkippedBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1681](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1681)
+Defined in: [Developer/brk/modules/brk-client/index.js:1681](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1681)
 
 Skip first n items, chain with take()
 
@@ -158,7 +158,7 @@ Skip first n items, chain with take()
 
 > **slice**: (`start?`, `end?`) => [`DateRangeBuilder`](DateRangeBuilder.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1678](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1678)
+Defined in: [Developer/brk/modules/brk-client/index.js:1678](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1678)
 
 Slice by index or Date
 
@@ -182,7 +182,7 @@ Slice by index or Date
 
 > **then**: [`DateThenable`](../type-aliases/DateThenable.md)\<`T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1686](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1686)
+Defined in: [Developer/brk/modules/brk-client/index.js:1686](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1686)
 
 Thenable (await endpoint)
 
@@ -192,7 +192,7 @@ Thenable (await endpoint)
 
 > **version**: () => `Promise`\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1685](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1685)
+Defined in: [Developer/brk/modules/brk-client/index.js:1685](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1685)
 
 Get the current version of the series
 

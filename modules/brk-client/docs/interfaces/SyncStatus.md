@@ -6,7 +6,7 @@
 
 # Interface: SyncStatus
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1173](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1173)
+Defined in: [Developer/brk/modules/brk-client/index.js:1173](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1173)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1173](https://github.com/
 
 > **blocksBehind**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1177](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1177)
+Defined in: [Developer/brk/modules/brk-client/index.js:1177](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1177)
 
 Number of blocks behind the tip
 
@@ -24,7 +24,7 @@ Number of blocks behind the tip
 
 > **computedHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1175](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1175)
+Defined in: [Developer/brk/modules/brk-client/index.js:1175](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1175)
 
 Height of the last computed block (series)
 
@@ -34,7 +34,7 @@ Height of the last computed block (series)
 
 > **indexedHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1174](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1174)
+Defined in: [Developer/brk/modules/brk-client/index.js:1174](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1174)
 
 Height of the last indexed block
 
@@ -44,7 +44,7 @@ Height of the last indexed block
 
 > **lastIndexedAt**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1178](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1178)
+Defined in: [Developer/brk/modules/brk-client/index.js:1178](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1178)
 
 Human-readable timestamp of the last indexed block (ISO 8601)
 
@@ -54,7 +54,7 @@ Human-readable timestamp of the last indexed block (ISO 8601)
 
 > **lastIndexedAtUnix**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1179](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1179)
+Defined in: [Developer/brk/modules/brk-client/index.js:1179](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1179)
 
 Unix timestamp of the last indexed block
 
@@ -64,6 +64,6 @@ Unix timestamp of the last indexed block
 
 > **tipHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1176](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1176)
+Defined in: [Developer/brk/modules/brk-client/index.js:1176](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1176)
 
 Height of the chain tip (from Bitcoin node)

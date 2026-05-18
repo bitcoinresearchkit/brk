@@ -6,7 +6,7 @@
 
 # Interface: AddrMempoolStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:37](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L37)
+Defined in: [Developer/brk/modules/brk-client/index.js:37](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L37)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:37](https://github.com/bi
 
 > **fundedTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:38](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L38)
+Defined in: [Developer/brk/modules/brk-client/index.js:38](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L38)
 
 Number of unconfirmed transaction outputs funding this address
 
@@ -24,7 +24,7 @@ Number of unconfirmed transaction outputs funding this address
 
 > **fundedTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:39](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L39)
+Defined in: [Developer/brk/modules/brk-client/index.js:39](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L39)
 
 Total amount in satoshis being received in unconfirmed transactions
 
@@ -34,7 +34,7 @@ Total amount in satoshis being received in unconfirmed transactions
 
 > **spentTxoCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:40](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L40)
+Defined in: [Developer/brk/modules/brk-client/index.js:40](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L40)
 
 Number of unconfirmed transaction inputs spending from this address
 
@@ -44,7 +44,7 @@ Number of unconfirmed transaction inputs spending from this address
 
 > **spentTxoSum**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:41](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L41)
+Defined in: [Developer/brk/modules/brk-client/index.js:41](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L41)
 
 Total amount in satoshis being spent in unconfirmed transactions
 
@@ -54,6 +54,6 @@ Total amount in satoshis being spent in unconfirmed transactions
 
 > **txCount**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:42](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L42)
+Defined in: [Developer/brk/modules/brk-client/index.js:42](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L42)
 
 Number of unconfirmed transactions involving this address

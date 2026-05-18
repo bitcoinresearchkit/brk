@@ -6,7 +6,7 @@
 
 # Interface: \_1m1w1y24hPattern4
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3690](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L3690)
+Defined in: [Developer/brk/modules/brk-client/index.js:3690](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L3690)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3690](https://github.com/
 
 > **\_1m**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3691](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L3691)
+Defined in: [Developer/brk/modules/brk-client/index.js:3691](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L3691)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3691](https://github.com/
 
 > **\_1w**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3692](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L3692)
+Defined in: [Developer/brk/modules/brk-client/index.js:3692](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L3692)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3692](https://github.com/
 
 > **\_1y**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3693](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L3693)
+Defined in: [Developer/brk/modules/brk-client/index.js:3693](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L3693)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3693](https://github.com/
 
 > **\_24h**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3694](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L3694)
+Defined in: [Developer/brk/modules/brk-client/index.js:3694](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L3694)

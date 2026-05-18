@@ -6,7 +6,7 @@
 
 # Interface: BlockSizesWeights
 
-Defined in: [Developer/brk/modules/brk-client/index.js:272](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L272)
+Defined in: [Developer/brk/modules/brk-client/index.js:272](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L272)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:272](https://github.com/b
 
 > **sizes**: [`BlockSizeEntry`](BlockSizeEntry.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:273](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L273)
+Defined in: [Developer/brk/modules/brk-client/index.js:273](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L273)
 
 Block size data points
 
@@ -24,6 +24,6 @@ Block size data points
 
 > **weights**: [`BlockWeightEntry`](BlockWeightEntry.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:274](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L274)
+Defined in: [Developer/brk/modules/brk-client/index.js:274](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L274)
 
 Block weight data points

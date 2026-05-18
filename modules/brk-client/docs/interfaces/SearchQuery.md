@@ -6,7 +6,7 @@
 
 # Interface: SearchQuery
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1055](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1055)
+Defined in: [Developer/brk/modules/brk-client/index.js:1055](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1055)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1055](https://github.com/
 
 > `optional` **limit?**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1057](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1057)
+Defined in: [Developer/brk/modules/brk-client/index.js:1057](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1057)
 
 Maximum number of results
 
@@ -24,6 +24,6 @@ Maximum number of results
 
 > **q**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1056](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L1056)
+Defined in: [Developer/brk/modules/brk-client/index.js:1056](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1056)
 
 Search query string

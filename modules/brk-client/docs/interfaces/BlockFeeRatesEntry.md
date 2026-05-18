@@ -6,7 +6,7 @@
 
 # Interface: BlockFeeRatesEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:160](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L160)
+Defined in: [Developer/brk/modules/brk-client/index.js:160](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L160)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:160](https://github.com/b
 
 > **avgFee0**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:163](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L163)
+Defined in: [Developer/brk/modules/brk-client/index.js:163](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L163)
 
 Minimum fee rate (sat/vB)
 
@@ -24,7 +24,7 @@ Minimum fee rate (sat/vB)
 
 > **avgFee10**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:164](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L164)
+Defined in: [Developer/brk/modules/brk-client/index.js:164](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L164)
 
 10th percentile fee rate (sat/vB)
 
@@ -34,7 +34,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:164](https://github.com/b
 
 > **avgFee100**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:169](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L169)
+Defined in: [Developer/brk/modules/brk-client/index.js:169](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L169)
 
 Maximum fee rate (sat/vB)
 
@@ -44,7 +44,7 @@ Maximum fee rate (sat/vB)
 
 > **avgFee25**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:165](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L165)
+Defined in: [Developer/brk/modules/brk-client/index.js:165](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L165)
 
 25th percentile fee rate (sat/vB)
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:165](https://github.com/b
 
 > **avgFee50**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:166](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L166)
+Defined in: [Developer/brk/modules/brk-client/index.js:166](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L166)
 
 Median fee rate (sat/vB)
 
@@ -64,7 +64,7 @@ Median fee rate (sat/vB)
 
 > **avgFee75**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:167](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L167)
+Defined in: [Developer/brk/modules/brk-client/index.js:167](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L167)
 
 75th percentile fee rate (sat/vB)
 
@@ -74,7 +74,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:167](https://github.com/b
 
 > **avgFee90**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:168](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L168)
+Defined in: [Developer/brk/modules/brk-client/index.js:168](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L168)
 
 90th percentile fee rate (sat/vB)
 
@@ -84,7 +84,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:168](https://github.com/b
 
 > **avgHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:161](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L161)
+Defined in: [Developer/brk/modules/brk-client/index.js:161](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L161)
 
 Average block height in this window
 
@@ -94,6 +94,6 @@ Average block height in this window
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:162](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L162)
+Defined in: [Developer/brk/modules/brk-client/index.js:162](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L162)
 
 Unix timestamp at the window midpoint

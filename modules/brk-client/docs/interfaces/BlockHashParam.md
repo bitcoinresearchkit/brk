@@ -6,7 +6,7 @@
 
 # Interface: BlockHashParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:188](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L188)
+Defined in: [Developer/brk/modules/brk-client/index.js:188](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L188)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:188](https://github.com/b
 
 > **hash**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:189](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L189)
+Defined in: [Developer/brk/modules/brk-client/index.js:189](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L189)

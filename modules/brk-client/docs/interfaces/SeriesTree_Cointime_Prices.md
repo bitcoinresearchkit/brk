@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cointime\_Prices
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5917](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5917)
+Defined in: [Developer/brk/modules/brk-client/index.js:5917](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5917)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5917](https://github.com/
 
 > **active**: [`BpsCentsPercentilesRatioSatsUsdPattern`](BpsCentsPercentilesRatioSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5919](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5919)
+Defined in: [Developer/brk/modules/brk-client/index.js:5919](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5919)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5919](https://github.com/
 
 > **cointime**: [`BpsCentsPercentilesRatioSatsUsdPattern`](BpsCentsPercentilesRatioSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5921](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5921)
+Defined in: [Developer/brk/modules/brk-client/index.js:5921](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5921)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5921](https://github.com/
 
 > **trueMarketMean**: [`BpsCentsPercentilesRatioSatsUsdPattern`](BpsCentsPercentilesRatioSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5920](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5920)
+Defined in: [Developer/brk/modules/brk-client/index.js:5920](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5920)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5920](https://github.com/
 
 > **vaulted**: [`BpsCentsPercentilesRatioSatsUsdPattern`](BpsCentsPercentilesRatioSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5918](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5918)
+Defined in: [Developer/brk/modules/brk-client/index.js:5918](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5918)

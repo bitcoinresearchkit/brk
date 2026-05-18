@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Transactions\_Size\_Weight
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5344](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5344)
+Defined in: [Developer/brk/modules/brk-client/index.js:5344](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5344)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5344](https://github.com/
 
 > **\_6b**: [`MaxMedianMinPct10Pct25Pct75Pct90Pattern2`](MaxMedianMinPct10Pct25Pct75Pct90Pattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5347](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5347)
+Defined in: [Developer/brk/modules/brk-client/index.js:5347](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5347)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5347](https://github.com/
 
 > **block**: [`MaxMedianMinPct10Pct25Pct75Pct90Pattern2`](MaxMedianMinPct10Pct25Pct75Pct90Pattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5346](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5346)
+Defined in: [Developer/brk/modules/brk-client/index.js:5346](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5346)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5346](https://github.com/
 
 > **txIndex**: [`SeriesPattern19`](../type-aliases/SeriesPattern19.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5345](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L5345)
+Defined in: [Developer/brk/modules/brk-client/index.js:5345](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L5345)

@@ -6,7 +6,7 @@
 
 # Interface: AddrAfterTxidParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:14](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L14)
+Defined in: [Developer/brk/modules/brk-client/index.js:14](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L14)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:14](https://github.com/bi
 
 > **address**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:15](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L15)
+Defined in: [Developer/brk/modules/brk-client/index.js:15](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L15)
 
 ***
 
@@ -22,6 +22,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:15](https://github.com/bi
 
 > **afterTxid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bitcoinresearchkit/brk/blob/6ff43c0f74cf0925ed63288a681f08b5cb45400b/modules/brk-client/index.js#L16)
+Defined in: [Developer/brk/modules/brk-client/index.js:16](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L16)
 
 Last txid from the previous page (return transactions strictly older than this)
