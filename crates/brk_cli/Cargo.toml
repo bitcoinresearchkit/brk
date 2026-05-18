@@ -31,6 +31,3 @@ vecdb = { workspace = true }
 [[bin]]
 name = "brk"
 path = "src/main.rs"
-
-[package.metadata.dist]
-dist = true

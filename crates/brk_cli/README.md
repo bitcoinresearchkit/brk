@@ -30,6 +30,10 @@ Portable build (without native CPU optimizations):
 cargo install --locked brk_cli
 ```
 
+## Update
+
+Updating is the same as installing: re-run the install command above. `cargo install` overwrites the existing binary in place. Indexed data is reused when the on-disk format is unchanged, otherwise it is reset and re-synced automatically on the next run.
+
 ## Run
 
 ```bash
