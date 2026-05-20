@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <title>bitview</title>
     <meta name="description" content="Bitcoin transparency, amplified" />
     <meta name="referrer" content="no-referrer" />
     <meta
@@ -10,6 +11,15 @@
     />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Keep URL in sync with @font-face in styles/fonts.css -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/assets/fonts/Lilex[wght]-v2_620.woff2"
+      crossorigin
+    />
 
     <!-- IMPORTMAP -->
     <link rel="stylesheet" href="/src/explorer/chain/cube/style.css" />
@@ -96,7 +106,7 @@
         }
       } catch (_) {}
     </script>
-    <script type="module" src="/scripts/entry.js"></script>
+    <script type="module" src="/scripts/entry.js" fetchpriority="high"></script>
 
     <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg" />
     <link

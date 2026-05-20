@@ -110,7 +110,7 @@ initPrice(brk);
 
 onPrice((price) => {
   console.log("close:", price);
-  window.document.title = `${price.toLocaleString("en-us")} | ${window.location.host}`;
+  window.document.title = `${price.toLocaleString("en-us")} | bitview`;
 });
 
 const options = initOptions();
@@ -199,7 +199,9 @@ function initResizeBar() {
   const bar = getElementById("resize-bar");
   const key = "bar-width";
   const root = document.documentElement;
-  const max = () => parseFloat(style.getPropertyValue("--max-main-width")) / 100 * window.innerWidth;
+  const max = () =>
+    (parseFloat(style.getPropertyValue("--max-main-width")) / 100) *
+    window.innerWidth;
 
   const saved = readStored(key);
   if (saved) root.style.setProperty("--sidebar-width", `${saved}px`);
