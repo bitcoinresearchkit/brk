@@ -16,7 +16,9 @@ pub use histogram::Histogram;
 /// so downstream consumers can invalidate cached results.
 pub const VERSION: u32 = 2;
 
-/// Pre-oracle dollar prices, one per line, heights 0..630_000.
+/// Pre-oracle dollar prices, one per line, heights 0..525_000. The last
+/// entry (height 524_999) seeds the oracle's first on-chain computation
+/// at `START_HEIGHT`.
 pub const PRICES: &str = include_str!("prices.txt");
 
 /// First height where the oracle computes from on-chain data.

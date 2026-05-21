@@ -124,7 +124,7 @@ The oracle consumes one pre-built histogram per block via `process_histogram(&hi
 
 The caller does the filtering when it builds the histogram. For each block it skips the coinbase, drops every output of a transaction carrying an `OP_RETURN`, then bins the rest. `default_eligible_bin(sats, output_type)` (or `Oracle::output_to_bin` for a non-default `Config`) applies the per-output rules: excluded script types, dust, and round-BTC values. It returns the bin index, or `None` for a filtered output.
 
-The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for every height up to 630,000 to derive a seed from.
+The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..525,000; the last entry (height 524,999) seeds the oracle's first on-chain computation at `START_HEIGHT`.
 
 ## Configuration
 
@@ -145,15 +145,16 @@ All parameters via `Config` with sensible defaults:
 
 | | brk_oracle | UTXOracle |
 |---|---|---|
-| Resolution | Per-block (~10 min) + daily candles | Per-run consensus price + per-output intraday scatter |
+| Resolution | Per-block (~10 min); daily OHLC built downstream | Per-run consensus price + per-output intraday scatter |
 | Operation | Rolling: EMA over ring buffer, updates each block | Batch: processes a full day from scratch, stateless |
 | Algorithm | Single-pass stencil scoring with per-offset normalization | Multi-step: dual stencil → rough estimate → output-to-USD mapping → iterative convergence |
+| Steps to compute price | 7 (filter+bin → ring insert → EMA → per-offset peaks → score → argmax+parabolic → bin→price) | 10 (filter+bin → clip → smooth round BTC → sum → normalize → cap extremes → dual-stencil slide → neighbor weight-avg → output-to-USD map → iterative central price) |
 | Stencil | 19 round-USD offsets ($1 to $10k), each normalized to its own peak | 803-point Gaussian + weighted spike template targeting 17 round-USD amounts |
 | Round BTC handling | Excluded from histogram entirely | Histogram bins smoothed by averaging neighbors |
-| Output filtering | Per-tx OP_RETURN drop, then per-output: script type, dust threshold, round BTC | Per-tx: exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
-| Validated from | Height 525,000 (May 2018) | December 2023 |
+| Output filtering | Per-tx OP_RETURN drop, then per-output: script type, dust threshold, round BTC | Per-tx: not coinbase, no OP_RETURN, exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
+| Validated from | Height 525,000 (May 2018) | Dec 15, 2023 |
 | Language | Rust | Python |
-| Dependencies | None (pure computation, caller provides block data) | Bitcoin Core RPC |
+| Dependencies | None (pure computation, caller provides block data) | bitcoin-cli + direct blk file reads |
 | Bins per decade | 200 | 200 |
 
 ## Accuracy
