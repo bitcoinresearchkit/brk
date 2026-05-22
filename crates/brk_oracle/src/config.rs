@@ -29,7 +29,7 @@ impl Default for Config {
         Self {
             alpha: 2.0 / 7.0,
             window_size: 12,
-            search_below: 9,
+            search_below: 12,
             search_above: 11,
             min_sats: DEFAULT_MIN_SATS,
             exclude_common_round_values: true,

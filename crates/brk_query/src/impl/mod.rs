@@ -3,6 +3,7 @@ mod block;
 mod cpfp;
 mod mempool;
 mod mining;
+mod oracle;
 mod price;
 mod series;
 mod tx;

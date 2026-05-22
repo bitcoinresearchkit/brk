@@ -2,7 +2,7 @@
 
 **Version 2**
 
-Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 525,000 (May 2018) onward.
+Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 508,000 (February 2018) onward.
 
 Inspired by [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple), which proved the concept. brk_oracle takes the same core insight and redesigns the algorithm for per-block resolution and rolling operation. See [comparison](#comparison-with-utxoracle) below.
 
@@ -42,13 +42,13 @@ The spacing between spikes is constant (set by the ratios between dollar amounts
 
 ## How it works
 
-The oracle tracks the price incrementally, block by block, starting from a known seed price. Each new block nudges the estimate. The search window is narrow (about ±10 bins, or ±12%), so the oracle can only follow gradual movement — it cannot jump to an arbitrary price from scratch. This is by design: it makes the algorithm resistant to noise.
+The oracle tracks the price incrementally, block by block, starting from a known seed price. Each new block nudges the estimate. The search window is narrow (about 12 bins, or +15% / -12% in price), so the oracle can only follow gradual movement, not jump to an arbitrary price from scratch. This is by design: it makes the algorithm resistant to noise.
 
 For each new block:
 
 ### 1. Filter outputs
 
-Skip the coinbase transaction, and skip every output of a transaction carrying an `OP_RETURN`: that transaction is protocol machinery, not a dollar-denominated payment, so its payout amounts are not price signal. Then exclude noisy outputs: script types dominated by protocol activity (P2TR by default), dust below 1,000 sats, and round BTC amounts (0.01, 0.1, 1.0 BTC, etc.) that create false spikes unrelated to dollar purchases.
+Skip the coinbase transaction, and skip every output of a transaction carrying an `OP_RETURN`: that transaction is protocol machinery, not a dollar-denominated payment, so its payout amounts are not price signal. Below height 630,000, also skip every output of a transaction with more than 100 outputs: a large fan-out is a batch payout (exchange sweep, mixer), not a round-dollar payment, and the thin early signal needs it removed. Then exclude noisy outputs: script types dominated by protocol activity (P2TR by default), dust below 1,000 sats, and round BTC amounts (0.01, 0.1, 1.0 BTC, etc.) that create false spikes unrelated to dollar purchases.
 
 ### 2. Build a log-scale histogram
 
@@ -122,9 +122,9 @@ Parabolic interpolation between the best bin and its two neighbors refines the e
 
 The oracle consumes one pre-built histogram per block via `process_histogram(&hist)`, a `[u32; 2400]` bin-count array, and returns the updated reference bin.
 
-The caller does the filtering when it builds the histogram. For each block it skips the coinbase, drops every output of a transaction carrying an `OP_RETURN`, then bins the rest. `default_eligible_bin(sats, output_type)` (or `Oracle::output_to_bin` for a non-default `Config`) applies the per-output rules: excluded script types, dust, and round-BTC values. It returns the bin index, or `None` for a filtered output.
+The caller does the filtering when it builds the histogram. For each block it skips the coinbase, drops every output of a transaction carrying an `OP_RETURN` (and, below height 630,000, every output of a transaction with more than 100 outputs), then bins the rest. `default_eligible_bin(sats, output_type)` (or `Oracle::output_to_bin` for a non-default `Config`) applies the per-output rules: excluded script types, dust, and round-BTC values. It returns the bin index, or `None` for a filtered output.
 
-The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..525,000; the last entry (height 524,999) seeds the oracle's first on-chain computation at `START_HEIGHT`.
+The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..508,000. Its last entry, height 507,999 (one below `START_HEIGHT`), seeds the oracle's first on-chain computation at height 508,000.
 
 ## Configuration
 
@@ -134,7 +134,7 @@ All parameters via `Config` with sensible defaults:
 |-----------|---------|---------|
 | `alpha` | 2/7 | EMA decay rate (~6-block span) |
 | `window_size` | 12 | Ring buffer depth in blocks |
-| `search_below` / `search_above` | 9 / 11 | Search window around previous estimate (bins) |
+| `search_below` / `search_above` | 12 / 11 | Search window around previous estimate (bins) |
 | `min_sats` | 1,000 | Dust threshold |
 | `exclude_common_round_values` | true | Filter d × 10ⁿ (d ∈ {1,2,3,5,6}) to prevent false stencil matches |
 | `excluded_output_types` | P2TR | Script types dominated by protocol activity |
@@ -152,29 +152,29 @@ All parameters via `Config` with sensible defaults:
 | Stencil | 19 round-USD offsets ($1 to $10k), each normalized to its own peak | 803-point Gaussian + weighted spike template targeting 17 round-USD amounts |
 | Round BTC handling | Excluded from histogram entirely | Histogram bins smoothed by averaging neighbors |
 | Output filtering | Per-tx OP_RETURN drop, then per-output: script type, dust threshold, round BTC | Per-tx: not coinbase, no OP_RETURN, exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
-| Validated from | Height 525,000 (May 2018) | Dec 15, 2023 |
+| Validated from | Height 508,000 (February 2018) | Dec 15, 2023 |
 | Language | Rust | Python |
 | Dependencies | None (pure computation, caller provides block data) | bitcoin-cli + direct blk file reads |
 | Bins per decade | 200 | 200 |
 
 ## Accuracy
 
-Tested over 411,251 blocks (heights 525,000 to 949,800, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 428,251 blocks (heights 508,000 to 950,490, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 
 | Metric | Value |
 |--------|-------|
 | Median error | 0.11% |
-| 95th percentile | 0.67% |
+| 95th percentile | 0.68% |
 | 99th percentile | 1.7% |
-| 99.9th percentile | 5.4% |
-| RMSE | 0.50% |
-| Max error | 33.4% |
+| 99.9th percentile | 4.7% |
+| RMSE | 0.46% |
+| Max error | 28.8% |
 | Bias | +0.00 bins (essentially zero) |
-| Blocks > 5% error | 472 (0.11%) |
-| Blocks > 10% error | 177 |
-| Blocks > 20% error | 3 |
+| Blocks > 5% error | 367 (0.086%) |
+| Blocks > 10% error | 116 |
+| Blocks > 20% error | 1 |
 
 ### Daily candles
 
@@ -182,26 +182,26 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 
 | | Median | RMSE | Max |
 |-------|--------|------|-----|
-| Open | 0.21% | 0.65% | 15.3% |
-| High | 0.53% | 1.12% | 28.0% |
-| Low | 0.51% | 1.38% | 19.7% |
+| Open | 0.21% | 0.59% | 15.3% |
+| High | 0.53% | 0.99% | 15.4% |
+| Low | 0.52% | 1.39% | 21.5% |
 | Close | 0.24% | 0.73% | 15.4% |
 
 ### By year
 
 | Year | Blocks | Median | RMSE | Max | >5% | >10% | >20% | Price range |
 |------|--------|--------|------|-----|-----|------|------|-------------|
-| 2018 | 31,492 | 0.21% | 1.11% | 33.4% | 169 | 109 | 3 | $3,129–$8,488 |
-| 2019 | 54,272 | 0.16% | 0.69% | 17.4% | 165 | 53 | 0 | $3,338–$13,868 |
-| 2020 | 53,102 | 0.10% | 0.44% | 12.6% | 70 | 6 | 0 | $3,858–$29,322 |
-| 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 42 | 9 | 0 | $27,678–$69,000 |
+| 2018 | 48,492 | 0.17% | 0.84% | 28.8% | 136 | 87 | 1 | $3,129–$11,775 |
+| 2019 | 54,272 | 0.16% | 0.59% | 17.4% | 100 | 16 | 0 | $3,338–$13,868 |
+| 2020 | 53,102 | 0.10% | 0.42% | 11.6% | 61 | 3 | 0 | $3,858–$29,322 |
+| 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 43 | 10 | 0 | $27,678–$69,000 |
 | 2022 | 53,230 | 0.07% | 0.32% | 6.8% | 10 | 0 | 0 | $15,460–$48,240 |
 | 2023 | 54,032 | 0.10% | 0.25% | 6.6% | 5 | 0 | 0 | $16,490–$44,700 |
-| 2024 | 53,367 | 0.10% | 0.28% | 6.7% | 7 | 0 | 0 | $38,555–$108,298 |
+| 2024 | 53,367 | 0.10% | 0.29% | 7.1% | 8 | 0 | 0 | $38,555–$108,298 |
 | 2025 | 53,113 | 0.11% | 0.25% | 5.8% | 4 | 0 | 0 | $74,409–$126,198 |
 | 2026 | 5,910 | 0.11% | 0.27% | 3.2% | 0 | 0 | 0 | $60,000–$97,900 |
 
-The oracle is only as good as the signal it reads. The largest errors cluster in late 2018: the November price crash fell faster than the narrow search window could follow (33% max error), and on-chain volume was lower then, so the round-dollar pattern was weaker (1.1% RMSE for the year). By 2020 the signal is strong enough for 0.1% median accuracy, and since 2022 no block exceeds 10% error.
+The oracle is only as good as the signal it reads. The largest errors cluster in late 2018: the November price crash fell faster than the narrow search window could follow (28.8% max error, at height 550,890), and on-chain volume was lower then, so the round-dollar pattern was weaker (0.84% RMSE for the year). By 2020 the signal is strong enough for 0.1% median accuracy, and since 2022 no block exceeds 10% error.
 
 ### Why no outlier smoothing?
 
@@ -211,6 +211,16 @@ Post-hoc smoothing — for example, correcting any block whose price deviates mo
 2. **Finality**: Each block's price is produced once and never revised (unless the block itself is reorged). Downstream consumers can treat the oracle output as append-only. Smoothing would require retroactively changing already-published prices, breaking that property.
 
 ## Changelog
+
+### v3
+
+Changes from v2:
+
+- **Earlier start**: on-chain tracking begins at height 508,000 (February 2018) instead of 525,000, adding about 17,000 blocks of history.
+- **Max-outputs filter**: a transaction with more than 100 outputs is dropped from the histogram below height 630,000. Large fan-outs (exchange sweeps, mixer payouts) are batch machinery, not round-dollar payments, and the thin 2018-2020 signal needs them removed to stay locked onto the pattern. Above 630,000 on-chain volume is dense enough that the cap removes more genuine signal than noise, so it is lifted.
+- **Wider up-reach**: `search_below` raised from 9 to 12 bins. The sharp 2018 reversal candles need extra room to follow a fast move upward in price.
+
+`VERSION` is bumped to 3 so downstream consumers invalidate prices computed by an earlier algorithm.
 
 ### v2
 

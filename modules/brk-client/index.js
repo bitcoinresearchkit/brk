@@ -664,6 +664,8 @@ ancestors and no descendants (matches mempool.space).
  *
  * @typedef {Dollars} High
  */
+/** @typedef {number[]} Histogram_uint16 */
+/** @typedef {number[]} Histogram_uint32 */
 /**
  * Historical price response
  *
@@ -11862,6 +11864,80 @@ class BrkClient extends BrkClientBase {
    */
   async getLivePrice({ signal, onValue } = {}) {
     const path = `/api/mempool/price`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Live BTC/USD price
+   *
+   * Current BTC/USD price in dollars, derived purely from on-chain round-dollar output patterns over the last 12 blocks plus the forming mempool block. Same value as `/api/mempool/price`. Confirmed per-height history is available at `/api/vecs/height-to-price`.
+   *
+   * Endpoint: `GET /api/oracle/price`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Dollars) => void }} [options]
+   * @returns {Promise<Dollars>}
+   */
+  async getOraclePrice({ signal, onValue } = {}) {
+    const path = `/api/oracle/price`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Live EMA histogram
+   *
+   * Smoothed round-dollar payment histogram at the live tip: the committed 12-block EMA with the forming mempool block blended in as a final slot. A flat array of 2400 log-scale bins, quantized to `u16` for the wire. This is the heatmap column you render.
+   *
+   * Endpoint: `GET /api/oracle/histogram/ema/live`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint16) => void }} [options]
+   * @returns {Promise<Histogram_uint16>}
+   */
+  async getOracleHistogramEmaLive({ signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/ema/live`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * EMA histogram at height
+   *
+   * Smoothed round-dollar payment histogram for a confirmed height, deterministically reconstructed by replaying the 12-block window ending at that height. Immutable once buried, so repeated requests return byte-identical results. A flat array of 2400 log-scale bins, quantized to `u16`.
+   *
+   * Endpoint: `GET /api/oracle/histogram/ema/{height}`
+   *
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint16) => void }} [options]
+   * @returns {Promise<Histogram_uint16>}
+   */
+  async getOracleHistogramEma(height, { signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/ema/${height}`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Live raw histogram
+   *
+   * Un-smoothed per-block round-dollar counts for the forming mempool block: the spiky primitive the EMA smooths over. A flat array of 2400 log-scale bins (`u32` counts), all zero when no mempool is configured.
+   *
+   * Endpoint: `GET /api/oracle/histogram/raw/live`
+   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint32) => void }} [options]
+   * @returns {Promise<Histogram_uint32>}
+   */
+  async getOracleHistogramRawLive({ signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/raw/live`;
+    return this.getJson(path, { signal, onValue });
+  }
+
+  /**
+   * Raw histogram at height
+   *
+   * Un-smoothed round-dollar counts for a single confirmed block. A flat array of 2400 log-scale bins (`u32` counts).
+   *
+   * Endpoint: `GET /api/oracle/histogram/raw/{height}`
+   *
+   * @param {Height} height
+   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint32) => void }} [options]
+   * @returns {Promise<Histogram_uint32>}
+   */
+  async getOracleHistogramRaw(height, { signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/raw/${height}`;
     return this.getJson(path, { signal, onValue });
   }
 

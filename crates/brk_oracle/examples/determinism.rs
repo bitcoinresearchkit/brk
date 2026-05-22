@@ -14,8 +14,8 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, Histogram, Oracle, PRICES, START_HEIGHT, bin_to_cents, cents_to_bin,
-    default_eligible_bin,
+    Config, HistogramRaw, Oracle, PRICES, START_HEIGHT, bin_to_cents, cents_to_bin,
+    for_each_round_dollar_bin,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -31,6 +31,7 @@ fn seed_bin_for_start_height() -> f64 {
 }
 
 struct Block {
+    height: usize,
     values: Vec<Sats>,
     output_types: Vec<OutputType>,
     tx_starts: Vec<usize>,
@@ -38,8 +39,8 @@ struct Block {
     out_end: usize,
 }
 
-fn build_histogram(block: &Block) -> Histogram {
-    let mut hist = Histogram::zeros();
+fn build_histogram(block: &Block) -> HistogramRaw {
+    let mut hist = HistogramRaw::zeros();
     for tx in 0..block.tx_starts.len() {
         let lo = block.tx_starts[tx] - block.out_start;
         let hi = block
@@ -47,14 +48,11 @@ fn build_histogram(block: &Block) -> Histogram {
             .get(tx + 1)
             .map(|s| s - block.out_start)
             .unwrap_or(block.out_end - block.out_start);
-        if block.output_types[lo..hi].contains(&OutputType::OpReturn) {
-            continue;
-        }
-        for i in lo..hi {
-            if let Some(bin) = default_eligible_bin(block.values[i], block.output_types[i]) {
-                hist.increment(bin as usize);
-            }
-        }
+        let outputs = block.values[lo..hi]
+            .iter()
+            .copied()
+            .zip(block.output_types[lo..hi].iter().copied());
+        for_each_round_dollar_bin(block.height, outputs, |bin| hist.increment(bin as usize));
     }
     hist
 }
@@ -129,6 +127,7 @@ fn main() {
             .collect_range_at(out_start, out_end);
 
         blocks.push(Block {
+            height: h,
             values,
             output_types,
             tx_starts,
@@ -142,7 +141,10 @@ fn main() {
         .iter()
         .map(|b| continuous.process_histogram(&build_histogram(b)))
         .collect();
-    println!("Continuous oracle: {} blocks processed", continuous_bins.len());
+    println!(
+        "Continuous oracle: {} blocks processed",
+        continuous_bins.len()
+    );
 
     let prev_bin = continuous_bins[restart_at - START_HEIGHT - 1];
     let seed_bin = cents_to_bin(bin_to_cents(prev_bin) as f64);

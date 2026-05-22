@@ -1,4 +1,4 @@
-use brk_oracle::default_eligible_bin;
+use brk_oracle::for_each_round_dollar_bin;
 use brk_types::Transaction;
 use smallvec::SmallVec;
 
@@ -9,12 +9,15 @@ pub struct OutputBins(SmallVec<[u16; 4]>);
 
 impl OutputBins {
     pub fn from_tx(tx: &Transaction) -> Self {
-        Self(
-            tx.output
-                .iter()
-                .filter_map(|o| default_eligible_bin(o.value, o.type_()))
-                .collect(),
-        )
+        let mut bins = SmallVec::new();
+        // Live mempool txs are post-tip, always above the historical max-outputs
+        // cap window, so the cap never applies here.
+        for_each_round_dollar_bin(
+            usize::MAX,
+            tx.output.iter().map(|o| (o.value, o.type_())),
+            |bin| bins.push(bin),
+        );
+        Self(bins)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = u16> + '_ {

@@ -1,4 +1,4 @@
-use brk_oracle::Histogram;
+use brk_oracle::HistogramRaw;
 use brk_types::{MempoolRecentTx, Transaction, TxOut, Txid, TxidPrefix, Vin};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -40,7 +40,7 @@ pub struct TxStore {
     records: FxHashMap<TxidPrefix, TxRecord>,
     recent: Vec<MempoolRecentTx>,
     unresolved: FxHashSet<TxidPrefix>,
-    live_histogram: Histogram,
+    live_histogram: HistogramRaw,
 }
 
 impl TxStore {
@@ -120,7 +120,7 @@ impl TxStore {
 
     /// Snapshot the live oracle-bin histogram. Maintained incrementally
     /// on insert/remove, so this is `O(NUM_BINS)`, not `O(live_outputs)`.
-    pub fn live_histogram(&self) -> Histogram {
+    pub fn live_histogram(&self) -> HistogramRaw {
         self.live_histogram.clone()
     }
 
@@ -263,7 +263,10 @@ mod tests {
         assert_eq!(applied[0].value, new_prevout.value);
 
         let record = store.record_by_prefix(&prefix).expect("record present");
-        assert_eq!(record.tx.input[0].prevout.as_ref().unwrap().value, new_prevout.value);
+        assert_eq!(
+            record.tx.input[0].prevout.as_ref().unwrap().value,
+            new_prevout.value
+        );
         assert_eq!(
             record.tx.input[1].prevout.as_ref().unwrap().value,
             prev_present.value
@@ -277,7 +280,10 @@ mod tests {
         let stray_prefix = TxidPrefix::from(&fake_txid(0xFF));
         let applied = store.apply_fills(
             &stray_prefix,
-            vec![(Vin::from(0u32), TxOut::from((ScriptBuf::new(), Sats::from(1u64))))],
+            vec![(
+                Vin::from(0u32),
+                TxOut::from((ScriptBuf::new(), Sats::from(1u64))),
+            )],
         );
         assert!(applied.is_empty());
     }
@@ -319,10 +325,7 @@ mod tests {
         let tx_a = fake_tx(
             20,
             &[Some(TxOut::from((p2wpkh_script(8), Sats::from(1_234u64))))],
-            &[
-                (p2wpkh_script(9), 2_345),
-                (p2wpkh_script(10), 3_456),
-            ],
+            &[(p2wpkh_script(9), 2_345), (p2wpkh_script(10), 3_456)],
         );
         let tx_b = fake_tx(
             21,

@@ -3,31 +3,51 @@
 //! Detects round-dollar transaction patterns ($1, $5, $10, ... $10,000) in Bitcoin
 //! block outputs to derive the current price without any exchange data.
 
-use brk_types::{Cents, Dollars, OutputType, Sats};
+use brk_types::{Cents, Dollars, Histogram, OutputType, Sats};
 
 mod config;
-mod histogram;
 
-use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
 pub use config::Config;
-pub use histogram::Histogram;
+use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
 
 /// Oracle algorithm version. Bump on any change that alters computed prices
 /// so downstream consumers can invalidate cached results.
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
 
-/// Pre-oracle dollar prices, one per line, heights 0..525_000. The last
-/// entry (height 524_999) seeds the oracle's first on-chain computation
-/// at `START_HEIGHT`.
+/// Pre-oracle dollar prices, one per line, heights 0..508_000. The last entry
+/// (height `START_HEIGHT - 1`) seeds the oracle's first on-chain computation at
+/// `START_HEIGHT`.
 pub const PRICES: &str = include_str!("prices.txt");
 
 /// First height where the oracle computes from on-chain data.
-pub const START_HEIGHT: usize = 525_000;
+pub const START_HEIGHT: usize = 508_000;
+
+/// A transaction with more than this many outputs is a batch payout (exchange
+/// sweep, mixer fan-out), not a round-dollar payment, so it is dropped below
+/// [`MAX_OUTPUTS_UNTIL_HEIGHT`].
+pub const MAX_OUTPUTS: usize = 100;
+
+/// Height below which the [`MAX_OUTPUTS`] cap applies. The thin 2018-2020
+/// signal needs batch payouts removed to stay locked onto the round-dollar
+/// pattern. Above this height on-chain volume is dense enough that the cap
+/// removes more genuine signal than noise, so it is lifted.
+pub const MAX_OUTPUTS_UNTIL_HEIGHT: usize = 630_000;
 
 pub const BINS_PER_DECADE: usize = 200;
 const MIN_LOG_BTC: i32 = -8;
 const MAX_LOG_BTC: i32 = 4;
 pub const NUM_BINS: usize = BINS_PER_DECADE * (MAX_LOG_BTC - MIN_LOG_BTC) as usize;
+
+/// Per-block round-dollar payment counts, one `u32` per log-scale bin: the
+/// oracle's ring-buffer element and the `histogram/raw/*` wire payload.
+pub type HistogramRaw = Histogram<u32, NUM_BINS>;
+
+/// Smoothed EMA over the window, one `f64` per bin. The stencil search reads it,
+/// never serialized (projected to [`HistogramEmaCompact`] for the wire).
+pub type HistogramEma = Histogram<f64, NUM_BINS>;
+
+/// Quantized `u16` projection of [`HistogramEma`] for the `histogram/ema/*` wire.
+pub type HistogramEmaCompact = Histogram<u16, NUM_BINS>;
 
 /// Bin offsets for 19 round-USD amounts relative to the $100 reference (offset 0).
 /// Each offset = log10(amount / 100) * BINS_PER_DECADE.
@@ -95,6 +115,36 @@ pub fn default_eligible_bin(sats: Sats, output_type: OutputType) -> Option<u16> 
     sats_to_bin(sats).map(|b| b as u16)
 }
 
+/// The single definition of the on-chain round-dollar payment filter, shared by
+/// the indexer warm-up, per-request reconstruction, and the mempool's live
+/// histogram so every path bins identically. Calls `emit(bin)` for each eligible
+/// output, in order.
+///
+/// A whole transaction is dropped when it carries any OP_RETURN output (data
+/// carriers like consolidations and inscriptions aren't payments and would
+/// pollute the signal) or, below [`MAX_OUTPUTS_UNTIL_HEIGHT`], when it has more
+/// than [`MAX_OUTPUTS`] outputs (batch payouts). `height` is the block these
+/// outputs belong to. The mempool, always past the cap window, passes
+/// `usize::MAX`.
+#[inline]
+pub fn for_each_round_dollar_bin(
+    height: usize,
+    outputs: impl ExactSizeIterator<Item = (Sats, OutputType)> + Clone,
+    mut emit: impl FnMut(u16),
+) {
+    if height < MAX_OUTPUTS_UNTIL_HEIGHT && outputs.len() > MAX_OUTPUTS {
+        return;
+    }
+    if outputs.clone().any(|(_, ty)| ty == OutputType::OpReturn) {
+        return;
+    }
+    for (sats, ty) in outputs {
+        if let Some(bin) = default_eligible_bin(sats, ty) {
+            emit(bin);
+        }
+    }
+}
+
 /// Converts a fractional bin to a USD price in cents.
 /// For a $D output at price P: sats = D * 1e8 / P, so P = 10^(10 - bin/200) dollars,
 /// where 10 = log10($100 reference * 1e8 sats/BTC).
@@ -113,7 +163,7 @@ pub fn cents_to_bin(cents: f64) -> f64 {
 /// Scores each candidate bin in the search window by summing normalized stencil
 /// matches across the EMA histogram, then refines with parabolic interpolation.
 fn find_best_bin(
-    ema: &[f64; NUM_BINS],
+    ema: &HistogramEma,
     prev_bin: f64,
     search_below: usize,
     search_above: usize,
@@ -182,8 +232,8 @@ fn find_best_bin(
 
 #[derive(Clone)]
 pub struct Oracle {
-    histograms: Vec<Histogram>,
-    ema: Box<[f64; NUM_BINS]>,
+    histograms: Vec<HistogramRaw>,
+    ema: Box<HistogramEma>,
     cursor: usize,
     filled: usize,
     ref_bin: f64,
@@ -205,8 +255,8 @@ impl Oracle {
             .iter()
             .fold(0u16, |mask, ot| mask | (1 << *ot as u8));
         Self {
-            histograms: vec![Histogram::zeros(); window_size],
-            ema: Box::new([0.0; NUM_BINS]),
+            histograms: vec![HistogramRaw::zeros(); window_size],
+            ema: Box::new(HistogramEma::zeros()),
             cursor: 0,
             filled: 0,
             ref_bin: start_bin,
@@ -230,7 +280,7 @@ impl Oracle {
         oracle
     }
 
-    pub fn process_histogram(&mut self, hist: &Histogram) -> f64 {
+    pub fn process_histogram(&mut self, hist: &HistogramRaw) -> f64 {
         self.histograms[self.cursor] = hist.clone();
         self.cursor = (self.cursor + 1) % self.config.window_size;
         if self.filled < self.config.window_size {
@@ -252,6 +302,13 @@ impl Oracle {
 
     pub fn ref_bin(&self) -> f64 {
         self.ref_bin
+    }
+
+    /// The current weighted EMA over the window, one value per log-scale bin.
+    /// `ema()[i]` is bin `i` (see `sats_to_bin`); callers transporting it
+    /// round/clamp to a smaller type.
+    pub fn ema(&self) -> &HistogramEma {
+        &self.ema
     }
 
     pub fn price_cents(&self) -> Cents {

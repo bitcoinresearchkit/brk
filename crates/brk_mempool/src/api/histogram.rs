@@ -1,6 +1,6 @@
 //! Mempool info + price-blending output histogram.
 
-use brk_oracle::Histogram;
+use brk_oracle::HistogramRaw;
 use brk_types::MempoolInfo;
 
 use crate::Mempool;
@@ -17,7 +17,7 @@ impl Mempool {
     /// of pool size. Used by `live_price` to blend the mempool into the
     /// committed oracle without re-parsing scripts per request.
     #[must_use]
-    pub fn live_histogram(&self) -> Histogram {
+    pub fn live_histogram(&self) -> HistogramRaw {
         self.read().txs.live_histogram()
     }
 }

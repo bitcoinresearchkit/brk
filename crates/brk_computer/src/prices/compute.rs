@@ -2,7 +2,9 @@ use std::ops::Range;
 
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
-use brk_oracle::{Config, Histogram, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin};
+use brk_oracle::{
+    Config, HistogramRaw, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin, for_each_round_dollar_bin,
+};
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, StorageMode, VecIndex, WritableVec};
@@ -61,8 +63,8 @@ impl Vecs {
     fn compute_prices(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;
 
-        let source_version = indexer.vecs.outputs.value.version()
-            + indexer.vecs.outputs.output_type.version();
+        let source_version =
+            indexer.vecs.outputs.value.version() + indexer.vecs.outputs.output_type.version();
         self.spot
             .cents
             .height
@@ -121,8 +123,7 @@ impl Vecs {
             committed, total_heights
         );
 
-        let ref_bins =
-            Self::feed_blocks(&mut oracle, indexer, committed..total_heights, None);
+        let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights, None);
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
             self.spot
@@ -151,11 +152,8 @@ impl Vecs {
     }
 
     /// Feed a range of blocks from the indexer into an Oracle (skipping coinbase),
-    /// returning per-block ref_bin values.
-    ///
-    /// A transaction carrying an `OP_RETURN` output is protocol machinery, not a
-    /// dollar-denominated payment, so all of its outputs are dropped from the
-    /// histogram. This needs per-transaction grouping of a block's outputs.
+    /// returning per-block ref_bin values. Outputs are grouped per transaction
+    /// because `for_each_round_dollar_bin` drops a whole tx on any OP_RETURN.
     ///
     /// Pass `cap = None` from compute paths, when the indexer is quiescent and
     /// raw vec lengths are authoritative. Pass `cap = Some(&safe_lengths)` from
@@ -239,21 +237,20 @@ impl Vecs {
                 &mut output_types,
             );
 
-            let mut hist = Histogram::zeros();
+            let mut hist = HistogramRaw::zeros();
             for tx in 0..tx_count {
                 let lo = tx_starts[tx] - out_start;
                 let hi = tx_starts
                     .get(tx + 1)
                     .map(|s| s - out_start)
                     .unwrap_or(out_end - out_start);
-                if output_types[lo..hi].contains(&OutputType::OpReturn) {
-                    continue;
-                }
-                for i in lo..hi {
-                    if let Some(bin) = oracle.output_to_bin(values[i], output_types[i]) {
-                        hist.increment(bin);
-                    }
-                }
+                let outputs = values[lo..hi]
+                    .iter()
+                    .copied()
+                    .zip(output_types[lo..hi].iter().copied());
+                for_each_round_dollar_bin(range.start + idx, outputs, |bin| {
+                    hist.increment(bin as usize)
+                });
             }
 
             ref_bins.push(oracle.process_histogram(&hist));

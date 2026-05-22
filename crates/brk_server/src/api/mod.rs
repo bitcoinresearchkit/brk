@@ -25,6 +25,7 @@ mod mempool;
 mod metrics;
 mod mining;
 mod openapi;
+mod oracle;
 mod series;
 mod series_legacy;
 mod server;
@@ -38,6 +39,7 @@ use general::GeneralRoutes;
 use mempool::MempoolRoutes;
 use mining::MiningRoutes;
 pub use openapi::*;
+use oracle::OracleRoutes;
 use transactions::TxRoutes;
 
 pub trait ApiRoutes {
@@ -57,6 +59,7 @@ impl ApiRoutes for ApiRouter<AppState> {
             .add_mining_routes()
             .add_fees_routes()
             .add_mempool_routes()
+            .add_oracle_routes()
             .add_tx_routes()
             .api_route(
                 "/openapi.json",
