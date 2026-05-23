@@ -178,6 +178,20 @@ All errors return structured JSON with a consistent format:
             ..Default::default()
         },
         Tag {
+            name: "Oracle".to_string(),
+            description: Some(
+                "On-chain BTC/USD price derived purely from round-dollar payment patterns in \
+                transaction outputs, with no external price feed. Payment activity is binned on a \
+                log scale, and a smoothed EMA over recent blocks locates the price.\n\n\
+                Histograms come in two flavors, each available at the live tip (mempool-blended) \
+                or at any confirmed height: `raw` (per-block counts) and `ema` (the smoothed \
+                window). The live price is also at `/api/mempool/price`. Confirmed per-height \
+                price history is at `/api/vecs/height-to-price`."
+                    .to_string(),
+            ),
+            ..Default::default()
+        },
+        Tag {
             name: "URPD".to_string(),
             description: Some(
                 "UTXO Realized Price Distribution. For each (cohort, date) pair, supply is \

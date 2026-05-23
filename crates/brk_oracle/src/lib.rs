@@ -342,9 +342,10 @@ impl Oracle {
             let idx = (self.cursor + self.config.window_size - 1 - age) % self.config.window_size;
             let weight = self.weights[age];
             let h = &self.histograms[idx];
-            (0..NUM_BINS).for_each(|bin| {
-                self.ema[bin] += weight * h[bin] as f64;
-            });
+            self.ema
+                .iter_mut()
+                .zip(h.iter())
+                .for_each(|(e, &c)| *e += weight * c as f64);
         }
     }
 }

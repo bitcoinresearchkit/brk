@@ -31,10 +31,9 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .oracle_tag()
                         .summary("Live BTC/USD price")
                         .description(
-                            "Current BTC/USD price in dollars, derived purely from on-chain \
-                            round-dollar output patterns over the last 12 blocks plus the \
-                            forming mempool block. Same value as `/api/mempool/price`. \
-                            Confirmed per-height history is available at `/api/vecs/height-to-price`.",
+                            "Current BTC/USD price in dollars. Same value as \
+                            `/api/mempool/price`. Confirmed per-height history is available at \
+                            `/api/vecs/height-to-price`.",
                         )
                         .json_response::<Dollars>()
                         .not_modified()
@@ -58,9 +57,8 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .summary("Live EMA histogram")
                         .description(
                             "Smoothed round-dollar payment histogram at the live tip: the \
-                            committed 12-block EMA with the forming mempool block blended in \
-                            as a final slot. A flat array of 2400 log-scale bins, quantized \
-                            to `u16` for the wire. This is the heatmap column you render.",
+                            committed EMA with the forming mempool block blended in. \
+                            A flat array of log-scale bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
                         .not_modified()
@@ -88,11 +86,8 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .oracle_tag()
                         .summary("EMA histogram at height")
                         .description(
-                            "Smoothed round-dollar payment histogram for a confirmed height, \
-                            deterministically reconstructed by replaying the 12-block window \
-                            ending at that height. Immutable once buried, so repeated requests \
-                            return byte-identical results. A flat array of 2400 log-scale bins, \
-                            quantized to `u16`.",
+                            "Smoothed round-dollar payment histogram for a confirmed height. \
+                            A flat array of log-scale bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
                         .not_modified()
@@ -118,8 +113,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .summary("Live raw histogram")
                         .description(
                             "Un-smoothed per-block round-dollar counts for the forming mempool \
-                            block: the spiky primitive the EMA smooths over. A flat array of \
-                            2400 log-scale bins (`u32` counts), all zero when no mempool is \
+                            block. A flat array of log-scale bins, all zero when no mempool is \
                             configured.",
                         )
                         .json_response::<HistogramRaw>()
@@ -149,7 +143,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .summary("Raw histogram at height")
                         .description(
                             "Un-smoothed round-dollar counts for a single confirmed block. A \
-                            flat array of 2400 log-scale bins (`u32` counts).",
+                            flat array of log-scale bins.",
                         )
                         .json_response::<HistogramRaw>()
                         .not_modified()

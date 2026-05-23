@@ -52,6 +52,13 @@ struct GuardCfg {
     raw_margin: f64, // octave neighbor raw mass must be >= raw_margin * current
     q_margin: usize, // neighbor must have >= q_margin MORE lit arms than current
     q_min: usize,    // neighbor must have at least this many lit arms (looks full)
+    // Lever 2: global re-acquire. Instead of only checking the +-60 octave
+    // neighbors, scan a wide band beyond the local search window for the
+    // strongest true-price peak (most lit arms, raw mass as tiebreak) and snap
+    // to it when it clearly beats the locally-trapped pick. Escapes any
+    // local-max trap, not just the octave alias.
+    global: bool,
+    global_radius: i64, // bins scanned on each side of the local pick
 }
 
 impl GuardCfg {
@@ -71,6 +78,11 @@ impl GuardCfg {
             raw_margin: g("GUARD_RAW", 1.0),
             q_margin: g("GUARD_QMARGIN", 4.0) as usize,
             q_min: g("GUARD_QMIN", 14.0) as usize,
+            global: std::env::var("GLOBAL_REACQUIRE")
+                .ok()
+                .map(|v| v != "0")
+                .unwrap_or(false),
+            global_radius: g("GLOBAL_RADIUS", 600.0) as i64,
         }
     }
 }
@@ -182,19 +194,52 @@ fn guarded_best_bin(
         let qb = arm_count(ema, b, guard.tau);
         let raw_b = ema_stencil_sum(ema, b);
         let mut target = b;
-        let mut best: Option<(usize, f64)> = None;
-        for &delta in &[-OCTAVE_BINS, OCTAVE_BINS] {
-            let n = b + delta;
-            if n < 0 || n as usize >= brk_oracle::NUM_BINS {
-                continue;
-            }
-            let qn = arm_count(ema, n, guard.tau);
-            let raw_n = ema_stencil_sum(ema, n);
-            if qn >= qb + guard.q_margin && qn >= guard.q_min && raw_n >= guard.raw_margin * raw_b {
-                let better = best.is_none_or(|(sq, sr)| qn > sq || (qn == sq && raw_n > sr));
+        if guard.global {
+            // Scan beyond the local window for the strongest peak by lit-arm
+            // count (raw mass as tiebreak), considering only bins carrying at
+            // least the local pick's raw mass. Snap to it when it lights up
+            // q_margin more arms and looks full (>= q_min), regardless of how
+            // many bins away it sits.
+            let lo = (b - guard.global_radius).max(0);
+            let hi = (b + guard.global_radius).min(brk_oracle::NUM_BINS as i64 - 1);
+            let mut best: Option<(i64, usize, f64)> = None;
+            for n in lo..=hi {
+                if n >= search_start as i64 && n < search_end as i64 {
+                    continue; // window interior is owned by the local search
+                }
+                let raw_n = ema_stencil_sum(ema, n);
+                if raw_n < guard.raw_margin * raw_b {
+                    continue;
+                }
+                let qn = arm_count(ema, n, guard.tau);
+                let better = best.is_none_or(|(_, sq, sr)| qn > sq || (qn == sq && raw_n > sr));
                 if better {
-                    best = Some((qn, raw_n));
+                    best = Some((n, qn, raw_n));
+                }
+            }
+            if let Some((n, qn, _)) = best {
+                if qn >= qb + guard.q_margin && qn >= guard.q_min {
                     target = n;
+                }
+            }
+        } else {
+            let mut best: Option<(usize, f64)> = None;
+            for &delta in &[-OCTAVE_BINS, OCTAVE_BINS] {
+                let n = b + delta;
+                if n < 0 || n as usize >= brk_oracle::NUM_BINS {
+                    continue;
+                }
+                let qn = arm_count(ema, n, guard.tau);
+                let raw_n = ema_stencil_sum(ema, n);
+                if qn >= qb + guard.q_margin
+                    && qn >= guard.q_min
+                    && raw_n >= guard.raw_margin * raw_b
+                {
+                    let better = best.is_none_or(|(sq, sr)| qn > sq || (qn == sq && raw_n > sr));
+                    if better {
+                        best = Some((qn, raw_n));
+                        target = n;
+                    }
                 }
             }
         }
@@ -480,7 +525,7 @@ fn main() {
         max_outputs,
     );
     eprintln!(
-        "  cfg: window_size={} alpha={:.5} (~{:.0}-block span) search -{}/+{} guard={} (tau={} raw={} qm={} qmin={})",
+        "  cfg: window_size={} alpha={:.5} (~{:.0}-block span) search -{}/+{} guard={} (tau={} raw={} qm={} qmin={}) global={} radius={}",
         config.window_size,
         config.alpha,
         2.0 / config.alpha - 1.0,
@@ -491,6 +536,8 @@ fn main() {
         guard.raw_margin,
         guard.q_margin,
         guard.q_min,
+        guard.global,
+        guard.global_radius,
     );
     let (sb, sa) = (config.search_below, config.search_above);
     let window_size = config.window_size;
@@ -503,6 +550,31 @@ fn main() {
     let mut filled = 0usize;
     let mut ema = HistogramEma::zeros();
     let mut ref_bin = cents_to_bin(start_price * 100.0);
+
+    // Lever 4: a parallel "sharp" detection EMA (fast span, short window) folded
+    // from the same per-block hists. The slow EMA above still sets the price; this
+    // is diagnostic only, used to check whether the true-price stencil holes (the
+    // arm-count contrast that the smeared slow EMA flattens during a crash) survive
+    // when the histogram is not smoothed.
+    let sharp_span: f64 = std::env::var("SHARP_SPAN")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3.0);
+    let sharp_window: usize = std::env::var("SHARP_WINDOW")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(6);
+    let sharp_alpha = 2.0 / (sharp_span + 1.0);
+    let sharp_weights: Vec<f64> = (0..sharp_window)
+        .map(|i| sharp_alpha * (1.0 - sharp_alpha).powi(i as i32))
+        .collect();
+    let mut sharp_ring: Vec<Vec<f64>> = vec![vec![0.0; NUM_BINS]; sharp_window];
+    let mut sharp_cursor = 0usize;
+    let mut sharp_filled = 0usize;
+    let mut sharp_ema = HistogramEma::zeros();
+    eprintln!(
+        "  sharp: span={sharp_span:.0} window={sharp_window} alpha={sharp_alpha:.5}"
+    );
 
     let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
@@ -600,6 +672,26 @@ fn main() {
                 ema[b] += w * block[b];
             }
         }
+        // Sharp detection EMA (diagnostic only - does not drive the price).
+        {
+            let slot = &mut sharp_ring[sharp_cursor];
+            for b in 0..NUM_BINS {
+                slot[b] = hist[b] as f64 * scale;
+            }
+        }
+        sharp_cursor = (sharp_cursor + 1) % sharp_window;
+        if sharp_filled < sharp_window {
+            sharp_filled += 1;
+        }
+        sharp_ema.fill(0.0);
+        for age in 0..sharp_filled {
+            let idx = (sharp_cursor + sharp_window - 1 - age) % sharp_window;
+            let w = sharp_weights[age];
+            let block = &sharp_ring[idx];
+            for b in 0..NUM_BINS {
+                sharp_ema[b] += w * block[b];
+            }
+        }
         ref_bin = guarded_best_bin(&ema, ref_bin, sb, sa, &guard);
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;
 
@@ -632,9 +724,14 @@ fn main() {
             let qh = arm_count(&ema, true_bin + 60, guard.tau);
             let qd = arm_count(&ema, true_bin - 60, guard.tau);
             let pat = arm_pattern(&ema, true_bin, guard.tau);
+            // Same arm-count contrast measured on the sharp detection EMA.
+            let qst = arm_count(&sharp_ema, true_bin, guard.tau);
+            let qsh = arm_count(&sharp_ema, true_bin + 60, guard.tau);
+            let qsd = arm_count(&sharp_ema, true_bin - 60, guard.tau);
+            let spat = arm_pattern(&sharp_ema, true_bin, guard.tau);
             let ts_secs: u32 = *timestamps[h];
             eprintln!(
-                "{h}\t{ts_secs}\t{oracle_price:.0}\t{ex_close:.0}\t{band_err:+.2}\t{eligible}\tT={s_true:.1}\tH={s_half:.1}\tD={s_dbl:.1}\tQt={qt}\tQh={qh}\tQd={qd}\t{pat}"
+                "{h}\t{ts_secs}\t{oracle_price:.0}\t{ex_close:.0}\t{band_err:+.2}\t{eligible}\tT={s_true:.1}\tH={s_half:.1}\tD={s_dbl:.1}\tQt={qt}\tQh={qh}\tQd={qd}\t{pat}\t|sharp Qt={qst} Qh={qsh} Qd={qsd}\t{spat}"
             );
         }
 
