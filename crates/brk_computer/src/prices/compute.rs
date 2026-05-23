@@ -3,7 +3,8 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
 use brk_oracle::{
-    Config, HistogramRaw, Oracle, START_HEIGHT, bin_to_cents, cents_to_bin, for_each_round_dollar_bin,
+    Config, HistogramRaw, Oracle, START_HEIGHT, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
+    for_each_round_dollar_bin,
 };
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
@@ -73,7 +74,7 @@ impl Vecs {
 
         let total_heights = indexer.vecs.blocks.timestamp.len();
 
-        if total_heights <= START_HEIGHT {
+        if total_heights <= START_HEIGHT_SLOW {
             return Ok(());
         }
 
@@ -85,12 +86,12 @@ impl Vecs {
             .inner
             .truncate_if_needed_at(truncate_to)?;
 
-        if self.spot.cents.height.len() < START_HEIGHT {
+        if self.spot.cents.height.len() < START_HEIGHT_SLOW {
             for line in brk_oracle::PRICES
                 .lines()
                 .skip(self.spot.cents.height.len())
             {
-                if self.spot.cents.height.len() >= START_HEIGHT {
+                if self.spot.cents.height.len() >= START_HEIGHT_SLOW {
                     break;
                 }
                 let dollars: f64 = line.parse().unwrap_or(0.0);
@@ -103,8 +104,8 @@ impl Vecs {
             return Ok(());
         }
 
-        let config = Config::default();
         let committed = self.spot.cents.height.len();
+        let config = Config::for_height(committed);
         let prev_cents = self
             .spot
             .cents
@@ -112,7 +113,7 @@ impl Vecs {
             .collect_one_at(committed - 1)
             .unwrap();
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
-        let warmup = config.window_size.min(committed - START_HEIGHT);
+        let warmup = config.window_size.min(committed - START_HEIGHT_SLOW);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
             Self::feed_blocks(o, indexer, (committed - warmup)..committed, None);
         });
@@ -123,7 +124,26 @@ impl Vecs {
             committed, total_heights
         );
 
-        let ref_bins = Self::feed_blocks(&mut oracle, indexer, committed..total_heights, None);
+        // Slow cold-start EMA up to START_HEIGHT, then switch to the fast
+        // mature-market EMA. Steady-state runs start past START_HEIGHT and skip
+        // the slow segment entirely.
+        let mut ref_bins = Vec::with_capacity(num_new);
+        if committed < START_HEIGHT {
+            let slow_end = START_HEIGHT.min(total_heights);
+            ref_bins.extend(Self::feed_blocks(&mut oracle, indexer, committed..slow_end, None));
+            if slow_end == START_HEIGHT {
+                oracle.reconfigure(Config::default());
+            }
+        }
+        let fast_start = committed.max(START_HEIGHT);
+        if fast_start < total_heights {
+            ref_bins.extend(Self::feed_blocks(
+                &mut oracle,
+                indexer,
+                fast_start..total_heights,
+                None,
+            ));
+        }
 
         for (i, ref_bin) in ref_bins.into_iter().enumerate() {
             self.spot

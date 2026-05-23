@@ -1,8 +1,8 @@
 # brk_oracle
 
-**Version 2**
+**Version 3**
 
-Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 508,000 (February 2018) onward.
+Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 470,000 (June 2017) onward.
 
 Inspired by [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple), which proved the concept. brk_oracle takes the same core insight and redesigns the algorithm for per-block resolution and rolling operation. See [comparison](#comparison-with-utxoracle) below.
 
@@ -87,7 +87,7 @@ The fixed ratios between round-dollar amounts ($1, $2, $3, $5, ... $10,000) crea
 The oracle slides this stencil across the EMA histogram within the search window. At each candidate position:
 
 1. **Read** the EMA value at all 19 expected spike locations
-2. **Normalize** each value by dividing by that offset's peak within the search window — this gives rare amounts like $3 equal voting weight to common amounts like $100
+2. **Normalize** each value by dividing by that offset's peak within the search window: this gives rare amounts like $3 equal voting weight to common amounts like $100
 3. **Sum** the 19 normalized values into a single score
 
 The position with the highest score is where the fingerprint best matches the histogram.
@@ -102,7 +102,7 @@ A $100 purchase at price P produces `$100 / P × 10⁸` sats, which lands in bin
       = (10 − log₁₀(P)) × 200
 ```
 
-So the stencil's winning position — the bin where $100 purchases land — directly encodes the price:
+So the stencil's winning position, the bin where $100 purchases land, directly encodes the price:
 
 ```
   price = 10^(10 − bin / 200)  dollars
@@ -124,7 +124,7 @@ The oracle consumes one pre-built histogram per block via `process_histogram(&hi
 
 The caller does the filtering when it builds the histogram. For each block it skips the coinbase, drops every output of a transaction carrying an `OP_RETURN` (and, below height 630,000, every output of a transaction with more than 100 outputs), then bins the rest. `default_eligible_bin(sats, output_type)` (or `Oracle::output_to_bin` for a non-default `Config`) applies the per-output rules: excluded script types, dust, and round-BTC values. It returns the bin index, or `None` for a filtered output.
 
-The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..508,000. Its last entry, height 507,999 (one below `START_HEIGHT`), seeds the oracle's first on-chain computation at height 508,000.
+The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..470,000. Its last entry, height 469,999 (one below `START_HEIGHT_SLOW`), seeds the oracle's first on-chain computation at height 470,000.
 
 ## Configuration
 
@@ -139,6 +139,8 @@ All parameters via `Config` with sensible defaults:
 | `exclude_common_round_values` | true | Filter d × 10ⁿ (d ∈ {1,2,3,5,6}) to prevent false stencil matches |
 | `excluded_output_types` | P2TR | Script types dominated by protocol activity |
 
+Between height 470,000 and 508,000 the oracle runs a slower cold-start configuration (`Config::slow()`: `alpha` = 0.10, ~19-block span, `window_size` = 40). The thinner pre-2018 output mix lets the fast default octave-lock onto the round-dollar half-price pattern, and the slow EMA resists that drift. At height 508,000 `Oracle::reconfigure` switches to the defaults above. `Config::for_height` returns the right one for any height.
+
 ## Comparison with UTXOracle
 
 [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple) proved that BTC/USD can be derived purely from on-chain data. Both projects share the same core insight (round-dollar detection via log-scale histogram) but make different engineering choices:
@@ -152,29 +154,29 @@ All parameters via `Config` with sensible defaults:
 | Stencil | 19 round-USD offsets ($1 to $10k), each normalized to its own peak | 803-point Gaussian + weighted spike template targeting 17 round-USD amounts |
 | Round BTC handling | Excluded from histogram entirely | Histogram bins smoothed by averaging neighbors |
 | Output filtering | Per-tx OP_RETURN drop, then per-output: script type, dust threshold, round BTC | Per-tx: not coinbase, no OP_RETURN, exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
-| Validated from | Height 508,000 (February 2018) | Dec 15, 2023 |
+| Validated from | Height 470,000 (June 2017) | Dec 15, 2023 |
 | Language | Rust | Python |
 | Dependencies | None (pure computation, caller provides block data) | bitcoin-cli + direct blk file reads |
 | Bins per decade | 200 | 200 |
 
 ## Accuracy
 
-Tested over 428,251 blocks (heights 508,000 to 950,490, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 466,251 blocks (heights 470,000 to 950,694, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 
 | Metric | Value |
 |--------|-------|
-| Median error | 0.11% |
-| 95th percentile | 0.68% |
-| 99th percentile | 1.7% |
-| 99.9th percentile | 4.7% |
-| RMSE | 0.46% |
-| Max error | 28.8% |
-| Bias | +0.00 bins (essentially zero) |
-| Blocks > 5% error | 367 (0.086%) |
-| Blocks > 10% error | 116 |
-| Blocks > 20% error | 1 |
+| Median error | 0.12% |
+| 95th percentile | 0.91% |
+| 99th percentile | 2.6% |
+| 99.9th percentile | 12.0% |
+| RMSE | 0.85% |
+| Max error | 47.7% |
+| Bias | +0.03 bins (essentially zero) |
+| Blocks > 5% error | 1,605 (0.344%) |
+| Blocks > 10% error | 609 |
+| Blocks > 20% error | 189 |
 
 ### Daily candles
 
@@ -182,30 +184,31 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 
 | | Median | RMSE | Max |
 |-------|--------|------|-----|
-| Open | 0.21% | 0.59% | 15.3% |
-| High | 0.53% | 0.99% | 15.4% |
-| Low | 0.52% | 1.39% | 21.5% |
-| Close | 0.24% | 0.73% | 15.4% |
+| Open | 0.22% | 0.90% | 21.1% |
+| High | 0.55% | 1.08% | 15.4% |
+| Low | 0.54% | 1.65% | 20.5% |
+| Close | 0.26% | 0.98% | 21.1% |
 
 ### By year
 
 | Year | Blocks | Median | RMSE | Max | >5% | >10% | >20% | Price range |
 |------|--------|--------|------|-----|-----|------|------|-------------|
-| 2018 | 48,492 | 0.17% | 0.84% | 28.8% | 136 | 87 | 1 | $3,129–$11,775 |
+| 2017 | 31,961 | 0.39% | 2.37% | 47.7% | 980 | 373 | 116 | $1,758–$19,892 |
+| 2018 | 54,531 | 0.18% | 1.35% | 32.2% | 394 | 207 | 73 | $3,129–$17,178 |
 | 2019 | 54,272 | 0.16% | 0.59% | 17.4% | 100 | 16 | 0 | $3,338–$13,868 |
 | 2020 | 53,102 | 0.10% | 0.42% | 11.6% | 61 | 3 | 0 | $3,858–$29,322 |
 | 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 43 | 10 | 0 | $27,678–$69,000 |
 | 2022 | 53,230 | 0.07% | 0.32% | 6.8% | 10 | 0 | 0 | $15,460–$48,240 |
 | 2023 | 54,032 | 0.10% | 0.25% | 6.6% | 5 | 0 | 0 | $16,490–$44,700 |
-| 2024 | 53,367 | 0.10% | 0.29% | 7.1% | 8 | 0 | 0 | $38,555–$108,298 |
+| 2024 | 53,367 | 0.10% | 0.28% | 7.1% | 8 | 0 | 0 | $38,555–$108,298 |
 | 2025 | 53,113 | 0.11% | 0.25% | 5.8% | 4 | 0 | 0 | $74,409–$126,198 |
-| 2026 | 5,910 | 0.11% | 0.27% | 3.2% | 0 | 0 | 0 | $60,000–$97,900 |
+| 2026 | 5,910 | 0.10% | 0.27% | 3.2% | 0 | 0 | 0 | $60,000–$97,900 |
 
-The oracle is only as good as the signal it reads. The largest errors cluster in late 2018: the November price crash fell faster than the narrow search window could follow (28.8% max error, at height 550,890), and on-chain volume was lower then, so the round-dollar pattern was weaker (0.84% RMSE for the year). By 2020 the signal is strong enough for 0.1% median accuracy, and since 2022 no block exceeds 10% error.
+The oracle is only as good as the signal it reads. The largest errors cluster in late 2017: the parabolic December run-up toward $20,000 rose faster than the slow cold-start EMA could follow, so the oracle lagged low (47.7% max error, at height 498,246, oracle ~$11,100 vs exchange ~$16,400). The thinner pre-2018 on-chain volume also weakens the round-dollar pattern, so 2017 and 2018 carry the bulk of the error (2.37% and 1.35% RMSE). From 2019 the signal strengthens: by 2020 the oracle reaches 0.1% median accuracy, and since 2022 no block exceeds 10% error.
 
 ### Why no outlier smoothing?
 
-Post-hoc smoothing — for example, correcting any block whose price deviates more than 5% from both its neighbors — would improve the aggregate numbers. This is deliberately not done, for two reasons:
+Post-hoc smoothing, for example correcting any block whose price deviates more than 5% from both its neighbors, would improve the aggregate numbers. This is deliberately not done, for two reasons:
 
 1. **Simplicity**: The oracle is a single forward pass with no lookback corrections. Adding smoothing means defining thresholds, neighbor windows, and replacement strategies, all of which add complexity for marginal gain.
 2. **Finality**: Each block's price is produced once and never revised (unless the block itself is reorged). Downstream consumers can treat the oracle output as append-only. Smoothing would require retroactively changing already-published prices, breaking that property.
@@ -216,7 +219,7 @@ Post-hoc smoothing — for example, correcting any block whose price deviates mo
 
 Changes from v2:
 
-- **Earlier start**: on-chain tracking begins at height 508,000 (February 2018) instead of 525,000, adding about 17,000 blocks of history.
+- **Earlier start with a cold-start regime**: on-chain tracking begins at height 470,000 (June 2017) instead of 525,000, adding about 55,000 blocks of history. Below height 508,000 the oracle runs a slower EMA (`Config::slow()`, ~19-block span, window 40) that resists the round-dollar half-price drift the fast default octave-locks onto in the thinner pre-2018 output mix, then switches to the fast default at 508,000 via `Oracle::reconfigure`.
 - **Max-outputs filter**: a transaction with more than 100 outputs is dropped from the histogram below height 630,000. Large fan-outs (exchange sweeps, mixer payouts) are batch machinery, not round-dollar payments, and the thin 2018-2020 signal needs them removed to stay locked onto the pattern. Above 630,000 on-chain volume is dense enough that the cap removes more genuine signal than noise, so it is lifted.
 - **Wider up-reach**: `search_below` raised from 9 to 12 bins. The sharp 2018 reversal candles need extra room to follow a fast move upward in price.
 

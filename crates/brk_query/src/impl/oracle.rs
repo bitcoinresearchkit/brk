@@ -4,7 +4,7 @@ use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT, cents_to_bin,
+    Config, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_SLOW, cents_to_bin,
     for_each_round_dollar_bin,
 };
 use brk_types::{Dollars, OutputType, Sats, TxIndex, TxOutIndex};
@@ -90,7 +90,7 @@ impl Query {
     /// committed blocks ending just before `end`. Reads are capped at `safe` so
     /// concurrent indexer writes past the cap stay invisible.
     fn warm_oracle(&self, seed_bin: f64, end: usize, safe: &Lengths) -> Oracle {
-        let config = Config::default();
+        let config = Config::for_height(end.saturating_sub(1));
         let start = end.saturating_sub(config.window_size);
         Oracle::from_checkpoint(seed_bin, config, |o| {
             PricesVecs::feed_blocks(o, self.indexer(), start..end, Some(safe));
@@ -113,7 +113,7 @@ impl Query {
         Ok(cents_to_bin(cents.inner() as f64))
     }
 
-    /// `START_HEIGHT <= height < min(spot price len, safe height)` or 404.
+    /// `START_HEIGHT_SLOW <= height < min(spot price len, safe height)` or 404.
     /// Returns the safe lengths so callers cap reads at the same bound.
     fn check_histogram_height(&self, height: usize) -> Result<Lengths> {
         let safe = self.safe_lengths();
@@ -125,7 +125,7 @@ impl Query {
             .height
             .len()
             .min(safe.height.to_usize());
-        if height < START_HEIGHT || height >= bound {
+        if height < START_HEIGHT_SLOW || height >= bound {
             return Err(Error::NotFound(format!(
                 "oracle histogram unavailable for height {height}"
             )));

@@ -14,12 +14,17 @@ use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
 /// so downstream consumers can invalidate cached results.
 pub const VERSION: u32 = 3;
 
-/// Pre-oracle dollar prices, one per line, heights 0..508_000. The last entry
-/// (height `START_HEIGHT - 1`) seeds the oracle's first on-chain computation at
-/// `START_HEIGHT`.
+/// Pre-oracle dollar prices, one per line, heights 0..470_000. The last entry
+/// seeds the oracle's first on-chain computation at `START_HEIGHT_SLOW`.
 pub const PRICES: &str = include_str!("prices.txt");
 
-/// First height where the oracle computes from on-chain data.
+/// First height the oracle computes on-chain, with the slow cold-start EMA
+/// ([`Config::slow`]). Below it, prices come from [`PRICES`].
+pub const START_HEIGHT_SLOW: usize = 470_000;
+
+/// Height where the oracle switches slow -> fast EMA ([`Config::default`]).
+/// The regimes are complementary: slow resists the round-USD half-price drift
+/// that locks fast below here; fast tracks the 2018-2019 crashes that lock slow.
 pub const START_HEIGHT: usize = 508_000;
 
 /// A transaction with more than this many outputs is a batch payout (exchange
@@ -300,6 +305,23 @@ impl Oracle {
         self.ref_bin
     }
 
+    /// Switch EMA regime mid-stream (slow -> fast at [`START_HEIGHT`]) by
+    /// re-warming under `config` over the most recent `config.window_size` raw
+    /// histograms, so a continuous build and an incremental warm-up reach the
+    /// same state; `ref_bin` carries over.
+    pub fn reconfigure(&mut self, config: Config) {
+        let window = self.config.window_size;
+        let kept: Vec<HistogramRaw> = (0..self.filled.min(config.window_size))
+            .rev()
+            .map(|age| self.histograms[(self.cursor + window - 1 - age) % window].clone())
+            .collect();
+        *self = Self::from_checkpoint(self.ref_bin, config, |o| {
+            kept.iter().for_each(|h| {
+                o.process_histogram(h);
+            });
+        });
+    }
+
     pub fn ref_bin(&self) -> f64 {
         self.ref_bin
     }
@@ -379,5 +401,36 @@ mod tests {
         let oracle = Oracle::new(1600.0, Config::default());
         assert_eq!(oracle.ref_bin(), 1600.0);
         assert_eq!(oracle.price_cents(), bin_to_cents(1600.0).into());
+    }
+
+    // reconfigure must leave the oracle in the same state as a fresh warm-up
+    // over the most recent window of raw histograms; the continuous build and
+    // the incremental resume rely on this agreeing at the slow -> fast seam.
+    #[test]
+    fn reconfigure_matches_fresh_warmup() {
+        let hists: Vec<HistogramRaw> = (0..60)
+            .map(|i| {
+                let mut h = HistogramRaw::zeros();
+                h.increment(1200 + i % 7);
+                h.increment(1600 + i % 5);
+                h
+            })
+            .collect();
+
+        let fast = Config::default();
+        let mut switched = Oracle::new(1600.0, Config::slow());
+        hists.iter().for_each(|h| {
+            switched.process_histogram(h);
+        });
+        switched.reconfigure(fast.clone());
+
+        let keep = fast.window_size;
+        let fresh = Oracle::from_checkpoint(switched.ref_bin(), fast, |o| {
+            hists[hists.len() - keep..].iter().for_each(|h| {
+                o.process_histogram(h);
+            });
+        });
+
+        assert!(switched.ema().iter().eq(fresh.ema().iter()));
     }
 }

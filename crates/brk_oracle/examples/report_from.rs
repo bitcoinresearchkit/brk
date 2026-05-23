@@ -26,6 +26,80 @@ const STENCIL_OFFSETS: [i32; 19] = [
     -400, -340, -305, -260, -200, -165, -140, -120, -105, -60, 0, 35, 60, 95, 140, 200, 260, 340,
     400,
 ];
+const N_ARMS: usize = STENCIL_OFFSETS.len();
+
+/// Canonical L1-normalized payment shape across the 19 stencil arms, estimated
+/// from true-center arm vectors over a validated block range (~$1.8k era).
+/// The real price center reproduces this profile; a ½×/2× alias distorts it
+/// (dark holes at no-ladder-partner arms, spurious mass from between-rung
+/// payments), so correlation against it discriminates octaves the raw stencil
+/// sum cannot. Order matches STENCIL_OFFSETS / the $1..$10k ladder.
+const ARM_PROFILE: [f64; N_ARMS] = [
+    0.022, 0.029, 0.021, 0.045, 0.060, 0.053, 0.092, 0.066, 0.077, 0.075, 0.105, 0.052, 0.075,
+    0.049, 0.059, 0.043, 0.044, 0.021, 0.014,
+];
+
+/// Raw EMA arm vector at `center` (mass on each of the 19 stencil offsets).
+fn arms_at(ema: &HistogramEma, center: i64) -> [f64; N_ARMS] {
+    let mut arms = [0.0f64; N_ARMS];
+    for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
+        let idx = center + off as i64;
+        if idx >= 0 && (idx as usize) < NUM_BINS {
+            arms[i] = ema[idx as usize];
+        }
+    }
+    arms
+}
+
+/// Pearson correlation between the raw EMA arm vector at `center` and a payment
+/// shape `profile`. High when the local shape matches real payments, low at a
+/// ½×/2× alias whose holes and spurious arms distort the shape.
+fn arm_profile_corr(ema: &HistogramEma, center: i64, profile: &[f64; N_ARMS]) -> f64 {
+    let arms = arms_at(ema, center);
+    let n = N_ARMS as f64;
+    let ma = arms.iter().sum::<f64>() / n;
+    let mb = profile.iter().sum::<f64>() / n;
+    let (mut num, mut da, mut db) = (0.0, 0.0, 0.0);
+    for i in 0..N_ARMS {
+        let (xa, xb) = (arms[i] - ma, profile[i] - mb);
+        num += xa * xb;
+        da += xa * xa;
+        db += xb * xb;
+    }
+    if da > 0.0 && db > 0.0 {
+        num / (da * db).sqrt()
+    } else {
+        0.0
+    }
+}
+
+/// Stencil-arm indices whose value v has 2v NOT on the round-USD ladder
+/// ($2 $3 $20 $30 $200 $300 $2000 $10000). A half-price hypothesis shifts the
+/// center +60 bins; an arm is lit there only if 2v is itself a round-USD amount
+/// people pay, so these eight are the only arms that fall dark at the ½x alias.
+/// They carry the entire octave discrimination; the other eleven alias cleanly.
+const DISC_ARMS: [usize; 8] = [1, 2, 6, 8, 12, 13, 16, 18];
+
+/// The four "decade-anchor" arms ($10 $50 $100 $1000) whose value has BOTH 2v
+/// and v/2 on the round-USD ladder, so they alias across the octave in either
+/// direction and carry zero up/down information. Down-weighting them is the
+/// symmetric counterpart to up-weighting the half-only DISC_ARMS, meant to
+/// resist the 2x climb as well as the 1/2x slide.
+const ALIAS_ARMS: [usize; 4] = [4, 9, 10, 15];
+
+/// Sum of EMA mass on a chosen subset of stencil arms at `center`.
+fn arm_subset_sum(ema: &HistogramEma, center: i64, arms: &[usize]) -> f64 {
+    arms.iter()
+        .map(|&i| {
+            let idx = center + STENCIL_OFFSETS[i] as i64;
+            if idx >= 0 && (idx as usize) < NUM_BINS {
+                ema[idx as usize]
+            } else {
+                0.0
+            }
+        })
+        .sum()
+}
 
 /// Raw sum of EMA mass landing on the 19 stencil arms when centered at `center`.
 fn ema_stencil_sum(ema: &HistogramEma, center: i64) -> f64 {
@@ -73,7 +147,7 @@ impl GuardCfg {
             enabled: std::env::var("OCTAVE_GUARD")
                 .ok()
                 .map(|v| v != "0")
-                .unwrap_or(true),
+                .unwrap_or(false),
             tau: g("GUARD_TAU", 0.15),
             raw_margin: g("GUARD_RAW", 1.0),
             q_margin: g("GUARD_QMARGIN", 4.0) as usize,
@@ -92,7 +166,7 @@ impl GuardCfg {
 /// partner one octave away), so this count separates truth from alias even when
 /// the normalized score-sum cannot.
 fn arm_count(ema: &HistogramEma, center: i64, tau: f64) -> usize {
-    let mut arms = [0.0f64; 19];
+    let mut arms = [0.0f64; N_ARMS];
     let mut peak = 0.0f64;
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         let idx = center + off as i64;
@@ -116,7 +190,7 @@ fn arm_count(ema: &HistogramEma, center: i64, tau: f64) -> usize {
 /// EMA mass >= tau * peak arm). Order: $1 $2 $3 $5 $10 $15 $20 $25 $30 $50 $100
 /// $150 $200 $300 $500 $1k $2k $5k $10k. Reveals WHICH amounts are present.
 fn arm_pattern(ema: &HistogramEma, center: i64, tau: f64) -> String {
-    let mut arms = [0.0f64; 19];
+    let mut arms = [0.0f64; N_ARMS];
     let mut peak = 0.0f64;
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         let idx = center + off as i64;
@@ -151,6 +225,9 @@ fn guarded_best_bin(
     search_below: usize,
     search_above: usize,
     guard: &GuardCfg,
+    arm_weights: &[f64; N_ARMS],
+    corr_weight: f64,
+    profile: &[f64; N_ARMS],
 ) -> f64 {
     let center = prev_bin.round() as usize;
     let search_start = center.saturating_sub(search_below);
@@ -159,7 +236,7 @@ fn guarded_best_bin(
         return prev_bin;
     }
 
-    let mut track_norm = [0.0f64; 19];
+    let mut track_norm = [0.0f64; N_ARMS];
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         for bin in search_start..search_end {
             let idx = bin as i32 + off;
@@ -173,8 +250,11 @@ fn guarded_best_bin(
         for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
             let idx = bin as i32 + off;
             if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS && track_norm[i] > 0.0 {
-                total += ema[idx as usize] / track_norm[i];
+                total += arm_weights[i] * ema[idx as usize] / track_norm[i];
             }
+        }
+        if corr_weight != 0.0 {
+            total += corr_weight * arm_profile_corr(ema, bin as i64, profile);
         }
         total
     };
@@ -454,12 +534,22 @@ fn main() {
         .map(|ts| (**ts / 86400).saturating_sub(GENESIS_DAY) as usize)
         .collect();
 
+    // Seed price at height `start - 1`. The baked prices.txt only covers up to
+    // 508k (the cold-start seed); past it we warm-start from the exchange close
+    // so any later start height gets a primed ref_bin without the cold-start
+    // alias zone. start <= 508k stays bit-identical to the old baseline.
     let start_price: f64 = PRICES
         .lines()
         .nth(start - 1)
-        .expect("prices.txt too short")
-        .parse()
-        .expect("Failed to parse seed price");
+        .and_then(|l| l.parse().ok())
+        .unwrap_or_else(|| {
+            let o = height_ohlc.get(start - 1).copied().unwrap_or([0.0; 4]);
+            if o[3] > 0.0 { o[3] } else { (o[1] + o[2]) / 2.0 }
+        });
+    // Exact seed override (reproduce the committed prices.txt seed at a start the
+    // truncated working-tree prices.txt no longer covers).
+    let start_price =
+        std::env::var("SEED").ok().and_then(|s| s.parse().ok()).unwrap_or(start_price);
 
     let mut config = Config::default();
     if let Some(w) = std::env::var("EMA_WINDOW")
@@ -484,6 +574,57 @@ fn main() {
         config.search_above = sa;
     }
     let guard = GuardCfg::from_env();
+    // Lever 3: up-weight the 8 octave-discriminating arms (2v not on the ladder)
+    // in the stencil score. They alone separate a center from its half-price
+    // alias; the other 11 alias cleanly and only dilute the up/down decision.
+    let disc_weight: f64 = std::env::var("DISC_WEIGHT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1.0);
+    let alias_weight: f64 = std::env::var("ALIAS_WEIGHT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1.0);
+    // Shape-correlation restoring force: add corr_weight * Pearson(arms, profile)
+    // to each candidate bin's stencil score. Pulls the ±window pick toward the
+    // octave whose arm-shape matches real payments, resisting the ½×/2× slide
+    // without a hard continuity clamp. 0 = off (bit-identical to baseline).
+    let corr_weight: f64 = std::env::var("CORR_WEIGHT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0.0);
+    // EMA rate for the adaptive shape template. The profile tracks the current
+    // price regime (which arms are tall) so correlation stays meaningful as the
+    // price moves an octave over months, while remaining slow enough to ride
+    // through a transient ½×/2× slide (tens of blocks) without adapting to it.
+    let corr_beta: f64 = std::env::var("CORR_BETA")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0.002);
+    // Mid-run regime switch, mirrors production Oracle::reconfigure at START_HEIGHT:
+    // at SWITCH_AT rebuild the EMA to SWITCH_WINDOW/SWITCH_ALPHA and warm-start fresh
+    // (ring reset, ref_bin kept) - the same state as a fresh warm-up. Search window
+    // is unchanged (both regimes share it). 0 = no switch (single-config baseline).
+    let switch_at: usize = std::env::var("SWITCH_AT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    let switch_window: usize = std::env::var("SWITCH_WINDOW")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(12);
+    let switch_alpha: f64 = std::env::var("SWITCH_ALPHA")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(2.0 / 7.0);
+    let mut arm_weights = [1.0f64; N_ARMS];
+    for &i in &DISC_ARMS {
+        arm_weights[i] = disc_weight;
+    }
+    for &i in &ALIAS_ARMS {
+        arm_weights[i] = alias_weight;
+    }
+    eprintln!("  disc_weight={disc_weight} on {DISC_ARMS:?}; alias_weight={alias_weight} on {ALIAS_ARMS:?}; corr_weight={corr_weight}");
     let anom_thresh: f64 = std::env::var("ANOM_THRESH")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -539,10 +680,13 @@ fn main() {
         guard.global,
         guard.global_radius,
     );
+    if switch_at != 0 {
+        eprintln!("  switch: at height {switch_at} -> window={switch_window} alpha={switch_alpha:.5}");
+    }
     let (sb, sa) = (config.search_below, config.search_above);
-    let window_size = config.window_size;
+    let mut window_size = config.window_size;
     let alpha = config.alpha;
-    let weights: Vec<f64> = (0..window_size)
+    let mut weights: Vec<f64> = (0..window_size)
         .map(|i| alpha * (1.0 - alpha).powi(i as i32))
         .collect();
     let mut ring: Vec<Vec<f64>> = vec![vec![0.0; NUM_BINS]; window_size];
@@ -550,6 +694,9 @@ fn main() {
     let mut filled = 0usize;
     let mut ema = HistogramEma::zeros();
     let mut ref_bin = cents_to_bin(start_price * 100.0);
+    // Adaptive shape template, seeded with the static profile and re-estimated
+    // each block from the L1-normalized arm vector at the pick.
+    let mut profile = ARM_PROFILE;
 
     // Lever 4: a parallel "sharp" detection EMA (fast span, short window) folded
     // from the same per-block hists. The slow EMA above still sets the price; this
@@ -597,6 +744,15 @@ fn main() {
 
     let loop_end = end_override.unwrap_or(total_heights).min(total_heights);
     for h in start..loop_end {
+        if switch_at != 0 && h == switch_at {
+            window_size = switch_window;
+            weights = (0..window_size)
+                .map(|i| switch_alpha * (1.0 - switch_alpha).powi(i as i32))
+                .collect();
+            ring = vec![vec![0.0; NUM_BINS]; window_size];
+            ring_cursor = 0;
+            filled = 0;
+        }
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -692,8 +848,20 @@ fn main() {
                 sharp_ema[b] += w * block[b];
             }
         }
-        ref_bin = guarded_best_bin(&ema, ref_bin, sb, sa, &guard);
+        ref_bin = guarded_best_bin(&ema, ref_bin, sb, sa, &guard, &arm_weights, corr_weight, &profile);
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;
+
+        // Re-estimate the shape template from the L1-normalized arm vector at the
+        // new pick, blended in slowly so a transient octave slide cannot corrupt it.
+        if corr_weight != 0.0 {
+            let arms = arms_at(&ema, ref_bin.round() as i64);
+            let s: f64 = arms.iter().sum();
+            if s > 0.0 {
+                for i in 0..N_ARMS {
+                    profile[i] = (1.0 - corr_beta) * profile[i] + corr_beta * (arms[i] / s);
+                }
+            }
+        }
 
         let o = height_ohlc.get(h).copied().unwrap_or([0.0; 4]);
         let (ex_high, ex_low, ex_close) = (o[1], o[2], o[3]);
@@ -724,6 +892,9 @@ fn main() {
             let qh = arm_count(&ema, true_bin + 60, guard.tau);
             let qd = arm_count(&ema, true_bin - 60, guard.tau);
             let pat = arm_pattern(&ema, true_bin, guard.tau);
+            // Octave-discriminating subset only: mass at true vs half center.
+            let dt = arm_subset_sum(&ema, true_bin, &DISC_ARMS);
+            let dh = arm_subset_sum(&ema, true_bin + 60, &DISC_ARMS);
             // Same arm-count contrast measured on the sharp detection EMA.
             let qst = arm_count(&sharp_ema, true_bin, guard.tau);
             let qsh = arm_count(&sharp_ema, true_bin + 60, guard.tau);
@@ -731,7 +902,7 @@ fn main() {
             let spat = arm_pattern(&sharp_ema, true_bin, guard.tau);
             let ts_secs: u32 = *timestamps[h];
             eprintln!(
-                "{h}\t{ts_secs}\t{oracle_price:.0}\t{ex_close:.0}\t{band_err:+.2}\t{eligible}\tT={s_true:.1}\tH={s_half:.1}\tD={s_dbl:.1}\tQt={qt}\tQh={qh}\tQd={qd}\t{pat}\t|sharp Qt={qst} Qh={qsh} Qd={qsd}\t{spat}"
+                "{h}\t{ts_secs}\t{oracle_price:.0}\t{ex_close:.0}\t{band_err:+.2}\t{eligible}\tT={s_true:.1}\tH={s_half:.1}\tD={s_dbl:.1}\tQt={qt}\tQh={qh}\tQd={qd}\tDt={dt:.1}\tDh={dh:.1}\t{pat}\t|sharp Qt={qst} Qh={qsh} Qd={qsd}\t{spat}"
             );
         }
 

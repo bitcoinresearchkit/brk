@@ -37,3 +37,27 @@ impl Default for Config {
         }
     }
 }
+
+impl Config {
+    /// Cold-start config below [`START_HEIGHT`](crate::START_HEIGHT): a slow EMA
+    /// (span ~19) that resists the round-USD half-price drift the fast default
+    /// octave-locks onto in the thin pre-2018 output mix. Window grows to 40 to
+    /// hold the decay.
+    pub fn slow() -> Self {
+        Self {
+            alpha: 0.10,
+            window_size: 40,
+            ..Self::default()
+        }
+    }
+
+    /// Config for `height`: [`slow`](Self::slow) below
+    /// [`START_HEIGHT`](crate::START_HEIGHT), else [`default`](Self::default).
+    pub fn for_height(height: usize) -> Self {
+        if height < crate::START_HEIGHT {
+            Self::slow()
+        } else {
+            Self::default()
+        }
+    }
+}
