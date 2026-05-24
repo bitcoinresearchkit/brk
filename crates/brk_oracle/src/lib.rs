@@ -14,13 +14,13 @@ use config::{DEFAULT_EXCLUDED_OUTPUT_TYPES, DEFAULT_MIN_SATS};
 /// so downstream consumers can invalidate cached results.
 pub const VERSION: u32 = 3;
 
-/// Pre-oracle dollar prices, one per line, heights 0..470_000. The last entry
+/// Pre-oracle dollar prices, one per line, heights 0..340_000. The last entry
 /// seeds the oracle's first on-chain computation at `START_HEIGHT_SLOW`.
 pub const PRICES: &str = include_str!("prices.txt");
 
 /// First height the oracle computes on-chain, with the slow cold-start EMA
 /// ([`Config::slow`]). Below it, prices come from [`PRICES`].
-pub const START_HEIGHT_SLOW: usize = 470_000;
+pub const START_HEIGHT_SLOW: usize = 340_000;
 
 /// Height where the oracle switches slow -> fast EMA ([`Config::default`]).
 /// The regimes are complementary: slow resists the round-USD half-price drift
@@ -77,6 +77,14 @@ const STENCIL_OFFSETS: [i32; 19] = [
     340,  // $5000
     400,  // $10000
 ];
+
+/// Number of round-USD stencil arms.
+const N_ARMS: usize = STENCIL_OFFSETS.len();
+
+/// EMA rate for the adaptive shape template (~250-block time constant), slow
+/// enough that a transient octave slide can't corrupt the profile before the
+/// pick recovers.
+const CORR_BETA: f64 = 0.004;
 
 /// Maps a satoshi value to its log-scale bin index.
 /// bin = round(log10(sats) * BINS_PER_DECADE).
@@ -165,13 +173,57 @@ pub fn cents_to_bin(cents: f64) -> f64 {
     (10.0 - (cents / 100.0).log10()) * BINS_PER_DECADE as f64
 }
 
+/// Raw EMA mass on each of the 19 stencil arms at `center`.
+fn arms_at(ema: &HistogramEma, center: i64) -> [f64; N_ARMS] {
+    let mut arms = [0.0; N_ARMS];
+    for (i, &offset) in STENCIL_OFFSETS.iter().enumerate() {
+        let idx = center + offset as i64;
+        if idx >= 0 && (idx as usize) < NUM_BINS {
+            arms[i] = ema[idx as usize];
+        }
+    }
+    arms
+}
+
+/// [`arms_at`] L1-normalized to sum 1, or `None` when the center carries no mass.
+fn normalized_arms_at(ema: &HistogramEma, center: i64) -> Option<[f64; N_ARMS]> {
+    let mut arms = arms_at(ema, center);
+    let sum: f64 = arms.iter().sum();
+    if sum <= 0.0 {
+        return None;
+    }
+    for arm in &mut arms {
+        *arm /= sum;
+    }
+    Some(arms)
+}
+
+/// Shape match `1 - L1distance` between the candidate's L1-normalized arm vector
+/// and the L1-normalized `profile`. 1.0 is an identical shape and it falls as
+/// mass shifts off the round-USD ladder, so it pulls the pick toward the octave
+/// whose payment shape looks real. Returns 0 for an empty (no-mass) center.
+fn arm_profile_match(ema: &HistogramEma, center: i64, profile: &[f64; N_ARMS]) -> f64 {
+    match normalized_arms_at(ema, center) {
+        Some(arms) => {
+            1.0 - (0..N_ARMS)
+                .map(|i| (arms[i] - profile[i]).abs())
+                .sum::<f64>()
+        }
+        None => 0.0,
+    }
+}
+
 /// Scores each candidate bin in the search window by summing normalized stencil
 /// matches across the EMA histogram, then refines with parabolic interpolation.
+/// When `corr_weight` is non-zero the [`arm_profile_match`] shape term is added
+/// to each candidate's score as an octave-discriminating restoring force.
 fn find_best_bin(
     ema: &HistogramEma,
     prev_bin: f64,
     search_below: usize,
     search_above: usize,
+    corr_weight: f64,
+    profile: &[f64; N_ARMS],
 ) -> f64 {
     let center = prev_bin.round() as usize;
     let search_start = center.saturating_sub(search_below);
@@ -199,6 +251,9 @@ fn find_best_bin(
             if idx >= 0 && (idx as usize) < NUM_BINS && track_norm[i] > 0.0 {
                 total += ema[idx as usize] / track_norm[i];
             }
+        }
+        if corr_weight != 0.0 {
+            total += corr_weight * arm_profile_match(ema, bin as i64, profile);
         }
         total
     };
@@ -246,6 +301,12 @@ pub struct Oracle {
     weights: Vec<f64>,
     excluded_mask: u16,
     warmup: bool,
+    /// Adaptive round-USD shape template, re-estimated each non-warmup block from
+    /// the arm vector at the pick. Seeded flat (every arm equal) and only
+    /// read/updated when `config.corr_weight` is non-zero (the slow cold-start
+    /// regime), so the EMA learns the real payment shape within a few hundred
+    /// blocks without a hand-tuned starting guess biasing acquisition.
+    profile: [f64; N_ARMS],
 }
 
 impl Oracle {
@@ -269,6 +330,7 @@ impl Oracle {
             excluded_mask,
             warmup: false,
             config,
+            profile: [1.0 / N_ARMS as f64; N_ARMS],
         }
     }
 
@@ -300,9 +362,26 @@ impl Oracle {
                 self.ref_bin,
                 self.config.search_below,
                 self.config.search_above,
+                self.config.corr_weight,
+                &self.profile,
             );
+            if self.config.corr_weight != 0.0 {
+                self.update_profile();
+            }
         }
         self.ref_bin
+    }
+
+    /// Blend the L1-normalized arm shape at the current pick into the adaptive
+    /// `profile` (slow EMA, [`CORR_BETA`]). The slow rate lets the template ride
+    /// through a transient octave dip without locking onto it. No-op when the
+    /// pick carries no mass.
+    fn update_profile(&mut self) {
+        if let Some(arms) = normalized_arms_at(&self.ema, self.ref_bin.round() as i64) {
+            (0..N_ARMS).for_each(|i| {
+                self.profile[i] = (1.0 - CORR_BETA) * self.profile[i] + CORR_BETA * arms[i];
+            });
+        }
     }
 
     /// Switch EMA regime mid-stream (slow -> fast at [`START_HEIGHT`]) by

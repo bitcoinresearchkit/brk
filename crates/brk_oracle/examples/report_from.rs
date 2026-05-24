@@ -73,6 +73,40 @@ fn arm_profile_corr(ema: &HistogramEma, center: i64, profile: &[f64; N_ARMS]) ->
     }
 }
 
+/// Shape-match via negative L1 distance between the candidate's L1-normalized arm
+/// vector and the L1-normalized `profile`. 1.0 = identical shape, lower as the
+/// shapes diverge. A covariance-free alternative to arm_profile_corr.
+fn arm_profile_l1(ema: &HistogramEma, center: i64, profile: &[f64; N_ARMS]) -> f64 {
+    let arms = arms_at(ema, center);
+    let s: f64 = arms.iter().sum();
+    if s <= 0.0 {
+        return 0.0;
+    }
+    let mut dist = 0.0;
+    for i in 0..N_ARMS {
+        dist += (arms[i] / s - profile[i]).abs();
+    }
+    1.0 - dist
+}
+
+/// Shape-match via the dot product of the candidate's L1-normalized arm vector
+/// with the L1-normalized `profile`. The minimal matched-filter form: the same
+/// multiply-accumulate the stencil sum already does, but profile-weighted instead
+/// of uniform. No covariance, no abs. Rewards mass on profile-heavy arms but
+/// (unlike L1/Pearson) does NOT penalize missing mass elsewhere.
+fn arm_profile_dot(ema: &HistogramEma, center: i64, profile: &[f64; N_ARMS]) -> f64 {
+    let arms = arms_at(ema, center);
+    let s: f64 = arms.iter().sum();
+    if s <= 0.0 {
+        return 0.0;
+    }
+    let mut dot = 0.0;
+    for i in 0..N_ARMS {
+        dot += (arms[i] / s) * profile[i];
+    }
+    dot
+}
+
 /// Stencil-arm indices whose value v has 2v NOT on the round-USD ladder
 /// ($2 $3 $20 $30 $200 $300 $2000 $10000). A half-price hypothesis shifts the
 /// center +60 bins; an arm is lit there only if 2v is itself a round-USD amount
@@ -228,6 +262,8 @@ fn guarded_best_bin(
     arm_weights: &[f64; N_ARMS],
     corr_weight: f64,
     profile: &[f64; N_ARMS],
+    metric: u8,
+    stencil_weight: f64,
 ) -> f64 {
     let center = prev_bin.round() as usize;
     let search_start = center.saturating_sub(search_below);
@@ -247,14 +283,21 @@ fn guarded_best_bin(
     }
     let score = |bin: usize| -> f64 {
         let mut total = 0.0;
-        for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
-            let idx = bin as i32 + off;
-            if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS && track_norm[i] > 0.0 {
-                total += arm_weights[i] * ema[idx as usize] / track_norm[i];
+        if stencil_weight != 0.0 {
+            for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
+                let idx = bin as i32 + off;
+                if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS && track_norm[i] > 0.0 {
+                    total += stencil_weight * arm_weights[i] * ema[idx as usize] / track_norm[i];
+                }
             }
         }
         if corr_weight != 0.0 {
-            total += corr_weight * arm_profile_corr(ema, bin as i64, profile);
+            let shape = match metric {
+                1 => arm_profile_l1(ema, bin as i64, profile),
+                2 => arm_profile_dot(ema, bin as i64, profile),
+                _ => arm_profile_corr(ema, bin as i64, profile),
+            };
+            total += corr_weight * shape;
         }
         total
     };
@@ -601,6 +644,47 @@ fn main() {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(0.002);
+    // Apply the corr term only below this height. Lets the pre-X (slow) leg use
+    // corr while the post-X (fast) leg stays bit-identical to the no-corr baseline.
+    // Default = always on (global corr).
+    let corr_until: usize = std::env::var("CORR_UNTIL")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(usize::MAX);
+    // Shape-match metric: "l1" = negative L1 distance, "dot" = matched-filter dot
+    // product (both covariance-free), else Pearson.
+    let metric: u8 = match std::env::var("PROFILE_METRIC").as_deref() {
+        Ok("l1") => 1,
+        Ok("dot") => 2,
+        _ => 0,
+    };
+    let metric_name = ["pearson", "l1", "dot"][metric as usize];
+    // Profile seed: "bootstrap" = seed from the first warm-up pick's shape (no magic
+    // constant), "uniform"/"flat" = every arm equal (1/N_ARMS), else the static
+    // ARM_PROFILE.
+    let profile_seed = std::env::var("PROFILE_SEED").ok();
+    let bootstrap_profile = profile_seed.as_deref() == Some("bootstrap");
+    let uniform_profile =
+        matches!(profile_seed.as_deref(), Some("uniform") | Some("flat"));
+    // Stencil-sum weight (default 1). Set 0 for SHAPE-ONLY scoring: the shape match
+    // does both within-octave localization and octave discrimination, no stencil
+    // term and no cw balance to tune.
+    let stencil_weight: f64 = std::env::var("STENCIL_WEIGHT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1.0);
+    eprintln!(
+        "  shape: metric={} seed={} stencil_weight={}",
+        metric_name,
+        if bootstrap_profile {
+            "bootstrap"
+        } else if uniform_profile {
+            "uniform"
+        } else {
+            "static"
+        },
+        stencil_weight,
+    );
     // Mid-run regime switch, mirrors production Oracle::reconfigure at START_HEIGHT:
     // at SWITCH_AT rebuild the EMA to SWITCH_WINDOW/SWITCH_ALPHA and warm-start fresh
     // (ring reset, ref_bin kept) - the same state as a fresh warm-up. Search window
@@ -694,9 +778,27 @@ fn main() {
     let mut filled = 0usize;
     let mut ema = HistogramEma::zeros();
     let mut ref_bin = cents_to_bin(start_price * 100.0);
-    // Adaptive shape template, seeded with the static profile and re-estimated
-    // each block from the L1-normalized arm vector at the pick.
-    let mut profile = ARM_PROFILE;
+    // Adaptive shape template, re-estimated each block from the L1-normalized arm
+    // vector at the pick. Static seed = ARM_PROFILE; bootstrap = filled from the
+    // first warm-up pick (zeros until then, so corr contributes nothing yet).
+    let mut profile = if bootstrap_profile {
+        [0.0f64; N_ARMS]
+    } else if uniform_profile {
+        [1.0 / N_ARMS as f64; N_ARMS]
+    } else {
+        ARM_PROFILE
+    };
+    let mut profile_seeded = !bootstrap_profile;
+
+    // Parity check (VERIFY_PROD=1): drive the PRODUCTION Oracle (lib.rs) over the
+    // same per-block histograms and confirm its ref_bin matches this harness pick
+    // bit-for-bit. Only meaningful under the shipped slow config (EMA_ALPHA=0.10
+    // EMA_WINDOW=40 search 12/11, metric=l1, cw=8, norm off, ORACLE_END<=508000 so
+    // corr stays on the whole run).
+    let verify_prod = std::env::var("VERIFY_PROD").as_deref() == Ok("1");
+    let mut prod_oracle = brk_oracle::Oracle::new(ref_bin, brk_oracle::Config::slow());
+    let mut prod_max_diff = 0.0f64;
+    let mut prod_diff_blocks = 0usize;
 
     // Lever 4: a parallel "sharp" detection EMA (fast span, short window) folded
     // from the same per-block hists. The slow EMA above still sets the price; this
@@ -848,17 +950,35 @@ fn main() {
                 sharp_ema[b] += w * block[b];
             }
         }
-        ref_bin = guarded_best_bin(&ema, ref_bin, sb, sa, &guard, &arm_weights, corr_weight, &profile);
+        let cw = if h < corr_until { corr_weight } else { 0.0 };
+        ref_bin =
+            guarded_best_bin(&ema, ref_bin, sb, sa, &guard, &arm_weights, cw, &profile, metric, stencil_weight);
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;
+
+        if verify_prod {
+            let prod_bin = prod_oracle.process_histogram(&hist);
+            let d = (prod_bin - ref_bin).abs();
+            prod_max_diff = prod_max_diff.max(d);
+            if prod_bin != ref_bin {
+                prod_diff_blocks += 1;
+            }
+        }
 
         // Re-estimate the shape template from the L1-normalized arm vector at the
         // new pick, blended in slowly so a transient octave slide cannot corrupt it.
-        if corr_weight != 0.0 {
+        if cw != 0.0 {
             let arms = arms_at(&ema, ref_bin.round() as i64);
             let s: f64 = arms.iter().sum();
             if s > 0.0 {
-                for i in 0..N_ARMS {
-                    profile[i] = (1.0 - corr_beta) * profile[i] + corr_beta * (arms[i] / s);
+                if !profile_seeded {
+                    for i in 0..N_ARMS {
+                        profile[i] = arms[i] / s;
+                    }
+                    profile_seeded = true;
+                } else {
+                    for i in 0..N_ARMS {
+                        profile[i] = (1.0 - corr_beta) * profile[i] + corr_beta * (arms[i] / s);
+                    }
                 }
             }
         }
@@ -970,6 +1090,12 @@ fn main() {
                 }
             }
         }
+    }
+
+    if verify_prod {
+        eprintln!(
+            "  VERIFY_PROD: production Oracle vs harness - max ref_bin diff {prod_max_diff:.6}, {prod_diff_blocks} blocks differ"
+        );
     }
 
     worst_blocks.sort_by(|a, b| b.error_pct.abs().partial_cmp(&a.error_pct.abs()).unwrap());

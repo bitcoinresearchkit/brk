@@ -16,6 +16,12 @@ pub struct Config {
     /// Search window bins below/above previous estimate. Asymmetric for log-scale.
     pub search_below: usize,
     pub search_above: usize,
+    /// Weight of the adaptive shape-correlation restoring force added to the
+    /// stencil score. `0.0` disables it (mature regime, where the fast EMA
+    /// tracks real moves the shape term would resist); the slow cold-start uses
+    /// a positive weight to resist round-USD octave aliasing in the thin early
+    /// output mix.
+    pub corr_weight: f64,
     /// Minimum output value in sats (dust filter).
     pub min_sats: u64,
     /// Exclude round BTC amounts that create false stencil matches.
@@ -31,6 +37,7 @@ impl Default for Config {
             window_size: 12,
             search_below: 12,
             search_above: 11,
+            corr_weight: 0.0,
             min_sats: DEFAULT_MIN_SATS,
             exclude_common_round_values: true,
             excluded_output_types: DEFAULT_EXCLUDED_OUTPUT_TYPES.to_vec(),
@@ -42,11 +49,13 @@ impl Config {
     /// Cold-start config below [`START_HEIGHT`](crate::START_HEIGHT): a slow EMA
     /// (span ~19) that resists the round-USD half-price drift the fast default
     /// octave-locks onto in the thin pre-2018 output mix. Window grows to 40 to
-    /// hold the decay.
+    /// hold the decay, and a shape-correlation restoring force (`corr_weight`)
+    /// pulls the pick toward the octave whose arm-shape looks like real payments.
     pub fn slow() -> Self {
         Self {
             alpha: 0.10,
             window_size: 40,
+            corr_weight: 8.0,
             ..Self::default()
         }
     }
