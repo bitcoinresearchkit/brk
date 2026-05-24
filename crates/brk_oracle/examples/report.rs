@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, Oracle, PRICES, HistogramRaw, START_HEIGHT, bin_to_cents, cents_to_bin,
-    default_eligible_bin,
+    Config, Oracle, PRICES, HistogramRaw, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
+    eligible_bin,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -174,7 +174,7 @@ fn main() {
 
     let start_price: f64 = PRICES
         .lines()
-        .nth(START_HEIGHT - 1)
+        .nth(START_HEIGHT_FAST - 1)
         .expect("prices.txt too short")
         .parse()
         .expect("Failed to parse seed price");
@@ -201,7 +201,7 @@ fn main() {
     let mut oracle_candles: Vec<DayCandle> = Vec::new();
     let mut current_di: Option<usize> = None;
 
-    for h in START_HEIGHT..total_heights {
+    for h in START_HEIGHT_FAST..total_heights {
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -247,7 +247,7 @@ fn main() {
                 continue;
             }
             for i in lo..hi {
-                if let Some(bin) = default_eligible_bin(values[i], output_types[i]) {
+                if let Some(bin) = eligible_bin(values[i], output_types[i]) {
                     hist.increment(bin as usize);
                 }
             }
@@ -376,7 +376,7 @@ fn main() {
     println!("  Config:       w12, alpha=2/7, search -9/+11, noisy/dust/round-btc filtered");
     println!(
         "  Test range:   height {} .. {} ({} blocks)",
-        START_HEIGHT,
+        START_HEIGHT_FAST,
         total_heights - 1,
         overall.total_blocks
     );

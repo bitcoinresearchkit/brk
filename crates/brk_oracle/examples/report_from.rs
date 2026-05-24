@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, HistogramEma, HistogramRaw, NUM_BINS, PRICES, START_HEIGHT, bin_to_cents, cents_to_bin,
-    default_eligible_bin,
+    Config, HistogramEma, HistogramRaw, NUM_BINS, PRICES, START_HEIGHT_FAST, bin_to_cents,
+    cents_to_bin, eligible_bin,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -528,7 +528,7 @@ fn main() {
     let start = std::env::var("ORACLE_START")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(START_HEIGHT);
+        .unwrap_or(START_HEIGHT_FAST);
     let end_override = std::env::var("ORACLE_END")
         .ok()
         .and_then(|s| s.parse::<usize>().ok());
@@ -685,7 +685,7 @@ fn main() {
         },
         stencil_weight,
     );
-    // Mid-run regime switch, mirrors production Oracle::reconfigure at START_HEIGHT:
+    // Mid-run regime switch, mirrors production Oracle::reconfigure at START_HEIGHT_FAST:
     // at SWITCH_AT rebuild the EMA to SWITCH_WINDOW/SWITCH_ALPHA and warm-start fresh
     // (ring reset, ref_bin kept) - the same state as a fresh warm-up. Search window
     // is unchanged (both regimes share it). 0 = no switch (single-config baseline).
@@ -903,7 +903,7 @@ fn main() {
                 continue;
             }
             for i in lo..hi {
-                if let Some(bin) = default_eligible_bin(values[i], output_types[i]) {
+                if let Some(bin) = eligible_bin(values[i], output_types[i]) {
                     hist.increment(bin as usize);
                 }
             }

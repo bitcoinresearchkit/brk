@@ -3,7 +3,7 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
 use brk_oracle::{
-    Config, HistogramRaw, Oracle, START_HEIGHT, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
+    Config, HistogramRaw, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
     for_each_round_dollar_bin,
 };
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
@@ -124,18 +124,18 @@ impl Vecs {
             committed, total_heights
         );
 
-        // Slow cold-start EMA up to START_HEIGHT, then switch to the fast
-        // mature-market EMA. Steady-state runs start past START_HEIGHT and skip
+        // Slow cold-start EMA up to START_HEIGHT_FAST, then switch to the fast
+        // mature-market EMA. Steady-state runs start past START_HEIGHT_FAST and skip
         // the slow segment entirely.
         let mut ref_bins = Vec::with_capacity(num_new);
-        if committed < START_HEIGHT {
-            let slow_end = START_HEIGHT.min(total_heights);
+        if committed < START_HEIGHT_FAST {
+            let slow_end = START_HEIGHT_FAST.min(total_heights);
             ref_bins.extend(Self::feed_blocks(&mut oracle, indexer, committed..slow_end, None));
-            if slow_end == START_HEIGHT {
+            if slow_end == START_HEIGHT_FAST {
                 oracle.reconfigure(Config::default());
             }
         }
-        let fast_start = committed.max(START_HEIGHT);
+        let fast_start = committed.max(START_HEIGHT_FAST);
         if fast_start < total_heights {
             ref_bins.extend(Self::feed_blocks(
                 &mut oracle,

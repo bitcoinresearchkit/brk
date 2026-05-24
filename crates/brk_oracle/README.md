@@ -2,7 +2,7 @@
 
 **Version 3**
 
-Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 470,000 (June 2017) onward.
+Pure on-chain BTC/USD price oracle. No exchange feeds, no external APIs. Derives the bitcoin price from transaction data alone. Tracks block by block from height 340,000 (January 2015) onward.
 
 Inspired by [UTXOracle](https://utxo.live/oracle/) by [@SteveSimple](https://x.com/SteveSimple), which proved the concept. brk_oracle takes the same core insight and redesigns the algorithm for per-block resolution and rolling operation. See [comparison](#comparison-with-utxoracle) below.
 
@@ -122,9 +122,9 @@ Parabolic interpolation between the best bin and its two neighbors refines the e
 
 The oracle consumes one pre-built histogram per block via `process_histogram(&hist)`, a `[u32; 2400]` bin-count array, and returns the updated reference bin.
 
-The caller does the filtering when it builds the histogram. For each block it skips the coinbase, drops every output of a transaction carrying an `OP_RETURN` (and, below height 630,000, every output of a transaction with more than 100 outputs), then bins the rest. `default_eligible_bin(sats, output_type)` (or `Oracle::output_to_bin` for a non-default `Config`) applies the per-output rules: excluded script types, dust, and round-BTC values. It returns the bin index, or `None` for a filtered output.
+The caller filters as it builds the histogram, applying the [step 1](#1-filter-outputs) rules. Two helpers are exported for this: `eligible_bin(sats, output_type)` returns an output's bin index, or `None` if filtered, and `for_each_round_dollar_bin` wraps it with the per-transaction drops (coinbase, OP_RETURN, the >100-output cap below height 630,000) for callers holding a whole transaction's outputs.
 
-The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..470,000. Its last entry, height 469,999 (one below `START_HEIGHT_SLOW`), seeds the oracle's first on-chain computation at height 470,000.
+The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..340,000. Its last entry, height 339,999 (one below `START_HEIGHT_SLOW`), seeds the oracle's first on-chain computation at height 340,000.
 
 ## Configuration
 
@@ -135,11 +135,11 @@ All parameters via `Config` with sensible defaults:
 | `alpha` | 2/7 | EMA decay rate (~6-block span) |
 | `window_size` | 12 | Ring buffer depth in blocks |
 | `search_below` / `search_above` | 12 / 11 | Search window around previous estimate (bins) |
-| `min_sats` | 1,000 | Dust threshold |
-| `exclude_common_round_values` | true | Filter d × 10ⁿ (d ∈ {1,2,3,5,6}) to prevent false stencil matches |
-| `excluded_output_types` | P2TR | Script types dominated by protocol activity |
+| `shape_weight` | 0 | Shape-anchoring restoring-force weight. 0 disables it. `Config::slow()` sets 8 for the cold-start |
 
-Between height 470,000 and 508,000 the oracle runs a slower cold-start configuration (`Config::slow()`: `alpha` = 0.10, ~19-block span, `window_size` = 40). The thinner pre-2018 output mix lets the fast default octave-lock onto the round-dollar half-price pattern, and the slow EMA resists that drift. At height 508,000 `Oracle::reconfigure` switches to the defaults above. `Config::for_height` returns the right one for any height.
+The output-filtering rules (1,000-sat dust floor, excluded P2TR, round-BTC exclusion) are not `Config` parameters: they are constants in the `filter` module so the indexer, per-request reconstruction, and mempool all bin identically. See [Input](#input).
+
+Between heights 340,000 and 508,000 the oracle runs a slower cold-start configuration (`Config::slow()`: `alpha` = 0.10, ~19-block span, `window_size` = 40, `shape_weight` = 8). In the thin pre-2018 output mix the fast default octave-locks onto the round-dollar half-price pattern, so the slow EMA and the shape-anchoring restoring force resist that drift. At 508,000 `Oracle::reconfigure` switches to the defaults above (`shape_weight` back to 0), and `Config::for_height` returns the right one for any height.
 
 ## Comparison with UTXOracle
 
@@ -154,29 +154,29 @@ Between height 470,000 and 508,000 the oracle runs a slower cold-start configura
 | Stencil | 19 round-USD offsets ($1 to $10k), each normalized to its own peak | 803-point Gaussian + weighted spike template targeting 17 round-USD amounts |
 | Round BTC handling | Excluded from histogram entirely | Histogram bins smoothed by averaging neighbors |
 | Output filtering | Per-tx OP_RETURN drop, then per-output: script type, dust threshold, round BTC | Per-tx: not coinbase, no OP_RETURN, exactly 2 outputs, ≤5 inputs, no same-day inputs, ≤500-byte witness |
-| Validated from | Height 470,000 (June 2017) | Dec 15, 2023 |
+| Validated from | Height 340,000 (January 2015) | Dec 15, 2023 |
 | Language | Rust | Python |
 | Dependencies | None (pure computation, caller provides block data) | bitcoin-cli + direct blk file reads |
 | Bins per decade | 200 | 200 |
 
 ## Accuracy
 
-Tested over 466,251 blocks (heights 470,000 to 950,694, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 596,251 blocks (heights 340,000 to 950,800, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 
 | Metric | Value |
 |--------|-------|
-| Median error | 0.12% |
-| 95th percentile | 0.91% |
-| 99th percentile | 2.6% |
-| 99.9th percentile | 12.0% |
-| RMSE | 0.85% |
-| Max error | 47.7% |
-| Bias | +0.03 bins (essentially zero) |
-| Blocks > 5% error | 1,605 (0.344%) |
-| Blocks > 10% error | 609 |
-| Blocks > 20% error | 189 |
+| Median error | 0.15% |
+| 95th percentile | 1.2% |
+| 99th percentile | 3.4% |
+| 99.9th percentile | 15.6% |
+| RMSE | 0.97% |
+| Max error | 33.8% |
+| Bias | +0.05 bins (essentially zero) |
+| Blocks > 5% error | 3,235 (0.543%) |
+| Blocks > 10% error | 1,324 |
+| Blocks > 20% error | 154 |
 
 ### Daily candles
 
@@ -184,17 +184,19 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 
 | | Median | RMSE | Max |
 |-------|--------|------|-----|
-| Open | 0.22% | 0.90% | 21.1% |
-| High | 0.55% | 1.08% | 15.4% |
-| Low | 0.54% | 1.65% | 20.5% |
-| Close | 0.26% | 0.98% | 21.1% |
+| Open | 0.24% | 1.07% | 29.1% |
+| High | 0.58% | 1.48% | 27.3% |
+| Low | 0.53% | 1.95% | 55.1% |
+| Close | 0.27% | 1.18% | 29.2% |
 
 ### By year
 
 | Year | Blocks | Median | RMSE | Max | >5% | >10% | >20% | Price range |
 |------|--------|--------|------|-----|-----|------|------|-------------|
-| 2017 | 31,961 | 0.39% | 2.37% | 47.7% | 980 | 373 | 116 | $1,758–$19,892 |
-| 2018 | 54,531 | 0.18% | 1.35% | 32.2% | 394 | 207 | 73 | $3,129–$17,178 |
+| 2015 | 51,249 | 0.26% | 1.67% | 33.8% | 916 | 449 | 25 | $198–$500 |
+| 2016 | 54,753 | 0.33% | 0.80% | 16.9% | 150 | 33 | 0 | $351–$989 |
+| 2017 | 55,959 | 0.45% | 2.05% | 28.6% | 1,527 | 606 | 67 | $0–$19,892 |
+| 2018 | 54,531 | 0.18% | 1.31% | 31.6% | 411 | 207 | 62 | $3,129–$17,178 |
 | 2019 | 54,272 | 0.16% | 0.59% | 17.4% | 100 | 16 | 0 | $3,338–$13,868 |
 | 2020 | 53,102 | 0.10% | 0.42% | 11.6% | 61 | 3 | 0 | $3,858–$29,322 |
 | 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 43 | 10 | 0 | $27,678–$69,000 |
@@ -204,7 +206,7 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 | 2025 | 53,113 | 0.11% | 0.25% | 5.8% | 4 | 0 | 0 | $74,409–$126,198 |
 | 2026 | 5,910 | 0.10% | 0.27% | 3.2% | 0 | 0 | 0 | $60,000–$97,900 |
 
-The oracle is only as good as the signal it reads. The largest errors cluster in late 2017: the parabolic December run-up toward $20,000 rose faster than the slow cold-start EMA could follow, so the oracle lagged low (47.7% max error, at height 498,246, oracle ~$11,100 vs exchange ~$16,400). The thinner pre-2018 on-chain volume also weakens the round-dollar pattern, so 2017 and 2018 carry the bulk of the error (2.37% and 1.35% RMSE). From 2019 the signal strengthens: by 2020 the oracle reaches 0.1% median accuracy, and since 2022 no block exceeds 10% error.
+The oracle is only as good as the signal it reads. The largest errors cluster in the early cold-start, where thin 2015 on-chain volume gives a weaker round-dollar pattern: the 33.8% max error sits at height 341,498 (oracle ~$287 vs exchange ~$213) during the first weeks of warm-up. A second cluster sits just below the 508,000 regime switch, where the slow EMA lagged the fast early-2018 rally (~31.6% at height 507,278, oracle ~$6,685 vs exchange ~$8,800) before handing off to the fast default. The thin pre-2018 mix means 2015, 2017, and 2018 carry the bulk of the error (1.67%, 2.05%, and 1.31% RMSE). From 2019 the signal strengthens: by 2020 the oracle reaches 0.1% median accuracy, and since 2022 no block exceeds 10% error.
 
 ### Why no outlier smoothing?
 
@@ -219,7 +221,7 @@ Post-hoc smoothing, for example correcting any block whose price deviates more t
 
 Changes from v2:
 
-- **Earlier start with a cold-start regime**: on-chain tracking begins at height 470,000 (June 2017) instead of 525,000, adding about 55,000 blocks of history. Below height 508,000 the oracle runs a slower EMA (`Config::slow()`, ~19-block span, window 40) that resists the round-dollar half-price drift the fast default octave-locks onto in the thinner pre-2018 output mix, then switches to the fast default at 508,000 via `Oracle::reconfigure`.
+- **Earlier start with a cold-start regime**: on-chain tracking begins at height 340,000 (January 2015) instead of 525,000, adding about 185,000 blocks of history. Below height 508,000 the oracle runs a slower EMA (`Config::slow()`, ~19-block span, window 40) paired with a shape-anchoring restoring force (`shape_weight` 8) that pulls candidate scores toward a slowly-adapted profile of the round-dollar arm shape, resisting the half-price octave drift the fast default locks onto in the thinner pre-2018 output mix. At height 508,000 it switches to the fast default via `Oracle::reconfigure`, which restores `shape_weight` to 0 and turns the force off.
 - **Max-outputs filter**: a transaction with more than 100 outputs is dropped from the histogram below height 630,000. Large fan-outs (exchange sweeps, mixer payouts) are batch machinery, not round-dollar payments, and the thin 2018-2020 signal needs them removed to stay locked onto the pattern. Above 630,000 on-chain volume is dense enough that the cap removes more genuine signal than noise, so it is lifted.
 - **Wider up-reach**: `search_below` raised from 9 to 12 bins. The sharp 2018 reversal candles need extra room to follow a fast move upward in price.
 
