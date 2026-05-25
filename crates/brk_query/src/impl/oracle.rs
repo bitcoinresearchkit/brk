@@ -1,13 +1,13 @@
-use std::sync::Arc;
+use std::{ops::Range, sync::Arc};
 
 use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_SLOW, cents_to_bin,
-    for_each_round_dollar_bin,
+    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_SLOW,
+    cents_to_bin, sats_to_bin,
 };
-use brk_types::{Dollars, OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{Day1, Dollars, Sats, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
@@ -27,23 +27,59 @@ impl Query {
     /// seed-independent, so the result is exact.
     pub fn confirmed_histogram_ema(&self, height: usize) -> Result<HistogramEmaCompact> {
         let safe = self.check_histogram_height(height)?;
-        let ref_bin = self.seed_bin_at(height)?;
-        Ok(self.warm_oracle(ref_bin, height + 1, &safe).ema().to_compact())
+        Ok(self.ema_oracle_at(height, &safe)?.ema().to_compact())
     }
 
-    /// Un-smoothed per-block round-dollar counts at the live tip: the mempool's
-    /// forming-block histogram, or zeros when no mempool is configured.
+    /// Smoothed EMA histogram for a calendar `day`: the bin-by-bin average of
+    /// every confirmed block's per-block EMA. Each block's EMA is reconstructed
+    /// independently (seed-independent, so exact); averaging keeps the result an
+    /// intensive per-block rate rather than letting a busy day dominate.
+    pub fn confirmed_histogram_ema_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
+        let safe = self.safe_lengths();
+        let range = self.day_block_range(day, &safe)?;
+        let count = range.len() as f64;
+        let mut acc = HistogramEma::zeros();
+        for height in range {
+            let oracle = self.ema_oracle_at(height, &safe)?;
+            acc.iter_mut()
+                .zip(oracle.ema().iter())
+                .for_each(|(a, &e)| *a += e);
+        }
+        acc.iter_mut().for_each(|a| *a /= count);
+        Ok(acc.to_compact())
+    }
+
+    /// Unfiltered per-bin output counts at the live tip: every forming-block
+    /// mempool output binned by value, with none of the round-dollar payment
+    /// filters applied. Zeros when no mempool is configured.
     pub fn live_histogram_raw(&self) -> Result<HistogramRaw> {
         Ok(match self.mempool() {
-            Some(mempool) => mempool.live_histogram(),
+            Some(mempool) => mempool.live_raw_histogram(),
             None => HistogramRaw::zeros(),
         })
     }
 
-    /// Un-smoothed per-block round-dollar counts for a confirmed `height`.
+    /// Unfiltered per-bin output counts for a confirmed `height`: every output
+    /// in the block binned by value, with no payment filtering.
     pub fn confirmed_histogram_raw(&self, height: usize) -> Result<HistogramRaw> {
         let safe = self.check_histogram_height(height)?;
         Ok(self.block_raw_histogram(height, &safe))
+    }
+
+    /// Unfiltered per-bin output counts for a calendar `day`: every block's raw
+    /// histogram summed bin-by-bin. Raw counts are additive, so the day total is
+    /// just the sum across its confirmed blocks.
+    pub fn confirmed_histogram_raw_day(&self, day: Day1) -> Result<HistogramRaw> {
+        let safe = self.safe_lengths();
+        let range = self.day_block_range(day, &safe)?;
+        let mut acc = HistogramRaw::zeros();
+        for height in range {
+            let block = self.block_raw_histogram(height, &safe);
+            acc.iter_mut()
+                .zip(block.iter())
+                .for_each(|(a, &v)| *a += v);
+        }
+        Ok(acc)
     }
 
     /// The live tip oracle: the cached committed base, with the forming block's
@@ -51,7 +87,7 @@ impl Query {
     fn live_oracle(&self) -> Result<Oracle> {
         let mut oracle = (*self.cached_oracle()?).clone();
         if let Some(mempool) = self.mempool() {
-            oracle.process_histogram(&mempool.live_histogram());
+            oracle.process_histogram(&mempool.live_eligible_histogram());
         }
         Ok(oracle)
     }
@@ -84,6 +120,14 @@ impl Query {
             *cache = Some((height, oracle.clone()));
         }
         Ok(oracle)
+    }
+
+    /// Oracle warmed to just after `height`, ready for its per-block EMA. Seeds
+    /// from the stored spot price at `height`, though the EMA is seed-independent
+    /// so the seed only sets the price read-out, not the window contents.
+    fn ema_oracle_at(&self, height: usize, safe: &Lengths) -> Result<Oracle> {
+        let seed_bin = self.seed_bin_at(height)?;
+        Ok(self.warm_oracle(seed_bin, height + 1, safe))
     }
 
     /// An oracle seeded at `seed_bin` and warmed by replaying the `window_size`
@@ -133,72 +177,62 @@ impl Query {
         Ok(safe)
     }
 
-    /// One confirmed block's round-dollar histogram, built from batched columnar
-    /// reads and the shared `for_each_round_dollar_bin` filter. Kept separate from
-    /// the hot-path `feed_blocks` (cursor + reusable buffers over a block range).
+    /// The confirmed block heights `[first, end)` of calendar `day`, clamped to
+    /// the same histogram-available bound as `check_histogram_height`. 404 when
+    /// the day has no committed blocks in range.
+    fn day_block_range(&self, day: Day1, safe: &Lengths) -> Result<Range<usize>> {
+        let first_height = &self.computer().indexes.day1.first_height;
+        let bound = self
+            .computer()
+            .prices
+            .spot
+            .cents
+            .height
+            .len()
+            .min(safe.height.to_usize());
+        let start = first_height
+            .collect_one(day)
+            .map_or(usize::MAX, |h| h.to_usize())
+            .max(START_HEIGHT_SLOW);
+        let end = first_height
+            .collect_one(day + 1)
+            .map_or(bound, |h| h.to_usize())
+            .min(bound);
+        if start >= end {
+            return Err(Error::NotFound(format!(
+                "oracle histogram unavailable for day {day}"
+            )));
+        }
+        Ok(start..end)
+    }
+
+    /// One confirmed block's unfiltered histogram: every output in the block,
+    /// coinbase included, binned by value via `sats_to_bin` with no payment
+    /// filtering. Built from a single batched columnar read of the block's
+    /// output-value range.
     fn block_raw_histogram(&self, height: usize, safe: &Lengths) -> HistogramRaw {
         let indexer = self.indexer();
-        let total_txs = safe.tx_index.to_usize();
         let total_outputs = safe.txout_index.to_usize();
         let next_height = (height + 2).min(safe.height.to_usize());
 
-        let first_tx_indexes: Vec<TxIndex> = indexer
-            .vecs
-            .transactions
-            .first_tx_index
-            .collect_range_at(height, next_height);
         let out_firsts: Vec<TxOutIndex> = indexer
             .vecs
             .outputs
             .first_txout_index
             .collect_range_at(height, next_height);
-
-        let block_first_tx = first_tx_indexes[0].to_usize() + 1;
-        let next_first_tx = first_tx_indexes
-            .get(1)
-            .copied()
-            .unwrap_or(TxIndex::from(total_txs))
-            .to_usize();
-        let tx_count = next_first_tx - block_first_tx;
-
-        let mut hist = HistogramRaw::zeros();
-        if tx_count == 0 {
-            return hist;
-        }
-
+        let out_start = out_firsts[0].to_usize();
         let out_end = out_firsts
             .get(1)
             .copied()
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
-        let tx_starts: Vec<usize> = indexer
-            .vecs
-            .transactions
-            .first_txout_index
-            .collect_range_at(block_first_tx, next_first_tx)
-            .into_iter()
-            .map(|t| t.to_usize())
-            .collect();
-        let out_start = tx_starts.first().copied().unwrap_or(out_end);
 
+        let mut hist = HistogramRaw::zeros();
         let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
-        let output_types: Vec<OutputType> = indexer
-            .vecs
-            .outputs
-            .output_type
-            .collect_range_at(out_start, out_end);
-
-        for tx in 0..tx_count {
-            let lo = tx_starts[tx] - out_start;
-            let hi = tx_starts
-                .get(tx + 1)
-                .map(|s| s - out_start)
-                .unwrap_or(out_end - out_start);
-            let outputs = values[lo..hi]
-                .iter()
-                .copied()
-                .zip(output_types[lo..hi].iter().copied());
-            for_each_round_dollar_bin(height, outputs, |bin| hist.increment(bin as usize));
+        for sats in values {
+            if let Some(bin) = sats_to_bin(sats) {
+                hist.increment(bin);
+            }
         }
         hist
     }

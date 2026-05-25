@@ -9870,35 +9870,35 @@ impl BrkClient {
     /// Smoothed round-dollar payment histogram at the live tip: the committed EMA with the forming mempool block blended in. A flat array of log-scale bins.
     ///
     /// Endpoint: `GET /api/oracle/histogram/ema/live`
-    pub fn get_oracle_histogram_ema_live(&self) -> Result<Histogram_uint16> {
+    pub fn get_oracle_histogram_ema_live(&self) -> Result<Vec<i64>> {
         self.base.get_json(&format!("/api/oracle/histogram/ema/live"))
     }
 
-    /// EMA histogram at height
+    /// EMA histogram at height or day
     ///
-    /// Smoothed round-dollar payment histogram for a confirmed height. A flat array of log-scale bins.
+    /// Smoothed round-dollar payment histogram for a confirmed point: a block height (`840000`) gives that block's EMA, a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. A flat array of log-scale bins.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/ema/{height}`
-    pub fn get_oracle_histogram_ema(&self, height: Height) -> Result<Histogram_uint16> {
-        self.base.get_json(&format!("/api/oracle/histogram/ema/{height}"))
+    /// Endpoint: `GET /api/oracle/histogram/ema/{point}`
+    pub fn get_oracle_histogram_ema(&self, point: &str) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/ema/{point}"))
     }
 
     /// Live raw histogram
     ///
-    /// Un-smoothed per-block round-dollar counts for the forming mempool block. A flat array of log-scale bins, all zero when no mempool is configured.
+    /// Unfiltered output histogram for the forming mempool block: every live output binned by value, with none of the round-dollar payment filters applied. A flat array of log-scale bins, all zero when no mempool is configured.
     ///
     /// Endpoint: `GET /api/oracle/histogram/raw/live`
-    pub fn get_oracle_histogram_raw_live(&self) -> Result<Histogram_uint32> {
+    pub fn get_oracle_histogram_raw_live(&self) -> Result<Vec<i64>> {
         self.base.get_json(&format!("/api/oracle/histogram/raw/live"))
     }
 
-    /// Raw histogram at height
+    /// Raw histogram at height or day
     ///
-    /// Un-smoothed round-dollar counts for a single confirmed block. A flat array of log-scale bins.
+    /// Unfiltered output histogram for a confirmed point: a block height (`840000`) gives that block's outputs, coinbase included, binned by value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/raw/{height}`
-    pub fn get_oracle_histogram_raw(&self, height: Height) -> Result<Histogram_uint32> {
-        self.base.get_json(&format!("/api/oracle/histogram/raw/{height}"))
+    /// Endpoint: `GET /api/oracle/histogram/raw/{point}`
+    pub fn get_oracle_histogram_raw(&self, point: &str) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/raw/{point}"))
     }
 
     /// Txid by index

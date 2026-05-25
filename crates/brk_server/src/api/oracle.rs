@@ -2,14 +2,15 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
+    response::IntoResponse,
 };
 use brk_oracle::{HistogramEmaCompact, HistogramRaw};
-use brk_types::{Dollars, Version};
+use brk_types::{Day1, Dollars, Version};
 
 use crate::{
     AppState,
     extended::TransformResponseExtended,
-    params::{Empty, HeightParam},
+    params::{Empty, HeightOrDate, HeightOrDateParam},
 };
 
 pub trait OracleRoutes {
@@ -67,26 +68,42 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/ema/{height}",
+            "/api/oracle/histogram/ema/{point}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
-                       Path(path): Path<HeightParam>,
+                       Path(path): Path<HeightOrDateParam>,
                        _: Empty,
                        State(state): State<AppState>| {
-                    let strategy = state.height_strategy(Version::new(brk_oracle::VERSION), path.height);
-                    state
-                        .respond_json(&headers, strategy, &uri, move |q| {
-                            q.confirmed_histogram_ema(usize::from(path.height))
-                        })
-                        .await
+                    let version = Version::new(brk_oracle::VERSION);
+                    match path.resolve() {
+                        Ok(HeightOrDate::Date(date)) => {
+                            let strategy = state.date_strategy(version, date);
+                            state
+                                .respond_json(&headers, strategy, &uri, move |q| {
+                                    q.confirmed_histogram_ema_day(Day1::try_from(date)?)
+                                })
+                                .await
+                        }
+                        Ok(HeightOrDate::Height(height)) => {
+                            let strategy = state.height_strategy(version, height);
+                            state
+                                .respond_json(&headers, strategy, &uri, move |q| {
+                                    q.confirmed_histogram_ema(usize::from(height))
+                                })
+                                .await
+                        }
+                        Err(e) => e.into_response(),
+                    }
                 },
                 |op| {
                     op.id("get_oracle_histogram_ema")
                         .oracle_tag()
-                        .summary("EMA histogram at height")
+                        .summary("EMA histogram at height or day")
                         .description(
-                            "Smoothed round-dollar payment histogram for a confirmed height. \
+                            "Smoothed round-dollar payment histogram for a confirmed point: a \
+                            block height (`840000`) gives that block's EMA, a calendar date \
+                            (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. \
                             A flat array of log-scale bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
@@ -112,9 +129,10 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .oracle_tag()
                         .summary("Live raw histogram")
                         .description(
-                            "Un-smoothed per-block round-dollar counts for the forming mempool \
-                            block. A flat array of log-scale bins, all zero when no mempool is \
-                            configured.",
+                            "Unfiltered output histogram for the forming mempool block: every \
+                            live output binned by value, with none of the round-dollar payment \
+                            filters applied. A flat array of log-scale bins, all zero when no \
+                            mempool is configured.",
                         )
                         .json_response::<HistogramRaw>()
                         .not_modified()
@@ -123,27 +141,44 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/raw/{height}",
+            "/api/oracle/histogram/raw/{point}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
-                       Path(path): Path<HeightParam>,
+                       Path(path): Path<HeightOrDateParam>,
                        _: Empty,
                        State(state): State<AppState>| {
-                    let strategy = state.height_strategy(Version::new(brk_oracle::VERSION), path.height);
-                    state
-                        .respond_json(&headers, strategy, &uri, move |q| {
-                            q.confirmed_histogram_raw(usize::from(path.height))
-                        })
-                        .await
+                    let version = Version::new(brk_oracle::VERSION);
+
+                    match path.resolve() {
+                        Ok(HeightOrDate::Date(date)) => {
+                            let strategy = state.date_strategy(version, date);
+                            state
+                                .respond_json(&headers, strategy, &uri, move |q| {
+                                    q.confirmed_histogram_raw_day(Day1::try_from(date)?)
+                                })
+                                .await
+                        }
+                        Ok(HeightOrDate::Height(height)) => {
+                            let strategy = state.height_strategy(version, height);
+                            state
+                                .respond_json(&headers, strategy, &uri, move |q| {
+                                    q.confirmed_histogram_raw(usize::from(height))
+                                })
+                                .await
+                        }
+                        Err(e) => e.into_response(),
+                    }
                 },
                 |op| {
                     op.id("get_oracle_histogram_raw")
                         .oracle_tag()
-                        .summary("Raw histogram at height")
+                        .summary("Raw histogram at height or day")
                         .description(
-                            "Un-smoothed round-dollar counts for a single confirmed block. A \
-                            flat array of log-scale bins.",
+                            "Unfiltered output histogram for a confirmed point: a block height \
+                            (`840000`) gives that block's outputs, coinbase included, binned by \
+                            value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums \
+                            every block that day. A flat array of log-scale bins.",
                         )
                         .json_response::<HistogramRaw>()
                         .not_modified()

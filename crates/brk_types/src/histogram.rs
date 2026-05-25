@@ -112,4 +112,11 @@ impl<T: JsonSchema, const N: usize> JsonSchema for Histogram<T, N> {
     fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
         Vec::<T>::json_schema(generator)
     }
+
+    /// Inline as a plain array rather than registering a named `Histogram_uintN`
+    /// component: the wire shape is just a flat array of counts, and the synthetic
+    /// generic-mangled name has no real type for the Rust client to resolve to.
+    fn inline_schema() -> bool {
+        true
+    }
 }

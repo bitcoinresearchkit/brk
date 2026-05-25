@@ -174,8 +174,6 @@ Halving = int
 Hex = str
 # Highest price value for a time period
 High = Dollars
-Histogram_uint16 = List[int]
-Histogram_uint32 = List[int]
 Hour1 = int
 Hour12 = int
 Hour4 = int
@@ -1133,6 +1131,14 @@ class Health(TypedDict):
     blocks_behind: Height
     last_indexed_at: str
     last_indexed_at_unix: Timestamp
+
+class HeightOrDateParam(TypedDict):
+    """
+    Path parameter accepting either a block height (`840000`) or a calendar date
+    (`YYYY-MM-DD`). The handler resolves it and dispatches to the per-height or
+    per-day variant, choosing the matching cache strategy.
+    """
+    point: str
 
 class HeightParam(TypedDict):
     """
@@ -8668,7 +8674,7 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/oracle/price`"""
         return self.get_json('/api/oracle/price')
 
-    def get_oracle_histogram_ema_live(self) -> Histogram_uint16:
+    def get_oracle_histogram_ema_live(self) -> List[int]:
         """Live EMA histogram.
 
         Smoothed round-dollar payment histogram at the live tip: the committed EMA with the forming mempool block blended in. A flat array of log-scale bins.
@@ -8676,29 +8682,29 @@ class BrkClient(BrkClientBase):
         Endpoint: `GET /api/oracle/histogram/ema/live`"""
         return self.get_json('/api/oracle/histogram/ema/live')
 
-    def get_oracle_histogram_ema(self, height: Height) -> Histogram_uint16:
-        """EMA histogram at height.
+    def get_oracle_histogram_ema(self, point: str) -> List[int]:
+        """EMA histogram at height or day.
 
-        Smoothed round-dollar payment histogram for a confirmed height. A flat array of log-scale bins.
+        Smoothed round-dollar payment histogram for a confirmed point: a block height (`840000`) gives that block's EMA, a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. A flat array of log-scale bins.
 
-        Endpoint: `GET /api/oracle/histogram/ema/{height}`"""
-        return self.get_json(f'/api/oracle/histogram/ema/{height}')
+        Endpoint: `GET /api/oracle/histogram/ema/{point}`"""
+        return self.get_json(f'/api/oracle/histogram/ema/{point}')
 
-    def get_oracle_histogram_raw_live(self) -> Histogram_uint32:
+    def get_oracle_histogram_raw_live(self) -> List[int]:
         """Live raw histogram.
 
-        Un-smoothed per-block round-dollar counts for the forming mempool block. A flat array of log-scale bins, all zero when no mempool is configured.
+        Unfiltered output histogram for the forming mempool block: every live output binned by value, with none of the round-dollar payment filters applied. A flat array of log-scale bins, all zero when no mempool is configured.
 
         Endpoint: `GET /api/oracle/histogram/raw/live`"""
         return self.get_json('/api/oracle/histogram/raw/live')
 
-    def get_oracle_histogram_raw(self, height: Height) -> Histogram_uint32:
-        """Raw histogram at height.
+    def get_oracle_histogram_raw(self, point: str) -> List[int]:
+        """Raw histogram at height or day.
 
-        Un-smoothed round-dollar counts for a single confirmed block. A flat array of log-scale bins.
+        Unfiltered output histogram for a confirmed point: a block height (`840000`) gives that block's outputs, coinbase included, binned by value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
 
-        Endpoint: `GET /api/oracle/histogram/raw/{height}`"""
-        return self.get_json(f'/api/oracle/histogram/raw/{height}')
+        Endpoint: `GET /api/oracle/histogram/raw/{point}`"""
+        return self.get_json(f'/api/oracle/histogram/raw/{point}')
 
     def get_tx_by_index(self, index: TxIndex) -> Txid:
         """Txid by index.

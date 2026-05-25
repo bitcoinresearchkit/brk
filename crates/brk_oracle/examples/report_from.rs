@@ -253,6 +253,7 @@ fn arm_pattern(ema: &HistogramEma, center: i64, tau: f64) -> String {
 /// guard: if the half- or double-price bin lights up strictly more stencil arms
 /// and carries comparable mass, snap to it. This escapes a ½×/2× alias lock that
 /// the ±window can never climb the 60 bins out of on its own.
+#[allow(clippy::too_many_arguments)]
 fn guarded_best_bin(
     ema: &HistogramEma,
     prev_bin: f64,
@@ -340,10 +341,11 @@ fn guarded_best_bin(
                     best = Some((n, qn, raw_n));
                 }
             }
-            if let Some((n, qn, _)) = best {
-                if qn >= qb + guard.q_margin && qn >= guard.q_min {
-                    target = n;
-                }
+            if let Some((n, qn, _)) = best
+                && qn >= qb + guard.q_margin
+                && qn >= guard.q_min
+            {
+                target = n;
             }
         } else {
             let mut best: Option<(usize, f64)> = None;
@@ -587,12 +589,18 @@ fn main() {
         .and_then(|l| l.parse().ok())
         .unwrap_or_else(|| {
             let o = height_ohlc.get(start - 1).copied().unwrap_or([0.0; 4]);
-            if o[3] > 0.0 { o[3] } else { (o[1] + o[2]) / 2.0 }
+            if o[3] > 0.0 {
+                o[3]
+            } else {
+                (o[1] + o[2]) / 2.0
+            }
         });
     // Exact seed override (reproduce the committed prices.txt seed at a start the
     // truncated working-tree prices.txt no longer covers).
-    let start_price =
-        std::env::var("SEED").ok().and_then(|s| s.parse().ok()).unwrap_or(start_price);
+    let start_price = std::env::var("SEED")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(start_price);
 
     let mut config = Config::default();
     if let Some(w) = std::env::var("EMA_WINDOW")
@@ -664,8 +672,7 @@ fn main() {
     // ARM_PROFILE.
     let profile_seed = std::env::var("PROFILE_SEED").ok();
     let bootstrap_profile = profile_seed.as_deref() == Some("bootstrap");
-    let uniform_profile =
-        matches!(profile_seed.as_deref(), Some("uniform") | Some("flat"));
+    let uniform_profile = matches!(profile_seed.as_deref(), Some("uniform") | Some("flat"));
     // Stencil-sum weight (default 1). Set 0 for SHAPE-ONLY scoring: the shape match
     // does both within-octave localization and octave discrimination, no stencil
     // term and no cw balance to tune.
@@ -708,7 +715,9 @@ fn main() {
     for &i in &ALIAS_ARMS {
         arm_weights[i] = alias_weight;
     }
-    eprintln!("  disc_weight={disc_weight} on {DISC_ARMS:?}; alias_weight={alias_weight} on {ALIAS_ARMS:?}; corr_weight={corr_weight}");
+    eprintln!(
+        "  disc_weight={disc_weight} on {DISC_ARMS:?}; alias_weight={alias_weight} on {ALIAS_ARMS:?}; corr_weight={corr_weight}"
+    );
     let anom_thresh: f64 = std::env::var("ANOM_THRESH")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -765,7 +774,9 @@ fn main() {
         guard.global_radius,
     );
     if switch_at != 0 {
-        eprintln!("  switch: at height {switch_at} -> window={switch_window} alpha={switch_alpha:.5}");
+        eprintln!(
+            "  switch: at height {switch_at} -> window={switch_window} alpha={switch_alpha:.5}"
+        );
     }
     let (sb, sa) = (config.search_below, config.search_above);
     let mut window_size = config.window_size;
@@ -821,9 +832,7 @@ fn main() {
     let mut sharp_cursor = 0usize;
     let mut sharp_filled = 0usize;
     let mut sharp_ema = HistogramEma::zeros();
-    eprintln!(
-        "  sharp: span={sharp_span:.0} window={sharp_window} alpha={sharp_alpha:.5}"
-    );
+    eprintln!("  sharp: span={sharp_span:.0} window={sharp_window} alpha={sharp_alpha:.5}");
 
     let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
@@ -922,14 +931,14 @@ fn main() {
             filled += 1;
         }
         ema.fill(0.0);
-        for age in 0..filled {
+        (0..filled).for_each(|age| {
             let idx = (ring_cursor + window_size - 1 - age) % window_size;
             let w = weights[age];
             let block = &ring[idx];
             for b in 0..NUM_BINS {
                 ema[b] += w * block[b];
             }
-        }
+        });
         // Sharp detection EMA (diagnostic only - does not drive the price).
         {
             let slot = &mut sharp_ring[sharp_cursor];
@@ -942,17 +951,27 @@ fn main() {
             sharp_filled += 1;
         }
         sharp_ema.fill(0.0);
-        for age in 0..sharp_filled {
+        (0..sharp_filled).for_each(|age| {
             let idx = (sharp_cursor + sharp_window - 1 - age) % sharp_window;
             let w = sharp_weights[age];
             let block = &sharp_ring[idx];
             for b in 0..NUM_BINS {
                 sharp_ema[b] += w * block[b];
             }
-        }
+        });
         let cw = if h < corr_until { corr_weight } else { 0.0 };
-        ref_bin =
-            guarded_best_bin(&ema, ref_bin, sb, sa, &guard, &arm_weights, cw, &profile, metric, stencil_weight);
+        ref_bin = guarded_best_bin(
+            &ema,
+            ref_bin,
+            sb,
+            sa,
+            &guard,
+            &arm_weights,
+            cw,
+            &profile,
+            metric,
+            stencil_weight,
+        );
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;
 
         if verify_prod {

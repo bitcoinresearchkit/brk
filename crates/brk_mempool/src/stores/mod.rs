@@ -4,13 +4,13 @@
 //! one lock-order discipline.
 
 mod addr_tracker;
+mod live_histograms;
 mod outpoint_spends;
-mod output_bins;
 mod tx_graveyard;
 mod tx_store;
 
 pub use addr_tracker::AddrTracker;
+pub use live_histograms::LiveHistograms;
 pub use outpoint_spends::OutpointSpends;
-pub use output_bins::OutputBins;
 pub use tx_graveyard::{TxGraveyard, TxTombstone};
 pub use tx_store::TxStore;

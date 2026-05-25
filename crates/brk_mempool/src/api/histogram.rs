@@ -11,13 +11,21 @@ impl Mempool {
         self.read().info.clone()
     }
 
-    /// Snapshot of pre-bucketed oracle bins across all live mempool tx
-    /// outputs. The total is maintained incrementally by `TxStore` on
-    /// every insert/remove, so this hot path is `O(NUM_BINS)` regardless
-    /// of pool size. Used by `live_price` to blend the mempool into the
-    /// committed oracle without re-parsing scripts per request.
+    /// Snapshot of pre-bucketed round-dollar-eligible bins across all live
+    /// mempool tx outputs. Maintained incrementally by `TxStore` on every
+    /// insert/remove, so this hot path is `O(NUM_BINS)` regardless of pool
+    /// size. Used by `live_price` to blend the mempool into the committed
+    /// oracle without re-parsing scripts per request.
     #[must_use]
-    pub fn live_histogram(&self) -> HistogramRaw {
-        self.read().txs.live_histogram()
+    pub fn live_eligible_histogram(&self) -> HistogramRaw {
+        self.read().txs.live_eligible_histogram()
+    }
+
+    /// Snapshot of the raw histogram: every live mempool output binned by
+    /// value with no payment filtering. Backs the `histogram/raw/live`
+    /// endpoint.
+    #[must_use]
+    pub fn live_raw_histogram(&self) -> HistogramRaw {
+        self.read().txs.live_raw_histogram()
     }
 }

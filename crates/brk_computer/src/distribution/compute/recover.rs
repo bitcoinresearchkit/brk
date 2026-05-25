@@ -24,51 +24,60 @@ pub struct RecoveredState {
 /// Returns Height::ZERO if any validation fails (triggers fresh start).
 pub(crate) fn recover_state(
     height: Height,
-    chain_state_rollback: vecdb::Result<Stamp>,
+    chain_state_rollback: Option<vecdb::Result<Stamp>>,
     any_addr_indexes: &mut AnyAddrIndexesVecs,
     addrs_data: &mut AddrsDataVecs,
     utxo_cohorts: &mut UTXOCohorts,
     addr_cohorts: &mut AddrCohorts,
 ) -> Result<RecoveredState> {
-    let stamp = Stamp::from(height);
+    // `None`: clean resume, already at the checkpoint, nothing to undo.
+    // `Some`: reorg, undo state past the resume point.
+    let consistent_height = match chain_state_rollback {
+        None => height,
+        Some(chain_state_rollback) => {
+            let stamp = Stamp::from(height);
 
-    // Rollback address state vectors
-    let addr_indexes_rollback = any_addr_indexes.rollback_before(stamp);
-    let addr_data_rollback = addrs_data.rollback_before(stamp);
+            // Rollback address state vectors
+            let addr_indexes_rollback = any_addr_indexes.rollback_before(stamp);
+            let addr_data_rollback = addrs_data.rollback_before(stamp);
 
-    // Verify rollback consistency - all must agree on the same height
-    let consistent_height = rollback_states(
-        chain_state_rollback,
-        addr_indexes_rollback,
-        addr_data_rollback,
-    );
+            // Verify rollback consistency - all must agree on the same height
+            let consistent_height = rollback_states(
+                chain_state_rollback,
+                addr_indexes_rollback,
+                addr_data_rollback,
+            );
 
-    // If rollbacks are inconsistent, start fresh
-    if consistent_height.is_zero() {
-        warn!("Rollback consistency check failed: inconsistent heights");
-        return Ok(RecoveredState {
-            starting_height: Height::ZERO,
-        });
-    }
+            // If rollbacks are inconsistent, start fresh
+            if consistent_height.is_zero() {
+                warn!("Rollback consistency check failed: inconsistent heights");
+                return Ok(RecoveredState {
+                    starting_height: Height::ZERO,
+                });
+            }
 
-    // Rollback can land at an earlier height (multi-block change file), which is fine.
-    // But if it lands AHEAD of target, that means rollback failed (missing change files).
-    if consistent_height > height {
-        warn!(
-            "Rollback failed: still at {} but target was {}, falling back to fresh start",
-            consistent_height, height
-        );
-        return Ok(RecoveredState {
-            starting_height: Height::ZERO,
-        });
-    }
+            // Rollback can land at an earlier height (multi-block change file), which is fine.
+            // But if it lands AHEAD of target, that means rollback failed (missing change files).
+            if consistent_height > height {
+                warn!(
+                    "Rollback failed: still at {} but target was {}, falling back to fresh start",
+                    consistent_height, height
+                );
+                return Ok(RecoveredState {
+                    starting_height: Height::ZERO,
+                });
+            }
 
-    if consistent_height != height {
-        debug!(
-            "Rollback landed at {} instead of {}, will resume from there",
-            consistent_height, height
-        );
-    }
+            if consistent_height != height {
+                debug!(
+                    "Rollback landed at {} instead of {}, will resume from there",
+                    consistent_height, height
+                );
+            }
+
+            consistent_height
+        }
+    };
 
     // Import UTXO cohort states - all must succeed
     debug!(

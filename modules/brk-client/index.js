@@ -647,6 +647,14 @@ ancestors and no descendants (matches mempool.space).
  * @typedef {number} Height
  */
 /**
+ * Path parameter accepting either a block height (`840000`) or a calendar date
+ * (`YYYY-MM-DD`). The handler resolves it and dispatches to the per-height or
+ * per-day variant, choosing the matching cache strategy.
+ *
+ * @typedef {Object} HeightOrDateParam
+ * @property {string} point
+ */
+/**
  * Block height path parameter
  *
  * @typedef {Object} HeightParam
@@ -664,8 +672,6 @@ ancestors and no descendants (matches mempool.space).
  *
  * @typedef {Dollars} High
  */
-/** @typedef {number[]} Histogram_uint16 */
-/** @typedef {number[]} Histogram_uint32 */
 /**
  * Historical price response
  *
@@ -11887,8 +11893,8 @@ class BrkClient extends BrkClientBase {
    * Smoothed round-dollar payment histogram at the live tip: the committed EMA with the forming mempool block blended in. A flat array of log-scale bins.
    *
    * Endpoint: `GET /api/oracle/histogram/ema/live`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint16) => void }} [options]
-   * @returns {Promise<Histogram_uint16>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
+   * @returns {Promise<number[]>}
    */
   async getOracleHistogramEmaLive({ signal, onValue } = {}) {
     const path = `/api/oracle/histogram/ema/live`;
@@ -11896,29 +11902,29 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * EMA histogram at height
+   * EMA histogram at height or day
    *
-   * Smoothed round-dollar payment histogram for a confirmed height. A flat array of log-scale bins.
+   * Smoothed round-dollar payment histogram for a confirmed point: a block height (`840000`) gives that block's EMA, a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. A flat array of log-scale bins.
    *
-   * Endpoint: `GET /api/oracle/histogram/ema/{height}`
+   * Endpoint: `GET /api/oracle/histogram/ema/{point}`
    *
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint16) => void }} [options]
-   * @returns {Promise<Histogram_uint16>}
+   * @param {string} point
+   * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
+   * @returns {Promise<number[]>}
    */
-  async getOracleHistogramEma(height, { signal, onValue } = {}) {
-    const path = `/api/oracle/histogram/ema/${height}`;
+  async getOracleHistogramEma(point, { signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/ema/${point}`;
     return this.getJson(path, { signal, onValue });
   }
 
   /**
    * Live raw histogram
    *
-   * Un-smoothed per-block round-dollar counts for the forming mempool block. A flat array of log-scale bins, all zero when no mempool is configured.
+   * Unfiltered output histogram for the forming mempool block: every live output binned by value, with none of the round-dollar payment filters applied. A flat array of log-scale bins, all zero when no mempool is configured.
    *
    * Endpoint: `GET /api/oracle/histogram/raw/live`
-   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint32) => void }} [options]
-   * @returns {Promise<Histogram_uint32>}
+   * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
+   * @returns {Promise<number[]>}
    */
   async getOracleHistogramRawLive({ signal, onValue } = {}) {
     const path = `/api/oracle/histogram/raw/live`;
@@ -11926,18 +11932,18 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
-   * Raw histogram at height
+   * Raw histogram at height or day
    *
-   * Un-smoothed round-dollar counts for a single confirmed block. A flat array of log-scale bins.
+   * Unfiltered output histogram for a confirmed point: a block height (`840000`) gives that block's outputs, coinbase included, binned by value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
    *
-   * Endpoint: `GET /api/oracle/histogram/raw/{height}`
+   * Endpoint: `GET /api/oracle/histogram/raw/{point}`
    *
-   * @param {Height} height
-   * @param {{ signal?: AbortSignal, onValue?: (value: Histogram_uint32) => void }} [options]
-   * @returns {Promise<Histogram_uint32>}
+   * @param {string} point
+   * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void }} [options]
+   * @returns {Promise<number[]>}
    */
-  async getOracleHistogramRaw(height, { signal, onValue } = {}) {
-    const path = `/api/oracle/histogram/raw/${height}`;
+  async getOracleHistogramRaw(point, { signal, onValue } = {}) {
+    const path = `/api/oracle/histogram/raw/${point}`;
     return this.getJson(path, { signal, onValue });
   }
 

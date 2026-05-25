@@ -16,7 +16,8 @@ use brk_query::{Query as BrkQuery, ResolvedQuery};
 use brk_traversable::TreeNode;
 use brk_types::{
     DataRangeFormat, Format, IndexInfo, Output, PaginatedSeries, Pagination, SearchQuery,
-    SeriesCount, SeriesData, SeriesInfo, SeriesNameWithIndex, SeriesSelection,
+    SeriesCount, SeriesData, SeriesInfo, SeriesNameWithIndex, SeriesOutput, SeriesSelection,
+    Version,
 };
 
 use crate::{
@@ -67,7 +68,7 @@ pub(super) async fn serve(
         .await)
 }
 
-fn output_to_bytes(out: brk_types::SeriesOutput) -> BrkResult<Bytes> {
+fn output_to_bytes(out: SeriesOutput) -> BrkResult<Bytes> {
     Ok(match out.output {
         Output::CSV(s) => Bytes::from(s),
         Output::Json(v) => Bytes::from(v),
@@ -365,7 +366,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                     .series_tag()
                     .summary("Get series version")
                     .description("Returns the current version of a series. Changes when the series data is updated.")
-                    .json_response::<brk_types::Version>()
+                    .json_response::<Version>()
                     .not_modified()
                     .not_found(),
             ),

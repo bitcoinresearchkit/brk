@@ -341,12 +341,13 @@ impl Vecs {
         // Try to resume from checkpoint, fall back to fresh start if needed
         let recovered_height = match start_mode {
             StartMode::Resume(height) => {
-                let stamp = Stamp::from(height);
+                // Roll back only on a reorg. A clean resume has nothing to undo, and an
+                // interrupted run wrote no rollback metadata (periodic flushes use
+                // with_changes=false; only the final write creates the `changes/` dir),
+                // so `rollback_before` would fail with `NotFound`.
+                let chain_state_rollback = (height < current_height)
+                    .then(|| self.supply_state.rollback_before(Stamp::from(height)));
 
-                // Rollback BytesVec state and capture results for validation
-                let chain_state_rollback = self.supply_state.rollback_before(stamp);
-
-                // Validate all rollbacks and imports are consistent
                 let recovered = recover_state(
                     height,
                     chain_state_rollback,
