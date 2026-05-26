@@ -4,7 +4,7 @@ use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_SLOW,
+    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle,
     cents_to_bin, sats_to_bin,
 };
 use brk_types::{Day1, Dollars, Sats, TxOutIndex};
@@ -157,7 +157,7 @@ impl Query {
         Ok(cents_to_bin(cents.inner() as f64))
     }
 
-    /// `START_HEIGHT_SLOW <= height < min(spot price len, safe height)` or 404.
+    /// `height < min(spot price len, safe height)` or 404.
     /// Returns the safe lengths so callers cap reads at the same bound.
     fn check_histogram_height(&self, height: usize) -> Result<Lengths> {
         let safe = self.safe_lengths();
@@ -169,7 +169,7 @@ impl Query {
             .height
             .len()
             .min(safe.height.to_usize());
-        if height < START_HEIGHT_SLOW || height >= bound {
+        if height >= bound {
             return Err(Error::NotFound(format!(
                 "oracle histogram unavailable for height {height}"
             )));
@@ -192,8 +192,7 @@ impl Query {
             .min(safe.height.to_usize());
         let start = first_height
             .collect_one(day)
-            .map_or(usize::MAX, |h| h.to_usize())
-            .max(START_HEIGHT_SLOW);
+            .map_or(usize::MAX, |h| h.to_usize());
         let end = first_height
             .collect_one(day + 1)
             .map_or(bound, |h| h.to_usize())

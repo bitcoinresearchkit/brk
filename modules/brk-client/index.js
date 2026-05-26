@@ -1357,9 +1357,9 @@ on serialization otherwise.
 /**
  * Aggregation strategy for URPD buckets.
  * Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
- * log10/log50/log100/log200 (logarithmic with 10/50/100/200 buckets per decade).
+ * log10/log50/log100/log200/log500/log1000 (logarithmic with 10/50/100/200/500/1000 buckets per decade).
  *
- * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100"|"log200")} UrpdAggregation
+ * @typedef {("raw"|"lin200"|"lin500"|"lin1000"|"log10"|"log50"|"log100"|"log200"|"log500"|"log1000")} UrpdAggregation
  */
 /**
  * A single bucket in a URPD snapshot.
