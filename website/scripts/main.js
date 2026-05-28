@@ -8,6 +8,7 @@ import {
 } from "./panes/chart.js";
 import { init as initExplorer } from "./explorer/index.js";
 import { init as initSearch } from "./panes/search.js";
+import { init as initHeatmap } from "../src/heatmap/index.js";
 import { readStored, removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
@@ -20,6 +21,7 @@ import {
   navLabelElement,
   searchElement,
   layoutButtonElement,
+  heatmapElement,
   style,
 } from "./utils/elements.js";
 import { idle } from "./utils/timing.js";
@@ -125,11 +127,14 @@ function initSelected() {
 
     let previousElement = /** @type {HTMLElement | undefined} */ (undefined);
     let firstTimeLoadingChart = true;
+    let firstTimeLoadingHeatmap = true;
     let firstTimeLoadingExplorer = true;
 
     options.selected.onChange((option) => {
       /** @type {HTMLElement | undefined} */
       let element;
+
+      console.log(option);
 
       switch (option.kind) {
         case "explorer": {
@@ -142,7 +147,21 @@ function initSelected() {
 
           break;
         }
+        case "heatmap": {
+          console.log("heatmap");
+
+          element = heatmapElement;
+
+          if (firstTimeLoadingHeatmap) {
+            initHeatmap(option);
+          }
+          firstTimeLoadingHeatmap = false;
+
+          break;
+        }
         case "chart": {
+          console.log("chart");
+
           element = chartElement;
 
           if (firstTimeLoadingChart) {

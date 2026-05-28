@@ -104,6 +104,14 @@
  *
  * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *
+ * @typedef {Object} PartialHeatmapOptionSpecific
+ * @property {"heatmap"} kind
+ * @property {string} title
+ *
+ * @typedef {PartialOption & PartialHeatmapOptionSpecific} PartialHeatmapOption
+ *
+ * @typedef {Required<PartialHeatmapOption> & ProcessedOptionAddons} HeatmapOption
+ *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"link"} [kind]
  * @property {() => string} url
@@ -114,9 +122,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialExplorerOption | PartialChartOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialExplorerOption | PartialChartOption | PartialUrlOption | PartialHeatmapOption} AnyPartialOption
  *
- * @typedef {ExplorerOption | ChartOption | UrlOption} Option
+ * @typedef {ExplorerOption | ChartOption | UrlOption | HeatmapOption} Option
  *
  * @typedef {(AnyPartialOption | PartialOptionsGroup)[]} PartialOptionsTree
  *
@@ -323,7 +331,6 @@
  * @property {AddrCountPattern} addressCount
  *
  * @typedef {UtxoCohortObject | AddrCohortObject | CohortWithoutRelative} CohortObject
- *
  *
  * @typedef {Object} AddrCohortGroupObject
  * @property {string} name

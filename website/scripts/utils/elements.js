@@ -11,6 +11,7 @@ export const searchElement = getElementById("search");
 export const navElement = getElementById("nav");
 export const chartElement = getElementById("chart");
 export const explorerElement = getElementById("explorer");
+export const heatmapElement = getElementById("heatmap");
 
 export const asideLabelElement = getElementById("aside-selector-label");
 export const navLabelElement = getElementById(`nav-selector-label`);

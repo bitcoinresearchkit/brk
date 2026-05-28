@@ -311,6 +311,14 @@ export function initOptions() {
           option.kind = anyPartial.kind;
           option.path = [];
           option.name = name;
+        } else if ("kind" in anyPartial && anyPartial.kind === "heatmap") {
+          Object.assign(
+            option,
+            /** @satisfies {HeatmapOption} */ ({
+              ...anyPartial,
+              path,
+            }),
+          );
         } else if ("url" in anyPartial) {
           Object.assign(
             option,

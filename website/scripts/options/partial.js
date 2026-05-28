@@ -63,6 +63,7 @@ export function createPartialOptions() {
       kind: "explorer",
       title: "Explorer",
     },
+
     {
       name: "Charts",
       tree: [
@@ -291,6 +292,17 @@ export function createPartialOptions() {
         {
           name: "Frameworks",
           tree: [createCointimeSection()],
+        },
+      ],
+    },
+
+    {
+      name: "Heatmaps",
+      tree: [
+        {
+          kind: "heatmap",
+          name: "name",
+          title: "name",
         },
       ],
     },
