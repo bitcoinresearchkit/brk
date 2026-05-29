@@ -301,8 +301,8 @@ export function createPartialOptions() {
       tree: [
         {
           kind: "heatmap",
-          name: "name",
-          title: "name",
+          name: "Demo",
+          title: "Heatmap Demo",
         },
       ],
     },
