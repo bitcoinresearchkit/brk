@@ -31,7 +31,7 @@
     padding: 0.5rem var(--main-padding);
     gap: 1rem;
 
-    > div.field {
+    > label {
       display: flex;
       align-items: baseline;
       flex-shrink: 0;
@@ -39,7 +39,7 @@
       cursor: pointer;
       color: var(--color);
 
-      > label {
+      > span:first-child {
         color: var(--off-color);
       }
 

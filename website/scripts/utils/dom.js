@@ -281,18 +281,16 @@ export function createSelect({
     return span;
   }
 
-  const field = window.document.createElement("div");
-  field.classList.add("field");
+  const field = window.document.createElement("label");
+  if (label) {
+    const span = window.document.createElement("span");
+    span.textContent = label;
+    field.append(span);
+  }
 
   const select = window.document.createElement("select");
   select.id = id ?? "";
   select.name = id ?? "";
-  if (label) {
-    const labelElement = window.document.createElement("label");
-    labelElement.htmlFor = select.id;
-    labelElement.textContent = label;
-    field.append(labelElement);
-  }
   field.append(select);
 
   /** @param {T} choice */
@@ -333,6 +331,7 @@ export function createSelect({
 
   field.addEventListener("click", (e) => {
     if (e.target !== select) {
+      e.preventDefault();
       select.showPicker();
     }
   });
