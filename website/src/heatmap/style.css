@@ -20,7 +20,7 @@
     margin-right: var(--negative-main-padding);
   }
 
-  > fieldset.heatmap-controls {
+  > fieldset {
     flex-shrink: 0;
     text-transform: lowercase;
     overflow-x: auto;
@@ -31,32 +31,25 @@
     padding: 0.5rem var(--main-padding);
     gap: 1rem;
 
-    .heatmap-control {
+    > div.field {
       display: flex;
-      flex-direction: row;
-      align-items: center;
+      align-items: baseline;
+      flex-shrink: 0;
       gap: 0.5rem;
+      cursor: pointer;
       color: var(--color);
 
-      span {
+      > label {
         color: var(--off-color);
       }
 
-      > div.field {
-        display: flex;
-        align-items: baseline;
-        flex-shrink: 0;
-        gap: 0.375rem;
-        cursor: pointer;
-
-        select {
-          width: auto;
-          line-height: 1;
-        }
+      select {
+        width: auto;
+        line-height: 1;
       }
     }
 
-    .heatmap-status {
+    > small {
       color: var(--off-color);
       white-space: nowrap;
     }

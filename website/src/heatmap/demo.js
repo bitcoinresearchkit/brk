@@ -17,7 +17,7 @@ export const demoHeatmapOption = {
   points: {
     fetch: fetchDemoPoints,
   },
-  cells: createAverageCells({ yStart: 0, yEnd: 1, nativeRows: ROWS }),
+  grid: createAverageCells({ yStart: 0, yEnd: 1, nativeRows: ROWS }),
   color: intensityColor({ light: INFERNO_LUT, dark: INFERNO_LUT }),
 };
 

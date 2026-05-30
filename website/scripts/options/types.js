@@ -108,7 +108,7 @@
  * @property {"heatmap"} kind
  * @property {string} title
  * @property {HeatmapPointSource} points
- * @property {HeatmapCells} cells
+ * @property {HeatmapGridFactory} grid
  * @property {HeatmapColorFn} color
  * @property {HeatmapTooltipFn} [tooltip]
  *

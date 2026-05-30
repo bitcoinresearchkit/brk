@@ -1,4 +1,4 @@
-/** @import { HeatmapCells, HeatmapGrid, HeatmapRange } from "./types.js" */
+/** @import { HeatmapGrid, HeatmapGridFactory, HeatmapRange } from "./types.js" */
 
 /**
  * @param {number} value
@@ -18,7 +18,7 @@ function clamp(value, min, max) {
  * @param {number} [args.minCellSize]
  * @param {number} [args.maxCols]
  * @param {number} [args.nativeRows]
- * @returns {HeatmapCells}
+ * @returns {HeatmapGridFactory}
  */
 export function createAverageCells({
   yStart,

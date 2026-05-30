@@ -184,6 +184,7 @@ export function createLabeledInput({
  * @param {Object} args
  * @param {T} args.initialValue
  * @param {string} [args.id]
+ * @param {string} [args.label]
  * @param {readonly T[]} args.choices
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
@@ -245,6 +246,7 @@ export function createRadios({
  * @param {Object} args
  * @param {T} args.initialValue
  * @param {string} [args.id]
+ * @param {string} [args.label]
  * @param {readonly T[]} args.choices
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
@@ -254,6 +256,7 @@ export function createRadios({
  */
 export function createSelect({
   id,
+  label,
   choices: unsortedChoices,
   groups,
   initialValue,
@@ -284,6 +287,12 @@ export function createSelect({
   const select = window.document.createElement("select");
   select.id = id ?? "";
   select.name = id ?? "";
+  if (label) {
+    const labelElement = window.document.createElement("label");
+    labelElement.htmlFor = select.id;
+    labelElement.textContent = label;
+    field.append(labelElement);
+  }
   field.append(select);
 
   /** @param {T} choice */
@@ -348,4 +357,3 @@ export function createHeader(title = "", level = 1) {
     headingElement,
   };
 }
-

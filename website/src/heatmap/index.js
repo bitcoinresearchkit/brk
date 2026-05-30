@@ -30,8 +30,6 @@ let currentOption;
 let currentGrid;
 /** @type {string[]} */
 let currentDates = [];
-/** @type {Map<string, number>} */
-let currentDateIndex = new Map();
 /** @type {Map<string, HeatmapPoints>} */
 let pointsByDate = new Map();
 /** @type {AbortController | undefined} */
@@ -98,11 +96,12 @@ function loadRange() {
   const controller = new AbortController();
   abortController = controller;
   currentDates = dateRange(from, to);
-  currentDateIndex = createDateIndex(currentDates);
 
   rebuildGrid();
 
-  const missing = currentDates.filter((date) => !pointsByDate.has(date));
+  const missing = currentDates.flatMap((date, dateIndex) =>
+    pointsByDate.has(date) ? [] : [{ date, dateIndex }],
+  );
   let completed = currentDates.length - missing.length;
   let failed = 0;
   updateStatus(completed, currentDates.length, failed);
@@ -117,15 +116,15 @@ function loadRange() {
     while (index !== undefined) {
       const date = missing[index];
       try {
-        const points = await option.points.fetch(date, controller.signal);
+        const points = await option.points.fetch(date.date, controller.signal);
         if (isCurrentLoad(option, controller, generation)) {
-          pointsByDate.set(date, points);
-          addDateToGrid(date, points);
+          pointsByDate.set(date.date, points);
+          addDateToGrid(date.dateIndex, points);
         }
       } catch (error) {
         if (controller.signal.aborted) return;
         failed += 1;
-        console.error(`Failed to fetch heatmap points for ${date}`, error);
+        console.error(`Failed to fetch heatmap points for ${date.date}`, error);
       } finally {
         if (isCurrentLoad(option, controller, generation)) {
           completed += 1;
@@ -176,7 +175,7 @@ function rebuildGrid() {
     return;
   }
 
-  currentGrid = currentOption.cells.create({
+  currentGrid = currentOption.grid.create({
     dates: currentDates,
     width: renderer.width,
     height: renderer.height,
@@ -191,13 +190,11 @@ function rebuildGrid() {
 }
 
 /**
- * @param {string} date
+ * @param {number} dateIndex
  * @param {HeatmapPoints} points
  */
-function addDateToGrid(date, points) {
+function addDateToGrid(dateIndex, points) {
   if (!currentGrid) return;
-  const dateIndex = currentDateIndex.get(date);
-  if (dateIndex === undefined) return;
   const dirtyCol = currentGrid.add(dateIndex, points);
   if (dirtyCol !== undefined) paint([dirtyCol]);
 }
@@ -227,18 +224,6 @@ function updateTooltip(event) {
     return;
   }
   canvas.title = currentOption.tooltip({ grid: currentGrid, col, row });
-}
-
-/**
- * @param {readonly string[]} dates
- * @returns {Map<string, number>}
- */
-function createDateIndex(dates) {
-  const map = new Map();
-  for (let i = 0; i < dates.length; i++) {
-    map.set(dates[i], i);
-  }
-  return map;
 }
 
 /**
@@ -272,10 +257,15 @@ function createRangeControls() {
 
   const fromSelect = createSelect({
     id: "heatmap-from",
+    label: "from",
     choices: fromChoices,
     initialValue: fromChoice,
     onChange(choice) {
       fromChoice = choice;
+      if (fromChoice.date > toChoice.date) {
+        toChoice = findFirstToChoiceOnOrAfter(toChoices, fromChoice.date);
+        setSelectChoice(toSelect, toChoice);
+      }
       setRange(fromChoice.date, toChoice.date);
     },
     toKey: rangeChoiceKey,
@@ -283,20 +273,22 @@ function createRangeControls() {
   });
   const toSelect = createSelect({
     id: "heatmap-to",
+    label: "to",
     choices: toChoices,
     initialValue: toChoice,
     onChange(choice) {
       toChoice = choice;
+      if (fromChoice.date > toChoice.date) {
+        fromChoice = findLastFromChoiceOnOrBefore(fromChoices, toChoice.date);
+        setSelectChoice(fromSelect, fromChoice);
+      }
       setRange(fromChoice.date, toChoice.date);
     },
     toKey: rangeChoiceKey,
     toLabel: rangeChoiceLabel,
   });
 
-  const fromLabel = createControlField("from", fromSelect);
-  const toLabel = createControlField("to", toSelect);
-
-  fieldset.append(fromLabel, toLabel, statusElement);
+  fieldset.append(fromSelect, toSelect, statusElement);
 
   return fieldset;
 }
@@ -308,7 +300,10 @@ function createRangeControls() {
 function createFromChoices(currentYear) {
   const choices = [{ label: "genesis", date: GENESIS_DATE }];
   for (let year = 2009; year <= currentYear; year++) {
-    choices.push({ label: String(year), date: yearStartISODate(year) });
+    choices.push({
+      label: String(year),
+      date: year === 2009 ? GENESIS_DATE : yearStartISODate(year),
+    });
   }
   return choices;
 }
@@ -340,18 +335,28 @@ function rangeChoiceLabel(choice) {
 }
 
 /**
- * @param {string} text
- * @param {HTMLElement} control
+ * @param {readonly RangeChoice[]} choices
+ * @param {string} date
  */
-function createControlField(text, control) {
-  const label = document.createElement("div");
-  label.classList.add("heatmap-control");
-  const span = document.createElement("span");
-  span.textContent = text;
+function findFirstToChoiceOnOrAfter(choices, date) {
+  return choices.find((choice) => choice.date >= date) ?? choices[0];
+}
+
+/**
+ * @param {readonly RangeChoice[]} choices
+ * @param {string} date
+ */
+function findLastFromChoiceOnOrBefore(choices, date) {
+  return choices.findLast((choice) => choice.date <= date) ?? choices[0];
+}
+
+/**
+ * @param {HTMLElement} control
+ * @param {RangeChoice} choice
+ */
+function setSelectChoice(control, choice) {
   const select = control.querySelector("select");
-  if (select) select.ariaLabel = text;
-  label.append(span, control);
-  return label;
+  if (select) select.value = rangeChoiceKey(choice);
 }
 
 /**
@@ -359,13 +364,8 @@ function createControlField(text, control) {
  * @param {string} nextTo
  */
 function setRange(nextFrom, nextTo) {
-  if (nextFrom > nextTo) {
-    from = nextTo;
-    to = nextFrom;
-  } else {
-    from = nextFrom;
-    to = nextTo;
-  }
+  from = nextFrom;
+  to = nextTo;
   loadRange();
 }
 

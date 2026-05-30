@@ -28,7 +28,7 @@
  * @property {(col: number) => HeatmapRange} getDateIndexRange
  * @property {(row: number) => HeatmapRange} getYRange
  *
- * @typedef {Object} HeatmapCells
+ * @typedef {Object} HeatmapGridFactory
  * @property {(args: { dates: readonly string[], width: number, height: number }) => HeatmapGrid} create
  *
  * @typedef {(value: number, context: { dark: boolean, grid: HeatmapGrid, col: number, row: number }) => number} HeatmapColorFn
