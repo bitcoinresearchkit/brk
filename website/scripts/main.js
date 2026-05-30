@@ -8,7 +8,10 @@ import {
 } from "./panes/chart.js";
 import { init as initExplorer } from "./explorer/index.js";
 import { init as initSearch } from "./panes/search.js";
-import { init as initHeatmap } from "../src/heatmap/index.js";
+import {
+  init as initHeatmap,
+  setOption as setHeatmapOption,
+} from "../src/heatmap/index.js";
 import { readStored, removeStored, writeToStorage } from "./utils/storage.js";
 import {
   asideElement,
@@ -153,9 +156,10 @@ function initSelected() {
           element = heatmapElement;
 
           if (firstTimeLoadingHeatmap) {
-            initHeatmap(option);
+            initHeatmap();
           }
           firstTimeLoadingHeatmap = false;
+          setHeatmapOption(option);
 
           break;
         }

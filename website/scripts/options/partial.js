@@ -25,6 +25,7 @@ import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";
 import { createInvestingSection } from "./investing.js";
+import { demoHeatmapOption } from "../../src/heatmap/demo.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
@@ -298,13 +299,7 @@ export function createPartialOptions() {
 
     {
       name: "Heatmaps",
-      tree: [
-        {
-          kind: "heatmap",
-          name: "Demo",
-          title: "Heatmap Demo",
-        },
-      ],
+      tree: [demoHeatmapOption],
     },
 
     {

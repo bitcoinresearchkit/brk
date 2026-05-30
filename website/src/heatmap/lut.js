@@ -1,3 +1,5 @@
+/** @import { HeatmapColorFn } from "./types.js" */
+
 const INFERNO_STOPS = [
   [0, 0, 0, 0],
   [0.13, 40, 11, 84],
@@ -11,6 +13,21 @@ const INFERNO_STOPS = [
 ];
 
 export const INFERNO_LUT = createColorLut(INFERNO_STOPS);
+
+/**
+ * @param {Object} args
+ * @param {ArrayLike<number>} args.light
+ * @param {ArrayLike<number>} args.dark
+ * @returns {HeatmapColorFn}
+ */
+export function intensityColor({ light, dark }) {
+  return (value, context) => {
+    if (!Number.isFinite(value)) return 0x00000000;
+    const lut = context.dark ? dark : light;
+    const index = Math.min(255, Math.max(0, Math.round(value * 255)));
+    return lut[index] ?? 0x00000000;
+  };
+}
 
 /**
  * @param {number[][]} stops - Tuples of [position, red, green, blue].

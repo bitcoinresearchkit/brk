@@ -1,4 +1,5 @@
 const DAY_MS = 86_400_000;
+export const GENESIS_DATE = "2009-01-03";
 
 /**
  * @param {Date} date

@@ -107,14 +107,14 @@
  * @typedef {Object} PartialHeatmapOptionSpecific
  * @property {"heatmap"} kind
  * @property {string} title
- * @property {HeatmapDataSource} data
+ * @property {HeatmapPointSource} points
  * @property {HeatmapCells} cells
  * @property {HeatmapColorFn} color
  * @property {HeatmapTooltipFn} [tooltip]
  *
  * @typedef {PartialOption & PartialHeatmapOptionSpecific} PartialHeatmapOption
  *
- * @typedef {Required<PartialHeatmapOption> & ProcessedOptionAddons} HeatmapOption
+ * @typedef {Required<Omit<PartialHeatmapOption, "tooltip">> & Pick<PartialHeatmapOption, "tooltip"> & ProcessedOptionAddons} HeatmapOption
  *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"link"} [kind]
