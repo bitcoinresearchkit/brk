@@ -107,6 +107,10 @@
  * @typedef {Object} PartialHeatmapOptionSpecific
  * @property {"heatmap"} kind
  * @property {string} title
+ * @property {HeatmapDataSource} data
+ * @property {HeatmapCells} cells
+ * @property {HeatmapColorFn} color
+ * @property {HeatmapTooltipFn} [tooltip]
  *
  * @typedef {PartialOption & PartialHeatmapOptionSpecific} PartialHeatmapOption
  *
