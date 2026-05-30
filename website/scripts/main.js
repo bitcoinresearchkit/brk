@@ -147,8 +147,6 @@ function initSelected() {
           break;
         }
         case "heatmap": {
-          console.log("heatmap");
-
           element = heatmapElement;
 
           setHeatmapOption(option);
@@ -156,8 +154,6 @@ function initSelected() {
           break;
         }
         case "chart": {
-          console.log("chart");
-
           element = chartElement;
 
           if (firstTimeLoadingChart) {

@@ -1,7 +1,7 @@
 /** @import { PartialHeatmapOption } from "../../scripts/options/types.js" */
 /** @import { HeatmapPoints } from "./types.js" */
 
-import { createAverageCells } from "./cells.js";
+import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, intensityColor } from "./lut.js";
 import { GENESIS_DATE, todayISODate } from "./time.js";
 
@@ -17,7 +17,7 @@ export const demoHeatmapOption = {
   points: {
     fetch: fetchDemoPoints,
   },
-  grid: createAverageCells({ yStart: 0, yEnd: 1, nativeRows: ROWS }),
+  grid: createAverageGrid({ yStart: 0, yEnd: 1, nativeRows: ROWS }),
   color: intensityColor({ light: INFERNO_LUT, dark: INFERNO_LUT }),
 };
 

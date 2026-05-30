@@ -99,9 +99,12 @@ function loadRange() {
 
   rebuildGrid();
 
-  const missing = currentDates.flatMap((date, dateIndex) =>
-    pointsByDate.has(date) ? [] : [{ date, dateIndex }],
-  );
+  /** @type {{ date: string, dateIndex: number }[]} */
+  const missing = [];
+  for (let dateIndex = 0; dateIndex < currentDates.length; dateIndex++) {
+    const date = currentDates[dateIndex];
+    if (!pointsByDate.has(date)) missing.push({ date, dateIndex });
+  }
   let completed = currentDates.length - missing.length;
   let failed = 0;
   updateStatus(completed, currentDates.length, failed);
@@ -114,17 +117,17 @@ function loadRange() {
   }).map(async () => {
     let index = nextMissingIndex();
     while (index !== undefined) {
-      const date = missing[index];
+      const entry = missing[index];
       try {
-        const points = await option.points.fetch(date.date, controller.signal);
+        const points = await option.points.fetch(entry.date, controller.signal);
         if (isCurrentLoad(option, controller, generation)) {
-          pointsByDate.set(date.date, points);
-          addDateToGrid(date.dateIndex, points);
+          pointsByDate.set(entry.date, points);
+          addDateToGrid(entry.dateIndex, points);
         }
       } catch (error) {
         if (controller.signal.aborted) return;
         failed += 1;
-        console.error(`Failed to fetch heatmap points for ${date.date}`, error);
+        console.error(`Failed to fetch heatmap points for ${entry.date}`, error);
       } finally {
         if (isCurrentLoad(option, controller, generation)) {
           completed += 1;
@@ -244,10 +247,8 @@ function updateStatus(completed, total, failed) {
 
 function createRangeControls() {
   const fieldset = document.createElement("fieldset");
-  fieldset.classList.add("heatmap-controls");
 
   statusElement = document.createElement("small");
-  statusElement.classList.add("heatmap-status");
 
   const currentYear = new Date().getUTCFullYear();
   const fromChoices = createFromChoices(currentYear);
@@ -263,12 +264,12 @@ function createRangeControls() {
     onChange(choice) {
       fromChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        toChoice = findFirstToChoiceOnOrAfter(toChoices, fromChoice.date);
-        setSelectChoice(toSelect, toChoice);
+        toChoice = findMatchingChoice(toChoices, fromChoice);
+        toSelect.set(toChoice);
       }
       setRange(fromChoice.date, toChoice.date);
     },
-    toKey: rangeChoiceKey,
+    toKey: rangeChoiceLabel,
     toLabel: rangeChoiceLabel,
   });
   const toSelect = createSelect({
@@ -279,16 +280,16 @@ function createRangeControls() {
     onChange(choice) {
       toChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        fromChoice = findLastFromChoiceOnOrBefore(fromChoices, toChoice.date);
-        setSelectChoice(fromSelect, fromChoice);
+        fromChoice = findMatchingChoice(fromChoices, toChoice);
+        fromSelect.set(fromChoice);
       }
       setRange(fromChoice.date, toChoice.date);
     },
-    toKey: rangeChoiceKey,
+    toKey: rangeChoiceLabel,
     toLabel: rangeChoiceLabel,
   });
 
-  fieldset.append(fromSelect, toSelect, statusElement);
+  fieldset.append(fromSelect.element, toSelect.element, statusElement);
 
   return fieldset;
 }
@@ -323,40 +324,16 @@ function createToChoices(currentYear) {
 /**
  * @param {RangeChoice} choice
  */
-function rangeChoiceKey(choice) {
-  return choice.label;
-}
-
-/**
- * @param {RangeChoice} choice
- */
 function rangeChoiceLabel(choice) {
   return choice.label;
 }
 
 /**
  * @param {readonly RangeChoice[]} choices
- * @param {string} date
+ * @param {RangeChoice} selected
  */
-function findFirstToChoiceOnOrAfter(choices, date) {
-  return choices.find((choice) => choice.date >= date) ?? choices[0];
-}
-
-/**
- * @param {readonly RangeChoice[]} choices
- * @param {string} date
- */
-function findLastFromChoiceOnOrBefore(choices, date) {
-  return choices.findLast((choice) => choice.date <= date) ?? choices[0];
-}
-
-/**
- * @param {HTMLElement} control
- * @param {RangeChoice} choice
- */
-function setSelectChoice(control, choice) {
-  const select = control.querySelector("select");
-  if (select) select.value = rangeChoiceKey(choice);
+function findMatchingChoice(choices, selected) {
+  return choices.find((choice) => choice.label === selected.label) ?? choices[0];
 }
 
 /**

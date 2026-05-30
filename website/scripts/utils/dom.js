@@ -181,10 +181,18 @@ export function createLabeledInput({
 
 /**
  * @template T
+ * @typedef {Object} Select
+ * @property {HTMLElement} element
+ * @property {() => T} get
+ * @property {(choice: T) => void} set
+ */
+
+/**
+ * @template T
  * @param {Object} args
  * @param {T} args.initialValue
  * @param {string} [args.id]
- * @param {string} [args.label]
+ * @param {string} [args.legend]
  * @param {readonly T[]} args.choices
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
@@ -193,6 +201,7 @@ export function createLabeledInput({
  */
 export function createRadios({
   id,
+  legend,
   choices,
   initialValue,
   onChange,
@@ -200,8 +209,7 @@ export function createRadios({
   toLabel = /** @type {(choice: T) => string} */ ((c) => String(c)),
   toTitle,
 }) {
-  const field = window.document.createElement("div");
-  field.classList.add("field");
+  const field = window.document.createElement("fieldset");
 
   const initialKey = toKey(initialValue);
 
@@ -214,6 +222,12 @@ export function createRadios({
     span.textContent = toLabel(choices[0]);
     field.append(span);
   } else {
+    if (legend) {
+      const legendElement = window.document.createElement("legend");
+      legendElement.textContent = legend;
+      field.append(legendElement);
+    }
+
     const fieldId = id ?? "";
     choices.forEach((choice) => {
       const choiceKey = toKey(choice);
@@ -232,10 +246,10 @@ export function createRadios({
       field.append(label);
     });
 
-    field.addEventListener("change", (event) => {
-      // @ts-ignore
-      onChange?.(fromKey(event.target.value));
-    });
+  field.addEventListener("change", (event) => {
+    if (!(event.target instanceof HTMLInputElement)) return;
+    onChange?.(fromKey(event.target.value));
+  });
   }
 
   return field;
@@ -253,6 +267,7 @@ export function createRadios({
  * @param {(choice: T) => string} [args.toLabel]
  * @param {boolean} [args.sorted]
  * @param {{ label: string, items: T[] }[]} [args.groups]
+ * @returns {Select<T>}
  */
 export function createSelect({
   id,
@@ -278,7 +293,11 @@ export function createSelect({
   if (choices.length === 1) {
     const span = window.document.createElement("span");
     span.textContent = toLabel(choices[0]);
-    return span;
+    return {
+      element: span,
+      get: () => initialValue,
+      set: () => {},
+    };
   }
 
   const field = window.document.createElement("label");
@@ -330,13 +349,19 @@ export function createSelect({
   }
 
   field.addEventListener("click", (e) => {
-    if (e.target !== select) {
+    if (e.target !== select && "showPicker" in select) {
       e.preventDefault();
       select.showPicker();
     }
   });
 
-  return field;
+  return {
+    element: field,
+    get: () => fromKey(select.value),
+    set: (choice) => {
+      select.value = toKey(choice);
+    },
+  };
 }
 
 /**

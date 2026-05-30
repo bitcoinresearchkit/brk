@@ -20,7 +20,7 @@ function clamp(value, min, max) {
  * @param {number} [args.nativeRows]
  * @returns {HeatmapGridFactory}
  */
-export function createAverageCells({
+export function createAverageGrid({
   yStart,
   yEnd,
   minCellSize = 1,
