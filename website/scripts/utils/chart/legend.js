@@ -1,4 +1,4 @@
-import { createLabeledInput, createSpanName } from "../dom.js";
+import { createLabeledInput, createSpan, createSpanName } from "../dom.js";
 import { stringToId } from "../format.js";
 
 /** @param {HTMLElement} el */
@@ -27,8 +27,7 @@ export function createLegend() {
   element.append(scroller);
   captureScroll(scroller);
 
-  const separator = window.document.createElement("span");
-  separator.textContent = "|";
+  const separator = createSpan("|");
   captureScroll(separator);
 
   return {

@@ -1,5 +1,6 @@
 import { createCube } from "./cube.js";
 import { formatFeeRate } from "./render.js";
+import { createSpan } from "../utils/dom.js";
 
 const NUM_BLOCKS = 8;
 
@@ -73,14 +74,12 @@ function updateMempoolCube(cube, block, position) {
 
   cube.leftFace.textContent = "";
   const median = document.createElement("p");
-  const tilde = document.createElement("span");
+  const tilde = createSpan("~");
   tilde.classList.add("dim");
-  tilde.textContent = "~";
   median.append(tilde, formatFeeRate(block.medianFee));
   const range = document.createElement("p");
-  const dash = document.createElement("span");
+  const dash = createSpan("-");
   dash.classList.add("dim");
-  dash.textContent = "-";
   range.append(formatFeeRate(block.feeRange[0]), dash, formatFeeRate(block.feeRange[6]));
   const unit = document.createElement("p");
   unit.classList.add("dim");

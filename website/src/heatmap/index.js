@@ -109,7 +109,10 @@ function loadRange() {
   let failed = 0;
   updateStatus(completed, currentDates.length, failed);
 
-  if (!missing.length) return;
+  if (!missing.length) {
+    abortController = undefined;
+    return;
+  }
 
   let cursor = 0;
   const workers = Array.from({
@@ -264,7 +267,7 @@ function createRangeControls() {
     onChange(choice) {
       fromChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        toChoice = findMatchingChoice(toChoices, fromChoice);
+        toChoice = findSameLabelChoice(toChoices, fromChoice, toChoices[0]);
         toSelect.set(toChoice);
       }
       setRange(fromChoice.date, toChoice.date);
@@ -280,7 +283,7 @@ function createRangeControls() {
     onChange(choice) {
       toChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        fromChoice = findMatchingChoice(fromChoices, toChoice);
+        fromChoice = findSameLabelChoice(fromChoices, toChoice, fromChoices[0]);
         fromSelect.set(fromChoice);
       }
       setRange(fromChoice.date, toChoice.date);
@@ -330,10 +333,11 @@ function rangeChoiceLabel(choice) {
 
 /**
  * @param {readonly RangeChoice[]} choices
- * @param {RangeChoice} selected
+ * @param {RangeChoice} choice
+ * @param {RangeChoice} fallback
  */
-function findMatchingChoice(choices, selected) {
-  return choices.find((choice) => choice.label === selected.label) ?? choices[0];
+function findSameLabelChoice(choices, choice, fallback) {
+  return choices.find((candidate) => candidate.label === choice.label) ?? fallback;
 }
 
 /**

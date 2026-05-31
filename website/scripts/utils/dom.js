@@ -42,6 +42,15 @@ export function createSpan(text) {
 }
 
 /**
+ * @param {string} text
+ */
+export function createSmall(text) {
+  const small = window.document.createElement("small");
+  small.textContent = text;
+  return small;
+}
+
+/**
  * @param {string} name
  */
 export function createSpanName(name) {
@@ -335,9 +344,7 @@ export function createSelect({
 
   const remaining = choices.length - 1;
   if (remaining > 0) {
-    const small = window.document.createElement("small");
-    small.textContent = `+${remaining}`;
-    element.append(small);
+    element.append(createSmall(`+${remaining}`));
     element.append(createSpan("↓"));
   }
 

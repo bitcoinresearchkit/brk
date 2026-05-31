@@ -113,7 +113,7 @@ export function createAverageGrid({
           if (col < 0 || col >= cols || dates.length === 0) {
             return emptyRange();
           }
-          const start = Math.floor((col * dates.length) / cols);
+          const start = Math.ceil((col * dates.length) / cols);
           const end = Math.floor(((col + 1) * dates.length - 1) / cols);
           return { start, end: clamp(end, start, dates.length - 1) };
         },
