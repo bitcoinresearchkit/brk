@@ -33,6 +33,15 @@ export function onFirstIntersection(element, callback) {
 }
 
 /**
+ * @param {string} text
+ */
+export function createSpan(text) {
+  const span = window.document.createElement("span");
+  span.textContent = text;
+  return span;
+}
+
+/**
  * @param {string} name
  */
 export function createSpanName(name) {
@@ -192,7 +201,6 @@ export function createLabeledInput({
  * @param {Object} args
  * @param {T} args.initialValue
  * @param {string} [args.id]
- * @param {string} [args.legend]
  * @param {readonly T[]} args.choices
  * @param {(value: T) => void} [args.onChange]
  * @param {(choice: T) => string} [args.toKey]
@@ -201,7 +209,6 @@ export function createLabeledInput({
  */
 export function createRadios({
   id,
-  legend,
   choices,
   initialValue,
   onChange,
@@ -209,7 +216,7 @@ export function createRadios({
   toLabel = /** @type {(choice: T) => string} */ ((c) => String(c)),
   toTitle,
 }) {
-  const field = window.document.createElement("fieldset");
+  const fieldset = window.document.createElement("fieldset");
 
   const initialKey = toKey(initialValue);
 
@@ -218,41 +225,32 @@ export function createRadios({
     choices.find((c) => toKey(c) === key) ?? initialValue;
 
   if (choices.length === 1) {
-    const span = window.document.createElement("span");
-    span.textContent = toLabel(choices[0]);
-    field.append(span);
+    fieldset.append(createSpan(toLabel(choices[0])));
   } else {
-    if (legend) {
-      const legendElement = window.document.createElement("legend");
-      legendElement.textContent = legend;
-      field.append(legendElement);
-    }
-
-    const fieldId = id ?? "";
+    const groupId = id ?? "";
     choices.forEach((choice) => {
-      const choiceKey = toKey(choice);
-      const choiceLabel = toLabel(choice);
+      const key = toKey(choice);
       const { label } = createLabeledInput({
-        inputId: `${fieldId}-${choiceKey.toLowerCase()}`,
-        inputName: fieldId,
-        inputValue: choiceKey,
-        inputChecked: choiceKey === initialKey,
+        inputId: `${groupId}-${key.toLowerCase()}`,
+        inputName: groupId,
+        inputValue: key,
+        inputChecked: key === initialKey,
         title: toTitle?.(choice),
         type: "radio",
       });
 
-      const text = window.document.createTextNode(choiceLabel);
+      const text = window.document.createTextNode(toLabel(choice));
       label.append(text);
-      field.append(label);
+      fieldset.append(label);
     });
 
-  field.addEventListener("change", (event) => {
-    if (!(event.target instanceof HTMLInputElement)) return;
-    onChange?.(fromKey(event.target.value));
-  });
+    fieldset.addEventListener("change", (event) => {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      onChange?.(fromKey(event.target.value));
+    });
   }
 
-  return field;
+  return fieldset;
 }
 
 /**
@@ -291,33 +289,30 @@ export function createSelect({
     choices.find((c) => toKey(c) === key) ?? initialValue;
 
   if (choices.length === 1) {
-    const span = window.document.createElement("span");
-    span.textContent = toLabel(choices[0]);
     return {
-      element: span,
+      element: createSpan(toLabel(choices[0])),
       get: () => initialValue,
       set: () => {},
     };
   }
 
-  const field = window.document.createElement("label");
+  const element = window.document.createElement("label");
   if (label) {
-    const span = window.document.createElement("span");
-    span.textContent = label;
-    field.append(span);
+    element.append(createSpan(label));
   }
 
   const select = window.document.createElement("select");
   select.id = id ?? "";
   select.name = id ?? "";
-  field.append(select);
+  element.append(select);
 
   /** @param {T} choice */
   const createOption = (choice) => {
+    const key = toKey(choice);
     const option = window.document.createElement("option");
-    option.value = toKey(choice);
+    option.value = key;
     option.textContent = toLabel(choice);
-    if (toKey(choice) === initialKey) {
+    if (key === initialKey) {
       option.selected = true;
     }
     return option;
@@ -342,13 +337,11 @@ export function createSelect({
   if (remaining > 0) {
     const small = window.document.createElement("small");
     small.textContent = `+${remaining}`;
-    field.append(small);
-    const arrow = window.document.createElement("span");
-    arrow.textContent = "↓";
-    field.append(arrow);
+    element.append(small);
+    element.append(createSpan("↓"));
   }
 
-  field.addEventListener("click", (e) => {
+  element.addEventListener("click", (e) => {
     if (e.target !== select && "showPicker" in select) {
       e.preventDefault();
       select.showPicker();
@@ -356,7 +349,7 @@ export function createSelect({
   });
 
   return {
-    element: field,
+    element,
     get: () => fromKey(select.value),
     set: (choice) => {
       select.value = toKey(choice);

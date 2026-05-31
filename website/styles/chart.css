@@ -16,133 +16,133 @@
     background: none;
   }
 
-  legend {
-    position: absolute;
-    left: 0;
-    right: 0;
-    z-index: 20;
-    font-size: var(--font-size-xs);
-    line-height: var(--line-height-xs);
-    pointer-events: none;
-
-    &::before,
-    &::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: var(--main-padding);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    &::before {
-      left: 0;
-      background-image: linear-gradient(
-        to left,
-        transparent,
-        var(--background-color)
-      );
-    }
-
-    &::after {
-      right: 0;
-      background-image: linear-gradient(
-        to right,
-        transparent,
-        var(--background-color)
-      );
-    }
-
-    > div {
-      display: flex;
-      align-items: center;
-      overflow-x: auto;
-      padding: 0 var(--main-padding);
-      padding-top: 0.375rem;
-
-      @media (pointer: coarse) {
-        pointer-events: auto;
-      }
-
-      > * {
-        pointer-events: auto;
-      }
-
-      > *:nth-child(2) {
-        color: var(--gray);
-        padding: 0 0.75rem;
-      }
-    }
-
-    padding: 0;
-    top: 0;
-    text-transform: lowercase;
-
-    select {
-      text-transform: lowercase;
-    }
-
-    > div {
-      padding-bottom: 0.75rem;
-
-      small {
-        flex-shrink: 0;
-      }
-
-      > div:last-child {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-shrink: 0;
-
-        > div {
-          flex: 0;
-          height: 100%;
-          display: flex;
-          align-items: center;
-
-          > label {
-            > span {
-              display: flex;
-            }
-
-            &:has(input:not(:checked)) {
-              > span.main > span.name {
-                text-decoration: line-through 1.5px var(--color);
-              }
-
-              &:hover {
-                * {
-                  color: var(--off-color);
-                }
-
-                > span.main > span.name {
-                  text-decoration-color: var(--orange);
-                }
-              }
-
-              &:active {
-                color: var(--orange);
-              }
-            }
-          }
-
-          > a {
-            padding-inline: 0.375rem;
-            margin-inline: -0.375rem;
-            margin-top: 0.1rem;
-          }
-        }
-      }
-    }
-  }
-
   > div {
     min-height: 0;
     height: 100%;
     margin-right: var(--negative-main-padding);
     margin-left: var(--negative-main-padding);
+
+    & > legend,
+    & table > tr > td:not(:last-child) legend {
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      font-size: var(--font-size-xs);
+      line-height: var(--line-height-xs);
+      pointer-events: none;
+      padding: 0;
+      top: 0;
+      text-transform: lowercase;
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: var(--main-padding);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      &::before {
+        left: 0;
+        background-image: linear-gradient(
+          to left,
+          transparent,
+          var(--background-color)
+        );
+      }
+
+      &::after {
+        right: 0;
+        background-image: linear-gradient(
+          to right,
+          transparent,
+          var(--background-color)
+        );
+      }
+
+      select {
+        text-transform: lowercase;
+      }
+
+      > div {
+        display: flex;
+        align-items: center;
+        overflow-x: auto;
+        padding-inline: var(--main-padding);
+        padding-block-start: 0.375rem;
+
+        @media (pointer: coarse) {
+          pointer-events: auto;
+        }
+
+        > * {
+          pointer-events: auto;
+        }
+
+        > *:nth-child(2) {
+          color: var(--gray);
+          padding-inline: 0.75rem;
+        }
+
+        small {
+          flex-shrink: 0;
+        }
+
+        > div:last-child {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex-shrink: 0;
+
+          > div {
+            flex: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+
+            > label {
+              > span {
+                display: flex;
+              }
+
+              &:has(input:not(:checked)) {
+                > span.main > span.name {
+                  text-decoration: line-through 1.5px var(--color);
+                }
+
+                &:hover {
+                  * {
+                    color: var(--off-color);
+                  }
+
+                  > span.main > span.name {
+                    text-decoration-color: var(--orange);
+                  }
+                }
+
+                &:active {
+                  color: var(--orange);
+                }
+              }
+            }
+
+            > a {
+              padding-inline: 0.375rem;
+              margin-inline: -0.375rem;
+              margin-top: 0.1rem;
+            }
+          }
+        }
+      }
+    }
+
+    & table > tr > td:not(:last-child) legend > div {
+      padding-bottom: 0.75rem;
+    }
 
     :is(fieldset:has(> label > input[type="radio"]), label:has(> select)) {
       display: flex;
@@ -174,41 +174,6 @@
 
       &:last-child > td {
         border-top: 1px;
-
-        &:nth-child(2) {
-          position: relative;
-
-          > fieldset:has(> label > input[type="radio"]) {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            pointer-events: auto;
-            font-size: var(--font-size-xs);
-            line-height: var(--line-height-xs);
-            text-transform: uppercase;
-            background-color: var(--background-color);
-            padding-left: var(--main-padding);
-            padding-right: 0.25rem;
-
-            &::after {
-              content: "";
-              position: absolute;
-              top: 0;
-              bottom: 0;
-              left: 100%;
-              width: var(--main-padding);
-              background-image: linear-gradient(
-                to right,
-                var(--background-color),
-                transparent
-              );
-            }
-          }
-        }
       }
     }
 
@@ -218,11 +183,14 @@
       z-index: 50;
       display: inline-flex;
       font-size: var(--font-size-xs);
+      line-height: var(--line-height-xs);
       align-items: center;
       text-transform: uppercase;
     }
 
-    tr:not(:last-child) > td:last-child > fieldset:has(> label > input[type="radio"]) {
+    tr:not(:last-child)
+      > td:last-child
+      > fieldset:has(> label > input[type="radio"]) {
       top: 0;
       right: 0;
       gap: 0.375rem;
@@ -304,10 +272,12 @@
 }
 
 @keyframes chart-hint {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0;
   }
-  15%, 85% {
+  15%,
+  85% {
     opacity: 0.85;
   }
 }

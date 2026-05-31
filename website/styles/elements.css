@@ -105,6 +105,11 @@ button {
   user-select: none;
 }
 
+fieldset {
+  min-inline-size: 0;
+  padding: 0;
+}
+
 h1 {
   font-size: 2rem;
   line-height: var(--line-height-xl);
