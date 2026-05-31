@@ -25,6 +25,7 @@
  * @property {number} rows
  * @property {(dateIndex: number, points: HeatmapPoints) => number | undefined} add
  * @property {(col: number, row: number) => number} getValue
+ * @property {(col?: number) => number} getMaxValue
  * @property {(col: number) => HeatmapRange} getDateIndexRange
  * @property {(row: number) => HeatmapRange} getYRange
  *

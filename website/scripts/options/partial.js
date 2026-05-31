@@ -26,6 +26,10 @@ import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";
 import { createInvestingSection } from "./investing.js";
 import { demoHeatmapOption } from "../../src/heatmap/demo.js";
+import {
+  oracleEmaHeatmapOption,
+  oracleRawHeatmapOption,
+} from "../../src/heatmap/oracle.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
@@ -299,7 +303,13 @@ export function createPartialOptions() {
 
     {
       name: "Heatmaps",
-      tree: [demoHeatmapOption],
+      tree: [
+        demoHeatmapOption,
+        {
+          name: "Oracle",
+          tree: [oracleRawHeatmapOption, oracleEmaHeatmapOption],
+        },
+      ],
     },
 
     {

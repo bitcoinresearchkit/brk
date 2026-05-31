@@ -1,15 +1,6 @@
 /** @import { HeatmapGrid, HeatmapGridFactory, HeatmapRange } from "./types.js" */
 
 /**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- */
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-/**
  * Generic date/y binning with average merge semantics.
  *
  * @param {Object} args
@@ -43,12 +34,19 @@ export function createAverageGrid({
       );
       const sums = new Float64Array(cols * rows);
       const counts = new Uint32Array(cols * rows);
+      const maxByCol = new Float64Array(cols);
+      const cumulativeMaxByCol = new Float64Array(cols);
+      let cumulativeMaxDirty = true;
       const ySpan = yEnd - yStart;
 
       /** @param {number} dateIndex */
       function toCol(dateIndex) {
         if (dateIndex < 0 || dateIndex >= dates.length) return undefined;
-        return clamp(Math.floor((dateIndex * cols) / dates.length), 0, cols - 1);
+        return clamp(
+          Math.floor((dateIndex * cols) / dates.length),
+          0,
+          cols - 1,
+        );
       }
 
       /** @param {number} y */
@@ -62,18 +60,19 @@ export function createAverageGrid({
       }
 
       /**
-       * @param {number} dateIndex
+       * @param {number} col
        * @param {number} y
        * @param {number} value
        */
-      function addValue(dateIndex, y, value) {
+      function addValue(col, y, value) {
         if (!Number.isFinite(value)) return undefined;
-        const col = toCol(dateIndex);
         const row = toRow(y);
-        if (col === undefined || row === undefined) return undefined;
+        if (row === undefined) return undefined;
         const index = row * cols + col;
         sums[index] += value;
         counts[index] += 1;
+        maxByCol[col] = Math.max(maxByCol[col], sums[index] / counts[index]);
+        cumulativeMaxDirty = true;
         return col;
       }
 
@@ -83,24 +82,27 @@ export function createAverageGrid({
         cols,
         rows,
         add(dateIndex, points) {
-          let dirty;
+          const col = toCol(dateIndex);
+          if (col === undefined) return undefined;
+          let dirty = false;
           if (points.kind === "implicit") {
             for (let i = 0; i < points.values.length; i++) {
-              const col = addValue(
-                dateIndex,
-                points.yStart + i * points.yStep,
-                points.values[i],
-              );
-              dirty = col ?? dirty;
+              dirty =
+                addValue(
+                  col,
+                  points.yStart + i * points.yStep,
+                  points.values[i],
+                ) !== undefined || dirty;
             }
           } else {
             const length = Math.min(points.y.length, points.values.length);
             for (let i = 0; i < length; i++) {
-              const col = addValue(dateIndex, points.y[i], points.values[i]);
-              dirty = col ?? dirty;
+              dirty =
+                addValue(col, points.y[i], points.values[i]) !== undefined ||
+                dirty;
             }
           }
-          return dirty;
+          return dirty ? col : undefined;
         },
         getValue(col, row) {
           if (col < 0 || col >= cols || row < 0 || row >= rows) {
@@ -108,6 +110,17 @@ export function createAverageGrid({
           }
           const index = row * cols + col;
           return counts[index] ? sums[index] / counts[index] : Number.NaN;
+        },
+        getMaxValue(col = cols - 1) {
+          if (cumulativeMaxDirty) {
+            let max = 0;
+            for (let c = 0; c < cols; c++) {
+              max = Math.max(max, maxByCol[c]);
+              cumulativeMaxByCol[c] = max;
+            }
+            cumulativeMaxDirty = false;
+          }
+          return cumulativeMaxByCol[clamp(col, 0, cols - 1)] ?? 0;
         },
         getDateIndexRange(col) {
           if (col < 0 || col >= cols || dates.length === 0) {
@@ -128,6 +141,15 @@ export function createAverageGrid({
       return grid;
     },
   };
+}
+
+/**
+ * @param {number} value
+ * @param {number} min
+ * @param {number} max
+ */
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 /** @returns {HeatmapRange} */

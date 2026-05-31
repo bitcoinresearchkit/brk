@@ -30,6 +30,24 @@ export function intensityColor({ light, dark }) {
 }
 
 /**
+ * @param {Object} args
+ * @param {ArrayLike<number>} args.light
+ * @param {ArrayLike<number>} args.dark
+ * @returns {HeatmapColorFn}
+ */
+export function logIntensityColor({ light, dark }) {
+  return (value, context) => {
+    if (!Number.isFinite(value) || value <= 0) return 0x00000000;
+    const max = context.grid.getMaxValue(context.col);
+    if (max <= 0) return 0x00000000;
+    const lut = context.dark ? dark : light;
+    const t = Math.log2(value + 1) / Math.log2(max + 1);
+    const index = Math.min(255, Math.max(0, Math.round(t * 255)));
+    return lut[index] ?? 0x00000000;
+  };
+}
+
+/**
  * @param {number[][]} stops - Tuples of [position, red, green, blue].
  */
 export function createColorLut(stops) {
