@@ -9,6 +9,7 @@ import { defaultTooltip } from "./tooltip.js";
 const BINS = 2400;
 const MIN_LOG = -8;
 const BINS_PER_DECADE = 200;
+const MAX_LOG = MIN_LOG + (BINS - 1) / BINS_PER_DECADE;
 
 export const oracleRawHeatmapOption = createOracleHeatmapOption("raw", "Raw");
 export const oracleEmaHeatmapOption = createOracleHeatmapOption("ema", "EMA");
@@ -24,7 +25,8 @@ function createOracleHeatmapOption(mode, name) {
     name,
     title: `Oracle ${name} Histogram`,
     points: {
-      fetch: (date, signal) => fetchOraclePoints(mode, date, signal),
+      fetch: (date, signal, onPoints) =>
+        fetchOraclePoints(mode, date, signal, onPoints),
     },
     grid: createAverageGrid({
       yStart: MIN_LOG,
@@ -40,40 +42,44 @@ function createOracleHeatmapOption(mode, name) {
  * @param {"raw" | "ema"} mode
  * @param {string} date
  * @param {AbortSignal} signal
+ * @param {(points: HeatmapPoints) => void} [onPoints]
  * @returns {Promise<HeatmapPoints>}
  */
-async function fetchOraclePoints(mode, date, signal) {
-  const values = await firstAvailable((onValue) =>
-    mode === "raw"
-      ? brk.getOracleHistogramRaw(date, { signal, onValue })
-      : brk.getOracleHistogramEma(date, { signal, onValue }),
+async function fetchOraclePoints(mode, date, signal, onPoints) {
+  const values = await fetchOracleValues(
+    mode,
+    date,
+    signal,
+    onPoints ? (values) => onPoints(toOraclePoints(values)) : undefined,
   );
 
-  return {
-    kind: "implicit",
-    yStart: MIN_LOG,
-    yStep: 1 / BINS_PER_DECADE,
-    values,
-  };
+  return toOraclePoints(values);
 }
 
 /**
- * @param {(onValue: (value: number[]) => void) => Promise<number[]>} fetch
+ * @param {"raw" | "ema"} mode
+ * @param {string} date
+ * @param {AbortSignal} signal
+ * @param {(values: number[]) => void} [onValue]
  * @returns {Promise<number[]>}
  */
-function firstAvailable(fetch) {
-  return new Promise((resolve, reject) => {
-    let settled = false;
+function fetchOracleValues(mode, date, signal, onValue) {
+  return (
+    mode === "raw"
+      ? brk.getOracleHistogramRaw(date, { signal, onValue })
+      : brk.getOracleHistogramEma(date, { signal, onValue })
+  );
+}
 
-    /** @param {number[]} value */
-    const resolveOnce = (value) => {
-      if (settled) return;
-      settled = true;
-      resolve(value);
-    };
-
-    fetch(resolveOnce).then(resolveOnce, (error) => {
-      if (!settled) reject(error);
-    });
-  });
+/**
+ * @param {number[]} values
+ * @returns {HeatmapPoints}
+ */
+function toOraclePoints(values) {
+  return {
+    kind: "implicit",
+    yStart: MAX_LOG,
+    yStep: -1 / BINS_PER_DECADE,
+    values,
+  };
 }

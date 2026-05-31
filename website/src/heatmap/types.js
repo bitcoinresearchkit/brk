@@ -13,7 +13,7 @@
  * @typedef {HeatmapImplicitPoints | HeatmapExplicitPoints} HeatmapPoints
  *
  * @typedef {Object} HeatmapPointSource
- * @property {(date: string, signal: AbortSignal) => Promise<HeatmapPoints>} fetch
+ * @property {(date: string, signal: AbortSignal, onPoints?: (points: HeatmapPoints) => void) => Promise<HeatmapPoints>} fetch
  *
  * @typedef {Object} HeatmapRange
  * @property {number} start

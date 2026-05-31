@@ -116,6 +116,7 @@ function loadRange() {
   }
 
   let cursor = 0;
+  let needsRebuild = false;
   const workers = Array.from({
     length: Math.min(MAX_PARALLEL_FETCHES, missing.length),
   }).map(async () => {
@@ -123,10 +124,17 @@ function loadRange() {
     while (index !== undefined) {
       const entry = missing[index];
       try {
-        const points = await option.points.fetch(entry.date, controller.signal);
+        const points = await option.points.fetch(
+          entry.date,
+          controller.signal,
+          (points) => {
+            if (isCurrentLoad(option, controller, generation)) {
+              setPoints(entry, points);
+            }
+          },
+        );
         if (isCurrentLoad(option, controller, generation)) {
-          pointsByDate.set(entry.date, points);
-          addDateToGrid(entry.dateIndex, points);
+          setPoints(entry, points);
         }
       } catch (error) {
         if (controller.signal.aborted) return;
@@ -147,7 +155,11 @@ function loadRange() {
   void Promise.all(workers).then(() => {
     if (isCurrentLoad(option, controller, generation)) {
       updateStatus(completed, currentDates.length, failed);
-      paint();
+      if (needsRebuild) {
+        rebuildGrid();
+      } else {
+        paint();
+      }
     }
   });
 
@@ -156,6 +168,21 @@ function loadRange() {
     const index = cursor;
     cursor += 1;
     return index;
+  }
+
+  /**
+   * @param {{ date: string, dateIndex: number }} entry
+   * @param {HeatmapPoints} points
+   */
+  function setPoints(entry, points) {
+    const previous = pointsByDate.get(entry.date);
+    if (previous && samePoints(previous, points)) return;
+    pointsByDate.set(entry.date, points);
+    if (previous) {
+      needsRebuild = true;
+    } else {
+      addDateToGrid(entry.dateIndex, points);
+    }
   }
 }
 
@@ -207,6 +234,20 @@ function addDateToGrid(dateIndex, points) {
   if (!currentGrid) return;
   const dirtyCol = currentGrid.add(dateIndex, points);
   if (dirtyCol !== undefined) schedulePaint(dirtyCol);
+}
+
+/**
+ * @param {HeatmapPoints} a
+ * @param {HeatmapPoints} b
+ */
+function samePoints(a, b) {
+  if (a === b) return true;
+  if (a.kind !== b.kind || a.values !== b.values) return false;
+  if (a.kind === "implicit" && b.kind === "implicit") {
+    return a.yStart === b.yStart && a.yStep === b.yStep;
+  }
+  if (a.kind === "explicit" && b.kind === "explicit") return a.y === b.y;
+  return false;
 }
 
 /** @param {number} col */
