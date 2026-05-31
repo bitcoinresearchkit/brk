@@ -482,7 +482,7 @@ class BrkClientBase {{
     const url = `${{this.baseUrl}}${{path}}`;
     /** @type {{_MemEntry<T> | undefined}} */
     const memHit = this._memGet(url);
-    const browserCache = this._browserCache ?? await this._browserCachePromise;
+    const browserCache = this._browserCache;
 
     // L1 fast path: deliver from memCache, revalidate via network.
     // ETag match → zero parse, zero clone, zero cache write, no second onValue fire.

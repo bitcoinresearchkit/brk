@@ -65,15 +65,24 @@ export function createAverageGrid({
        * @param {number} value
        */
       function addValue(col, y, value) {
-        if (!Number.isFinite(value)) return undefined;
+        if (!Number.isFinite(value)) return false;
         const row = toRow(y);
-        if (row === undefined) return undefined;
+        if (row === undefined) return false;
         const index = row * cols + col;
         sums[index] += value;
         counts[index] += 1;
-        maxByCol[col] = Math.max(maxByCol[col], sums[index] / counts[index]);
+        return true;
+      }
+
+      /** @param {number} col */
+      function updateColumnMax(col) {
+        let max = 0;
+        for (let row = 0; row < rows; row++) {
+          const index = row * cols + col;
+          if (counts[index]) max = Math.max(max, sums[index] / counts[index]);
+        }
+        maxByCol[col] = max;
         cumulativeMaxDirty = true;
-        return col;
       }
 
       /** @type {HeatmapGrid} */
@@ -87,22 +96,19 @@ export function createAverageGrid({
           let dirty = false;
           if (points.kind === "implicit") {
             for (let i = 0; i < points.values.length; i++) {
-              dirty =
-                addValue(
-                  col,
-                  points.yStart + i * points.yStep,
-                  points.values[i],
-                ) !== undefined || dirty;
+              if (addValue(col, points.yStart + i * points.yStep, points.values[i])) {
+                dirty = true;
+              }
             }
           } else {
             const length = Math.min(points.y.length, points.values.length);
             for (let i = 0; i < length; i++) {
-              dirty =
-                addValue(col, points.y[i], points.values[i]) !== undefined ||
-                dirty;
+              if (addValue(col, points.y[i], points.values[i])) dirty = true;
             }
           }
-          return dirty ? col : undefined;
+          if (!dirty) return undefined;
+          updateColumnMax(col);
+          return col;
         },
         getValue(col, row) {
           if (col < 0 || col >= cols || row < 0 || row >= rows) {

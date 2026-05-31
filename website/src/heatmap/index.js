@@ -15,8 +15,6 @@ import { dateRange, GENESIS_DATE, todayISODate, toISODate } from "./time.js";
  */
 
 const MAX_PARALLEL_FETCHES = 8;
-const DEBUG = true;
-const DEBUG_STARTED_AT = performance.now();
 
 /** @type {ReturnType<typeof createRenderer> | undefined} */
 let renderer;
@@ -44,21 +42,10 @@ let from = yearStartISODate(new Date().getUTCFullYear());
 let to = todayISODate();
 
 /**
- * @param {string} message
- * @param {Record<string, unknown>} [data]
- */
-function debug(message, data) {
-  if (!DEBUG) return;
-  const elapsed = Math.round(performance.now() - DEBUG_STARTED_AT);
-  console.log(`[heatmap +${elapsed}ms] ${message}`, data ?? "");
-}
-
-/**
  * Initializes the heatmap pane once for the app lifetime.
  */
 export function init() {
   if (initialized) return;
-  debug("init:start");
   initialized = true;
 
   const header = createHeader();
@@ -79,17 +66,13 @@ export function init() {
 
   new ResizeObserver(
     debounce(() => {
-      debug("resize");
       resizeAndRebuild();
     }, 250),
   ).observe(heatmapElement);
-
-  debug("init:done");
 }
 
 /** @param {HeatmapOption} option */
 export function setOption(option) {
-  debug("setOption", { title: option.title, same: currentOption === option });
   init();
   if (currentOption !== option) {
     currentOption = option;
@@ -103,19 +86,11 @@ export function setOption(option) {
 function resizeAndRebuild() {
   if (!canvas || !renderer) return;
   const { width, height } = canvas.getBoundingClientRect();
-  debug("resizeAndRebuild", { width, height });
   if (renderer.resize(width, height)) rebuildGrid();
 }
 
 function loadRange() {
   if (!currentOption) return;
-  const startedAt = performance.now();
-  debug("loadRange:start", {
-    title: currentOption.title,
-    from,
-    to,
-    cacheSize: pointsByDate.size,
-  });
 
   abortController?.abort();
   const generation = ++loadGeneration;
@@ -123,7 +98,6 @@ function loadRange() {
   const controller = new AbortController();
   abortController = controller;
   currentDates = dateRange(from, to);
-  debug("loadRange:dates", { count: currentDates.length });
 
   /** @type {{ date: string, dateIndex: number }[]} */
   const missing = [];
@@ -134,41 +108,22 @@ function loadRange() {
   let completed = currentDates.length - missing.length;
   let failed = 0;
   updateStatus(completed, currentDates.length, failed);
-  debug("loadRange:missing", {
-    missing: missing.length,
-    cached: completed,
-    total: currentDates.length,
-  });
 
   if (!missing.length) {
-    debug("loadRange:all-cached:rebuild:start");
     rebuildGrid();
-    debug("loadRange:all-cached:rebuild:done", {
-      elapsed: Math.round(performance.now() - startedAt),
-    });
     abortController = undefined;
     return;
   }
 
   let cursor = 0;
-  debug("loadRange:workers:start", {
-    workers: Math.min(MAX_PARALLEL_FETCHES, missing.length),
-  });
   const workers = Array.from({
     length: Math.min(MAX_PARALLEL_FETCHES, missing.length),
-  }).map(async (_, workerId) => {
-    debug("worker:start", { workerId });
+  }).map(async () => {
     let index = nextMissingIndex();
     while (index !== undefined) {
       const entry = missing[index];
       try {
-        if (completed < 10) {
-          debug("worker:fetch:start", { workerId, date: entry.date });
-        }
         const points = await option.points.fetch(entry.date, controller.signal);
-        if (completed < 10) {
-          debug("worker:fetch:done", { workerId, date: entry.date });
-        }
         if (isCurrentLoad(option, controller, generation)) {
           pointsByDate.set(entry.date, points);
           addDateToGrid(entry.dateIndex, points);
@@ -181,42 +136,18 @@ function loadRange() {
         if (isCurrentLoad(option, controller, generation)) {
           completed += 1;
           updateStatus(completed, currentDates.length, failed);
-          if (completed <= 10 || completed % 25 === 0 || completed === currentDates.length) {
-            debug("loadRange:progress", {
-              completed,
-              total: currentDates.length,
-              failed,
-              elapsed: Math.round(performance.now() - startedAt),
-            });
-          }
         }
       }
       index = nextMissingIndex();
     }
-    debug("worker:done", { workerId });
   });
 
-  debug("loadRange:rebuild:start");
   rebuildGrid();
-  debug("loadRange:rebuild:done", {
-    elapsed: Math.round(performance.now() - startedAt),
-  });
 
   void Promise.all(workers).then(() => {
     if (isCurrentLoad(option, controller, generation)) {
       updateStatus(completed, currentDates.length, failed);
-      debug("loadRange:final-paint:start", {
-        completed,
-        total: currentDates.length,
-        failed,
-      });
       paint();
-      debug("loadRange:done", {
-        completed,
-        total: currentDates.length,
-        failed,
-        elapsed: Math.round(performance.now() - startedAt),
-      });
     }
   });
 
@@ -243,7 +174,6 @@ function isCurrentLoad(option, controller, generation) {
 }
 
 function rebuildGrid() {
-  const startedAt = performance.now();
   if (
     !currentOption ||
     !renderer ||
@@ -252,39 +182,21 @@ function rebuildGrid() {
     !currentDates.length
   ) {
     currentGrid = undefined;
-    debug("rebuildGrid:skip");
     return;
   }
 
-  debug("rebuildGrid:create:start", {
-    dates: currentDates.length,
-    width: renderer.width,
-    height: renderer.height,
-    cached: pointsByDate.size,
-  });
   currentGrid = currentOption.grid.create({
     dates: currentDates,
     width: renderer.width,
     height: renderer.height,
   });
 
-  let added = 0;
   for (let i = 0; i < currentDates.length; i++) {
     const points = pointsByDate.get(currentDates[i]);
-    if (points) {
-      currentGrid.add(i, points);
-      added += 1;
-    }
+    if (points) currentGrid.add(i, points);
   }
 
-  debug("rebuildGrid:add:done", {
-    added,
-    elapsed: Math.round(performance.now() - startedAt),
-  });
   paint();
-  debug("rebuildGrid:paint:done", {
-    elapsed: Math.round(performance.now() - startedAt),
-  });
 }
 
 /**
@@ -299,7 +211,6 @@ function addDateToGrid(dateIndex, points) {
 
 /** @param {number} col */
 function schedulePaint(col) {
-  if (dirtyCols.size === 0) debug("paint:schedule", { col });
   dirtyCols.add(col);
   if (paintScheduled) return;
   paintScheduled = true;

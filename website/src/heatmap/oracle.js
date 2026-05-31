@@ -9,19 +9,6 @@ import { defaultTooltip } from "./tooltip.js";
 const BINS = 2400;
 const MIN_LOG = -8;
 const BINS_PER_DECADE = 200;
-const DEBUG = true;
-const DEBUG_STARTED_AT = performance.now();
-let fetchLogCount = 0;
-
-/**
- * @param {string} message
- * @param {Record<string, unknown>} [data]
- */
-function debug(message, data) {
-  if (!DEBUG) return;
-  const elapsed = Math.round(performance.now() - DEBUG_STARTED_AT);
-  console.log(`[heatmap:oracle +${elapsed}ms] ${message}`, data ?? "");
-}
 
 export const oracleRawHeatmapOption = createOracleHeatmapOption("raw", "Raw");
 export const oracleEmaHeatmapOption = createOracleHeatmapOption("ema", "EMA");
@@ -56,23 +43,11 @@ function createOracleHeatmapOption(mode, name) {
  * @returns {Promise<HeatmapPoints>}
  */
 async function fetchOraclePoints(mode, date, signal) {
-  const shouldLog = DEBUG && fetchLogCount < 20;
-  fetchLogCount += 1;
-  const startedAt = performance.now();
-  if (shouldLog) debug("fetch:start", { mode, date });
   const values = await firstAvailable((onValue) =>
     mode === "raw"
       ? brk.getOracleHistogramRaw(date, { signal, onValue })
       : brk.getOracleHistogramEma(date, { signal, onValue }),
   );
-  if (shouldLog) {
-    debug("fetch:done", {
-      mode,
-      date,
-      length: values.length,
-      elapsed: Math.round(performance.now() - startedAt),
-    });
-  }
 
   return {
     kind: "implicit",
