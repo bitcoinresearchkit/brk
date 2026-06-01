@@ -162,6 +162,7 @@
 - [HashrateEntry](interfaces/HashrateEntry.md)
 - [HashrateSummary](interfaces/HashrateSummary.md)
 - [Health](interfaces/Health.md)
+- [HeightOrDateParam](interfaces/HeightOrDateParam.md)
 - [HeightParam](interfaces/HeightParam.md)
 - [HistoricalPrice](interfaces/HistoricalPrice.md)
 - [HistoricalPriceEntry](interfaces/HistoricalPriceEntry.md)

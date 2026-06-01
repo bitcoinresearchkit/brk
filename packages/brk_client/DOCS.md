@@ -99,6 +99,11 @@
     * [get\_block\_template](#brk_client.BrkClient.get_block_template)
     * [get\_block\_template\_diff](#brk_client.BrkClient.get_block_template_diff)
     * [get\_live\_price](#brk_client.BrkClient.get_live_price)
+    * [get\_oracle\_price](#brk_client.BrkClient.get_oracle_price)
+    * [get\_oracle\_histogram\_payments\_live](#brk_client.BrkClient.get_oracle_histogram_payments_live)
+    * [get\_oracle\_histogram\_payments](#brk_client.BrkClient.get_oracle_histogram_payments)
+    * [get\_oracle\_histogram\_outputs\_live](#brk_client.BrkClient.get_oracle_histogram_outputs_live)
+    * [get\_oracle\_histogram\_outputs](#brk_client.BrkClient.get_oracle_histogram_outputs)
     * [get\_tx\_by\_index](#brk_client.BrkClient.get_tx_by_index)
     * [get\_cpfp](#brk_client.BrkClient.get_cpfp)
     * [get\_tx\_rbf](#brk_client.BrkClient.get_tx_rbf)
@@ -1439,6 +1444,76 @@ Live BTC/USD price.
 Returns the current BTC/USD price in dollars, derived from on-chain round-dollar output patterns in the last 12 blocks plus mempool.
 
 Endpoint: `GET /api/mempool/price`
+
+<a id="brk_client.BrkClient.get_oracle_price"></a>
+
+#### get\_oracle\_price
+
+```python
+def get_oracle_price() -> Dollars
+```
+
+Live BTC/USD price.
+
+Current BTC/USD price in dollars. Same value as `/api/mempool/price`. Confirmed per-height history is available at `/api/vecs/height-to-price`.
+
+Endpoint: `GET /api/oracle/price`
+
+<a id="brk_client.BrkClient.get_oracle_histogram_payments_live"></a>
+
+#### get\_oracle\_histogram\_payments\_live
+
+```python
+def get_oracle_histogram_payments_live() -> List[int]
+```
+
+Live payment output histogram.
+
+Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+
+Endpoint: `GET /api/oracle/histogram/payments/live`
+
+<a id="brk_client.BrkClient.get_oracle_histogram_payments"></a>
+
+#### get\_oracle\_histogram\_payments
+
+```python
+def get_oracle_histogram_payments(point: str) -> List[int]
+```
+
+Payment output histogram at height or day.
+
+Smoothed histogram of oracle-eligible payment outputs for a confirmed point. A block height (`840000`) gives that block's oracle payment histogram; a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block payment histograms. A flat array of log-scale bins.
+
+Endpoint: `GET /api/oracle/histogram/payments/{point}`
+
+<a id="brk_client.BrkClient.get_oracle_histogram_outputs_live"></a>
+
+#### get\_oracle\_histogram\_outputs\_live
+
+```python
+def get_oracle_histogram_outputs_live() -> List[int]
+```
+
+Live output value histogram.
+
+Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+
+Endpoint: `GET /api/oracle/histogram/outputs/live`
+
+<a id="brk_client.BrkClient.get_oracle_histogram_outputs"></a>
+
+#### get\_oracle\_histogram\_outputs
+
+```python
+def get_oracle_histogram_outputs(point: str) -> List[int]
+```
+
+Output value histogram at height or day.
+
+Unfiltered output value histogram for a confirmed point. A block height (`840000`) gives every output in that block, coinbase included, binned by value on the oracle log scale; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
+
+Endpoint: `GET /api/oracle/histogram/outputs/{point}`
 
 <a id="brk_client.BrkClient.get_tx_by_index"></a>
 

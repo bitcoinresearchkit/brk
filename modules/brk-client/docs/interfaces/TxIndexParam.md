@@ -6,7 +6,7 @@
 
 # Interface: TxIndexParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1252](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1252)
+Defined in: [Developer/brk/modules/brk-client/index.js:1260](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L1260)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1252](https://github.com/
 
 > **index**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1253](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1253)
+Defined in: [Developer/brk/modules/brk-client/index.js:1261](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L1261)

@@ -8,6 +8,6 @@
 
 > **OutputType** = `"p2pk"` \| `"p2pk"` \| `"p2pkh"` \| `"multisig"` \| `"p2sh"` \| `"op_return"` \| `"v0_p2wpkh"` \| `"v0_p2wsh"` \| `"v1_p2tr"` \| `"p2a"` \| `"empty"` \| `"unknown"`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:819](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L819)
+Defined in: [Developer/brk/modules/brk-client/index.js:827](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L827)
 
 ## Type Parameters

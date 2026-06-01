@@ -8,6 +8,6 @@
 
 > **SigOps** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1133](https://github.com/bitcoinresearchkit/brk/blob/0b871e86004ed9dd0c54dd9336049531d6fe4d23/modules/brk-client/index.js#L1133)
+Defined in: [Developer/brk/modules/brk-client/index.js:1141](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L1141)
 
 ## Type Parameters
