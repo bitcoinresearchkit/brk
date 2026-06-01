@@ -25,8 +25,11 @@ const AMOUNT_CHOICES = [
   { label: "10k BTC", value: 4 },
 ];
 
-export const oracleRawHeatmapOption = createOracleHeatmapOption("raw", "Raw");
-export const oracleEmaHeatmapOption = createOracleHeatmapOption("ema", "EMA");
+export const oracleRawHeatmapOption = createOracleHeatmapOption("raw", "raw");
+export const oracleEmaHeatmapOption = createOracleHeatmapOption(
+  "ema",
+  "smoothed",
+);
 
 /**
  * @param {"raw" | "ema"} mode
@@ -37,7 +40,7 @@ function createOracleHeatmapOption(mode, name) {
   return {
     kind: "heatmap",
     name,
-    title: `Oracle ${name} Histogram`,
+    title: `${capitalize(name)} Output Value Distribution`,
     points: {
       fetch: (date, signal, onPoints) =>
         fetchOraclePoints(mode, date, signal, onPoints),
@@ -134,4 +137,9 @@ function formatNumber(value) {
 /** @param {string} value */
 function trimNumber(value) {
   return value.replace(/\.?0+$/, "");
+}
+
+/** @param {string} value */
+function capitalize(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

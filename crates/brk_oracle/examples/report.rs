@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, Oracle, PRICES, HistogramRaw, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
+    Config, HistogramRaw, Oracle, PRICES, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
     eligible_bin,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};

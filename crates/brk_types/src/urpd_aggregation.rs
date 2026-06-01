@@ -59,7 +59,12 @@ impl UrpdAggregation {
                 let size = self.linear_size_cents().unwrap();
                 (price_cents / size) * size
             }
-            Self::Log10 | Self::Log50 | Self::Log100 | Self::Log200 | Self::Log500 | Self::Log1000 => {
+            Self::Log10
+            | Self::Log50
+            | Self::Log100
+            | Self::Log200
+            | Self::Log500
+            | Self::Log1000 => {
                 if price_cents == Cents::ZERO {
                     return Cents::ZERO;
                 }

@@ -306,7 +306,7 @@ export function createPartialOptions() {
       tree: [
         demoHeatmapOption,
         {
-          name: "Oracle",
+          name: "output values",
           tree: [oracleRawHeatmapOption, oracleEmaHeatmapOption],
         },
       ],

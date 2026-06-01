@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 /// First height the oracle computes on-chain, with the slow cold-start EMA
 /// ([`slow`](Config::slow)). Below it, prices come from [`PRICES`](crate::PRICES).
 pub const START_HEIGHT_SLOW: usize = 340_000;
@@ -60,5 +62,42 @@ impl Config {
         } else {
             Self::default()
         }
+    }
+
+    /// Split a block range into sub-ranges with a single EMA configuration.
+    pub fn segments_for_range(range: Range<usize>) -> impl Iterator<Item = Range<usize>> {
+        let split = START_HEIGHT_FAST.clamp(range.start, range.end);
+        [range.start..split, split..range.end]
+            .into_iter()
+            .filter(|range| !range.is_empty())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn segments_for_range_splits_at_fast_start() {
+        let segments: Vec<_> =
+            Config::segments_for_range((START_HEIGHT_FAST - 2)..(START_HEIGHT_FAST + 2)).collect();
+        assert_eq!(
+            segments,
+            vec![
+                (START_HEIGHT_FAST - 2)..START_HEIGHT_FAST,
+                START_HEIGHT_FAST..(START_HEIGHT_FAST + 2),
+            ]
+        );
+    }
+
+    #[test]
+    fn segments_for_range_omits_empty_sides() {
+        let slow: Vec<_> =
+            Config::segments_for_range((START_HEIGHT_FAST - 2)..START_HEIGHT_FAST).collect();
+        assert_eq!(slow, vec![(START_HEIGHT_FAST - 2)..START_HEIGHT_FAST]);
+
+        let fast: Vec<_> =
+            Config::segments_for_range(START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)).collect();
+        assert_eq!(fast, vec![START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)]);
     }
 }

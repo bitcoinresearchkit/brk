@@ -66,6 +66,21 @@ impl<const N: usize> Histogram<f64, N> {
         }
         Histogram(out)
     }
+
+    /// Add another floating-point histogram bin-by-bin.
+    #[inline]
+    pub fn add_from(&mut self, rhs: &Self) {
+        self.0
+            .iter_mut()
+            .zip(rhs.0.iter())
+            .for_each(|(a, &b)| *a += b);
+    }
+
+    /// Divide every bin by `rhs`.
+    #[inline]
+    pub fn divide_by(&mut self, rhs: f64) {
+        self.0.iter_mut().for_each(|v| *v /= rhs);
+    }
 }
 
 impl<T: Serialize, const N: usize> Serialize for Histogram<T, N> {
@@ -118,5 +133,28 @@ impl<T: JsonSchema, const N: usize> JsonSchema for Histogram<T, N> {
     /// generic-mangled name has no real type for the Rust client to resolve to.
     fn inline_schema() -> bool {
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn float_histogram_add_and_divide_are_binwise() {
+        let mut a = Histogram::<f64, 3>::zeros();
+        a[0] = 1.0;
+        a[1] = 2.0;
+        a[2] = 3.0;
+
+        let mut b = Histogram::<f64, 3>::zeros();
+        b[0] = 3.0;
+        b[1] = 4.0;
+        b[2] = 5.0;
+
+        a.add_from(&b);
+        a.divide_by(2.0);
+
+        assert_eq!(*a, [2.0, 3.0, 4.0]);
     }
 }

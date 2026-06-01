@@ -115,7 +115,13 @@ impl Vecs {
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
         let warmup = config.window_size.min(committed - START_HEIGHT_SLOW);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
-            Self::feed_blocks(o, indexer, (committed - warmup)..committed, None);
+            Self::feed_blocks_with(
+                o,
+                indexer,
+                (committed - warmup)..committed,
+                None,
+                |_, _, _| {},
+            );
         });
 
         let num_new = total_heights - committed;

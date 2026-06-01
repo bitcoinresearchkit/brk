@@ -61,7 +61,11 @@ impl ShapeAnchor {
     /// shifts off the round-USD ladder. 0 for an empty (no-mass) center.
     fn shape_match(&self, ema: &HistogramEma, center: i64) -> f64 {
         match normalized_arms_at(ema, center) {
-            Some(arms) => 1.0 - (0..N_ARMS).map(|i| (arms[i] - self.profile[i]).abs()).sum::<f64>(),
+            Some(arms) => {
+                1.0 - (0..N_ARMS)
+                    .map(|i| (arms[i] - self.profile[i]).abs())
+                    .sum::<f64>()
+            }
             None => 0.0,
         }
     }

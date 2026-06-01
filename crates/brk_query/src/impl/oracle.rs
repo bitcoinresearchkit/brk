@@ -4,13 +4,14 @@ use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_FAST,
-    cents_to_bin, sats_to_bin,
+    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, cents_to_bin, sats_to_bin,
 };
 use brk_types::{Day1, Dollars, Sats, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
+
+const RAW_HISTOGRAM_VALUE_CHUNK: usize = 1_000_000;
 
 impl Query {
     pub fn live_price(&self) -> Result<Dollars> {
@@ -48,9 +49,9 @@ impl Query {
         let count = range.len();
         let mut acc = HistogramEma::zeros();
 
-        for segment in ema_config_segments(range) {
+        for segment in Config::segments_for_range(range) {
             let mut oracle = self.ema_oracle_at(segment.start, safe)?;
-            add_ema(&mut acc, oracle.ema());
+            acc.add_from(oracle.ema());
 
             let feed_start = segment.start + 1;
             if feed_start < segment.end {
@@ -59,13 +60,12 @@ impl Query {
                     self.indexer(),
                     feed_start..segment.end,
                     Some(safe),
-                    |_, oracle, _| add_ema(&mut acc, oracle.ema()),
+                    |_, oracle, _| acc.add_from(oracle.ema()),
                 );
             }
         }
 
-        let count = count as f64;
-        acc.iter_mut().for_each(|a| *a /= count);
+        acc.divide_by(count as f64);
         Ok(acc)
     }
 
@@ -83,7 +83,7 @@ impl Query {
     /// in the block binned by value, with no payment filtering.
     pub fn confirmed_histogram_raw(&self, height: usize) -> Result<HistogramRaw> {
         let safe = self.check_histogram_height(height)?;
-        Ok(self.block_raw_histogram(height, &safe))
+        Ok(self.raw_histogram_for_blocks(height..height + 1, &safe))
     }
 
     /// Unfiltered per-bin output counts for a calendar `day`: every block's raw
@@ -92,14 +92,7 @@ impl Query {
     pub fn confirmed_histogram_raw_day(&self, day: Day1) -> Result<HistogramRaw> {
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
-        let mut acc = HistogramRaw::zeros();
-        for height in range {
-            let block = self.block_raw_histogram(height, &safe);
-            acc.iter_mut()
-                .zip(block.iter())
-                .for_each(|(a, &v)| *a += v);
-        }
-        Ok(acc)
+        Ok(self.raw_histogram_for_blocks(range, &safe))
     }
 
     /// The live tip oracle: the cached committed base, with the forming block's
@@ -225,49 +218,51 @@ impl Query {
         Ok(start..end)
     }
 
-    /// One confirmed block's unfiltered histogram: every output in the block,
+    /// Unfiltered histogram for a contiguous confirmed block range: every output,
     /// coinbase included, binned by value via `sats_to_bin` with no payment
-    /// filtering. Built from a single batched columnar read of the block's
-    /// output-value range.
-    fn block_raw_histogram(&self, height: usize, safe: &Lengths) -> HistogramRaw {
+    /// filtering. Raw counts are additive, so a day can be read as one output
+    /// range instead of one block at a time.
+    fn raw_histogram_for_blocks(&self, range: Range<usize>, safe: &Lengths) -> HistogramRaw {
         let indexer = self.indexer();
         let total_outputs = safe.txout_index.to_usize();
-        let next_height = (height + 2).min(safe.height.to_usize());
+        let collect_end = (range.end + 1).min(safe.height.to_usize());
 
         let out_firsts: Vec<TxOutIndex> = indexer
             .vecs
             .outputs
             .first_txout_index
-            .collect_range_at(height, next_height);
+            .collect_range_at(range.start, collect_end);
         let out_start = out_firsts[0].to_usize();
         let out_end = out_firsts
-            .get(1)
+            .get(range.end - range.start)
             .copied()
             .unwrap_or(TxOutIndex::from(total_outputs))
             .to_usize();
 
         let mut hist = HistogramRaw::zeros();
-        let values: Vec<Sats> = indexer.vecs.outputs.value.collect_range_at(out_start, out_end);
-        for sats in values {
-            if let Some(bin) = sats_to_bin(sats) {
-                hist.increment(bin);
-            }
+        let mut values: Vec<Sats> = Vec::new();
+        let mut start = out_start;
+        while start < out_end {
+            let end = (start + RAW_HISTOGRAM_VALUE_CHUNK).min(out_end);
+            values.clear();
+            indexer
+                .vecs
+                .outputs
+                .value
+                .collect_range_into_at(start, end, &mut values);
+            add_sats_to_raw_histogram(&mut hist, &values);
+            start = end;
         }
         hist
     }
 }
 
-fn add_ema(acc: &mut HistogramEma, ema: &HistogramEma) {
-    acc.iter_mut()
-        .zip(ema.iter())
-        .for_each(|(a, &e)| *a += e);
-}
-
-fn ema_config_segments(range: Range<usize>) -> impl Iterator<Item = Range<usize>> {
-    let split = START_HEIGHT_FAST.clamp(range.start, range.end);
-    [range.start..split, split..range.end]
-        .into_iter()
-        .filter(|range| !range.is_empty())
+fn add_sats_to_raw_histogram(hist: &mut HistogramRaw, values: &[Sats]) {
+    for &sats in values {
+        if let Some(bin) = sats_to_bin(sats) {
+            hist.increment(bin);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -275,25 +270,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ema_config_segments_split_at_fast_start() {
-        let segments: Vec<_> =
-            ema_config_segments((START_HEIGHT_FAST - 2)..(START_HEIGHT_FAST + 2)).collect();
-        assert_eq!(
-            segments,
-            vec![
-                (START_HEIGHT_FAST - 2)..START_HEIGHT_FAST,
-                START_HEIGHT_FAST..(START_HEIGHT_FAST + 2),
-            ]
-        );
-    }
+    fn raw_histogram_accumulation_is_additive() {
+        let values = [
+            Sats::ZERO,
+            Sats::new(1),
+            Sats::new(10),
+            Sats::new(100_000_000),
+            Sats::new(1_000_000_000_000),
+            Sats::new(5_000_000_000),
+        ];
 
-    #[test]
-    fn ema_config_segments_omits_empty_sides() {
-        let slow: Vec<_> = ema_config_segments((START_HEIGHT_FAST - 2)..START_HEIGHT_FAST).collect();
-        assert_eq!(slow, vec![(START_HEIGHT_FAST - 2)..START_HEIGHT_FAST]);
+        let mut one_shot = HistogramRaw::zeros();
+        add_sats_to_raw_histogram(&mut one_shot, &values);
 
-        let fast: Vec<_> =
-            ema_config_segments(START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)).collect();
-        assert_eq!(fast, vec![START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)]);
+        let mut chunked = HistogramRaw::zeros();
+        for chunk in values.chunks(2) {
+            add_sats_to_raw_histogram(&mut chunked, chunk);
+        }
+
+        assert!(one_shot.iter().eq(chunked.iter()));
     }
 }

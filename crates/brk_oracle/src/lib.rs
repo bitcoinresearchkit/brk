@@ -169,4 +169,46 @@ mod tests {
 
         assert!(switched.ema().iter().eq(fresh.ema().iter()));
     }
+
+    #[test]
+    fn sequential_ema_matches_fresh_warmups() {
+        let hists: Vec<HistogramRaw> = (0..80)
+            .map(|i| {
+                let mut h = HistogramRaw::zeros();
+                h.increment(1000 + i % 11);
+                h.increment(1300 + i % 13);
+                h.increment(1700 + i % 17);
+                h
+            })
+            .collect();
+
+        for config in [Config::slow(), Config::default()] {
+            let query_start = config.window_size + 5;
+            let query_end = query_start + 20;
+            let seed = 1600.0;
+            let mut sequential = Oracle::from_checkpoint(seed, config.clone(), |o| {
+                hists[query_start + 1 - config.window_size..query_start + 1]
+                    .iter()
+                    .for_each(|h| {
+                        o.process_histogram(h);
+                    });
+            });
+
+            for height in query_start..query_end {
+                if height != query_start {
+                    sequential.process_histogram(&hists[height]);
+                }
+
+                let fresh = Oracle::from_checkpoint(seed, config.clone(), |o| {
+                    hists[height + 1 - config.window_size..height + 1]
+                        .iter()
+                        .for_each(|h| {
+                            o.process_histogram(h);
+                        });
+                });
+
+                assert!(sequential.ema().iter().eq(fresh.ema().iter()));
+            }
+        }
+    }
 }

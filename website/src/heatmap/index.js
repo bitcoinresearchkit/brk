@@ -3,6 +3,7 @@
 
 import { createHeader, createSelect } from "../../scripts/utils/dom.js";
 import { heatmapElement } from "../../scripts/utils/elements.js";
+import { createPersistedValue } from "../../scripts/utils/persisted.js";
 import { debounce, next } from "../../scripts/utils/timing.js";
 import { dark, onChange as onThemeChange } from "../../scripts/utils/theme.js";
 import { createRenderer } from "./renderer.js";
@@ -87,7 +88,9 @@ export function setOption(option) {
   if (currentOption !== option) {
     currentOption = option;
     pointsByDate = new Map();
+    updateDateControls(option);
     updateYControls(option);
+    renderRangeControls();
     if (headingElement) headingElement.textContent = option.title;
     if (canvas) canvas.removeAttribute("title");
   }
@@ -331,11 +334,49 @@ function createRangeControls() {
 
   statusElement = document.createElement("small");
 
+  return fieldset;
+}
+
+/** @param {HeatmapOption} option */
+function updateDateControls(option) {
   const currentYear = new Date().getUTCFullYear();
   const fromChoices = createFromChoices(currentYear);
   const toChoices = createToChoices(currentYear);
-  let fromChoice = fromChoices.at(-1) ?? fromChoices[0];
-  let toChoice = toChoices[0];
+  const defaultFromChoice = fromChoices.at(-1) ?? fromChoices[0];
+  const defaultToChoice = toChoices[0];
+
+  const persistedFrom = createHeatmapPersistedValue(
+    option,
+    "from",
+    "hm_from",
+    rangeChoiceLabel(defaultFromChoice),
+  );
+  const persistedTo = createHeatmapPersistedValue(
+    option,
+    "to",
+    "hm_to",
+    rangeChoiceLabel(defaultToChoice),
+  );
+
+  let fromChoice = findChoiceByKey(
+    fromChoices,
+    persistedFrom.value,
+    defaultFromChoice,
+    rangeChoiceLabel,
+  );
+  let toChoice = findChoiceByKey(
+    toChoices,
+    persistedTo.value,
+    defaultToChoice,
+    rangeChoiceLabel,
+  );
+
+  if (fromChoice.date > toChoice.date) {
+    toChoice = findSameLabelChoice(toChoices, fromChoice, defaultToChoice);
+  }
+  from = fromChoice.date;
+  to = toChoice.date;
+  persistDateChoices();
 
   const fromSelect = createSelect({
     id: "heatmap-from",
@@ -345,9 +386,10 @@ function createRangeControls() {
     onChange(choice) {
       fromChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        toChoice = findSameLabelChoice(toChoices, fromChoice, toChoices[0]);
+        toChoice = findSameLabelChoice(toChoices, fromChoice, defaultToChoice);
         toSelect.set(toChoice);
       }
+      persistDateChoices();
       setRange(fromChoice.date, toChoice.date);
     },
     toKey: rangeChoiceLabel,
@@ -361,9 +403,10 @@ function createRangeControls() {
     onChange(choice) {
       toChoice = choice;
       if (fromChoice.date > toChoice.date) {
-        fromChoice = findSameLabelChoice(fromChoices, toChoice, fromChoices[0]);
+        fromChoice = findSameLabelChoice(fromChoices, toChoice, defaultFromChoice);
         fromSelect.set(fromChoice);
       }
+      persistDateChoices();
       setRange(fromChoice.date, toChoice.date);
     },
     toKey: rangeChoiceLabel,
@@ -371,9 +414,11 @@ function createRangeControls() {
   });
 
   dateControlElements = [fromSelect.element, toSelect.element];
-  renderRangeControls();
 
-  return fieldset;
+  function persistDateChoices() {
+    persistedFrom.setImmediate(rangeChoiceLabel(fromChoice));
+    persistedTo.setImmediate(rangeChoiceLabel(toChoice));
+  }
 }
 
 /** @param {HeatmapOption} option */
@@ -384,14 +429,42 @@ function updateYControls(option) {
     yMin = undefined;
     yMax = undefined;
     yControlElements = [];
-    renderRangeControls();
     return;
   }
 
-  let minChoice = choices[0];
-  let maxChoice = choices.at(-1) ?? choices[0];
+  const defaultMinChoice = choices[0];
+  const defaultMaxChoice = choices.at(-1) ?? choices[0];
+  const persistedMin = createHeatmapPersistedValue(
+    option,
+    "y-min",
+    "hm_y_min",
+    axisChoiceKey(defaultMinChoice),
+  );
+  const persistedMax = createHeatmapPersistedValue(
+    option,
+    "y-max",
+    "hm_y_max",
+    axisChoiceKey(defaultMaxChoice),
+  );
+
+  let minChoice = findChoiceByKey(
+    choices,
+    persistedMin.value,
+    defaultMinChoice,
+    axisChoiceKey,
+  );
+  let maxChoice = findChoiceByKey(
+    choices,
+    persistedMax.value,
+    defaultMaxChoice,
+    axisChoiceKey,
+  );
+  if (minChoice.value > maxChoice.value) {
+    maxChoice = minChoice;
+  }
   yMin = minChoice.value;
   yMax = maxChoice.value;
+  persistYChoices();
 
   const minSelect = createSelect({
     id: "heatmap-y-min",
@@ -404,6 +477,7 @@ function updateYControls(option) {
         maxChoice = minChoice;
         maxSelect.set(maxChoice);
       }
+      persistYChoices();
       setYRange(minChoice.value, maxChoice.value);
     },
     toKey: axisChoiceKey,
@@ -420,6 +494,7 @@ function updateYControls(option) {
         minChoice = maxChoice;
         minSelect.set(minChoice);
       }
+      persistYChoices();
       setYRange(minChoice.value, maxChoice.value);
     },
     toKey: axisChoiceKey,
@@ -427,7 +502,11 @@ function updateYControls(option) {
   });
 
   yControlElements = [minSelect.element, maxSelect.element];
-  renderRangeControls();
+
+  function persistYChoices() {
+    persistedMin.setImmediate(axisChoiceKey(minChoice));
+    persistedMax.setImmediate(axisChoiceKey(maxChoice));
+  }
 }
 
 function renderRangeControls() {
@@ -511,6 +590,38 @@ function axisChoiceKey(choice) {
 /** @param {HeatmapAxisChoice} choice */
 function axisChoiceLabel(choice) {
   return choice.label;
+}
+
+/** @param {HeatmapOption} option */
+function heatmapStoragePrefix(option) {
+  return `heatmap-${option.path.join("-")}`;
+}
+
+/**
+ * @param {HeatmapOption} option
+ * @param {string} key
+ * @param {string} urlKey
+ * @param {string} defaultValue
+ */
+function createHeatmapPersistedValue(option, key, urlKey, defaultValue) {
+  return createPersistedValue({
+    defaultValue,
+    storageKey: `${heatmapStoragePrefix(option)}-${key}`,
+    urlKey,
+    serialize: (value) => value,
+    deserialize: (value) => value,
+  });
+}
+
+/**
+ * @template T
+ * @param {readonly T[]} choices
+ * @param {string} key
+ * @param {T} fallback
+ * @param {(choice: T) => string} toKey
+ */
+function findChoiceByKey(choices, key, fallback, toKey) {
+  return choices.find((candidate) => toKey(candidate) === key) ?? fallback;
 }
 
 /** @param {number} year */
