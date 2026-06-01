@@ -71,7 +71,10 @@ function createOracleHeatmapOption(mode, name) {
             yMin: -5,
             yMax: 2,
           }
-        : undefined,
+        : {
+            from: "genesis",
+            to: "today",
+          },
     tooltip: defaultTooltip,
   };
 }

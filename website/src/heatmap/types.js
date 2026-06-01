@@ -19,9 +19,11 @@
  * @property {number} start
  * @property {number} end
  *
+ * @typedef {"genesis" | "today" | `${number}`} HeatmapDateKey
+ *
  * @typedef {Object} HeatmapDefaults
- * @property {string} [from]
- * @property {string} [to]
+ * @property {HeatmapDateKey} [from]
+ * @property {HeatmapDateKey} [to]
  * @property {number} [yMin]
  * @property {number} [yMax]
  *
