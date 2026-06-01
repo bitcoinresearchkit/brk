@@ -30,6 +30,7 @@ import {
   oracleOutputsHeatmapOption,
   oraclePaymentsHeatmapOption,
 } from "../../src/heatmap/oracle.js";
+import { urpdSupplyHeatmapOption } from "../../src/heatmap/urpd.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
@@ -308,6 +309,10 @@ export function createPartialOptions() {
         {
           name: "oracle histograms",
           tree: [oracleOutputsHeatmapOption, oraclePaymentsHeatmapOption],
+        },
+        {
+          name: "URPD",
+          tree: [urpdSupplyHeatmapOption],
         },
       ],
     },

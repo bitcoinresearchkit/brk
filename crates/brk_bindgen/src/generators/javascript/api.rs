@@ -51,7 +51,7 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
     }
     writeln!(
         output,
-        "   * @param {{{{ signal?: AbortSignal, onValue?: (value: {}) => void }}}} [options]",
+        "   * @param {{{{ signal?: AbortSignal, onValue?: (value: {}) => void, cache?: boolean }}}} [options]",
         return_type
     )
     .unwrap();
@@ -60,22 +60,22 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
 
     let params = build_method_params(endpoint);
     let params_with_opts = if params.is_empty() {
-        "{ signal, onValue } = {}".to_string()
+        "{ signal, onValue, cache } = {}".to_string()
     } else {
-        format!("{}, {{ signal, onValue }} = {{}}", params)
+        format!("{}, {{ signal, onValue, cache }} = {{}}", params)
     };
     writeln!(output, "  async {}({}) {{", method_name, params_with_opts).unwrap();
 
     let path = build_path_template(&endpoint.path, &endpoint.path_params);
 
     let fetch_call: String = if endpoint.returns_binary() {
-        "this.getBytes(path, { signal, onValue })".to_string()
+        "this.getBytes(path, { signal, onValue, cache })".to_string()
     } else if endpoint.returns_json() {
-        "this.getJson(path, { signal, onValue })".to_string()
+        "this.getJson(path, { signal, onValue, cache })".to_string()
     } else if endpoint.response_kind.text_is_numeric() {
-        "Number(await this.getText(path, { signal, onValue: onValue ? (v) => onValue(Number(v)) : undefined }))".to_string()
+        "Number(await this.getText(path, { signal, cache, onValue: onValue ? (v) => onValue(Number(v)) : undefined }))".to_string()
     } else {
-        "this.getText(path, { signal, onValue })".to_string()
+        "this.getText(path, { signal, onValue, cache })".to_string()
     };
 
     write_path_assignment(output, endpoint, &path);
@@ -83,7 +83,7 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
     if endpoint.supports_csv {
         writeln!(
             output,
-            "    if (format === 'csv') return this.getText(path, {{ signal, onValue }});"
+            "    if (format === 'csv') return this.getText(path, {{ signal, onValue, cache }});"
         )
         .unwrap();
     }

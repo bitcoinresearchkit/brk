@@ -144,8 +144,8 @@ CoinbaseTag = str
 CostBasisValue = Literal["supply", "realized", "unrealized"]
 # Aggregation strategy for URPD buckets.
 # Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
-# log10/log50/log100/log200/log500/log1000 (logarithmic with 10/50/100/200/500/1000 buckets per decade).
-UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200", "log500", "log1000"]
+# log10/log50/log100/log200/log500/log1000/log2000 (logarithmic with 10/50/100/200/500/1000/2000 buckets per decade).
+UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200", "log500", "log1000", "log2000"]
 # Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
 # has no meaning outside the enclosing cluster.
 CpfpClusterTxIndex = int

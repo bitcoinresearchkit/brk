@@ -4,11 +4,13 @@ import { numberToShortUSFormat } from "../../../scripts/utils/format.js";
  * @param {Object} [args]
  * @param {string} [args.valueLabel]
  * @param {string} [args.averageLabel]
+ * @param {(value: number) => string} [args.formatValue]
  * @returns {HeatmapTooltipFn}
  */
 export function defaultTooltip({
   valueLabel = "Value",
   averageLabel = "Avg value",
+  formatValue = formatNumber,
 } = {}) {
   return ({ option, grid, col, row }) => {
     const dateRange = grid.getDateIndexRange(col);
@@ -25,7 +27,7 @@ export function defaultTooltip({
     return [
       date,
       `${capitalize(yLabel)}: ${formatY(yRange.start)} to ${formatY(yRange.end)}`,
-      `${label}: ${formatNumber(value)}`,
+      `${label}: ${formatValue(value)}`,
     ].join("\n");
   };
 }
