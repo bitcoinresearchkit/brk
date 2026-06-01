@@ -347,8 +347,20 @@ function updateDateControls(option) {
   const currentYear = new Date().getUTCFullYear();
   const fromChoices = createFromChoices(currentYear);
   const toChoices = createToChoices(currentYear);
-  const defaultFromChoice = fromChoices.at(-1) ?? fromChoices[0];
-  const defaultToChoice = toChoices[0];
+  const fallbackFromChoice = fromChoices.at(-1) ?? fromChoices[0];
+  const fallbackToChoice = toChoices[0];
+  const defaultFromChoice = findChoiceByKey(
+    fromChoices,
+    option.defaults?.from ?? "",
+    fallbackFromChoice,
+    rangeChoiceLabel,
+  );
+  const defaultToChoice = findChoiceByKey(
+    toChoices,
+    option.defaults?.to ?? "",
+    fallbackToChoice,
+    rangeChoiceLabel,
+  );
 
   const persistedFrom = createHeatmapPersistedValue(
     option,
@@ -437,8 +449,20 @@ function updateYControls(option) {
     return;
   }
 
-  const defaultMinChoice = choices[0];
-  const defaultMaxChoice = choices.at(-1) ?? choices[0];
+  const fallbackMinChoice = choices[0];
+  const fallbackMaxChoice = choices.at(-1) ?? choices[0];
+  const defaultMinChoice = findChoiceByKey(
+    choices,
+    String(option.defaults?.yMin ?? ""),
+    fallbackMinChoice,
+    axisChoiceKey,
+  );
+  const defaultMaxChoice = findChoiceByKey(
+    choices,
+    String(option.defaults?.yMax ?? ""),
+    fallbackMaxChoice,
+    axisChoiceKey,
+  );
   const persistedMin = createHeatmapPersistedValue(
     option,
     "y-min",

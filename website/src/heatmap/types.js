@@ -19,6 +19,12 @@
  * @property {number} start
  * @property {number} end
  *
+ * @typedef {Object} HeatmapDefaults
+ * @property {string} [from]
+ * @property {string} [to]
+ * @property {number} [yMin]
+ * @property {number} [yMax]
+ *
  * @typedef {Object} HeatmapGridAddResult
  * @property {number} col
  * @property {boolean} maxChanged

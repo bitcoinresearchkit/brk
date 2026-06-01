@@ -63,6 +63,15 @@ function createOracleHeatmapOption(mode, name) {
         format: formatAmount,
       },
     },
+    defaults:
+      mode === "payments"
+        ? {
+            from: "2015",
+            to: "today",
+            yMin: -5,
+            yMax: 2,
+          }
+        : undefined,
     tooltip: defaultTooltip,
   };
 }

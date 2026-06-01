@@ -111,11 +111,12 @@
  * @property {HeatmapGridFactory} grid
  * @property {HeatmapColorFn} color
  * @property {HeatmapAxis} [axis]
+ * @property {HeatmapDefaults} [defaults]
  * @property {HeatmapTooltipFn} [tooltip]
  *
  * @typedef {PartialOption & PartialHeatmapOptionSpecific} PartialHeatmapOption
  *
- * @typedef {Required<Omit<PartialHeatmapOption, "axis" | "tooltip">> & Pick<PartialHeatmapOption, "axis" | "tooltip"> & ProcessedOptionAddons} HeatmapOption
+ * @typedef {PartialHeatmapOption & ProcessedOptionAddons} HeatmapOption
  *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"link"} [kind]

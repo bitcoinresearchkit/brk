@@ -233,21 +233,14 @@ impl Query {
         let indexer = self.indexer();
         let safe_height = safe.height.to_usize();
         let total_outputs = safe.txout_index.to_usize();
+        let first_txout_index = &indexer.vecs.outputs.first_txout_index;
 
-        let out_start = indexer
-            .vecs
-            .outputs
-            .first_txout_index
+        let out_start = first_txout_index
             .collect_one_at(range.start)
             .unwrap()
             .to_usize();
         let out_end = if range.end < safe_height {
-            indexer
-                .vecs
-                .outputs
-                .first_txout_index
-                .collect_one_at(range.end)
-                .unwrap()
+            first_txout_index.collect_one_at(range.end).unwrap()
         } else {
             TxOutIndex::from(total_outputs)
         }
