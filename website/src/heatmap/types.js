@@ -19,13 +19,17 @@
  * @property {number} start
  * @property {number} end
  *
+ * @typedef {Object} HeatmapGridAddResult
+ * @property {number} col
+ * @property {boolean} maxChanged
+ *
  * @typedef {Object} HeatmapGrid
  * @property {readonly string[]} dates
  * @property {number} cols
  * @property {number} rows
- * @property {(dateIndex: number, points: HeatmapPoints) => number | undefined} add
+ * @property {(dateIndex: number, points: HeatmapPoints) => HeatmapGridAddResult | undefined} add
  * @property {(col: number, row: number) => number} getValue
- * @property {(col?: number) => number} getMaxValue
+ * @property {() => number} getMaxValue
  * @property {(col: number) => HeatmapRange} getDateIndexRange
  * @property {(row: number) => HeatmapRange} getYRange
  *

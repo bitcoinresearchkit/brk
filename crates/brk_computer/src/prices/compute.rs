@@ -127,39 +127,45 @@ impl Vecs {
         // Slow cold-start EMA up to START_HEIGHT_FAST, then switch to the fast
         // mature-market EMA. Steady-state runs start past START_HEIGHT_FAST and skip
         // the slow segment entirely.
-        let mut ref_bins = Vec::with_capacity(num_new);
-        if committed < START_HEIGHT_FAST {
-            let slow_end = START_HEIGHT_FAST.min(total_heights);
-            ref_bins.extend(Self::feed_blocks(
-                &mut oracle,
-                indexer,
-                committed..slow_end,
-                None,
-            ));
-            if slow_end == START_HEIGHT_FAST {
-                oracle.reconfigure(Config::default());
+        {
+            let mut processed = 0usize;
+            let mut push_ref_bin = |ref_bin| {
+                self.spot
+                    .cents
+                    .height
+                    .inner
+                    .push(Cents::new(bin_to_cents(ref_bin)));
+
+                processed += 1;
+                let progress = (processed * 100 / num_new) as u8;
+                if processed > 1 && progress > (((processed - 1) * 100 / num_new) as u8) {
+                    info!("Oracle price computation: {}%", progress);
+                }
+            };
+
+            if committed < START_HEIGHT_FAST {
+                let slow_end = START_HEIGHT_FAST.min(total_heights);
+                Self::feed_blocks_with(
+                    &mut oracle,
+                    indexer,
+                    committed..slow_end,
+                    None,
+                    |_, _, ref_bin| push_ref_bin(ref_bin),
+                );
+                if slow_end == START_HEIGHT_FAST {
+                    oracle.reconfigure(Config::default());
+                }
             }
-        }
-        let fast_start = committed.max(START_HEIGHT_FAST);
-        if fast_start < total_heights {
-            ref_bins.extend(Self::feed_blocks(
-                &mut oracle,
-                indexer,
-                fast_start..total_heights,
-                None,
-            ));
-        }
 
-        for (i, ref_bin) in ref_bins.into_iter().enumerate() {
-            self.spot
-                .cents
-                .height
-                .inner
-                .push(Cents::new(bin_to_cents(ref_bin)));
-
-            let progress = ((i + 1) * 100 / num_new) as u8;
-            if i > 0 && progress > ((i * 100 / num_new) as u8) {
-                info!("Oracle price computation: {}%", progress);
+            let fast_start = committed.max(START_HEIGHT_FAST);
+            if fast_start < total_heights {
+                Self::feed_blocks_with(
+                    &mut oracle,
+                    indexer,
+                    fast_start..total_heights,
+                    None,
+                    |_, _, ref_bin| push_ref_bin(ref_bin),
+                );
             }
         }
 

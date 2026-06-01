@@ -4,14 +4,12 @@ use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, cents_to_bin, sats_to_bin,
+    cents_to_bin, sats_to_bin, Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle,
 };
-use brk_types::{Day1, Dollars, Sats, TxOutIndex};
+use brk_types::{Day1, Dollars, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use crate::Query;
-
-const RAW_HISTOGRAM_VALUE_CHUNK: usize = 1_000_000;
 
 impl Query {
     pub fn live_price(&self) -> Result<Dollars> {
@@ -233,70 +231,38 @@ impl Query {
     /// range instead of one block at a time.
     fn output_histogram_for_blocks(&self, range: Range<usize>, safe: &Lengths) -> HistogramRaw {
         let indexer = self.indexer();
+        let safe_height = safe.height.to_usize();
         let total_outputs = safe.txout_index.to_usize();
-        let collect_end = (range.end + 1).min(safe.height.to_usize());
 
-        let out_firsts: Vec<TxOutIndex> = indexer
+        let out_start = indexer
             .vecs
             .outputs
             .first_txout_index
-            .collect_range_at(range.start, collect_end);
-        let out_start = out_firsts[0].to_usize();
-        let out_end = out_firsts
-            .get(range.end - range.start)
-            .copied()
-            .unwrap_or(TxOutIndex::from(total_outputs))
+            .collect_one_at(range.start)
+            .unwrap()
             .to_usize();
-
-        let mut hist = HistogramRaw::zeros();
-        let mut values: Vec<Sats> = Vec::new();
-        let mut start = out_start;
-        while start < out_end {
-            let end = (start + RAW_HISTOGRAM_VALUE_CHUNK).min(out_end);
-            values.clear();
+        let out_end = if range.end < safe_height {
             indexer
                 .vecs
                 .outputs
-                .value
-                .collect_range_into_at(start, end, &mut values);
-            add_sats_to_raw_histogram(&mut hist, &values);
-            start = end;
+                .first_txout_index
+                .collect_one_at(range.end)
+                .unwrap()
+        } else {
+            TxOutIndex::from(total_outputs)
         }
+        .to_usize();
+
+        let mut hist = HistogramRaw::zeros();
+        indexer
+            .vecs
+            .outputs
+            .value
+            .for_each_range_at(out_start, out_end, |sats| {
+                if let Some(bin) = sats_to_bin(sats) {
+                    hist.increment(bin);
+                }
+            });
         hist
-    }
-}
-
-fn add_sats_to_raw_histogram(hist: &mut HistogramRaw, values: &[Sats]) {
-    for &sats in values {
-        if let Some(bin) = sats_to_bin(sats) {
-            hist.increment(bin);
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn raw_histogram_accumulation_is_additive() {
-        let values = [
-            Sats::ZERO,
-            Sats::new(1),
-            Sats::new(10),
-            Sats::new(100_000_000),
-            Sats::new(1_000_000_000_000),
-            Sats::new(5_000_000_000),
-        ];
-
-        let mut one_shot = HistogramRaw::zeros();
-        add_sats_to_raw_histogram(&mut one_shot, &values);
-
-        let mut chunked = HistogramRaw::zeros();
-        for chunk in values.chunks(2) {
-            add_sats_to_raw_histogram(&mut chunked, chunk);
-        }
-
-        assert!(one_shot.iter().eq(chunked.iter()));
     }
 }

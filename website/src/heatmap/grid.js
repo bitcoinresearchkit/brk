@@ -37,8 +37,7 @@ export function createAverageGrid({
       const sums = new Float64Array(cols * rows);
       const counts = new Uint32Array(cols * rows);
       const maxByCol = new Float64Array(cols);
-      const cumulativeMaxByCol = new Float64Array(cols);
-      let cumulativeMaxDirty = true;
+      let maxValue = 0;
       const ySpan = yMax - yMin;
 
       /** @param {number} dateIndex */
@@ -85,7 +84,10 @@ export function createAverageGrid({
           if (counts[index]) max = Math.max(max, sums[index] / counts[index]);
         }
         maxByCol[col] = max;
-        cumulativeMaxDirty = true;
+        maxValue = 0;
+        for (let c = 0; c < cols; c++) {
+          maxValue = Math.max(maxValue, maxByCol[c]);
+        }
       }
 
       /** @type {HeatmapGrid} */
@@ -99,7 +101,13 @@ export function createAverageGrid({
           let dirty = false;
           if (points.kind === "implicit") {
             for (let i = 0; i < points.values.length; i++) {
-              if (addValue(col, points.yStart + i * points.yStep, points.values[i])) {
+              if (
+                addValue(
+                  col,
+                  points.yStart + i * points.yStep,
+                  points.values[i],
+                )
+              ) {
                 dirty = true;
               }
             }
@@ -110,8 +118,9 @@ export function createAverageGrid({
             }
           }
           if (!dirty) return undefined;
+          const previousMax = maxValue;
           updateColumnMax(col);
-          return col;
+          return { col, maxChanged: maxValue !== previousMax };
         },
         getValue(col, row) {
           if (col < 0 || col >= cols || row < 0 || row >= rows) {
@@ -120,16 +129,8 @@ export function createAverageGrid({
           const index = row * cols + col;
           return counts[index] ? sums[index] / counts[index] : Number.NaN;
         },
-        getMaxValue(col = cols - 1) {
-          if (cumulativeMaxDirty) {
-            let max = 0;
-            for (let c = 0; c < cols; c++) {
-              max = Math.max(max, maxByCol[c]);
-              cumulativeMaxByCol[c] = max;
-            }
-            cumulativeMaxDirty = false;
-          }
-          return cumulativeMaxByCol[clamp(col, 0, cols - 1)] ?? 0;
+        getMaxValue() {
+          return maxValue;
         },
         getDateIndexRange(col) {
           if (col < 0 || col >= cols || dates.length === 0) {

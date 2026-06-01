@@ -44,7 +44,7 @@ function createOracleHeatmapOption(mode, name) {
     kind: "heatmap",
     name,
     title:
-      mode === "outputs" ? "Output Value Histogram" : "Payment Output Histogram",
+      mode === "outputs" ? "Output Value Histogram" : "Payment Value Histogram",
     points: {
       fetch: (date, signal, onPoints) =>
         fetchOraclePoints(mode, date, signal, onPoints),

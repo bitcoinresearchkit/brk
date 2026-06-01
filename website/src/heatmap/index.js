@@ -248,8 +248,13 @@ function rebuildGrid() {
  */
 function addDateToGrid(dateIndex, points) {
   if (!currentGrid) return;
-  const dirtyCol = currentGrid.add(dateIndex, points);
-  if (dirtyCol !== undefined) schedulePaint(dirtyCol);
+  const result = currentGrid.add(dateIndex, points);
+  if (!result) return;
+  if (result.maxChanged) {
+    paint();
+  } else {
+    schedulePaint(result.col);
+  }
 }
 
 /**

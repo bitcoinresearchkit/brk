@@ -38,7 +38,7 @@ export function intensityColor({ light, dark }) {
 export function logIntensityColor({ light, dark }) {
   return (value, context) => {
     if (!Number.isFinite(value) || value <= 0) return 0x00000000;
-    const max = context.grid.getMaxValue(context.col);
+    const max = context.grid.getMaxValue();
     if (max <= 0) return 0x00000000;
     const lut = context.dark ? dark : light;
     const t = Math.log2(value + 1) / Math.log2(max + 1);
