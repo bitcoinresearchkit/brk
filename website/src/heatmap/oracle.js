@@ -7,28 +7,28 @@ const BINS = 2400;
 const MIN_LOG = -8;
 const BINS_PER_DECADE = 200;
 const AMOUNT_CHOICES = [
-  { label: "1 sat", value: -8 },
-  { label: "10 sats", value: -7 },
-  { label: "100 sats", value: -6 },
-  { label: "1k sats", value: -5 },
-  { label: "10k sats", value: -4 },
-  { label: "100k sats", value: -3 },
-  { label: "0.01 BTC", value: -2 },
-  { label: "0.1 BTC", value: -1 },
-  { label: "1 BTC", value: 0 },
-  { label: "10 BTC", value: 1 },
-  { label: "100 BTC", value: 2 },
-  { label: "1k BTC", value: 3 },
-  { label: "10k BTC", value: 4 },
+  { label: "1 sat", key: "1sat", value: -8 },
+  { label: "10 sats", key: "10sats", value: -7 },
+  { label: "100 sats", key: "100sats", value: -6 },
+  { label: "1k sats", key: "1ksats", value: -5 },
+  { label: "10k sats", key: "10ksats", value: -4 },
+  { label: "100k sats", key: "100ksats", value: -3 },
+  { label: "0.01 BTC", key: "0.01btc", value: -2 },
+  { label: "0.1 BTC", key: "0.1btc", value: -1 },
+  { label: "1 BTC", key: "1btc", value: 0 },
+  { label: "10 BTC", key: "10btc", value: 1 },
+  { label: "100 BTC", key: "100btc", value: 2 },
+  { label: "1k BTC", key: "1kbtc", value: 3 },
+  { label: "10k BTC", key: "10kbtc", value: 4 },
 ];
 
 export const oracleOutputsHeatmapOption = createOracleHeatmapOption(
   "outputs",
-  "outputs",
+  "All",
 );
 export const oraclePaymentsHeatmapOption = createOracleHeatmapOption(
   "payments",
-  "payments",
+  "Payments",
 );
 
 /**
@@ -41,7 +41,7 @@ function createOracleHeatmapOption(mode, name) {
     kind: "heatmap",
     name,
     title:
-      mode === "outputs" ? "Output Value Histogram" : "Payment Value Histogram",
+      mode === "outputs" ? "All Output Values" : "Payment Output Values",
     points: {
       fetch: (date, signal, onPoints) =>
         fetchOraclePoints(mode, date, signal, onPoints),
@@ -74,8 +74,8 @@ function createOracleHeatmapOption(mode, name) {
           },
     tooltip: defaultTooltip(
       mode === "outputs"
-        ? { valueLabel: "Outputs", averageLabel: "Avg outputs" }
-        : { valueLabel: "Payment signal", averageLabel: "Avg payment signal" },
+        ? { valueLabel: "Outputs" }
+        : { valueLabel: "Payment signal" },
     ),
   };
 }

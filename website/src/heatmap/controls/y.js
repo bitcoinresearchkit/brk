@@ -18,24 +18,24 @@ export function createYControls(option, onChange) {
     choices,
     String(option.defaults?.yMin ?? ""),
     fallbackMinChoice,
-    axisChoiceKey,
+    axisChoiceValueKey,
   );
   const defaultMaxChoice = findChoiceByKey(
     choices,
     String(option.defaults?.yMax ?? ""),
     fallbackMaxChoice,
-    axisChoiceKey,
+    axisChoiceValueKey,
   );
   const persistedMin = createHeatmapPersistedValue(
     option,
     "y-min",
-    "hm_y_min",
+    "min",
     axisChoiceKey(defaultMinChoice),
   );
   const persistedMax = createHeatmapPersistedValue(
     option,
     "y-max",
-    "hm_y_max",
+    "max",
     axisChoiceKey(defaultMaxChoice),
   );
 
@@ -105,10 +105,15 @@ export function createYControls(option, onChange) {
 
 /** @param {HeatmapAxisChoice} choice */
 function axisChoiceKey(choice) {
-  return String(choice.value);
+  return choice.key ?? choice.label;
 }
 
 /** @param {HeatmapAxisChoice} choice */
 function axisChoiceLabel(choice) {
   return choice.label;
+}
+
+/** @param {HeatmapAxisChoice} choice */
+function axisChoiceValueKey(choice) {
+  return String(choice.value);
 }

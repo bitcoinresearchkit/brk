@@ -37,23 +37,41 @@ export function createHeatmapLoader({ addDateToGrid, rebuildGrid, paint }) {
      * @param {string} args.from
      * @param {string} args.to
      */
-    load({ option, from, to }) {
+    setRange({ option, from, to }) {
+      abortController?.abort();
+      generation += 1;
+      activeOption = option;
+      dates = dateRange(from, to);
+    },
+    /**
+     * @param {Object} args
+     * @param {HeatmapOption} args.option
+     * @param {readonly number[]} args.dateIndexes
+     */
+    load({ option, dateIndexes }) {
       abortController?.abort();
       const controller = new AbortController();
       const currentGeneration = ++generation;
       activeOption = option;
       abortController = controller;
-      dates = dateRange(from, to);
 
       /** @type {{ date: string, dateIndex: number }[]} */
       const missing = [];
-      for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+      let previousDateIndex = -1;
+      for (const dateIndex of dateIndexes) {
+        if (
+          dateIndex === previousDateIndex ||
+          dateIndex < 0 ||
+          dateIndex >= dates.length
+        ) {
+          continue;
+        }
+        previousDateIndex = dateIndex;
         const date = dates[dateIndex];
         if (!pointsByDate.has(date)) missing.push({ date, dateIndex });
       }
 
       if (!missing.length) {
-        rebuildGrid();
         abortController = undefined;
         return;
       }
@@ -89,8 +107,6 @@ export function createHeatmapLoader({ addDateToGrid, rebuildGrid, paint }) {
           index = nextMissingIndex();
         }
       });
-
-      rebuildGrid();
 
       void Promise.all(workers).then(() => {
         if (isCurrentLoad(option, controller, currentGeneration)) {

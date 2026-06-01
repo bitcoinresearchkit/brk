@@ -34,13 +34,13 @@ export function createDateControls(option, onChange) {
   const persistedFrom = createHeatmapPersistedValue(
     option,
     "from",
-    "hm_from",
+    "from",
     rangeChoiceLabel(defaultFromChoice),
   );
   const persistedTo = createHeatmapPersistedValue(
     option,
     "to",
-    "hm_to",
+    "to",
     rangeChoiceLabel(defaultToChoice),
   );
 

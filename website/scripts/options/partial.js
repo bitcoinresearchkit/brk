@@ -25,12 +25,16 @@ import { createNetworkSection } from "./network.js";
 import { createMiningSection } from "./mining.js";
 import { createCointimeSection } from "./cointime.js";
 import { createInvestingSection } from "./investing.js";
-import { demoHeatmapOption } from "../../src/heatmap/demo.js";
 import {
   oracleOutputsHeatmapOption,
   oraclePaymentsHeatmapOption,
 } from "../../src/heatmap/oracle.js";
-import { urpdSupplyHeatmapOption } from "../../src/heatmap/urpd.js";
+import {
+  urpdAgeBandHeatmapFolders,
+  urpdAllHeatmapOptions,
+  urpdLthHeatmapOptions,
+  urpdSthHeatmapOptions,
+} from "../../src/heatmap/urpd.js";
 
 // Re-export types for external consumers
 export * from "./types.js";
@@ -305,14 +309,18 @@ export function createPartialOptions() {
     {
       name: "Heatmaps",
       tree: [
-        demoHeatmapOption,
         {
-          name: "oracle histograms",
+          name: "Output Values",
           tree: [oracleOutputsHeatmapOption, oraclePaymentsHeatmapOption],
         },
         {
-          name: "URPD",
-          tree: [urpdSupplyHeatmapOption],
+          name: "Price Distributions",
+          tree: [
+            ...urpdAllHeatmapOptions,
+            { name: "STH", tree: urpdSthHeatmapOptions },
+            { name: "LTH", tree: urpdLthHeatmapOptions },
+            { name: "Age Bands", tree: urpdAgeBandHeatmapFolders },
+          ],
         },
       ],
     },

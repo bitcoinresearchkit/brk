@@ -38,7 +38,8 @@
  * @property {(dateIndex: number, points: HeatmapPoints) => HeatmapGridAddResult | undefined} add
  * @property {(col: number, row: number) => number} getValue
  * @property {(col: number, row: number) => number} getCount
- * @property {() => number} getMaxValue
+ * @property {(col?: number) => number} getMaxValue
+ * @property {(col?: number) => number} getMagnitudeMaxValue
  * @property {(col: number) => HeatmapRange} getDateIndexRange
  * @property {(row: number) => HeatmapRange} getYRange
  *
@@ -47,6 +48,7 @@
  *
  * @typedef {Object} HeatmapAxisChoice
  * @property {string} label
+ * @property {string} [key]
  * @property {number} value
  *
  * @typedef {Object} HeatmapAxis

@@ -3,13 +3,11 @@ import { numberToShortUSFormat } from "../../../scripts/utils/format.js";
 /**
  * @param {Object} [args]
  * @param {string} [args.valueLabel]
- * @param {string} [args.averageLabel]
  * @param {(value: number) => string} [args.formatValue]
  * @returns {HeatmapTooltipFn}
  */
 export function defaultTooltip({
   valueLabel = "Value",
-  averageLabel = "Avg value",
   formatValue = formatNumber,
 } = {}) {
   return ({ option, grid, col, row }) => {
@@ -18,16 +16,13 @@ export function defaultTooltip({
     const value = grid.getValue(col, row);
     const yLabel = option.axis?.y?.label ?? "y";
     const formatY = option.axis?.y?.format ?? formatNumber;
-    const label = grid.getCount(col, row) > 1 ? averageLabel : valueLabel;
 
-    const from = grid.dates[dateRange.start] ?? "";
-    const to = grid.dates[dateRange.end] ?? from;
-    const date = from === to ? from : `${from} to ${to}`;
+    const date = grid.dates[dateRange.end] ?? grid.dates[dateRange.start] ?? "";
 
     return [
       date,
       `${capitalize(yLabel)}: ${formatY(yRange.start)} to ${formatY(yRange.end)}`,
-      `${label}: ${formatValue(value)}`,
+      `${valueLabel}: ${formatValue(value)}`,
     ].join("\n");
   };
 }

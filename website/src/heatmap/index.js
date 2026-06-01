@@ -53,7 +53,7 @@ export function init() {
       yMin = range.yMin;
       yMax = range.yMax;
       hideTooltip();
-      rebuildGrid();
+      rebuildAndLoadVisibleDates();
     },
   });
 
@@ -102,12 +102,18 @@ export function setOption(option) {
 function resizeAndRebuild() {
   if (!canvas || !renderer) return;
   const { width, height } = canvas.getBoundingClientRect();
-  if (renderer.resize(width, height)) rebuildGrid();
+  if (renderer.resize(width, height)) rebuildAndLoadVisibleDates();
 }
 
 function loadRange() {
   if (!currentOption || !loader) return;
-  loader.load({ option: currentOption, from, to });
+  loader.setRange({ option: currentOption, from, to });
+  rebuildAndLoadVisibleDates();
+}
+
+function rebuildAndLoadVisibleDates() {
+  rebuildGrid();
+  loadVisibleDates();
 }
 
 function rebuildGrid() {
@@ -132,12 +138,39 @@ function rebuildGrid() {
     yMax,
   });
 
-  for (let i = 0; i < dates.length; i++) {
-    const points = loader.getPoint(dates[i]);
-    if (points) currentGrid.add(i, points);
+  for (const dateIndex of getVisibleDateIndexes(currentGrid)) {
+    const points = loader.getPoint(dates[dateIndex]);
+    if (points) currentGrid.add(dateIndex, points);
   }
 
   paint();
+}
+
+function loadVisibleDates() {
+  if (!currentOption || !loader || !currentGrid) return;
+  loader.load({
+    option: currentOption,
+    dateIndexes: getVisibleDateIndexes(currentGrid),
+  });
+}
+
+/**
+ * @param {HeatmapGrid} grid
+ * @returns {number[]}
+ */
+function getVisibleDateIndexes(grid) {
+  /** @type {number[]} */
+  const indexes = [];
+  let previousDateIndex = -1;
+  for (let col = 0; col < grid.cols; col++) {
+    const dateIndex = grid.getDateIndexRange(col).end;
+    if (!Number.isInteger(dateIndex) || dateIndex === previousDateIndex) {
+      continue;
+    }
+    previousDateIndex = dateIndex;
+    indexes.push(dateIndex);
+  }
+  return indexes;
 }
 
 /**

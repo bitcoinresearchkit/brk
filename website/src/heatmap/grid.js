@@ -35,7 +35,9 @@ export function createAverageGrid({
       const sums = new Float64Array(cols * rows);
       const counts = new Uint32Array(cols * rows);
       const maxByCol = new Float64Array(cols);
+      const magnitudeMaxByCol = new Float64Array(cols);
       let maxValue = 0;
+      let magnitudeMaxValue = 0;
       const ySpan = yMax - yMin;
 
       /** @param {number} dateIndex */
@@ -77,14 +79,22 @@ export function createAverageGrid({
       /** @param {number} col */
       function updateColumnMax(col) {
         let max = 0;
+        let magnitudeMax = 0;
         for (let row = 0; row < rows; row++) {
           const index = row * cols + col;
-          if (counts[index]) max = Math.max(max, sums[index] / counts[index]);
+          if (counts[index]) {
+            const value = sums[index] / counts[index];
+            max = Math.max(max, value);
+            magnitudeMax = Math.max(magnitudeMax, Math.abs(value));
+          }
         }
         maxByCol[col] = max;
+        magnitudeMaxByCol[col] = magnitudeMax;
         maxValue = 0;
+        magnitudeMaxValue = 0;
         for (let c = 0; c < cols; c++) {
           maxValue = Math.max(maxValue, maxByCol[c]);
+          magnitudeMaxValue = Math.max(magnitudeMaxValue, magnitudeMaxByCol[c]);
         }
       }
 
@@ -117,8 +127,14 @@ export function createAverageGrid({
           }
           if (!dirty) return undefined;
           const previousMax = maxValue;
+          const previousMagnitudeMax = magnitudeMaxValue;
           updateColumnMax(col);
-          return { col, maxChanged: maxValue !== previousMax };
+          return {
+            col,
+            maxChanged:
+              maxValue !== previousMax ||
+              magnitudeMaxValue !== previousMagnitudeMax,
+          };
         },
         getValue(col, row) {
           if (col < 0 || col >= cols || row < 0 || row >= rows) {
@@ -131,8 +147,15 @@ export function createAverageGrid({
           if (col < 0 || col >= cols || row < 0 || row >= rows) return 0;
           return counts[row * cols + col];
         },
-        getMaxValue() {
-          return maxValue;
+        getMaxValue(col) {
+          if (col === undefined) return maxValue;
+          if (col < 0 || col >= cols) return 0;
+          return maxByCol[col];
+        },
+        getMagnitudeMaxValue(col) {
+          if (col === undefined) return magnitudeMaxValue;
+          if (col < 0 || col >= cols) return 0;
+          return magnitudeMaxByCol[col];
         },
         getDateIndexRange(col) {
           if (col < 0 || col >= cols || dates.length === 0) {
