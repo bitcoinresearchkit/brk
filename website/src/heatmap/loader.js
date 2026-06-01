@@ -28,6 +28,7 @@ export function createHeatmapLoader({ addDateToGrid, rebuildGrid, paint }) {
       return pointsByDate.get(date);
     },
     reset() {
+      abortController?.abort();
       pointsByDate = new Map();
     },
     /**
