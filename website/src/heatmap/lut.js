@@ -15,32 +15,26 @@ const INFERNO_STOPS = [
 export const INFERNO_LUT = createColorLut(INFERNO_STOPS);
 
 /**
- * @param {Object} args
- * @param {ArrayLike<number>} args.light
- * @param {ArrayLike<number>} args.dark
+ * @param {ArrayLike<number>} lut
  * @returns {HeatmapColorFn}
  */
-export function intensityColor({ light, dark }) {
-  return (value, context) => {
+export function intensityColor(lut) {
+  return (value) => {
     if (!Number.isFinite(value)) return 0x00000000;
-    const lut = context.dark ? dark : light;
     const index = Math.min(255, Math.max(0, Math.round(value * 255)));
     return lut[index] ?? 0x00000000;
   };
 }
 
 /**
- * @param {Object} args
- * @param {ArrayLike<number>} args.light
- * @param {ArrayLike<number>} args.dark
+ * @param {ArrayLike<number>} lut
  * @returns {HeatmapColorFn}
  */
-export function logIntensityColor({ light, dark }) {
+export function logIntensityColor(lut) {
   return (value, context) => {
     if (!Number.isFinite(value) || value <= 0) return 0x00000000;
     const max = context.grid.getMaxValue();
     if (max <= 0) return 0x00000000;
-    const lut = context.dark ? dark : light;
     const t = Math.log2(value + 1) / Math.log2(max + 1);
     const index = Math.min(255, Math.max(0, Math.round(t * 255)));
     return lut[index] ?? 0x00000000;

@@ -4,7 +4,7 @@
 import { brk } from "../../scripts/utils/client.js";
 import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, logIntensityColor } from "./lut.js";
-import { defaultTooltip } from "./tooltip.js";
+import { defaultTooltip } from "./tooltip/index.js";
 
 const BINS = 2400;
 const MIN_LOG = -8;
@@ -55,7 +55,7 @@ function createOracleHeatmapOption(mode, name) {
       nativeRows: BINS,
       yOrigin: "top",
     }),
-    color: logIntensityColor({ light: INFERNO_LUT, dark: INFERNO_LUT }),
+    color: logIntensityColor(INFERNO_LUT),
     axis: {
       y: {
         label: "amount",
@@ -75,7 +75,11 @@ function createOracleHeatmapOption(mode, name) {
             from: "genesis",
             to: "today",
           },
-    tooltip: defaultTooltip,
+    tooltip: defaultTooltip(
+      mode === "outputs"
+        ? { valueLabel: "Outputs", averageLabel: "Avg outputs" }
+        : { valueLabel: "Payment signal", averageLabel: "Avg payment signal" },
+    ),
   };
 }
 

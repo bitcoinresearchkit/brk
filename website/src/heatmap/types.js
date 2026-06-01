@@ -37,6 +37,7 @@
  * @property {number} rows
  * @property {(dateIndex: number, points: HeatmapPoints) => HeatmapGridAddResult | undefined} add
  * @property {(col: number, row: number) => number} getValue
+ * @property {(col: number, row: number) => number} getCount
  * @property {() => number} getMaxValue
  * @property {(col: number) => HeatmapRange} getDateIndexRange
  * @property {(row: number) => HeatmapRange} getYRange
@@ -51,7 +52,7 @@
  * @typedef {Object} HeatmapAxis
  * @property {{ label: string, choices?: HeatmapAxisChoice[], format?: (value: number) => string }} [y]
  *
- * @typedef {(value: number, context: { dark: boolean, grid: HeatmapGrid, col: number, row: number }) => number} HeatmapColorFn
+ * @typedef {(value: number, context: { grid: HeatmapGrid, col: number, row: number }) => number} HeatmapColorFn
  * @typedef {(context: { option: { axis?: HeatmapAxis }, grid: HeatmapGrid, col: number, row: number }) => string} HeatmapTooltipFn
  */
 

@@ -5,9 +5,9 @@ import { createHeader, createSelect } from "../../scripts/utils/dom.js";
 import { heatmapElement } from "../../scripts/utils/elements.js";
 import { createPersistedValue } from "../../scripts/utils/persisted.js";
 import { debounce, next } from "../../scripts/utils/timing.js";
-import { dark, onChange as onThemeChange } from "../../scripts/utils/theme.js";
 import { createRenderer } from "./renderer.js";
 import { dateRange, GENESIS_DATE, todayISODate, toISODate } from "./time.js";
+import { createTooltipView } from "./tooltip/view.js";
 
 /**
  * @typedef {Object} RangeChoice
@@ -21,6 +21,8 @@ const MAX_PARALLEL_FETCHES = 8;
 let renderer;
 /** @type {HTMLCanvasElement | undefined} */
 let canvas;
+/** @type {ReturnType<typeof createTooltipView> | undefined} */
+let tooltipView;
 /** @type {HTMLHeadingElement | undefined} */
 let headingElement;
 /** @type {HTMLElement | undefined} */
@@ -68,10 +70,12 @@ export function init() {
   canvas = document.createElement("canvas");
   heatmapElement.append(canvas);
   renderer = createRenderer(canvas);
+  tooltipView = createTooltipView(heatmapElement);
 
-  canvas.addEventListener("mousemove", updateTooltip);
-  canvas.addEventListener("mouseleave", () => canvas?.removeAttribute("title"));
-  onThemeChange(paint);
+  canvas.addEventListener("pointermove", updateHoverTooltip);
+  canvas.addEventListener("pointerdown", updateTapTooltip);
+  canvas.addEventListener("pointerleave", hideHoverTooltip);
+  canvas.addEventListener("pointercancel", hideTooltip);
 
   void next().then(resizeAndRebuild);
 
@@ -92,7 +96,7 @@ export function setOption(option) {
     updateYControls(option);
     renderRangeControls();
     if (headingElement) headingElement.textContent = option.title;
-    if (canvas) canvas.removeAttribute("title");
+    hideTooltip();
   }
   loadRange();
 }
@@ -293,28 +297,71 @@ function paint(dirty) {
   renderer.paint(
     grid.cols,
     grid.rows,
-    (col, row) =>
-      option.color(grid.getValue(col, row), { dark, grid, col, row }),
+    (col, row) => option.color(grid.getValue(col, row), { grid, col, row }),
     dirty,
   );
 }
 
-/** @param {MouseEvent} event */
-function updateTooltip(event) {
-  if (!canvas || !currentGrid || !currentOption?.tooltip) return;
-  const rect = canvas.getBoundingClientRect();
-  const col = Math.floor(((event.clientX - rect.left) * currentGrid.cols) / rect.width);
-  const row = Math.floor(((event.clientY - rect.top) * currentGrid.rows) / rect.height);
-  if (col < 0 || col >= currentGrid.cols || row < 0 || row >= currentGrid.rows) {
-    canvas.removeAttribute("title");
+/** @param {PointerEvent} event */
+function updateHoverTooltip(event) {
+  if (event.pointerType !== "mouse") return;
+  updateTooltip(event, "auto");
+}
+
+/** @param {PointerEvent} event */
+function updateTapTooltip(event) {
+  if (event.pointerType === "mouse") return;
+  updateTooltip(event, "above");
+}
+
+/** @param {PointerEvent} event */
+function hideHoverTooltip(event) {
+  if (event.pointerType === "mouse") hideTooltip();
+}
+
+/**
+ * @param {PointerEvent} event
+ * @param {"auto" | "above"} placement
+ */
+function updateTooltip(event, placement) {
+  if (!canvas || !currentGrid || !currentOption?.tooltip || !tooltipView) {
+    hideTooltip();
     return;
   }
-  canvas.title = currentOption.tooltip({
-    option: currentOption,
-    grid: currentGrid,
-    col,
-    row,
-  });
+  const rect = canvas.getBoundingClientRect();
+  const col = Math.floor(
+    ((event.clientX - rect.left) * currentGrid.cols) / rect.width,
+  );
+  const row = Math.floor(
+    ((event.clientY - rect.top) * currentGrid.rows) / rect.height,
+  );
+  if (
+    col < 0 ||
+    col >= currentGrid.cols ||
+    row < 0 ||
+    row >= currentGrid.rows
+  ) {
+    hideTooltip();
+    return;
+  }
+  if (currentGrid.getCount(col, row) === 0) {
+    hideTooltip();
+    return;
+  }
+  tooltipView.show(
+    event,
+    currentOption.tooltip({
+      option: currentOption,
+      grid: currentGrid,
+      col,
+      row,
+    }),
+    { placement },
+  );
+}
+
+function hideTooltip() {
+  tooltipView?.hide();
 }
 
 /**
@@ -597,6 +644,7 @@ function findSameLabelChoice(choices, choice, fallback) {
 function setRange(nextFrom, nextTo) {
   from = nextFrom;
   to = nextTo;
+  hideTooltip();
   loadRange();
 }
 
@@ -607,7 +655,7 @@ function setRange(nextFrom, nextTo) {
 function setYRange(nextYMin, nextYMax) {
   yMin = nextYMin;
   yMax = nextYMax;
-  if (canvas) canvas.removeAttribute("title");
+  hideTooltip();
   rebuildGrid();
 }
 

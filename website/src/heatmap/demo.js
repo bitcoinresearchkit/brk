@@ -4,7 +4,7 @@
 import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, intensityColor } from "./lut.js";
 import { GENESIS_DATE, todayISODate } from "./time.js";
-import { defaultTooltip } from "./tooltip.js";
+import { defaultTooltip } from "./tooltip/index.js";
 
 const ROWS = 160;
 const DAY_MS = 86_400_000;
@@ -19,8 +19,8 @@ export const demoHeatmapOption = {
     fetch: fetchDemoPoints,
   },
   grid: createAverageGrid({ yMin: 0, yMax: 1, nativeRows: ROWS }),
-  color: intensityColor({ light: INFERNO_LUT, dark: INFERNO_LUT }),
-  tooltip: defaultTooltip,
+  color: intensityColor(INFERNO_LUT),
+  tooltip: defaultTooltip(),
 };
 
 /**

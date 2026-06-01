@@ -129,6 +129,10 @@ export function createAverageGrid({
           const index = row * cols + col;
           return counts[index] ? sums[index] / counts[index] : Number.NaN;
         },
+        getCount(col, row) {
+          if (col < 0 || col >= cols || row < 0 || row >= rows) return 0;
+          return counts[row * cols + col];
+        },
         getMaxValue() {
           return maxValue;
         },
