@@ -21,6 +21,10 @@
   }
 
   > fieldset {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    align-items: baseline;
     flex-shrink: 0;
     text-transform: lowercase;
     overflow-x: auto;
@@ -30,6 +34,11 @@
     margin: 0.5rem var(--negative-main-padding);
     padding: 0.5rem var(--main-padding);
     gap: 1rem;
+
+    @media (max-width: 767px) {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(2, max-content);
+    }
 
     > label {
       display: flex;
@@ -47,11 +56,6 @@
         width: auto;
         line-height: 1;
       }
-    }
-
-    > small {
-      color: var(--off-color);
-      white-space: nowrap;
     }
   }
 

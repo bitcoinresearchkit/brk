@@ -26,8 +26,6 @@ let tooltipView;
 /** @type {HTMLHeadingElement | undefined} */
 let headingElement;
 /** @type {HTMLElement | undefined} */
-let statusElement;
-/** @type {HTMLElement | undefined} */
 let rangeControlsElement;
 /** @type {HTMLElement[]} */
 let dateControlElements = [];
@@ -123,10 +121,6 @@ function loadRange() {
     const date = currentDates[dateIndex];
     if (!pointsByDate.has(date)) missing.push({ date, dateIndex });
   }
-  let completed = currentDates.length - missing.length;
-  let failed = 0;
-  updateStatus(completed, currentDates.length, failed);
-
   if (!missing.length) {
     rebuildGrid();
     abortController = undefined;
@@ -156,13 +150,7 @@ function loadRange() {
         }
       } catch (error) {
         if (controller.signal.aborted) return;
-        failed += 1;
         console.error(`Failed to fetch heatmap points for ${entry.date}`, error);
-      } finally {
-        if (isCurrentLoad(option, controller, generation)) {
-          completed += 1;
-          updateStatus(completed, currentDates.length, failed);
-        }
       }
       index = nextMissingIndex();
     }
@@ -172,7 +160,6 @@ function loadRange() {
 
   void Promise.all(workers).then(() => {
     if (isCurrentLoad(option, controller, generation)) {
-      updateStatus(completed, currentDates.length, failed);
       if (needsRebuild) {
         rebuildGrid();
       } else {
@@ -364,28 +351,9 @@ function hideTooltip() {
   tooltipView?.hide();
 }
 
-/**
- * @param {number} completed
- * @param {number} total
- * @param {number} failed
- */
-function updateStatus(completed, total, failed) {
-  if (!statusElement) return;
-  if (completed >= total) {
-    statusElement.textContent = failed ? `${failed} failed` : "";
-  } else {
-    statusElement.textContent = failed
-      ? `${completed}/${total} · ${failed} failed`
-      : `${completed}/${total}`;
-  }
-}
-
 function createRangeControls() {
   const fieldset = document.createElement("fieldset");
   rangeControlsElement = fieldset;
-
-  statusElement = document.createElement("small");
-
   return fieldset;
 }
 
@@ -544,7 +512,7 @@ function updateYControls(option) {
 
   const minSelect = createSelect({
     id: "heatmap-y-min",
-    label: `${y.label} from`,
+    label: "min",
     choices,
     initialValue: minChoice,
     onChange(choice) {
@@ -561,7 +529,7 @@ function updateYControls(option) {
   });
   const maxSelect = createSelect({
     id: "heatmap-y-max",
-    label: "to",
+    label: "max",
     choices: Array.from(choices).reverse(),
     initialValue: maxChoice,
     onChange(choice) {
@@ -586,11 +554,10 @@ function updateYControls(option) {
 }
 
 function renderRangeControls() {
-  if (!rangeControlsElement || !statusElement) return;
+  if (!rangeControlsElement) return;
   rangeControlsElement.replaceChildren(
     ...dateControlElements,
     ...yControlElements,
-    statusElement,
   );
 }
 
