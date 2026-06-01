@@ -35,39 +35,12 @@ export const DIVERGING_POSITIVE_LUT = createColorLut(DIVERGING_POSITIVE_STOPS);
  * @param {ArrayLike<number>} lut
  * @returns {HeatmapColorFn}
  */
-export function intensityColor(lut) {
-  return (value) => {
-    if (!Number.isFinite(value)) return 0x00000000;
-    const index = Math.min(255, Math.max(0, Math.round(value * 255)));
-    return lut[index] ?? 0x00000000;
-  };
-}
-
-/**
- * @param {ArrayLike<number>} lut
- * @returns {HeatmapColorFn}
- */
 export function logIntensityColor(lut) {
   return (value, context) => {
     if (!Number.isFinite(value) || value <= 0) return 0x00000000;
     const max = context.grid.getMaxValue(context.col);
     if (max <= 0) return 0x00000000;
     const t = Math.log2(value + 1) / Math.log2(max + 1);
-    const index = Math.min(255, Math.max(0, Math.round(t * 255)));
-    return lut[index] ?? 0x00000000;
-  };
-}
-
-/**
- * @param {ArrayLike<number>} lut
- * @returns {HeatmapColorFn}
- */
-export function linearIntensityColor(lut) {
-  return (value, context) => {
-    if (!Number.isFinite(value) || value <= 0) return 0x00000000;
-    const cap = context.grid.getMaxValue(context.col);
-    if (cap <= 0) return 0x00000000;
-    const t = Math.min(1, value / cap);
     const index = Math.min(255, Math.max(0, Math.round(t * 255)));
     return lut[index] ?? 0x00000000;
   };
@@ -107,39 +80,6 @@ export function divergingPowerIntensityColor(
     const t = Math.pow(Math.min(1, Math.abs(value) / cap), exponent);
     const index = Math.min(255, Math.max(0, Math.round(t * 255)));
     const lut = value < 0 ? negativeLut : positiveLut;
-    return lut[index] ?? 0x00000000;
-  };
-}
-
-/**
- * @param {ArrayLike<number>} lut
- * @param {{ knee?: number, max?: number }} [options]
- * @returns {HeatmapColorFn}
- */
-export function softIntensityColor(lut, { knee = 0.15, max = 1 } = {}) {
-  return (value, context) => {
-    if (!Number.isFinite(value) || value <= 0) return 0x00000000;
-    const cap = context.grid.getMaxValue(context.col);
-    if (cap <= 0) return 0x00000000;
-    const ratio = Math.min(1, value / cap);
-    const t = (ratio / (ratio + knee)) * max;
-    const index = Math.min(255, Math.max(0, Math.round(t * 255)));
-    return lut[index] ?? 0x00000000;
-  };
-}
-
-/**
- * @param {ArrayLike<number>} lut
- * @returns {HeatmapColorFn}
- */
-export function smoothLogIntensityColor(lut) {
-  return (value, context) => {
-    if (!Number.isFinite(value) || value <= 0) return 0x00000000;
-    const cap = context.grid.getMaxValue(context.col);
-    if (cap <= 0) return 0x00000000;
-    const u = Math.log1p(value) / Math.log1p(cap);
-    const t = u * u * (3 - 2 * u);
-    const index = Math.min(255, Math.max(0, Math.round(t * 255)));
     return lut[index] ?? 0x00000000;
   };
 }

@@ -1,5 +1,6 @@
 import { brk } from "../../scripts/utils/client.js";
 import { numberToShortUSFormat } from "../../scripts/utils/format.js";
+import { formatCompact } from "./format.js";
 import { createAverageGrid } from "./grid.js";
 import {
   DIVERGING_NEGATIVE_LUT,
@@ -175,6 +176,7 @@ function createUrpdHeatmapOption({
     grid: createAverageGrid({
       yMin: MIN_LOG,
       yMax: MAX_LOG,
+      minCellSize: 2,
     }),
     color,
     axis: {
@@ -207,7 +209,6 @@ async function fetchUrpdPoints(cohort, date, signal, getValue, onPoints) {
   let points;
   const urpd = await brk.getUrpdAt(cohort, date, AGGREGATION, {
     signal,
-    cache: false,
     onValue: onPoints
       ? (urpd) => {
           points = toPoints(urpd, getValue);
@@ -276,22 +277,4 @@ function formatSignedDollar(value) {
   if (value > 0) return `+${formatted}`;
   if (value < 0) return `-${formatted}`;
   return formatted;
-}
-
-/** @param {number} value */
-function formatCompact(value) {
-  if (value >= 1000) return `${formatNumber(value / 1000)}k`;
-  return formatNumber(value);
-}
-
-/** @param {number} value */
-function formatNumber(value) {
-  if (value >= 100) return String(Math.round(value));
-  if (value >= 10) return trimNumber(value.toFixed(1));
-  return trimNumber(value.toFixed(2));
-}
-
-/** @param {string} value */
-function trimNumber(value) {
-  return value.replace(/\.?0+$/, "");
 }

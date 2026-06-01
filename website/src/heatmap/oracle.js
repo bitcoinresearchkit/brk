@@ -1,4 +1,5 @@
 import { brk } from "../../scripts/utils/client.js";
+import { formatCompact } from "./format.js";
 import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, logIntensityColor } from "./lut.js";
 import { defaultTooltip } from "./tooltip/index.js";
@@ -136,22 +137,4 @@ function formatAmount(value) {
   const btc = 10 ** value;
   if (btc >= 1) return `${formatCompact(btc)} BTC`;
   return `${formatCompact(btc * 100_000_000)} sats`;
-}
-
-/** @param {number} value */
-function formatCompact(value) {
-  if (value >= 1000) return `${formatNumber(value / 1000)}k`;
-  return formatNumber(value);
-}
-
-/** @param {number} value */
-function formatNumber(value) {
-  if (value >= 100) return String(Math.round(value));
-  if (value >= 10) return trimNumber(value.toFixed(1));
-  return trimNumber(value.toFixed(2));
-}
-
-/** @param {string} value */
-function trimNumber(value) {
-  return value.replace(/\.?0+$/, "");
 }
