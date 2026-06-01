@@ -30,9 +30,10 @@ impl Query {
     }
 
     /// Smoothed payment output histogram for a calendar `day`: the bin-by-bin average of
-    /// every confirmed block's per-block EMA. Each block's EMA is reconstructed
-    /// independently (seed-independent, so exact); averaging keeps the result an
-    /// intensive per-block rate rather than letting a busy day dominate.
+    /// every confirmed block's per-block EMA. The first block in each EMA config
+    /// segment is reconstructed exactly, then later blocks in the segment are walked
+    /// sequentially. Averaging keeps the result an intensive per-block rate rather
+    /// than letting a busy day dominate.
     pub fn confirmed_payment_histogram_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
@@ -177,18 +178,21 @@ impl Query {
         Ok(cents_to_bin(cents.inner() as f64))
     }
 
-    /// `height < min(spot price len, safe height)` or 404.
-    /// Returns the safe lengths so callers cap reads at the same bound.
-    fn check_histogram_height(&self, height: usize) -> Result<Lengths> {
-        let safe = self.safe_lengths();
-        let bound = self
-            .computer()
+    fn histogram_bound(&self, safe: &Lengths) -> usize {
+        self.computer()
             .prices
             .spot
             .cents
             .height
             .len()
-            .min(safe.height.to_usize());
+            .min(safe.height.to_usize())
+    }
+
+    /// `height < min(spot price len, safe height)` or 404.
+    /// Returns the safe lengths so callers cap reads at the same bound.
+    fn check_histogram_height(&self, height: usize) -> Result<Lengths> {
+        let safe = self.safe_lengths();
+        let bound = self.histogram_bound(&safe);
         if height >= bound {
             return Err(Error::NotFound(format!(
                 "oracle histogram unavailable for height {height}"
@@ -202,14 +206,7 @@ impl Query {
     /// the day has no committed blocks in range.
     fn day_block_range(&self, day: Day1, safe: &Lengths) -> Result<Range<usize>> {
         let first_height = &self.computer().indexes.day1.first_height;
-        let bound = self
-            .computer()
-            .prices
-            .spot
-            .cents
-            .height
-            .len()
-            .min(safe.height.to_usize());
+        let bound = self.histogram_bound(safe);
         let start = first_height
             .collect_one(day)
             .map_or(usize::MAX, |h| h.to_usize());

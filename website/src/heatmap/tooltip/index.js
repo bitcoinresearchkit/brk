@@ -1,5 +1,3 @@
-/** @import { HeatmapTooltipFn } from "../types.js" */
-
 import { numberToShortUSFormat } from "../../../scripts/utils/format.js";
 
 /**

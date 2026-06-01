@@ -1,6 +1,3 @@
-/** @import { PartialHeatmapOption } from "../../scripts/options/types.js" */
-/** @import { HeatmapPoints } from "./types.js" */
-
 import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, intensityColor } from "./lut.js";
 import { GENESIS_DATE, todayISODate } from "./time.js";

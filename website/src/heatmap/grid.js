@@ -1,5 +1,3 @@
-/** @import { HeatmapGrid, HeatmapGridFactory, HeatmapRange } from "./types.js" */
-
 /**
  * Generic date/y binning with average merge semantics.
  *

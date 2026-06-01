@@ -5,8 +5,8 @@ const MIN_LOG_BTC: i32 = -8;
 const MAX_LOG_BTC: i32 = 4;
 pub const NUM_BINS: usize = BINS_PER_DECADE * (MAX_LOG_BTC - MIN_LOG_BTC) as usize;
 
-/// Per-block round-dollar payment counts, one `u32` per log-scale bin: the
-/// oracle's ring-buffer element and the `histogram/raw/*` wire payload.
+/// Per-bin integer counts on the oracle log scale: used for both oracle-eligible
+/// payment histograms and unfiltered output histograms.
 pub type HistogramRaw = Histogram<u32, NUM_BINS>;
 
 /// Smoothed EMA over the window, one `f64` per bin. The stencil search reads it,

@@ -1,5 +1,3 @@
-/** @import { HeatmapColorFn } from "./types.js" */
-
 const INFERNO_STOPS = [
   [0, 0, 0, 0],
   [0.13, 40, 11, 84],

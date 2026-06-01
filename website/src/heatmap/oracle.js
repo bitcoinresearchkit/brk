@@ -1,6 +1,3 @@
-/** @import { PartialHeatmapOption } from "../../scripts/options/types.js" */
-/** @import { HeatmapPoints } from "./types.js" */
-
 import { brk } from "../../scripts/utils/client.js";
 import { createAverageGrid } from "./grid.js";
 import { INFERNO_LUT, logIntensityColor } from "./lut.js";
