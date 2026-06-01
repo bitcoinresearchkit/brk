@@ -486,7 +486,7 @@ function updateYControls(option) {
   const maxSelect = createSelect({
     id: "heatmap-y-max",
     label: "to",
-    choices,
+    choices: Array.from(choices).reverse(),
     initialValue: maxChoice,
     onChange(choice) {
       maxChoice = choice;

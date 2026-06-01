@@ -18,30 +18,32 @@ impl Query {
         Ok(self.live_oracle()?.price_dollars())
     }
 
-    /// Smoothed EMA histogram at the live tip, quantized for the wire.
-    pub fn live_histogram_ema(&self) -> Result<HistogramEmaCompact> {
+    /// Smoothed payment output histogram at the live tip, quantized for the wire.
+    pub fn live_payment_histogram(&self) -> Result<HistogramEmaCompact> {
         Ok(self.live_oracle()?.ema().to_compact())
     }
 
-    /// Smoothed EMA histogram for a confirmed `height`, deterministically
+    /// Smoothed payment output histogram for a confirmed `height`, deterministically
     /// reconstructed by replaying the window ending at `height`. EMA values are
     /// seed-independent, so the result is exact.
-    pub fn confirmed_histogram_ema(&self, height: usize) -> Result<HistogramEmaCompact> {
+    pub fn confirmed_payment_histogram(&self, height: usize) -> Result<HistogramEmaCompact> {
         let safe = self.check_histogram_height(height)?;
         Ok(self.ema_oracle_at(height, &safe)?.ema().to_compact())
     }
 
-    /// Smoothed EMA histogram for a calendar `day`: the bin-by-bin average of
+    /// Smoothed payment output histogram for a calendar `day`: the bin-by-bin average of
     /// every confirmed block's per-block EMA. Each block's EMA is reconstructed
     /// independently (seed-independent, so exact); averaging keeps the result an
     /// intensive per-block rate rather than letting a busy day dominate.
-    pub fn confirmed_histogram_ema_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
+    pub fn confirmed_payment_histogram_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
-        Ok(self.average_histogram_ema_range(range, &safe)?.to_compact())
+        Ok(self
+            .average_payment_histogram_range(range, &safe)?
+            .to_compact())
     }
 
-    fn average_histogram_ema_range(
+    fn average_payment_histogram_range(
         &self,
         range: Range<usize>,
         safe: &Lengths,
@@ -72,7 +74,7 @@ impl Query {
     /// Unfiltered per-bin output counts at the live tip: every forming-block
     /// mempool output binned by value, with none of the round-dollar payment
     /// filters applied. Zeros when no mempool is configured.
-    pub fn live_histogram_raw(&self) -> Result<HistogramRaw> {
+    pub fn live_output_histogram(&self) -> Result<HistogramRaw> {
         Ok(match self.mempool() {
             Some(mempool) => mempool.live_raw_histogram(),
             None => HistogramRaw::zeros(),
@@ -81,18 +83,18 @@ impl Query {
 
     /// Unfiltered per-bin output counts for a confirmed `height`: every output
     /// in the block binned by value, with no payment filtering.
-    pub fn confirmed_histogram_raw(&self, height: usize) -> Result<HistogramRaw> {
+    pub fn confirmed_output_histogram(&self, height: usize) -> Result<HistogramRaw> {
         let safe = self.check_histogram_height(height)?;
-        Ok(self.raw_histogram_for_blocks(height..height + 1, &safe))
+        Ok(self.output_histogram_for_blocks(height..height + 1, &safe))
     }
 
-    /// Unfiltered per-bin output counts for a calendar `day`: every block's raw
+    /// Unfiltered per-bin output counts for a calendar `day`: every block's output
     /// histogram summed bin-by-bin. Raw counts are additive, so the day total is
     /// just the sum across its confirmed blocks.
-    pub fn confirmed_histogram_raw_day(&self, day: Day1) -> Result<HistogramRaw> {
+    pub fn confirmed_output_histogram_day(&self, day: Day1) -> Result<HistogramRaw> {
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
-        Ok(self.raw_histogram_for_blocks(range, &safe))
+        Ok(self.output_histogram_for_blocks(range, &safe))
     }
 
     /// The live tip oracle: the cached committed base, with the forming block's
@@ -124,7 +126,14 @@ impl Query {
             return Ok(oracle);
         }
 
-        let last = self.computer().prices.spot.cents.height.len().saturating_sub(1);
+        let last = self
+            .computer()
+            .prices
+            .spot
+            .cents
+            .height
+            .len()
+            .saturating_sub(1);
         let seed_bin = self.seed_bin_at(last)?;
         let oracle = Arc::new(self.warm_oracle(seed_bin, height.to_usize(), &safe));
 
@@ -150,7 +159,7 @@ impl Query {
         let config = Config::for_height(end.saturating_sub(1));
         let start = end.saturating_sub(config.window_size);
         Oracle::from_checkpoint(seed_bin, config, |o| {
-            PricesVecs::feed_blocks_with(o, self.indexer(), start..end, Some(safe), |_, _, _| {});
+            PricesVecs::feed_blocks_for_warmup(o, self.indexer(), start..end, Some(safe));
         })
     }
 
@@ -222,7 +231,7 @@ impl Query {
     /// coinbase included, binned by value via `sats_to_bin` with no payment
     /// filtering. Raw counts are additive, so a day can be read as one output
     /// range instead of one block at a time.
-    fn raw_histogram_for_blocks(&self, range: Range<usize>, safe: &Lengths) -> HistogramRaw {
+    fn output_histogram_for_blocks(&self, range: Range<usize>, safe: &Lengths) -> HistogramRaw {
         let indexer = self.indexer();
         let total_outputs = safe.txout_index.to_usize();
         let collect_end = (range.end + 1).min(safe.height.to_usize());

@@ -3,8 +3,8 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
 use brk_oracle::{
-    Config, HistogramRaw, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
-    for_each_round_dollar_bin,
+    bin_to_cents, cents_to_bin, for_each_round_dollar_bin, Config, HistogramRaw, Oracle,
+    START_HEIGHT_FAST, START_HEIGHT_SLOW,
 };
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
@@ -115,13 +115,7 @@ impl Vecs {
         let seed_bin = cents_to_bin(prev_cents.inner() as f64);
         let warmup = config.window_size.min(committed - START_HEIGHT_SLOW);
         let mut oracle = Oracle::from_checkpoint(seed_bin, config, |o| {
-            Self::feed_blocks_with(
-                o,
-                indexer,
-                (committed - warmup)..committed,
-                None,
-                |_, _, _| {},
-            );
+            Self::feed_blocks_for_warmup(o, indexer, (committed - warmup)..committed, None);
         });
 
         let num_new = total_heights - committed;
@@ -136,7 +130,12 @@ impl Vecs {
         let mut ref_bins = Vec::with_capacity(num_new);
         if committed < START_HEIGHT_FAST {
             let slow_end = START_HEIGHT_FAST.min(total_heights);
-            ref_bins.extend(Self::feed_blocks(&mut oracle, indexer, committed..slow_end, None));
+            ref_bins.extend(Self::feed_blocks(
+                &mut oracle,
+                indexer,
+                committed..slow_end,
+                None,
+            ));
             if slow_end == START_HEIGHT_FAST {
                 oracle.reconfigure(Config::default());
             }
@@ -195,6 +194,16 @@ impl Vecs {
             ref_bins.push(ref_bin);
         });
         ref_bins
+    }
+
+    /// Feed blocks into an Oracle when callers only need the warmed EMA/window state.
+    pub fn feed_blocks_for_warmup<IM: StorageMode>(
+        oracle: &mut Oracle,
+        indexer: &Indexer<IM>,
+        range: Range<usize>,
+        cap: Option<&Lengths>,
+    ) {
+        Self::feed_blocks_with(oracle, indexer, range, cap, |_, _, _| {});
     }
 
     /// Feed a range of blocks into an Oracle and call `on_block` after each

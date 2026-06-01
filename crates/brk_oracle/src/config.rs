@@ -66,7 +66,7 @@ impl Config {
 
     /// Split a block range into sub-ranges with a single EMA configuration.
     pub fn segments_for_range(range: Range<usize>) -> impl Iterator<Item = Range<usize>> {
-        let split = START_HEIGHT_FAST.clamp(range.start, range.end);
+        let split = START_HEIGHT_FAST.max(range.start).min(range.end);
         [range.start..split, split..range.end]
             .into_iter()
             .filter(|range| !range.is_empty())

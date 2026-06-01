@@ -25,14 +25,17 @@ const AMOUNT_CHOICES = [
   { label: "10k BTC", value: 4 },
 ];
 
-export const oracleRawHeatmapOption = createOracleHeatmapOption("raw", "raw");
-export const oracleEmaHeatmapOption = createOracleHeatmapOption(
-  "ema",
-  "smoothed",
+export const oracleOutputsHeatmapOption = createOracleHeatmapOption(
+  "outputs",
+  "outputs",
+);
+export const oraclePaymentsHeatmapOption = createOracleHeatmapOption(
+  "payments",
+  "payments",
 );
 
 /**
- * @param {"raw" | "ema"} mode
+ * @param {"outputs" | "payments"} mode
  * @param {string} name
  * @returns {PartialHeatmapOption}
  */
@@ -40,7 +43,8 @@ function createOracleHeatmapOption(mode, name) {
   return {
     kind: "heatmap",
     name,
-    title: `${capitalize(name)} Output Value Distribution`,
+    title:
+      mode === "outputs" ? "Output Value Histogram" : "Payment Output Histogram",
     points: {
       fetch: (date, signal, onPoints) =>
         fetchOraclePoints(mode, date, signal, onPoints),
@@ -64,7 +68,7 @@ function createOracleHeatmapOption(mode, name) {
 }
 
 /**
- * @param {"raw" | "ema"} mode
+ * @param {"outputs" | "payments"} mode
  * @param {string} date
  * @param {AbortSignal} signal
  * @param {(points: HeatmapPoints) => void} [onPoints]
@@ -82,7 +86,7 @@ async function fetchOraclePoints(mode, date, signal, onPoints) {
 }
 
 /**
- * @param {"raw" | "ema"} mode
+ * @param {"outputs" | "payments"} mode
  * @param {string} date
  * @param {AbortSignal} signal
  * @param {(values: number[]) => void} [onValue]
@@ -90,9 +94,9 @@ async function fetchOraclePoints(mode, date, signal, onPoints) {
  */
 function fetchOracleValues(mode, date, signal, onValue) {
   return (
-    mode === "raw"
-      ? brk.getOracleHistogramRaw(date, { signal, onValue })
-      : brk.getOracleHistogramEma(date, { signal, onValue })
+    mode === "outputs"
+      ? brk.getOracleHistogramOutputs(date, { signal, onValue })
+      : brk.getOracleHistogramPayments(date, { signal, onValue })
   );
 }
 
@@ -137,9 +141,4 @@ function formatNumber(value) {
 /** @param {string} value */
 function trimNumber(value) {
   return value.replace(/\.?0+$/, "");
-}
-
-/** @param {string} value */
-function capitalize(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

@@ -9865,40 +9865,40 @@ impl BrkClient {
         self.base.get_json(&format!("/api/oracle/price"))
     }
 
-    /// Live EMA histogram
+    /// Live payment output histogram
     ///
-    /// Smoothed round-dollar payment histogram at the live tip: the committed EMA with the forming mempool block blended in. A flat array of log-scale bins.
+    /// Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/ema/live`
-    pub fn get_oracle_histogram_ema_live(&self) -> Result<Vec<i64>> {
-        self.base.get_json(&format!("/api/oracle/histogram/ema/live"))
+    /// Endpoint: `GET /api/oracle/histogram/payments/live`
+    pub fn get_oracle_histogram_payments_live(&self) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/payments/live"))
     }
 
-    /// EMA histogram at height or day
+    /// Payment output histogram at height or day
     ///
-    /// Smoothed round-dollar payment histogram for a confirmed point: a block height (`840000`) gives that block's EMA, a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. A flat array of log-scale bins.
+    /// Smoothed histogram of oracle-eligible payment outputs for a confirmed point. A block height (`840000`) gives that block's oracle payment histogram; a calendar date (`YYYY-MM-DD`) gives the average of that day's per-block payment histograms. A flat array of log-scale bins.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/ema/{point}`
-    pub fn get_oracle_histogram_ema(&self, point: &str) -> Result<Vec<i64>> {
-        self.base.get_json(&format!("/api/oracle/histogram/ema/{point}"))
+    /// Endpoint: `GET /api/oracle/histogram/payments/{point}`
+    pub fn get_oracle_histogram_payments(&self, point: &str) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/payments/{point}"))
     }
 
-    /// Live raw histogram
+    /// Live output value histogram
     ///
-    /// Unfiltered output histogram for the forming mempool block: every live output binned by value, with none of the round-dollar payment filters applied. A flat array of log-scale bins, all zero when no mempool is configured.
+    /// Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/raw/live`
-    pub fn get_oracle_histogram_raw_live(&self) -> Result<Vec<i64>> {
-        self.base.get_json(&format!("/api/oracle/histogram/raw/live"))
+    /// Endpoint: `GET /api/oracle/histogram/outputs/live`
+    pub fn get_oracle_histogram_outputs_live(&self) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/outputs/live"))
     }
 
-    /// Raw histogram at height or day
+    /// Output value histogram at height or day
     ///
-    /// Unfiltered output histogram for a confirmed point: a block height (`840000`) gives that block's outputs, coinbase included, binned by value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
+    /// Unfiltered output value histogram for a confirmed point. A block height (`840000`) gives every output in that block, coinbase included, binned by value on the oracle log scale; a calendar date (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale bins.
     ///
-    /// Endpoint: `GET /api/oracle/histogram/raw/{point}`
-    pub fn get_oracle_histogram_raw(&self, point: &str) -> Result<Vec<i64>> {
-        self.base.get_json(&format!("/api/oracle/histogram/raw/{point}"))
+    /// Endpoint: `GET /api/oracle/histogram/outputs/{point}`
+    pub fn get_oracle_histogram_outputs(&self, point: &str) -> Result<Vec<i64>> {
+        self.base.get_json(&format!("/api/oracle/histogram/outputs/{point}"))
     }
 
     /// Txid by index

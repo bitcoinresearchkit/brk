@@ -43,23 +43,24 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/ema/live",
+            "/api/oracle/histogram/payments/live",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
-                            q.live_histogram_ema()
+                            q.live_payment_histogram()
                         })
                         .await
                 },
                 |op| {
-                    op.id("get_oracle_histogram_ema_live")
+                    op.id("get_oracle_histogram_payments_live")
                         .oracle_tag()
-                        .summary("Live EMA histogram")
+                        .summary("Live payment output histogram")
                         .description(
-                            "Smoothed round-dollar payment histogram at the live tip: the \
-                            committed EMA with the forming mempool block blended in. \
-                            A flat array of log-scale bins.",
+                            "Live smoothed histogram of oracle-eligible payment outputs, binned \
+                            by output value on the oracle log scale. It combines the committed \
+                            oracle window with the forming mempool block. A flat array of \
+                            log-scale bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
                         .not_modified()
@@ -68,7 +69,7 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/ema/{point}",
+            "/api/oracle/histogram/payments/{point}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
@@ -81,7 +82,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                             let strategy = state.date_strategy(version, date);
                             state
                                 .respond_json(&headers, strategy, &uri, move |q| {
-                                    q.confirmed_histogram_ema_day(Day1::try_from(date)?)
+                                    q.confirmed_payment_histogram_day(Day1::try_from(date)?)
                                 })
                                 .await
                         }
@@ -89,7 +90,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                             let strategy = state.height_strategy(version, height);
                             state
                                 .respond_json(&headers, strategy, &uri, move |q| {
-                                    q.confirmed_histogram_ema(usize::from(height))
+                                    q.confirmed_payment_histogram(usize::from(height))
                                 })
                                 .await
                         }
@@ -97,14 +98,15 @@ impl OracleRoutes for ApiRouter<AppState> {
                     }
                 },
                 |op| {
-                    op.id("get_oracle_histogram_ema")
+                    op.id("get_oracle_histogram_payments")
                         .oracle_tag()
-                        .summary("EMA histogram at height or day")
+                        .summary("Payment output histogram at height or day")
                         .description(
-                            "Smoothed round-dollar payment histogram for a confirmed point: a \
-                            block height (`840000`) gives that block's EMA, a calendar date \
-                            (`YYYY-MM-DD`) gives the average of that day's per-block EMAs. \
-                            A flat array of log-scale bins.",
+                            "Smoothed histogram of oracle-eligible payment outputs for a \
+                            confirmed point. A block height (`840000`) gives that block's oracle \
+                            payment histogram; a calendar date (`YYYY-MM-DD`) gives the average \
+                            of that day's per-block payment histograms. A flat array of log-scale \
+                            bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
                         .not_modified()
@@ -115,24 +117,24 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/raw/live",
+            "/api/oracle/histogram/outputs/live",
             get_with(
                 async |uri: Uri, headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
                         .respond_json(&headers, state.mempool_strategy(), &uri, |q| {
-                            q.live_histogram_raw()
+                            q.live_output_histogram()
                         })
                         .await
                 },
                 |op| {
-                    op.id("get_oracle_histogram_raw_live")
+                    op.id("get_oracle_histogram_outputs_live")
                         .oracle_tag()
-                        .summary("Live raw histogram")
+                        .summary("Live output value histogram")
                         .description(
-                            "Unfiltered output histogram for the forming mempool block: every \
-                            live output binned by value, with none of the round-dollar payment \
-                            filters applied. A flat array of log-scale bins, all zero when no \
-                            mempool is configured.",
+                            "Live unfiltered output value histogram for the forming mempool \
+                            block. Every live output is binned by value on the oracle log scale; \
+                            no oracle payment filters are applied. A flat array of log-scale \
+                            bins, all zero when no mempool is configured.",
                         )
                         .json_response::<HistogramRaw>()
                         .not_modified()
@@ -141,7 +143,7 @@ impl OracleRoutes for ApiRouter<AppState> {
             ),
         )
         .api_route(
-            "/api/oracle/histogram/raw/{point}",
+            "/api/oracle/histogram/outputs/{point}",
             get_with(
                 async |uri: Uri,
                        headers: HeaderMap,
@@ -155,7 +157,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                             let strategy = state.date_strategy(version, date);
                             state
                                 .respond_json(&headers, strategy, &uri, move |q| {
-                                    q.confirmed_histogram_raw_day(Day1::try_from(date)?)
+                                    q.confirmed_output_histogram_day(Day1::try_from(date)?)
                                 })
                                 .await
                         }
@@ -163,7 +165,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                             let strategy = state.height_strategy(version, height);
                             state
                                 .respond_json(&headers, strategy, &uri, move |q| {
-                                    q.confirmed_histogram_raw(usize::from(height))
+                                    q.confirmed_output_histogram(usize::from(height))
                                 })
                                 .await
                         }
@@ -171,14 +173,15 @@ impl OracleRoutes for ApiRouter<AppState> {
                     }
                 },
                 |op| {
-                    op.id("get_oracle_histogram_raw")
+                    op.id("get_oracle_histogram_outputs")
                         .oracle_tag()
-                        .summary("Raw histogram at height or day")
+                        .summary("Output value histogram at height or day")
                         .description(
-                            "Unfiltered output histogram for a confirmed point: a block height \
-                            (`840000`) gives that block's outputs, coinbase included, binned by \
-                            value with no payment filtering; a calendar date (`YYYY-MM-DD`) sums \
-                            every block that day. A flat array of log-scale bins.",
+                            "Unfiltered output value histogram for a confirmed point. A block \
+                            height (`840000`) gives every output in that block, coinbase \
+                            included, binned by value on the oracle log scale; a calendar date \
+                            (`YYYY-MM-DD`) sums every block that day. A flat array of log-scale \
+                            bins.",
                         )
                         .json_response::<HistogramRaw>()
                         .not_modified()
