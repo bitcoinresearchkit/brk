@@ -18,7 +18,7 @@ export const demoHeatmapOption = {
   points: {
     fetch: fetchDemoPoints,
   },
-  grid: createAverageGrid({ yStart: 0, yEnd: 1, nativeRows: ROWS }),
+  grid: createAverageGrid({ yMin: 0, yMax: 1, nativeRows: ROWS }),
   color: intensityColor({ light: INFERNO_LUT, dark: INFERNO_LUT }),
   tooltip: defaultTooltip,
 };

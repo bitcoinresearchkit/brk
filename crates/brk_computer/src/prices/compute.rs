@@ -184,6 +184,23 @@ impl Vecs {
         range: Range<usize>,
         cap: Option<&Lengths>,
     ) -> Vec<f64> {
+        let mut ref_bins = Vec::with_capacity(range.len());
+        Self::feed_blocks_with(oracle, indexer, range, cap, |_, _, ref_bin| {
+            ref_bins.push(ref_bin);
+        });
+        ref_bins
+    }
+
+    /// Feed a range of blocks into an Oracle and call `on_block` after each
+    /// processed block. This lets callers observe derived state such as EMA
+    /// without duplicating the histogram extraction path.
+    pub fn feed_blocks_with<IM: StorageMode>(
+        oracle: &mut Oracle,
+        indexer: &Indexer<IM>,
+        range: Range<usize>,
+        cap: Option<&Lengths>,
+        mut on_block: impl FnMut(usize, &Oracle, f64),
+    ) {
         let (total_txs, total_outputs, height_len) = match cap {
             Some(c) => (
                 c.tx_index.to_usize(),
@@ -210,8 +227,6 @@ impl Vecs {
             .outputs
             .first_txout_index
             .collect_range_at(range.start, collect_end);
-
-        let mut ref_bins = Vec::with_capacity(range.len());
 
         // Cursor avoids per-block PcoVec page decompression for the
         // tx-indexed first_txout_index lookup. Accessed tx_index values
@@ -273,9 +288,8 @@ impl Vecs {
                 });
             }
 
-            ref_bins.push(oracle.process_histogram(&hist));
+            let ref_bin = oracle.process_histogram(&hist);
+            on_block(range.start + idx, oracle, ref_bin);
         }
-
-        ref_bins
     }
 }

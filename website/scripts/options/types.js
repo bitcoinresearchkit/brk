@@ -110,11 +110,12 @@
  * @property {HeatmapPointSource} points
  * @property {HeatmapGridFactory} grid
  * @property {HeatmapColorFn} color
+ * @property {HeatmapAxis} [axis]
  * @property {HeatmapTooltipFn} [tooltip]
  *
  * @typedef {PartialOption & PartialHeatmapOptionSpecific} PartialHeatmapOption
  *
- * @typedef {Required<Omit<PartialHeatmapOption, "tooltip">> & Pick<PartialHeatmapOption, "tooltip"> & ProcessedOptionAddons} HeatmapOption
+ * @typedef {Required<Omit<PartialHeatmapOption, "axis" | "tooltip">> & Pick<PartialHeatmapOption, "axis" | "tooltip"> & ProcessedOptionAddons} HeatmapOption
  *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"link"} [kind]

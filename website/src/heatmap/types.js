@@ -30,10 +30,17 @@
  * @property {(row: number) => HeatmapRange} getYRange
  *
  * @typedef {Object} HeatmapGridFactory
- * @property {(args: { dates: readonly string[], width: number, height: number }) => HeatmapGrid} create
+ * @property {(args: { dates: readonly string[], width: number, height: number, yMin?: number, yMax?: number }) => HeatmapGrid} create
+ *
+ * @typedef {Object} HeatmapAxisChoice
+ * @property {string} label
+ * @property {number} value
+ *
+ * @typedef {Object} HeatmapAxis
+ * @property {{ label: string, choices?: HeatmapAxisChoice[], format?: (value: number) => string }} [y]
  *
  * @typedef {(value: number, context: { dark: boolean, grid: HeatmapGrid, col: number, row: number }) => number} HeatmapColorFn
- * @typedef {(context: { grid: HeatmapGrid, col: number, row: number }) => string} HeatmapTooltipFn
+ * @typedef {(context: { option: { axis?: HeatmapAxis }, grid: HeatmapGrid, col: number, row: number }) => string} HeatmapTooltipFn
  */
 
 export {};

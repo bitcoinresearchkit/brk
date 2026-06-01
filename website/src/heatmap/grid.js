@@ -4,22 +4,24 @@
  * Generic date/y binning with average merge semantics.
  *
  * @param {Object} args
- * @param {number} args.yStart
- * @param {number} args.yEnd
+ * @param {number} args.yMin
+ * @param {number} args.yMax
  * @param {number} [args.minCellSize]
  * @param {number} [args.maxCols]
  * @param {number} [args.nativeRows]
+ * @param {"bottom" | "top"} [args.yOrigin]
  * @returns {HeatmapGridFactory}
  */
 export function createAverageGrid({
-  yStart,
-  yEnd,
+  yMin: defaultYMin,
+  yMax: defaultYMax,
   minCellSize = 1,
   maxCols = Number.POSITIVE_INFINITY,
   nativeRows = Number.POSITIVE_INFINITY,
+  yOrigin = "bottom",
 }) {
   return {
-    create({ dates, width, height }) {
+    create({ dates, width, height, yMin = defaultYMin, yMax = defaultYMax }) {
       const cols = Math.max(
         1,
         Math.min(
@@ -37,7 +39,7 @@ export function createAverageGrid({
       const maxByCol = new Float64Array(cols);
       const cumulativeMaxByCol = new Float64Array(cols);
       let cumulativeMaxDirty = true;
-      const ySpan = yEnd - yStart;
+      const ySpan = yMax - yMin;
 
       /** @param {number} dateIndex */
       function toCol(dateIndex) {
@@ -54,9 +56,10 @@ export function createAverageGrid({
         if (!Number.isFinite(y) || !Number.isFinite(ySpan) || ySpan <= 0) {
           return undefined;
         }
-        const t = (y - yStart) / ySpan;
+        const t = (y - yMin) / ySpan;
         if (t < 0 || t > 1) return undefined;
-        return rows - 1 - clamp(Math.floor(t * rows), 0, rows - 1);
+        const row = clamp(Math.floor(t * rows), 0, rows - 1);
+        return yOrigin === "top" ? row : rows - 1 - row;
       }
 
       /**
@@ -138,8 +141,9 @@ export function createAverageGrid({
         },
         getYRange(row) {
           if (row < 0 || row >= rows || ySpan <= 0) return emptyRange();
-          const start = yStart + ((rows - row - 1) / rows) * ySpan;
-          const end = yStart + ((rows - row) / rows) * ySpan;
+          const index = yOrigin === "top" ? row : rows - row - 1;
+          const start = yMin + (index / rows) * ySpan;
+          const end = yMin + ((index + 1) / rows) * ySpan;
           return { start, end };
         },
       };

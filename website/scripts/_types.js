@@ -12,7 +12,7 @@
  *
  * @import { Color } from "./utils/colors.js"
  *
- * @import { HeatmapPointSource, HeatmapGridFactory, HeatmapColorFn, HeatmapTooltipFn } from "../src/heatmap/types.js"
+ * @import { HeatmapAxis, HeatmapPointSource, HeatmapGridFactory, HeatmapColorFn, HeatmapTooltipFn } from "../src/heatmap/types.js"
  *
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnySeriesBlueprint, SeriesType, AnyFetchedSeriesBlueprint, ExplorerOption, UrlOption, PartialOptionsGroup, OptionsGroup, PartialOptionsTree, UtxoCohortObject, AddrCohortObject, CohortObject, CohortGroupObject, FetchedLineSeriesBlueprint, FetchedBaselineSeriesBlueprint, FetchedHistogramSeriesBlueprint, FetchedDotsBaselineSeriesBlueprint, PatternAll, PatternFull, PatternWithAdjusted, PatternWithPercentiles, PatternBasic, PatternBasicWithMarketCap, PatternBasicWithoutMarketCap, PatternWithoutRelative, CohortAll, CohortFull, CohortWithAdjusted, CohortWithPercentiles, CohortBasic, CohortBasicWithMarketCap, CohortBasicWithoutMarketCap, CohortWithoutRelative, CohortAddr, CohortLongTerm, CohortAgeRange, CohortAgeRangeWithMatured, CohortGroupFull, CohortGroupWithAdjusted, CohortGroupWithPercentiles, CohortGroupLongTerm, CohortGroupAgeRange, CohortGroupBasic, CohortGroupBasicWithMarketCap, CohortGroupBasicWithoutMarketCap, CohortGroupWithoutRelative, CohortGroupAddr, UtxoCohortGroupObject, AddrCohortGroupObject, FetchedDotsSeriesBlueprint, HeatmapOption, FetchedCandlestickSeriesBlueprint, FetchedPriceSeriesBlueprint, AnyPricePattern, AnyValuePattern } from "./options/partial.js"
  *

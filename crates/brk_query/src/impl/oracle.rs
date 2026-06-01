@@ -4,7 +4,7 @@ use brk_computer::prices::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle,
+    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, START_HEIGHT_FAST,
     cents_to_bin, sats_to_bin,
 };
 use brk_types::{Day1, Dollars, Sats, TxOutIndex};
@@ -37,16 +37,36 @@ impl Query {
     pub fn confirmed_histogram_ema_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
-        let count = range.len() as f64;
+        Ok(self.average_histogram_ema_range(range, &safe)?.to_compact())
+    }
+
+    fn average_histogram_ema_range(
+        &self,
+        range: Range<usize>,
+        safe: &Lengths,
+    ) -> Result<HistogramEma> {
+        let count = range.len();
         let mut acc = HistogramEma::zeros();
-        for height in range {
-            let oracle = self.ema_oracle_at(height, &safe)?;
-            acc.iter_mut()
-                .zip(oracle.ema().iter())
-                .for_each(|(a, &e)| *a += e);
+
+        for segment in ema_config_segments(range) {
+            let mut oracle = self.ema_oracle_at(segment.start, safe)?;
+            add_ema(&mut acc, oracle.ema());
+
+            let feed_start = segment.start + 1;
+            if feed_start < segment.end {
+                PricesVecs::feed_blocks_with(
+                    &mut oracle,
+                    self.indexer(),
+                    feed_start..segment.end,
+                    Some(safe),
+                    |_, oracle, _| add_ema(&mut acc, oracle.ema()),
+                );
+            }
         }
+
+        let count = count as f64;
         acc.iter_mut().for_each(|a| *a /= count);
-        Ok(acc.to_compact())
+        Ok(acc)
     }
 
     /// Unfiltered per-bin output counts at the live tip: every forming-block
@@ -137,7 +157,7 @@ impl Query {
         let config = Config::for_height(end.saturating_sub(1));
         let start = end.saturating_sub(config.window_size);
         Oracle::from_checkpoint(seed_bin, config, |o| {
-            PricesVecs::feed_blocks(o, self.indexer(), start..end, Some(safe));
+            PricesVecs::feed_blocks_with(o, self.indexer(), start..end, Some(safe), |_, _, _| {});
         })
     }
 
@@ -234,5 +254,46 @@ impl Query {
             }
         }
         hist
+    }
+}
+
+fn add_ema(acc: &mut HistogramEma, ema: &HistogramEma) {
+    acc.iter_mut()
+        .zip(ema.iter())
+        .for_each(|(a, &e)| *a += e);
+}
+
+fn ema_config_segments(range: Range<usize>) -> impl Iterator<Item = Range<usize>> {
+    let split = START_HEIGHT_FAST.clamp(range.start, range.end);
+    [range.start..split, split..range.end]
+        .into_iter()
+        .filter(|range| !range.is_empty())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ema_config_segments_split_at_fast_start() {
+        let segments: Vec<_> =
+            ema_config_segments((START_HEIGHT_FAST - 2)..(START_HEIGHT_FAST + 2)).collect();
+        assert_eq!(
+            segments,
+            vec![
+                (START_HEIGHT_FAST - 2)..START_HEIGHT_FAST,
+                START_HEIGHT_FAST..(START_HEIGHT_FAST + 2),
+            ]
+        );
+    }
+
+    #[test]
+    fn ema_config_segments_omits_empty_sides() {
+        let slow: Vec<_> = ema_config_segments((START_HEIGHT_FAST - 2)..START_HEIGHT_FAST).collect();
+        assert_eq!(slow, vec![(START_HEIGHT_FAST - 2)..START_HEIGHT_FAST]);
+
+        let fast: Vec<_> =
+            ema_config_segments(START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)).collect();
+        assert_eq!(fast, vec![START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)]);
     }
 }

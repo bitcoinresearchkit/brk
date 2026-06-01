@@ -1,5 +1,5 @@
 /** @import { HeatmapOption } from "../../scripts/options/types.js" */
-/** @import { HeatmapGrid, HeatmapPoints } from "./types.js" */
+/** @import { HeatmapAxisChoice, HeatmapGrid, HeatmapPoints } from "./types.js" */
 
 import { createHeader, createSelect } from "../../scripts/utils/dom.js";
 import { heatmapElement } from "../../scripts/utils/elements.js";
@@ -24,6 +24,12 @@ let canvas;
 let headingElement;
 /** @type {HTMLElement | undefined} */
 let statusElement;
+/** @type {HTMLElement | undefined} */
+let rangeControlsElement;
+/** @type {HTMLElement[]} */
+let dateControlElements = [];
+/** @type {HTMLElement[]} */
+let yControlElements = [];
 /** @type {HeatmapOption | undefined} */
 let currentOption;
 /** @type {HeatmapGrid | undefined} */
@@ -40,6 +46,10 @@ let paintScheduled = false;
 let initialized = false;
 let from = yearStartISODate(new Date().getUTCFullYear());
 let to = todayISODate();
+/** @type {number | undefined} */
+let yMin;
+/** @type {number | undefined} */
+let yMax;
 
 /**
  * Initializes the heatmap pane once for the app lifetime.
@@ -77,6 +87,7 @@ export function setOption(option) {
   if (currentOption !== option) {
     currentOption = option;
     pointsByDate = new Map();
+    updateYControls(option);
     if (headingElement) headingElement.textContent = option.title;
     if (canvas) canvas.removeAttribute("title");
   }
@@ -216,6 +227,8 @@ function rebuildGrid() {
     dates: currentDates,
     width: renderer.width,
     height: renderer.height,
+    yMin,
+    yMax,
   });
 
   for (let i = 0; i < currentDates.length; i++) {
@@ -288,7 +301,12 @@ function updateTooltip(event) {
     canvas.removeAttribute("title");
     return;
   }
-  canvas.title = currentOption.tooltip({ grid: currentGrid, col, row });
+  canvas.title = currentOption.tooltip({
+    option: currentOption,
+    grid: currentGrid,
+    col,
+    row,
+  });
 }
 
 /**
@@ -309,6 +327,7 @@ function updateStatus(completed, total, failed) {
 
 function createRangeControls() {
   const fieldset = document.createElement("fieldset");
+  rangeControlsElement = fieldset;
 
   statusElement = document.createElement("small");
 
@@ -351,9 +370,73 @@ function createRangeControls() {
     toLabel: rangeChoiceLabel,
   });
 
-  fieldset.append(fromSelect.element, toSelect.element, statusElement);
+  dateControlElements = [fromSelect.element, toSelect.element];
+  renderRangeControls();
 
   return fieldset;
+}
+
+/** @param {HeatmapOption} option */
+function updateYControls(option) {
+  const y = option.axis?.y;
+  const choices = y?.choices;
+  if (!choices || choices.length < 2) {
+    yMin = undefined;
+    yMax = undefined;
+    yControlElements = [];
+    renderRangeControls();
+    return;
+  }
+
+  let minChoice = choices[0];
+  let maxChoice = choices.at(-1) ?? choices[0];
+  yMin = minChoice.value;
+  yMax = maxChoice.value;
+
+  const minSelect = createSelect({
+    id: "heatmap-y-min",
+    label: `${y.label} from`,
+    choices,
+    initialValue: minChoice,
+    onChange(choice) {
+      minChoice = choice;
+      if (minChoice.value > maxChoice.value) {
+        maxChoice = minChoice;
+        maxSelect.set(maxChoice);
+      }
+      setYRange(minChoice.value, maxChoice.value);
+    },
+    toKey: axisChoiceKey,
+    toLabel: axisChoiceLabel,
+  });
+  const maxSelect = createSelect({
+    id: "heatmap-y-max",
+    label: "to",
+    choices,
+    initialValue: maxChoice,
+    onChange(choice) {
+      maxChoice = choice;
+      if (minChoice.value > maxChoice.value) {
+        minChoice = maxChoice;
+        minSelect.set(minChoice);
+      }
+      setYRange(minChoice.value, maxChoice.value);
+    },
+    toKey: axisChoiceKey,
+    toLabel: axisChoiceLabel,
+  });
+
+  yControlElements = [minSelect.element, maxSelect.element];
+  renderRangeControls();
+}
+
+function renderRangeControls() {
+  if (!rangeControlsElement || !statusElement) return;
+  rangeControlsElement.replaceChildren(
+    ...dateControlElements,
+    ...yControlElements,
+    statusElement,
+  );
 }
 
 /**
@@ -407,6 +490,27 @@ function setRange(nextFrom, nextTo) {
   from = nextFrom;
   to = nextTo;
   loadRange();
+}
+
+/**
+ * @param {number} nextYMin
+ * @param {number} nextYMax
+ */
+function setYRange(nextYMin, nextYMax) {
+  yMin = nextYMin;
+  yMax = nextYMax;
+  if (canvas) canvas.removeAttribute("title");
+  rebuildGrid();
+}
+
+/** @param {HeatmapAxisChoice} choice */
+function axisChoiceKey(choice) {
+  return String(choice.value);
+}
+
+/** @param {HeatmapAxisChoice} choice */
+function axisChoiceLabel(choice) {
+  return choice.label;
 }
 
 /** @param {number} year */
