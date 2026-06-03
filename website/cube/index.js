@@ -14,20 +14,22 @@ export function createCube({ fill = 0.5 } = {}) {
     return element;
   };
 
-  cube.append(
-    face("glass", "bottom"),
-    face("glass", "rear-right"),
-    face("glass", "rear-left"),
-    face("liquid", "bottom"),
-    face("liquid", "rear-right"),
-    face("liquid", "rear-left"),
-    face("liquid", "right"),
-    face("liquid", "left"),
-    face("liquid", "top"),
-    face("glass", "right"),
-    face("glass", "left"),
-    face("glass", "top"),
-  );
+  const faces = /** @type {const} */ ([
+    ["glass", "front", "bottom"],
+    ["glass", "rear", "right"],
+    ["glass", "rear", "left"],
+    ["liquid", "front", "bottom"],
+    ["liquid", "rear", "right"],
+    ["liquid", "rear", "left"],
+    ["liquid", "front", "right"],
+    ["liquid", "front", "left"],
+    ["liquid", "front", "top"],
+    ["glass", "front", "right"],
+    ["glass", "front", "left"],
+    ["glass", "front", "top"],
+  ]);
+
+  cube.append(...faces.map((names) => face(...names)));
 
   return cube;
 }

@@ -25,10 +25,7 @@
     width: var(--size);
     height: var(--size);
     transform: translateY(50%) var(--orient)
-      translate(
-        calc(var(--size) * var(--x)),
-        calc(var(--size) * var(--y))
-      )
+      translate(calc(var(--size) * var(--x)), calc(var(--size) * var(--y)))
       scale(var(--scale-x, 1), var(--scale-y));
   }
 
@@ -45,73 +42,61 @@
     --stack-shift: 0;
   }
 
-  .top,
-  .bottom {
-    --orient: rotate(30deg) skewX(-30deg);
-    --scale-y: var(--iso-scale);
+  .front {
+    &.top,
+    &.bottom {
+      --orient: rotate(30deg) skewX(-30deg);
+      --scale-y: var(--iso-scale);
+    }
+
+    &.right {
+      --orient: rotate(-30deg) skewX(-30deg);
+      --face-color: var(--face-right);
+      --x: 1;
+      --y: calc(var(--stack-shift) + var(--iso-scale));
+    }
+
+    &.left {
+      --orient: rotate(30deg) skewX(30deg);
+      --face-color: var(--face-left);
+      --x: 0;
+      --y: var(--stack-shift);
+    }
+
+    &.top {
+      --face-color: var(--face-top);
+      --x: 0;
+      --y: calc(var(--stack-shift) - var(--iso-scale));
+    }
+
+    &.bottom {
+      --face-color: var(--face-bottom);
+      --x: 1;
+      --y: 0;
+    }
   }
 
-  .right,
-  .rear-left {
-    --orient: rotate(-30deg) skewX(-30deg);
+  .rear {
+    &.right {
+      --orient: rotate(30deg) skewX(30deg);
+      --face-color: var(--face-left);
+      --x: 1;
+      --y: calc(var(--stack-shift) - var(--iso-scale));
+    }
+
+    &.left {
+      --orient: rotate(-30deg) skewX(-30deg);
+      --face-color: var(--face-top);
+      --x: 1;
+      --y: var(--stack-shift);
+      --scale-x: -1;
+    }
   }
 
-  .left,
-  .rear-right {
-    --orient: rotate(30deg) skewX(30deg);
-  }
-
-  .top,
-  .rear-right {
-    --y: calc(var(--stack-shift) - var(--iso-scale));
-  }
-
-  .left,
-  .rear-left {
-    --y: var(--stack-shift);
-  }
-
-  .right {
-    --y: calc(var(--stack-shift) + var(--iso-scale));
-  }
-
-  .bottom {
-    --y: 0;
-  }
-
-  .top {
-    --face-color: var(--face-top);
-    --x: 0;
-  }
-
-  .bottom {
-    --face-color: var(--face-bottom);
-    --x: 1;
-  }
-
-  .right {
-    --face-color: var(--face-right);
-    --x: 1;
-  }
-
-  .left {
-    --face-color: var(--face-left);
-    --x: 0;
-  }
-
-  .rear-right {
-    --face-color: var(--face-left);
-    --x: 1;
-  }
-
-  .rear-left {
-    --face-color: var(--face-top);
-    --x: 1;
-    --scale-x: -1;
-  }
-
-  .liquid.top {
-    --x: calc(1 - var(--fill));
+  .liquid {
+    &.front.top {
+      --x: calc(1 - var(--fill));
+    }
   }
 }
 
@@ -119,7 +104,6 @@
   from {
     --fill: 0.01;
   }
-
   to {
     --fill: 1;
   }
