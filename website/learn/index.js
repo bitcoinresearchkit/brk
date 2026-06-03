@@ -15,10 +15,9 @@ function createChart(label) {
 
 /**
  * @param {string} title
- * @param {number[]} indexes
  */
-function createSectionId(title, indexes) {
-  return `${indexes.join("-")}-${title.toLowerCase().replaceAll(" ", "-")}`;
+function createSectionId(title) {
+  return title.toLowerCase().replaceAll(" ", "-");
 }
 
 /**
@@ -30,9 +29,10 @@ function createSection(section, indexes) {
   const title = document.createElement(indexes.length === 1 ? "h1" : "h2");
   const anchor = document.createElement("a");
   const description = document.createElement("p");
+  const id = createSectionId(section.title);
 
-  element.id = createSectionId(section.title, indexes);
-  anchor.href = `#${element.id}`;
+  title.id = id;
+  anchor.href = `#${id}`;
   anchor.append(section.title);
   title.append(anchor);
   description.append(section.description);
@@ -52,7 +52,7 @@ function createSection(section, indexes) {
 function createContentsItem(section, indexes) {
   const item = document.createElement("li");
   const anchor = document.createElement("a");
-  anchor.href = `#${createSectionId(section.title, indexes)}`;
+  anchor.href = `#${createSectionId(section.title)}`;
   anchor.append(section.title);
   item.append(anchor);
 
@@ -83,7 +83,7 @@ function createContents() {
 
 /** @param {HTMLElement} main */
 function initScrollSpy(main) {
-  const sections = [...main.querySelectorAll("section[id]")];
+  const titles = [...main.querySelectorAll("h1[id], h2[id]")];
   const visible = new Set();
   const links = new Map(
     [...main.querySelectorAll('nav a[href^="#"]')].map((link) => [
@@ -96,15 +96,15 @@ function initScrollSpy(main) {
   let current = null;
 
   function update() {
-    const section = sections.find((section) => visible.has(section.id));
-    if (!section) return;
+    const title = titles.find((title) => visible.has(title.id));
+    if (!title) return;
 
-    const hash = `#${section.id}`;
+    const hash = `#${title.id}`;
     if (hash === current) return;
 
     links.get(current)?.removeAttribute("aria-current");
     links.get(hash)?.setAttribute("aria-current", "location");
-    history.replaceState(null, "", `/learn${hash}`);
+    history.replaceState(null, "", hash);
     current = hash;
   }
 
@@ -119,8 +119,8 @@ function initScrollSpy(main) {
     update();
   });
 
-  for (const section of sections) {
-    observer.observe(section);
+  for (const title of titles) {
+    observer.observe(title);
   }
 }
 

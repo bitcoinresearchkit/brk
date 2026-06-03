@@ -1,7 +1,5 @@
 main.home {
-  min-height: 100dvh;
   display: grid;
   place-items: center;
-  color: white;
   font-size: 4rem;
 }

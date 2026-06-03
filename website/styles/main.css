@@ -12,8 +12,10 @@ body {
     position: fixed;
     inset: 0;
     overflow: auto;
+    color: white;
     opacity: 0;
     pointer-events: none;
+    scroll-behavior: smooth;
     transition: opacity 180ms ease;
   }
 
@@ -23,16 +25,9 @@ body {
   }
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 @media (prefers-reduced-motion: reduce) {
   body > main {
-    transition: none;
-  }
-
-  html {
     scroll-behavior: auto;
+    transition: none;
   }
 }

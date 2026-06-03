@@ -1,18 +1,12 @@
 main.learn {
-  min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 14rem;
   gap: 4rem;
   padding: 8rem 2rem 6rem;
-  color: white;
 
   article {
     width: min(100%, 52rem);
     justify-self: center;
-
-    section {
-      scroll-margin-top: 6rem;
-    }
 
     > section + section {
       margin-top: 8rem;
@@ -27,6 +21,7 @@ main.learn {
   h2 {
     font-weight: 400;
     line-height: 1;
+    scroll-margin-top: 6rem;
 
     a {
       position: relative;
