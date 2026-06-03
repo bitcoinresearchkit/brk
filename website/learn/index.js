@@ -81,9 +81,12 @@ function createContents() {
   return nav;
 }
 
-/** @param {HTMLElement} main */
-function initScrollSpy(main) {
-  const titles = [...main.querySelectorAll("h1[id], h2[id]")];
+/**
+ * @param {HTMLElement} main
+ * @param {HTMLElement} article
+ */
+function initScrollSpy(main, article) {
+  const titles = [...article.querySelectorAll("h1[id], h2[id]")];
   const visible = new Set();
   const links = new Map(
     [...main.querySelectorAll('nav a[href^="#"]')].map((link) => [
@@ -108,16 +111,19 @@ function initScrollSpy(main) {
     current = hash;
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        visible.add(entry.target.id);
-      } else {
-        visible.delete(entry.target.id);
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          visible.add(entry.target.id);
+        } else {
+          visible.delete(entry.target.id);
+        }
       }
-    }
-    update();
-  });
+      update();
+    },
+    { root: article },
+  );
 
   for (const title of titles) {
     observer.observe(title);
@@ -134,7 +140,7 @@ export function createLearnPage() {
   }
 
   main.append(article, createContents());
-  initScrollSpy(main);
+  initScrollSpy(main, article);
   return main;
 }
 

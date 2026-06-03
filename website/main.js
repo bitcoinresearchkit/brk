@@ -27,7 +27,7 @@ function normalizePath(pathname) {
 function updateCurrentLink(pathname) {
   const currentPath = normalizePath(pathname);
 
-  for (const link of document.querySelectorAll("nav a")) {
+  for (const link of document.querySelectorAll("body > header > nav a")) {
     const linkPath = new URL(/** @type {HTMLAnchorElement} */ (link).href)
       .pathname;
 
