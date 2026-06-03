@@ -31,8 +31,6 @@ body {
     }
 
     > nav {
-      grid-column: 2;
-      justify-self: center;
       font-size: var(--font-size-xs);
 
       ul {

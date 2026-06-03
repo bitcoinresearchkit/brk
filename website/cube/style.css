@@ -93,10 +93,8 @@
     }
   }
 
-  .liquid {
-    &.front.top {
-      --x: calc(1 - var(--fill));
-    }
+  .liquid.front.top {
+    --x: calc(1 - var(--fill));
   }
 }
 

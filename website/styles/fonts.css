@@ -42,7 +42,9 @@ html {
   font-family: var(--font-mono);
 }
 
-h1 {
+h1,
+h2,
+h3 {
   font-family: var(--font-serif);
 }
 

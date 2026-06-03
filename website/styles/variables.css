@@ -49,8 +49,3 @@
   --font-weight-base: 400;
   --max-main-width: 70dvw;
 }
-
-html,
-body {
-  background: var(--black);
-}

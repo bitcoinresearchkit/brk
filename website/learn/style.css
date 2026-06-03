@@ -1,0 +1,129 @@
+main.learn {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14rem;
+  gap: 4rem;
+  padding: 8rem 2rem 6rem;
+  color: white;
+
+  article {
+    width: min(100%, 52rem);
+    justify-self: center;
+
+    section {
+      scroll-margin-top: 6rem;
+    }
+
+    > section + section {
+      margin-top: 8rem;
+    }
+
+    section section {
+      margin-top: 4rem;
+    }
+  }
+
+  h1,
+  h2 {
+    font-weight: 400;
+    line-height: 1;
+
+    a {
+      position: relative;
+      display: inline-block;
+      color: white;
+      text-decoration: none;
+
+      &::before {
+        content: "#";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        translate: 0 -50%;
+        opacity: 0;
+        user-select: none;
+        text-decoration: none;
+      }
+
+      &:hover::before {
+        opacity: 0.5;
+      }
+
+      &:hover {
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.125em;
+      }
+
+      &:active {
+        color: var(--orange);
+      }
+    }
+  }
+
+  h1 {
+    font-size: 2.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin-top: 1rem;
+    color: var(--dark-white);
+  }
+
+  figure {
+    margin-top: 2rem;
+    color: var(--gray);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+
+    > div {
+      height: 18rem;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--dark-gray);
+      font-size: var(--font-size-sm);
+    }
+
+    figcaption {
+      margin-top: 0.75rem;
+    }
+  }
+
+  > nav {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-sm);
+    text-transform: uppercase;
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    ol ol {
+      margin-top: 0.5rem;
+      margin-left: 1rem;
+      color: var(--gray);
+    }
+
+    li + li {
+      margin-top: 0.5rem;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--orange);
+      }
+    }
+  }
+}

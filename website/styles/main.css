@@ -1,0 +1,38 @@
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  background: var(--black);
+}
+
+body {
+  > main {
+    position: fixed;
+    inset: 0;
+    overflow: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  > main[data-active] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body > main {
+    transition: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

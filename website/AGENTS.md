@@ -25,3 +25,4 @@ ALWAYS
 - reads like english
 - very easy to understand
 - very easy to maintain
+- avoid defensive checks when the code itself guarantees correctness
