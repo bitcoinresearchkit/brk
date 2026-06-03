@@ -1,0 +1,14 @@
+LICENSE
+**/*.*.*/*.json
+*webcomponent*
+cli*
+extras/
+*.cjs
+dev.js
+*.development*
+*.iife.*
+nano.*
+worker.*
+*.mts
+*.cts
+*.rs

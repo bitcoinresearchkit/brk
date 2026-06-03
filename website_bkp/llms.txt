@@ -1,0 +1,32 @@
+# Bitcoin Research Kit (BRK)
+
+> Free, open-source Bitcoin on-chain analytics API at https://bitview.space. 49,000+ time-series (price, hashrate, supply, MVRV, HODL waves, and more), block explorer, address index, mempool stats, mining data. No auth required. JSON and CSV output.
+
+## API Documentation
+
+- [Full API reference (plain text)](https://bitview.space/llms-full.txt): Every endpoint, parameter, and response shape
+- [OpenAPI spec (compact, LLM-optimized)](https://bitview.space/api.json): Machine-readable, minimal spec for tool use
+- [OpenAPI spec (full)](https://bitview.space/openapi.json): Complete OpenAPI 3.1 specification
+- [Interactive docs](https://bitview.space/api): Scalar API explorer
+
+## Quick Start
+
+- [Search series](https://bitview.space/api/series/search?q=price): `GET /api/series/search?q={query}`
+- [Get series data](https://bitview.space/api/series/price/day?start=-30): `GET /api/series/{name}/{index}?start=-30`
+- [Latest value](https://bitview.space/api/series/price/day/latest): `GET /api/series/{name}/{index}/latest`
+- [Bulk query](https://bitview.space/api/series/bulk?index=day&series=price,market_cap&start=-7): `GET /api/series/bulk?index={index}&series={s1},{s2}`
+- [Block by height](https://bitview.space/api/block-height/0): `GET /api/block-height/{height}`
+- [Transaction](https://bitview.space/api/tx/4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b): `GET /api/tx/{txid}`
+- [Address](https://bitview.space/api/address/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa): `GET /api/address/{address}`
+- [Fee estimates](https://bitview.space/api/v1/fees/recommended): `GET /api/v1/fees/recommended`
+- [Live price](https://bitview.space/api/mempool/price): `GET /api/mempool/price`
+
+## Client Libraries
+
+- [JavaScript](https://www.npmjs.com/package/brk-client): npm install brk-client
+- [Python](https://pypi.org/project/brk-client/): pip install brk-client
+- [Rust](https://crates.io/crates/brk_client): cargo add brk_client
+
+## Source
+
+- [GitHub](https://github.com/bitcoinresearchkit/brk): MIT licensed

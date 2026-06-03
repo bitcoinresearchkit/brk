@@ -15,7 +15,6 @@
   font-display: block;
 }
 
-/* Preloaded in index.html — keep URL in sync. */
 @font-face {
   font-family: Instrument;
   src: url("/assets/fonts/InstrumentSerif-Regular.woff2") format("woff2");
@@ -28,14 +27,6 @@
   src: url("/assets/fonts/InstrumentSerif-Italic.woff2") format("woff2");
   font-style: italic;
   font-display: block;
-}
-
-:root {
-  --font-mono:
-    "Lilex", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  --font-serif:
-    Instrument, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
 }
 
 html {

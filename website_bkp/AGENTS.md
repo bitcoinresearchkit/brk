@@ -1,7 +1,3 @@
-# Rule
-
-before editing a file, always explain why that code, why it's the most optimal one and wait for my feedback
-
 # Types
 
 To check types run:

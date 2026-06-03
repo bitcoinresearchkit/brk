@@ -1,0 +1,497 @@
+# Bitcoin Research Kit (BRK) — Full API Reference
+
+> Free, open-source Bitcoin on-chain analytics API. 49,000+ time-series, block explorer, address index, mempool, mining stats — all computed from a Bitcoin Core node. No auth required.
+
+Base URL: https://bitview.space
+GitHub: https://github.com/bitcoinresearchkit/brk
+License: MIT
+
+## Quick Start
+
+    # Search for series by keyword
+    curl -s "https://bitview.space/api/series/search?q=price"
+
+    # Get Bitcoin closing price for the last 30 days
+    curl -s "https://bitview.space/api/series/price/day?start=-30"
+
+    # Get just the latest price
+    curl -s "https://bitview.space/api/series/price/day/latest"
+
+    # Bulk query multiple series
+    curl -s "https://bitview.space/api/series/bulk?index=day&series=price,market_cap&start=-7"
+
+    # Get the genesis block
+    curl -s "https://bitview.space/api/block-height/0"
+
+    # Get an address balance
+    curl -s "https://bitview.space/api/address/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+
+    # Get current fee estimates
+    curl -s "https://bitview.space/api/v1/fees/recommended"
+
+    # Get the live mempool-derived price
+    curl -s "https://bitview.space/api/mempool/price"
+
+---
+
+## Response Format
+
+All endpoints return JSON by default. Series endpoints also support CSV via `?format=csv`.
+
+Errors return:
+
+    {
+      "error": {
+        "type": "not_found",
+        "code": "series_not_found",
+        "message": "'foo' not found, did you mean 'bar'?",
+        "doc_url": "/api"
+      }
+    }
+
+Error types: `invalid_request` (400), `forbidden` (403), `not_found` (404), `unavailable` (503), `internal` (500).
+
+## Range Parameters
+
+`start` and `end` are optional on all series data endpoints. They accept:
+- Dates: `2025-01-01`
+- Integers: block height or absolute index
+- Negative integers: relative offset from latest (`-30` = last 30 entries)
+- ISO 8601 timestamps
+
+## Indexes
+
+Series are queryable by time-based and block-based indexes. Common aliases are accepted (e.g. `day` for `day1`, `week` for `week1`).
+
+Time-based: `minute10`, `minute30`, `hour1`, `hour4`, `hour12`, `day1`, `day3`, `week1`, `month1`, `month3`, `month6`, `year1`, `year10`, `halving`, `epoch`
+Block-based: `height`
+
+Common aliases: `day` = `day1`, `week` = `week1`, `month` = `month1`, `hour` = `hour1`, `h` = `height`
+
+Not all series support all indexes. Use `GET /api/series/{name}` to see which indexes a series supports.
+
+---
+
+## Server
+
+### GET https://bitview.space/health
+
+Health check.
+
+    → {"status": "healthy", "service": "brk", "version": "0.2.1", "indexed_height": 941908, "blocks_behind": 0, "uptime_seconds": 11806, ...}
+
+### GET https://bitview.space/version
+
+API version string.
+
+    → "0.2.1"
+
+### GET https://bitview.space/api/server/sync
+
+Sync status.
+
+    → {"indexed_height": 941908, "computed_height": 941908, "tip_height": 941908, "blocks_behind": 0, "last_indexed_at": "2026-03-23T19:13:32Z"}
+
+### GET https://bitview.space/api/server/disk
+
+Disk usage for BRK data and Bitcoin Core data directories.
+
+---
+
+## Series
+
+The core feature. 49,000+ on-chain time-series.
+
+### GET https://bitview.space/api/series/search?q={query}
+
+Fuzzy search series by name. Returns an array of matching series names.
+
+    → ["price", "price_ath", "price_low", "price_sats", "price_high", "price_ohlc", ...]
+
+### GET https://bitview.space/api/series/{series}/{index}
+
+Fetch series data. Parameters: `format` (json|csv), `start`, `end`.
+
+The `data` array contains raw values. Their position maps to the index range `start..end`. For date-based indexes, compute dates from the index type and position.
+
+    GET /api/series/price/day?start=-3
+    → {
+        "version": 69,
+        "index": "day1",
+        "type": "Dollars",
+        "total": 6291,
+        "start": 6288,
+        "end": 6291,
+        "stamp": "2026-03-23T19:06:40Z",
+        "data": [70077.35, 68301.76, 70788.45]
+      }
+
+Some series return compound values per entry (e.g. OHLC):
+
+    GET /api/series/price_ohlc/day?start=-1
+    → { ..., "type": "OHLCDollars", "data": [[68251.03, 71455.61, 67682.26, 70788.45]] }
+
+CSV format returns the series name as header, then one value per line:
+
+    GET /api/series/price/day?start=-3&format=csv
+    → price
+      70077.35
+      68301.76
+      70788.45
+
+### GET https://bitview.space/api/series/{series}/{index}/data
+
+Raw data array only (no metadata wrapper). Same parameters.
+
+    GET /api/series/price/day/data?start=-3
+    → [70077.35, 68301.76, 70788.45]
+
+### GET https://bitview.space/api/series/{series}/{index}/latest
+
+Most recent value only.
+
+    GET /api/series/price/day/latest
+    → 70788.45
+
+### GET https://bitview.space/api/series/{series}
+
+Series metadata: available indexes and value type.
+
+    GET /api/series/price
+    → {
+        "indexes": ["minute10", "minute30", "hour1", "hour4", "hour12",
+                     "day1", "day3", "week1", "month1", "month3", "month6",
+                     "year1", "year10", "halving", "epoch", "height"],
+        "type": "Dollars"
+      }
+
+### GET https://bitview.space/api/series
+
+Full hierarchical catalog of all series as a tree.
+
+### GET https://bitview.space/api/series/list
+
+Paginated list of all series. Supports `?page=N` (default 0, 1000 per page).
+
+    → {"current_page": 0, "max_page": 49, "total_count": 49259, "per_page": 1000, "has_more": true, "series": ["fee", "nvt", ...]}
+
+### GET https://bitview.space/api/series/count
+
+Series count by category. Returns totals and per-database breakdowns.
+
+### GET https://bitview.space/api/series/indexes
+
+List all available indexes with their aliases.
+
+    → [{"index": "day1", "aliases": ["1d", "d", "day", "date", "daily", "day1", "dateindex"]}, ...]
+
+### GET https://bitview.space/api/series/{series}/{index}/len
+
+Number of data points in the series.
+
+### GET https://bitview.space/api/series/{series}/{index}/version
+
+Version number (increments when data changes).
+
+### GET https://bitview.space/api/series/bulk?index={index}&series={s1},{s2}
+
+Fetch multiple series at once. Parameters: `series` (comma-separated, required), `index` (required), `format`, `start`, `end`.
+
+    GET /api/series/bulk?index=day&series=price,market_cap&start=-1
+    → [
+        {"version": 69, "index": "day1", "type": "Dollars", "total": 6291, "start": 6290, "end": 6291, "stamp": "...", "data": [70788.45]},
+        {"version": 83, "index": "day1", "type": "Dollars", "total": 6291, "start": 6290, "end": 6291, "stamp": "...", "data": [1416174345666.71]}
+      ]
+
+CSV bulk format uses one column per series:
+
+    GET /api/series/bulk?index=day&series=price,market_cap&start=-1&format=csv
+    → price,market_cap
+      70788.45,1416174345666.71
+
+### Cost Basis Distribution
+
+#### GET https://bitview.space/api/series/cost-basis
+List available cohorts.
+
+#### GET https://bitview.space/api/series/cost-basis/{cohort}/dates
+Available snapshot dates for a cohort.
+
+#### GET https://bitview.space/api/series/cost-basis/{cohort}/{date}
+Distribution data. Parameters: `bucket` (raw|lin200|lin500|lin1000|log10|log50|log100), `value` (supply|realized|unrealized).
+
+---
+
+## Blocks
+
+Mempool.space compatible.
+
+### GET https://bitview.space/api/block-height/{height}
+
+Single block by height.
+
+    GET /api/block-height/0
+    → {
+        "id": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+        "height": 0,
+        "tx_count": 1,
+        "size": 285,
+        "weight": 1140,
+        "timestamp": 1231006505,
+        "difficulty": 1.0
+      }
+
+### GET https://bitview.space/api/block/{hash}
+
+Single block by hash. Same response shape.
+
+### GET https://bitview.space/api/blocks
+
+Last 10 blocks. Returns array of block objects.
+
+### GET https://bitview.space/api/blocks/{height}
+
+Up to 10 blocks ending at `{height}` (descending).
+
+### GET https://bitview.space/api/block/{hash}/status
+
+    → {"in_best_chain": true, "height": 916656, "next_best": "0000..."}
+
+### GET https://bitview.space/api/block/{hash}/txids
+
+Array of all transaction IDs in the block.
+
+### GET https://bitview.space/api/block/{hash}/txs/{start_index}
+
+Paginated transactions in the block.
+
+### GET https://bitview.space/api/block/{hash}/txid/{index}
+
+Single txid at position `index`.
+
+### GET https://bitview.space/api/block/{hash}/raw
+
+Raw block bytes.
+
+### GET https://bitview.space/api/v1/mining/blocks/timestamp/{timestamp}
+
+Block closest to a UNIX timestamp.
+
+---
+
+## Transactions
+
+Mempool.space compatible.
+
+### GET https://bitview.space/api/tx/{txid}
+
+Full transaction data. Values in satoshis (1 BTC = 100,000,000 sats).
+
+    → {
+        "index": 0,
+        "txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+        "version": 1,
+        "locktime": 0,
+        "size": 204,
+        "weight": 816,
+        "sigops": 4,
+        "fee": 0,
+        "vin": [{
+          "txid": "0000000000000000000000000000000000000000000000000000000000000000",
+          "vout": 65535,
+          "prevout": null,
+          "scriptsig": "04ffff001d...",
+          "scriptsig_asm": "OP_PUSHBYTES_4 ...",
+          "is_coinbase": true,
+          "sequence": 4294967295
+        }],
+        "vout": [{
+          "scriptpubkey": "4104678a...",
+          "scriptpubkey_asm": "OP_PUSHBYTES_65 ... OP_CHECKSIG",
+          "scriptpubkey_type": "p2pk65",
+          "scriptpubkey_address": "04678afdb0...",
+          "value": 5000000000
+        }],
+        "status": {
+          "confirmed": true,
+          "block_height": 0,
+          "block_hash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+          "block_time": 1231006505
+        }
+      }
+
+### GET https://bitview.space/api/tx/{txid}/status
+
+    → {"confirmed": true, "block_height": 0, "block_hash": "0000...", "block_time": 1231006505}
+
+### GET https://bitview.space/api/tx/{txid}/hex
+
+Raw transaction hex string.
+
+### GET https://bitview.space/api/tx/{txid}/outspend/{vout}
+
+    → {"spent": true, "txid": "...", "vin": 0, "status": {...}}
+
+### GET https://bitview.space/api/tx/{txid}/outspends
+
+Array of spend status for all outputs.
+
+---
+
+## Addresses
+
+Mempool.space compatible. Supports P2PKH, P2SH, P2WPKH, P2WSH, P2TR.
+
+### GET https://bitview.space/api/address/{address}
+
+Address summary. Values in satoshis.
+
+    GET /api/address/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+    → {
+        "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+        "chain_stats": {
+          "funded_txo_count": 73262,
+          "funded_txo_sum": 5715642026,
+          "spent_txo_count": 0,
+          "spent_txo_sum": 0,
+          "tx_count": 62198,
+          "type_index": 371955
+        },
+        "mempool_stats": {
+          "funded_txo_count": 0,
+          "funded_txo_sum": 0,
+          "spent_txo_count": 0,
+          "spent_txo_sum": 0,
+          "tx_count": 0
+        }
+      }
+
+### GET https://bitview.space/api/address/{address}/txs
+
+Transaction history (up to 75 per page). Paginate with `?after_txid={txid}`.
+
+### GET https://bitview.space/api/address/{address}/txs/chain
+
+Confirmed transactions only (25 per page). Paginate with `?after_txid={txid}`.
+
+### GET https://bitview.space/api/address/{address}/txs/mempool
+
+Unconfirmed transactions (up to 50).
+
+### GET https://bitview.space/api/address/{address}/utxo
+
+Unspent outputs.
+
+    → [{"txid": "...", "vout": 0, "status": {...}, "value": 5000000000}]
+
+### GET https://bitview.space/api/v1/validate-address/{address}
+
+    → {"isvalid": true, "address": "...", "scriptPubKey": "...", "isscript": false, "iswitness": true, "witness_version": 0, "witness_program": "..."}
+
+---
+
+## Mempool
+
+### GET https://bitview.space/api/mempool/price
+
+Live BTC/USD price derived from on-chain round-dollar transaction patterns.
+
+    → 70817.64
+
+### GET https://bitview.space/api/mempool/info
+
+    → {"count": 24611, "vsize": 2185871, "total_fee": 6250465}
+
+### GET https://bitview.space/api/mempool/txids
+
+Array of all transaction IDs in the mempool.
+
+### GET https://bitview.space/api/v1/fees/recommended
+
+Fee rate recommendations in sat/vB.
+
+    → {"fastestFee": 3.0, "halfHourFee": 0.135, "hourFee": 0.111, "economyFee": 0.106, "minimumFee": 0.1}
+
+### GET https://bitview.space/api/v1/fees/mempool-blocks
+
+Projected mempool blocks.
+
+    → [{"blockSize": 3999892, "blockVSize": 999973.0, "nTx": 3743, "totalFees": 4148496, "medianFee": 3.0, "feeRange": [2.0, 2.0, 2.173, 3.0, 3.965, 5.969, 347.223]}]
+
+---
+
+## Mining
+
+Mempool.space compatible. Time periods: `24h`, `3d`, `1w`, `1m`, `3m`, `6m`, `1y`, `2y`, `3y`.
+
+### GET https://bitview.space/api/v1/mining/pools
+
+All known mining pools.
+
+### GET https://bitview.space/api/v1/mining/pools/{time_period}
+
+Pool statistics for a time period.
+
+### GET https://bitview.space/api/v1/mining/pool/{slug}
+
+Detailed info for a specific pool.
+
+### GET https://bitview.space/api/v1/difficulty-adjustment
+
+Current difficulty epoch: progress, estimated adjustment, remaining blocks/time.
+
+### GET https://bitview.space/api/v1/mining/difficulty-adjustments
+
+All historical difficulty adjustments.
+
+### GET https://bitview.space/api/v1/mining/difficulty-adjustments/{time_period}
+
+Difficulty adjustments for a given time period.
+
+### GET https://bitview.space/api/v1/mining/hashrate
+
+All-time hashrate and difficulty data.
+
+### GET https://bitview.space/api/v1/mining/hashrate/{time_period}
+
+Hashrate and difficulty for a given time period.
+
+### GET https://bitview.space/api/v1/mining/blocks/fees/{time_period}
+
+Average block fees over time.
+
+### GET https://bitview.space/api/v1/mining/blocks/rewards/{time_period}
+
+Average block rewards (subsidy + fees) over time.
+
+### GET https://bitview.space/api/v1/mining/blocks/sizes-weights/{time_period}
+
+Average block sizes and weights over time.
+
+### GET https://bitview.space/api/v1/mining/reward-stats/{block_count}
+
+Reward statistics for the last N blocks.
+
+---
+
+## Series Categories
+
+49,000+ series across these categories. Use `/api/series/search?q={keyword}` to discover, or `/api/series` for the full tree.
+
+- **Market**: price, market_cap, realized_cap, mvrv, nvt, thermocap, and variants (SMA, rolling)
+- **Supply**: circulating, issued, inflation_rate, subsidy
+- **Mining**: hashrate, difficulty, revenue, fees, block size/weight stats
+- **Network activity**: transaction counts, volumes, active addresses
+- **UTXO age bands**: HODL waves, realized cap by age cohort
+- **Cointime economics**: liveliness, vaultedness, activity-to-vaultedness ratio
+- **Holder cohorts**: by balance range (plankton to whale), by holding duration (short/long-term)
+- **Cost basis**: UTXO realized price distributions by cohort
+- **Addresses**: total, new, active, empty, by balance range, by type
+
+---
+
+## Client Libraries
+
+- JavaScript: https://www.npmjs.com/package/brk-client
+- Python: https://pypi.org/project/brk-client/
+- Rust: https://crates.io/crates/brk_client

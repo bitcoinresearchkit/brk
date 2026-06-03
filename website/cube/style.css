@@ -1,0 +1,132 @@
+.cube {
+  --size: 1rem;
+  --iso-scale: calc(sqrt(3) / 2);
+  --empty-alpha: 0.4;
+  --step: 0.033;
+  --width: calc(var(--size) * 2 * var(--iso-scale));
+  --height: calc(var(--size) * 2);
+  --face-base: currentColor;
+  --face-top: var(--face-base);
+  --face-right: oklch(from var(--face-base) calc(l - var(--step) * 2) c h);
+  --face-left: oklch(from var(--face-base) calc(l - var(--step)) c h);
+  --face-bottom: oklch(from var(--face-base) calc(l - var(--step) * 3) c h);
+  --is-empty: round(down, calc(1 - var(--fill)), 1);
+
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+  width: var(--width);
+  height: var(--height);
+  overflow: visible;
+
+  .face {
+    position: absolute;
+    transform-origin: 0 0;
+    width: var(--size);
+    height: var(--size);
+    transform: translateY(50%) var(--orient)
+      translate(
+        calc(var(--size) * var(--x)),
+        calc(var(--size) * var(--y))
+      )
+      scale(var(--scale-x, 1), var(--scale-y));
+  }
+
+  .liquid {
+    background: var(--face-color);
+    opacity: calc(1 - var(--is-empty));
+    --scale-y: calc(var(--iso-scale) * var(--fill));
+    --stack-shift: calc(var(--iso-scale) * (1 - var(--fill)));
+  }
+
+  .glass {
+    background: oklch(from var(--face-color) l c h / var(--empty-alpha));
+    --scale-y: calc(var(--iso-scale) * (1 - var(--fill)));
+    --stack-shift: 0;
+  }
+
+  .top,
+  .bottom {
+    --orient: rotate(30deg) skewX(-30deg);
+    --scale-y: var(--iso-scale);
+  }
+
+  .right,
+  .rear-left {
+    --orient: rotate(-30deg) skewX(-30deg);
+  }
+
+  .left,
+  .rear-right {
+    --orient: rotate(30deg) skewX(30deg);
+  }
+
+  .top,
+  .rear-right {
+    --y: calc(var(--stack-shift) - var(--iso-scale));
+  }
+
+  .left,
+  .rear-left {
+    --y: var(--stack-shift);
+  }
+
+  .right {
+    --y: calc(var(--stack-shift) + var(--iso-scale));
+  }
+
+  .bottom {
+    --y: 0;
+  }
+
+  .top {
+    --face-color: var(--face-top);
+    --x: 0;
+  }
+
+  .bottom {
+    --face-color: var(--face-bottom);
+    --x: 1;
+  }
+
+  .right {
+    --face-color: var(--face-right);
+    --x: 1;
+  }
+
+  .left {
+    --face-color: var(--face-left);
+    --x: 0;
+  }
+
+  .rear-right {
+    --face-color: var(--face-left);
+    --x: 1;
+  }
+
+  .rear-left {
+    --face-color: var(--face-top);
+    --x: 1;
+    --scale-x: -1;
+  }
+
+  .liquid.top {
+    --x: calc(1 - var(--fill));
+  }
+}
+
+@keyframes cube-fill {
+  from {
+    --fill: 0.01;
+  }
+
+  to {
+    --fill: 1;
+  }
+}
+
+@property --fill {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
