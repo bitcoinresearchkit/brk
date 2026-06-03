@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-loading>
   <head>
     <meta charset="utf-8" />
     <title>bitview</title>
@@ -14,6 +14,33 @@
     />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <style>
+      html,
+      body {
+        background: var(--black);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: var(--black);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease;
+      }
+
+      html[data-loading] body::before {
+        opacity: 1;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body::before {
+          transition: none;
+        }
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
     <link rel="shortcut icon" href="/favicon.ico" />

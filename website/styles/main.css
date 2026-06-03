@@ -16,7 +16,7 @@ body {
     opacity: 0;
     pointer-events: none;
     scroll-behavior: smooth;
-    transition: opacity 180ms ease;
+    transition: opacity 150ms ease;
   }
 
   > main[data-active] {

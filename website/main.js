@@ -103,3 +103,9 @@ document.addEventListener("click", (event) => {
 window.addEventListener("popstate", renderPage);
 
 renderPage();
+
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    delete document.documentElement.dataset.loading;
+  }, 150);
+});
