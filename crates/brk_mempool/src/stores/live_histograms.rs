@@ -1,4 +1,4 @@
-use brk_oracle::{for_each_modern_round_dollar_bin, sats_to_bin, HistogramRaw};
+use brk_oracle::{sats_to_bin, HistogramRaw, PaymentFilter};
 use brk_types::Transaction;
 
 use crate::stores::tx_store::TxRecord;
@@ -45,7 +45,7 @@ impl LiveHistograms {
     /// which are never mutated after insert, so add and remove recompute it
     /// identically rather than caching.
     fn eligible_bins(tx: &Transaction, emit: impl FnMut(u16)) {
-        for_each_modern_round_dollar_bin(tx.output.iter().map(|o| (o.value, o.type_())), emit);
+        PaymentFilter::MODERN.for_each_bin(tx.output.iter().map(|o| (o.value, o.type_())), emit);
     }
 
     /// Raw bin index per output, dropping only values outside the bin domain

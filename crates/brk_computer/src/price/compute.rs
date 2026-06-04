@@ -3,8 +3,7 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
 use brk_oracle::{
-    Config, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
-    payment_histogram,
+    bin_to_cents, cents_to_bin, Config, Oracle, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW,
 };
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
@@ -298,7 +297,7 @@ impl Vecs {
                     .copied()
                     .zip(output_types[lo..hi].iter().copied())
             });
-            let hist = payment_histogram(range.start + idx, tx_outputs);
+            let hist = PaymentFilter::for_height(range.start + idx).histogram(tx_outputs);
 
             let ref_bin = oracle.process_histogram(&hist);
             on_block(range.start + idx, oracle, ref_bin);

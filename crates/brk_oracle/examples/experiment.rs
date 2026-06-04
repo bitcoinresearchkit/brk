@@ -11,8 +11,8 @@ use std::{cmp::Ordering, env, path::PathBuf};
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    bin_to_cents, cents_to_bin, eligible_bin, seed_bin as oracle_seed_bin, Config, BINS_PER_DECADE,
-    NUM_BINS, START_HEIGHT_FAST, START_HEIGHT_SLOW,
+    bin_to_cents, cents_to_bin, seed_bin as oracle_seed_bin, Config, PaymentFilter,
+    BINS_PER_DECADE, NUM_BINS, START_HEIGHT_FAST, START_HEIGHT_SLOW,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -511,7 +511,7 @@ fn main() {
         add_cfg(
             format!("pre100_post{post}"),
             Some(100),
-            brk_oracle::MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT,
+            PaymentFilter::MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT,
             Some(post),
         );
     }
@@ -596,7 +596,7 @@ fn main() {
             }
             bins.clear();
             for i in lo..hi {
-                if let Some(bin) = eligible_bin(values[i], output_types[i]) {
+                if let Some(bin) = PaymentFilter::eligible_bin(values[i], output_types[i]) {
                     bins.push(bin);
                 }
             }

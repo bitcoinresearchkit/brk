@@ -6,8 +6,7 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
-    payment_histogram,
+    bin_to_cents, cents_to_bin, Config, Oracle, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -94,7 +93,11 @@ impl YearStats {
     fn median_pct(&mut self) -> f64 {
         self.errors.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let n = self.errors.len();
-        if n == 0 { 0.0 } else { self.errors[n / 2] }
+        if n == 0 {
+            0.0
+        } else {
+            self.errors[n / 2]
+        }
     }
 
     fn percentile(&self, p: f64) -> f64 {
@@ -242,7 +245,7 @@ fn main() {
                 .copied()
                 .zip(output_types[lo..hi].iter().copied())
         });
-        let hist = payment_histogram(h, tx_outputs);
+        let hist = PaymentFilter::for_height(h).histogram(tx_outputs);
 
         let ref_bin = oracle.process_histogram(&hist);
         let oracle_price = bin_to_cents(ref_bin) as f64 / 100.0;

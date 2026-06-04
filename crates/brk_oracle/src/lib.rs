@@ -9,9 +9,10 @@
 //!   pre-oracle tape. From there to [`START_HEIGHT_FAST`] a slow cold-start EMA
 //!   runs with a shape-anchoring restoring force. At [`START_HEIGHT_FAST`] it
 //!   switches to a fast EMA that tracks mature-market volatility.
-//! - Output filter (`filter`): below [`MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT`]
-//!   batch-payout transactions are capped strictly. Above it the cap relaxes but
-//!   still drops very large fan-outs.
+//! - Output filter (`filter`): below
+//!   [`PaymentFilter::MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT`] batch-payout
+//!   transactions are capped strictly. Above it the cap relaxes but still drops
+//!   very large fan-outs.
 //!
 //! The two boundaries differ on purpose. The EMA must hand off to fast before the
 //! 2020 crash, while the output cap helps the thin pre-2020 mix for longer and
@@ -27,11 +28,7 @@ mod stencil;
 mod window;
 
 pub use config::{Config, START_HEIGHT_FAST, START_HEIGHT_SLOW};
-pub use filter::{
-    eligible_bin, for_each_modern_round_dollar_bin, for_each_round_dollar_bin, payment_histogram,
-    MODERN_TX_OUTPUT_FANOUT_CAP, MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT,
-    PRE_MODERN_TX_OUTPUT_FANOUT_CAP,
-};
+pub use filter::PaymentFilter;
 pub use scale::{
     bin_to_cents, cents_to_bin, sats_to_bin, HistogramEma, HistogramEmaCompact, HistogramRaw,
     BINS_PER_DECADE, NUM_BINS,

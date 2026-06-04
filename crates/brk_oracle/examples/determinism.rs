@@ -13,8 +13,8 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, HistogramRaw, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
-    payment_histogram,
+    bin_to_cents, cents_to_bin, Config, HistogramRaw, Oracle, PaymentFilter, START_HEIGHT_FAST,
+    START_HEIGHT_SLOW,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -41,7 +41,7 @@ fn build_histogram(block: &Block) -> HistogramRaw {
             .copied()
             .zip(block.output_types[lo..hi].iter().copied())
     });
-    payment_histogram(block.height, tx_outputs)
+    PaymentFilter::for_height(block.height).histogram(tx_outputs)
 }
 
 fn main() {

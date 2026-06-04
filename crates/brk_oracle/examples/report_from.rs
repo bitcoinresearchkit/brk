@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use brk_indexer::Indexer;
 use brk_oracle::{
     Config, HistogramEma, HistogramRaw, NUM_BINS, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
-    eligible_bin, pre_oracle_price_cents,
+    pre_oracle_price_cents, PaymentFilter,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -913,7 +913,7 @@ fn main() {
                 continue;
             }
             for i in lo..hi {
-                if let Some(bin) = eligible_bin(values[i], output_types[i]) {
+                if let Some(bin) = PaymentFilter::eligible_bin(values[i], output_types[i]) {
                     hist.increment(bin as usize);
                 }
             }

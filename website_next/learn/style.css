@@ -3,10 +3,7 @@ main.learn {
   --sidebar-top: 6rem;
   --sidebar-bottom: 1rem;
 
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 14rem;
-  grid-template-rows: minmax(0, 1fr);
-  gap: 4rem;
+  display: flex;
   overflow: hidden;
 
   article {
