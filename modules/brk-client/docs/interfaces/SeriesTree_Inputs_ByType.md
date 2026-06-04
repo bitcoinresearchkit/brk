@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Inputs\_ByType
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5415](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5415)
+Defined in: [Developer/brk/modules/brk-client/index.js:5415](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5415)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5415](https://github.com/
 
 > **inputCount**: [`SeriesTree_Inputs_ByType_InputCount`](SeriesTree_Inputs_ByType_InputCount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5416](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5416)
+Defined in: [Developer/brk/modules/brk-client/index.js:5416](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5416)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5416](https://github.com/
 
 > **inputShare**: [`SeriesTree_Inputs_ByType_InputShare`](SeriesTree_Inputs_ByType_InputShare.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5417](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5417)
+Defined in: [Developer/brk/modules/brk-client/index.js:5417](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5417)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5417](https://github.com/
 
 > **txCount**: [`SeriesTree_Inputs_ByType_TxCount`](SeriesTree_Inputs_ByType_TxCount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5418](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5418)
+Defined in: [Developer/brk/modules/brk-client/index.js:5418](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5418)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5418](https://github.com/
 
 > **txShare**: [`EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2`](EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5419](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5419)
+Defined in: [Developer/brk/modules/brk-client/index.js:5419](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5419)

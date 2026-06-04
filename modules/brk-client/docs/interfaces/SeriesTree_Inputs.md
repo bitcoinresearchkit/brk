@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Inputs
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5391](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5391)
+Defined in: [Developer/brk/modules/brk-client/index.js:5391](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5391)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5391](https://github.com/
 
 > **byType**: [`SeriesTree_Inputs_ByType`](SeriesTree_Inputs_ByType.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5396](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5396)
+Defined in: [Developer/brk/modules/brk-client/index.js:5396](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5396)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5396](https://github.com/
 
 > **count**: [`CumulativeRollingSumPattern`](CumulativeRollingSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5394](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5394)
+Defined in: [Developer/brk/modules/brk-client/index.js:5394](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5394)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5394](https://github.com/
 
 > **perSec**: [`_1m1w1y24hPattern`](1m1w1y24hPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5395](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5395)
+Defined in: [Developer/brk/modules/brk-client/index.js:5395](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5395)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5395](https://github.com/
 
 > **raw**: [`SeriesTree_Inputs_Raw`](SeriesTree_Inputs_Raw.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5392](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5392)
+Defined in: [Developer/brk/modules/brk-client/index.js:5392](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5392)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5392](https://github.com/
 
 > **spent**: [`SeriesTree_Inputs_Spent`](SeriesTree_Inputs_Spent.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5393](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L5393)
+Defined in: [Developer/brk/modules/brk-client/index.js:5393](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L5393)

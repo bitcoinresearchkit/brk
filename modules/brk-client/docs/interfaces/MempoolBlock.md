@@ -6,7 +6,7 @@
 
 # Interface: MempoolBlock
 
-Defined in: [Developer/brk/modules/brk-client/index.js:731](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L731)
+Defined in: [Developer/brk/modules/brk-client/index.js:731](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L731)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:731](https://github.com/b
 
 > **blockSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:732](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L732)
+Defined in: [Developer/brk/modules/brk-client/index.js:732](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L732)
 
 Total serialized block size in bytes (witness + non-witness).
 
@@ -24,7 +24,7 @@ Total serialized block size in bytes (witness + non-witness).
 
 > **blockVSize**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:733](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L733)
+Defined in: [Developer/brk/modules/brk-client/index.js:733](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L733)
 
 Total block virtual size in vbytes
 
@@ -34,7 +34,7 @@ Total block virtual size in vbytes
 
 > **feeRange**: `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:737](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L737)
+Defined in: [Developer/brk/modules/brk-client/index.js:737](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L737)
 
 Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
 
@@ -44,7 +44,7 @@ Fee rate range: [min, 10%, 25%, 50%, 75%, 90%, max]
 
 > **medianFee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:736](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L736)
+Defined in: [Developer/brk/modules/brk-client/index.js:736](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L736)
 
 Median fee rate in sat/vB
 
@@ -54,7 +54,7 @@ Median fee rate in sat/vB
 
 > **nTx**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:734](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L734)
+Defined in: [Developer/brk/modules/brk-client/index.js:734](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L734)
 
 Number of transactions in the projected block
 
@@ -64,6 +64,6 @@ Number of transactions in the projected block
 
 > **totalFees**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:735](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L735)
+Defined in: [Developer/brk/modules/brk-client/index.js:735](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L735)
 
 Total fees in satoshis

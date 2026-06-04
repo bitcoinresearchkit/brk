@@ -6,7 +6,7 @@
 
 # Interface: Pagination
 
-Defined in: [Developer/brk/modules/brk-client/index.js:860](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L860)
+Defined in: [Developer/brk/modules/brk-client/index.js:860](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L860)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:860](https://github.com/b
 
 > `optional` **page?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:861](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L861)
+Defined in: [Developer/brk/modules/brk-client/index.js:861](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L861)
 
 Pagination index
 
@@ -24,6 +24,6 @@ Pagination index
 
 > `optional` **perPage?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:862](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L862)
+Defined in: [Developer/brk/modules/brk-client/index.js:862](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L862)
 
 Results per page (default: 1000, max: 1000)

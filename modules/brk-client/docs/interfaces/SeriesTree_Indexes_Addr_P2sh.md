@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_Addr\_P2sh
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6038](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6038)
+Defined in: [Developer/brk/modules/brk-client/index.js:6038](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6038)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6038](https://github.com/
 
 > **addr**: [`SeriesPattern29`](../type-aliases/SeriesPattern29.md)\<`string`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6040](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6040)
+Defined in: [Developer/brk/modules/brk-client/index.js:6040](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6040)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6040](https://github.com/
 
 > **identity**: [`SeriesPattern29`](../type-aliases/SeriesPattern29.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6039](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6039)
+Defined in: [Developer/brk/modules/brk-client/index.js:6039](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6039)

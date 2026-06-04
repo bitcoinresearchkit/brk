@@ -6,7 +6,7 @@
 
 # Interface: MerkleProof
 
-Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L760)
+Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L760)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:760](https://github.com/b
 
 > **blockHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:761](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L761)
+Defined in: [Developer/brk/modules/brk-client/index.js:761](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L761)
 
 Block height containing the transaction
 
@@ -24,7 +24,7 @@ Block height containing the transaction
 
 > **merkle**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:762](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L762)
+Defined in: [Developer/brk/modules/brk-client/index.js:762](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L762)
 
 Merkle proof path (hex-encoded hashes)
 
@@ -34,6 +34,6 @@ Merkle proof path (hex-encoded hashes)
 
 > **pos**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:763](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L763)
+Defined in: [Developer/brk/modules/brk-client/index.js:763](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L763)
 
 Transaction position in the block (0-indexed)

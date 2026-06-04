@@ -6,7 +6,7 @@
 
 # Interface: DeltaDominanceHalfInTotalPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3274](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3274)
+Defined in: [Developer/brk/modules/brk-client/index.js:3274](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3274)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3274](https://github.com/
 
 > **delta**: [`AbsoluteRatePattern3`](AbsoluteRatePattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3275](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3275)
+Defined in: [Developer/brk/modules/brk-client/index.js:3275](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3275)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3275](https://github.com/
 
 > **dominance**: [`BpsPercentRatioPattern2`](BpsPercentRatioPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3276](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3276)
+Defined in: [Developer/brk/modules/brk-client/index.js:3276](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3276)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3276](https://github.com/
 
 > **half**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3277](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3277)
+Defined in: [Developer/brk/modules/brk-client/index.js:3277](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3277)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3277](https://github.com/
 
 > **inLoss**: [`BtcCentsSatsShareUsdPattern`](BtcCentsSatsShareUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3278](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3278)
+Defined in: [Developer/brk/modules/brk-client/index.js:3278](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3278)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3278](https://github.com/
 
 > **inProfit**: [`BtcCentsSatsShareUsdPattern`](BtcCentsSatsShareUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3279](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3279)
+Defined in: [Developer/brk/modules/brk-client/index.js:3279](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3279)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3279](https://github.com/
 
 > **total**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3280](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L3280)
+Defined in: [Developer/brk/modules/brk-client/index.js:3280](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L3280)

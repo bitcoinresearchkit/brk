@@ -6,7 +6,7 @@
 
 # Interface: Health
 
-Defined in: [Developer/brk/modules/brk-client/index.js:630](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L630)
+Defined in: [Developer/brk/modules/brk-client/index.js:630](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L630)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:630](https://github.com/b
 
 > **blocksBehind**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:640](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L640)
+Defined in: [Developer/brk/modules/brk-client/index.js:640](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L640)
 
 Number of blocks behind the tip
 
@@ -24,7 +24,7 @@ Number of blocks behind the tip
 
 > **computedHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:638](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L638)
+Defined in: [Developer/brk/modules/brk-client/index.js:638](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L638)
 
 Height of the last computed block (series)
 
@@ -34,7 +34,7 @@ Height of the last computed block (series)
 
 > **indexedHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:637](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L637)
+Defined in: [Developer/brk/modules/brk-client/index.js:637](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L637)
 
 Height of the last indexed block
 
@@ -44,7 +44,7 @@ Height of the last indexed block
 
 > **lastIndexedAt**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:641](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L641)
+Defined in: [Developer/brk/modules/brk-client/index.js:641](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L641)
 
 Human-readable timestamp of the last indexed block (ISO 8601)
 
@@ -54,7 +54,7 @@ Human-readable timestamp of the last indexed block (ISO 8601)
 
 > **lastIndexedAtUnix**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:642](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L642)
+Defined in: [Developer/brk/modules/brk-client/index.js:642](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L642)
 
 Unix timestamp of the last indexed block
 
@@ -64,7 +64,7 @@ Unix timestamp of the last indexed block
 
 > **service**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:632](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L632)
+Defined in: [Developer/brk/modules/brk-client/index.js:632](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L632)
 
 Service name
 
@@ -74,7 +74,7 @@ Service name
 
 > **startedAt**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:635](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L635)
+Defined in: [Developer/brk/modules/brk-client/index.js:635](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L635)
 
 Server start time (ISO 8601)
 
@@ -84,7 +84,7 @@ Server start time (ISO 8601)
 
 > **status**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:631](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L631)
+Defined in: [Developer/brk/modules/brk-client/index.js:631](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L631)
 
 Health status ("healthy")
 
@@ -94,7 +94,7 @@ Health status ("healthy")
 
 > **timestamp**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:634](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L634)
+Defined in: [Developer/brk/modules/brk-client/index.js:634](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L634)
 
 Current server time (ISO 8601)
 
@@ -104,7 +104,7 @@ Current server time (ISO 8601)
 
 > **tipHeight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:639](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L639)
+Defined in: [Developer/brk/modules/brk-client/index.js:639](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L639)
 
 Height of the chain tip (from Bitcoin node)
 
@@ -114,7 +114,7 @@ Height of the chain tip (from Bitcoin node)
 
 > **uptimeSeconds**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:636](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L636)
+Defined in: [Developer/brk/modules/brk-client/index.js:636](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L636)
 
 Uptime in seconds
 
@@ -124,6 +124,6 @@ Uptime in seconds
 
 > **version**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:633](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L633)
+Defined in: [Developer/brk/modules/brk-client/index.js:633](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L633)
 
 Server version

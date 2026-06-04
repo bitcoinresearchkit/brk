@@ -6,7 +6,7 @@
 
 # Interface: HeightParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:660](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L660)
+Defined in: [Developer/brk/modules/brk-client/index.js:660](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L660)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:660](https://github.com/b
 
 > **height**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:661](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L661)
+Defined in: [Developer/brk/modules/brk-client/index.js:661](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L661)

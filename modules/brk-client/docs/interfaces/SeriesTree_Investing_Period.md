@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Investing\_Period
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6249](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6249)
+Defined in: [Developer/brk/modules/brk-client/index.js:6249](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6249)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6249](https://github.com/
 
 > **dcaCagr**: [`_10y2y3y4y5y6y8yPattern`](10y2y3y4y5y6y8yPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6253](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6253)
+Defined in: [Developer/brk/modules/brk-client/index.js:6253](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6253)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6253](https://github.com/
 
 > **dcaCostBasis**: [`SeriesTree_Investing_Period_DcaCostBasis`](SeriesTree_Investing_Period_DcaCostBasis.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6251](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6251)
+Defined in: [Developer/brk/modules/brk-client/index.js:6251](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6251)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6251](https://github.com/
 
 > **dcaReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6252](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6252)
+Defined in: [Developer/brk/modules/brk-client/index.js:6252](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6252)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6252](https://github.com/
 
 > **dcaStack**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern3`](10y1m1w1y2y3m3y4y5y6m6y8yPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6250](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6250)
+Defined in: [Developer/brk/modules/brk-client/index.js:6250](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6250)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6250](https://github.com/
 
 > **lumpSumReturn**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern2`](10y1m1w1y2y3m3y4y5y6m6y8yPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6255](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6255)
+Defined in: [Developer/brk/modules/brk-client/index.js:6255](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6255)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6255](https://github.com/
 
 > **lumpSumStack**: [`_10y1m1w1y2y3m3y4y5y6m6y8yPattern3`](10y1m1w1y2y3m3y4y5y6m6y8yPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6254](https://github.com/bitcoinresearchkit/brk/blob/d161462137a58a76f972f5e15b0029af02a165ca/modules/brk-client/index.js#L6254)
+Defined in: [Developer/brk/modules/brk-client/index.js:6254](https://github.com/bitcoinresearchkit/brk/blob/37e2b6eae2ee7db79b2d392e73eb0697e4a91b28/modules/brk-client/index.js#L6254)
