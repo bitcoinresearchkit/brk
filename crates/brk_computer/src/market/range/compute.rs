@@ -4,13 +4,13 @@ use brk_types::{BasisPoints16, StoredF32};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{blocks, prices};
+use crate::{blocks, price};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         blocks: &blocks::Vecs,
         exit: &Exit,
     ) -> Result<()> {

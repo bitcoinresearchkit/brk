@@ -27,7 +27,7 @@ use crate::{
     },
     indexes,
     internal::{ValuePerBlockCumulativeRolling, WindowStartVec, Windows},
-    prices,
+    price,
 };
 
 use super::{fenwick::CostBasisFenwick, vecs::UTXOCohortVecs};
@@ -483,7 +483,7 @@ impl UTXOCohorts<Rw> {
     /// First phase of post-processing: compute index transforms.
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -546,7 +546,7 @@ impl UTXOCohorts<Rw> {
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         exit: &Exit,

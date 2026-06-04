@@ -18,7 +18,7 @@ use crate::{
         RatioPerBlockStdDevBands, RatioSma, RollingWindows, RollingWindowsFrom1w,
         ValuePerBlockCumulativeRolling,
     },
-    prices,
+    price,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -240,7 +240,7 @@ impl RealizedFull {
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,

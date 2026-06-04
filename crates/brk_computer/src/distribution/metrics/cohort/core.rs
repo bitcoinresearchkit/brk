@@ -10,7 +10,7 @@ use crate::{
         ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, SupplyCore,
         UnrealizedCore,
     },
-    prices,
+    price,
 };
 
 #[derive(Traversable)]
@@ -102,7 +102,7 @@ impl CoreCohortMetrics {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -122,7 +122,7 @@ impl CoreCohortMetrics {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

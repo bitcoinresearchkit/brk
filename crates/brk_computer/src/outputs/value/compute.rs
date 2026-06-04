@@ -4,13 +4,13 @@ use brk_types::{Height, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
-use crate::prices;
+use crate::price;
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_lengths = indexer.safe_lengths();

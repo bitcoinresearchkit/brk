@@ -45,7 +45,7 @@ use super::{
     count::AddrCountFundedTotalVecs,
     supply::{AddrSupplyShareVecs, AddrSupplyVecs},
 };
-use crate::{indexes, prices};
+use crate::{indexes, price};
 
 mod state;
 
@@ -104,7 +104,7 @@ impl ExposedAddrVecs {
     pub(crate) fn compute_rest(
         &mut self,
         starting_lengths: &Lengths,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,

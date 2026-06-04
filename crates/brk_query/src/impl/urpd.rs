@@ -81,7 +81,7 @@ impl Query {
         let day1 = Day1::try_from(date)?;
         let close = self
             .computer()
-            .prices
+            .price
             .split
             .close
             .cents

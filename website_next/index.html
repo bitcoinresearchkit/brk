@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" data-loading>
+  <head>
+    <meta charset="utf-8" />
+    <title>bitview</title>
+    <meta
+      name="description"
+      content="Explore Bitcoin data from blocks to patterns."
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <style>
+      html,
+      body {
+        background: var(--black);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: var(--black);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 150ms ease;
+      }
+
+      html[data-loading] body::before {
+        opacity: 1;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body::before {
+          transition: none;
+        }
+      }
+    </style>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="bitview" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- Keep URL in sync with @font-face in styles/fonts.css -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/assets/fonts/Lilex[wght]-v2_620.woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/assets/fonts/InstrumentSerif-Regular.woff2"
+      crossorigin
+    />
+
+    <!-- IMPORTMAP -->
+    <link rel="stylesheet" href="/styles/reset.css" />
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link rel="stylesheet" href="/styles/fonts.css" />
+    <link rel="stylesheet" href="/styles/variables.css" />
+
+    <link rel="stylesheet" href="/cube/style.css" />
+    <link rel="stylesheet" href="/header/style.css" />
+
+    <link rel="stylesheet" href="/home/style.css" />
+    <link rel="stylesheet" href="/explore/style.css" />
+    <link rel="stylesheet" href="/learn/style.css" />
+    <link rel="stylesheet" href="/build/style.css" />
+    <!-- /IMPORTMAP -->
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/service-worker.js", {
+            scope: "/",
+          });
+        });
+      }
+    </script>
+    <script type="module" src="/entry.js" fetchpriority="high"></script>
+  </head>
+  <body></body>
+</html>

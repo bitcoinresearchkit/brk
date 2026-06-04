@@ -10,7 +10,7 @@ use crate::{
     distribution::metrics::{
         ActivityFull, AdjustedSopr, CohortMetricsBase, ImportConfig, RealizedFull, UnrealizedFull,
     },
-    prices,
+    price,
 };
 
 use super::ExtendedCohortMetrics;
@@ -62,7 +62,7 @@ impl ExtendedAdjustedCohortMetrics {
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         under_1h_value_created: &impl ReadableVec<Height, Cents>,

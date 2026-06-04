@@ -6,7 +6,7 @@ use brk_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, Exit, Rw, StorageMode};
 
-use crate::{distribution, indexes, prices};
+use crate::{distribution, indexes, price};
 
 pub use inner::RarityMeterInner;
 
@@ -37,7 +37,7 @@ impl RarityMeter {
         &mut self,
         indexer: &Indexer,
         distribution: &distribution::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let realized = &distribution.utxo_cohorts.all.metrics.realized;

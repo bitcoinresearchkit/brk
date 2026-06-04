@@ -3,14 +3,14 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::MacdChain;
-use crate::{blocks, prices};
+use crate::{blocks, price};
 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn compute(
     chain: &mut MacdChain,
     indexer: &Indexer,
     blocks: &blocks::Vecs,
-    prices: &prices::Vecs,
+    prices: &price::Vecs,
     fast_days: usize,
     slow_days: usize,
     signal_days: usize,

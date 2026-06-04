@@ -3,14 +3,14 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, distribution, mining, prices, supply};
+use crate::{blocks, distribution, mining, price, supply};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         supply_vecs: &supply::Vecs,

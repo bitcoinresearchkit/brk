@@ -55,7 +55,7 @@ use crate::{
         metrics::{CohortMetricsBase, CohortMetricsState},
         state::UTXOCohortState,
     },
-    prices,
+    price,
 };
 
 #[derive(Traversable)]
@@ -186,7 +186,7 @@ impl<M: CohortMetricsBase + Traversable> DynCohortVecs for UTXOCohortVecs<M> {
 
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

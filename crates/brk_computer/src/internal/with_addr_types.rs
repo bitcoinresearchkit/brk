@@ -11,7 +11,7 @@ use rayon::prelude::*;
 use schemars::JsonSchema;
 use vecdb::{AnyStoredVec, AnyVec, Database, EagerVec, Exit, PcoVec, WritableVec};
 
-use crate::{indexes, prices};
+use crate::{indexes, price};
 
 use super::{
     BpsType, NumericValue, PerBlock, PerBlockCumulativeRolling, PercentPerBlock, ValuePerBlock,
@@ -229,7 +229,7 @@ impl WithAddrTypes<ValuePerBlock> {
     pub(crate) fn compute_rest(
         &mut self,
         max_from: Height,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.all.compute(prices, max_from, exit)?;

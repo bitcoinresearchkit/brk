@@ -29,7 +29,7 @@ use crate::{
         PerBlockCumulativeRolling, WindowStartVec, Windows, WithAddrTypes,
         db_utils::{finalize_db, open_db},
     },
-    outputs, prices, transactions,
+    outputs, price, transactions,
 };
 
 use super::{
@@ -316,7 +316,7 @@ impl Vecs {
         outputs: &outputs::Vecs,
         transactions: &transactions::Vecs,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;

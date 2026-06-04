@@ -11,7 +11,7 @@ use crate::{
         ActivityFull, AdjustedSopr, CohortMetricsBase, CostBasis, ImportConfig, OutputsBase,
         RealizedFull, RelativeForAll, SupplyCore, UnrealizedFull,
     },
-    prices,
+    price,
 };
 
 /// All-cohort metrics: extended realized + adjusted (as composable add-on),
@@ -100,7 +100,7 @@ impl AllCohortMetrics {
     pub(crate) fn compute_rest_part2(
         &mut self,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_market_cap: &impl ReadableVec<Height, Dollars>,
         under_1h_value_created: &impl ReadableVec<Height, Cents>,

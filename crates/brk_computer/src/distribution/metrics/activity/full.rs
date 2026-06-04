@@ -12,7 +12,7 @@ use crate::{
         metrics::ImportConfig,
         state::{CohortState, CostBasisOps, RealizedOps},
     },
-    prices,
+    price,
 };
 
 use super::ActivityCore;
@@ -89,7 +89,7 @@ impl ActivityFull {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

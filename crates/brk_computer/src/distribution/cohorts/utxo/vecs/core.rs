@@ -6,7 +6,7 @@ use vecdb::{Exit, ReadableVec};
 
 use crate::{
     distribution::{cohorts::traits::DynCohortVecs, metrics::CoreCohortMetrics},
-    prices,
+    price,
 };
 
 use super::UTXOCohortVecs;
@@ -56,7 +56,7 @@ impl DynCohortVecs for UTXOCohortVecs<CoreCohortMetrics> {
 
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

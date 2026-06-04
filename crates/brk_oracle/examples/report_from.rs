@@ -1,13 +1,16 @@
-//! Generate detailed oracle accuracy report for README / documentation.
+//! Experimental oracle accuracy report from an arbitrary start height with many
+//! scoring/filter knobs.
 //!
-//! Run with: cargo run -p brk_oracle --example report --release
+//! Use `report.rs` for the canonical README/documentation report.
+//!
+//! Run with: cargo run -p brk_oracle --example report_from --release
 
 use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, HistogramEma, HistogramRaw, NUM_BINS, PRICES, START_HEIGHT_FAST, bin_to_cents,
-    cents_to_bin, eligible_bin,
+    Config, HistogramEma, HistogramRaw, NUM_BINS, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
+    eligible_bin, pre_oracle_price_cents,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -579,16 +582,14 @@ fn main() {
         .map(|ts| (**ts / 86400).saturating_sub(GENESIS_DAY) as usize)
         .collect();
 
-    // Seed price at height `start - 1`. The baked prices.txt only covers up to
-    // 508k (the cold-start seed); past it we warm-start from the exchange close
-    // so any later start height gets a primed ref_bin without the cold-start
-    // alias zone. start <= 508k stays bit-identical to the old baseline.
-    let start_price: f64 = PRICES
-        .lines()
-        .nth(start - 1)
-        .and_then(|l| l.parse().ok())
+    // Seed price at height `start - 1`. The baked prices.txt only covers the
+    // pre-oracle seed range; past it this experimental harness warm-starts from
+    // exchange OHLC so arbitrary later starts get a primed ref_bin.
+    let seed_height = start.saturating_sub(1);
+    let start_price: f64 = pre_oracle_price_cents(seed_height)
+        .map(|cents| cents.inner() as f64 / 100.0)
         .unwrap_or_else(|| {
-            let o = height_ohlc.get(start - 1).copied().unwrap_or([0.0; 4]);
+            let o = height_ohlc.get(seed_height).copied().unwrap_or([0.0; 4]);
             if o[3] > 0.0 {
                 o[3]
             } else {
@@ -1168,7 +1169,10 @@ fn main() {
     println!("  brk_oracle accuracy report");
     println!("  ══════════════════════════");
     println!();
-    println!("  Config:       w12, alpha=2/7, search -9/+11, noisy/dust/round-btc filtered");
+    println!(
+        "  Config:       w{}, alpha={:.5}, search -{}/+{}, experimental knobs",
+        window_size, config.alpha, config.search_below, config.search_above
+    );
     println!(
         "  Test range:   height {} .. {} ({} blocks), seed ${:.2}",
         start,

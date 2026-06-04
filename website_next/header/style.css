@@ -5,27 +5,43 @@ body {
     z-index: 10;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: start;
+    align-items: center;
     font-size: var(--font-size-sm);
     line-height: 1;
     text-transform: uppercase;
 
     > a {
+      --color: var(--white);
+      opacity: 0.8;
+
       justify-self: start;
       display: flex;
       align-items: center;
-      gap: 0.625rem;
-      color: white;
+      gap: 0.5rem;
+      color: var(--color);
+      font-size: var(--font-size-base);
       text-decoration: none;
       text-transform: lowercase;
 
-      &:hover,
+      &:hover {
+        opacity: 1;
+      }
+
       &:active {
-        color: var(--orange);
+        opacity: 1;
+        --color: var(--orange);
+      }
+
+      > span {
+        display: inline-grid;
+        padding: 0.2rem 0.3rem;
+        color: var(--black);
+        background-color: var(--color);
+        border-radius: 0.25rem;
       }
 
       .cube {
-        --size: 1rem;
+        --size: 0.75rem;
         animation: cube-fill 5s linear infinite alternate;
       }
     }

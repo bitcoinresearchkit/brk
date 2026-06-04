@@ -8,7 +8,7 @@ use vecdb::{
 
 use crate::{
     internal::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents},
-    prices,
+    price,
 };
 
 /// Raw per-block amount data: sats + cents (stored), btc + usd (lazy), no resolutions.
@@ -44,7 +44,7 @@ impl ValueBlock {
     pub(crate) fn compute_cents(
         &mut self,
         max_from: Height,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.cents.compute_binary::<Sats, Cents, SatsToCents>(

@@ -22,7 +22,7 @@ mod market;
 mod mining;
 mod outputs;
 mod pools;
-pub mod prices;
+pub mod price;
 mod supply;
 mod transactions;
 
@@ -38,7 +38,7 @@ pub struct Computer<M: StorageMode = Rw> {
     pub investing: Box<investing::Vecs<M>>,
     pub market: Box<market::Vecs<M>>,
     pub pools: Box<pools::Vecs<M>>,
-    pub prices: Box<prices::Vecs<M>>,
+    pub price: Box<price::Vecs<M>>,
     #[traversable(flatten)]
     pub distribution: Box<distribution::Vecs<M>>,
     pub supply: Box<supply::Vecs<M>>,
@@ -66,14 +66,14 @@ impl Computer {
             )?))
         })?;
 
-        let (constants, prices) = timed("Imported prices/constants", || -> Result<_> {
+        let (constants, price) = timed("Imported price/constants", || -> Result<_> {
             let constants = Box::new(constants::Vecs::new(VERSION, &indexes));
-            let prices = Box::new(prices::Vecs::forced_import(
+            let price = Box::new(price::Vecs::forced_import(
                 &computed_path,
                 VERSION,
                 &indexes,
             )?);
-            Ok((constants, prices))
+            Ok((constants, price))
         })?;
 
         let blocks = timed("Imported blocks", || -> Result<_> {
@@ -223,7 +223,7 @@ impl Computer {
             cointime,
             indexes,
             inputs,
-            prices,
+            price,
             outputs,
         };
 
@@ -244,7 +244,7 @@ impl Computer {
             investing::DB_NAME,
             market::DB_NAME,
             pools::DB_NAME,
-            prices::DB_NAME,
+            price::DB_NAME,
             distribution::DB_NAME,
             supply::DB_NAME,
             inputs::DB_NAME,
@@ -297,8 +297,8 @@ impl Computer {
                     })
                 },
                 || {
-                    timed("Computed prices", || {
-                        self.prices.compute(indexer, &self.indexes, exit)
+                    timed("Computed price", || {
+                        self.price.compute(indexer, &self.indexes, exit)
                     })
                 },
             );
@@ -310,7 +310,7 @@ impl Computer {
             let market = scope.spawn(|| {
                 timed("Computed market", || {
                     self.market
-                        .compute(indexer, &self.prices, &self.indexes, &self.blocks, exit)
+                        .compute(indexer, &self.price, &self.indexes, &self.blocks, exit)
                 })
             });
 
@@ -321,7 +321,7 @@ impl Computer {
                         &self.indexes,
                         &self.blocks,
                         &self.inputs,
-                        &self.prices,
+                        &self.price,
                         exit,
                     )
                 })?;
@@ -331,7 +331,7 @@ impl Computer {
                         &self.indexes,
                         &self.blocks,
                         &self.transactions,
-                        &self.prices,
+                        &self.price,
                         exit,
                     )
                 })
@@ -343,7 +343,7 @@ impl Computer {
                     &self.indexes,
                     &self.inputs,
                     &self.blocks,
-                    &self.prices,
+                    &self.price,
                     exit,
                 )
             })?;
@@ -360,7 +360,7 @@ impl Computer {
                         indexer,
                         &self.indexes,
                         &self.blocks,
-                        &self.prices,
+                        &self.price,
                         &self.mining,
                         exit,
                     )
@@ -372,7 +372,7 @@ impl Computer {
                     self.investing.compute(
                         indexer,
                         &self.indexes,
-                        &self.prices,
+                        &self.price,
                         &self.blocks,
                         &self.market.lookback,
                         exit,
@@ -388,7 +388,7 @@ impl Computer {
                     &self.outputs,
                     &self.transactions,
                     &self.blocks,
-                    &self.prices,
+                    &self.price,
                     exit,
                 )
             })?;
@@ -421,7 +421,7 @@ impl Computer {
                     &self.blocks,
                     &self.mining,
                     &self.transactions,
-                    &self.prices,
+                    &self.price,
                     &self.distribution,
                     exit,
                 )
@@ -430,7 +430,7 @@ impl Computer {
             timed("Computed cointime", || {
                 self.cointime.compute(
                     indexer,
-                    &self.prices,
+                    &self.price,
                     &self.blocks,
                     &self.mining,
                     &self.supply,
@@ -445,7 +445,7 @@ impl Computer {
 
         self.indicators
             .rarity_meter
-            .compute(indexer, &self.distribution, &self.prices, exit)?;
+            .compute(indexer, &self.distribution, &self.price, exit)?;
 
         info!("Total compute time: {:?}", compute_start.elapsed());
         Ok(())
@@ -498,7 +498,7 @@ impl_iter_named!(
     investing,
     market,
     pools,
-    prices,
+    price,
     distribution,
     supply,
     inputs,

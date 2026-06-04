@@ -4,9 +4,8 @@
 //! values matching a continuously-running oracle from the restart height
 //! onward.
 //!
-//! Mirrors the production filter exactly (per-tx OP_RETURN drop + per-output
-//! `eligible_bin`), so it exercises the same code path
-//! `brk_computer::prices::compute::feed_blocks` uses at runtime.
+//! Mirrors the production transaction filter exactly, so it exercises the same code path
+//! `brk_computer::price::compute::feed_blocks` uses at runtime.
 //!
 //! Run with: cargo run -p brk_oracle --example determinism --release
 
@@ -14,21 +13,11 @@ use std::path::PathBuf;
 
 use brk_indexer::Indexer;
 use brk_oracle::{
-    Config, HistogramRaw, Oracle, PRICES, START_HEIGHT_FAST, bin_to_cents, cents_to_bin,
-    for_each_round_dollar_bin,
+    Config, HistogramRaw, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
+    payment_histogram,
 };
 use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
-
-fn seed_bin_for_start_height() -> f64 {
-    let price: f64 = PRICES
-        .lines()
-        .nth(START_HEIGHT_FAST - 1)
-        .expect("prices.txt too short for START_HEIGHT_FAST")
-        .parse()
-        .expect("Failed to parse seed price");
-    cents_to_bin(price * 100.0)
-}
 
 struct Block {
     height: usize,
@@ -40,21 +29,19 @@ struct Block {
 }
 
 fn build_histogram(block: &Block) -> HistogramRaw {
-    let mut hist = HistogramRaw::zeros();
-    for tx in 0..block.tx_starts.len() {
+    let tx_outputs = (0..block.tx_starts.len()).map(|tx| {
         let lo = block.tx_starts[tx] - block.out_start;
         let hi = block
             .tx_starts
             .get(tx + 1)
             .map(|s| s - block.out_start)
             .unwrap_or(block.out_end - block.out_start);
-        let outputs = block.values[lo..hi]
+        block.values[lo..hi]
             .iter()
             .copied()
-            .zip(block.output_types[lo..hi].iter().copied());
-        for_each_round_dollar_bin(block.height, outputs, |bin| hist.increment(bin as usize));
-    }
-    hist
+            .zip(block.output_types[lo..hi].iter().copied())
+    });
+    payment_histogram(block.height, tx_outputs)
 }
 
 fn main() {
@@ -68,14 +55,15 @@ fn main() {
     let indexer = Indexer::forced_import(&data_dir).expect("Failed to load indexer");
     let total_heights = indexer.vecs.blocks.timestamp.len();
 
-    let config = Config::default();
-    let window_size = config.window_size;
+    let fast_config = Config::default();
+    let window_size = fast_config.window_size;
 
     let restart_offset = 1000;
     let end_offset = restart_offset + window_size * 4;
     let end_height = (START_HEIGHT_FAST + end_offset).min(total_heights);
     let restart_at = START_HEIGHT_FAST + restart_offset;
     let warmup_start = restart_at - window_size;
+    let load_start = START_HEIGHT_SLOW;
 
     assert!(
         end_height > restart_at,
@@ -84,8 +72,8 @@ fn main() {
     );
 
     println!(
-        "Loading {} blocks ({START_HEIGHT_FAST}..{end_height})...",
-        end_height - START_HEIGHT_FAST
+        "Loading {} blocks ({load_start}..{end_height})...",
+        end_height - load_start
     );
     let total_txs = indexer.vecs.transactions.txid.len();
     let total_outputs = indexer.vecs.outputs.value.len();
@@ -93,8 +81,8 @@ fn main() {
     let out_first: Vec<TxOutIndex> = indexer.vecs.outputs.first_txout_index.collect();
     let mut txout_cursor = indexer.vecs.transactions.first_txout_index.cursor();
 
-    let mut blocks: Vec<Block> = Vec::with_capacity(end_height - START_HEIGHT_FAST);
-    for h in START_HEIGHT_FAST..end_height {
+    let mut blocks: Vec<Block> = Vec::with_capacity(end_height - load_start);
+    for h in load_start..end_height {
         let ft = first_tx_index[h];
         let next_ft = first_tx_index
             .get(h + 1)
@@ -136,31 +124,36 @@ fn main() {
         });
     }
 
-    let mut continuous = Oracle::new(seed_bin_for_start_height(), config.clone());
+    let mut continuous = Oracle::from_seed();
     let continuous_bins: Vec<f64> = blocks
         .iter()
-        .map(|b| continuous.process_histogram(&build_histogram(b)))
+        .map(|b| {
+            if b.height == START_HEIGHT_FAST {
+                continuous.reconfigure(fast_config);
+            }
+            continuous.process_histogram(&build_histogram(b))
+        })
         .collect();
     println!(
         "Continuous oracle: {} blocks processed",
         continuous_bins.len()
     );
 
-    let prev_bin = continuous_bins[restart_at - START_HEIGHT_FAST - 1];
+    let prev_bin = continuous_bins[restart_at - load_start - 1];
     let seed_bin = cents_to_bin(bin_to_cents(prev_bin) as f64);
     println!(
         "Restart at {restart_at}: prev_bin={prev_bin:.4} -> cents -> seed_bin={seed_bin:.4} (delta {:.6})",
         seed_bin - prev_bin
     );
 
-    let warmup_slice = &blocks[warmup_start - START_HEIGHT_FAST..restart_at - START_HEIGHT_FAST];
-    let mut restored = Oracle::from_checkpoint(seed_bin, config.clone(), |o| {
+    let warmup_slice = &blocks[warmup_start - load_start..restart_at - load_start];
+    let mut restored = Oracle::from_checkpoint(seed_bin, fast_config, |o| {
         for b in warmup_slice {
             o.process_histogram(&build_histogram(b));
         }
     });
 
-    let restored_bins: Vec<f64> = blocks[restart_at - START_HEIGHT_FAST..]
+    let restored_bins: Vec<f64> = blocks[restart_at - load_start..]
         .iter()
         .map(|b| restored.process_histogram(&build_histogram(b)))
         .collect();
@@ -168,7 +161,7 @@ fn main() {
 
     let mut mismatches: Vec<(usize, f64, f64)> = Vec::new();
     for (i, &r) in restored_bins.iter().enumerate() {
-        let c = continuous_bins[restart_at - START_HEIGHT_FAST + i];
+        let c = continuous_bins[restart_at - load_start + i];
         if r != c {
             mismatches.push((restart_at + i, c, r));
         }

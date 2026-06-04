@@ -10,7 +10,7 @@ use super::{
 use crate::{
     blocks,
     internal::{RatioDollarsBp32, WindowsTo1m},
-    prices,
+    price,
 };
 
 impl Vecs {
@@ -19,7 +19,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         returns: &returns::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         blocks: &blocks::Vecs,
         moving_average: &moving_average::Vecs,
         exit: &Exit,

@@ -13,7 +13,7 @@ impl Query {
     pub fn block_rewards(&self, time_period: TimePeriod) -> Result<Vec<BlockRewardsEntry>> {
         let bw = BlockWindow::new(self, time_period)?;
         let rewards: Vec<Sats> = bw.read(&self.computer().mining.rewards.coinbase.block.sats)?;
-        let prices: Vec<Cents> = bw.read(&self.computer().prices.spot.cents.height)?;
+        let prices: Vec<Cents> = bw.read(&self.computer().price.spot.cents.height)?;
 
         Ok(bw
             .buckets

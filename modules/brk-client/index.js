@@ -5193,7 +5193,7 @@ function createTransferPattern(client, acc) {
  * @property {SeriesTree_Investing} investing
  * @property {SeriesTree_Market} market
  * @property {SeriesTree_Pools} pools
- * @property {SeriesTree_Prices} prices
+ * @property {SeriesTree_Price} price
  * @property {SeriesTree_Supply} supply
  * @property {SeriesTree_Cohorts} cohorts
  */
@@ -6725,14 +6725,14 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Prices
- * @property {SeriesTree_Prices_Split} split
- * @property {SeriesTree_Prices_Ohlc} ohlc
- * @property {SeriesTree_Prices_Spot} spot
+ * @typedef {Object} SeriesTree_Price
+ * @property {SeriesTree_Price_Split} split
+ * @property {SeriesTree_Price_Ohlc} ohlc
+ * @property {SeriesTree_Price_Spot} spot
  */
 
 /**
- * @typedef {Object} SeriesTree_Prices_Split
+ * @typedef {Object} SeriesTree_Price_Split
  * @property {CentsSatsUsdPattern3} open
  * @property {CentsSatsUsdPattern3} high
  * @property {CentsSatsUsdPattern3} low
@@ -6740,14 +6740,14 @@ function createTransferPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Prices_Ohlc
+ * @typedef {Object} SeriesTree_Price_Ohlc
  * @property {SeriesPattern2<OHLCDollars>} usd
  * @property {SeriesPattern2<OHLCCents>} cents
  * @property {SeriesPattern2<OHLCSats>} sats
  */
 
 /**
- * @typedef {Object} SeriesTree_Prices_Spot
+ * @typedef {Object} SeriesTree_Price_Spot
  * @property {SeriesPattern1<Dollars>} usd
  * @property {SeriesPattern1<Cents>} cents
  * @property {SeriesPattern1<Sats>} sats
@@ -9863,7 +9863,7 @@ class BrkClient extends BrkClientBase {
           noderunners: createBlocksDominancePattern(this, 'noderunners'),
         },
       },
-      prices: {
+      price: {
         split: {
           open: createCentsSatsUsdPattern3(this, 'price_open'),
           high: createCentsSatsUsdPattern3(this, 'price_high'),

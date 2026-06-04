@@ -271,7 +271,7 @@ impl Query {
             .block
             .sats
             .collect_range_at(begin, end);
-        let prices = computer.prices.spot.usd.height.collect_range_at(begin, end);
+        let prices = computer.price.spot.usd.height.collect_range_at(begin, end);
         let output_volumes = computer
             .mining
             .rewards

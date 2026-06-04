@@ -5,7 +5,7 @@ use vecdb::Exit;
 
 use super::Vecs;
 use crate::transactions::{count, fees};
-use crate::{indexes, internal::Windows, prices};
+use crate::{indexes, internal::Windows, price};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -13,7 +13,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         count_vecs: &count::Vecs,
         fees_vecs: &fees::Vecs,
         exit: &Exit,

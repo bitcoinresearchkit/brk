@@ -3,7 +3,7 @@ use brk_traversable::Traversable;
 use brk_types::{Height, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, Database, Exit, ReadableVec, Rw, StorageMode, WritableVec};
 
-use crate::{indexes, internal::ValuePerBlock, prices};
+use crate::{indexes, internal::ValuePerBlock, price};
 
 /// Average amount held per UTXO and per funded address.
 ///
@@ -53,7 +53,7 @@ impl AvgAmountMetrics {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         supply_sats: &impl ReadableVec<Height, Sats>,
         utxo_count: &impl ReadableVec<Height, StoredU64>,
         funded_addr_count: &impl ReadableVec<Height, StoredU64>,

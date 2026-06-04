@@ -21,7 +21,7 @@ use crate::{
 use by_unit::{OhlcByUnit, PriceByUnit, SplitByUnit, SplitCloseByUnit, SplitIndexesByUnit};
 use ohlcs::{LazyOhlcVecs, OhlcVecs};
 
-pub const DB_NAME: &str = "prices";
+pub const DB_NAME: &str = "price";
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

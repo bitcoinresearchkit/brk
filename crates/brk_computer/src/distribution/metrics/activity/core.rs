@@ -11,7 +11,7 @@ use crate::{
         state::{CohortState, CostBasisOps, RealizedOps},
     },
     internal::{PerBlockCumulativeRolling, ValuePerBlockCumulativeRolling},
-    prices,
+    price,
 };
 
 use super::ActivityMinimal;
@@ -98,7 +98,7 @@ impl ActivityCore {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

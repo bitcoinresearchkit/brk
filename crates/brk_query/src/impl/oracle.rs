@@ -1,10 +1,10 @@
 use std::{ops::Range, sync::Arc};
 
-use brk_computer::prices::Vecs as PricesVecs;
+use brk_computer::price::Vecs as PricesVecs;
 use brk_error::{Error, Result};
 use brk_indexer::Lengths;
 use brk_oracle::{
-    cents_to_bin, sats_to_bin, Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle,
+    Config, HistogramEma, HistogramEmaCompact, HistogramRaw, Oracle, cents_to_bin, sats_to_bin,
 };
 use brk_types::{Day1, Dollars, TxOutIndex};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
@@ -127,7 +127,7 @@ impl Query {
 
         let last = self
             .computer()
-            .prices
+            .price
             .spot
             .cents
             .height
@@ -169,7 +169,7 @@ impl Query {
     fn seed_bin_at(&self, height: usize) -> Result<f64> {
         let cents = self
             .computer()
-            .prices
+            .price
             .spot
             .cents
             .height
@@ -180,7 +180,7 @@ impl Query {
 
     fn histogram_bound(&self, safe: &Lengths) -> usize {
         self.computer()
-            .prices
+            .price
             .spot
             .cents
             .height

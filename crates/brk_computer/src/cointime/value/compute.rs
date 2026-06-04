@@ -5,13 +5,13 @@ use vecdb::Exit;
 
 use super::super::activity;
 use super::Vecs;
-use crate::{distribution, prices};
+use crate::{distribution, price};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         exit: &Exit,

@@ -7,7 +7,7 @@ use vecdb::Exit;
 const INITIAL_SUBSIDY: f64 = Sats::ONE_BTC_U64 as f64 * 50.0;
 
 use super::Vecs;
-use crate::{blocks, distribution, mining, outputs, prices, transactions};
+use crate::{blocks, distribution, mining, outputs, price, transactions};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -18,7 +18,7 @@ impl Vecs {
         blocks: &blocks::Vecs,
         mining: &mining::Vecs,
         transactions: &transactions::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         distribution: &distribution::Vecs,
         exit: &Exit,
     ) -> Result<()> {

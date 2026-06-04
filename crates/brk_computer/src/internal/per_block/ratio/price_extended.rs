@@ -6,7 +6,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Database, EagerVec, Exit, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::internal::{LazyPerBlock, PerBlock, Price};
-use crate::{indexes, prices};
+use crate::{indexes, price};
 
 use super::{RatioPerBlock, RatioPerBlockPercentiles};
 
@@ -63,7 +63,7 @@ impl PriceWithRatioPerBlock {
     /// Compute price via closure (in cents), then compute ratio.
     pub(crate) fn compute_all<F>(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
         mut compute_price: F,
@@ -101,7 +101,7 @@ impl PriceWithRatioExtendedPerBlock {
     /// Compute ratio and percentiles from already-computed price cents.
     pub(crate) fn compute_rest(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -120,7 +120,7 @@ impl PriceWithRatioExtendedPerBlock {
     /// Compute price via closure (in cents), then compute ratio and percentiles.
     pub(crate) fn compute_all<F>(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
         mut compute_price: F,

@@ -2,7 +2,7 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use vecdb::Exit;
 
-use crate::{blocks, indexes, prices};
+use crate::{blocks, indexes, price};
 
 use super::Vecs;
 
@@ -10,7 +10,7 @@ impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         indexes: &indexes::Vecs,
         blocks: &blocks::Vecs,
         exit: &Exit,

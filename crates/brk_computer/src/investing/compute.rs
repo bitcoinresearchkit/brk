@@ -4,7 +4,7 @@ use brk_types::{BasisPointsSigned32, Bitcoin, Cents, Date, Day1, Dollars, Sats};
 use vecdb::{AnyVec, Exit, ReadableOptionVec, ReadableVec, VecIndex};
 
 use super::{ByDcaPeriod, Vecs};
-use crate::{blocks, indexes, internal::RatioDiffCentsBps32, market, prices};
+use crate::{blocks, indexes, internal::RatioDiffCentsBps32, market, price};
 
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
@@ -13,7 +13,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         blocks: &blocks::Vecs,
         lookback: &market::lookback::Vecs,
         exit: &Exit,

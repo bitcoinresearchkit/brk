@@ -10,7 +10,7 @@ use crate::{
         CentsUnsignedToDollars, LazyPerBlock, NumericValue, PerBlock, SatsSignedToBitcoin,
         SatsToBitcoin, SatsToCents,
     },
-    prices,
+    price,
 };
 
 /// Trait that associates a sats type with its transform to Bitcoin.
@@ -69,7 +69,7 @@ impl ValuePerBlock {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {

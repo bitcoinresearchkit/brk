@@ -7,7 +7,7 @@ use super::Vecs;
 use crate::{
     blocks, indexes,
     internal::{RatioDollarsBp32, RatioSatsBp16},
-    prices, transactions,
+    price, transactions,
 };
 
 impl Vecs {
@@ -18,7 +18,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         lookback: &blocks::LookbackVecs,
         transactions: &transactions::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;

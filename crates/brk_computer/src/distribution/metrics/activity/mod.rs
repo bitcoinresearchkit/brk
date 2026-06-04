@@ -13,7 +13,7 @@ use vecdb::Exit;
 
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
-    prices,
+    price,
 };
 
 pub trait ActivityLike: Send + Sync {
@@ -30,7 +30,7 @@ pub trait ActivityLike: Send + Sync {
     ) -> Result<()>;
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()>;
@@ -62,7 +62,7 @@ impl ActivityLike for ActivityCore {
     }
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -96,7 +96,7 @@ impl ActivityLike for ActivityFull {
     }
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

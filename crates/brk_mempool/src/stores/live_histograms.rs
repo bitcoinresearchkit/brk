@@ -1,4 +1,4 @@
-use brk_oracle::{HistogramRaw, for_each_round_dollar_bin, sats_to_bin};
+use brk_oracle::{for_each_modern_round_dollar_bin, sats_to_bin, HistogramRaw};
 use brk_types::Transaction;
 
 use crate::stores::tx_store::TxRecord;
@@ -43,14 +43,9 @@ impl LiveHistograms {
     /// Round-dollar-eligible bins, applying the oracle payment filter. Calls
     /// `emit(bin)` per eligible output. Deterministic over a tx's outputs,
     /// which are never mutated after insert, so add and remove recompute it
-    /// identically rather than caching. Live mempool txs are post-tip, always
-    /// above the historical max-outputs cap window, so the cap never applies.
+    /// identically rather than caching.
     fn eligible_bins(tx: &Transaction, emit: impl FnMut(u16)) {
-        for_each_round_dollar_bin(
-            usize::MAX,
-            tx.output.iter().map(|o| (o.value, o.type_())),
-            emit,
-        );
+        for_each_modern_round_dollar_bin(tx.output.iter().map(|o| (o.value, o.type_())), emit);
     }
 
     /// Raw bin index per output, dropping only values outside the bin domain

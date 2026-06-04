@@ -5788,7 +5788,7 @@ class SeriesTree_Pools:
         self.major: SeriesTree_Pools_Major = SeriesTree_Pools_Major(client)
         self.minor: SeriesTree_Pools_Minor = SeriesTree_Pools_Minor(client)
 
-class SeriesTree_Prices_Split:
+class SeriesTree_Price_Split:
     """Series tree node."""
     
     def __init__(self, client: BrkClient, base_path: str = ''):
@@ -5797,7 +5797,7 @@ class SeriesTree_Prices_Split:
         self.low: CentsSatsUsdPattern3 = CentsSatsUsdPattern3(client, 'price_low')
         self.close: CentsSatsUsdPattern3 = CentsSatsUsdPattern3(client, 'price_close')
 
-class SeriesTree_Prices_Ohlc:
+class SeriesTree_Price_Ohlc:
     """Series tree node."""
     
     def __init__(self, client: BrkClient, base_path: str = ''):
@@ -5805,7 +5805,7 @@ class SeriesTree_Prices_Ohlc:
         self.cents: SeriesPattern2[OHLCCents] = SeriesPattern2(client, 'price_ohlc_cents')
         self.sats: SeriesPattern2[OHLCSats] = SeriesPattern2(client, 'price_ohlc_sats')
 
-class SeriesTree_Prices_Spot:
+class SeriesTree_Price_Spot:
     """Series tree node."""
     
     def __init__(self, client: BrkClient, base_path: str = ''):
@@ -5813,13 +5813,13 @@ class SeriesTree_Prices_Spot:
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_cents')
         self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, 'price_sats')
 
-class SeriesTree_Prices:
+class SeriesTree_Price:
     """Series tree node."""
     
     def __init__(self, client: BrkClient, base_path: str = ''):
-        self.split: SeriesTree_Prices_Split = SeriesTree_Prices_Split(client)
-        self.ohlc: SeriesTree_Prices_Ohlc = SeriesTree_Prices_Ohlc(client)
-        self.spot: SeriesTree_Prices_Spot = SeriesTree_Prices_Spot(client)
+        self.split: SeriesTree_Price_Split = SeriesTree_Price_Split(client)
+        self.ohlc: SeriesTree_Price_Ohlc = SeriesTree_Price_Ohlc(client)
+        self.spot: SeriesTree_Price_Spot = SeriesTree_Price_Spot(client)
 
 class SeriesTree_Supply_Velocity:
     """Series tree node."""
@@ -6717,7 +6717,7 @@ class SeriesTree:
         self.investing: SeriesTree_Investing = SeriesTree_Investing(client)
         self.market: SeriesTree_Market = SeriesTree_Market(client)
         self.pools: SeriesTree_Pools = SeriesTree_Pools(client)
-        self.prices: SeriesTree_Prices = SeriesTree_Prices(client)
+        self.price: SeriesTree_Price = SeriesTree_Price(client)
         self.supply: SeriesTree_Supply = SeriesTree_Supply(client)
         self.cohorts: SeriesTree_Cohorts = SeriesTree_Cohorts(client)
 

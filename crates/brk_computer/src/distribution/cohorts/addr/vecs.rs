@@ -12,7 +12,7 @@ use crate::{
     distribution::state::{AddrCohortState, MinimalRealizedState},
     indexes,
     internal::{PerBlockWithDeltas, WindowStartVec, Windows},
-    prices,
+    price,
 };
 
 use crate::distribution::metrics::{ImportConfig, MinimalCohortMetrics};
@@ -174,7 +174,7 @@ impl DynCohortVecs for AddrCohortVecs {
 
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -229,7 +229,7 @@ impl CohortVecs for AddrCohortVecs {
 
     fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

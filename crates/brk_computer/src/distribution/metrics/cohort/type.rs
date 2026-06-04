@@ -9,7 +9,7 @@ use crate::{
     distribution::metrics::{
         ActivityMinimal, ImportConfig, OutputsBase, RealizedMinimal, SupplyCore, UnrealizedBasic,
     },
-    prices,
+    price,
 };
 
 /// TypeCohortMetrics: supply(core), outputs(base), realized(minimal), unrealized(basic).
@@ -59,7 +59,7 @@ impl TypeCohortMetrics {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -73,7 +73,7 @@ impl TypeCohortMetrics {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

@@ -149,7 +149,7 @@ use crate::{
         CohortState, CoreRealizedState, CostBasisData, CostBasisOps, CostBasisRaw,
         MinimalRealizedState, RealizedOps, RealizedState, WithCapital, WithoutCapital,
     },
-    prices,
+    price,
 };
 
 pub trait CohortMetricsState {
@@ -270,7 +270,7 @@ pub trait CohortMetricsBase:
     /// First phase of computed metrics (indexes from height).
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

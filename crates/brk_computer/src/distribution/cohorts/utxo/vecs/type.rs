@@ -5,7 +5,7 @@ use brk_types::{Cents, Height, Version};
 use vecdb::{Exit, ReadableVec};
 
 use crate::{
-    distribution::cohorts::traits::DynCohortVecs, distribution::metrics::TypeCohortMetrics, prices,
+    distribution::cohorts::traits::DynCohortVecs, distribution::metrics::TypeCohortMetrics, price,
 };
 
 use super::UTXOCohortVecs;
@@ -55,7 +55,7 @@ impl DynCohortVecs for UTXOCohortVecs<TypeCohortMetrics> {
 
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

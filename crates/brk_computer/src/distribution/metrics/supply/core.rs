@@ -5,7 +5,7 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, AnyVec, Exit, Rw, StorageMode, WritableVec};
 
-use crate::{distribution::state::UnrealizedState, prices};
+use crate::{distribution::state::UnrealizedState, price};
 
 use crate::internal::{
     HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, LazyValuePerBlock, ValuePerBlock,
@@ -72,7 +72,7 @@ impl SupplyCore {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {

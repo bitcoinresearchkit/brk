@@ -3,8 +3,8 @@ use std::ops::Range;
 use brk_error::Result;
 use brk_indexer::{Indexer, Lengths};
 use brk_oracle::{
-    bin_to_cents, cents_to_bin, for_each_round_dollar_bin, Config, HistogramRaw, Oracle,
-    START_HEIGHT_FAST, START_HEIGHT_SLOW,
+    Config, Oracle, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
+    payment_histogram,
 };
 use brk_types::{Cents, OutputType, Sats, TxIndex, TxOutIndex};
 use tracing::info;
@@ -87,16 +87,11 @@ impl Vecs {
             .truncate_if_needed_at(truncate_to)?;
 
         if self.spot.cents.height.len() < START_HEIGHT_SLOW {
-            for line in brk_oracle::PRICES
-                .lines()
-                .skip(self.spot.cents.height.len())
-            {
+            for cents in brk_oracle::pre_oracle_prices_from(self.spot.cents.height.len()) {
                 if self.spot.cents.height.len() >= START_HEIGHT_SLOW {
                     break;
                 }
-                let dollars: f64 = line.parse().unwrap_or(0.0);
-                let cents = (dollars * 100.0).round() as u64;
-                self.spot.cents.height.inner.push(Cents::new(cents));
+                self.spot.cents.height.inner.push(cents);
             }
         }
 
@@ -183,8 +178,7 @@ impl Vecs {
     }
 
     /// Feed a range of blocks from the indexer into an Oracle (skipping coinbase),
-    /// returning per-block ref_bin values. Outputs are grouped per transaction
-    /// because `for_each_round_dollar_bin` drops a whole tx on any OP_RETURN.
+    /// returning per-block ref_bin values.
     ///
     /// Pass `cap = None` from compute paths, when the indexer is quiescent and
     /// raw vec lengths are authoritative. Pass `cap = Some(&safe_lengths)` from
@@ -293,21 +287,18 @@ impl Vecs {
                 &mut output_types,
             );
 
-            let mut hist = HistogramRaw::zeros();
-            for tx in 0..tx_count {
+            let tx_outputs = (0..tx_count).map(|tx| {
                 let lo = tx_starts[tx] - out_start;
                 let hi = tx_starts
                     .get(tx + 1)
                     .map(|s| s - out_start)
                     .unwrap_or(out_end - out_start);
-                let outputs = values[lo..hi]
+                values[lo..hi]
                     .iter()
                     .copied()
-                    .zip(output_types[lo..hi].iter().copied());
-                for_each_round_dollar_bin(range.start + idx, outputs, |bin| {
-                    hist.increment(bin as usize)
-                });
-            }
+                    .zip(output_types[lo..hi].iter().copied())
+            });
+            let hist = payment_histogram(range.start + idx, tx_outputs);
 
             let ref_bin = oracle.process_histogram(&hist);
             on_block(range.start + idx, oracle, ref_bin);

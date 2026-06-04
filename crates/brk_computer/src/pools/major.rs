@@ -11,7 +11,7 @@ use crate::{
         MaskSats, PercentRollingWindows, RatioU64Bp16, ValuePerBlockCumulativeRolling,
         WindowStartVec, Windows,
     },
-    mining, prices,
+    mining, price,
 };
 
 use super::minor;
@@ -63,7 +63,7 @@ impl Vecs {
         indexer: &Indexer,
         pool: &impl ReadableVec<Height, PoolSlug>,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         mining: &mining::Vecs,
         exit: &Exit,
     ) -> Result<()> {

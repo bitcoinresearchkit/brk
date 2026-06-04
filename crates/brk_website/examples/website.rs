@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use axum::{
     ServiceExt,
@@ -22,7 +22,8 @@ async fn main() -> std::io::Result<()> {
 
     // Use the embedded website (default in release mode)
     // Or use Website::Filesystem(path) to serve from a custom path
-    let website = Website::Default;
+    // let website = Website::Default;
+    let website = Website::Filesystem(PathBuf::from("./website_next"));
 
     if !website.is_enabled() {
         eprintln!("Website is disabled");
@@ -78,7 +79,7 @@ async fn main() -> std::io::Result<()> {
         ))
         .layer(CorsLayer::permissive());
 
-    let port = 3110;
+    let port = 3111;
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     info!("website server listening on port {port}");

@@ -102,7 +102,7 @@ fn cost_basis_formatted(
     let day1 = Day1::try_from(date)?;
     let spot_cents = q
         .computer()
-        .prices
+        .price
         .split
         .close
         .cents

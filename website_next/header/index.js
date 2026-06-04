@@ -3,9 +3,12 @@ import { createCube } from "../cube/index.js";
 const header = document.createElement("header");
 
 const home = document.createElement("a");
+const cube = document.createElement("span");
+
 home.href = "/";
 home.ariaLabel = "bitview home";
-home.append(createCube(), "bitview");
+cube.append(createCube());
+home.append(cube, "bitview");
 
 const nav = document.createElement("nav");
 nav.setAttribute("aria-label", "Primary");

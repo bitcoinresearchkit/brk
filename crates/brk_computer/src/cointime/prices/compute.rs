@@ -5,14 +5,14 @@ use vecdb::Exit;
 
 use super::super::{activity, cap, supply};
 use super::Vecs;
-use crate::{distribution, prices};
+use crate::{distribution, price};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         distribution: &distribution::Vecs,
         activity: &activity::Vecs,
         supply: &supply::Vecs,

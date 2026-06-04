@@ -9,7 +9,7 @@ use crate::{
     distribution::metrics::{
         ActivityMinimal, ImportConfig, OutputsBase, RealizedMinimal, SupplyBase, UnrealizedMinimal,
     },
-    prices,
+    price,
 };
 
 /// MinimalCohortMetrics: supply, outputs, realized cap/price/mvrv/profit/loss + value_created/destroyed.
@@ -97,7 +97,7 @@ impl MinimalCohortMetrics {
 
     pub(crate) fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {
@@ -111,7 +111,7 @@ impl MinimalCohortMetrics {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

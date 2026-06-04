@@ -4,14 +4,14 @@ use brk_types::StoredF64;
 use vecdb::Exit;
 
 use super::{super::value, Vecs};
-use crate::{blocks, internal::algo::ComputeRollingMedianFromStarts, prices};
+use crate::{blocks, internal::algo::ComputeRollingMedianFromStarts, price};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         value: &value::Vecs,
         exit: &Exit,
     ) -> Result<()> {

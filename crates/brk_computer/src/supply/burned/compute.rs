@@ -4,7 +4,7 @@ use brk_types::Sats;
 use vecdb::{Exit, VecIndex};
 
 use super::Vecs;
-use crate::{mining, outputs, prices};
+use crate::{mining, outputs, price};
 
 impl Vecs {
     pub(crate) fn compute(
@@ -12,7 +12,7 @@ impl Vecs {
         indexer: &Indexer,
         outputs: &outputs::Vecs,
         mining: &mining::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;

@@ -6,7 +6,7 @@ use vecdb::{AnyStoredVec, AnyVec, Exit, ReadableVec, Rw, StorageMode, WritableVe
 
 use crate::{
     distribution::state::{CohortState, CostBasisOps, RealizedOps},
-    prices,
+    price,
 };
 
 use crate::internal::{
@@ -64,7 +64,7 @@ impl SupplyBase {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {

@@ -1,7 +1,8 @@
 use std::ops::Range;
 
 /// First height the oracle computes on-chain, with the slow cold-start EMA
-/// ([`slow`](Config::slow)). Below it, prices come from [`PRICES`](crate::PRICES).
+/// ([`slow`](Config::slow)). Below it, prices come from
+/// [`pre_oracle_prices_from`](crate::pre_oracle_prices_from).
 pub const START_HEIGHT_SLOW: usize = 340_000;
 
 /// Height where the oracle switches slow -> fast EMA ([`default`](Config::default)).
@@ -10,7 +11,7 @@ pub const START_HEIGHT_SLOW: usize = 340_000;
 /// slow.
 pub const START_HEIGHT_FAST: usize = 508_000;
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Config {
     /// EMA decay: 2/(N+1) where N is span in blocks. 2/7 = 6-block span.
     pub alpha: f64,
@@ -99,5 +100,11 @@ mod tests {
         let fast: Vec<_> =
             Config::segments_for_range(START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)).collect();
         assert_eq!(fast, vec![START_HEIGHT_FAST..(START_HEIGHT_FAST + 2)]);
+    }
+
+    #[test]
+    fn for_height_selects_regime() {
+        assert_eq!(Config::for_height(START_HEIGHT_FAST - 1), Config::slow());
+        assert_eq!(Config::for_height(START_HEIGHT_FAST), Config::default());
     }
 }

@@ -6,42 +6,44 @@
 //! Behavior changes by height along two independent axes, each in its own module:
 //!
 //! - EMA regime (`config`): below [`START_HEIGHT_SLOW`] prices come from the baked
-//!   [`PRICES`]. From there to [`START_HEIGHT_FAST`] a slow cold-start EMA runs with
-//!   a shape-anchoring restoring force. At [`START_HEIGHT_FAST`] it switches to a
-//!   fast EMA that tracks mature-market volatility.
-//! - Output filter (`filter`): below [`MAX_OUTPUTS_UNTIL_HEIGHT`] batch-payout
-//!   transactions are dropped from the histogram. Above it the cap is lifted.
+//!   pre-oracle tape. From there to [`START_HEIGHT_FAST`] a slow cold-start EMA
+//!   runs with a shape-anchoring restoring force. At [`START_HEIGHT_FAST`] it
+//!   switches to a fast EMA that tracks mature-market volatility.
+//! - Output filter (`filter`): below [`MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT`]
+//!   batch-payout transactions are capped strictly. Above it the cap relaxes but
+//!   still drops very large fan-outs.
 //!
 //! The two boundaries differ on purpose. The EMA must hand off to fast before the
-//! 2020 crash, while the output cap helps the thin pre-2020 mix for longer.
+//! 2020 crash, while the output cap helps the thin pre-2020 mix for longer and
+//! still prevents modern fan-out clusters from dominating one EMA slot.
 
 use brk_types::{Cents, Dollars};
 
 mod config;
 mod filter;
 mod scale;
-mod shape;
+mod seed;
 mod stencil;
 mod window;
 
 pub use config::{Config, START_HEIGHT_FAST, START_HEIGHT_SLOW};
-pub use filter::{MAX_OUTPUTS, MAX_OUTPUTS_UNTIL_HEIGHT, eligible_bin, for_each_round_dollar_bin};
-pub use scale::{
-    BINS_PER_DECADE, HistogramEma, HistogramEmaCompact, HistogramRaw, NUM_BINS, bin_to_cents,
-    cents_to_bin, sats_to_bin,
+pub use filter::{
+    eligible_bin, for_each_modern_round_dollar_bin, for_each_round_dollar_bin, payment_histogram,
+    MODERN_TX_OUTPUT_FANOUT_CAP, MODERN_TX_OUTPUT_FANOUT_CAP_START_HEIGHT,
+    PRE_MODERN_TX_OUTPUT_FANOUT_CAP,
 };
+pub use scale::{
+    bin_to_cents, cents_to_bin, sats_to_bin, HistogramEma, HistogramEmaCompact, HistogramRaw,
+    BINS_PER_DECADE, NUM_BINS,
+};
+pub use seed::{pre_oracle_price_cents, pre_oracle_prices_from, seed_bin, seed_price_cents};
 
-use shape::ShapeAnchor;
-use stencil::find_best_bin;
+use stencil::Stencil;
 use window::EmaWindow;
 
 /// Oracle algorithm version. Bump on any change that alters computed prices
 /// so downstream consumers can invalidate cached results.
-pub const VERSION: u32 = 3;
-
-/// Pre-oracle dollar prices, one per line, heights 0..340_000. The last entry
-/// seeds the oracle's first on-chain computation at [`START_HEIGHT_SLOW`].
-pub const PRICES: &str = include_str!("prices.txt");
+pub const VERSION: u32 = 4;
 
 #[derive(Clone)]
 pub struct Oracle {
@@ -49,9 +51,7 @@ pub struct Oracle {
     ref_bin: f64,
     config: Config,
     warmup: bool,
-    /// Shape-anchoring restoring force, inert outside the slow cold-start
-    /// regime (zero weight). See [`ShapeAnchor`](shape::ShapeAnchor).
-    shape: ShapeAnchor,
+    stencil: Stencil,
 }
 
 impl Oracle {
@@ -60,9 +60,15 @@ impl Oracle {
             window: EmaWindow::new(config.window_size, config.alpha),
             ref_bin: start_bin,
             warmup: false,
-            shape: ShapeAnchor::new(config.shape_weight),
+            stencil: Stencil::new(config.shape_weight),
             config,
         }
+    }
+
+    /// Create an oracle ready to process height [`START_HEIGHT_SLOW`], seeded from
+    /// the baked pre-oracle price tape and using the slow cold-start config.
+    pub fn from_seed() -> Self {
+        Self::new(seed_bin(), Config::slow())
     }
 
     /// Create an oracle restored from a known price. `fill` should call
@@ -84,14 +90,12 @@ impl Oracle {
         if !self.warmup {
             self.window.recompute();
 
-            self.ref_bin = find_best_bin(
+            self.ref_bin = self.stencil.pick(
                 self.window.ema(),
                 self.ref_bin,
                 self.config.search_below,
                 self.config.search_above,
-                &self.shape,
             );
-            self.shape.update(self.window.ema(), self.ref_bin.round() as i64);
         }
         self.ref_bin
     }
@@ -139,6 +143,21 @@ mod tests {
         assert_eq!(oracle.price_cents(), bin_to_cents(1600.0).into());
     }
 
+    #[test]
+    fn from_seed_matches_manual_seed() {
+        let mut seeded = Oracle::from_seed();
+        let mut manual = Oracle::new(seed_bin(), Config::slow());
+        let mut hist = HistogramRaw::zeros();
+        hist.increment(1200);
+
+        assert_eq!(seeded.ref_bin(), manual.ref_bin());
+        assert_eq!(
+            seeded.process_histogram(&hist),
+            manual.process_histogram(&hist)
+        );
+        assert!(seeded.ema().iter().eq(manual.ema().iter()));
+    }
+
     // reconfigure must leave the oracle in the same state as a fresh warm-up
     // over the most recent window of raw histograms. The continuous build and
     // the incremental resume rely on this agreeing at the slow -> fast seam.
@@ -158,7 +177,7 @@ mod tests {
         hists.iter().for_each(|h| {
             switched.process_histogram(h);
         });
-        switched.reconfigure(fast.clone());
+        switched.reconfigure(fast);
 
         let keep = fast.window_size;
         let fresh = Oracle::from_checkpoint(switched.ref_bin(), fast, |o| {
@@ -186,7 +205,7 @@ mod tests {
             let query_start = config.window_size + 5;
             let query_end = query_start + 20;
             let seed = 1600.0;
-            let mut sequential = Oracle::from_checkpoint(seed, config.clone(), |o| {
+            let mut sequential = Oracle::from_checkpoint(seed, config, |o| {
                 hists[query_start + 1 - config.window_size..query_start + 1]
                     .iter()
                     .for_each(|h| {
@@ -199,7 +218,7 @@ mod tests {
                     sequential.process_histogram(&hists[height]);
                 }
 
-                let fresh = Oracle::from_checkpoint(seed, config.clone(), |o| {
+                let fresh = Oracle::from_checkpoint(seed, config, |o| {
                     hists[height + 1 - config.window_size..height + 1]
                         .iter()
                         .for_each(|h| {

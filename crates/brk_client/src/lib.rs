@@ -3534,7 +3534,7 @@ pub struct SeriesTree {
     pub investing: SeriesTree_Investing,
     pub market: SeriesTree_Market,
     pub pools: SeriesTree_Pools,
-    pub prices: SeriesTree_Prices,
+    pub price: SeriesTree_Price,
     pub supply: SeriesTree_Supply,
     pub cohorts: SeriesTree_Cohorts,
 }
@@ -3556,7 +3556,7 @@ impl SeriesTree {
             investing: SeriesTree_Investing::new(client.clone(), format!("{base_path}_investing")),
             market: SeriesTree_Market::new(client.clone(), format!("{base_path}_market")),
             pools: SeriesTree_Pools::new(client.clone(), format!("{base_path}_pools")),
-            prices: SeriesTree_Prices::new(client.clone(), format!("{base_path}_prices")),
+            price: SeriesTree_Price::new(client.clone(), format!("{base_path}_price")),
             supply: SeriesTree_Supply::new(client.clone(), format!("{base_path}_supply")),
             cohorts: SeriesTree_Cohorts::new(client.clone(), format!("{base_path}_cohorts")),
         }
@@ -7063,31 +7063,31 @@ impl SeriesTree_Pools_Minor {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Prices {
-    pub split: SeriesTree_Prices_Split,
-    pub ohlc: SeriesTree_Prices_Ohlc,
-    pub spot: SeriesTree_Prices_Spot,
+pub struct SeriesTree_Price {
+    pub split: SeriesTree_Price_Split,
+    pub ohlc: SeriesTree_Price_Ohlc,
+    pub spot: SeriesTree_Price_Spot,
 }
 
-impl SeriesTree_Prices {
+impl SeriesTree_Price {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
-            split: SeriesTree_Prices_Split::new(client.clone(), format!("{base_path}_split")),
-            ohlc: SeriesTree_Prices_Ohlc::new(client.clone(), format!("{base_path}_ohlc")),
-            spot: SeriesTree_Prices_Spot::new(client.clone(), format!("{base_path}_spot")),
+            split: SeriesTree_Price_Split::new(client.clone(), format!("{base_path}_split")),
+            ohlc: SeriesTree_Price_Ohlc::new(client.clone(), format!("{base_path}_ohlc")),
+            spot: SeriesTree_Price_Spot::new(client.clone(), format!("{base_path}_spot")),
         }
     }
 }
 
 /// Series tree node.
-pub struct SeriesTree_Prices_Split {
+pub struct SeriesTree_Price_Split {
     pub open: CentsSatsUsdPattern3,
     pub high: CentsSatsUsdPattern3,
     pub low: CentsSatsUsdPattern3,
     pub close: CentsSatsUsdPattern3,
 }
 
-impl SeriesTree_Prices_Split {
+impl SeriesTree_Price_Split {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             open: CentsSatsUsdPattern3::new(client.clone(), "price_open".to_string()),
@@ -7099,13 +7099,13 @@ impl SeriesTree_Prices_Split {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Prices_Ohlc {
+pub struct SeriesTree_Price_Ohlc {
     pub usd: SeriesPattern2<OHLCDollars>,
     pub cents: SeriesPattern2<OHLCCents>,
     pub sats: SeriesPattern2<OHLCSats>,
 }
 
-impl SeriesTree_Prices_Ohlc {
+impl SeriesTree_Price_Ohlc {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             usd: SeriesPattern2::new(client.clone(), "price_ohlc".to_string()),
@@ -7116,13 +7116,13 @@ impl SeriesTree_Prices_Ohlc {
 }
 
 /// Series tree node.
-pub struct SeriesTree_Prices_Spot {
+pub struct SeriesTree_Price_Spot {
     pub usd: SeriesPattern1<Dollars>,
     pub cents: SeriesPattern1<Cents>,
     pub sats: SeriesPattern1<Sats>,
 }
 
-impl SeriesTree_Prices_Spot {
+impl SeriesTree_Price_Spot {
     pub fn new(client: Arc<BrkClientBase>, base_path: String) -> Self {
         Self {
             usd: SeriesPattern1::new(client.clone(), "price".to_string()),
@@ -8953,7 +8953,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.0";
+    pub const VERSION: &'static str = "v0.3.1";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {

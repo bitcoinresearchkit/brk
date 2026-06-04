@@ -16,7 +16,7 @@ use crate::{
         FiatPerBlockCumulativeWithSumsAndDeltas, LazyPerBlock, NegCentsUnsignedToDollars,
         PerBlockCumulativeRolling, RatioCents64, RollingWindow24hPerBlock, Windows,
     },
-    prices,
+    price,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -166,7 +166,7 @@ impl RealizedCore {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         transfer_volume_sum_24h_cents: &impl ReadableVec<Height, Cents>,

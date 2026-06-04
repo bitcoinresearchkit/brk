@@ -10,7 +10,7 @@ use crate::{
         ActivityCore, CohortMetricsBase, ImportConfig, OutputsBase, RealizedCore, SupplyCore,
         UnrealizedCore,
     },
-    prices,
+    price,
 };
 
 /// Basic cohort metrics: no extensions, used by age_range cohorts.
@@ -61,7 +61,7 @@ impl BasicCohortMetrics {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

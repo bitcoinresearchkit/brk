@@ -10,7 +10,7 @@ use crate::{
         LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight, ValuePerBlockCumulative,
         WindowStartVec, Windows,
     },
-    prices,
+    price,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -63,7 +63,7 @@ impl ValuePerBlockCumulativeRolling {
     pub(crate) fn compute(
         &mut self,
         max_from: Height,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
@@ -74,7 +74,7 @@ impl ValuePerBlockCumulativeRolling {
     pub(crate) fn compute_rest(
         &mut self,
         max_from: Height,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.inner.compute(prices, max_from, exit)

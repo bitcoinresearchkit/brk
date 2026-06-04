@@ -3,7 +3,7 @@ use brk_indexer::Lengths;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use vecdb::{Exit, ReadableVec};
 
-use crate::prices;
+use crate::price;
 
 /// Dynamic dispatch trait for cohort vectors.
 ///
@@ -31,7 +31,7 @@ pub trait DynCohortVecs: Send + Sync {
     /// First phase of post-processing computations.
     fn compute_rest_part1(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()>;
@@ -61,7 +61,7 @@ pub trait CohortVecs: DynCohortVecs {
     /// Second phase of post-processing computations.
     fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         all_utxo_count: &impl ReadableVec<Height, StoredU64>,

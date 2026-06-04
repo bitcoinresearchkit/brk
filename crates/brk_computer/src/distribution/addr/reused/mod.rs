@@ -35,7 +35,7 @@ use super::{
 use crate::{
     indexes, inputs,
     internal::{WindowStartVec, Windows},
-    outputs, prices,
+    outputs, price,
 };
 
 mod state;
@@ -112,7 +112,7 @@ impl ReusedAddrVecs {
         starting_lengths: &Lengths,
         outputs_by_type: &outputs::ByTypeVecs,
         inputs_by_type: &inputs::ByTypeVecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         all_supply_sats: &impl ReadableVec<Height, Sats>,
         type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,

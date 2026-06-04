@@ -3,7 +3,7 @@ use brk_indexer::Indexer;
 use vecdb::Exit;
 
 use super::Vecs;
-use crate::{blocks, indexes, inputs, prices};
+use crate::{blocks, indexes, inputs, price};
 
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
@@ -13,7 +13,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         inputs: &inputs::Vecs,
         blocks: &blocks::Vecs,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
     ) -> Result<()> {
         self.db.sync_bg_tasks()?;

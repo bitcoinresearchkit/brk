@@ -48,7 +48,7 @@ For each new block:
 
 ### 1. Filter outputs
 
-Skip the coinbase transaction, and skip every output of a transaction carrying an `OP_RETURN`: that transaction is protocol machinery, not a dollar-denominated payment, so its payout amounts are not price signal. Below height 630,000, also skip every output of a transaction with more than 100 outputs: a large fan-out is a batch payout (exchange sweep, mixer), not a round-dollar payment, and the thin early signal needs it removed. Then exclude noisy outputs: script types dominated by protocol activity (P2TR by default), dust below 1,000 sats, and round BTC amounts (0.01, 0.1, 1.0 BTC, etc.) that create false spikes unrelated to dollar purchases.
+Skip the coinbase transaction, and skip every output of a transaction carrying an `OP_RETURN`: that transaction is protocol machinery, not a dollar-denominated payment, so its payout amounts are not price signal. Below height 630,000, also skip every output of a transaction with more than 100 outputs: a large fan-out is a batch payout (exchange sweep, mixer), not a round-dollar payment, and the thin early signal needs it removed. At and above height 630,000, the transaction fan-out cap relaxes to 250 outputs so dense-chain payment activity remains visible while very large fan-outs cannot dominate one EMA slot. Then exclude noisy outputs: script types dominated by protocol activity (P2TR by default), dust below 1,000 sats, and round BTC amounts (0.01, 0.1, 1.0 BTC, etc.) that create false spikes unrelated to dollar purchases.
 
 ### 2. Build a log-scale histogram
 
@@ -122,9 +122,9 @@ Parabolic interpolation between the best bin and its two neighbors refines the e
 
 The oracle consumes one pre-built histogram per block via `process_histogram(&hist)`, a `[u32; 2400]` bin-count array, and returns the updated reference bin.
 
-The caller filters as it builds the histogram, applying the [step 1](#1-filter-outputs) rules. Two helpers are exported for this: `eligible_bin(sats, output_type)` returns an output's bin index, or `None` if filtered, and `for_each_round_dollar_bin` wraps it with the per-transaction drops (coinbase, OP_RETURN, the >100-output cap below height 630,000) for callers holding a whole transaction's outputs.
+The caller filters as it builds the histogram, applying the [step 1](#1-filter-outputs) rules. `payment_histogram` builds a fresh block histogram from non-coinbase transaction outputs. Incremental callers use `for_each_round_dollar_bin(height, ...)`; live or otherwise guaranteed-modern callers use `for_each_modern_round_dollar_bin(...)`, which applies the modern fan-out cap without requiring a height. `eligible_bin(sats, output_type)` returns an individual output's bin index, or `None` if filtered. The transaction-level rules include the OP_RETURN drop, the >100 transaction-output fan-out cap below height 630,000, and the >250 cap from height 630,000 onward.
 
-The initial seed must be close to the real price at the starting height. The crate includes a `PRICES` constant with exchange prices for heights 0..340,000. Its last entry, height 339,999 (one below `START_HEIGHT_SLOW`), seeds the oracle's first on-chain computation at height 340,000.
+The initial seed must be close to the real price at the starting height. The crate includes typed pre-oracle helpers for exchange prices at heights 0..340,000. `Oracle::from_seed()` uses the last baked price, height 339,999 (one below `START_HEIGHT_SLOW`), and the slow cold-start config to seed the oracle's first on-chain computation at height 340,000.
 
 ## Configuration
 
@@ -161,7 +161,7 @@ Between heights 340,000 and 508,000 the oracle runs a slower cold-start configur
 
 ## Accuracy
 
-Tested over 596,251 blocks (heights 340,000 to 950,800, as of May 2026) against exchange OHLC data. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
+Tested over 596,251 exchange-covered blocks after running the oracle from height 340,000 through height 952,314. Error is measured per block as distance from the oracle estimate to the exchange high/low range at that height. If the oracle falls within the range, the error is zero.
 
 ### Per-block
 
@@ -173,9 +173,9 @@ Tested over 596,251 blocks (heights 340,000 to 950,800, as of May 2026) against 
 | 99.9th percentile | 15.6% |
 | RMSE | 0.97% |
 | Max error | 33.8% |
-| Bias | +0.05 bins (essentially zero) |
-| Blocks > 5% error | 3,235 (0.543%) |
-| Blocks > 10% error | 1,324 |
+| Bias | +0.06 bins (essentially zero) |
+| Blocks > 5% error | 3,233 (0.542%) |
+| Blocks > 10% error | 1,323 |
 | Blocks > 20% error | 154 |
 
 ### Daily candles
@@ -185,7 +185,7 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 | | Median | RMSE | Max |
 |-------|--------|------|-----|
 | Open | 0.24% | 1.07% | 29.1% |
-| High | 0.58% | 1.48% | 27.3% |
+| High | 0.58% | 1.47% | 27.3% |
 | Low | 0.53% | 1.95% | 55.1% |
 | Close | 0.27% | 1.18% | 29.2% |
 
@@ -199,10 +199,10 @@ Oracle daily OHLC built from per-block prices vs exchange daily OHLC:
 | 2018 | 54,531 | 0.18% | 1.31% | 31.6% | 411 | 207 | 62 | $3,129–$17,178 |
 | 2019 | 54,272 | 0.16% | 0.59% | 17.4% | 100 | 16 | 0 | $3,338–$13,868 |
 | 2020 | 53,102 | 0.10% | 0.42% | 11.6% | 61 | 3 | 0 | $3,858–$29,322 |
-| 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 43 | 10 | 0 | $27,678–$69,000 |
+| 2021 | 52,733 | 0.07% | 0.47% | 14.4% | 42 | 9 | 0 | $27,678–$69,000 |
 | 2022 | 53,230 | 0.07% | 0.32% | 6.8% | 10 | 0 | 0 | $15,460–$48,240 |
 | 2023 | 54,032 | 0.10% | 0.25% | 6.6% | 5 | 0 | 0 | $16,490–$44,700 |
-| 2024 | 53,367 | 0.10% | 0.28% | 7.1% | 8 | 0 | 0 | $38,555–$108,298 |
+| 2024 | 53,367 | 0.10% | 0.28% | 6.7% | 7 | 0 | 0 | $38,555–$108,298 |
 | 2025 | 53,113 | 0.11% | 0.25% | 5.8% | 4 | 0 | 0 | $74,409–$126,198 |
 | 2026 | 5,910 | 0.10% | 0.27% | 3.2% | 0 | 0 | 0 | $60,000–$97,900 |
 
@@ -216,6 +216,14 @@ Post-hoc smoothing, for example correcting any block whose price deviates more t
 2. **Finality**: Each block's price is produced once and never revised (unless the block itself is reorged). Downstream consumers can treat the oracle output as append-only. Smoothing would require retroactively changing already-published prices, breaking that property.
 
 ## Changelog
+
+### v4
+
+Changes from v3:
+
+- **Modern fan-out cap**: below height 630,000 the oracle keeps the strict >100-output transaction drop introduced in v3. At and above 630,000 the cap now relaxes to 250 outputs instead of being fully lifted. This preserves dense-chain payment signal while preventing very large modern fan-outs from dominating a single EMA slot and creating a transient false round-dollar ladder.
+
+`VERSION` is bumped to 4 so downstream consumers invalidate prices computed by an earlier algorithm.
 
 ### v3
 

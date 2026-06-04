@@ -10,7 +10,7 @@ use crate::{
     internal::{
         PerBlock, RatioPerBlock, ValuePerBlock, ValuePerBlockWithDeltas, WindowStartVec, Windows,
     },
-    prices,
+    price,
 };
 
 #[derive(Traversable)]
@@ -115,7 +115,7 @@ impl ProfitabilityBucket {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         is_profit: bool,
         exit: &Exit,
@@ -176,7 +176,7 @@ impl ProfitabilityBucket {
 
     pub(crate) fn compute_from_ranges(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         is_profit: bool,
         sources: &[&ProfitabilityBucket],
@@ -293,7 +293,7 @@ impl ProfitabilityMetrics {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         exit: &Exit,
     ) -> Result<()> {

@@ -13,7 +13,7 @@ use crate::{
         FiatPerBlockCumulativeWithSums, FiatPerBlockWithDeltas, Identity, LazyPerBlock,
         PriceWithRatioPerBlock,
     },
-    prices,
+    price,
 };
 
 use crate::distribution::metrics::ImportConfig;
@@ -104,7 +104,7 @@ impl RealizedMinimal {
 
     pub(crate) fn compute_rest_part2(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         starting_lengths: &Lengths,
         height_to_supply: &impl ReadableVec<Height, Bitcoin>,
         exit: &Exit,

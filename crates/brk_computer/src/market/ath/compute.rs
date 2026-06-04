@@ -4,13 +4,13 @@ use brk_types::{StoredF32, Timestamp};
 use vecdb::{Exit, ReadableVec, VecIndex};
 
 use super::Vecs;
-use crate::{indexes, prices};
+use crate::{indexes, price};
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         indexes: &indexes::Vecs,
         exit: &Exit,
     ) -> Result<()> {

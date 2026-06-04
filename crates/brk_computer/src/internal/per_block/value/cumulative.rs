@@ -6,7 +6,7 @@ use vecdb::{Database, EagerVec, Exit, PcoVec, Rw, StorageMode};
 use crate::{
     indexes,
     internal::{ValueBlock, ValuePerBlock},
-    prices,
+    price,
 };
 
 #[derive(Traversable)]
@@ -39,7 +39,7 @@ impl ValuePerBlockCumulative {
 
     pub(crate) fn compute(
         &mut self,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {
@@ -61,7 +61,7 @@ impl ValuePerBlockCumulative {
     pub(crate) fn compute_with(
         &mut self,
         max_from: Height,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {

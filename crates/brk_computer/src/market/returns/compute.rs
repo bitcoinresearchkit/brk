@@ -5,14 +5,14 @@ use vecdb::Exit;
 
 use super::Vecs;
 use crate::{
-    blocks, internal::RatioDiffDollarsBps32, investing::ByDcaPeriod, market::lookback, prices,
+    blocks, internal::RatioDiffDollarsBps32, investing::ByDcaPeriod, market::lookback, price,
 };
 
 impl Vecs {
     pub(crate) fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         blocks: &blocks::Vecs,
         lookback: &lookback::Vecs,
         exit: &Exit,

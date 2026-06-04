@@ -10,7 +10,7 @@ use crate::{
         RollingDistributionValuePerBlock, ValuePerBlockCumulativeRolling, WindowStartVec,
         WindowStarts, Windows,
     },
-    prices,
+    price,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -49,7 +49,7 @@ impl ValuePerBlockFull {
         &mut self,
         max_from: Height,
         windows: &WindowStarts<'_>,
-        prices: &prices::Vecs,
+        prices: &price::Vecs,
         exit: &Exit,
         compute_sats: impl FnOnce(&mut EagerVec<PcoVec<Height, Sats>>) -> Result<()>,
     ) -> Result<()> {
