@@ -13,20 +13,13 @@ html {
 
 body {
   > main {
-    color: white;
+    min-height: 100dvh;
+    color: var(--white);
   }
-}
-
-main {
-  min-height: 100dvh;
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-
-  body::before {
-    transition: none;
   }
 }

@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
   --white: oklch(95% 0 0);
   --dark-white: oklch(92.5% 0 0);
@@ -44,11 +44,10 @@
   --font-size-xl: 1.25rem;
   --line-height-xl: calc(1.75 / 1.25);
 
+  --page-x: 2rem;
   --main-padding: 2rem;
   --negative-main-padding: calc(-1 * var(--main-padding));
   --font-weight-base: 400;
   --max-main-width: 70dvw;
-  --layer-transition: 8;
   --layer-header: 10;
-  --layer-loading: 100;
 }

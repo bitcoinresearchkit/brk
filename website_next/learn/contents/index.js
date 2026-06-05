@@ -1,25 +1,19 @@
-/**
- * @param {{ title: string, children: Section[] }} section
- */
-function createSectionId(section) {
-  return section.title.toLowerCase().replaceAll(" ", "-");
-}
+import { createId } from "../../utils/id.js";
 
 /**
  * @param {{ title: string, children: Section[] }} section
- * @param {number[]} indexes
  */
-function createContentsItem(section, indexes) {
+function createContentsItem(section) {
   const item = document.createElement("li");
   const anchor = document.createElement("a");
-  anchor.href = `#${createSectionId(section)}`;
+  anchor.href = `#${createId(section.title)}`;
   anchor.append(section.title);
 
   if (section.children.length) {
     const list = document.createElement("ol");
 
-    for (const [index, child] of section.children.entries()) {
-      list.append(createContentsItem(child, indexes.concat(index + 1)));
+    for (const child of section.children) {
+      list.append(createContentsItem(child));
     }
     item.append(list);
   }
@@ -35,8 +29,8 @@ export function createContents(sections) {
 
   nav.setAttribute("aria-label", "Learn contents");
 
-  for (const [index, section] of sections.entries()) {
-    list.append(createContentsItem(section, [index + 1]));
+  for (const section of sections) {
+    list.append(createContentsItem(section));
   }
 
   nav.append(list);

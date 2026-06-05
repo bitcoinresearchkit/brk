@@ -14,15 +14,17 @@ npx --package typescript tsc --noEmit --pretty false | grep -v "modules/"
 
 ALWAYS
 
-- fast
+- very fast
+- light (memory)
 - KISS
 - DRY
 - very well organized
 - contained
 - colocated
+- composed
 - prefer one concept per file
 - prefer more files and folders than big files
 - reads like english
-- very easy to understand
-- very easy to maintain
+- easy to understand
+- maintainability
 - avoid defensive checks when the code itself guarantees correctness

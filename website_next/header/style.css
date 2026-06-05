@@ -1,7 +1,7 @@
 body {
   > header {
     position: fixed;
-    inset: 1.5rem 2rem auto;
+    inset: 1.5rem var(--page-x) auto;
     z-index: var(--layer-header);
     display: grid;
     grid-template-columns: 1fr auto 1fr;

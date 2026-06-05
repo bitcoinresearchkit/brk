@@ -1,17 +1,7 @@
-import "./header/index.js";
-import { createBuildPage } from "./build/index.js";
-import { createExplorePage } from "./explore/index.js";
-import { createHomePage } from "./home/index.js";
-import { createLearnPage } from "./learn/index.js";
-import { readCssDuration, wait } from "./utils/timing.js";
-
-/** @type {Record<string, () => HTMLElement>} */
-const routes = {
-  "/": createHomePage,
-  "/build": createBuildPage,
-  "/explore": createExplorePage,
-  "/learn": createLearnPage,
-};
+import { createHeader } from "./header/index.js";
+import { createRoutePage, isRoute, normalizePath } from "./routes.js";
+import { getEventAnchor } from "./utils/event.js";
+import { revealPage, transitionPage } from "./utils/transition.js";
 
 /** @type {HTMLElement | undefined} */
 let currentPage;
@@ -19,24 +9,16 @@ let currentPage;
 /** @type {Map<string, HTMLElement>} */
 const pageByPath = new Map();
 
-function waitForTransition() {
-  return wait(readCssDuration("--transition-duration"));
-}
+const header = createHeader();
+document.body.append(header);
 
-function waitForReveal() {
-  return wait(readCssDuration("--reveal-duration"));
-}
-
-/** @param {string} pathname */
-function normalizePath(pathname) {
-  return pathname in routes ? pathname : "/";
-}
+const navLinks = [...header.querySelectorAll("nav a")];
 
 /** @param {string} pathname */
 function updateCurrentLink(pathname) {
   const currentPath = normalizePath(pathname);
 
-  for (const link of document.querySelectorAll("body > header > nav a")) {
+  for (const link of navLinks) {
     const linkPath = new URL(/** @type {HTMLAnchorElement} */ (link).href)
       .pathname;
 
@@ -53,7 +35,7 @@ function getPage(pathname) {
   let page = pageByPath.get(pathname);
 
   if (!page) {
-    page = routes[pathname]();
+    page = createRoutePage(pathname);
     page.hidden = true;
     page.inert = true;
     pageByPath.set(pathname, page);
@@ -85,16 +67,7 @@ function renderPage() {
 function navigate(pathname) {
   if (pathname === window.location.pathname) return;
   history.pushState(null, "", pathname);
-  transitionPage();
-}
-
-async function transitionPage() {
-  document.documentElement.dataset.transition = "";
-  await waitForTransition();
-  renderPage();
-  requestAnimationFrame(() => {
-    delete document.documentElement.dataset.transition;
-  });
+  void transitionPage(renderPage);
 }
 
 document.addEventListener("click", (event) => {
@@ -102,16 +75,14 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  const anchor = /** @type {HTMLAnchorElement | null} */ (
-    /** @type {HTMLElement} */ (event.target).closest("a[href]")
-  );
+  const anchor = getEventAnchor(event);
   if (!anchor) return;
 
   const url = new URL(anchor.href);
   if (url.origin !== window.location.origin) return;
   if (url.pathname === window.location.pathname && url.hash) return;
 
-  if (!(url.pathname in routes)) return;
+  if (!isRoute(url.pathname)) return;
 
   event.preventDefault();
   navigate(url.pathname);
@@ -122,11 +93,5 @@ window.addEventListener("popstate", renderPage);
 renderPage();
 
 requestAnimationFrame(() => {
-  waitForTransition().then(() => {
-    delete document.documentElement.dataset.loading;
-    document.documentElement.dataset.revealing = "";
-    waitForReveal().then(() => {
-      delete document.documentElement.dataset.revealing;
-    });
-  });
+  void revealPage();
 });

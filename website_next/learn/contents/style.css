@@ -1,5 +1,6 @@
 main.learn {
   > nav {
+    counter-reset: content-theme;
     position: sticky;
     top: 0;
     padding-top: var(--top-offset);
@@ -44,7 +45,7 @@ main.learn {
         opacity: 0.5;
       }
 
-      &:hover {
+      &:is(:hover, [aria-current="location"]) {
         color: var(--orange);
       }
     }

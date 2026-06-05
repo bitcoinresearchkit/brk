@@ -1,11 +1,11 @@
 main.learn {
   --top-offset: 6rem;
-  --sidebar-bottom: 1rem;
+  --content-width: 52rem;
 
   display: grid;
   grid-template-columns: 14rem minmax(0, 1fr);
   gap: 4rem;
-  padding: 0 2rem;
+  padding: 0 var(--page-x);
 
   article {
     counter-reset: theme;
@@ -18,7 +18,6 @@ main.learn {
       top: 0;
       z-index: 2;
       display: block;
-      width: min(100%, 52rem);
       height: var(--top-offset);
       margin-top: calc(-1 * var(--top-offset));
       margin-inline: auto;
@@ -30,7 +29,7 @@ main.learn {
     > section {
       counter-increment: theme;
       counter-reset: topic;
-      width: min(100%, 52rem);
+      width: min(100%, var(--content-width));
       margin-inline: auto;
       scroll-margin-top: var(--top-offset);
     }
@@ -53,13 +52,15 @@ main.learn {
   h1,
   h2 {
     position: sticky;
+    top: var(--top-offset);
+    padding-bottom: 0.5rem;
     background: var(--black);
     line-height: 1;
 
     a {
       position: relative;
       display: inline-block;
-      color: white;
+      color: var(--white);
       text-decoration: none;
 
       &::before {
@@ -90,8 +91,6 @@ main.learn {
 
   h1 {
     z-index: 3;
-    top: var(--top-offset);
-    padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--dark-gray);
     font-size: 2.75rem;
 
@@ -102,9 +101,7 @@ main.learn {
 
   h2 {
     z-index: 1;
-    top: var(--top-offset);
     padding-top: 4.5rem;
-    padding-bottom: 0.5rem;
     border-bottom: 1px dashed var(--dark-gray);
     font-size: 1.5rem;
 
