@@ -3,6 +3,7 @@ import { createBuildPage } from "./build/index.js";
 import { createExplorePage } from "./explore/index.js";
 import { createHomePage } from "./home/index.js";
 import { createLearnPage } from "./learn/index.js";
+import { readCssDuration, wait } from "./utils/timing.js";
 
 /** @type {Record<string, () => HTMLElement>} */
 const routes = {
@@ -17,6 +18,14 @@ let currentPage;
 
 /** @type {Map<string, HTMLElement>} */
 const pageByPath = new Map();
+
+function waitForTransition() {
+  return wait(readCssDuration("--transition-duration"));
+}
+
+function waitForReveal() {
+  return wait(readCssDuration("--reveal-duration"));
+}
 
 /** @param {string} pathname */
 function normalizePath(pathname) {
@@ -45,6 +54,7 @@ function getPage(pathname) {
 
   if (!page) {
     page = routes[pathname]();
+    page.hidden = true;
     page.inert = true;
     pageByPath.set(pathname, page);
     document.body.append(page);
@@ -56,12 +66,12 @@ function getPage(pathname) {
 /** @param {HTMLElement} page */
 function activatePage(page) {
   if (currentPage) {
+    currentPage.hidden = true;
     currentPage.inert = true;
-    delete currentPage.dataset.active;
   }
 
+  page.hidden = false;
   page.inert = false;
-  page.dataset.active = "";
   currentPage = page;
 }
 
@@ -73,11 +83,18 @@ function renderPage() {
 
 /** @param {string} pathname */
 function navigate(pathname) {
-  if (pathname !== window.location.pathname) {
-    history.pushState(null, "", pathname);
-  }
+  if (pathname === window.location.pathname) return;
+  history.pushState(null, "", pathname);
+  transitionPage();
+}
 
+async function transitionPage() {
+  document.documentElement.dataset.transition = "";
+  await waitForTransition();
   renderPage();
+  requestAnimationFrame(() => {
+    delete document.documentElement.dataset.transition;
+  });
 }
 
 document.addEventListener("click", (event) => {
@@ -105,7 +122,11 @@ window.addEventListener("popstate", renderPage);
 renderPage();
 
 requestAnimationFrame(() => {
-  setTimeout(() => {
+  waitForTransition().then(() => {
     delete document.documentElement.dataset.loading;
-  }, 150);
+    document.documentElement.dataset.revealing = "";
+    waitForReveal().then(() => {
+      delete document.documentElement.dataset.revealing;
+    });
+  });
 });

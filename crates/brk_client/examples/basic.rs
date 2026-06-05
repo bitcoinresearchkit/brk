@@ -17,7 +17,7 @@ fn main() -> brk_client::Result<()> {
     // day1() returns DateMetricEndpointBuilder, so fetch() returns DateMetricData
     let price_close = client
         .series()
-        .prices
+        .price
         .split
         .close
         .usd

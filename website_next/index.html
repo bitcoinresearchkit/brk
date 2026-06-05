@@ -20,19 +20,42 @@
         background: var(--black);
       }
 
+      html {
+        --layer-transition: 8;
+        --layer-loading: 100;
+        --transition-duration: 150ms;
+        --reveal-duration: 500ms;
+        --overlay-layer: var(--layer-transition);
+        --overlay-duration: var(--transition-duration);
+      }
+
       body::before {
         content: "";
         position: fixed;
         inset: 0;
-        z-index: 100;
+        z-index: var(--overlay-layer);
         background: var(--black);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 150ms ease;
+        transition: opacity var(--overlay-duration) ease;
       }
 
-      html[data-loading] body::before {
+      html[data-loading] body::before,
+      html[data-transition] body::before {
         opacity: 1;
+      }
+
+      html[data-loading],
+      html[data-revealing] {
+        --overlay-layer: var(--layer-loading);
+      }
+
+      html[data-revealing] {
+        --overlay-duration: var(--reveal-duration);
+      }
+
+      html[data-transition] {
+        --overlay-layer: var(--layer-transition);
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -76,6 +99,7 @@
     <link rel="stylesheet" href="/home/style.css" />
     <link rel="stylesheet" href="/explore/style.css" />
     <link rel="stylesheet" href="/learn/style.css" />
+    <link rel="stylesheet" href="/learn/contents/style.css" />
     <link rel="stylesheet" href="/build/style.css" />
     <!-- /IMPORTMAP -->
 

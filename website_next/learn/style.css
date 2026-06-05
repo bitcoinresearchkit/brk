@@ -1,19 +1,16 @@
 main.learn {
-  --sticky-h: 5rem;
-  --sidebar-top: 6rem;
+  --top-offset: 6rem;
   --sidebar-bottom: 1rem;
 
-  display: flex;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+  gap: 4rem;
+  padding: 0 2rem;
 
   article {
-    position: relative;
     counter-reset: theme;
-    min-width: 0;
-    min-height: 0;
-    overflow: auto;
-    scroll-behavior: smooth;
-    scrollbar-gutter: stable;
+    padding-top: var(--top-offset);
+    padding-bottom: calc(var(--top-offset) / 2);
 
     &::before {
       content: "";
@@ -22,9 +19,10 @@ main.learn {
       z-index: 2;
       display: block;
       width: min(100%, 52rem);
-      height: var(--sticky-h);
+      height: var(--top-offset);
+      margin-top: calc(-1 * var(--top-offset));
       margin-inline: auto;
-      margin-bottom: calc(-1 * var(--sticky-h));
+      margin-bottom: calc(-1 * var(--top-offset));
       background: var(--black);
       pointer-events: none;
     }
@@ -34,6 +32,12 @@ main.learn {
       counter-reset: topic;
       width: min(100%, 52rem);
       margin-inline: auto;
+      scroll-margin-top: var(--top-offset);
+    }
+
+    > section:first-of-type {
+      margin-top: calc(-1 * var(--top-offset));
+      padding-top: var(--top-offset);
     }
 
     > section + section {
@@ -42,7 +46,7 @@ main.learn {
 
     section section {
       counter-increment: topic;
-      margin-top: 4rem;
+      scroll-margin-top: var(--top-offset);
     }
   }
 
@@ -86,8 +90,7 @@ main.learn {
 
   h1 {
     z-index: 3;
-    top: var(--sticky-h);
-    scroll-margin-top: var(--sticky-h);
+    top: var(--top-offset);
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--dark-gray);
     font-size: 2.75rem;
@@ -99,9 +102,8 @@ main.learn {
 
   h2 {
     z-index: 1;
-    top: var(--sticky-h);
-    scroll-margin-top: var(--sticky-h);
-    padding-top: 3.5rem;
+    top: var(--top-offset);
+    padding-top: 4.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px dashed var(--dark-gray);
     font-size: 1.5rem;
@@ -133,69 +135,5 @@ main.learn {
     figcaption {
       margin-top: 0.75rem;
     }
-  }
-
-  > nav {
-    counter-reset: content-theme;
-    min-height: 0;
-    overflow: auto;
-    scrollbar-gutter: stable;
-    padding-top: var(--sidebar-top);
-    padding-bottom: var(--sidebar-bottom);
-    font-size: var(--font-size-xs);
-    line-height: var(--line-height-sm);
-    text-transform: uppercase;
-
-    ol {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    > ol > li {
-      counter-increment: content-theme;
-      counter-reset: content-topic;
-    }
-
-    ol ol {
-      margin-top: 0.5rem;
-      margin-left: 1rem;
-      color: var(--gray);
-    }
-
-    ol ol > li {
-      counter-increment: content-topic;
-    }
-
-    li + li {
-      margin-top: 0.5rem;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-
-      &::before {
-        opacity: 0.5;
-      }
-
-      &:hover {
-        color: var(--orange);
-      }
-    }
-
-    > ol > li > a::before {
-      content: counter(content-theme, upper-roman) ". ";
-    }
-
-    ol ol > li > a::before {
-      content: counter(content-topic) ". ";
-    }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  main.learn article {
-    scroll-behavior: auto;
   }
 }

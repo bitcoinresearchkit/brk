@@ -7,27 +7,26 @@ body {
   background: var(--black);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   > main {
-    position: fixed;
-    inset: 0;
-    overflow: auto;
     color: white;
-    opacity: 0;
-    pointer-events: none;
-    scroll-behavior: smooth;
-    transition: opacity 150ms ease;
-  }
-
-  > main[data-active] {
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 
+main {
+  min-height: 100dvh;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  body > main {
+  html {
     scroll-behavior: auto;
+  }
+
+  body::before {
     transition: none;
   }
 }

@@ -1,0 +1,60 @@
+main.learn {
+  > nav {
+    position: sticky;
+    top: 0;
+    padding-top: var(--top-offset);
+    padding-bottom: calc(var(--top-offset) / 2);
+    max-height: 100dvh;
+    overflow: auto;
+    scrollbar-width: thin;
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-xs);
+    text-transform: uppercase;
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    > ol > li {
+      counter-increment: content-theme;
+      counter-reset: content-topic;
+    }
+
+    ol ol {
+      margin-top: 0.5rem;
+      margin-left: 1rem;
+      color: var(--gray);
+    }
+
+    ol ol > li {
+      counter-increment: content-topic;
+    }
+
+    li + li {
+      margin-top: 0.5rem;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+
+      &::before {
+        opacity: 0.5;
+      }
+
+      &:hover {
+        color: var(--orange);
+      }
+    }
+
+    > ol > li > a::before {
+      content: counter(content-theme, upper-roman) ". ";
+    }
+
+    ol ol > li > a::before {
+      content: counter(content-topic) ". ";
+    }
+  }
+}

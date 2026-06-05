@@ -1,3 +1,4 @@
+import { createContents } from "./contents/index.js";
 import { sections } from "./data.js";
 
 /** @param {string} label */
@@ -31,7 +32,7 @@ function createSection(section, indexes) {
   const description = document.createElement("p");
   const id = createSectionId(section.title);
 
-  title.id = id;
+  element.id = id;
   anchor.href = `#${id}`;
   anchor.append(section.title);
   title.append(anchor);
@@ -45,49 +46,10 @@ function createSection(section, indexes) {
   return element;
 }
 
-/**
- * @param {{ title: string, children: Section[] }} section
- * @param {number[]} indexes
- */
-function createContentsItem(section, indexes) {
-  const item = document.createElement("li");
-  const anchor = document.createElement("a");
-  anchor.href = `#${createSectionId(section.title)}`;
-  anchor.append(section.title);
-  item.append(anchor);
-
-  if (section.children.length) {
-    const list = document.createElement("ol");
-    for (const [index, child] of section.children.entries()) {
-      list.append(createContentsItem(child, indexes.concat(index + 1)));
-    }
-    item.append(list);
-  }
-
-  return item;
-}
-
-function createContents() {
-  const nav = document.createElement("nav");
-  const list = document.createElement("ol");
-
-  nav.setAttribute("aria-label", "Learn contents");
-
-  for (const [index, section] of sections.entries()) {
-    list.append(createContentsItem(section, [index + 1]));
-  }
-
-  nav.append(list);
-  return nav;
-}
-
-/**
- * @param {HTMLElement} main
- * @param {HTMLElement} article
- */
-function initScrollSpy(main, article) {
-  const titles = [...article.querySelectorAll("h1[id], h2[id]")];
-  const visible = new Set();
+/** @param {HTMLElement} main */
+function initScrollSpy(main) {
+  const headings = [...main.querySelectorAll("article h1, article h2")];
+  const visibleHeadings = new Set();
   const links = new Map(
     [...main.querySelectorAll('nav a[href^="#"]')].map((link) => [
       link.getAttribute("href"),
@@ -98,36 +60,54 @@ function initScrollSpy(main, article) {
   /** @type {string | null} */
   let current = null;
 
-  function update() {
-    const title = titles.find((title) => visible.has(title.id));
-    if (!title) return;
+  /** @param {Element} heading */
+  function getHash(heading) {
+    const section = /** @type {HTMLElement} */ (
+      heading.closest("section[id]")
+    );
+    return `#${section.id}`;
+  }
 
-    const hash = `#${title.id}`;
+  /** @param {string} hash */
+  function getLink(hash) {
+    return /** @type {HTMLAnchorElement} */ (links.get(hash));
+  }
+
+  /** @param {string} hash */
+  function setCurrent(hash) {
     if (hash === current) return;
 
-    links.get(current)?.removeAttribute("aria-current");
-    links.get(hash)?.setAttribute("aria-current", "location");
+    if (current) getLink(current).removeAttribute("aria-current");
+    getLink(hash).setAttribute("aria-current", "location");
     history.replaceState(null, "", hash);
     current = hash;
+  }
+
+  function update() {
+    if (main.hidden) return;
+
+    const heading = headings.findLast((heading) =>
+      visibleHeadings.has(heading),
+    );
+    if (heading) setCurrent(getHash(heading));
   }
 
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
-          visible.add(entry.target.id);
+          visibleHeadings.add(entry.target);
         } else {
-          visible.delete(entry.target.id);
+          visibleHeadings.delete(entry.target);
         }
       }
+
       update();
     },
-    { root: article },
+    { rootMargin: "0px 0px -80% 0px" },
   );
 
-  for (const title of titles) {
-    observer.observe(title);
-  }
+  for (const heading of headings) observer.observe(heading);
 }
 
 export function createLearnPage() {
@@ -139,8 +119,8 @@ export function createLearnPage() {
     article.append(createSection(section, [index + 1]));
   }
 
-  main.append(article, createContents());
-  initScrollSpy(main, article);
+  main.append(createContents(sections), article);
+  initScrollSpy(main);
   return main;
 }
 

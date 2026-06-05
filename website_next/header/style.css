@@ -2,7 +2,7 @@ body {
   > header {
     position: fixed;
     inset: 1.5rem 2rem auto;
-    z-index: 10;
+    z-index: var(--layer-header);
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
