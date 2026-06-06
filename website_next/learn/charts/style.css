@@ -183,7 +183,7 @@ main.learn {
         text-transform: inherit;
         cursor: pointer;
 
-        &:is(:hover, :focus-visible, [data-active]) {
+        &:is(:hover, :focus-visible, [data-active], [data-preview]) {
           color: var(--black);
           background: var(--color);
 

@@ -63,6 +63,8 @@ export function createScrubber(svg, readout, highlight) {
   let markers = [];
   let height = 0;
   let stepCount = 0;
+  /** @type {number | undefined} */
+  let previewIndex;
 
   group.dataset.scrubber = "root";
   guide.dataset.scrubber = "guide";
@@ -108,9 +110,26 @@ export function createScrubber(svg, readout, highlight) {
   function clear() {
     series = [];
     markers = [];
+    clearPreview();
     group.replaceChildren(guide);
     delete svg.dataset.index;
     delete svg.dataset.scrubbing;
+  }
+
+  /** @param {number} index */
+  function preview(index) {
+    if (index === previewIndex) return;
+
+    if (previewIndex !== undefined) highlight.clearPreview(previewIndex);
+    highlight.preview(index);
+    previewIndex = index;
+  }
+
+  function clearPreview() {
+    if (previewIndex === undefined) return;
+
+    highlight.clearPreview(previewIndex);
+    previewIndex = undefined;
   }
 
   /**
@@ -141,14 +160,25 @@ export function createScrubber(svg, readout, highlight) {
   function updateFromPointer(event) {
     const { left, width } = svg.getBoundingClientRect();
     const x = ((event.clientX - left) / width) * VIEWBOX_WIDTH;
+    const index = Number(
+      /** @type {SVGElement} */ (event.target).dataset.series,
+    );
 
+    if (Number.isInteger(index)) preview(index);
+    else clearPreview();
     update(x / VIEWBOX_WIDTH);
   }
 
   svg.addEventListener("pointermove", updateFromPointer);
-  svg.addEventListener("pointerleave", hide);
+  svg.addEventListener("pointerleave", () => {
+    clearPreview();
+    hide();
+  });
   svg.addEventListener("focus", () => update(1));
-  svg.addEventListener("blur", hide);
+  svg.addEventListener("blur", () => {
+    clearPreview();
+    hide();
+  });
   svg.addEventListener("keydown", (event) => {
     const current = Number(svg.dataset.index || stepCount);
 

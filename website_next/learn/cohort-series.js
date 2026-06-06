@@ -1,4 +1,3 @@
-import { createSeries } from "./charts/config.js";
 import { colors } from "../utils/colors.js";
 
 const palette = [
@@ -29,13 +28,11 @@ function colorAt(index) {
 
 /** @param {readonly { label: string, color?: ChartColor, metric: Metric }[]} items */
 export function createCohortSeries(items) {
-  return createSeries(
-    items.map(({ label, color, metric }, index) => ({
-      label,
-      color: color ?? colorAt(index),
-      metric,
-    })),
-  );
+  return items.map(({ label, color, metric }, index) => ({
+    label,
+    color: color ?? colorAt(index),
+    metric,
+  }));
 }
 
 /**

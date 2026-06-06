@@ -40,13 +40,14 @@ export function createSeriesHighlight(items) {
   }
 
   /** @param {number} index */
-  function activateItem(index) {
-    setActive(items[index], true);
+  function previewItem(index) {
+    scrollToItem(index);
+    items[index].dataset.preview = "";
   }
 
   /** @param {number} index */
-  function clearItem(index) {
-    clearState(items[index]);
+  function clearPreview(index) {
+    delete items[index].dataset.preview;
   }
 
   items.forEach((item, index) => {
@@ -62,11 +63,6 @@ export function createSeriesHighlight(items) {
    */
   function add(node, index) {
     seriesNodes[index].push(node);
-    node.addEventListener("pointerenter", () => {
-      scrollToItem(index);
-      activateItem(index);
-    });
-    node.addEventListener("pointerleave", () => clearItem(index));
   }
 
   function clearNodes() {
@@ -79,7 +75,9 @@ export function createSeriesHighlight(items) {
 
   return {
     add,
+    clearPreview,
     clearNodes,
+    preview: previewItem,
   };
 }
 
@@ -101,6 +99,7 @@ function setActive(element, active) {
 function clearState(element) {
   delete element.dataset.active;
   delete element.dataset.muted;
+  delete element.dataset.preview;
 }
 
 /** @typedef {(SVGPathElement | SVGCircleElement)[]} SeriesNode */
@@ -108,5 +107,7 @@ function clearState(element) {
 /**
  * @typedef {Object} SeriesHighlight
  * @property {(node: SVGPathElement | SVGCircleElement, index: number) => void} add
+ * @property {(index: number) => void} clearPreview
  * @property {() => void} clearNodes
+ * @property {(index: number) => void} preview
  */
