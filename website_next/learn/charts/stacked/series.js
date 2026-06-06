@@ -1,4 +1,5 @@
 import { VIEWBOX_WIDTH } from "../viewbox.js";
+import { scaleY } from "../scale.js";
 
 /**
  * @param {LoadedSeries[]} series
@@ -9,6 +10,7 @@ function createStackBounds(series, stackIndexes, lineIndexes) {
   const length = series[0].entries.length;
   let min = 0;
   let max = 0;
+  let minPositive = Infinity;
 
   for (let index = 0; index < length; index += 1) {
     let negative = 0;
@@ -23,27 +25,18 @@ function createStackBounds(series, stackIndexes, lineIndexes) {
 
     min = Math.min(min, negative);
     max = Math.max(max, positive);
+    if (positive > 0) minPositive = Math.min(minPositive, positive);
 
     for (const seriesIndex of lineIndexes) {
       const value = series[seriesIndex].entries[index].value;
 
       min = Math.min(min, value);
       max = Math.max(max, value);
+      if (value > 0) minPositive = Math.min(minPositive, value);
     }
   }
 
-  return { min, max };
-}
-
-/**
- * @param {number} value
- * @param {{ min: number, max: number }} bounds
- * @param {number} height
- */
-function scaleY(value, bounds, height) {
-  return bounds.max === bounds.min
-    ? height / 2
-    : height - ((value - bounds.min) / (bounds.max - bounds.min)) * height;
+  return { min, max, minPositive };
 }
 
 /** @returns {StackedPoint[]} */
@@ -55,8 +48,9 @@ function createStackedPoints() {
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
  * @param {boolean} reversed
+ * @param {import("../scale.js").ChartScale} scale
  */
-export function createStackedSeries(loadedSeries, height, reversed) {
+export function createStackedSeries(loadedSeries, height, reversed, scale) {
   const indexes = loadedSeries.map((_, index) => index);
   const lineIndexes = indexes.filter(
     (index) => loadedSeries[index].series.role === "line",
@@ -94,15 +88,15 @@ export function createStackedSeries(loadedSeries, height, reversed) {
         date,
         value,
         x,
-        y: scaleY(end, bounds, height),
-        y0: scaleY(start, bounds, height),
-        y1: scaleY(end, bounds, height),
+        y: scaleY(end, bounds, height, scale),
+        y0: scaleY(start, bounds, height, scale),
+        y1: scaleY(end, bounds, height, scale),
       });
     }
 
     for (const seriesIndex of lineIndexes) {
       const { date, value } = loadedSeries[seriesIndex].entries[index];
-      const y = scaleY(value, bounds, height);
+      const y = scaleY(value, bounds, height, scale);
 
       plottedSeries[seriesIndex].points.push({
         date,

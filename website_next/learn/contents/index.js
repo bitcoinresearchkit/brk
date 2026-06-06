@@ -1,19 +1,23 @@
-import { createId } from "../../utils/id.js";
+import { createPathId } from "../path.js";
 
-/** @param {Section} section */
-function createContentsItem(section) {
+/**
+ * @param {Section} section
+ * @param {readonly string[]} path
+ */
+function createContentsItem(section, path) {
   const item = document.createElement("li");
   const anchor = document.createElement("a");
   const children = section.children ?? [];
+  const sectionPath = [...path, section.title];
 
-  anchor.href = `#${createId(section.title)}`;
+  anchor.href = `#${createPathId(sectionPath)}`;
   anchor.append(section.title);
 
   if (children.length) {
     const list = document.createElement("ol");
 
     for (const child of children) {
-      list.append(createContentsItem(child));
+      list.append(createContentsItem(child, sectionPath));
     }
     item.append(list);
   }
@@ -30,7 +34,7 @@ export function createContents(sections) {
   nav.setAttribute("aria-label", "Learn contents");
 
   for (const section of sections) {
-    list.append(createContentsItem(section));
+    list.append(createContentsItem(section, []));
   }
 
   nav.append(list);

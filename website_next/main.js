@@ -12,24 +12,6 @@ const pageByPath = new Map();
 const header = createHeader();
 document.body.append(header);
 
-const navLinks = [...header.querySelectorAll("nav a")];
-
-/** @param {string} pathname */
-function updateCurrentLink(pathname) {
-  const currentPath = normalizePath(pathname);
-
-  for (const link of navLinks) {
-    const linkPath = new URL(/** @type {HTMLAnchorElement} */ (link).href)
-      .pathname;
-
-    if (linkPath === currentPath) {
-      link.setAttribute("aria-current", "page");
-    } else {
-      link.removeAttribute("aria-current");
-    }
-  }
-}
-
 /** @param {string} pathname */
 function getPage(pathname) {
   let page = pageByPath.get(pathname);
@@ -60,7 +42,6 @@ function activatePage(page) {
 function renderPage() {
   const pathname = normalizePath(window.location.pathname);
   activatePage(getPage(pathname));
-  updateCurrentLink(pathname);
 }
 
 /** @param {string} pathname */

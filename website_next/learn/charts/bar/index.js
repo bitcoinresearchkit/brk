@@ -44,12 +44,21 @@ function createBarPathData(points, width) {
  * @param {number} height
  * @param {SeriesHighlight} highlight
  * @param {{ reversed: boolean }} options
+ * @param {import("../scale.js").ChartScale} scale
  */
-export function renderBarPlot(group, loadedSeries, height, highlight, options) {
+export function renderBarPlot(
+  group,
+  loadedSeries,
+  height,
+  highlight,
+  options,
+  scale,
+) {
   const { lineIndexes, plottedSeries, stackIndexes } = createStackedSeries(
     loadedSeries,
     height,
     options.reversed,
+    scale,
   );
 
   for (const index of stackIndexes) {

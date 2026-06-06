@@ -1,4 +1,23 @@
 import {
+  capitalizationSeries,
+  marketCapAddressBalanceSeries,
+  marketCapAgeSeries,
+  marketCapClassSeries,
+  marketCapEpochSeries,
+  marketCapSeries,
+  marketCapTermSeries,
+  marketCapTypeSeries,
+  marketCapUtxoBalanceSeries,
+  realizedCapAddressBalanceSeries,
+  realizedCapAgeSeries,
+  realizedCapClassSeries,
+  realizedCapEpochSeries,
+  realizedCapSeries,
+  realizedCapTermSeries,
+  realizedCapTypeSeries,
+  realizedCapUtxoBalanceSeries,
+} from "./capitalization.js";
+import {
   addressBalanceSeries,
   ageSeries,
   classSeries,
@@ -126,25 +145,157 @@ export const sections = [
     title: "Capitalization",
     description:
       "Different ways to value the network by market price, realized cost, and accumulated flows.",
-    chart: "Capitalization overview",
+    chart: {
+      title: "Capitalization",
+      series: capitalizationSeries,
+    },
     children: [
       {
         title: "Market Cap",
         description:
           "The current market value of circulating bitcoin at spot price.",
-        chart: "Market capitalization",
+        chart: {
+          title: "Market cap",
+          series: marketCapSeries,
+        },
+        children: [
+          {
+            title: "Term",
+            description:
+              "Market value split between recently moved and long-term holder coins.",
+            chart: {
+              title: "Market cap by term",
+              series: marketCapTermSeries,
+            },
+          },
+          {
+            title: "Age",
+            description:
+              "Market value grouped by how long coins have remained still.",
+            chart: {
+              title: "Market cap by age",
+              series: marketCapAgeSeries,
+            },
+          },
+          {
+            title: "UTXO Balance",
+            description:
+              "Market value grouped by the amount held in each unspent output.",
+            chart: {
+              title: "Market cap by UTXO balance",
+              series: marketCapUtxoBalanceSeries,
+            },
+          },
+          {
+            title: "Address Balance",
+            description:
+              "Market value grouped by the balance held at each address.",
+            chart: {
+              title: "Market cap by address balance",
+              series: marketCapAddressBalanceSeries,
+            },
+          },
+          {
+            title: "Type",
+            description: "Market value grouped by spendable output script type.",
+            chart: {
+              title: "Market cap by type",
+              series: marketCapTypeSeries,
+            },
+          },
+          {
+            title: "Epoch",
+            description:
+              "Market value grouped by the halving epoch in which coins were created.",
+            chart: {
+              title: "Market cap by epoch",
+              series: marketCapEpochSeries,
+            },
+          },
+          {
+            title: "Class",
+            description:
+              "Market value grouped by the calendar year in which coins were created.",
+            chart: {
+              title: "Market cap by class",
+              series: marketCapClassSeries,
+            },
+          },
+        ],
       },
       {
         title: "Realized Cap",
         description:
           "The aggregate value of coins priced where they last moved on-chain.",
-        chart: "Realized capitalization",
-      },
-      {
-        title: "Value Bands",
-        description:
-          "How market value compares with cost basis and historical valuation ranges.",
-        chart: "Valuation bands",
+        chart: {
+          title: "Realized cap",
+          series: realizedCapSeries,
+        },
+        children: [
+          {
+            title: "Term",
+            description:
+              "Realized value split between recently moved and long-term holder coins.",
+            chart: {
+              title: "Realized cap by term",
+              series: realizedCapTermSeries,
+            },
+          },
+          {
+            title: "Age",
+            description:
+              "Realized value grouped by how long coins have remained still.",
+            chart: {
+              title: "Realized cap by age",
+              series: realizedCapAgeSeries,
+            },
+          },
+          {
+            title: "UTXO Balance",
+            description:
+              "Realized value grouped by the amount held in each unspent output.",
+            chart: {
+              title: "Realized cap by UTXO balance",
+              series: realizedCapUtxoBalanceSeries,
+            },
+          },
+          {
+            title: "Address Balance",
+            description:
+              "Realized value grouped by the balance held at each address.",
+            chart: {
+              title: "Realized cap by address balance",
+              series: realizedCapAddressBalanceSeries,
+            },
+          },
+          {
+            title: "Type",
+            description:
+              "Realized value grouped by spendable output script type.",
+            chart: {
+              title: "Realized cap by type",
+              series: realizedCapTypeSeries,
+            },
+          },
+          {
+            title: "Epoch",
+            description:
+              "Realized value grouped by the halving epoch in which coins were created.",
+            chart: {
+              title: "Realized cap by epoch",
+              series: realizedCapEpochSeries,
+            },
+          },
+          {
+            title: "Class",
+            description:
+              "Realized value grouped by the calendar year in which coins were created.",
+            chart: {
+              title: "Realized cap by class",
+              series: realizedCapClassSeries,
+            },
+          },
+        ],
       },
     ],
   },

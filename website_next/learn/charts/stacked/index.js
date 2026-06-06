@@ -8,6 +8,7 @@ import { createStackedSeries } from "./series.js";
  * @param {number} height
  * @param {SeriesHighlight} highlight
  * @param {{ reversed: boolean }} options
+ * @param {import("../scale.js").ChartScale} scale
  */
 export function renderStackedPlot(
   group,
@@ -15,11 +16,13 @@ export function renderStackedPlot(
   height,
   highlight,
   options,
+  scale,
 ) {
   const { lineIndexes, plottedSeries, stackIndexes } = createStackedSeries(
     loadedSeries,
     height,
     options.reversed,
+    scale,
   );
 
   for (const index of stackIndexes) {

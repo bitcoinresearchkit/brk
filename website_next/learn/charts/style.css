@@ -222,6 +222,7 @@ main.learn {
         > output {
           display: block;
           margin-top: 0.25rem;
+          min-height: 1em;
           color: var(--white);
           font-variant-numeric: tabular-nums;
           text-align: right;

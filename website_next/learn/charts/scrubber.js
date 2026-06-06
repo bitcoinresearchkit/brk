@@ -103,6 +103,14 @@ export function createScrubber(svg, readout, highlight) {
     update(1, false);
   }
 
+  function clear() {
+    series = [];
+    markers = [];
+    group.replaceChildren(guide);
+    delete svg.dataset.index;
+    delete svg.dataset.scrubbing;
+  }
+
   /**
    * @param {ScrubberSeries[]} nextSeries
    * @param {number} nextHeight
@@ -153,7 +161,7 @@ export function createScrubber(svg, readout, highlight) {
     }
   });
 
-  return { setSeries };
+  return { clear, setSeries };
 }
 
 /**

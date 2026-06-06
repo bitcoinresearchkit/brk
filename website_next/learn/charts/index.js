@@ -2,9 +2,14 @@ import { brk } from "../../utils/client.js";
 import { renderBarPlot } from "./bar/index.js";
 import { createFullscreenButton } from "./fullscreen.js";
 import { createSeriesHighlight } from "./highlight.js";
-import { onFirstIntersection } from "./intersection.js";
+import { onChartVisibility } from "./intersection.js";
 import { createLegend } from "./legend.js";
 import { renderLinePlot } from "./line/index.js";
+import {
+  createScaleControl,
+  getDefaultScale,
+  saveScale,
+} from "./scale.js";
 import { createScrubber } from "./scrubber.js";
 import { renderDotsPlot } from "./dots/index.js";
 import { createSvgElement } from "./svg.js";
@@ -27,6 +32,7 @@ import {
 } from "./viewbox.js";
 
 /** @typedef {import("./legend.js").Readout} Readout */
+/** @typedef {import("./scale.js").ChartScale} ChartScale */
 /** @typedef {import("./timeframes.js").TimeframeValue} TimeframeValue */
 /** @typedef {import("./views.js").ChartView} ChartView */
 
@@ -90,22 +96,33 @@ function createLoadedSeriesCache(chart) {
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
  * @param {SeriesHighlight} highlight
+ * @param {ChartScale} scale
  */
-function renderPlot(view, group, loadedSeries, height, highlight) {
+function renderPlot(view, group, loadedSeries, height, highlight, scale) {
   switch (view) {
     case "line":
-      return renderLinePlot(group, loadedSeries, height, highlight);
+      return renderLinePlot(group, loadedSeries, height, highlight, scale);
     case "bar":
     case "bar-reversed":
-      return renderBarPlot(group, loadedSeries, height, highlight, {
-        reversed: view === "bar-reversed",
-      });
+      return renderBarPlot(
+        group,
+        loadedSeries,
+        height,
+        highlight,
+        { reversed: view === "bar-reversed" },
+        scale,
+      );
     case "dots":
-      return renderDotsPlot(group, loadedSeries, height, highlight);
+      return renderDotsPlot(group, loadedSeries, height, highlight, scale);
     default:
-      return renderStackedPlot(group, loadedSeries, height, highlight, {
-        reversed: view === "stacked-reversed",
-      });
+      return renderStackedPlot(
+        group,
+        loadedSeries,
+        height,
+        highlight,
+        { reversed: view === "stacked-reversed" },
+        scale,
+      );
   }
 }
 
@@ -116,6 +133,7 @@ function renderPlot(view, group, loadedSeries, height, highlight) {
  * @param {HTMLElement} status
  * @param {Chart} chart
  * @param {() => ChartView} getView
+ * @param {() => ChartScale} getScale
  * @param {() => TimeframeValue} getTimeframe
  */
 function createChartRenderer(
@@ -125,6 +143,7 @@ function createChartRenderer(
   status,
   chart,
   getView,
+  getScale,
   getTimeframe,
 ) {
   const group = createSvgElement("g");
@@ -134,12 +153,14 @@ function createChartRenderer(
   let loadedSeries = [];
   /** @type {ReturnType<typeof createScrubber> | undefined} */
   let scrubber;
+  const resizeObserver = new ResizeObserver(renderCurrent);
+  let active = false;
   let loadId = 0;
 
   svg.append(group);
 
   function renderCurrent() {
-    if (!loadedSeries.length) return;
+    if (!active || !loadedSeries.length) return;
 
     const height = getViewBoxHeight(svg);
 
@@ -148,7 +169,7 @@ function createChartRenderer(
     highlight.clearNodes();
     scrubber ??= createScrubber(svg, readout, highlight);
     scrubber.setSeries(
-      renderPlot(getView(), group, loadedSeries, height, highlight),
+      renderPlot(getView(), group, loadedSeries, height, highlight, getScale()),
       height,
     );
   }
@@ -160,7 +181,7 @@ function createChartRenderer(
     try {
       const nextSeries = await getLoadedSeries(getTimeframe());
 
-      if (id !== loadId) return;
+      if (id !== loadId || !active) return;
 
       loadedSeries = nextSeries;
       renderCurrent();
@@ -174,11 +195,31 @@ function createChartRenderer(
     }
   }
 
-  new ResizeObserver(renderCurrent).observe(svg);
+  function resume() {
+    if (active) return;
+
+    active = true;
+    resizeObserver.observe(svg);
+    void loadCurrent();
+  }
+
+  function suspend() {
+    if (!active) return;
+
+    active = false;
+    loadId += 1;
+    resizeObserver.disconnect();
+    group.replaceChildren();
+    highlight.clearNodes();
+    scrubber?.clear();
+    svg.removeAttribute("aria-busy");
+  }
 
   return {
     loadCurrent,
     renderCurrent,
+    resume,
+    suspend,
   };
 }
 
@@ -187,16 +228,19 @@ export function createChart(chart) {
   const figure = document.createElement("figure");
   const svg = createSvgElement("svg");
   const controls = document.createElement("footer");
+  const chartControls = document.createElement("div");
   const timeControls = document.createElement("div");
   const status = document.createElement("p");
   const chartKey = chart.title;
   let currentTimeframe = getDefaultTimeframe(chartKey);
   let currentView = getDefaultView(chartKey);
+  let currentScale = getDefaultScale(chartKey);
   const { legend, items, readout } = createLegend(chart);
 
   figure.dataset.chart = "series";
   figure.dataset.timeframe = currentTimeframe;
   figure.dataset.view = currentView;
+  figure.dataset.scale = currentScale;
   svg.setAttribute(
     "viewBox",
     `0 0 ${VIEWBOX_WIDTH} ${FALLBACK_VIEWBOX_HEIGHT}`,
@@ -214,12 +258,19 @@ export function createChart(chart) {
     status,
     chart,
     () => currentView,
+    () => currentScale,
     () => currentTimeframe,
   );
   const viewControl = createViewControl(currentView, (view) => {
     currentView = view;
     saveView(chartKey, view);
     figure.dataset.view = view;
+    renderer.renderCurrent();
+  });
+  const scaleControl = createScaleControl(currentScale, (scale) => {
+    currentScale = scale;
+    saveScale(chartKey, scale);
+    figure.dataset.scale = scale;
     renderer.renderCurrent();
   });
   const timeframeControl = createTimeframeControl(
@@ -231,10 +282,14 @@ export function createChart(chart) {
       void renderer.loadCurrent();
     },
   );
+  chartControls.append(viewControl, scaleControl);
   timeControls.append(timeframeControl, createFullscreenButton(figure));
-  controls.append(viewControl, timeControls);
+  controls.append(chartControls, timeControls);
   figure.append(legend, svg, controls, status);
-  onFirstIntersection(figure, () => void renderer.loadCurrent());
+  onChartVisibility(figure, {
+    show: renderer.resume,
+    hide: renderer.suspend,
+  });
 
   return figure;
 }

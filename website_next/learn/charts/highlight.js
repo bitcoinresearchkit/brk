@@ -39,6 +39,16 @@ export function createSeriesHighlight(items) {
     }
   }
 
+  /** @param {number} index */
+  function activateItem(index) {
+    setActive(items[index], true);
+  }
+
+  /** @param {number} index */
+  function clearItem(index) {
+    clearState(items[index]);
+  }
+
   items.forEach((item, index) => {
     item.addEventListener("pointerenter", () => activate(index));
     item.addEventListener("pointerleave", clear);
@@ -54,9 +64,9 @@ export function createSeriesHighlight(items) {
     seriesNodes[index].push(node);
     node.addEventListener("pointerenter", () => {
       scrollToItem(index);
-      activate(index);
+      activateItem(index);
     });
-    node.addEventListener("pointerleave", clear);
+    node.addEventListener("pointerleave", () => clearItem(index));
   }
 
   function clearNodes() {

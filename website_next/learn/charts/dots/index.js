@@ -21,9 +21,10 @@ function createDotsPathData(points) {
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
  * @param {SeriesHighlight} highlight
+ * @param {import("../scale.js").ChartScale} scale
  */
-export function renderDotsPlot(group, loadedSeries, height, highlight) {
-  const plottedSeries = createLineSeries(loadedSeries, height);
+export function renderDotsPlot(group, loadedSeries, height, highlight, scale) {
+  const plottedSeries = createLineSeries(loadedSeries, height, scale);
 
   plottedSeries.forEach(({ color, points }, index) => {
     const path = createSvgElement("path");

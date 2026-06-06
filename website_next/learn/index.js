@@ -3,7 +3,7 @@ import { sections } from "./data.js";
 import { createChart as createDataChart } from "./charts/index.js";
 import { initHashLinks } from "./hash-links.js";
 import { initScrollSpy } from "./scroll-spy.js";
-import { createId } from "../utils/id.js";
+import { createPathId } from "./path.js";
 
 /** @param {Section["chart"]} chart */
 function createFigure(chart) {
@@ -22,15 +22,17 @@ function createFigure(chart) {
 
 /**
  * @param {Section} section
- * @param {number} [level]
+ * @param {readonly string[]} [path]
  */
-function createSection(section, level = 1) {
+function createSection(section, path = []) {
   const element = document.createElement("section");
-  const heading = document.createElement(level === 1 ? "h1" : "h2");
+  const level = path.length + 1;
+  const sectionPath = [...path, section.title];
+  const heading = document.createElement(`h${Math.min(level, 6)}`);
   const anchor = document.createElement("a");
   const description = document.createElement("p");
   const children = section.children ?? [];
-  const id = createId(section.title);
+  const id = createPathId(sectionPath);
 
   element.id = id;
   anchor.href = `#${id}`;
@@ -40,7 +42,7 @@ function createSection(section, level = 1) {
   element.append(heading, description, createFigure(section.chart));
 
   for (const child of children) {
-    element.append(createSection(child, level + 1));
+    element.append(createSection(child, sectionPath));
   }
 
   return element;

@@ -1,9 +1,11 @@
 main.learn {
   > nav {
+    --nav-offset: calc(var(--offset) + 2rem);
+
     counter-reset: content-theme;
     position: sticky;
     top: 0;
-    padding-block: var(--offset);
+    padding-block: var(--nav-offset) var(--offset);
     max-height: 100dvh;
     overflow: auto;
     scrollbar-width: thin;
@@ -24,14 +26,19 @@ main.learn {
       counter-reset: content-topic;
     }
 
+    > ol > li > ol > li {
+      counter-increment: content-topic;
+      counter-reset: content-detail;
+    }
+
+    > ol > li > ol > li > ol > li {
+      counter-increment: content-detail;
+    }
+
     ol ol {
       margin-top: 0.25rem;
       margin-left: 1rem;
       color: var(--gray);
-    }
-
-    ol ol > li {
-      counter-increment: content-topic;
     }
 
     li + li {
@@ -76,8 +83,12 @@ main.learn {
       content: counter(content-theme, upper-roman) ". ";
     }
 
-    ol ol > li > a::before {
+    > ol > li > ol > li > a::before {
       content: counter(content-topic) ". ";
+    }
+
+    > ol > li > ol > li > ol > li > a::before {
+      content: counter(content-detail, lower-alpha) ". ";
     }
   }
 }

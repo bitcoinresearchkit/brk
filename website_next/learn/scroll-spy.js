@@ -2,6 +2,7 @@ const thresholds = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
 /** @param {HTMLElement} main */
 export function initScrollSpy(main) {
+  const nav = /** @type {HTMLElement} */ (main.querySelector("nav"));
   const sections = [...main.querySelectorAll("section[id]")];
   const sectionStates = sections.map((section) => ({
     section,
@@ -46,6 +47,23 @@ export function initScrollSpy(main) {
     return /** @type {HTMLAnchorElement} */ (links.get(hash));
   }
 
+  /** @param {HTMLElement} link */
+  function scrollLinkIntoNav(link) {
+    const style = getComputedStyle(nav);
+    const top = Number.parseFloat(style.paddingTop);
+    const bottom = Number.parseFloat(style.paddingBottom);
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+
+    if (linkRect.top < navRect.top + top) {
+      nav.scrollBy({ top: linkRect.top - navRect.top - top });
+    }
+
+    if (linkRect.bottom > navRect.bottom - bottom) {
+      nav.scrollBy({ top: linkRect.bottom - navRect.bottom + bottom });
+    }
+  }
+
   /** @param {string} hash */
   function setCurrentHash(hash) {
     if (hash === current) return;
@@ -54,7 +72,7 @@ export function initScrollSpy(main) {
 
     const link = getLink(hash);
     link.setAttribute("aria-current", "location");
-    link.scrollIntoView({ block: "nearest", inline: "nearest" });
+    scrollLinkIntoNav(link);
 
     history.replaceState(null, "", hash);
     current = hash;

@@ -1,5 +1,39 @@
 main.home {
   display: grid;
+  gap: 2rem;
   place-items: center;
-  font-size: 4rem;
+  align-content: center;
+  padding: var(--offset, 6rem) var(--page-x);
+
+  h1 {
+    margin: 0;
+    font-size: 4rem;
+    line-height: 1;
+  }
+
+  nav {
+    display: flex;
+    gap: 0.5rem;
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    text-transform: uppercase;
+
+    a {
+      display: block;
+      padding: 0.75rem 1rem;
+      border-radius: 0.3125rem;
+      color: var(--white);
+      background: var(--dark-gray);
+      text-decoration: none;
+
+      &:hover {
+        background: var(--gray);
+      }
+
+      &:active {
+        color: var(--black);
+        background: var(--orange);
+      }
+    }
+  }
 }
