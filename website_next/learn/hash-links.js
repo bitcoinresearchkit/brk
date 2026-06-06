@@ -18,10 +18,18 @@ function scrollToTarget(target, behavior) {
   target.scrollIntoView({ behavior, block: "start" });
 }
 
+/**
+ * @param {HTMLElement} main
+ * @param {ScrollBehavior} behavior
+ */
+function scrollToCurrentHash(main, behavior) {
+  const target = getHashTarget(main, window.location.hash);
+
+  if (target) scrollToTarget(target, behavior);
+}
+
 /** @param {HTMLElement} main */
 export function initHashLinks(main) {
-  const initialHash = window.location.hash;
-
   main.addEventListener("click", (event) => {
     if (!isPlainLeftClick(event)) return;
 
@@ -45,12 +53,8 @@ export function initHashLinks(main) {
 
   window.addEventListener("popstate", () => {
     if (main.hidden) return;
-    const target = getHashTarget(main, window.location.hash);
-    if (target) scrollToTarget(target, "auto");
+    scrollToCurrentHash(main, "auto");
   });
 
-  requestAnimationFrame(() => {
-    const target = getHashTarget(main, initialHash);
-    if (target) scrollToTarget(target, "auto");
-  });
+  main.addEventListener("pageactive", () => scrollToCurrentHash(main, "auto"));
 }

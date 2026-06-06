@@ -19,6 +19,7 @@ export function getEventAnchor(event) {
 export function isPlainLeftClick(event) {
   return (
     event.button === 0 &&
+    !event.altKey &&
     !event.metaKey &&
     !event.ctrlKey &&
     !event.shiftKey

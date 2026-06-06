@@ -21,6 +21,7 @@ ALWAYS
 - very well organized
 - contained
 - colocated
+- idiomatic
 - composed
 - prefer one concept per file
 - prefer more files and folders than big files

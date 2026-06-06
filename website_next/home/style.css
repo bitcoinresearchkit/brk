@@ -1,9 +1,11 @@
 main.home {
+  --home-offset: 6rem;
+
   display: grid;
   gap: 2rem;
   place-items: center;
   align-content: center;
-  padding: var(--offset, 6rem) var(--page-x);
+  padding: var(--home-offset) var(--page-x);
 
   h1 {
     margin: 0;

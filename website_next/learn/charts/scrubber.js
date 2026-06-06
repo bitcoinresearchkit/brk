@@ -74,6 +74,8 @@ export function createScrubber(svg, readout, highlight) {
    * @param {boolean} [scrubbing]
    */
   function update(ratio, scrubbing = true) {
+    if (!series.length) return;
+
     const nextRatio = clamp(ratio, 0, 1);
     const points = series.map((item) => getPointAtRatio(item, nextRatio));
     const x = points[0].x.toFixed(2);

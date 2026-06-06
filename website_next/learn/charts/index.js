@@ -71,22 +71,22 @@ async function loadSeries(chart, timeframe) {
 
 /** @param {Chart} chart */
 function createLoadedSeriesCache(chart) {
-  /** @type {Map<TimeframeValue, Promise<LoadedSeries[]>>} */
-  const cache = new Map();
+  /** @type {TimeframeValue | undefined} */
+  let cachedTimeframe;
+  /** @type {Promise<LoadedSeries[]> | undefined} */
+  let cachedPromise;
 
   /** @param {TimeframeValue} timeframe */
   return function getLoadedSeries(timeframe) {
-    let promise = cache.get(timeframe);
-
-    if (!promise) {
-      promise = loadSeries(chart, timeframe).catch((error) => {
-        cache.delete(timeframe);
+    if (timeframe !== cachedTimeframe || !cachedPromise) {
+      cachedTimeframe = timeframe;
+      cachedPromise = loadSeries(chart, timeframe).catch((error) => {
+        if (timeframe === cachedTimeframe) cachedPromise = undefined;
         throw error;
       });
-      cache.set(timeframe, promise);
     }
 
-    return promise;
+    return cachedPromise;
   };
 }
 

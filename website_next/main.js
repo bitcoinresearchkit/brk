@@ -37,6 +37,7 @@ function activatePage(page) {
   page.hidden = false;
   page.inert = false;
   currentPage = page;
+  page.dispatchEvent(new Event("pageactive"));
 }
 
 function renderPage() {
@@ -44,10 +45,10 @@ function renderPage() {
   activatePage(getPage(pathname));
 }
 
-/** @param {string} pathname */
-function navigate(pathname) {
-  if (pathname === window.location.pathname) return;
-  history.pushState(null, "", pathname);
+/** @param {string} path */
+function navigate(path) {
+  if (path === `${window.location.pathname}${window.location.hash}`) return;
+  history.pushState(null, "", path);
   void transitionPage(renderPage);
 }
 
@@ -64,7 +65,7 @@ document.addEventListener("click", (event) => {
   if (!isRoute(url.pathname)) return;
 
   event.preventDefault();
-  navigate(url.pathname);
+  navigate(`${url.pathname}${url.hash}`);
 });
 
 window.addEventListener("popstate", renderPage);
