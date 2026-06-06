@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 
 const DEFAULT_BUY_LEVELS = new Map([
-  [50, 1.0],
-  [45, 1.5],
-  [40, 2.0],
+  [100, 10.875],
+  [95, 11.7395833],
+  [90, 12.6041667],
+  [85, 13.46875],
+  [80, 14.3333333],
+  [75, 15.1979167],
+  [70, 16.0625],
+  [65, 16.9270833],
+  [60, 17.7916667],
+  [55, 18.65625],
+  [50, 19.5208333],
+  [45, 20.3854167],
+  [40, 21.25],
 ]);
 
 const DAYS_PER_MONTH = 365.2425 / 12;
@@ -11,6 +21,7 @@ const DAYS_PER_MONTH = 365.2425 / 12;
 function parseArgs(argv) {
   const opts = {
     baseUrl: "https://bitview.space",
+    dataStart: "2014-01-01",
     start: "2014-01-01",
     end: null,
     starts: null,
@@ -18,6 +29,8 @@ function parseArgs(argv) {
     initialCash: 10_000,
     monthlyTopup: 1_000,
     dailyBuy: null,
+    buyRunwayMonths: 0,
+    minCashReserveMonths: 0,
     initialDeployDays: 365,
     buyTriggerPct: 50,
     buyLevels: DEFAULT_BUY_LEVELS,
@@ -25,7 +38,7 @@ function parseArgs(argv) {
     sellArmPct: 100,
     sellBandLowerPct: 95,
     sellBandUpperPct: 100,
-    sellBandMultiple: 5,
+    sellBandMultiple: 2.75,
     sellAthMultiple: 3,
     sellMap: null,
     maxDailySellFraction: 0.005,
@@ -45,6 +58,8 @@ function parseArgs(argv) {
       opts.help = true;
     } else if (arg === "--base-url") {
       opts.baseUrl = next();
+    } else if (arg === "--data-start") {
+      opts.dataStart = next();
     } else if (arg === "--start") {
       opts.start = next();
     } else if (arg === "--end") {
@@ -62,6 +77,10 @@ function parseArgs(argv) {
       opts.monthlyTopup = parseNumber(next(), arg);
     } else if (arg === "--daily-buy") {
       opts.dailyBuy = parseNumber(next(), arg);
+    } else if (arg === "--buy-runway-months") {
+      opts.buyRunwayMonths = parseNumber(next(), arg);
+    } else if (arg === "--min-cash-reserve-months") {
+      opts.minCashReserveMonths = parseNumber(next(), arg);
     } else if (arg === "--initial-deploy-days") {
       opts.initialDeployDays = parseInteger(next(), arg);
     } else if (arg === "--buy-trigger-pct") {
@@ -143,23 +162,25 @@ function printHelp() {
 Fetches Bitview daily price + BTC-weighted cost-basis percentile data and
 simulates the image rule:
   - p50 touch starts daily DCA-in
-  - ATH touch stops DCA-in
-  - optional DCA-out uses percentile * multiplier thresholds
+  - p100 increase stops DCA-in and arms DCA-out
+  - optional DCA-out sells inside the selected percentile band after arming
   - start with cash, then add a monthly top-up
 
 Defaults:
   --start 2014-01-01
+  --data-start 2014-01-01
   --initial-cash 10000
   --monthly-topup 1000
-  --buy-levels 50:1,45:1.5,40:2
+  --buy-levels 100:10.875,95:11.7395833,90:12.6041667,85:13.46875,80:14.3333333,75:15.1979167,70:16.0625,65:16.9270833,60:17.7916667,55:18.65625,50:19.5208333,45:20.3854167,40:21.25
   --sell-band 95:100
-  --sell-band-multiple 5
+  --sell-band-multiple 2.75
   --max-daily-sell-fraction 0.005
   --mode both
   --start-set cycle-extremes
 
 Options:
   --start YYYY-MM-DD
+  --data-start YYYY-MM-DD            Warmup data start for cycle phase inference
   --end YYYY-MM-DD
   --starts YYYY-MM-DD,YYYY-MM-DD  Explicit start dates
   --start-set cycle-extremes|single|custom
@@ -167,11 +188,13 @@ Options:
   --initial-cash USD
   --monthly-topup USD
   --daily-buy USD                    Default: monthly top-up / average month
+  --buy-runway-months N              Cap daily buys to preserve N months of spend runway
+  --min-cash-reserve-months N        Never spend below N months of top-up cash
   --initial-deploy-days N            Adds initial cash / N to buy budget on active buy days
   --buy-trigger-pct N
   --buy-levels pct:weight,...
   --sell-arm-pct N                  Arms sell phase once p100 increases, or price touches other pct
-  --sell-band lowerPct:upperPct      Sell only inside percentile band after multiplier
+  --sell-band lowerPct:upperPct      Sell only inside percentile band after arming
   --sell-band-multiple N             Multiplies daily sell size while inside the band
   --sell-ath-multiple N             Sell when price >= previous ATH * N
   --sell-map pct:multiplier,...      Alternative: sell on cost-basis percentile thresholds
@@ -212,8 +235,10 @@ async function main() {
         final_value: signal.finalValue,
         return_pct: pct(signal.finalValue / signal.contributed - 1),
         cash: signal.cash,
+        min_cash: signal.minCash,
         btc: signal.btc,
         buys: signal.buys,
+        capped_buy_days: signal.cappedBuyDays,
         sells: signal.sells,
         bought_usd: signal.boughtUsd,
         sold_usd: signal.soldUsd,
@@ -289,7 +314,7 @@ async function loadData(opts) {
 
 async function fetchSeries(opts, series) {
   const url = new URL(`/api/series/${series}/day1`, normalizeBaseUrl(opts.baseUrl));
-  url.searchParams.set("start", opts.start);
+  url.searchParams.set("start", opts.dataStart);
   if (opts.end) url.searchParams.set("end", opts.end);
 
   const response = await fetch(url);
@@ -332,13 +357,15 @@ function resolveStartPoints(rows, opts) {
         date: opts.start,
         kind: "single",
         epoch: null,
-        index: 0,
+        index: findDateIndex(rows, opts.start),
       },
     ];
   }
 
+  const firstIndex = findDateIndex(rows, opts.start);
   const byEpoch = new Map();
   rows.forEach((row, index) => {
+    if (index < firstIndex) return;
     if (!Number.isFinite(row.price) || row.price <= 0) return;
     if (!byEpoch.has(row.epoch)) byEpoch.set(row.epoch, []);
     byEpoch.get(row.epoch).push({ row, index });
@@ -392,14 +419,15 @@ function findDateIndex(rows, date) {
 function simulateSignal(rows, startIndex, opts, sellEnabled) {
   let cash = opts.initialCash;
   let btc = 0;
-  let buyActive = false;
-  let sellArmed = false;
+  let { buyActive, sellArmed } = inferPhase(rows, startIndex, opts);
   let initialDeployActiveDays = 0;
   let contributed = opts.initialCash;
   let buys = 0;
   let sells = 0;
   let boughtUsd = 0;
   let soldUsd = 0;
+  let minCash = cash;
+  let cappedBuyDays = 0;
   let peakValue = cash;
   let maxDrawdown = 0;
   const baseDailyBuy = opts.dailyBuy ?? opts.monthlyTopup / DAYS_PER_MONTH;
@@ -440,7 +468,10 @@ function simulateSignal(rows, startIndex, opts, sellEnabled) {
           ? opts.initialCash / opts.initialDeployDays
           : 0;
       const buyBudget = (baseDailyBuy + initialBudget) * buyWeight(row, opts);
-      const usd = Math.min(cash, buyBudget);
+      const usd = cappedBuyUsd(cash, buyBudget, opts);
+      if (usd + 1e-9 < Math.min(cash, buyBudget)) {
+        cappedBuyDays += 1;
+      }
       if (usd > 0) {
         btc += usd / row.price;
         cash -= usd;
@@ -451,6 +482,7 @@ function simulateSignal(rows, startIndex, opts, sellEnabled) {
     }
 
     const value = cash + btc * row.price;
+    minCash = Math.min(minCash, cash);
     peakValue = Math.max(peakValue, value);
     maxDrawdown = Math.max(maxDrawdown, peakValue === 0 ? 0 : 1 - value / peakValue);
   }
@@ -460,14 +492,53 @@ function simulateSignal(rows, startIndex, opts, sellEnabled) {
     finalDate: finalRow.date,
     finalValue: cash + btc * finalRow.price,
     cash,
+    minCash,
     btc,
     buys,
+    cappedBuyDays,
     sells,
     boughtUsd,
     soldUsd,
     contributed,
     maxDrawdown,
   };
+}
+
+function cappedBuyUsd(cash, buyBudget, opts) {
+  let cap = buyBudget;
+
+  if (opts.buyRunwayMonths > 0) {
+    cap = Math.min(cap, cash / (DAYS_PER_MONTH * opts.buyRunwayMonths));
+  }
+
+  if (opts.minCashReserveMonths > 0) {
+    const reserve = opts.monthlyTopup * opts.minCashReserveMonths;
+    cap = Math.min(cap, Math.max(0, cash - reserve));
+  }
+
+  return Math.min(cash, cap);
+}
+
+function inferPhase(rows, startIndex, opts) {
+  let buyActive = false;
+  let sellArmed = false;
+
+  for (let i = 0; i < startIndex; i += 1) {
+    const row = rows[i];
+    const p50 = row.percentiles.get(opts.buyTriggerPct);
+
+    if (Number.isFinite(p50) && p50 > 0 && row.price <= p50) {
+      buyActive = true;
+      sellArmed = false;
+    }
+
+    if (buyActive && isSellArmTouch(row, rows[i - 1], opts)) {
+      buyActive = false;
+      sellArmed = true;
+    }
+  }
+
+  return { buyActive, sellArmed };
 }
 
 function simulateLumpAndTopup(rows, startIndex, opts) {
@@ -524,7 +595,7 @@ function simulateSimpleDailyDca(rows, startIndex, opts) {
 }
 
 function buyWeight(row, opts) {
-  let weight = 1.0;
+  let weight = 0;
   for (const [pct, pctWeight] of [...opts.buyLevels.entries()].sort(
     ([a], [b]) => b - a,
   )) {
@@ -603,7 +674,8 @@ function printTable(results, opts) {
     [
       `Data: ${opts.start}${opts.end ? ` to ${opts.end}` : " to latest"}`,
       `Cash: ${usd(opts.initialCash)} initial + ${usd(opts.monthlyTopup)} monthly`,
-      `Buy trigger: p${opts.buyTriggerPct} touch starts DCA-in; ATH touch stops it`,
+      `Buy runway: ${formatBuyRunway(opts)}`,
+      `Buy trigger: p${opts.buyTriggerPct} touch starts DCA-in; p${opts.sellArmPct} increase stops it`,
       `Sell: ${
       opts.mode === "hold"
           ? "disabled"
@@ -624,8 +696,10 @@ function printTable(results, opts) {
     final: usd(result.final_value),
     ret: `${formatNumber(result.return_pct, 2)}%`,
     cash: usd(result.cash),
+    min_cash: usd(result.min_cash),
     btc: formatNumber(result.btc, 6),
     buys: String(result.buys),
+    capped_buys: String(result.capped_buy_days),
     sells: String(result.sells),
     dd: `${formatNumber(result.max_drawdown_pct, 2)}%`,
     vs_lump: `${formatNumber(result.lump_delta_pct, 2)}%`,
@@ -639,13 +713,30 @@ function printTable(results, opts) {
     ["final", "final"],
     ["ret", "return"],
     ["cash", "cash"],
+    ["min_cash", "min cash"],
     ["btc", "btc"],
     ["buys", "buys"],
+    ["capped_buys", "capped buys"],
     ["sells", "sells"],
     ["dd", "max dd"],
     ["vs_lump", "vs lump"],
     ["vs_dca", "vs dca"],
   ]);
+}
+
+function formatBuyRunway(opts) {
+  const parts = [];
+  if (opts.buyRunwayMonths > 0) {
+    parts.push(
+      `daily cap preserves ${formatNumber(opts.buyRunwayMonths, 2)} month(s)`,
+    );
+  }
+  if (opts.minCashReserveMonths > 0) {
+    parts.push(
+      `cash floor ${formatNumber(opts.minCashReserveMonths, 2)} month(s) top-up`,
+    );
+  }
+  return parts.length ? parts.join("; ") : "none";
 }
 
 function printCsv(results) {

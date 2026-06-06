@@ -1,0 +1,2109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bitcoin DCA Cycle Simulator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000;
+      --text: #f2f2f2;
+      --muted: #8d8d8d;
+      --faint: #4d4d4d;
+      --line: #242424;
+      --line-strong: #777;
+      --simple: #ff9f1c;
+      --simple-sell: #ffe66d;
+      --dca: #ff4d8d;
+      --reserve: #4ade80;
+      --invested: #ff9f1c;
+      --loss: #ff6b6b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --page-pad-x: clamp(20px, 3vw, 40px);
+      --page-pad-y: clamp(20px, 3vw, 32px);
+      --section-gap: 22px;
+      --grid-gap: 14px;
+      font-family: var(--mono);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      font-family: inherit;
+      font-weight: inherit;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    input,
+    select {
+      font: inherit;
+      color: inherit;
+      width: 100%;
+      height: 42px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      padding: 0;
+      font-size: 20px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      min-width: 0;
+    }
+
+    label.reserve { color: var(--reserve); }
+    label.invested { color: var(--invested); }
+    label.topup { color: var(--text); }
+
+    .app {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: var(--page-pad-y) var(--page-pad-x) 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: var(--section-gap);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3vw, 40px);
+      line-height: 1;
+    }
+
+    .intro-copy {
+      max-width: 1180px;
+    }
+
+    .sub {
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.5;
+    }
+
+    .cycle-rule,
+    .strategy-note {
+      max-width: 1180px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .cycle-rule {
+      margin: 12px 0 0;
+    }
+
+    .strategy-note {
+      margin-top: 10px;
+    }
+
+    .strategy-note p {
+      margin: 8px 0 0;
+    }
+
+    .strategy-note summary {
+      display: inline-block;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .strategy-defs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      padding: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .strategy-defs strong {
+      color: var(--text);
+    }
+
+    .cycle-rule select,
+    .strategy-note select {
+      display: inline-block;
+      width: auto;
+      height: auto;
+      color: var(--text);
+      font-size: inherit;
+      line-height: inherit;
+      vertical-align: baseline;
+      cursor: pointer;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--grid-gap);
+      padding: 0 0 var(--section-gap);
+      border-bottom: 1px solid var(--line);
+      margin-bottom: var(--section-gap);
+    }
+
+    .span-4 { grid-column: span 4; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--grid-gap);
+      margin-top: var(--grid-gap);
+    }
+
+    .grid-heading {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      padding-top: 18px;
+      margin-top: 8px;
+      border-top: 1px solid var(--line);
+      line-height: 1.45;
+    }
+
+    .grid-heading .title {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .app > section + section { margin-top: var(--section-gap); }
+
+    .panel { min-width: 0; }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 0 0 12px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .title {
+      color: var(--text);
+    }
+
+    .chart-wrap,
+    .history-wrap,
+    .small-chart-wrap {
+      position: relative;
+      height: 320px;
+      min-height: 260px;
+    }
+
+    .history-wrap {
+      margin-bottom: var(--section-gap);
+      cursor: ew-resize;
+      touch-action: none;
+    }
+
+    .rank-chart-wrap {
+      height: 160px;
+      min-height: 130px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      font-family: var(--mono);
+    }
+
+    svg text { font-family: var(--mono); }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      min-width: 220px;
+      padding: 10px;
+      border: 1px solid var(--line-strong);
+      background: #000;
+      transform: translate(12px, 12px);
+      opacity: 0;
+      transition: opacity 120ms ease;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .tooltip.on { opacity: 1; }
+
+    .tooltip .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 5px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+
+    .swatch {
+      width: 18px;
+      height: 3px;
+      background: currentColor;
+    }
+
+    .metrics {
+      display: grid;
+      gap: var(--grid-gap);
+      padding: 0;
+    }
+
+    .outcome-lead {
+      border-bottom: 1px solid var(--line);
+      padding: 0 0 16px;
+      min-width: 0;
+    }
+
+    .outcome-lead .label {
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .outcome-lead-main {
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .outcome-lead-detail {
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.45;
+      max-width: 960px;
+    }
+
+    .outcome-reason {
+      color: var(--text);
+      margin-top: 8px;
+      line-height: 1.45;
+      max-width: 960px;
+    }
+
+    .outcome-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+      margin-top: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .outcome-facts strong {
+      color: var(--text);
+    }
+
+    .outcome-table-wrap {
+      overflow-x: auto;
+    }
+
+    .outcome-table {
+      min-width: 900px;
+    }
+
+    .behavior-table {
+      min-width: 820px;
+    }
+
+    .today-table {
+      min-width: 640px;
+    }
+
+    .today-action {
+      color: var(--text);
+    }
+
+    .action-buy { color: var(--reserve); }
+    .action-sell { color: var(--loss); }
+    .action-hodl { color: var(--simple-sell); }
+
+    .table-caption {
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .strategy-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .positive { color: var(--reserve); }
+    .negative { color: var(--loss); }
+    .neutral { color: var(--muted); }
+
+    .rank {
+      color: var(--muted);
+    }
+
+    .activity-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .filter-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .filter-btn.is-active {
+      color: var(--text);
+    }
+
+    .assumptions {
+      margin-top: var(--section-gap);
+      padding-top: var(--section-gap);
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+    }
+
+    .table-zero {
+      color: var(--faint);
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    @media (max-width: 980px) {
+      .topbar { flex-direction: column; }
+      .controls { grid-template-columns: repeat(2, 1fr); }
+      .span-4 { grid-column: span 1; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: 1fr; }
+      .activity-filter { justify-content: flex-start; }
+    }
+
+    @media (max-width: 560px) {
+      :root {
+        --page-pad-x: 14px;
+        --page-pad-y: 16px;
+        --section-gap: 18px;
+        --grid-gap: 12px;
+      }
+      .controls { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="intro-copy">
+        <h1>Bitcoin DCA Cycle Simulator</h1>
+        <div class="sub">Pick a start date and savings plan, then compare daily DCA with cycle-aware buying and trimming.</div>
+        <p class="cycle-rule">Cycle strategies wait with cash, then buy when BTC falls to
+          <select id="cycleTrigger" aria-label="Cycle buy trigger">
+            <option value="60">p60</option>
+            <option value="55">p55</option>
+            <option value="50" selected>p50</option>
+            <option value="45">p45</option>
+            <option value="40">p40</option>
+          </select>
+          or lower. They stop new buys when BTC reaches a fresh all-time high (ATH).
+        </p>
+        <details class="strategy-note" open>
+          <summary>How it works</summary>
+          <p>p-levels are supply cost-basis percentiles: the buy price of the BTC supply at that percentile. p50 means BTC is near the median coin cost basis; lower p-levels usually mean deeper market pain, higher p-levels usually mean heat.</p>
+          <p>All cycle strategies use the same buy rule: once the buy phase is active, buy the larger of the p-level grid amount or 0.5% of portfolio value per day. Cycle Buy + Trim sells BTC worth 0.5% of portfolio value per day near p95-p100.</p>
+          <p>Daily DCA uses one fixed daily order size based on a 31-day month. It only switches to 2x when enough cash remains to keep buying every day for about a month.</p>
+        </details>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="Simulation controls">
+      <label class="span-4 reserve">Starting cash
+        <input id="initialReserve" type="number" min="0" step="100" value="5000">
+      </label>
+      <label class="span-4 invested">Starting BTC buy
+        <input id="initialInvested" type="number" min="0" step="100" value="5000">
+      </label>
+      <label class="span-4 topup">Monthly savings
+        <input id="monthlyTopup" type="number" min="0" step="100" value="1000">
+      </label>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="title">Start date</div>
+          <div id="historyMeta">simulation start</div>
+        </div>
+      </div>
+      <div class="history-wrap">
+        <svg id="historySvg" role="img" aria-label="BTC price history start selector"></svg>
+      </div>
+    </section>
+
+    <section>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Portfolio value</div>
+            <div id="chartMeta">-</div>
+          </div>
+          <div class="legend">
+            <span class="key" style="color: var(--simple)"><span class="swatch"></span>Cycle Buy &amp; Hold</span>
+            <span class="key" style="color: var(--simple-sell)"><span class="swatch"></span>Cycle Buy + Trim</span>
+            <span class="key" style="color: var(--dca)"><span class="swatch"></span>Daily DCA</span>
+          </div>
+        </div>
+        <div class="strategy-defs">
+          <span><strong>Hold</strong> buys pain, never sells.</span>
+          <span><strong>Trim</strong> buys pain, trims heat.</span>
+          <span><strong>DCA</strong> buys every day.</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="equitySvg" role="img" aria-label="Portfolio value chart"></svg>
+          <div id="tooltip" class="tooltip"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="title">Strategy ranking</div>
+          <div>daily portfolio-value rank: 3 is top, 1 is lowest; ties overlap</div>
+        </div>
+      </div>
+      <div class="small-chart-wrap rank-chart-wrap">
+        <svg id="rankSvg" role="img" aria-label="Strategy ranking over time chart"></svg>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="title">Outcomes</div>
+          <div>answer first: winner, return, BTC, cash, and pain</div>
+        </div>
+      </div>
+      <div id="metrics" class="metrics"></div>
+    </section>
+
+    <section id="detailSection" class="detail-grid" aria-label="Portfolio detail charts">
+      <div class="grid-heading">
+        <div class="title">What happened to the money</div>
+        <div>BTC stacked, cash held back, buys, average entry, and trim sells.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">BTC stacked</div>
+          <div>stack size over time</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="btcSvg" role="img" aria-label="BTC stacked chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Cash left</div>
+            <div>uninvested cash by strategy</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="cashSvg" role="img" aria-label="Cash left chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Daily buys</div>
+            <div>cash deployed each day</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="buyFlowSvg" role="img" aria-label="Daily buys chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Average buy price</div>
+            <div>remaining BTC cost basis vs spot price</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="averagePriceSvg" role="img" aria-label="Average buy price chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Trim sells</div>
+            <div>cash raised by trimming BTC</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="sellFlowSvg" role="img" aria-label="Trim sells chart"></svg>
+        </div>
+      </div>
+
+      <div class="grid-heading">
+        <div class="title">How painful it was</div>
+        <div>Drawdowns and how long each strategy sat below money put in.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Portfolio drawdown</div>
+            <div>strategy drops plus BTC spot drawdown in white</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="drawdownSvg" role="img" aria-label="Portfolio drawdown chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Below-deposit streak</div>
+            <div>current stretch at or below money put in</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="underwaterStreakSvg" role="img" aria-label="Below-deposit streak chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Days above deposits</div>
+            <div>cumulative days above money put in</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="profitableDaysSvg" role="img" aria-label="Days above deposits chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Days at/below deposits</div>
+            <div>cumulative days at or below money put in</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="unprofitableDaysSvg" role="img" aria-label="Days at or below deposits chart"></svg>
+        </div>
+      </div>
+
+      <div class="grid-heading">
+        <div class="title">Why the cycle rule acted</div>
+        <div>Market zone, cycle state, cash runway, and BTC exposure.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Market pain / heat zone</div>
+            <div>overall supply cost-basis percentile</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="priceZoneSvg" role="img" aria-label="Market pain and heat zone chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Cycle state</div>
+            <div>idle, buying, holding, or trimming</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="cyclePhaseSvg" role="img" aria-label="Cycle state chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">Months of cash left</div>
+            <div>cash reserve measured in monthly savings</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="cashRunwaySvg" role="img" aria-label="Months of cash left chart"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="title">BTC share of portfolio</div>
+            <div>BTC value as share of total portfolio</div>
+          </div>
+        </div>
+        <div class="small-chart-wrap">
+          <svg id="exposureSvg" role="img" aria-label="BTC share of portfolio chart"></svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="activitySection" class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="title">Daily activity</div>
+          <div id="activityMeta">all days, newest first</div>
+        </div>
+        <div class="activity-filter" aria-label="Daily activity filter">
+          <button class="filter-btn is-active" type="button" data-activity-filter="all">all</button>
+          <button class="filter-btn" type="button" data-activity-filter="buys">cycle buys</button>
+          <button class="filter-btn" type="button" data-activity-filter="sells">trim sells</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>BTC price</th>
+              <th>Zone</th>
+              <th>Phase</th>
+              <th>Hold buy</th>
+              <th>Trim buy</th>
+              <th>Trim sell</th>
+              <th>DCA buy</th>
+            </tr>
+          </thead>
+          <tbody id="activityRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="assumptions">
+      No fees. No taxes. Daily close data. Supply cost-basis percentiles.
+    </footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    const API_BASE = "https://bitview.space";
+    const DATA_START = "2016-01-01";
+    const DAYS_PER_MONTH = 31;
+    const DAILY_DCA_RUNWAY_DAYS = DAYS_PER_MONTH;
+    const DAILY_DCA_MAX_MULTIPLE = 2;
+    const PCTS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40];
+    const PCTS_ASC = [...PCTS].reverse();
+    const SIMPLE_GRID = new Map([
+      [100, 1], [95, 1.5], [90, 2], [85, 2.5], [80, 3], [75, 3.5], [70, 4],
+      [65, 4.5], [60, 5], [55, 5.5], [50, 6], [45, 6.5], [40, 7],
+    ]);
+    const CYCLE_BUY_FLOOR_FRACTION = 0.005;
+    const TRIM_SELL_FRACTION = 0.005;
+    const CHART_WIDTH_MIN = 320;
+    const CHART_WIDTH_FALLBACK = 900;
+    const CHART_HEIGHT_MIN = 220;
+    const CHART_HEIGHT_FALLBACK = 520;
+    const CHART_PAD = { top: 20, right: 70, bottom: 34, left: 76 };
+    const HISTORY_PAD = { top: 14, right: 70, bottom: 30, left: 70 };
+    const SERIES = ["date", "price", "price_ath", ...PCTS.map(costBasisSeriesName)];
+
+    const els = {
+      initialReserve: document.querySelector("#initialReserve"),
+      initialInvested: document.querySelector("#initialInvested"),
+      monthlyTopup: document.querySelector("#monthlyTopup"),
+      cycleTrigger: document.querySelector("#cycleTrigger"),
+      chartMeta: document.querySelector("#chartMeta"),
+      historyMeta: document.querySelector("#historyMeta"),
+      historySvg: document.querySelector("#historySvg"),
+      equitySvg: document.querySelector("#equitySvg"),
+      rankSvg: document.querySelector("#rankSvg"),
+      cashSvg: document.querySelector("#cashSvg"),
+      cashRunwaySvg: document.querySelector("#cashRunwaySvg"),
+      btcSvg: document.querySelector("#btcSvg"),
+      exposureSvg: document.querySelector("#exposureSvg"),
+      buyFlowSvg: document.querySelector("#buyFlowSvg"),
+      sellFlowSvg: document.querySelector("#sellFlowSvg"),
+      priceZoneSvg: document.querySelector("#priceZoneSvg"),
+      cyclePhaseSvg: document.querySelector("#cyclePhaseSvg"),
+      drawdownSvg: document.querySelector("#drawdownSvg"),
+      underwaterStreakSvg: document.querySelector("#underwaterStreakSvg"),
+      averagePriceSvg: document.querySelector("#averagePriceSvg"),
+      profitableDaysSvg: document.querySelector("#profitableDaysSvg"),
+      unprofitableDaysSvg: document.querySelector("#unprofitableDaysSvg"),
+      detailSection: document.querySelector("#detailSection"),
+      activitySection: document.querySelector("#activitySection"),
+      activityMeta: document.querySelector("#activityMeta"),
+      activityRows: document.querySelector("#activityRows"),
+      activityFilters: document.querySelectorAll("[data-activity-filter]"),
+      tooltip: document.querySelector("#tooltip"),
+      metrics: document.querySelector("#metrics"),
+    };
+
+    let rows = [];
+    let latestRun = null;
+    let draggingStart = false;
+    let selectedStartDate = "2021-04-14";
+    let activityFilter = "all";
+    let detailVisible = false;
+    let activityVisible = false;
+    let detailDirty = true;
+    let activityDirty = true;
+    let runTimer = 0;
+    let activeRunId = 0;
+
+    boot();
+
+    function boot() {
+      applyUrlState();
+      for (const input of [els.initialReserve, els.initialInvested, els.monthlyTopup]) {
+        input.addEventListener("input", scheduleRun);
+      }
+      for (const button of els.activityFilters) {
+        button.addEventListener("click", () => setActivityFilter(button.dataset.activityFilter));
+      }
+      els.cycleTrigger.addEventListener("change", scheduleRun);
+      window.addEventListener("resize", () => {
+        if (latestRun) {
+          renderSingle(latestRun);
+        }
+      });
+      els.historySvg.addEventListener("pointerdown", startHistoryDrag);
+      els.historySvg.addEventListener("pointermove", moveHistoryDrag);
+      els.historySvg.addEventListener("pointerup", endHistoryDrag);
+      els.historySvg.addEventListener("pointercancel", endHistoryDrag);
+      initLazyRendering();
+      runSingle();
+    }
+
+    function scheduleRun() {
+      clearTimeout(runTimer);
+      runTimer = setTimeout(runSingle, 120);
+    }
+
+    async function runSingle() {
+      const runId = ++activeRunId;
+      try {
+        const opts = readOptions();
+        const loadedRows = await loadRows(opts.end);
+        if (runId !== activeRunId) return;
+        rows = loadedRows;
+        normalizeStartDate(opts);
+        writeUrlState(opts);
+        const result = simulateAll(rows, findDateIndex(rows, opts.start), opts);
+        latestRun = { opts, result };
+        renderSingle(latestRun);
+      } catch (error) {
+        if (runId === activeRunId) console.error(error);
+      }
+    }
+
+    function readOptions() {
+      const today = todayString();
+      return {
+        start: selectedStartDate,
+        today,
+        end: addDays(today, 1),
+        initialReserve: numberFrom(els.initialReserve, 5000),
+        initialInvested: numberFrom(els.initialInvested, 5000),
+        monthlyTopup: numberFrom(els.monthlyTopup, 1000),
+        triggerPct: numberFrom(els.cycleTrigger, 50),
+      };
+    }
+
+    function normalizeStartDate(opts) {
+      if (!rows.length) return;
+      const min = rows[0].date;
+      const max = rows.at(-1).date;
+      opts.start = clampDate(opts.start, min, max);
+      selectedStartDate = opts.start;
+    }
+
+    function applyUrlState() {
+      const params = new URLSearchParams(location.search);
+      selectedStartDate = params.get("start") || selectedStartDate;
+      setNumberInput(els.initialReserve, params.get("reserve"));
+      setNumberInput(els.initialInvested, params.get("invested"));
+      setNumberInput(els.monthlyTopup, params.get("monthly"));
+      setSelectValue(els.cycleTrigger, params.get("trigger"));
+    }
+
+    function writeUrlState(opts) {
+      try {
+        const url = new URL(location.href);
+        url.searchParams.set("start", opts.start);
+        url.searchParams.set("reserve", String(opts.initialReserve));
+        url.searchParams.set("invested", String(opts.initialInvested));
+        url.searchParams.set("monthly", String(opts.monthlyTopup));
+        url.searchParams.set("trigger", String(opts.triggerPct));
+        history.replaceState(null, "", url);
+      } catch {
+        // Sharing state is optional; never block the simulation.
+      }
+    }
+
+    function setNumberInput(input, value) {
+      if (value === null) return;
+      const number = Number(value);
+      if (Number.isFinite(number) && number >= 0) input.value = String(number);
+    }
+
+    function setSelectValue(select, value) {
+      if (value === null) return;
+      if ([...select.options].some((option) => option.value === value)) select.value = value;
+    }
+
+    async function loadRows(end) {
+      const cacheKey = `btc-cycle-sim:${DATA_START}:${end}`;
+      const cached = getCache(cacheKey);
+      if (cached) return cached;
+
+      const loaded = new Map(await Promise.all(SERIES.map(async (name) => [name, await fetchSeries(name, end)])));
+      const length = Math.min(...SERIES.map((name) => loaded.get(name).length));
+      const built = Array.from({ length }, (_, i) => {
+        const levels = new Map(PCTS.map((pct) => [pct, loaded.get(costBasisSeriesName(pct))[i]]));
+        return {
+          date: loaded.get("date")[i],
+          price: loaded.get("price")[i],
+          ath: loaded.get("price_ath")[i],
+          levels,
+        };
+      });
+
+      setCache(cacheKey, built);
+      return built;
+    }
+
+    async function fetchSeries(series, end) {
+      const url = new URL(`/api/series/${series}/day1`, API_BASE);
+      url.searchParams.set("start", DATA_START);
+      url.searchParams.set("end", end);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Bitview fetch failed for ${series}: ${response.status}`);
+      const json = await response.json();
+      if (!Array.isArray(json.data)) throw new Error(`Bitview series ${series} returned no data array`);
+      return json.data;
+    }
+
+    function simulateAll(allRows, startIndex, opts) {
+      const slice = allRows.slice(startIndex);
+      return {
+        start: allRows[startIndex].date,
+        end: allRows.at(-1).date,
+        series: {
+          simpleHold: simulateSimple(allRows, startIndex, opts, null),
+          simpleSell: simulateSimple(allRows, startIndex, opts, "value"),
+          dca: simulateNormalDca(slice, opts),
+        },
+      };
+    }
+
+    function simulateSimple(allRows, startIndex, opts, sellRule) {
+      let cash = opts.initialReserve;
+      let btc = opts.initialInvested / allRows[startIndex].price;
+      let costBasis = opts.initialInvested;
+      let contributed = opts.initialReserve + opts.initialInvested;
+      let { buyActive, sellArmed } = inferPhase(allRows, startIndex, opts.triggerPct);
+      const points = [];
+
+      for (let i = startIndex; i < allRows.length; i += 1) {
+        const row = allRows[i];
+        let buyUsd = 0;
+        let sellUsd = 0;
+
+        if (i > startIndex && isMonthStart(row.date)) {
+          cash += opts.monthlyTopup;
+          contributed += opts.monthlyTopup;
+        }
+
+        if (touchesLevel(row, opts.triggerPct)) {
+          buyActive = true;
+          sellArmed = false;
+        }
+        if (buyActive && isP100Increase(row, allRows[i - 1])) {
+          buyActive = false;
+          sellArmed = true;
+        }
+
+        const phase = cyclePhaseValue(row, buyActive, sellArmed);
+
+        if (sellRule && sellArmed && btc > 0 && isInsideSellBand(row)) {
+          const btcToSell = trimSellBtc(row, cash, btc, sellRule);
+          const basisToRemove = btc > 0 ? costBasis * (btcToSell / btc) : 0;
+          btc -= btcToSell;
+          costBasis -= basisToRemove;
+          sellUsd = btcToSell * row.price;
+          cash += sellUsd;
+        }
+
+        if (buyActive && cash > 0) {
+          const usd = Math.min(cash, cycleBuyUsd(row, cash, btc, opts));
+          if (usd > 0) {
+            const btcBought = usd / row.price;
+            btc += btcBought;
+            costBasis += usd;
+            cash -= usd;
+            buyUsd = usd;
+          }
+        }
+
+        points.push(point(row, {
+          cash,
+          btc,
+          contributed,
+          costBasis,
+          monthlyTopup: opts.monthlyTopup,
+          buyUsd,
+          sellUsd,
+          cyclePhase: phase,
+        }));
+      }
+
+      return summarize(simpleStrategyName(sellRule), points, cash, btc, contributed, allRows.at(-1).price, opts);
+    }
+
+    function simulateNormalDca(slice, opts) {
+      let cash = opts.initialReserve;
+      let btc = opts.initialInvested / slice[0].price;
+      let costBasis = opts.initialInvested;
+      let contributed = opts.initialReserve + opts.initialInvested;
+      const points = [];
+
+      slice.forEach((row, i) => {
+        let buyUsd = 0;
+
+        if (i > 0 && isMonthStart(row.date)) {
+          cash += opts.monthlyTopup;
+          contributed += opts.monthlyTopup;
+        }
+        const usd = normalDcaBuyAmount(cash, opts.monthlyTopup);
+        if (usd > 0) {
+          const btcBought = usd / row.price;
+          btc += btcBought;
+          costBasis += usd;
+          cash -= usd;
+          buyUsd = usd;
+        }
+        points.push(point(row, {
+          cash,
+          btc,
+          contributed,
+          costBasis,
+          monthlyTopup: opts.monthlyTopup,
+          buyUsd,
+        }));
+      });
+
+      return summarize("Daily DCA", points, cash, btc, contributed, slice.at(-1).price, opts);
+    }
+
+    function inferPhase(allRows, startIndex, triggerPct) {
+      let buyActive = false;
+      let sellArmed = false;
+      for (let i = 0; i < startIndex; i += 1) {
+        const row = allRows[i];
+        if (touchesLevel(row, triggerPct)) {
+          buyActive = true;
+          sellArmed = false;
+        }
+        if (buyActive && isP100Increase(row, allRows[i - 1])) {
+          buyActive = false;
+          sellArmed = true;
+        }
+      }
+      return { buyActive, sellArmed };
+    }
+
+    function point(row, state) {
+      const {
+        cash,
+        btc,
+        contributed,
+        costBasis,
+        monthlyTopup,
+        buyUsd = 0,
+        sellUsd = 0,
+        cyclePhase = 0,
+      } = state;
+      const btcValue = btc * row.price;
+      const value = cash + btcValue;
+      return {
+        date: row.date,
+        price: row.price,
+        athDrawdown: validLevel(row.ath) ? Math.max(0, 1 - row.price / row.ath) : 0,
+        cash,
+        cashRunway: monthlyTopup > 0 ? cash / monthlyTopup : 0,
+        btc,
+        exposure: value > 0 ? btcValue / value : 0,
+        buyUsd,
+        sellUsd,
+        priceZone: priceZoneValue(row),
+        cyclePhase,
+        costBasis,
+        avgPrice: btc > 0 ? costBasis / btc : 0,
+        contributed,
+        value,
+      };
+    }
+
+    function summarize(name, points, cash, btc, contributed, lastPrice, opts) {
+      let peak = points[0]?.value ?? 0;
+      let maxDrawdown = 0;
+      let profitDays = 0;
+      let underwaterStreak = 0;
+      let maxUnderwaterStreak = 0;
+      let buyDays = opts.initialInvested > 0 ? 1 : 0;
+      let sellDays = 0;
+      let totalBuyUsd = opts.initialInvested;
+      let totalBuyBtc = points[0]?.price > 0 ? opts.initialInvested / points[0].price : 0;
+      let triggerBuyUsd = points[0]?.priceZone <= opts.triggerPct ? opts.initialInvested : 0;
+      let weightedBuyZone = (points[0]?.priceZone ?? 0) * opts.initialInvested;
+      let totalSellUsd = 0;
+      let averageCash = 0;
+      for (let i = 0; i < points.length; i += 1) {
+        const item = points[i];
+        peak = Math.max(peak, item.value);
+        item.drawdown = peak ? 1 - item.value / peak : 0;
+        item.inProfit = item.value > item.contributed;
+        if (item.inProfit) profitDays += 1;
+        underwaterStreak = item.inProfit ? 0 : underwaterStreak + 1;
+        item.underwaterStreak = underwaterStreak;
+        item.profitableDays = profitDays;
+        item.unprofitableDays = i + 1 - profitDays;
+        maxDrawdown = Math.max(maxDrawdown, item.drawdown);
+        maxUnderwaterStreak = Math.max(maxUnderwaterStreak, underwaterStreak);
+        averageCash += item.cash;
+        if (item.buyUsd > 0) {
+          buyDays += 1;
+          totalBuyUsd += item.buyUsd;
+          totalBuyBtc += item.buyUsd / item.price;
+          weightedBuyZone += item.buyUsd * item.priceZone;
+          if (item.priceZone <= opts.triggerPct) triggerBuyUsd += item.buyUsd;
+        }
+        if (item.sellUsd > 0) {
+          sellDays += 1;
+          totalSellUsd += item.sellUsd;
+        }
+      }
+      return {
+        name,
+        points,
+        totalDays: points.length,
+        profitDays,
+        profitPct: points.length ? profitDays / points.length : 0,
+        cash,
+        btc,
+        contributed,
+        finalValue: cash + btc * lastPrice,
+        maxDrawdown,
+        maxUnderwaterStreak,
+        returnPct: contributed ? cash / contributed - 1 + (btc * lastPrice) / contributed : 0,
+        buyDays,
+        sellDays,
+        totalBuyUsd,
+        totalSellUsd,
+        averageBuyPrice: totalBuyBtc > 0 ? totalBuyUsd / totalBuyBtc : 0,
+        averageBuyZone: totalBuyUsd > 0 ? weightedBuyZone / totalBuyUsd : 0,
+        triggerBuyUsd,
+        averageCash: points.length ? averageCash / points.length : 0,
+      };
+    }
+
+    function renderSingle(run) {
+      const { opts, result } = run;
+      els.chartMeta.textContent = `${result.start} -> ${opts.today} | trigger p${opts.triggerPct} | starting cash $${fmt(opts.initialReserve)} | starting BTC buy $${fmt(opts.initialInvested)} | savings $${fmt(opts.monthlyTopup)}/mo`;
+      renderHistoryChart(els.historySvg, opts);
+      renderEquityChart(els.equitySvg, result.series);
+      renderRankChart(els.rankSvg, result.series);
+      renderMetrics(strategyItems(result.series), opts);
+      markLazySectionsDirty();
+      renderVisibleLazySections();
+    }
+
+    function initLazyRendering() {
+      if (!("IntersectionObserver" in window)) {
+        detailVisible = true;
+        activityVisible = true;
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === els.detailSection) detailVisible = entry.isIntersecting;
+          if (entry.target === els.activitySection) activityVisible = entry.isIntersecting;
+        }
+        renderVisibleLazySections();
+      }, { rootMargin: "500px 0px" });
+      observer.observe(els.detailSection);
+      observer.observe(els.activitySection);
+    }
+
+    function markLazySectionsDirty() {
+      detailDirty = true;
+      activityDirty = true;
+    }
+
+    function renderVisibleLazySections() {
+      if (!latestRun) return;
+      if (detailDirty && detailVisible) {
+        renderDetailCharts(latestRun.result.series);
+        detailDirty = false;
+      }
+      if (activityDirty && activityVisible) {
+        renderActivityTable(latestRun.result.series);
+        activityDirty = false;
+      }
+    }
+
+    function renderDetailCharts(series) {
+      renderSeriesChart(els.cashSvg, series, { key: "cash", formatter: usd });
+      renderSeriesChart(els.cashRunwaySvg, series, { key: "cashRunway", formatter: monthFmt });
+      renderSeriesChart(els.btcSvg, series, { key: "btc", formatter: btcFmt });
+      renderSeriesChart(els.exposureSvg, series, { key: "exposure", formatter: pct });
+      renderSeriesChart(els.buyFlowSvg, series, { key: "buyUsd", formatter: usd });
+      renderPriceZoneChart(els.priceZoneSvg, series);
+      renderCyclePhaseChart(els.cyclePhaseSvg, series);
+      renderSeriesChart(els.sellFlowSvg, series, { key: "sellUsd", formatter: usd });
+      renderSeriesChart(els.drawdownSvg, series, {
+        key: "drawdown",
+        formatter: pct,
+        references: [{ label: "BTC drawdown", labelPrefix: "BTC", valueKey: "athDrawdown", color: cssVar("--text") }],
+      });
+      renderSeriesChart(els.underwaterStreakSvg, series, { key: "underwaterStreak", formatter: dayFmt });
+      renderSeriesChart(els.averagePriceSvg, series, { key: "avgPrice", formatter: usd, priceReference: true, logScale: true });
+      renderSeriesChart(els.profitableDaysSvg, series, { key: "profitableDays", formatter: dayFmt });
+      renderSeriesChart(els.unprofitableDaysSvg, series, { key: "unprofitableDays", formatter: dayFmt });
+    }
+
+    function renderMetrics(items, opts) {
+      const dca = items.find((item) => item.name === "Daily DCA");
+      const ranked = [...items].sort((a, b) => b.finalValue - a.finalValue);
+      const best = ranked[0];
+      const mostBtc = [...items].sort((a, b) => b.btc - a.btc)[0];
+      const leastDrawdown = [...items].sort((a, b) => a.maxDrawdown - b.maxDrawdown)[0];
+      const today = items[0]?.points.at(-1)?.date ?? "today";
+      const dcaDelta = dca && best.key !== "dca"
+        ? `${signedUsd(best.finalValue - dca.finalValue)} vs Daily DCA (${signedPct(relativeDelta(best.finalValue, dca.finalValue))})`
+        : "Daily DCA wins this run";
+
+      els.metrics.innerHTML = `
+        <div class="outcome-lead">
+          <div class="label">Best result</div>
+          <div class="outcome-lead-main" style="color:${best.color}">${escapeHtml(best.label)} -> ${usd(best.finalValue)}</div>
+          <div class="outcome-lead-detail">${signedUsd(best.finalValue - best.contributed)} net gain on ${usd(best.contributed)} deposited. ${dcaDelta}.</div>
+          <div class="outcome-reason">${escapeHtml(outcomeReason(best, dca, ranked[1]))}</div>
+          <div class="outcome-facts">
+            <span>most BTC <strong>${escapeHtml(mostBtc.label)} (${btcFmt(mostBtc.btc)})</strong></span>
+            <span>least drawdown <strong>${escapeHtml(leastDrawdown.label)} (${pct(leastDrawdown.maxDrawdown)})</strong></span>
+            <span>most cash held <strong>${escapeHtml([...items].sort((a, b) => b.averageCash - a.averageCash)[0].label)}</strong></span>
+          </div>
+        </div>
+        <div class="outcome-table-wrap">
+          <div class="table-caption">Today (${today})</div>
+          <table class="outcome-table today-table">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Doing now</th>
+                <th>Portfolio value</th>
+                <th>BTC stacked</th>
+                <th>Cash reserve</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((item) => {
+                const last = item.points.at(-1);
+                return `
+                  <tr>
+                    <td><span class="strategy-cell" style="color:${item.color}"><span class="swatch"></span>${escapeHtml(item.label)}</span></td>
+                    <td class="today-action">${todayActionWithValue(item, last)}</td>
+                    <td style="color:${item.color}">${usd(last.value)}</td>
+                    <td>${btcFmt(last.btc)}</td>
+                    <td>${usd(last.cash)}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="outcome-table-wrap">
+          <div class="table-caption">Result</div>
+          <table class="outcome-table">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Portfolio</th>
+                <th>Net gain</th>
+                <th>Return</th>
+                <th>vs Daily DCA</th>
+                <th>Worst drop</th>
+                <th>Longest below deposits</th>
+                <th>Profit days</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ranked.map((item, index) => {
+                const netGain = item.finalValue - item.contributed;
+                const dcaValueDelta = dca ? item.finalValue - dca.finalValue : 0;
+                const dcaPctDelta = dca ? relativeDelta(item.finalValue, dca.finalValue) : 0;
+                const vsDca = item.key === "dca" ? "baseline" : `${signedUsd(dcaValueDelta)} (${signedPct(dcaPctDelta)})`;
+                return `
+                  <tr>
+                    <td><span class="strategy-cell" style="color:${item.color}"><span class="rank">#${index + 1}</span><span class="swatch"></span>${escapeHtml(item.label)}</span></td>
+                    <td style="color:${item.color}">${usd(item.finalValue)}</td>
+                    <td class="${toneClass(netGain)}">${signedUsd(netGain)}</td>
+                    <td class="${toneClass(item.returnPct)}">${signedPct(item.returnPct)}</td>
+                    <td class="${item.key === "dca" ? "neutral" : toneClass(dcaValueDelta)}">${vsDca}</td>
+                    <td class="${item.maxDrawdown > 0 ? "negative" : "neutral"}">${pct(item.maxDrawdown)}</td>
+                    <td>${dayFmt(item.maxUnderwaterStreak)}</td>
+                    <td>${dayFmt(item.profitDays)} (${pct(item.profitPct)})</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="outcome-table-wrap">
+          <div class="table-caption">Buying behavior, including the initial invested amount as the first buy</div>
+          <table class="outcome-table behavior-table">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Buy days</th>
+                <th>Cash deployed</th>
+                <th>Avg buy</th>
+                <th>Avg zone</th>
+                <th>At/below p${opts.triggerPct}</th>
+                <th>Avg cash held</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ranked.map((item) => `
+                <tr>
+                  <td><span class="strategy-cell" style="color:${item.color}"><span class="swatch"></span>${escapeHtml(item.label)}</span></td>
+                  <td>${dayFmt(item.buyDays)}</td>
+                  <td>${usd(item.totalBuyUsd)}</td>
+                  <td>${item.averageBuyPrice > 0 ? usd(item.averageBuyPrice) : "-"}</td>
+                  <td>${zoneAverageFmt(item.averageBuyZone)}</td>
+                  <td>${usd(item.triggerBuyUsd)}</td>
+                  <td>${usd(item.averageCash)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderActivityTable(series) {
+      const hold = series.simpleHold.points;
+      const trim = series.simpleSell.points;
+      const dca = series.dca.points;
+      let html = "";
+      let total = 0;
+      for (let i = hold.length - 1; i >= 0; i -= 1) {
+        const day = hold[i];
+        const hasBuy = hold[i].buyUsd > 0 || trim[i].buyUsd > 0;
+        const hasSell = trim[i].sellUsd > 0;
+        if (activityFilter === "buys" && !hasBuy) continue;
+        if (activityFilter === "sells" && !hasSell) continue;
+        total += 1;
+        html += `
+          <tr>
+            <td>${day.date}</td>
+            <td>${usd(day.price)}</td>
+            <td>${priceZoneLabel(day.priceZone)}</td>
+            <td>${phaseLabel(day.cyclePhase)}</td>
+            <td style="color: var(--simple)">${actionUsd(hold[i].buyUsd)}</td>
+            <td style="color: var(--simple-sell)">${actionUsd(trim[i].buyUsd)}</td>
+            <td style="color: var(--simple-sell)">${actionUsd(trim[i].sellUsd)}</td>
+            <td style="color: var(--dca)">${actionUsd(dca[i].buyUsd)}</td>
+          </tr>
+        `;
+      }
+      if (!html) {
+        html = `<tr><td colspan="8" class="neutral">no days for this filter</td></tr>`;
+      }
+      els.activityMeta.textContent = activityMetaText(activityFilter, total);
+      els.activityRows.innerHTML = html;
+    }
+
+    function setActivityFilter(value) {
+      activityFilter = value || "all";
+      for (const button of els.activityFilters) {
+        button.classList.toggle("is-active", button.dataset.activityFilter === activityFilter);
+      }
+      if (latestRun) {
+        renderActivityTable(latestRun.result.series);
+        activityDirty = false;
+      }
+    }
+
+    function chartFrame(svg, options = {}) {
+      const box = svg.getBoundingClientRect();
+      const minHeight = options.minHeight ?? CHART_HEIGHT_MIN;
+      const fallbackHeight = options.fallbackHeight ?? CHART_HEIGHT_FALLBACK;
+      return {
+        width: Math.max(CHART_WIDTH_MIN, box.width || CHART_WIDTH_FALLBACK),
+        height: Math.max(minHeight, box.height || fallbackHeight),
+        pad: options.pad ?? CHART_PAD,
+      };
+    }
+
+    function marketPoints(series) {
+      return strategyItems(series)[0].points;
+    }
+
+    function renderHistoryChart(svg, opts) {
+      if (!rows.length) return;
+      const { width, height, pad } = chartFrame(svg, { minHeight: 140, fallbackHeight: 180, pad: HISTORY_PAD });
+      const startIndex = findDateIndex(rows, opts.start);
+      const minPrice = Math.min(...rows.map((row) => row.price).filter((price) => price > 0));
+      const maxPrice = Math.max(...rows.map((row) => row.price));
+      const x = scaleTime(rows[0].date, rows.at(-1).date, pad.left, width - pad.right);
+      const y = scaleLog(minPrice * 0.9, maxPrice * 1.1, height - pad.bottom, pad.top);
+      const before = rows.slice(0, startIndex + 1);
+      const after = rows.slice(startIndex);
+      const startRow = rows[startIndex];
+      const startX = x(startRow.date);
+      const grid = logGrid(y, height, width, pad);
+
+      els.historyMeta.textContent = `simulation starts ${startRow.date} | BTC ${usd(startRow.price)}`;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        ${grid}
+        <path d="${pathD(before, x, y, "price")}" fill="none" stroke="${cssVar("--faint")}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <path d="${pathD(after, x, y, "price")}" fill="none" stroke="${cssVar("--text")}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <line x1="${startX}" x2="${startX}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--simple")}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <rect x="${startX - 5}" y="${pad.top}" width="10" height="${height - pad.top - pad.bottom}" fill="transparent"/>
+        <text x="${Math.min(width - pad.right, Math.max(pad.left, startX))}" y="${pad.top + 13}" fill="${cssVar("--simple")}" text-anchor="${startX > width - pad.right - 90 ? "end" : "start"}">${startRow.date}</text>
+        <text x="${pad.left}" y="${height - 8}" fill="${cssVar("--muted")}">${rows[0].date}</text>
+        <text x="${width - pad.right}" y="${height - 8}" fill="${cssVar("--muted")}" text-anchor="end">${rows.at(-1).date}</text>
+        <rect x="${pad.left}" y="${pad.top}" width="${width - pad.left - pad.right}" height="${height - pad.top - pad.bottom}" fill="transparent"/>
+      `;
+    }
+
+    function startHistoryDrag(event) {
+      if (!rows.length) return;
+      draggingStart = true;
+      els.historySvg.setPointerCapture(event.pointerId);
+      updateStartFromHistory(event);
+    }
+
+    function moveHistoryDrag(event) {
+      if (!draggingStart) return;
+      updateStartFromHistory(event);
+    }
+
+    function endHistoryDrag(event) {
+      if (!draggingStart) return;
+      draggingStart = false;
+      updateStartFromHistory(event);
+      if (els.historySvg.hasPointerCapture(event.pointerId)) {
+        els.historySvg.releasePointerCapture(event.pointerId);
+      }
+      clearTimeout(runTimer);
+      runSingle();
+    }
+
+    function updateStartFromHistory(event) {
+      const index = historyIndexFromEvent(event);
+      if (index < 0) return;
+      const date = rows[index].date;
+      if (date === selectedStartDate) return;
+      selectedStartDate = date;
+      if (latestRun) {
+        latestRun.opts.start = date;
+        renderHistoryChart(els.historySvg, latestRun.opts);
+      }
+      if (draggingStart) scheduleRun();
+    }
+
+    function historyIndexFromEvent(event) {
+      if (!rows.length) return -1;
+      const viewBox = els.historySvg.viewBox.baseVal;
+      const width = viewBox.width || els.historySvg.getBoundingClientRect().width;
+      const pad = HISTORY_PAD;
+      const point = svgPoint(els.historySvg, event);
+      const ratio = clamp((point.x - pad.left) / (width - pad.left - pad.right), 0, 1);
+      return clamp(Math.round(ratio * (rows.length - 1)), 0, rows.length - 1);
+    }
+
+    function renderEquityChart(svg, series) {
+      renderSeriesChart(svg, series, {
+        key: "value",
+        formatter: usd,
+        logScale: true,
+        references: [{ label: "Contributed", labelPrefix: "Contrib", valueKey: "contributed" }],
+      });
+    }
+
+    function renderRankChart(svg, series) {
+      const baseLines = strategyItems(series);
+      const rankLines = rankedStrategyLines(baseLines);
+      const { width, height, pad } = chartFrame(svg, { minHeight: 130, fallbackHeight: 160 });
+      const points = rankLines[0].points;
+      const x = scaleTime(points[0].date, points.at(-1).date, pad.left, width - pad.right);
+      const maxRank = rankLines.length;
+      const y = scaleLinear(1, maxRank, height - pad.bottom, pad.top);
+      const grid = rankAxisGrid(y, height, width, pad, maxRank);
+      const paths = rankLines.map((line) => `<path d="${stepPathD(line.points, x, y, "rank")}" fill="none" stroke="${line.color}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`).join("");
+      const labels = rankLines.map((line) => {
+        const last = line.points.at(-1);
+        return `<text x="${width - pad.right + 8}" y="${y(last.rank) + 4}" fill="${line.color}">${rankFmt(last.rank, maxRank)}</text>`;
+      }).join("");
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        ${grid}
+        ${paths}
+        ${labels}
+        <text x="${pad.left}" y="${height - 8}" fill="${cssVar("--muted")}">${points[0].date}</text>
+        <text x="${width - pad.right}" y="${height - 8}" fill="${cssVar("--muted")}" text-anchor="end">${points.at(-1).date}</text>
+        <rect x="${pad.left}" y="${pad.top}" width="${width - pad.left - pad.right}" height="${height - pad.top - pad.bottom}" fill="transparent"/>
+        <line id="hoverLine" x1="0" x2="0" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}" stroke-dasharray="4 4" opacity="0"/>
+      `;
+
+      svg.onmousemove = (event) => showHover(event, svg, rankLines, x, pad, width, height, { formatter: (value) => rankFmt(value, maxRank) });
+      svg.onmouseleave = () => {
+        svg.querySelector("#hoverLine")?.setAttribute("opacity", "0");
+        els.tooltip.classList.remove("on");
+      };
+    }
+
+    function renderSeriesChart(svg, series, config) {
+      const lines = strategyItems(series);
+      const chartLines = lines.map((line) => ({ ...line, valueKey: config.key }));
+      if (config.priceReference) {
+        chartLines.push({
+          label: "BTC price",
+          labelPrefix: "BTC",
+          color: cssVar("--muted"),
+          dash: "0",
+          points: lines[0]?.points ?? [],
+          valueKey: "price",
+        });
+      }
+      if (config.references) {
+        for (const reference of config.references) {
+          chartLines.push({
+            color: cssVar("--muted"),
+            dash: "0",
+            points: lines[0]?.points ?? [],
+            ...reference,
+          });
+        }
+      }
+      const { width, height, pad } = chartFrame(svg);
+      const all = chartLines.flatMap((line) => line.points);
+      const x = scaleTime(all[0].date, all.at(-1).date, pad.left, width - pad.right);
+      const chartValues = chartLines.flatMap((line) => line.points.map((p) => p[line.valueKey])).filter(Number.isFinite);
+      const positiveValues = chartValues.filter((value) => value > 0);
+      const logScale = config.logScale && positiveValues.length > 0;
+      const maxValue = Math.max(0, ...chartValues);
+      const minPositiveValue = Math.min(...positiveValues);
+      const y = logScale
+        ? scaleLog(minPositiveValue * 0.95, Math.max(minPositiveValue * 1.05, maxValue * 1.04), height - pad.bottom, pad.top)
+        : scaleLinear(0, maxValue > 0 ? maxValue * 1.04 : 1, height - pad.bottom, pad.top);
+
+      const grid = logScale ? logGrid(y, height, width, pad) : axisGrid(y, height, width, pad, config.formatter);
+      const paths = chartLines.map((line) => `<path d="${pathD(line.points, x, y, line.valueKey, logScale ? minPositiveValue : null)}" fill="none" stroke="${line.color}" stroke-width="1.5" stroke-dasharray="${line.dash}" vector-effect="non-scaling-stroke"/>`).join("");
+      const labels = chartLines.map((line) => {
+        const last = line.points.at(-1);
+        const prefix = line.labelPrefix ? `${line.labelPrefix} ` : "";
+        const labelValue = logScale ? Math.max(minPositiveValue, last[line.valueKey]) : last[line.valueKey];
+        return `<text x="${width - pad.right + 8}" y="${y(labelValue) + 4}" fill="${line.color}">${prefix}${config.formatter(last[line.valueKey])}</text>`;
+      }).join("");
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        ${grid}
+        ${paths}
+        ${labels}
+        <text x="${pad.left}" y="${height - 8}" fill="${cssVar("--muted")}">${all[0].date}</text>
+        <text x="${width - pad.right}" y="${height - 8}" fill="${cssVar("--muted")}" text-anchor="end">${all.at(-1).date}</text>
+        <rect x="${pad.left}" y="${pad.top}" width="${width - pad.left - pad.right}" height="${height - pad.top - pad.bottom}" fill="transparent" data-hit="chart"/>
+        <line id="hoverLine" x1="0" x2="0" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}" stroke-dasharray="4 4" opacity="0"/>
+      `;
+
+      svg.onmousemove = (event) => showHover(event, svg, chartLines, x, pad, width, height, config);
+      svg.onmouseleave = () => {
+        svg.querySelector("#hoverLine")?.setAttribute("opacity", "0");
+        els.tooltip.classList.remove("on");
+      };
+    }
+
+    function renderPriceZoneChart(svg, series) {
+      const points = marketPoints(series);
+      const { width, height, pad } = chartFrame(svg);
+      const x = scaleTime(points[0].date, points.at(-1).date, pad.left, width - pad.right);
+      const y = scaleLinear(40, 102, height - pad.bottom, pad.top);
+      const grid = zoneAxisGrid(y, height, width, pad);
+      const path = pathD(points, x, y, "priceZone");
+      const last = points.at(-1);
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        ${grid}
+        <path d="${path}" fill="none" stroke="${cssVar("--text")}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <text x="${width - pad.right + 8}" y="${y(last.priceZone) + 4}" fill="${cssVar("--text")}">${priceZoneLabel(last.priceZone)}</text>
+        <text x="${pad.left}" y="${height - 8}" fill="${cssVar("--muted")}">${points[0].date}</text>
+        <text x="${width - pad.right}" y="${height - 8}" fill="${cssVar("--muted")}" text-anchor="end">${points.at(-1).date}</text>
+        <rect x="${pad.left}" y="${pad.top}" width="${width - pad.left - pad.right}" height="${height - pad.top - pad.bottom}" fill="transparent"/>
+        <line id="hoverLine" x1="0" x2="0" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}" stroke-dasharray="4 4" opacity="0"/>
+      `;
+
+      svg.onmousemove = (event) => showPriceZoneHover(event, svg, points, x, pad, width, height);
+      svg.onmouseleave = () => {
+        svg.querySelector("#hoverLine")?.setAttribute("opacity", "0");
+        els.tooltip.classList.remove("on");
+      };
+    }
+
+    function renderCyclePhaseChart(svg, series) {
+      const points = marketPoints(series);
+      const { width, height, pad } = chartFrame(svg);
+      const x = scaleTime(points[0].date, points.at(-1).date, pad.left, width - pad.right);
+      const y = scaleLinear(0, 3, height - pad.bottom, pad.top);
+      const grid = phaseAxisGrid(y, height, width, pad);
+      const path = stepPathD(points, x, y, "cyclePhase");
+      const last = points.at(-1);
+
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        ${grid}
+        <path d="${path}" fill="none" stroke="${cssVar("--text")}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <text x="${width - pad.right + 8}" y="${y(last.cyclePhase) + 4}" fill="${cssVar("--text")}">${phaseLabel(last.cyclePhase)}</text>
+        <text x="${pad.left}" y="${height - 8}" fill="${cssVar("--muted")}">${points[0].date}</text>
+        <text x="${width - pad.right}" y="${height - 8}" fill="${cssVar("--muted")}" text-anchor="end">${points.at(-1).date}</text>
+        <rect x="${pad.left}" y="${pad.top}" width="${width - pad.left - pad.right}" height="${height - pad.top - pad.bottom}" fill="transparent"/>
+        <line id="hoverLine" x1="0" x2="0" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}" stroke-dasharray="4 4" opacity="0"/>
+      `;
+
+      svg.onmousemove = (event) => showCyclePhaseHover(event, svg, points, x, pad, width, height);
+      svg.onmouseleave = () => {
+        svg.querySelector("#hoverLine")?.setAttribute("opacity", "0");
+        els.tooltip.classList.remove("on");
+      };
+    }
+
+    function showHover(event, svg, lines, x, pad, width, height, config) {
+      const hover = hoverAt(event, svg, lines[0].points, pad, width, height);
+      if (!hover) return;
+      showHoverLine(svg, x(hover.point.date));
+      showTooltip(event, `<strong>${hover.point.date}</strong>` + lines.map((line) => {
+        const p = line.points[hover.index];
+        return `<div class="row"><span style="color:${line.color}">${line.label}</span><span>${config.formatter(p[line.valueKey])}</span></div>`;
+      }).join(""));
+    }
+
+    function showPriceZoneHover(event, svg, points, x, pad, width, height) {
+      const hover = hoverAt(event, svg, points, pad, width, height);
+      if (!hover) return;
+      showHoverLine(svg, x(hover.point.date));
+      showTooltip(event, `<strong>${hover.point.date}</strong><div class="row"><span>zone</span><span>${priceZoneLabel(hover.point.priceZone)}</span></div><div class="row"><span>price</span><span>${usd(hover.point.price)}</span></div>`);
+    }
+
+    function showCyclePhaseHover(event, svg, points, x, pad, width, height) {
+      const hover = hoverAt(event, svg, points, pad, width, height);
+      if (!hover) return;
+      showHoverLine(svg, x(hover.point.date));
+      showTooltip(event, `<strong>${hover.point.date}</strong><div class="row"><span>phase</span><span>${phaseLabel(hover.point.cyclePhase)}</span></div><div class="row"><span>price</span><span>${usd(hover.point.price)}</span></div>`);
+    }
+
+    function hoverAt(event, svg, points, pad, width, height) {
+      const pt = svgPoint(svg, event);
+      if (pt.x < pad.left || pt.x > width - pad.right || pt.y < pad.top || pt.y > height - pad.bottom) return;
+      const index = clamp(Math.round((pt.x - pad.left) / (width - pad.left - pad.right) * (points.length - 1)), 0, points.length - 1);
+      return { index, point: points[index] };
+    }
+
+    function showHoverLine(svg, xValue) {
+      const hoverLine = svg.querySelector("#hoverLine");
+      hoverLine.setAttribute("x1", xValue);
+      hoverLine.setAttribute("x2", xValue);
+      hoverLine.setAttribute("opacity", "1");
+    }
+
+    function showTooltip(event, html) {
+      els.tooltip.style.left = `${event.clientX}px`;
+      els.tooltip.style.top = `${event.clientY}px`;
+      els.tooltip.innerHTML = html;
+      els.tooltip.classList.add("on");
+    }
+
+    function strategyItems(series) {
+      return [
+        { key: "simpleHold", label: "Cycle Buy & Hold", color: cssVar("--simple"), dash: "0", ...series.simpleHold },
+        { key: "simpleSell", label: "Cycle Buy + Trim", color: cssVar("--simple-sell"), dash: "0", ...series.simpleSell },
+        { key: "dca", label: "Daily DCA", color: cssVar("--dca"), dash: "0", ...series.dca },
+      ];
+    }
+
+    function rankedStrategyLines(lines) {
+      return lines.map((line) => ({
+        ...line,
+        valueKey: "rank",
+        points: line.points.map((point, pointIndex) => {
+          const value = point.value;
+          const betterCount = lines.filter((candidate) => candidate.points[pointIndex].value > value).length;
+          return { ...point, rank: lines.length - betterCount };
+        }),
+      }));
+    }
+
+    function axisGrid(y, height, width, pad, formatter) {
+      return ticks(0, y.domainMax, 5).map((tick) => {
+        const yy = y(tick);
+        return `<line x1="${pad.left}" x2="${width - pad.right}" y1="${yy}" y2="${yy}" stroke="${cssVar("--line")}"/><text x="${pad.left - 8}" y="${yy + 4}" fill="${cssVar("--muted")}" text-anchor="end">${formatter(tick)}</text>`;
+      }).join("") + `<line x1="${pad.left}" x2="${pad.left}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/><line x1="${pad.left}" x2="${width - pad.right}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/>`;
+    }
+
+    function zoneAxisGrid(y, height, width, pad) {
+      return [100, 90, 80, 70, 60, 50, 40].map((tick) => {
+        const yy = y(tick);
+        return `<line x1="${pad.left}" x2="${width - pad.right}" y1="${yy}" y2="${yy}" stroke="${cssVar("--line")}"/><text x="${pad.left - 8}" y="${yy + 4}" fill="${cssVar("--muted")}" text-anchor="end">p${tick}</text>`;
+      }).join("") + `<line x1="${pad.left}" x2="${pad.left}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/><line x1="${pad.left}" x2="${width - pad.right}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/>`;
+    }
+
+    function phaseAxisGrid(y, height, width, pad) {
+      return [3, 2, 1, 0].map((tick) => {
+        const yy = y(tick);
+        return `<line x1="${pad.left}" x2="${width - pad.right}" y1="${yy}" y2="${yy}" stroke="${cssVar("--line")}"/><text x="${pad.left - 8}" y="${yy + 4}" fill="${cssVar("--muted")}" text-anchor="end">${phaseLabel(tick)}</text>`;
+      }).join("") + `<line x1="${pad.left}" x2="${pad.left}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/><line x1="${pad.left}" x2="${width - pad.right}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/>`;
+    }
+
+    function rankAxisGrid(y, height, width, pad, maxRank) {
+      return Array.from({ length: maxRank }, (_, i) => maxRank - i).map((tick) => {
+        const yy = y(tick);
+        return `<line x1="${pad.left}" x2="${width - pad.right}" y1="${yy}" y2="${yy}" stroke="${cssVar("--line")}"/><text x="${pad.left - 8}" y="${yy + 4}" fill="${cssVar("--muted")}" text-anchor="end">${rankFmt(tick, maxRank)}</text>`;
+      }).join("") + `<line x1="${pad.left}" x2="${pad.left}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/><line x1="${pad.left}" x2="${width - pad.right}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/>`;
+    }
+
+    function pathD(points, x, y, key, minValue = null) {
+      return points.map((p, i) => {
+        const value = minValue === null ? p[key] : Math.max(minValue, p[key]);
+        return `${i ? "L" : "M"}${x(p.date).toFixed(2)},${y(value).toFixed(2)}`;
+      }).join(" ");
+    }
+
+    function stepPathD(points, x, y, key) {
+      if (!points.length) return "";
+      let d = `M${x(points[0].date).toFixed(2)},${y(points[0][key]).toFixed(2)}`;
+      for (let i = 1; i < points.length; i += 1) {
+        const prev = points[i - 1];
+        const point = points[i];
+        const xx = x(point.date).toFixed(2);
+        d += ` L${xx},${y(prev[key]).toFixed(2)} L${xx},${y(point[key]).toFixed(2)}`;
+      }
+      return d;
+    }
+
+    function buyWeight(row) {
+      let weight = 0;
+      for (const [pct, pctWeight] of SIMPLE_GRID) {
+        const level = row.levels.get(pct);
+        if (validLevel(level) && row.price <= level) weight = Math.max(weight, pctWeight);
+      }
+      return weight;
+    }
+
+    function cycleBuyUsd(row, cash, btc, opts) {
+      const gridUsd = opts.monthlyTopup / DAYS_PER_MONTH * buyWeight(row);
+      const portfolioValue = cash + btc * row.price;
+      return Math.max(gridUsd, portfolioValue * CYCLE_BUY_FLOOR_FRACTION);
+    }
+
+    function touchesLevel(row, pctValue) {
+      const level = row.levels.get(pctValue);
+      return validLevel(level) && row.price <= level;
+    }
+
+    function priceZoneValue(row) {
+      for (const pctValue of PCTS_ASC) {
+        const level = row.levels.get(pctValue);
+        if (validLevel(level) && row.price <= level) return pctValue;
+      }
+      return 101;
+    }
+
+    function priceZoneLabel(zone) {
+      return zone === 101 ? ">p100" : `p${zone}`;
+    }
+
+    function cyclePhaseValue(row, buyActive, sellArmed) {
+      if (buyActive) return 1;
+      if (sellArmed && isInsideSellBand(row)) return 3;
+      if (sellArmed) return 2;
+      return 0;
+    }
+
+    function phaseLabel(value) {
+      if (value === 3) return "trim";
+      if (value === 2) return "hold";
+      if (value === 1) return "DCA";
+      return "idle";
+    }
+
+    function isP100Increase(row, previousRow) {
+      const level = row.levels.get(100);
+      const previous = previousRow?.levels.get(100);
+      return validLevel(level) && validLevel(previous) && level > previous;
+    }
+
+    function isInsideSellBand(row) {
+      const p95 = row.levels.get(95);
+      const p100 = row.levels.get(100);
+      if (!validLevel(p95) || !validLevel(p100)) return false;
+      const lower = Math.min(p95, p100);
+      const upper = Math.max(p95, p100);
+      return row.price >= lower && row.price <= upper;
+    }
+
+    function trimSellBtc(row, cash, btc, sellRule) {
+      if (sellRule === "value") {
+        const portfolioValue = cash + btc * row.price;
+        return Math.min(btc, portfolioValue * TRIM_SELL_FRACTION / row.price);
+      }
+      return 0;
+    }
+
+    function simpleStrategyName(sellRule) {
+      if (sellRule === "value") return "Cycle Buy + Trim";
+      return "Cycle Buy & Hold";
+    }
+
+    function normalDcaBuyAmount(cash, monthlyTopup) {
+      const baseDailyBuy = monthlyTopup / DAYS_PER_MONTH;
+      if (cash <= 0 || baseDailyBuy <= 0) return 0;
+      if (cash < baseDailyBuy) return 0;
+      const maxBuy = baseDailyBuy * DAILY_DCA_MAX_MULTIPLE;
+      const runway = baseDailyBuy * DAILY_DCA_RUNWAY_DAYS;
+      return cash - maxBuy >= runway ? maxBuy : baseDailyBuy;
+    }
+
+    function findDateIndex(list, date) {
+      const index = list.findIndex((row) => row.date >= date);
+      if (index < 0) throw new Error(`Date ${date} is outside loaded data.`);
+      return index;
+    }
+
+    function costBasisSeriesName(pctValue) {
+      return pctValue === 100 ? "cost_basis_max" : `cost_basis_per_coin_pct${String(pctValue).padStart(2, "0")}`;
+    }
+
+    function scaleLinear(min, max, outMin, outMax) {
+      const fn = (value) => outMin + ((value - min) / (max - min || 1)) * (outMax - outMin);
+      fn.domainMax = max;
+      return fn;
+    }
+
+    function scaleLog(min, max, outMin, outMax) {
+      const logMin = Math.log10(min);
+      const logMax = Math.log10(max);
+      const fn = (value) => outMin + ((Math.log10(value) - logMin) / (logMax - logMin || 1)) * (outMax - outMin);
+      fn.domainMin = min;
+      fn.domainMax = max;
+      return fn;
+    }
+
+    function scaleTime(minDate, maxDate, outMin, outMax) {
+      const min = Date.parse(minDate);
+      const max = Date.parse(maxDate);
+      return (date) => outMin + ((Date.parse(date) - min) / (max - min || 1)) * (outMax - outMin);
+    }
+
+    function ticks(min, max, count) {
+      const step = niceStep((max - min) / Math.max(1, count - 1));
+      const start = Math.ceil(min / step) * step;
+      const values = [];
+      for (let value = start; value <= max + step * 1e-6; value += step) values.push(value);
+      return values;
+    }
+
+    function logGrid(y, height, width, pad) {
+      return logTicks(y.domainMin, y.domainMax).map((tick) => {
+        const yy = y(tick);
+        return `<line x1="${pad.left}" x2="${width - pad.right}" y1="${yy}" y2="${yy}" stroke="${cssVar("--line")}"/><text x="${pad.left - 8}" y="${yy + 4}" fill="${cssVar("--muted")}" text-anchor="end">${usd(tick)}</text>`;
+      }).join("") + `<line x1="${pad.left}" x2="${pad.left}" y1="${pad.top}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/><line x1="${pad.left}" x2="${width - pad.right}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="${cssVar("--line-strong")}"/>`;
+    }
+
+    function logTicks(min, max) {
+      const values = [];
+      const start = Math.floor(Math.log10(min));
+      const end = Math.ceil(Math.log10(max));
+      for (let power = start; power <= end; power += 1) {
+        const value = 10 ** power;
+        if (value >= min && value <= max) values.push(value);
+      }
+      return values;
+    }
+
+    function niceStep(raw) {
+      const pow = 10 ** Math.floor(Math.log10(raw || 1));
+      const n = raw / pow;
+      if (n <= 1) return pow;
+      if (n <= 2) return 2 * pow;
+      if (n <= 5) return 5 * pow;
+      return 10 * pow;
+    }
+
+    function svgPoint(svg, event) {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function numberFrom(input, fallback) {
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function validLevel(value) {
+      return Number.isFinite(value) && value > 0;
+    }
+
+    function isMonthStart(date) {
+      return date.endsWith("-01");
+    }
+
+    function addDays(date, days) {
+      const parsed = new Date(`${date}T00:00:00Z`);
+      parsed.setUTCDate(parsed.getUTCDate() + days);
+      return parsed.toISOString().slice(0, 10);
+    }
+
+    function clampDate(date, min, max) {
+      if (!date || date < min) return min;
+      if (date > max) return max;
+      return date;
+    }
+
+    function todayString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function usd(value) {
+      if (!Number.isFinite(value)) return "-";
+      if (Math.abs(value) >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}m`;
+      if (Math.abs(value) >= 10_000) return `$${(value / 1_000).toFixed(1)}k`;
+      return `$${fmt(value)}`;
+    }
+
+    function outcomeReason(best, dca, runnerUp) {
+      if (!dca || !runnerUp) return "The best strategy ended with the highest portfolio value for this start date.";
+      if (Math.abs(best.finalValue - runnerUp.finalValue) < 1e-9) {
+        return "Top strategies are tied on final value; compare BTC stacked, cash left, and drawdown to choose the better fit.";
+      }
+      if (best.key === "dca") {
+        return best.btc >= runnerUp.btc
+          ? "Daily DCA won by staying exposed instead of waiting for a cycle trigger."
+          : "Daily DCA won because steady buying beat the cash timing rules for this start date.";
+      }
+      if (best.btc > dca.btc && best.cash > dca.cash) {
+        return `${best.label} won by ending with more BTC and more dry powder than Daily DCA.`;
+      }
+      if (best.btc > dca.btc) {
+        return `${best.label} won by stacking more BTC; its buys landed in better zones than the steady baseline.`;
+      }
+      if (best.cash > dca.cash) {
+        return `${best.label} won by keeping more dry powder into today while still holding enough BTC exposure.`;
+      }
+      if (best.totalSellUsd > 0) {
+        return `${best.label} won because trimming rebuilt cash without giving up too much upside.`;
+      }
+      return `${best.label} won because its cash and BTC mix ended with a higher value than the baseline.`;
+    }
+
+    function todayAction(item, point) {
+      if (!point) return "-";
+      if (point.sellUsd > 0) return "sell";
+      if (point.buyUsd > 0) return "buy";
+      return "hodl";
+    }
+
+    function todayActionWithValue(item, point) {
+      const action = todayAction(item, point);
+      const actionClass = `action-${action}`;
+      if (!point || action === "hodl") return `<span class="${actionClass}">${escapeHtml(action)}</span>`;
+      const amount = action === "sell" ? point.sellUsd : point.buyUsd;
+      return `<span class="${actionClass}">${escapeHtml(action)}</span> <span class="neutral">${usd(amount)}</span>`;
+    }
+
+    function activityMetaText(filter, total) {
+      const noun = total === 1 ? "day" : "days";
+      const count = fmt(total);
+      if (filter === "buys") return `${count} cycle buy ${noun}, newest first`;
+      if (filter === "sells") return `${count} trim sell ${noun}, newest first`;
+      return `${count} ${noun}, newest first`;
+    }
+
+    function zoneAverageFmt(value) {
+      if (!Number.isFinite(value) || value <= 0) return "-";
+      if (value > 100) return ">p100";
+      return `p${value.toFixed(0)}`;
+    }
+
+    function signedUsd(value) {
+      if (!Number.isFinite(value)) return "-";
+      if (value > 0) return `+${usd(value)}`;
+      if (value < 0) return `-${usd(Math.abs(value))}`;
+      return usd(0);
+    }
+
+    function actionUsd(value) {
+      return value > 0 ? usd(value) : `<span class="table-zero">-</span>`;
+    }
+
+    function fmt(value) {
+      if (!Number.isFinite(value)) return "-";
+      return Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 });
+    }
+
+    function pct(value) {
+      if (!Number.isFinite(value)) return "-";
+      return `${(value * 100).toFixed(1)}%`;
+    }
+
+    function rankFmt(value, maxRank = 4) {
+      if (value === maxRank) return `${maxRank} top`;
+      if (value === 1) return "1 low";
+      return String(value);
+    }
+
+    function signedPct(value) {
+      if (!Number.isFinite(value)) return "-";
+      return `${value > 0 ? "+" : ""}${pct(value)}`;
+    }
+
+    function relativeDelta(value, base) {
+      return Number.isFinite(value) && Number.isFinite(base) && base > 0 ? value / base - 1 : 0;
+    }
+
+    function toneClass(value) {
+      if (value > 0) return "positive";
+      if (value < 0) return "negative";
+      return "neutral";
+    }
+
+    function btcFmt(value) {
+      if (!Number.isFinite(value)) return "-";
+      const digits = Math.abs(value) < 1 ? 5 : 3;
+      return `${Number(value).toLocaleString("en-US", { maximumFractionDigits: digits })} BTC`;
+    }
+
+    function monthFmt(value) {
+      if (!Number.isFinite(value)) return "-";
+      return `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 })}mo`;
+    }
+
+    function dayFmt(value) {
+      if (!Number.isFinite(value)) return "-";
+      return `${fmt(value)}d`;
+    }
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function getCache(key) {
+      try {
+        const item = JSON.parse(localStorage.getItem(key));
+        return item && Date.now() - item.time < 6 * 60 * 60 * 1000
+          ? item.rows.map((row) => ({ ...row, levels: new Map(row.levels) }))
+          : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function setCache(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify({
+          time: Date.now(),
+          rows: value.map((row) => ({ ...row, levels: [...row.levels.entries()] })),
+        }));
+      } catch {
+        // Cache is optional.
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+    }
+  </script>
+</body>
+</html>

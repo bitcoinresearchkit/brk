@@ -7,19 +7,9 @@ body {
   background: var(--black);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   > main {
     min-height: 100dvh;
     color: var(--white);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
   }
 }

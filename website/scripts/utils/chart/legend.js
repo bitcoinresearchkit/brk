@@ -29,19 +29,22 @@ export function createLegend() {
 
   const separator = createSpan("|");
   captureScroll(separator);
+  /** @type {HTMLElement | null} */
+  let prefix = null;
 
   return {
     element,
     scroller,
     /** @param {HTMLElement} el */
     setPrefix(el) {
-      const prev = separator.previousSibling;
-      if (prev) {
-        prev.replaceWith(el);
-      } else {
-        scroller.prepend(el, separator);
-      }
+      prefix ? prefix.replaceWith(el) : scroller.prepend(el, separator);
+      prefix = el;
       captureScroll(el);
+    },
+    clearPrefix() {
+      prefix?.remove();
+      prefix = null;
+      separator.remove();
     },
   };
 }
@@ -76,6 +79,7 @@ export function createSeriesLegend() {
   return {
     element: legend.element,
     setPrefix: legend.setPrefix,
+    clearPrefix: legend.clearPrefix,
     /**
      * @param {Object} args
      * @param {AnySeries} args.series

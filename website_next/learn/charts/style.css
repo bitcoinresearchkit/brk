@@ -1,0 +1,258 @@
+main.learn {
+  figure[data-chart="series"] {
+    line-height: 1;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 20rem;
+      cursor: crosshair;
+      overflow: visible;
+      touch-action: pan-y;
+    }
+
+    svg:focus-visible {
+      outline: 1px solid var(--orange);
+      outline-offset: 0.5rem;
+    }
+
+    p[role="status"]:empty {
+      display: none;
+    }
+
+    > footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: start;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      margin: 0.5rem 0 0;
+
+      > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.125rem 0.5rem;
+      }
+
+      fieldset {
+        display: flex;
+        gap: 0.25rem;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        text-transform: uppercase;
+
+        legend {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip-path: inset(50%);
+          white-space: nowrap;
+        }
+
+        label {
+          position: relative;
+          display: block;
+          cursor: pointer;
+        }
+
+        input {
+          position: absolute;
+          inset: 0;
+          margin: 0;
+          opacity: 0;
+          cursor: pointer;
+        }
+
+        span {
+          display: block;
+          padding: 0.25rem;
+          border-radius: 0.25rem;
+          color: var(--gray);
+        }
+
+        label:hover span {
+          color: var(--white);
+          background: var(--dark-gray);
+        }
+
+        label:has(:checked) span {
+          color: var(--black);
+          background: var(--white);
+        }
+
+        label:active span {
+          color: var(--black);
+          background: var(--orange);
+        }
+
+        label:has(:focus-visible) span {
+          outline: 1px solid var(--orange);
+          outline-offset: 0.125rem;
+        }
+      }
+
+      button[data-chart="fullscreen"] {
+        padding: 0.25rem;
+        border: 0;
+        border-radius: 0.25rem;
+        color: var(--gray);
+        background: none;
+        font: inherit;
+        line-height: inherit;
+        text-transform: uppercase;
+        cursor: pointer;
+
+        &:hover {
+          color: var(--white);
+          background: var(--dark-gray);
+        }
+
+        &[aria-pressed="true"] {
+          color: var(--black);
+          background: var(--green);
+        }
+
+        &:active {
+          color: var(--black);
+          background: var(--orange);
+        }
+
+        &:focus-visible {
+          outline: 1px solid var(--orange);
+          outline-offset: 0.125rem;
+        }
+      }
+    }
+
+    &:fullscreen {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem;
+      background: var(--black);
+
+      svg {
+        flex: 1;
+        height: auto;
+        min-height: 0;
+      }
+
+      figcaption menu {
+        padding-bottom: 0.5rem;
+      }
+    }
+
+    figcaption {
+      text-transform: uppercase;
+
+      header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      time {
+        color: var(--off-color);
+      }
+
+      menu {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0;
+        padding-bottom: 1rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        list-style: none;
+      }
+
+      li {
+        flex: 0 0 auto;
+      }
+
+      button {
+        padding: 0.25rem;
+        border: 0;
+        border-radius: 0.25rem;
+        color: inherit;
+        background: none;
+        font: inherit;
+        text-align: inherit;
+        text-transform: inherit;
+        cursor: pointer;
+
+        &:is(:hover, :focus-visible, [data-active]) {
+          color: var(--black);
+          background: var(--color);
+
+          span,
+          output {
+            color: inherit;
+          }
+        }
+
+        &:focus-visible {
+          outline: 1px solid var(--orange);
+          outline-offset: 0.125rem;
+        }
+
+        &[data-muted] {
+          opacity: 0.35;
+        }
+
+        > span {
+          display: block;
+          color: var(--color);
+          text-align: left;
+
+          &::before {
+            content: "";
+            display: inline-block;
+            width: 0.5em;
+            height: 0.5em;
+            margin-right: 0.35em;
+            margin-bottom: 0.1rem;
+            border-radius: 50%;
+            background: currentColor;
+          }
+        }
+
+        > output {
+          display: block;
+          margin-top: 0.25rem;
+          color: var(--white);
+          font-variant-numeric: tabular-nums;
+          text-align: right;
+        }
+      }
+    }
+
+    svg [data-series][data-muted] {
+      opacity: 0.2;
+    }
+
+    [data-scrubber] {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    svg[data-scrubbing="true"] [data-scrubber] {
+      opacity: 1;
+    }
+
+    [data-scrubber="guide"] {
+      stroke: var(--light-gray);
+      stroke-dasharray: 2 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    [data-scrubber="marker"] {
+      fill: var(--black);
+      stroke: var(--color, var(--orange));
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+}

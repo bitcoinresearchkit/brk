@@ -1,6 +1,6 @@
 import { createHeader } from "./header/index.js";
 import { createRoutePage, isRoute, normalizePath } from "./routes.js";
-import { getEventAnchor } from "./utils/event.js";
+import { getEventAnchor, isPlainLeftClick } from "./utils/event.js";
 import { revealPage, transitionPage } from "./utils/transition.js";
 
 /** @type {HTMLElement | undefined} */
@@ -71,9 +71,7 @@ function navigate(pathname) {
 }
 
 document.addEventListener("click", (event) => {
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
-    return;
-  }
+  if (!isPlainLeftClick(event)) return;
 
   const anchor = getEventAnchor(event);
   if (!anchor) return;

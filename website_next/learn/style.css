@@ -112,13 +112,18 @@ main.learn {
   p {
     margin-top: 1rem;
     color: var(--dark-white);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
   }
 
   figure {
     margin-top: 2rem;
     color: var(--gray);
     font-size: var(--font-size-xs);
-    text-transform: uppercase;
+
+    &:not([data-chart]) {
+      text-transform: uppercase;
+    }
 
     > div {
       height: 18rem;

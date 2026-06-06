@@ -18,6 +18,7 @@ _*
 /*.py
 /*.json
 /*.html
+!/btc-cycle-sim.html
 /research
 /filter_*
 /heatmaps*

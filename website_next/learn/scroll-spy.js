@@ -1,3 +1,5 @@
+const thresholds = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+
 /** @param {HTMLElement} main */
 export function initScrollSpy(main) {
   const sections = [...main.querySelectorAll("section[id]")];
@@ -96,9 +98,7 @@ export function initScrollSpy(main) {
       update();
     },
     {
-      threshold: [
-        0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1,
-      ],
+      threshold: thresholds,
     },
   );
 

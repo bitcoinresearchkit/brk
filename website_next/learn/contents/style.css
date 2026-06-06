@@ -25,7 +25,7 @@ main.learn {
     }
 
     ol ol {
-      margin-top: 0.5rem;
+      margin-top: 0.25rem;
       margin-left: 1rem;
       color: var(--gray);
     }
@@ -35,7 +35,7 @@ main.learn {
     }
 
     li + li {
-      margin-top: 0.5rem;
+      margin-top: 0.25rem;
     }
 
     a {
@@ -44,16 +44,16 @@ main.learn {
       color: inherit;
       text-decoration: none;
       margin-right: 1rem;
+      margin-block: -0.25rem;
+      margin-left: -0.5rem;
+      padding: 0.25rem;
+      padding-left: 0.5rem;
 
       &::before {
         opacity: 0.5;
       }
 
       &:is(:hover, :active) {
-        margin-block: -0.25rem;
-        margin-left: -0.5rem;
-        padding: 0.25rem;
-        padding-left: 0.5rem;
         border-radius: 0.25rem;
       }
 

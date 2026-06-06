@@ -14,3 +14,13 @@ export function getEventAnchor(event) {
     getEventTarget(event, "a[href]")
   );
 }
+
+/** @param {MouseEvent} event */
+export function isPlainLeftClick(event) {
+  return (
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey
+  );
+}

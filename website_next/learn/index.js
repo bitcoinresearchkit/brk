@@ -1,17 +1,21 @@
 import { createContents } from "./contents/index.js";
 import { sections } from "./data.js";
+import { createChart as createDataChart } from "./charts/index.js";
+import { initHashLinks } from "./hash-links.js";
 import { initScrollSpy } from "./scroll-spy.js";
 import { createId } from "../utils/id.js";
 
-/** @param {string} label */
-function createChart(label) {
+/** @param {Section["chart"]} chart */
+function createFigure(chart) {
+  if (typeof chart !== "string") return createDataChart(chart);
+
   const figure = document.createElement("figure");
-  const chart = document.createElement("div");
+  const placeholder = document.createElement("div");
   const caption = document.createElement("figcaption");
 
-  chart.append(label);
-  caption.append(label);
-  figure.append(chart, caption);
+  placeholder.append(chart);
+  caption.append(chart);
+  figure.append(placeholder, caption);
 
   return figure;
 }
@@ -22,19 +26,20 @@ function createChart(label) {
  */
 function createSection(section, level = 1) {
   const element = document.createElement("section");
-  const title = document.createElement(level === 1 ? "h1" : "h2");
+  const heading = document.createElement(level === 1 ? "h1" : "h2");
   const anchor = document.createElement("a");
   const description = document.createElement("p");
+  const children = section.children ?? [];
   const id = createId(section.title);
 
   element.id = id;
   anchor.href = `#${id}`;
   anchor.append(section.title);
-  title.append(anchor);
+  heading.append(anchor);
   description.append(section.description);
-  element.append(title, description, createChart(section.chart));
+  element.append(heading, description, createFigure(section.chart));
 
-  for (const child of section.children) {
+  for (const child of children) {
     element.append(createSection(child, level + 1));
   }
 
@@ -51,6 +56,7 @@ export function createLearnPage() {
   }
 
   main.append(createContents(sections), article);
+  initHashLinks(main);
   initScrollSpy(main);
   return main;
 }
@@ -59,6 +65,6 @@ export function createLearnPage() {
  * @typedef {Object} Section
  * @property {string} title
  * @property {string} description
- * @property {string} chart
- * @property {Section[]} children
+ * @property {string | import("./charts/index.js").Chart} chart
+ * @property {Section[]} [children]
  */

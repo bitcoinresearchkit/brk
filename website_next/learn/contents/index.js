@@ -1,18 +1,18 @@
 import { createId } from "../../utils/id.js";
 
-/**
- * @param {{ title: string, children: Section[] }} section
- */
+/** @param {Section} section */
 function createContentsItem(section) {
   const item = document.createElement("li");
   const anchor = document.createElement("a");
+  const children = section.children ?? [];
+
   anchor.href = `#${createId(section.title)}`;
   anchor.append(section.title);
 
-  if (section.children.length) {
+  if (children.length) {
     const list = document.createElement("ol");
 
-    for (const child of section.children) {
+    for (const child of children) {
       list.append(createContentsItem(child));
     }
     item.append(list);
@@ -40,5 +40,5 @@ export function createContents(sections) {
 /**
  * @typedef {Object} Section
  * @property {string} title
- * @property {Section[]} children
+ * @property {Section[]} [children]
  */

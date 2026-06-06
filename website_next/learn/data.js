@@ -1,30 +1,124 @@
+import {
+  addressBalanceSeries,
+  ageSeries,
+  classSeries,
+  epochSeries,
+  termSeries,
+  typeSeries,
+  utxoBalanceSeries,
+} from "./cohorts.js";
+import { colors } from "../utils/colors.js";
+
+/** @param {typeof import("../utils/client.js").brk} client */
+function metricCirculatingSupply(client) {
+  return client.series.supply.circulating.btc;
+}
+
+/** @param {typeof import("../utils/client.js").brk} client */
+function metricSupplyInProfit(client) {
+  return client.series.cohorts.utxo.profitability.profit.all.supply.all.btc;
+}
+
+/** @param {typeof import("../utils/client.js").brk} client */
+function metricSupplyInLoss(client) {
+  return client.series.cohorts.utxo.profitability.loss.all.supply.all.btc;
+}
+
 export const sections = [
   {
     title: "Supply",
     description:
       "How bitcoin moves from issuance into long-term ownership, profit, loss, and distribution.",
-    chart: "Circulating supply",
+    chart: {
+      title: "Circulating supply",
+      series: [
+        {
+          label: "Circulating",
+          color: colors.orange,
+          metric: metricCirculatingSupply,
+        },
+      ],
+    },
     children: [
       {
         title: "Profitability",
         description:
           "Which coins sit in profit or loss, and how that balance changes through cycles.",
-        chart: "Supply in profit",
-        children: [],
+        chart: {
+          title: "Profitability",
+          series: [
+            {
+              label: "In profit",
+              color: colors.green,
+              metric: metricSupplyInProfit,
+            },
+            {
+              label: "In loss",
+              color: colors.red,
+              metric: metricSupplyInLoss,
+            },
+          ],
+        },
+      },
+      {
+        title: "Term",
+        description:
+          "Supply split between recently moved coins and long-term holder coins.",
+        chart: {
+          title: "Supply by term",
+          series: termSeries,
+        },
       },
       {
         title: "Age",
         description:
           "How long coins have remained still, from fresh movement to deep dormancy.",
-        chart: "Supply by age",
-        children: [],
+        chart: {
+          title: "Supply by age",
+          series: ageSeries,
+        },
       },
       {
-        title: "Distribution",
+        title: "UTXO Balance",
+        description: "Supply grouped by the amount held in each unspent output.",
+        chart: {
+          title: "Supply by UTXO balance",
+          series: utxoBalanceSeries,
+        },
+      },
+      {
+        title: "Address Balance",
+        description: "Supply grouped by the balance held at each address.",
+        chart: {
+          title: "Supply by address balance",
+          series: addressBalanceSeries,
+        },
+      },
+      {
+        title: "Type",
+        description: "Supply grouped by output script type.",
+        chart: {
+          title: "Supply by type",
+          series: typeSeries,
+        },
+      },
+      {
+        title: "Epoch",
         description:
-          "How supply is spread across addresses, scripts, cohorts, and balance ranges.",
-        chart: "Supply distribution",
-        children: [],
+          "Supply grouped by the halving epoch in which coins were created.",
+        chart: {
+          title: "Supply by epoch",
+          series: epochSeries,
+        },
+      },
+      {
+        title: "Class",
+        description:
+          "Supply grouped by the calendar year in which coins were created.",
+        chart: {
+          title: "Supply by class",
+          series: classSeries,
+        },
       },
     ],
   },
@@ -39,28 +133,26 @@ export const sections = [
         description:
           "The current market value of circulating bitcoin at spot price.",
         chart: "Market capitalization",
-        children: [],
       },
       {
         title: "Realized Cap",
         description:
           "The aggregate value of coins priced where they last moved on-chain.",
         chart: "Realized capitalization",
-        children: [],
       },
       {
         title: "Value Bands",
         description:
           "How market value compares with cost basis and historical valuation ranges.",
         chart: "Valuation bands",
-        children: [],
       },
     ],
   },
   {
     title: "Activity",
     description:
-      "How often the chain is used, how value moves, and how demand appears in fees and transactions.",
+      "How often the chain is used, how value moves, and how demand appears " +
+      "in fees and transactions.",
     chart: "Network activity",
     children: [
       {
@@ -68,21 +160,18 @@ export const sections = [
         description:
           "Confirmed transaction count, throughput, and block-level settlement patterns.",
         chart: "Transaction count",
-        children: [],
       },
       {
         title: "Fees",
         description:
           "The cost users pay for block space and what that reveals about demand.",
         chart: "Fee rate",
-        children: [],
       },
       {
         title: "Addresses",
         description:
           "Address creation, reuse, activity, and balance changes across the network.",
         chart: "Active addresses",
-        children: [],
       },
     ],
   },
@@ -97,21 +186,18 @@ export const sections = [
         description:
           "Estimated computational power securing the network over time.",
         chart: "Hashrate",
-        children: [],
       },
       {
         title: "Difficulty",
         description:
           "How Bitcoin adjusts mining difficulty to keep block production steady.",
         chart: "Difficulty",
-        children: [],
       },
       {
         title: "Rewards",
         description:
           "Subsidy, fees, and the changing economics of block production.",
         chart: "Miner rewards",
-        children: [],
       },
     ],
   },
@@ -126,21 +212,18 @@ export const sections = [
         description:
           "Bitcoin price across time, cycles, drawdowns, and all-time highs.",
         chart: "Price",
-        children: [],
       },
       {
         title: "Returns",
         description:
           "How returns vary by holding period, entry point, and cycle phase.",
         chart: "Returns",
-        children: [],
       },
       {
         title: "Volatility",
         description:
           "The scale and rhythm of price movement across different windows.",
         chart: "Volatility",
-        children: [],
       },
     ],
   },
@@ -155,21 +238,18 @@ export const sections = [
         description:
           "Address and entity balances grouped by size, concentration, and historical change.",
         chart: "Balance cohorts",
-        children: [],
       },
       {
         title: "Entities",
         description:
           "Estimated ownership clusters and how their behavior changes through market regimes.",
         chart: "Entity supply",
-        children: [],
       },
       {
         title: "Custody",
         description:
           "Coins associated with exchanges, funds, miners, and other observable custody groups.",
         chart: "Custody balances",
-        children: [],
       },
     ],
   },
@@ -184,21 +264,18 @@ export const sections = [
         description:
           "Coins held by entities that tend to spend, trade, or redistribute frequently.",
         chart: "Liquid supply",
-        children: [],
       },
       {
         title: "Illiquid Supply",
         description:
           "Coins held by entities with low spending history and stronger accumulation behavior.",
         chart: "Illiquid supply",
-        children: [],
       },
       {
         title: "Exchange Flow",
         description:
           "Deposits, withdrawals, and balance changes across known exchange clusters.",
         chart: "Exchange netflow",
-        children: [],
       },
     ],
   },
@@ -213,21 +290,18 @@ export const sections = [
         description:
           "Distance from prior highs and the depth of cycle retracements over time.",
         chart: "Drawdown",
-        children: [],
       },
       {
         title: "Stress",
         description:
           "Periods where losses, volatility, and fee pressure concentrate together.",
         chart: "Network stress",
-        children: [],
       },
       {
         title: "Leverage",
         description:
           "Market conditions that indicate amplified exposure and forced positioning risk.",
         chart: "Leverage proxy",
-        children: [],
       },
     ],
   },
@@ -242,21 +316,18 @@ export const sections = [
         description:
           "Supply issuance changes and their relationship to market and miner behavior.",
         chart: "Halving cycles",
-        children: [],
       },
       {
         title: "Phases",
         description:
           "Bull, bear, recovery, and transition periods described through on-chain behavior.",
         chart: "Cycle phases",
-        children: [],
       },
       {
         title: "Comparisons",
         description:
           "Cycle-to-cycle comparisons normalized by time, price, drawdown, or supply behavior.",
         chart: "Cycle comparison",
-        children: [],
       },
     ],
   },
@@ -271,21 +342,18 @@ export const sections = [
         description:
           "Recently moved coins and holders more sensitive to price, volatility, and liquidity.",
         chart: "Short-term holder supply",
-        children: [],
       },
       {
         title: "Long Term",
         description:
           "Older coins and holders with stronger dormancy, conviction, or lower spend frequency.",
         chart: "Long-term holder supply",
-        children: [],
       },
       {
         title: "Cost Basis",
         description:
           "Estimated acquisition prices across cohorts and how they frame profit and loss.",
         chart: "Cohort cost basis",
-        children: [],
       },
     ],
   },

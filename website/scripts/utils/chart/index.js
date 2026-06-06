@@ -65,6 +65,7 @@ import { Unit } from "../units.js";
  * @typedef {Object} Legend
  * @property {HTMLLegendElement} element
  * @property {function(HTMLElement): void} setPrefix
+ * @property {function(): void} clearPrefix
  * @property {function({ series: AnySeries, name: string, order: number, colors: Color[] }): void} addOrReplace
  * @property {function(number): void} removeFrom
  */
@@ -1620,6 +1621,7 @@ export function createChart({ parent, brk, fitContent }) {
         const units = Array.from(map.keys());
         if (!units.length) {
           blueprints.panes[paneIndex].unit = null;
+          legends[paneIndex].clearPrefix();
           return;
         }
 
@@ -1678,6 +1680,7 @@ export function createChart({ parent, brk, fitContent }) {
     capture({
       screenshot: ichart.takeScreenshot(),
       chartWidth: chartEl.clientWidth,
+      chartElement: chartEl,
       parent,
       legends,
     });
