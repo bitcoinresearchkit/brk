@@ -3,14 +3,15 @@ main.learn {
     counter-reset: content-theme;
     position: sticky;
     top: 0;
-    padding-top: var(--top-offset);
-    padding-bottom: calc(var(--top-offset) / 2);
+    padding-block: var(--offset);
     max-height: 100dvh;
     overflow: auto;
     scrollbar-width: thin;
     font-size: var(--font-size-xs);
     line-height: var(--line-height-xs);
     text-transform: uppercase;
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
 
     ol {
       list-style: none;
@@ -38,15 +39,36 @@ main.learn {
     }
 
     a {
+      display: block;
+      scroll-margin-block: var(--offset);
       color: inherit;
       text-decoration: none;
+      margin-right: 1rem;
 
       &::before {
         opacity: 0.5;
       }
 
-      &:is(:hover, [aria-current="location"]) {
+      &:is(:hover, :active) {
+        margin-block: -0.25rem;
+        margin-left: -0.5rem;
+        padding: 0.25rem;
+        padding-left: 0.5rem;
+        border-radius: 0.25rem;
+      }
+
+      &:hover {
+        color: var(--white);
+        background-color: var(--dark-gray);
+      }
+
+      &[aria-current="location"] {
         color: var(--orange);
+      }
+
+      &:active {
+        color: var(--black);
+        background-color: var(--orange);
       }
     }
 

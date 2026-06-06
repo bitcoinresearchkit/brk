@@ -1,5 +1,5 @@
 main.learn {
-  --top-offset: 6rem;
+  --offset: 6rem;
   --content-width: 52rem;
 
   display: grid;
@@ -9,8 +9,7 @@ main.learn {
 
   article {
     counter-reset: theme;
-    padding-top: var(--top-offset);
-    padding-bottom: calc(var(--top-offset) / 2);
+    padding-block: var(--offset);
 
     &::before {
       content: "";
@@ -18,10 +17,10 @@ main.learn {
       top: 0;
       z-index: 2;
       display: block;
-      height: var(--top-offset);
-      margin-top: calc(-1 * var(--top-offset));
+      height: var(--offset);
+      margin-top: calc(-1 * var(--offset));
       margin-inline: auto;
-      margin-bottom: calc(-1 * var(--top-offset));
+      margin-bottom: calc(-1 * var(--offset));
       background: var(--black);
       pointer-events: none;
     }
@@ -31,12 +30,12 @@ main.learn {
       counter-reset: topic;
       width: min(100%, var(--content-width));
       margin-inline: auto;
-      scroll-margin-top: var(--top-offset);
+      scroll-margin-top: var(--offset);
     }
 
     > section:first-of-type {
-      margin-top: calc(-1 * var(--top-offset));
-      padding-top: var(--top-offset);
+      margin-top: calc(-1 * var(--offset));
+      padding-top: var(--offset);
     }
 
     > section + section {
@@ -45,14 +44,14 @@ main.learn {
 
     section section {
       counter-increment: topic;
-      scroll-margin-top: var(--top-offset);
+      scroll-margin-top: var(--offset);
     }
   }
 
   h1,
   h2 {
     position: sticky;
-    top: var(--top-offset);
+    top: var(--offset);
     padding-bottom: 0.5rem;
     background: var(--black);
     line-height: 1;

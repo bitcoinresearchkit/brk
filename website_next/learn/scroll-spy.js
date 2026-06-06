@@ -1,7 +1,14 @@
 /** @param {HTMLElement} main */
 export function initScrollSpy(main) {
-  const headings = [...main.querySelectorAll("article h1, article h2")];
-  const visibleHeadings = new Set();
+  const sections = [...main.querySelectorAll("section[id]")];
+  const sectionStates = sections.map((section) => ({
+    section,
+    children: [...section.querySelectorAll(":scope > section")],
+    intersecting: false,
+  }));
+  const stateBySection = new Map(
+    sectionStates.map((state) => [state.section, state]),
+  );
   const links = new Map(
     [...main.querySelectorAll('nav a[href^="#"]')].map((link) => [
       link.getAttribute("href"),
@@ -12,12 +19,24 @@ export function initScrollSpy(main) {
   /** @type {string | null} */
   let current = null;
 
-  /** @param {Element} heading */
-  function getHash(heading) {
-    const section = /** @type {HTMLElement} */ (
-      heading.closest("section[id]")
+  /** @param {Element} section */
+  function getVisibleHeight(section) {
+    const rect = section.getBoundingClientRect();
+    return Math.max(
+      0,
+      Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0),
     );
-    return `#${section.id}`;
+  }
+
+  /** @param {{ section: Element, children: Element[] }} state */
+  function getOwnVisibleHeight(state) {
+    let height = getVisibleHeight(state.section);
+
+    for (const child of state.children) {
+      height -= getVisibleHeight(child);
+    }
+
+    return Math.max(0, height);
   }
 
   /** @param {string} hash */
@@ -26,38 +45,62 @@ export function initScrollSpy(main) {
   }
 
   /** @param {string} hash */
-  function setCurrent(hash) {
+  function setCurrentHash(hash) {
     if (hash === current) return;
 
     if (current) getLink(current).removeAttribute("aria-current");
-    getLink(hash).setAttribute("aria-current", "location");
+
+    const link = getLink(hash);
+    link.setAttribute("aria-current", "location");
+    link.scrollIntoView({ block: "nearest", inline: "nearest" });
+
     history.replaceState(null, "", hash);
     current = hash;
+  }
+
+  function getCurrentSection() {
+    /** @type {{ section: Element, children: Element[] } | undefined} */
+    let currentState;
+    let currentHeight = 0;
+
+    for (const state of sectionStates) {
+      if (!state.intersecting) continue;
+
+      const height = getOwnVisibleHeight(state);
+
+      if (height > currentHeight) {
+        currentState = state;
+        currentHeight = height;
+      }
+    }
+
+    return currentState?.section;
   }
 
   function update() {
     if (main.hidden) return;
 
-    const heading = headings.findLast((heading) =>
-      visibleHeadings.has(heading),
-    );
-    if (heading) setCurrent(getHash(heading));
+    const section = getCurrentSection();
+    if (section) setCurrentHash(`#${section.id}`);
   }
 
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting) {
-          visibleHeadings.add(entry.target);
-        } else {
-          visibleHeadings.delete(entry.target);
-        }
+        const state = /** @type {{ intersecting: boolean }} */ (
+          stateBySection.get(entry.target)
+        );
+        state.intersecting = entry.isIntersecting;
       }
 
       update();
     },
-    { rootMargin: "0px 0px -80% 0px" },
+    {
+      threshold: [
+        0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1,
+      ],
+    },
   );
 
-  for (const heading of headings) observer.observe(heading);
+  for (const section of sections) observer.observe(section);
 }
