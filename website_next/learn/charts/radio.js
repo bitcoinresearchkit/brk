@@ -15,6 +15,11 @@ export function createRadioGroup(args) {
 
   legend.append(args.legend);
   fieldset.append(legend);
+  fieldset.addEventListener("change", (event) => {
+    const input = /** @type {HTMLInputElement} */ (event.target);
+
+    args.onChange(/** @type {T} */ (input.value));
+  });
 
   for (const option of args.options) {
     const label = document.createElement("label");
@@ -25,9 +30,6 @@ export function createRadioGroup(args) {
     input.name = name;
     input.value = option.value;
     input.checked = option.value === args.currentValue;
-    input.addEventListener("change", () => {
-      if (input.checked) args.onChange(option.value);
-    });
 
     text.append(option.label);
     label.append(input, text);

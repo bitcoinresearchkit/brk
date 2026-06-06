@@ -33,7 +33,7 @@ export function renderStackedPlot(
     path.dataset.series = index.toString();
     path.style.setProperty("--color", color);
     path.setAttribute("d", createAreaPathData(points));
-    highlight.add(path, index);
+    highlight.addNode(path, index);
     group.append(path);
   }
 
@@ -45,7 +45,7 @@ export function renderStackedPlot(
     path.dataset.series = index.toString();
     path.style.setProperty("--color", color);
     path.setAttribute("d", createLinePathData(points));
-    highlight.add(path, index);
+    highlight.addNode(path, index);
     group.append(path);
   }
 

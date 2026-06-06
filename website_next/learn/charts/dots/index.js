@@ -33,7 +33,7 @@ export function renderDotsPlot(group, loadedSeries, height, highlight, scale) {
     path.dataset.series = index.toString();
     path.style.setProperty("--color", color);
     path.setAttribute("d", createDotsPathData(points));
-    highlight.add(path, index);
+    highlight.addNode(path, index);
     group.append(path);
   });
 

@@ -1,15 +1,3 @@
-/**
- * @param {HTMLElement} target
- * @param {() => void} onChange
- */
-function listen(target, onChange) {
-  document.addEventListener("fullscreenchange", () => {
-    if (document.fullscreenElement === target || !document.fullscreenElement) {
-      onChange();
-    }
-  });
-}
-
 /** @param {HTMLElement} target */
 export function createFullscreenButton(target) {
   const button = document.createElement("button");
@@ -30,7 +18,7 @@ export function createFullscreenButton(target) {
       void target.requestFullscreen();
     }
   });
-  listen(target, update);
+  target.addEventListener("fullscreenchange", update);
   update();
 
   return button;

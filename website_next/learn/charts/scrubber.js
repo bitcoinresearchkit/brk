@@ -63,8 +63,6 @@ export function createScrubber(svg, readout, highlight) {
   let markers = [];
   let height = 0;
   let stepCount = 0;
-  /** @type {number | undefined} */
-  let previewIndex;
 
   group.dataset.scrubber = "root";
   guide.dataset.scrubber = "guide";
@@ -110,26 +108,10 @@ export function createScrubber(svg, readout, highlight) {
   function clear() {
     series = [];
     markers = [];
-    clearPreview();
+    highlight.clearPreview();
     group.replaceChildren(guide);
     delete svg.dataset.index;
     delete svg.dataset.scrubbing;
-  }
-
-  /** @param {number} index */
-  function preview(index) {
-    if (index === previewIndex) return;
-
-    if (previewIndex !== undefined) highlight.clearPreview(previewIndex);
-    highlight.preview(index);
-    previewIndex = index;
-  }
-
-  function clearPreview() {
-    if (previewIndex === undefined) return;
-
-    highlight.clearPreview(previewIndex);
-    previewIndex = undefined;
   }
 
   /**
@@ -147,7 +129,7 @@ export function createScrubber(svg, readout, highlight) {
       marker.dataset.scrubber = "marker";
       marker.style.setProperty("--color", color);
       marker.setAttribute("r", "3");
-      highlight.add(marker, index);
+      highlight.addNode(marker, index);
 
       return marker;
     });
@@ -164,19 +146,19 @@ export function createScrubber(svg, readout, highlight) {
       /** @type {SVGElement} */ (event.target).dataset.series,
     );
 
-    if (Number.isInteger(index)) preview(index);
-    else clearPreview();
+    if (Number.isInteger(index)) highlight.preview(index);
+    else highlight.clearPreview();
     update(x / VIEWBOX_WIDTH);
   }
 
   svg.addEventListener("pointermove", updateFromPointer);
   svg.addEventListener("pointerleave", () => {
-    clearPreview();
+    highlight.clearPreview();
     hide();
   });
   svg.addEventListener("focus", () => update(1));
   svg.addEventListener("blur", () => {
-    clearPreview();
+    highlight.clearPreview();
     hide();
   });
   svg.addEventListener("keydown", (event) => {

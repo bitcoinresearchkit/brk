@@ -69,7 +69,7 @@ export function renderBarPlot(
     path.dataset.series = index.toString();
     path.style.setProperty("--color", color);
     path.setAttribute("d", createBarPathData(points, getBarWidth(points)));
-    highlight.add(path, index);
+    highlight.addNode(path, index);
     group.append(path);
   }
 
@@ -81,7 +81,7 @@ export function renderBarPlot(
     path.dataset.series = index.toString();
     path.style.setProperty("--color", color);
     path.setAttribute("d", createLinePathData(points));
-    highlight.add(path, index);
+    highlight.addNode(path, index);
     group.append(path);
   }
 
