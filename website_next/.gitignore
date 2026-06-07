@@ -1,5 +1,4 @@
 */**/*.md
-!_redirects
 !scripts/**/_*.js
 *_old.js
 *dump*
