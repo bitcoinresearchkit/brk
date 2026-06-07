@@ -8,7 +8,6 @@ main.learn {
     padding-block: var(--nav-offset) var(--offset);
     max-height: 100dvh;
     overflow: auto;
-    scrollbar-width: thin;
     font-size: var(--font-size-xs);
     line-height: var(--line-height-xs);
     text-transform: uppercase;

@@ -154,14 +154,27 @@ main.learn {
         color: var(--off-color);
       }
 
+      span:is([data-chart="unit"], [data-chart="separator"]) {
+        color: var(--off-color);
+      }
+
       menu {
+        --shadow-size: 1rem;
+
         display: flex;
-        padding: 0;
+        margin-inline: calc(-1 * var(--shadow-size));
+        padding: 0 var(--shadow-size);
         padding-bottom: 1rem;
         padding-top: 0.25rem;
         overflow-x: auto;
-        scrollbar-width: thin;
         list-style: none;
+        mask-image: linear-gradient(
+          to right,
+          transparent,
+          black var(--shadow-size),
+          black calc(100% - var(--shadow-size)),
+          transparent
+        );
       }
 
       li {

@@ -8,11 +8,14 @@ const scales = /** @type {const} */ ([
   { value: "log", label: "Log" },
 ]);
 
-/** @param {string} chartKey */
-export function getDefaultScale(chartKey) {
+/**
+ * @param {string} chartKey
+ * @param {ChartScale} [fallback]
+ */
+export function getDefaultScale(chartKey, fallback = defaultScale) {
   const value = storage.get(chartKey);
 
-  return scales.find((scale) => scale.value === value)?.value ?? defaultScale;
+  return scales.find((scale) => scale.value === value)?.value ?? fallback;
 }
 
 /**

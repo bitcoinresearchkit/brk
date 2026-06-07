@@ -13,3 +13,13 @@ body {
     color: var(--white);
   }
 }
+
+::selection {
+  color: var(--black);
+  background-color: var(--orange);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray) transparent;
+}

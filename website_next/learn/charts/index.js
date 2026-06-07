@@ -30,8 +30,8 @@ export function createChart(chart) {
   const status = document.createElement("p");
   const chartKey = chart.title;
   let currentTimeframe = getDefaultTimeframe(chartKey);
-  let currentView = getDefaultView(chartKey);
-  let currentScale = getDefaultScale(chartKey);
+  let currentView = getDefaultView(chartKey, chart.defaultType);
+  let currentScale = getDefaultScale(chartKey, chart.defaultScale);
   const { legend, menu, items, readout } = createLegend(chart);
 
   figure.dataset.chart = "series";
@@ -95,6 +95,9 @@ export function createChart(chart) {
 /**
  * @typedef {Object} Chart
  * @property {string} title
+ * @property {import("./units.js").ChartUnit} unit
+ * @property {import("./views.js").ChartView} [defaultType]
+ * @property {import("./scale.js").ChartScale} [defaultScale]
  * @property {ChartSeries[]} series
  */
 

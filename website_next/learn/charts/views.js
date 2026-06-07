@@ -12,11 +12,14 @@ const views = /** @type {const} */ ([
   { value: "dots", label: "Dots" },
 ]);
 
-/** @param {string} chartKey */
-export function getDefaultView(chartKey) {
+/**
+ * @param {string} chartKey
+ * @param {ChartView} [fallback]
+ */
+export function getDefaultView(chartKey, fallback = defaultView) {
   const value = storage.get(chartKey);
 
-  return views.find((view) => view.value === value)?.value ?? defaultView;
+  return views.find((view) => view.value === value)?.value ?? fallback;
 }
 
 /**
