@@ -5,15 +5,16 @@ main.learn {
     counter-reset: content-theme;
     position: sticky;
     top: 0;
-    padding-block: var(--nav-offset) var(--offset);
     max-height: 100dvh;
+    margin-left: -1rem;
+    padding-block: var(--nav-offset) var(--offset);
+    padding-left: 0.5rem;
     overflow: auto;
+    overscroll-behavior: contain;
+    color: var(--gray);
     font-size: var(--font-size-xs);
     line-height: var(--line-height-xs);
     text-transform: uppercase;
-    color: var(--gray);
-    padding-left: 0.5rem;
-    margin-left: -0.5rem;
 
     ol {
       list-style: none;

@@ -25,36 +25,6 @@ import {
 } from "./views.js";
 import { FALLBACK_VIEWBOX_HEIGHT, VIEWBOX_WIDTH } from "./viewbox.js";
 
-/**
- * @template {string} T
- * @param {Object} args
- * @param {T} args.currentValue
- * @param {(currentValue: T, onChange: (value: T) => void) => HTMLFieldSetElement} args.createControl
- * @param {(chartKey: string, value: T) => void} args.save
- * @param {string} args.chartKey
- * @param {HTMLElement} args.figure
- * @param {string} args.dataKey
- * @param {(value: T) => void} args.setValue
- * @param {() => void} args.render
- */
-function createChartSettingControl({
-  currentValue,
-  createControl,
-  save,
-  chartKey,
-  figure,
-  dataKey,
-  setValue,
-  render,
-}) {
-  return createControl(currentValue, (value) => {
-    setValue(value);
-    save(chartKey, value);
-    figure.dataset[dataKey] = value;
-    render();
-  });
-}
-
 /** @param {Chart} chart */
 export function createChart(chart) {
   const figure = document.createElement("figure");
@@ -99,48 +69,38 @@ export function createChart(chart) {
     getOrder: () => currentOrder,
     getTimeframe: () => currentTimeframe,
   });
-  const viewControl = createChartSettingControl({
-    currentValue: currentView,
-    createControl: createViewControl,
-    save: saveView,
-    chartKey,
-    figure,
-    dataKey: "view",
-    setValue: (view) => {
-      currentView = view;
-    },
-    render: renderer.renderCurrent,
+
+  /**
+   * @template {string} T
+   * @param {string} dataKey
+   * @param {(chartKey: string, value: T) => void} save
+   * @param {T} value
+   */
+  function saveChartSetting(dataKey, save, value) {
+    save(chartKey, value);
+    figure.dataset[dataKey] = value;
+  }
+
+  const viewControl = createViewControl(currentView, (view) => {
+    currentView = view;
+    saveChartSetting("view", saveView, view);
+    renderer.renderCurrent();
   });
-  const scaleControl = createChartSettingControl({
-    currentValue: currentScale,
-    createControl: createScaleControl,
-    save: saveScale,
-    chartKey,
-    figure,
-    dataKey: "scale",
-    setValue: (scale) => {
-      currentScale = scale;
-    },
-    render: renderer.renderCurrent,
+  const scaleControl = createScaleControl(currentScale, (scale) => {
+    currentScale = scale;
+    saveChartSetting("scale", saveScale, scale);
+    renderer.renderCurrent();
   });
-  const orderControl = createChartSettingControl({
-    currentValue: currentOrder,
-    createControl: createOrderControl,
-    save: saveOrder,
-    chartKey,
-    figure,
-    dataKey: "order",
-    setValue: (order) => {
-      currentOrder = order;
-    },
-    render: renderer.renderCurrent,
+  const orderControl = createOrderControl(currentOrder, (order) => {
+    currentOrder = order;
+    saveChartSetting("order", saveOrder, order);
+    renderer.renderCurrent();
   });
   const timeframeControl = createTimeframeControl(
     currentTimeframe,
     (timeframe) => {
       currentTimeframe = timeframe;
-      saveTimeframe(chartKey, timeframe);
-      figure.dataset.timeframe = timeframe;
+      saveChartSetting("timeframe", saveTimeframe, timeframe);
       void renderer.loadCurrent();
     },
   );

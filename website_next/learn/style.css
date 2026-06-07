@@ -14,7 +14,6 @@ main.learn {
 
   display: grid;
   grid-template-columns: 14rem minmax(0, 1fr);
-  gap: 4rem;
   padding: 0 var(--page-x);
   scroll-padding-top: var(--offset);
 
