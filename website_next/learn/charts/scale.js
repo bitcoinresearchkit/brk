@@ -36,6 +36,24 @@ export function createScaleControl(currentScale, onChange) {
   return setting.create(currentScale, onChange);
 }
 
+export function createBounds() {
+  return {
+    min: Infinity,
+    max: -Infinity,
+    minPositive: Infinity,
+  };
+}
+
+/**
+ * @param {ScaleBounds} bounds
+ * @param {number} value
+ */
+export function includeBoundValue(bounds, value) {
+  bounds.min = Math.min(bounds.min, value);
+  bounds.max = Math.max(bounds.max, value);
+  if (value > 0) bounds.minPositive = Math.min(bounds.minPositive, value);
+}
+
 /**
  * @param {number} value
  * @param {ScaleBounds} bounds

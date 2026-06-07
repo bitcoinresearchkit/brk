@@ -1,6 +1,11 @@
 import { createFullscreenButton } from "./fullscreen.js";
 import { onChartVisibility } from "./intersection.js";
 import { createLegend } from "./legend/index.js";
+import {
+  createOrderControl,
+  getDefaultOrder,
+  saveOrder,
+} from "./order.js";
 import { createChartRenderer } from "./renderer.js";
 import {
   createScaleControl,
@@ -20,6 +25,36 @@ import {
 } from "./views.js";
 import { FALLBACK_VIEWBOX_HEIGHT, VIEWBOX_WIDTH } from "./viewbox.js";
 
+/**
+ * @template {string} T
+ * @param {Object} args
+ * @param {T} args.currentValue
+ * @param {(currentValue: T, onChange: (value: T) => void) => HTMLFieldSetElement} args.createControl
+ * @param {(chartKey: string, value: T) => void} args.save
+ * @param {string} args.chartKey
+ * @param {HTMLElement} args.figure
+ * @param {string} args.dataKey
+ * @param {(value: T) => void} args.setValue
+ * @param {() => void} args.render
+ */
+function createChartSettingControl({
+  currentValue,
+  createControl,
+  save,
+  chartKey,
+  figure,
+  dataKey,
+  setValue,
+  render,
+}) {
+  return createControl(currentValue, (value) => {
+    setValue(value);
+    save(chartKey, value);
+    figure.dataset[dataKey] = value;
+    render();
+  });
+}
+
 /** @param {Chart} chart */
 export function createChart(chart) {
   const figure = document.createElement("figure");
@@ -33,6 +68,7 @@ export function createChart(chart) {
   let currentTimeframe = getDefaultTimeframe(chartKey);
   let currentView = getDefaultView(chartKey, chart.defaultType);
   let currentScale = getDefaultScale(chartKey, chart.defaultScale);
+  let currentOrder = getDefaultOrder(chartKey);
   const { legend, menu, items, readout } = createLegend(chart);
 
   figure.dataset.chart = "series";
@@ -40,6 +76,7 @@ export function createChart(chart) {
   figure.dataset.timeframe = currentTimeframe;
   figure.dataset.view = currentView;
   figure.dataset.scale = currentScale;
+  figure.dataset.order = currentOrder;
   svg.setAttribute(
     "viewBox",
     `0 0 ${VIEWBOX_WIDTH} ${FALLBACK_VIEWBOX_HEIGHT}`,
@@ -59,19 +96,44 @@ export function createChart(chart) {
     chart,
     getView: () => currentView,
     getScale: () => currentScale,
+    getOrder: () => currentOrder,
     getTimeframe: () => currentTimeframe,
   });
-  const viewControl = createViewControl(currentView, (view) => {
-    currentView = view;
-    saveView(chartKey, view);
-    figure.dataset.view = view;
-    renderer.renderCurrent();
+  const viewControl = createChartSettingControl({
+    currentValue: currentView,
+    createControl: createViewControl,
+    save: saveView,
+    chartKey,
+    figure,
+    dataKey: "view",
+    setValue: (view) => {
+      currentView = view;
+    },
+    render: renderer.renderCurrent,
   });
-  const scaleControl = createScaleControl(currentScale, (scale) => {
-    currentScale = scale;
-    saveScale(chartKey, scale);
-    figure.dataset.scale = scale;
-    renderer.renderCurrent();
+  const scaleControl = createChartSettingControl({
+    currentValue: currentScale,
+    createControl: createScaleControl,
+    save: saveScale,
+    chartKey,
+    figure,
+    dataKey: "scale",
+    setValue: (scale) => {
+      currentScale = scale;
+    },
+    render: renderer.renderCurrent,
+  });
+  const orderControl = createChartSettingControl({
+    currentValue: currentOrder,
+    createControl: createOrderControl,
+    save: saveOrder,
+    chartKey,
+    figure,
+    dataKey: "order",
+    setValue: (order) => {
+      currentOrder = order;
+    },
+    render: renderer.renderCurrent,
   });
   const timeframeControl = createTimeframeControl(
     currentTimeframe,
@@ -82,7 +144,7 @@ export function createChart(chart) {
       void renderer.loadCurrent();
     },
   );
-  chartControls.append(viewControl, scaleControl);
+  chartControls.append(viewControl, scaleControl, orderControl);
   timeControls.append(timeframeControl, createFullscreenButton(figure));
   controls.append(chartControls, timeControls);
   plot.append(svg, status);

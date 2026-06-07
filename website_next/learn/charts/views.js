@@ -2,18 +2,16 @@ import { createChartSetting } from "./setting.js";
 
 export const viewTypes = /** @type {const} */ ({
   line: "line",
+  area: "area",
   stacked: "stacked",
-  stackedReversed: "stacked-reversed",
   bar: "bar",
-  barReversed: "bar-reversed",
   dots: "dots",
 });
 const views = /** @type {const} */ ([
   { value: viewTypes.line, label: "Line" },
-  { value: viewTypes.stacked, label: "Stack↑" },
-  { value: viewTypes.stackedReversed, label: "Stack↓" },
-  { value: viewTypes.bar, label: "Bars↑" },
-  { value: viewTypes.barReversed, label: "Bars↓" },
+  { value: viewTypes.area, label: "Area" },
+  { value: viewTypes.stacked, label: "Stack" },
+  { value: viewTypes.bar, label: "Bars" },
   { value: viewTypes.dots, label: "Dots" },
 ]);
 const defaultView = viewTypes.stacked;

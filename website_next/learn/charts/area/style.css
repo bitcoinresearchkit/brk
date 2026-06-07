@@ -1,0 +1,9 @@
+main.learn {
+  figure[data-chart="series"] {
+    path[data-chart="area"] {
+      fill: var(--color, var(--orange));
+      fill-opacity: 0.5;
+      stroke: none;
+    }
+  }
+}

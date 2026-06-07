@@ -1,5 +1,6 @@
 import { createLinePathData } from "../path.js";
 import { appendSeriesPath } from "../series-path.js";
+import { createOrderedIndexes } from "../order.js";
 import { createLineSeries } from "./series.js";
 
 /**
@@ -8,11 +9,21 @@ import { createLineSeries } from "./series.js";
  * @param {number} height
  * @param {SeriesHighlight} highlight
  * @param {import("../scale.js").ChartScale} scale
+ * @param {import("../order.js").ChartOrder} order
  */
-export function renderLinePlot(group, loadedSeries, height, highlight, scale) {
+export function renderLinePlot(
+  group,
+  loadedSeries,
+  height,
+  highlight,
+  scale,
+  order,
+) {
   const plottedSeries = createLineSeries(loadedSeries, height, scale);
+  const indexes = createOrderedIndexes(plottedSeries.length, order);
 
-  plottedSeries.forEach(({ color, points }, index) => {
+  for (const index of indexes) {
+    const { color, points } = plottedSeries[index];
     appendSeriesPath({
       group,
       highlight,
@@ -21,7 +32,7 @@ export function renderLinePlot(group, loadedSeries, height, highlight, scale) {
       color,
       d: createLinePathData(points),
     });
-  });
+  }
 
   return plottedSeries;
 }

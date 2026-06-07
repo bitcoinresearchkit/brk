@@ -35,21 +35,21 @@ function createBarPathData(points, width) {
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
  * @param {SeriesHighlight} highlight
- * @param {{ reversed: boolean }} options
  * @param {import("../scale.js").ChartScale} scale
+ * @param {import("../order.js").ChartOrder} order
  */
 export function renderBarPlot(
   group,
   loadedSeries,
   height,
   highlight,
-  options,
   scale,
+  order,
 ) {
   const { lineIndexes, plottedSeries, stackIndexes } = createStackedSeries(
     loadedSeries,
     height,
-    options.reversed,
+    order,
     scale,
   );
 

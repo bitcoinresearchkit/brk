@@ -1,42 +1,40 @@
 import { VIEWBOX_WIDTH } from "../viewbox.js";
-import { scaleY } from "../scale.js";
+import { orderIndexes } from "../order.js";
+import { createBounds, includeBoundValue, scaleY } from "../scale.js";
 
 /**
  * @param {LoadedSeries[]} series
- * @param {number[]} stackIndexes
+ * @param {number[]} stackOrder
  * @param {number[]} lineIndexes
  */
-function createStackBounds(series, stackIndexes, lineIndexes) {
+function createStackBounds(series, stackOrder, lineIndexes) {
+  const bounds = createBounds();
   const length = series[0].entries.length;
-  let min = 0;
-  let max = 0;
-  let minPositive = Infinity;
+
+  includeBoundValue(bounds, 0);
 
   for (let index = 0; index < length; index += 1) {
     let negative = 0;
     let positive = 0;
 
-    for (const seriesIndex of stackIndexes) {
+    for (const seriesIndex of stackOrder) {
       const value = series[seriesIndex].entries[index].value;
+      const end = value < 0 ? negative + value : positive + value;
 
-      if (value < 0) negative += value;
-      else positive += value;
+      if (value < 0) negative = end;
+      else positive = end;
+
+      includeBoundValue(bounds, end);
     }
-
-    min = Math.min(min, negative);
-    max = Math.max(max, positive);
-    if (positive > 0) minPositive = Math.min(minPositive, positive);
 
     for (const seriesIndex of lineIndexes) {
       const value = series[seriesIndex].entries[index].value;
 
-      min = Math.min(min, value);
-      max = Math.max(max, value);
-      if (value > 0) minPositive = Math.min(minPositive, value);
+      includeBoundValue(bounds, value);
     }
   }
 
-  return { min, max, minPositive };
+  return bounds;
 }
 
 /** @returns {StackedPoint[]} */
@@ -47,36 +45,36 @@ function createStackedPoints() {
 /**
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
- * @param {boolean} reversed
+ * @param {import("../order.js").ChartOrder} order
  * @param {import("../scale.js").ChartScale} scale
  */
-export function createStackedSeries(loadedSeries, height, reversed, scale) {
+export function createStackedSeries(loadedSeries, height, order, scale) {
   const indexes = loadedSeries.map((_, index) => index);
-  const lineIndexes = indexes.filter(
-    (index) => loadedSeries[index].series.role === "line",
+  const lineIndexes = orderIndexes(
+    indexes.filter((index) => loadedSeries[index].series.role === "line"),
+    order,
   );
-  const stackIndexes = indexes.filter(
-    (index) => loadedSeries[index].series.role !== "line",
+  const stackIndexes = orderIndexes(
+    indexes.filter((index) => loadedSeries[index].series.role !== "line"),
+    order,
   );
 
-  const bounds = createStackBounds(loadedSeries, stackIndexes, lineIndexes);
   const length = loadedSeries[0].entries.length;
   const xScale = VIEWBOX_WIDTH / (length - 1);
-  const order = [...stackIndexes];
   const plottedSeries = loadedSeries.map(({ series, color }) => ({
     series,
     color,
     points: createStackedPoints(),
   }));
 
-  if (reversed) order.reverse();
+  const bounds = createStackBounds(loadedSeries, stackIndexes, lineIndexes);
 
   for (let index = 0; index < length; index += 1) {
     let negative = 0;
     let positive = 0;
     const x = index * xScale;
 
-    for (const seriesIndex of order) {
+    for (const seriesIndex of stackIndexes) {
       const { date, value } = loadedSeries[seriesIndex].entries[index];
       const start = value < 0 ? negative : positive;
       const end = start + value;

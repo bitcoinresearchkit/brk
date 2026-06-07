@@ -15,6 +15,7 @@ import { getViewBoxHeight, VIEWBOX_WIDTH } from "./viewbox.js";
  * @param {Chart} args.chart
  * @param {() => ChartView} args.getView
  * @param {() => ChartScale} args.getScale
+ * @param {() => ChartOrder} args.getOrder
  * @param {() => TimeframeValue} args.getTimeframe
  */
 export function createChartRenderer({
@@ -26,6 +27,7 @@ export function createChartRenderer({
   chart,
   getView,
   getScale,
+  getOrder,
   getTimeframe,
 }) {
   const group = createSvgElement("g");
@@ -68,6 +70,7 @@ export function createChartRenderer({
         height,
         highlight,
         getScale(),
+        getOrder(),
       ),
       height,
     );
@@ -132,6 +135,7 @@ export function createChartRenderer({
 /** @typedef {import("./index.js").Chart} Chart */
 /** @typedef {import("./index.js").LoadedSeries} LoadedSeries */
 /** @typedef {import("./legend/index.js").Readout} Readout */
+/** @typedef {import("./order.js").ChartOrder} ChartOrder */
 /** @typedef {import("./scale.js").ChartScale} ChartScale */
 /** @typedef {import("./timeframes.js").TimeframeValue} TimeframeValue */
 /** @typedef {import("./views.js").ChartView} ChartView */

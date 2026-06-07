@@ -1,21 +1,17 @@
 import { VIEWBOX_WIDTH } from "../viewbox.js";
-import { scaleY } from "../scale.js";
+import { createBounds, includeBoundValue, scaleY } from "../scale.js";
 
 /** @param {LoadedSeries[]} series */
 function createValueBounds(series) {
-  let min = Infinity;
-  let max = -Infinity;
-  let minPositive = Infinity;
+  const bounds = createBounds();
 
   for (const { entries } of series) {
     for (const { value } of entries) {
-      min = Math.min(min, value);
-      max = Math.max(max, value);
-      if (value > 0) minPositive = Math.min(minPositive, value);
+      includeBoundValue(bounds, value);
     }
   }
 
-  return { min, max, minPositive };
+  return bounds;
 }
 
 /**

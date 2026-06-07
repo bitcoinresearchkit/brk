@@ -1,20 +1,18 @@
-import { formatCoordinate } from "../path.js";
+import { createAreaPathData, createLinePathData } from "../path.js";
 import { appendSeriesPath } from "../series-path.js";
 import { createOrderedIndexes } from "../order.js";
 import { createLineSeries } from "../line/series.js";
 
-const radius = 1;
-
-/** @param {{ x: number, y: number }[]} points */
-function createDotsPathData(points) {
-  return points
-    .map(
-      ({ x, y }) =>
-        `M${formatCoordinate(x - radius)} ${formatCoordinate(y)}` +
-        `a${radius} ${radius} 0 1 0 ${radius * 2} 0` +
-        `a${radius} ${radius} 0 1 0 ${radius * -2} 0`,
-    )
-    .join(" ");
+/**
+ * @param {number} height
+ * @param {{ date: Date, value: number, x: number, y: number }[]} points
+ */
+function createAreaPoints(height, points) {
+  return points.map((point) => ({
+    ...point,
+    y0: height,
+    y1: point.y,
+  }));
 }
 
 /**
@@ -25,7 +23,7 @@ function createDotsPathData(points) {
  * @param {import("../scale.js").ChartScale} scale
  * @param {import("../order.js").ChartOrder} order
  */
-export function renderDotsPlot(
+export function renderAreaPlot(
   group,
   loadedSeries,
   height,
@@ -42,9 +40,18 @@ export function renderDotsPlot(
       group,
       highlight,
       index,
-      chart: "dots",
+      chart: "area",
       color,
-      d: createDotsPathData(points),
+      d: createAreaPathData(createAreaPoints(height, points)),
+    });
+
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "line",
+      color,
+      d: createLinePathData(points),
     });
   }
 
