@@ -104,6 +104,10 @@ export function createChartRenderer({
 
   async function loadCurrent() {
     const id = (loadId += 1);
+    const loadingTimer = setTimeout(() => {
+      if (id === loadId && active) status.textContent = "Loading";
+    }, 250);
+
     svg.setAttribute("aria-busy", "true");
 
     try {
@@ -119,6 +123,7 @@ export function createChartRenderer({
       console.error(error);
       status.textContent = "Chart unavailable";
     } finally {
+      clearTimeout(loadingTimer);
       if (id === loadId) svg.removeAttribute("aria-busy");
     }
   }
@@ -141,6 +146,7 @@ export function createChartRenderer({
     group.replaceChildren();
     highlight.clearNodes();
     scrubber?.clear();
+    status.textContent = "";
     svg.removeAttribute("aria-busy");
   }
 

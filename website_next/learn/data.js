@@ -24,6 +24,8 @@ import {
   ageSeries,
   classSeries,
   epochSeries,
+  exposedSupplySeries,
+  exposedSupplyTypeSeries,
   termSeries,
   typeSeries,
   utxoBalanceSeries,
@@ -91,6 +93,29 @@ export const sections = [
             },
           ],
         },
+      },
+      {
+        title: "Exposed",
+        description:
+          "Shows BTC held by addresses whose public key is already visible on-chain. This can happen because the address type exposes the key directly, or because coins were spent from that address before.",
+        chart: {
+          title: "Exposed supply",
+          unit: units.btc,
+          defaultType: lineType,
+          series: exposedSupplySeries,
+        },
+        children: [
+          {
+            title: "Type",
+            description:
+              "Splits exposed supply by address type. This shows which script formats account for the visible-public-key supply.",
+            chart: {
+              title: "Exposed supply by type",
+              unit: units.btc,
+              series: exposedSupplyTypeSeries,
+            },
+          },
+        ],
       },
       {
         title: "Term",

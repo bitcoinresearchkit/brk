@@ -23,6 +23,7 @@ import { FALLBACK_VIEWBOX_HEIGHT, VIEWBOX_WIDTH } from "./viewbox.js";
 /** @param {Chart} chart */
 export function createChart(chart) {
   const figure = document.createElement("figure");
+  const plot = document.createElement("div");
   const svg = createSvgElement("svg");
   const controls = document.createElement("footer");
   const chartControls = document.createElement("div");
@@ -35,6 +36,7 @@ export function createChart(chart) {
   const { legend, menu, items, readout } = createLegend(chart);
 
   figure.dataset.chart = "series";
+  plot.dataset.chart = "plot";
   figure.dataset.timeframe = currentTimeframe;
   figure.dataset.view = currentView;
   figure.dataset.scale = currentScale;
@@ -83,7 +85,8 @@ export function createChart(chart) {
   chartControls.append(viewControl, scaleControl);
   timeControls.append(timeframeControl, createFullscreenButton(figure));
   controls.append(chartControls, timeControls);
-  figure.append(legend, svg, controls, status);
+  plot.append(svg, status);
+  figure.append(legend, plot, controls);
   onChartVisibility(figure, {
     show: renderer.resume,
     hide: renderer.suspend,

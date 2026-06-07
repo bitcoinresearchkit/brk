@@ -1,17 +1,11 @@
-const thresholds = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-
 /** @param {HTMLElement} main */
 export function initScrollSpy(main) {
   const nav = /** @type {HTMLElement} */ (main.querySelector("nav"));
   const sections = [...main.querySelectorAll("section[id]")];
   const sectionStates = sections.map((section) => ({
     section,
-    children: [...section.querySelectorAll(":scope > section")],
-    intersecting: false,
+    firstChild: section.querySelector(":scope > section"),
   }));
-  const stateBySection = new Map(
-    sectionStates.map((state) => [state.section, state]),
-  );
   const links = new Map(
     [...main.querySelectorAll('nav a[href^="#"]')].map((link) => [
       link.getAttribute("href"),
@@ -21,25 +15,29 @@ export function initScrollSpy(main) {
 
   /** @type {string | null} */
   let current = null;
+  let scheduled = false;
 
-  /** @param {Element} section */
-  function getVisibleHeight(section) {
-    const rect = section.getBoundingClientRect();
-    return Math.max(
-      0,
-      Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0),
-    );
+  function getViewportTop() {
+    return Number.parseFloat(getComputedStyle(main).getPropertyValue("--offset"));
   }
 
-  /** @param {{ section: Element, children: Element[] }} state */
-  function getOwnVisibleHeight(state) {
-    let height = getVisibleHeight(state.section);
+  /**
+   * @param {Element} section
+   * @param {Element | null} firstChild
+   */
+  function getOwnVisibleHeight(section, firstChild) {
+    const sectionRect = section.getBoundingClientRect();
+    const childRect = firstChild?.getBoundingClientRect();
+    const top = Math.max(sectionRect.top, getViewportTop());
+    const bottom = Math.min(
+      childRect?.top ?? sectionRect.bottom,
+      window.innerHeight,
+    );
 
-    for (const child of state.children) {
-      height -= getVisibleHeight(child);
-    }
-
-    return Math.max(0, height);
+    return Math.max(
+      0,
+      bottom - top,
+    );
   }
 
   /** @param {string} hash */
@@ -79,14 +77,12 @@ export function initScrollSpy(main) {
   }
 
   function getCurrentSection() {
-    /** @type {{ section: Element, children: Element[] } | undefined} */
+    /** @type {{ section: Element, firstChild: Element | null } | undefined} */
     let currentState;
     let currentHeight = 0;
 
     for (const state of sectionStates) {
-      if (!state.intersecting) continue;
-
-      const height = getOwnVisibleHeight(state);
+      const height = getOwnVisibleHeight(state.section, state.firstChild);
 
       if (height > currentHeight) {
         currentState = state;
@@ -104,21 +100,17 @@ export function initScrollSpy(main) {
     if (section) setCurrentHash(`#${section.id}`);
   }
 
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        const state = /** @type {{ intersecting: boolean }} */ (
-          stateBySection.get(entry.target)
-        );
-        state.intersecting = entry.isIntersecting;
-      }
+  function scheduleUpdate() {
+    if (scheduled) return;
 
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
       update();
-    },
-    {
-      threshold: thresholds,
-    },
-  );
+    });
+  }
 
-  for (const section of sections) observer.observe(section);
+  window.addEventListener("scroll", scheduleUpdate, { passive: true });
+  main.addEventListener("pageactive", scheduleUpdate);
+  scheduleUpdate();
 }

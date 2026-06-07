@@ -10,6 +10,26 @@ main.learn {
       cursor: crosshair;
       overflow: visible;
       touch-action: pan-y;
+      transition: opacity 150ms ease;
+    }
+
+    svg[aria-busy="true"] {
+      opacity: 0.25;
+    }
+
+    > div[data-chart="plot"] {
+      position: relative;
+    }
+
+    p[role="status"] {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      color: var(--white);
+      text-transform: uppercase;
+      pointer-events: none;
     }
 
     p[role="status"]:empty {
@@ -69,13 +89,13 @@ main.learn {
         }
 
         label:hover span {
-          color: var(--white);
-          background: var(--dark-gray);
-        }
-
-        label:has(:checked) span {
           color: var(--black);
           background: var(--white);
+        }
+
+        label:has(:checked):not(:hover) span {
+          color: var(--black);
+          background: var(--gray);
         }
 
         label:active span {
@@ -101,8 +121,8 @@ main.learn {
         cursor: pointer;
 
         &:hover {
-          color: var(--white);
-          background: var(--dark-gray);
+          color: var(--black);
+          background: var(--white);
         }
 
         &[aria-pressed="true"] {
@@ -255,7 +275,7 @@ main.learn {
     }
 
     [data-scrubber="guide"] {
-      stroke: var(--light-gray);
+      stroke: var(--white);
       stroke-dasharray: 2 4;
       vector-effect: non-scaling-stroke;
     }

@@ -3,9 +3,7 @@
 
   --white: oklch(95% 0 0);
   --dark-white: oklch(92.5% 0 0);
-  --light-gray: oklch(90% 0 0);
   --gray: oklch(55% 0 0);
-  --dark-gray: oklch(20% 0 0);
   --light-black: oklch(17.5% 0 0);
   --black: oklch(15% 0 0);
   --red: oklch(0.607 0.241 26.328);

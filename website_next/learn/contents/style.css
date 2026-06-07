@@ -67,8 +67,8 @@ main.learn {
       }
 
       &:hover {
-        color: var(--white);
-        background-color: var(--dark-gray);
+        color: var(--black);
+        background-color: var(--white);
       }
 
       &[aria-current="location"] {

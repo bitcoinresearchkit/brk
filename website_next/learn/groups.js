@@ -54,6 +54,17 @@ export const spendableTypes = /** @type {const} */ ([
   ["Empty", "empty"],
 ]);
 
+export const addressableTypes = /** @type {const} */ ([
+  ["P2PK65", "p2pk65"],
+  ["P2PK33", "p2pk33"],
+  ["P2PKH", "p2pkh"],
+  ["P2SH", "p2sh"],
+  ["P2WPKH", "p2wpkh"],
+  ["P2WSH", "p2wsh"],
+  ["P2TR", "p2tr"],
+  ["P2A", "p2a"],
+]);
+
 export const outputTypes = /** @type {const} */ ([
   ["P2PK65", "p2pk65"],
   ["P2PK33", "p2pk33"],

@@ -3,6 +3,7 @@ import {
   createCohortSeriesFromKeys,
 } from "./cohort-series.js";
 import {
+  addressableTypes,
   ageRanges,
   amountRanges,
   classes,
@@ -10,6 +11,19 @@ import {
   outputTypes,
 } from "./groups.js";
 import { colors } from "../utils/colors.js";
+
+export const exposedSupplySeries = createCohortSeries([
+  {
+    label: "Exposed",
+    color: colors.orange,
+    metric: (client) => client.series.addrs.exposed.supply.all.btc,
+  },
+]);
+
+export const exposedSupplyTypeSeries = createCohortSeriesFromKeys(
+  addressableTypes,
+  (key) => (client) => client.series.addrs.exposed.supply[key].btc,
+);
 
 export const termSeries = createCohortSeries([
   {

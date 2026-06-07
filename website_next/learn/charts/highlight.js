@@ -9,17 +9,18 @@ export function createSeriesHighlight(items, menu) {
 
   /** @param {number} index */
   function scrollToItem(index) {
+    const margin = Number.parseFloat(getComputedStyle(menu).paddingLeft);
     const itemRect = items[index].getBoundingClientRect();
     const menuRect = menu.getBoundingClientRect();
 
-    if (itemRect.left < menuRect.left) {
+    if (itemRect.left < menuRect.left + margin) {
       menu.scrollBy({
-        left: itemRect.left - menuRect.left,
+        left: itemRect.left - menuRect.left - margin,
         behavior: "smooth",
       });
-    } else if (itemRect.right > menuRect.right) {
+    } else if (itemRect.right > menuRect.right - margin) {
       menu.scrollBy({
-        left: itemRect.right - menuRect.right,
+        left: itemRect.right - menuRect.right + margin,
         behavior: "smooth",
       });
     }
