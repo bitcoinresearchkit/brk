@@ -4,6 +4,7 @@ import {
   marketCapAgeSeries,
   marketCapClassSeries,
   marketCapEpochSeries,
+  marketCapProfitabilitySeries,
   marketCapSeries,
   marketCapTermSeries,
   marketCapTypeSeries,
@@ -12,6 +13,7 @@ import {
   realizedCapAgeSeries,
   realizedCapClassSeries,
   realizedCapEpochSeries,
+  realizedCapProfitabilitySeries,
   realizedCapSeries,
   realizedCapTermSeries,
   realizedCapTypeSeries,
@@ -169,6 +171,15 @@ export const sections = [
         },
         children: [
           {
+            title: "Profitability",
+            description:
+              "Splits market cap between coins that are currently in profit and coins that are currently in loss. This shows how much current market value sits above or below each coin's last moved price.",
+            chart: {
+              title: "Market cap by profitability",
+              series: marketCapProfitabilitySeries,
+            },
+          },
+          {
             title: "Term",
             description:
               "Splits market cap between coins that moved recently and coins that have stayed still longer. This shows how much current market value sits with active supply versus long-term holder supply.",
@@ -242,6 +253,15 @@ export const sections = [
           series: realizedCapSeries,
         },
         children: [
+          {
+            title: "Profitability",
+            description:
+              "Splits realized cap between coins that are currently in profit and coins that are currently in loss. This shows how the market's cost basis is distributed across coins above or below their last moved price.",
+            chart: {
+              title: "Realized cap by profitability",
+              series: realizedCapProfitabilitySeries,
+            },
+          },
           {
             title: "Term",
             description:

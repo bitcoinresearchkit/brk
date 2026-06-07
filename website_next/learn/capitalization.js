@@ -30,6 +30,36 @@ export const marketCapSeries = [marketCap];
 
 export const realizedCapSeries = [realizedCap];
 
+export const marketCapProfitabilitySeries = createCohortSeries([
+  {
+    label: "In profit",
+    color: colors.green,
+    metric: (client) =>
+      client.series.cohorts.utxo.profitability.profit.all.supply.all.usd,
+  },
+  {
+    label: "In loss",
+    color: colors.red,
+    metric: (client) =>
+      client.series.cohorts.utxo.profitability.loss.all.supply.all.usd,
+  },
+]);
+
+export const realizedCapProfitabilitySeries = createCohortSeries([
+  {
+    label: "In profit",
+    color: colors.green,
+    metric: (client) =>
+      client.series.cohorts.utxo.profitability.profit.all.realizedCap.all,
+  },
+  {
+    label: "In loss",
+    color: colors.red,
+    metric: (client) =>
+      client.series.cohorts.utxo.profitability.loss.all.realizedCap.all,
+  },
+]);
+
 export const marketCapTermSeries = createCohortSeries([
   {
     label: "STH",
