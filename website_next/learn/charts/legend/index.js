@@ -47,4 +47,4 @@ export function createLegend(chart) {
  * @property {{ value: HTMLOutputElement }[]} rows
  */
 
-/** @typedef {import("./index.js").Chart} Chart */
+/** @typedef {import("../index.js").Chart} Chart */

@@ -1,5 +1,5 @@
 import { formatCoordinate } from "../path.js";
-import { createSvgElement } from "../svg.js";
+import { appendSeriesPath } from "../series-path.js";
 import { createLineSeries } from "../line/series.js";
 
 const radius = 1;
@@ -27,14 +27,14 @@ export function renderDotsPlot(group, loadedSeries, height, highlight, scale) {
   const plottedSeries = createLineSeries(loadedSeries, height, scale);
 
   plottedSeries.forEach(({ color, points }, index) => {
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "dots";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createDotsPathData(points));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "dots",
+      color,
+      d: createDotsPathData(points),
+    });
   });
 
   return plottedSeries;

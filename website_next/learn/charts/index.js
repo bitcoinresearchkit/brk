@@ -1,6 +1,6 @@
 import { createFullscreenButton } from "./fullscreen.js";
 import { onChartVisibility } from "./intersection.js";
-import { createLegend } from "./legend.js";
+import { createLegend } from "./legend/index.js";
 import { createChartRenderer } from "./renderer.js";
 import {
   createScaleControl,

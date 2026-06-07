@@ -1,16 +1,8 @@
 import { createLinePathData, formatCoordinate } from "../path.js";
-import { createSvgElement } from "../svg.js";
 import { VIEWBOX_WIDTH } from "../viewbox.js";
 import { createStackedSeries } from "../stacked/series.js";
-
-/**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- */
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
+import { clamp } from "../math.js";
+import { appendSeriesPath } from "../series-path.js";
 
 /** @param {{ x: number, y0: number, y1: number }[]} points */
 function getBarWidth(points) {
@@ -63,26 +55,26 @@ export function renderBarPlot(
 
   for (const index of stackIndexes) {
     const { color, points } = plottedSeries[index];
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "bar";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createBarPathData(points, getBarWidth(points)));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "bar",
+      color,
+      d: createBarPathData(points, getBarWidth(points)),
+    });
   }
 
   for (const index of lineIndexes) {
     const { color, points } = plottedSeries[index];
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "line";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createLinePathData(points));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "line",
+      color,
+      d: createLinePathData(points),
+    });
   }
 
   return plottedSeries;

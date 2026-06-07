@@ -3,9 +3,9 @@
  * @param {string} selector
  */
 export function getEventTarget(event, selector) {
-  return /** @type {HTMLElement | null} */ (
-    /** @type {HTMLElement} */ (event.target).closest(selector)
-  );
+  const target = event.target;
+
+  return target instanceof Element ? target.closest(selector) : null;
 }
 
 /** @param {Event} event */

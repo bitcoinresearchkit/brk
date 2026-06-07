@@ -1,0 +1,114 @@
+main.learn {
+  figure[data-chart="series"] {
+    figcaption {
+      text-transform: uppercase;
+
+      header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      time {
+        color: var(--off-color);
+      }
+
+      span:is([data-chart="unit"], [data-chart="separator"]) {
+        color: var(--off-color);
+      }
+
+      menu {
+        --shadow-size: 1rem;
+
+        display: flex;
+        margin-inline: calc(-1 * var(--shadow-size));
+        padding: 0 var(--shadow-size);
+        padding-bottom: 1rem;
+        padding-top: 0.25rem;
+        overflow-x: auto;
+        list-style: none;
+        mask-image: linear-gradient(
+          to right,
+          transparent,
+          black var(--shadow-size),
+          black calc(100% - var(--shadow-size)),
+          transparent
+        );
+      }
+
+      li {
+        flex: 0 0 auto;
+      }
+
+      button {
+        padding: 0.25rem 0.375rem;
+        border: 0;
+        border-radius: 0.25rem;
+        color: inherit;
+        background: none;
+        font: inherit;
+        text-align: inherit;
+        text-transform: inherit;
+        cursor: pointer;
+
+        &:is(:hover, :focus-visible, [data-active], [data-preview]) {
+          color: var(--black);
+          background: var(--color);
+
+          span,
+          output {
+            color: inherit;
+          }
+        }
+
+        &:focus-visible {
+          outline: 1px solid var(--orange);
+          outline-offset: 0.125rem;
+        }
+
+        &[data-muted] {
+          opacity: 0.35;
+        }
+
+        > span {
+          display: block;
+          color: var(--color);
+          text-align: left;
+
+          &::before {
+            content: "";
+            display: inline-block;
+            width: 0.5em;
+            height: 0.5em;
+            margin-right: 0.35em;
+            margin-bottom: 0.1rem;
+            border-radius: 50%;
+            background: currentColor;
+          }
+        }
+
+        > output {
+          display: block;
+          margin-top: 0.25rem;
+          margin-left: auto;
+          width: 7ch;
+          min-height: 1em;
+          color: var(--white);
+          font-variant-numeric: tabular-nums;
+          text-align: right;
+        }
+      }
+    }
+
+    &:fullscreen {
+      figcaption menu {
+        padding-bottom: 0.5rem;
+      }
+    }
+
+    svg [data-series][data-muted] {
+      opacity: 0.2;
+    }
+  }
+}

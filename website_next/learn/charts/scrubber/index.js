@@ -1,24 +1,16 @@
-import { formatValue } from "./format.js";
-import { createSvgElement } from "./svg.js";
-import { VIEWBOX_WIDTH } from "./viewbox.js";
+import { formatValue } from "../format.js";
+import { clamp } from "../math.js";
+import { createSvgElement } from "../svg.js";
+import { VIEWBOX_WIDTH } from "../viewbox.js";
 
-/** @typedef {import("./highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("./legend.js").Readout} Readout */
+/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
+/** @typedef {import("../legend/index.js").Readout} Readout */
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
 });
-
-/**
- * @param {number} value
- * @param {number} min
- * @param {number} max
- */
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
 
 /**
  * @param {ScrubberSeries} series

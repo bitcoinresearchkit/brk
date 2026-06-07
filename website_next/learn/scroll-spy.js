@@ -18,17 +18,18 @@ export function initScrollSpy(main) {
   let scheduled = false;
 
   function getViewportTop() {
-    return Number.parseFloat(getComputedStyle(main).getPropertyValue("--offset"));
+    return Number.parseFloat(getComputedStyle(main).scrollPaddingTop);
   }
 
   /**
    * @param {Element} section
    * @param {Element | null} firstChild
+   * @param {number} viewportTop
    */
-  function getOwnVisibleHeight(section, firstChild) {
+  function getOwnVisibleHeight(section, firstChild, viewportTop) {
     const sectionRect = section.getBoundingClientRect();
     const childRect = firstChild?.getBoundingClientRect();
-    const top = Math.max(sectionRect.top, getViewportTop());
+    const top = Math.max(sectionRect.top, viewportTop);
     const bottom = Math.min(
       childRect?.top ?? sectionRect.bottom,
       window.innerHeight,
@@ -80,9 +81,14 @@ export function initScrollSpy(main) {
     /** @type {{ section: Element, firstChild: Element | null } | undefined} */
     let currentState;
     let currentHeight = 0;
+    const viewportTop = getViewportTop();
 
     for (const state of sectionStates) {
-      const height = getOwnVisibleHeight(state.section, state.firstChild);
+      const height = getOwnVisibleHeight(
+        state.section,
+        state.firstChild,
+        viewportTop,
+      );
 
       if (height > currentHeight) {
         currentState = state;

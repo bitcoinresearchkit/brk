@@ -1,0 +1,25 @@
+main.learn {
+  figure[data-chart="series"] {
+    [data-scrubber] {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    svg[data-scrubbing="true"] [data-scrubber] {
+      opacity: 1;
+    }
+
+    [data-scrubber="guide"] {
+      stroke: var(--white);
+      stroke-dasharray: 2 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    [data-scrubber="marker"] {
+      fill: var(--black);
+      stroke: var(--color, var(--orange));
+      stroke-width: 1.5;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+}

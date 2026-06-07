@@ -1,21 +1,23 @@
-import { createRadioGroup } from "./radio.js";
-import { createChartStorage } from "./storage.js";
+import { createChartSetting } from "./setting.js";
 
-const storage = createChartStorage("scale");
-const defaultScale = "linear";
 const scales = /** @type {const} */ ([
   { value: "linear", label: "Lin" },
   { value: "log", label: "Log" },
 ]);
+const defaultScale = "linear";
+const setting = createChartSetting({
+  storageKey: "scale",
+  legend: "Scale",
+  options: scales,
+  defaultValue: defaultScale,
+});
 
 /**
  * @param {string} chartKey
  * @param {ChartScale} [fallback]
  */
 export function getDefaultScale(chartKey, fallback = defaultScale) {
-  const value = storage.get(chartKey);
-
-  return scales.find((scale) => scale.value === value)?.value ?? fallback;
+  return setting.get(chartKey, fallback);
 }
 
 /**
@@ -23,7 +25,7 @@ export function getDefaultScale(chartKey, fallback = defaultScale) {
  * @param {ChartScale} scale
  */
 export function saveScale(chartKey, scale) {
-  storage.set(chartKey, scale);
+  setting.save(chartKey, scale);
 }
 
 /**
@@ -31,12 +33,7 @@ export function saveScale(chartKey, scale) {
  * @param {(scale: ChartScale) => void} onChange
  */
 export function createScaleControl(currentScale, onChange) {
-  return createRadioGroup({
-    legend: "Scale",
-    options: scales,
-    currentValue: currentScale,
-    onChange,
-  });
+  return setting.create(currentScale, onChange);
 }
 
 /**

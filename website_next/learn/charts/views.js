@@ -1,25 +1,35 @@
-import { createRadioGroup } from "./radio.js";
-import { createChartStorage } from "./storage.js";
+import { createChartSetting } from "./setting.js";
 
-const storage = createChartStorage("view");
-const defaultView = "stacked";
+export const viewTypes = /** @type {const} */ ({
+  line: "line",
+  stacked: "stacked",
+  stackedReversed: "stacked-reversed",
+  bar: "bar",
+  barReversed: "bar-reversed",
+  dots: "dots",
+});
 const views = /** @type {const} */ ([
-  { value: "line", label: "Line" },
-  { value: "stacked", label: "Stack↑" },
-  { value: "stacked-reversed", label: "Stack↓" },
-  { value: "bar", label: "Bars↑" },
-  { value: "bar-reversed", label: "Bars↓" },
-  { value: "dots", label: "Dots" },
+  { value: viewTypes.line, label: "Line" },
+  { value: viewTypes.stacked, label: "Stack↑" },
+  { value: viewTypes.stackedReversed, label: "Stack↓" },
+  { value: viewTypes.bar, label: "Bars↑" },
+  { value: viewTypes.barReversed, label: "Bars↓" },
+  { value: viewTypes.dots, label: "Dots" },
 ]);
+const defaultView = viewTypes.stacked;
+const setting = createChartSetting({
+  storageKey: "view",
+  legend: "View",
+  options: views,
+  defaultValue: defaultView,
+});
 
 /**
  * @param {string} chartKey
  * @param {ChartView} [fallback]
  */
 export function getDefaultView(chartKey, fallback = defaultView) {
-  const value = storage.get(chartKey);
-
-  return views.find((view) => view.value === value)?.value ?? fallback;
+  return setting.get(chartKey, fallback);
 }
 
 /**
@@ -27,7 +37,7 @@ export function getDefaultView(chartKey, fallback = defaultView) {
  * @param {ChartView} view
  */
 export function saveView(chartKey, view) {
-  storage.set(chartKey, view);
+  setting.save(chartKey, view);
 }
 
 /**
@@ -35,12 +45,7 @@ export function saveView(chartKey, view) {
  * @param {(view: ChartView) => void} onChange
  */
 export function createViewControl(currentView, onChange) {
-  return createRadioGroup({
-    legend: "View",
-    options: views,
-    currentValue: currentView,
-    onChange,
-  });
+  return setting.create(currentView, onChange);
 }
 
 /** @typedef {(typeof views)[number]["value"]} ChartView */

@@ -1,8 +1,5 @@
-import { createRadioGroup } from "./radio.js";
-import { createChartStorage } from "./storage.js";
+import { createChartSetting } from "./setting.js";
 
-const storage = createChartStorage("timeframe");
-const defaultTimeframe = "all";
 const timeframes = /** @type {const} */ ({
   "1d": { index: "minute10", count: 144 },
   "1w": { index: "hour1", count: 168 },
@@ -21,15 +18,16 @@ const options = /** @type {const} */ ([
   { value: "8y", label: "8y" },
   { value: "all", label: "all" },
 ]);
+const setting = createChartSetting({
+  storageKey: "timeframe",
+  legend: "Time",
+  options,
+  defaultValue: "all",
+});
 
 /** @param {string} chartKey */
 export function getDefaultTimeframe(chartKey) {
-  const value = storage.get(chartKey);
-
-  return (
-    options.find((timeframe) => timeframe.value === value)?.value ??
-    defaultTimeframe
-  );
+  return setting.get(chartKey);
 }
 
 /**
@@ -37,7 +35,7 @@ export function getDefaultTimeframe(chartKey) {
  * @param {TimeframeValue} timeframe
  */
 export function saveTimeframe(chartKey, timeframe) {
-  storage.set(chartKey, timeframe);
+  setting.save(chartKey, timeframe);
 }
 
 /**
@@ -45,12 +43,7 @@ export function saveTimeframe(chartKey, timeframe) {
  * @param {(timeframe: TimeframeValue) => void} onChange
  */
 export function createTimeframeControl(currentTimeframe, onChange) {
-  return createRadioGroup({
-    legend: "Time",
-    options,
-    currentValue: currentTimeframe,
-    onChange,
-  });
+  return setting.create(currentTimeframe, onChange);
 }
 
 /**

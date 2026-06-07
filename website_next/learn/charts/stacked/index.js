@@ -1,5 +1,5 @@
 import { createAreaPathData, createLinePathData } from "../path.js";
-import { createSvgElement } from "../svg.js";
+import { appendSeriesPath } from "../series-path.js";
 import { createStackedSeries } from "./series.js";
 
 /**
@@ -27,26 +27,26 @@ export function renderStackedPlot(
 
   for (const index of stackIndexes) {
     const { color, points } = plottedSeries[index];
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "stacked";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createAreaPathData(points));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "stacked",
+      color,
+      d: createAreaPathData(points),
+    });
   }
 
   for (const index of lineIndexes) {
     const { color, points } = plottedSeries[index];
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "line";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createLinePathData(points));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "line",
+      color,
+      d: createLinePathData(points),
+    });
   }
 
   return plottedSeries;

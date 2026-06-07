@@ -1,48 +1,9 @@
-import { renderBarPlot } from "./bar/index.js";
 import { createSeriesHighlight } from "./highlight.js";
 import { createSeriesLoader } from "./loader.js";
-import { renderLinePlot } from "./line/index.js";
-import { createScrubber } from "./scrubber.js";
-import { renderDotsPlot } from "./dots/index.js";
+import { renderPlot } from "./plot.js";
+import { createScrubber } from "./scrubber/index.js";
 import { createSvgElement } from "./svg.js";
-import { renderStackedPlot } from "./stacked/index.js";
 import { getViewBoxHeight, VIEWBOX_WIDTH } from "./viewbox.js";
-
-/**
- * @param {ChartView} view
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {ChartScale} scale
- */
-function renderPlot(view, group, loadedSeries, height, highlight, scale) {
-  switch (view) {
-    case "line":
-      return renderLinePlot(group, loadedSeries, height, highlight, scale);
-    case "bar":
-    case "bar-reversed":
-      return renderBarPlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        { reversed: view === "bar-reversed" },
-        scale,
-      );
-    case "dots":
-      return renderDotsPlot(group, loadedSeries, height, highlight, scale);
-    default:
-      return renderStackedPlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        { reversed: view === "stacked-reversed" },
-        scale,
-      );
-  }
-}
 
 /**
  * @param {Object} args
@@ -80,6 +41,16 @@ export function createChartRenderer({
 
   svg.append(group);
 
+  function clearStatus() {
+    status.textContent = "";
+    svg.removeAttribute("aria-busy");
+  }
+
+  /** @param {string} message */
+  function setStatus(message) {
+    status.textContent = message;
+  }
+
   function renderCurrent() {
     if (!active || !loadedSeries.length) return;
 
@@ -105,9 +76,10 @@ export function createChartRenderer({
   async function loadCurrent() {
     const id = (loadId += 1);
     const loadingTimer = setTimeout(() => {
-      if (id === loadId && active) status.textContent = "Loading";
+      if (id === loadId && active) setStatus("Loading");
     }, 250);
 
+    setStatus("");
     svg.setAttribute("aria-busy", "true");
 
     try {
@@ -117,11 +89,11 @@ export function createChartRenderer({
 
       loadedSeries = nextSeries;
       renderCurrent();
-      status.textContent = "";
+      clearStatus();
     } catch (error) {
       if (id !== loadId) return;
       console.error(error);
-      status.textContent = "Chart unavailable";
+      setStatus("Chart unavailable");
     } finally {
       clearTimeout(loadingTimer);
       if (id === loadId) svg.removeAttribute("aria-busy");
@@ -146,8 +118,7 @@ export function createChartRenderer({
     group.replaceChildren();
     highlight.clearNodes();
     scrubber?.clear();
-    status.textContent = "";
-    svg.removeAttribute("aria-busy");
+    clearStatus();
   }
 
   return {
@@ -160,7 +131,7 @@ export function createChartRenderer({
 
 /** @typedef {import("./index.js").Chart} Chart */
 /** @typedef {import("./index.js").LoadedSeries} LoadedSeries */
-/** @typedef {import("./legend.js").Readout} Readout */
+/** @typedef {import("./legend/index.js").Readout} Readout */
 /** @typedef {import("./scale.js").ChartScale} ChartScale */
 /** @typedef {import("./timeframes.js").TimeframeValue} TimeframeValue */
 /** @typedef {import("./views.js").ChartView} ChartView */

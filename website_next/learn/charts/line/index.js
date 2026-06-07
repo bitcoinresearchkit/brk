@@ -1,5 +1,5 @@
 import { createLinePathData } from "../path.js";
-import { createSvgElement } from "../svg.js";
+import { appendSeriesPath } from "../series-path.js";
 import { createLineSeries } from "./series.js";
 
 /**
@@ -13,14 +13,14 @@ export function renderLinePlot(group, loadedSeries, height, highlight, scale) {
   const plottedSeries = createLineSeries(loadedSeries, height, scale);
 
   plottedSeries.forEach(({ color, points }, index) => {
-    const path = createSvgElement("path");
-
-    path.dataset.chart = "line";
-    path.dataset.series = index.toString();
-    path.style.setProperty("--color", color);
-    path.setAttribute("d", createLinePathData(points));
-    highlight.addNode(path, index);
-    group.append(path);
+    appendSeriesPath({
+      group,
+      highlight,
+      index,
+      chart: "line",
+      color,
+      d: createLinePathData(points),
+    });
   });
 
   return plottedSeries;

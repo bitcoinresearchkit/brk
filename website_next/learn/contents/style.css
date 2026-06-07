@@ -11,6 +11,7 @@ main.learn {
     font-size: var(--font-size-xs);
     line-height: var(--line-height-xs);
     text-transform: uppercase;
+    color: var(--gray);
     padding-left: 0.5rem;
     margin-left: -0.5rem;
 
@@ -40,7 +41,6 @@ main.learn {
     ol ol {
       margin-top: 0.25rem;
       margin-left: 1rem;
-      color: var(--gray);
     }
 
     li + li {
@@ -66,13 +66,13 @@ main.learn {
         border-radius: 0.25rem;
       }
 
+      &[aria-current="location"] {
+        color: var(--white);
+      }
+
       &:hover {
         color: var(--black);
         background-color: var(--white);
-      }
-
-      &[aria-current="location"] {
-        color: var(--orange);
       }
 
       &:active {
