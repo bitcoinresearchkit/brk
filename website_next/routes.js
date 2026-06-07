@@ -12,13 +12,22 @@ const routes = {
 };
 
 /** @param {string} pathname */
-export function isRoute(pathname) {
-  return pathname in routes;
+function canonicalPath(pathname) {
+  return pathname !== "/" && pathname.endsWith("/")
+    ? pathname.slice(0, -1)
+    : pathname;
+}
+
+/** @param {string} pathname */
+export function resolvePath(pathname) {
+  const path = canonicalPath(pathname);
+
+  return path in routes ? path : undefined;
 }
 
 /** @param {string} pathname */
 export function normalizePath(pathname) {
-  return isRoute(pathname) ? pathname : "/";
+  return resolvePath(pathname) ?? "/";
 }
 
 /** @param {string} pathname */

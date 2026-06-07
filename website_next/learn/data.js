@@ -45,9 +45,15 @@ function metricSupplyInLoss(client) {
 
 export const sections = [
   {
+    title: "Introduction",
+    numbered: false,
+    description:
+      "Bitcoin can be measured from many angles, but a single number rarely explains much on its own. This page introduces core Bitcoin concepts through data that changes over time. Each chart is meant to answer a simple question: what is being measured, how has it changed, and how does it compare across different groups? The goal is to make the system easier to read, from the supply itself to the way coins move, age, concentrate, and gain value.",
+  },
+  {
     title: "Supply",
     description:
-      "How bitcoin moves from issuance into long-term ownership, profit, loss, and distribution.",
+      "Bitcoin has a fixed issuance schedule. This chart shows how many BTC are in circulation over time, so you can see supply rising toward the 21 million limit.",
     chart: {
       title: "Circulating supply",
       series: [
@@ -62,7 +68,7 @@ export const sections = [
       {
         title: "Profitability",
         description:
-          "Which coins sit in profit or loss, and how that balance changes through cycles.",
+          "Shows whether coins are in profit or loss based on the price when they last moved on-chain. A coin is in profit when today's price is higher than its last moved price, and in loss when today's price is lower.",
         chart: {
           title: "Profitability",
           series: [
@@ -82,7 +88,7 @@ export const sections = [
       {
         title: "Term",
         description:
-          "Supply split between recently moved coins and long-term holder coins.",
+          "Splits supply between coins that moved recently and coins that have stayed still longer. This helps separate more active supply from long-term holder supply.",
         chart: {
           title: "Supply by term",
           series: termSeries,
@@ -91,7 +97,7 @@ export const sections = [
       {
         title: "Age",
         description:
-          "How long coins have remained still, from fresh movement to deep dormancy.",
+          "Groups coins by how long they have stayed still since their last on-chain movement. Older coins are usually more dormant, while younger coins have moved more recently.",
         chart: {
           title: "Supply by age",
           series: ageSeries,
@@ -99,7 +105,8 @@ export const sections = [
       },
       {
         title: "UTXO Balance",
-        description: "Supply grouped by the amount held in each unspent output.",
+        description:
+          "Groups supply by the size of each unspent output. A UTXO is a spendable piece of bitcoin created by a transaction, so this shows the size distribution of coin fragments.",
         chart: {
           title: "Supply by UTXO balance",
           series: utxoBalanceSeries,
@@ -107,7 +114,8 @@ export const sections = [
       },
       {
         title: "Address Balance",
-        description: "Supply grouped by the balance held at each address.",
+        description:
+          "Groups supply by the total BTC held at each address. An address is not the same as a person or entity, but this still helps show how balances are distributed on-chain.",
         chart: {
           title: "Supply by address balance",
           series: addressBalanceSeries,
@@ -115,7 +123,8 @@ export const sections = [
       },
       {
         title: "Type",
-        description: "Supply grouped by output script type.",
+        description:
+          "Groups supply by Bitcoin output type. The output type is the script format that defines how coins can be spent.",
         chart: {
           title: "Supply by type",
           series: typeSeries,
@@ -124,7 +133,7 @@ export const sections = [
       {
         title: "Epoch",
         description:
-          "Supply grouped by the halving epoch in which coins were created.",
+          "Groups supply by the halving epoch when coins were mined. A halving epoch is a period between two subsidy halvings, when the amount of new BTC paid to miners changes.",
         chart: {
           title: "Supply by epoch",
           series: epochSeries,
@@ -133,7 +142,7 @@ export const sections = [
       {
         title: "Class",
         description:
-          "Supply grouped by the calendar year in which coins were created.",
+          "Groups supply by the calendar year when coins were mined. This shows how much of today's supply comes from each issuance year.",
         chart: {
           title: "Supply by class",
           series: classSeries,
@@ -144,7 +153,7 @@ export const sections = [
   {
     title: "Capitalization",
     description:
-      "Different ways to value the network by market price, realized cost, and accumulated flows.",
+      "Shows ways to value Bitcoin in US dollars. Market cap uses today's price, while realized cap uses the price when coins last moved on-chain.",
     chart: {
       title: "Capitalization",
       series: capitalizationSeries,
@@ -153,7 +162,7 @@ export const sections = [
       {
         title: "Market Cap",
         description:
-          "The current market value of circulating bitcoin at spot price.",
+          "Market cap is circulating supply multiplied by the current bitcoin price. It answers: what is all circulating BTC worth at today's market price?",
         chart: {
           title: "Market cap",
           series: marketCapSeries,
@@ -162,7 +171,7 @@ export const sections = [
           {
             title: "Term",
             description:
-              "Market value split between recently moved and long-term holder coins.",
+              "Splits market cap between coins that moved recently and coins that have stayed still longer. This shows how much current market value sits with active supply versus long-term holder supply.",
             chart: {
               title: "Market cap by term",
               series: marketCapTermSeries,
@@ -171,7 +180,7 @@ export const sections = [
           {
             title: "Age",
             description:
-              "Market value grouped by how long coins have remained still.",
+              "Groups market cap by how long coins have stayed still since their last on-chain movement. It shows which age bands hold the most current market value.",
             chart: {
               title: "Market cap by age",
               series: marketCapAgeSeries,
@@ -180,7 +189,7 @@ export const sections = [
           {
             title: "UTXO Balance",
             description:
-              "Market value grouped by the amount held in each unspent output.",
+              "Groups market cap by the size of each unspent output. This shows how current market value is distributed across small and large spendable coin fragments.",
             chart: {
               title: "Market cap by UTXO balance",
               series: marketCapUtxoBalanceSeries,
@@ -189,7 +198,7 @@ export const sections = [
           {
             title: "Address Balance",
             description:
-              "Market value grouped by the balance held at each address.",
+              "Groups market cap by the total BTC held at each address. Addresses are not people or entities, but this still helps show how current market value is distributed across address balances.",
             chart: {
               title: "Market cap by address balance",
               series: marketCapAddressBalanceSeries,
@@ -197,7 +206,8 @@ export const sections = [
           },
           {
             title: "Type",
-            description: "Market value grouped by spendable output script type.",
+            description:
+              "Groups market cap by Bitcoin output type. This shows how much current market value is held in each script format.",
             chart: {
               title: "Market cap by type",
               series: marketCapTypeSeries,
@@ -206,7 +216,7 @@ export const sections = [
           {
             title: "Epoch",
             description:
-              "Market value grouped by the halving epoch in which coins were created.",
+              "Groups market cap by the halving epoch when coins were mined. This shows the current value of coins created during each issuance period.",
             chart: {
               title: "Market cap by epoch",
               series: marketCapEpochSeries,
@@ -215,7 +225,7 @@ export const sections = [
           {
             title: "Class",
             description:
-              "Market value grouped by the calendar year in which coins were created.",
+              "Groups market cap by the calendar year when coins were mined. This shows the current value of supply created in each year.",
             chart: {
               title: "Market cap by class",
               series: marketCapClassSeries,
@@ -226,7 +236,7 @@ export const sections = [
       {
         title: "Realized Cap",
         description:
-          "The aggregate value of coins priced where they last moved on-chain.",
+          "Realized cap values each coin at the price when it last moved on-chain. It is often used as a rough view of the market's aggregate cost basis.",
         chart: {
           title: "Realized cap",
           series: realizedCapSeries,
@@ -235,7 +245,7 @@ export const sections = [
           {
             title: "Term",
             description:
-              "Realized value split between recently moved and long-term holder coins.",
+              "Splits realized cap between coins that moved recently and coins that have stayed still longer. This shows where the market's cost basis sits across active and long-term holder supply.",
             chart: {
               title: "Realized cap by term",
               series: realizedCapTermSeries,
@@ -244,7 +254,7 @@ export const sections = [
           {
             title: "Age",
             description:
-              "Realized value grouped by how long coins have remained still.",
+              "Groups realized cap by how long coins have stayed still since their last on-chain movement. This shows which coin ages carry the largest share of the market's cost basis.",
             chart: {
               title: "Realized cap by age",
               series: realizedCapAgeSeries,
@@ -253,7 +263,7 @@ export const sections = [
           {
             title: "UTXO Balance",
             description:
-              "Realized value grouped by the amount held in each unspent output.",
+              "Groups realized cap by the size of each unspent output. This shows how cost basis is distributed across small and large spendable coin fragments.",
             chart: {
               title: "Realized cap by UTXO balance",
               series: realizedCapUtxoBalanceSeries,
@@ -262,7 +272,7 @@ export const sections = [
           {
             title: "Address Balance",
             description:
-              "Realized value grouped by the balance held at each address.",
+              "Groups realized cap by the total BTC held at each address. Addresses are not people or entities, but this still helps show how cost basis is distributed across address balances.",
             chart: {
               title: "Realized cap by address balance",
               series: realizedCapAddressBalanceSeries,
@@ -271,7 +281,7 @@ export const sections = [
           {
             title: "Type",
             description:
-              "Realized value grouped by spendable output script type.",
+              "Groups realized cap by Bitcoin output type. This shows how much cost basis is held in each script format.",
             chart: {
               title: "Realized cap by type",
               series: realizedCapTypeSeries,
@@ -280,7 +290,7 @@ export const sections = [
           {
             title: "Epoch",
             description:
-              "Realized value grouped by the halving epoch in which coins were created.",
+              "Groups realized cap by the halving epoch when coins were mined. This shows the cost basis of coins created during each issuance period.",
             chart: {
               title: "Realized cap by epoch",
               series: realizedCapEpochSeries,
@@ -289,222 +299,13 @@ export const sections = [
           {
             title: "Class",
             description:
-              "Realized value grouped by the calendar year in which coins were created.",
+              "Groups realized cap by the calendar year when coins were mined. This shows the cost basis of supply created in each year.",
             chart: {
               title: "Realized cap by class",
               series: realizedCapClassSeries,
             },
           },
         ],
-      },
-    ],
-  },
-  {
-    title: "Activity",
-    description:
-      "How often the chain is used, how value moves, and how demand appears " +
-      "in fees and transactions.",
-    chart: "Network activity",
-    children: [
-      {
-        title: "Transactions",
-        description:
-          "Confirmed transaction count, throughput, and block-level settlement patterns.",
-        chart: "Transaction count",
-      },
-      {
-        title: "Fees",
-        description:
-          "The cost users pay for block space and what that reveals about demand.",
-        chart: "Fee rate",
-      },
-      {
-        title: "Addresses",
-        description:
-          "Address creation, reuse, activity, and balance changes across the network.",
-        chart: "Active addresses",
-      },
-    ],
-  },
-  {
-    title: "Mining",
-    description:
-      "The security budget, difficulty adjustments, pool behavior, and miner revenue.",
-    chart: "Mining overview",
-    children: [
-      {
-        title: "Hashrate",
-        description:
-          "Estimated computational power securing the network over time.",
-        chart: "Hashrate",
-      },
-      {
-        title: "Difficulty",
-        description:
-          "How Bitcoin adjusts mining difficulty to keep block production steady.",
-        chart: "Difficulty",
-      },
-      {
-        title: "Rewards",
-        description:
-          "Subsidy, fees, and the changing economics of block production.",
-        chart: "Miner rewards",
-      },
-    ],
-  },
-  {
-    title: "Market",
-    description:
-      "Price behavior, returns, volatility, and the market context around on-chain patterns.",
-    chart: "Market overview",
-    children: [
-      {
-        title: "Price",
-        description:
-          "Bitcoin price across time, cycles, drawdowns, and all-time highs.",
-        chart: "Price",
-      },
-      {
-        title: "Returns",
-        description:
-          "How returns vary by holding period, entry point, and cycle phase.",
-        chart: "Returns",
-      },
-      {
-        title: "Volatility",
-        description:
-          "The scale and rhythm of price movement across different windows.",
-        chart: "Volatility",
-      },
-    ],
-  },
-  {
-    title: "Ownership",
-    description:
-      "How coins are held across balances, entities, custody patterns, and long-term cohorts.",
-    chart: "Ownership overview",
-    children: [
-      {
-        title: "Balances",
-        description:
-          "Address and entity balances grouped by size, concentration, and historical change.",
-        chart: "Balance cohorts",
-      },
-      {
-        title: "Entities",
-        description:
-          "Estimated ownership clusters and how their behavior changes through market regimes.",
-        chart: "Entity supply",
-      },
-      {
-        title: "Custody",
-        description:
-          "Coins associated with exchanges, funds, miners, and other observable custody groups.",
-        chart: "Custody balances",
-      },
-    ],
-  },
-  {
-    title: "Liquidity",
-    description:
-      "How available supply changes as coins move between liquid, illiquid, and exchange venues.",
-    chart: "Liquidity overview",
-    children: [
-      {
-        title: "Liquid Supply",
-        description:
-          "Coins held by entities that tend to spend, trade, or redistribute frequently.",
-        chart: "Liquid supply",
-      },
-      {
-        title: "Illiquid Supply",
-        description:
-          "Coins held by entities with low spending history and stronger accumulation behavior.",
-        chart: "Illiquid supply",
-      },
-      {
-        title: "Exchange Flow",
-        description:
-          "Deposits, withdrawals, and balance changes across known exchange clusters.",
-        chart: "Exchange netflow",
-      },
-    ],
-  },
-  {
-    title: "Risk",
-    description:
-      "Stress, leverage, drawdown, and valuation conditions that shape market fragility.",
-    chart: "Risk overview",
-    children: [
-      {
-        title: "Drawdown",
-        description:
-          "Distance from prior highs and the depth of cycle retracements over time.",
-        chart: "Drawdown",
-      },
-      {
-        title: "Stress",
-        description:
-          "Periods where losses, volatility, and fee pressure concentrate together.",
-        chart: "Network stress",
-      },
-      {
-        title: "Leverage",
-        description:
-          "Market conditions that indicate amplified exposure and forced positioning risk.",
-        chart: "Leverage proxy",
-      },
-    ],
-  },
-  {
-    title: "Cycles",
-    description:
-      "How Bitcoin behaves across halvings, adoption waves, liquidity regimes, and market phases.",
-    chart: "Cycle overview",
-    children: [
-      {
-        title: "Halvings",
-        description:
-          "Supply issuance changes and their relationship to market and miner behavior.",
-        chart: "Halving cycles",
-      },
-      {
-        title: "Phases",
-        description:
-          "Bull, bear, recovery, and transition periods described through on-chain behavior.",
-        chart: "Cycle phases",
-      },
-      {
-        title: "Comparisons",
-        description:
-          "Cycle-to-cycle comparisons normalized by time, price, drawdown, or supply behavior.",
-        chart: "Cycle comparison",
-      },
-    ],
-  },
-  {
-    title: "Cohorts",
-    description:
-      "Groups of market participants organized by age, balance, cost basis, and observed behavior.",
-    chart: "Cohort overview",
-    children: [
-      {
-        title: "Short Term",
-        description:
-          "Recently moved coins and holders more sensitive to price, volatility, and liquidity.",
-        chart: "Short-term holder supply",
-      },
-      {
-        title: "Long Term",
-        description:
-          "Older coins and holders with stronger dormancy, conviction, or lower spend frequency.",
-        chart: "Long-term holder supply",
-      },
-      {
-        title: "Cost Basis",
-        description:
-          "Estimated acquisition prices across cohorts and how they frame profit and loss.",
-        chart: "Cohort cost basis",
       },
     ],
   },

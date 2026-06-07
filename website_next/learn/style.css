@@ -36,16 +36,40 @@ main.learn {
     }
 
     > section {
-      counter-increment: theme;
       counter-reset: topic;
       width: min(100%, var(--content-width));
       margin-inline: auto;
       scroll-margin-top: var(--offset);
     }
 
-    > section:first-of-type {
-      margin-top: calc(-1 * var(--offset));
-      padding-top: var(--offset);
+    > section:not([data-numbered="false"]) {
+      counter-increment: theme;
+    }
+
+    > section[data-numbered="false"] {
+      display: grid;
+      align-content: center;
+      min-height: calc(100dvh - var(--offset));
+
+      > h1 {
+        position: static;
+        max-width: 10ch;
+        padding: 0;
+        border: 0;
+        font-size: 4rem;
+
+        a::before {
+          content: none;
+        }
+      }
+
+      > p {
+        max-width: 42rem;
+        margin-top: 1.5rem;
+        color: var(--white);
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+      }
     }
 
     > section + section {
@@ -155,21 +179,5 @@ main.learn {
     margin-top: 2rem;
     color: var(--gray);
     font-size: var(--font-size-xs);
-
-    &:not([data-chart]) {
-      text-transform: uppercase;
-    }
-
-    > div {
-      height: 18rem;
-      display: grid;
-      place-items: center;
-      border: 1px solid var(--dark-gray);
-      font-size: var(--font-size-sm);
-    }
-
-    figcaption {
-      margin-top: 0.75rem;
-    }
   }
 }

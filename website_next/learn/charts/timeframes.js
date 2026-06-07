@@ -2,10 +2,8 @@ import { createRadioGroup } from "./radio.js";
 import { createChartStorage } from "./storage.js";
 
 const storage = createChartStorage("timeframe");
-/** @type {TimeframeValue} */
 const defaultTimeframe = "all";
-/** @type {Record<TimeframeValue, TimeframeConfig>} */
-const timeframes = {
+const timeframes = /** @type {const} */ ({
   "1d": { index: "minute10", count: 144 },
   "1w": { index: "hour1", count: 168 },
   "1m": { index: "hour4", count: 186 },
@@ -13,9 +11,8 @@ const timeframes = {
   "4y": { index: "day3", count: 488 },
   "8y": { index: "week1", count: 418 },
   all: { index: "week1" },
-};
-/** @type {{ value: TimeframeValue, label: string }[]} */
-const options = [
+});
+const options = /** @type {const} */ ([
   { value: "1d", label: "1d" },
   { value: "1w", label: "1w" },
   { value: "1m", label: "1m" },
@@ -23,7 +20,7 @@ const options = [
   { value: "4y", label: "4y" },
   { value: "8y", label: "8y" },
   { value: "all", label: "all" },
-];
+]);
 
 /** @param {string} chartKey */
 export function getDefaultTimeframe(chartKey) {
@@ -61,20 +58,16 @@ export function createTimeframeControl(currentTimeframe, onChange) {
  * @param {TimeframeValue} timeframe
  */
 export function fetchTimeframe(metric, timeframe) {
-  const { count, index } = timeframes[timeframe];
-  const endpoint = metric.by[index];
+  const config = timeframes[timeframe];
+  const endpoint = metric.by[config.index];
 
-  return count ? endpoint.last(count).fetch() : endpoint.fetch();
+  return "count" in config
+    ? endpoint.last(config.count).fetch()
+    : endpoint.fetch();
 }
 
-/** @typedef {"1d" | "1w" | "1m" | "1y" | "4y" | "8y" | "all"} TimeframeValue */
-/** @typedef {"minute10" | "hour1" | "hour4" | "day1" | "day3" | "week1"} TimeframeIndex */
-
-/**
- * @typedef {Object} TimeframeConfig
- * @property {TimeframeIndex} index
- * @property {number} [count]
- */
+/** @typedef {(typeof options)[number]["value"]} TimeframeValue */
+/** @typedef {(typeof timeframes)[TimeframeValue]["index"]} TimeframeIndex */
 
 /**
  * @typedef {Object} TimeframeEndpoint

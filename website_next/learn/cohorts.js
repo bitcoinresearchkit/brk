@@ -14,12 +14,12 @@ import { colors } from "../utils/colors.js";
 export const termSeries = createCohortSeries([
   {
     label: "STH",
-    color: colors.sky,
+    color: colors.yellow,
     metric: (client) => client.series.cohorts.utxo.sth.supply.total.btc,
   },
   {
     label: "LTH",
-    color: colors.orange,
+    color: colors.fuchsia,
     metric: (client) => client.series.cohorts.utxo.lth.supply.total.btc,
   },
 ]);

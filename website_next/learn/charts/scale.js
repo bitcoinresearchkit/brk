@@ -2,13 +2,11 @@ import { createRadioGroup } from "./radio.js";
 import { createChartStorage } from "./storage.js";
 
 const storage = createChartStorage("scale");
-/** @type {ChartScale} */
 const defaultScale = "linear";
-/** @type {{ value: ChartScale, label: string }[]} */
-const scales = [
+const scales = /** @type {const} */ ([
   { value: "linear", label: "Lin" },
   { value: "log", label: "Log" },
-];
+]);
 
 /** @param {string} chartKey */
 export function getDefaultScale(chartKey) {
@@ -71,4 +69,4 @@ export function scaleY(value, bounds, height, scale) {
  * @property {number} minPositive
  */
 
-/** @typedef {"linear" | "log"} ChartScale */
+/** @typedef {(typeof scales)[number]["value"]} ChartScale */

@@ -32,7 +32,7 @@ export function createChart(chart) {
   let currentTimeframe = getDefaultTimeframe(chartKey);
   let currentView = getDefaultView(chartKey);
   let currentScale = getDefaultScale(chartKey);
-  const { legend, items, readout } = createLegend(chart);
+  const { legend, menu, items, readout } = createLegend(chart);
 
   figure.dataset.chart = "series";
   figure.dataset.timeframe = currentTimeframe;
@@ -51,6 +51,7 @@ export function createChart(chart) {
   const renderer = createChartRenderer({
     svg,
     readout,
+    menu,
     items,
     status,
     chart,

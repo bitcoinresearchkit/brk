@@ -2,17 +2,15 @@ import { createRadioGroup } from "./radio.js";
 import { createChartStorage } from "./storage.js";
 
 const storage = createChartStorage("view");
-/** @type {ChartView} */
 const defaultView = "stacked";
-/** @type {{ value: ChartView, label: string }[]} */
-const views = [
+const views = /** @type {const} */ ([
   { value: "line", label: "Line" },
   { value: "stacked", label: "Stack↑" },
   { value: "stacked-reversed", label: "Stack↓" },
   { value: "bar", label: "Bars↑" },
   { value: "bar-reversed", label: "Bars↓" },
   { value: "dots", label: "Dots" },
-];
+]);
 
 /** @param {string} chartKey */
 export function getDefaultView(chartKey) {
@@ -42,4 +40,4 @@ export function createViewControl(currentView, onChange) {
   });
 }
 
-/** @typedef {"line" | "stacked" | "stacked-reversed" | "bar" | "bar-reversed" | "dots"} ChartView */
+/** @typedef {(typeof views)[number]["value"]} ChartView */

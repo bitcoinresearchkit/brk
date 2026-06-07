@@ -4,7 +4,7 @@ let groupId = 0;
  * @template {string} T
  * @param {Object} args
  * @param {string} args.legend
- * @param {{ value: T, label: string }[]} args.options
+ * @param {readonly { value: T, label: string }[]} args.options
  * @param {T} args.currentValue
  * @param {(value: T) => void} args.onChange
  */

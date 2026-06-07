@@ -1,5 +1,5 @@
 import { createHeader } from "./header/index.js";
-import { createRoutePage, isRoute, normalizePath } from "./routes.js";
+import { createRoutePage, normalizePath, resolvePath } from "./routes.js";
 import { getEventAnchor, isPlainLeftClick } from "./utils/event.js";
 import { revealPage, transitionPage } from "./utils/transition.js";
 
@@ -62,10 +62,11 @@ document.addEventListener("click", (event) => {
   if (url.origin !== window.location.origin) return;
   if (url.pathname === window.location.pathname && url.hash) return;
 
-  if (!isRoute(url.pathname)) return;
+  const pathname = resolvePath(url.pathname);
+  if (!pathname) return;
 
   event.preventDefault();
-  navigate(`${url.pathname}${url.hash}`);
+  navigate(`${pathname}${url.hash}`);
 });
 
 window.addEventListener("popstate", renderPage);

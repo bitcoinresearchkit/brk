@@ -1,23 +1,28 @@
-/** @returns {SeriesNode} */
-function createSeriesNode() {
-  return [];
-}
-
 /**
  * @param {HTMLElement[]} items
+ * @param {HTMLElement} menu
  */
-export function createSeriesHighlight(items) {
-  const seriesNodes = items.map(createSeriesNode);
+export function createSeriesHighlight(items, menu) {
+  const seriesNodes = /** @type {SeriesNode[]} */ (items.map(() => []));
   /** @type {number | undefined} */
   let previewIndex;
 
   /** @param {number} index */
   function scrollToItem(index) {
-    items[index].scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
+    const itemRect = items[index].getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+
+    if (itemRect.left < menuRect.left) {
+      menu.scrollBy({
+        left: itemRect.left - menuRect.left,
+        behavior: "smooth",
+      });
+    } else if (itemRect.right > menuRect.right) {
+      menu.scrollBy({
+        left: itemRect.right - menuRect.right,
+        behavior: "smooth",
+      });
+    }
   }
 
   /** @param {number} index */

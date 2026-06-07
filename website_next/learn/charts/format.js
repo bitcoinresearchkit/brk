@@ -1,3 +1,5 @@
+const suffixes = ["M", "B", "T", "P", "E", "Z", "Y"];
+
 /**
  * @param {number} value
  * @param {number} digits
@@ -11,6 +13,8 @@ function formatNumber(value, digits) {
 
 /** @param {number} value */
 export function formatValue(value) {
+  if (value === 0) return "0";
+
   const absolute = Math.abs(value);
 
   if (absolute < 10) return formatNumber(value, 3);
@@ -20,7 +24,6 @@ export function formatValue(value) {
   if (absolute >= 1e27) return "Inf.";
 
   const log = Math.floor(Math.log10(absolute) - 6);
-  const suffixes = ["M", "B", "T", "P", "E", "Z", "Y"];
   const suffixIndex = Math.floor(log / 3);
   const digits = 3 - (log % 3);
   const scaled = value / (1_000_000 * 1_000 ** suffixIndex);

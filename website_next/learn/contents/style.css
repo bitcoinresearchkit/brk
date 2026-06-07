@@ -22,8 +22,11 @@ main.learn {
     }
 
     > ol > li {
-      counter-increment: content-theme;
       counter-reset: content-topic;
+    }
+
+    > ol > li:not([data-numbered="false"]) {
+      counter-increment: content-theme;
     }
 
     > ol > li > ol > li {
@@ -81,6 +84,11 @@ main.learn {
 
     > ol > li > a::before {
       content: counter(content-theme, upper-roman) ". ";
+    }
+
+    > ol > li[data-numbered="false"] > a::before {
+      content: "I. ";
+      visibility: hidden;
     }
 
     > ol > li > ol > li > a::before {

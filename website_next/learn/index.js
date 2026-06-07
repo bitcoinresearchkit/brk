@@ -5,21 +5,6 @@ import { initHashLinks } from "./hash-links.js";
 import { initScrollSpy } from "./scroll-spy.js";
 import { createPathId } from "./path.js";
 
-/** @param {Section["chart"]} chart */
-function createFigure(chart) {
-  if (typeof chart !== "string") return createDataChart(chart);
-
-  const figure = document.createElement("figure");
-  const placeholder = document.createElement("div");
-  const caption = document.createElement("figcaption");
-
-  placeholder.append(chart);
-  caption.append(chart);
-  figure.append(placeholder, caption);
-
-  return figure;
-}
-
 /**
  * @param {Section} section
  * @param {readonly string[]} [path]
@@ -35,11 +20,13 @@ function createSection(section, path = []) {
   const id = createPathId(sectionPath);
 
   element.id = id;
+  if (section.numbered === false) element.dataset.numbered = "false";
   anchor.href = `#${id}`;
   anchor.append(section.title);
   heading.append(anchor);
   description.append(section.description);
-  element.append(heading, description, createFigure(section.chart));
+  element.append(heading, description);
+  if (section.chart) element.append(createDataChart(section.chart));
 
   for (const child of children) {
     element.append(createSection(child, sectionPath));
@@ -67,6 +54,7 @@ export function createLearnPage() {
  * @typedef {Object} Section
  * @property {string} title
  * @property {string} description
- * @property {string | import("./charts/index.js").Chart} chart
+ * @property {import("./charts/index.js").Chart} [chart]
+ * @property {boolean} [numbered]
  * @property {Section[]} [children]
  */

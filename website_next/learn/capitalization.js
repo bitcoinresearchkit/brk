@@ -24,31 +24,21 @@ export const capitalizationSeries = createCohortSeries([
   },
 ]);
 
-export const marketCapSeries = createCohortSeries([
-  {
-    label: "Market cap",
-    color: colors.green,
-    metric: (client) => client.series.supply.marketCap.usd,
-  },
-]);
+const [marketCap, realizedCap] = capitalizationSeries;
 
-export const realizedCapSeries = createCohortSeries([
-  {
-    label: "Realized cap",
-    color: colors.orange,
-    metric: (client) => client.series.cohorts.utxo.all.realized.cap.usd,
-  },
-]);
+export const marketCapSeries = [marketCap];
+
+export const realizedCapSeries = [realizedCap];
 
 export const marketCapTermSeries = createCohortSeries([
   {
     label: "STH",
-    color: colors.sky,
+    color: colors.yellow,
     metric: (client) => client.series.cohorts.utxo.sth.supply.total.usd,
   },
   {
     label: "LTH",
-    color: colors.orange,
+    color: colors.fuchsia,
     metric: (client) => client.series.cohorts.utxo.lth.supply.total.usd,
   },
 ]);
@@ -56,12 +46,12 @@ export const marketCapTermSeries = createCohortSeries([
 export const realizedCapTermSeries = createCohortSeries([
   {
     label: "STH",
-    color: colors.sky,
+    color: colors.yellow,
     metric: (client) => client.series.cohorts.utxo.sth.realized.cap.usd,
   },
   {
     label: "LTH",
-    color: colors.orange,
+    color: colors.fuchsia,
     metric: (client) => client.series.cohorts.utxo.lth.realized.cap.usd,
   },
 ]);

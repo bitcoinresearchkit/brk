@@ -48,6 +48,7 @@ function renderPlot(view, group, loadedSeries, height, highlight, scale) {
  * @param {Object} args
  * @param {SVGSVGElement} args.svg
  * @param {Readout} args.readout
+ * @param {HTMLElement} args.menu
  * @param {HTMLElement[]} args.items
  * @param {HTMLElement} args.status
  * @param {Chart} args.chart
@@ -58,6 +59,7 @@ function renderPlot(view, group, loadedSeries, height, highlight, scale) {
 export function createChartRenderer({
   svg,
   readout,
+  menu,
   items,
   status,
   chart,
@@ -66,7 +68,7 @@ export function createChartRenderer({
   getTimeframe,
 }) {
   const group = createSvgElement("g");
-  const highlight = createSeriesHighlight(items);
+  const highlight = createSeriesHighlight(items, menu);
   const loadSeries = createSeriesLoader(chart);
   /** @type {LoadedSeries[]} */
   let loadedSeries = [];

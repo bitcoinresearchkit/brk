@@ -29,3 +29,4 @@ ALWAYS
 - easy to understand
 - maintainability
 - avoid defensive checks when the code itself guarantees correctness
+- prefer "@type {const}" + infer to "@type {TYPE}" or "@type {import().type}"
