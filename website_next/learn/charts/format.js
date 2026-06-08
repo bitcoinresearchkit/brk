@@ -5,7 +5,7 @@ const suffixes = ["M", "B", "T", "P", "E", "Z", "Y"];
  * @param {number} digits
  */
 function formatNumber(value, digits) {
-  return value.toLocaleString("en-us", {
+  return value.toLocaleString("en-US", {
     maximumFractionDigits: digits,
     minimumFractionDigits: digits,
   });

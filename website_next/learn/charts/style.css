@@ -52,6 +52,12 @@ main.learn {
       padding: 1rem;
       background: var(--black);
 
+      > div[data-chart="plot"] {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+
       svg {
         flex: 1;
         height: auto;

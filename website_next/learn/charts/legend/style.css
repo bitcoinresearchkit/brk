@@ -10,6 +10,14 @@ main.learn {
         gap: 1rem;
       }
 
+      h4 {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+      }
+
       time {
         color: var(--off-color);
       }
@@ -102,8 +110,17 @@ main.learn {
     }
 
     &:fullscreen {
-      figcaption menu {
-        padding-bottom: 0.5rem;
+      figcaption {
+        h4 {
+          color: var(--white);
+          font-family: var(--font-serif);
+          font-size: 2rem;
+          text-transform: none;
+        }
+
+        menu {
+          padding-bottom: 0.5rem;
+        }
       }
     }
 

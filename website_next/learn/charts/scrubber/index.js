@@ -12,6 +12,15 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const markerRadiusPx = 4;
+
+/** @param {SVGSVGElement} svg */
+function getMarkerRadiusInViewBox(svg) {
+  const width = svg.getBoundingClientRect().width;
+
+  return width ? (markerRadiusPx * VIEWBOX_WIDTH) / width : markerRadiusPx;
+}
+
 /**
  * @param {ScrubberSeries} series
  * @param {number} ratio
@@ -114,13 +123,14 @@ export function createScrubber(svg, readout, highlight) {
     series = nextSeries;
     height = nextHeight;
     stepCount = Math.max(...series.map(({ points }) => points.length - 1));
+    const radius = getMarkerRadiusInViewBox(svg);
     markers = series.map(({ color }, index) => {
       const marker = createSvgElement("circle");
 
       marker.dataset.series = index.toString();
       marker.dataset.scrubber = "marker";
       marker.style.setProperty("--color", color);
-      marker.setAttribute("r", "3");
+      marker.setAttribute("r", radius.toString());
       highlight.addNode(marker, index);
 
       return marker;

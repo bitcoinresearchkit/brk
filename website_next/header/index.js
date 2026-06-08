@@ -7,7 +7,7 @@ export function createHeader() {
   const cube = document.createElement("span");
 
   home.href = "/";
-  home.ariaLabel = "bitview home";
+  home.setAttribute("aria-label", "bitview home");
   cube.append(createCube());
   home.append(cube, "bitview");
 

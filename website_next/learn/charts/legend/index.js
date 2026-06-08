@@ -5,7 +5,7 @@
 export function createLegend(chart) {
   const legend = document.createElement("figcaption");
   const header = document.createElement("header");
-  const title = document.createElement("span");
+  const title = document.createElement("h4");
   const separator = document.createElement("span");
   const unit = document.createElement("span");
   const time = document.createElement("time");
