@@ -1,6 +1,5 @@
 import { capitalizationSeries } from "../capitalization.js";
 import { units } from "../charts/units.js";
-import { viewTypes } from "../charts/views.js";
 import { marketCapSection } from "./capitalization/market.js";
 import { realizedCapSection } from "./capitalization/realized.js";
 
@@ -11,7 +10,7 @@ export const capitalizationSection = {
   chart: {
     title: "Capitalization",
     unit: units.usd,
-    defaultType: viewTypes.line,
+    defaultType: /** @type {const} */ ("line"),
     series: capitalizationSeries,
   },
   children: [

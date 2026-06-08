@@ -14,7 +14,6 @@ import {
   supplyProfitabilitySeries,
 } from "../supply.js";
 import { units } from "../charts/units.js";
-import { viewTypes } from "../charts/views.js";
 
 export const supplySection = {
   title: "Supply",
@@ -43,7 +42,7 @@ export const supplySection = {
       chart: {
         title: "Exposed supply",
         unit: units.btc,
-        defaultType: viewTypes.line,
+        defaultType: /** @type {const} */ ("line"),
         series: exposedSupplySeries,
       },
       children: [

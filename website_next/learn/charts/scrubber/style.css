@@ -15,6 +15,11 @@ main.learn {
       vector-effect: non-scaling-stroke;
     }
 
+    [data-scrubber="shade"] {
+      fill: var(--black);
+      fill-opacity: 0.5;
+    }
+
     [data-scrubber="marker"] {
       fill: var(--black);
       stroke: var(--color, var(--orange));

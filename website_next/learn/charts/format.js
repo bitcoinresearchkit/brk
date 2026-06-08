@@ -1,14 +1,18 @@
 const suffixes = ["M", "B", "T", "P", "E", "Z", "Y"];
+const numberFormats = [0, 1, 2, 3].map(
+  (digits) =>
+    new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: digits,
+    }),
+);
 
 /**
  * @param {number} value
  * @param {number} digits
  */
 function formatNumber(value, digits) {
-  return value.toLocaleString("en-US", {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
-  });
+  return numberFormats[digits].format(value);
 }
 
 /** @param {number} value */

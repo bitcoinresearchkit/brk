@@ -82,13 +82,16 @@ export function createStackedSeries(loadedSeries, height, order, scale) {
       if (value < 0) negative = end;
       else positive = end;
 
+      const y0 = scaleY(start, bounds, height, scale);
+      const y1 = scaleY(end, bounds, height, scale);
+
       plottedSeries[seriesIndex].points.push({
         date,
         value,
         x,
-        y: scaleY(end, bounds, height, scale),
-        y0: scaleY(start, bounds, height, scale),
-        y1: scaleY(end, bounds, height, scale),
+        y: y1,
+        y0,
+        y1,
       });
     }
 

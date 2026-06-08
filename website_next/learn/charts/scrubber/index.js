@@ -14,19 +14,37 @@ const dateFormat = new Intl.DateTimeFormat("en-US", {
 
 const markerRadiusPx = 4;
 
-/** @param {SVGSVGElement} svg */
-function getMarkerRadiusInViewBox(svg) {
-  const width = svg.getBoundingClientRect().width;
-
+/** @param {number} width */
+function getMarkerRadiusInViewBox(width) {
   return width ? (markerRadiusPx * VIEWBOX_WIDTH) / width : markerRadiusPx;
 }
 
 /**
  * @param {ScrubberSeries} series
- * @param {number} ratio
+ * @param {number} step
  */
-function getPointAtRatio(series, ratio) {
-  return series.points[Math.round(ratio * (series.points.length - 1))];
+function getPointAtStep(series, step) {
+  return series.points[step];
+}
+
+/**
+ * @param {ReturnType<typeof getPointAtStep>[]} points
+ * @param {number} y
+ */
+function getClosestPointIndex(points, y) {
+  let closestIndex = 0;
+  let closestDistance = Infinity;
+
+  for (const [index, point] of points.entries()) {
+    const distance = Math.abs(point.y - y);
+
+    if (distance < closestDistance) {
+      closestIndex = index;
+      closestDistance = distance;
+    }
+  }
+
+  return closestIndex;
 }
 
 /**
@@ -40,7 +58,7 @@ function updateTime(time, date) {
 
 /**
  * @param {Readout} readout
- * @param {ReturnType<typeof getPointAtRatio>[]} points
+ * @param {ReturnType<typeof getPointAtStep>[]} points
  */
 function updateReadout(readout, points) {
   updateTime(readout.time, points[0].date);
@@ -57,6 +75,7 @@ function updateReadout(readout, points) {
  */
 export function createScrubber(svg, readout, highlight) {
   const group = createSvgElement("g");
+  const shade = createSvgElement("rect");
   const guide = createSvgElement("line");
   /** @type {ScrubberSeries[]} */
   let series = [];
@@ -64,53 +83,83 @@ export function createScrubber(svg, readout, highlight) {
   let markers = [];
   let height = 0;
   let stepCount = 0;
+  let currentStep = -1;
+  let currentPoints = getPointsAtStep(0);
+  let rect = svg.getBoundingClientRect();
 
   group.dataset.scrubber = "root";
+  shade.dataset.scrubber = "shade";
   guide.dataset.scrubber = "guide";
-  group.append(guide);
+  group.append(shade, guide);
   svg.append(group);
+
+  function measure() {
+    rect = svg.getBoundingClientRect();
+  }
+
+  /** @param {number} step */
+  function getPointsAtStep(step) {
+    return series.map((item) => getPointAtStep(item, step));
+  }
 
   /**
    * @param {number} ratio
+   * @param {number} [y]
    * @param {boolean} [scrubbing]
    */
-  function update(ratio, scrubbing = true) {
+  function update(ratio, y, scrubbing = true) {
     if (!series.length) return;
 
-    const nextRatio = clamp(ratio, 0, 1);
-    const points = series.map((item) => getPointAtRatio(item, nextRatio));
-    const x = points[0].x.toFixed(2);
+    const nextStep = Math.round(clamp(ratio, 0, 1) * stepCount);
 
-    svg.dataset.index = Math.round(nextRatio * stepCount).toString();
-    guide.setAttribute("x1", x);
-    guide.setAttribute("x2", x);
-    guide.setAttribute("y1", "0");
-    guide.setAttribute("y2", height.toString());
-    updateReadout(readout, points);
+    if (nextStep !== currentStep) {
+      currentStep = nextStep;
+      currentPoints = getPointsAtStep(nextStep);
 
-    markers.forEach((marker, index) => {
-      const point = points[index];
+      const x = currentPoints[0].x;
+      const xText = x.toFixed(2);
 
-      marker.setAttribute("cx", point.x.toFixed(2));
-      marker.setAttribute("cy", point.y.toFixed(2));
-    });
+      svg.dataset.index = nextStep.toString();
+      shade.setAttribute("x", xText);
+      shade.setAttribute("y", "0");
+      shade.setAttribute("width", (VIEWBOX_WIDTH - x).toFixed(2));
+      shade.setAttribute("height", height.toString());
+      guide.setAttribute("x1", xText);
+      guide.setAttribute("x2", xText);
+      guide.setAttribute("y1", "0");
+      guide.setAttribute("y2", height.toString());
+      updateReadout(readout, currentPoints);
+
+      markers.forEach((marker, index) => {
+        const point = currentPoints[index];
+
+        marker.setAttribute("cx", point.x.toFixed(2));
+        marker.setAttribute("cy", point.y.toFixed(2));
+      });
+    }
 
     if (scrubbing) {
       svg.dataset.scrubbing = "true";
     } else {
       delete svg.dataset.scrubbing;
     }
+
+    if (y !== undefined) {
+      highlight.preview(getClosestPointIndex(currentPoints, y));
+    }
   }
 
   function hide() {
-    update(1, false);
+    update(1, undefined, false);
   }
 
   function clear() {
     series = [];
     markers = [];
+    currentStep = -1;
+    currentPoints = [];
     highlight.clearPreview();
-    group.replaceChildren(guide);
+    group.replaceChildren(shade, guide);
     delete svg.dataset.index;
     delete svg.dataset.scrubbing;
   }
@@ -122,8 +171,10 @@ export function createScrubber(svg, readout, highlight) {
   function setSeries(nextSeries, nextHeight) {
     series = nextSeries;
     height = nextHeight;
+    currentStep = -1;
     stepCount = Math.max(...series.map(({ points }) => points.length - 1));
-    const radius = getMarkerRadiusInViewBox(svg);
+    measure();
+    const radius = getMarkerRadiusInViewBox(rect.width);
     markers = series.map(({ color }, index) => {
       const marker = createSvgElement("circle");
 
@@ -136,23 +187,19 @@ export function createScrubber(svg, readout, highlight) {
       return marker;
     });
 
-    group.replaceChildren(guide, ...markers);
-    update(1, false);
+    group.replaceChildren(shade, guide, ...markers);
+    update(1, undefined, false);
   }
 
   /** @param {PointerEvent} event */
   function updateFromPointer(event) {
-    const { left, width } = svg.getBoundingClientRect();
-    const x = ((event.clientX - left) / width) * VIEWBOX_WIDTH;
-    const index = Number(
-      /** @type {SVGElement} */ (event.target).dataset.series,
-    );
+    const x = ((event.clientX - rect.left) / rect.width) * VIEWBOX_WIDTH;
+    const y = ((event.clientY - rect.top) / rect.height) * height;
 
-    if (Number.isInteger(index)) highlight.preview(index);
-    else highlight.clearPreview();
-    update(x / VIEWBOX_WIDTH);
+    update(x / VIEWBOX_WIDTH, y);
   }
 
+  svg.addEventListener("pointerenter", measure);
   svg.addEventListener("pointermove", updateFromPointer);
   svg.addEventListener("pointerleave", () => {
     highlight.clearPreview();
