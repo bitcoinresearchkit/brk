@@ -59,6 +59,11 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
+        html {
+          --transition-duration: 0ms;
+          --reveal-duration: 0ms;
+        }
+
         body::before {
           transition: none;
         }

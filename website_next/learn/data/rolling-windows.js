@@ -1,7 +1,7 @@
 import { createCohortSeries } from "./cohort-series.js";
 import { colors } from "../../utils/colors.js";
 
-export const rollingWindows = /** @type {const} */ ([
+const rollingWindows = /** @type {const} */ ([
   ["24h", "_24h", colors.sky],
   ["1w", "_1w", colors.cyan],
   ["1m", "_1m", colors.blue],

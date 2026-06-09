@@ -26,7 +26,7 @@ function createSection(section, path = []) {
   heading.append(anchor);
   description.append(section.description);
   element.append(heading, description);
-  if (section.chart) element.append(createDataChart(section.chart));
+  if (section.chart) element.append(createDataChart(section.chart, id));
 
   for (const child of children) {
     element.append(createSection(child, sectionPath));

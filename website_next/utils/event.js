@@ -2,7 +2,7 @@
  * @param {Event} event
  * @param {string} selector
  */
-export function getEventTarget(event, selector) {
+function getEventTarget(event, selector) {
   const target = event.target;
 
   return target instanceof Element ? target.closest(selector) : null;

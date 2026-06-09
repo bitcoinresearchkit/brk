@@ -79,21 +79,58 @@ main.learn {
       margin-top: 8rem;
     }
 
-    > section > section {
-      counter-increment: topic;
-      counter-reset: detail;
-      scroll-margin-top: var(--offset);
+    section[id] {
+      > :is(h1, h2, h3, h4) {
+        a {
+          position: relative;
+          display: inline-block;
+          color: var(--white);
+          text-decoration: none;
+
+          &::before {
+            position: absolute;
+            top: 50%;
+            right: 100%;
+            translate: 0 -50%;
+            opacity: 0;
+            user-select: none;
+            text-decoration: none;
+          }
+
+          &:hover::before {
+            opacity: 0.5;
+          }
+
+          &:hover {
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.125em;
+          }
+
+          &:active {
+            color: var(--orange);
+          }
+        }
+      }
     }
 
-    > section > section > section {
-      counter-increment: detail;
-      counter-reset: subtopic;
-      scroll-margin-top: var(--offset);
-    }
+    > section {
+      > section {
+        counter-increment: topic;
+        counter-reset: detail;
+        scroll-margin-top: var(--offset);
 
-    > section > section > section > section {
-      counter-increment: subtopic;
-      scroll-margin-top: var(--offset);
+        > section {
+          counter-increment: detail;
+          counter-reset: subtopic;
+          scroll-margin-top: var(--offset);
+
+          > section {
+            counter-increment: subtopic;
+            scroll-margin-top: var(--offset);
+          }
+        }
+      }
     }
 
     section[id]:not([data-numbered="false"]) {
@@ -153,7 +190,7 @@ main.learn {
 
       > p {
         margin-top: 1rem;
-        color: var(--dark-white);
+        color: var(--white);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
       }
@@ -162,41 +199,6 @@ main.learn {
         margin-top: 2rem;
         color: var(--gray);
         font-size: var(--font-size-xs);
-      }
-    }
-
-    section[id] {
-      > :is(h1, h2, h3, h4) {
-        a {
-          position: relative;
-          display: inline-block;
-          color: var(--white);
-          text-decoration: none;
-
-          &::before {
-            position: absolute;
-            top: 50%;
-            right: 100%;
-            translate: 0 -50%;
-            opacity: 0;
-            user-select: none;
-            text-decoration: none;
-          }
-
-          &:hover::before {
-            opacity: 0.5;
-          }
-
-          &:hover {
-            text-decoration: underline;
-            text-decoration-thickness: 1px;
-            text-underline-offset: 0.125em;
-          }
-
-          &:active {
-            color: var(--orange);
-          }
-        }
       }
     }
   }

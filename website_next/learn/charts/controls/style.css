@@ -40,62 +40,50 @@ main.learn {
 
         span {
           display: block;
-          padding: 0.25rem;
-          border-radius: 0.25rem;
-          color: var(--gray);
-        }
-
-        label:hover span {
-          color: var(--black);
-          background: var(--white);
         }
 
         label:has(:checked):not(:hover) span {
           color: var(--black);
           background: var(--gray);
         }
-
-        label:active span {
-          color: var(--black);
-          background: var(--orange);
-        }
-
-        label:has(:focus-visible) span {
-          outline: 1px solid var(--orange);
-          outline-offset: 0.125rem;
-        }
       }
 
       button[data-chart="fullscreen"] {
-        padding: 0.25rem;
         border: 0;
-        border-radius: 0.25rem;
-        color: var(--gray);
         background: none;
         font: inherit;
         line-height: inherit;
         text-transform: uppercase;
         cursor: pointer;
 
-        &:hover {
-          color: var(--black);
-          background: var(--white);
-        }
-
         &[aria-pressed="true"] {
           color: var(--black);
           background: var(--green);
         }
+      }
 
-        &:active {
-          color: var(--black);
-          background: var(--orange);
-        }
+      :is(label > span, button[data-chart="fullscreen"]) {
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        color: var(--gray);
+      }
 
-        &:focus-visible {
-          outline: 1px solid var(--orange);
-          outline-offset: 0.125rem;
-        }
+      :is(label:hover span, button[data-chart="fullscreen"]:hover) {
+        color: var(--black);
+        background: var(--white);
+      }
+
+      :is(label:active span, button[data-chart="fullscreen"]:active) {
+        color: var(--black);
+        background: var(--orange);
+      }
+
+      :is(
+          label:has(:focus-visible) span,
+          button[data-chart="fullscreen"]:focus-visible
+        ) {
+        outline: 1px solid var(--orange);
+        outline-offset: 0.125rem;
       }
     }
   }

@@ -2,7 +2,6 @@
   color-scheme: dark;
 
   --white: oklch(95% 0 0);
-  --dark-white: oklch(92.5% 0 0);
   --gray: oklch(55% 0 0);
   --black: oklch(15% 0 0);
   --red: oklch(0.607 0.241 26.328);
@@ -23,7 +22,6 @@
   --fuchsia: oklch(0.629 0.294 322.523);
   --pink: oklch(0.624 0.245 357.444);
   --rose: oklch(0.6155 0.2495 17.012);
-  --off-color: var(--gray);
 
   --font-size-xs: 0.75rem;
   --line-height-xs: calc(1 / 0.75);

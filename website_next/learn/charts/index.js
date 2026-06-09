@@ -25,10 +25,12 @@ import {
 } from "./views.js";
 import { FALLBACK_VIEWBOX_HEIGHT, VIEWBOX_WIDTH } from "./viewbox.js";
 
-/** @param {Chart} chart */
-export function createChart(chart) {
+/**
+ * @param {Chart} chart
+ * @param {string} chartKey
+ */
+export function createChart(chart, chartKey) {
   const figure = document.createElement("figure");
-  const chartKey = chart.title;
   /** @type {ReturnType<typeof createChartRenderer> | undefined} */
   let renderer;
 

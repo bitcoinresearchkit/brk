@@ -19,11 +19,11 @@ main.learn {
       }
 
       time {
-        color: var(--off-color);
+        color: var(--gray);
       }
 
       span:is([data-chart="unit"], [data-chart="separator"]) {
-        color: var(--off-color);
+        color: var(--gray);
       }
 
       menu {
