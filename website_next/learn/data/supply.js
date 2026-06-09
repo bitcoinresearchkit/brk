@@ -1,5 +1,5 @@
 import { createCohortSeries } from "./cohort-series.js";
-import { colors } from "../utils/colors.js";
+import { colors } from "../../utils/colors.js";
 
 export const circulatingSupplySeries = createCohortSeries([
   {

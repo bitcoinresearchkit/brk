@@ -28,90 +28,103 @@ import { FALLBACK_VIEWBOX_HEIGHT, VIEWBOX_WIDTH } from "./viewbox.js";
 /** @param {Chart} chart */
 export function createChart(chart) {
   const figure = document.createElement("figure");
-  const plot = document.createElement("div");
-  const svg = createSvgElement("svg");
-  const controls = document.createElement("footer");
-  const chartControls = document.createElement("div");
-  const timeControls = document.createElement("div");
-  const status = document.createElement("p");
   const chartKey = chart.title;
-  let currentTimeframe = getDefaultTimeframe(chartKey);
-  let currentView = getDefaultView(chartKey, chart.defaultType);
-  let currentScale = getDefaultScale(chartKey, chart.defaultScale);
-  let currentOrder = getDefaultOrder(chartKey);
-  const { legend, menu, items, readout } = createLegend(chart);
+  /** @type {ReturnType<typeof createChartRenderer> | undefined} */
+  let renderer;
 
   figure.dataset.chart = "series";
-  plot.dataset.chart = "plot";
-  figure.dataset.timeframe = currentTimeframe;
-  figure.dataset.view = currentView;
-  figure.dataset.scale = currentScale;
-  figure.dataset.order = currentOrder;
-  svg.setAttribute(
-    "viewBox",
-    `0 0 ${VIEWBOX_WIDTH} ${FALLBACK_VIEWBOX_HEIGHT}`,
-  );
-  svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", chart.title);
-  svg.setAttribute("tabindex", "0");
-  status.setAttribute("aria-live", "polite");
-  status.setAttribute("role", "status");
 
-  const renderer = createChartRenderer({
-    svg,
-    readout,
-    menu,
-    items,
-    status,
-    chart,
-    getView: () => currentView,
-    getScale: () => currentScale,
-    getOrder: () => currentOrder,
-    getTimeframe: () => currentTimeframe,
-  });
+  function mount() {
+    if (renderer) return renderer;
 
-  /**
-   * @template {string} T
-   * @param {string} dataKey
-   * @param {(chartKey: string, value: T) => void} save
-   * @param {T} value
-   */
-  function saveChartSetting(dataKey, save, value) {
-    save(chartKey, value);
-    figure.dataset[dataKey] = value;
+    const plot = document.createElement("div");
+    const svg = createSvgElement("svg");
+    const controls = document.createElement("footer");
+    const chartControls = document.createElement("div");
+    const timeControls = document.createElement("div");
+    const status = document.createElement("p");
+    let currentTimeframe = getDefaultTimeframe(chartKey);
+    let currentView = getDefaultView(chartKey, chart.defaultType);
+    let currentScale = getDefaultScale(chartKey, chart.defaultScale);
+    let currentOrder = getDefaultOrder(chartKey);
+    const { legend, menu, items, readout } = createLegend(chart);
+
+    plot.dataset.chart = "plot";
+    figure.dataset.timeframe = currentTimeframe;
+    figure.dataset.view = currentView;
+    figure.dataset.scale = currentScale;
+    figure.dataset.order = currentOrder;
+    svg.setAttribute(
+      "viewBox",
+      `0 0 ${VIEWBOX_WIDTH} ${FALLBACK_VIEWBOX_HEIGHT}`,
+    );
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", chart.title);
+    svg.setAttribute("tabindex", "0");
+    status.setAttribute("aria-live", "polite");
+    status.setAttribute("role", "status");
+
+    const nextRenderer = createChartRenderer({
+      svg,
+      readout,
+      menu,
+      items,
+      status,
+      chart,
+      getView: () => currentView,
+      getScale: () => currentScale,
+      getOrder: () => currentOrder,
+      getTimeframe: () => currentTimeframe,
+    });
+
+    /**
+     * @template {string} T
+     * @param {string} dataKey
+     * @param {(chartKey: string, value: T) => void} save
+     * @param {T} value
+     */
+    function saveChartSetting(dataKey, save, value) {
+      save(chartKey, value);
+      figure.dataset[dataKey] = value;
+    }
+
+    const viewControl = createViewControl(currentView, (view) => {
+      currentView = view;
+      saveChartSetting("view", saveView, view);
+      nextRenderer.renderCurrent();
+    });
+    const scaleControl = createScaleControl(currentScale, (scale) => {
+      currentScale = scale;
+      saveChartSetting("scale", saveScale, scale);
+      nextRenderer.renderCurrent();
+    });
+    const orderControl = createOrderControl(currentOrder, (order) => {
+      currentOrder = order;
+      saveChartSetting("order", saveOrder, order);
+      nextRenderer.renderCurrent();
+    });
+    const timeframeControl = createTimeframeControl(
+      currentTimeframe,
+      (timeframe) => {
+        currentTimeframe = timeframe;
+        saveChartSetting("timeframe", saveTimeframe, timeframe);
+        void nextRenderer.loadCurrent();
+      },
+    );
+
+    chartControls.append(viewControl, scaleControl, orderControl);
+    timeControls.append(timeframeControl, createFullscreenButton(figure));
+    controls.append(chartControls, timeControls);
+    plot.append(svg, status);
+    figure.replaceChildren(legend, plot, controls);
+    renderer = nextRenderer;
+
+    return renderer;
   }
 
-  const viewControl = createViewControl(currentView, (view) => {
-    currentView = view;
-    saveChartSetting("view", saveView, view);
-    renderer.renderCurrent();
-  });
-  const scaleControl = createScaleControl(currentScale, (scale) => {
-    currentScale = scale;
-    saveChartSetting("scale", saveScale, scale);
-    renderer.renderCurrent();
-  });
-  const orderControl = createOrderControl(currentOrder, (order) => {
-    currentOrder = order;
-    saveChartSetting("order", saveOrder, order);
-    renderer.renderCurrent();
-  });
-  const timeframeControl = createTimeframeControl(
-    currentTimeframe,
-    (timeframe) => {
-      currentTimeframe = timeframe;
-      saveChartSetting("timeframe", saveTimeframe, timeframe);
-      void renderer.loadCurrent();
-    },
-  );
-  chartControls.append(viewControl, scaleControl, orderControl);
-  timeControls.append(timeframeControl, createFullscreenButton(figure));
-  controls.append(chartControls, timeControls);
-  plot.append(svg, status);
-  figure.append(legend, plot, controls);
   onChartVisibility(figure, {
-    show: renderer.resume,
-    hide: renderer.suspend,
+    show: () => mount().resume(),
+    hide: () => renderer?.suspend(),
   });
 
   return figure;

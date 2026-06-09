@@ -9,7 +9,7 @@ import {
   realizedCapTypeSeries,
   realizedCapUtxoBalanceSeries,
 } from "../../capitalization.js";
-import { units } from "../../charts/units.js";
+import { units } from "../../../charts/units.js";
 
 export const realizedCapSection = {
   title: "Realized Cap",

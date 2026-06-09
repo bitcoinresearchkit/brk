@@ -4,8 +4,9 @@
  */
 export function createSeriesHighlight(items, menu) {
   const seriesNodes = /** @type {SeriesNode[]} */ (items.map(() => []));
-  /** @type {number | undefined} */
-  let previewIndex;
+  const noSeries = -1;
+  let selectedSeries = noSeries;
+  let previewedSeries = noSeries;
 
   /** @param {number} index */
   function scrollToItem(index) {
@@ -27,7 +28,7 @@ export function createSeriesHighlight(items, menu) {
   }
 
   /** @param {number} index */
-  function activate(index) {
+  function highlightSeries(index) {
     for (const [itemIndex, item] of items.entries()) {
       setActive(item, itemIndex === index);
     }
@@ -39,38 +40,67 @@ export function createSeriesHighlight(items, menu) {
     });
   }
 
-  function clear() {
-    for (const item of items) clearState(item);
+  function clearHighlight() {
+    for (const item of items) clearElementState(item);
 
     for (const nodes of seriesNodes) {
-      for (const node of nodes) clearState(node);
+      for (const node of nodes) clearElementState(node);
     }
+  }
 
-    previewIndex = undefined;
+  function restoreSelectedHighlight() {
+    if (selectedSeries === noSeries) {
+      clearHighlight();
+    } else {
+      highlightSeries(selectedSeries);
+    }
+  }
+
+  function clearInteractionHighlight() {
+    clearPreview();
+    restoreSelectedHighlight();
   }
 
   /** @param {number} index */
-  function previewItem(index) {
-    if (index === previewIndex) return;
+  function selectSeries(index) {
+    selectedSeries = index;
+
+    items.forEach((item, itemIndex) => {
+      item.setAttribute(
+        "aria-pressed",
+        (itemIndex === selectedSeries).toString(),
+      );
+    });
+
+    restoreSelectedHighlight();
+  }
+
+  /** @param {number} index */
+  function previewSeries(index) {
+    if (index === previewedSeries) return;
 
     clearPreview();
     scrollToItem(index);
     items[index].dataset.preview = "";
-    previewIndex = index;
+    previewedSeries = index;
   }
 
   function clearPreview() {
-    if (previewIndex === undefined) return;
+    if (previewedSeries === noSeries) return;
 
-    delete items[previewIndex].dataset.preview;
-    previewIndex = undefined;
+    delete items[previewedSeries].dataset.preview;
+    previewedSeries = noSeries;
   }
 
   items.forEach((item, index) => {
-    item.addEventListener("pointerenter", () => activate(index));
-    item.addEventListener("pointerleave", clear);
-    item.addEventListener("focus", () => activate(index));
-    item.addEventListener("blur", clear);
+    item.setAttribute("aria-pressed", "false");
+    item.addEventListener("pointerenter", () => highlightSeries(index));
+    item.addEventListener("pointerleave", clearInteractionHighlight);
+    item.addEventListener("focus", () => highlightSeries(index));
+    item.addEventListener("blur", clearInteractionHighlight);
+    item.addEventListener("click", () => {
+      selectSeries(selectedSeries === index ? noSeries : index);
+    });
   });
 
   /**
@@ -78,11 +108,12 @@ export function createSeriesHighlight(items, menu) {
    * @param {number} index
    */
   function addNode(node, index) {
+    if (selectedSeries !== noSeries) setActive(node, index === selectedSeries);
     seriesNodes[index].push(node);
   }
 
   function clearNodes() {
-    clear();
+    clearInteractionHighlight();
 
     for (const nodes of seriesNodes) {
       nodes.length = 0;
@@ -93,7 +124,7 @@ export function createSeriesHighlight(items, menu) {
     addNode,
     clearPreview,
     clearNodes,
-    preview: previewItem,
+    preview: previewSeries,
   };
 }
 
@@ -112,7 +143,7 @@ function setActive(element, active) {
 }
 
 /** @param {HTMLElement | SVGElement} element */
-function clearState(element) {
+function clearElementState(element) {
   delete element.dataset.active;
   delete element.dataset.muted;
   delete element.dataset.preview;

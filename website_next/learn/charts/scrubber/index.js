@@ -1,4 +1,3 @@
-import { formatValue } from "../format.js";
 import { clamp } from "../math.js";
 import { createSvgElement } from "../svg.js";
 import { VIEWBOX_WIDTH } from "../viewbox.js";
@@ -59,12 +58,13 @@ function updateTime(time, date) {
 /**
  * @param {Readout} readout
  * @param {ReturnType<typeof getPointAtStep>[]} points
+ * @param {(value: number) => string} format
  */
-function updateReadout(readout, points) {
+function updateReadout(readout, points, format) {
   updateTime(readout.time, points[0].date);
 
   readout.rows.forEach(({ value }, index) => {
-    value.textContent = formatValue(points[index].value);
+    value.textContent = format(points[index].value);
   });
 }
 
@@ -72,8 +72,9 @@ function updateReadout(readout, points) {
  * @param {SVGSVGElement} svg
  * @param {Readout} readout
  * @param {SeriesHighlight} highlight
+ * @param {(value: number) => string} format
  */
-export function createScrubber(svg, readout, highlight) {
+export function createScrubber(svg, readout, highlight, format) {
   const group = createSvgElement("g");
   const shade = createSvgElement("rect");
   const guide = createSvgElement("line");
@@ -128,7 +129,7 @@ export function createScrubber(svg, readout, highlight) {
       guide.setAttribute("x2", xText);
       guide.setAttribute("y1", "0");
       guide.setAttribute("y2", height.toString());
-      updateReadout(readout, currentPoints);
+      updateReadout(readout, currentPoints, format);
 
       markers.forEach((marker, index) => {
         const point = currentPoints[index];

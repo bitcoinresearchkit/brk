@@ -10,7 +10,7 @@ main.learn {
         gap: 1rem;
       }
 
-      h4 {
+      h5 {
         margin: 0;
         font-family: var(--font-mono);
         font-size: inherit;
@@ -111,7 +111,7 @@ main.learn {
 
     &:fullscreen {
       figcaption {
-        h4 {
+        h5 {
           color: var(--white);
           font-family: var(--font-serif);
           font-size: 2rem;

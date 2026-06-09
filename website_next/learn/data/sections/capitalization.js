@@ -1,5 +1,5 @@
 import { capitalizationSeries } from "../capitalization.js";
-import { units } from "../charts/units.js";
+import { units } from "../../charts/units.js";
 import { marketCapSection } from "./capitalization/market.js";
 import { realizedCapSection } from "./capitalization/realized.js";
 

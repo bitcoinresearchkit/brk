@@ -1,16 +1,28 @@
 main.learn {
   figure[data-chart="series"] {
+    --chart-plot-height: 20rem;
+    --chart-placeholder-height: calc(var(--chart-plot-height) + 4rem);
+
     line-height: 1;
+
+    &:empty {
+      min-height: var(--chart-placeholder-height);
+    }
 
     svg {
       display: block;
       width: 100%;
-      height: 20rem;
+      height: var(--chart-plot-height);
       outline: 0;
       cursor: crosshair;
       overflow: visible;
       touch-action: pan-y;
       transition: opacity 150ms ease;
+    }
+
+    svg:focus-visible {
+      outline: 1px solid var(--orange);
+      outline-offset: 0.25rem;
     }
 
     svg[aria-busy="true"] {

@@ -61,7 +61,7 @@ export function createChartRenderer({
     svg.setAttribute("viewBox", `0 0 ${VIEWBOX_WIDTH} ${height}`);
     group.replaceChildren();
     highlight.clearNodes();
-    scrubber ??= createScrubber(svg, readout, highlight);
+    scrubber ??= createScrubber(svg, readout, highlight, chart.unit.format);
     scrubber.setSeries(
       renderPlot(
         getView(),

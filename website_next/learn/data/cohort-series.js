@@ -1,4 +1,4 @@
-import { colors } from "../utils/colors.js";
+import { colors } from "../../utils/colors.js";
 
 const palette = [
   colors.red,
@@ -49,5 +49,5 @@ export function createCohortSeriesFromKeys(items, createMetric) {
   );
 }
 
-/** @typedef {import("./charts/index.js").ChartSeries["color"]} ChartColor */
-/** @typedef {import("./charts/index.js").ChartSeries["metric"]} Metric */
+/** @typedef {import("../charts/index.js").ChartSeries["color"]} ChartColor */
+/** @typedef {import("../charts/index.js").ChartSeries["metric"]} Metric */

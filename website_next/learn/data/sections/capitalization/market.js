@@ -9,7 +9,7 @@ import {
   marketCapTypeSeries,
   marketCapUtxoBalanceSeries,
 } from "../../capitalization.js";
-import { units } from "../../charts/units.js";
+import { units } from "../../../charts/units.js";
 
 export const marketCapSection = {
   title: "Market Cap",

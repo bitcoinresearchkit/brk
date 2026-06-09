@@ -6,6 +6,10 @@ const numberFormats = [0, 1, 2, 3].map(
       minimumFractionDigits: digits,
     }),
 );
+const percentFormat = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
 /**
  * @param {number} value
@@ -16,7 +20,7 @@ function formatNumber(value, digits) {
 }
 
 /** @param {number} value */
-export function formatValue(value) {
+export function formatNumberValue(value) {
   if (value === 0) return "0";
 
   const absolute = Math.abs(value);
@@ -33,4 +37,9 @@ export function formatValue(value) {
   const scaled = value / (1_000_000 * 1_000 ** suffixIndex);
 
   return `${formatNumber(scaled, digits)}${suffixes[suffixIndex]}`;
+}
+
+/** @param {number} value */
+export function formatPercentValue(value) {
+  return value === 0 ? "0%" : `${percentFormat.format(value)}%`;
 }

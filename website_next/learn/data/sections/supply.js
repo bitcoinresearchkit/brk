@@ -13,7 +13,7 @@ import {
   circulatingSupplySeries,
   supplyProfitabilitySeries,
 } from "../supply.js";
-import { units } from "../charts/units.js";
+import { units } from "../../charts/units.js";
 
 export const supplySection = {
   title: "Supply",

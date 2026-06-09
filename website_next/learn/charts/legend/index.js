@@ -5,7 +5,7 @@
 export function createLegend(chart) {
   const legend = document.createElement("figcaption");
   const header = document.createElement("header");
-  const title = document.createElement("h4");
+  const title = document.createElement("h5");
   const separator = document.createElement("span");
   const unit = document.createElement("span");
   const time = document.createElement("time");
@@ -17,6 +17,7 @@ export function createLegend(chart) {
     const value = document.createElement("output");
 
     button.type = "button";
+    button.setAttribute("aria-label", `Highlight ${series.label}`);
     button.style.setProperty("--color", series.color());
     label.append(series.label);
     button.append(label, value);

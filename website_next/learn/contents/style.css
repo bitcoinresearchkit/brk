@@ -22,28 +22,6 @@ main.learn {
       padding: 0;
     }
 
-    > ol > li {
-      counter-reset: content-topic;
-    }
-
-    > ol > li:not([data-numbered="false"]) {
-      counter-increment: content-theme;
-    }
-
-    > ol > li > ol > li {
-      counter-increment: content-topic;
-      counter-reset: content-detail;
-    }
-
-    > ol > li > ol > li > ol > li {
-      counter-increment: content-detail;
-    }
-
-    ol ol {
-      margin-top: 0.25rem;
-      margin-left: 1rem;
-    }
-
     li + li {
       margin-top: 0.25rem;
     }
@@ -61,6 +39,7 @@ main.learn {
 
       &::before {
         opacity: 0.5;
+        text-transform: none;
       }
 
       &:is(:hover, :active) {
@@ -82,21 +61,64 @@ main.learn {
       }
     }
 
-    > ol > li > a::before {
-      content: counter(content-theme, upper-roman) ". ";
-    }
+    > ol {
+      > li {
+        counter-reset: content-topic;
 
-    > ol > li[data-numbered="false"] > a::before {
-      content: "I. ";
-      visibility: hidden;
-    }
+        &:not([data-numbered="false"]) {
+          counter-increment: content-theme;
+        }
 
-    > ol > li > ol > li > a::before {
-      content: counter(content-topic) ". ";
-    }
+        > a::before {
+          content: counter(content-theme, upper-roman) ". ";
+        }
 
-    > ol > li > ol > li > ol > li > a::before {
-      content: counter(content-detail, lower-alpha) ". ";
+        &[data-numbered="false"] > a::before {
+          content: "I. ";
+          visibility: hidden;
+        }
+
+        > ol {
+          margin-top: 0.25rem;
+          margin-left: 1rem;
+
+          > li {
+            counter-increment: content-topic;
+            counter-reset: content-detail;
+
+            > a::before {
+              content: counter(content-topic) ". ";
+            }
+
+            > ol {
+              margin-top: 0.25rem;
+              margin-left: 1rem;
+
+              > li {
+                counter-increment: content-detail;
+                counter-reset: content-subtopic;
+
+                > a::before {
+                  content: counter(content-detail, lower-alpha) ". ";
+                }
+
+                > ol {
+                  margin-top: 0.25rem;
+                  margin-left: 0.5rem;
+
+                  > li {
+                    counter-increment: content-subtopic;
+
+                    > a::before {
+                      content: counter(content-subtopic, lower-alpha) ". ";
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ import {
   epochs,
   spendableTypes,
 } from "./groups.js";
-import { colors } from "../utils/colors.js";
+import { colors } from "../../utils/colors.js";
 
 export const capitalizationSeries = createCohortSeries([
   {
