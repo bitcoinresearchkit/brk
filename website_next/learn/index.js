@@ -45,7 +45,7 @@ export function createLearnPage() {
   }
 
   main.append(createContents(sections), article);
-  initHashLinks(main);
-  initScrollSpy(main);
+  const navigateToHash = initScrollSpy(main);
+  initHashLinks(main, navigateToHash);
   return main;
 }

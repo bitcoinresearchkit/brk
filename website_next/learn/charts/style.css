@@ -1,13 +1,12 @@
 main.learn {
   figure[data-chart="series"] {
     --chart-plot-height: 20rem;
-    --chart-placeholder-height: calc(var(--chart-plot-height) + 4rem);
+    --chart-reserved-ui-height: 6rem;
 
+    min-height: calc(
+      var(--chart-plot-height) + var(--chart-reserved-ui-height)
+    );
     line-height: 1;
-
-    &:empty {
-      min-height: var(--chart-placeholder-height);
-    }
 
     svg {
       display: block;

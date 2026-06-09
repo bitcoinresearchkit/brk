@@ -1,8 +1,11 @@
 main.learn {
   > nav {
     --nav-offset: calc(var(--offset) + 2rem);
+    --line-gap: 0.5rem;
+    --line-gutter: 1.25rem;
+    --line-inset: 0.5rem;
+    --line-step: 1rem;
 
-    counter-reset: content-theme;
     position: sticky;
     top: 0;
     max-height: 100dvh;
@@ -11,6 +14,7 @@ main.learn {
     padding-left: 0.5rem;
     overflow: auto;
     overscroll-behavior: contain;
+    scroll-snap-type: y proximity;
     color: var(--gray);
     font-size: var(--font-size-xs);
     line-height: var(--line-height-xs);
@@ -27,22 +31,30 @@ main.learn {
     }
 
     a {
+      --line-width: calc(var(--line-indent) + var(--line-gutter));
+
+      position: relative;
       display: block;
+      scroll-snap-align: center;
       scroll-margin-block: var(--offset);
       color: inherit;
       text-decoration: none;
+      border-radius: 0.25rem;
       margin-block: -0.25rem;
-      margin-inline: -0.5rem 1rem;
+      margin-inline: calc(-1 * var(--line-indent)) 1rem;
       padding: 0.25rem;
-      padding-inline-start: 0.5rem;
+      padding-inline-start: calc(var(--line-width) + var(--line-gap));
 
-      &::before {
+      &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: var(--line-inset);
+        width: calc(var(--line-width) - var(--line-inset));
+        translate: 0 -50%;
+        border-block-start: 1px solid currentColor;
         opacity: 0.5;
-        text-transform: none;
-      }
-
-      &:is(:hover, :active) {
-        border-radius: 0.25rem;
+        pointer-events: none;
       }
 
       &[aria-current="location"] {
@@ -61,63 +73,22 @@ main.learn {
     }
 
     ol ol {
+      --line-indent: var(--line-step);
+
       margin-block-start: 0.25rem;
-      margin-inline-start: 1rem;
+      margin-inline-start: var(--line-step);
+    }
+
+    ol ol ol {
+      --line-indent: calc(var(--line-step) * 2);
     }
 
     ol ol ol ol {
-      margin-inline-start: 0.5rem;
+      --line-indent: calc(var(--line-step) * 3);
     }
 
     > ol {
-      > li {
-        counter-reset: content-topic;
-
-        &:not([data-numbered="false"]) {
-          counter-increment: content-theme;
-        }
-
-        > a::before {
-          content: counter(content-theme, upper-roman) ". ";
-        }
-
-        &[data-numbered="false"] > a::before {
-          content: "I. ";
-          visibility: hidden;
-        }
-
-        > ol {
-          > li {
-            counter-increment: content-topic;
-            counter-reset: content-detail;
-
-            > a::before {
-              content: counter(content-topic) ". ";
-            }
-
-            > ol {
-              > li {
-                counter-increment: content-detail;
-                counter-reset: content-subtopic;
-
-                > a::before {
-                  content: counter(content-detail, lower-alpha) ". ";
-                }
-
-                > ol {
-                  > li {
-                    counter-increment: content-subtopic;
-
-                    > a::before {
-                      content: counter(content-subtopic, lower-alpha) ". ";
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      --line-indent: 0rem;
     }
   }
 }

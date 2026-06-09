@@ -28,8 +28,11 @@ function scrollToCurrentHash(main, behavior) {
   if (target) scrollToTarget(target, behavior);
 }
 
-/** @param {HTMLElement} main */
-export function initHashLinks(main) {
+/**
+ * @param {HTMLElement} main
+ * @param {(hash: string) => void} onHashNavigate
+ */
+export function initHashLinks(main, onHashNavigate) {
   main.addEventListener("click", (event) => {
     if (!isPlainLeftClick(event)) return;
 
@@ -44,6 +47,7 @@ export function initHashLinks(main) {
     if (!target) return;
 
     event.preventDefault();
+    onHashNavigate(url.hash);
     scrollToTarget(target, "smooth");
 
     if (url.hash !== window.location.hash) {

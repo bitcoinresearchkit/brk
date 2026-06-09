@@ -10,7 +10,6 @@ function createContentsItem(section, path) {
   const children = section.children ?? [];
   const sectionPath = [...path, section.title];
 
-  if (section.numbered === false) item.dataset.numbered = "false";
   anchor.href = `#${createPathId(sectionPath)}`;
   anchor.append(section.title);
 

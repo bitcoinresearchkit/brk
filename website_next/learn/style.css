@@ -146,10 +146,6 @@ main.learn {
         padding-bottom: var(--heading-padding-bottom);
         border-bottom: 1px solid var(--gray);
         font-size: 3rem;
-
-        a::before {
-          content: counter(theme, upper-roman) ". ";
-        }
       }
 
       > h2 {
@@ -158,10 +154,6 @@ main.learn {
         padding-bottom: var(--heading-padding-bottom);
         border-bottom: 1px dashed var(--gray);
         font-size: var(--topic-font-size);
-
-        a::before {
-          content: counter(topic) ". ";
-        }
       }
 
       > h3 {
@@ -170,10 +162,6 @@ main.learn {
         padding-bottom: var(--detail-padding-bottom);
         border-bottom: 1px dotted var(--gray);
         font-size: var(--detail-font-size);
-
-        a::before {
-          content: counter(detail, lower-alpha) ". ";
-        }
       }
 
       > h4 {
@@ -182,10 +170,6 @@ main.learn {
         padding-bottom: var(--subtopic-padding-bottom);
         border-bottom: 1px dotted var(--gray);
         font-size: var(--subtopic-font-size);
-
-        a::before {
-          content: counter(subtopic, lower-alpha) ". ";
-        }
       }
 
       > p {

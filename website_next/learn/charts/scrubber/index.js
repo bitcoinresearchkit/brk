@@ -82,8 +82,12 @@ export function createScrubber(svg, readout, highlight, format) {
   let height = 0;
   let stepCount = 0;
   let currentStep = -1;
-  let currentPoints = getPointsAtStep(0);
+  /** @type {ChartPoint[]} */
+  let currentPoints = [];
   let rect = svg.getBoundingClientRect();
+  let pointerX = 0;
+  let pointerY = 0;
+  let pointerFrame = 0;
 
   group.dataset.scrubber = "root";
   shade.dataset.scrubber = "shade";
@@ -151,7 +155,13 @@ export function createScrubber(svg, readout, highlight, format) {
     update(1, undefined, false);
   }
 
+  function cancelPointerUpdate() {
+    if (pointerFrame) cancelAnimationFrame(pointerFrame);
+    pointerFrame = 0;
+  }
+
   function clear() {
+    cancelPointerUpdate();
     series = [];
     markers = [];
     currentStep = -1;
@@ -191,20 +201,30 @@ export function createScrubber(svg, readout, highlight, format) {
 
   /** @param {PointerEvent} event */
   function updateFromPointer(event) {
-    const x = ((event.clientX - rect.left) / rect.width) * VIEWBOX_WIDTH;
-    const y = ((event.clientY - rect.top) / rect.height) * height;
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    if (pointerFrame) return;
 
-    update(x / VIEWBOX_WIDTH, y);
+    pointerFrame = requestAnimationFrame(() => {
+      pointerFrame = 0;
+
+      const x = ((pointerX - rect.left) / rect.width) * VIEWBOX_WIDTH;
+      const y = ((pointerY - rect.top) / rect.height) * height;
+
+      update(x / VIEWBOX_WIDTH, y);
+    });
   }
 
   svg.addEventListener("pointerenter", measure);
   svg.addEventListener("pointermove", updateFromPointer);
   svg.addEventListener("pointerleave", () => {
+    cancelPointerUpdate();
     highlight.clearPreview();
     hide();
   });
   svg.addEventListener("focus", () => update(1));
   svg.addEventListener("blur", () => {
+    cancelPointerUpdate();
     highlight.clearPreview();
     hide();
   });
