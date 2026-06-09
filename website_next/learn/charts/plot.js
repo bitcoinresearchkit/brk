@@ -6,66 +6,19 @@ import { renderStackedPlot } from "./stacked/index.js";
 
 /**
  * @param {ChartView} view
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {ChartScale} scale
- * @param {ChartOrder} order
+ * @param {PlotContext} context
  */
-export function renderPlot(
-  view,
-  group,
-  loadedSeries,
-  height,
-  highlight,
-  scale,
-  order,
-) {
+export function renderPlot(view, context) {
   switch (view) {
     case "line":
-      return renderLinePlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        scale,
-        order,
-      );
+      return renderLinePlot(context);
     case "area":
-      return renderAreaPlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        scale,
-        order,
-      );
+      return renderAreaPlot(context);
     case "bar":
-      return renderBarPlot(group, loadedSeries, height, highlight, scale, order);
+      return renderBarPlot(context);
     case "dots":
-      return renderDotsPlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        scale,
-        order,
-      );
+      return renderDotsPlot(context);
     case "stacked":
-      return renderStackedPlot(
-        group,
-        loadedSeries,
-        height,
-        highlight,
-        scale,
-        order,
-      );
+      return renderStackedPlot(context);
   }
 }
-
-/** @typedef {import("./highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("./index.js").LoadedSeries} LoadedSeries */
-/** @typedef {import("./order.js").ChartOrder} ChartOrder */
-/** @typedef {import("./scale.js").ChartScale} ChartScale */
-/** @typedef {import("./views.js").ChartView} ChartView */

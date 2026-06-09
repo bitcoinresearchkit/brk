@@ -3,10 +3,10 @@ import { fetchTimeframe } from "./timeframes.js";
 
 /**
  * @param {ChartResult} result
- * @returns {{ date: Date, value: number }[]}
+ * @returns {ChartEntry[]}
  */
 function createEntries(result) {
-  /** @type {{ date: Date, value: number }[]} */
+  /** @type {ChartEntry[]} */
   const entries = [];
   /** @type {number | undefined} */
   let lastValue;
@@ -53,8 +53,3 @@ export function createSeriesLoader(chart) {
     return cachedPromise;
   };
 }
-
-/** @typedef {import("./index.js").Chart} Chart */
-/** @typedef {import("./index.js").ChartResult} ChartResult */
-/** @typedef {import("./index.js").LoadedSeries} LoadedSeries */
-/** @typedef {import("./timeframes.js").TimeframeValue} TimeframeValue */

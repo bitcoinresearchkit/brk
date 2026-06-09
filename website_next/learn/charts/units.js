@@ -8,6 +8,3 @@ export const units = /** @type {const} */ ({
   utxos: { id: "utxos", name: "UTXOs", format: formatNumberValue },
   usd: { id: "usd", name: "US Dollars", format: formatNumberValue },
 });
-
-/** @typedef {keyof typeof units} ChartUnitKey */
-/** @typedef {typeof units[ChartUnitKey]} ChartUnit */

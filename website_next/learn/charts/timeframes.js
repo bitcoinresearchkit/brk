@@ -1,6 +1,6 @@
 import { createChartSetting } from "./setting.js";
 
-const timeframes = /** @type {const} */ ({
+export const timeframes = /** @type {const} */ ({
   "1d": { index: "minute10", count: 144 },
   "1w": { index: "hour1", count: 168 },
   "1m": { index: "hour4", count: 186 },
@@ -9,7 +9,7 @@ const timeframes = /** @type {const} */ ({
   "8y": { index: "week1", count: 418 },
   all: { index: "week1" },
 });
-const options = /** @type {const} */ ([
+export const timeframeOptions = /** @type {const} */ ([
   { value: "1d", label: "1d" },
   { value: "1w", label: "1w" },
   { value: "1m", label: "1m" },
@@ -21,7 +21,7 @@ const options = /** @type {const} */ ([
 const setting = createChartSetting({
   storageKey: "timeframe",
   legend: "Time",
-  options,
+  options: timeframeOptions,
   defaultValue: "all",
 });
 
@@ -58,17 +58,3 @@ export function fetchTimeframe(metric, timeframe) {
     ? endpoint.last(config.count).fetch()
     : endpoint.fetch();
 }
-
-/** @typedef {(typeof options)[number]["value"]} TimeframeValue */
-/** @typedef {(typeof timeframes)[TimeframeValue]["index"]} TimeframeIndex */
-
-/**
- * @typedef {Object} TimeframeEndpoint
- * @property {() => Promise<import("./index.js").ChartResult>} fetch
- * @property {(count: number) => { fetch: () => Promise<import("./index.js").ChartResult> }} last
- */
-
-/**
- * @typedef {Object} TimeframeMetric
- * @property {Record<TimeframeIndex, TimeframeEndpoint>} by
- */

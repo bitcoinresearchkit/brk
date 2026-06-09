@@ -1,6 +1,6 @@
 import { createChartSetting } from "./setting.js";
 
-const scales = /** @type {const} */ ([
+export const scales = /** @type {const} */ ([
   { value: "linear", label: "Lin" },
   { value: "log", label: "Log" },
 ]);
@@ -79,12 +79,3 @@ export function scaleY(value, bounds, height, scale) {
 
   return height - ((value - bounds.min) / (bounds.max - bounds.min)) * height;
 }
-
-/**
- * @typedef {Object} ScaleBounds
- * @property {number} min
- * @property {number} max
- * @property {number} minPositive
- */
-
-/** @typedef {(typeof scales)[number]["value"]} ChartScale */

@@ -8,7 +8,7 @@ import { getViewBoxHeight, VIEWBOX_WIDTH } from "./viewbox.js";
 /**
  * @param {Object} args
  * @param {SVGSVGElement} args.svg
- * @param {Readout} args.readout
+ * @param {LegendReadout} args.readout
  * @param {HTMLElement} args.menu
  * @param {HTMLElement[]} args.items
  * @param {HTMLElement} args.status
@@ -63,15 +63,14 @@ export function createChartRenderer({
     highlight.clearNodes();
     scrubber ??= createScrubber(svg, readout, highlight, chart.unit.format);
     scrubber.setSeries(
-      renderPlot(
-        getView(),
+      renderPlot(getView(), {
         group,
         loadedSeries,
         height,
         highlight,
-        getScale(),
-        getOrder(),
-      ),
+        scale: getScale(),
+        order: getOrder(),
+      }),
       height,
     );
   }
@@ -131,12 +130,3 @@ export function createChartRenderer({
     suspend,
   };
 }
-
-/** @typedef {import("./index.js").Chart} Chart */
-/** @typedef {import("./index.js").LoadedSeries} LoadedSeries */
-/** @typedef {import("./legend/index.js").Readout} Readout */
-/** @typedef {import("./order.js").ChartOrder} ChartOrder */
-/** @typedef {import("./scale.js").ChartScale} ChartScale */
-/** @typedef {import("./timeframes.js").TimeframeValue} TimeframeValue */
-/** @typedef {import("./views.js").ChartView} ChartView */
-/** @typedef {import("./highlight.js").SeriesHighlight} SeriesHighlight */

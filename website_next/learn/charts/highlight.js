@@ -150,11 +150,3 @@ function clearElementState(element) {
 }
 
 /** @typedef {(SVGPathElement | SVGCircleElement)[]} SeriesNode */
-
-/**
- * @typedef {Object} SeriesHighlight
- * @property {(node: SVGPathElement | SVGCircleElement, index: number) => void} addNode
- * @property {() => void} clearPreview
- * @property {() => void} clearNodes
- * @property {(index: number) => void} preview
- */

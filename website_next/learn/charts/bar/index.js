@@ -4,13 +4,13 @@ import { createStackedSeries } from "../stacked/series.js";
 import { clamp } from "../math.js";
 import { appendSeriesPath } from "../series-path.js";
 
-/** @param {{ x: number, y0: number, y1: number }[]} points */
+/** @param {StackedPoint[]} points */
 function getBarWidth(points) {
   return points.length > 1 ? (VIEWBOX_WIDTH / (points.length - 1)) * 0.8 : 1;
 }
 
 /**
- * @param {{ x: number, y0: number, y1: number }[]} points
+ * @param {StackedPoint[]} points
  * @param {number} width
  */
 function createBarPathData(points, width) {
@@ -31,21 +31,16 @@ function createBarPathData(points, width) {
 }
 
 /**
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {import("../scale.js").ChartScale} scale
- * @param {import("../order.js").ChartOrder} order
+ * @param {PlotContext} context
  */
-export function renderBarPlot(
+export function renderBarPlot({
   group,
   loadedSeries,
   height,
   highlight,
   scale,
   order,
-) {
+}) {
   const { lineIndexes, plottedSeries, stackIndexes } = createStackedSeries(
     loadedSeries,
     height,
@@ -79,6 +74,3 @@ export function renderBarPlot(
 
   return plottedSeries;
 }
-
-/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */

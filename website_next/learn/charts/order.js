@@ -1,6 +1,6 @@
 import { createChartSetting } from "./setting.js";
 
-const orders = /** @type {const} */ ([
+export const orders = /** @type {const} */ ([
   { value: "ascending", label: "Asc" },
   { value: "descending", label: "Dsc" },
 ]);
@@ -55,5 +55,3 @@ export function createOrderedIndexes(length, order) {
     order,
   );
 }
-
-/** @typedef {(typeof orders)[number]["value"]} ChartOrder */

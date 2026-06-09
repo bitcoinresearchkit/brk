@@ -21,5 +21,3 @@ export function appendSeriesPath(args) {
 
   return path;
 }
-
-/** @typedef {import("./highlight.js").SeriesHighlight} SeriesHighlight */

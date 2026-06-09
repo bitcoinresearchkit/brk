@@ -131,32 +131,3 @@ export function createChart(chart, chartKey) {
 
   return figure;
 }
-
-/**
- * @typedef {Object} Chart
- * @property {string} title
- * @property {import("./units.js").ChartUnit} unit
- * @property {import("./views.js").ChartView} [defaultType]
- * @property {import("./scale.js").ChartScale} [defaultScale]
- * @property {ChartSeries[]} series
- */
-
-/**
- * @typedef {Object} ChartSeries
- * @property {string} label
- * @property {() => string} color
- * @property {"line"} [role]
- * @property {(client: typeof import("../../utils/client.js").brk) => import("./timeframes.js").TimeframeMetric} metric
- */
-
-/**
- * @typedef {Object} ChartResult
- * @property {() => Iterable<[Date, number | null | undefined]>} dateEntries
- */
-
-/**
- * @typedef {Object} LoadedSeries
- * @property {ChartSeries} series
- * @property {string} color
- * @property {{ date: Date, value: number }[]} entries
- */

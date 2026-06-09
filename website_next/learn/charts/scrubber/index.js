@@ -2,9 +2,6 @@ import { clamp } from "../math.js";
 import { createSvgElement } from "../svg.js";
 import { VIEWBOX_WIDTH } from "../viewbox.js";
 
-/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("../legend/index.js").Readout} Readout */
-
 const dateFormat = new Intl.DateTimeFormat("en-US", {
   day: "2-digit",
   month: "2-digit",
@@ -27,7 +24,7 @@ function getPointAtStep(series, step) {
 }
 
 /**
- * @param {ReturnType<typeof getPointAtStep>[]} points
+ * @param {ChartPoint[]} points
  * @param {number} y
  */
 function getClosestPointIndex(points, y) {
@@ -56,8 +53,8 @@ function updateTime(time, date) {
 }
 
 /**
- * @param {Readout} readout
- * @param {ReturnType<typeof getPointAtStep>[]} points
+ * @param {LegendReadout} readout
+ * @param {ChartPoint[]} points
  * @param {(value: number) => string} format
  */
 function updateReadout(readout, points, format) {
@@ -70,7 +67,7 @@ function updateReadout(readout, points, format) {
 
 /**
  * @param {SVGSVGElement} svg
- * @param {Readout} readout
+ * @param {LegendReadout} readout
  * @param {SeriesHighlight} highlight
  * @param {(value: number) => string} format
  */
@@ -231,5 +228,5 @@ export function createScrubber(svg, readout, highlight, format) {
 /**
  * @typedef {Object} ScrubberSeries
  * @property {string} color
- * @property {{ date: Date, value: number, x: number, y: number }[]} points
+ * @property {ChartPoint[]} points
  */

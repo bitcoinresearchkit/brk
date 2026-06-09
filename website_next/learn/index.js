@@ -1,12 +1,12 @@
 import { createContents } from "./contents/index.js";
 import { sections } from "./data/index.js";
-import { createChart as createDataChart } from "./charts/index.js";
+import { createChart } from "./charts/index.js";
 import { initHashLinks } from "./hash-links.js";
 import { initScrollSpy } from "./scroll-spy.js";
 import { createPathId } from "./path.js";
 
 /**
- * @param {Section} section
+ * @param {LearnSection} section
  * @param {readonly string[]} [path]
  */
 function createSection(section, path = []) {
@@ -26,7 +26,7 @@ function createSection(section, path = []) {
   heading.append(anchor);
   description.append(section.description);
   element.append(heading, description);
-  if (section.chart) element.append(createDataChart(section.chart, id));
+  if (section.chart) element.append(createChart(section.chart, id));
 
   for (const child of children) {
     element.append(createSection(child, sectionPath));
@@ -49,12 +49,3 @@ export function createLearnPage() {
   initScrollSpy(main);
   return main;
 }
-
-/**
- * @typedef {Object} Section
- * @property {string} title
- * @property {string} description
- * @property {import("./charts/index.js").Chart} [chart]
- * @property {boolean} [numbered]
- * @property {Section[]} [children]
- */

@@ -1,7 +1,7 @@
 import { createPathId } from "../path.js";
 
 /**
- * @param {Section} section
+ * @param {LearnSection} section
  * @param {readonly string[]} path
  */
 function createContentsItem(section, path) {
@@ -27,7 +27,7 @@ function createContentsItem(section, path) {
   return item;
 }
 
-/** @param {Section[]} sections */
+/** @param {LearnSection[]} sections */
 export function createContents(sections) {
   const nav = document.createElement("nav");
   const list = document.createElement("ol");
@@ -41,10 +41,3 @@ export function createContents(sections) {
   nav.append(list);
   return nav;
 }
-
-/**
- * @typedef {Object} Section
- * @property {string} title
- * @property {boolean} [numbered]
- * @property {Section[]} [children]
- */

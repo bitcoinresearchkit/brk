@@ -3,21 +3,16 @@ import { appendSeriesPath } from "../series-path.js";
 import { createStackedSeries } from "./series.js";
 
 /**
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {import("../scale.js").ChartScale} scale
- * @param {import("../order.js").ChartOrder} order
+ * @param {PlotContext} context
  */
-export function renderStackedPlot(
+export function renderStackedPlot({
   group,
   loadedSeries,
   height,
   highlight,
   scale,
   order,
-) {
+}) {
   const { lineIndexes, plottedSeries, stackIndexes } = createStackedSeries(
     loadedSeries,
     height,
@@ -51,6 +46,3 @@ export function renderStackedPlot(
 
   return plottedSeries;
 }
-
-/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */

@@ -37,16 +37,11 @@ function createStackBounds(series, stackOrder, lineIndexes) {
   return bounds;
 }
 
-/** @returns {StackedPoint[]} */
-function createStackedPoints() {
-  return [];
-}
-
 /**
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
- * @param {import("../order.js").ChartOrder} order
- * @param {import("../scale.js").ChartScale} scale
+ * @param {ChartOrder} order
+ * @param {ChartScale} scale
  */
 export function createStackedSeries(loadedSeries, height, order, scale) {
   const indexes = loadedSeries.map((_, index) => index);
@@ -64,7 +59,7 @@ export function createStackedSeries(loadedSeries, height, order, scale) {
   const plottedSeries = loadedSeries.map(({ series, color }) => ({
     series,
     color,
-    points: createStackedPoints(),
+    points: /** @type {StackedPoint[]} */ ([]),
   }));
 
   const bounds = createStackBounds(loadedSeries, stackIndexes, lineIndexes);
@@ -116,15 +111,3 @@ export function createStackedSeries(loadedSeries, height, order, scale) {
     stackIndexes,
   };
 }
-
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */
-
-/**
- * @typedef {Object} StackedPoint
- * @property {Date} date
- * @property {number} value
- * @property {number} x
- * @property {number} y
- * @property {number} y0
- * @property {number} y1
- */

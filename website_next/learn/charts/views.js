@@ -1,6 +1,6 @@
 import { createChartSetting } from "./setting.js";
 
-const views = /** @type {const} */ ([
+export const views = /** @type {const} */ ([
   { value: "line", label: "Line" },
   { value: "area", label: "Area" },
   { value: "stacked", label: "Stack" },
@@ -38,5 +38,3 @@ export function saveView(chartKey, view) {
 export function createViewControl(currentView, onChange) {
   return setting.create(currentView, onChange);
 }
-
-/** @typedef {(typeof views)[number]["value"]} ChartView */

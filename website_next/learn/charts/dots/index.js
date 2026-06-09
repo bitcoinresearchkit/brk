@@ -5,7 +5,7 @@ import { createLineSeries } from "../line/series.js";
 
 const radius = 1;
 
-/** @param {{ x: number, y: number }[]} points */
+/** @param {ChartPoint[]} points */
 function createDotsPathData(points) {
   return points
     .map(
@@ -18,21 +18,16 @@ function createDotsPathData(points) {
 }
 
 /**
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {import("../scale.js").ChartScale} scale
- * @param {import("../order.js").ChartOrder} order
+ * @param {PlotContext} context
  */
-export function renderDotsPlot(
+export function renderDotsPlot({
   group,
   loadedSeries,
   height,
   highlight,
   scale,
   order,
-) {
+}) {
   const plottedSeries = createLineSeries(loadedSeries, height, scale);
   const indexes = createOrderedIndexes(plottedSeries.length, order);
 
@@ -50,6 +45,3 @@ export function renderDotsPlot(
 
   return plottedSeries;
 }
-
-/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */

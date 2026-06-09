@@ -26,7 +26,7 @@ function colorAt(index) {
   return palette[index % palette.length];
 }
 
-/** @param {readonly { label: string, color?: ChartColor, metric: Metric }[]} items */
+/** @param {readonly { label: string, color?: () => string, metric: ChartMetric }[]} items */
 export function createCohortSeries(items) {
   return items.map(({ label, color, metric }, index) => ({
     label,
@@ -38,7 +38,7 @@ export function createCohortSeries(items) {
 /**
  * @template {string} Key
  * @param {readonly (readonly [string, Key])[]} items
- * @param {(key: Key) => Metric} createMetric
+ * @param {(key: Key) => ChartMetric} createMetric
  */
 export function createCohortSeriesFromKeys(items, createMetric) {
   return createCohortSeries(
@@ -48,6 +48,3 @@ export function createCohortSeriesFromKeys(items, createMetric) {
     })),
   );
 }
-
-/** @typedef {import("../charts/index.js").ChartSeries["color"]} ChartColor */
-/** @typedef {import("../charts/index.js").ChartSeries["metric"]} Metric */

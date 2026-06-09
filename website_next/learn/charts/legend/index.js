@@ -1,6 +1,6 @@
 /**
  * @param {Chart} chart
- * @returns {{ legend: HTMLElement, menu: HTMLElement, items: HTMLElement[], readout: Readout }}
+ * @returns {{ legend: HTMLElement, menu: HTMLElement, items: HTMLElement[], readout: LegendReadout }}
  */
 export function createLegend(chart) {
   const legend = document.createElement("figcaption");
@@ -41,11 +41,3 @@ export function createLegend(chart) {
 
   return { legend, menu, items, readout: { time, rows } };
 }
-
-/**
- * @typedef {Object} Readout
- * @property {HTMLTimeElement} time
- * @property {{ value: HTMLOutputElement }[]} rows
- */
-
-/** @typedef {import("../index.js").Chart} Chart */

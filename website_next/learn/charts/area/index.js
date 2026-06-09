@@ -5,7 +5,8 @@ import { createLineSeries } from "../line/series.js";
 
 /**
  * @param {number} height
- * @param {{ date: Date, value: number, x: number, y: number }[]} points
+ * @param {ChartPoint[]} points
+ * @returns {StackedPoint[]}
  */
 function createAreaPoints(height, points) {
   return points.map((point) => ({
@@ -16,21 +17,16 @@ function createAreaPoints(height, points) {
 }
 
 /**
- * @param {SVGGElement} group
- * @param {LoadedSeries[]} loadedSeries
- * @param {number} height
- * @param {SeriesHighlight} highlight
- * @param {import("../scale.js").ChartScale} scale
- * @param {import("../order.js").ChartOrder} order
+ * @param {PlotContext} context
  */
-export function renderAreaPlot(
+export function renderAreaPlot({
   group,
   loadedSeries,
   height,
   highlight,
   scale,
   order,
-) {
+}) {
   const plottedSeries = createLineSeries(loadedSeries, height, scale);
   const indexes = createOrderedIndexes(plottedSeries.length, order);
 
@@ -57,6 +53,3 @@ export function renderAreaPlot(
 
   return plottedSeries;
 }
-
-/** @typedef {import("../highlight.js").SeriesHighlight} SeriesHighlight */
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */

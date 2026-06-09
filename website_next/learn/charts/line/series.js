@@ -15,10 +15,11 @@ function createValueBounds(series) {
 }
 
 /**
- * @param {{ date: Date, value: number }[]} entries
- * @param {import("../scale.js").ScaleBounds} bounds
+ * @param {ChartEntry[]} entries
+ * @param {ScaleBounds} bounds
  * @param {number} height
- * @param {import("../scale.js").ChartScale} scale
+ * @param {ChartScale} scale
+ * @returns {ChartPoint[]}
  */
 function createPoints(entries, bounds, height, scale) {
   const xScale = VIEWBOX_WIDTH / (entries.length - 1);
@@ -34,7 +35,7 @@ function createPoints(entries, bounds, height, scale) {
 /**
  * @param {LoadedSeries[]} loadedSeries
  * @param {number} height
- * @param {import("../scale.js").ChartScale} scale
+ * @param {ChartScale} scale
  */
 export function createLineSeries(loadedSeries, height, scale) {
   const bounds = createValueBounds(loadedSeries);
@@ -45,5 +46,3 @@ export function createLineSeries(loadedSeries, height, scale) {
     points: createPoints(entries, bounds, height, scale),
   }));
 }
-
-/** @typedef {import("../index.js").LoadedSeries} LoadedSeries */

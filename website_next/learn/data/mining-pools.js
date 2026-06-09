@@ -24,7 +24,7 @@ function createPools(pools) {
 }
 
 /**
- * @param {(window: WindowKey) => TimeframeMetric} createMetric
+ * @param {(window: RollingWindowKey) => TimeframeMetric} createMetric
  */
 function createWindowSeries(createMetric) {
   return createRollingWindowSeries((window) => () => createMetric(window));
@@ -102,7 +102,5 @@ export function createMinorPoolBlocksMinedSeries(pool) {
   );
 }
 
-/** @typedef {import("./rolling-windows.js").RollingWindowKey} WindowKey */
 /** @typedef {typeof brk.series.pools.major.unknown} MajorPool */
 /** @typedef {typeof brk.series.pools.minor.blockfills} MinorPool */
-/** @typedef {import("../charts/timeframes.js").TimeframeMetric} TimeframeMetric */
