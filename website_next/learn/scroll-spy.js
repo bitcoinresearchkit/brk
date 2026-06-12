@@ -97,7 +97,6 @@ export function initScrollSpy(main) {
   /** @param {string} hash */
   function navigateToHash(hash) {
     navigatingTo = hash;
-    selectHash(hash);
     scrollLinkIntoNav(getLink(hash), "smooth");
   }
 
@@ -122,6 +121,7 @@ export function initScrollSpy(main) {
 
     const hash = `#${section.id}`;
     if (navigatingTo) {
+      selectHash(hash);
       if (hash === navigatingTo) navigatingTo = null;
       return;
     }
