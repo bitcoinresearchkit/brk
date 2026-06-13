@@ -206,7 +206,7 @@ impl RealizedFull {
     }
 
     #[inline(always)]
-    pub(crate) fn push_accum(&mut self, accum: &RealizedFullAccum) {
+    pub(crate) fn push_accum(&mut self, accum: &RealizedFullAccum) -> Cents {
         self.cap_raw.push(accum.cap_raw);
         self.capitalized.cap_raw.push(accum.capitalized_cap_raw);
 
@@ -221,6 +221,8 @@ impl RealizedFull {
         self.capitalized.price.cents.height.push(capitalized_price);
 
         self.peak_regret.value.block.cents.push(accum.peak_regret());
+
+        capitalized_price
     }
 
     pub(crate) fn compute_rest_part1(

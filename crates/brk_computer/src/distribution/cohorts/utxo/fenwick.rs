@@ -30,18 +30,34 @@ const TREE_SIZE: usize = TIER0_COUNT + TIER1_COUNT + OVERFLOW; // 190,001
 pub(super) struct CostBasisNode {
     all_sats: i64,
     sth_sats: i64,
+    discount_sats: i64,
     all_usd: i128,
     sth_usd: i128,
+    discount_usd: i128,
 }
 
 impl CostBasisNode {
     #[inline(always)]
-    fn new(sats: i64, usd: i128, is_sth: bool) -> Self {
+    fn new_supply(sats: i64, usd: i128, is_sth: bool) -> Self {
         Self {
             all_sats: sats,
             sth_sats: if is_sth { sats } else { 0 },
+            discount_sats: 0,
             all_usd: usd,
             sth_usd: if is_sth { usd } else { 0 },
+            discount_usd: 0,
+        }
+    }
+
+    #[inline(always)]
+    fn new_discount(sats: i64, usd: i128) -> Self {
+        Self {
+            all_sats: 0,
+            sth_sats: 0,
+            discount_sats: sats,
+            all_usd: 0,
+            sth_usd: 0,
+            discount_usd: usd,
         }
     }
 }
@@ -51,8 +67,10 @@ impl FenwickNode for CostBasisNode {
     fn add_assign(&mut self, other: &Self) {
         self.all_sats += other.all_sats;
         self.sth_sats += other.sth_sats;
+        self.discount_sats += other.discount_sats;
         self.all_usd += other.all_usd;
         self.sth_usd += other.sth_usd;
+        self.discount_usd += other.discount_usd;
     }
 }
 
@@ -151,16 +169,34 @@ impl CostBasisFenwick {
         }
         let bucket = price_to_bucket(price);
         let delta =
-            CostBasisNode::new(net_sats, price.as_u128() as i128 * net_sats as i128, is_sth);
+            CostBasisNode::new_supply(net_sats, price.as_u128() as i128 * net_sats as i128, is_sth);
         self.tree.add(bucket, &delta);
         self.totals.add_assign(&delta);
     }
 
-    /// Bulk-initialize from BTreeMaps (one per age-range cohort).
-    /// Call after state import when all pending maps have been drained.
-    pub(super) fn bulk_init<'a>(
+    /// Apply a net delta from the discount-entry cohort.
+    ///
+    /// Supply totals are maintained from the age-range cohorts; this updates
+    /// only the discount-entry partition so premium can be derived as all - discount.
+    pub(super) fn apply_discount_delta(&mut self, price: CentsCompact, pending: &PendingDelta) {
+        let net_sats = u64::from(pending.inc) as i64 - u64::from(pending.dec) as i64;
+        if net_sats == 0 {
+            return;
+        }
+        let bucket = price_to_bucket(price);
+        let delta =
+            CostBasisNode::new_discount(net_sats, price.as_u128() as i128 * net_sats as i128);
+        self.tree.add(bucket, &delta);
+        self.totals.add_assign(&delta);
+    }
+
+    /// Bulk-initialize from age-range maps plus the discount-entry map.
+    /// Age-range maps maintain all/STH/LTH totals; the discount-entry map
+    /// maintains only the discount partition used to derive premium.
+    pub(super) fn bulk_init_with_discount<'a>(
         &mut self,
         maps: impl Iterator<Item = (&'a std::collections::BTreeMap<CentsCompact, Sats>, bool)>,
+        discount_maps: impl Iterator<Item = &'a std::collections::BTreeMap<CentsCompact, Sats>>,
     ) {
         self.tree.reset();
         self.totals = CostBasisNode::default();
@@ -169,7 +205,18 @@ impl CostBasisFenwick {
             for (&price, &sats) in map.iter() {
                 let bucket = price_to_bucket(price);
                 let s = u64::from(sats) as i64;
-                let node = CostBasisNode::new(s, price.as_u128() as i128 * s as i128, is_sth);
+                let node =
+                    CostBasisNode::new_supply(s, price.as_u128() as i128 * s as i128, is_sth);
+                self.tree.add_raw(bucket, &node);
+                self.totals.add_assign(&node);
+            }
+        }
+
+        for map in discount_maps {
+            for (&price, &sats) in map.iter() {
+                let bucket = price_to_bucket(price);
+                let s = u64::from(sats) as i64;
+                let node = CostBasisNode::new_discount(s, price.as_u128() as i128 * s as i128);
                 self.tree.add_raw(bucket, &node);
                 self.totals.add_assign(&node);
             }
@@ -209,6 +256,26 @@ impl CostBasisFenwick {
             self.totals.all_usd - self.totals.sth_usd,
             |n| n.all_sats - n.sth_sats,
             |n| n.all_usd - n.sth_usd,
+        )
+    }
+
+    /// Compute percentile prices for discount-entry cohort.
+    pub(super) fn percentiles_discount_entry(&self) -> PercentileResult {
+        self.compute_percentiles(
+            self.totals.discount_sats,
+            self.totals.discount_usd,
+            |n| n.discount_sats,
+            |n| n.discount_usd,
+        )
+    }
+
+    /// Compute percentile prices for premium-entry cohort (all - discount).
+    pub(super) fn percentiles_premium_entry(&self) -> PercentileResult {
+        self.compute_percentiles(
+            self.totals.all_sats - self.totals.discount_sats,
+            self.totals.all_usd - self.totals.discount_usd,
+            |n| n.all_sats - n.discount_sats,
+            |n| n.all_usd - n.discount_usd,
         )
     }
 
@@ -271,6 +338,37 @@ impl CostBasisFenwick {
             return (0, 0, 0);
         }
 
+        let range = self.density_range(spot_price);
+        let all_range = range.all_sats.max(0);
+        let sth_range = range.sth_sats.max(0);
+        let lth_range = all_range - sth_range;
+
+        let lth_total = self.totals.all_sats - self.totals.sth_sats;
+        (
+            Self::to_bps(all_range, self.totals.all_sats),
+            Self::to_bps(sth_range, self.totals.sth_sats),
+            Self::to_bps(lth_range, lth_total),
+        )
+    }
+
+    /// Compute supply density for entry cohorts: (discount_bps, premium_bps).
+    pub(super) fn entry_density(&self, spot_price: Cents) -> (u16, u16) {
+        if self.totals.all_sats <= 0 {
+            return (0, 0);
+        }
+
+        let range = self.density_range(spot_price);
+        let discount_range = range.discount_sats.max(0);
+        let premium_range = range.all_sats.max(0) - discount_range;
+        let premium_total = self.totals.all_sats - self.totals.discount_sats;
+
+        (
+            Self::to_bps(discount_range, self.totals.discount_sats),
+            Self::to_bps(premium_range, premium_total),
+        )
+    }
+
+    fn density_range(&self, spot_price: Cents) -> CostBasisNode {
         let spot_f64 = u64::from(spot_price) as f64;
         let low = Cents::from((spot_f64 * 0.95) as u64);
         let high = Cents::from((spot_f64 * 1.05) as u64);
@@ -285,24 +383,23 @@ impl CostBasisFenwick {
             CostBasisNode::default()
         };
 
-        let all_range = (cum_high.all_sats - cum_low.all_sats).max(0);
-        let sth_range = (cum_high.sth_sats - cum_low.sth_sats).max(0);
-        let lth_range = all_range - sth_range;
+        CostBasisNode {
+            all_sats: cum_high.all_sats - cum_low.all_sats,
+            sth_sats: cum_high.sth_sats - cum_low.sth_sats,
+            discount_sats: cum_high.discount_sats - cum_low.discount_sats,
+            all_usd: cum_high.all_usd - cum_low.all_usd,
+            sth_usd: cum_high.sth_usd - cum_low.sth_usd,
+            discount_usd: cum_high.discount_usd - cum_low.discount_usd,
+        }
+    }
 
-        let to_bps = |range: i64, total: i64| -> u16 {
-            if total <= 0 {
-                0
-            } else {
-                (range as f64 / total as f64 * 10000.0).round() as u16
-            }
-        };
-
-        let lth_total = self.totals.all_sats - self.totals.sth_sats;
-        (
-            to_bps(all_range, self.totals.all_sats),
-            to_bps(sth_range, self.totals.sth_sats),
-            to_bps(lth_range, lth_total),
-        )
+    #[inline(always)]
+    fn to_bps(range: i64, total: i64) -> u16 {
+        if total <= 0 {
+            0
+        } else {
+            (range as f64 / total as f64 * 10000.0).round() as u16
+        }
     }
 
     // -----------------------------------------------------------------------

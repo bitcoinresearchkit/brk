@@ -1,6 +1,6 @@
 use brk_types::{Halving, OutputType, Sats, Year};
 
-use super::{AmountFilter, CohortContext, Term, TimeFilter};
+use super::{AmountFilter, CohortContext, EntryPrice, Term, TimeFilter};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filter {
@@ -10,6 +10,7 @@ pub enum Filter {
     Amount(AmountFilter),
     Epoch(Halving),
     Class(Year),
+    Entry(EntryPrice),
     Type(OutputType),
 }
 
@@ -68,7 +69,8 @@ impl Filter {
     }
 
     /// Whether to compute extended metrics (realized cap ratios, profit/loss ratios, percentiles)
-    /// For UTXO context: true only for age range cohorts (Range) and aggregate cohorts (All, Term)
+    /// For UTXO context: true for age range cohorts (Range), aggregate cohorts (All, Term),
+    /// and immutable entry valuation cohorts.
     /// For address context: always false
     pub fn is_extended(&self, context: CohortContext) -> bool {
         match context {
@@ -76,7 +78,10 @@ impl Filter {
             CohortContext::Utxo => {
                 matches!(
                     self,
-                    Filter::All | Filter::Term(_) | Filter::Time(TimeFilter::Range(_))
+                    Filter::All
+                        | Filter::Term(_)
+                        | Filter::Time(TimeFilter::Range(_))
+                        | Filter::Entry(_)
                 )
             }
         }

@@ -226,7 +226,7 @@ function historicalSubSection(name, periods) {
  * @returns {PartialOptionsGroup}
  */
 export function createMarketSection() {
-  const { market, supply, cohorts, prices, indicators } = brk.series;
+  const { market, supply, cohorts, price: prices, indicators } = brk.series;
   const {
     movingAverage: ma,
     ath,

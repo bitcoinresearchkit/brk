@@ -5,6 +5,7 @@ import {
   createCohortFolderAll,
   createCohortFolderFull,
   createCohortFolderWithAdjusted,
+  createCohortFolderWithNupl,
   createCohortFolderLongTerm,
   createCohortFolderAgeRangeWithMatured,
   createCohortFolderBasicWithMarketCap,
@@ -53,6 +54,7 @@ export function createPartialOptions() {
     overAge,
     ageRange,
     epoch,
+    entry,
     utxosOverAmount,
     addressesOverAmount,
     utxosUnderAmount,
@@ -98,6 +100,19 @@ export function createPartialOptions() {
             createCohortFolderFull(termShort),
 
             createCohortFolderLongTerm(termLong),
+
+            {
+              name: "Entry",
+              tree: [
+                createGroupedCohortFolderWithNupl({
+                  name: "Compare",
+                  title: "Veteran vs Rookie",
+                  list: entry,
+                  all: cohortAll,
+                }),
+                ...entry.map(createCohortFolderWithNupl),
+              ],
+            },
 
             {
               name: "UTXO Age",

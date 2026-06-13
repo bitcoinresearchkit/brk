@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
+use brk_cohort::EntryPrice;
 use brk_types::{Cents, SupplyState, Timestamp};
 use serde::Serialize;
 
@@ -7,6 +8,8 @@ use serde::Serialize;
 pub struct BlockState {
     #[serde(flatten)]
     pub supply: SupplyState,
+    #[serde(skip)]
+    pub entry: EntryPrice,
     #[serde(skip)]
     pub price: Cents,
     #[serde(skip)]

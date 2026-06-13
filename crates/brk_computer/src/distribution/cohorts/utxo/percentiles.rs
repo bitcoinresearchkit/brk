@@ -50,6 +50,22 @@ impl UTXOCohorts {
         let lth = self.caches.fenwick.percentiles_lth();
         push_cost_basis(&lth, lth_d, &mut self.lth.metrics.cost_basis);
 
+        let (discount_d, premium_d) = self.caches.fenwick.entry_density(spot_price);
+
+        let discount = self.caches.fenwick.percentiles_discount_entry();
+        push_cost_basis(
+            &discount,
+            discount_d,
+            &mut self.entry.discount.metrics.cost_basis,
+        );
+
+        let premium = self.caches.fenwick.percentiles_premium_entry();
+        push_cost_basis(
+            &premium,
+            premium_d,
+            &mut self.entry.premium.metrics.cost_basis,
+        );
+
         let prof = self.caches.fenwick.profitability(spot_price);
         push_profitability(&prof, &mut self.profitability);
     }

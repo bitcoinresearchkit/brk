@@ -2,8 +2,8 @@ use brk_traversable::Traversable;
 use rayon::prelude::*;
 
 use crate::{
-    AgeRange, AmountRange, ByEpoch, ByTerm, Class, Filter, OverAge, OverAmount, SpendableType,
-    UnderAge, UnderAmount,
+    AgeRange, AmountRange, ByEntry, ByEpoch, ByTerm, Class, Filter, OverAge, OverAmount,
+    SpendableType, UnderAge, UnderAmount,
 };
 
 #[derive(Default, Clone, Traversable)]
@@ -12,6 +12,7 @@ pub struct UTXOGroups<T> {
     pub age_range: AgeRange<T>,
     pub epoch: ByEpoch<T>,
     pub class: Class<T>,
+    pub entry: ByEntry<T>,
     pub over_age: OverAge<T>,
     pub over_amount: OverAmount<T>,
     pub amount_range: AmountRange<T>,
@@ -31,6 +32,7 @@ impl<T> UTXOGroups<T> {
             age_range: AgeRange::new(&mut create),
             epoch: ByEpoch::new(&mut create),
             class: Class::new(&mut create),
+            entry: ByEntry::new(&mut create),
             over_age: OverAge::new(&mut create),
             over_amount: OverAmount::new(&mut create),
             amount_range: AmountRange::new(&mut create),
@@ -51,6 +53,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.age_range.iter())
             .chain(self.epoch.iter())
             .chain(self.class.iter())
+            .chain(self.entry.iter())
             .chain(self.amount_range.iter())
             .chain(self.under_amount.iter())
             .chain(self.type_.iter())
@@ -66,6 +69,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.age_range.iter_mut())
             .chain(self.epoch.iter_mut())
             .chain(self.class.iter_mut())
+            .chain(self.entry.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self.under_amount.iter_mut())
             .chain(self.type_.iter_mut())
@@ -84,6 +88,7 @@ impl<T> UTXOGroups<T> {
             .chain(self.age_range.par_iter_mut())
             .chain(self.epoch.par_iter_mut())
             .chain(self.class.par_iter_mut())
+            .chain(self.entry.par_iter_mut())
             .chain(self.amount_range.par_iter_mut())
             .chain(self.under_amount.par_iter_mut())
             .chain(self.type_.par_iter_mut())
@@ -94,6 +99,7 @@ impl<T> UTXOGroups<T> {
             .iter()
             .chain(self.epoch.iter())
             .chain(self.class.iter())
+            .chain(self.entry.iter())
             .chain(self.amount_range.iter())
             .chain(self.type_.iter())
     }
@@ -103,6 +109,7 @@ impl<T> UTXOGroups<T> {
             .iter_mut()
             .chain(self.epoch.iter_mut())
             .chain(self.class.iter_mut())
+            .chain(self.entry.iter_mut())
             .chain(self.amount_range.iter_mut())
             .chain(self.type_.iter_mut())
     }
@@ -115,6 +122,7 @@ impl<T> UTXOGroups<T> {
             .par_iter_mut()
             .chain(self.epoch.par_iter_mut())
             .chain(self.class.par_iter_mut())
+            .chain(self.entry.par_iter_mut())
             .chain(self.amount_range.par_iter_mut())
             .chain(self.type_.par_iter_mut())
     }

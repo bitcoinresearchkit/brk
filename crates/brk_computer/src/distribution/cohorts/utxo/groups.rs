@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use brk_cohort::{
-    AgeRange, AmountRange, ByEpoch, Class, CohortContext, Filter, Filtered, OverAge, OverAmount,
-    SpendableType, Term, UnderAge, UnderAmount,
+    AgeRange, AmountRange, ByEntry, ByEpoch, Class, CohortContext, Filter, Filtered, OverAge,
+    OverAmount, SpendableType, Term, UnderAge, UnderAmount,
 };
 use brk_error::Result;
 use brk_indexer::Lengths;
@@ -16,7 +16,6 @@ use vecdb::{
 use crate::{
     blocks,
     distribution::{
-        DynCohortVecs,
         metrics::{
             AllCohortMetrics, BasicCohortMetrics, CohortMetricsBase, CoreCohortMetrics,
             ExtendedAdjustedCohortMetrics, ExtendedCohortMetrics, ImportConfig,
@@ -24,6 +23,7 @@ use crate::{
             TypeCohortMetrics,
         },
         state::UTXOCohortState,
+        DynCohortVecs,
     },
     indexes,
     internal::{ValuePerBlockCumulativeRolling, WindowStartVec, Windows},
@@ -45,6 +45,7 @@ pub struct UTXOCohorts<M: StorageMode = Rw> {
     pub over_age: OverAge<UTXOCohortVecs<CoreCohortMetrics<M>>>,
     pub epoch: ByEpoch<UTXOCohortVecs<CoreCohortMetrics<M>>>,
     pub class: Class<UTXOCohortVecs<CoreCohortMetrics<M>>>,
+    pub entry: ByEntry<UTXOCohortVecs<ExtendedCohortMetrics<M>>>,
     pub over_amount: OverAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub amount_range: AmountRange<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
     pub under_amount: UnderAmount<UTXOCohortVecs<MinimalCohortMetrics<M>>>,
@@ -67,8 +68,10 @@ pub(crate) struct UTXOCohortsTransientState {
 }
 
 impl UTXOCohorts<Rw> {
-    /// ~71 separate cohorts (21 age + 5 epoch + 18 class + 15 amount + 12 type)
-    const SEPARATE_COHORT_CAPACITY: usize = 80;
+    /// Separate cohorts currently total 72:
+    /// 21 age + 5 epoch + 18 class + 2 entry + 15 amount + 11 spendable type.
+    /// Keep small headroom because this is only Vec allocation capacity.
+    const SEPARATE_COHORT_CAPACITY: usize = 82;
 
     /// Import all UTXO cohorts from database.
     pub(crate) fn forced_import(
@@ -135,6 +138,26 @@ impl UTXOCohorts<Rw> {
 
         let epoch = ByEpoch::try_new(&core_separate)?;
         let class = Class::try_new(&core_separate)?;
+
+        let extended_separate =
+            |f: Filter, name: &'static str| -> Result<UTXOCohortVecs<ExtendedCohortMetrics>> {
+                let full_name = CohortContext::Utxo.full_name(&f, name);
+                let cfg = ImportConfig {
+                    db,
+                    filter: &f,
+                    full_name: &full_name,
+                    version: v,
+                    indexes,
+                    cached_starts,
+                };
+                let state = Some(Box::new(UTXOCohortState::new(states_path, &full_name)));
+                Ok(UTXOCohortVecs::new(
+                    state,
+                    ExtendedCohortMetrics::forced_import(&cfg)?,
+                ))
+            };
+
+        let entry = ByEntry::try_new(&extended_separate)?;
 
         // Helper for separate cohorts with MinimalCohortMetrics + MinimalRealizedState
         let minimal_separate =
@@ -281,6 +304,7 @@ impl UTXOCohorts<Rw> {
             lth,
             epoch,
             class,
+            entry,
             type_,
             under_age,
             over_age,
@@ -309,6 +333,7 @@ impl UTXOCohorts<Rw> {
             sth,
             caches,
             age_range,
+            entry,
             ..
         } = self;
         caches
@@ -327,7 +352,15 @@ impl UTXOCohorts<Rw> {
                 Some((map, caches.fenwick.is_sth_at(i)))
             })
             .collect();
-        caches.fenwick.bulk_init(maps.into_iter());
+        let discount_maps = entry
+            .discount
+            .state
+            .as_ref()
+            .map(|state| state.cost_basis_map())
+            .into_iter();
+        caches
+            .fenwick
+            .bulk_init_with_discount(maps.into_iter(), discount_maps);
     }
 
     /// Apply pending deltas from all age-range cohorts to the Fenwick tree.
@@ -338,7 +371,10 @@ impl UTXOCohorts<Rw> {
         }
         // Destructure to get separate borrows on caches and age_range
         let Self {
-            caches, age_range, ..
+            caches,
+            age_range,
+            entry,
+            ..
         } = self;
         for (i, sub) in age_range.iter().enumerate() {
             if let Some(state) = sub.state.as_ref() {
@@ -347,6 +383,11 @@ impl UTXOCohorts<Rw> {
                     caches.fenwick.apply_delta(price, delta, is_sth);
                 });
             }
+        }
+        if let Some(state) = entry.discount.state.as_ref() {
+            state.for_each_cost_basis_pending(|&price, delta| {
+                caches.fenwick.apply_discount_delta(price, delta);
+            });
         }
     }
 
@@ -365,6 +406,7 @@ impl UTXOCohorts<Rw> {
             age_range,
             epoch,
             class,
+            entry,
             amount_range,
             type_,
             ..
@@ -374,6 +416,7 @@ impl UTXOCohorts<Rw> {
             .map(|x| x as &mut dyn DynCohortVecs)
             .chain(epoch.par_iter_mut().map(|x| x as &mut dyn DynCohortVecs))
             .chain(class.par_iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+            .chain(entry.par_iter_mut().map(|x| x as &mut dyn DynCohortVecs))
             .chain(
                 amount_range
                     .par_iter_mut()
@@ -389,6 +432,7 @@ impl UTXOCohorts<Rw> {
             age_range,
             epoch,
             class,
+            entry,
             amount_range,
             type_,
             ..
@@ -398,6 +442,7 @@ impl UTXOCohorts<Rw> {
             .map(|x| x as &mut dyn DynCohortVecs)
             .chain(epoch.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
             .chain(class.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
+            .chain(entry.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
             .chain(amount_range.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
             .chain(type_.iter_mut().map(|x| x as &mut dyn DynCohortVecs))
     }
@@ -409,6 +454,7 @@ impl UTXOCohorts<Rw> {
             .map(|x| x as &dyn DynCohortVecs)
             .chain(self.epoch.iter().map(|x| x as &dyn DynCohortVecs))
             .chain(self.class.iter().map(|x| x as &dyn DynCohortVecs))
+            .chain(self.entry.iter().map(|x| x as &dyn DynCohortVecs))
             .chain(self.amount_range.iter().map(|x| x as &dyn DynCohortVecs))
             .chain(self.type_.iter().map(|x| x as &dyn DynCohortVecs))
     }
@@ -516,6 +562,7 @@ impl UTXOCohorts<Rw> {
             );
             all.extend(self.epoch.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
             all.extend(self.class.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
+            all.extend(self.entry.iter_mut().map(|x| x as &mut dyn DynCohortVecs));
             all.extend(
                 self.amount_range
                     .iter_mut()
@@ -604,6 +651,7 @@ impl UTXOCohorts<Rw> {
             under_amount,
             epoch,
             class,
+            entry,
             type_,
             ..
         } = self;
@@ -677,6 +725,19 @@ impl UTXOCohorts<Rw> {
                 })
             }),
             Box::new(|| {
+                entry.par_iter_mut().try_for_each(|v| {
+                    v.metrics.compute_rest_part2(
+                        blocks,
+                        prices,
+                        starting_lengths,
+                        height_to_market_cap,
+                        ss,
+                        au,
+                        exit,
+                    )
+                })
+            }),
+            Box::new(|| {
                 amount_range.par_iter_mut().try_for_each(|v| {
                     v.metrics
                         .compute_rest_part2(prices, starting_lengths, ss, au, exit)
@@ -728,6 +789,9 @@ impl UTXOCohorts<Rw> {
             vecs.extend(v.metrics.collect_all_vecs_mut());
         }
         for v in self.class.iter_mut() {
+            vecs.extend(v.metrics.collect_all_vecs_mut());
+        }
+        for v in self.entry.iter_mut() {
             vecs.extend(v.metrics.collect_all_vecs_mut());
         }
         for v in self.amount_range.iter_mut() {
@@ -813,7 +877,7 @@ impl UTXOCohorts<Rw> {
 
     /// Aggregate RealizedFull fields from age_range states and push to all/sth/lth.
     /// Called during the block loop after separate cohorts' push_state but before reset.
-    pub(crate) fn push_overlapping(&mut self, height_price: Cents) {
+    pub(crate) fn push_overlapping(&mut self, height_price: Cents) -> Cents {
         let Self {
             all,
             sth,
@@ -852,7 +916,7 @@ impl UTXOCohorts<Rw> {
             }
         }
 
-        all.metrics.realized.push_accum(&all_acc);
+        let all_capitalized_price = all.metrics.realized.push_accum(&all_acc);
         sth.metrics.realized.push_accum(&sth_acc);
         lth.metrics.realized.push_accum(&lth_acc);
 
@@ -880,6 +944,8 @@ impl UTXOCohorts<Rw> {
             .unrealized
             .capitalized_cap_in_loss_raw
             .push(CentsSquaredSats::new(lth_ccap.1));
+
+        all_capitalized_price
     }
 }
 

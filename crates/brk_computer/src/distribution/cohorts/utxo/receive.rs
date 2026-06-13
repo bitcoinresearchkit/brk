@@ -1,3 +1,4 @@
+use brk_cohort::EntryPrice;
 use brk_types::{Cents, CostBasisSnapshot, Height, Timestamp};
 use vecdb::Rw;
 
@@ -12,6 +13,7 @@ impl UTXOCohorts<Rw> {
     /// - The "under_1h" age cohort (all new UTXOs start at 0 hours old)
     /// - The appropriate epoch cohort based on block height
     /// - The appropriate class cohort based on block timestamp
+    /// - The immutable entry valuation cohort based on creation price versus anchor
     /// - The appropriate output type cohort (P2PKH, P2SH, etc.)
     /// - The appropriate amount range cohort based on value
     pub(crate) fn receive(
@@ -20,13 +22,14 @@ impl UTXOCohorts<Rw> {
         height: Height,
         timestamp: Timestamp,
         price: Cents,
+        entry: EntryPrice,
     ) {
         let supply_state = received.spendable_supply;
 
-        // Pre-compute snapshot once for the 3 cohorts sharing the same supply_state
+        // Pre-compute snapshot once for cohorts sharing the block-level supply_state
         let snapshot = CostBasisSnapshot::from_utxo(price, &supply_state);
 
-        // New UTXOs go into under_1h, current epoch, and current class
+        // New UTXOs go into under_1h plus immutable creation cohorts
         self.age_range
             .under_1h
             .state
@@ -45,6 +48,12 @@ impl UTXOCohorts<Rw> {
                 .unwrap()
                 .receive_utxo_snapshot(&supply_state, &snapshot);
         }
+        self.entry
+            .get_mut(entry)
+            .state
+            .as_mut()
+            .unwrap()
+            .receive_utxo_snapshot(&supply_state, &snapshot);
 
         // Update output type cohorts (skip types with no outputs this block)
         self.type_.iter_typed_mut().for_each(|(output_type, vecs)| {

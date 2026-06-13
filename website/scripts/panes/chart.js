@@ -40,7 +40,7 @@ export function init() {
     /** @type {Map<Unit, AnyFetchedSeriesBlueprint[]>} */
     const result = new Map();
 
-    const { ohlc, spot } = brk.series.prices;
+    const { ohlc, spot } = brk.series.price;
 
     result.set(Unit.usd, [
       /** @type {AnyFetchedSeriesBlueprint} */ ({

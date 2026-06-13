@@ -33,6 +33,7 @@ export function buildCohortData() {
     AMOUNT_RANGE_NAMES,
     SPENDABLE_TYPE_NAMES,
     CLASS_NAMES,
+    ENTRY_NAMES,
     PROFITABILITY_RANGE_NAMES,
     PROFIT_NAMES,
     LOSS_NAMES,
@@ -201,6 +202,18 @@ export function buildCohortData() {
       tree: utxoCohorts.class[key],
     }));
 
+  const entryColors = {
+    discount: colors.arr[11],
+    premium: colors.arr[0],
+  };
+
+  const entry = entries(ENTRY_NAMES).map(([key, names]) => ({
+    name: names.short,
+    title: `UTXOs ${names.long}`,
+    color: entryColors[key],
+    tree: utxoCohorts.entry[key],
+  }));
+
   const { range, profit, loss } = utxoCohorts.profitability;
 
   const profitabilityRange = entries(PROFITABILITY_RANGE_NAMES).map(
@@ -242,6 +255,7 @@ export function buildCohortData() {
     typeAddressable,
     typeOther,
     class: class_,
+    entry,
     profitabilityRange,
     profitabilityProfit,
     profitabilityLoss,

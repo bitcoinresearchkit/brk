@@ -49,7 +49,7 @@ impl UTXOCohorts<Rw> {
             // This is the max price between receive and send heights
             let peak_price = price_range_max.max_between(receive_height, send_height);
 
-            // Pre-compute once for age_range, epoch, year (all share sent.spendable_supply)
+            // Pre-compute once for cohorts sharing the sent supply.
             if let Some(pre) = SendPrecomputed::new(
                 &sent.spendable_supply,
                 current_price,
@@ -75,6 +75,12 @@ impl UTXOCohorts<Rw> {
                         .unwrap()
                         .send_utxo_precomputed(&sent.spendable_supply, &pre);
                 }
+                self.entry
+                    .get_mut(block_state.entry)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .send_utxo_precomputed(&sent.spendable_supply, &pre);
             } else if sent.spendable_supply.utxo_count > 0 {
                 // Zero-value UTXOs: just subtract supply
                 self.age_range.get_mut(age).state.as_mut().unwrap().supply -=
@@ -85,6 +91,12 @@ impl UTXOCohorts<Rw> {
                 if let Some(v) = self.class.mut_vec_from_timestamp(block_state.timestamp) {
                     v.state.as_mut().unwrap().supply -= &sent.spendable_supply;
                 }
+                self.entry
+                    .get_mut(block_state.entry)
+                    .state
+                    .as_mut()
+                    .unwrap()
+                    .supply -= &sent.spendable_supply;
             }
 
             // Update output type cohorts (skip zero-supply entries)

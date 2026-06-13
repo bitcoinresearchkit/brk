@@ -1,4 +1,4 @@
-use brk_cohort::ByAddrType;
+use brk_cohort::{ByAddrType, EntryPrice};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_types::{
@@ -46,6 +46,7 @@ pub(crate) fn process_blocks(
     last_height: Height,
     chain_state: &mut Vec<BlockState>,
     tx_index_to_height: &mut RangeMap<TxIndex, Height>,
+    mut entry_anchor: Cents,
     cached_prices: &[Cents],
     cached_timestamps: &[Timestamp],
     cached_price_range_max: &PriceRangeMax,
@@ -370,9 +371,14 @@ pub(crate) fn process_blocks(
                 .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
         }
 
+        let entry = EntryPrice::from_is_discount(
+            entry_anchor == Cents::ZERO || block_price <= entry_anchor,
+        );
+
         // Push current block state before processing cohort updates
         chain_state.push(BlockState {
             supply: transacted.spendable_supply,
+            entry,
             price: block_price,
             timestamp,
         });
@@ -411,7 +417,7 @@ pub(crate) fn process_blocks(
             || {
                 // UTXO cohorts receive/send
                 vecs.utxo_cohorts
-                    .receive(transacted, height, timestamp, block_price);
+                    .receive(transacted, height, timestamp, block_price, entry);
                 if let Some(min_h) =
                     vecs.utxo_cohorts
                         .send(height_to_sent, chain_state, ctx.price_range_max)
@@ -460,7 +466,7 @@ pub(crate) fn process_blocks(
         let is_last_of_day = is_last_of_day[offset];
         let date_opt = is_last_of_day.then(|| Date::from(timestamp));
 
-        push_cohort_states(
+        entry_anchor = push_cohort_states(
             &mut vecs.utxo_cohorts,
             &mut vecs.addr_cohorts,
             height,
@@ -527,7 +533,7 @@ fn push_cohort_states(
     addr_cohorts: &mut AddrCohorts,
     height: Height,
     height_price: Cents,
-) {
+) -> Cents {
     // Phase 1: push + unrealized (no reset yet, states still needed for aggregation)
     rayon::join(
         || {
@@ -545,7 +551,7 @@ fn push_cohort_states(
     );
 
     // Phase 2: aggregate age_range states → push to overlapping cohorts
-    utxo_cohorts.push_overlapping(height_price);
+    let all_capitalized_price = utxo_cohorts.push_overlapping(height_price);
 
     // Phase 3: reset per-block values
     utxo_cohorts
@@ -554,4 +560,6 @@ fn push_cohort_states(
     addr_cohorts
         .iter_separate_mut()
         .for_each(|v| v.reset_single_iteration_values());
+
+    all_capitalized_price
 }

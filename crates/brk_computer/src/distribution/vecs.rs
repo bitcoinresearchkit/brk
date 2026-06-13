@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use brk_cohort::{ByAddrType, Filter};
+use brk_cohort::{ByAddrType, EntryPrice, Filter};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_traversable::Traversable;
@@ -436,13 +436,34 @@ impl Vecs {
             let end = usize::from(recovered_height);
             debug!("building supply_state vec for {} heights", recovered_height);
             let supply_state_data: Vec<_> = self.supply_state.collect_range_at(0, end);
+            let capitalized_price_data: Vec<_> = self
+                .utxo_cohorts
+                .all
+                .metrics
+                .realized
+                .capitalized
+                .price
+                .cents
+                .height
+                .collect_range_at(0, end);
+
+            let mut entry_anchor = Cents::ZERO;
             chain_state = supply_state_data
                 .into_iter()
                 .enumerate()
-                .map(|(h, supply)| BlockState {
-                    supply,
-                    price: self.caches.prices[h],
-                    timestamp: self.caches.timestamps[h],
+                .map(|(h, supply)| {
+                    let price = self.caches.prices[h];
+                    let entry = EntryPrice::from_is_discount(
+                        entry_anchor == Cents::ZERO || price <= entry_anchor,
+                    );
+                    entry_anchor = capitalized_price_data[h];
+
+                    BlockState {
+                        supply,
+                        entry,
+                        price,
+                        timestamp: self.caches.timestamps[h],
+                    }
                 })
                 .collect();
             debug!("chain_state rebuilt");
@@ -474,6 +495,20 @@ impl Vecs {
             let prices = std::mem::take(&mut self.caches.prices);
             let timestamps = std::mem::take(&mut self.caches.timestamps);
             let price_range_max = std::mem::take(&mut self.caches.price_range_max);
+            let entry_anchor = starting_height
+                .decremented()
+                .and_then(|height| {
+                    self.utxo_cohorts
+                        .all
+                        .metrics
+                        .realized
+                        .capitalized
+                        .price
+                        .cents
+                        .height
+                        .collect_one(height)
+                })
+                .unwrap_or(Cents::ZERO);
 
             process_blocks(
                 self,
@@ -486,6 +521,7 @@ impl Vecs {
                 last_height,
                 &mut chain_state,
                 &mut tx_index_to_height,
+                entry_anchor,
                 &prices,
                 &timestamps,
                 &price_range_max,

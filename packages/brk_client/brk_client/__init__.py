@@ -2954,6 +2954,10 @@ class CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
+class CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern2:
+    """Pattern struct for repeated tree structure."""
+    pass
+
 class EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
     """Pattern struct for repeated tree structure."""
     
@@ -3178,6 +3182,10 @@ class _1m1w1y24hBpsPercentRatioPattern:
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'ratio'))
 
 class ActiveInputOutputSpendablePattern:
+    """Pattern struct for repeated tree structure."""
+    pass
+
+class ActivityCostInvestedOutputsRealizedSupplyUnrealizedPattern2:
     """Pattern struct for repeated tree structure."""
     pass
 
@@ -4055,6 +4063,14 @@ class PriceRatioPattern:
         """Create pattern node with accumulated series name."""
         self.price: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, disc))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, f'ratio_{disc}'))
+
+class RatioValuePattern2:
+    """Pattern struct for repeated tree structure."""
+    
+    def __init__(self, client: BrkClient, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, _m(acc, 'sopr'))
+        self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, _m(acc, 'value_destroyed'))
 
 class RatioValuePattern:
     """Pattern struct for repeated tree structure."""
@@ -6299,13 +6315,6 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized_Price:
         self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'lth_realized_price_ratio_sma')
         self.std_dev: SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_Lth_Realized_Price_StdDev(client)
 
-class SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr:
-    """Series tree node."""
-    
-    def __init__(self, client: BrkClient, base_path: str = ''):
-        self.value_destroyed: AverageBlockCumulativeSumPattern[Cents] = AverageBlockCumulativeSumPattern(client, 'lth_value_destroyed')
-        self.ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'lth_sopr')
-
 class SeriesTree_Cohorts_Utxo_Lth_Realized:
     """Series tree node."""
     
@@ -6316,7 +6325,7 @@ class SeriesTree_Cohorts_Utxo_Lth_Realized:
         self.price: SeriesTree_Cohorts_Utxo_Lth_Realized_Price = SeriesTree_Cohorts_Utxo_Lth_Realized_Price(client)
         self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'lth_mvrv')
         self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'lth_net')
-        self.sopr: SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr = SeriesTree_Cohorts_Utxo_Lth_Realized_Sopr(client)
+        self.sopr: RatioValuePattern2 = RatioValuePattern2(client, 'lth')
         self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_gross_pnl')
         self.sell_side_risk_ratio: _1m1w1y24hPattern8 = _1m1w1y24hPattern8(client, 'lth_sell_side_risk_ratio')
         self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'lth_realized_peak_regret')
@@ -6439,6 +6448,275 @@ class SeriesTree_Cohorts_Utxo_Class:
         self._2024: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2024')
         self._2025: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2025')
         self._2026: ActivityOutputsRealizedSupplyUnrealizedPattern = ActivityOutputsRealizedSupplyUnrealizedPattern(client, 'class_2026')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_All:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_sd')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_zscore')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'veteran_realized_price_0sd')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p0_5sd')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1sd')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1_5sd')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2sd')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2_5sd')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p3sd')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm0_5sd')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1sd')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1_5sd')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2sd')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2_5sd')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm3sd')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_4y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_sd_4y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_zscore_4y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'veteran_realized_price_0sd_4y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p0_5sd_4y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1sd_4y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1_5sd_4y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2sd_4y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2_5sd_4y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p3sd_4y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm0_5sd_4y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1sd_4y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1_5sd_4y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2sd_4y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2_5sd_4y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm3sd_4y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_2y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_sd_2y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_zscore_2y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'veteran_realized_price_0sd_2y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p0_5sd_2y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1sd_2y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1_5sd_2y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2sd_2y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2_5sd_2y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p3sd_2y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm0_5sd_2y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1sd_2y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1_5sd_2y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2sd_2y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2_5sd_2y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm3sd_2y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_1y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_sd_1y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio_zscore_1y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'veteran_realized_price_0sd_1y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p0_5sd_1y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1sd_1y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p1_5sd_1y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2sd_1y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p2_5sd_1y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'p3sd_1y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm0_5sd_1y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1sd_1y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm1_5sd_1y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2sd_1y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm2_5sd_1y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'veteran_realized_price', 'm3sd_1y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.all: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_All = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_All(client)
+        self._4y: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_4y = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_4y(client)
+        self._2y: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_2y = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_2y(client)
+        self._1y: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_1y = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev_1y(client)
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'veteran_realized_price')
+        self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'veteran_realized_price_cents')
+        self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'veteran_realized_price_sats')
+        self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, 'veteran_realized_price_ratio_bps')
+        self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_realized_price_ratio')
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'veteran_realized_price')
+        self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'veteran_realized_price_ratio_sma')
+        self.std_dev: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price_StdDev(client)
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'veteran_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'veteran_realized_profit')
+        self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, 'veteran_realized_loss')
+        self.price: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized_Price(client)
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'veteran_mvrv')
+        self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'veteran_net')
+        self.sopr: RatioValuePattern2 = RatioValuePattern2(client, 'veteran')
+        self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'veteran_realized_gross_pnl')
+        self.sell_side_risk_ratio: _1m1w1y24hPattern8 = _1m1w1y24hPattern8(client, 'veteran_sell_side_risk_ratio')
+        self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'veteran_realized_peak_regret')
+        self.capitalized: PricePattern = PricePattern(client, 'veteran_capitalized_price')
+        self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'veteran_realized_profit_to_loss_ratio')
+
+class SeriesTree_Cohorts_Utxo_Entry_Discount:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'veteran_supply')
+        self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'veteran')
+        self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'veteran')
+        self.realized: SeriesTree_Cohorts_Utxo_Entry_Discount_Realized = SeriesTree_Cohorts_Utxo_Entry_Discount_Realized(client)
+        self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'veteran')
+        self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'veteran')
+        self.invested_capital: InPattern = InPattern(client, 'veteran_invested_capital_in')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_All:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_sd')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_zscore')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'rookie_realized_price_0sd')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p0_5sd')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1sd')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1_5sd')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2sd')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2_5sd')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p3sd')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm0_5sd')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1sd')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1_5sd')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2sd')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2_5sd')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm3sd')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_4y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_sd_4y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_zscore_4y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'rookie_realized_price_0sd_4y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p0_5sd_4y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1sd_4y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1_5sd_4y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2sd_4y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2_5sd_4y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p3sd_4y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm0_5sd_4y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1sd_4y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1_5sd_4y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2sd_4y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2_5sd_4y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm3sd_4y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_2y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_sd_2y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_zscore_2y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'rookie_realized_price_0sd_2y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p0_5sd_2y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1sd_2y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1_5sd_2y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2sd_2y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2_5sd_2y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p3sd_2y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm0_5sd_2y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1sd_2y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1_5sd_2y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2sd_2y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2_5sd_2y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm3sd_2y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_1y:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.sd: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_sd_1y')
+        self.zscore: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio_zscore_1y')
+        self._0sd: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'rookie_realized_price_0sd_1y')
+        self.p0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p0_5sd_1y')
+        self.p1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1sd_1y')
+        self.p1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p1_5sd_1y')
+        self.p2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2sd_1y')
+        self.p2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p2_5sd_1y')
+        self.p3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'p3sd_1y')
+        self.m0_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm0_5sd_1y')
+        self.m1sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1sd_1y')
+        self.m1_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm1_5sd_1y')
+        self.m2sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2sd_1y')
+        self.m2_5sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm2_5sd_1y')
+        self.m3sd: PriceRatioPattern = PriceRatioPattern(client, 'rookie_realized_price', 'm3sd_1y')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.all: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_All = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_All(client)
+        self._4y: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_4y = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_4y(client)
+        self._2y: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_2y = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_2y(client)
+        self._1y: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_1y = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev_1y(client)
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'rookie_realized_price')
+        self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'rookie_realized_price_cents')
+        self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'rookie_realized_price_sats')
+        self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, 'rookie_realized_price_ratio_bps')
+        self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_realized_price_ratio')
+        self.percentiles: Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern = Pct0Pct1Pct2Pct5Pct95Pct98Pct99Pattern(client, 'rookie_realized_price')
+        self.sma: _1m1w1y2y4yAllPattern = _1m1w1y2y4yAllPattern(client, 'rookie_realized_price_ratio_sma')
+        self.std_dev: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price_StdDev(client)
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium_Realized:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.cap: CentsDeltaToUsdPattern = CentsDeltaToUsdPattern(client, 'rookie_realized_cap')
+        self.profit: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'rookie_realized_profit')
+        self.loss: BlockCumulativeNegativeSumPattern = BlockCumulativeNegativeSumPattern(client, 'rookie_realized_loss')
+        self.price: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized_Price(client)
+        self.mvrv: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rookie_mvrv')
+        self.net_pnl: BlockChangeCumulativeDeltaSumPattern = BlockChangeCumulativeDeltaSumPattern(client, 'rookie_net')
+        self.sopr: RatioValuePattern2 = RatioValuePattern2(client, 'rookie')
+        self.gross_pnl: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'rookie_realized_gross_pnl')
+        self.sell_side_risk_ratio: _1m1w1y24hPattern8 = _1m1w1y24hPattern8(client, 'rookie_sell_side_risk_ratio')
+        self.peak_regret: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, 'rookie_realized_peak_regret')
+        self.capitalized: PricePattern = PricePattern(client, 'rookie_capitalized_price')
+        self.profit_to_loss_ratio: _1m1w1y24hPattern[StoredF64] = _1m1w1y24hPattern(client, 'rookie_realized_profit_to_loss_ratio')
+
+class SeriesTree_Cohorts_Utxo_Entry_Premium:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.supply: DeltaDominanceHalfInTotalPattern2 = DeltaDominanceHalfInTotalPattern2(client, 'rookie_supply')
+        self.outputs: SpendingSpentUnspentPattern = SpendingSpentUnspentPattern(client, 'rookie')
+        self.activity: CoindaysCoinyearsDormancyTransferPattern = CoindaysCoinyearsDormancyTransferPattern(client, 'rookie')
+        self.realized: SeriesTree_Cohorts_Utxo_Entry_Premium_Realized = SeriesTree_Cohorts_Utxo_Entry_Premium_Realized(client)
+        self.cost_basis: InMaxMinPerSupplyPattern = InMaxMinPerSupplyPattern(client, 'rookie')
+        self.unrealized: CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2 = CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2(client, 'rookie')
+        self.invested_capital: InPattern = InPattern(client, 'rookie_invested_capital_in')
+
+class SeriesTree_Cohorts_Utxo_Entry:
+    """Series tree node."""
+    
+    def __init__(self, client: BrkClient, base_path: str = ''):
+        self.discount: SeriesTree_Cohorts_Utxo_Entry_Discount = SeriesTree_Cohorts_Utxo_Entry_Discount(client)
+        self.premium: SeriesTree_Cohorts_Utxo_Entry_Premium = SeriesTree_Cohorts_Utxo_Entry_Premium(client)
 
 class SeriesTree_Cohorts_Utxo_OverAmount:
     """Series tree node."""
@@ -6621,6 +6899,7 @@ class SeriesTree_Cohorts_Utxo:
         self.over_age: SeriesTree_Cohorts_Utxo_OverAge = SeriesTree_Cohorts_Utxo_OverAge(client)
         self.epoch: SeriesTree_Cohorts_Utxo_Epoch = SeriesTree_Cohorts_Utxo_Epoch(client)
         self.class_: SeriesTree_Cohorts_Utxo_Class = SeriesTree_Cohorts_Utxo_Class(client)
+        self.entry: SeriesTree_Cohorts_Utxo_Entry = SeriesTree_Cohorts_Utxo_Entry(client)
         self.over_amount: SeriesTree_Cohorts_Utxo_OverAmount = SeriesTree_Cohorts_Utxo_OverAmount(client)
         self.amount_range: SeriesTree_Cohorts_Utxo_AmountRange = SeriesTree_Cohorts_Utxo_AmountRange(client)
         self.under_amount: SeriesTree_Cohorts_Utxo_UnderAmount = SeriesTree_Cohorts_Utxo_UnderAmount(client)
@@ -7061,6 +7340,19 @@ class BrkClient(BrkClientBase):
         "id": "class_2026",
         "short": "2026",
         "long": "Class 2026"
+      }
+    }
+
+    ENTRY_NAMES = {
+      "discount": {
+        "id": "veteran",
+        "short": "Veteran",
+        "long": "Veteran Coins"
+      },
+      "premium": {
+        "id": "rookie",
+        "short": "Rookie",
+        "long": "Rookie Coins"
       }
     }
 
