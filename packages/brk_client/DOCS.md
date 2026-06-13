@@ -9,6 +9,7 @@
     * [TERM\_NAMES](#brk_client.BrkClient.TERM_NAMES)
     * [EPOCH\_NAMES](#brk_client.BrkClient.EPOCH_NAMES)
     * [CLASS\_NAMES](#brk_client.BrkClient.CLASS_NAMES)
+    * [ENTRY\_NAMES](#brk_client.BrkClient.ENTRY_NAMES)
     * [SPENDABLE\_TYPE\_NAMES](#brk_client.BrkClient.SPENDABLE_TYPE_NAMES)
     * [AGE\_RANGE\_NAMES](#brk_client.BrkClient.AGE_RANGE_NAMES)
     * [UNDER\_AGE\_NAMES](#brk_client.BrkClient.UNDER_AGE_NAMES)
@@ -167,6 +168,10 @@ Main BRK client with series tree and API methods.
 <a id="brk_client.BrkClient.CLASS_NAMES"></a>
 
 #### CLASS\_NAMES
+
+<a id="brk_client.BrkClient.ENTRY_NAMES"></a>
+
+#### ENTRY\_NAMES
 
 <a id="brk_client.BrkClient.SPENDABLE_TYPE_NAMES"></a>
 

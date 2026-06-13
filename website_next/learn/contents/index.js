@@ -9,20 +9,27 @@ function createContentsItem(section, path) {
   const anchor = document.createElement("a");
   const children = section.children ?? [];
   const sectionPath = [...path, section.title];
+  const id = createPathId(sectionPath);
 
-  anchor.href = `#${createPathId(sectionPath)}`;
+  anchor.href = `#${id}`;
   anchor.append(section.title);
 
   if (children.length) {
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
     const list = document.createElement("ol");
 
     for (const child of children) {
       list.append(createContentsItem(child, sectionPath));
     }
-    item.append(list);
+
+    summary.append(anchor);
+    details.append(summary, list);
+    item.append(details);
+  } else {
+    item.append(anchor);
   }
 
-  item.prepend(anchor);
   return item;
 }
 

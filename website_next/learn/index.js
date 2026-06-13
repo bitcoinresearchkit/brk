@@ -1,6 +1,7 @@
 import { createContents } from "./contents/index.js";
 import { sections } from "./data/index.js";
 import { createChart } from "./charts/index.js";
+import { initSectionDetails } from "./details.js";
 import { initHashLinks } from "./hash-links.js";
 import { initScrollSpy } from "./scroll-spy.js";
 import { createPathId } from "./path.js";
@@ -18,6 +19,8 @@ function createSection(section, path = []) {
   const description = document.createElement("p");
   const children = section.children ?? [];
   const id = createPathId(sectionPath);
+  /** @type {HTMLElement[]} */
+  const content = [description];
 
   element.id = id;
   if (section.numbered === false) element.dataset.numbered = "false";
@@ -25,11 +28,21 @@ function createSection(section, path = []) {
   anchor.append(section.title);
   heading.append(anchor);
   description.append(section.description);
-  element.append(heading, description);
-  if (section.chart) element.append(createChart(section.chart, id));
+  if (section.chart) content.push(createChart(section.chart, id));
 
   for (const child of children) {
-    element.append(createSection(child, sectionPath));
+    content.push(createSection(child, sectionPath));
+  }
+
+  if (section.numbered === false) {
+    element.append(heading, ...content);
+  } else {
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+
+    summary.append(heading);
+    details.append(summary, ...content);
+    element.append(details);
   }
 
   return element;
@@ -45,7 +58,8 @@ export function createLearnPage() {
   }
 
   main.append(createContents(sections), article);
+  const details = initSectionDetails(main);
   const navigateToHash = initScrollSpy(main);
-  initHashLinks(main, navigateToHash);
+  initHashLinks(main, navigateToHash, details);
   return main;
 }

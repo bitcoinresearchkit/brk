@@ -105,6 +105,7 @@ export function initScrollSpy(main) {
     const viewportTop = getViewportTop();
 
     for (const section of sections) {
+      if (!section.getClientRects().length) continue;
       if (section.getBoundingClientRect().top > viewportTop) break;
 
       currentSection = section;
@@ -149,6 +150,7 @@ export function initScrollSpy(main) {
     alignNavToTop = true;
     scheduleUpdate();
   });
+  main.addEventListener("sectiontoggle", scheduleUpdate);
   scheduleUpdate();
   return navigateToHash;
 }

@@ -6,6 +6,11 @@ declare global {
     numbered?: boolean;
     children?: LearnSection[];
   };
+
+  type LearnDetails = {
+    openHash(hash: string): void;
+    toggleHash(hash: string): boolean;
+  };
 }
 
 export {};

@@ -21,18 +21,24 @@ function scrollToTarget(target, behavior) {
 /**
  * @param {HTMLElement} main
  * @param {ScrollBehavior} behavior
+ * @param {LearnDetails} details
  */
-function scrollToCurrentHash(main, behavior) {
-  const target = getHashTarget(main, window.location.hash);
+function scrollToCurrentHash(main, behavior, details) {
+  const hash = window.location.hash;
+  const target = getHashTarget(main, hash);
 
-  if (target) scrollToTarget(target, behavior);
+  if (target) {
+    details.openHash(hash);
+    scrollToTarget(target, behavior);
+  }
 }
 
 /**
  * @param {HTMLElement} main
  * @param {(hash: string) => void} onHashNavigate
+ * @param {LearnDetails} details
  */
-export function initHashLinks(main, onHashNavigate) {
+export function initHashLinks(main, onHashNavigate, details) {
   main.addEventListener("click", (event) => {
     if (!isPlainLeftClick(event)) return;
 
@@ -47,6 +53,9 @@ export function initHashLinks(main, onHashNavigate) {
     if (!target) return;
 
     event.preventDefault();
+    const open = details.toggleHash(url.hash);
+    if (!open) return;
+
     onHashNavigate(url.hash);
     scrollToTarget(target, "smooth");
 
@@ -57,8 +66,10 @@ export function initHashLinks(main, onHashNavigate) {
 
   window.addEventListener("popstate", () => {
     if (main.hidden) return;
-    scrollToCurrentHash(main, "auto");
+    scrollToCurrentHash(main, "auto", details);
   });
 
-  main.addEventListener("pageactive", () => scrollToCurrentHash(main, "auto"));
+  main.addEventListener("pageactive", () => {
+    scrollToCurrentHash(main, "auto", details);
+  });
 }

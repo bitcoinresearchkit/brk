@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Addr
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7518](https://github.com/bitcoinresearchkit/brk/blob/e23554811be77a28474c946e0b8ab586d4075ec9/modules/brk-client/index.js#L7518)
+Defined in: [Developer/brk/modules/brk-client/index.js:7811](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7811)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7518](https://github.com/
 
 > **amountRange**: [`SeriesTree_Cohorts_Addr_AmountRange`](SeriesTree_Cohorts_Addr_AmountRange.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7520](https://github.com/bitcoinresearchkit/brk/blob/e23554811be77a28474c946e0b8ab586d4075ec9/modules/brk-client/index.js#L7520)
+Defined in: [Developer/brk/modules/brk-client/index.js:7813](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7813)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7520](https://github.com/
 
 > **overAmount**: [`SeriesTree_Cohorts_Addr_OverAmount`](SeriesTree_Cohorts_Addr_OverAmount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7519](https://github.com/bitcoinresearchkit/brk/blob/e23554811be77a28474c946e0b8ab586d4075ec9/modules/brk-client/index.js#L7519)
+Defined in: [Developer/brk/modules/brk-client/index.js:7812](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7812)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7519](https://github.com/
 
 > **underAmount**: [`SeriesTree_Cohorts_Addr_UnderAmount`](SeriesTree_Cohorts_Addr_UnderAmount.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7521](https://github.com/bitcoinresearchkit/brk/blob/e23554811be77a28474c946e0b8ab586d4075ec9/modules/brk-client/index.js#L7521)
+Defined in: [Developer/brk/modules/brk-client/index.js:7814](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7814)

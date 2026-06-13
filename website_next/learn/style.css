@@ -23,6 +23,19 @@ main.learn {
   grid-template-columns: 14rem minmax(0, 1fr);
   padding: 0 var(--page-x);
   scroll-padding-top: var(--offset);
+  interpolate-size: allow-keywords;
+
+  details::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height 1s ease,
+      content-visibility 1s ease allow-discrete;
+  }
+
+  details[open]::details-content {
+    height: auto;
+  }
 
   article {
     counter-reset: theme;
@@ -79,8 +92,13 @@ main.learn {
       margin-top: 8rem;
     }
 
+    > section:has(> details:not([open])) + section {
+      margin-top: var(--offset);
+    }
+
     section[id] {
-      > :is(h1, h2, h3, h4) {
+      > :is(h1, h2, h3, h4),
+      > details > summary > :is(h1, h2, h3, h4) {
         a {
           position: relative;
           display: inline-block;
@@ -115,17 +133,17 @@ main.learn {
     }
 
     > section {
-      > section {
+      > details > section {
         counter-increment: topic;
         counter-reset: detail;
         scroll-margin-top: var(--offset);
 
-        > section {
+        > details > section {
           counter-increment: detail;
           counter-reset: subtopic;
           scroll-margin-top: var(--offset);
 
-          > section {
+          > details > section {
             counter-increment: subtopic;
             scroll-margin-top: var(--offset);
           }
@@ -134,52 +152,108 @@ main.learn {
     }
 
     section[id]:not([data-numbered="false"]) {
-      > :is(h1, h2, h3, h4) {
-        position: sticky;
-        top: var(--offset);
-        line-height: 1;
-        background: var(--black);
+      > details {
+        > summary {
+          position: relative;
+          line-height: 1;
+          list-style: none;
+          background: var(--black);
+          cursor: pointer;
+
+          &::-webkit-details-marker {
+            display: none;
+          }
+
+          &::after {
+            content: "+";
+            position: absolute;
+            top: 50%;
+            right: 0;
+            translate: 0 -50%;
+            color: var(--gray);
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            pointer-events: none;
+          }
+
+          > :is(h1, h2, h3, h4) {
+            line-height: 1;
+          }
+
+          &:has(> h1) {
+            z-index: 8;
+
+            > h1 {
+              border-bottom: 1px solid var(--gray);
+              font-size: 3rem;
+            }
+          }
+
+          &:has(> h2) {
+            z-index: 7;
+
+            > h2 {
+              border-bottom: 1px dashed var(--gray);
+              font-size: var(--topic-font-size);
+            }
+          }
+
+          &:has(> h3) {
+            z-index: 6;
+
+            > h3 {
+              border-bottom: 1px dotted var(--gray);
+              font-size: var(--detail-font-size);
+            }
+          }
+
+          &:has(> h4) {
+            z-index: 5;
+
+            > h4 {
+              border-bottom: 1px dotted var(--gray);
+              font-size: var(--subtopic-font-size);
+            }
+          }
+        }
+
+        &[open] > summary::after {
+          content: "-";
+        }
+
+        &[open] > summary {
+          position: sticky;
+          top: var(--offset);
+
+          > h1 {
+            padding-bottom: var(--heading-padding-bottom);
+          }
+
+          > h2 {
+            padding-top: var(--topic-padding-top);
+            padding-bottom: var(--heading-padding-bottom);
+          }
+
+          > h3 {
+            padding-top: var(--detail-padding-top);
+            padding-bottom: var(--detail-padding-bottom);
+          }
+
+          > h4 {
+            padding-top: var(--subtopic-padding-top);
+            padding-bottom: var(--subtopic-padding-bottom);
+          }
+        }
       }
 
-      > h1 {
-        z-index: 8;
-        padding-bottom: var(--heading-padding-bottom);
-        border-bottom: 1px solid var(--gray);
-        font-size: 3rem;
-      }
-
-      > h2 {
-        z-index: 7;
-        padding-top: var(--topic-padding-top);
-        padding-bottom: var(--heading-padding-bottom);
-        border-bottom: 1px dashed var(--gray);
-        font-size: var(--topic-font-size);
-      }
-
-      > h3 {
-        z-index: 6;
-        padding-top: var(--detail-padding-top);
-        padding-bottom: var(--detail-padding-bottom);
-        border-bottom: 1px dotted var(--gray);
-        font-size: var(--detail-font-size);
-      }
-
-      > h4 {
-        z-index: 5;
-        padding-top: var(--subtopic-padding-top);
-        padding-bottom: var(--subtopic-padding-bottom);
-        border-bottom: 1px dotted var(--gray);
-        font-size: var(--subtopic-font-size);
-      }
-
-      > p {
+      > details > p {
         margin-top: 1rem;
         color: var(--white);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
       }
 
-      > figure {
+      > details > figure {
         margin-top: 2rem;
         color: var(--gray);
         font-size: var(--font-size-xs);

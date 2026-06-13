@@ -21,13 +21,19 @@ main.learn {
     text-transform: uppercase;
 
     ol {
+      display: grid;
       list-style: none;
       margin: 0;
       padding: 0;
     }
 
-    li + li {
-      margin-block-start: 0.25rem;
+    summary {
+      display: block;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
     }
 
     a {
@@ -40,8 +46,7 @@ main.learn {
       color: inherit;
       text-decoration: none;
       border-radius: 0.25rem;
-      margin-block: -0.25rem;
-      margin-inline: calc(-1 * var(--line-indent)) 1rem;
+      margin-inline: 0 1rem;
       padding: 0.25rem;
       padding-inline-start: calc(var(--line-width) + var(--line-gap));
 
@@ -74,9 +79,6 @@ main.learn {
 
     ol ol {
       --line-indent: var(--line-step);
-
-      margin-block-start: 0.25rem;
-      margin-inline-start: var(--line-step);
     }
 
     ol ol ol {
