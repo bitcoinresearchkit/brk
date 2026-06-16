@@ -1,0 +1,38 @@
+main.wallets {
+  .wallets__results {
+    display: grid;
+    gap: 1rem;
+    overflow-x: auto;
+  }
+
+  .wallets__table {
+    width: 100%;
+    min-width: 44rem;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+
+    th,
+    td {
+      padding: 0.75rem;
+      border-bottom: 1px solid color-mix(in oklch, var(--gray) 22%, transparent);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--gray);
+      font-size: var(--font-size-xs);
+      font-weight: 400;
+      line-height: var(--line-height-xs);
+      text-transform: uppercase;
+    }
+
+    code {
+      overflow-wrap: anywhere;
+      color: var(--white);
+      font-family: inherit;
+      font-size: inherit;
+    }
+  }
+}

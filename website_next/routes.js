@@ -2,6 +2,7 @@ import { createBuildPage } from "./build/index.js";
 import { createExplorePage } from "./explore/index.js";
 import { createHomePage } from "./home/index.js";
 import { createLearnPage } from "./learn/index.js";
+import { createWalletsPage } from "./wallets/index.js";
 
 /** @type {Record<string, () => HTMLElement>} */
 const routes = {
@@ -9,6 +10,7 @@ const routes = {
   "/explore": createExplorePage,
   "/learn": createLearnPage,
   "/build": createBuildPage,
+  "/wallets": createWalletsPage,
 };
 
 /** @param {string} pathname */

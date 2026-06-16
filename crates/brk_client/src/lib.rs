@@ -9538,7 +9538,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.3";
+    pub const VERSION: &'static str = "v0.3.4";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -9864,6 +9864,15 @@ impl BrkClient {
         let query_str = if query.is_empty() { String::new() } else { format!("?{}", query.join("&")) };
         let path = format!("/api/v1/historical-price{}", query_str);
         self.base.get_json(&path)
+    }
+
+    /// Address hash-prefix matches
+    ///
+    /// Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+    ///
+    /// Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
+    pub fn get_address_hash_prefix_matches(&self, addr_type: OutputType, prefix: &str) -> Result<AddrHashPrefixMatches> {
+        self.base.get_json(&format!("/api/address/hash-prefix/{addr_type}/{prefix}"))
     }
 
     /// Address information

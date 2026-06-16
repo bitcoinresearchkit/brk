@@ -1,0 +1,58 @@
+main.wallets {
+  --offset: 4rem;
+  --content-width: 72rem;
+  --control-height: 2.75rem;
+
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+  width: min(100%, var(--content-width));
+  margin-inline: auto;
+  padding: var(--offset) var(--page-x);
+  scroll-padding-top: var(--offset);
+
+  &[data-wallets-page-locked] {
+    min-height: 100dvh;
+    align-content: center;
+  }
+
+  .wallets__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .wallets__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: end;
+  }
+
+  .wallets__content {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .wallets__status {
+    min-height: var(--line-height-sm);
+    margin: 0;
+    color: var(--gray);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__header {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .wallets__actions {
+      justify-content: start;
+    }
+  }
+}

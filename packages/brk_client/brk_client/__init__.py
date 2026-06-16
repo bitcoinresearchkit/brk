@@ -298,6 +298,16 @@ class AddrChainStats(TypedDict):
     type_index: TypeIndex
     realized_price: Dollars
 
+class AddrHashPrefixMatches(TypedDict):
+    addr_type: OutputType
+    prefix: str
+    truncated: bool
+    addresses: List[Addr]
+
+class AddrHashPrefixParam(TypedDict):
+    addr_type: OutputType
+    prefix: str
+
 class AddrMempoolStats(TypedDict):
     """
     Address statistics in the mempool (unconfirmed transactions only)
@@ -8435,6 +8445,14 @@ class BrkClient(BrkClientBase):
         query = '&'.join(params)
         path = f'/api/v1/historical-price{"?" + query if query else ""}'
         return self.get_json(path)
+
+    def get_address_hash_prefix_matches(self, addr_type: OutputType, prefix: str) -> AddrHashPrefixMatches:
+        """Address hash-prefix matches.
+
+        Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+
+        Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`"""
+        return self.get_json(f'/api/address/hash-prefix/{addr_type}/{prefix}')
 
     def get_address(self, address: Addr) -> AddrStats:
         """Address information.

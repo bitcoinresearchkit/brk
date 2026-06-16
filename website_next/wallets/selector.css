@@ -1,0 +1,56 @@
+main.wallets {
+  .wallets__selector {
+    min-width: 0;
+  }
+
+  .wallets__wallet-list {
+    display: flex;
+    gap: 1rem;
+    min-width: 0;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: var(--page-x);
+    scroll-snap-type: x proximity;
+  }
+
+  .wallets__wallet-button {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    border: 0;
+    padding: 0;
+    color: var(--white);
+    background: transparent;
+    font-family: var(--font-serif);
+    font-size: 4rem;
+    font-weight: 400;
+    line-height: 1;
+    opacity: 0.48;
+    cursor: pointer;
+  }
+
+  .wallets__wallet-button[aria-pressed="true"] {
+    opacity: 1;
+  }
+
+  .wallets__wallet-button:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 56rem) {
+  main.wallets {
+    .wallets__wallet-button {
+      font-size: 3rem;
+    }
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__wallet-button {
+      font-size: 2.5rem;
+    }
+  }
+}

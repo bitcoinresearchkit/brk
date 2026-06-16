@@ -1,4 +1,5 @@
 mod addr_after_txid_param;
+mod addr_hash_prefix_param;
 mod addr_param;
 mod block_count_param;
 mod blockhash_param;
@@ -20,6 +21,7 @@ mod urpd_params;
 mod validate_addr_param;
 
 pub use addr_after_txid_param::*;
+pub use addr_hash_prefix_param::*;
 pub use addr_param::*;
 pub use block_count_param::*;
 pub use blockhash_param::*;

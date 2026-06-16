@@ -7,6 +7,12 @@ use super::AddrBytes;
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash)]
 pub struct AddrHash(u64);
 
+impl AddrHash {
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+}
+
 impl From<&AddrBytes> for AddrHash {
     #[inline]
     fn from(addr_bytes: &AddrBytes) -> Self {

@@ -30,6 +30,18 @@
  * @property {Dollars} realizedPrice - Realized price (average cost basis) in USD
  */
 /**
+ * @typedef {Object} AddrHashPrefixMatches
+ * @property {OutputType} addrType
+ * @property {string} prefix
+ * @property {boolean} truncated
+ * @property {Addr[]} addresses
+ */
+/**
+ * @typedef {Object} AddrHashPrefixParam
+ * @property {OutputType} addrType
+ * @property {string} prefix
+ */
+/**
  * Address statistics in the mempool (unconfirmed transactions only)
  *
  * Based on mempool.space's format.
@@ -11473,6 +11485,23 @@ class BrkClient extends BrkClientBase {
     if (timestamp !== undefined) params.set('timestamp', String(timestamp));
     const query = params.toString();
     const path = `/api/v1/historical-price${query ? '?' + query : ''}`;
+    return this.getJson(path, { signal, onValue, cache });
+  }
+
+  /**
+   * Address hash-prefix matches
+   *
+   * Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+   *
+   * Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
+   *
+   * @param {OutputType} addr_type
+   * @param {string} prefix
+   * @param {{ signal?: AbortSignal, onValue?: (value: AddrHashPrefixMatches) => void, cache?: boolean }} [options]
+   * @returns {Promise<AddrHashPrefixMatches>}
+   */
+  async getAddressHashPrefixMatches(addr_type, prefix, { signal, onValue, cache } = {}) {
+    const path = `/api/address/hash-prefix/${addr_type}/${prefix}`;
     return this.getJson(path, { signal, onValue, cache });
   }
 

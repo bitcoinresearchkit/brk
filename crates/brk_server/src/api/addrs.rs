@@ -3,12 +3,14 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{AddrStats, AddrValidation, Transaction, Utxo, Version};
+use brk_types::{
+    AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version,
+};
 
 use crate::{
     AppState, CacheStrategy,
     extended::TransformResponseExtended,
-    params::{AddrAfterTxidParam, AddrParam, Empty, ValidateAddrParam},
+    params::{AddrAfterTxidParam, AddrHashPrefixParam, AddrParam, Empty, ValidateAddrParam},
 };
 
 /// Esplora `/txs` and `/txs/chain` page sizes. Wire-protocol constants from
@@ -26,6 +28,29 @@ pub trait AddrRoutes {
 impl AddrRoutes for ApiRouter<AppState> {
     fn add_addr_routes(self) -> Self {
         self.api_route(
+            "/api/address/hash-prefix/{addr_type}/{prefix}",
+            get_with(async |
+                uri: Uri,
+                headers: HeaderMap,
+                Path(path): Path<AddrHashPrefixParam>,
+                _: Empty,
+                State(state): State<AppState>
+            | {
+                state.respond_json(&headers, CacheStrategy::Tip, &uri, move |q| {
+                    q.addr_hash_prefix_matches(path.addr_type, &path.prefix)
+                }).await
+            }, |op| op
+                .id("get_address_hash_prefix_matches")
+                .addrs_tag()
+                .summary("Address hash-prefix matches")
+                .description("Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.")
+                .json_response::<AddrHashPrefixMatches>()
+                .not_modified()
+                .bad_request()
+                .server_error()
+            ),
+        )
+        .api_route(
             "/api/address/{address}",
             get_with(async |
                 uri: Uri,
