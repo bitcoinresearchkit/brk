@@ -1,0 +1,63 @@
+main.wallets {
+  .wallets__setup {
+    display: grid;
+    gap: 1rem;
+    place-content: center;
+    max-width: 36rem;
+    min-height: 16rem;
+    margin-inline: auto;
+    text-align: center;
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-serif);
+      font-size: 5rem;
+      font-weight: 400;
+      line-height: 0.9;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .wallets__setup-description {
+    display: grid;
+    gap: 0.625rem;
+    color: var(--gray);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+  }
+
+  .wallets__setup-form {
+    display: grid;
+    grid-template-columns: minmax(12rem, 18rem) auto;
+    gap: 0.75rem;
+    align-items: end;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 56rem) {
+  main.wallets {
+    .wallets__setup {
+      h1 {
+        font-size: 4rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__setup {
+      h1 {
+        font-size: 3rem;
+      }
+    }
+
+    .wallets__setup-form {
+      grid-template-columns: 1fr;
+    }
+  }
+}

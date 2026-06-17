@@ -1,0 +1,54 @@
+main.wallets {
+  .wallets__history-button {
+    height: 2rem;
+    padding: 0 0.625rem;
+    background: transparent;
+  }
+
+  .wallets__history-button:disabled {
+    color: var(--gray);
+    background: transparent;
+    cursor: progress;
+  }
+
+  .wallets__history {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.25rem 0 0.75rem;
+  }
+
+  .wallets__history-message {
+    margin: 0;
+    color: var(--gray);
+  }
+
+  .wallets__history-list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: grid;
+      grid-template-columns:
+        minmax(5.5rem, 0.7fr)
+        minmax(4.75rem, 0.6fr)
+        minmax(8rem, 0.8fr)
+        minmax(7.5rem, 0.8fr)
+        minmax(10rem, 1fr);
+      gap: 0.75rem 1rem;
+      align-items: baseline;
+    }
+
+    strong {
+      color: var(--white);
+      white-space: nowrap;
+    }
+
+    span {
+      color: var(--gray);
+      white-space: nowrap;
+    }
+  }
+}

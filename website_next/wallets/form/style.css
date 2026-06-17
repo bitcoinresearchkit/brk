@@ -1,0 +1,15 @@
+main.wallets {
+  .wallets__field {
+    display: grid;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .wallets__label {
+    color: var(--gray);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-xs);
+    text-transform: uppercase;
+  }
+
+}

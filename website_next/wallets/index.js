@@ -1,254 +1,200 @@
 import { brk } from "../utils/client.js";
-import { createGroupedAddress } from "./address-view.js";
-import { renderWalletAddresses } from "./addresses-view.js";
+import { createGroupedAddress } from "./wallet/address/index.js";
 import {
-  createEmptyWalletView,
-  createLockedWalletView,
-  createSetupWalletView,
-  createUnlockedWalletView,
-} from "./content-view.js";
-import {
-  createElement,
-  setBusy,
   setStatus,
+  withBusy,
 } from "./dom.js";
+import { createEmpty } from "./empty/index.js";
 import { getErrorMessage } from "./errors.js";
+import { createAddForm } from "./add/index.js";
+import { createLayout } from "./layout/index.js";
+import { createLock } from "./lock/index.js";
+import { redaction } from "./redaction/index.js";
+import { historyCache } from "./wallet/history/cache.js";
+import { inferAddressScript } from "./add/inference.js";
+import { readWalletSourceText } from "./add/source.js";
+import { scanStatus } from "./wallet/status.js";
+import { createSelector } from "./selector/index.js";
+import { renderSettings } from "./wallet/settings/index.js";
+import { createSetup } from "./setup/index.js";
 import {
-  createAddWalletForm,
-} from "./import-view.js";
-import {
-  syncPrivacyButton,
-  togglePrivateValues,
-} from "./privacy-view.js";
-import { fetchAddressHistory } from "./privacy/address-history.js";
-import { renderReceiveButton } from "./receive-view.js";
-import { inferAddressScript } from "./script-inference.js";
-import { readWalletSourceText } from "./wallet-source.js";
-import {
-  addWallet,
-  createWalletVault,
-  hasStoredWallets,
-  loadWallets,
-  resetWalletVault,
-  updateWalletScript,
-} from "./storage/wallets.js";
-import {
-  createScanPendingMessage,
-  scanWalletAddresses,
-} from "./scan.js";
-import {
-  initWalletSelector,
-  renderWalletSelector,
-} from "./selector-view.js";
-import { renderWalletSettings } from "./settings-view.js";
-import { renderWalletSummary } from "./summary-view.js";
+  createWalletPanel,
+  renderWalletPanel,
+} from "./wallet/index.js";
+import { createVault } from "./vault/index.js";
 
 /**
- * @typedef {import("./xpub/address.js").AddressScript} AddressScript
- * @typedef {import("./scan.js").WalletAddress} WalletAddress
- * @typedef {import("./scan.js").WalletScan} WalletScan
- * @typedef {import("./storage/wallets.js").StoredWallet} StoredWallet
+ * @typedef {import("./derive/address.js").AddressScript} AddressScript
+ * @typedef {import("./scan/index.js").WalletScan} WalletScan
+ * @typedef {import("./vault/index.js").StoredWallet} StoredWallet
+ * @typedef {import("./vault/index.js").WalletRuntime} WalletRuntime
  */
-
-/**
- * @param {WalletScan} scan
- * @param {HTMLElement} summary
- * @param {HTMLElement} settings
- * @param {HTMLElement} results
- */
-function renderWalletScan(scan, summary, settings, results) {
-  renderWalletSummary(summary, scan.addresses, scan.btcUsdPrice);
-  renderReceiveButton(settings, scan.receiveAddress);
-  renderWalletAddresses(results, scan.addresses, {
-    fetchHistory(address) {
-      return fetchAddressHistory(brk, address);
-    },
-    getErrorMessage,
-  });
-}
 
 export function createWalletsPage() {
-  const main = createElement("main", "wallets");
-  const header = createElement("header", "wallets__header");
-  const actions = createElement("div", "wallets__actions");
-  const privacyButton = document.createElement("button");
-  const lockButton = document.createElement("button");
-  const selector = createElement("section", "wallets__selector");
-  const walletList = createElement("div", "wallets__wallet-list");
-  const addButton = document.createElement("button");
-  const content = createElement("section", "wallets__content");
-  const addDialog = createElement("dialog", "wallets__dialog");
-  /** @type {StoredWallet[]} */
-  let wallets = [];
-  let selectedWalletId = "";
-  let pageLocked = hasStoredWallets();
-  let pagePassword = "";
-  /** @type {Map<string, { xpub: string, scan?: WalletScan, scanPromise?: Promise<WalletScan | undefined> }>} */
-  const walletStates = new Map();
-
-  privacyButton.type = "button";
-  syncPrivacyButton(privacyButton);
-  lockButton.type = "button";
-  lockButton.append("Lock");
-  addButton.type = "button";
-  addButton.append("Add watch-only wallet");
-  content.setAttribute("aria-live", "polite");
-  walletList.setAttribute("tabindex", "0");
-  walletList.setAttribute("aria-label", "Wallets");
-  header.append(selector, actions);
-  actions.append(addButton, privacyButton, lockButton);
-  selector.append(walletList);
-  initWalletSelector(walletList, {
-    getSelectedWalletId() {
-      return selectedWalletId;
+  const {
+    main,
+    header,
+    addButton,
+    privacyButton,
+    lockButton,
+    selector: selectorElement,
+    walletList,
+    content,
+    addDialog,
+  } = createLayout();
+  const vault = createVault();
+  const selector = createSelector(walletList, {
+    getSelectedId() {
+      return vault.selectedId;
     },
-    onSelect: selectWallet,
+    onSelect: select,
   });
 
-  /**
-   * @returns {StoredWallet | undefined}
-   */
-  function getSelectedWallet() {
-    return wallets.find((wallet) => wallet.id === selectedWalletId);
-  }
+  redaction.syncButton(privacyButton);
 
   /**
    * @param {string} walletId
    */
-  function selectWallet(walletId) {
-    selectedWalletId = walletId;
+  function select(walletId) {
+    vault.select(walletId);
     render();
   }
 
-  function lockPage() {
-    wallets = [];
-    selectedWalletId = "";
-    walletStates.clear();
-    pagePassword = "";
-    pageLocked = hasStoredWallets();
+  function lock() {
+    vault.lock();
     render();
   }
 
-  function resetWallets() {
-    resetWalletVault();
-    wallets = [];
-    selectedWalletId = "";
-    walletStates.clear();
-    pagePassword = "";
-    pageLocked = false;
+  function reset() {
+    vault.reset();
     render();
   }
 
-  function openAddDialog() {
-    addDialog.replaceChildren(createAddWalletForm({
+  function openAdd() {
+    addDialog.replaceChildren(createAddForm({
       onCancel() {
         addDialog.close();
       },
       onSubmit(submit) {
-        return addStoredWallet(submit);
+        return submitAdd(submit);
       },
     }));
     addDialog.showModal();
   }
 
   privacyButton.addEventListener("click", () => {
-    togglePrivateValues(main, privacyButton, createGroupedAddress);
+    redaction.toggle(main, privacyButton, createGroupedAddress);
   });
 
   lockButton.addEventListener("click", () => {
-    lockPage();
+    lock();
   });
 
   addButton.addEventListener("click", () => {
-    openAddDialog();
+    openAdd();
   });
 
-  function syncSelectedWallet() {
-    selectedWalletId = wallets.some((wallet) => wallet.id === selectedWalletId)
-      ? selectedWalletId
-      : wallets[0]?.id ?? "";
-  }
-
-  function renderLockedWallet() {
-    content.replaceChildren(createLockedWalletView({
+  function renderLocked() {
+    content.replaceChildren(createLock({
       onUnlock(password, button, status) {
-        return unlockWallet(password, button, status);
+        return unlock(password, button, status);
       },
       onReset() {
-        resetWallets();
+        reset();
       },
     }));
   }
 
-  function renderSetupWallet() {
-    content.replaceChildren(createSetupWalletView({
+  function renderSetup() {
+    content.replaceChildren(createSetup({
       onCreate(password, button, status) {
-        return setupWallet(password, button, status);
+        return setup(password, button, status);
       },
     }));
   }
 
   /**
    * @param {StoredWallet} wallet
-   * @param {{ xpub: string, scan?: WalletScan, scanPromise?: Promise<WalletScan | undefined> }} state
+   * @param {WalletRuntime} runtime
    */
-  function renderUnlockedWallet(wallet, state) {
-    const view = createUnlockedWalletView();
+  function renderUnlocked(wallet, runtime) {
+    const panel = createWalletPanel();
 
-    content.replaceChildren(...view.nodes);
-    renderWalletSettings(view.settings, wallet, {
+    content.replaceChildren(...panel.nodes);
+    renderSettings(panel.settings, wallet, {
       onScriptChange(script, select, status) {
-        return updateSelectedWalletScript(wallet, state, script, select, status);
+        return updateScript(wallet, script, select, status);
       },
     });
 
-    if (state.scan) {
-      renderWalletScan(state.scan, view.summary, view.settings, view.results);
-      setStatus(view.status, "Ready");
+    if (runtime.scan) {
+      renderWalletData(runtime.scan, panel);
+      setStatus(panel.status, "Ready");
       return;
     }
 
-    if (!state.scanPromise) {
-      state.scanPromise = scanWalletAddresses({
-        client: brk,
-        xpub: state.xpub,
-        start: 0,
-        script: wallet.script,
-        status: view.status,
-      });
-    } else {
-      setStatus(view.status, createScanPendingMessage());
-    }
+    scanStatus.setPending(panel.status);
+    void runtime.load({
+      client: brk,
+      script: wallet.script,
+      onProgress(progress) {
+        scanStatus.setProgress(panel.status, progress);
+      },
+    }).then((scan) => {
+      if (!isCurrentPanel(wallet, runtime, panel)) return;
 
-    void state.scanPromise.then((scan) => {
-      if (!scan || walletStates.get(wallet.id) !== state) return;
-
-      state.scan = scan;
-
-      if (pageLocked || selectedWalletId !== wallet.id || !view.results.isConnected) {
-        return;
+      renderWalletData(scan, panel);
+      setStatus(panel.status, "Ready");
+    }, (error) => {
+      if (isCurrentPanel(wallet, runtime, panel)) {
+        setStatus(panel.status, getErrorMessage(error));
       }
+    });
+  }
 
-      renderWalletScan(scan, view.summary, view.settings, view.results);
-      setStatus(view.status, "Ready");
+  /**
+   * @param {StoredWallet} wallet
+   * @param {WalletRuntime} runtime
+   * @param {ReturnType<typeof createWalletPanel>} panel
+   */
+  function isCurrentPanel(wallet, runtime, panel) {
+    return (
+      vault.isCurrent(wallet, runtime) &&
+      !vault.isLocked() &&
+      vault.selectedId === wallet.id &&
+      panel.results.isConnected
+    );
+  }
+
+  /**
+   * @param {WalletScan} scan
+   * @param {ReturnType<typeof createWalletPanel>} panel
+   */
+  function renderWalletData(scan, panel) {
+    renderWalletPanel(scan, panel, {
+      fetchHistory(address) {
+        return historyCache.load(brk, address);
+      },
+      getErrorMessage,
     });
   }
 
   /**
    * @param {string} password
+   * @param {HTMLButtonElement} button
+   * @param {HTMLElement} status
    */
-  async function unlockPageWallets(password) {
-    wallets = await loadWallets(password);
-    selectedWalletId = wallets.some((wallet) => wallet.id === selectedWalletId)
-      ? selectedWalletId
-      : wallets[0]?.id ?? "";
+  async function unlock(password, button, status) {
+    await withBusy(button, "Unlock", "Unlocking", async () => {
+      setStatus(status, "");
 
-    walletStates.clear();
-    pagePassword = password;
-
-    for (const wallet of wallets) {
-      walletStates.set(wallet.id, { xpub: wallet.xpub });
-    }
+      try {
+        await vault.unlock(password);
+        render();
+      } catch {
+        setStatus(status, "Invalid password");
+      }
+    });
   }
 
   /**
@@ -256,64 +202,38 @@ export function createWalletsPage() {
    * @param {HTMLButtonElement} button
    * @param {HTMLElement} status
    */
-  async function unlockWallet(password, button, status) {
-    setBusy(button, true, "Unlock", "Unlocking");
-    setStatus(status, "");
+  async function setup(password, button, status) {
+    await withBusy(button, "Continue", "Creating", async () => {
+      setStatus(status, "");
 
-    try {
-      await unlockPageWallets(password);
-      pageLocked = false;
-      render();
-    } catch {
-      setStatus(status, "Invalid password");
-    } finally {
-      setBusy(button, false, "Unlock", "Unlocking");
-    }
-  }
-
-  /**
-   * @param {string} password
-   * @param {HTMLButtonElement} button
-   * @param {HTMLElement} status
-   */
-  async function setupWallet(password, button, status) {
-    setBusy(button, true, "Continue", "Creating");
-    setStatus(status, "");
-
-    try {
-      await createWalletVault(password);
-      wallets = [];
-      selectedWalletId = "";
-      walletStates.clear();
-      pagePassword = password;
-      pageLocked = false;
-      render();
-    } catch (error) {
-      setStatus(status, getErrorMessage(error));
-    } finally {
-      setBusy(button, false, "Continue", "Creating");
-    }
+      try {
+        await vault.setup(password);
+        render();
+      } catch (error) {
+        setStatus(status, getErrorMessage(error));
+      }
+    });
   }
 
   /**
    * @param {StoredWallet} wallet
-   * @param {{ xpub: string, scan?: WalletScan, scanPromise?: Promise<WalletScan | undefined> }} state
    * @param {AddressScript} script
    * @param {HTMLSelectElement} select
    * @param {HTMLElement} status
    */
-  async function updateSelectedWalletScript(wallet, state, script, select, status) {
+  async function updateScript(
+    wallet,
+    script,
+    select,
+    status,
+  ) {
     if (script === wallet.script) return;
 
     select.disabled = true;
     setStatus(status, "Saving");
 
     try {
-      wallets = await updateWalletScript(wallets, {
-        walletId: wallet.id,
-        script,
-      }, pagePassword);
-      walletStates.set(wallet.id, { xpub: state.xpub });
+      await vault.updateWalletScript(wallet, script);
       render();
     } catch (error) {
       select.value = wallet.script;
@@ -323,104 +243,88 @@ export function createWalletsPage() {
     }
   }
 
-  function renderSelectedWallet() {
-    const hasVault = hasStoredWallets();
-    const setup = !hasVault && !pagePassword;
-    const locked = pageLocked && hasVault;
-    const wallet = getSelectedWallet();
-    const state = wallet ? walletStates.get(wallet.id) : undefined;
+  function renderContent() {
+    const needsSetup = vault.needsSetup();
+    const locked = vault.isLocked();
+    const current = vault.current();
+    const empty = !needsSetup && !locked && !current;
 
-    main.toggleAttribute("data-wallets-page-locked", locked || setup);
-    header.hidden = locked || setup;
-    selector.hidden = locked || setup;
-    lockButton.hidden = locked || setup || !pagePassword;
+    main.toggleAttribute("data-wallets-page-locked", locked || needsSetup);
+    main.toggleAttribute("data-wallets-page-empty", empty);
+    header.hidden = locked || needsSetup || empty;
+    selectorElement.hidden = locked || needsSetup || empty;
+    lockButton.hidden = locked || needsSetup || !vault.hasPassword;
 
-    if (setup) {
-      renderSetupWallet();
+    if (needsSetup) {
+      renderSetup();
       return;
     }
 
     if (locked) {
-      renderLockedWallet();
+      renderLocked();
       return;
     }
 
-    if (!wallet) {
-      content.replaceChildren(createEmptyWalletView({
+    if (!current) {
+      content.replaceChildren(createEmpty({
         onAdd() {
-          openAddDialog();
+          openAdd();
         },
       }));
       return;
     }
 
-    if (state) {
-      renderUnlockedWallet(wallet, state);
-      return;
-    }
-
-    renderLockedWallet();
+    renderUnlocked(current.wallet, current.runtime);
   }
 
   function render() {
-    syncSelectedWallet();
-    if (pageLocked && hasStoredWallets()) {
-      walletList.replaceChildren();
+    if (vault.isLocked()) {
+      selector.clear();
     } else {
-      renderWalletSelector(walletList, {
-        wallets,
-        selectedWalletId,
-        onSelect: selectWallet,
-      });
+      selector.render(vault.wallets);
     }
-    renderSelectedWallet();
+    renderContent();
   }
 
   /**
    * @param {Object} options
    * @param {HTMLInputElement} options.name
-   * @param {HTMLInputElement} options.xpub
+   * @param {HTMLInputElement} options.source
    * @param {HTMLButtonElement} options.submit
    * @param {HTMLElement} options.status
    * @param {HTMLFormElement} options.form
    */
-  async function addStoredWallet({
+  async function submitAdd({
     name,
-    xpub,
+    source,
     submit,
     status,
     form,
   }) {
-    setBusy(submit, true, "Add", "Adding");
-    setStatus(status, "Checking address type");
+    await withBusy(submit, "Add", "Adding", async () => {
+      setStatus(status, "Checking address type");
 
-    try {
-      const value = readWalletSourceText(xpub.value);
-      const script = await inferAddressScript(brk, value);
+      try {
+        const value = readWalletSourceText(source.value);
+        const script = await inferAddressScript(brk, value);
 
-      setStatus(status, "Saving");
+        setStatus(status, "Saving");
 
-      const added = await addWallet(wallets, {
-        name: name.value,
-        xpub: value,
-        script,
-      }, pagePassword);
+        await vault.addWallet({
+          name: name.value,
+          source: value,
+          script,
+        });
 
-      form.reset();
-      addDialog.close();
-      wallets = added.wallets;
-      selectedWalletId = added.wallet.id;
-      pageLocked = false;
-      walletStates.set(added.wallet.id, { xpub: added.wallet.xpub });
-      render();
-    } catch (error) {
-      setStatus(status, getErrorMessage(error));
-    } finally {
-      setBusy(submit, false, "Add", "Adding");
-    }
+        form.reset();
+        addDialog.close();
+        render();
+      } catch (error) {
+        setStatus(status, getErrorMessage(error));
+      }
+    });
   }
 
-  main.append(header, selector, content, addDialog);
   render();
 
   return main;

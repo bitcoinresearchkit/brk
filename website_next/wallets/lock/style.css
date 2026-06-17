@@ -1,0 +1,36 @@
+main.wallets {
+  .wallets__unlock {
+    display: grid;
+    gap: 1rem;
+    place-content: center;
+    min-height: 16rem;
+    text-align: center;
+
+    h2,
+    p {
+      margin: 0;
+    }
+  }
+
+  .wallets__unlock-form {
+    display: grid;
+    grid-template-columns: minmax(12rem, 18rem) auto;
+    gap: 0.75rem;
+    align-items: end;
+    justify-content: center;
+  }
+
+  .wallets__reset {
+    justify-self: center;
+    color: var(--gray);
+    background: transparent;
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__unlock-form {
+      grid-template-columns: 1fr;
+    }
+  }
+}

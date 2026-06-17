@@ -1,0 +1,32 @@
+main.wallets {
+  .wallets__header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: end;
+  }
+
+  .wallets__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: end;
+  }
+
+  .wallets__content {
+    display: grid;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__header {
+      justify-content: start;
+    }
+
+    .wallets__actions {
+      justify-content: start;
+    }
+  }
+}

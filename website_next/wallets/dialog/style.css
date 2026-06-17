@@ -1,0 +1,19 @@
+main.wallets {
+  .wallets__dialog {
+    width: min(100% - 2rem, 30rem);
+    border: 1px solid color-mix(in oklch, var(--gray) 36%, transparent);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    color: var(--white);
+    background: var(--black);
+
+    h2 {
+      margin: 0;
+    }
+  }
+
+  .wallets__dialog::backdrop {
+    background: color-mix(in oklch, var(--black) 72%, transparent);
+  }
+
+}

@@ -1,0 +1,14 @@
+main.wallets {
+  .wallets__empty {
+    display: grid;
+    gap: 1rem;
+    place-content: center;
+    min-height: 16rem;
+    text-align: center;
+
+    h2,
+    p {
+      margin: 0;
+    }
+  }
+}

@@ -12,20 +12,6 @@ export function createElement(tag, className) {
 }
 
 /**
- * @param {string} label
- * @param {HTMLInputElement | HTMLSelectElement} control
- */
-export function createField(label, control) {
-  const element = createElement("label", "wallets__field");
-  const text = createElement("span", "wallets__label");
-
-  text.append(label);
-  element.append(text, control);
-
-  return element;
-}
-
-/**
  * @param {HTMLButtonElement} button
  * @param {boolean} busy
  * @param {string} idleLabel
@@ -35,6 +21,22 @@ export function setBusy(button, busy, idleLabel, busyLabel) {
   button.disabled = busy;
   button.ariaBusy = busy ? "true" : "false";
   button.textContent = busy ? busyLabel : idleLabel;
+}
+
+/**
+ * @param {HTMLButtonElement} button
+ * @param {string} idleLabel
+ * @param {string} busyLabel
+ * @param {() => Promise<void>} task
+ */
+export async function withBusy(button, idleLabel, busyLabel, task) {
+  setBusy(button, true, idleLabel, busyLabel);
+
+  try {
+    await task();
+  } finally {
+    setBusy(button, false, idleLabel, busyLabel);
+  }
 }
 
 /**
