@@ -1,0 +1,141 @@
+main.wallets {
+  .wallets__results {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .wallets__activity {
+    display: grid;
+    gap: 1.25rem;
+
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h2 {
+      color: var(--white);
+      font-size: var(--font-size-lg);
+      font-weight: 400;
+      line-height: var(--line-height-lg);
+    }
+
+    h3 {
+      color: var(--gray);
+      font-size: var(--font-size-xs);
+      font-weight: 400;
+      line-height: var(--line-height-xs);
+      text-transform: uppercase;
+    }
+  }
+
+  .wallets__tx-group {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .wallets__tx-list {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .wallets__tx {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.25rem 1rem;
+    align-items: center;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid color-mix(in oklch, var(--gray) 18%, transparent);
+  }
+
+  .wallets__tx-main {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    justify-content: space-between;
+    min-width: 0;
+
+    strong {
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    span {
+      color: var(--white);
+      white-space: nowrap;
+    }
+
+    span[data-wallets-tx-amount="positive"] {
+      color: var(--green);
+    }
+
+    span[data-wallets-tx-amount="negative"] {
+      color: var(--red);
+    }
+  }
+
+  .wallets__tx-detail {
+    grid-column: 1;
+    min-width: 0;
+    color: var(--gray);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+
+    code {
+      color: inherit;
+      font-family: inherit;
+    }
+  }
+
+  .wallets__tx button {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    height: 2rem;
+    padding-inline: 0.625rem;
+    background: transparent;
+  }
+
+  .wallets__tx-dialog {
+    width: min(100% - 2rem, 42rem);
+  }
+
+  .wallets__tx-details {
+    display: grid;
+    gap: 1rem;
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    code {
+      overflow-wrap: anywhere;
+      color: var(--white);
+      font-family: inherit;
+    }
+  }
+
+  .wallets__tx-addresses {
+    display: grid;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 34rem) {
+  main.wallets {
+    .wallets__tx {
+      grid-template-columns: 1fr;
+    }
+
+    .wallets__tx button {
+      grid-column: 1;
+      grid-row: auto;
+      justify-self: start;
+    }
+  }
+}

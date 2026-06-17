@@ -10,7 +10,6 @@ import { createAddForm } from "./add/index.js";
 import { createLayout } from "./layout/index.js";
 import { createLock } from "./lock/index.js";
 import { redaction } from "./redaction/index.js";
-import { historyCache } from "./wallet/history/cache.js";
 import { inferAddressScript } from "./add/inference.js";
 import { readWalletSourceText } from "./add/source.js";
 import { scanStatus } from "./wallet/status.js";
@@ -171,12 +170,7 @@ export function createWalletsPage() {
    * @param {ReturnType<typeof createWalletPanel>} panel
    */
   function renderWalletData(scan, panel) {
-    renderWalletPanel(scan, panel, {
-      fetchHistory(address) {
-        return historyCache.load(brk, address);
-      },
-      getErrorMessage,
-    });
+    renderWalletPanel(scan, panel, brk);
   }
 
   /**

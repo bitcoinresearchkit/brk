@@ -99,6 +99,6 @@ async function load(client, address) {
   };
 }
 
-export const historyCache = /** @type {const} */ ({
+export const addressHistory = /** @type {const} */ ({
   load,
 });

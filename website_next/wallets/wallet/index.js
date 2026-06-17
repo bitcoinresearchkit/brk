@@ -1,11 +1,12 @@
 import { createElement } from "../dom.js";
 import { renderReceiveButton } from "./receive/index.js";
 import { renderWalletSummary } from "./summary/index.js";
-import { createAddressTable } from "./table/index.js";
+import { transactionCache } from "./transactions/cache.js";
+import { renderTransactions } from "./transactions/index.js";
 
 /**
  * @typedef {import("../scan/index.js").WalletScan} WalletScan
- * @typedef {Parameters<typeof createAddressTable>[1]} WalletRenderOptions
+ * @typedef {Parameters<typeof transactionCache.load>[0]} TransactionClient
  *
  * @typedef {Object} WalletPanel
  * @property {HTMLElement} settings
@@ -41,10 +42,19 @@ export function createWalletPanel() {
 /**
  * @param {WalletScan} scan
  * @param {WalletPanel} panel
- * @param {WalletRenderOptions} options
+ * @param {TransactionClient} client
  */
-export function renderWalletPanel(scan, panel, options) {
+export function renderWalletPanel(scan, panel, client) {
   renderWalletSummary(panel.summary, scan.addresses, scan.btcUsdPrice);
   renderReceiveButton(panel.settings, scan.receiveAddress);
-  panel.results.replaceChildren(createAddressTable(scan.addresses, options));
+  panel.results.replaceChildren("Loading activity");
+  void transactionCache.load(client, scan.addresses).then((transactions) => {
+    if (panel.results.isConnected) {
+      renderTransactions(panel.results, transactions);
+    }
+  }, () => {
+    if (panel.results.isConnected) {
+      panel.results.replaceChildren("Activity unavailable");
+    }
+  });
 }
