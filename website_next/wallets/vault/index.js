@@ -4,7 +4,6 @@ import { createRuntime } from "./runtime.js";
 /**
  * @typedef {import("./storage.js").StoredWallet} StoredWallet
  * @typedef {import("./storage.js").AddWalletInput} AddWalletInput
- * @typedef {import("../derive/address.js").AddressScript} AddressScript
  * @typedef {ReturnType<typeof createRuntime>} WalletRuntime
  */
 
@@ -116,19 +115,6 @@ export function createVault() {
     runtimes.set(added.wallet.id, createRuntime(added.wallet.source));
   }
 
-  /**
-   * @param {StoredWallet} wallet
-   * @param {AddressScript} script
-   */
-  async function updateWalletScript(wallet, script) {
-    wallets = await vaultStorage.updateWalletScript(wallets, {
-      walletId: wallet.id,
-      script,
-    }, password);
-    runtimes.set(wallet.id, createRuntime(wallet.source));
-    syncSelected();
-  }
-
   return {
     get wallets() {
       return wallets;
@@ -153,6 +139,5 @@ export function createVault() {
     setup,
     unlock,
     addWallet,
-    updateWalletScript,
   };
 }

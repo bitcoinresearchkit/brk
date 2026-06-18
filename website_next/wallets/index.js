@@ -10,20 +10,19 @@ import { createAddForm } from "./add/index.js";
 import { createLayout } from "./layout/index.js";
 import { createLock } from "./lock/index.js";
 import { redaction } from "./redaction/index.js";
-import { inferAddressScript } from "./add/inference.js";
 import { readWalletSourceText } from "./add/source.js";
 import { scanStatus } from "./wallet/status.js";
 import { createSelector } from "./selector/index.js";
-import { renderSettings } from "./wallet/settings/index.js";
 import { createSetup } from "./setup/index.js";
 import {
   createWalletPanel,
   renderWalletPanel,
 } from "./wallet/index.js";
 import { createVault } from "./vault/index.js";
+import { generateAddressesFromWalletSource } from "./derive/index.js";
+import { syncBtcAmounts } from "./amount/index.js";
 
 /**
- * @typedef {import("./derive/address.js").AddressScript} AddressScript
  * @typedef {import("./scan/index.js").WalletScan} WalletScan
  * @typedef {import("./vault/index.js").StoredWallet} StoredWallet
  * @typedef {import("./vault/index.js").WalletRuntime} WalletRuntime
@@ -83,6 +82,7 @@ export function createWalletsPage() {
 
   privacyButton.addEventListener("click", () => {
     redaction.toggle(main, privacyButton, createGroupedAddress);
+    syncBtcAmounts(main);
   });
 
   lockButton.addEventListener("click", () => {
@@ -120,11 +120,6 @@ export function createWalletsPage() {
     const panel = createWalletPanel();
 
     content.replaceChildren(...panel.nodes);
-    renderSettings(panel.settings, wallet, {
-      onScriptChange(script, select, status) {
-        return updateScript(wallet, script, select, status);
-      },
-    });
 
     if (runtime.scan) {
       renderWalletData(runtime.scan, panel);
@@ -135,7 +130,6 @@ export function createWalletsPage() {
     scanStatus.setPending(panel.status);
     void runtime.load({
       client: brk,
-      script: wallet.script,
       onProgress(progress) {
         scanStatus.setProgress(panel.status, progress);
       },
@@ -209,34 +203,6 @@ export function createWalletsPage() {
     });
   }
 
-  /**
-   * @param {StoredWallet} wallet
-   * @param {AddressScript} script
-   * @param {HTMLSelectElement} select
-   * @param {HTMLElement} status
-   */
-  async function updateScript(
-    wallet,
-    script,
-    select,
-    status,
-  ) {
-    if (script === wallet.script) return;
-
-    select.disabled = true;
-    setStatus(status, "Saving");
-
-    try {
-      await vault.updateWalletScript(wallet, script);
-      render();
-    } catch (error) {
-      select.value = wallet.script;
-      setStatus(status, getErrorMessage(error));
-    } finally {
-      select.disabled = false;
-    }
-  }
-
   function renderContent() {
     const needsSetup = vault.needsSetup();
     const locked = vault.isLocked();
@@ -296,18 +262,18 @@ export function createWalletsPage() {
     form,
   }) {
     await withBusy(submit, "Add", "Adding", async () => {
-      setStatus(status, "Checking address type");
+      setStatus(status, "Checking wallet");
 
       try {
         const value = readWalletSourceText(source.value);
-        const script = await inferAddressScript(brk, value);
+
+        await generateAddressesFromWalletSource(value, { count: 1 });
 
         setStatus(status, "Saving");
 
         await vault.addWallet({
           name: name.value,
           source: value,
-          script,
         });
 
         form.reset();

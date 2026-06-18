@@ -16,7 +16,7 @@ main.wallets {
     align-content: center;
   }
 
-  .wallets__status {
+  [role="status"] {
     min-height: var(--line-height-sm);
     margin: 0;
     color: var(--gray);
@@ -24,8 +24,11 @@ main.wallets {
     line-height: var(--line-height-sm);
   }
 
-  :is(input, select),
-  button:not(.wallets__wallet-button) {
+  [data-wallets-btc-muted] {
+    color: color-mix(in oklch, currentColor 45%, transparent);
+  }
+
+  :is(input, select, button) {
     min-width: 0;
     height: var(--control-height);
     border: 1px solid color-mix(in oklch, var(--gray) 45%, transparent);
@@ -37,11 +40,11 @@ main.wallets {
     line-height: 1;
   }
 
-  button:not(.wallets__wallet-button) {
+  button {
     cursor: pointer;
   }
 
-  :is(input, select, button:not(.wallets__wallet-button)):focus-visible {
+  :is(input, select, button):focus-visible {
     outline: 2px solid var(--orange);
     outline-offset: 2px;
   }
@@ -50,21 +53,7 @@ main.wallets {
     color: color-mix(in oklch, var(--gray) 70%, transparent);
   }
 
-  :is(
-    .wallets__actions,
-    .wallets__empty,
-    .wallets__setup-form,
-    .wallets__unlock-form
-  ) button,
-  .wallets__dialog-form button[type="submit"],
-  .wallets__receive-button,
-  .wallets__receive-actions button:first-child {
-    border-color: var(--orange);
-    color: var(--black);
-    background: var(--orange);
-  }
-
-  button:not(.wallets__wallet-button):disabled {
+  button:disabled {
     border-color: var(--gray);
     color: var(--black);
     background: var(--gray);

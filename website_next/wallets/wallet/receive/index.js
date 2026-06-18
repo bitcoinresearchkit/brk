@@ -46,7 +46,6 @@ function createReceiveQr(receiveAddress) {
   const image = document.createElement("img");
   const uri = `bitcoin:${receiveAddress.address}`;
 
-  image.className = "wallets__receive-qr";
   image.alt = `QR code for ${receiveAddress.address}`;
   image.src = createQrDataUrl(uri);
 
@@ -57,7 +56,7 @@ function createReceiveQr(receiveAddress) {
  * @param {ReceiveAddress} receiveAddress
  */
 function createReceiveAddress(receiveAddress) {
-  const element = createElement("div", "wallets__receive-address");
+  const element = document.createElement("div");
 
   element.append(createGroupedAddress(receiveAddress.address));
 
@@ -82,8 +81,8 @@ function openReceiveDialog(receiveAddress) {
     "dialog",
     "wallets__dialog wallets__receive-dialog",
   );
-  const content = createElement("div", "wallets__receive-card");
-  const actions = createElement("div", "wallets__receive-actions");
+  const content = document.createElement("div");
+  const actions = document.createElement("div");
   const copy = document.createElement("button");
   const close = document.createElement("button");
 
@@ -128,7 +127,6 @@ export function renderReceiveButton(element, receiveAddress) {
   const button = document.createElement("button");
 
   button.type = "button";
-  button.className = "wallets__receive-button";
   button.disabled = !receiveAddress;
   button.append("Receive");
   button.addEventListener("click", () => {

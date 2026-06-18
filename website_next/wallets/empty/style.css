@@ -6,9 +6,14 @@ main.wallets {
     min-height: 16rem;
     text-align: center;
 
-    h2,
     p {
       margin: 0;
+    }
+
+    > button {
+      border-color: var(--orange);
+      color: var(--black);
+      background: var(--orange);
     }
   }
 }

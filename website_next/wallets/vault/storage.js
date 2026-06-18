@@ -4,14 +4,12 @@ const STORAGE_KEY = "bitview.wallets.v3";
 
 /**
  * @typedef {import("./encryption.js").EncryptedSecret} EncryptedSecret
- * @typedef {import("../derive/address.js").AddressScript} AddressScript
  */
 
 /**
  * @typedef {Object} StoredWallet
  * @property {string} id
  * @property {string} name
- * @property {AddressScript} script
  * @property {string} source
  * @property {number} createdAt
  * @property {number} updatedAt
@@ -20,14 +18,7 @@ const STORAGE_KEY = "bitview.wallets.v3";
 /**
  * @typedef {Object} AddWalletInput
  * @property {string} name
- * @property {AddressScript} script
  * @property {string} source
- */
-
-/**
- * @typedef {Object} UpdateWalletScriptInput
- * @property {string} walletId
- * @property {AddressScript} script
  */
 
 /**
@@ -120,7 +111,6 @@ async function addWallet(wallets, input, pagePassword) {
   const wallet = {
     id: createWalletId(),
     name: input.name.trim(),
-    script: input.script,
     source: input.source.trim(),
     createdAt: time,
     updatedAt: time,
@@ -135,33 +125,10 @@ async function addWallet(wallets, input, pagePassword) {
   };
 }
 
-/**
- * @param {StoredWallet[]} wallets
- * @param {UpdateWalletScriptInput} input
- * @param {string} pagePassword
- */
-async function updateWalletScript(wallets, input, pagePassword) {
-  const time = now();
-  const nextWallets = wallets.map((wallet) => {
-    return wallet.id === input.walletId
-      ? {
-        ...wallet,
-        script: input.script,
-        updatedAt: time,
-      }
-      : wallet;
-  });
-
-  await writeWallets(nextWallets, pagePassword);
-
-  return nextWallets;
-}
-
 export const vaultStorage = /** @type {const} */ ({
   has,
   reset,
   setup,
   load,
   addWallet,
-  updateWalletScript,
 });

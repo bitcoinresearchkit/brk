@@ -1,12 +1,20 @@
 main.wallets {
-  .wallets__dialog-form {
-    display: grid;
-    gap: 0.75rem;
-  }
+  .wallets__dialog {
+    > form {
+      display: grid;
+      gap: 0.75rem;
 
-  .wallets__dialog-actions {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: end;
+      > div {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: end;
+      }
+
+      button[type="submit"] {
+        border-color: var(--orange);
+        color: var(--black);
+        background: var(--orange);
+      }
+    }
   }
 }

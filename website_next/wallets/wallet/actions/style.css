@@ -1,0 +1,26 @@
+main.wallets {
+  .wallets__wallet-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+    justify-content: end;
+
+    @media (max-width: 34rem) {
+      justify-content: start;
+    }
+
+    > button {
+      border-color: var(--orange);
+      color: var(--black);
+      background: var(--orange);
+
+      &:disabled {
+        border-color: color-mix(in oklch, var(--gray) 35%, transparent);
+        color: var(--gray);
+        background: transparent;
+        cursor: default;
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { createElement } from "../../dom.js";
-import { formatBtc } from "../../format.js";
+import { createBtcAmount } from "../../amount/index.js";
 import { redaction } from "../../redaction/index.js";
 import { createAddressCellContent } from "../address/index.js";
 
@@ -21,107 +21,82 @@ function formatTxid(txid) {
 }
 
 /**
- * @param {number} sats
- */
-function formatSignedBtc(sats) {
-  if (sats > 0) return `+${formatBtc(sats)}`;
-  if (sats < 0) return `-${formatBtc(Math.abs(sats))}`;
-
-  return formatBtc(sats);
-}
-
-/**
+ * @param {HTMLElement} element
  * @param {WalletTransaction} transaction
  */
-function getTransactionDetail(transaction) {
+function appendTransactionDetail(element, transaction) {
   if (transaction.type === "consolidation") {
-    return `${transaction.addresses.length} wallet addresses · fee only`;
+    element.append(
+      `${transaction.addresses.length} wallet addresses · fee only`,
+    );
+    return;
   }
 
   if (transaction.type === "send") {
-    return `to external wallet · fee ${formatBtc(transaction.fee)}`;
+    element.append(
+      "to external wallet · fee ",
+      createBtcAmount("span", transaction.fee),
+    );
+    return;
   }
 
-  return transaction.status;
+  element.append(transaction.status);
 }
 
 /**
  * @param {WalletTransaction} transaction
  */
 function createTransactionDetails(transaction) {
-  const dialog = createElement("dialog", "wallets__dialog wallets__tx-dialog");
-  const content = createElement("div", "wallets__tx-details");
-  const title = document.createElement("h2");
+  const content = document.createElement("div");
   const txid = document.createElement("code");
   const meta = document.createElement("p");
-  const list = createElement("div", "wallets__tx-addresses");
-  const close = document.createElement("button");
+  const list = document.createElement("div");
 
-  title.append(typeLabels[transaction.type]);
   redaction.setTitle(txid, transaction.txid);
   redaction.setValue(txid, transaction.txid);
   meta.append(
     transaction.status,
     " · ",
-    redaction.createValue("span", formatSignedBtc(transaction.amount), "fixed"),
+    createBtcAmount("span", transaction.amount, { signed: true }),
     " · fee ",
-    redaction.createValue("span", formatBtc(transaction.fee), "fixed"),
+    createBtcAmount("span", transaction.fee),
   );
   for (const address of transaction.addresses) {
     list.append(createAddressCellContent(address.walletAddress));
   }
-  close.type = "button";
-  close.append("Close");
-  content.append(title, txid, meta, list, close);
-  dialog.append(content);
-  close.addEventListener("click", () => {
-    dialog.close();
-  });
-  dialog.addEventListener("close", () => {
-    dialog.remove();
-  });
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) {
-      dialog.close();
-    }
-  });
+  content.append(txid, meta, list);
 
-  return dialog;
+  return content;
 }
 
 /**
  * @param {WalletTransaction} transaction
  */
 function createTransactionRow(transaction) {
-  const row = createElement("li", "wallets__tx");
-  const main = createElement("div", "wallets__tx-main");
+  const row = document.createElement("li");
+  const main = document.createElement("div");
   const label = document.createElement("strong");
-  const amount = redaction.createValue(
+  const amount = createBtcAmount(
     "span",
-    formatSignedBtc(transaction.amount),
-    "fixed",
+    transaction.amount,
+    { signed: true },
   );
-  const detail = createElement("p", "wallets__tx-detail");
+  const detail = document.createElement("p");
   const txid = document.createElement("code");
-  const more = document.createElement("button");
+  const details = document.createElement("details");
+  const summary = document.createElement("summary");
 
   label.append(typeLabels[transaction.type]);
   amount.dataset.walletsTxAmount =
     transaction.amount >= 0 ? "positive" : "negative";
   redaction.setTitle(txid, transaction.txid);
   redaction.setValue(txid, formatTxid(transaction.txid));
-  more.type = "button";
-  more.append("View more");
-  detail.append(getTransactionDetail(transaction), " · ", txid);
+  summary.append("Details");
+  appendTransactionDetail(detail, transaction);
+  detail.append(" · ", txid);
+  details.append(summary, createTransactionDetails(transaction));
   main.append(label, amount);
-  row.append(main, detail, more);
-  more.addEventListener("click", () => {
-    const dialog = createTransactionDetails(transaction);
-    const mainElement = document.querySelector("main.wallets") ?? document.body;
-
-    mainElement.append(dialog);
-    dialog.showModal();
-  });
+  row.append(main, detail, details);
 
   return row;
 }
@@ -164,11 +139,11 @@ export function renderTransactions(element, transactions) {
   }
 
   for (const [date, group] of groups) {
-    const section = createElement("section", "wallets__tx-group");
+    const section = document.createElement("section");
     const heading = document.createElement("h3");
-    const list = createElement("ol", "wallets__tx-list");
+    const list = document.createElement("ol");
 
-    heading.append(date);
+    heading.append(redaction.createValue("span", date, "fixed"));
     for (const transaction of group) {
       list.append(createTransactionRow(transaction));
     }

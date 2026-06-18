@@ -1,5 +1,5 @@
-import { createElement } from "../../dom.js";
-import { formatBtc, formatUsd } from "../../format.js";
+import { createBtcAmount } from "../../amount/index.js";
+import { formatUsd } from "../../format.js";
 import { redaction } from "../../redaction/index.js";
 
 /**
@@ -11,8 +11,8 @@ import { redaction } from "../../redaction/index.js";
  * @param {number} btcUsdPrice
  */
 function createBalanceSummary(balance, btcUsdPrice) {
-  const element = createElement("p", "wallets__balance");
-  const btc = redaction.createValue("strong", formatBtc(balance), "fixed");
+  const element = document.createElement("p");
+  const btc = createBtcAmount("strong", balance);
   const usd = redaction.createValue(
     "span",
     formatUsd((balance / 100_000_000) * btcUsdPrice),

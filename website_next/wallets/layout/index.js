@@ -18,14 +18,14 @@ import { createElement } from "../dom.js";
  */
 export function createLayout() {
   const main = createElement("main", "wallets");
-  const header = createElement("header", "wallets__header");
-  const actions = createElement("div", "wallets__actions");
+  const header = document.createElement("header");
+  const actions = document.createElement("div");
   const addButton = document.createElement("button");
   const privacyButton = document.createElement("button");
   const lockButton = document.createElement("button");
   const selector = createElement("section", "wallets__selector");
-  const walletList = createElement("div", "wallets__wallet-list");
-  const content = createElement("section", "wallets__content");
+  const walletList = document.createElement("div");
+  const content = document.createElement("section");
   const addDialog = createElement("dialog", "wallets__dialog");
 
   addButton.type = "button";

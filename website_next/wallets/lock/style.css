@@ -6,31 +6,53 @@ main.wallets {
     min-height: 16rem;
     text-align: center;
 
-    h2,
-    p {
+    > h1 {
       margin: 0;
+      font-size: 3rem;
+      font-weight: 400;
+      line-height: 1;
     }
-  }
 
-  .wallets__unlock-form {
-    display: grid;
-    grid-template-columns: minmax(12rem, 18rem) auto;
-    gap: 0.75rem;
-    align-items: end;
-    justify-content: center;
-  }
+    > form {
+      display: grid;
+      grid-template-columns: minmax(12rem, 18rem) auto;
+      gap: 0.75rem;
+      align-items: end;
+      justify-content: center;
 
-  .wallets__reset {
-    justify-self: center;
-    color: var(--gray);
-    background: transparent;
-  }
-}
+      @media (max-width: 34rem) {
+        grid-template-columns: 1fr;
+      }
 
-@media (max-width: 34rem) {
-  main.wallets {
-    .wallets__unlock-form {
-      grid-template-columns: 1fr;
+      > button {
+        border-color: var(--orange);
+        color: var(--black);
+        background: var(--orange);
+      }
+    }
+
+    > button {
+      position: relative;
+      isolation: isolate;
+      justify-self: center;
+      overflow: hidden;
+      color: var(--gray);
+      background: transparent;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: color-mix(in oklch, var(--red) 34%, transparent);
+        transform: scaleX(0);
+        transform-origin: left;
+      }
+
+      &[data-wallets-holding]::before {
+        transform: scaleX(1);
+        transition: transform 2s linear;
+      }
     }
   }
 }

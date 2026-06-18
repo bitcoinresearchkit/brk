@@ -22,11 +22,11 @@ function createDescriptionText(text) {
 export function createSetup(options) {
   const section = createElement("section", "wallets__setup");
   const title = document.createElement("h1");
-  const description = createElement("div", "wallets__setup-description");
-  const form = createElement("form", "wallets__setup-form");
+  const description = document.createElement("div");
+  const form = document.createElement("form");
   const password = document.createElement("input");
   const button = document.createElement("button");
-  const status = createElement("p", "wallets__status");
+  const status = document.createElement("p");
 
   title.append("Wallets");
   description.append(

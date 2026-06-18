@@ -6,58 +6,53 @@ main.wallets {
     max-width: 36rem;
     min-height: 16rem;
     margin-inline: auto;
-    text-align: center;
 
     h1 {
       margin: 0;
-      font-family: var(--font-serif);
+      text-align: center;
       font-size: 5rem;
       font-weight: 400;
       line-height: 0.9;
+
+      @media (max-width: 56rem) {
+        font-size: 4rem;
+      }
+
+      @media (max-width: 34rem) {
+        font-size: 3rem;
+      }
     }
 
     p {
       margin: 0;
     }
-  }
 
-  .wallets__setup-description {
-    display: grid;
-    gap: 0.625rem;
-    color: var(--gray);
-    font-size: var(--font-size-md);
-    line-height: var(--line-height-md);
-  }
-
-  .wallets__setup-form {
-    display: grid;
-    grid-template-columns: minmax(12rem, 18rem) auto;
-    gap: 0.75rem;
-    align-items: end;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 56rem) {
-  main.wallets {
-    .wallets__setup {
-      h1 {
-        font-size: 4rem;
-      }
-    }
-  }
-}
-
-@media (max-width: 34rem) {
-  main.wallets {
-    .wallets__setup {
-      h1 {
-        font-size: 3rem;
-      }
+    > div {
+      display: grid;
+      gap: 0.75rem;
+      color: var(--gray);
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-sm);
+      text-align: left;
     }
 
-    .wallets__setup-form {
-      grid-template-columns: 1fr;
+    > form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem;
+      align-items: end;
+      justify-content: center;
+      width: 100%;
+
+      @media (max-width: 34rem) {
+        grid-template-columns: 1fr;
+      }
+
+      > button {
+        border-color: var(--orange);
+        color: var(--black);
+        background: var(--orange);
+      }
     }
   }
 }

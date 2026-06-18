@@ -9,9 +9,7 @@ main.wallets {
     display: grid;
     gap: 1.25rem;
 
-    h2,
-    h3,
-    p {
+    :is(h2, h3, p) {
       margin: 0;
     }
 
@@ -29,113 +27,132 @@ main.wallets {
       line-height: var(--line-height-xs);
       text-transform: uppercase;
     }
-  }
 
-  .wallets__tx-group {
-    display: grid;
-    gap: 0.5rem;
-  }
+    > section {
+      display: grid;
+      gap: 0.5rem;
 
-  .wallets__tx-list {
-    display: grid;
-    gap: 0.25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
+      > ol {
+        display: grid;
+        gap: 0.25rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
 
-  .wallets__tx {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.25rem 1rem;
-    align-items: center;
-    padding: 0.875rem 0;
-    border-bottom: 1px solid color-mix(in oklch, var(--gray) 18%, transparent);
-  }
+        > li {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 0.25rem 1rem;
+          align-items: center;
+          padding: 0.875rem 0;
+          border-bottom: 1px solid color-mix(
+            in oklch,
+            var(--gray) 18%,
+            transparent
+          );
 
-  .wallets__tx-main {
-    display: flex;
-    gap: 1rem;
-    align-items: baseline;
-    justify-content: space-between;
-    min-width: 0;
+          @media (max-width: 34rem) {
+            grid-template-columns: 1fr;
+          }
 
-    strong {
-      color: var(--white);
-      font-weight: 500;
-    }
+          > div:first-child {
+            display: flex;
+            gap: 1rem;
+            align-items: baseline;
+            justify-content: space-between;
+            min-width: 0;
 
-    span {
-      color: var(--white);
-      white-space: nowrap;
-    }
+            strong {
+              color: var(--white);
+              font-weight: 500;
+            }
 
-    span[data-wallets-tx-amount="positive"] {
-      color: var(--green);
-    }
+            > span {
+              color: var(--white);
+              white-space: nowrap;
 
-    span[data-wallets-tx-amount="negative"] {
-      color: var(--red);
-    }
-  }
+              &[data-wallets-tx-amount="positive"] {
+                color: var(--green);
+              }
 
-  .wallets__tx-detail {
-    grid-column: 1;
-    min-width: 0;
-    color: var(--gray);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-sm);
+              &[data-wallets-tx-amount="negative"] {
+                color: var(--red);
+              }
+            }
+          }
 
-    code {
-      color: inherit;
-      font-family: inherit;
-    }
-  }
+          > p {
+            grid-column: 1;
+            min-width: 0;
+            color: var(--gray);
+            font-size: var(--font-size-sm);
+            line-height: var(--line-height-sm);
 
-  .wallets__tx button {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    height: 2rem;
-    padding-inline: 0.625rem;
-    background: transparent;
-  }
+            code {
+              color: inherit;
+              font-family: inherit;
+            }
+          }
 
-  .wallets__tx-dialog {
-    width: min(100% - 2rem, 42rem);
-  }
+          > details {
+            grid-column: 2;
+            grid-row: 1 / span 2;
 
-  .wallets__tx-details {
-    display: grid;
-    gap: 1rem;
+            @media (max-width: 34rem) {
+              grid-column: 1;
+              grid-row: auto;
+              justify-self: start;
+            }
 
-    h2,
-    p {
-      margin: 0;
-    }
+            &[open] {
+              display: grid;
+              grid-column: 1 / -1;
+              grid-row: auto;
+              gap: 0.75rem;
+            }
 
-    code {
-      overflow-wrap: anywhere;
-      color: var(--white);
-      font-family: inherit;
-    }
-  }
+            > summary {
+              display: grid;
+              place-items: center;
+              height: 2rem;
+              border: 1px solid color-mix(
+                in oklch,
+                var(--gray) 45%,
+                transparent
+              );
+              border-radius: 0.375rem;
+              padding-inline: 0.625rem;
+              color: var(--white);
+              background: transparent;
+              line-height: 1;
+              list-style: none;
+              cursor: pointer;
 
-  .wallets__tx-addresses {
-    display: grid;
-    gap: 0.75rem;
-  }
-}
+              &::marker,
+              &::-webkit-details-marker {
+                display: none;
+                content: "";
+              }
+            }
 
-@media (max-width: 34rem) {
-  main.wallets {
-    .wallets__tx {
-      grid-template-columns: 1fr;
-    }
+            > div {
+              display: grid;
+              gap: 1rem;
 
-    .wallets__tx button {
-      grid-column: 1;
-      grid-row: auto;
-      justify-self: start;
+              code {
+                overflow-wrap: anywhere;
+                color: var(--white);
+                font-family: inherit;
+              }
+
+              > div {
+                display: grid;
+                gap: 0.75rem;
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

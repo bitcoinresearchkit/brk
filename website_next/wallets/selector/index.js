@@ -23,7 +23,6 @@ function renderButtons(walletList, wallets, options) {
     const selected = wallet.id === options.getSelectedId();
 
     button.type = "button";
-    button.className = "wallets__wallet-button";
     button.setAttribute("aria-pressed", selected ? "true" : "false");
     button.setAttribute("data-wallet-id", wallet.id);
     button.append(wallet.name);
@@ -40,7 +39,7 @@ function renderButtons(walletList, wallets, options) {
  */
 export function createSelector(walletList, options) {
   function selectSnappedWallet() {
-    const buttons = [...walletList.querySelectorAll(".wallets__wallet-button")];
+    const buttons = [...walletList.querySelectorAll("button")];
 
     if (buttons.length === 0) return;
 

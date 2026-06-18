@@ -1,32 +1,34 @@
 main.wallets {
-  .wallets__header {
+  > header {
     display: flex;
     gap: 1rem;
     align-items: center;
     justify-content: end;
+
+    @media (max-width: 34rem) {
+      justify-content: start;
+    }
+
+    > div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: end;
+
+      @media (max-width: 34rem) {
+        justify-content: start;
+      }
+
+      > button {
+        border-color: var(--orange);
+        color: var(--black);
+        background: var(--orange);
+      }
+    }
   }
 
-  .wallets__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: end;
-  }
-
-  .wallets__content {
+  > section[aria-live] {
     display: grid;
     gap: 1.5rem;
-  }
-}
-
-@media (max-width: 34rem) {
-  main.wallets {
-    .wallets__header {
-      justify-content: start;
-    }
-
-    .wallets__actions {
-      justify-content: start;
-    }
   }
 }

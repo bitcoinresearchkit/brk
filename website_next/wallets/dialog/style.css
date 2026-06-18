@@ -10,10 +10,9 @@ main.wallets {
     h2 {
       margin: 0;
     }
-  }
 
-  .wallets__dialog::backdrop {
-    background: color-mix(in oklch, var(--black) 72%, transparent);
+    &::backdrop {
+      background: color-mix(in oklch, var(--black) 72%, transparent);
+    }
   }
-
 }

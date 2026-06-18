@@ -1,4 +1,3 @@
-import { createElement } from "../dom.js";
 import { createField } from "../form/index.js";
 import { redaction } from "../redaction/index.js";
 
@@ -35,14 +34,14 @@ function createSourceInput() {
  * @param {AddWalletFormOptions} options
  */
 export function createAddForm(options) {
-  const form = createElement("form", "wallets__dialog-form");
+  const form = document.createElement("form");
   const title = document.createElement("h2");
   const name = document.createElement("input");
   const source = createSourceInput();
-  const actions = createElement("div", "wallets__dialog-actions");
+  const actions = document.createElement("div");
   const cancel = document.createElement("button");
   const submit = document.createElement("button");
-  const status = createElement("p", "wallets__status");
+  const status = document.createElement("p");
   const fields = [
     createField("name", name),
     createField("xpub or descriptor", source),

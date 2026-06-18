@@ -1,46 +1,45 @@
 main.wallets {
-  .wallets__receive-button:disabled {
-    border-color: color-mix(in oklch, var(--gray) 35%, transparent);
-    color: var(--gray);
-    background: transparent;
-    cursor: default;
-  }
-
   .wallets__receive-dialog {
     width: min(100% - 2rem, 32rem);
-  }
 
-  .wallets__receive-card {
-    display: grid;
-    gap: 1rem;
+    > div {
+      display: grid;
+      gap: 1rem;
 
-    h2 {
-      margin: 0;
-      font-size: var(--font-size-lg);
-      font-weight: 400;
-      line-height: var(--line-height-lg);
+      h2 {
+        margin: 0;
+        font-size: var(--font-size-lg);
+        font-weight: 400;
+        line-height: var(--line-height-lg);
+      }
+
+      > img {
+        justify-self: center;
+        width: min(100%, 18rem);
+        aspect-ratio: 1;
+        padding: 1rem;
+        background: var(--white);
+        image-rendering: pixelated;
+      }
+
+      > div:first-of-type {
+        color: var(--white);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-sm);
+      }
+
+      > div:last-of-type {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: end;
+
+        > button:first-child {
+          border-color: var(--orange);
+          color: var(--black);
+          background: var(--orange);
+        }
+      }
     }
-  }
-
-  .wallets__receive-qr {
-    justify-self: center;
-    width: min(100%, 18rem);
-    aspect-ratio: 1;
-    padding: 1rem;
-    background: var(--white);
-    image-rendering: pixelated;
-  }
-
-  .wallets__receive-address {
-    color: var(--white);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-sm);
-  }
-
-  .wallets__receive-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: end;
   }
 }

@@ -6,15 +6,6 @@ export function formatNumber(value) {
 }
 
 /**
- * @param {number} sats
- */
-export function formatBtc(sats) {
-  return `${(sats / 100_000_000).toLocaleString("en-US", {
-    maximumFractionDigits: 8,
-  })} BTC`;
-}
-
-/**
  * @param {number} dollars
  */
 export function formatUsd(dollars) {

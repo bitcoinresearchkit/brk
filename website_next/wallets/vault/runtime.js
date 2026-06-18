@@ -4,11 +4,9 @@ import { scanWalletAddresses } from "../scan/index.js";
  * @typedef {import("../scan/index.js").WalletScan} WalletScan
  * @typedef {import("../scan/index.js").WalletScanClient} WalletScanClient
  * @typedef {import("../scan/index.js").WalletScanProgress} WalletScanProgress
- * @typedef {import("../derive/address.js").AddressScript} AddressScript
  *
  * @typedef {Object} LoadOptions
  * @property {WalletScanClient} client
- * @property {AddressScript} script
  * @property {(progress: WalletScanProgress) => void} [onProgress]
  */
 
@@ -31,7 +29,6 @@ export function createRuntime(source) {
       pending = scanWalletAddresses({
         client: options.client,
         source,
-        script: options.script,
         onProgress: options.onProgress,
       }).then((nextScan) => {
         scan = nextScan;

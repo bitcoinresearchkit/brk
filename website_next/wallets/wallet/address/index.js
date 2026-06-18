@@ -14,14 +14,14 @@ export function createGroupedAddress(text) {
   const groups = text.match(/.{1,4}/g) ?? [];
 
   for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
-    const group = createElement("span", "wallets__address-group");
+    const group = document.createElement("span");
 
     for (const character of groups[groupIndex]) {
-      const span = createElement(
-        "span",
-        Number.isNaN(Number(character))
-          ? "wallets__address-letter"
-          : "wallets__address-number",
+      const span = document.createElement("span");
+
+      span.setAttribute(
+        "data-wallets-address-character",
+        Number.isNaN(Number(character)) ? "letter" : "number",
       );
 
       span.append(character);
@@ -55,7 +55,7 @@ function createPrivateAddress(address) {
  * @param {WalletAddress} row
  */
 function createAddressBadge(row) {
-  const badge = createElement("span", "wallets__address-badge");
+  const badge = document.createElement("span");
   const label = row.branchLabel?.toLowerCase() ?? "address";
 
   badge.setAttribute("data-wallets-address-branch", label);
@@ -69,7 +69,7 @@ function createAddressBadge(row) {
  */
 export function createAddressCellContent(row) {
   const element = createElement("div", "wallets__address-cell");
-  const anonSet = createElement("span", "wallets__address-meta");
+  const anonSet = document.createElement("span");
 
   anonSet.append(`anon set: ${formatNumber(row.historyBucketSize)}`);
   element.append(
