@@ -1,5 +1,4 @@
 import { brk } from "../utils/client.js";
-import { createGroupedAddress } from "./wallet/address/index.js";
 import {
   setStatus,
   withBusy,
@@ -81,8 +80,8 @@ export function createWalletsPage() {
   }
 
   privacyButton.addEventListener("click", () => {
-    redaction.toggle(main, privacyButton, createGroupedAddress);
-    syncBtcAmounts(main);
+    redaction.toggle(privacyButton);
+    syncBtcAmounts();
   });
 
   lockButton.addEventListener("click", () => {
@@ -209,8 +208,6 @@ export function createWalletsPage() {
     const current = vault.current();
     const empty = !needsSetup && !locked && !current;
 
-    main.toggleAttribute("data-wallets-page-locked", locked || needsSetup);
-    main.toggleAttribute("data-wallets-page-empty", empty);
     header.hidden = locked || needsSetup || empty;
     selectorElement.hidden = locked || needsSetup || empty;
     lockButton.hidden = locked || needsSetup || !vault.hasPassword;

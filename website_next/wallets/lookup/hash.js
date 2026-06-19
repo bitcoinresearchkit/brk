@@ -83,13 +83,6 @@ function rapidHashV3(bytes) {
   let a = readU64(bytes, length - 16) ^ BigInt(length);
   let b = readU64(bytes, length - 8);
 
-  if (length > 32) {
-    seed = rapidMix(
-      readU64(bytes, 16) ^ DEFAULT_SECRETS[2],
-      readU64(bytes, 24) ^ seed,
-    );
-  }
-
   a ^= DEFAULT_SECRETS[1];
   b ^= seed;
 

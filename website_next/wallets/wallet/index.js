@@ -22,11 +22,10 @@ import { renderTransactions } from "./transactions/index.js";
 export function createWalletPanel() {
   const actions = createElement("section", "wallets__wallet-actions");
   const summary = createElement("section", "wallets__summary");
-  const status = document.createElement("p");
+  const status = document.createElement("output");
   const results = createElement("section", "wallets__results");
 
   actions.setAttribute("aria-label", "Wallet actions");
-  status.setAttribute("role", "status");
   summary.setAttribute("aria-label", "Wallets summary");
   results.setAttribute("aria-label", "Wallets results");
 

@@ -4,16 +4,10 @@ main.wallets {
       display: grid;
       gap: 0.75rem;
 
-      > div {
+      > footer {
         display: flex;
         gap: 0.5rem;
         justify-content: end;
-      }
-
-      button[type="submit"] {
-        border-color: var(--orange);
-        color: var(--black);
-        background: var(--orange);
       }
     }
   }

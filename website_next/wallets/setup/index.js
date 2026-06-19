@@ -22,11 +22,11 @@ function createDescriptionText(text) {
 export function createSetup(options) {
   const section = createElement("section", "wallets__setup");
   const title = document.createElement("h1");
-  const description = document.createElement("div");
+  const description = document.createElement("article");
   const form = document.createElement("form");
   const password = document.createElement("input");
   const button = document.createElement("button");
-  const status = document.createElement("p");
+  const status = document.createElement("output");
 
   title.append("Wallets");
   description.append(
@@ -49,8 +49,8 @@ export function createSetup(options) {
   password.placeholder = "Set password";
   password.required = true;
   button.type = "submit";
+  button.classList.add("primary");
   button.append("Continue");
-  status.setAttribute("role", "status");
   form.append(password, button);
   form.addEventListener("submit", (event) => {
     event.preventDefault();

@@ -47,10 +47,10 @@ function appendTransactionDetail(element, transaction) {
  * @param {WalletTransaction} transaction
  */
 function createTransactionDetails(transaction) {
-  const content = document.createElement("div");
+  const content = document.createElement("section");
   const txid = document.createElement("code");
   const meta = document.createElement("p");
-  const list = document.createElement("div");
+  const list = document.createElement("ul");
 
   redaction.setTitle(txid, transaction.txid);
   redaction.setValue(txid, transaction.txid);
@@ -62,7 +62,10 @@ function createTransactionDetails(transaction) {
     createBtcAmount("span", transaction.fee),
   );
   for (const address of transaction.addresses) {
-    list.append(createAddressCellContent(address.walletAddress));
+    const item = document.createElement("li");
+
+    item.append(createAddressCellContent(address.walletAddress));
+    list.append(item);
   }
   content.append(txid, meta, list);
 
@@ -74,7 +77,7 @@ function createTransactionDetails(transaction) {
  */
 function createTransactionRow(transaction) {
   const row = document.createElement("li");
-  const main = document.createElement("div");
+  const main = document.createElement("header");
   const label = document.createElement("strong");
   const amount = createBtcAmount(
     "span",
@@ -87,8 +90,12 @@ function createTransactionRow(transaction) {
   const summary = document.createElement("summary");
 
   label.append(typeLabels[transaction.type]);
-  amount.dataset.walletsTxAmount =
-    transaction.amount >= 0 ? "positive" : "negative";
+  if (transaction.amount > 0) {
+    amount.classList.add("positive");
+  }
+  if (transaction.amount < 0) {
+    amount.classList.add("negative");
+  }
   redaction.setTitle(txid, transaction.txid);
   redaction.setValue(txid, formatTxid(transaction.txid));
   summary.append("Details");

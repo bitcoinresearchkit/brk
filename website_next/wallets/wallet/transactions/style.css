@@ -55,7 +55,7 @@ main.wallets {
             grid-template-columns: 1fr;
           }
 
-          > div:first-child {
+          > header {
             display: flex;
             gap: 1rem;
             align-items: baseline;
@@ -71,11 +71,11 @@ main.wallets {
               color: var(--white);
               white-space: nowrap;
 
-              &[data-wallets-tx-amount="positive"] {
+              &.positive {
                 color: var(--green);
               }
 
-              &[data-wallets-tx-amount="negative"] {
+              &.negative {
                 color: var(--red);
               }
             }
@@ -135,7 +135,7 @@ main.wallets {
               }
             }
 
-            > div {
+            > section {
               display: grid;
               gap: 1rem;
 
@@ -145,9 +145,12 @@ main.wallets {
                 font-family: inherit;
               }
 
-              > div {
+              > ul {
                 display: grid;
                 gap: 0.75rem;
+                margin: 0;
+                padding: 0;
+                list-style: none;
               }
             }
           }

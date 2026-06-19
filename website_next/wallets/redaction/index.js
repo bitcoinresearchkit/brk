@@ -1,6 +1,15 @@
 const FIXED_PRIVATE_TEXT = "*****";
 
 let hidden = false;
+const effects = /** @type {RedactionEffect[]} */ ([]);
+
+/**
+ * @typedef {"exact" | "fixed"} RedactionMode
+ *
+ * @typedef {Object} RedactionEffect
+ * @property {HTMLElement} element
+ * @property {() => void} sync
+ */
 
 function isHidden() {
   return hidden;
@@ -17,7 +26,7 @@ function createText(value) {
 
 /**
  * @param {string} value
- * @param {string | null} mode
+ * @param {RedactionMode} mode
  */
 function mask(value, mode) {
   return mode === "fixed" ? FIXED_PRIVATE_TEXT : createText(value);
@@ -25,15 +34,22 @@ function mask(value, mode) {
 
 /**
  * @param {HTMLElement} element
+ * @param {() => void} sync
+ */
+function addEffect(element, sync) {
+  effects.push({ element, sync });
+  sync();
+}
+
+/**
+ * @param {HTMLElement} element
  * @param {string} value
- * @param {"exact" | "fixed"} [mode]
+ * @param {RedactionMode} [mode]
  */
 function setValue(element, value, mode = "exact") {
-  element.setAttribute("data-wallets-private-value", value);
-  element.setAttribute("data-wallets-private-mode", mode);
-  element.textContent = hidden
-    ? mask(value, mode)
-    : value;
+  addEffect(element, () => {
+    element.textContent = hidden ? mask(value, mode) : value;
+  });
 }
 
 /**
@@ -41,15 +57,36 @@ function setValue(element, value, mode = "exact") {
  * @param {string} value
  */
 function setTitle(element, value) {
-  element.setAttribute("data-wallets-private-title", value);
-  element.title = hidden ? createText(value) : value;
+  addEffect(element, () => {
+    element.title = hidden ? createText(value) : value;
+  });
+}
+
+/**
+ * @param {HTMLElement} element
+ * @param {string} value
+ * @param {(text: string) => void} render
+ */
+function setAddress(element, value, render) {
+  addEffect(element, () => {
+    render(hidden ? createText(value) : value);
+  });
+}
+
+/**
+ * @param {HTMLInputElement} input
+ */
+function setInput(input) {
+  addEffect(input, () => {
+    input.type = hidden ? "password" : "text";
+  });
 }
 
 /**
  * @template {keyof HTMLElementTagNameMap} Tag
  * @param {Tag} tag
  * @param {string} value
- * @param {"exact" | "fixed"} [mode]
+ * @param {RedactionMode} [mode]
  */
 function createValue(tag, value, mode = "exact") {
   const element = document.createElement(tag);
@@ -59,44 +96,14 @@ function createValue(tag, value, mode = "exact") {
   return element;
 }
 
-/**
- * @param {HTMLElement} root
- * @param {(text: string) => HTMLElement} createAddress
- */
-function sync(root, createAddress) {
-  const values = root.querySelectorAll("[data-wallets-private-value]");
-  const titles = root.querySelectorAll("[data-wallets-private-title]");
-  const addresses = root.querySelectorAll("[data-wallets-private-address]");
-  const inputs = root.querySelectorAll("[data-wallets-private-input]");
+function sync() {
+  for (let index = effects.length - 1; index >= 0; index -= 1) {
+    const effect = effects[index];
 
-  for (const value of values) {
-    const text = value.getAttribute("data-wallets-private-value") ?? "";
-    const mode = value.getAttribute("data-wallets-private-mode");
-
-    value.textContent = hidden
-      ? mask(text, mode)
-      : text;
-  }
-
-  for (const element of titles) {
-    const title = /** @type {HTMLElement} */ (element);
-    const text = title.getAttribute("data-wallets-private-title") ?? "";
-
-    title.title = hidden
-      ? createText(text)
-      : text;
-  }
-
-  for (const address of addresses) {
-    const text = address.getAttribute("data-wallets-private-address") ?? "";
-    const next = hidden ? createText(text) : text;
-
-    address.replaceChildren(...createAddress(next).childNodes);
-  }
-
-  for (const input of inputs) {
-    if (input instanceof HTMLInputElement) {
-      input.type = hidden ? "password" : "text";
+    if (!effect.element.isConnected) {
+      effects.splice(index, 1);
+    } else {
+      effect.sync();
     }
   }
 }
@@ -110,13 +117,11 @@ function syncButton(button) {
 }
 
 /**
- * @param {HTMLElement} root
  * @param {HTMLButtonElement} button
- * @param {(text: string) => HTMLElement} createAddress
  */
-function toggle(root, button, createAddress) {
+function toggle(button) {
   hidden = !hidden;
-  sync(root, createAddress);
+  sync();
   syncButton(button);
 }
 
@@ -125,6 +130,8 @@ export const redaction = /** @type {const} */ ({
   createText,
   setValue,
   setTitle,
+  setAddress,
+  setInput,
   createValue,
   syncButton,
   toggle,

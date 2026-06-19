@@ -9,18 +9,11 @@ main.wallets {
     @media (max-width: 34rem) {
       justify-content: start;
     }
-
-    > button {
-      border-color: var(--orange);
-      color: var(--black);
-      background: var(--orange);
-
-      &:disabled {
-        border-color: color-mix(in oklch, var(--gray) 35%, transparent);
-        color: var(--gray);
-        background: transparent;
-        cursor: default;
-      }
+    > button:disabled {
+      border-color: color-mix(in oklch, var(--gray) 35%, transparent);
+      color: var(--gray);
+      background: transparent;
+      cursor: default;
     }
   }
 }

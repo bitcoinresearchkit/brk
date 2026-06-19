@@ -17,15 +17,14 @@ export function createGroupedAddress(text) {
     const group = document.createElement("span");
 
     for (const character of groups[groupIndex]) {
-      const span = document.createElement("span");
+      if (Number.isNaN(Number(character))) {
+        group.append(character);
+      } else {
+        const number = document.createElement("var");
 
-      span.setAttribute(
-        "data-wallets-address-character",
-        Number.isNaN(Number(character)) ? "letter" : "number",
-      );
-
-      span.append(character);
-      group.append(span);
+        number.append(character);
+        group.append(number);
+      }
     }
 
     element.append(group);
@@ -41,12 +40,11 @@ export function createGroupedAddress(text) {
  * @param {string} address
  */
 function createPrivateAddress(address) {
-  const hidden = redaction.createText(address);
-  const element = redaction.isHidden()
-    ? createGroupedAddress(hidden)
-    : createGroupedAddress(address);
+  const element = createGroupedAddress(address);
 
-  element.setAttribute("data-wallets-private-address", address);
+  redaction.setAddress(element, address, (text) => {
+    element.replaceChildren(...createGroupedAddress(text).childNodes);
+  });
 
   return element;
 }
@@ -55,10 +53,9 @@ function createPrivateAddress(address) {
  * @param {WalletAddress} row
  */
 function createAddressBadge(row) {
-  const badge = document.createElement("span");
+  const badge = document.createElement("b");
   const label = row.branchLabel?.toLowerCase() ?? "address";
 
-  badge.setAttribute("data-wallets-address-branch", label);
   badge.append(label, ` #${formatNumber(row.index)}`);
 
   return badge;
@@ -69,7 +66,7 @@ function createAddressBadge(row) {
  */
 export function createAddressCellContent(row) {
   const element = createElement("div", "wallets__address-cell");
-  const anonSet = document.createElement("span");
+  const anonSet = document.createElement("small");
 
   anonSet.append(`anon set: ${formatNumber(row.historyBucketSize)}`);
   element.append(

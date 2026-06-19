@@ -2,11 +2,11 @@ main.wallets {
   .wallets__receive-dialog {
     width: min(100% - 2rem, 32rem);
 
-    > div {
+    > article {
       display: grid;
       gap: 1rem;
 
-      h2 {
+      > h2 {
         margin: 0;
         font-size: var(--font-size-lg);
         font-weight: 400;
@@ -22,22 +22,20 @@ main.wallets {
         image-rendering: pixelated;
       }
 
-      > div:first-of-type {
+      > p {
+        margin: 0;
         color: var(--white);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
       }
 
-      > div:last-of-type {
+      > footer {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         justify-content: end;
-
-        > button:first-child {
-          border-color: var(--orange);
-          color: var(--black);
-          background: var(--orange);
+        > form {
+          margin: 0;
         }
       }
     }

@@ -8,14 +8,21 @@
  * @typedef {Object} WalletSelectorOptions
  * @property {() => string} getSelectedId
  * @property {(walletId: string) => void} onSelect
+ *
+ * @typedef {Object} WalletSelectorButton
+ * @property {HTMLButtonElement} button
+ * @property {string} id
  */
 
 /**
  * @param {HTMLElement} walletList
  * @param {StoredWallet[]} wallets
  * @param {WalletSelectorOptions} options
+ * @returns {WalletSelectorButton[]}
  */
 function renderButtons(walletList, wallets, options) {
+  const buttons = /** @type {WalletSelectorButton[]} */ ([]);
+
   walletList.replaceChildren();
 
   for (const wallet of wallets) {
@@ -24,13 +31,15 @@ function renderButtons(walletList, wallets, options) {
 
     button.type = "button";
     button.setAttribute("aria-pressed", selected ? "true" : "false");
-    button.setAttribute("data-wallet-id", wallet.id);
     button.append(wallet.name);
     button.addEventListener("click", () => {
       options.onSelect(wallet.id);
     });
+    buttons.push({ button, id: wallet.id });
     walletList.append(button);
   }
+
+  return buttons;
 }
 
 /**
@@ -38,29 +47,29 @@ function renderButtons(walletList, wallets, options) {
  * @param {WalletSelectorOptions} options
  */
 export function createSelector(walletList, options) {
-  function selectSnappedWallet() {
-    const buttons = [...walletList.querySelectorAll("button")];
+  /** @type {WalletSelectorButton[]} */
+  let buttons = [];
 
+  function selectSnappedWallet() {
     if (buttons.length === 0) return;
 
     const listRect = walletList.getBoundingClientRect();
     const listCenter = listRect.left + listRect.width / 2;
-    const closest = buttons.reduce((best, button) => {
-      const rect = button.getBoundingClientRect();
+    const closest = buttons.reduce((best, item) => {
+      const rect = item.button.getBoundingClientRect();
       const center = rect.left + rect.width / 2;
       const distance = Math.abs(center - listCenter);
 
       return distance < best.distance
-        ? { button, distance }
+        ? { item, distance }
         : best;
     }, {
-      button: buttons[0],
+      item: buttons[0],
       distance: Number.POSITIVE_INFINITY,
     });
-    const id = closest.button.getAttribute("data-wallet-id");
 
-    if (id && id !== options.getSelectedId()) {
-      options.onSelect(id);
+    if (closest.item.id !== options.getSelectedId()) {
+      options.onSelect(closest.item.id);
     }
   }
 
@@ -90,12 +99,13 @@ export function createSelector(walletList, options) {
   return {
     clear() {
       walletList.replaceChildren();
+      buttons = [];
     },
     /**
      * @param {StoredWallet[]} wallets
      */
     render(wallets) {
-      renderButtons(walletList, wallets, options);
+      buttons = renderButtons(walletList, wallets, options);
     },
   };
 }

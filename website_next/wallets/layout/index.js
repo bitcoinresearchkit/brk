@@ -19,19 +19,22 @@ import { createElement } from "../dom.js";
 export function createLayout() {
   const main = createElement("main", "wallets");
   const header = document.createElement("header");
-  const actions = document.createElement("div");
+  const actions = document.createElement("menu");
   const addButton = document.createElement("button");
   const privacyButton = document.createElement("button");
   const lockButton = document.createElement("button");
   const selector = createElement("section", "wallets__selector");
-  const walletList = document.createElement("div");
-  const content = document.createElement("section");
+  const walletList = document.createElement("nav");
+  const content = document.createElement("article");
   const addDialog = createElement("dialog", "wallets__dialog");
 
   addButton.type = "button";
+  addButton.classList.add("primary");
   addButton.append("Add watch-only wallet");
   privacyButton.type = "button";
+  privacyButton.classList.add("primary");
   lockButton.type = "button";
+  lockButton.classList.add("primary");
   lockButton.append("Lock");
   content.setAttribute("aria-live", "polite");
   walletList.setAttribute("tabindex", "0");

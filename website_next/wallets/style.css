@@ -11,21 +11,13 @@ main.wallets {
   padding: var(--offset) var(--page-x);
   scroll-padding-top: var(--offset);
 
-  &:is([data-wallets-page-empty], [data-wallets-page-locked]) {
-    min-height: 100dvh;
-    align-content: center;
-  }
-
-  [role="status"] {
+  output {
+    display: block;
     min-height: var(--line-height-sm);
     margin: 0;
     color: var(--gray);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-sm);
-  }
-
-  [data-wallets-btc-muted] {
-    color: color-mix(in oklch, currentColor 45%, transparent);
   }
 
   :is(input, select, button) {
@@ -47,6 +39,12 @@ main.wallets {
   :is(input, select, button):focus-visible {
     outline: 2px solid var(--orange);
     outline-offset: 2px;
+  }
+
+  button.primary {
+    border-color: var(--orange);
+    color: var(--black);
+    background: var(--orange);
   }
 
   input::placeholder {

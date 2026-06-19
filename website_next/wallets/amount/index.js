@@ -3,10 +3,19 @@ import { redaction } from "../redaction/index.js";
 const SATS_PER_BTC = 100_000_000;
 const FRACTION_DIGITS = 8;
 const FIXED_PRIVATE_TEXT = "*****";
+const amounts = /** @type {BtcAmountRecord[]} */ ([]);
 
 /**
  * @typedef {Object} BtcAmountOptions
  * @property {boolean} [signed]
+ *
+ * @typedef {Object} BtcAmount
+ * @property {number} sats
+ * @property {boolean} signed
+ *
+ * @typedef {Object} BtcAmountRecord
+ * @property {HTMLElement} element
+ * @property {BtcAmount} amount
  */
 
 /**
@@ -127,29 +136,20 @@ function getBtcParts(sats, options = {}) {
 }
 
 /**
- * @param {number} sats
- * @param {BtcAmountOptions} [options]
- */
-export function formatBtc(sats, options = {}) {
-  return getBtcParts(sats, options).map((part) => part.text).join("");
-}
-
-/**
  * @param {HTMLElement} element
- * @param {number} sats
- * @param {BtcAmountOptions} [options]
+ * @param {BtcAmount} amount
  */
-function renderBtcAmount(element, sats, options = {}) {
+function renderBtcAmount(element, amount) {
   if (redaction.isHidden()) {
     element.textContent = FIXED_PRIVATE_TEXT;
     return;
   }
 
-  element.replaceChildren(...getBtcParts(sats, options).map((part) => {
+  element.replaceChildren(...getBtcParts(amount.sats, amount).map((part) => {
     const span = document.createElement("span");
 
     if (part.muted) {
-      span.setAttribute("data-wallets-btc-muted", "");
+      span.classList.add("muted");
     }
     span.append(part.text);
 
@@ -165,28 +165,26 @@ function renderBtcAmount(element, sats, options = {}) {
  */
 export function createBtcAmount(tag, sats, options = {}) {
   const element = document.createElement(tag);
+  const amount = {
+    sats,
+    signed: options.signed === true,
+  };
 
-  element.setAttribute("data-wallets-btc-amount", String(sats));
-  element.setAttribute(
-    "data-wallets-btc-signed",
-    options.signed ? "true" : "false",
-  );
-  renderBtcAmount(element, sats, options);
+  element.classList.add("wallets__amount");
+  amounts.push({ element, amount });
+  renderBtcAmount(element, amount);
 
   return element;
 }
 
-/**
- * @param {HTMLElement} root
- */
-export function syncBtcAmounts(root) {
-  const amounts = root.querySelectorAll("[data-wallets-btc-amount]");
+export function syncBtcAmounts() {
+  for (let index = amounts.length - 1; index >= 0; index -= 1) {
+    const { element, amount } = amounts[index];
 
-  for (const amount of amounts) {
-    const element = /** @type {HTMLElement} */ (amount);
-    const sats = Number(element.getAttribute("data-wallets-btc-amount"));
-    const signed = element.getAttribute("data-wallets-btc-signed") === "true";
-
-    renderBtcAmount(element, sats, { signed });
+    if (!element.isConnected) {
+      amounts.splice(index, 1);
+    } else {
+      renderBtcAmount(element, amount);
+    }
   }
 }

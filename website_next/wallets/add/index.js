@@ -20,8 +20,8 @@ function createSourceInput() {
   const input = document.createElement("input");
 
   input.name = "source";
-  input.type = redaction.isHidden() ? "password" : "text";
-  input.setAttribute("data-wallets-private-input", "");
+  input.type = "text";
+  redaction.setInput(input);
   input.autocomplete = "off";
   input.placeholder = "xpub or descriptor...";
   input.required = true;
@@ -38,10 +38,10 @@ export function createAddForm(options) {
   const title = document.createElement("h2");
   const name = document.createElement("input");
   const source = createSourceInput();
-  const actions = document.createElement("div");
+  const actions = document.createElement("footer");
   const cancel = document.createElement("button");
   const submit = document.createElement("button");
-  const status = document.createElement("p");
+  const status = document.createElement("output");
   const fields = [
     createField("name", name),
     createField("xpub or descriptor", source),
@@ -55,8 +55,8 @@ export function createAddForm(options) {
   cancel.type = "button";
   cancel.append("Cancel");
   submit.type = "submit";
+  submit.classList.add("primary");
   submit.append("Add");
-  status.setAttribute("role", "status");
   actions.append(cancel, submit);
   form.append(
     title,

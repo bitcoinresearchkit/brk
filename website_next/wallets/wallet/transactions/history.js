@@ -18,8 +18,6 @@ const historyByBucketKey =
 /**
  * @typedef {Object} AddressHistory
  * @property {unknown[]} transactions
- * @property {number} fetchedAddressCount
- * @property {number} bucketSize
  */
 
 /**
@@ -27,17 +25,6 @@ const historyByBucketKey =
  */
 function createBucketKey(addresses) {
   return [...addresses].sort().join("\n");
-}
-
-/**
- * @param {WalletAddress} address
- */
-function assertHistoryIsReasonable(address) {
-  if (address.txCount > MAX_SELECTED_ADDRESS_TXS) {
-    throw new Error(
-      `History disabled for addresses over ${MAX_SELECTED_ADDRESS_TXS} transactions`,
-    );
-  }
 }
 
 /**
@@ -67,13 +54,12 @@ async function fetchBucketHistory(client, addresses) {
  * @returns {Promise<AddressHistory>}
  */
 async function load(client, address) {
-  assertHistoryIsReasonable(address);
-
-  if (address.historyAddresses.length === 0) {
+  if (
+    address.txCount > MAX_SELECTED_ADDRESS_TXS ||
+    address.historyAddresses.length === 0
+  ) {
     return {
       transactions: [],
-      fetchedAddressCount: 0,
-      bucketSize: address.historyBucketSize,
     };
   }
 
@@ -94,8 +80,6 @@ async function load(client, address) {
 
   return {
     transactions: bucketHistory.get(address.address) ?? [],
-    fetchedAddressCount: address.historyAddresses.length,
-    bucketSize: address.historyBucketSize,
   };
 }
 

@@ -9,25 +9,22 @@ main.wallets {
       justify-content: start;
     }
 
-    > div {
+    > menu {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
       justify-content: end;
+      margin: 0;
+      padding: 0;
+      list-style: none;
 
       @media (max-width: 34rem) {
         justify-content: start;
       }
-
-      > button {
-        border-color: var(--orange);
-        color: var(--black);
-        background: var(--orange);
-      }
     }
   }
 
-  > section[aria-live] {
+  > article {
     display: grid;
     gap: 1.5rem;
   }

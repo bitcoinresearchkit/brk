@@ -2,7 +2,7 @@ main.wallets {
   .wallets__selector {
     min-width: 0;
 
-    > div {
+    > nav {
       display: flex;
       gap: 1rem;
       min-width: 0;

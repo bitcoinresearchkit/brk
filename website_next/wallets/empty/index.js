@@ -15,6 +15,7 @@ export function createEmpty(options) {
 
   text.append("No wallet imported yet");
   button.type = "button";
+  button.classList.add("primary");
   button.append("Add wallet");
   button.addEventListener("click", options.onAdd);
   empty.append(text, button);

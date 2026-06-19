@@ -3,17 +3,11 @@ main.wallets {
     display: grid;
     gap: 1rem;
     place-content: center;
-    min-height: 16rem;
+    min-height: calc(100dvh - 2 * var(--offset));
     text-align: center;
 
     p {
       margin: 0;
-    }
-
-    > button {
-      border-color: var(--orange);
-      color: var(--black);
-      background: var(--orange);
     }
   }
 }

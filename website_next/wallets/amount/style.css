@@ -1,0 +1,7 @@
+main.wallets {
+  .wallets__amount {
+    .muted {
+      color: color-mix(in oklch, currentColor 45%, transparent);
+    }
+  }
+}

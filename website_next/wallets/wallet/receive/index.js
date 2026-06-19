@@ -56,7 +56,7 @@ function createReceiveQr(receiveAddress) {
  * @param {ReceiveAddress} receiveAddress
  */
 function createReceiveAddress(receiveAddress) {
-  const element = document.createElement("div");
+  const element = document.createElement("p");
 
   element.append(createGroupedAddress(receiveAddress.address));
 
@@ -73,24 +73,28 @@ async function copyReceiveAddress(receiveAddress, copy) {
 }
 
 /**
+ * @param {HTMLElement} host
  * @param {ReceiveAddress} receiveAddress
  */
-function openReceiveDialog(receiveAddress) {
-  const main = document.querySelector("main.wallets") ?? document.body;
+function openReceiveDialog(host, receiveAddress) {
   const dialog = createElement(
     "dialog",
     "wallets__dialog wallets__receive-dialog",
   );
-  const content = document.createElement("div");
-  const actions = document.createElement("div");
+  const content = document.createElement("article");
+  const actions = document.createElement("footer");
   const copy = document.createElement("button");
+  const closeForm = document.createElement("form");
   const close = document.createElement("button");
 
   copy.type = "button";
+  copy.classList.add("primary");
   copy.append("Copy");
-  close.type = "button";
+  closeForm.method = "dialog";
+  close.type = "submit";
   close.append("Close");
-  actions.append(copy, close);
+  closeForm.append(close);
+  actions.append(copy, closeForm);
   content.append(
     createReceiveTitle(receiveAddress),
     createReceiveQr(receiveAddress),
@@ -98,15 +102,12 @@ function openReceiveDialog(receiveAddress) {
     actions,
   );
   dialog.append(content);
-  main.append(dialog);
+  host.append(dialog);
 
   copy.addEventListener("click", () => {
     void copyReceiveAddress(receiveAddress, copy).catch(() => {
       copy.textContent = "Copy failed";
     });
-  });
-  close.addEventListener("click", () => {
-    dialog.close();
   });
   dialog.addEventListener("close", () => {
     dialog.remove();
@@ -128,10 +129,11 @@ export function renderReceiveButton(element, receiveAddress) {
 
   button.type = "button";
   button.disabled = !receiveAddress;
+  button.classList.add("primary");
   button.append("Receive");
   button.addEventListener("click", () => {
     if (receiveAddress) {
-      openReceiveDialog(receiveAddress);
+      openReceiveDialog(element, receiveAddress);
     }
   });
   element.append(button);

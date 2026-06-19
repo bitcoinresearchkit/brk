@@ -21,16 +21,16 @@ function bindResetHold(button, onReset) {
 
     clearTimeout(timer);
     timer = undefined;
-    button.removeAttribute("data-wallets-holding");
+    button.classList.remove("holding");
   }
 
   function start() {
     if (timer !== undefined) return;
 
-    button.setAttribute("data-wallets-holding", "");
+    button.classList.add("holding");
     timer = window.setTimeout(() => {
       timer = undefined;
-      button.removeAttribute("data-wallets-holding");
+      button.classList.remove("holding");
       onReset();
     }, RESET_HOLD_MS);
   }
@@ -68,7 +68,7 @@ export function createLock(options) {
   const password = document.createElement("input");
   const button = document.createElement("button");
   const reset = document.createElement("button");
-  const status = document.createElement("p");
+  const status = document.createElement("output");
 
   title.append("Unlock vault");
   password.name = "password";
@@ -78,10 +78,10 @@ export function createLock(options) {
   password.placeholder = "Password";
   password.required = true;
   button.type = "submit";
+  button.classList.add("primary");
   button.append("Unlock");
   reset.type = "button";
   reset.append("Reset vault");
-  status.setAttribute("role", "status");
   form.append(password, button);
   form.addEventListener("submit", (event) => {
     event.preventDefault();

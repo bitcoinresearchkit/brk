@@ -3,7 +3,7 @@ main.wallets {
     display: grid;
     gap: 0.25rem;
 
-    > span:first-child {
+    > b {
       display: inline-flex;
       align-items: center;
       justify-self: start;
@@ -12,10 +12,11 @@ main.wallets {
       border-radius: 0.25rem;
       padding: 0 0.25rem;
       color: color-mix(in oklch, var(--white) 76%, var(--gray));
+      font-weight: 400;
       line-height: 1;
     }
 
-    > span:last-child {
+    > small {
       color: var(--gray);
       font-size: var(--font-size-xs);
       line-height: var(--line-height-xs);
@@ -29,15 +30,13 @@ main.wallets {
     max-width: 40rem;
 
     > span {
-      white-space: nowrap;
-    }
-
-    [data-wallets-address-character="letter"] {
       color: var(--white);
-    }
+      white-space: nowrap;
 
-    [data-wallets-address-character="number"] {
-      color: color-mix(in oklch, var(--white) 50%, var(--gray));
+      > var {
+        color: color-mix(in oklch, var(--white) 50%, var(--gray));
+        font-style: normal;
+      }
     }
   }
 }
