@@ -1,14 +1,35 @@
 main.wallets {
-  .wallets__dialog {
-    > form {
-      display: grid;
-      gap: 0.75rem;
+  .add {
+    display: grid;
+    gap: 1.25rem;
 
-      > footer {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: end;
+    > h2 {
+      color: var(--black);
+      font-size: 2.5rem;
+      line-height: 1;
+    }
+
+    > p {
+      margin: 0;
+      color: var(--gray);
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-sm);
+    }
+
+    :is(input, textarea) {
+      border: 1px solid var(--gray);
+      color: var(--black);
+      background: transparent;
+
+      &::placeholder {
+        color: var(--gray);
       }
+    }
+
+    > footer {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
     }
   }
 }

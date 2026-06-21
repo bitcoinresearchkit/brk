@@ -7,12 +7,11 @@ import { createEmpty } from "./empty/index.js";
 import { getErrorMessage } from "./errors.js";
 import { createAddForm } from "./add/index.js";
 import { createLayout } from "./layout/index.js";
-import { createLock } from "./lock/index.js";
 import { redaction } from "./redaction/index.js";
 import { readWalletSourceText } from "./add/source.js";
 import { scanStatus } from "./wallet/status.js";
 import { createSelector } from "./selector/index.js";
-import { createSetup } from "./setup/index.js";
+import { createStart } from "./start/index.js";
 import {
   createWalletPanel,
   renderWalletPanel,
@@ -33,7 +32,7 @@ export function createWalletsPage() {
     header,
     addButton,
     privacyButton,
-    lockButton,
+    sessionButton,
     selector: selectorElement,
     walletList,
     content,
@@ -67,6 +66,16 @@ export function createWalletsPage() {
     render();
   }
 
+  function startEphemeral() {
+    vault.startEphemeral();
+    render();
+  }
+
+  function clearEphemeral() {
+    vault.clearEphemeral();
+    render();
+  }
+
   function openAdd() {
     addDialog.replaceChildren(createAddForm({
       onCancel() {
@@ -84,7 +93,12 @@ export function createWalletsPage() {
     syncBtcAmounts();
   });
 
-  lockButton.addEventListener("click", () => {
+  sessionButton.addEventListener("click", () => {
+    if (vault.isEphemeral()) {
+      clearEphemeral();
+      return;
+    }
+
     lock();
   });
 
@@ -92,22 +106,21 @@ export function createWalletsPage() {
     openAdd();
   });
 
-  function renderLocked() {
-    content.replaceChildren(createLock({
-      onUnlock(password, button, status) {
-        return unlock(password, button, status);
+  /**
+   * @param {"create" | "unlock"} mode
+   */
+  function renderStart(mode) {
+    content.replaceChildren(createStart({
+      mode,
+      onPassword(password, button, status) {
+        return mode === "unlock"
+          ? unlock(password, button, status)
+          : setup(password, button, status);
       },
-      onReset() {
-        reset();
+      onEphemeral() {
+        startEphemeral();
       },
-    }));
-  }
-
-  function renderSetup() {
-    content.replaceChildren(createSetup({
-      onCreate(password, button, status) {
-        return setup(password, button, status);
-      },
+      onReset: mode === "unlock" ? reset : undefined,
     }));
   }
 
@@ -170,18 +183,24 @@ export function createWalletsPage() {
    * @param {string} password
    * @param {HTMLButtonElement} button
    * @param {HTMLElement} status
+   * @returns {Promise<boolean>}
    */
   async function unlock(password, button, status) {
+    let unlocked = false;
+
     await withBusy(button, "Unlock", "Unlocking", async () => {
       setStatus(status, "");
 
       try {
         await vault.unlock(password);
+        unlocked = true;
         render();
       } catch {
-        setStatus(status, "Invalid password");
+        unlocked = false;
       }
     });
+
+    return unlocked;
   }
 
   /**
@@ -190,7 +209,7 @@ export function createWalletsPage() {
    * @param {HTMLElement} status
    */
   async function setup(password, button, status) {
-    await withBusy(button, "Continue", "Creating", async () => {
+    await withBusy(button, "Create", "Creating", async () => {
       setStatus(status, "");
 
       try {
@@ -205,20 +224,22 @@ export function createWalletsPage() {
   function renderContent() {
     const needsSetup = vault.needsSetup();
     const locked = vault.isLocked();
+    const ephemeral = vault.isEphemeral();
     const current = vault.current();
     const empty = !needsSetup && !locked && !current;
 
     header.hidden = locked || needsSetup || empty;
     selectorElement.hidden = locked || needsSetup || empty;
-    lockButton.hidden = locked || needsSetup || !vault.hasPassword;
+    sessionButton.hidden = locked || needsSetup || (!vault.hasPassword && !ephemeral);
+    sessionButton.textContent = ephemeral ? "Clear" : "Lock";
 
     if (needsSetup) {
-      renderSetup();
+      renderStart("create");
       return;
     }
 
     if (locked) {
-      renderLocked();
+      renderStart("unlock");
       return;
     }
 
@@ -227,6 +248,7 @@ export function createWalletsPage() {
         onAdd() {
           openAdd();
         },
+        onClear: ephemeral ? clearEphemeral : undefined,
       }));
       return;
     }
@@ -246,27 +268,23 @@ export function createWalletsPage() {
   /**
    * @param {Object} options
    * @param {HTMLInputElement} options.name
-   * @param {HTMLInputElement} options.source
+   * @param {HTMLTextAreaElement} options.source
    * @param {HTMLButtonElement} options.submit
-   * @param {HTMLElement} options.status
    * @param {HTMLFormElement} options.form
    */
   async function submitAdd({
     name,
     source,
     submit,
-    status,
     form,
   }) {
     await withBusy(submit, "Add", "Adding", async () => {
-      setStatus(status, "Checking wallet");
+      source.removeAttribute("aria-invalid");
 
       try {
         const value = readWalletSourceText(source.value);
 
         await generateAddressesFromWalletSource(value, { count: 1 });
-
-        setStatus(status, "Saving");
 
         await vault.addWallet({
           name: name.value,
@@ -276,8 +294,9 @@ export function createWalletsPage() {
         form.reset();
         addDialog.close();
         render();
-      } catch (error) {
-        setStatus(status, getErrorMessage(error));
+      } catch {
+        source.setAttribute("aria-invalid", "true");
+        source.focus();
       }
     });
   }

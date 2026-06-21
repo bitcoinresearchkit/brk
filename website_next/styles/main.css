@@ -7,10 +7,58 @@ body {
   background: var(--black);
 }
 
-body {
-  > main {
-    min-height: 100dvh;
-    color: var(--white);
+body > main {
+  min-height: 100dvh;
+  color: var(--white);
+}
+
+:where(button, main.home nav a) {
+  display: inline-flex;
+  appearance: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border: 0;
+  border-radius: 0.3125rem;
+  padding: 0.75rem 1rem;
+  color: var(--black);
+  background: var(--gray);
+  font: inherit;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--black);
+    background: var(--white);
+  }
+
+  &:active {
+    color: var(--black);
+    background: var(--orange);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+}
+
+button {
+  font-size: var(--font-size-sm);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: progress;
+  }
+}
+
+:is(input, textarea)[aria-invalid="true"] {
+  border-color: var(--red);
+  color: var(--red);
+
+  &::placeholder {
+    color: var(--red);
   }
 }
 

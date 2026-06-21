@@ -29,6 +29,8 @@
   --line-height-sm: calc(1.25 / 0.875);
   --font-size-base: 1rem;
   --line-height-base: calc(1.5 / 1);
+  --font-size-lg: 1.25rem;
+  --line-height-lg: calc(1.5 / 1.25);
 
   --page-x: 2rem;
   --layer-header: 10;

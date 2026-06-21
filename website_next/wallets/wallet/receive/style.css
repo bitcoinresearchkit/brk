@@ -1,5 +1,5 @@
 main.wallets {
-  .wallets__receive-dialog {
+  dialog.receive {
     width: min(100% - 2rem, 32rem);
 
     > article {
@@ -24,7 +24,7 @@ main.wallets {
 
       > p {
         margin: 0;
-        color: var(--white);
+        color: var(--black);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
       }

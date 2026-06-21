@@ -1,12 +1,12 @@
 import { createField } from "../form/index.js";
+import { createElement } from "../dom.js";
 import { redaction } from "../redaction/index.js";
 
 /**
  * @typedef {Object} AddWalletFormSubmit
  * @property {HTMLInputElement} name
- * @property {HTMLInputElement} source
+ * @property {HTMLTextAreaElement} source
  * @property {HTMLButtonElement} submit
- * @property {HTMLElement} status
  * @property {HTMLFormElement} form
  */
 
@@ -17,15 +17,15 @@ import { redaction } from "../redaction/index.js";
  */
 
 function createSourceInput() {
-  const input = document.createElement("input");
+  const input = document.createElement("textarea");
 
   input.name = "source";
-  input.type = "text";
   redaction.setInput(input);
   input.autocomplete = "off";
-  input.placeholder = "xpub or descriptor...";
+  input.placeholder = "xpub... or wsh(sortedmulti(...))";
   input.required = true;
   input.spellcheck = false;
+  input.rows = 4;
 
   return input;
 }
@@ -34,44 +34,48 @@ function createSourceInput() {
  * @param {AddWalletFormOptions} options
  */
 export function createAddForm(options) {
-  const form = document.createElement("form");
+  const form = createElement("form", "add");
   const title = document.createElement("h2");
+  const description = document.createElement("p");
   const name = document.createElement("input");
   const source = createSourceInput();
   const actions = document.createElement("footer");
   const cancel = document.createElement("button");
   const submit = document.createElement("button");
-  const status = document.createElement("output");
   const fields = [
     createField("name", name),
     createField("xpub or descriptor", source),
   ];
 
-  title.append("Watch wallet");
+  title.append("Add wallet");
+  description.append(
+    "Import an xpub or watch-only descriptor. Spending keys are never needed.",
+  );
   name.name = "name";
   name.autocomplete = "off";
-  name.placeholder = "Wallet name";
+  name.placeholder = "Wallet 1";
   name.required = true;
   cancel.type = "button";
   cancel.append("Cancel");
   submit.type = "submit";
-  submit.classList.add("primary");
   submit.append("Add");
   actions.append(cancel, submit);
   form.append(
     title,
+    description,
     ...fields,
     actions,
-    status,
   );
   cancel.addEventListener("click", options.onCancel);
+  source.addEventListener("input", () => {
+    source.removeAttribute("aria-invalid");
+  });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     void options.onSubmit({
       name,
       source,
       submit,
-      status,
       form,
     });
   });

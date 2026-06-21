@@ -13,6 +13,7 @@ export function createVault() {
   let selectedId = "";
   let locked = hasVault();
   let password = "";
+  let ephemeral = false;
   /** @type {Map<string, WalletRuntime>} */
   const runtimes = new Map();
 
@@ -68,6 +69,7 @@ export function createVault() {
   function lock() {
     clear();
     password = "";
+    ephemeral = false;
     locked = hasVault();
   }
 
@@ -75,7 +77,22 @@ export function createVault() {
     vaultStorage.reset();
     clear();
     password = "";
+    ephemeral = false;
     locked = false;
+  }
+
+  function startEphemeral() {
+    clear();
+    password = "";
+    ephemeral = true;
+    locked = false;
+  }
+
+  function clearEphemeral() {
+    clear();
+    password = "";
+    ephemeral = false;
+    locked = hasVault();
   }
 
   /**
@@ -85,6 +102,7 @@ export function createVault() {
     await vaultStorage.setup(pagePassword);
     clear();
     password = pagePassword;
+    ephemeral = false;
     locked = false;
   }
 
@@ -96,6 +114,7 @@ export function createVault() {
     syncSelected();
     runtimes.clear();
     password = pagePassword;
+    ephemeral = false;
     locked = false;
 
     for (const wallet of wallets) {
@@ -107,6 +126,16 @@ export function createVault() {
    * @param {AddWalletInput} input
    */
   async function addWallet(input) {
+    if (ephemeral) {
+      const wallet = vaultStorage.createWallet(input);
+
+      wallets = [...wallets, wallet];
+      selectedId = wallet.id;
+      locked = false;
+      runtimes.set(wallet.id, createRuntime(wallet.source));
+      return;
+    }
+
     const added = await vaultStorage.addWallet(wallets, input, password);
 
     wallets = added.wallets;
@@ -126,16 +155,21 @@ export function createVault() {
       return password !== "";
     },
     needsSetup() {
-      return !hasVault() && !password;
+      return !hasVault() && !password && !ephemeral;
     },
     isLocked() {
-      return locked && hasVault();
+      return !ephemeral && locked && hasVault();
+    },
+    isEphemeral() {
+      return ephemeral;
     },
     current,
     isCurrent,
     select,
     lock,
     reset,
+    startEphemeral,
+    clearEphemeral,
     setup,
     unlock,
     addWallet,

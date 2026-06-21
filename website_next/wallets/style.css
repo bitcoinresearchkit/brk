@@ -1,7 +1,6 @@
 main.wallets {
   --offset: 4rem;
   --content-width: 72rem;
-  --control-height: 2.75rem;
 
   display: grid;
   gap: 1.5rem;
@@ -20,41 +19,30 @@ main.wallets {
     line-height: var(--line-height-sm);
   }
 
-  :is(input, select, button) {
+  :is(input, select, textarea) {
+    appearance: none;
     min-width: 0;
-    height: var(--control-height);
-    border: 1px solid color-mix(in oklch, var(--gray) 45%, transparent);
+    border: 0;
     border-radius: 0.375rem;
-    padding: 0 0.875rem;
+    padding: 0.75rem 0.875rem;
     color: var(--white);
     background: color-mix(in oklch, var(--black) 72%, var(--white));
     font: inherit;
     line-height: 1;
   }
 
-  button {
-    cursor: pointer;
+  textarea {
+    min-height: 7rem;
+    resize: vertical;
+    line-height: var(--line-height-sm);
   }
 
-  :is(input, select, button):focus-visible {
+  :is(input, select, textarea):focus-visible {
     outline: 2px solid var(--orange);
     outline-offset: 2px;
   }
 
-  button.primary {
-    border-color: var(--orange);
-    color: var(--black);
-    background: var(--orange);
-  }
-
-  input::placeholder {
+  :is(input, textarea)::placeholder {
     color: color-mix(in oklch, var(--gray) 70%, transparent);
-  }
-
-  button:disabled {
-    border-color: var(--gray);
-    color: var(--black);
-    background: var(--gray);
-    cursor: progress;
   }
 }

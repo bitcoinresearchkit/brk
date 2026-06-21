@@ -74,11 +74,15 @@ function setAddress(element, value, render) {
 }
 
 /**
- * @param {HTMLInputElement} input
+ * @param {HTMLInputElement | HTMLTextAreaElement} input
  */
 function setInput(input) {
   addEffect(input, () => {
-    input.type = hidden ? "password" : "text";
+    if (input instanceof HTMLTextAreaElement) {
+      input.style.setProperty("-webkit-text-security", hidden ? "disc" : "");
+    } else {
+      input.type = hidden ? "password" : "text";
+    }
   });
 }
 

@@ -77,10 +77,7 @@ async function copyReceiveAddress(receiveAddress, copy) {
  * @param {ReceiveAddress} receiveAddress
  */
 function openReceiveDialog(host, receiveAddress) {
-  const dialog = createElement(
-    "dialog",
-    "wallets__dialog wallets__receive-dialog",
-  );
+  const dialog = createElement("dialog", "receive");
   const content = document.createElement("article");
   const actions = document.createElement("footer");
   const copy = document.createElement("button");
@@ -88,7 +85,6 @@ function openReceiveDialog(host, receiveAddress) {
   const close = document.createElement("button");
 
   copy.type = "button";
-  copy.classList.add("primary");
   copy.append("Copy");
   closeForm.method = "dialog";
   close.type = "submit";
@@ -129,7 +125,6 @@ export function renderReceiveButton(element, receiveAddress) {
 
   button.type = "button";
   button.disabled = !receiveAddress;
-  button.classList.add("primary");
   button.append("Receive");
   button.addEventListener("click", () => {
     if (receiveAddress) {

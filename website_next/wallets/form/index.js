@@ -1,6 +1,6 @@
 /**
  * @param {string} label
- * @param {HTMLInputElement | HTMLSelectElement} control
+ * @param {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} control
  */
 export function createField(label, control) {
   const element = document.createElement("label");

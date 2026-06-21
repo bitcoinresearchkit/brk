@@ -67,6 +67,21 @@ function reset() {
 }
 
 /**
+ * @param {AddWalletInput} input
+ */
+function createWallet(input) {
+  const time = now();
+
+  return {
+    id: createWalletId(),
+    name: input.name.trim(),
+    source: input.source.trim(),
+    createdAt: time,
+    updatedAt: time,
+  };
+}
+
+/**
  * @param {string} pagePassword
  */
 async function setup(pagePassword) {
@@ -107,14 +122,7 @@ async function writeWallets(wallets, pagePassword) {
  * @param {string} pagePassword
  */
 async function addWallet(wallets, input, pagePassword) {
-  const time = now();
-  const wallet = {
-    id: createWalletId(),
-    name: input.name.trim(),
-    source: input.source.trim(),
-    createdAt: time,
-    updatedAt: time,
-  };
+  const wallet = createWallet(input);
   const nextWallets = [...wallets, wallet];
 
   await writeWallets(nextWallets, pagePassword);
@@ -128,6 +136,7 @@ async function addWallet(wallets, input, pagePassword) {
 export const vaultStorage = /** @type {const} */ ({
   has,
   reset,
+  createWallet,
   setup,
   load,
   addWallet,
