@@ -18,6 +18,7 @@ export function createHomePage() {
   for (const { href, label } of links) {
     const link = document.createElement("a");
     link.href = href;
+    link.dataset.button = "";
     link.append(label);
     nav.append(link);
   }

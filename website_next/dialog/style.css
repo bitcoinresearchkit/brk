@@ -1,6 +1,7 @@
 dialog {
   --dialog-space: 1.5rem;
 
+  color-scheme: light;
   width: min(100% - 2rem, 30rem);
   border: 0;
   border-radius: var(--dialog-space);
@@ -10,20 +11,5 @@ dialog {
 
   &::backdrop {
     background: color-mix(in oklch, var(--black) 72%, transparent);
-  }
-
-  button {
-    color: var(--white);
-    background: var(--gray);
-
-    &:hover {
-      color: var(--white);
-      background: var(--black);
-    }
-
-    &:active {
-      color: var(--white);
-      background: var(--orange);
-    }
   }
 }

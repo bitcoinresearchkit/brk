@@ -1,26 +1,13 @@
 main.wallets {
-  > header {
+  > footer {
     display: flex;
     gap: 1rem;
     align-items: center;
-    justify-content: end;
+    justify-content: space-between;
+    align-self: end;
 
     @media (max-width: 34rem) {
-      justify-content: start;
-    }
-
-    > menu {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: end;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-
-      @media (max-width: 34rem) {
-        justify-content: start;
-      }
+      justify-content: center;
     }
   }
 

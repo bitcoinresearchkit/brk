@@ -14,6 +14,7 @@ const MAX_SCANNED_ADDRESSES = 1_000;
 
 /**
  * @typedef {Object} AddressClient
+ * @property {string} domain
  * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
  * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
  */

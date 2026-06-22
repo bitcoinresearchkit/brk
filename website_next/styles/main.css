@@ -12,31 +12,18 @@ body > main {
   color: var(--white);
 }
 
-:where(button, main.home nav a) {
-  display: inline-flex;
+button,
+input,
+select,
+textarea,
+:where(a[data-button]) {
   appearance: none;
-  align-items: center;
-  justify-content: center;
   min-width: 0;
-  border: 0;
-  border-radius: 0.3125rem;
-  padding: 0.75rem 1rem;
-  color: var(--black);
-  background: var(--gray);
+  border-radius: var(--control-radius);
+  padding: var(--control-padding);
   font: inherit;
+  font-size: var(--font-size-sm);
   line-height: 1;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--black);
-    background: var(--white);
-  }
-
-  &:active {
-    color: var(--black);
-    background: var(--orange);
-  }
 
   &:focus-visible {
     outline: 2px solid var(--orange);
@@ -44,8 +31,25 @@ body > main {
   }
 }
 
-button {
-  font-size: var(--font-size-sm);
+button,
+:where(a[data-button]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  color: var(--button-color);
+  background: var(--button-background);
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--button-hover-background);
+  }
+
+  &:active {
+    background: var(--button-active-background);
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -53,13 +57,43 @@ button {
   }
 }
 
-:is(input, textarea)[aria-invalid="true"] {
-  border-color: var(--red);
-  color: var(--red);
+input,
+select,
+textarea {
+  border: 1px solid var(--field-border-color);
+  color: var(--field-color);
+  background: transparent;
+
+  &:hover {
+    border-color: var(--field-color);
+    color: var(--field-color);
+  }
+
+  &:active {
+    border-color: var(--field-active-color);
+    color: var(--field-active-color);
+  }
+
+  &[aria-invalid="true"] {
+    border-color: var(--red);
+    color: var(--red);
+
+    &::placeholder {
+      color: var(--red);
+    }
+  }
 
   &::placeholder {
-    color: var(--red);
+    color: color-mix(in oklch, var(--field-color) 70%, transparent);
   }
+}
+
+input {
+  height: 2.375rem;
+}
+
+textarea {
+  line-height: var(--line-height-sm);
 }
 
 ::selection {

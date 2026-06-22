@@ -16,6 +16,5 @@ main.home {
     gap: 0.5rem;
     font-size: var(--font-size-xs);
     line-height: 1;
-    text-transform: uppercase;
   }
 }

@@ -144,6 +144,20 @@ export function createVault() {
     runtimes.set(added.wallet.id, createRuntime(added.wallet.source));
   }
 
+  /**
+   * @param {string} walletId
+   */
+  async function deleteWallet(walletId) {
+    if (ephemeral) {
+      wallets = wallets.filter((wallet) => wallet.id !== walletId);
+    } else {
+      wallets = await vaultStorage.deleteWallet(wallets, walletId, password);
+    }
+
+    runtimes.delete(walletId);
+    syncSelected();
+  }
+
   return {
     get wallets() {
       return wallets;
@@ -173,5 +187,6 @@ export function createVault() {
     setup,
     unlock,
     addWallet,
+    deleteWallet,
   };
 }

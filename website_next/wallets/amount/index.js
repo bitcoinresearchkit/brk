@@ -170,7 +170,7 @@ export function createBtcAmount(tag, sats, options = {}) {
     signed: options.signed === true,
   };
 
-  element.classList.add("wallets__amount");
+  element.classList.add("amount");
   amounts.push({ element, amount });
   renderBtcAmount(element, amount);
 

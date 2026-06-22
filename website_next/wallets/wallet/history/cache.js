@@ -1,4 +1,4 @@
-import { addressHistory } from "./history.js";
+import { addressHistory } from "./address.js";
 import { readWalletTransaction } from "./transaction.js";
 
 /**
@@ -59,6 +59,6 @@ async function load(client, addresses) {
   return [...transactionsById.values()].sort(compareTransactions);
 }
 
-export const transactionCache = /** @type {const} */ ({
+export const historyCache = /** @type {const} */ ({
   load,
 });

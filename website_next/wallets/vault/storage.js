@@ -133,6 +133,19 @@ async function addWallet(wallets, input, pagePassword) {
   };
 }
 
+/**
+ * @param {StoredWallet[]} wallets
+ * @param {string} walletId
+ * @param {string} pagePassword
+ */
+async function deleteWallet(wallets, walletId, pagePassword) {
+  const nextWallets = wallets.filter((wallet) => wallet.id !== walletId);
+
+  await writeWallets(nextWallets, pagePassword);
+
+  return nextWallets;
+}
+
 export const vaultStorage = /** @type {const} */ ({
   has,
   reset,
@@ -140,4 +153,5 @@ export const vaultStorage = /** @type {const} */ ({
   setup,
   load,
   addWallet,
+  deleteWallet,
 });

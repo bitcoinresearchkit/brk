@@ -1498,6 +1498,12 @@ const _openBrowserCache = (option) => {
 };
 
 /**
+ * @param {string} url
+ * @returns {URL}
+ */
+const _parseBaseUrl = (url) => new URL(url, typeof location === 'undefined' ? undefined : location.href);
+
+/**
  * Custom error class for BRK client errors
  */
 class BrkError extends Error {
@@ -1849,6 +1855,9 @@ class BrkClientBase {
     const isString = typeof options === 'string';
     const rawUrl = isString ? options : options.baseUrl;
     this.baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
+    const url = _parseBaseUrl(this.baseUrl);
+    this.url = url.href.endsWith('/') ? url.href.slice(0, -1) : url.href;
+    this.domain = url.hostname;
     this.timeout = isString ? 5000 : (options.timeout ?? 5000);
     /** @type {Promise<Cache | null>} */
     this._browserCachePromise = _openBrowserCache(isString ? undefined : options.browserCache);

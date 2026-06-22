@@ -19,6 +19,7 @@ import { addressScripts } from "../derive/script.js";
 
 /**
  * @typedef {Object} WalletScanClient
+ * @property {string} domain
  * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
  * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
  * @property {(options?: { cache?: boolean }) => Promise<unknown>} getLivePrice

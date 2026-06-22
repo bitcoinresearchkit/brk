@@ -16,16 +16,6 @@ main.wallets {
       line-height: var(--line-height-sm);
     }
 
-    :is(input, textarea) {
-      border: 1px solid var(--gray);
-      color: var(--black);
-      background: transparent;
-
-      &::placeholder {
-        color: var(--gray);
-      }
-    }
-
     > footer {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));

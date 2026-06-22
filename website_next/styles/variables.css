@@ -32,6 +32,18 @@
   --font-size-lg: 1.25rem;
   --line-height-lg: calc(1.5 / 1.25);
 
+  --control-radius: 0.3125rem;
+  --control-padding: 0.75rem 1rem;
+
+  --button-color: light-dark(var(--white), var(--black));
+  --button-background: var(--gray);
+  --button-hover-background: light-dark(var(--black), var(--white));
+  --button-active-background: var(--orange);
+
+  --field-color: light-dark(var(--black), var(--white));
+  --field-border-color: var(--gray);
+  --field-active-color: var(--orange);
+
   --page-x: 2rem;
   --layer-header: 10;
 }

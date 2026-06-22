@@ -5,6 +5,7 @@ import {
   getAddressTxCount,
 } from "./stats.js";
 import { findUsablePrefixBucket } from "./bucket.js";
+import { isLocalClient } from "./local.js";
 
 const LOOKUP_CONCURRENCY = 8;
 
@@ -35,6 +36,7 @@ const LOOKUP_CONCURRENCY = 8;
 
 /**
  * @typedef {Object} AddressClient
+ * @property {string} domain
  * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
  * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
  */
@@ -94,6 +96,16 @@ function createWalletAddress(
 }
 
 /**
+ * @param {unknown} error
+ */
+function isNotFound(error) {
+  return (
+    error instanceof Error &&
+    /** @type {{ status?: unknown }} */ (error).status === 404
+  );
+}
+
+/**
  * @param {AddressClient} client
  * @param {readonly string[]} addresses
  * @param {Map<string, Promise<AddressStats>>} cache
@@ -111,6 +123,29 @@ async function fetchBucketMetadata(client, addresses, cache) {
   }
 
   await Promise.all(addresses.map((address) => cache.get(address)));
+}
+
+/**
+ * @param {AddressClient} client
+ * @param {GeneratedAddress} generated
+ * @returns {Promise<WalletAddress>}
+ */
+async function fetchDirectWalletAddress(client, generated) {
+  try {
+    const stats = /** @type {AddressStats} */ (
+      await client.getAddress(generated.address, { cache: false })
+    );
+    const historyAddresses =
+      getAddressTxCount(stats) > 0 ? [generated.address] : [];
+
+    return createWalletAddress(generated, stats, historyAddresses, 1);
+  } catch (error) {
+    if (isNotFound(error)) {
+      return createEmptyWalletAddress(generated, 1);
+    }
+
+    throw error;
+  }
 }
 
 /**
@@ -158,6 +193,12 @@ async function fetchWalletAddress(client, generated, metadataCache) {
  * @returns {Promise<WalletAddress[]>}
  */
 export async function fetchWalletAddresses(client, generated) {
+  if (isLocalClient(client)) {
+    return mapConcurrent(generated, LOOKUP_CONCURRENCY, (address) => {
+      return fetchDirectWalletAddress(client, address);
+    });
+  }
+
   const metadataCache =
     /** @type {Map<string, Promise<AddressStats>>} */ (new Map());
 

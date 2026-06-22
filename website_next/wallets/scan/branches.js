@@ -31,6 +31,7 @@ const descriptorBranches = /** @type {const} */ ([
 
 /**
  * @typedef {Object} AddressClient
+ * @property {string} domain
  * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
  * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
  */

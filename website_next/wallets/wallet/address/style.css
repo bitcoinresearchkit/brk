@@ -1,5 +1,5 @@
 main.wallets {
-  .wallets__address-cell {
+  .address-cell {
     display: grid;
     gap: 0.25rem;
 
@@ -23,7 +23,7 @@ main.wallets {
     }
   }
 
-  .wallets__address {
+  .address {
     display: flex;
     flex-wrap: wrap;
     gap: 0 0.375rem;

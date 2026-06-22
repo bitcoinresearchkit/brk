@@ -5,6 +5,7 @@ main.wallets {
   display: grid;
   gap: 1.5rem;
   align-content: start;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(100%, var(--content-width));
   margin-inline: auto;
   padding: var(--offset) var(--page-x);
@@ -19,30 +20,12 @@ main.wallets {
     line-height: var(--line-height-sm);
   }
 
-  :is(input, select, textarea) {
-    appearance: none;
+  .results {
     min-width: 0;
-    border: 0;
-    border-radius: 0.375rem;
-    padding: 0.75rem 0.875rem;
-    color: var(--white);
-    background: color-mix(in oklch, var(--black) 72%, var(--white));
-    font: inherit;
-    line-height: 1;
   }
 
   textarea {
     min-height: 7rem;
     resize: vertical;
-    line-height: var(--line-height-sm);
-  }
-
-  :is(input, select, textarea):focus-visible {
-    outline: 2px solid var(--orange);
-    outline-offset: 2px;
-  }
-
-  :is(input, textarea)::placeholder {
-    color: color-mix(in oklch, var(--gray) 70%, transparent);
   }
 }

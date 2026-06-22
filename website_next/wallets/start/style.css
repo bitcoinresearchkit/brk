@@ -40,7 +40,7 @@ main.wallets {
       margin: 0;
     }
 
-    > article > p:first-of-type {
+    > article > p {
       max-width: 35rem;
       color: var(--white);
       font-size: var(--font-size-base);
@@ -82,7 +82,7 @@ main.wallets {
       background: var(--gray);
     }
 
-    > article > p:last-of-type {
+    > article > small {
       max-width: 34rem;
       color: var(--gray);
       font-size: var(--font-size-sm);
@@ -137,33 +137,16 @@ main.wallets {
       }
 
       form {
-        --height: 2.375rem;
-
         display: flex;
         gap: 0;
         width: 100%;
-        font-size: var(--font-size-sm);
-
-        :is(input, button) {
-          height: var(--height);
-          padding: 0 1rem;
-          font: inherit;
-          line-height: 1;
-        }
 
         input {
           flex: 1 1 auto;
           display: block;
           min-block-size: 0;
-          border: 1px solid var(--gray);
           border-top-right-radius: 0;
           border-bottom-right-radius: 0;
-          color: var(--white);
-          background: transparent;
-
-          &::placeholder {
-            color: var(--gray);
-          }
         }
 
         button {
@@ -175,22 +158,18 @@ main.wallets {
           flex-direction: column;
 
           input {
-            border-top-right-radius: 0.375rem;
+            border-top-right-radius: var(--control-radius);
             border-bottom-left-radius: 0;
           }
 
           button {
             border-top-right-radius: 0;
-            border-bottom-left-radius: 0.375rem;
+            border-bottom-left-radius: var(--control-radius);
           }
         }
       }
 
-      > section:last-child {
-        font-size: var(--font-size-sm);
-      }
-
-      > section:last-child > button {
+      > section[data-mode="temporary"] > button {
         width: 100%;
       }
     }

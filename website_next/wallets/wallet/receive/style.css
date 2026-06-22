@@ -24,7 +24,6 @@ main.wallets {
 
       > p {
         margin: 0;
-        color: var(--black);
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
       }

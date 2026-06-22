@@ -1,3 +1,5 @@
+import { createHoldButton } from "../hold/index.js";
+
 /**
  * @typedef {Object} StoredWallet
  * @property {string} id
@@ -8,6 +10,8 @@
  * @typedef {Object} WalletSelectorOptions
  * @property {() => string} getSelectedId
  * @property {(walletId: string) => void} onSelect
+ * @property {() => void} onAdd
+ * @property {() => void} onDelete
  *
  * @typedef {Object} WalletSelectorButton
  * @property {HTMLButtonElement} button
@@ -22,6 +26,13 @@
  */
 function renderButtons(walletList, wallets, options) {
   const buttons = /** @type {WalletSelectorButton[]} */ ([]);
+  const add = document.createElement("button");
+  const remove = createHoldButton({
+    label: "DELETE",
+    title: "Hold to delete",
+    className: "delete",
+    onHold: options.onDelete,
+  });
 
   walletList.replaceChildren();
 
@@ -37,6 +48,14 @@ function renderButtons(walletList, wallets, options) {
     });
     buttons.push({ button, id: wallet.id });
     walletList.append(button);
+  }
+
+  add.type = "button";
+  add.append("ADD");
+  add.addEventListener("click", options.onAdd);
+  walletList.append(add);
+  if (wallets.length > 0) {
+    walletList.append(remove);
   }
 
   return buttons;

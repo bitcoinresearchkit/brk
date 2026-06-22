@@ -29,8 +29,7 @@ import { syncBtcAmounts } from "./amount/index.js";
 export function createWalletsPage() {
   const {
     main,
-    header,
-    addButton,
+    utilities,
     privacyButton,
     sessionButton,
     selector: selectorElement,
@@ -44,6 +43,12 @@ export function createWalletsPage() {
       return vault.selectedId;
     },
     onSelect: select,
+    onAdd() {
+      openAdd();
+    },
+    onDelete() {
+      deleteWallet(vault.selectedId);
+    },
   });
 
   redaction.syncButton(privacyButton);
@@ -76,6 +81,17 @@ export function createWalletsPage() {
     render();
   }
 
+  /**
+   * @param {string} walletId
+   */
+  function deleteWallet(walletId) {
+    void vault.deleteWallet(walletId).then(() => {
+      render();
+    }, (error) => {
+      console.error(error);
+    });
+  }
+
   function openAdd() {
     addDialog.replaceChildren(createAddForm({
       onCancel() {
@@ -100,10 +116,6 @@ export function createWalletsPage() {
     }
 
     lock();
-  });
-
-  addButton.addEventListener("click", () => {
-    openAdd();
   });
 
   /**
@@ -228,7 +240,7 @@ export function createWalletsPage() {
     const current = vault.current();
     const empty = !needsSetup && !locked && !current;
 
-    header.hidden = locked || needsSetup || empty;
+    utilities.hidden = locked || needsSetup || empty;
     selectorElement.hidden = locked || needsSetup || empty;
     sessionButton.hidden = locked || needsSetup || (!vault.hasPassword && !ephemeral);
     sessionButton.textContent = ephemeral ? "Clear" : "Lock";

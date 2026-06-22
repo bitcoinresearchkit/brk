@@ -3,8 +3,7 @@ import { createElement } from "../dom.js";
 /**
  * @typedef {Object} WalletsLayout
  * @property {HTMLElement} main
- * @property {HTMLElement} header
- * @property {HTMLButtonElement} addButton
+ * @property {HTMLElement} utilities
  * @property {HTMLButtonElement} privacyButton
  * @property {HTMLButtonElement} sessionButton
  * @property {HTMLElement} selector
@@ -18,33 +17,27 @@ import { createElement } from "../dom.js";
  */
 export function createLayout() {
   const main = createElement("main", "wallets");
-  const header = document.createElement("header");
-  const actions = document.createElement("menu");
-  const addButton = document.createElement("button");
+  const utilities = document.createElement("footer");
   const privacyButton = document.createElement("button");
   const sessionButton = document.createElement("button");
-  const selector = createElement("section", "wallets__selector");
+  const selector = createElement("section", "selector");
   const walletList = document.createElement("nav");
   const content = document.createElement("article");
   const addDialog = document.createElement("dialog");
 
-  addButton.type = "button";
-  addButton.append("Add watch-only wallet");
   privacyButton.type = "button";
   sessionButton.type = "button";
   sessionButton.append("Lock");
   content.setAttribute("aria-live", "polite");
   walletList.setAttribute("tabindex", "0");
   walletList.setAttribute("aria-label", "Wallets");
-  actions.append(addButton, privacyButton, sessionButton);
-  header.append(actions);
+  utilities.append(privacyButton, sessionButton);
   selector.append(walletList);
-  main.append(header, selector, content, addDialog);
+  main.append(selector, content, utilities, addDialog);
 
   return {
     main,
-    header,
-    addButton,
+    utilities,
     privacyButton,
     sessionButton,
     selector,
