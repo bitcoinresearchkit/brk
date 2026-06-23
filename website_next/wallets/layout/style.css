@@ -1,13 +1,22 @@
 main.wallets {
   > footer {
+    position: fixed;
+    right: var(--page-x);
+    bottom: var(--page-x);
+    left: var(--page-x);
+    z-index: 1;
     display: flex;
     gap: 1rem;
     align-items: center;
     justify-content: space-between;
-    align-self: end;
+    pointer-events: none;
 
     @media (max-width: 34rem) {
       justify-content: center;
+    }
+
+    > button {
+      pointer-events: auto;
     }
   }
 
