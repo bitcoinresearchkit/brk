@@ -6,7 +6,7 @@
 
 # Interface: SeriesPattern\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1740](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1740)
+Defined in: [Developer/brk/modules/brk-client/index.js:1758](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1758)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1740](https://github.com/
 
 > **by**: `Readonly`\<`Partial`\<`Record`\<[`Index`](../type-aliases/Index.md), [`SeriesEndpoint`](SeriesEndpoint.md)\<`T`\>\>\>\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1742](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1742)
+Defined in: [Developer/brk/modules/brk-client/index.js:1760](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1760)
 
 Index endpoints as lazy getters
 
@@ -30,7 +30,7 @@ Index endpoints as lazy getters
 
 > **get**: (`index`) => [`SeriesEndpoint`](SeriesEndpoint.md)\<`T`\> \| `undefined`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1744](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1744)
+Defined in: [Developer/brk/modules/brk-client/index.js:1762](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1762)
 
 Get an endpoint for a specific index
 
@@ -50,7 +50,7 @@ Get an endpoint for a specific index
 
 > **indexes**: () => readonly [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1743](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1743)
+Defined in: [Developer/brk/modules/brk-client/index.js:1761](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1761)
 
 Get the list of available indexes
 
@@ -64,6 +64,6 @@ readonly [`Index`](../type-aliases/Index.md)[]
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1741](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1741)
+Defined in: [Developer/brk/modules/brk-client/index.js:1759](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1759)
 
 The series name

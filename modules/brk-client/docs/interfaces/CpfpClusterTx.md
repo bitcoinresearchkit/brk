@@ -6,7 +6,7 @@
 
 # Interface: CpfpClusterTx
 
-Defined in: [Developer/brk/modules/brk-client/index.js:444](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L444)
+Defined in: [Developer/brk/modules/brk-client/index.js:456](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L456)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:444](https://github.com/b
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:447](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L447)
+Defined in: [Developer/brk/modules/brk-client/index.js:459](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L459)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:447](https://github.com/b
 
 > **parents**: `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:448](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L448)
+Defined in: [Developer/brk/modules/brk-client/index.js:460](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L460)
 
 In-cluster parents of this tx.
 
@@ -32,7 +32,7 @@ In-cluster parents of this tx.
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:445](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L445)
+Defined in: [Developer/brk/modules/brk-client/index.js:457](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L457)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:445](https://github.com/b
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:446](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L446)
+Defined in: [Developer/brk/modules/brk-client/index.js:458](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L458)

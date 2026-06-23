@@ -8,6 +8,6 @@
 
 > **FeeRate** = `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:590](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L590)
+Defined in: [Developer/brk/modules/brk-client/index.js:602](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L602)
 
 ## Type Parameters

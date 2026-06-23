@@ -6,7 +6,7 @@
 
 # Interface: UrpdQuery
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1389](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1389)
+Defined in: [Developer/brk/modules/brk-client/index.js:1401](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1401)
 
 ## Properties
 
@@ -14,6 +14,6 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1389](https://github.com/
 
 > `optional` **agg?**: [`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1390](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1390)
+Defined in: [Developer/brk/modules/brk-client/index.js:1402](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1402)
 
 Aggregation strategy. Default: raw (no aggregation). Accepts `bucket` as alias.

@@ -6,7 +6,7 @@
 
 # Interface: DateSeriesDataExtras\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1654](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1654)
+Defined in: [Developer/brk/modules/brk-client/index.js:1672](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1672)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1654](https://github.com/
 
 > **dateEntries**: () => \[`Date`, `T`\][]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1656](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1656)
+Defined in: [Developer/brk/modules/brk-client/index.js:1674](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1674)
 
 Get [date, value] pairs
 
@@ -34,7 +34,7 @@ Get [date, value] pairs
 
 > **dates**: () => `Date`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1655](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1655)
+Defined in: [Developer/brk/modules/brk-client/index.js:1673](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1673)
 
 Get dates for each data point
 
@@ -48,7 +48,7 @@ Get dates for each data point
 
 > **toDateMap**: () => `Map`\<`Date`, `T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1657](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1657)
+Defined in: [Developer/brk/modules/brk-client/index.js:1675](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1675)
 
 Convert to Map<date, value>
 

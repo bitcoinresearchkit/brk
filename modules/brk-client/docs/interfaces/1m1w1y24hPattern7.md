@@ -6,7 +6,7 @@
 
 # Interface: \_1m1w1y24hPattern7
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3781](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3781)
+Defined in: [Developer/brk/modules/brk-client/index.js:3802](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3802)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3781](https://github.com/
 
 > **\_1m**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3782](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3782)
+Defined in: [Developer/brk/modules/brk-client/index.js:3803](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3803)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3782](https://github.com/
 
 > **\_1w**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3783](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3783)
+Defined in: [Developer/brk/modules/brk-client/index.js:3804](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3804)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3783](https://github.com/
 
 > **\_1y**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3784](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3784)
+Defined in: [Developer/brk/modules/brk-client/index.js:3805](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3805)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3784](https://github.com/
 
 > **\_24h**: [`BtcSatsPattern`](BtcSatsPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3785](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3785)
+Defined in: [Developer/brk/modules/brk-client/index.js:3806](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3806)

@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Utxo\_Entry\_Premium
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7528](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7528)
+Defined in: [Developer/brk/modules/brk-client/index.js:7549](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7549)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7528](https://github.com/
 
 > **activity**: [`CoindaysCoinyearsDormancyTransferPattern`](CoindaysCoinyearsDormancyTransferPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7531](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7531)
+Defined in: [Developer/brk/modules/brk-client/index.js:7552](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7552)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7531](https://github.com/
 
 > **costBasis**: [`InMaxMinPerSupplyPattern`](InMaxMinPerSupplyPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7533](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7533)
+Defined in: [Developer/brk/modules/brk-client/index.js:7554](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7554)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7533](https://github.com/
 
 > **investedCapital**: [`InPattern`](InPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7535](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7535)
+Defined in: [Developer/brk/modules/brk-client/index.js:7556](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7556)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7535](https://github.com/
 
 > **outputs**: [`SpendingSpentUnspentPattern`](SpendingSpentUnspentPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7530](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7530)
+Defined in: [Developer/brk/modules/brk-client/index.js:7551](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7551)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7530](https://github.com/
 
 > **realized**: [`SeriesTree_Cohorts_Utxo_Entry_Premium_Realized`](SeriesTree_Cohorts_Utxo_Entry_Premium_Realized.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7532](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7532)
+Defined in: [Developer/brk/modules/brk-client/index.js:7553](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7553)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7532](https://github.com/
 
 > **supply**: [`DeltaDominanceHalfInTotalPattern2`](DeltaDominanceHalfInTotalPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7529](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7529)
+Defined in: [Developer/brk/modules/brk-client/index.js:7550](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7550)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:7529](https://github.com/
 
 > **unrealized**: [`CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2`](CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:7534](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L7534)
+Defined in: [Developer/brk/modules/brk-client/index.js:7555](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L7555)

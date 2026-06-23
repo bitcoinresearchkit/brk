@@ -6,7 +6,7 @@
 
 # Interface: Prices
 
-Defined in: [Developer/brk/modules/brk-client/index.js:965](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L965)
+Defined in: [Developer/brk/modules/brk-client/index.js:977](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L977)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:965](https://github.com/b
 
 > **time**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:966](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L966)
+Defined in: [Developer/brk/modules/brk-client/index.js:978](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L978)
 
 Unix timestamp
 
@@ -24,6 +24,6 @@ Unix timestamp
 
 > **uSD**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:967](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L967)
+Defined in: [Developer/brk/modules/brk-client/index.js:979](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L979)
 
 BTC/USD price

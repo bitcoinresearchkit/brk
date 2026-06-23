@@ -6,7 +6,7 @@
 
 # Interface: CoindaysTransferPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4962](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4962)
+Defined in: [Developer/brk/modules/brk-client/index.js:4983](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4983)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4962](https://github.com/
 
 > **coindaysDestroyed**: [`AverageBlockCumulativeSumPattern`](AverageBlockCumulativeSumPattern.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4963](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4963)
+Defined in: [Developer/brk/modules/brk-client/index.js:4984](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4984)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4963](https://github.com/
 
 > **transferVolume**: [`AverageBlockCumulativeInSumPattern`](AverageBlockCumulativeInSumPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4964](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4964)
+Defined in: [Developer/brk/modules/brk-client/index.js:4985](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4985)

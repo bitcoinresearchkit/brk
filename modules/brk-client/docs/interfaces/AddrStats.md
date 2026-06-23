@@ -6,7 +6,7 @@
 
 # Interface: AddrStats
 
-Defined in: [Developer/brk/modules/brk-client/index.js:53](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L53)
+Defined in: [Developer/brk/modules/brk-client/index.js:65](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L65)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:53](https://github.com/bi
 
 > **address**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:54](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L54)
+Defined in: [Developer/brk/modules/brk-client/index.js:66](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L66)
 
 Bitcoin address string
 
@@ -24,7 +24,7 @@ Bitcoin address string
 
 > **addrType**: [`OutputType`](../type-aliases/OutputType.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:55](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L55)
+Defined in: [Developer/brk/modules/brk-client/index.js:67](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L67)
 
 Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
 
@@ -34,7 +34,7 @@ Address type (p2pkh, p2sh, v0_p2wpkh, v0_p2wsh, v1_p2tr, etc.)
 
 > **chainStats**: [`AddrChainStats`](AddrChainStats.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:56](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L56)
+Defined in: [Developer/brk/modules/brk-client/index.js:68](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L68)
 
 Statistics for confirmed transactions on the blockchain
 
@@ -44,6 +44,6 @@ Statistics for confirmed transactions on the blockchain
 
 > **mempoolStats**: [`AddrMempoolStats`](AddrMempoolStats.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:57](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L57)
+Defined in: [Developer/brk/modules/brk-client/index.js:69](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L69)
 
 Statistics for unconfirmed transactions in the mempool

@@ -6,7 +6,7 @@
 
 # Interface: ActiveInputOutputSpendablePattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3026](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3026)
+Defined in: [Developer/brk/modules/brk-client/index.js:3047](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3047)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3026](https://github.com/
 
 > **activeReusedAddrCount**: [`_1m1w1y24hBlockPattern`](1m1w1y24hBlockPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3027](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3027)
+Defined in: [Developer/brk/modules/brk-client/index.js:3048](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3048)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3027](https://github.com/
 
 > **activeReusedAddrShare**: [`_1m1w1y24hBlockPattern2`](1m1w1y24hBlockPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3028](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3028)
+Defined in: [Developer/brk/modules/brk-client/index.js:3049](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3049)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3028](https://github.com/
 
 > **inputFromReusedAddrCount**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3029](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3029)
+Defined in: [Developer/brk/modules/brk-client/index.js:3050](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3050)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3029](https://github.com/
 
 > **inputFromReusedAddrShare**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3030](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3030)
+Defined in: [Developer/brk/modules/brk-client/index.js:3051](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3051)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3030](https://github.com/
 
 > **outputToReusedAddrCount**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3031](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3031)
+Defined in: [Developer/brk/modules/brk-client/index.js:3052](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3052)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3031](https://github.com/
 
 > **outputToReusedAddrShare**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern7.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3032](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3032)
+Defined in: [Developer/brk/modules/brk-client/index.js:3053](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3053)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:3032](https://github.com/
 
 > **spendableOutputToReusedAddrShare**: [`_1m1w1y24hBpsPercentRatioPattern`](1m1w1y24hBpsPercentRatioPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:3033](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L3033)
+Defined in: [Developer/brk/modules/brk-client/index.js:3054](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L3054)

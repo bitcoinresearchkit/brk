@@ -6,7 +6,7 @@
 
 # Interface: BlockCumulativeSumPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4228](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4228)
+Defined in: [Developer/brk/modules/brk-client/index.js:4249](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4249)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4228](https://github.com/
 
 > **block**: [`CentsUsdPattern2`](CentsUsdPattern2.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4229](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4229)
+Defined in: [Developer/brk/modules/brk-client/index.js:4250](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4250)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4229](https://github.com/
 
 > **cumulative**: [`CentsUsdPattern3`](CentsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4230](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4230)
+Defined in: [Developer/brk/modules/brk-client/index.js:4251](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4251)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4230](https://github.com/
 
 > **sum**: [`_1m1w1y24hPattern6`](1m1w1y24hPattern6.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4231](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4231)
+Defined in: [Developer/brk/modules/brk-client/index.js:4252](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4252)

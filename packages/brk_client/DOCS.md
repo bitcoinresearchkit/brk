@@ -47,6 +47,7 @@
     * [get\_difficulty\_adjustment](#brk_client.BrkClient.get_difficulty_adjustment)
     * [get\_prices](#brk_client.BrkClient.get_prices)
     * [get\_historical\_price](#brk_client.BrkClient.get_historical_price)
+    * [get\_address\_hash\_prefix\_matches](#brk_client.BrkClient.get_address_hash_prefix_matches)
     * [get\_address](#brk_client.BrkClient.get_address)
     * [get\_address\_txs](#brk_client.BrkClient.get_address_txs)
     * [get\_address\_confirmed\_txs](#brk_client.BrkClient.get_address_confirmed_txs)
@@ -605,6 +606,21 @@ Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the pri
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
 
 Endpoint: `GET /api/v1/historical-price`
+
+<a id="brk_client.BrkClient.get_address_hash_prefix_matches"></a>
+
+#### get\_address\_hash\_prefix\_matches
+
+```python
+def get_address_hash_prefix_matches(addr_type: OutputType,
+                                    prefix: str) -> AddrHashPrefixMatches
+```
+
+Address hash-prefix matches.
+
+Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+
+Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
 
 <a id="brk_client.BrkClient.get_address"></a>
 

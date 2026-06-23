@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Pools\_Minor
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6627](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6627)
+Defined in: [Developer/brk/modules/brk-client/index.js:6648](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6648)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6627](https://github.com/
 
 > **aaopool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6721](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6721)
+Defined in: [Developer/brk/modules/brk-client/index.js:6742](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6742)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6721](https://github.com/
 
 > **arkpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6723](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6723)
+Defined in: [Developer/brk/modules/brk-client/index.js:6744](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6744)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6723](https://github.com/
 
 > **asicminer**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6640](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6640)
+Defined in: [Developer/brk/modules/brk-client/index.js:6661](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6661)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6640](https://github.com/
 
 > **axbt**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6639](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6639)
+Defined in: [Developer/brk/modules/brk-client/index.js:6660](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6660)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6639](https://github.com/
 
 > **batpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6690](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6690)
+Defined in: [Developer/brk/modules/brk-client/index.js:6711](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6711)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6690](https://github.com/
 
 > **bcmonster**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6685](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6685)
+Defined in: [Developer/brk/modules/brk-client/index.js:6706](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6706)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6685](https://github.com/
 
 > **bcpoolio**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6665](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6665)
+Defined in: [Developer/brk/modules/brk-client/index.js:6686](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6686)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6665](https://github.com/
 
 > **bitalo**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6657](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6657)
+Defined in: [Developer/brk/modules/brk-client/index.js:6678](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6678)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6657](https://github.com/
 
 > **bitclub**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6671](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6671)
+Defined in: [Developer/brk/modules/brk-client/index.js:6692](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6692)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6671](https://github.com/
 
 > **bitcoinaffiliatenetwork**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6672](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6672)
+Defined in: [Developer/brk/modules/brk-client/index.js:6693](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6693)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6672](https://github.com/
 
 > **bitcoincom**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6636](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6636)
+Defined in: [Developer/brk/modules/brk-client/index.js:6657](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6657)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6636](https://github.com/
 
 > **bitcoinindia**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6696](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6696)
+Defined in: [Developer/brk/modules/brk-client/index.js:6717](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6717)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6696](https://github.com/
 
 > **bitcoinindiapool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6744](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6744)
+Defined in: [Developer/brk/modules/brk-client/index.js:6765](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6765)
 
 ***
 
@@ -118,7 +118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6744](https://github.com/
 
 > **bitcoinrussia**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6642](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6642)
+Defined in: [Developer/brk/modules/brk-client/index.js:6663](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6663)
 
 ***
 
@@ -126,7 +126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6642](https://github.com/
 
 > **bitcoinukraine**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6708](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6708)
+Defined in: [Developer/brk/modules/brk-client/index.js:6729](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6729)
 
 ***
 
@@ -134,7 +134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6708](https://github.com/
 
 > **bitfarms**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6632](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6632)
+Defined in: [Developer/brk/modules/brk-client/index.js:6653](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6653)
 
 ***
 
@@ -142,7 +142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6632](https://github.com/
 
 > **bitfufupool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6758](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6758)
+Defined in: [Developer/brk/modules/brk-client/index.js:6779](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6779)
 
 ***
 
@@ -150,7 +150,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6758](https://github.com/
 
 > **bitminter**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6641](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6641)
+Defined in: [Developer/brk/modules/brk-client/index.js:6662](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6662)
 
 ***
 
@@ -158,7 +158,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6641](https://github.com/
 
 > **bitparking**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6653](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6653)
+Defined in: [Developer/brk/modules/brk-client/index.js:6674](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6674)
 
 ***
 
@@ -166,7 +166,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6653](https://github.com/
 
 > **bitsolo**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6674](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6674)
+Defined in: [Developer/brk/modules/brk-client/index.js:6695](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6695)
 
 ***
 
@@ -174,7 +174,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6674](https://github.com/
 
 > **bixin**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6687](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6687)
+Defined in: [Developer/brk/modules/brk-client/index.js:6708](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6708)
 
 ***
 
@@ -182,7 +182,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6687](https://github.com/
 
 > **blockfills**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6628](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6628)
+Defined in: [Developer/brk/modules/brk-client/index.js:6649](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6649)
 
 ***
 
@@ -190,7 +190,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6628](https://github.com/
 
 > **braiinssolo**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6768](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6768)
+Defined in: [Developer/brk/modules/brk-client/index.js:6789](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6789)
 
 ***
 
@@ -198,7 +198,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6768](https://github.com/
 
 > **bravomining**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6682](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6682)
+Defined in: [Developer/brk/modules/brk-client/index.js:6703](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6703)
 
 ***
 
@@ -206,7 +206,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6682](https://github.com/
 
 > **btcdig**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6737](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6737)
+Defined in: [Developer/brk/modules/brk-client/index.js:6758](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6758)
 
 ***
 
@@ -214,7 +214,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6737](https://github.com/
 
 > **btclab**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6764](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6764)
+Defined in: [Developer/brk/modules/brk-client/index.js:6785](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6785)
 
 ***
 
@@ -222,7 +222,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6764](https://github.com/
 
 > **btcmp**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6739](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6739)
+Defined in: [Developer/brk/modules/brk-client/index.js:6760](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6760)
 
 ***
 
@@ -230,7 +230,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6739](https://github.com/
 
 > **btcnuggets**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6730](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6730)
+Defined in: [Developer/brk/modules/brk-client/index.js:6751](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6751)
 
 ***
 
@@ -238,7 +238,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6730](https://github.com/
 
 > **btcpoolparty**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6734](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6734)
+Defined in: [Developer/brk/modules/brk-client/index.js:6755](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6755)
 
 ***
 
@@ -246,7 +246,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6734](https://github.com/
 
 > **btcserv**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6643](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6643)
+Defined in: [Developer/brk/modules/brk-client/index.js:6664](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6664)
 
 ***
 
@@ -254,7 +254,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6643](https://github.com/
 
 > **btpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6694](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6694)
+Defined in: [Developer/brk/modules/brk-client/index.js:6715](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6715)
 
 ***
 
@@ -262,7 +262,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6694](https://github.com/
 
 > **bytepool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6715](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6715)
+Defined in: [Developer/brk/modules/brk-client/index.js:6736](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6736)
 
 ***
 
@@ -270,7 +270,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6715](https://github.com/
 
 > **canoe**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6746](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6746)
+Defined in: [Developer/brk/modules/brk-client/index.js:6767](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6767)
 
 ***
 
@@ -278,7 +278,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6746](https://github.com/
 
 > **canoepool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6635](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6635)
+Defined in: [Developer/brk/modules/brk-client/index.js:6656](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6656)
 
 ***
 
@@ -286,7 +286,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6635](https://github.com/
 
 > **carbonnegative**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6753](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6753)
+Defined in: [Developer/brk/modules/brk-client/index.js:6774](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6774)
 
 ***
 
@@ -294,7 +294,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6753](https://github.com/
 
 > **ckpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6669](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6669)
+Defined in: [Developer/brk/modules/brk-client/index.js:6690](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6690)
 
 ***
 
@@ -302,7 +302,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6669](https://github.com/
 
 > **cloudhashing**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6731](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6731)
+Defined in: [Developer/brk/modules/brk-client/index.js:6752](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6752)
 
 ***
 
@@ -310,7 +310,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6731](https://github.com/
 
 > **coinlab**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6649](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6649)
+Defined in: [Developer/brk/modules/brk-client/index.js:6670](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6670)
 
 ***
 
@@ -318,7 +318,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6649](https://github.com/
 
 > **cointerra**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6666](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6666)
+Defined in: [Developer/brk/modules/brk-client/index.js:6687](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6687)
 
 ***
 
@@ -326,7 +326,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6666](https://github.com/
 
 > **connectbtc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6689](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6689)
+Defined in: [Developer/brk/modules/brk-client/index.js:6710](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6710)
 
 ***
 
@@ -334,7 +334,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6689](https://github.com/
 
 > **dcex**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6693](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6693)
+Defined in: [Developer/brk/modules/brk-client/index.js:6714](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6714)
 
 ***
 
@@ -342,7 +342,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6693](https://github.com/
 
 > **dcexploration**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6692](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6692)
+Defined in: [Developer/brk/modules/brk-client/index.js:6713](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6713)
 
 ***
 
@@ -350,7 +350,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6692](https://github.com/
 
 > **digitalbtc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6676](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6676)
+Defined in: [Developer/brk/modules/brk-client/index.js:6697](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6697)
 
 ***
 
@@ -358,7 +358,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6676](https://github.com/
 
 > **digitalxmintsy**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6732](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6732)
+Defined in: [Developer/brk/modules/brk-client/index.js:6753](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6753)
 
 ***
 
@@ -366,7 +366,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6732](https://github.com/
 
 > **dpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6704](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6704)
+Defined in: [Developer/brk/modules/brk-client/index.js:6725](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6725)
 
 ***
 
@@ -374,7 +374,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6704](https://github.com/
 
 > **eclipsemc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6646](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6646)
+Defined in: [Developer/brk/modules/brk-client/index.js:6667](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6667)
 
 ***
 
@@ -382,7 +382,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6646](https://github.com/
 
 > **eightbaochi**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6677](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6677)
+Defined in: [Developer/brk/modules/brk-client/index.js:6698](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6698)
 
 ***
 
@@ -390,7 +390,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6677](https://github.com/
 
 > **ekanembtc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6745](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6745)
+Defined in: [Developer/brk/modules/brk-client/index.js:6766](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6766)
 
 ***
 
@@ -398,7 +398,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6745](https://github.com/
 
 > **emcdpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6722](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6722)
+Defined in: [Developer/brk/modules/brk-client/index.js:6743](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6743)
 
 ***
 
@@ -406,7 +406,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6722](https://github.com/
 
 > **entrustcharitypool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6726](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6726)
+Defined in: [Developer/brk/modules/brk-client/index.js:6747](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6747)
 
 ***
 
@@ -414,7 +414,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6726](https://github.com/
 
 > **eobot**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6740](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6740)
+Defined in: [Developer/brk/modules/brk-client/index.js:6761](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6761)
 
 ***
 
@@ -422,7 +422,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6740](https://github.com/
 
 > **est3lar**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6767](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6767)
+Defined in: [Developer/brk/modules/brk-client/index.js:6788](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6788)
 
 ***
 
@@ -430,7 +430,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6767](https://github.com/
 
 > **exxbw**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6673](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6673)
+Defined in: [Developer/brk/modules/brk-client/index.js:6694](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6694)
 
 ***
 
@@ -438,7 +438,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6673](https://github.com/
 
 > **fiftyeightcoin**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6695](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6695)
+Defined in: [Developer/brk/modules/brk-client/index.js:6716](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6716)
 
 ***
 
@@ -446,7 +446,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6695](https://github.com/
 
 > **futurebitapollosolo**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6752](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6752)
+Defined in: [Developer/brk/modules/brk-client/index.js:6773](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6773)
 
 ***
 
@@ -454,7 +454,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6752](https://github.com/
 
 > **gbminers**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6638](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6638)
+Defined in: [Developer/brk/modules/brk-client/index.js:6659](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6659)
 
 ***
 
@@ -462,7 +462,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6638](https://github.com/
 
 > **gdpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6759](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6759)
+Defined in: [Developer/brk/modules/brk-client/index.js:6780](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6780)
 
 ***
 
@@ -470,7 +470,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6759](https://github.com/
 
 > **ghashio**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6651](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6651)
+Defined in: [Developer/brk/modules/brk-client/index.js:6672](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6672)
 
 ***
 
@@ -478,7 +478,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6651](https://github.com/
 
 > **givemecoins**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6663](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6663)
+Defined in: [Developer/brk/modules/brk-client/index.js:6684](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6684)
 
 ***
 
@@ -486,7 +486,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6663](https://github.com/
 
 > **gogreenlight**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6743](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6743)
+Defined in: [Developer/brk/modules/brk-client/index.js:6764](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6764)
 
 ***
 
@@ -494,7 +494,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6743](https://github.com/
 
 > **haominer**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6706](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6706)
+Defined in: [Developer/brk/modules/brk-client/index.js:6727](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6727)
 
 ***
 
@@ -502,7 +502,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6706](https://github.com/
 
 > **haozhuzhu**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6700](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6700)
+Defined in: [Developer/brk/modules/brk-client/index.js:6721](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6721)
 
 ***
 
@@ -510,7 +510,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6700](https://github.com/
 
 > **hashbx**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6703](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6703)
+Defined in: [Developer/brk/modules/brk-client/index.js:6724](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6724)
 
 ***
 
@@ -518,7 +518,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6703](https://github.com/
 
 > **hashpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6680](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6680)
+Defined in: [Developer/brk/modules/brk-client/index.js:6701](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6701)
 
 ***
 
@@ -526,7 +526,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6680](https://github.com/
 
 > **helix**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6707](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6707)
+Defined in: [Developer/brk/modules/brk-client/index.js:6728](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6728)
 
 ***
 
@@ -534,7 +534,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6707](https://github.com/
 
 > **hhtt**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6658](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6658)
+Defined in: [Developer/brk/modules/brk-client/index.js:6679](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6679)
 
 ***
 
@@ -542,7 +542,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6658](https://github.com/
 
 > **hotpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6683](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6683)
+Defined in: [Developer/brk/modules/brk-client/index.js:6704](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6704)
 
 ***
 
@@ -550,7 +550,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6683](https://github.com/
 
 > **hummerpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6713](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6713)
+Defined in: [Developer/brk/modules/brk-client/index.js:6734](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6734)
 
 ***
 
@@ -558,7 +558,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6713](https://github.com/
 
 > **huobipool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6633](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6633)
+Defined in: [Developer/brk/modules/brk-client/index.js:6654](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6654)
 
 ***
 
@@ -566,7 +566,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6633](https://github.com/
 
 > **innopolistech**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6763](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6763)
+Defined in: [Developer/brk/modules/brk-client/index.js:6784](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6784)
 
 ***
 
@@ -574,7 +574,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6763](https://github.com/
 
 > **kanopool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6667](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6667)
+Defined in: [Developer/brk/modules/brk-client/index.js:6688](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6688)
 
 ***
 
@@ -582,7 +582,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6667](https://github.com/
 
 > **kncminer**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6656](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6656)
+Defined in: [Developer/brk/modules/brk-client/index.js:6677](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6677)
 
 ***
 
@@ -590,7 +590,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6656](https://github.com/
 
 > **kucoinpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6725](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6725)
+Defined in: [Developer/brk/modules/brk-client/index.js:6746](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6746)
 
 ***
 
@@ -598,7 +598,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6725](https://github.com/
 
 > **lubiancom**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6719](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6719)
+Defined in: [Developer/brk/modules/brk-client/index.js:6740](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6740)
 
 ***
 
@@ -606,7 +606,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6719](https://github.com/
 
 > **maxbtc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6647](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6647)
+Defined in: [Developer/brk/modules/brk-client/index.js:6668](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6668)
 
 ***
 
@@ -614,7 +614,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6647](https://github.com/
 
 > **maxipool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6757](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6757)
+Defined in: [Developer/brk/modules/brk-client/index.js:6778](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6778)
 
 ***
 
@@ -622,7 +622,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6757](https://github.com/
 
 > **megabigpower**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6659](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6659)
+Defined in: [Developer/brk/modules/brk-client/index.js:6680](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6680)
 
 ***
 
@@ -630,7 +630,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6659](https://github.com/
 
 > **minerium**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6718](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6718)
+Defined in: [Developer/brk/modules/brk-client/index.js:6739](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6739)
 
 ***
 
@@ -638,7 +638,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6718](https://github.com/
 
 > **miningcity**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6717](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6717)
+Defined in: [Developer/brk/modules/brk-client/index.js:6738](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6738)
 
 ***
 
@@ -646,7 +646,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6717](https://github.com/
 
 > **miningdutch**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6760](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6760)
+Defined in: [Developer/brk/modules/brk-client/index.js:6781](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6781)
 
 ***
 
@@ -654,7 +654,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6760](https://github.com/
 
 > **miningkings**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6702](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6702)
+Defined in: [Developer/brk/modules/brk-client/index.js:6723](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6723)
 
 ***
 
@@ -662,7 +662,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6702](https://github.com/
 
 > **miningsquared**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6762](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6762)
+Defined in: [Developer/brk/modules/brk-client/index.js:6783](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6783)
 
 ***
 
@@ -670,7 +670,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6762](https://github.com/
 
 > **mmpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6654](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6654)
+Defined in: [Developer/brk/modules/brk-client/index.js:6675](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6675)
 
 ***
 
@@ -678,7 +678,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6654](https://github.com/
 
 > **mtred**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6660](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6660)
+Defined in: [Developer/brk/modules/brk-client/index.js:6681](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6681)
 
 ***
 
@@ -686,7 +686,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6660](https://github.com/
 
 > **multicoinco**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6664](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6664)
+Defined in: [Developer/brk/modules/brk-client/index.js:6685](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6685)
 
 ***
 
@@ -694,7 +694,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6664](https://github.com/
 
 > **multipool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6735](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6735)
+Defined in: [Developer/brk/modules/brk-client/index.js:6756](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6756)
 
 ***
 
@@ -702,7 +702,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6735](https://github.com/
 
 > **mybtccoinpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6678](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6678)
+Defined in: [Developer/brk/modules/brk-client/index.js:6699](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6699)
 
 ***
 
@@ -710,7 +710,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6678](https://github.com/
 
 > **neopool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6756](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6756)
+Defined in: [Developer/brk/modules/brk-client/index.js:6777](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6777)
 
 ***
 
@@ -718,7 +718,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6756](https://github.com/
 
 > **nexious**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6681](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6681)
+Defined in: [Developer/brk/modules/brk-client/index.js:6702](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6702)
 
 ***
 
@@ -726,7 +726,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6681](https://github.com/
 
 > **nicehash**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6670](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6670)
+Defined in: [Developer/brk/modules/brk-client/index.js:6691](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6691)
 
 ***
 
@@ -734,7 +734,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6670](https://github.com/
 
 > **nmcbit**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6661](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6661)
+Defined in: [Developer/brk/modules/brk-client/index.js:6682](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6682)
 
 ***
 
@@ -742,7 +742,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6661](https://github.com/
 
 > **noderunners**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6770](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6770)
+Defined in: [Developer/brk/modules/brk-client/index.js:6791](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6791)
 
 ***
 
@@ -750,7 +750,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6770](https://github.com/
 
 > **novablock**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6716](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6716)
+Defined in: [Developer/brk/modules/brk-client/index.js:6737](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6737)
 
 ***
 
@@ -758,7 +758,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6716](https://github.com/
 
 > **okexpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6684](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6684)
+Defined in: [Developer/brk/modules/brk-client/index.js:6705](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6705)
 
 ***
 
@@ -766,7 +766,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6684](https://github.com/
 
 > **okkong**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6720](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6720)
+Defined in: [Developer/brk/modules/brk-client/index.js:6741](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6741)
 
 ***
 
@@ -774,7 +774,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6720](https://github.com/
 
 > **okminer**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6727](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6727)
+Defined in: [Developer/brk/modules/brk-client/index.js:6748](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6748)
 
 ***
 
@@ -782,7 +782,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6727](https://github.com/
 
 > **okpooltop**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6712](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6712)
+Defined in: [Developer/brk/modules/brk-client/index.js:6733](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6733)
 
 ***
 
@@ -790,7 +790,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6712](https://github.com/
 
 > **onehash**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6686](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6686)
+Defined in: [Developer/brk/modules/brk-client/index.js:6707](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6707)
 
 ***
 
@@ -798,7 +798,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6686](https://github.com/
 
 > **onem1x**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6748](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6748)
+Defined in: [Developer/brk/modules/brk-client/index.js:6769](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6769)
 
 ***
 
@@ -806,7 +806,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6748](https://github.com/
 
 > **onethash**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6631](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6631)
+Defined in: [Developer/brk/modules/brk-client/index.js:6652](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6652)
 
 ***
 
@@ -814,7 +814,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6631](https://github.com/
 
 > **ozcoin**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6645](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6645)
+Defined in: [Developer/brk/modules/brk-client/index.js:6666](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6666)
 
 ***
 
@@ -822,7 +822,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6645](https://github.com/
 
 > **parasite**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6765](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6765)
+Defined in: [Developer/brk/modules/brk-client/index.js:6786](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6786)
 
 ***
 
@@ -830,7 +830,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6765](https://github.com/
 
 > **patels**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6742](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6742)
+Defined in: [Developer/brk/modules/brk-client/index.js:6763](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6763)
 
 ***
 
@@ -838,7 +838,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6742](https://github.com/
 
 > **pegapool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6729](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6729)
+Defined in: [Developer/brk/modules/brk-client/index.js:6750](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6750)
 
 ***
 
@@ -846,7 +846,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6729](https://github.com/
 
 > **phashio**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6698](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6698)
+Defined in: [Developer/brk/modules/brk-client/index.js:6719](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6719)
 
 ***
 
@@ -854,7 +854,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6698](https://github.com/
 
 > **phoenix**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6755](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6755)
+Defined in: [Developer/brk/modules/brk-client/index.js:6776](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6776)
 
 ***
 
@@ -862,7 +862,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6755](https://github.com/
 
 > **polmine**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6655](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6655)
+Defined in: [Developer/brk/modules/brk-client/index.js:6676](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6676)
 
 ***
 
@@ -870,7 +870,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6655](https://github.com/
 
 > **pool175btc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6637](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6637)
+Defined in: [Developer/brk/modules/brk-client/index.js:6658](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6658)
 
 ***
 
@@ -878,7 +878,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6637](https://github.com/
 
 > **pool50btc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6650](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6650)
+Defined in: [Developer/brk/modules/brk-client/index.js:6671](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6671)
 
 ***
 
@@ -886,7 +886,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6650](https://github.com/
 
 > **portlandhodl**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6754](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6754)
+Defined in: [Developer/brk/modules/brk-client/index.js:6775](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6775)
 
 ***
 
@@ -894,7 +894,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6754](https://github.com/
 
 > **publicpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6761](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6761)
+Defined in: [Developer/brk/modules/brk-client/index.js:6782](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6782)
 
 ***
 
@@ -902,7 +902,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6761](https://github.com/
 
 > **purebtccom**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6724](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6724)
+Defined in: [Developer/brk/modules/brk-client/index.js:6745](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6745)
 
 ***
 
@@ -910,7 +910,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6724](https://github.com/
 
 > **rawpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6705](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6705)
+Defined in: [Developer/brk/modules/brk-client/index.js:6726](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6726)
 
 ***
 
@@ -918,7 +918,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6705](https://github.com/
 
 > **redrockpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6766](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6766)
+Defined in: [Developer/brk/modules/brk-client/index.js:6787](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6787)
 
 ***
 
@@ -926,7 +926,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6766](https://github.com/
 
 > **rigpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6699](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6699)
+Defined in: [Developer/brk/modules/brk-client/index.js:6720](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6720)
 
 ***
 
@@ -934,7 +934,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6699](https://github.com/
 
 > **secretsuperstar**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6709](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6709)
+Defined in: [Developer/brk/modules/brk-client/index.js:6730](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6730)
 
 ***
 
@@ -942,7 +942,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6709](https://github.com/
 
 > **sevenpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6701](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6701)
+Defined in: [Developer/brk/modules/brk-client/index.js:6722](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6722)
 
 ***
 
@@ -950,7 +950,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6701](https://github.com/
 
 > **shawnp0wers**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6697](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6697)
+Defined in: [Developer/brk/modules/brk-client/index.js:6718](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6718)
 
 ***
 
@@ -958,7 +958,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6697](https://github.com/
 
 > **sigmapoolcom**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6711](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6711)
+Defined in: [Developer/brk/modules/brk-client/index.js:6732](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6732)
 
 ***
 
@@ -966,7 +966,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6711](https://github.com/
 
 > **simplecoinus**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6644](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6644)
+Defined in: [Developer/brk/modules/brk-client/index.js:6665](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6665)
 
 ***
 
@@ -974,7 +974,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6644](https://github.com/
 
 > **solock**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6668](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6668)
+Defined in: [Developer/brk/modules/brk-client/index.js:6689](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6689)
 
 ***
 
@@ -982,7 +982,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6668](https://github.com/
 
 > **solopool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6769](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6769)
+Defined in: [Developer/brk/modules/brk-client/index.js:6790](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6790)
 
 ***
 
@@ -990,7 +990,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6769](https://github.com/
 
 > **stminingcorp**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6652](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6652)
+Defined in: [Developer/brk/modules/brk-client/index.js:6673](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6673)
 
 ***
 
@@ -998,7 +998,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6652](https://github.com/
 
 > **tangpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6714](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6714)
+Defined in: [Developer/brk/modules/brk-client/index.js:6735](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6735)
 
 ***
 
@@ -1006,7 +1006,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6714](https://github.com/
 
 > **tatmaspool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6688](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6688)
+Defined in: [Developer/brk/modules/brk-client/index.js:6709](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6709)
 
 ***
 
@@ -1014,7 +1014,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6688](https://github.com/
 
 > **tbdice**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6679](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6679)
+Defined in: [Developer/brk/modules/brk-client/index.js:6700](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6700)
 
 ***
 
@@ -1022,7 +1022,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6679](https://github.com/
 
 > **telco214**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6733](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6733)
+Defined in: [Developer/brk/modules/brk-client/index.js:6754](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6754)
 
 ***
 
@@ -1030,7 +1030,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6733](https://github.com/
 
 > **terrapool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6630](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6630)
+Defined in: [Developer/brk/modules/brk-client/index.js:6651](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6651)
 
 ***
 
@@ -1038,7 +1038,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6630](https://github.com/
 
 > **tiger**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6747](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6747)
+Defined in: [Developer/brk/modules/brk-client/index.js:6768](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6768)
 
 ***
 
@@ -1046,7 +1046,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6747](https://github.com/
 
 > **tigerpoolnet**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6710](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6710)
+Defined in: [Developer/brk/modules/brk-client/index.js:6731](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6731)
 
 ***
 
@@ -1054,7 +1054,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6710](https://github.com/
 
 > **titan**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6728](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6728)
+Defined in: [Developer/brk/modules/brk-client/index.js:6749](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6749)
 
 ***
 
@@ -1062,7 +1062,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6728](https://github.com/
 
 > **transactioncoinmining**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6736](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6736)
+Defined in: [Developer/brk/modules/brk-client/index.js:6757](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6757)
 
 ***
 
@@ -1070,7 +1070,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6736](https://github.com/
 
 > **trickysbtcpool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6738](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6738)
+Defined in: [Developer/brk/modules/brk-client/index.js:6759](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6759)
 
 ***
 
@@ -1078,7 +1078,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6738](https://github.com/
 
 > **triplemining**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6648](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6648)
+Defined in: [Developer/brk/modules/brk-client/index.js:6669](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6669)
 
 ***
 
@@ -1086,7 +1086,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6648](https://github.com/
 
 > **twentyoneinc**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6675](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6675)
+Defined in: [Developer/brk/modules/brk-client/index.js:6696](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6696)
 
 ***
 
@@ -1094,7 +1094,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6675](https://github.com/
 
 > **ultimuspool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6629](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6629)
+Defined in: [Developer/brk/modules/brk-client/index.js:6650](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6650)
 
 ***
 
@@ -1102,7 +1102,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6629](https://github.com/
 
 > **unomp**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6741](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6741)
+Defined in: [Developer/brk/modules/brk-client/index.js:6762](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6762)
 
 ***
 
@@ -1110,7 +1110,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6741](https://github.com/
 
 > **waterhole**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6691](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6691)
+Defined in: [Developer/brk/modules/brk-client/index.js:6712](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6712)
 
 ***
 
@@ -1118,7 +1118,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6691](https://github.com/
 
 > **wayicn**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6634](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6634)
+Defined in: [Developer/brk/modules/brk-client/index.js:6655](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6655)
 
 ***
 
@@ -1126,7 +1126,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6634](https://github.com/
 
 > **wiz**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6750](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6750)
+Defined in: [Developer/brk/modules/brk-client/index.js:6771](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6771)
 
 ***
 
@@ -1134,7 +1134,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6750](https://github.com/
 
 > **wk057**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6751](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6751)
+Defined in: [Developer/brk/modules/brk-client/index.js:6772](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6772)
 
 ***
 
@@ -1142,7 +1142,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6751](https://github.com/
 
 > **yourbtcnet**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6662](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6662)
+Defined in: [Developer/brk/modules/brk-client/index.js:6683](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6683)
 
 ***
 
@@ -1150,4 +1150,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6662](https://github.com/
 
 > **zulupool**: [`BlocksDominancePattern`](BlocksDominancePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6749](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6749)
+Defined in: [Developer/brk/modules/brk-client/index.js:6770](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6770)

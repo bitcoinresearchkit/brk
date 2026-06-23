@@ -6,7 +6,7 @@
 
 # Interface: TimePeriodParam
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1200](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1200)
+Defined in: [Developer/brk/modules/brk-client/index.js:1212](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1212)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1200](https://github.com/
 
 > **timePeriod**: [`TimePeriod`](../type-aliases/TimePeriod.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1201](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1201)
+Defined in: [Developer/brk/modules/brk-client/index.js:1213](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1213)

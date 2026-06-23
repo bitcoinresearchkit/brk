@@ -6,7 +6,7 @@
 
 # Interface: AllSthPattern2
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4714](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4714)
+Defined in: [Developer/brk/modules/brk-client/index.js:4735](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4735)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4714](https://github.com/
 
 > **all**: [`BtcCentsDeltaSatsUsdPattern`](BtcCentsDeltaSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4715](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4715)
+Defined in: [Developer/brk/modules/brk-client/index.js:4736](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4736)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4715](https://github.com/
 
 > **sth**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4716](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4716)
+Defined in: [Developer/brk/modules/brk-client/index.js:4737](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4737)

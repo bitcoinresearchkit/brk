@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Indexes\_TxoutIndex
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6249](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6249)
+Defined in: [Developer/brk/modules/brk-client/index.js:6270](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6270)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6249](https://github.com/
 
 > **identity**: [`SeriesPattern21`](../type-aliases/SeriesPattern21.md)\<`number`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6250](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6250)
+Defined in: [Developer/brk/modules/brk-client/index.js:6271](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6271)

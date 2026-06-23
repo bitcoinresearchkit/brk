@@ -6,7 +6,7 @@
 
 # Interface: TxOutspend
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1274](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1274)
+Defined in: [Developer/brk/modules/brk-client/index.js:1286](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1286)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1274](https://github.com/
 
 > **spent**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1275](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1275)
+Defined in: [Developer/brk/modules/brk-client/index.js:1287](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1287)
 
 Whether the output has been spent
 
@@ -24,7 +24,7 @@ Whether the output has been spent
 
 > `optional` **status?**: [`TxStatus`](TxStatus.md) \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1278](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1278)
+Defined in: [Developer/brk/modules/brk-client/index.js:1290](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1290)
 
 Status of the spending transaction (only present if spent)
 
@@ -34,7 +34,7 @@ Status of the spending transaction (only present if spent)
 
 > `optional` **txid?**: `string` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1276](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1276)
+Defined in: [Developer/brk/modules/brk-client/index.js:1288](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1288)
 
 Transaction ID of the spending transaction (only present if spent)
 
@@ -44,6 +44,6 @@ Transaction ID of the spending transaction (only present if spent)
 
 > `optional` **vin?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1277](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1277)
+Defined in: [Developer/brk/modules/brk-client/index.js:1289](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1289)
 
 Input index in the spending transaction (only present if spent)

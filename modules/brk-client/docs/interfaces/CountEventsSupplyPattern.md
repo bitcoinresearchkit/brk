@@ -6,7 +6,7 @@
 
 # Interface: CountEventsSupplyPattern
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4460](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4460)
+Defined in: [Developer/brk/modules/brk-client/index.js:4481](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4481)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4460](https://github.com/
 
 > **count**: [`FundedTotalPattern`](FundedTotalPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4461)
+Defined in: [Developer/brk/modules/brk-client/index.js:4482](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4482)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4461](https://github.com/
 
 > **events**: [`ActiveInputOutputSpendablePattern`](ActiveInputOutputSpendablePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4462)
+Defined in: [Developer/brk/modules/brk-client/index.js:4483](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4483)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:4462](https://github.com/
 
 > **supply**: [`AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern`](AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:4463](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L4463)
+Defined in: [Developer/brk/modules/brk-client/index.js:4484](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L4484)

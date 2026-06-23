@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Price\_Split
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6781](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6781)
+Defined in: [Developer/brk/modules/brk-client/index.js:6802](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6802)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6781](https://github.com/
 
 > **close**: [`CentsSatsUsdPattern3`](CentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6785](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6785)
+Defined in: [Developer/brk/modules/brk-client/index.js:6806](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6806)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6785](https://github.com/
 
 > **high**: [`CentsSatsUsdPattern3`](CentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6783](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6783)
+Defined in: [Developer/brk/modules/brk-client/index.js:6804](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6804)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6783](https://github.com/
 
 > **low**: [`CentsSatsUsdPattern3`](CentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6784](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6784)
+Defined in: [Developer/brk/modules/brk-client/index.js:6805](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6805)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6784](https://github.com/
 
 > **open**: [`CentsSatsUsdPattern3`](CentsSatsUsdPattern3.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6782](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6782)
+Defined in: [Developer/brk/modules/brk-client/index.js:6803](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6803)

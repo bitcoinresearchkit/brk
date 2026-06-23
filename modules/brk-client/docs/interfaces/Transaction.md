@@ -6,7 +6,7 @@
 
 # Interface: Transaction
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1217](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1217)
+Defined in: [Developer/brk/modules/brk-client/index.js:1229](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1229)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1217](https://github.com/
 
 > **fee**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1227](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1227)
+Defined in: [Developer/brk/modules/brk-client/index.js:1239](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1239)
 
 Transaction fee in satoshis
 
@@ -24,7 +24,7 @@ Transaction fee in satoshis
 
 > `optional` **index?**: `number` \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1218](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1218)
+Defined in: [Developer/brk/modules/brk-client/index.js:1230](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1230)
 
 Internal transaction index (brk-specific, not in mempool.space)
 
@@ -34,7 +34,7 @@ Internal transaction index (brk-specific, not in mempool.space)
 
 > **locktime**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1221](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1221)
+Defined in: [Developer/brk/modules/brk-client/index.js:1233](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1233)
 
 Transaction lock time
 
@@ -44,7 +44,7 @@ Transaction lock time
 
 > **sigops**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1226](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1226)
+Defined in: [Developer/brk/modules/brk-client/index.js:1238](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1238)
 
 Number of signature operations
 
@@ -54,7 +54,7 @@ Number of signature operations
 
 > **size**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1224](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1224)
+Defined in: [Developer/brk/modules/brk-client/index.js:1236](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1236)
 
 Transaction size in bytes
 
@@ -64,7 +64,7 @@ Transaction size in bytes
 
 > **status**: [`TxStatus`](TxStatus.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1228](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1228)
+Defined in: [Developer/brk/modules/brk-client/index.js:1240](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1240)
 
 Confirmation status (confirmed, block height/hash/time)
 
@@ -74,7 +74,7 @@ Confirmation status (confirmed, block height/hash/time)
 
 > **txid**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1219](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1219)
+Defined in: [Developer/brk/modules/brk-client/index.js:1231](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1231)
 
 Transaction ID
 
@@ -84,7 +84,7 @@ Transaction ID
 
 > **version**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1220](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1220)
+Defined in: [Developer/brk/modules/brk-client/index.js:1232](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1232)
 
 Transaction version (raw i32 from Bitcoin protocol, may contain non-standard values in coinbase txs)
 
@@ -94,7 +94,7 @@ Transaction version (raw i32 from Bitcoin protocol, may contain non-standard val
 
 > **vin**: [`TxIn`](TxIn.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1222](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1222)
+Defined in: [Developer/brk/modules/brk-client/index.js:1234](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1234)
 
 Transaction inputs
 
@@ -104,7 +104,7 @@ Transaction inputs
 
 > **vout**: [`TxOut`](TxOut.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1223](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1223)
+Defined in: [Developer/brk/modules/brk-client/index.js:1235](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1235)
 
 Transaction outputs
 
@@ -114,6 +114,6 @@ Transaction outputs
 
 > **weight**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1225](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1225)
+Defined in: [Developer/brk/modules/brk-client/index.js:1237](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1237)
 
 Transaction weight

@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6821](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6821)
+Defined in: [Developer/brk/modules/brk-client/index.js:6842](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6842)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6821](https://github.com/
 
 > **addr**: [`SeriesTree_Cohorts_Addr`](SeriesTree_Cohorts_Addr.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6823](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6823)
+Defined in: [Developer/brk/modules/brk-client/index.js:6844](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6844)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6823](https://github.com/
 
 > **utxo**: [`SeriesTree_Cohorts_Utxo`](SeriesTree_Cohorts_Utxo.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6822](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6822)
+Defined in: [Developer/brk/modules/brk-client/index.js:6843](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6843)

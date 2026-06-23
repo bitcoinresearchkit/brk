@@ -6,7 +6,7 @@
 
 # Interface: BlockTemplateDiff
 
-Defined in: [Developer/brk/modules/brk-client/index.js:309](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L309)
+Defined in: [Developer/brk/modules/brk-client/index.js:321](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L321)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:309](https://github.com/b
 
 > **hash**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:310](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L310)
+Defined in: [Developer/brk/modules/brk-client/index.js:322](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L322)
 
 Current next-block hash. Use as `since` on the next diff call.
 
@@ -24,7 +24,7 @@ Current next-block hash. Use as `since` on the next diff call.
 
 > **order**: [`BlockTemplateDiffEntry`](../type-aliases/BlockTemplateDiffEntry.md)[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:312](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L312)
+Defined in: [Developer/brk/modules/brk-client/index.js:324](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L324)
 
 New template in order. Each entry is either an index into the
 prior template's transactions or a full transaction body.
@@ -35,7 +35,7 @@ prior template's transactions or a full transaction body.
 
 > **removed**: `string`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:314](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L314)
+Defined in: [Developer/brk/modules/brk-client/index.js:326](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L326)
 
 Txids that left the projected next block since `since`
 (confirmed, evicted, replaced, or pushed past block 0).
@@ -46,6 +46,6 @@ Txids that left the projected next block since `since`
 
 > **since**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:311](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L311)
+Defined in: [Developer/brk/modules/brk-client/index.js:323](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L323)
 
 Echoed prior hash the diff was computed against.

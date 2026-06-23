@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Market\_Technical\_Macd
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6560](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6560)
+Defined in: [Developer/brk/modules/brk-client/index.js:6581](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6581)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6560](https://github.com/
 
 > **\_1m**: [`SeriesTree_Market_Technical_Macd_1m`](SeriesTree_Market_Technical_Macd_1m.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6563](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6563)
+Defined in: [Developer/brk/modules/brk-client/index.js:6584](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6584)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6563](https://github.com/
 
 > **\_1w**: [`SeriesTree_Market_Technical_Macd_1w`](SeriesTree_Market_Technical_Macd_1w.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6562](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6562)
+Defined in: [Developer/brk/modules/brk-client/index.js:6583](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6583)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6562](https://github.com/
 
 > **\_24h**: [`SeriesTree_Market_Technical_Macd_24h`](SeriesTree_Market_Technical_Macd_24h.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6561](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6561)
+Defined in: [Developer/brk/modules/brk-client/index.js:6582](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6582)

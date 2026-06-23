@@ -6,7 +6,7 @@
 
 # Interface: SeriesDataBase\<T\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1635](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1635)
+Defined in: [Developer/brk/modules/brk-client/index.js:1653](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1653)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1635](https://github.com/
 
 > **data**: `T`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1642](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1642)
+Defined in: [Developer/brk/modules/brk-client/index.js:1660](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1660)
 
 The series data
 
@@ -30,7 +30,7 @@ The series data
 
 > **end**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1640](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1640)
+Defined in: [Developer/brk/modules/brk-client/index.js:1658](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1658)
 
 End index (exclusive)
 
@@ -40,7 +40,7 @@ End index (exclusive)
 
 > **entries**: () => \[`number`, `T`\][]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1646](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1646)
+Defined in: [Developer/brk/modules/brk-client/index.js:1664](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1664)
 
 Get [index, value] pairs
 
@@ -54,7 +54,7 @@ Get [index, value] pairs
 
 > **index**: [`Index`](../type-aliases/Index.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1637](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1637)
+Defined in: [Developer/brk/modules/brk-client/index.js:1655](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1655)
 
 The index type used for this query
 
@@ -64,7 +64,7 @@ The index type used for this query
 
 > **indexes**: () => `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1644](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1644)
+Defined in: [Developer/brk/modules/brk-client/index.js:1662](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1662)
 
 Get index numbers
 
@@ -78,7 +78,7 @@ Get index numbers
 
 > **isDateBased**: `boolean`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1643](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1643)
+Defined in: [Developer/brk/modules/brk-client/index.js:1661](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1661)
 
 Whether this series uses a date-based index
 
@@ -88,7 +88,7 @@ Whether this series uses a date-based index
 
 > **keys**: () => `number`[]
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1645](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1645)
+Defined in: [Developer/brk/modules/brk-client/index.js:1663](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1663)
 
 Get keys as index numbers (alias for indexes)
 
@@ -102,7 +102,7 @@ Get keys as index numbers (alias for indexes)
 
 > **stamp**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1641](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1641)
+Defined in: [Developer/brk/modules/brk-client/index.js:1659](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1659)
 
 ISO 8601 timestamp of when the response was generated
 
@@ -112,7 +112,7 @@ ISO 8601 timestamp of when the response was generated
 
 > **start**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1639](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1639)
+Defined in: [Developer/brk/modules/brk-client/index.js:1657](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1657)
 
 Start index (inclusive)
 
@@ -122,7 +122,7 @@ Start index (inclusive)
 
 > **toMap**: () => `Map`\<`number`, `T`\>
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1647](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1647)
+Defined in: [Developer/brk/modules/brk-client/index.js:1665](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1665)
 
 Convert to Map<index, value>
 
@@ -136,7 +136,7 @@ Convert to Map<index, value>
 
 > **type**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1638](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1638)
+Defined in: [Developer/brk/modules/brk-client/index.js:1656](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1656)
 
 Value type (e.g. "f32", "u64", "Sats")
 
@@ -146,6 +146,6 @@ Value type (e.g. "f32", "u64", "Sats")
 
 > **version**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:1636](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L1636)
+Defined in: [Developer/brk/modules/brk-client/index.js:1654](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L1654)
 
 Version of the series data

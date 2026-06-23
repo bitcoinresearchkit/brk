@@ -43,6 +43,8 @@
 - [ActivityOutputsRealizedSupplyUnrealizedPattern3](interfaces/ActivityOutputsRealizedSupplyUnrealizedPattern3.md)
 - [AddrAfterTxidParam](interfaces/AddrAfterTxidParam.md)
 - [AddrChainStats](interfaces/AddrChainStats.md)
+- [AddrHashPrefixMatches](interfaces/AddrHashPrefixMatches.md)
+- [AddrHashPrefixParam](interfaces/AddrHashPrefixParam.md)
 - [AddrMempoolStats](interfaces/AddrMempoolStats.md)
 - [AddrParam](interfaces/AddrParam.md)
 - [AddrStats](interfaces/AddrStats.md)

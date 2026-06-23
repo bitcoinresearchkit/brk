@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Addrs\_Respent
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5749](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L5749)
+Defined in: [Developer/brk/modules/brk-client/index.js:5770](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L5770)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5749](https://github.com/
 
 > **count**: [`FundedTotalPattern`](FundedTotalPattern.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5750](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L5750)
+Defined in: [Developer/brk/modules/brk-client/index.js:5771](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L5771)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5750](https://github.com/
 
 > **events**: [`SeriesTree_Addrs_Respent_Events`](SeriesTree_Addrs_Respent_Events.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5751](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L5751)
+Defined in: [Developer/brk/modules/brk-client/index.js:5772](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L5772)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:5751](https://github.com/
 
 > **supply**: [`SeriesTree_Addrs_Respent_Supply`](SeriesTree_Addrs_Respent_Supply.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:5752](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L5752)
+Defined in: [Developer/brk/modules/brk-client/index.js:5773](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L5773)

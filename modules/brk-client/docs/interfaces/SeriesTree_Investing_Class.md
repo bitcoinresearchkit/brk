@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Investing\_Class
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6321](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6321)
+Defined in: [Developer/brk/modules/brk-client/index.js:6342](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6342)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6321](https://github.com/
 
 > **dcaCostBasis**: [`SeriesTree_Investing_Class_DcaCostBasis`](SeriesTree_Investing_Class_DcaCostBasis.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6323](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6323)
+Defined in: [Developer/brk/modules/brk-client/index.js:6344](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6344)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6323](https://github.com/
 
 > **dcaReturn**: [`SeriesTree_Investing_Class_DcaReturn`](SeriesTree_Investing_Class_DcaReturn.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6324](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6324)
+Defined in: [Developer/brk/modules/brk-client/index.js:6345](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6345)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/brk/modules/brk-client/index.js:6324](https://github.com/
 
 > **dcaStack**: [`SeriesTree_Investing_Class_DcaStack`](SeriesTree_Investing_Class_DcaStack.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:6322](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L6322)
+Defined in: [Developer/brk/modules/brk-client/index.js:6343](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L6343)

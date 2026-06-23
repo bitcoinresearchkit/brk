@@ -6,7 +6,7 @@
 
 # Interface: HashrateEntry
 
-Defined in: [Developer/brk/modules/brk-client/index.js:614](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L614)
+Defined in: [Developer/brk/modules/brk-client/index.js:626](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L626)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:614](https://github.com/b
 
 > **avgHashrate**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:616](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L616)
+Defined in: [Developer/brk/modules/brk-client/index.js:628](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L628)
 
 Average hashrate (H/s)
 
@@ -24,6 +24,6 @@ Average hashrate (H/s)
 
 > **timestamp**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:615](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L615)
+Defined in: [Developer/brk/modules/brk-client/index.js:627](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L627)
 
 Unix timestamp

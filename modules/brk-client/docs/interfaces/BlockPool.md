@@ -6,7 +6,7 @@
 
 # Interface: BlockPool
 
-Defined in: [Developer/brk/modules/brk-client/index.js:246](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L246)
+Defined in: [Developer/brk/modules/brk-client/index.js:258](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L258)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:246](https://github.com/b
 
 > **id**: `number`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:247](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L247)
+Defined in: [Developer/brk/modules/brk-client/index.js:259](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L259)
 
 Unique pool identifier
 
@@ -24,7 +24,7 @@ Unique pool identifier
 
 > `optional` **minerNames?**: `string`[] \| `null`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:250](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L250)
+Defined in: [Developer/brk/modules/brk-client/index.js:262](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L262)
 
 Miner name tags found in coinbase scriptsig
 
@@ -34,7 +34,7 @@ Miner name tags found in coinbase scriptsig
 
 > **name**: `string`
 
-Defined in: [Developer/brk/modules/brk-client/index.js:248](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L248)
+Defined in: [Developer/brk/modules/brk-client/index.js:260](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L260)
 
 Pool name
 
@@ -44,6 +44,6 @@ Pool name
 
 > **slug**: [`PoolSlug`](../type-aliases/PoolSlug.md)
 
-Defined in: [Developer/brk/modules/brk-client/index.js:249](https://github.com/bitcoinresearchkit/brk/blob/c85da92cbcb3b8645b12f2986df719688adb8dff/modules/brk-client/index.js#L249)
+Defined in: [Developer/brk/modules/brk-client/index.js:261](https://github.com/bitcoinresearchkit/brk/blob/9879a986aa1b6609c39bacbd2ccae5519598e212/modules/brk-client/index.js#L261)
 
 URL-friendly pool identifier
