@@ -35,7 +35,7 @@ debug = true
 [workspace.dependencies]
 aide = { version = "0.16.0-alpha.4", features = ["axum-json", "axum-query"] }
 axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
-bitcoin = { version = "0.32.10", features = ["serde"] }
+bitcoin = { version = "0.32.101", features = ["serde"] }
 brk_alloc = { version = "0.3.5", path = "crates/brk_alloc" }
 brk_bencher = { version = "0.3.5", path = "crates/brk_bencher" }
 brk_bindgen = { version = "0.3.5", path = "crates/brk_bindgen" }
