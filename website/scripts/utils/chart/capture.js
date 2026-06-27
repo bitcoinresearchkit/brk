@@ -3,6 +3,15 @@ import { style } from "../elements.js";
 import { colors } from "../colors.js";
 
 export const canCapture = !ios || canShare;
+const captureFileName = "bitview-chart.png";
+const openUrls = new Set();
+
+window.addEventListener("pagehide", () => {
+  for (const url of openUrls) {
+    URL.revokeObjectURL(url);
+  }
+  openUrls.clear();
+});
 
 /**
  * @typedef {Object} LegendItem
@@ -279,13 +288,69 @@ function drawLegend(ctx, rows, x, y, metrics) {
 }
 
 /** @param {HTMLCanvasElement} canvas */
-function openCanvas(canvas) {
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-  }, "image/png");
+function canvasToBlob(canvas) {
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+}
+
+/** @param {HTMLCanvasElement} canvas */
+function canvasToBlobSync(canvas) {
+  const data = canvas.toDataURL("image/png").split(",")[1];
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: "image/png" });
+}
+
+/** @param {Blob} blob */
+async function shareBlob(blob) {
+  if (!canShare || !("share" in navigator) || !("File" in window)) {
+    return false;
+  }
+
+  const file = new File([blob], captureFileName, { type: "image/png" });
+  if (!navigator.canShare({ files: [file] })) {
+    return false;
+  }
+
+  try {
+    await navigator.share({
+      files: [file],
+      title: document.title,
+    });
+    return true;
+  } catch (error) {
+    return error instanceof DOMException && error.name === "AbortError";
+  }
+}
+
+/** @param {Blob} blob */
+function openBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  openUrls.add(url);
+
+  const win = window.open(url, "_blank");
+  if (win) return;
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = captureFileName;
+  anchor.click();
+}
+
+/** @param {HTMLCanvasElement} canvas */
+async function openCanvas(canvas) {
+  const blob = ios ? canvasToBlobSync(canvas) : await canvasToBlob(canvas);
+  if (!blob) return;
+
+  if (ios && (await shareBlob(blob))) {
+    return;
+  }
+
+  openBlob(blob);
 }
 
 /**
