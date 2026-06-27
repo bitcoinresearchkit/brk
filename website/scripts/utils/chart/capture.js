@@ -1,9 +1,9 @@
 import { ios, canShare } from "../env.js";
 import { style } from "../elements.js";
 import { colors } from "../colors.js";
+import { stringToId } from "../format.js";
 
 export const canCapture = !ios || canShare;
-const captureFileName = "bitview-chart.png";
 const openUrls = new Set();
 
 window.addEventListener("pagehide", () => {
@@ -12,6 +12,20 @@ window.addEventListener("pagehide", () => {
   }
   openUrls.clear();
 });
+
+/**
+ * @typedef {Object} CaptureMetadata
+ * @property {string} title
+ * @property {string} fileName
+ */
+
+/** @param {string} title */
+function captureMetadata(title) {
+  return {
+    title: `${title} | bitview`,
+    fileName: `bitview-${stringToId(title)}.png`,
+  };
+}
 
 /**
  * @typedef {Object} LegendItem
@@ -305,13 +319,16 @@ function canvasToBlobSync(canvas) {
   return new Blob([bytes], { type: "image/png" });
 }
 
-/** @param {Blob} blob */
-async function shareBlob(blob) {
+/**
+ * @param {Blob} blob
+ * @param {CaptureMetadata} metadata
+ */
+async function shareBlob(blob, metadata) {
   if (!canShare || !("share" in navigator) || !("File" in window)) {
     return false;
   }
 
-  const file = new File([blob], captureFileName, { type: "image/png" });
+  const file = new File([blob], metadata.fileName, { type: "image/png" });
   if (!navigator.canShare({ files: [file] })) {
     return false;
   }
@@ -319,7 +336,7 @@ async function shareBlob(blob) {
   try {
     await navigator.share({
       files: [file],
-      title: document.title,
+      title: metadata.title,
     });
     return true;
   } catch (error) {
@@ -327,9 +344,16 @@ async function shareBlob(blob) {
   }
 }
 
-/** @param {Blob} blob */
-function openBlob(blob) {
-  const url = URL.createObjectURL(blob);
+/**
+ * @param {Blob} blob
+ * @param {CaptureMetadata} metadata
+ */
+function openBlob(blob, metadata) {
+  const file =
+    "File" in window
+      ? new File([blob], metadata.fileName, { type: "image/png" })
+      : blob;
+  const url = URL.createObjectURL(file);
   openUrls.add(url);
 
   const win = window.open(url, "_blank");
@@ -337,20 +361,23 @@ function openBlob(blob) {
 
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = captureFileName;
+  anchor.download = metadata.fileName;
   anchor.click();
 }
 
-/** @param {HTMLCanvasElement} canvas */
-async function openCanvas(canvas) {
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {CaptureMetadata} metadata
+ */
+async function openCanvas(canvas, metadata) {
   const blob = ios ? canvasToBlobSync(canvas) : await canvasToBlob(canvas);
   if (!blob) return;
 
-  if (ios && (await shareBlob(blob))) {
+  if (ios && (await shareBlob(blob, metadata))) {
     return;
   }
 
-  openBlob(blob);
+  openBlob(blob, metadata);
 }
 
 /**
@@ -388,6 +415,7 @@ export function capture({
 
   const title = parent.querySelector("h1");
   const titleText = title?.textContent?.trim() ?? "";
+  const metadata = captureMetadata(titleText);
   const titleStyle = title
     ? getComputedStyle(title)
     : getComputedStyle(document.documentElement);
@@ -459,5 +487,5 @@ export function capture({
   ctx.textBaseline = "bottom";
   ctx.fillText(window.location.host, canvas.width - pad, canvas.height - pad / 2);
 
-  openCanvas(canvas);
+  openCanvas(canvas, metadata);
 }
