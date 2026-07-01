@@ -9,6 +9,10 @@
 - [BrkClient](classes/BrkClient.md)
 - [BrkError](classes/BrkError.md)
 
+## Functions
+
+- [addressPayloadHashPrefix](functions/addressPayloadHashPrefix.md)
+
 ## Interfaces
 
 - [\_0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern](interfaces/0sdM0M1M1sdM2M2sdM3sdP0P1P1sdP2P2sdP3sdSdZscorePattern.md)

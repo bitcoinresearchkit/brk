@@ -24,6 +24,7 @@
     * [series\_endpoint](#brk_client.BrkClient.series_endpoint)
     * [index\_to\_date](#brk_client.BrkClient.index_to_date)
     * [date\_to\_index](#brk_client.BrkClient.date_to_index)
+    * [address\_payload\_hash\_prefix](#brk_client.BrkClient.address_payload_hash_prefix)
     * [get\_health](#brk_client.BrkClient.get_health)
     * [get\_version](#brk_client.BrkClient.get_version)
     * [get\_sync\_status](#brk_client.BrkClient.get_sync_status)
@@ -47,6 +48,7 @@
     * [get\_difficulty\_adjustment](#brk_client.BrkClient.get_difficulty_adjustment)
     * [get\_prices](#brk_client.BrkClient.get_prices)
     * [get\_historical\_price](#brk_client.BrkClient.get_historical_price)
+    * [get\_address\_payload\_hash\_prefix\_matches](#brk_client.BrkClient.get_address_payload_hash_prefix_matches)
     * [get\_address\_hash\_prefix\_matches](#brk_client.BrkClient.get_address_hash_prefix_matches)
     * [get\_address](#brk_client.BrkClient.get_address)
     * [get\_address\_txs](#brk_client.BrkClient.get_address_txs)
@@ -254,6 +256,17 @@ def date_to_index(index: Index, d: Union[date, datetime]) -> int
 ```
 
 Convert a date/datetime to an index value for date-based indexes.
+
+<a id="brk_client.BrkClient.address_payload_hash_prefix"></a>
+
+#### address\_payload\_hash\_prefix
+
+```python
+def address_payload_hash_prefix(
+        payload: Union[bytes, bytearray, memoryview], nibbles: int) -> str
+```
+
+Compute the RapidHash v3 hash-prefix for raw address payload bytes.
 
 <a id="brk_client.BrkClient.get_health"></a>
 
@@ -607,6 +620,19 @@ Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the pri
 
 Endpoint: `GET /api/v1/historical-price`
 
+<a id="brk_client.BrkClient.get_address_payload_hash_prefix_matches"></a>
+
+#### get\_address\_payload\_hash\_prefix\_matches
+
+```python
+def get_address_payload_hash_prefix_matches(
+        addr_type: OutputType,
+        payload: Union[bytes, bytearray, memoryview],
+        nibbles: int) -> AddrHashPrefixMatches
+```
+
+Fetch address hash-prefix matches from raw payload bytes matching `addr_type` length.
+
 <a id="brk_client.BrkClient.get_address_hash_prefix_matches"></a>
 
 #### get\_address\_hash\_prefix\_matches
@@ -618,7 +644,7 @@ def get_address_hash_prefix_matches(addr_type: OutputType,
 
 Address hash-prefix matches.
 
-Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+Find addresses by address type and by the first 1-16 hex nibbles of RapidHash v3 over the raw address payload bytes. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
 
 Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
 
@@ -1769,4 +1795,3 @@ Compact OpenAPI specification.
 Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. Full spec available at `/openapi.json`.
 
 Endpoint: `GET /api.json`
-

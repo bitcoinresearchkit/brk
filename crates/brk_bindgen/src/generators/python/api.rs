@@ -84,6 +84,23 @@ pub fn generate_main_client(output: &mut String, endpoints: &[Endpoint]) {
     .unwrap();
     writeln!(output, "        return _date_to_index(index, d)").unwrap();
     writeln!(output).unwrap();
+
+    output.push_str(r#"    @staticmethod
+    def address_payload_hash_prefix(payload: Union[bytes, bytearray, memoryview], nibbles: int) -> str:
+        """Compute the RapidHash v3 hash-prefix for raw address payload bytes."""
+        return address_payload_hash_prefix(payload, nibbles)
+
+    def get_address_payload_hash_prefix_matches(
+        self,
+        addr_type: OutputType,
+        payload: Union[bytes, bytearray, memoryview],
+        nibbles: int,
+    ) -> AddrHashPrefixMatches:
+        """Fetch address hash-prefix matches from raw payload bytes matching addr_type length."""
+        _validate_address_payload_for_type(addr_type, payload)
+        return self.get_address_hash_prefix_matches(addr_type, address_payload_hash_prefix(payload, nibbles))
+
+"#);
     // Generate API methods
     generate_api_methods(output, endpoints);
 }

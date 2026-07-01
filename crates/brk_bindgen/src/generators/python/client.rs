@@ -147,6 +147,125 @@ def _p(prefix: str, acc: str) -> str:
 "#
     )
     .unwrap();
+    output.push_str(r#"
+_MASK_64 = (1 << 64) - 1
+_RAPIDHASH_SECRETS = (
+    0x2d358dccaa6c78a5,
+    0x8bb84b93962eacc9,
+    0x4b33a62ed433d4a3,
+    0x4d5a2da51de1aa47,
+    0xa0761d6478bd642f,
+    0xe7037ed1a0b428db,
+    0x90ed1765281c388c,
+)
+_RAPIDHASH_SEED = 0
+
+
+def _u64(value: int) -> int:
+    return value & _MASK_64
+
+
+def _rapid_mix(left: int, right: int) -> int:
+    result = _u64(left) * _u64(right)
+    return _u64(result) ^ _u64(result >> 64)
+
+
+def _rapid_mum(left: int, right: int) -> Tuple[int, int]:
+    result = _u64(left) * _u64(right)
+    return _u64(result), _u64(result >> 64)
+
+
+def _rapid_hash_seed(seed: int) -> int:
+    return _u64(seed ^ _rapid_mix(seed ^ _RAPIDHASH_SECRETS[2], _RAPIDHASH_SECRETS[1]))
+
+
+_RAPIDHASH_SEED = _rapid_hash_seed(0)
+
+
+def _read_u32(data: bytes, offset: int) -> int:
+    return int.from_bytes(data[offset:offset + 4], "little")
+
+
+def _read_u64(data: bytes, offset: int) -> int:
+    return int.from_bytes(data[offset:offset + 8], "little")
+
+
+def _rapid_hash_v3(payload: Union[bytes, bytearray, memoryview]) -> int:
+    data = bytes(payload)
+    length = len(data)
+    if length == 0:
+        raise ValueError("Expected a non-empty address payload")
+    if length > 65:
+        raise ValueError("Expected at most 65 address payload bytes")
+
+    seed = _RAPIDHASH_SEED
+    a = 0
+    b = 0
+
+    if length <= 16:
+        if length >= 4:
+            seed ^= length
+            if length >= 8:
+                a ^= _read_u64(data, 0)
+                b ^= _read_u64(data, length - 8)
+            else:
+                a ^= _read_u32(data, 0)
+                b ^= _read_u32(data, length - 4)
+        elif length > 0:
+            a ^= (data[0] << 45) | data[length - 1]
+            b ^= data[length >> 1]
+        remainder = length
+    else:
+        if length > 16:
+            seed = _rapid_mix(_read_u64(data, 0) ^ _RAPIDHASH_SECRETS[2], _read_u64(data, 8) ^ seed)
+            if length > 32:
+                seed = _rapid_mix(_read_u64(data, 16) ^ _RAPIDHASH_SECRETS[2], _read_u64(data, 24) ^ seed)
+                if length > 48:
+                    seed = _rapid_mix(_read_u64(data, 32) ^ _RAPIDHASH_SECRETS[1], _read_u64(data, 40) ^ seed)
+                    if length > 64:
+                        seed = _rapid_mix(_read_u64(data, 48) ^ _RAPIDHASH_SECRETS[1], _read_u64(data, 56) ^ seed)
+        remainder = length
+        a ^= _read_u64(data, length - 16) ^ remainder
+        b ^= _read_u64(data, length - 8)
+
+    a ^= _RAPIDHASH_SECRETS[1]
+    b ^= seed
+    a, b = _rapid_mum(a, b)
+    return _rapid_mix(a ^ 0xaaaaaaaaaaaaaaaa, b ^ _RAPIDHASH_SECRETS[1] ^ remainder)
+
+
+def _validate_hash_prefix_nibbles(nibbles: int) -> None:
+    if isinstance(nibbles, bool) or not isinstance(nibbles, int) or nibbles < 1 or nibbles > 16:
+        raise ValueError("Expected hash-prefix length from 1 to 16 hex nibbles")
+
+
+def _address_payload_lengths(addr_type: OutputType) -> Tuple[int, ...]:
+    if addr_type == "p2a":
+        return (2,)
+    if addr_type == "p2pk":
+        return (33, 65)
+    if addr_type in ("p2pkh", "p2sh", "v0_p2wpkh"):
+        return (20,)
+    if addr_type in ("v0_p2wsh", "v1_p2tr"):
+        return (32,)
+    raise ValueError(f"Unsupported address type for address payload hash-prefix: {addr_type}")
+
+
+def _validate_address_payload_for_type(addr_type: OutputType, payload: Union[bytes, bytearray, memoryview]) -> None:
+    length = len(bytes(payload))
+    expected = _address_payload_lengths(addr_type)
+    if length not in expected:
+        joined = " or ".join(str(value) for value in expected)
+        raise ValueError(f"Expected {addr_type} address payload length {joined} bytes")
+
+
+def address_payload_hash_prefix(payload: Union[bytes, bytearray, memoryview], nibbles: int) -> str:
+    """Compute the RapidHash v3 hash-prefix used by `/api/address/hash-prefix/{addr_type}/{prefix}`."""
+    _validate_hash_prefix_nibbles(nibbles)
+    return f"{_rapid_hash_v3(payload):016x}"[:nibbles]
+
+
+"#);
 }
 
 /// Generate the SeriesData and SeriesEndpoint classes

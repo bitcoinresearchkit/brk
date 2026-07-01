@@ -5,7 +5,7 @@ import { addressScripts } from "../derive/script.js";
 
 /**
  * @typedef {import("../derive/address.js").AddressScript} AddressScript
- * @typedef {import("../derive/index.js").AddressType} AddressType
+ * @typedef {import("../lookup/index.js").AddressClient} AddressClient
  * @typedef {Awaited<ReturnType<typeof scanBranches>>["addresses"][number]} WalletAddress
  * @typedef {Awaited<ReturnType<typeof scanBranches>>} ScriptScan
  */
@@ -18,11 +18,9 @@ import { addressScripts } from "../derive/script.js";
  */
 
 /**
- * @typedef {Object} WalletScanClient
- * @property {string} domain
- * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
- * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
- * @property {(options?: { cache?: boolean }) => Promise<unknown>} getLivePrice
+ * @typedef {AddressClient & {
+ *   getLivePrice(options?: { cache?: boolean }): Promise<number>,
+ * }} WalletScanClient
  */
 
 /**
@@ -135,9 +133,7 @@ export async function scanWalletAddresses({
 
   const addresses = scans.flatMap((scan) => scan.addresses)
     .sort(compareWalletAddresses);
-  const btcUsdPrice = /** @type {number} */ (
-    await client.getLivePrice({ cache: false })
-  );
+  const btcUsdPrice = await client.getLivePrice({ cache: false });
 
   return {
     addresses,

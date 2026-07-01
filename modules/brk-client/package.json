@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node tests/basic.js && node tests/tree.js",
     "test:basic": "node tests/basic.js",
+    "test:hash-prefix": "node tests/hash_prefix.js",
     "test:tree": "node tests/tree.js"
   },
   "description": "Bitcoin on-chain analytics client — thousands of metrics, block explorer, and address index",

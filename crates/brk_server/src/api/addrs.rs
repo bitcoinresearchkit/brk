@@ -3,9 +3,7 @@ use axum::{
     extract::{Path, State},
     http::{HeaderMap, Uri},
 };
-use brk_types::{
-    AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version,
-};
+use brk_types::{AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version};
 
 use crate::{
     AppState, CacheStrategy,
@@ -43,7 +41,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 .id("get_address_hash_prefix_matches")
                 .addrs_tag()
                 .summary("Address hash-prefix matches")
-                .description("Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.")
+                .description("Find addresses by address type and by the first 1-16 hex nibbles of RapidHash v3 over the raw address payload bytes. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.")
                 .json_response::<AddrHashPrefixMatches>()
                 .not_modified()
                 .bad_request()

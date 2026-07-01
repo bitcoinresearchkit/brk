@@ -233,6 +233,32 @@ Defined in: [Developer/brk/modules/brk-client/index.js:1894](https://github.com/
 
 ***
 
+### addressPayloadHashPrefix()
+
+> `static` **addressPayloadHashPrefix**(`payload`, `nibbles`): `string`
+
+Compute the RapidHash v3 hash-prefix for raw address payload bytes.
+
+#### Parameters
+
+##### payload
+
+`Uint8Array` | `ArrayBuffer` | `ArrayBufferView` | `number`[]
+
+Raw address payload bytes. Must be 1 to 65 bytes.
+
+##### nibbles
+
+`number`
+
+Prefix length from 1 to 16 hex nibbles.
+
+#### Returns
+
+`string`
+
+***
+
 ### dateToIndex()
 
 > **dateToIndex**(`index`, `d`): `number`
@@ -427,7 +453,7 @@ Defined in: [Developer/brk/modules/brk-client/index.js:11512](https://github.com
 
 Address hash-prefix matches
 
-Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+Find addresses by address type and by the first 1-16 hex nibbles of RapidHash v3 over the raw address payload bytes. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
 
 Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
 
@@ -440,6 +466,50 @@ Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
 ##### prefix
 
 `string`
+
+##### options?
+
+###### cache?
+
+`boolean`
+
+###### onValue?
+
+(`value`) => `void`
+
+###### signal?
+
+`AbortSignal`
+
+#### Returns
+
+`Promise`\<[`AddrHashPrefixMatches`](../interfaces/AddrHashPrefixMatches.md)\>
+
+***
+
+### getAddressPayloadHashPrefixMatches()
+
+> **getAddressPayloadHashPrefixMatches**(`addrType`, `payload`, `nibbles`, `options?`): `Promise`\<[`AddrHashPrefixMatches`](../interfaces/AddrHashPrefixMatches.md)\>
+
+Fetch address hash-prefix matches from raw payload bytes matching `addrType` length.
+
+#### Parameters
+
+##### addrType
+
+[`OutputType`](../type-aliases/OutputType.md)
+
+##### payload
+
+`Uint8Array` | `ArrayBuffer` | `ArrayBufferView` | `number`[]
+
+Raw payload bytes matching `addrType` length.
+
+##### nibbles
+
+`number`
+
+Prefix length from 1 to 16 hex nibbles.
 
 ##### options?
 

@@ -410,6 +410,7 @@ version = "0.3.6"
 dependencies = [
  "brk_cohort",
  "brk_types",
+ "rapidhash",
  "serde",
  "serde_json",
  "ureq",
@@ -2458,9 +2459,9 @@ dependencies = [
 
 [[package]]
 name = "rapidhash"
-version = "4.4.1"
+version = "4.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5e48930979c155e2f33aa36ab3119b5ee81332beb6482199a8ecd6029b80b59"
+checksum = "32b266a82f4aa99bb5c25e28d11cc44ace63d91adbcbcee4d323e2ae3d49ef37"
 dependencies = [
  "rustversion",
 ]

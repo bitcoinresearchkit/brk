@@ -1,24 +1,15 @@
-import { rapidHashV3Prefix } from "./hash.js";
-
 const MIN_PREFIX_NIBBLES = 4;
 const MAX_PREFIX_NIBBLES = 16;
 
 /**
+ * @typedef {import("../../modules/brk-client/index.js").AddrHashPrefixMatches} AddrHashPrefixMatches
  * @typedef {import("../derive/index.js").AddressType} AddressType
  * @typedef {import("../derive/index.js").GeneratedAddress} GeneratedAddress
  */
 
 /**
- * @typedef {Object} AddrHashPrefixMatches
- * @property {AddressType} addrType
- * @property {string} prefix
- * @property {boolean} truncated
- * @property {string[]} addresses
- */
-
-/**
  * @typedef {Object} AddressClient
- * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
+ * @property {(addrType: AddressType, payload: Uint8Array, nibbles: number, options?: { cache?: boolean }) => Promise<AddrHashPrefixMatches>} getAddressPayloadHashPrefixMatches
  */
 
 /**
@@ -28,10 +19,8 @@ const MAX_PREFIX_NIBBLES = 16;
  * @returns {Promise<AddrHashPrefixMatches>}
  */
 async function fetchPrefixMatches(client, generated, nibbles) {
-  const prefix = rapidHashV3Prefix(generated.payload, nibbles);
-
   return /** @type {AddrHashPrefixMatches} */ (
-    await client.getAddressHashPrefixMatches(generated.addrType, prefix, {
+    await client.getAddressPayloadHashPrefixMatches(generated.addrType, generated.payload, nibbles, {
       cache: false,
     })
   );

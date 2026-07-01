@@ -76,6 +76,36 @@ impl BrkClient {{
     )
     .unwrap();
 
+    output.push_str(r#"    /// Decode a mainnet Bitcoin address into the BRK address type and raw payload bytes.
+    pub fn decode_address_payload(address: &str) -> Result<AddressPayload> {
+        decode_address_payload(address)
+    }
+
+    /// Compute the RapidHash v3 hash-prefix for raw address payload bytes.
+    pub fn address_payload_hash_prefix(payload: &[u8], nibbles: usize) -> Result<String> {
+        address_payload_hash_prefix(payload, nibbles)
+    }
+
+    /// Decode a mainnet Bitcoin address and compute its hash prefix.
+    pub fn address_hash_prefix(address: &str, nibbles: usize) -> Result<AddressHashPrefix> {
+        address_hash_prefix(address, nibbles)
+    }
+
+    /// Fetch address hash-prefix matches from raw payload bytes matching `addr_type` length.
+    pub fn get_address_payload_hash_prefix_matches(&self, addr_type: OutputType, payload: &[u8], nibbles: usize) -> Result<AddrHashPrefixMatches> {
+        validate_address_payload_for_type(addr_type, payload)?;
+        let prefix = address_payload_hash_prefix(payload, nibbles)?;
+        self.get_address_hash_prefix_matches(addr_type, &prefix)
+    }
+
+    /// Fetch address hash-prefix matches for a mainnet Bitcoin address.
+    pub fn get_address_hash_prefix_matches_for_address(&self, address: &str, nibbles: usize) -> Result<AddrHashPrefixMatches> {
+        let hashed = address_hash_prefix(address, nibbles)?;
+        self.get_address_hash_prefix_matches(hashed.addr_type, &hashed.prefix)
+    }
+
+"#);
+
     generate_api_methods(output, endpoints);
 
     writeln!(output, "}}").unwrap();
@@ -117,6 +147,23 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
     } else {
         "get_text"
     };
+
+    if endpoint.path == "/api/address/hash-prefix/{addr_type}/{prefix}" {
+        writeln!(
+            output,
+            "        let addr_type = address_payload_type_path(addr_type)?;"
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "        self.base.{}(&format!(\"{}\"{}))",
+            fetch_method, path, index_arg
+        )
+        .unwrap();
+        writeln!(output, "    }}").unwrap();
+        writeln!(output).unwrap();
+        return;
+    }
 
     if endpoint.query_params.is_empty() {
         writeln!(

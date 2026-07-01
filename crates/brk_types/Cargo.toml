@@ -16,7 +16,7 @@ indexmap = { workspace = true }
 itoa = "1.0.18"
 jiff = { workspace = true }
 pco = { workspace = true }
-rapidhash = "4.4.1"
+rapidhash = { workspace = true }
 rustc-hash = { workspace = true }
 ryu = "1.0.23"
 schemars = { workspace = true }

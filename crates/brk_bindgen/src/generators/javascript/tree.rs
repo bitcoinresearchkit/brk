@@ -111,6 +111,32 @@ pub fn generate_main_client(
     writeln!(output, "    this.series = this._buildTree();").unwrap();
     writeln!(output, "  }}\n").unwrap();
 
+    output.push_str(r##"  /**
+   * Compute the RapidHash v3 hash-prefix for raw address payload bytes.
+   * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload
+   * @param {number} nibbles
+   * @returns {string}
+   */
+  static addressPayloadHashPrefix(payload, nibbles) {
+    return addressPayloadHashPrefix(payload, nibbles);
+  }
+
+  /**
+   * Fetch address hash-prefix matches from raw address payload bytes.
+   * @param {OutputType} addrType
+   * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload - Raw payload bytes matching addrType length
+   * @param {number} nibbles
+   * @param {{ signal?: AbortSignal, onValue?: (value: AddrHashPrefixMatches) => void, cache?: boolean }} [options]
+   * @returns {Promise<AddrHashPrefixMatches>}
+   */
+  getAddressPayloadHashPrefixMatches(addrType, payload, nibbles, options = {}) {
+    _validateAddressPayloadForType(addrType, payload);
+    const prefix = addressPayloadHashPrefix(payload, nibbles);
+    return this.getAddressHashPrefixMatches(addrType, prefix, options);
+  }
+
+"##);
+
     writeln!(output, "  /**").unwrap();
     writeln!(output, "   * @private").unwrap();
     writeln!(output, "   * @returns {{SeriesTree}}").unwrap();
@@ -161,7 +187,11 @@ pub fn generate_main_client(
 
     writeln!(output, "}}\n").unwrap();
 
-    writeln!(output, "export {{ BrkClient, BrkError }};").unwrap();
+    writeln!(
+        output,
+        "export {{ BrkClient, BrkError, addressPayloadHashPrefix }};"
+    )
+    .unwrap();
 }
 
 #[allow(clippy::too_many_arguments)]

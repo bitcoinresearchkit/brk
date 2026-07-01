@@ -16,6 +16,7 @@ const LOOKUP_CONCURRENCY = 8;
 
 /**
  * @typedef {import("./stats.js").AddressStats} AddressStats
+ * @typedef {import("./bucket.js").AddrHashPrefixMatches} AddrHashPrefixMatches
  */
 
 /**
@@ -37,8 +38,8 @@ const LOOKUP_CONCURRENCY = 8;
 /**
  * @typedef {Object} AddressClient
  * @property {string} domain
- * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
- * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
+ * @property {(address: string, options?: { cache?: boolean }) => Promise<AddressStats>} getAddress
+ * @property {(addrType: AddressType, payload: Uint8Array, nibbles: number, options?: { cache?: boolean }) => Promise<AddrHashPrefixMatches>} getAddressPayloadHashPrefixMatches
  */
 
 /**
@@ -115,9 +116,7 @@ async function fetchBucketMetadata(client, addresses, cache) {
     if (!cache.has(address)) {
       cache.set(
         address,
-        client.getAddress(address, { cache: false }).then(
-          (stats) => /** @type {AddressStats} */ (stats),
-        ),
+        client.getAddress(address, { cache: false }),
       );
     }
   }
@@ -132,9 +131,7 @@ async function fetchBucketMetadata(client, addresses, cache) {
  */
 async function fetchDirectWalletAddress(client, generated) {
   try {
-    const stats = /** @type {AddressStats} */ (
-      await client.getAddress(generated.address, { cache: false })
-    );
+    const stats = await client.getAddress(generated.address, { cache: false });
     const historyAddresses =
       getAddressTxCount(stats) > 0 ? [generated.address] : [];
 

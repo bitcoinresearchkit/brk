@@ -2132,6 +2132,159 @@ const _m = (acc, s) => s ? (acc ? `${acc}_${s}` : s) : acc;
 const _p = (prefix, acc) => acc ? `${prefix}_${acc}` : prefix;
 
 
+
+const _MASK_64 = 0xffffffffffffffffn;
+const _RAPIDHASH_SECRETS = /** @type {const} */ ([
+  0x2d358dccaa6c78a5n,
+  0x8bb84b93962eacc9n,
+  0x4b33a62ed433d4a3n,
+  0x4d5a2da51de1aa47n,
+  0xa0761d6478bd642fn,
+  0xe7037ed1a0b428dbn,
+  0x90ed1765281c388cn,
+]);
+const _RAPIDHASH_SEED = _rapidHashSeed(0n);
+
+/** @param {bigint} value */
+function _u64(value) {
+  return value & _MASK_64;
+}
+
+/** @param {bigint} left @param {bigint} right */
+function _rapidMix(left, right) {
+  const result = _u64(left) * _u64(right);
+  return _u64(result) ^ _u64(result >> 64n);
+}
+
+/** @param {bigint} left @param {bigint} right @returns {[bigint, bigint]} */
+function _rapidMum(left, right) {
+  const result = _u64(left) * _u64(right);
+  return [_u64(result), _u64(result >> 64n)];
+}
+
+/** @param {bigint} seed */
+function _rapidHashSeed(seed) {
+  return _u64(seed ^ _rapidMix(seed ^ _RAPIDHASH_SECRETS[2], _RAPIDHASH_SECRETS[1]));
+}
+
+/** @param {Uint8Array} bytes @param {number} offset */
+function _readU32(bytes, offset) {
+  return (
+    BigInt(bytes[offset]) |
+    (BigInt(bytes[offset + 1]) << 8n) |
+    (BigInt(bytes[offset + 2]) << 16n) |
+    (BigInt(bytes[offset + 3]) << 24n)
+  );
+}
+
+/** @param {Uint8Array} bytes @param {number} offset */
+function _readU64(bytes, offset) {
+  return _readU32(bytes, offset) | (_readU32(bytes, offset + 4) << 32n);
+}
+
+/** @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload */
+function _asUint8Array(payload) {
+  if (payload instanceof Uint8Array) return payload;
+  if (payload instanceof ArrayBuffer) return new Uint8Array(payload);
+  if (ArrayBuffer.isView(payload)) return new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength);
+  if (Array.isArray(payload)) return new Uint8Array(payload);
+  throw new Error("Expected address payload bytes");
+}
+
+/** @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload */
+function _rapidHashV3(payload) {
+  const bytes = _asUint8Array(payload);
+  const length = bytes.length;
+  if (length === 0) throw new Error("Expected a non-empty address payload");
+  if (length > 65) throw new Error("Expected at most 65 address payload bytes");
+
+  let seed = _RAPIDHASH_SEED;
+  let a = 0n;
+  let b = 0n;
+  let remainder;
+
+  if (length <= 16) {
+    if (length >= 4) {
+      seed ^= BigInt(length);
+      if (length >= 8) {
+        a ^= _readU64(bytes, 0);
+        b ^= _readU64(bytes, length - 8);
+      } else {
+        a ^= _readU32(bytes, 0);
+        b ^= _readU32(bytes, length - 4);
+      }
+    } else if (length > 0) {
+      a ^= (BigInt(bytes[0]) << 45n) | BigInt(bytes[length - 1]);
+      b ^= BigInt(bytes[length >> 1]);
+    }
+    remainder = BigInt(length);
+  } else {
+    seed = _rapidMix(_readU64(bytes, 0) ^ _RAPIDHASH_SECRETS[2], _readU64(bytes, 8) ^ seed);
+    if (length > 32) {
+      seed = _rapidMix(_readU64(bytes, 16) ^ _RAPIDHASH_SECRETS[2], _readU64(bytes, 24) ^ seed);
+      if (length > 48) {
+        seed = _rapidMix(_readU64(bytes, 32) ^ _RAPIDHASH_SECRETS[1], _readU64(bytes, 40) ^ seed);
+        if (length > 64) {
+          seed = _rapidMix(_readU64(bytes, 48) ^ _RAPIDHASH_SECRETS[1], _readU64(bytes, 56) ^ seed);
+        }
+      }
+    }
+    remainder = BigInt(length);
+    a ^= _readU64(bytes, length - 16) ^ remainder;
+    b ^= _readU64(bytes, length - 8);
+  }
+
+  a ^= _RAPIDHASH_SECRETS[1];
+  b ^= seed;
+  [a, b] = _rapidMum(a, b);
+  return _rapidMix(a ^ 0xaaaaaaaaaaaaaaaan, b ^ _RAPIDHASH_SECRETS[1] ^ remainder);
+}
+
+/** @param {number} nibbles */
+function _validateHashPrefixNibbles(nibbles) {
+  if (!Number.isInteger(nibbles) || nibbles < 1 || nibbles > 16) {
+    throw new Error("Expected hash-prefix length from 1 to 16 hex nibbles");
+  }
+}
+
+/** @param {OutputType} addrType @returns {number[]} */
+function _addressPayloadLengths(addrType) {
+  switch (addrType) {
+    case "p2a": return [2];
+    case "p2pk": return [33, 65];
+    case "p2pkh":
+    case "p2sh":
+    case "v0_p2wpkh": return [20];
+    case "v0_p2wsh":
+    case "v1_p2tr": return [32];
+    default:
+      throw new Error(`Unsupported address type for address payload hash-prefix: ${addrType}`);
+  }
+}
+
+/**
+ * @param {OutputType} addrType
+ * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload
+ */
+function _validateAddressPayloadForType(addrType, payload) {
+  const length = _asUint8Array(payload).length;
+  const expected = _addressPayloadLengths(addrType);
+  if (!expected.includes(length)) {
+    throw new Error(`Expected ${addrType} address payload length ${expected.join(" or ")} bytes`);
+  }
+}
+
+/**
+ * Compute the RapidHash v3 hash-prefix used by `/api/address/hash-prefix/{addr_type}/{prefix}`.
+ * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload - Raw address payload bytes
+ * @param {number} nibbles - Prefix length from 1 to 16 hex nibbles
+ * @returns {string}
+ */
+function addressPayloadHashPrefix(payload, nibbles) {
+  _validateHashPrefixNibbles(nibbles);
+  return _rapidHashV3(payload).toString(16).padStart(16, "0").slice(0, nibbles);
+}
+
 // Index group constants and factory
 
 const _i1 = /** @type {const} */ (["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height"]);
@@ -9092,6 +9245,30 @@ class BrkClient extends BrkClientBase {
   }
 
   /**
+   * Compute the RapidHash v3 hash-prefix for raw address payload bytes.
+   * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload
+   * @param {number} nibbles
+   * @returns {string}
+   */
+  static addressPayloadHashPrefix(payload, nibbles) {
+    return addressPayloadHashPrefix(payload, nibbles);
+  }
+
+  /**
+   * Fetch address hash-prefix matches from raw address payload bytes.
+   * @param {OutputType} addrType
+   * @param {Uint8Array | ArrayBuffer | ArrayBufferView | number[]} payload - Raw payload bytes matching addrType length
+   * @param {number} nibbles
+   * @param {{ signal?: AbortSignal, onValue?: (value: AddrHashPrefixMatches) => void, cache?: boolean }} [options]
+   * @returns {Promise<AddrHashPrefixMatches>}
+   */
+  getAddressPayloadHashPrefixMatches(addrType, payload, nibbles, options = {}) {
+    _validateAddressPayloadForType(addrType, payload);
+    const prefix = addressPayloadHashPrefix(payload, nibbles);
+    return this.getAddressHashPrefixMatches(addrType, prefix, options);
+  }
+
+  /**
    * @private
    * @returns {SeriesTree}
    */
@@ -11500,7 +11677,7 @@ class BrkClient extends BrkClientBase {
   /**
    * Address hash-prefix matches
    *
-   * Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+   * Find addresses by address type and by the first 1-16 hex nibbles of RapidHash v3 over the raw address payload bytes. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
    *
    * Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
    *
@@ -12766,4 +12943,4 @@ class BrkClient extends BrkClientBase {
 
 }
 
-export { BrkClient, BrkError };
+export { BrkClient, BrkError, addressPayloadHashPrefix };

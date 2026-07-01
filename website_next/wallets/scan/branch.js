@@ -8,15 +8,8 @@ const MAX_SCANNED_ADDRESSES = 1_000;
 
 /**
  * @typedef {import("../derive/address.js").AddressScript} AddressScript
- * @typedef {import("../derive/index.js").AddressType} AddressType
+ * @typedef {import("../lookup/index.js").AddressClient} AddressClient
  * @typedef {import("../lookup/index.js").WalletAddress} WalletAddress
- */
-
-/**
- * @typedef {Object} AddressClient
- * @property {string} domain
- * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddress
- * @property {(addrType: AddressType, prefix: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressHashPrefixMatches
  */
 
 /**

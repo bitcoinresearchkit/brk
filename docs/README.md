@@ -6,7 +6,6 @@
 [![Supported by OpenSats](https://img.shields.io/badge/supported%20by-opensats-ff7b00)](https://opensats.org/)
 [![Discord](https://img.shields.io/discord/1350431684562124850?label=Discord&logo=discord&color=5865F2)](https://discord.gg/WACpShCB7M)
 [![X](https://img.shields.io/badge/@_nym21_-000000?logo=x)](https://x.com/_nym21_)
-[![Nostr](https://img.shields.io/badge/Nostr-purple?logo=nostr)](https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6)
 
 > "Shout out to Bitcoin Research Kit. [...] Couldn't recommend them highly enough."
 > — James Check (CheckOnChain), [What Bitcoin Did #1000](https://www.whatbitcoindid.com/episodes/wbd1000-checkmate)

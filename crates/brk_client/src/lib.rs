@@ -8,6 +8,7 @@
 #![allow(clippy::useless_format)]
 #![allow(clippy::unnecessary_to_owned)]
 
+use std::str::FromStr;
 use std::sync::Arc;
 use std::ops::{Bound, RangeBounds};
 use serde::de::DeserializeOwned;
@@ -31,6 +32,97 @@ impl std::error::Error for BrkError {}
 
 /// Result type for BRK client operations.
 pub type Result<T> = std::result::Result<T, BrkError>;
+
+/// BRK address type and raw payload bytes used by the hash-prefix index.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddressPayload {
+    pub addr_type: OutputType,
+    pub payload: Vec<u8>,
+}
+
+/// BRK address type and leading hex nibbles of the address-payload hash.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AddressHashPrefix {
+    pub addr_type: OutputType,
+    pub prefix: String,
+}
+
+/// Compute the RapidHash v3 hash-prefix used by `/api/address/hash-prefix/{addr_type}/{prefix}`.
+pub fn address_payload_hash_prefix(payload: &[u8], nibbles: usize) -> Result<String> {
+    if payload.is_empty() {
+        return Err(BrkError { message: "Expected a non-empty address payload".to_string() });
+    }
+    if payload.len() > 65 {
+        return Err(BrkError { message: "Expected at most 65 address payload bytes".to_string() });
+    }
+    if !(1..=16).contains(&nibbles) {
+        return Err(BrkError { message: "Expected hash-prefix length from 1 to 16 hex nibbles".to_string() });
+    }
+    Ok(format!("{:016x}", rapidhash::v3::rapidhash_v3(payload))[..nibbles].to_string())
+}
+
+fn validate_address_payload_for_type(addr_type: OutputType, payload: &[u8]) -> Result<()> {
+    let expected: &[usize] = match addr_type {
+        OutputType::P2A => &[2],
+        OutputType::P2PK33 => &[33],
+        OutputType::P2PK65 => &[65],
+        OutputType::P2PKH | OutputType::P2SH | OutputType::P2WPKH => &[20],
+        OutputType::P2WSH | OutputType::P2TR => &[32],
+        OutputType::P2MS | OutputType::OpReturn | OutputType::Empty | OutputType::Unknown => {
+            return Err(BrkError { message: format!("Unsupported address type for address payload hash-prefix: {addr_type:?}") });
+        },
+    };
+    let addr_type = address_payload_type_path(addr_type)?;
+
+    if !expected.contains(&payload.len()) {
+        let joined = expected
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(" or ");
+        return Err(BrkError { message: format!("Expected {addr_type} address payload length {joined} bytes") });
+    }
+
+    Ok(())
+}
+
+fn address_payload_type_path(addr_type: OutputType) -> Result<&'static str> {
+    match addr_type {
+        OutputType::P2A => Ok("p2a"),
+        OutputType::P2PK33 | OutputType::P2PK65 => Ok("p2pk"),
+        OutputType::P2PKH => Ok("p2pkh"),
+        OutputType::P2SH => Ok("p2sh"),
+        OutputType::P2WPKH => Ok("v0_p2wpkh"),
+        OutputType::P2WSH => Ok("v0_p2wsh"),
+        OutputType::P2TR => Ok("v1_p2tr"),
+        OutputType::P2MS | OutputType::OpReturn | OutputType::Empty | OutputType::Unknown => {
+            Err(BrkError { message: format!("Unsupported address type for address payload hash-prefix: {addr_type:?}") })
+        },
+    }
+}
+
+/// Decode a mainnet Bitcoin address into the BRK address type and raw payload bytes.
+pub fn decode_address_payload(address: &str) -> Result<AddressPayload> {
+    if address.is_empty() {
+        return Err(BrkError { message: "Expected an address string".to_string() });
+    }
+    let addr_bytes = AddrBytes::from_str(address).map_err(|e| BrkError { message: e.to_string() })?;
+    let addr_type = OutputType::from(&addr_bytes);
+
+    Ok(AddressPayload {
+        addr_type,
+        payload: addr_bytes.as_slice().to_vec(),
+    })
+}
+
+/// Decode a mainnet Bitcoin address and compute its hash prefix.
+pub fn address_hash_prefix(address: &str, nibbles: usize) -> Result<AddressHashPrefix> {
+    let decoded = decode_address_payload(address)?;
+    Ok(AddressHashPrefix {
+        addr_type: decoded.addr_type,
+        prefix: address_payload_hash_prefix(&decoded.payload, nibbles)?,
+    })
+}
 
 /// Options for configuring the BRK client.
 #[derive(Debug, Clone)]
@@ -9538,7 +9630,7 @@ pub struct BrkClient {
 
 impl BrkClient {
     /// Client version.
-    pub const VERSION: &'static str = "v0.3.4";
+    pub const VERSION: &'static str = "v0.3.6";
 
     /// Create a new client with the given base URL.
     pub fn new(base_url: impl Into<String>) -> Self {
@@ -9590,6 +9682,34 @@ impl BrkClient {
             Arc::from(series.into().as_str()),
             index,
         ))
+    }
+
+    /// Decode a mainnet Bitcoin address into the BRK address type and raw payload bytes.
+    pub fn decode_address_payload(address: &str) -> Result<AddressPayload> {
+        decode_address_payload(address)
+    }
+
+    /// Compute the RapidHash v3 hash-prefix for raw address payload bytes.
+    pub fn address_payload_hash_prefix(payload: &[u8], nibbles: usize) -> Result<String> {
+        address_payload_hash_prefix(payload, nibbles)
+    }
+
+    /// Decode a mainnet Bitcoin address and compute its hash prefix.
+    pub fn address_hash_prefix(address: &str, nibbles: usize) -> Result<AddressHashPrefix> {
+        address_hash_prefix(address, nibbles)
+    }
+
+    /// Fetch address hash-prefix matches from raw payload bytes matching `addr_type` length.
+    pub fn get_address_payload_hash_prefix_matches(&self, addr_type: OutputType, payload: &[u8], nibbles: usize) -> Result<AddrHashPrefixMatches> {
+        validate_address_payload_for_type(addr_type, payload)?;
+        let prefix = address_payload_hash_prefix(payload, nibbles)?;
+        self.get_address_hash_prefix_matches(addr_type, &prefix)
+    }
+
+    /// Fetch address hash-prefix matches for a mainnet Bitcoin address.
+    pub fn get_address_hash_prefix_matches_for_address(&self, address: &str, nibbles: usize) -> Result<AddrHashPrefixMatches> {
+        let hashed = address_hash_prefix(address, nibbles)?;
+        self.get_address_hash_prefix_matches(hashed.addr_type, &hashed.prefix)
     }
 
     /// Health check
@@ -9868,10 +9988,11 @@ impl BrkClient {
 
     /// Address hash-prefix matches
     ///
-    /// Find addresses by address type and address-payload hash prefix. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
+    /// Find addresses by address type and by the first 1-16 hex nibbles of RapidHash v3 over the raw address payload bytes. Intended for privacy-preserving client-side wallet discovery without sending raw addresses or xpubs. Fetch metadata for the returned addresses through `/api/address/{address}`.
     ///
     /// Endpoint: `GET /api/address/hash-prefix/{addr_type}/{prefix}`
     pub fn get_address_hash_prefix_matches(&self, addr_type: OutputType, prefix: &str) -> Result<AddrHashPrefixMatches> {
+        let addr_type = address_payload_type_path(addr_type)?;
         self.base.get_json(&format!("/api/address/hash-prefix/{addr_type}/{prefix}"))
     }
 

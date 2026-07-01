@@ -1,5 +1,6 @@
 /**
  * @typedef {import("../../scan/index.js").WalletAddress} WalletAddress
+ * @typedef {Record<string, unknown>} ApiTransaction
  *
  * @typedef {Object} WalletTransactionAddress
  * @property {WalletAddress} walletAddress
@@ -186,7 +187,7 @@ function getExternalOutputValue(transaction, walletAddressSet) {
 }
 
 /**
- * @param {unknown} transaction
+ * @param {ApiTransaction} transaction
  * @param {readonly WalletAddress[]} walletAddresses
  * @returns {WalletTransaction}
  */

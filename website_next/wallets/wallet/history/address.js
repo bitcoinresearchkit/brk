@@ -4,20 +4,21 @@ const HISTORY_CONCURRENCY = 4;
 const MAX_SELECTED_ADDRESS_TXS = 100;
 
 const historyByBucketKey =
-  /** @type {Map<string, Promise<Map<string, unknown[]>>>} */ (new Map());
+  /** @type {Map<string, Promise<Map<string, ApiTransaction[]>>>} */ (new Map());
 
 /**
  * @typedef {import("../../scan/index.js").WalletAddress} WalletAddress
+ * @typedef {import("./transaction.js").ApiTransaction} ApiTransaction
  */
 
 /**
  * @typedef {Object} AddressHistoryClient
- * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressTxs
+ * @property {(address: string, options?: { cache?: boolean }) => Promise<ApiTransaction[]>} getAddressTxs
  */
 
 /**
  * @typedef {Object} AddressHistory
- * @property {unknown[]} transactions
+ * @property {ApiTransaction[]} transactions
  */
 
 /**
@@ -30,16 +31,14 @@ function createBucketKey(addresses) {
 /**
  * @param {AddressHistoryClient} client
  * @param {readonly string[]} addresses
- * @returns {Promise<Map<string, unknown[]>>}
+ * @returns {Promise<Map<string, ApiTransaction[]>>}
  */
 async function fetchBucketHistory(client, addresses) {
   const entries = await mapConcurrent(
     addresses,
     HISTORY_CONCURRENCY,
     async (address) => {
-      const transactions = /** @type {unknown[]} */ (
-        await client.getAddressTxs(address, { cache: false })
-      );
+      const transactions = await client.getAddressTxs(address, { cache: false });
 
       return /** @type {const} */ ([address, transactions]);
     },

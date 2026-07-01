@@ -3,12 +3,13 @@ import { readWalletTransaction } from "./transaction.js";
 
 /**
  * @typedef {import("../../scan/index.js").WalletAddress} WalletAddress
+ * @typedef {import("./transaction.js").ApiTransaction} ApiTransaction
  * @typedef {import("./transaction.js").WalletTransaction} WalletTransaction
  */
 
 /**
  * @typedef {Object} TransactionClient
- * @property {(address: string, options?: { cache?: boolean }) => Promise<unknown>} getAddressTxs
+ * @property {(address: string, options?: { cache?: boolean }) => Promise<ApiTransaction[]>} getAddressTxs
  */
 
 /**
