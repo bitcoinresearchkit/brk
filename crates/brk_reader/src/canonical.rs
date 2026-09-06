@@ -55,14 +55,14 @@ impl CanonicalRange {
     }
 
     #[inline]
-    pub(crate) fn offset_of(&self, hash: &BlockHash) -> Option<u32> {
+    pub fn offset_of(&self, hash: &BlockHash) -> Option<u32> {
         self.by_hash.get(hash).copied()
     }
 
     /// `prev_hash` must match the canonical hash at `offset - 1`, or
     /// the anchor when `offset == 0`.
     #[inline]
-    pub(crate) fn verify_prev(&self, offset: u32, prev_hash: &BlockHash) -> bool {
+    pub fn verify_prev(&self, offset: u32, prev_hash: &BlockHash) -> bool {
         match offset {
             0 => self.anchor.as_ref().is_none_or(|a| a == prev_hash),
             _ => self.offset_of(prev_hash) == Some(offset - 1),

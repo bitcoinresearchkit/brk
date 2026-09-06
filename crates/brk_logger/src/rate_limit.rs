@@ -29,7 +29,7 @@ const fn level_index(level: Level) -> usize {
 
 /// Returns true if `name` matches a file produced by this writer:
 /// `YYYY-MM-DD.txt` or `YYYY-MM-DD_<level>.txt`.
-pub(crate) fn is_log_file(name: &str) -> bool {
+pub fn is_log_file(name: &str) -> bool {
     let Some(stem) = name.strip_suffix(".txt") else {
         return false;
     };

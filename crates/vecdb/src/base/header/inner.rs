@@ -6,7 +6,7 @@ use super::{super::Format, HEADER_OFFSET, HEADER_VERSION};
 
 #[derive(Debug, Clone)]
 #[repr(C)]
-pub(super) struct HeaderInner {
+pub struct HeaderInner {
     pub header_version: Version,
     pub vec_version: Version,
     pub computed_version: Version,

@@ -5,15 +5,15 @@ use brk_types::ReadBlock;
 use crossbeam::channel::Sender;
 use rustc_hash::FxHashMap;
 
-pub(super) struct ReorderState {
-    pub(super) next_offset: u32,
+pub struct ReorderState {
+    pub next_offset: u32,
     pending: FxHashMap<u32, ReadBlock>,
     send_to_consumer: Sender<Result<ReadBlock>>,
     consumer_dropped: bool,
 }
 
 impl ReorderState {
-    pub(super) fn new(send_to_consumer: Sender<Result<ReadBlock>>) -> Self {
+    pub fn new(send_to_consumer: Sender<Result<ReadBlock>>) -> Self {
         Self {
             next_offset: 0,
             pending: FxHashMap::default(),
@@ -22,7 +22,7 @@ impl ReorderState {
         }
     }
 
-    pub(super) fn finalize(self, expected_count: usize) -> Result<()> {
+    pub fn finalize(self, expected_count: usize) -> Result<()> {
         if !self.consumer_dropped && (self.next_offset as usize) < expected_count {
             return Err(Error::Internal(
                 "forward pipeline: blk files missing canonical blocks",
@@ -31,7 +31,7 @@ impl ReorderState {
         Ok(())
     }
 
-    pub(super) fn try_emit(&mut self, offset: u32, block: ReadBlock) -> bool {
+    pub fn try_emit(&mut self, offset: u32, block: ReadBlock) -> bool {
         match offset.cmp(&self.next_offset) {
             Ordering::Equal => {
                 if !self.send(block) {

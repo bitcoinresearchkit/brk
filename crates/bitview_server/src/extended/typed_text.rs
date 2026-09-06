@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use aide::{
     OperationOutput,
+    generate::GenContext,
     openapi::{MediaType, Operation, Response, SchemaObject, StatusCode},
 };
 use schemars::JsonSchema;
@@ -15,10 +16,7 @@ pub struct TypedText<T>(PhantomData<T>);
 impl<T: JsonSchema> OperationOutput for TypedText<T> {
     type Inner = Self;
 
-    fn operation_response(
-        ctx: &mut aide::generate::GenContext,
-        _operation: &mut Operation,
-    ) -> Option<Response> {
+    fn operation_response(ctx: &mut GenContext, _operation: &mut Operation) -> Option<Response> {
         let json_schema = ctx.schema.subschema_for::<T>();
         Some(Response {
             description: "plain text".into(),
@@ -39,7 +37,7 @@ impl<T: JsonSchema> OperationOutput for TypedText<T> {
     }
 
     fn inferred_responses(
-        ctx: &mut aide::generate::GenContext,
+        ctx: &mut GenContext,
         operation: &mut Operation,
     ) -> Vec<(Option<StatusCode>, Response)> {
         Self::operation_response(ctx, operation)

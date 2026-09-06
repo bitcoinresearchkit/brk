@@ -1,10 +1,8 @@
-use bitcoin::ScriptBuf;
-use brk_error::Error;
 use byteview::ByteView;
 use derive_more::Deref;
 use vecdb::Bytes;
 
-use super::{AddrBytes, OutputType};
+use super::AddrBytes;
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash)]
 pub struct AddrHash(u64);
@@ -12,13 +10,6 @@ pub struct AddrHash(u64);
 impl AddrHash {
     pub const fn new(value: u64) -> Self {
         Self(value)
-    }
-
-    #[inline]
-    pub fn from_script(script: &ScriptBuf, output_type: OutputType) -> Result<Self, Error> {
-        Ok(Self(rapidhash::v3::rapidhash_v3(
-            AddrBytes::script_payload(script, output_type)?,
-        )))
     }
 }
 

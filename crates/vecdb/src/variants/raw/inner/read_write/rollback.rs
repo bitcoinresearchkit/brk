@@ -1,14 +1,26 @@
+use crate::internals::*;
+
 use crate::{AnyStoredVec, ChangeCursor, ReadWriteBaseVec, VecIndex, VecValue};
 
 use super::{super::RawStrategy, ReadWriteRawVec};
 
-impl<I, T, S> ReadWriteRawVec<I, T, S>
+pub trait VariantsRawInnerReadWriteRollbackReadWriteRawVecITSInternal<I, T, S>: Sized
 where
     I: VecIndex,
     T: VecValue,
     S: RawStrategy<T>,
 {
-    pub(super) fn serialize_raw_changes(&self) -> crate::Result<Vec<u8>> {
+    fn serialize_raw_changes(&self) -> crate::Result<Vec<u8>>;
+    fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()>;
+}
+impl<I, T, S> VariantsRawInnerReadWriteRollbackReadWriteRawVecITSInternal<I, T, S>
+    for ReadWriteRawVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn serialize_raw_changes(&self) -> crate::Result<Vec<u8>> {
         self.base.serialize_changes(
             Self::SIZE_OF_T,
             |from, to| self.collect_stored_range(from, to),
@@ -19,8 +31,7 @@ where
             },
         )
     }
-
-    pub(super) fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()> {
+    fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()> {
         let mut cursor = ChangeCursor::new(bytes);
         let change =
             ReadWriteBaseVec::<I, T>::parse_change_data(&mut cursor, Self::SIZE_OF_T, S::read)?;

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, mem, sync::Arc};
+use std::{mem, sync::Arc};
 
 use log::warn;
 use parking_lot::RwLock;
@@ -6,21 +6,19 @@ use rawdb::{Error as RawDbError, Region, RegionGroup};
 
 use crate::{Error, ImportOptions, Result, SharedLen, StoredVec, Version};
 
-mod column;
-mod lazy;
-mod read;
-mod read_only;
-mod schema;
-mod sum;
-mod traits;
+pub mod column;
+pub mod lazy;
+pub mod read;
+pub mod read_only;
+pub mod schema;
+pub mod sum;
+pub mod traits;
 
 pub use column::*;
 pub use lazy::*;
 pub use read_only::*;
 pub use schema::*;
 pub use sum::*;
-
-use schema::validate_schema;
 
 const VERSION: Version = Version::new(10);
 
@@ -53,7 +51,7 @@ where
     V: StoredVec,
     C: ColumnId,
 {
-    pub(super) const COLUMN_COUNT: usize = C::ALL.len();
+    const COLUMN_COUNT: usize = C::ALL.len();
 
     fn column_name(name: &str, column: C) -> String {
         format!("{name}_{column:?}")
@@ -149,17 +147,17 @@ where
     }
 
     #[inline]
-    pub(super) fn first(&self) -> &V {
+    fn first(&self) -> &V {
         &self.columns[0]
     }
 
     #[inline]
-    pub(super) fn first_mut(&mut self) -> &mut V {
+    fn first_mut(&mut self) -> &mut V {
         &mut self.columns[0]
     }
 
     #[inline]
-    pub(super) fn stored_rows(&self) -> usize {
+    fn stored_rows(&self) -> usize {
         let len = self.first().stored_len();
         debug_assert!(self.columns.iter().all(|column| column.stored_len() == len));
         len
@@ -193,16 +191,6 @@ where
         }
         self.publish_stored_rows();
         Ok(written)
-    }
-
-    pub fn read_only_clone(&self) -> ReadOnlyColumnarVec<V, C> {
-        ReadOnlyColumnarVec {
-            name: Arc::clone(&self.name),
-            columns: Arc::clone(&self.read_only_columns),
-            visible_rows: self.visible_rows.clone(),
-            gate: Arc::clone(&self.gate),
-            column_ids: PhantomData,
-        }
     }
 
     /// Returns an owned read-only view of one persisted scalar column.

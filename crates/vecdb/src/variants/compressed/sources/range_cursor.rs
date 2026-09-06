@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::{ptr::NonNull, sync::Arc};
 
 use parking_lot::RwLock;
@@ -157,30 +159,6 @@ where
     T: VecValue,
     S: CompressionStrategy<T>,
 {
-    pub(crate) fn new(
-        region: &'a Region,
-        pages: &'a Arc<RwLock<Pages>>,
-        stored_len: usize,
-        from: usize,
-        to: usize,
-    ) -> Self {
-        let from = from.min(stored_len);
-        let to = to.min(stored_len).max(from);
-        let owner = if ReadWriteCompressedVec::<I, T, S>::prefers_mmap(region, pages, from, to) {
-            Owner::Mmap(CompressedMmapSource::new_from_parts(
-                region, pages, stored_len, from, to,
-            ))
-        } else {
-            Owner::Io(CompressedIoSource::new_from_parts(
-                region, pages, stored_len, from, to,
-            ))
-        };
-        Self {
-            owner,
-            state: CursorState::new(from, to),
-        }
-    }
-
     /// Returns the current absolute vector position.
     #[inline(always)]
     pub fn position(&self) -> usize {
@@ -247,5 +225,51 @@ where
     #[inline]
     pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
         self.fold(n, (), |(), value| f(value));
+    }
+}
+pub trait VariantsCompressedSourcesRangeCursorCompressedRangeCursorAITSInternal<'a, I, T, S>:
+    Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn new(
+        region: &'a Region,
+        pages: &'a Arc<RwLock<Pages>>,
+        stored_len: usize,
+        from: usize,
+        to: usize,
+    ) -> Self;
+}
+impl<'a, I, T, S> VariantsCompressedSourcesRangeCursorCompressedRangeCursorAITSInternal<'a, I, T, S>
+    for CompressedRangeCursor<'a, I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn new(
+        region: &'a Region,
+        pages: &'a Arc<RwLock<Pages>>,
+        stored_len: usize,
+        from: usize,
+        to: usize,
+    ) -> Self {
+        let from = from.min(stored_len);
+        let to = to.min(stored_len).max(from);
+        let owner = if ReadWriteCompressedVec::<I, T, S>::prefers_mmap(region, pages, from, to) {
+            Owner::Mmap(CompressedMmapSource::new_from_parts(
+                region, pages, stored_len, from, to,
+            ))
+        } else {
+            Owner::Io(CompressedIoSource::new_from_parts(
+                region, pages, stored_len, from, to,
+            ))
+        };
+        Self {
+            owner,
+            state: CursorState::new(from, to),
+        }
     }
 }

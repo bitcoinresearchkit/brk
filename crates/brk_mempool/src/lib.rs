@@ -30,7 +30,9 @@
 //!
 //! # Locking domains
 //!
-//! Two independent locks. No path holds both simultaneously.
+//! Two independent data-lock domains. No path holds both simultaneously.
+//! A separate cycle mutex excludes concurrent writers across RPC and mutation
+//! phases; readers never acquire it.
 //!
 //! - `State` (`RwLock<State>`): the live mempool. Cycle steps 3 and 4
 //!   take the write guard. Every read-side accessor takes a read guard.
@@ -55,17 +57,19 @@
 //!
 //! A `Mempool` hosts at most one driver. Calling `start` / `start_with`
 //! a second time on the same instance panics. Spawn a separate
-//! `Mempool::new` if you need more loops.
+//! `Mempool::new` if you need more loops. Concurrent manual ticks return
+//! `StateUpdating` before RPC or mutation.
 
 use std::sync::{Arc, atomic::AtomicBool};
 
 use brk_rpc::Client;
-use parking_lot::{RwLock, RwLockReadGuard};
+use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 
 mod api;
 mod cycle;
 mod diagnostics;
 mod driver;
+mod internals;
 mod snapshot;
 mod state;
 mod steps;
@@ -92,6 +96,7 @@ struct Inner {
     state: RwLock<State>,
     rebuilder: Rebuilder,
     started: AtomicBool,
+    cycle: Mutex<()>,
 }
 
 impl Mempool {
@@ -101,6 +106,7 @@ impl Mempool {
             state: RwLock::new(State::default()),
             rebuilder: Rebuilder::default(),
             started: AtomicBool::new(false),
+            cycle: Mutex::new(()),
         }))
     }
 
@@ -123,33 +129,5 @@ impl Mempool {
 }
 
 #[cfg(test)]
-mod test_helpers {
-    use brk_rpc::Auth;
-    use brk_types::{FeeRate, Txid};
-
-    use super::*;
-
-    impl Mempool {
-        /// Test-only constructor that wires a Client at the default URL without
-        /// touching the network. `simple_http` only parses the URL on init.
-        pub(crate) fn for_test() -> Self {
-            let client = Client::new(Client::default_url(), Auth::None).unwrap();
-            Self(Arc::new(Inner {
-                client,
-                state: RwLock::new(State::default()),
-                rebuilder: Rebuilder::default(),
-                started: AtomicBool::new(false),
-            }))
-        }
-
-        pub(crate) fn test_state_lock(&self) -> &RwLock<State> {
-            &self.0.state
-        }
-
-        pub(crate) fn test_tick(&self, gbt_txids: &[Txid], min_fee: FeeRate) {
-            self.0
-                .rebuilder
-                .tick(&self.0.state, gbt_txids, min_fee, true);
-        }
-    }
-}
+#[path = "../tests/unit/lib_test_helpers.rs"]
+mod test_helpers;

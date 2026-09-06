@@ -1,7 +1,7 @@
 /// Expands a struct definition by appending shared range/format fields
 /// (`start`, `end`, `limit`, `format` plus their aliases) and emitting
-/// matching accessors. Used to keep `DataRangeFormat`, `SeriesSelection`
-/// and `SeriesSelectionLegacy` in sync without `#[serde(flatten)]`, since
+/// matching accessors. Used to keep `DataRangeFormat` and `SeriesSelection`
+/// in sync without `#[serde(flatten)]`, since
 /// `deny_unknown_fields` is silently inert through any flatten chain.
 macro_rules! with_range_format {
     (

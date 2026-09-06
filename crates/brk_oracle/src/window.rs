@@ -9,7 +9,7 @@ use crate::{HistogramEma, HistogramRaw};
 /// and recomputing are separate steps so warm-up can fill the ring without
 /// paying for the EMA until the first real query.
 #[derive(Clone)]
-pub(crate) struct EmaWindow {
+pub struct EmaWindow {
     histograms: Vec<HistogramRaw>,
     weights: Vec<f64>,
     ema: Box<HistogramEma>,
@@ -18,7 +18,7 @@ pub(crate) struct EmaWindow {
 }
 
 impl EmaWindow {
-    pub(crate) fn new(window_size: usize, alpha: f64) -> Self {
+    pub fn new(window_size: usize, alpha: f64) -> Self {
         let decay = 1.0 - alpha;
         let weights = (0..window_size)
             .map(|i| alpha * decay.powi(i as i32))
@@ -33,7 +33,7 @@ impl EmaWindow {
     }
 
     /// Record `hist` as the newest block, evicting the oldest once full.
-    pub(crate) fn push(&mut self, hist: &HistogramRaw) {
+    pub fn push(&mut self, hist: &HistogramRaw) {
         let window = self.histograms.len();
         self.histograms[self.cursor] = hist.clone();
         self.cursor = (self.cursor + 1) % window;
@@ -47,7 +47,7 @@ impl EmaWindow {
     }
 
     /// Fold the ring into the weighted EMA, newest block weighted `weights[0]`.
-    pub(crate) fn recompute(&mut self) {
+    pub fn recompute(&mut self) {
         self.ema.fill(0.0);
         for age in 0..self.filled {
             let weight = self.weights[age];
@@ -59,13 +59,13 @@ impl EmaWindow {
         }
     }
 
-    pub(crate) fn ema(&self) -> &HistogramEma {
+    pub fn ema(&self) -> &HistogramEma {
         &self.ema
     }
 
     /// The most recent `min(filled, n)` raw histograms, oldest first - the
     /// hand-off a regime switch replays into a fresh window of size `n`.
-    pub(crate) fn recent(&self, n: usize) -> Vec<HistogramRaw> {
+    pub fn recent(&self, n: usize) -> Vec<HistogramRaw> {
         (0..self.filled.min(n))
             .rev()
             .map(|age| self.histograms[self.index_at_age(age)].clone())

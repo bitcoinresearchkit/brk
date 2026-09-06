@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use brk_error::{OptionData, Result};
 use brk_types::{
     CPFP_CHAIN_LIMIT, ChunkInput, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry,
@@ -26,17 +28,6 @@ struct Member {
 }
 
 impl Query {
-    pub(super) fn confirmed_cpfp_resolved(
-        &self,
-        transaction: ResolvedConfirmedTx,
-    ) -> Result<CpfpInfo> {
-        let (_, seed, height) = self.revalidate_confirmed_tx(transaction)?;
-        let _guard = self.read_plugin(self.plugins().outputs)?;
-        let info = self.confirmed_cpfp_at(seed, height)?;
-        self.revalidate_confirmed_tx(transaction)?;
-        Ok(info)
-    }
-
     fn confirmed_cpfp_at(&self, seed: TxIndex, height: Height) -> Result<CpfpInfo> {
         let walk = self.walk_same_block_cluster(seed, height)?;
         let members = self.resolve_members(&walk.members)?;
@@ -141,12 +132,12 @@ impl Query {
                 if !parent.is_coinbase()
                     && parent.tx_index() >= block_first
                     && parent.tx_index() < block_end
-                    && !parents.contains(&parent.tx_index())
                 {
                     parents.push(parent.tx_index());
                 }
             }
             parents.sort_unstable();
+            parents.dedup();
             Ok(parents)
         };
 
@@ -161,11 +152,12 @@ impl Query {
                     continue;
                 }
                 let child = spending_tx.get(usize::from(input)).data()?;
-                if child >= block_first && child < block_end && !children.contains(&child) {
+                if child >= block_first && child < block_end {
                     children.push(child);
                 }
             }
             children.sort_unstable();
+            children.dedup();
             Ok(children)
         };
 
@@ -312,38 +304,22 @@ fn build_cpfp_info(
 }
 
 #[cfg(test)]
-mod tests {
-    use brk_error::Result;
-    use brk_types::TxIndex;
-    use smallvec::SmallVec;
-    use vecdb::VecIndex;
-
-    use super::{walk_component, walk_direction};
-
-    fn adjacent(graph: &[Vec<usize>], tx: TxIndex) -> Result<SmallVec<[TxIndex; 2]>> {
-        Ok(graph[tx.to_usize()]
-            .iter()
-            .copied()
-            .map(TxIndex::from)
-            .collect())
-    }
-
-    #[test]
-    fn component_includes_siblings_but_directional_walk_does_not() {
-        let parents = vec![vec![], vec![0], vec![0]];
-        let children = vec![vec![1, 2], vec![], vec![]];
-        let seed = TxIndex::from(1usize);
-        let mut parent = |tx| adjacent(&parents, tx);
-        let mut child = |tx| adjacent(&children, tx);
-
-        let mut component = walk_component(seed, &mut parent, &mut child, 64).unwrap();
-        component.sort_unstable();
-        assert_eq!(component, [0usize, 1, 2].map(TxIndex::from));
-
-        assert_eq!(
-            walk_direction(seed, &mut parent, 25).unwrap(),
-            [TxIndex::from(0usize)]
-        );
-        assert!(walk_direction(seed, &mut child, 25).unwrap().is_empty());
+#[path = "../../../tests/unit/impl/cpfp/confirmed.rs"]
+mod tests;
+pub trait RImplCpfpConfirmedQueryInternal: Sized {
+    fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo>;
+}
+impl RImplCpfpConfirmedQueryInternal for Query {
+    fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![
+            plugins.indexer,
+            plugins.mappings,
+            plugins.outputs,
+            plugins.transactions,
+        ])?;
+        let (_, seed, height) = self.revalidate_confirmed_tx(transaction)?;
+        let info = self.confirmed_cpfp_at(seed, height)?;
+        Ok(info)
     }
 }

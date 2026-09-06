@@ -1,7 +1,7 @@
-use crate::{Format, ReadOnlyCompressedVec, ReadWriteCompressedVec, impl_vec_wrapper};
+use crate::{Format, ReadOnlyCompressedVec, ReadWriteCompressedVec};
 
-mod strategy;
-mod value;
+pub mod strategy;
+pub mod value;
 
 pub use strategy::*;
 pub use value::*;

@@ -22,20 +22,13 @@ impl<T> UTXOGroupsWithoutAmountOrType<T> {
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        Self::new_with(&mut create)
-    }
-
-    pub(crate) fn new_with<F>(create: &mut F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
         Self {
             all: create(Filter::All, ""),
-            age: ByAge::new(&mut *create),
-            epoch: ByEpoch::new(&mut *create),
-            class: Class::new(&mut *create),
-            entry: ByEntry::new(&mut *create),
-            term: ByTerm::new(&mut *create),
+            age: ByAge::new(&mut create),
+            epoch: ByEpoch::new(&mut create),
+            class: Class::new(&mut create),
+            entry: ByEntry::new(&mut create),
+            term: ByTerm::new(&mut create),
         }
     }
 

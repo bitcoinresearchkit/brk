@@ -1,30 +1,31 @@
 use std::{
     borrow::Cow,
-    cmp::Ordering,
     collections::{BTreeMap, BTreeSet, btree_map::Entry},
-    iter,
 };
 
 use bitview_plugin::Plugin;
 use bitview_runtime::PluginSet;
 use bitview_traversable::{Traversable, TreeNode};
 use bitview_types::{
-    DetailedSeriesCount, IndexInfo, Limit, PaginatedSeries, Pagination, SeriesCount, SeriesInfo,
+    DetailedSeriesCount, IndexInfo, PaginatedSeries, Pagination, SeriesCount, SeriesInfo,
     SeriesName,
 };
 use brk_types::{CacheClass, Index};
-use quickmatch::{QuickMatch, QuickMatchConfig};
+use quickmatch::QuickMatch;
 use rustc_hash::{FxHashMap, FxHashSet};
 use vecdb::AnyExportableVec;
 
-mod cohort_query;
-mod index_to_vec;
-mod series_entry;
+pub mod index_to_vec;
+pub mod normalize;
+pub mod resolved_series_info;
+pub mod search;
+pub mod series_entry;
 
 use index_to_vec::IndexToVec;
 
+pub use resolved_series_info::ResolvedSeriesInfo;
 pub use series_entry::SeriesEntry;
-pub(crate) use series_entry::SeriesEntryLookup;
+pub use series_entry::SeriesEntryLookup;
 
 pub struct Vecs<'a> {
     by_series: FxHashMap<&'a str, IndexToVec<'a>>,
@@ -54,28 +55,6 @@ impl SeriesId {
     fn as_usize(self) -> usize {
         self.0 as usize
     }
-}
-
-#[derive(Default)]
-struct SearchCandidate {
-    normalized_rank: Option<usize>,
-    expanded_rank: Option<usize>,
-    description_rank: Option<usize>,
-    direct_words: usize,
-    description_words: usize,
-}
-
-struct RankedCandidate<'a> {
-    name: &'a str,
-    normalized_exact: bool,
-    expanded_exact: bool,
-    cohort_words: usize,
-    semantic_words: usize,
-    name_words: usize,
-    description_words: usize,
-    documented: bool,
-    description_rank: Option<usize>,
-    direct_rank: Option<usize>,
 }
 
 impl<'a> Vecs<'a> {
@@ -216,162 +195,19 @@ impl<'a> Vecs<'a> {
     }
 
     pub fn series_info(&self, series: &SeriesName) -> Option<SeriesInfo> {
-        let normalized = series.normalize();
-        let name = normalized.as_ref();
-        let index_to_vec = self.by_series.get(name)?;
-        let value_type = index_to_vec.first()?.vec().value_type_to_string();
-        let indexes = index_to_vec.indexes().collect();
-        let description = self
-            .series_position(name)
-            .and_then(|index| self.description_search.description(index));
-        Some(SeriesInfo {
-            description,
-            indexes,
-            value_type: value_type.into(),
-        })
+        self.resolve_series_info(series)
+            .map(ResolvedSeriesInfo::into_info)
     }
 
     pub fn catalog(&self) -> &TreeNode {
         &self.catalog
     }
 
-    pub fn matches(&self, series: &SeriesName, limit: Limit) -> Vec<&'_ str> {
-        if limit.is_zero() {
-            return Vec::new();
-        }
-        if self.by_series.contains_key(series.normalize().as_ref()) {
-            return self
-                .matcher
-                .matches_with_ids_and_matched_words(
-                    series,
-                    &QuickMatchConfig::new().with_limit(*limit),
-                )
-                .into_iter()
-                .map(|(id, _)| self.series_names[id as usize])
-                .collect();
-        }
-
-        self.matches_after_exact_miss(series, limit)
-    }
-
-    /// Continue fuzzy matching after the caller established that the exact
-    /// normalized series name is absent.
-    pub(crate) fn matches_after_exact_miss(
-        &self,
-        series: &SeriesName,
-        limit: Limit,
-    ) -> Vec<&'_ str> {
-        if limit.is_zero() {
-            return Vec::new();
-        }
-
-        let query = cohort_query::expand(series);
-        let normalized_name = query.normalized.replace(' ', "_");
-        if self.by_series.contains_key(normalized_name.as_str()) {
-            return self
-                .matcher
-                .matches_with_ids_and_matched_words(
-                    &query.normalized,
-                    &QuickMatchConfig::new().with_limit(*limit),
-                )
-                .into_iter()
-                .map(|(id, _)| self.series_names[id as usize])
-                .collect();
-        }
-
-        let is_expanded = query.expanded != query.normalized;
-        let mut normalized_config = QuickMatchConfig::new()
-            .with_limit(self.series_names.len())
-            .with_union_fallback(false);
-        if is_expanded {
-            normalized_config = normalized_config.with_trigram_budget(0);
-        }
-        let normalized = self
-            .matcher
-            .matches_with_ids_and_matched_words(&query.normalized, &normalized_config);
-        let expanded = if is_expanded {
-            self.matcher.matches_with_ids_and_matched_words(
-                &query.expanded,
-                &QuickMatchConfig::new()
-                    .with_limit(self.series_names.len())
-                    .with_union_fallback(false),
-            )
-        } else {
-            Vec::new()
-        };
-
-        let mut candidates: FxHashMap<SeriesId, SearchCandidate> = FxHashMap::default();
-        for (rank, (id, matched_words)) in normalized.into_iter().enumerate() {
-            let candidate = candidates.entry(SeriesId(id)).or_default();
-            candidate.normalized_rank = Some(rank);
-            candidate.direct_words = candidate.direct_words.max(matched_words as usize);
-        }
-        for (rank, (id, matched_words)) in expanded.into_iter().enumerate() {
-            let candidate = candidates.entry(SeriesId(id)).or_default();
-            candidate.expanded_rank = Some(rank);
-            candidate.direct_words = candidate.direct_words.max(matched_words as usize);
-        }
-        if query.semantic.is_empty() {
-            return rank_candidates(
-                &self.series_names,
-                candidates,
-                iter::empty(),
-                0,
-                &query,
-                *limit,
-            );
-        }
-
-        let descriptions = self
-            .description_search
-            .matcher
-            .matches_best_with_ids_and_matched_words(
-                &query.semantic,
-                &QuickMatchConfig::new()
-                    .with_limit(self.description_search.series_by_description.len()),
-            );
-        if descriptions.is_empty() {
-            return rank_candidates(
-                &self.series_names,
-                candidates,
-                iter::empty(),
-                0,
-                &query,
-                *limit,
-            );
-        }
-        let described_series = descriptions
-            .iter()
-            .map(|(description_id, _)| {
-                self.description_search.series_by_description[*description_id as usize].len()
-            })
-            .sum();
-        let description_candidates = descriptions.into_iter().enumerate().flat_map(
-            |(rank, (description_id, matched_words))| {
-                self.description_search.series_by_description[description_id as usize]
-                    .iter()
-                    .copied()
-                    .map(move |id| (id, rank, matched_words as usize))
-            },
-        );
-        rank_candidates(
-            &self.series_names,
-            candidates,
-            description_candidates,
-            described_series,
-            &query,
-            *limit,
-        )
-    }
-
-    pub(crate) fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a> {
-        let Some(index_to_vec) = self.by_series.get(series.normalize().as_ref()) else {
-            return SeriesEntryLookup::Missing;
-        };
-
-        match index_to_vec.get(index).copied() {
-            Some(entry) => SeriesEntryLookup::Found(entry),
-            None => SeriesEntryLookup::Unsupported(index_to_vec.indexes().collect()),
+    /// Finds a queryable vector and its owning plugin at the requested index.
+    pub fn entry(&self, series: &SeriesName, index: Index) -> Option<SeriesEntry<'a>> {
+        match self.lookup_entry(series, index) {
+            SeriesEntryLookup::Found(entry) => Some(entry),
+            SeriesEntryLookup::Unsupported(_) | SeriesEntryLookup::Missing => None,
         }
     }
 
@@ -399,7 +235,7 @@ impl DescriptionSearch {
             let Some(description) = description else {
                 continue;
             };
-            let description = cohort_query::normalize(&description);
+            let description = normalize::normalize(&description);
             if description.is_empty() {
                 continue;
             }
@@ -428,101 +264,6 @@ impl DescriptionSearch {
     }
 }
 
-fn search_words(text: &str) -> impl Iterator<Item = &str> {
-    text.split(['_', '-', ' ', ':', '/'])
-        .filter(|word| !word.is_empty())
-}
-
-fn matching_words_in_name(query: &[&str], name: &str) -> usize {
-    query
-        .iter()
-        .filter(|query| search_words(name).any(|name| name.starts_with(**query)))
-        .count()
-}
-
-fn rank_candidates<'a>(
-    series: &[&'a str],
-    mut direct_candidates: FxHashMap<SeriesId, SearchCandidate>,
-    description_candidates: impl Iterator<Item = (SeriesId, usize, usize)>,
-    description_candidate_count: usize,
-    query: &cohort_query::ExpandedQuery,
-    limit: usize,
-) -> Vec<&'a str> {
-    let normalized_words = search_words(&query.normalized).collect::<Vec<_>>();
-    let expanded_words = search_words(&query.expanded).collect::<Vec<_>>();
-    let cohort_words = search_words(&query.cohorts).collect::<Vec<_>>();
-    let rank = |id: SeriesId, candidate: SearchCandidate| {
-        let name = series[id.as_usize()];
-        let cohort_words = matching_words_in_name(&cohort_words, name);
-        let name_words = candidate.direct_words.saturating_sub(cohort_words);
-        RankedCandidate {
-            name,
-            normalized_exact: candidate.normalized_rank.is_some()
-                && normalized_words.iter().copied().eq(search_words(name)),
-            expanded_exact: candidate.expanded_rank.is_some()
-                && expanded_words.iter().copied().eq(search_words(name)),
-            cohort_words,
-            semantic_words: name_words.max(candidate.description_words),
-            name_words,
-            description_words: candidate.description_words,
-            documented: candidate.description_rank.is_some(),
-            description_rank: candidate.description_rank,
-            direct_rank: candidate
-                .normalized_rank
-                .into_iter()
-                .chain(candidate.expanded_rank)
-                .min(),
-        }
-    };
-
-    let mut candidates = Vec::with_capacity(direct_candidates.len() + description_candidate_count);
-    for (id, description_rank, description_words) in description_candidates {
-        let mut candidate = direct_candidates.remove(&id).unwrap_or_default();
-        candidate.description_rank = Some(description_rank);
-        candidate.description_words = description_words;
-        candidates.push(rank(id, candidate));
-    }
-    candidates.extend(
-        direct_candidates
-            .into_iter()
-            .map(|(id, candidate)| rank(id, candidate)),
-    );
-
-    if candidates.len() > limit {
-        candidates.select_nth_unstable_by(limit, RankedCandidate::cmp);
-        candidates.truncate(limit);
-    }
-    candidates.sort_unstable_by(RankedCandidate::cmp);
-    candidates
-        .into_iter()
-        .map(|candidate| candidate.name)
-        .collect()
-}
-
-impl RankedCandidate<'_> {
-    fn cmp(a: &Self, b: &Self) -> Ordering {
-        b.normalized_exact
-            .cmp(&a.normalized_exact)
-            .then_with(|| b.expanded_exact.cmp(&a.expanded_exact))
-            .then_with(|| b.cohort_words.cmp(&a.cohort_words))
-            .then_with(|| b.semantic_words.cmp(&a.semantic_words))
-            .then_with(|| b.name_words.cmp(&a.name_words))
-            .then_with(|| b.description_words.cmp(&a.description_words))
-            .then_with(|| b.documented.cmp(&a.documented))
-            .then_with(|| {
-                if a.documented && b.documented {
-                    a.name.len().cmp(&b.name.len())
-                } else {
-                    a.direct_rank.cmp(&b.direct_rank)
-                }
-            })
-            .then(a.description_rank.cmp(&b.description_rank))
-            .then(a.direct_rank.cmp(&b.direct_rank))
-            .then(a.name.len().cmp(&b.name.len()))
-            .then(a.name.cmp(b.name))
-    }
-}
-
 #[derive(Default)]
 struct Builder<'a> {
     by_series: FxHashMap<&'a str, IndexToVec<'a>>,
@@ -537,8 +278,8 @@ impl<'a> Builder<'a> {
         let serialized_index = vec.index_type_to_string();
         let index = Index::try_from(serialized_index)
             .unwrap_or_else(|_| panic!("Unknown index type: {serialized_index}"));
-        let requires_gate = matches!(index.cache_class(), CacheClass::Mutable) || vec.is_mutable();
-        let entry = SeriesEntry::new(index, vec, plugin, requires_gate);
+        let is_mutable = matches!(index.cache_class(), CacheClass::Mutable) || vec.is_mutable();
+        let entry = SeriesEntry::new(index, vec, plugin, is_mutable);
 
         let prev = self.by_series.entry(name).or_default().insert(entry);
         assert!(
@@ -558,6 +299,21 @@ impl<'a> Builder<'a> {
         }
         if self.seen_by_db.entry(db).or_default().insert(name) {
             by_db.distinct += 1;
+        }
+    }
+}
+pub trait VecsVecsAInternal<'a>: Sized {
+    fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a>;
+}
+impl<'a> VecsVecsAInternal<'a> for Vecs<'a> {
+    fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a> {
+        let Some(index_to_vec) = self.by_series.get(series.normalize().as_ref()) else {
+            return SeriesEntryLookup::Missing;
+        };
+
+        match index_to_vec.get(index).copied() {
+            Some(entry) => SeriesEntryLookup::Found(entry),
+            None => SeriesEntryLookup::Unsupported(index_to_vec.indexes().collect()),
         }
     }
 }

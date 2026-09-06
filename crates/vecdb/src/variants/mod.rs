@@ -1,20 +1,20 @@
-mod cached;
-mod columnar;
-mod compressed;
-mod eager;
-mod lazy;
+#[macro_use]
 mod macros;
-mod mutable;
-mod overflow;
-mod raw;
+
+pub mod cached;
+pub mod columnar;
+pub mod compressed;
+pub mod eager;
+pub mod lazy;
+pub mod mutable;
+pub mod overflow;
+pub mod raw;
 
 pub use cached::*;
 pub use columnar::*;
 pub use compressed::*;
 pub use eager::*;
 pub use lazy::*;
-#[allow(unused_imports)]
-pub use macros::*;
 pub use mutable::*;
 pub use overflow::*;
 pub use raw::*;

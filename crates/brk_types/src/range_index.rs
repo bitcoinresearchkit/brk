@@ -81,7 +81,7 @@ impl<'de> Deserialize<'de> for RangeIndex {
         if let Ok(i) = s.parse::<i64>() {
             return Ok(Self::Int(i));
         }
-        if let Some(date) = parse_date(s) {
+        if let Ok(date) = s.parse::<Date>() {
             return Ok(Self::Date(date));
         }
         if let Ok(ts) = s.parse::<jiff::Timestamp>() {
@@ -99,36 +99,6 @@ impl<'de> Deserialize<'de> for RangeIndex {
     }
 }
 
-fn parse_date(s: &str) -> Option<Date> {
-    if s.len() != 10 {
-        return None;
-    }
-    let b = s.as_bytes();
-    if b[4] != b'-' || b[7] != b'-' {
-        return None;
-    }
-    let year = s[0..4].parse().ok()?;
-    let month = s[5..7].parse().ok()?;
-    let day = s[8..10].parse().ok()?;
-    Some(Date::new(year, month, day))
-}
-
 #[cfg(test)]
-mod tests {
-    use super::RangeIndex;
-
-    #[test]
-    fn schema_matches_accepted_wire_forms() {
-        let schema = serde_json::to_value(schemars::schema_for!(RangeIndex))
-            .expect("RangeIndex schema should serialize");
-        let variants = schema["anyOf"]
-            .as_array()
-            .expect("RangeIndex schema should contain variants");
-
-        assert_eq!(variants[0]["type"], "integer");
-        assert_eq!(variants[1]["type"], "string");
-        assert_eq!(variants[1]["format"], "date");
-        assert_eq!(variants[2]["type"], "string");
-        assert_eq!(variants[2]["format"], "date-time");
-    }
-}
+#[path = "../tests/unit/range_index.rs"]
+mod tests;

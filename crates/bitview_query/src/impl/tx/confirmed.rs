@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, Height, TxIndex, Txid};
 use vecdb::ReadableVec;
@@ -41,37 +43,8 @@ impl ResolvedConfirmedTx {
 impl Query {
     /// Resolve an exact transaction confirmed in the published best chain.
     pub fn resolve_confirmed_tx(&self, txid: &Txid) -> Result<ResolvedConfirmedTx> {
-        let (index, height) = self.resolve_confirmed_position(txid)?;
-        let block_hash = self.confirmed_block_hash(height)?;
-
-        Ok(ResolvedConfirmedTx {
-            txid: *txid,
-            index,
-            height,
-            block_hash,
-        })
-    }
-
-    /// Preserve the existing `(TxIndex, Height)` API without resolving a block
-    /// hash that its callers may not need.
-    pub(super) fn resolve_confirmed_position(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        let index = super::resolve_tx_index(self, txid)?;
-        let height = self.validate_confirmed_position(txid, index)?;
-        Ok((index, height))
-    }
-
-    /// Revalidate a token without repeating its txid-prefix store lookup.
-    pub(crate) fn revalidate_confirmed_tx(
-        &self,
-        tx: ResolvedConfirmedTx,
-    ) -> Result<(Txid, TxIndex, Height)> {
-        // The block hash commits to the transaction list and its ordering.
-        // Since the token was exactly verified when constructed, confirming
-        // that the same block remains at the same height is sufficient.
-        if self.confirmed_block_hash(tx.height)? != tx.block_hash {
-            return Err(Error::UnknownTxid);
-        }
-        Ok((tx.txid, tx.index, tx.height))
+        let _guard = self.read_plugin(self.indexer())?;
+        self.resolve_confirmed_tx_guarded(txid)
     }
 
     /// Validate between safe-bound snapshots. Rollback lowers the published
@@ -84,7 +57,7 @@ impl Query {
             return Err(Error::UnknownTxid);
         }
 
-        let height = super::confirmed_status_height(self, index)?;
+        let height = self.confirmed_status_height(index)?;
         let safe = self.safe_lengths();
         if index >= safe.tx_index || height >= safe.height {
             return Err(Error::UnknownTxid);
@@ -103,11 +76,51 @@ impl Query {
             .vecs()
             .blocks
             .blockhash
-            .get(height)
+            .inner
+            .collect_one(height)
             .ok_or(Error::UnknownTxid)?;
         if height >= self.safe_lengths().height {
             return Err(Error::UnknownTxid);
         }
         Ok(hash)
+    }
+}
+pub trait RImplTxConfirmedQueryInternal: Sized {
+    fn resolve_confirmed_tx_guarded(&self, txid: &Txid) -> Result<ResolvedConfirmedTx>;
+
+    fn resolve_confirmed_position(&self, txid: &Txid) -> Result<(TxIndex, Height)>;
+
+    fn revalidate_confirmed_tx(&self, tx: ResolvedConfirmedTx) -> Result<(Txid, TxIndex, Height)>;
+}
+impl RImplTxConfirmedQueryInternal for Query {
+    /// Internal resolution while the caller retains indexer publication exclusion.
+    fn resolve_confirmed_tx_guarded(&self, txid: &Txid) -> Result<ResolvedConfirmedTx> {
+        let (index, height) = self.resolve_confirmed_position(txid)?;
+        let block_hash = self.confirmed_block_hash(height)?;
+
+        Ok(ResolvedConfirmedTx {
+            txid: *txid,
+            index,
+            height,
+            block_hash,
+        })
+    }
+    /// Preserve the existing `(TxIndex, Height)` API without resolving a block
+    /// hash that its callers may not need.
+    /// Internal callers must hold publication exclusion through their reads.
+    fn resolve_confirmed_position(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
+        let index = self.resolve_tx_index(txid)?;
+        let height = self.validate_confirmed_position(txid, index)?;
+        Ok((index, height))
+    }
+    /// Revalidate a token without repeating its txid-prefix store lookup.
+    fn revalidate_confirmed_tx(&self, tx: ResolvedConfirmedTx) -> Result<(Txid, TxIndex, Height)> {
+        // The block hash commits to the transaction list and its ordering.
+        // Since the token was exactly verified when constructed, confirming
+        // that the same block remains at the same height is sufficient.
+        if self.confirmed_block_hash(tx.height)? != tx.block_hash {
+            return Err(Error::UnknownTxid);
+        }
+        Ok((tx.txid, tx.index, tx.height))
     }
 }

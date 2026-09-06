@@ -1,0 +1,137 @@
+use std::{
+    convert::Infallible,
+    future::{poll_fn, ready},
+    pin::Pin,
+};
+
+use axum::body::HttpBody;
+use axum::http::{
+    Request,
+    header::{ACCEPT_ENCODING, CONTENT_ENCODING, CONTENT_TYPE},
+};
+use tower::{ServiceExt, service_fn};
+use tower_layer::Layer;
+
+use super::*;
+
+#[test]
+fn payload_clones_retain_admission_without_copying_bytes() {
+    let budget = Arc::new(Semaphore::new(1));
+    let permit = RawBodyPermit::try_acquire(&budget).unwrap();
+    let input = Bytes::from(vec![7; 4096]);
+    let pointer = input.as_ptr();
+    let bytes = permit.bytes(input);
+    assert_eq!(bytes.as_ptr(), pointer);
+    let slice = bytes.slice(1..);
+    drop(permit);
+    drop(bytes);
+    assert!(RawBodyPermit::try_acquire(&budget).is_none());
+    assert_eq!(slice[0], 7);
+    drop(slice);
+    assert_eq!(budget.available_permits(), 1);
+}
+
+#[tokio::test]
+async fn wire_frames_retain_admission_after_the_body_is_dropped() {
+    let budget = Arc::new(Semaphore::new(1));
+    let permit = RawBodyPermit::try_acquire(&budget).unwrap();
+    // Independent output bytes model an encoder that consumed its input.
+    let mut response = Response::new(Body::from("encoded output"));
+    response.extensions_mut().insert(permit);
+    let mut body = RawBodyPermit::retain(response).into_body();
+    assert_eq!(body.size_hint().exact(), Some(14));
+    let frame = poll_fn(|cx| Pin::new(&mut body).poll_frame(cx))
+        .await
+        .unwrap()
+        .unwrap();
+    let bytes = frame.into_data().unwrap();
+    assert_eq!(bytes, "encoded output");
+    drop(body);
+    assert_eq!(budget.available_permits(), 0);
+    let clone = bytes.clone();
+    drop(bytes);
+    assert_eq!(budget.available_permits(), 0);
+    drop(clone);
+    assert_eq!(budget.available_permits(), 1);
+
+    let permit = RawBodyPermit::try_acquire(&budget).unwrap();
+    let mut response = Response::new(Body::from("cancelled"));
+    response.extensions_mut().insert(permit);
+    drop(RawBodyPermit::retain(response));
+    assert_eq!(budget.available_permits(), 1);
+}
+
+#[tokio::test]
+async fn compression_releases_input_without_releasing_response_admission() {
+    for encoding in ["identity", "gzip", "br", "zstd"] {
+        for compressible in [true, false] {
+            let budget = Arc::new(Semaphore::new(1));
+            let permit = RawBodyPermit::try_acquire(&budget).unwrap();
+            let mut random = 1u32;
+            let input: Arc<[u8]> = (0..128 * 1024)
+                .map(|_| {
+                    random ^= random << 13;
+                    random ^= random >> 17;
+                    random ^= random << 5;
+                    if compressible { 0 } else { random as u8 }
+                })
+                .collect();
+            let input_lifetime = Arc::downgrade(&input);
+            let bytes = permit.bytes(Bytes::from_owner(input));
+            let mut response = Response::new(Body::from(bytes));
+            response
+                .headers_mut()
+                .insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
+            response.extensions_mut().insert(permit);
+            let mut response = Some(response);
+            let service = crate::compression_layer().layer(service_fn(move |_: Request<Body>| {
+                ready(Ok::<_, Infallible>(response.take().unwrap()))
+            }));
+            let request = Request::builder()
+                .header(ACCEPT_ENCODING, encoding)
+                .body(Body::empty())
+                .unwrap();
+            let response = service.oneshot(request).await.unwrap().map(Body::new);
+            assert_eq!(
+                response
+                    .headers()
+                    .get(CONTENT_ENCODING)
+                    .map(|v| v.to_str().unwrap()),
+                if encoding == "identity" {
+                    None
+                } else {
+                    Some(encoding)
+                }
+            );
+            let mut body = RawBodyPermit::retain(response).into_body();
+            let mut frames = Vec::new();
+            while let Some(frame) = poll_fn(|cx| Pin::new(&mut body).poll_frame(cx)).await {
+                if let Ok(bytes) = frame.unwrap().into_data() {
+                    frames.push(bytes);
+                }
+                assert_eq!(budget.available_permits(), 0);
+            }
+            assert!(!frames.is_empty());
+            // Some codecs retain an exhausted input chunk until their body
+            // is dropped. Output-frame admission must survive either case.
+            drop(body);
+            if encoding != "identity" {
+                assert!(
+                    input_lifetime.upgrade().is_none(),
+                    "{encoding} retained consumed input"
+                );
+            }
+            assert_eq!(
+                budget.available_permits(),
+                0,
+                "{encoding} released before its output frames"
+            );
+            let last = frames.pop().unwrap();
+            drop(frames);
+            assert_eq!(budget.available_permits(), 0);
+            drop(last);
+            assert_eq!(budget.available_permits(), 1);
+            assert!(input_lifetime.upgrade().is_none());
+        }
+    }
+}

@@ -80,6 +80,7 @@ mod file;
 mod hash;
 mod key;
 mod key_range;
+mod level_policy;
 mod run_reader;
 mod run_scanner;
 
@@ -118,4 +119,6 @@ pub use {
     tree::{Tree, ingest::Ingestion},
 };
 
+use level_policy::LevelPolicy;
 use seqno::SequenceNumberCounter;
+use slice::SliceExt;

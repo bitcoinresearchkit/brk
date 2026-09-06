@@ -41,18 +41,30 @@ pub struct QuickMatch<'a> {
 }
 
 impl<'a> QuickMatch<'a> {
-    /// Expect the items to be pre-formatted (lowercase)
+    /// Build from pre-formatted lowercase ASCII items.
+    ///
+    /// # Panics
+    /// Panics if an item is not lowercase ASCII or there are more than u32::MAX items.
     pub fn new(items: &[&'a str]) -> Self {
         Self::new_with(items, QuickMatchConfig::default())
     }
 
-    /// Expect the items to be pre-formatted (lowercase)
+    /// Build from pre-formatted lowercase ASCII items and a custom configuration.
+    ///
+    /// # Panics
+    /// Panics if an item is not lowercase ASCII or there are more than u32::MAX items.
     pub fn new_with(items: &[&'a str], config: QuickMatchConfig) -> Self {
         Self::build(items.iter().copied().map(Cow::Borrowed).collect(), config)
     }
 
     fn build(items: Vec<Cow<'a, str>>, config: QuickMatchConfig) -> Self {
         assert!(u32::try_from(items.len()).is_ok(), "Too many items");
+        assert!(
+            items
+                .iter()
+                .all(|item| item.is_ascii() && !item.bytes().any(|byte| byte.is_ascii_uppercase())),
+            "QuickMatch items must be lowercase ASCII",
+        );
 
         let mut word_index: FxHashMap<String, Vec<ItemId>> = FxHashMap::default();
         let mut trigram_index: FxHashMap<[char; 3], Vec<ItemId>> = FxHashMap::default();
@@ -114,6 +126,7 @@ impl<'a> QuickMatch<'a> {
                 .collect::<Vec<_>>();
             ranked_ids.sort_unstable_by(|a, b| {
                 item_order(items[a.0 as usize].as_ref(), items[b.0 as usize].as_ref())
+                    .then(a.cmp(b))
             });
             let mut item_rank = vec![ItemId::default(); items.len()];
             for (rank, id) in ranked_ids.into_iter().enumerate() {
@@ -174,7 +187,7 @@ impl<'a> QuickMatch<'a> {
         query: &str,
         config: &QuickMatchConfig,
     ) -> Vec<(u32, u32)> {
-        self.matches_with_ids_and_matched_words_inner::<false>(query, config)
+        self.matches_with_ids_and_matched_words_inner::<false, false>(query, config)
     }
 
     /// Matches and returns only the highest matched-query-word tier, with each
@@ -184,10 +197,20 @@ impl<'a> QuickMatch<'a> {
         query: &str,
         config: &QuickMatchConfig,
     ) -> Vec<(u32, u32)> {
-        self.matches_with_ids_and_matched_words_inner::<true>(query, config)
+        self.matches_with_ids_and_matched_words_inner::<true, false>(query, config)
     }
 
-    fn matches_with_ids_and_matched_words_inner<const BEST_ONLY: bool>(
+    /// Whole query words, in any order, without prefix or typo matching.
+    /// With union fallback disabled, every query word must match.
+    pub fn matches_exact_with_ids_and_matched_words(
+        &self,
+        query: &str,
+        config: &QuickMatchConfig,
+    ) -> Vec<(u32, u32)> {
+        self.matches_with_ids_and_matched_words_inner::<false, true>(query, config)
+    }
+
+    fn matches_with_ids_and_matched_words_inner<const BEST_ONLY: bool, const EXACT_WORDS: bool>(
         &self,
         query: &str,
         config: &QuickMatchConfig,
@@ -206,7 +229,7 @@ impl<'a> QuickMatch<'a> {
             .map(|c| c.to_ascii_lowercase())
             .collect();
 
-        if query.is_empty() || query.len() > self.max_query_len {
+        if query.is_empty() || (!EXACT_WORDS && query.len() > self.max_query_len) {
             return vec![];
         }
 
@@ -214,12 +237,12 @@ impl<'a> QuickMatch<'a> {
 
         let mut query_words: Vec<&str> = vec![];
         for w in words(&query, &sep) {
-            if w.len() <= self.max_word_len && !query_words.contains(&w) {
+            if (EXACT_WORDS || w.len() <= self.max_word_len) && !query_words.contains(&w) {
                 query_words.push(w);
             }
         }
 
-        if query_words.is_empty() || query_words.len() > self.max_word_count {
+        if query_words.is_empty() || (!EXACT_WORDS && query_words.len() > self.max_word_count) {
             return vec![];
         }
 
@@ -234,7 +257,92 @@ impl<'a> QuickMatch<'a> {
             }
         }
 
+        if EXACT_WORDS {
+            if !config.union_fallback() && known_lists.len() != query_words.len() {
+                return Vec::new();
+            }
+            let candidates = if config.union_fallback() {
+                Self::union_lists(&known_lists)
+            } else {
+                Self::intersect_lists(&known_lists).unwrap_or_default()
+            };
+            return self
+                .rank::<BEST_ONLY, true>(
+                    candidates
+                        .into_iter()
+                        .filter(|id| {
+                            let matched = word_match(self.item(*id), &query_words, &sep, true).0;
+                            matched > 0 && (config.union_fallback() || matched == query_words.len())
+                        })
+                        .map(|id| (id, 0)),
+                    &query_words,
+                    &sep,
+                    limit,
+                )
+                .into_iter()
+                .map(|(id, matched)| (id.0, matched))
+                .collect();
+        }
+
         let pool = Self::intersect_lists(&known_lists);
+
+        // A swapped pair often shares no trigrams ("prcie" → "price").
+        // Probe indexed corrections before the broader trigram fallback.
+        if !unknown_words.is_empty() && trigram_budget > 0 {
+            let mut corrections: Vec<Vec<ItemId>> = vec![vec![]; unknown_words.len()];
+            let mut budget = trigram_budget;
+            for round in 0..trigram_budget {
+                for (i, word) in unknown_words.iter().enumerate() {
+                    if budget == 0 {
+                        break;
+                    }
+                    let bytes = word.as_bytes();
+                    if round >= bytes.len() - 1 {
+                        continue;
+                    }
+                    let at = if round % 2 == 0 {
+                        round / 2
+                    } else {
+                        bytes.len() - 2 - round / 2
+                    };
+                    if bytes[at] == bytes[at + 1] {
+                        continue;
+                    }
+                    budget -= 1;
+                    let mut corrected = bytes.to_vec();
+                    corrected.swap(at, at + 1);
+                    let corrected = String::from_utf8(corrected).expect("query is ASCII");
+                    if let Some(hits) = self.word_index.get(corrected.as_str()) {
+                        corrections[i].extend(hits.iter().copied().filter(|id| {
+                            word_match(self.item(*id), &[corrected.as_str()], &sep, true).0 > 0
+                        }));
+                    }
+                }
+                if budget == 0 {
+                    break;
+                }
+            }
+            if corrections.iter().all(|lists| !lists.is_empty()) {
+                for hits in &mut corrections {
+                    hits.sort_unstable();
+                    hits.dedup();
+                }
+                let mut lists = known_lists.clone();
+                lists.extend(corrections.iter().map(Vec::as_slice));
+                if let Some(candidates) = Self::intersect_lists(&lists) {
+                    return self
+                        .rank::<BEST_ONLY, false>(
+                            candidates.into_iter().map(|id| (id, 0)),
+                            &query_words,
+                            &sep,
+                            limit,
+                        )
+                        .into_iter()
+                        .map(|(id, matched)| (id.0, matched))
+                        .collect();
+                }
+            }
+        }
 
         // Try typo matching for unknown words
         if !unknown_words.is_empty() && trigram_budget > 0 {
@@ -242,7 +350,7 @@ impl<'a> QuickMatch<'a> {
             let (scores, hit_count) =
                 self.score_trigrams(&unknown_words, trigram_budget, pool.as_deref(), min_len);
             let min_score = hit_count.div_ceil(2).max(config.min_score());
-            let results = self.rank::<BEST_ONLY>(
+            let results = self.rank::<BEST_ONLY, false>(
                 scores.into_iter().filter(|(_, s)| *s >= min_score),
                 &query_words,
                 &sep,
@@ -265,7 +373,7 @@ impl<'a> QuickMatch<'a> {
                 Vec::new()
             }
         });
-        self.rank::<BEST_ONLY>(
+        self.rank::<BEST_ONLY, false>(
             candidates.into_iter().map(|id| (id, 0)),
             &query_words,
             &sep,
@@ -309,7 +417,7 @@ impl<'a> QuickMatch<'a> {
 
     /// Bucket by matched-word count, then sort each needed bucket by fuzzy
     /// score, match position, and length.
-    fn rank<const BEST_ONLY: bool>(
+    fn rank<const BEST_ONLY: bool, const EXACT_WORDS: bool>(
         &self,
         candidates: impl IntoIterator<Item = (ItemId, usize)>,
         query_words: &[&str],
@@ -317,14 +425,14 @@ impl<'a> QuickMatch<'a> {
         limit: usize,
     ) -> Vec<(ItemId, u32)> {
         if BEST_ONLY {
-            return self.rank_best(candidates, query_words, sep, limit);
+            return self.rank_best::<EXACT_WORDS>(candidates, query_words, sep, limit);
         }
 
         let mut buckets: Vec<Vec<RankedItem>> = vec![vec![]; query_words.len() + 1];
 
         for (item, fuzzy) in candidates {
             let s = self.item(item);
-            let (matched, position) = word_match(s, query_words, sep);
+            let (matched, position) = word_match(s, query_words, sep, EXACT_WORDS);
             buckets[matched].push((item, fuzzy, position, self.item_rank[item.0 as usize]));
         }
 
@@ -344,7 +452,7 @@ impl<'a> QuickMatch<'a> {
         results
     }
 
-    fn rank_best(
+    fn rank_best<const EXACT_WORDS: bool>(
         &self,
         candidates: impl IntoIterator<Item = (ItemId, usize)>,
         query_words: &[&str],
@@ -357,7 +465,7 @@ impl<'a> QuickMatch<'a> {
 
         for (item, fuzzy) in candidates {
             let s = self.item(item);
-            let (matched, position) = word_match(s, query_words, sep);
+            let (matched, position) = word_match(s, query_words, sep, EXACT_WORDS);
             if matched < best_matched {
                 continue;
             }
@@ -452,18 +560,20 @@ impl<'a> QuickMatch<'a> {
 }
 
 impl QuickMatch<'static> {
-    /// Builds a matcher that owns its pre-formatted (lowercase) items.
+    /// Own pre-formatted lowercase ASCII items. Panics on invalid corpus input,
+    /// as documented by [`Self::new`].
     pub fn new_owned(items: Vec<String>) -> Self {
         Self::new_owned_with(items, QuickMatchConfig::default())
     }
 
-    /// Builds a matcher that owns its pre-formatted (lowercase) items.
+    /// Own pre-formatted lowercase ASCII items with a custom configuration.
+    /// Panics on invalid corpus input, as documented by [`Self::new`].
     pub fn new_owned_with(items: Vec<String>, config: QuickMatchConfig) -> Self {
         Self::build(items.into_iter().map(Cow::Owned).collect(), config)
     }
 }
 
-fn item_order(a: &str, b: &str) -> std::cmp::Ordering {
+fn item_order(a: &str, b: &str) -> Ordering {
     a.len().cmp(&b.len()).then_with(|| a.cmp(b))
 }
 
@@ -473,9 +583,7 @@ fn item_order(a: &str, b: &str) -> std::cmp::Ordering {
 fn sep_table(separators: &[char]) -> [bool; 256] {
     let mut table = [false; 256];
     for &c in separators {
-        if (c as usize) < 256 {
-            table[c as usize] = true;
-        }
+        table[c as usize] = true;
     }
     table
 }
@@ -500,20 +608,35 @@ fn words<'s>(text: &'s str, sep: &'s [bool; 256]) -> impl Iterator<Item = &'s st
 /// - `matched`: query words matched as an in-order subsequence of item words
 /// - `position`: index of the item word where that run starts (or the item's
 ///   word count when nothing matched)
-fn word_match(item: &str, query_words: &[&str], sep: &[bool; 256]) -> (usize, usize) {
+fn word_match(item: &str, query_words: &[&str], sep: &[bool; 256], exact: bool) -> (usize, usize) {
     let mut matched = 0;
-    let mut position = 0;
-    for iw in words(item, sep) {
-        if query_words
-            .get(matched)
-            .is_some_and(|qw| iw.starts_with(*qw))
-        {
-            matched += 1;
-        } else if matched == 0 {
-            position += 1;
+    let mut first_position = words(item, sep).count();
+    for qw in query_words {
+        let mut previous: Option<&str> = None;
+        for (position, iw) in words(item, sep).enumerate() {
+            let joined = previous.is_some_and(|pw| {
+                qw.len() > pw.len()
+                    && qw.starts_with(pw)
+                    && if exact {
+                        iw == &qw[pw.len()..]
+                    } else {
+                        iw.starts_with(&qw[pw.len()..])
+                    }
+            });
+            if (if exact {
+                iw == *qw
+            } else {
+                iw.starts_with(*qw)
+            }) || joined
+            {
+                matched += 1;
+                first_position = first_position.min(if joined { position - 1 } else { position });
+                break;
+            }
+            previous = Some(iw);
         }
     }
-    (matched, position)
+    (matched, first_position)
 }
 
 /// Picks which trigram of a length-`len` word to probe on `round`, spreading
@@ -549,134 +672,5 @@ fn trigram_position(len: usize, round: usize) -> Option<usize> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    const ITEMS: &[&str] = &[
-        "hash_rate",
-        "realized_price",
-        "supply_in_profit",
-        "sth_realized_price",
-        "dominance",
-    ];
-
-    #[test]
-    fn owned_and_borrowed_matchers_are_equivalent() {
-        let borrowed = QuickMatch::new(ITEMS);
-        let owned = QuickMatch::new_owned(ITEMS.iter().map(|item| (*item).to_string()).collect());
-        let config = QuickMatchConfig::new().with_limit(ITEMS.len());
-
-        for query in [
-            "hashrate",
-            "realized price",
-            "suply",
-            "dom",
-            "sth realized price",
-            "missing",
-        ] {
-            assert_eq!(
-                borrowed.matches_with_matched_words(query, &config),
-                owned.matches_with_matched_words(query, &config),
-                "owned matcher changed results for {query}"
-            );
-
-            let indexed = borrowed.matches_with_ids_and_matched_words(query, &config);
-            let resolved = indexed
-                .iter()
-                .map(|&(id, matched)| (ITEMS[id as usize], matched as usize))
-                .collect::<Vec<_>>();
-            assert_eq!(
-                resolved,
-                borrowed.matches_with_matched_words(query, &config),
-                "indexed API changed results for {query}"
-            );
-        }
-
-        assert_eq!(borrowed.matches("hashrate")[0], "hash_rate");
-        assert_eq!(borrowed.matches("realized price")[0], "realized_price");
-        assert_eq!(borrowed.matches("suply")[0], "supply_in_profit");
-        assert_eq!(borrowed.matches("dom")[0], "dominance");
-    }
-
-    #[test]
-    fn union_fallback_remains_configurable() {
-        let items = ["alpha_x", "beta_y"];
-        let matcher = QuickMatch::new(&items);
-        let union = QuickMatchConfig::new().with_limit(2);
-        let intersection_only = QuickMatchConfig::new()
-            .with_limit(2)
-            .with_union_fallback(false);
-
-        assert_eq!(matcher.matches_with("alpha beta", &union).len(), 2);
-        assert!(
-            matcher
-                .matches_with("alpha beta", &intersection_only)
-                .is_empty()
-        );
-    }
-
-    #[test]
-    fn best_matched_word_tier_matches_full_ranking_then_filtering() {
-        let items = [
-            "short term holder realized capitalization",
-            "long term holder realized capitalization",
-            "realized capitalization adjusted by entity",
-            "address count with positive balance",
-            "supply held by short term holders",
-            "supply held by long term holders",
-            "realized profit and realized loss",
-            "market capitalization divided by realized capitalization",
-            "coin days destroyed",
-            "bitcoin closing price",
-        ];
-        let matcher = QuickMatch::new(&items);
-
-        for config in [
-            QuickMatchConfig::new().with_limit(items.len()),
-            QuickMatchConfig::new().with_limit(2),
-            QuickMatchConfig::new()
-                .with_limit(items.len())
-                .with_trigram_budget(0),
-            QuickMatchConfig::new()
-                .with_limit(items.len())
-                .with_union_fallback(false),
-        ] {
-            for query in [
-                "short term holder capitalization",
-                "long term price",
-                "address supply",
-                "market cap",
-                "coin days",
-                "realized proft loss",
-                "bitcoin price",
-                "capitalization holder",
-                "missing",
-                "",
-            ] {
-                let full = matcher.matches_with_ids_and_matched_words(query, &config);
-                let expected = full
-                    .first()
-                    .map(|(_, best)| {
-                        full.iter()
-                            .copied()
-                            .take_while(|(_, matched)| matched == best)
-                            .collect::<Vec<_>>()
-                    })
-                    .unwrap_or_default();
-
-                assert_eq!(
-                    matcher.matches_best_with_ids_and_matched_words(query, &config),
-                    expected,
-                    "best-only ranking changed results for {query:?}"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn matcher_is_naturally_send_and_sync() {
-        fn assert_send_sync<T: Send + Sync>() {}
-
-        assert_send_sync::<QuickMatch<'static>>();
-    }
-}
+#[path = "../tests/unit/lib.rs"]
+mod tests;

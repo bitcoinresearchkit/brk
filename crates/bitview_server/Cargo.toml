@@ -44,12 +44,13 @@ urpd = [
     "price",
     "bitview_query/urpd",
 ]
-bindgen = ["dep:bitview_bindgen"]
 
 [dependencies]
+bitcoin = { workspace = true }
+brk_rpc = { workspace = true, features = ["async"] }
 aide = { workspace = true }
 axum = { workspace = true }
-bitview_bindgen = { workspace = true, optional = true }
+http-body = { workspace = true }
 brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecdb"] }
 brk_oracle = { workspace = true }
 bitview_query = { workspace = true, default-features = false, features = ["tokio"] }
@@ -64,12 +65,23 @@ parking_lot = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["rc"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
 tracing = { workspace = true }
-tower-http = { workspace = true }
+tower-http = { workspace = true, features = ["limit"] }
 tower-layer = { workspace = true }
 
 [dev-dependencies]
+brk_mempool = { workspace = true }
+tower = { workspace = true }
+brk_exit = { workspace = true }
+bitview_default = { workspace = true }
+bitview_plugin = { workspace = true }
+bitview_plugin_distribution = { workspace = true }
+bitview_plugin_indexer = { workspace = true }
+bitview_plugin_price = { workspace = true }
+bitview_runtime = { workspace = true }
+brk_reader = { workspace = true }
 tempfile = { workspace = true }
+tokio = { workspace = true, features = ["io-util"] }

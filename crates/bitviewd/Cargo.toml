@@ -55,7 +55,7 @@ bindgen = [
     "dep:bitview_query",
     "dep:color-eyre",
     "dep:serde_json",
-    "bitview/bindgen",
+    "dep:tempfile",
 ]
 
 [dependencies]
@@ -77,6 +77,7 @@ owo-colors = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, optional = true }
 toml = "1.1.4"
+tempfile = { workspace = true, optional = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]

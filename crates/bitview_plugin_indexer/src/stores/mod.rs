@@ -18,8 +18,8 @@ use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES, vecs::IndexerVecs as _}
 
 use super::Vecs;
 
-mod checkpoint;
-mod transaction;
+pub mod checkpoint;
+pub mod transaction;
 
 use checkpoint::{
     DeferredStoresCommit, PendingStoresCheckpoint, PersistedStoresCheckpoint, StoresCheckpoint,

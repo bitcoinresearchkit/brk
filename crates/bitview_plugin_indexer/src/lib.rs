@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-use brk_error::Result;
-
 use std::{
     collections::BTreeMap,
     fs,
@@ -15,7 +13,7 @@ use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_traversable::{Traversable, TreeNode};
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_exit::Exit;
 use brk_reader::{Reader, XOR_LEN, XORBytes};
 use brk_types::{BlkPosition, BlockHash, Height};
@@ -26,29 +24,28 @@ use vecdb::{
 };
 mod constants;
 mod has;
+mod internals;
 mod lengths;
 mod processor;
 mod readers;
+mod safe_lengths;
 mod state;
 mod stores;
 mod vecs;
 
+pub use brk_types::Lengths;
 use constants::*;
+pub use has::HasIndexer;
 use lengths::IndexerLengths as _;
 use processor::{BlockBuffers, BlockProcessor};
 use readers::Readers;
-use stores::IndexerStores as _;
-use vecs::{IndexerVecs as _, TransactionCounts, TxFeatureFlags};
-
-pub use brk_types::Lengths;
-pub use has::HasIndexer;
-use stores::Stores;
-use vecs::{
-    AddrsVecs, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs, TransactionFeaturesVecs,
-    TxMetadataVecs, Vecs,
-};
-
+pub use safe_lengths::SafeLengths;
 use state::State;
+use stores::{IndexerStores as _, Stores};
+use vecs::{
+    AddrsVecs, IndexerVecs as _, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs,
+    TransactionCounts, TransactionFeaturesVecs, TxFeatureFlags, TxMetadataVecs, Vecs,
+};
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("indexer"), VERSION);
 const EXPORT_HEIGHT_INTERVAL: usize = 100;
@@ -171,6 +168,16 @@ impl<M: StorageMode> Indexer<M> {
     /// answers against this loaded snapshot.
     pub fn safe_lengths(&self) -> Lengths {
         self.inner.state.lengths()
+    }
+
+    /// Stabilize the already published immutable prefix, including across
+    /// rollback. This does not wait for an append-only compute pass.
+    pub fn pin_safe_lengths(&self) -> SafeLengths {
+        self.inner.state.pin()
+    }
+
+    pub fn try_pin_safe_lengths(&self) -> Option<SafeLengths> {
+        self.inner.state.try_pin()
     }
 
     /// Latest safely published indexed height.

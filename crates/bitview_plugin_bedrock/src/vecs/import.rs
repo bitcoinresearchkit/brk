@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use bitview_compute::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyMetric};
 use bitview_plugin::ImportContext;
 use brk_error::Result;

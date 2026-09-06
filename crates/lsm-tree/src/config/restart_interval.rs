@@ -15,14 +15,6 @@ impl std::ops::Deref for RestartIntervalPolicy {
 }
 
 impl RestartIntervalPolicy {
-    pub(crate) fn get(&self, level: usize) -> u8 {
-        #[expect(clippy::expect_used, reason = "policy is expected not to be empty")]
-        self.0
-            .get(level)
-            .copied()
-            .unwrap_or_else(|| self.last().copied().expect("policy should not be empty"))
-    }
-
     // TODO: accept Vec... Into<Vec<...>>? or owned
 
     /// Uses the same block size in every level.

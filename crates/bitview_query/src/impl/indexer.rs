@@ -1,6 +1,10 @@
+use std::cell::OnceCell;
+
+use bitcoin::ScriptBuf;
 use brk_types::{OutputType, Sats, TxOut, TxOutIndex, Txid, TxidPrefix, TypeIndex, Vout};
 use rustc_hash::FxHashMap;
 
+use super::indexed_transaction;
 use crate::Query;
 
 impl Query {
@@ -8,39 +12,96 @@ impl Query {
     pub fn indexer_prevout_resolver(
         &self,
     ) -> impl Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut> + Send + Sync + use<> {
-        let indexer = self.0.plugins.indexer;
+        let query = self.clone();
 
         move |holes: &[(Txid, Vout)]| {
             if holes.is_empty() {
                 return FxHashMap::default();
             }
+            let indexer = query.indexer();
+            let Ok(_guard) = query.read_plugin(indexer) else {
+                return FxHashMap::default();
+            };
             let safe = indexer.safe_lengths();
+            let txid_reader = indexer.vecs().transactions.txid.reader();
             let first_txout_reader = indexer.vecs().transactions.first_txout_index.reader();
             let output_type_reader = indexer.vecs().outputs.output_type.reader();
             let type_index_reader = indexer.vecs().outputs.type_index.reader();
             let value_reader = indexer.vecs().outputs.value.reader();
             let addr_readers = indexer.vecs().addrs.addr_readers();
-            holes
-                .iter()
-                .filter_map(|(prev_txid, vout)| {
+            let mut parents: FxHashMap<Txid, Vec<Vout>> = FxHashMap::default();
+            for (txid, vout) in holes {
+                parents.entry(*txid).or_default().push(*vout);
+            }
+            parents
+                .into_iter()
+                .filter_map(|(prev_txid, vouts)| {
                     let prev_tx_index = indexer
                         .stores()
                         .tx_index(&TxidPrefix::from(prev_txid))
                         .ok()??;
-                    if prev_tx_index >= safe.tx_index {
+                    if prev_tx_index >= safe.tx_index
+                        || txid_reader.try_get(prev_tx_index)? != prev_txid
+                    {
                         return None;
                     }
                     let first_txout: TxOutIndex = first_txout_reader.try_get(prev_tx_index)?;
-                    let txout = first_txout + *vout;
-                    if txout >= safe.txout_index {
+                    let next_tx = prev_tx_index.incremented();
+                    let next_txout = if next_tx < safe.tx_index {
+                        first_txout_reader.try_get(next_tx)?
+                    } else {
+                        safe.txout_index
+                    };
+                    if first_txout > next_txout || next_txout > safe.txout_index {
                         return None;
                     }
-                    let output_type: OutputType = output_type_reader.try_get(txout)?;
-                    let type_index: TypeIndex = type_index_reader.try_get(txout)?;
-                    let value: Sats = value_reader.try_get(txout)?;
-                    let script_pubkey = addr_readers.script_pubkey(output_type, type_index);
-                    Some(((*prev_txid, *vout), TxOut::from((script_pubkey, value))))
+                    // Decode at most one raw parent at a time. Retain only the
+                    // requested outputs, not every large parent in the batch.
+                    let decoded = OnceCell::new();
+                    Some(
+                        vouts
+                            .into_iter()
+                            .filter_map(|vout| {
+                                let txout =
+                                    usize::from(first_txout).checked_add(usize::from(vout))?;
+                                if txout >= usize::from(next_txout) {
+                                    return None;
+                                }
+                                let txout = TxOutIndex::from(txout);
+                                let output_type: OutputType = output_type_reader.try_get(txout)?;
+                                let type_index: TypeIndex = type_index_reader.try_get(txout)?;
+                                let value: Sats = value_reader.try_get(txout)?;
+                                if type_index >= safe.to_type_index(output_type) {
+                                    return None;
+                                }
+                                let script_pubkey = if output_type == OutputType::Empty {
+                                    ScriptBuf::new()
+                                } else if let Some(addr) = addr_readers.get(output_type, type_index)
+                                {
+                                    addr.to_script_pubkey()
+                                } else if matches!(
+                                    output_type,
+                                    OutputType::P2MS | OutputType::Unknown | OutputType::OpReturn
+                                ) {
+                                    let parent = decoded.get_or_init(|| {
+                                        indexed_transaction::read_at(&query, prev_tx_index)
+                                            .ok()
+                                            .map(|(_, parent)| parent)
+                                    });
+                                    let output = parent.as_ref()?.output.get(usize::from(vout))?;
+                                    if output.value.to_sat() != u64::from(value) {
+                                        return None;
+                                    }
+                                    output.script_pubkey.clone()
+                                } else {
+                                    return None;
+                                };
+                                Some(((prev_txid, vout), TxOut::from((script_pubkey, value))))
+                            })
+                            .collect::<Vec<_>>(),
+                    )
                 })
+                .flatten()
                 .collect()
         }
     }

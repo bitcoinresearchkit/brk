@@ -1,6 +1,10 @@
-use std::{fmt, mem, str::FromStr};
+use std::{
+    array::from_fn,
+    fmt, mem,
+    str::{self, FromStr},
+};
 
-use bitcoin::hashes::Hash;
+use bitcoin::{BlockHash as BitcoinBlockHash, hashes::Hash};
 use brk_error::Error;
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -19,10 +23,20 @@ use vecdb::{Bytes, Formattable};
 )]
 pub struct BlockHash([u8; 32]);
 
+impl BlockHash {
+    fn hex(&self) -> [u8; 64] {
+        from_fn(|i| {
+            let byte = self.0[31 - i / 2];
+            let nibble = if i % 2 == 0 { byte >> 4 } else { byte & 15 };
+            b"0123456789abcdef"[nibble as usize]
+        })
+    }
+}
+
 impl TryFrom<&str> for BlockHash {
     type Error = Error;
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Ok(Self::from(bitcoin::BlockHash::from_str(s)?))
+        Ok(Self::from(BitcoinBlockHash::from_str(s)?))
     }
 }
 
@@ -33,44 +47,44 @@ impl FromStr for BlockHash {
     }
 }
 
-impl From<bitcoin::BlockHash> for BlockHash {
+impl From<BitcoinBlockHash> for BlockHash {
     #[inline]
-    fn from(value: bitcoin::BlockHash) -> Self {
+    fn from(value: BitcoinBlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<&bitcoin::BlockHash> for &BlockHash {
+impl From<&BitcoinBlockHash> for &BlockHash {
     #[inline]
-    fn from(value: &bitcoin::BlockHash) -> Self {
+    fn from(value: &BitcoinBlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<BlockHash> for bitcoin::BlockHash {
+impl From<BlockHash> for BitcoinBlockHash {
     #[inline]
     fn from(value: BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<&BlockHash> for &bitcoin::BlockHash {
+impl From<&BlockHash> for &BitcoinBlockHash {
     #[inline]
     fn from(value: &BlockHash) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<&BlockHash> for bitcoin::BlockHash {
+impl From<&BlockHash> for BitcoinBlockHash {
     #[inline]
     fn from(value: &BlockHash) -> Self {
-        bitcoin::BlockHash::from_slice(&value.0).unwrap()
+        BitcoinBlockHash::from_slice(&value.0).unwrap()
     }
 }
 
 impl fmt::Display for BlockHash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&bitcoin::BlockHash::from(self).to_string())
+        f.write_str(str::from_utf8(&self.hex()).unwrap())
     }
 }
 
@@ -79,7 +93,7 @@ impl Serialize for BlockHash {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        serializer.serialize_str(str::from_utf8(&self.hex()).unwrap())
     }
 }
 
@@ -95,10 +109,7 @@ impl<'de> Deserialize<'de> for BlockHash {
 
 impl Formattable for BlockHash {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        buf.extend_from_slice(&self.hex());
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {
@@ -107,3 +118,7 @@ impl Formattable for BlockHash {
         buf.push(b'"');
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/blockhash.rs"]
+mod tests;

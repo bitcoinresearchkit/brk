@@ -5,9 +5,11 @@ use axum::{
 };
 use bitview_query::RepresentationId;
 use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp, Version};
+use serde_json::to_vec;
 
+use super::historical_price;
 use crate::{
-    AppState, CacheStrategy,
+    AppState,
     extended::TransformResponseExtended,
     params::{Empty, OptionalTimestampParam},
 };
@@ -23,7 +25,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .respond_json(&headers, state.tip_strategy(), |q| {
+                        .respond_json_content(&headers, |q| {
                             q.difficulty_adjustment()
                         })
                         .await
@@ -49,7 +51,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
                                 time: Timestamp::now(),
                                 usd: q.live_price()?,
                             };
-                            let bytes = serde_json::to_vec(&prices).unwrap();
+                            let bytes = to_vec(&prices).unwrap();
                             let identity = RepresentationId::content(&bytes);
                             Ok((bytes, identity))
                         })
@@ -72,35 +74,13 @@ impl GeneralRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Query(params): Query<OptionalTimestampParam>,
                        State(state): State<AppState>| {
-                    match params.timestamp {
-                        Some(timestamp) => {
-                            let version = Version::ONE;
-                            state
-                                .respond_json_adaptive(&headers, None, move |q, tip| {
-                                    let resolved = q.resolve_historical_price(timestamp)?;
-                                    let strategy = if resolved.is_stable() {
-                                        CacheStrategy::Immutable(version)
-                                    } else {
-                                        CacheStrategy::Tip(tip)
-                                    };
-                                    Ok((resolved.into_value(), strategy))
-                                })
-                                .await
-                        }
-                        None => {
-                            state
-                                .respond_json(&headers, state.tip_strategy(), |q| {
-                                    q.historical_price(None)
-                                })
-                                .await
-                        }
-                    }
+                    historical_price::serve(state, headers, params.timestamp).await
                 },
                 |op| {
                     op.id("get_historical_price")
                         .general_tag()
                         .summary("Historical price")
-                        .description("Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*")
+                        .description("Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*")
                         .json_response::<HistoricalPrice>()
                         .not_modified()
                         .server_error()

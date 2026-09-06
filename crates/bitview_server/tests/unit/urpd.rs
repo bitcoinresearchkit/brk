@@ -1,0 +1,575 @@
+use std::{
+    array::from_fn,
+    fs::OpenOptions,
+    hint::black_box,
+    net::SocketAddr,
+    os::unix::fs::symlink,
+    path::Path,
+    time::{Duration, Instant},
+};
+
+use aide::axum::ApiRouter;
+use axum::{
+    body::{Body, Bytes},
+    http::{HeaderMap, HeaderValue, Request, StatusCode},
+    response::Response,
+    serve as serve_http,
+};
+use bitview_plugin::Plugin;
+use brk_types::{Cents, CentsCompact, Cohort, Date, Sats, UrpdAggregation, UrpdRaw, UrpdWeight};
+use serde_json::{Value, from_str, to_vec};
+use tokio::{fs, join, net::TcpListener, spawn, time::timeout};
+use tower::ServiceExt;
+use tower_http::timeout::TimeoutLayer;
+
+#[cfg(feature = "chain")]
+use super::chain_fixture;
+use super::{server_routes::exchange_with_etag, urpd_sources};
+use crate::{
+    AppState, CacheParams, CacheStrategy, CdnCacheMode,
+    api::ApiRoutes,
+    extended::{HeaderMapExtended, ResponseExtended},
+    urpd_input,
+};
+
+#[cfg(feature = "chain")]
+#[test]
+fn populated_urpd_snapshots() {
+    chain_fixture::run(|state, address| async move {
+        check_snapshots(&state, address).await;
+    });
+}
+
+#[test]
+#[ignore = "URPD conditional response assembly comparison; excludes query, cache and transport"]
+fn benchmark_response_assembly() {
+    let params = CacheParams::resolve(
+        &CacheStrategy::Live("urpd1-benchmark".to_owned().into()),
+        CdnCacheMode::Live,
+    );
+    let body = Bytes::from_static(b"{\"buckets\":[]}");
+    for (name, condition, extra) in [
+        ("unconditional", None, false),
+        ("mismatch", Some("\"old\""), false),
+        ("mismatch-extra", Some("\"old\""), true),
+        ("match", Some("*"), false),
+        ("match-extra", Some("*"), true),
+    ] {
+        let mut headers = HeaderMap::new();
+        if let Some(condition) = condition {
+            headers.insert("if-none-match", HeaderValue::from_static(condition));
+        }
+        if extra {
+            for _ in 0..16 {
+                headers.append(
+                    "x-fixture",
+                    HeaderValue::from_static("extra-request-header"),
+                );
+            }
+        }
+        let assemble = |old: bool| {
+            let params = black_box(&params).clone();
+            let headers = black_box(&headers);
+            if old {
+                let conditions = headers.clone();
+                if params.matches_etag(&conditions) {
+                    Response::new_not_modified(&params)
+                } else {
+                    Response::json_bytes(headers, &params, || body.clone())
+                }
+            } else if params.matches_etag(headers) {
+                Response::new_not_modified(&params)
+            } else {
+                AppState::assemble_response(
+                    params,
+                    Ok(body.clone()),
+                    HeaderMapExtended::insert_content_type_application_json,
+                )
+            }
+        };
+        let old = assemble(true);
+        let new = assemble(false);
+        assert_eq!(old.status(), new.status());
+        assert_eq!(old.headers(), new.headers());
+        let mut samples = [Vec::new(), Vec::new()];
+        for round in 0..12 {
+            for candidate in [round % 2, 1 - round % 2] {
+                let start = Instant::now();
+                for _ in 0..10_000 {
+                    black_box(assemble(candidate == 0));
+                }
+                if round >= 2 {
+                    samples[candidate].push(start.elapsed());
+                }
+            }
+        }
+        for sample in &mut samples {
+            sample.sort_unstable();
+        }
+        eprintln!(
+            "{name}: old {:?}, new {:?} per response",
+            samples[0][5] / 10_000,
+            samples[1][5] / 10_000
+        );
+    }
+}
+
+pub async fn check_snapshots(state: &AppState, address: SocketAddr) {
+    check_cancelled_admission(state).await;
+    urpd_sources::check(state, address).await;
+    let cohort = Cohort::new("fixture").unwrap();
+    let date = Date::new(2009, 1, 3);
+    let path = state.sync(|query| query.distribution().states_path.clone());
+    fs::create_dir_all(UrpdRaw::dir(&path, "emptyfixture"))
+        .await
+        .unwrap();
+    for method in ["GET", "HEAD"] {
+        let response = exchange_with_etag(address, method, "/api/urpd/emptyfixture", "*").await;
+        assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+        assert!(!response.contains("\r\netag:"));
+        if method == "HEAD" {
+            assert!(response.ends_with("\r\n\r\n"));
+        }
+    }
+    let write = |date, sats| {
+        UrpdRaw::write(
+            &path,
+            &cohort,
+            date,
+            [(CentsCompact::new(100), Sats::from(sats))].into_iter(),
+        )
+        .unwrap()
+    };
+    write(date, 100_000_000_u64);
+    let route = "/api/urpd/fixture";
+    let dated = "/api/urpd/fixture/2009-01-03";
+    let response = exchange_with_etag(address, "GET", route, "\"old\"").await;
+    assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+    let old = response
+        .lines()
+        .find_map(|line| line.strip_prefix("etag: "))
+        .unwrap()
+        .to_owned();
+    let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+    assert_eq!(body["total_supply"], 1.0);
+    let dated_response = exchange_with_etag(address, "GET", dated, "\"old\"").await;
+    assert!(
+        dated_response.starts_with("HTTP/1.1 200"),
+        "{dated_response}"
+    );
+    assert_eq!(
+        dated_response
+            .lines()
+            .find_map(|line| line.strip_prefix("etag: "))
+            .unwrap(),
+        old
+    );
+    assert_eq!(
+        dated_response.split_once("\r\n\r\n").unwrap().1,
+        response.split_once("\r\n\r\n").unwrap().1
+    );
+    // Every metadata input participates, independently of the chain tip.
+    state.sync(|query| {
+        let mut input = query
+            .resolve_urpd_latest(&cohort, UrpdAggregation::Raw, UrpdWeight::Raw)
+            .unwrap();
+        let original = urpd_input::identity(&input);
+        input.close = Cents::from(1_u64);
+        assert_ne!(urpd_input::identity(&input), original);
+        input.close = Cents::ZERO;
+        input.scalar = 0.5;
+        assert_ne!(urpd_input::identity(&input), original);
+        input.scalar = 1.0;
+        input.aggregation = UrpdAggregation::Lin200;
+        assert_ne!(urpd_input::identity(&input), original);
+        input.aggregation = UrpdAggregation::Raw;
+        input.weight = UrpdWeight::Coinflow;
+        assert_ne!(urpd_input::identity(&input), original);
+        input.weight = UrpdWeight::Raw;
+        input.date = Date::new(2009, 1, 4);
+        assert_ne!(urpd_input::identity(&input), original);
+        input.date = date;
+        input.cohort = Cohort::new("another").unwrap();
+        assert_ne!(urpd_input::identity(&input), original);
+    });
+    write(date, 200_000_000_u64);
+    let response = exchange_with_etag(address, "GET", route, &old).await;
+    assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+    let current = response
+        .lines()
+        .find_map(|line| line.strip_prefix("etag: "))
+        .unwrap()
+        .to_owned();
+    assert_ne!(old, current);
+    let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+    assert_eq!(body["total_supply"], 2.0);
+    check_response_admission(state, dated, &current).await;
+    // Discovery must not select a newer directory or impossible calendar date.
+    fs::create_dir(UrpdRaw::path(&path, &cohort, Date::new(2009, 1, 5)))
+        .await
+        .unwrap();
+    symlink(
+        UrpdRaw::path(&path, &cohort, date),
+        UrpdRaw::path(&path, &cohort, Date::new(2009, 1, 6)),
+    )
+    .unwrap();
+    fs::write(UrpdRaw::dir(&path, &cohort).join("2009-02-30"), b"")
+        .await
+        .unwrap();
+    let dates = exchange_with_etag(address, "GET", "/api/urpd/fixture/dates", "\"old\"").await;
+    assert!(dates.starts_with("HTTP/1.1 200"), "{dates}");
+    assert_eq!(dates.split_once("\r\n\r\n").unwrap().1, "[\"2009-01-03\"]");
+    for route in [route, dated] {
+        let response = exchange_with_etag(address, "GET", route, &old).await;
+        assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+        assert_eq!(
+            response
+                .lines()
+                .find_map(|line| line.strip_prefix("etag: "))
+                .unwrap(),
+            current
+        );
+        let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(body["total_supply"], 2.0);
+        let response = exchange_with_etag(address, "HEAD", route, &old).await;
+        assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+        assert!(response.ends_with("\r\n\r\n"));
+        for method in ["GET", "HEAD"] {
+            for condition in [&current, "*"] {
+                let response = exchange_with_etag(address, method, route, condition).await;
+                assert!(response.starts_with("HTTP/1.1 304"), "{response}");
+                assert!(response.ends_with("\r\n\r\n"));
+                assert!(
+                    response.contains("cdn-cache-control: public, max-age=1, must-revalidate\r\n")
+                );
+            }
+            for query in [
+                "?x=1",
+                "?agg=raw&agg=raw",
+                "?agg=raw&bucket=raw",
+                "?weight=raw&weight=raw",
+            ] {
+                let response =
+                    exchange_with_etag(address, method, &format!("{route}{query}"), "*").await;
+                assert!(response.starts_with("HTTP/1.1 400"), "{response}");
+                assert!(!response.contains("\r\netag:"));
+            }
+        }
+    }
+    // Newer valid input with no price must not reuse the older successful body.
+    let next_date = Date::new(2009, 1, 4);
+    write(next_date, 300_000_000_u64);
+    for variant in 0..4 {
+        let status = if variant == 0 { 404 } else { 500 };
+        let snapshot = UrpdRaw::path(&path, &cohort, next_date);
+        if variant == 1 || variant == 2 {
+            let mut bytes = b"invalid".to_vec();
+            if variant == 2 {
+                bytes = vec![0; 24];
+                bytes[..8].copy_from_slice(&((UrpdRaw::MAX_ENTRIES + 1) as u64).to_le_bytes());
+            }
+            fs::write(&snapshot, bytes).await.unwrap();
+        }
+        if variant == 3 {
+            OpenOptions::new()
+                .write(true)
+                .open(snapshot)
+                .unwrap()
+                .set_len(UrpdRaw::MAX_ENCODED_BYTES as u64 + 1)
+                .unwrap();
+        }
+        for route in [route, "/api/urpd/fixture/2009-01-04"] {
+            for method in ["GET", "HEAD"] {
+                for condition in [&current, "*"] {
+                    let response = exchange_with_etag(address, method, route, condition).await;
+                    assert!(
+                        response.starts_with(&format!("HTTP/1.1 {status}")),
+                        "{response}"
+                    );
+                    assert!(!response.contains("\r\netag:"));
+                    if method == "HEAD" {
+                        assert!(response.ends_with("\r\n\r\n"));
+                    }
+                }
+            }
+        }
+    }
+    for method in ["GET", "HEAD"] {
+        // A newer broken snapshot does not change a request for the older date.
+        let response = exchange_with_etag(address, method, dated, &current).await;
+        assert!(response.starts_with("HTTP/1.1 304"), "{response}");
+        for route in [
+            "/api/urpd/unknown/2009-01-03",
+            "/api/urpd/fixture/2009-01-02",
+        ] {
+            let response = exchange_with_etag(address, method, route, "*").await;
+            assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+            assert!(!response.contains("\r\netag:"));
+        }
+        for date in ["2009-02-30", "2009_01_03", "123%C3%A901-01"] {
+            let response =
+                exchange_with_etag(address, method, &format!("/api/urpd/fixture/{date}"), "*")
+                    .await;
+            assert!(response.starts_with("HTTP/1.1 400"), "{response}");
+            assert!(!response.contains("\r\netag:"));
+            if method == "HEAD" {
+                assert!(response.ends_with("\r\n\r\n"));
+            }
+        }
+    }
+    // Symlink loops provide deterministic metadata errors without relying on permissions.
+    let loop_cohort = path.join("loop");
+    symlink(&loop_cohort, &loop_cohort).unwrap();
+    let loop_snapshot = UrpdRaw::path(&path, &cohort, Date::new(2009, 1, 7));
+    symlink(&loop_snapshot, &loop_snapshot).unwrap();
+    for route in [
+        "/api/urpd/loop/dates",
+        "/api/urpd/loop",
+        "/api/urpd/loop/2009-01-03",
+        "/api/urpd/fixture/2009-01-07",
+    ] {
+        for method in ["GET", "HEAD"] {
+            for condition in [&current, "*"] {
+                let response = exchange_with_etag(address, method, route, condition).await;
+                assert!(response.starts_with("HTTP/1.1 500"), "{route}: {response}");
+                assert!(!response.contains("\r\netag:"));
+                assert!(response.contains("\r\ncache-control: no-store\r\n"));
+                assert!(response.contains("\r\ncdn-cache-control: no-store\r\n"));
+                if method == "HEAD" {
+                    assert!(response.ends_with("\r\n\r\n"));
+                }
+            }
+        }
+    }
+    // 65,536 days after the populated day: an unchecked u16 cast aliases its price.
+    write(Date::new(2188, 6, 9), 100_000_000_u64);
+    for route in [route, "/api/urpd/fixture/2188-06-09"] {
+        for method in ["GET", "HEAD"] {
+            for condition in [&current, "*"] {
+                let response = exchange_with_etag(address, method, route, condition).await;
+                assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+                assert!(!response.contains("\r\netag:"));
+                if method == "GET" {
+                    assert!(response.contains("unindexable_date"), "{response}");
+                }
+                if method == "HEAD" {
+                    assert!(response.ends_with("\r\n\r\n"));
+                }
+            }
+        }
+    }
+}
+
+async fn check_response_admission(state: &AppState, path: &str, current: &str) {
+    let router = ApiRouter::new().add_api_routes().with_state(state.clone());
+    let request = |method, tag: &str| {
+        Request::builder()
+            .method(method)
+            .uri(path)
+            .header("if-none-match", tag)
+            .body(Body::empty())
+            .unwrap()
+    };
+    let first = router
+        .clone()
+        .oneshot(request("GET", "\"old\""))
+        .await
+        .unwrap();
+    let second = router
+        .clone()
+        .oneshot(request("GET", "\"old\""))
+        .await
+        .unwrap();
+    assert_eq!(first.status(), StatusCode::OK);
+    assert_eq!(second.status(), StatusCode::OK);
+    assert_eq!(state.urpd_bodies.available_permits(), 0);
+    assert_eq!(state.urpd_query.available_permits(), 2);
+    let busy = router
+        .clone()
+        .oneshot(request("GET", "\"old\""))
+        .await
+        .unwrap();
+    assert_eq!(busy.status(), StatusCode::SERVICE_UNAVAILABLE);
+    assert!(!busy.headers().contains_key("etag"));
+    for method in ["GET", "HEAD"] {
+        for tag in [current, "*"] {
+            let response = router.clone().oneshot(request(method, tag)).await.unwrap();
+            assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
+        }
+    }
+    assert_eq!(state.urpd_bodies.available_permits(), 0);
+    drop(first);
+    assert_eq!(state.urpd_bodies.available_permits(), 1);
+    drop(second);
+    assert_eq!(state.urpd_bodies.available_permits(), 2);
+}
+
+async fn check_cancelled_admission(state: &AppState) {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let router = ApiRouter::new()
+        .add_api_routes()
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::GATEWAY_TIMEOUT,
+            Duration::from_millis(100),
+        ))
+        .with_state(state.clone());
+    let serving = spawn(async move {
+        serve_http(listener, router.into_make_service())
+            .await
+            .unwrap();
+    });
+    let gate = state.sync(|query| query.distribution().gate().clone());
+    let admission = state.urpd_query.clone();
+    assert_eq!(admission.available_permits(), 2);
+    gate.begin_update();
+    let (first, second) = join!(
+        exchange_with_etag(address, "GET", "/api/urpd/all", "*"),
+        exchange_with_etag(address, "HEAD", "/api/urpd/all", "*"),
+    );
+    let after_cancel = admission.available_permits();
+    let queued = exchange_with_etag(address, "GET", "/api/urpd/all", "*").await;
+    let after_queued = admission.available_permits();
+    gate.finish_update();
+    // Waiting for both permits also waits for the detached blocking jobs to exit.
+    let recovered = timeout(Duration::from_secs(2), admission.acquire_many_owned(2)).await;
+    serving.abort();
+    assert!(first.starts_with("HTTP/1.1 504"), "{first}");
+    assert!(second.starts_with("HTTP/1.1 504"), "{second}");
+    assert!(second.ends_with("\r\n\r\n"));
+    assert_eq!(
+        after_cancel, 0,
+        "cancelled requests must not release running jobs' slots"
+    );
+    assert!(queued.starts_with("HTTP/1.1 504"), "{queued}");
+    assert_eq!(after_queued, 0);
+    drop(recovered.unwrap().unwrap());
+    assert_eq!(state.urpd_query.available_permits(), 2);
+}
+
+pub async fn check_weighted_errors(address: SocketAddr, dir: &Path, weight: UrpdWeight) {
+    // Called by the empty-index fixture after publishing the raw date filename.
+    assert!(!dir.try_exists().unwrap());
+    fs::create_dir_all(dir.parent().unwrap()).await.unwrap();
+    for broken in [false, true] {
+        if broken {
+            symlink(dir, dir).unwrap();
+        }
+        for suffix in ["/dates", "", "/2026-09-01"] {
+            let route = format!("/api/urpd/all{suffix}?weight={weight}");
+            check_weighted_error(address, &route, if broken { 500 } else { 404 }).await;
+        }
+    }
+    // Remove only the loop created above; then exercise the dated-file preflight.
+    fs::remove_file(dir).await.unwrap();
+    fs::create_dir(dir).await.unwrap();
+    let snapshot = dir.join("2026-09-01");
+    let route = format!("/api/urpd/all/2026-09-01?weight={weight}");
+    check_weighted_error(address, &route, 404).await;
+    symlink(&snapshot, &snapshot).unwrap();
+    check_weighted_error(address, &route, 500).await;
+    fs::remove_file(&snapshot).await.unwrap();
+    // Only September 1 exists in both sources; the newer weighted-only file
+    // must not become latest. Empty payloads deliberately fail decoding.
+    fs::write(&snapshot, b"").await.unwrap();
+    let newer = dir.join("2026-09-02");
+    fs::write(&newer, b"").await.unwrap();
+    let dates_route = format!("/api/urpd/all/dates?weight={weight}");
+    let response = exchange_with_etag(address, "GET", &dates_route, "\"old\"").await;
+    assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+    assert!(response.ends_with("\r\n\r\n[\"2026-09-01\"]"), "{response}");
+    let etag = response
+        .lines()
+        .find_map(|line| line.strip_prefix("etag: "))
+        .unwrap();
+    for method in ["GET", "HEAD"] {
+        let response = exchange_with_etag(address, method, &dates_route, etag).await;
+        assert!(response.starts_with("HTTP/1.1 304"), "{response}");
+        assert!(response.ends_with("\r\n\r\n"));
+    }
+    check_weighted_error(address, &format!("/api/urpd/all?weight={weight}"), 500).await;
+    fs::remove_file(snapshot).await.unwrap();
+    fs::remove_file(newer).await.unwrap();
+    fs::remove_dir(dir).await.unwrap();
+}
+
+async fn check_weighted_error(address: SocketAddr, route: &str, status: u16) {
+    for method in ["GET", "HEAD"] {
+        for condition in ["\"old\"", "*"] {
+            let response = exchange_with_etag(address, method, route, condition).await;
+            assert!(
+                response.starts_with(&format!("HTTP/1.1 {status}")),
+                "{route}: {response}"
+            );
+            assert!(!response.contains("\r\netag:"));
+            let policy = if status == 500 {
+                "no-store"
+            } else {
+                "public, max-age=1, must-revalidate"
+            };
+            for header in ["cache-control", "cdn-cache-control"] {
+                assert!(
+                    response.contains(&format!("\r\n{header}: {policy}\r\n")),
+                    "{response}"
+                );
+            }
+            if method == "HEAD" {
+                assert!(response.ends_with("\r\n\r\n"));
+            }
+        }
+    }
+}
+
+pub fn benchmark_inputs(state: &AppState) {
+    state.sync(|query| {
+        let cohort = Cohort::new("fixture").unwrap();
+        let date = Date::new(2009, 1, 3); // The fixture's populated genesis day.
+        let path = &query.distribution().states_path;
+        for rows in [0_u32, 1, 10_000, 100_000] {
+            let mut random = 0x1234_5678_u64;
+            let mut price = 0;
+            UrpdRaw::write(path, &cohort, date, (0..rows).map(|_| {
+                random ^= random << 13;
+                random ^= random >> 7;
+                random ^= random << 17;
+                price += 1 + (random % 199) as u32;
+                (CentsCompact::new(price), Sats::from(1_000_000 + random % 100_000_000))
+            })).unwrap();
+            for aggregation in [UrpdAggregation::Raw, UrpdAggregation::Lin200] {
+                let capture = || query.resolve_urpd_latest(&cohort, aggregation, UrpdWeight::Raw).unwrap();
+                let first = capture();
+                let id = urpd_input::identity(&first);
+                let mut encoded = 0;
+                first.for_each_section(|bytes| encoded += bytes.len());
+                let expected = to_vec(&first.build().unwrap()).unwrap();
+                let batch = if rows < 10_000 { 100 } else { 10 };
+                let mut samples: [Vec<Duration>; 4] = from_fn(|_| Vec::new());
+                for round in 0..12 {
+                    for offset in 0..4 {
+                        let variant = (round + offset) % 4;
+                        let start = Instant::now();
+                        for sample in 0..batch {
+                            let input = capture();
+                            if variant != 0 {
+                                assert_eq!(urpd_input::identity(&input), id);
+                            }
+                            match variant {
+                                0 | 2 => {
+                                    let actual = to_vec(&input.build().unwrap()).unwrap();
+                                    if round < 2 && sample == 0 { assert_eq!(actual, expected); }
+                                    black_box(actual);
+                                }
+                                1 => {}
+                                3 => { input.validate().unwrap(); }
+                                _ => unreachable!(),
+                            }
+                        }
+                        if round >= 2 { samples[variant].push(start.elapsed() / batch); }
+                    }
+                }
+                for values in &mut samples { values.sort_unstable(); }
+                eprintln!("URPD varied rows={rows} aggregation={aggregation} encoded={encoded} body={}: decode+JSON {:?}, captured-id lower bound {:?}, captured-id+decode+JSON {:?}, stateless-entry-validation {:?}", expected.len(), samples[0][5], samples[1][5], samples[2][5], samples[3][5]);
+            }
+        }
+    });
+}

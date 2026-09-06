@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use brk_types::Index;
 
-use crate::{DataRangeFormat, SeriesList, SeriesName, SeriesSelectionLegacy};
+use crate::{DataRangeFormat, SeriesList, SeriesName};
 
 with_range_format! {
     /// Selection of series to query
@@ -44,25 +44,6 @@ impl From<(Index, SeriesList, DataRangeFormat)> for SeriesSelection {
             end: range.end(),
             limit: range.limit(),
             format: range.format(),
-        }
-    }
-}
-
-impl From<SeriesSelectionLegacy> for SeriesSelection {
-    #[inline]
-    fn from(value: SeriesSelectionLegacy) -> Self {
-        let start = value.start();
-        let end = value.end();
-        let limit = value.limit();
-        let format = value.format();
-
-        Self {
-            index: value.index,
-            series: value.ids,
-            start,
-            end,
-            limit,
-            format,
         }
     }
 }

@@ -1,15 +1,17 @@
+use crate::internals::*;
+
 use std::{marker::PhantomData, sync::Arc};
 
 use log::debug;
 use parking_lot::RwLock;
 use rawdb::{Reader, Region, likely, unlikely};
 
-mod any_stored_vec;
-mod any_vec;
-mod readable;
-mod rollback;
-mod typed;
-mod writable;
+pub mod any_stored_vec;
+pub mod any_vec;
+pub mod readable;
+pub mod rollback;
+pub mod typed;
+pub mod writable;
 
 use crate::{
     AnyStoredVec, AnyVec, CompressedRangeCursor, Error, Format, ImportOptions, ReadWriteBaseVec,
@@ -28,8 +30,8 @@ const VERSION: Version = Version::new(4);
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
 pub struct ReadWriteCompressedVec<I, T, S> {
-    pub(super) base: ReadWriteBaseVec<I, T>,
-    pub(super) pages: Arc<RwLock<Pages>>,
+    base: ReadWriteBaseVec<I, T>,
+    pages: Arc<RwLock<Pages>>,
     pages_per_chunk: usize,
     _strategy: PhantomData<S>,
 }
@@ -40,8 +42,6 @@ where
     T: VecValue,
     S: CompressionStrategy<T>,
 {
-    pub(super) const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / Self::SIZE_OF_T;
-
     pub fn read_only_clone(&self) -> ReadOnlyCompressedVec<I, T, S> {
         ReadOnlyCompressedVec::new(self.base.read_only_base(), Arc::clone(&self.pages))
     }
@@ -136,110 +136,6 @@ where
         Self::decode_page_with(self.stored_len(), page_index, reader, &self.pages.read())
     }
 
-    #[inline]
-    pub(crate) fn decode_page_with(
-        stored_len: usize,
-        page_index: usize,
-        reader: &Reader,
-        pages: &Pages,
-    ) -> crate::Result<Vec<T>> {
-        let index = Self::page_index_to_index(page_index);
-
-        if unlikely(index >= stored_len) {
-            return Err(Error::IndexTooHigh {
-                index,
-                len: stored_len,
-                name: "page".to_string(),
-            });
-        }
-        if unlikely(page_index >= pages.len()) {
-            return Err(Error::ExpectVecToHaveIndex);
-        }
-
-        // SAFETY: We checked page_index < pages.len() above
-        let page = pages
-            .get(page_index)
-            .expect("page should exist after bounds check");
-        let header = reader.unchecked_read(page.header_start as usize, page.header_len());
-        let body = reader.unchecked_read(page.start as usize, page.bytes as usize);
-        let expected_len = page.values_count(Self::PER_PAGE, Self::SIZE_OF_T);
-        let mut values = Vec::with_capacity(expected_len);
-        PageDecoder::<T, S>::default().decode_into(
-            page,
-            header,
-            body,
-            expected_len,
-            &mut values,
-        )?;
-        Ok(values)
-    }
-
-    #[inline(always)]
-    pub(crate) fn index_to_page_index(index: usize) -> usize {
-        index / Self::PER_PAGE
-    }
-
-    #[inline(always)]
-    pub(crate) fn page_index_to_index(page_index: usize) -> usize {
-        page_index * Self::PER_PAGE
-    }
-
-    /// Reads stored page data into a buffer. Used by both ReadWrite and ReadOnly read_into_at.
-    #[inline(always)]
-    pub(crate) fn read_stored_pages_into(
-        reader: &Reader,
-        pages: &Pages,
-        from: usize,
-        to: usize,
-        buf: &mut Vec<T>,
-    ) {
-        let start_page = Self::index_to_page_index(from);
-        let end_page = Self::index_to_page_index(to - 1);
-        let mut decoder = PageDecoder::<T, S>::default();
-        let mut page_buf = Vec::with_capacity(Self::PER_PAGE);
-        for page_idx in start_page..=end_page {
-            let page_start = Self::page_index_to_index(page_idx);
-            let page = pages
-                .get(page_idx)
-                .expect("page should exist after bounds check");
-            let header = reader.unchecked_read(page.header_start as usize, page.header_len());
-            let body = reader.unchecked_read(page.start as usize, page.bytes as usize);
-            let values_count = page.values_count(Self::PER_PAGE, Self::SIZE_OF_T);
-            let local_from = from.saturating_sub(page_start);
-            let local_to = (to - page_start).min(values_count);
-
-            if !page.is_raw() && likely(local_from == 0) {
-                let before = buf.len();
-                decoder
-                    .decode_append(page, header, body, values_count, buf)
-                    .expect("decompression failed in read_into_at");
-                buf.truncate(before + local_to);
-            } else {
-                decoder
-                    .decode_into(page, header, body, values_count, &mut page_buf)
-                    .expect("page decode failed in read_into_at");
-                buf.extend_from_slice(&page_buf[local_from..local_to]);
-            }
-        }
-    }
-
-    #[inline]
-    pub(crate) fn prefers_mmap(
-        region: &Region,
-        pages: &RwLock<Pages>,
-        from: usize,
-        to: usize,
-    ) -> bool {
-        let Some((offset, len)) = pages.read().stored_byte_range(from, to, Self::PER_PAGE) else {
-            return true;
-        };
-        region.prefers_mmap(offset, len)
-    }
-
-    pub(crate) fn pages_region_name(&self) -> String {
-        Self::pages_region_name_with(self.name())
-    }
-
     fn pages_region_name_with(name: &str) -> String {
         format!("{}_pages", vec_region_name_with::<I>(name))
     }
@@ -256,44 +152,6 @@ where
     #[inline]
     pub fn reserve_pushed(&mut self, additional: usize) {
         self.base.reserve_pushed(additional);
-    }
-
-    #[inline]
-    pub(crate) fn create_reader(&self) -> Reader {
-        self.base.region().create_reader()
-    }
-
-    #[inline]
-    pub(crate) fn pages(&self) -> &Arc<RwLock<Pages>> {
-        &self.pages
-    }
-
-    pub(crate) fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
-        if from >= to {
-            return Ok(vec![]);
-        }
-
-        let reader = self.create_reader();
-        let pages = self.pages.read();
-        let real_len = pages.stored_len(Self::PER_PAGE, Self::SIZE_OF_T);
-        let to = to.min(real_len);
-        if from >= to {
-            return Ok(vec![]);
-        }
-
-        let mut result = Vec::with_capacity(to - from);
-        let start_page = Self::index_to_page_index(from);
-        let end_page = Self::index_to_page_index(to - 1);
-
-        for page_idx in start_page..=end_page {
-            let page_start = Self::page_index_to_index(page_idx);
-            let decoded = Self::decode_page_with(real_len, page_idx, &reader, &pages)?;
-            let local_from = from.saturating_sub(page_start);
-            let local_to = (to - page_start).min(decoded.len());
-            result.extend_from_slice(&decoded[local_from..local_to]);
-        }
-
-        Ok(result)
     }
 
     #[inline]
@@ -329,15 +187,181 @@ where
         }
         crate::CompressedMmapSource::new(self, from, to).fold(init, f)
     }
-
-    #[inline(always)]
-    pub(super) fn fold_source<B, F: FnMut(B, T) -> B>(
+}
+pub trait VariantsCompressedInnerReadWriteReadWriteCompressedVecITSInternal<I, T, S>:
+    Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / size_of::<T>();
+    fn decode_page_with(
+        stored_len: usize,
+        page_index: usize,
+        reader: &Reader,
+        pages: &Pages,
+    ) -> crate::Result<Vec<T>>;
+    fn index_to_page_index(index: usize) -> usize;
+    fn page_index_to_index(page_index: usize) -> usize;
+    fn read_stored_pages_into(
+        reader: &Reader,
+        pages: &Pages,
+        from: usize,
+        to: usize,
+        buf: &mut Vec<T>,
+    );
+    fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool;
+    fn pages_region_name(&self) -> String;
+    fn create_reader(&self) -> Reader;
+    fn pages(&self) -> &Arc<RwLock<Pages>>;
+    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>>;
+    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B;
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> B {
+    ) -> std::result::Result<B, E>;
+}
+impl<I, T, S> VariantsCompressedInnerReadWriteReadWriteCompressedVecITSInternal<I, T, S>
+    for ReadWriteCompressedVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    #[inline]
+    fn decode_page_with(
+        stored_len: usize,
+        page_index: usize,
+        reader: &Reader,
+        pages: &Pages,
+    ) -> crate::Result<Vec<T>> {
+        let index = Self::page_index_to_index(page_index);
+
+        if unlikely(index >= stored_len) {
+            return Err(Error::IndexTooHigh {
+                index,
+                len: stored_len,
+                name: "page".to_string(),
+            });
+        }
+        if unlikely(page_index >= pages.len()) {
+            return Err(Error::ExpectVecToHaveIndex);
+        }
+
+        // SAFETY: We checked page_index < pages.len() above
+        let page = pages
+            .get(page_index)
+            .expect("page should exist after bounds check");
+        let header = reader.unchecked_read(page.header_start as usize, page.header_len());
+        let body = reader.unchecked_read(page.start as usize, page.bytes as usize);
+        let expected_len = page.values_count(Self::PER_PAGE, Self::SIZE_OF_T);
+        let mut values = Vec::with_capacity(expected_len);
+        PageDecoder::<T, S>::default().decode_into(
+            page,
+            header,
+            body,
+            expected_len,
+            &mut values,
+        )?;
+        Ok(values)
+    }
+    #[inline(always)]
+    fn index_to_page_index(index: usize) -> usize {
+        index / Self::PER_PAGE
+    }
+    #[inline(always)]
+    fn page_index_to_index(page_index: usize) -> usize {
+        page_index * Self::PER_PAGE
+    }
+    /// Reads stored page data into a buffer. Used by both ReadWrite and ReadOnly read_into_at.
+    #[inline(always)]
+    fn read_stored_pages_into(
+        reader: &Reader,
+        pages: &Pages,
+        from: usize,
+        to: usize,
+        buf: &mut Vec<T>,
+    ) {
+        let start_page = Self::index_to_page_index(from);
+        let end_page = Self::index_to_page_index(to - 1);
+        let mut decoder = PageDecoder::<T, S>::default();
+        let mut page_buf = Vec::with_capacity(Self::PER_PAGE);
+        for page_idx in start_page..=end_page {
+            let page_start = Self::page_index_to_index(page_idx);
+            let page = pages
+                .get(page_idx)
+                .expect("page should exist after bounds check");
+            let header = reader.unchecked_read(page.header_start as usize, page.header_len());
+            let body = reader.unchecked_read(page.start as usize, page.bytes as usize);
+            let values_count = page.values_count(Self::PER_PAGE, Self::SIZE_OF_T);
+            let local_from = from.saturating_sub(page_start);
+            let local_to = (to - page_start).min(values_count);
+
+            if !page.is_raw() && likely(local_from == 0) {
+                let before = buf.len();
+                decoder
+                    .decode_append(page, header, body, values_count, buf)
+                    .expect("decompression failed in read_into_at");
+                buf.truncate(before + local_to);
+            } else {
+                decoder
+                    .decode_into(page, header, body, values_count, &mut page_buf)
+                    .expect("page decode failed in read_into_at");
+                buf.extend_from_slice(&page_buf[local_from..local_to]);
+            }
+        }
+    }
+    #[inline]
+    fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool {
+        let Some((offset, len)) = pages.read().stored_byte_range(from, to, Self::PER_PAGE) else {
+            return true;
+        };
+        region.prefers_mmap(offset, len)
+    }
+    fn pages_region_name(&self) -> String {
+        Self::pages_region_name_with(self.name())
+    }
+    #[inline]
+    fn create_reader(&self) -> Reader {
+        self.base.region().create_reader()
+    }
+    #[inline]
+    fn pages(&self) -> &Arc<RwLock<Pages>> {
+        &self.pages
+    }
+    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
+        if from >= to {
+            return Ok(vec![]);
+        }
+
+        let reader = self.create_reader();
+        let pages = self.pages.read();
+        let real_len = pages.stored_len(Self::PER_PAGE, Self::SIZE_OF_T);
+        let to = to.min(real_len);
+        if from >= to {
+            return Ok(vec![]);
+        }
+
+        let mut result = Vec::with_capacity(to - from);
+        let start_page = Self::index_to_page_index(from);
+        let end_page = Self::index_to_page_index(to - 1);
+
+        for page_idx in start_page..=end_page {
+            let page_start = Self::page_index_to_index(page_idx);
+            let decoded = Self::decode_page_with(real_len, page_idx, &reader, &pages)?;
+            let local_from = from.saturating_sub(page_start);
+            let local_to = (to - page_start).min(decoded.len());
+            result.extend_from_slice(&decoded[local_from..local_to]);
+        }
+
+        Ok(result)
+    }
+    #[inline(always)]
+    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {
         let mmap = Self::prefers_mmap(self.region(), &self.pages, from, to);
         if mmap {
             crate::CompressedMmapSource::new(self, from, to).fold(init, f)
@@ -345,9 +369,8 @@ where
             crate::CompressedIoSource::new(self, from, to).fold(init, f)
         }
     }
-
     #[inline(always)]
-    pub(super) fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         &self,
         from: usize,
         to: usize,

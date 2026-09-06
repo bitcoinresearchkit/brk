@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::marker::PhantomData;
 
 use rawdb::{Reader, Region};
@@ -35,42 +37,12 @@ pub struct VecReaderCursor<I, T, S> {
     pos: usize,
 }
 
-unsafe impl<I: Send, T: Send, S: Send> Send for VecReader<I, T, S> {}
-unsafe impl<I: Sync, T: Sync, S: Sync> Sync for VecReader<I, T, S> {}
-
 impl<I, T, S> VecReader<I, T, S>
 where
     T: VecValue,
     S: RawStrategy<T>,
 {
     const SIZE_OF_T: usize = size_of::<T>();
-
-    pub(crate) fn from_region(region: &Region, stored_len: usize) -> Self {
-        let reader = region.create_reader();
-        let slice = reader.prefixed(HEADER_OFFSET);
-        let ptr = slice.as_ptr();
-
-        Self {
-            _reader: reader,
-            data: ptr,
-            stored_len,
-            _marker: PhantomData,
-        }
-    }
-
-    pub(crate) fn from_read_write(vec: &ReadWriteRawVec<I, T, S>) -> Self
-    where
-        I: VecIndex,
-    {
-        Self::from_region(vec.region(), vec.stored_len())
-    }
-
-    pub(crate) fn from_read_only(vec: &ReadOnlyRawVec<I, T, S>) -> Self
-    where
-        I: VecIndex,
-    {
-        Self::from_region(vec.region(), vec.stored_len())
-    }
 
     /// Returns the value at typed `index`.
     ///
@@ -128,14 +100,6 @@ where
     #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.stored_len == 0
-    }
-
-    #[inline(always)]
-    #[cfg(feature = "zerocopy")]
-    pub(crate) fn as_bytes(&self) -> &[u8] {
-        // SAFETY: `data` points to `stored_len * SIZE_OF_T` bytes and `_reader`
-        // keeps the mmap generation containing them alive for this borrow.
-        unsafe { std::slice::from_raw_parts(self.data, self.stored_len * Self::SIZE_OF_T) }
     }
 
     /// Creates an allocation-free cursor over the persisted values.
@@ -203,3 +167,59 @@ where
         self.fold(n, (), |(), value| f(value));
     }
 }
+pub trait VariantsRawSourcesReaderVecReaderITSInternal<I, T, S>: Sized
+where
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn from_region(region: &Region, stored_len: usize) -> Self;
+    fn from_read_write(vec: &ReadWriteRawVec<I, T, S>) -> Self
+    where
+        I: VecIndex;
+    fn from_read_only(vec: &ReadOnlyRawVec<I, T, S>) -> Self
+    where
+        I: VecIndex;
+    #[cfg(feature = "zerocopy")]
+    fn as_bytes(&self) -> &[u8];
+}
+impl<I, T, S> VariantsRawSourcesReaderVecReaderITSInternal<I, T, S> for VecReader<I, T, S>
+where
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn from_region(region: &Region, stored_len: usize) -> Self {
+        let reader = region.create_reader();
+        let slice = reader.prefixed(HEADER_OFFSET);
+        let ptr = slice.as_ptr();
+
+        Self {
+            _reader: reader,
+            data: ptr,
+            stored_len,
+            _marker: PhantomData,
+        }
+    }
+    fn from_read_write(vec: &ReadWriteRawVec<I, T, S>) -> Self
+    where
+        I: VecIndex,
+    {
+        Self::from_region(vec.region(), vec.stored_len())
+    }
+    fn from_read_only(vec: &ReadOnlyRawVec<I, T, S>) -> Self
+    where
+        I: VecIndex,
+    {
+        Self::from_region(vec.region(), vec.stored_len())
+    }
+    #[inline(always)]
+    #[cfg(feature = "zerocopy")]
+    fn as_bytes(&self) -> &[u8] {
+        // SAFETY: `data` points to `stored_len * SIZE_OF_T` bytes and `_reader`
+        // keeps the mmap generation containing them alive for this borrow.
+        unsafe { std::slice::from_raw_parts(self.data, self.stored_len * Self::SIZE_OF_T) }
+    }
+}
+
+unsafe impl<I: Send, T: Send, S: Send> Send for VecReader<I, T, S> {}
+
+unsafe impl<I: Sync, T: Sync, S: Sync> Sync for VecReader<I, T, S> {}

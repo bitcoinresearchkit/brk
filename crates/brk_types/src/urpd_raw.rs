@@ -1,14 +1,14 @@
 use std::{
     collections::BTreeMap,
     fs, io,
+    io::Read,
     path::{Path, PathBuf},
 };
 
 use brk_error::{Error, Result};
-use pco::{
-    ChunkConfig,
-    standalone::{simple_compress, simple_decompress},
-};
+
+mod decode;
+use pco::{ChunkConfig, standalone::simple_compress};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::Bytes;
@@ -30,6 +30,21 @@ struct DecodedEntries<'a> {
 }
 
 impl UrpdRaw {
+    /// Resource ceilings for persisted snapshots, not truncation thresholds.
+    /// Exceeding either limit is an error. Two million rows leave substantial
+    /// headroom above the producer's five-significant-digit dollar buckets.
+    pub const MAX_ENTRIES: usize = 2_000_000;
+    pub const MAX_ENCODED_BYTES: usize = 64 * 1024 * 1024;
+
+    /// Validate the supply of a raw or weighted subset of Bitcoin's UTXO set.
+    pub fn checked_supply(&self) -> Result<Sats> {
+        checked_supply(self.map.values().map(|sats| u64::from(*sats)))
+    }
+
+    pub fn checked_entry_supply(entries: &[(CentsCompact, Sats)]) -> Result<Sats> {
+        checked_supply(entries.iter().map(|(_, sats)| u64::from(*sats)))
+    }
+
     /// Return sat- and acquisition-value-weighted percentiles using shared passes.
     pub fn cost_basis_percentile_prices(&self) -> CostBasisPercentilePrices {
         Self::cost_basis_percentile_prices_from_entries(
@@ -109,8 +124,13 @@ impl UrpdRaw {
 
     pub fn read(states_path: &Path, name: &str, date: Date) -> Result<Self> {
         let bytes = Self::read_bytes(states_path, name, date)?;
+        Self::deserialize_exact(&bytes)
+    }
+
+    /// Decode exactly one snapshot, rejecting trailing data.
+    pub fn deserialize_exact(bytes: &[u8]) -> Result<Self> {
         Ok(Self {
-            map: Self::deserialize_entries(&bytes)?.into_iter().collect(),
+            map: Self::deserialize_entries(bytes)?.into_iter().collect(),
         })
     }
 
@@ -127,15 +147,39 @@ impl UrpdRaw {
         ))
     }
 
-    fn read_bytes(states_path: &Path, name: &str, date: Date) -> Result<Vec<u8>> {
+    /// Capture an encoded snapshot without decoding it. The producer's publication
+    /// guard must protect this read when snapshots can be rewritten concurrently.
+    pub fn read_bytes(states_path: &Path, name: &str, date: Date) -> Result<Vec<u8>> {
         let path = Self::path(states_path, name, date);
-        fs::read(&path).map_err(|error| {
+        Self::read_encoded_file(&path).map_err(|error| {
             io::Error::new(
                 error.kind(),
                 format!("Cannot read URPD '{}': {error}", path.display()),
             )
             .into()
         })
+    }
+
+    /// Shared bounded capture for raw and indexed age-range snapshot files.
+    pub fn read_encoded_file(path: &Path) -> io::Result<Vec<u8>> {
+        let file = fs::File::open(path)?;
+        let metadata = file.metadata()?;
+        if !metadata.is_file() || metadata.len() > Self::MAX_ENCODED_BYTES as u64 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "URPD file exceeds snapshot limits",
+            ));
+        }
+        let mut bytes = Vec::with_capacity(metadata.len() as usize + 1);
+        file.take(Self::MAX_ENCODED_BYTES as u64 + 1)
+            .read_to_end(&mut bytes)?;
+        if bytes.len() > Self::MAX_ENCODED_BYTES {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "URPD file grew beyond snapshot limits",
+            ));
+        }
+        Ok(bytes)
     }
 
     pub fn write(
@@ -192,9 +236,18 @@ impl UrpdRaw {
         let keys_len = usize::from_bytes(&data[8..16])?;
         let values_len = usize::from_bytes(&data[16..24])?;
 
-        let keys_start = 24;
-        let values_start = keys_start + keys_len;
-        let rest_start = values_start + values_len;
+        let keys_start = 24_usize;
+        let values_start = keys_start.checked_add(keys_len).ok_or_else(|| {
+            Error::Deserialization("UrpdRaw: key section length overflows".into())
+        })?;
+        let rest_start = values_start.checked_add(values_len).ok_or_else(|| {
+            Error::Deserialization("UrpdRaw: value section length overflows".into())
+        })?;
+        if rest_start > Self::MAX_ENCODED_BYTES {
+            return Err(Error::Deserialization(
+                "UrpdRaw: encoded section exceeds snapshot limit".into(),
+            ));
+        }
 
         if data.len() < rest_start {
             return Err(Error::Deserialization(format!(
@@ -204,17 +257,26 @@ impl UrpdRaw {
             )));
         }
 
-        let keys: Vec<u32> = simple_decompress(&data[keys_start..values_start])?;
-        let values: Vec<u64> = simple_decompress(&data[values_start..rest_start])?;
+        // Reject oversized counts before compressed streams request output memory.
+        if entry_count > Self::MAX_ENTRIES {
+            return Err(Error::Deserialization(
+                "UrpdRaw: entry count exceeds snapshot limit".into(),
+            ));
+        }
+        let keys: Vec<u32> = decode::exact(&data[keys_start..values_start], entry_count)?;
+        if keys.last() == Some(&u32::MAX) || !keys.windows(2).all(|pair| pair[0] < pair[1]) {
+            return Err(Error::Deserialization(
+                "UrpdRaw: prices must be finite and strictly sorted".into(),
+            ));
+        }
+        let values: Vec<u64> = decode::exact(&data[values_start..rest_start], entry_count)?;
+        checked_supply(values.iter().copied())?;
 
         let entries = keys
             .into_iter()
             .zip(values)
             .map(|(k, v)| (CentsCompact::new(k), Sats::from(v)))
             .collect::<Vec<_>>();
-
-        debug_assert_eq!(entries.len(), entry_count);
-        debug_assert!(entries.windows(2).all(|pair| pair[0].0 < pair[1].0));
 
         Ok(DecodedEntries {
             entries,
@@ -246,9 +308,21 @@ impl UrpdRaw {
 
     /// Serialize from a sorted iterator of (price, sats) pairs.
     pub fn serialize_iter(iter: impl Iterator<Item = (CentsCompact, Sats)>) -> Result<Vec<u8>> {
-        let (keys, values): (Vec<u32>, Vec<u64>) = iter
-            .map(|(key, value)| (key.inner(), u64::from(value)))
-            .unzip();
+        let mut keys = Vec::new();
+        let mut values = Vec::new();
+        for (key, value) in iter {
+            if keys.len() == Self::MAX_ENTRIES {
+                return Err(Error::Internal(
+                    "UrpdRaw: entry count exceeds snapshot limit",
+                ));
+            }
+            keys.push(
+                key.finite_inner()
+                    .ok_or(Error::Internal("UrpdRaw: non-finite price"))?,
+            );
+            values.push(u64::from(value));
+        }
+        checked_supply(values.iter().copied())?;
 
         let config = ChunkConfig::default();
         let compressed_keys = simple_compress(&keys, &config)?;
@@ -265,89 +339,18 @@ impl UrpdRaw {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::PercentileId;
-
-    #[test]
-    fn file_roundtrip() {
-        let root = std::env::temp_dir().join(format!("brk-urpd-file-{}", std::process::id()));
-        let date = Date::new(2026, 8, 4);
-        let expected = BTreeMap::from([
-            (CentsCompact::new(100), Sats::from(21_u64)),
-            (CentsCompact::new(200), Sats::from(34_u64)),
-        ]);
-
-        UrpdRaw::write(
-            &root,
-            "test",
-            date,
-            expected.iter().map(|(&price, &sats)| (price, sats)),
-        )
-        .unwrap();
-        let actual = UrpdRaw::read(&root, "test", date).unwrap();
-
-        assert_eq!(actual.map, expected);
-        assert_eq!(
-            UrpdRaw::read_cost_basis_percentile_prices(&root, "test", date).unwrap(),
-            actual.cost_basis_percentile_prices()
-        );
-
-        UrpdRaw::write(&root, "empty", date, std::iter::empty()).unwrap();
-        assert!(UrpdRaw::read(&root, "empty", date).unwrap().map.is_empty());
-
-        std::fs::remove_dir_all(root).unwrap();
-    }
-
-    #[test]
-    fn scalar_weight_floors_each_bucket() {
-        let raw = UrpdRaw {
-            map: BTreeMap::from([
-                (CentsCompact::new(100), Sats::from(3_u64)),
-                (CentsCompact::new(200), Sats::from(1_u64)),
-            ]),
-        };
-
-        assert_eq!(
-            raw.apply_weight(0.5).map,
-            BTreeMap::from([(CentsCompact::new(100), Sats::from(1_u64))])
-        );
-    }
-
-    #[test]
-    fn cost_basis_percentiles_match_distribution_nearest_rank() {
-        let raw = UrpdRaw {
-            map: BTreeMap::from([
-                (CentsCompact::new(100), Sats::from(5_u64)),
-                (CentsCompact::new(200), Sats::from(5_u64)),
-            ]),
-        };
-
-        let prices = raw.cost_basis_percentile_prices();
-        assert_eq!(
-            prices.per_coin[PercentileId::Pct50 as usize],
-            Cents::new(100)
-        );
-        assert_eq!(
-            prices.per_coin[PercentileId::Pct55 as usize],
-            Cents::new(100)
-        );
-        assert_eq!(
-            prices.per_coin[PercentileId::Pct60 as usize],
-            Cents::new(200)
-        );
-        assert_eq!(
-            prices.per_dollar[PercentileId::Pct50 as usize],
-            Cents::new(200)
-        );
-    }
-
-    #[test]
-    fn empty_cost_basis_percentiles_match_distribution_default() {
-        assert_eq!(
-            UrpdRaw::default().cost_basis_percentile_prices(),
-            CostBasisPercentilePrices::default()
-        );
-    }
+fn checked_supply(mut values: impl Iterator<Item = u64>) -> Result<Sats> {
+    values
+        .try_fold(0_u64, |sum, value| {
+            sum.checked_add(value)
+                .filter(|sum| *sum <= bitcoin::Amount::MAX_MONEY.to_sat())
+                .ok_or_else(|| {
+                    Error::Deserialization("UrpdRaw: supply exceeds Bitcoin's maximum".into())
+                })
+        })
+        .map(Sats::from)
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/urpd_raw.rs"]
+mod tests;

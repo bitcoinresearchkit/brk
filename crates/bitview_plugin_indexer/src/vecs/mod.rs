@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use brk_error::Result;
 
 use std::path::Path;
@@ -13,14 +15,14 @@ const PAGE_SIZE: usize = 4096;
 use crate::Lengths;
 
 #[macro_use]
-mod macros;
-mod addrs;
-mod blocks;
-mod inputs;
-mod op_return;
-mod outputs;
-mod scripts;
-mod transactions;
+pub mod macros;
+pub mod addrs;
+pub mod blocks;
+pub mod inputs;
+pub mod op_return;
+pub mod outputs;
+pub mod scripts;
+pub mod transactions;
 
 pub use addrs::*;
 pub use blocks::*;
@@ -171,6 +173,7 @@ impl IndexerVecs for Vecs {
     }
 
     fn stamped_write(&mut self, height: Height) -> Result<()> {
+        self.blocks.compute_median_times()?;
         self.par_iter_mut_any_stored_vec()
             .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
         Ok(())
@@ -244,22 +247,5 @@ fn next_height_from_min_stamp(min_stamp: Stamp, has_blocks: bool) -> Height {
 }
 
 #[cfg(test)]
-mod checkpoint_tests {
-    use super::*;
-
-    #[test]
-    fn zero_stamp_distinguishes_empty_from_genesis() {
-        let zero = Stamp::from(0_u64);
-
-        assert_eq!(next_height_from_min_stamp(zero, false), Height::ZERO);
-        assert_eq!(next_height_from_min_stamp(zero, true), Height::new(1));
-    }
-
-    #[test]
-    fn nonzero_stamp_advances_to_next_height() {
-        assert_eq!(
-            next_height_from_min_stamp(Stamp::from(41_u64), true),
-            Height::new(42)
-        );
-    }
-}
+#[path = "../../tests/unit/vecs_checkpoint_tests.rs"]
+mod checkpoint_tests;

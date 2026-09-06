@@ -1,0 +1,430 @@
+use std::{
+    cmp::Ordering,
+    fs,
+    io::ErrorKind,
+    path::{Path, PathBuf},
+};
+
+use bitview_cohort::{AgeRangeId, CohortContext, UTXO_ALL_NAME, UTXOAggregateId};
+use bitview_plugin::{Plugin, PluginReadGuard};
+use bitview_plugin_distribution::AgeRangeUrpds;
+use brk_error::{Error, Result};
+use brk_types::{Cents, Cohort, Date, Day1, Urpd, UrpdAggregation, UrpdRaw, UrpdWeight};
+use vecdb::{ColumnId, ReadableOptionVec};
+
+use crate::Query;
+
+pub mod resolved;
+use resolved::UrpdInput;
+
+/// Owned domain inputs; no files or mutable plugin state are read after capture.
+pub struct ResolvedUrpd {
+    pub cohort: Cohort,
+    pub date: Date,
+    pub weight: UrpdWeight,
+    pub aggregation: UrpdAggregation,
+    pub scalar: f64,
+    pub close: Cents,
+    input: UrpdInput,
+}
+
+impl Query {
+    fn urpd_read_guard(&self) -> Result<PluginReadGuard> {
+        self.read_plugins(vec![
+            self.plugins().distribution as &dyn Plugin,
+            self.plugins().bedrock as &dyn Plugin,
+        ])
+    }
+
+    /// Available cohorts for URPD.
+    pub fn urpd_cohorts(&self) -> Result<Vec<Cohort>> {
+        let _guard = self.urpd_read_guard()?;
+        self.urpd_cohorts_inner()
+    }
+
+    fn urpd_cohorts_inner(&self) -> Result<Vec<Cohort>> {
+        let states_path = &self.plugins().distribution.states_path;
+        let age_range_dir = AgeRangeUrpds::dir(states_path);
+
+        let entries = match fs::read_dir(states_path) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(error) => return Err(error.into()),
+        };
+        let mut cohorts = Vec::new();
+        let mut has_age_ranges = false;
+        for entry in entries {
+            let entry = entry?;
+            if !entry.file_type()?.is_dir() {
+                continue;
+            }
+            if entry.path() == age_range_dir {
+                has_age_ranges = true;
+                continue;
+            }
+            let Some(cohort) = entry.file_name().to_str().and_then(Cohort::new) else {
+                continue;
+            };
+            if Self::urpd_age_range_id(&cohort).is_none()
+                && Self::urpd_aggregate_id(&cohort).is_none()
+            {
+                cohorts.push(cohort);
+            }
+        }
+
+        if has_age_ranges {
+            cohorts.extend(
+                AgeRangeId::ALL
+                    .iter()
+                    .filter_map(|id| Cohort::new(CohortContext::Utxo.prefixed(id.name().id))),
+            );
+            cohorts.extend(
+                UTXOAggregateId::ALL
+                    .iter()
+                    .filter_map(|id| Cohort::new(id.cohort_name().id)),
+            );
+        }
+
+        cohorts.sort_unstable();
+        cohorts.dedup();
+
+        Ok(cohorts)
+    }
+
+    fn urpd_dir(&self, cohort: &Cohort) -> Result<PathBuf> {
+        let states_path = &self.plugins().distribution.states_path;
+        let is_age_range = Self::urpd_age_range_id(cohort).is_some();
+        let is_aggregate = Self::urpd_aggregate_id(cohort).is_some();
+        let dir = if is_age_range || is_aggregate {
+            AgeRangeUrpds::dir(states_path)
+        } else {
+            UrpdRaw::dir(states_path, cohort)
+        };
+
+        if !dir.try_exists()? {
+            return Err(Error::NotFound("Unknown URPD cohort".into()));
+        }
+
+        Ok(dir)
+    }
+
+    /// Available dates for a cohort.
+    pub fn urpd_dates(&self, cohort: &Cohort) -> Result<Vec<Date>> {
+        self.urpd_dates_with_weight(cohort, UrpdWeight::Raw)
+    }
+
+    /// Available dates for a cohort and weighting.
+    pub fn urpd_dates_with_weight(&self, cohort: &Cohort, weight: UrpdWeight) -> Result<Vec<Date>> {
+        let _guard = self.urpd_read_guard()?;
+        self.urpd_dates_with_weight_inner(cohort, weight)
+    }
+
+    fn urpd_dates_with_weight_inner(
+        &self,
+        cohort: &Cohort,
+        weight: UrpdWeight,
+    ) -> Result<Vec<Date>> {
+        if weight == UrpdWeight::Raw {
+            return dates_in_dir(&self.urpd_dir(cohort)?);
+        }
+
+        let mut dates = Vec::new();
+        self.visit_weighted_urpd_dates(cohort, weight, |date| dates.push(date))?;
+        Ok(dates)
+    }
+
+    fn visit_weighted_urpd_dates(
+        &self,
+        cohort: &Cohort,
+        weight: UrpdWeight,
+        visit: impl FnMut(Date),
+    ) -> Result<()> {
+        let dir = self.urpd_dir(cohort)?;
+
+        let all = Cohort::new(UTXO_ALL_NAME.id).expect("canonical cohort is valid");
+        let weighted_cohort = if Self::urpd_aggregate_id(cohort).is_some() {
+            cohort
+        } else {
+            &all
+        };
+        let weighted_dir = self.weighted_urpd_dir(weighted_cohort, weight)?;
+        visit_intersection(dates_in_dir(&dir)?, dates_in_dir(&weighted_dir)?, visit);
+        Ok(())
+    }
+
+    /// Raw URPD data for a cohort on a specific date.
+    pub fn urpd_raw(&self, cohort: &Cohort, date: Date) -> Result<UrpdRaw> {
+        self.urpd_raw_with_weight(cohort, date, UrpdWeight::Raw)
+    }
+
+    /// Raw URPD data with an optional Bedrock weighting.
+    pub fn urpd_raw_with_weight(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        weight: UrpdWeight,
+    ) -> Result<UrpdRaw> {
+        let _guard = self.urpd_read_guard()?;
+        self.urpd_raw_with_weight_inner(cohort, date, weight)
+    }
+
+    fn urpd_raw_with_weight_inner(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        weight: UrpdWeight,
+    ) -> Result<UrpdRaw> {
+        let (input, scalar) = self.urpd_input_inner(cohort, date, weight)?;
+        Ok(input.decode()?.apply_weight(scalar))
+    }
+
+    fn urpd_input_inner(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        weight: UrpdWeight,
+    ) -> Result<(UrpdInput, f64)> {
+        let raw_path = self.urpd_dir(cohort)?.join(date.to_string());
+
+        if !raw_path.try_exists()? {
+            return Err(Error::NotFound(format!(
+                "No URPD for cohort '{cohort}' on {date}"
+            )));
+        }
+
+        if weight == UrpdWeight::Raw {
+            return Ok((self.read_urpd_input(cohort, date)?, 1.0));
+        }
+
+        if Self::urpd_aggregate_id(cohort).is_some() {
+            let path = self
+                .weighted_urpd_dir(cohort, weight)?
+                .join(date.to_string());
+            if !path.try_exists()? {
+                return Err(Error::NotFound(format!(
+                    "No {weight}-weighted URPD for cohort '{cohort}' on {date}"
+                )));
+            }
+            return Ok((
+                UrpdInput::Raw(
+                    self.plugins()
+                        .bedrock
+                        .urpd_raw_bytes(weight, cohort, date)?,
+                ),
+                1.0,
+            ));
+        }
+
+        let day = Day1::try_from(date)?;
+        let scalar = self
+            .plugins()
+            .bedrock
+            .urpd_weight(
+                self.plugins().distribution,
+                self.plugins().cointime,
+                self.plugins().coinflow,
+                cohort,
+                day,
+                weight,
+            )
+            .ok_or_else(|| {
+                Error::NotFound(format!(
+                    "No {weight} weight for cohort '{cohort}' on {date}"
+                ))
+            })?;
+        Ok((self.read_urpd_input(cohort, date)?, scalar))
+    }
+
+    fn read_urpd_input(&self, cohort: &Cohort, date: Date) -> Result<UrpdInput> {
+        let states_path = &self.plugins().distribution.states_path;
+        if let Some(id) = Self::urpd_age_range_id(cohort) {
+            return AgeRangeUrpds::read_one_bytes(states_path, id, date).map(UrpdInput::Raw);
+        }
+        if let Some(id) = Self::urpd_aggregate_id(cohort) {
+            return AgeRangeUrpds::read_aggregate_encoded(states_path, id, date)
+                .map(UrpdInput::Aggregate);
+        }
+        UrpdRaw::read_bytes(states_path, cohort, date).map(UrpdInput::Raw)
+    }
+
+    fn urpd_age_range_id(cohort: &Cohort) -> Option<AgeRangeId> {
+        AgeRangeId::from_cohort_name(CohortContext::Utxo, cohort)
+    }
+
+    fn urpd_aggregate_id(cohort: &Cohort) -> Option<UTXOAggregateId> {
+        UTXOAggregateId::from_cohort_name(cohort)
+    }
+
+    /// URPD for a cohort on a specific date.
+    pub fn urpd_at(&self, cohort: &Cohort, date: Date, agg: UrpdAggregation) -> Result<Urpd> {
+        self.urpd_at_with_weight(cohort, date, agg, UrpdWeight::Raw)
+    }
+
+    /// URPD for a cohort on a specific date and weighting.
+    pub fn urpd_at_with_weight(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        agg: UrpdAggregation,
+        weight: UrpdWeight,
+    ) -> Result<Urpd> {
+        self.resolve_urpd_at(cohort, date, agg, weight)?.build()
+    }
+
+    /// Capture one dated snapshot and its pricing inputs under publication protection.
+    pub fn resolve_urpd_at(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        aggregation: UrpdAggregation,
+        weight: UrpdWeight,
+    ) -> Result<ResolvedUrpd> {
+        let _guard = self.urpd_read_guard()?;
+        self.resolve_urpd_inner(cohort, date, aggregation, weight)
+    }
+
+    /// URPD for the most recently available date in a cohort.
+    pub fn urpd_latest(&self, cohort: &Cohort, agg: UrpdAggregation) -> Result<Urpd> {
+        self.urpd_latest_with_weight(cohort, agg, UrpdWeight::Raw)
+    }
+
+    /// Most recent URPD for a cohort and weighting.
+    pub fn urpd_latest_with_weight(
+        &self,
+        cohort: &Cohort,
+        agg: UrpdAggregation,
+        weight: UrpdWeight,
+    ) -> Result<Urpd> {
+        self.resolve_urpd_latest(cohort, agg, weight)?.build()
+    }
+
+    /// Capture the latest snapshot and its pricing inputs under publication protection.
+    /// Successful captures defer decoding to `ResolvedUrpd::build`; they are not
+    /// evidence of a valid response until built.
+    pub fn resolve_urpd_latest(
+        &self,
+        cohort: &Cohort,
+        aggregation: UrpdAggregation,
+        weight: UrpdWeight,
+    ) -> Result<ResolvedUrpd> {
+        let _guard = self.urpd_read_guard()?;
+        let date = if weight == UrpdWeight::Raw {
+            latest_date_in_dir(&self.urpd_dir(cohort)?)?
+        } else {
+            let mut latest = None;
+            self.visit_weighted_urpd_dates(cohort, weight, |date| latest = Some(date))?;
+            latest
+        }
+        .ok_or_else(|| {
+            Error::NotFound(format!(
+                "No {weight}-weighted URPD available for cohort '{cohort}'"
+            ))
+        })?;
+        self.resolve_urpd_inner(cohort, date, aggregation, weight)
+    }
+
+    fn resolve_urpd_inner(
+        &self,
+        cohort: &Cohort,
+        date: Date,
+        aggregation: UrpdAggregation,
+        weight: UrpdWeight,
+    ) -> Result<ResolvedUrpd> {
+        let (input, scalar) = self.urpd_input_inner(cohort, date, weight)?;
+        let close = Day1::try_from(date).and_then(|day| {
+            self.plugins()
+                .price
+                .split
+                .close
+                .cents
+                .day1
+                .collect_one_flat(day)
+                .ok_or_else(|| Error::NotFound(format!("No price data for {date}")))
+        });
+        let close = match close {
+            Ok(close) => close,
+            Err(error) => {
+                // Preserve decoding-before-price error precedence without retaining
+                // an error inside a successfully captured input.
+                input.decode()?;
+                return Err(error);
+            }
+        };
+        Ok(ResolvedUrpd {
+            cohort: cohort.clone(),
+            date,
+            weight,
+            aggregation,
+            scalar,
+            close,
+            input,
+        })
+    }
+
+    fn weighted_urpd_dir(&self, cohort: &Cohort, weight: UrpdWeight) -> Result<PathBuf> {
+        let dir = self.plugins().bedrock.urpd_dir(weight, cohort);
+        if !dir.try_exists()? {
+            return Err(Error::NotFound(format!(
+                "No {weight}-weighted URPD available for cohort '{cohort}'"
+            )));
+        }
+        Ok(dir)
+    }
+}
+
+fn dates_in_dir(dir: &Path) -> Result<Vec<Date>> {
+    let mut dates = Vec::new();
+    visit_dates(dir, |date| dates.push(date))?;
+    dates.sort_unstable();
+    Ok(dates)
+}
+
+fn latest_date_in_dir(dir: &Path) -> Result<Option<Date>> {
+    let mut latest = None;
+    visit_dates(dir, |date| {
+        latest = Some(latest.map_or(date, |old: Date| old.max(date)))
+    })?;
+    Ok(latest)
+}
+
+fn visit_dates(dir: &Path, mut visit: impl FnMut(Date)) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let Some(date) = entry
+            .file_name()
+            .to_str()
+            .and_then(|name| name.parse().ok())
+        else {
+            continue;
+        };
+        if entry.file_type()?.is_file() {
+            visit(date);
+        }
+    }
+
+    Ok(())
+}
+
+fn visit_intersection(left: Vec<Date>, right: Vec<Date>, mut visit: impl FnMut(Date)) {
+    let mut left = left.into_iter().peekable();
+    let mut right = right.into_iter().peekable();
+    while let (Some(&a), Some(&b)) = (left.peek(), right.peek()) {
+        match a.cmp(&b) {
+            Ordering::Less => {
+                left.next();
+            }
+            Ordering::Greater => {
+                right.next();
+            }
+            Ordering::Equal => {
+                visit(a);
+                left.next();
+                right.next();
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/urpd.rs"]
+mod tests;

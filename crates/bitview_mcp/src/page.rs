@@ -7,7 +7,7 @@ use axum::{
 
 const HTML: &str = include_str!("../assets/index.html");
 
-pub(crate) struct Pages {
+pub struct Pages {
     home: Arc<str>,
     privacy: Arc<str>,
     terms: Arc<str>,

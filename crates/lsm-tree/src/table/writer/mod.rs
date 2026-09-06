@@ -58,7 +58,7 @@ impl FixedLen {
 /// Serializes and compresses values into blocks and writes them to disk as a table
 pub struct Writer {
     /// Table file path
-    pub(crate) path: PathBuf,
+    pub path: PathBuf,
 
     table_id: u32,
 
@@ -98,7 +98,7 @@ pub struct Writer {
     chunk_key_len: FixedLen,
     chunk_value_len: FixedLen,
 
-    pub(crate) meta: meta::Metadata,
+    pub meta: meta::Metadata,
 
     /// Stores the previous block position (used for creating back links)
     prev_pos: (BlockOffset, BlockOffset),
@@ -265,7 +265,7 @@ impl Writer {
     /// This is triggered when a `Writer::write` causes the buffer to grow to the configured `block_size`.
     ///
     /// Should only be called when the block has items in it.
-    pub(crate) fn spill_block(&mut self) -> Result<()> {
+    pub fn spill_block(&mut self) -> Result<()> {
         let Some(last) = self.chunk.last() else {
             return Ok(());
         };

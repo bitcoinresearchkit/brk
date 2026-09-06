@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-mod any_vec;
-mod read_only_clone;
-mod readable;
-mod transform;
-mod typed;
+pub mod any_vec;
+pub mod read_only_clone;
+pub mod readable;
+pub mod transform;
+pub mod typed;
 
 pub use transform::*;
 
@@ -25,10 +25,10 @@ where
     S1I: VecIndex,
     S1T: VecValue,
 {
-    pub(super) name: Arc<str>,
-    pub(super) base_version: Version,
-    pub(super) source: ReadableBoxedVec<S1I, S1T>,
-    pub(super) compute: fn(I, S1T) -> T,
+    name: Arc<str>,
+    base_version: Version,
+    source: ReadableBoxedVec<S1I, S1T>,
+    compute: fn(I, S1T) -> T,
 }
 
 impl<I, T, S1I, S1T> LazyVec<I, T, S1I, S1T>

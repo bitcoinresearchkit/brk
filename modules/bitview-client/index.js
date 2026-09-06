@@ -292,8 +292,9 @@ Matches mempool.space/bitcoin-cli behavior.
  * once to rebuild the new template; no separate `added` array to
  * cross-reference.
  *
- * `removed` is redundant (computable from `order` by collecting prior
- * indices that don't appear) but shipped for cache-eviction ergonomics.
+ * `removed` lists txids no longer present. A changed body can be emitted as
+ * `New` without removing its txid; absence of a retained index alone does not
+ * imply removal.
  *
  * @typedef {Object} BlockTemplateDiff
  * @property {NextBlockHash} hash - Current next-block hash. Use as `since` on the next diff call.
@@ -311,7 +312,7 @@ prior template's transactions or a full transaction body.
  *   transactions of the prior template (which the client cached at
  *   `since`).
  * - `New(tx)` serializes as a transaction object - a body that was
- *   not in the prior template and must be added at this position.
+ *   new or changed since the prior template and must replace this position.
  *
  * Reconstruction is a single pass: for each entry, either copy
  * `prior[idx]` or append the inline body.
@@ -403,25 +404,6 @@ prior template's transactions or a full transaction body.
  * Bitcoin consensus limits coinbase scriptSig to 2-100 bytes.
  *
  * @typedef {string} CoinbaseTag
- */
-/**
- * @typedef {Object} CostBasisCohortParam
- * @property {Cohort} cohort
- */
-/**
- * @typedef {Object} CostBasisParams
- * @property {Cohort} cohort
- * @property {string} date
- */
-/**
- * @typedef {Object} CostBasisQuery
- * @property {UrpdAggregation=} bucket
- * @property {CostBasisValue=} value
- */
-/**
- * Value type for the deprecated cost-basis distribution output.
- *
- * @typedef {("supply"|"realized"|"unrealized")} CostBasisValue
  */
 /**
  * CPFP cluster: the connected component the seed belongs to, plus its
@@ -549,7 +531,7 @@ ancestors and no descendants (matches mempool.space).
  * @property {number} brkBytes - brk data size in bytes
  * @property {string} bitcoin - Human-readable Bitcoin blocks directory size
  * @property {number} bitcoinBytes - Bitcoin blocks directory size in bytes
- * @property {number} ratio - brk as percentage of Bitcoin data
+ * @property {number} ratio - Ratio of BRK bytes to Bitcoin bytes; zero when Bitcoin bytes are zero.
  */
 /**
  * US Dollar amount
@@ -702,19 +684,6 @@ ancestors and no descendants (matches mempool.space).
  * @property {string[]} aliases - All Accepted query aliases
  */
 /**
- * Legacy path parameter for `/api/metric/{metric}`
- *
- * @typedef {Object} LegacySeriesParam
- * @property {SeriesName} metric
- */
-/**
- * Legacy path parameters for `/api/metric/{metric}/{index}`
- *
- * @typedef {Object} LegacySeriesWithIndex
- * @property {SeriesName} metric
- * @property {Index} index
- */
-/**
  * Maximum number of results to return. Defaults to 100 if not specified.
  *
  * @typedef {number} Limit
@@ -793,7 +762,8 @@ creation price.
 /** @typedef {number} Month6 */
 /**
  * Content hash of the projected next block (block 0 of the mempool
- * snapshot). Same value as the mempool ETag. Opaque token: pass back
+ * snapshot), including its statistics and complete transaction bodies.
+ * Opaque token, distinct from HTTP ETag formatting: pass back
  * to `GET /api/v1/mempool/block-template/diff/{hash}` to fetch deltas.
  *
  * @typedef {number} NextBlockHash
@@ -1248,6 +1218,9 @@ on serialization otherwise.
 /**
  * Comma-separated list of series names
  *
+ * Deserialization permits at most 32 normalized names and 2,048 decoded input
+ * string bytes. For arrays, the byte budget is shared by their string values.
+ *
  * @typedef {string} SeriesList
  */
 /**
@@ -1270,17 +1243,6 @@ on serialization otherwise.
  * @typedef {Object} SeriesSelection
  * @property {SeriesList} series - Requested series
  * @property {Index} index - Index to query
- * @property {(RangeIndex|null)=} start - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
- * @property {(RangeIndex|null)=} end - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
- * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
- * @property {Format=} format - Format of the output
- */
-/**
- * Legacy series selection parameters (deprecated)
- *
- * @typedef {Object} SeriesSelectionLegacy
- * @property {Index} index
- * @property {SeriesList} ids
  * @property {(RangeIndex|null)=} start - Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
  * @property {(RangeIndex|null)=} end - Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
  * @property {(Limit|null)=} limit - Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
@@ -23257,7 +23219,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Health check
    *
-   * Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.
+   * Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
    *
    * Endpoint: `GET /health`
    * @param {{ signal?: AbortSignal, onValue?: (value: Health) => void, cache?: boolean, memCache?: boolean }} [options]
@@ -23285,7 +23247,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Sync status
    *
-   * Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+   * Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.
    *
    * Endpoint: `GET /api/server/sync`
    * @param {{ signal?: AbortSignal, onValue?: (value: SyncStatus) => void, cache?: boolean, memCache?: boolean }} [options]
@@ -23299,7 +23261,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Disk usage
    *
-   * Returns the disk space used by BRK and Bitcoin data.
+   * Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.
    *
    * Endpoint: `GET /api/server/disk`
    * @param {{ signal?: AbortSignal, onValue?: (value: DiskUsage) => void, cache?: boolean, memCache?: boolean }} [options]
@@ -23376,7 +23338,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Search series
    *
-   * Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.
+   * Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
    *
    * Endpoint: `GET /api/series/search`
    *
@@ -23397,7 +23359,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Get series info
    *
-   * Returns the optional description, supported indexes, and value type for the specified series.
+   * Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.
    *
    * Endpoint: `GET /api/series/{series}`
    *
@@ -23503,7 +23465,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Get series version
    *
-   * Returns the current version of a series. Changes when the series data is updated.
+   * Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.
    *
    * Endpoint: `GET /api/series/{series}/{index}/version`
    *
@@ -23661,7 +23623,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Historical price
    *
-   * Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+   * Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
    *
@@ -23899,7 +23861,7 @@ address payload bytes.
   /**
    * Block by timestamp
    *
-   * Find the block closest to a given UNIX timestamp.
+   * Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
    *
@@ -24231,7 +24193,7 @@ address payload bytes.
   /**
    * Mining pool blocks
    *
-   * Get the 10 most recent blocks mined by a specific pool.
+   * Get up to 100 recent blocks mined by a specific pool.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
    *
@@ -24249,7 +24211,7 @@ address payload bytes.
   /**
    * Mining pool blocks from height
    *
-   * Get 10 blocks mined by a specific pool before (and including) the given height.
+   * Get up to 100 blocks mined by a specific pool before (and including) the given height.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
    *
@@ -24490,7 +24452,7 @@ address payload bytes.
   /**
    * Mempool content hash
    *
-   * Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+   * Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.
    *
    * Endpoint: `GET /api/mempool/hash`
    * @param {{ signal?: AbortSignal, onValue?: (value: NextBlockHash) => void, cache?: boolean, memCache?: boolean }} [options]
@@ -24830,7 +24792,7 @@ address payload bytes.
   /**
    * Broadcast transaction
    *
-   * Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+   * Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.
    *
    * *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
    *
@@ -24842,7 +24804,7 @@ address payload bytes.
    */
   async postTx(body, { signal } = {}) {
     const path = `/api/tx`;
-    return this.postJson(path, body, { signal });
+    return this.postText(path, body, { signal });
   }
 
   /**
@@ -24862,7 +24824,7 @@ address payload bytes.
   /**
    * Live payment output histogram
    *
-   * Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+   * Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.
    *
    * Endpoint: `GET /api/oracle/histogram/payments/live`
    * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void, cache?: boolean, memCache?: boolean }} [options]
@@ -24893,7 +24855,7 @@ address payload bytes.
   /**
    * Live output value histogram
    *
-   * Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+   * Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
    *
    * Endpoint: `GET /api/oracle/histogram/outputs/live`
    * @param {{ signal?: AbortSignal, onValue?: (value: number[]) => void, cache?: boolean, memCache?: boolean }} [options]

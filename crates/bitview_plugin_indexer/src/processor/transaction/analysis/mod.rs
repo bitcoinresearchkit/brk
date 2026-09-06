@@ -1,8 +1,8 @@
-mod features;
-mod input;
-mod output;
-mod policy;
-mod sigops;
+pub mod features;
+pub mod input;
+pub mod output;
+pub mod policy;
+pub mod sigops;
 
 use bitcoin::Sequence;
 use brk_types::{OutputType, SigOps};

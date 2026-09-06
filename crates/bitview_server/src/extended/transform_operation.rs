@@ -4,17 +4,12 @@ use aide::transform::{TransformOperation, TransformResponse};
 use axum::Json;
 use schemars::JsonSchema;
 
-#[cfg(any(
-    feature = "chain",
-    feature = "price",
-    feature = "series",
-    feature = "urpd"
-))]
 use crate::error_body::ErrorBody;
 #[cfg(feature = "chain")]
 use crate::extended::TypedText;
 
 pub trait TransformResponseExtended<'t> {
+    fn error_response<const STATUS: u16>(self, description: &str) -> Self;
     #[cfg(feature = "chain")]
     fn general_tag(self) -> Self;
     #[cfg(feature = "chain")]
@@ -36,12 +31,7 @@ pub trait TransformResponseExtended<'t> {
     fn series_tag(self) -> Self;
     #[cfg(feature = "urpd")]
     fn urpd_tag(self) -> Self;
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn metrics_tag(self) -> Self;
 
-    /// Mark operation as deprecated
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn deprecated(self) -> Self;
     /// Keep the REST operation public while excluding it from generated MCP tools.
     fn mcp_ignore(self) -> Self;
 
@@ -66,7 +56,6 @@ pub trait TransformResponseExtended<'t> {
     #[cfg(feature = "series")]
     fn csv_response(self) -> Self;
     /// 400
-    #[cfg(any(feature = "chain", feature = "price"))]
     fn bad_request(self) -> Self;
     /// 404
     #[cfg(any(
@@ -79,16 +68,26 @@ pub trait TransformResponseExtended<'t> {
     /// 304
     fn not_modified(self) -> Self;
     /// 500
-    #[cfg(any(
-        feature = "chain",
-        feature = "price",
-        feature = "series",
-        feature = "urpd"
-    ))]
     fn server_error(self) -> Self;
+    /// 504
+    fn gateway_timeout(self) -> Self;
+    /// 500, 503, 504
+    fn server_errors(self) -> Self;
 }
 
 impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
+    fn error_response<const STATUS: u16>(self, description: &str) -> Self {
+        self.response_with::<STATUS, Json<ErrorBody>, _>(|mut response| {
+            if let Some(schema) = response.inner().content.shift_remove("application/json") {
+                response
+                    .inner()
+                    .content
+                    .insert("application/problem+json".into(), schema);
+            }
+            response.description(description)
+        })
+    }
+
     #[cfg(feature = "chain")]
     fn general_tag(self) -> Self {
         self.tag("General")
@@ -143,22 +142,11 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self.tag("URPD")
     }
 
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn metrics_tag(self) -> Self {
-        self.tag("Metrics")
-    }
-
     fn json_response<R>(self) -> Self
     where
         R: JsonSchema,
     {
         self.json_response_with(|r: TransformResponse<'_, R>| r)
-    }
-
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn deprecated(mut self) -> Self {
-        self.inner_mut().deprecated = true;
-        self
     }
 
     fn mcp_ignore(mut self) -> Self {
@@ -203,11 +191,8 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         self
     }
 
-    #[cfg(any(feature = "chain", feature = "price"))]
     fn bad_request(self) -> Self {
-        self.response_with::<400, Json<ErrorBody>, _>(|res| {
-            res.description("Invalid request parameters")
-        })
+        self.error_response::<400>("Invalid request parameters")
     }
 
     #[cfg(any(
@@ -217,7 +202,7 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         feature = "urpd"
     ))]
     fn not_found(self) -> Self {
-        self.response_with::<404, Json<ErrorBody>, _>(|res| res.description("Resource not found"))
+        self.error_response::<404>("Resource not found")
     }
 
     fn not_modified(self) -> Self {
@@ -226,15 +211,21 @@ impl<'t> TransformResponseExtended<'t> for TransformOperation<'t> {
         })
     }
 
-    #[cfg(any(
-        feature = "chain",
-        feature = "price",
-        feature = "series",
-        feature = "urpd"
-    ))]
     fn server_error(self) -> Self {
-        self.response_with::<500, Json<ErrorBody>, _>(|res| {
-            res.description("Internal server error")
-        })
+        self.error_response::<500>("Internal server error")
+    }
+
+    fn gateway_timeout(self) -> Self {
+        self.error_response::<504>("Request deadline exceeded")
+    }
+
+    fn server_errors(self) -> Self {
+        self.server_error()
+            .error_response::<503>("Service temporarily unavailable")
+            .gateway_timeout()
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/extended/transform_operation.rs"]
+mod tests;

@@ -1,14 +1,14 @@
 use std::{marker::PhantomData, sync::Arc};
 
-mod any_vec;
-mod avg;
-mod change;
-mod clone;
-mod op;
-mod rate;
-mod readable;
-mod sub;
-mod typed;
+pub mod any_vec;
+pub mod avg;
+pub mod change;
+pub mod clone;
+pub mod op;
+pub mod rate;
+pub mod readable;
+pub mod sub;
+pub mod typed;
 
 pub use avg::DeltaAvg;
 pub use change::DeltaChange;
@@ -28,13 +28,13 @@ use crate::{ReadableBoxedVec, VecIndex, VecValue, Version};
 ///
 /// Nothing is stored on disk — values are computed on-the-fly during iteration.
 pub struct LazyDeltaVec<I: VecIndex, S: VecValue, T, Op> {
-    pub(super) name: Arc<str>,
-    pub(super) base_version: Version,
-    pub(super) source: ReadableBoxedVec<I, S>,
-    pub(super) window_starts_version: Version,
+    name: Arc<str>,
+    base_version: Version,
+    source: ReadableBoxedVec<I, S>,
+    window_starts_version: Version,
     #[allow(clippy::type_complexity)]
-    pub(super) window_starts: Arc<dyn Fn() -> Arc<Vec<I>> + Send + Sync>,
-    pub(super) _op: PhantomData<(Op, T)>,
+    window_starts: Arc<dyn Fn() -> Arc<Vec<I>> + Send + Sync>,
+    _op: PhantomData<(Op, T)>,
 }
 
 impl<I, S, T, Op> LazyDeltaVec<I, S, T, Op>
@@ -65,7 +65,7 @@ where
     /// covering both current and ago positions in a single sequential read,
     /// then apply Op per element.
     #[inline]
-    pub(super) fn bulk_try_fold<B, E>(
+    fn bulk_try_fold<B, E>(
         &self,
         from: usize,
         to: usize,
@@ -98,13 +98,7 @@ where
     }
 
     #[inline]
-    pub(super) fn bulk_for_each(
-        &self,
-        from: usize,
-        to: usize,
-        starts: &[I],
-        mut each: impl FnMut(T),
-    ) {
+    fn bulk_for_each(&self, from: usize, to: usize, starts: &[I], mut each: impl FnMut(T)) {
         self.bulk_try_fold(from, to, starts, (), |(), v| {
             each(v);
             Ok::<_, std::convert::Infallible>(())

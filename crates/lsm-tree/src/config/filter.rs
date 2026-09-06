@@ -29,14 +29,6 @@ impl std::ops::Deref for FilterPolicy {
 }
 
 impl FilterPolicy {
-    pub(crate) fn get(&self, level: usize) -> FilterPolicyEntry {
-        #[expect(clippy::expect_used, reason = "policy is expected not to be empty")]
-        self.0
-            .get(level)
-            .copied()
-            .unwrap_or_else(|| self.last().copied().expect("policy should not be empty"))
-    }
-
     /// Disables all filters.
     ///
     /// **Not recommended unless you know what you are doing!**

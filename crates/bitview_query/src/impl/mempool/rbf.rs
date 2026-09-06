@@ -1,6 +1,10 @@
-use brk_error::Result;
+use crate::internals::*;
+
+use brk_error::{Error, OptionData, Result};
 use brk_mempool::{RbfForTx, RbfNode};
-use brk_types::{CheckedSub, FeeRate, RbfResponse, RbfTx, ReplacementNode, Timestamp, Txid};
+use brk_types::{
+    BlockHash, CheckedSub, FeeRate, RbfResponse, RbfTx, ReplacementNode, Timestamp, Txid,
+};
 use vecdb::ReadableVec;
 
 use crate::{Query, RepresentationId};
@@ -13,14 +17,19 @@ const RECENT_REPLACEMENTS_LIMIT: usize = 25;
 pub struct ResolvedRbf {
     source: RbfForTx,
     identity: Option<RepresentationId>,
+    tip: BlockHash,
 }
 
 impl ResolvedRbf {
-    fn new(source: RbfForTx) -> Self {
+    fn new(source: RbfForTx, tip: BlockHash) -> Self {
         let identity = source
             .is_empty()
             .then(|| serialize_json(&RbfResponse::EMPTY).1);
-        Self { source, identity }
+        Self {
+            source,
+            identity,
+            tip,
+        }
     }
 
     /// Present when the final empty response was completely resolved in preflight.
@@ -32,29 +41,41 @@ impl ResolvedRbf {
 impl Query {
     /// Resolve the exact owned replacement tree once under the mempool lock.
     pub fn resolve_rbf(&self, txid: &Txid) -> Result<ResolvedRbf> {
-        Ok(ResolvedRbf::new(self.require_mempool()?.rbf_for_tx(txid)))
+        let _guard = self.read_plugin(self.indexer())?;
+        let tip = self.tip_blockhash();
+        Ok(ResolvedRbf::new(
+            self.require_mempool()?.rbf_for_tx(txid, &tip)?,
+            tip,
+        ))
     }
 
     /// RBF history for a tx. Matches mempool.space's
     /// `GET /api/v1/tx/:txid/rbf`.
     pub fn tx_rbf(&self, txid: &Txid) -> Result<RbfResponse> {
-        Ok(self.tx_rbf_resolved(self.resolve_rbf(txid)?))
+        self.tx_rbf_resolved(self.resolve_rbf(txid)?)
     }
 
     /// Enrich an already resolved tree without repeating its mempool lookup.
-    pub fn tx_rbf_resolved(&self, rbf: ResolvedRbf) -> RbfResponse {
+    pub fn tx_rbf_resolved(&self, rbf: ResolvedRbf) -> Result<RbfResponse> {
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![plugins.indexer, plugins.transactions])?;
+        if self.tip_blockhash() != rbf.tip {
+            return Err(Error::StateUpdating);
+        }
         let RbfForTx { root, replaces } = rbf.source;
-        let replacements = root.map(|node| self.enrich_rbf_node(node, None));
+        let replacements = root
+            .map(|node| self.enrich_rbf_node(node, None))
+            .transpose()?;
         let replaces = (!replaces.is_empty()).then_some(replaces);
-        RbfResponse {
+        Ok(RbfResponse {
             replacements,
             replaces,
-        }
+        })
     }
 
     /// Serialize an already resolved tree with its exact content identity.
     pub fn tx_rbf_json_resolved(&self, rbf: ResolvedRbf) -> Result<(Vec<u8>, RepresentationId)> {
-        let response = self.tx_rbf_resolved(rbf);
+        let response = self.tx_rbf_resolved(rbf)?;
         Ok(serialize_json(&response))
     }
 
@@ -63,12 +84,17 @@ impl Query {
     /// Most-recent first, capped at 25. `full_rbf_only` keeps only
     /// trees with at least one non-signaling predecessor.
     pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
-        Ok(self
-            .require_mempool()?
-            .recent_rbf_trees(full_rbf_only, RECENT_REPLACEMENTS_LIMIT)
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![plugins.indexer, plugins.transactions])?;
+        let trees = self.require_mempool()?.recent_rbf_trees(
+            full_rbf_only,
+            RECENT_REPLACEMENTS_LIMIT,
+            &self.tip_blockhash(),
+        )?;
+        trees
             .into_iter()
             .map(|node| self.enrich_rbf_node(node, None))
-            .collect())
+            .collect()
     }
 
     /// Serialize recent replacements with their exact content identity.
@@ -81,18 +107,22 @@ impl Query {
     }
 
     /// Layer `mined` and effective fee rate onto an owned RBF tree.
-    fn enrich_rbf_node(&self, node: RbfNode, successor_time: Option<Timestamp>) -> ReplacementNode {
+    fn enrich_rbf_node(
+        &self,
+        node: RbfNode,
+        successor_time: Option<Timestamp>,
+    ) -> Result<ReplacementNode> {
         let interval = successor_time
             .and_then(|time| time.checked_sub(node.first_seen))
             .map(|duration| *duration);
-        let (mined, rate) = self.rbf_status_and_rate(&node);
+        let (mined, rate) = self.rbf_status_and_rate(&node)?;
         let first_seen = node.first_seen;
         let replaces = node
             .replaces
             .into_iter()
             .map(|child| self.enrich_rbf_node(child, Some(first_seen)))
-            .collect();
-        ReplacementNode {
+            .collect::<Result<_>>()?;
+        Ok(ReplacementNode {
             tx: RbfTx {
                 txid: node.txid,
                 fee: node.fee,
@@ -108,48 +138,30 @@ impl Query {
             interval,
             mined,
             replaces,
-        }
+        })
     }
 
     /// Resolve confirmation and its effective rate with one exact txid lookup.
-    fn rbf_status_and_rate(&self, node: &RbfNode) -> (Option<bool>, FeeRate) {
-        let confirmed_rate = self
-            .resolve_confirmed_tx(&node.txid)
-            .ok()
-            .and_then(|transaction| {
-                let (_, index, _) = self.revalidate_confirmed_tx(transaction).ok()?;
-                let rate = self
-                    .plugins()
+    fn rbf_status_and_rate(&self, node: &RbfNode) -> Result<(Option<bool>, FeeRate)> {
+        let confirmed_rate = match self.resolve_confirmed_position(&node.txid) {
+            Ok((index, _)) => Some(
+                self.plugins()
                     .transactions
                     .fees
                     .effective_fee_rate
                     .tx_index
-                    .collect_one(index);
-                self.revalidate_confirmed_tx(transaction).ok()?;
-                Some(rate)
-            });
-        let mined = confirmed_rate.is_some().then_some(true);
-        let rate = if node.in_mempool {
-            node.rate
-        } else {
-            confirmed_rate.flatten().unwrap_or(node.rate)
+                    .collect_one(index)
+                    .data()?,
+            ),
+            Err(Error::UnknownTxid) => None,
+            Err(error) => return Err(error),
         };
-        (mined, rate)
+        let mined = confirmed_rate.is_some().then_some(true);
+        let rate = confirmed_rate.unwrap_or(node.rate);
+        Ok((mined, rate))
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::representation_id::content_hash;
-
-    #[test]
-    fn empty_rbf_is_identified_by_its_exact_json() {
-        let resolved = ResolvedRbf::new(RbfForTx::default());
-        let bytes = serde_json::to_vec(&RbfResponse::EMPTY).unwrap();
-        assert!(matches!(
-            resolved.identity(),
-            Some(RepresentationId::Content(hash)) if hash == content_hash(&bytes)
-        ));
-    }
-}
+#[path = "../../../tests/unit/impl/mempool/rbf.rs"]
+mod tests;

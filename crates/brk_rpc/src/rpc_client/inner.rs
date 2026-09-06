@@ -13,13 +13,14 @@ use tracing::{debug, info, warn};
 
 use crate::Auth;
 
-use super::rpc_call::RpcCall;
+use super::{rpc_call::RpcCall, submission::Submission};
 
 #[derive(Debug)]
 pub struct ClientInner {
-    url: String,
-    auth: Auth,
+    pub url: String,
+    pub auth: Auth,
     client: RwLock<JsonRpcClient>,
+    submission: Submission,
     max_retries: usize,
     retry_delay: Duration,
 }
@@ -31,9 +32,14 @@ impl ClientInner {
             url: url.to_string(),
             auth,
             client: RwLock::new(client),
+            submission: Submission::new(),
             max_retries,
             retry_delay,
         })
+    }
+
+    pub fn send_raw_transaction(&self, hex: &str) -> Result<brk_types::Txid> {
+        self.submission.send(&self.url, &self.auth, hex)
     }
 
     /// Builds a `jsonrpc::Client` using the `simple_http` transport, which
@@ -115,15 +121,6 @@ impl ClientInner {
             data: None,
         })
         .into())
-    }
-
-    pub fn call_once<T, P>(&self, method: &str, args: &P) -> Result<T>
-    where
-        T: for<'de> Deserialize<'de>,
-        P: Serialize + ?Sized,
-    {
-        let raw = to_raw_value(args).map_err(Error::from)?;
-        Ok(self.client.read().call::<T>(method, Some(&raw))?)
     }
 
     fn send_batch<P>(

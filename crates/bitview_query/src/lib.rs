@@ -2,13 +2,11 @@
 #![allow(clippy::module_inception)]
 #![allow(clippy::type_complexity)]
 
-#[cfg(feature = "price")]
-use std::sync::RwLock;
 #[cfg(feature = "indexer")]
-use std::{path::Path, sync::Arc};
+use std::{path::Path, sync::Arc, time::Duration};
 
-#[cfg(feature = "chain")]
-use r#impl::{AddrMempoolTxsCache, AddrTxsCache, BlockTemplateCache};
+#[cfg(feature = "indexer")]
+use bitview_plugin::{Plugin, PluginReadGuard};
 
 #[cfg(feature = "bedrock")]
 use bitview_plugin_bedrock::Vecs as Bedrock;
@@ -39,11 +37,9 @@ use bitview_plugin_transactions::Vecs as Transactions;
 #[cfg(feature = "indexer")]
 use bitview_types::SyncStatus;
 #[cfg(feature = "indexer")]
-use brk_error::{OptionData, Result};
+use brk_error::{Error, OptionData, Result};
 #[cfg(feature = "indexer")]
 use brk_mempool::Mempool;
-#[cfg(feature = "price")]
-use brk_oracle::Oracle;
 #[cfg(feature = "indexer")]
 use brk_reader::Reader;
 #[cfg(feature = "indexer")]
@@ -59,6 +55,9 @@ use vecdb::{ReadOnlyClone, ReadableVec, Ro};
 
 #[cfg(feature = "tokio")]
 mod r#async;
+mod internals;
+#[cfg(feature = "price")]
+mod live_oracle;
 mod output;
 #[cfg(feature = "indexer")]
 mod query_plugin_set;
@@ -66,7 +65,6 @@ mod query_plugin_set;
 mod query_plugins;
 mod representation_id;
 mod series_output;
-mod series_output_legacy;
 mod vecs;
 
 #[cfg(feature = "indexer")]
@@ -74,16 +72,16 @@ mod r#impl;
 
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-#[cfg(feature = "price")]
-pub use r#impl::ResolvedHistoricalPrice;
 #[cfg(feature = "series")]
 pub use r#impl::ResolvedQuery;
+#[cfg(feature = "urpd")]
+pub use r#impl::ResolvedUrpd;
 #[cfg(feature = "chain")]
 pub use r#impl::{
-    AddrMempoolTxsPreflight, AddrTxsPreflight, BlockTemplateDiffPreflight, ResolvedAddrChainTxs,
-    ResolvedAddrMempoolTxs, ResolvedAddrTxs, ResolvedAddrUtxos, ResolvedBlock,
-    ResolvedBlockTimestamp, ResolvedConfirmedTx, ResolvedCpfp, ResolvedPoolBlocks,
-    ResolvedRawTransaction, ResolvedRbf, ResolvedTransaction,
+    BlockTemplateSource, ResolvedAddrChainTxs, ResolvedAddrTxs, ResolvedAddrUtxos, ResolvedBlock,
+    ResolvedBlockTemplateDiff, ResolvedBlockTimestamp, ResolvedBlocks, ResolvedBlocksV1,
+    ResolvedConfirmedTx, ResolvedCpfp, ResolvedPoolBlocks, ResolvedRawTransaction, ResolvedRbf,
+    ResolvedTransaction,
 };
 pub use output::*;
 #[cfg(feature = "indexer")]
@@ -93,13 +91,11 @@ pub use query_plugin_set::{
     SupportsOutputs, SupportsPools, SupportsPrice, SupportsSeriesQueries, SupportsTransactions,
     SupportsUrpdQueries,
 };
-pub use representation_id::RepresentationId;
-pub use series_output::*;
-pub use series_output_legacy::*;
-pub use vecs::Vecs;
-
 #[cfg(feature = "indexer")]
 use query_plugins::QueryPlugins;
+pub use representation_id::RepresentationId;
+pub use series_output::*;
+pub use vecs::{ResolvedSeriesInfo, Vecs};
 
 #[cfg(feature = "indexer")]
 #[derive(Clone)]
@@ -109,18 +105,31 @@ struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
     plugins: QueryPlugins<'a>,
     mempool: Option<Mempool>,
-    #[cfg(feature = "chain")]
-    addr_mempool_txs_cache: AddrMempoolTxsCache,
-    #[cfg(feature = "chain")]
-    addr_txs_cache: AddrTxsCache,
-    #[cfg(feature = "chain")]
-    block_template_cache: BlockTemplateCache,
     #[cfg(feature = "price")]
-    live_oracle: RwLock<Option<(BlockHash, Arc<Oracle>)>>,
+    live_oracle: live_oracle::LiveOracle,
 }
 
 #[cfg(feature = "indexer")]
 impl Query {
+    const UPDATE_WAIT_TIMEOUT: Duration = Duration::from_secs(4);
+
+    fn read_plugin(&self, plugin: &impl Plugin) -> Result<PluginReadGuard> {
+        plugin
+            .gate()
+            .read_for(Self::UPDATE_WAIT_TIMEOUT)
+            .ok_or(Error::StateUpdating)
+    }
+
+    #[cfg(feature = "chain")]
+    fn try_read_plugin(&self, plugin: &impl Plugin) -> Option<PluginReadGuard> {
+        plugin.gate().try_read()
+    }
+
+    #[cfg(feature = "mappings")]
+    fn read_plugins(&self, plugins: Vec<&dyn Plugin>) -> Result<PluginReadGuard> {
+        PluginReadGuard::acquire_for(plugins, Self::UPDATE_WAIT_TIMEOUT).ok_or(Error::StateUpdating)
+    }
+
     /// Builds the process-lifetime read-only query view.
     ///
     /// The cloned composition and its vector catalog are intentionally leaked
@@ -140,14 +149,8 @@ impl Query {
             vecs,
             plugins,
             mempool,
-            #[cfg(feature = "chain")]
-            addr_mempool_txs_cache: AddrMempoolTxsCache::default(),
-            #[cfg(feature = "chain")]
-            addr_txs_cache: AddrTxsCache::default(),
-            #[cfg(feature = "chain")]
-            block_template_cache: BlockTemplateCache::default(),
             #[cfg(feature = "price")]
-            live_oracle: RwLock::new(None),
+            live_oracle: Default::default(),
         }))
     }
 
@@ -210,8 +213,13 @@ impl Query {
                 .unwrap_or(0),
         );
 
-        let timestamp =
-            tip.and_then(|height| self.indexer().vecs().blocks.timestamp.collect_one(height));
+        let timestamp = tip.and_then(|height| {
+            self.plugins()
+                .mappings
+                .timestamp
+                .monotonic
+                .collect_one(height)
+        });
         for index in Index::all().into_iter().filter(Index::is_date_based) {
             let len = timestamp
                 .and_then(|timestamp| index.timestamp_to_index(timestamp))
@@ -237,20 +245,22 @@ impl Query {
 
     /// Build sync status entirely from one safely published local snapshot.
     pub fn local_sync_status(&self) -> Result<SyncStatus> {
-        let safe = self.safe_lengths();
-        let indexed_height = safe.last_height().unwrap_or_default();
-        self.sync_status_from(safe, indexed_height)
+        self.sync_status_from(None)
     }
 
     /// Build sync status with the given external tip height. Both indexed and
     /// computed heights use one safely published pipeline snapshot.
     pub fn sync_status(&self, tip_height: Height) -> Result<SyncStatus> {
-        let safe = self.safe_lengths();
-        self.sync_status_from(safe, tip_height)
+        self.sync_status_from(Some(tip_height))
     }
 
-    fn sync_status_from(&self, safe: Lengths, tip_height: Height) -> Result<SyncStatus> {
-        let indexed_height = safe.last_height().unwrap_or_default();
+    fn sync_status_from(&self, tip_height: Option<Height>) -> Result<SyncStatus> {
+        let guard = self.read_plugin(self.indexer())?;
+        let indexed_height = self
+            .safe_lengths()
+            .last_height()
+            .ok_or(Error::StateUpdating)?;
+        let tip_height = tip_height.unwrap_or(indexed_height);
         let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
         let last_indexed_at_unix = self
             .indexer()
@@ -259,6 +269,7 @@ impl Query {
             .timestamp
             .collect_one(indexed_height)
             .data()?;
+        drop(guard);
 
         Ok(SyncStatus {
             indexed_height,

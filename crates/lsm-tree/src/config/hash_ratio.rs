@@ -15,14 +15,6 @@ impl std::ops::Deref for HashRatioPolicy {
 }
 
 impl HashRatioPolicy {
-    pub(crate) fn get(&self, level: usize) -> f32 {
-        #[expect(clippy::expect_used, reason = "policy is expected not to be empty")]
-        self.0
-            .get(level)
-            .copied()
-            .unwrap_or_else(|| self.last().copied().expect("policy should not be empty"))
-    }
-
     /// Uses the same block size in every level.
     #[must_use]
     pub fn all(c: f32) -> Self {

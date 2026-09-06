@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 
-mod default;
+pub mod default;
 
 /// Atomic length counter shared across clones.
 ///

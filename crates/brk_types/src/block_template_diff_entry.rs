@@ -10,7 +10,7 @@ use crate::Transaction;
 ///   transactions of the prior template (which the client cached at
 ///   `since`).
 /// - `New(tx)` serializes as a transaction object - a body that was
-///   not in the prior template and must be added at this position.
+///   new or changed since the prior template and must replace this position.
 ///
 /// Reconstruction is a single pass: for each entry, either copy
 /// `prior[idx]` or append the inline body.

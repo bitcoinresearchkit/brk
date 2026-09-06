@@ -47,8 +47,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// that estimates price from round-USD transaction-output patterns. Empty
     /// periods carry the previous close as all four candle values.
     pub ohlc: OhlcByUnit,
-    /// BRK's block-level BTC/USD spot-price estimate. Heights before 340,000 use
-    /// baked historical exchange prices; later heights use an on-chain oracle
+    /// BRK's block-level Bitcoin (BTC/USD) spot-price estimate. Heights before
+    /// 340,000 use baked historical exchange prices; later heights use an on-chain oracle
     /// that estimates price from round-USD transaction-output patterns. This is
     /// a model-derived block price, not a contemporaneous exchange ticker.
     pub spot: PriceByUnit<M>,

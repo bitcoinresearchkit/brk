@@ -1,29 +1,17 @@
 use std::sync::Arc;
 
-use brk_types::{NextBlockHash, Txid};
+use brk_types::{NextBlockHash, Transaction};
 
 use super::BlockTemplateSource;
 
 /// A validated historical template captured for one diff request.
 pub struct ResolvedBlockTemplateDiff {
     since: NextBlockHash,
-    past: Arc<[Txid]>,
+    past: Arc<[Arc<Transaction>]>,
     source: BlockTemplateSource,
 }
 
 impl ResolvedBlockTemplateDiff {
-    pub(super) fn new(
-        since: NextBlockHash,
-        past: Arc<[Txid]>,
-        source: BlockTemplateSource,
-    ) -> Self {
-        Self {
-            since,
-            past,
-            source,
-        }
-    }
-
     #[must_use]
     pub fn since(&self) -> NextBlockHash {
         self.since
@@ -33,8 +21,28 @@ impl ResolvedBlockTemplateDiff {
     pub fn source(&self) -> &BlockTemplateSource {
         &self.source
     }
-
-    pub(super) fn into_parts(self) -> (NextBlockHash, Arc<[Txid]>) {
-        (self.since, self.past)
+}
+pub trait ApiBlockTemplateDiffResolvedBlockTemplateDiffInternal: Sized {
+    fn new(
+        since: NextBlockHash,
+        past: Arc<[Arc<Transaction>]>,
+        source: BlockTemplateSource,
+    ) -> Self;
+    fn into_parts(self) -> (NextBlockHash, Arc<[Arc<Transaction>]>, BlockTemplateSource);
+}
+impl ApiBlockTemplateDiffResolvedBlockTemplateDiffInternal for ResolvedBlockTemplateDiff {
+    fn new(
+        since: NextBlockHash,
+        past: Arc<[Arc<Transaction>]>,
+        source: BlockTemplateSource,
+    ) -> Self {
+        Self {
+            since,
+            past,
+            source,
+        }
+    }
+    fn into_parts(self) -> (NextBlockHash, Arc<[Arc<Transaction>]>, BlockTemplateSource) {
+        (self.since, self.past, self.source)
     }
 }

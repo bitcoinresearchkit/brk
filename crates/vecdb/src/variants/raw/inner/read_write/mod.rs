@@ -1,14 +1,16 @@
+use crate::internals::*;
+
 use std::marker::PhantomData;
 
 use log::debug;
 use rawdb::Reader;
 
-mod any_stored_vec;
-mod any_vec;
-mod readable;
-mod rollback;
-mod typed;
-mod writable;
+pub mod any_stored_vec;
+pub mod any_vec;
+pub mod readable;
+pub mod rollback;
+pub mod typed;
+pub mod writable;
 
 use crate::{
     AnyStoredVec, AnyVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
@@ -30,7 +32,7 @@ const VERSION: Version = Version::ONE;
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
 pub struct ReadWriteRawVec<I, T, S> {
-    pub(crate) base: ReadWriteBaseVec<I, T>,
+    base: ReadWriteBaseVec<I, T>,
     _strategy: PhantomData<S>,
 }
 
@@ -188,47 +190,6 @@ where
         Some(reader.get_at(index))
     }
 
-    pub(crate) fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
-        let reader = self.raw_reader();
-        Ok((from..to)
-            .map(|index| self.unchecked_read_at(index, &reader))
-            .collect())
-    }
-
-    #[inline(always)]
-    pub(super) fn fold_source<B, F: FnMut(B, T) -> B>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        f: F,
-    ) -> B {
-        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
-        let bytes = (to - from) * Self::SIZE_OF_T;
-        if self.region().prefers_mmap(offset, bytes) {
-            RawMmapSource::new(self, from, to).fold(init, f)
-        } else {
-            RawIoSource::new(self, from, to).fold(init, f)
-        }
-    }
-
-    #[inline(always)]
-    pub(super) fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E> {
-        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
-        let bytes = (to - from) * Self::SIZE_OF_T;
-        if self.region().prefers_mmap(offset, bytes) {
-            RawMmapSource::new(self, from, to).try_fold(init, f)
-        } else {
-            RawIoSource::new(self, from, to).try_fold(init, f)
-        }
-    }
-
     pub fn fold_stored_io<B, F: FnMut(B, T) -> B>(
         &self,
         from: usize,
@@ -259,5 +220,69 @@ where
             return init;
         }
         RawMmapSource::new(self, from, to).fold(init, f)
+    }
+}
+pub trait VariantsRawInnerReadWriteReadWriteRawVecITSInternal<I, T, S>: Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn base(&self) -> &ReadWriteBaseVec<I, T>;
+    fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T>;
+    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>>;
+    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B;
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        f: F,
+    ) -> std::result::Result<B, E>;
+}
+impl<I, T, S> VariantsRawInnerReadWriteReadWriteRawVecITSInternal<I, T, S>
+    for ReadWriteRawVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn base(&self) -> &ReadWriteBaseVec<I, T> {
+        &self.base
+    }
+    fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T> {
+        &mut self.base
+    }
+    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
+        let reader = self.raw_reader();
+        Ok((from..to)
+            .map(|index| self.unchecked_read_at(index, &reader))
+            .collect())
+    }
+    #[inline(always)]
+    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {
+        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
+        let bytes = (to - from) * Self::SIZE_OF_T;
+        if self.region().prefers_mmap(offset, bytes) {
+            RawMmapSource::new(self, from, to).fold(init, f)
+        } else {
+            RawIoSource::new(self, from, to).fold(init, f)
+        }
+    }
+    #[inline(always)]
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        f: F,
+    ) -> std::result::Result<B, E> {
+        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
+        let bytes = (to - from) * Self::SIZE_OF_T;
+        if self.region().prefers_mmap(offset, bytes) {
+            RawMmapSource::new(self, from, to).try_fold(init, f)
+        } else {
+            RawIoSource::new(self, from, to).try_fold(init, f)
+        }
     }
 }

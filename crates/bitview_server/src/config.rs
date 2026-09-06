@@ -31,6 +31,13 @@ pub struct ServerConfig {
     pub max_utxos: usize,
 }
 
+impl ServerConfig {
+    /// Directory for daemon and benchmark logs.
+    pub fn logs_path(&self) -> PathBuf {
+        self.data_path.join("logs")
+    }
+}
+
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
@@ -46,14 +53,5 @@ impl Default for ServerConfig {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn defaults_to_all_interfaces_on_the_default_port() {
-        let config = ServerConfig::default();
-
-        assert_eq!(config.bind, DEFAULT_BIND);
-        assert_eq!(config.port, Port::DEFAULT);
-    }
-}
+#[path = "../tests/unit/config.rs"]
+mod tests;

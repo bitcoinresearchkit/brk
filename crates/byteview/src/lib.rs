@@ -23,7 +23,6 @@
     clippy::needless_lifetimes
 )]
 
-mod builder;
 mod byteview;
 
 pub use byteview::ByteView;

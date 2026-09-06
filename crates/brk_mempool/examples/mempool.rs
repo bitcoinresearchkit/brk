@@ -22,13 +22,13 @@ fn main() -> brk_error::Result<()> {
     loop {
         thread::sleep(Duration::from_secs(5));
 
-        let info_count = mempool.info().count;
+        let info_count = mempool.info().map(|info| info.count);
         let stats = mempool.stats();
         let snapshot = mempool.snapshot();
         let blocks_tx_total: usize = snapshot.blocks.iter().map(Vec::len).sum();
 
         println!(
-            "info.count={} txs={} unresolved={} addrs={} outpoints={} \
+            "info.count={:?} txs={} unresolved={} addrs={} outpoints={} \
              graveyard.tombstones={} graveyard.order={} \
              snap.txs.len={} snap.blocks={} snap.blocks_txs={} \
              rebuilds={}",

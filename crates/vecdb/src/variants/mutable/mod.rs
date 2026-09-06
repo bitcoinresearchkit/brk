@@ -10,14 +10,14 @@ use log::debug;
 
 use crate::{AnyVec, Bytes, Error, Result, TypedVec, VecIndex, WithPrev, vec_region_name_with};
 
-mod any_stored_vec;
-mod any_vec;
-mod importable;
-mod raw;
-mod read_only;
-mod readable;
-mod typed;
-mod writable;
+pub mod any_stored_vec;
+pub mod any_vec;
+pub mod importable;
+pub mod raw;
+pub mod read_only;
+pub mod readable;
+pub mod typed;
+pub mod writable;
 
 use raw::MutableRawVec;
 pub use read_only::ReadOnlyMutableVec;

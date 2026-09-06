@@ -1,0 +1,12 @@
+[package]
+name = "bitviewd_latency"
+description = "Offline latency reports from bitviewd access logs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+jiff = { workspace = true }
+bitviewd = { workspace = true, default-features = false }
+tempfile = { workspace = true }

@@ -26,22 +26,34 @@ indexer. Only one driver may run for a `Mempool` instance.
 
 Use `tick` or `tick_with` to drive one cycle manually. They return a `Cycle`
 describing the observed additions, removals, and other state changes.
+Concurrent manual cycles return `StateUpdating` before issuing RPCs or changing
+state.
 
 ## Read API
 
 Readers access the latest published state without driving a rebuild:
 
-- `snapshot`, `stats`, and `info` expose aggregate state.
+- `snapshot` and `stats` expose diagnostic state. `info`, txid lists/hashes,
+  recent transactions and transaction times require a completed pool observation
+  and return an error during startup, incomplete updates or failed polls.
 - `fees` and `block_stats` expose recommendations and projected-block
   statistics.
 - `block_template` returns the projected next block in Bitcoin Core
   `getblocktemplate` order.
 - `block_template_diff` returns retained, new, and removed transactions since a
   recent template hash.
-- `contains_txid`, `with_tx`, `lookup_spender`, and `recent_txs` query live
-  transactions.
-- `addr_stats` and `addr_txs` query address activity.
-- `rbf_for_tx` and `recent_rbf_trees` expose replacement relationships.
+- `contains_txid`, `transaction`, and the outspend/spender reads take the
+  caller's full chain-tip hash and require a completed matching publication.
+  `transaction` shares an immutable live or recently vanished body; replaced
+  tombstones are excluded. `recent_txs` exposes the completed recent live list.
+- `cpfp_info` and `effective_fee_rate` additionally verify that the graph and
+  live transaction fields share a revision. Stale graphs are not combined with
+  newer live state.
+- `addr_stats` and `addr_txs` take the caller's full chain-tip hash and return
+  address activity only from a completed publication at that tip. `addr_txs`
+  shares immutable `Arc<Transaction>` bodies rather than deep-cloning them.
+- `rbf_for_tx` and `recent_rbf_trees` expose replacement relationships at a
+  caller-supplied chain tip, requiring matching completed live/graph revisions.
 
 The full next-block template follows the transaction order returned by Bitcoin
 Core's `getblocktemplate`. Later projected blocks are coarse fee-ordered
@@ -65,6 +77,15 @@ or above `minimum_fee`.
 
 The writer builds a complete replacement `Snapshot` and publishes it in one
 swap. Read methods that draw from the snapshot therefore agree on projected
-blocks, fees, chunk rates, and the next-block hash. Live transaction/address
-lookups may include changes received after that snapshot; methods document
-their fallback behavior for that short interval.
+blocks, fees, chunk rates, and the next-block hash. Live transaction lookups
+may include changes received after that snapshot; methods document their
+fallback behavior for that short interval.
+
+Address reads have a stricter gate. Each poll brackets its fetch and prevout
+resolution with full best-block hashes and checks them against the template's
+anchor. Address reads return `StateUpdating` during mutations, on a chain-tip
+mismatch, after a failed poll, or while downloads/prevouts are incomplete. A
+template containing transactions absent from the raw mempool listing is still
+usable for template projection, but their union is not served as an address
+balance or page. These are consistency checks on sampled observations, not a
+claim that a JSON-RPC batch is atomic.

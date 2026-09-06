@@ -2245,7 +2245,7 @@
       "tool": {
         "name": "get_block_by_timestamp",
         "title": "Block by timestamp",
-        "description": "Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*\n\nREST operation: `GET /api/v1/mining/blocks/timestamp/{timestamp}`.",
+        "description": "Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*\n\nREST operation: `GET /api/v1/mining/blocks/timestamp/{timestamp}`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -6552,7 +6552,7 @@
       "tool": {
         "name": "get_historical_price",
         "title": "Historical price",
-        "description": "Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*\n\nREST operation: `GET /api/v1/historical-price`.",
+        "description": "Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*\n\nREST operation: `GET /api/v1/historical-price`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -6930,7 +6930,7 @@
       "tool": {
         "name": "get_mempool_hash",
         "title": "Mempool content hash",
-        "description": "Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.\n\nREST operation: `GET /api/mempool/hash`.",
+        "description": "Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.\n\nREST operation: `GET /api/mempool/hash`.",
         "inputSchema": {
           "type": "object",
           "properties": {},
@@ -7101,7 +7101,7 @@
       "tool": {
         "name": "get_oracle_histogram_outputs_live",
         "title": "Live output value histogram",
-        "description": "Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.\n\nREST operation: `GET /api/oracle/histogram/outputs/live`.",
+        "description": "Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.\n\nREST operation: `GET /api/oracle/histogram/outputs/live`.",
         "inputSchema": {
           "type": "object",
           "properties": {},
@@ -7188,7 +7188,7 @@
       "tool": {
         "name": "get_oracle_histogram_payments_live",
         "title": "Live payment output histogram",
-        "description": "Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.\n\nREST operation: `GET /api/oracle/histogram/payments/live`.",
+        "description": "Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.\n\nREST operation: `GET /api/oracle/histogram/payments/live`.",
         "inputSchema": {
           "type": "object",
           "properties": {},
@@ -7769,7 +7769,7 @@
       "tool": {
         "name": "get_pool_blocks",
         "title": "Mining pool blocks",
-        "description": "Get the 10 most recent blocks mined by a specific pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*\n\nREST operation: `GET /api/v1/mining/pool/{slug}/blocks`.",
+        "description": "Get up to 100 recent blocks mined by a specific pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*\n\nREST operation: `GET /api/v1/mining/pool/{slug}/blocks`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -8538,7 +8538,7 @@
       "tool": {
         "name": "get_pool_blocks_from",
         "title": "Mining pool blocks from height",
-        "description": "Get 10 blocks mined by a specific pool before (and including) the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*\n\nREST operation: `GET /api/v1/mining/pool/{slug}/blocks/{height}`.",
+        "description": "Get up to 100 blocks mined by a specific pool before (and including) the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*\n\nREST operation: `GET /api/v1/mining/pool/{slug}/blocks/{height}`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -11092,7 +11092,7 @@
               ]
             },
             "SeriesList": {
-              "description": "Comma-separated list of series names",
+              "description": "Comma-separated list of series names\n\nDeserialization permits at most 32 normalized names and 2,048 decoded input\nstring bytes. For arrays, the byte budget is shared by their string values.",
               "type": "string",
               "examples": [
                 "date,price_close",
@@ -11352,7 +11352,7 @@
       "tool": {
         "name": "get_series_info",
         "title": "Get series info",
-        "description": "Returns the optional description, supported indexes, and value type for the specified series.\n\nREST operation: `GET /api/series/{series}`.",
+        "description": "Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.\n\nREST operation: `GET /api/series/{series}`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -11677,7 +11677,7 @@
       "tool": {
         "name": "get_series_version",
         "title": "Get series version",
-        "description": "Returns the current version of a series. Changes when the series data is updated.\n\nREST operation: `GET /api/series/{series}/{index}/version`.",
+        "description": "Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.\n\nREST operation: `GET /api/series/{series}/{index}/version`.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -11788,7 +11788,7 @@
       "tool": {
         "name": "get_sync_status",
         "title": "Sync status",
-        "description": "Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.\n\nREST operation: `GET /api/server/sync`.",
+        "description": "Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.\n\nREST operation: `GET /api/server/sync`.",
         "inputSchema": {
           "type": "object",
           "properties": {},
@@ -14006,7 +14006,7 @@
       "tool": {
         "name": "search_series",
         "title": "Search series",
-        "description": "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.\n\nREST operation: `GET /api/series/search`.",
+        "description": "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.\n\nREST operation: `GET /api/series/search`.",
         "inputSchema": {
           "type": "object",
           "properties": {

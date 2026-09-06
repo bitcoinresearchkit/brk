@@ -10,27 +10,66 @@ mod base;
 mod bytes;
 mod cursor;
 mod error;
+mod internals;
 mod iterators;
 mod ops;
 mod read_bounds;
 mod stamp;
+#[macro_use]
 mod traits;
 mod variants;
 mod version;
 
 use variants::*;
 
-pub use base::*;
-pub use bytes::*;
-pub use cursor::*;
-pub use error::*;
-pub use iterators::*;
-pub use ops::*;
-pub use read_bounds::*;
-pub use stamp::*;
-pub use traits::*;
-pub use variants::*;
-pub use version::*;
+use base::{
+    ChangeCursor, ChangeData, ReadOnlyBaseVec, ReadWriteBaseVec, vec_region_name,
+    vec_region_name_with,
+};
+pub use base::{Format, HEADER_OFFSET, Header, ImportOptions, SharedLen, WithPrev};
+pub use bytes::Bytes;
+
+pub use cursor::Cursor;
+
+pub use error::{Error, Result};
+
+pub use iterators::ValueWriter;
+
+pub use ops::{BinaryTransform, CheckedSub, Divide, Minus, Plus, SaturatingAdd, Times};
+
+pub use read_bounds::ReadBounds;
+
+pub use stamp::Stamp;
+
+#[cfg(feature = "schemars")]
+pub use traits::AnyVecWithSchema;
+pub use traits::{
+    AnyExportableVec, AnyReadableVec, AnySerializableVec, AnyStoredVec, AnyVec, AnyVecWithWriter,
+    Formattable, ImportableVec, PrintableIndex, READ_CHUNK_SIZE, ReadOnlyClone, ReadableBoxedVec,
+    ReadableCloneableVec, ReadableOptionVec, ReadableVec, Ro, Rw, StorageMode, StoredVec, TypedVec,
+    ValueStrategy, VecIndex, VecValue, WritableVec, i64_to_usize, short_type_name,
+};
+
+pub use variants::{
+    AggFold, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue, CachedBoxedVec,
+    CachedReadableVec, CachedVec, CachedVecBudget, ColumnId, ColumnarVec, CompressedRangeCursor,
+    CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec,
+    EncodedChunk, Halve, Ident, LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec,
+    LazyDeltaVec, LazyVec, MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader,
+    OverflowVecReaderCursor, OverflowVecValue, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
+    ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
+    ReadWriteRawVec, ReadableColumnarVec, UnaryTransform, VecReader, VecReaderCursor,
+};
+#[cfg(feature = "lz4")]
+pub use variants::{LZ4Strategy, LZ4Vec, LZ4VecValue};
+#[cfg(feature = "pco")]
+pub use variants::{Pco, PcoVec, PcoVecValue, PcodecStrategy};
+#[cfg(feature = "zerocopy")]
+pub use variants::{ZeroCopyStrategy, ZeroCopyVec, ZeroCopyVecValue};
+#[cfg(feature = "zstd")]
+pub use variants::{ZstdStrategy, ZstdVec, ZstdVecValue};
+
+pub use version::Version;
 
 const ONE_KIB: usize = 1024;
 

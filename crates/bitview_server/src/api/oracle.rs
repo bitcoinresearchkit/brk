@@ -5,16 +5,16 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_oracle::{HistogramEmaCompact, HistogramRaw};
-use brk_types::{Day1, Dollars, Version};
+use brk_types::{Day1, Dollars};
 
 use crate::{
     AppState,
-    error::RouteResult,
+    error::Result,
     extended::TransformResponseExtended,
     params::{Empty, HeightOrDate, HeightOrDateParam},
 };
 
-pub(super) async fn serve_live_price(
+pub async fn serve_live_price(
     headers: HeaderMap,
     _: Empty,
     State(state): State<AppState>,
@@ -62,7 +62,8 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .description(
                             "Live smoothed histogram of oracle-eligible payment outputs, binned \
                             by output value on the oracle log scale. It combines the committed \
-                            oracle window with the forming mempool block. A flat array of \
+                            oracle window with the complete mempool's eligible outputs from \
+                            a matching chain publication. A flat array of \
                             log-scale bins.",
                         )
                         .json_response::<HistogramEmaCompact>()
@@ -78,25 +79,18 @@ impl OracleRoutes for ApiRouter<AppState> {
                        Path(path): Path<HeightOrDateParam>,
                        _: Empty,
                        State(state): State<AppState>|
-                       -> RouteResult<Response> {
-                    let version = Version::new(brk_oracle::VERSION);
+                       -> Result<Response> {
                     match path.resolve() {
-                        Ok(HeightOrDate::Date(date)) => {
-                            let strategy = state.date_strategy(version, date).await?;
-                            Ok(state
-                                .respond_json(&headers, strategy, move |q| {
-                                    q.confirmed_payment_histogram_day(Day1::try_from(date)?)
-                                })
-                                .await)
-                        }
-                        Ok(HeightOrDate::Height(height)) => {
-                            let strategy = state.height_strategy(version, height);
-                            Ok(state
-                                .respond_json(&headers, strategy, move |q| {
-                                    q.confirmed_payment_histogram(usize::from(height))
-                                })
-                                .await)
-                        }
+                        Ok(HeightOrDate::Date(date)) => Ok(state
+                            .respond_json_content(&headers, move |q| {
+                                q.confirmed_payment_histogram_day(Day1::try_from(date)?)
+                            })
+                            .await),
+                        Ok(HeightOrDate::Height(height)) => Ok(state
+                            .respond_json_content(&headers, move |q| {
+                                q.confirmed_payment_histogram(usize::from(height))
+                            })
+                            .await),
                         Err(e) => Ok(e.into_response()),
                     }
                 },
@@ -132,8 +126,8 @@ impl OracleRoutes for ApiRouter<AppState> {
                         .oracle_tag()
                         .summary("Live output value histogram")
                         .description(
-                            "Live unfiltered output value histogram for the forming mempool \
-                            block. Every live output is binned by value on the oracle log scale; \
+                            "Live unfiltered output value histogram for the complete published \
+                            mempool. Every live output is binned by value on the oracle log scale; \
                             no oracle payment filters are applied. A flat array of log-scale \
                             bins, all zero when no mempool is configured.",
                         )
@@ -150,26 +144,18 @@ impl OracleRoutes for ApiRouter<AppState> {
                        Path(path): Path<HeightOrDateParam>,
                        _: Empty,
                        State(state): State<AppState>|
-                       -> RouteResult<Response> {
-                    let version = Version::new(brk_oracle::VERSION);
-
+                       -> Result<Response> {
                     match path.resolve() {
-                        Ok(HeightOrDate::Date(date)) => {
-                            let strategy = state.date_strategy(version, date).await?;
-                            Ok(state
-                                .respond_json(&headers, strategy, move |q| {
-                                    q.confirmed_output_histogram_day(Day1::try_from(date)?)
-                                })
-                                .await)
-                        }
-                        Ok(HeightOrDate::Height(height)) => {
-                            let strategy = state.height_strategy(version, height);
-                            Ok(state
-                                .respond_json(&headers, strategy, move |q| {
-                                    q.confirmed_output_histogram(usize::from(height))
-                                })
-                                .await)
-                        }
+                        Ok(HeightOrDate::Date(date)) => Ok(state
+                            .respond_json_content(&headers, move |q| {
+                                q.confirmed_output_histogram_day(Day1::try_from(date)?)
+                            })
+                            .await),
+                        Ok(HeightOrDate::Height(height)) => Ok(state
+                            .respond_json_content(&headers, move |q| {
+                                q.confirmed_output_histogram(usize::from(height))
+                            })
+                            .await),
                         Err(e) => Ok(e.into_response()),
                     }
                 },

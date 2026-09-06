@@ -1,5 +1,5 @@
-mod analysis;
-mod computed;
+pub mod analysis;
+pub mod computed;
 
 use brk_error::Result;
 

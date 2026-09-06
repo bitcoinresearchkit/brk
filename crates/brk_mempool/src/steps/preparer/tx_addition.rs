@@ -9,6 +9,7 @@
 //!   (preserving `rbf`, `size`). The Applier exhumes the cached tx
 //!   body. No raw decoding.
 
+use bitcoin::{Transaction as BitcoinTransaction, TxIn as BitcoinTxIn};
 use brk_types::{MempoolEntryInfo, SigOps, Transaction, TxIn, TxOut, TxStatus, Txid, Vout};
 
 use crate::{
@@ -33,11 +34,7 @@ impl TxAddition {
     /// Resolves prevouts against the live mempool only. Confirmed
     /// parents land with `prevout: None` and are filled by the
     /// resolver supplied to `Mempool::tick_with` in the same cycle.
-    pub(super) fn fresh(
-        info: &MempoolEntryInfo,
-        tx: bitcoin::Transaction,
-        mempool_txs: &TxStore,
-    ) -> Self {
+    pub fn fresh(info: &MempoolEntryInfo, tx: BitcoinTransaction, mempool_txs: &TxStore) -> Self {
         let total_size = tx.total_size();
         let rbf = tx.input.iter().any(|i| i.sequence.is_rbf());
         let built = Self::build_tx(info, tx, total_size, mempool_txs);
@@ -47,7 +44,7 @@ impl TxAddition {
 
     fn build_tx(
         info: &MempoolEntryInfo,
-        tx: bitcoin::Transaction,
+        tx: BitcoinTransaction,
         total_size: usize,
         mempool_txs: &TxStore,
     ) -> Transaction {
@@ -76,13 +73,13 @@ impl TxAddition {
     /// Preserves the tomb's original `first_seen`: bitcoind resets the
     /// timestamp on re-acceptance (and GBT synthesis carries "now"), but
     /// the consumer wants the first-ever sighting, not the latest one.
-    pub(super) fn revived(info: &MempoolEntryInfo, tomb: &TxTombstone) -> Self {
+    pub fn revived(info: &MempoolEntryInfo, tomb: &TxTombstone) -> Self {
         let mut entry = TxEntry::new(info, tomb.entry.size, tomb.entry.rbf);
         entry.first_seen = tomb.entry.first_seen;
         Self::Revived { entry }
     }
 
-    fn build_txin(txin: bitcoin::TxIn, mempool_txs: &TxStore) -> TxIn {
+    fn build_txin(txin: BitcoinTxIn, mempool_txs: &TxStore) -> TxIn {
         let prev_txid: Txid = txin.previous_output.txid.into();
         let prev_vout = Vout::from(txin.previous_output.vout);
         let prevout = Self::resolve_prevout(&prev_txid, prev_vout, mempool_txs);

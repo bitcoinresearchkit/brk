@@ -3,7 +3,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use rawdb::Region;
 
-mod inner;
+pub mod inner;
 
 use inner::HeaderInner;
 

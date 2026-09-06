@@ -3,17 +3,19 @@ use aide::axum::{
     routing::{get_with, post_with},
 };
 use axum::{
-    extract::{Path, State},
+    extract::{DefaultBodyLimit, Path, State},
     http::HeaderMap,
     response::Response,
 };
 use brk_types::{
     CpfpInfo, Hex, MerkleProof, RbfResponse, Transaction, TxOutspend, TxStatus, Txid, Version,
 };
+use tower_http::limit::RequestBodyLimitLayer;
 
+use super::broadcast;
 use crate::{
-    AppState, Error,
-    error::RouteResult,
+    AppState,
+    error::Result,
     extended::TransformResponseExtended,
     params::{Empty, TxIndexParam, TxidParam, TxidVout, TxidsParam},
 };
@@ -32,9 +34,9 @@ impl TxRoutes for ApiRouter<AppState> {
                        Path(param): Path<TxIndexParam>,
                        _: Empty,
                        State(state): State<AppState>|
-                       -> RouteResult<Response> {
+                       -> Result<Response> {
                     let (txid, strategy) =
-                        state.txid_by_index_preflight(Version::ONE, param.index)?;
+                        state.txid_by_index_preflight(Version::ONE, param.index).await?;
                     Ok(state.respond_text_value(&headers, strategy, txid.to_string()))
                 },
                 |op| op
@@ -52,8 +54,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/cpfp/{txid}",
             get_with(
-                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let (cpfp, strategy) = state.cpfp_preflight(Version::ONE, &param.txid)?;
+                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let (cpfp, strategy) = state.cpfp_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_json_bytes(&headers, strategy, move |q| q.cpfp_json_resolved(cpfp)).await)
                 },
                 |op| op
@@ -71,8 +73,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/tx/{txid}/rbf",
             get_with(
-                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let (rbf, strategy) = state.rbf_preflight(Version::ONE, &param.txid)?;
+                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let (rbf, strategy) = state.rbf_preflight(Version::ONE, &param.txid).await?;
                     if let Some(strategy) = strategy {
                         return Ok(state.respond_json_value(&headers, strategy, RbfResponse::EMPTY));
                     }
@@ -98,9 +100,9 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(param): Path<TxidParam>,
                     _: Empty,
                     State(state): State<AppState>
-                | -> RouteResult<Response> {
+                | -> Result<Response> {
                     let (transaction, strategy) =
-                        state.transaction_preflight(Version::ONE, &param.txid)?;
+                        state.transaction_preflight(Version::ONE, &param.txid).await?;
                     Ok(state
                         .respond_json_bytes(&headers, strategy, move |q| {
                             q.transaction_json_resolved(transaction)
@@ -129,8 +131,8 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(param): Path<TxidParam>,
                     _: Empty,
                     State(state): State<AppState>
-                | -> RouteResult<Response> {
-                    let (transaction, strategy) = state.raw_transaction_preflight(Version::ONE, &param.txid)?;
+                | -> Result<Response> {
+                    let (transaction, strategy) = state.raw_transaction_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_text(&headers, strategy, move |q| q.transaction_hex_resolved(transaction)).await)
                 },
                 |op| op
@@ -150,8 +152,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/tx/{txid}/merkleblock-proof",
             get_with(
-                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let (tx, strategy) = state.confirmed_tx_preflight(Version::ONE, &param.txid)?;
+                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let (tx, strategy) = state.confirmed_tx_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_text(&headers, strategy, move |q| q.merkleblock_proof_resolved(tx)).await)
                 },
                 |op| op
@@ -169,8 +171,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/tx/{txid}/merkle-proof",
             get_with(
-                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let (tx, strategy) = state.confirmed_tx_preflight(Version::ONE, &param.txid)?;
+                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let (tx, strategy) = state.confirmed_tx_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_json(&headers, strategy, move |q| q.merkle_proof_resolved(tx)).await)
                 },
                 |op| op
@@ -246,8 +248,8 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/tx/{txid}/raw",
             get_with(
-                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let (transaction, strategy) = state.raw_transaction_preflight(Version::ONE, &param.txid)?;
+                async |headers: HeaderMap, Path(param): Path<TxidParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let (transaction, strategy) = state.raw_transaction_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_bytes(&headers, strategy, move |q| q.transaction_raw_resolved(transaction)).await)
                 },
                 |op| op
@@ -271,9 +273,9 @@ impl TxRoutes for ApiRouter<AppState> {
                     Path(param): Path<TxidParam>,
                     _: Empty,
                     State(state): State<AppState>
-                | -> RouteResult<Response> {
+                | -> Result<Response> {
                     let (status, strategy) =
-                        state.tx_status_preflight(Version::ONE, &param.txid)?;
+                        state.tx_status_preflight(Version::ONE, &param.txid).await?;
                     Ok(state.respond_json_value(&headers, strategy, status))
                 },
                 |op| op
@@ -293,7 +295,7 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/transaction-times",
             get_with(
-                async |headers: HeaderMap, params: TxidsParam, State(state): State<AppState>| -> RouteResult<Response> {
+                async |headers: HeaderMap, params: TxidsParam, State(state): State<AppState>| -> Result<Response> {
                     let (times, strategy) = state.transaction_times_preflight(&params.txids)?;
                     Ok(state.respond_json_value(&headers, strategy, times))
                 },
@@ -310,24 +312,23 @@ impl TxRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/tx",
             post_with(
-                async |_: Empty, State(state): State<AppState>, body: String| {
-                    let hex = body.trim().to_string();
-                    state.run(move |q| q.broadcast_transaction(&hex))
-                        .await
-                        .map(|txid| txid.to_string())
-                        .map_err(Error::from)
-                },
+                broadcast::serve,
                 |op| {
                     op.id("post_tx")
                         .transactions_tag()
                         .mcp_ignore()
                         .summary("Broadcast transaction")
-                        .description("Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
-                        .json_response::<Txid>()
+                        .description("Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*")
+                        .text_response::<Txid>()
                         .bad_request()
-                        .server_error()
+                        .error_response::<413>("Request body too large")
+                        .server_errors()
                 },
-            ),
+            )
+            .layer((
+                RequestBodyLimitLayer::new(broadcast::MAX_BODY_BYTES),
+                DefaultBodyLimit::disable(),
+            )),
         )
     }
 }

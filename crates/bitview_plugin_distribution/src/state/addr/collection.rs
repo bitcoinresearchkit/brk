@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{Error, Result};
 
 use std::path::Path;
 
@@ -39,7 +39,11 @@ impl AddrStates {
         };
 
         for state in self.amount_range.iter_mut() {
-            let imported_height = state.inner.import_at_or_before(previous_height)?;
+            let imported_height = match state.inner.import_at_or_before(previous_height) {
+                Ok(height) => height,
+                Err(Error::NotFound(_)) => return Ok(false),
+                Err(error) => return Err(error),
+            };
             if imported_height != previous_height {
                 return Ok(false);
             }

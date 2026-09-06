@@ -53,6 +53,13 @@ impl Date {
         self.into()
     }
 
+    /// Validate dates constructed directly or decoded from persisted values.
+    pub fn try_into_jiff(self) -> brk_error::Result<Date_> {
+        let year = i16::try_from(self.0 / 10_000).map_err(|_| brk_error::Error::UnindexableDate)?;
+        Date_::new(year, self.month() as i8, self.day() as i8)
+            .map_err(|_| brk_error::Error::UnindexableDate)
+    }
+
     pub fn today() -> Self {
         Self::from(Timestamp::now())
     }
@@ -213,26 +220,7 @@ impl<'de> Deserialize<'de> for Date {
             where
                 E: serde::de::Error,
             {
-                // Parse YYYY-MM-DD format
-                if v.len() != 10 {
-                    return Err(E::invalid_length(v.len(), &self));
-                }
-
-                let year: u16 = v[0..4]
-                    .parse()
-                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
-                let month: u8 = v[5..7]
-                    .parse()
-                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
-                let day: u8 = v[8..10]
-                    .parse()
-                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
-
-                if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
-                    return Err(E::invalid_value(serde::de::Unexpected::Str(v), &self));
-                }
-
-                Ok(Date::new(year, month, day))
+                v.parse().map_err(E::custom)
             }
         }
 
@@ -244,7 +232,11 @@ impl fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = itoa::Buffer::new();
 
-        f.write_str(buf.format(self.year()))?;
+        let year = buf.format(self.year());
+        for _ in year.len()..4 {
+            f.write_str("0")?;
+        }
+        f.write_str(year)?;
         f.write_str("-")?;
 
         let month = self.month();
@@ -268,13 +260,23 @@ impl FromStr for Date {
 
     /// Parse a date from YYYY-MM-DD format.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() != 10 || s.as_bytes()[4] != b'-' || s.as_bytes()[7] != b'-' {
+        let bytes = s.as_bytes();
+        if bytes.len() != 10
+            || bytes[4] != b'-'
+            || bytes[7] != b'-'
+            || bytes
+                .iter()
+                .enumerate()
+                .any(|(i, byte)| i != 4 && i != 7 && !byte.is_ascii_digit())
+        {
             return Err("expected YYYY-MM-DD format");
         }
         let year: u16 = s[0..4].parse().map_err(|_| "invalid year")?;
         let month: u8 = s[5..7].parse().map_err(|_| "invalid month")?;
         let day: u8 = s[8..10].parse().map_err(|_| "invalid day")?;
-        Ok(Self::new(year, month, day))
+        Date_::new(year as i16, month as i8, day as i8)
+            .map(Self::from)
+            .map_err(|_| "invalid calendar date")
     }
 }
 
@@ -294,180 +296,5 @@ impl Formattable for Date {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_date_from_day1_zero() {
-        // Day1 0 is Jan 1, 2009
-        let date = Date::from(Day1::from(0_usize));
-        assert_eq!(date, Date::INDEX_ZERO);
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_day1_two() {
-        // Day1 2 is Jan 3, 2009 (genesis)
-        let date = Date::from(Day1::from(2_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 3);
-    }
-
-    #[test]
-    fn test_date_from_day1_eight() {
-        // Day1 8 is Jan 9, 2009
-        let date = Date::from(Day1::from(8_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 9);
-    }
-
-    #[test]
-    fn test_date_from_week1_zero() {
-        // Week1 0 starts at Jan 1, 2009
-        let date = Date::from(Week1::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_week1_one() {
-        // Week1 1 is Jan 8, 2009 (one week after epoch)
-        let date = Date::from(Week1::from(1_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 8);
-    }
-
-    #[test]
-    fn test_date_from_month1_zero() {
-        // Month1 0 is Jan 1, 2009
-        let date = Date::from(Month1::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month1_one() {
-        // Month1 1 is Feb 1, 2009
-        let date = Date::from(Month1::from(1_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 2);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month1_twelve() {
-        // Month1 12 is Jan 1, 2010
-        let date = Date::from(Month1::from(12_usize));
-        assert_eq!(date.year(), 2010);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_year1_zero() {
-        // Year1 0 is Jan 1, 2009
-        let date = Date::from(Year1::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_year1_one() {
-        // Year1 1 is Jan 1, 2010
-        let date = Date::from(Year1::from(1_usize));
-        assert_eq!(date.year(), 2010);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month3_zero() {
-        // Month3 0 is Q1 2009: Jan 1, 2009
-        let date = Date::from(Month3::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month3_one() {
-        // Month3 1 is Q2 2009: Apr 1, 2009
-        let date = Date::from(Month3::from(1_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 4);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month3_four() {
-        // Month3 4 is Q1 2010: Jan 1, 2010
-        let date = Date::from(Month3::from(4_usize));
-        assert_eq!(date.year(), 2010);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month6_zero() {
-        // Month6 0 is H1 2009: Jan 1, 2009
-        let date = Date::from(Month6::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month6_one() {
-        // Month6 1 is H2 2009: Jul 1, 2009
-        let date = Date::from(Month6::from(1_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 7);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_month6_two() {
-        // Month6 2 is H1 2010: Jan 1, 2010
-        let date = Date::from(Month6::from(2_usize));
-        assert_eq!(date.year(), 2010);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_year10_zero() {
-        // Year10 0 is 2009: Jan 1, 2009
-        let date = Date::from(Year10::from(0_usize));
-        assert_eq!(date.year(), 2009);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn test_date_from_year10_one() {
-        // Year10 1 is 2019: Jan 1, 2019
-        let date = Date::from(Year10::from(1_usize));
-        assert_eq!(date.year(), 2019);
-        assert_eq!(date.month(), 1);
-        assert_eq!(date.day(), 1);
-    }
-
-    #[test]
-    fn schema_matches_date_string_serialization() {
-        let date = Date::new(2024, 4, 20);
-        assert_eq!(serde_json::to_value(date).unwrap(), "2024-04-20");
-
-        let schema = serde_json::to_value(schemars::schema_for!(Date)).unwrap();
-        assert_eq!(schema["type"], "string");
-        assert_eq!(schema["format"], "date");
-        assert_eq!(schema["pattern"], r"^\d{4}-\d{2}-\d{2}$");
-    }
-}
+#[path = "../tests/unit/date.rs"]
+mod tests;

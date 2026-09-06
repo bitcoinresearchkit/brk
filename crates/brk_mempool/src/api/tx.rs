@@ -1,11 +1,16 @@
 //! Tx-keyed reads.
 
-use std::hash::{Hash, Hasher};
-
-use brk_types::{
-    MempoolRecentTx, OutpointPrefix, Transaction, TxOutspend, TxStatus, Txid, TxidPrefix, Vin, Vout,
+use std::{
+    hash::{Hash, Hasher},
+    sync::Arc,
 };
-use rustc_hash::FxHasher;
+
+use brk_error::{Error, Result};
+use brk_types::{
+    BlockHash, MempoolRecentTx, OutpointPrefix, Transaction, TxOutspend, TxStatus, Txid,
+    TxidPrefix, Vin, Vout,
+};
+use rustc_hash::{FxHashSet, FxHasher};
 
 use crate::{Mempool, State};
 
@@ -16,68 +21,104 @@ fn transaction_times_hash(times: &[u64]) -> u64 {
 }
 
 impl Mempool {
-    pub fn contains_txid(&self, txid: &Txid) -> bool {
-        self.read().txs.contains(txid)
+    pub fn contains_txid(&self, txid: &Txid, tip: &BlockHash) -> Result<bool> {
+        let state = self.read();
+        state.ensure_published_at(tip)?;
+        Ok(state.txs.contains(txid))
     }
 
-    /// Apply `f` to the live tx body if present.
-    pub fn with_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
-        self.read().txs.get(txid).map(f)
-    }
-
-    /// Apply `f` to a `Vanished` tombstone's tx body if present.
-    /// `Replaced` tombstones return `None` because the tx will not confirm.
-    pub fn with_vanished_tx<R>(&self, txid: &Txid, f: impl FnOnce(&Transaction) -> R) -> Option<R> {
-        self.read().graveyard.get_vanished(txid).map(|t| f(&t.tx))
+    /// Capture an immutable live body or its recently vanished fallback from
+    /// one completed publication. Replaced tombstones are excluded.
+    pub fn transaction(&self, txid: &Txid, tip: &BlockHash) -> Result<Option<Arc<Transaction>>> {
+        let state = self.read();
+        state.ensure_published_at(tip)?;
+        Ok(state
+            .txs
+            .record(txid)
+            .map(|record| record.tx.clone())
+            .or_else(|| {
+                state
+                    .graveyard
+                    .get_vanished(txid)
+                    .map(|tomb| tomb.tx.clone())
+            }))
     }
 
     /// Spend status for a live mempool transaction's output, or `None` when
     /// the parent is not in the mempool. Parent presence, output bounds, and
     /// the spender are resolved under one state read lock.
-    pub fn outspend_if_present(&self, txid: &Txid, vout: Vout) -> Option<TxOutspend> {
+    pub fn outspend_if_present(
+        &self,
+        txid: &Txid,
+        vout: Vout,
+        tip: &BlockHash,
+    ) -> Result<Option<TxOutspend>> {
         let state = self.read();
-        let transaction = state.txs.get(txid)?;
+        state.ensure_published_at(tip)?;
+        let Some(transaction) = state.txs.get(txid) else {
+            return Ok(None);
+        };
         if usize::from(vout) >= transaction.output.len() {
-            return Some(TxOutspend::UNSPENT);
+            return Ok(Some(TxOutspend::UNSPENT));
         }
-        Some(Self::outspend_for(&state, txid, vout))
+        Ok(Some(Self::outspend_for(&state, txid, vout)))
     }
 
     /// Current mempool spend status for an output whose parent may be
     /// confirmed. The spender's full input list is checked to rule out prefix
     /// collisions.
-    pub fn outspend(&self, txid: &Txid, vout: Vout) -> TxOutspend {
-        Self::outspend_for(&self.read(), txid, vout)
+    pub fn outspend(&self, txid: &Txid, vout: Vout, tip: &BlockHash) -> Result<TxOutspend> {
+        let state = self.read();
+        state.ensure_published_at(tip)?;
+        Ok(Self::outspend_for(&state, txid, vout))
     }
 
     /// Spend statuses for every output of a live mempool transaction, or
     /// `None` when the parent is not in the mempool. The complete array is
     /// resolved under one state read lock.
-    pub fn outspends_if_present(&self, txid: &Txid) -> Option<Vec<TxOutspend>> {
+    pub fn outspends_if_present(
+        &self,
+        txid: &Txid,
+        tip: &BlockHash,
+    ) -> Result<Option<Vec<TxOutspend>>> {
         let state = self.read();
-        let output_count = state.txs.get(txid)?.output.len();
-        Some(Self::outspends_for(&state, txid, output_count))
+        state.ensure_published_at(tip)?;
+        let Some(transaction) = state.txs.get(txid) else {
+            return Ok(None);
+        };
+        Self::outspends_for(&state, txid, transaction.output.len()).map(Some)
     }
 
     /// Overlay mempool spends onto unresolved outputs of a confirmed parent.
     /// Returns without taking the state lock when every output is already
     /// confirmed spent; otherwise the complete overlay uses one read lock.
-    pub fn merge_outspends(&self, txid: &Txid, outspends: &mut [TxOutspend]) {
+    pub fn merge_outspends(
+        &self,
+        txid: &Txid,
+        outspends: &mut [TxOutspend],
+        tip: &BlockHash,
+    ) -> Result<()> {
         if outspends.iter().all(|outspend| outspend.spent) {
-            return;
+            return Ok(());
         }
+        check_output_count(outspends.len())?;
         let state = self.read();
-        for (index, outspend) in outspends.iter_mut().enumerate() {
-            if !outspend.spent {
-                *outspend = Self::outspend_for(&state, txid, Vout::from(index));
-            }
-        }
+        state.ensure_published_at(tip)?;
+        Self::overlay_outspends(&state, txid, outspends);
+        Ok(())
     }
 
     /// Mempool tx spending `(txid, vout)`, or `None`. The spender's
     /// input list is walked to rule out `TxidPrefix` collisions.
-    pub fn lookup_spender(&self, txid: &Txid, vout: Vout) -> Option<(Txid, Vin)> {
-        Self::lookup_spender_for(&self.read(), txid, vout)
+    pub fn lookup_spender(
+        &self,
+        txid: &Txid,
+        vout: Vout,
+        tip: &BlockHash,
+    ) -> Result<Option<(Txid, Vin)>> {
+        let state = self.read();
+        state.ensure_published_at(tip)?;
+        Ok(Self::lookup_spender_for(&state, txid, vout))
     }
 
     fn outspend_for(state: &State, txid: &Txid, vout: Vout) -> TxOutspend {
@@ -92,10 +133,54 @@ impl Mempool {
         }
     }
 
-    fn outspends_for(state: &State, txid: &Txid, output_count: usize) -> Vec<TxOutspend> {
-        (0..output_count)
-            .map(|index| Self::outspend_for(state, txid, Vout::from(index)))
-            .collect()
+    fn outspends_for(state: &State, txid: &Txid, output_count: usize) -> Result<Vec<TxOutspend>> {
+        check_output_count(output_count)?;
+        let mut outspends = vec![TxOutspend::UNSPENT; output_count];
+        Self::overlay_outspends(state, txid, &mut outspends);
+        Ok(outspends)
+    }
+
+    /// Resolve a spender's inputs once for the whole parent, retaining exact
+    /// outpoint validation and never replacing a confirmed spend.
+    fn overlay_outspends(state: &State, txid: &Txid, outspends: &mut [TxOutspend]) {
+        let parent = TxidPrefix::from(txid);
+        let mut scanned = FxHashSet::default();
+        for index in 0..outspends.len() {
+            if outspends[index].spent {
+                continue;
+            }
+            let key = OutpointPrefix::new(parent, Vout::from(index));
+            let Some(prefix) = state.outpoint_spends.get(&key) else {
+                continue;
+            };
+            if !scanned.insert(prefix) {
+                continue;
+            }
+            let Some(spender) = state.txs.record_by_prefix(&prefix) else {
+                continue;
+            };
+            for (vin, input) in spender.tx.input.iter().enumerate() {
+                if input.txid != *txid {
+                    continue;
+                }
+                let Some(outspend) = outspends.get_mut(usize::from(input.vout)) else {
+                    continue;
+                };
+                if !outspend.spent
+                    && state
+                        .outpoint_spends
+                        .get(&OutpointPrefix::new(parent, input.vout))
+                        == Some(prefix)
+                {
+                    *outspend = TxOutspend {
+                        spent: true,
+                        txid: Some(spender.entry.txid),
+                        vin: Some(Vin::from(vin)),
+                        status: Some(TxStatus::UNCONFIRMED),
+                    };
+                }
+            }
+        }
     }
 
     fn lookup_spender_for(state: &State, txid: &Txid, vout: Vout) -> Option<(Txid, Vin)> {
@@ -118,28 +203,35 @@ impl Mempool {
     /// diagnostics. Route layers serving large pools should paginate at
     /// their boundary rather than calling this per request.
     #[must_use]
-    pub fn txids(&self) -> Vec<Txid> {
-        self.read().txs.txids().copied().collect()
+    pub fn txids(&self) -> Result<Vec<Txid>> {
+        let state = self.read();
+        state.ensure_published()?;
+        Ok(state.txs.txids().copied().collect())
     }
 
     /// Order-sensitive validator for the current txid array.
     #[must_use]
-    pub fn txids_hash(&self) -> u64 {
-        self.read().txs.txids_hash()
+    pub fn txids_hash(&self) -> Result<u64> {
+        let state = self.read();
+        state.ensure_published()?;
+        Ok(state.txs.txids_hash())
     }
 
     /// Current txid array and its validator from one state-lock window.
     #[must_use]
-    pub fn txids_with_hash(&self) -> (Vec<Txid>, u64) {
+    pub fn txids_with_hash(&self) -> Result<(Vec<Txid>, u64)> {
         let state = self.read();
+        state.ensure_published()?;
         let txids = state.txs.txids().copied().collect();
-        (txids, state.txs.txids_hash())
+        Ok((txids, state.txs.txids_hash()))
     }
 
     /// Snapshot of recent live txs.
     #[must_use]
-    pub fn recent_txs(&self) -> Vec<MempoolRecentTx> {
-        self.read().txs.recent().to_vec()
+    pub fn recent_txs(&self) -> Result<Vec<MempoolRecentTx>> {
+        let state = self.read();
+        state.ensure_published()?;
+        Ok(state.txs.recent().to_vec())
     }
 
     /// `first_seen` Unix-second timestamps for `txids`, in input order.
@@ -147,19 +239,21 @@ impl Mempool {
     /// the buried entry's `first_seen` to avoid flicker between drop
     /// and indexer catch-up.
     #[must_use]
-    pub fn transaction_times(&self, txids: &[Txid]) -> Vec<u64> {
+    pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
         let state = self.read();
-        Self::transaction_times_for(&state, txids)
+        state.ensure_published()?;
+        Ok(Self::transaction_times_for(&state, txids))
     }
 
     /// Transaction times and an order-sensitive hash of that exact result,
     /// captured from one state snapshot.
     #[must_use]
-    pub fn transaction_times_with_hash(&self, txids: &[Txid]) -> (Vec<u64>, u64) {
+    pub fn transaction_times_with_hash(&self, txids: &[Txid]) -> Result<(Vec<u64>, u64)> {
         let state = self.read();
+        state.ensure_published()?;
         let times = Self::transaction_times_for(&state, txids);
         let hash = transaction_times_hash(&times);
-        (times, hash)
+        Ok((times, hash))
     }
 
     fn transaction_times_for(state: &State, txids: &[Txid]) -> Vec<u64> {
@@ -170,78 +264,15 @@ impl Mempool {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use brk_types::Vout;
-
-    use super::transaction_times_hash;
-    use crate::{
-        Mempool,
-        state::TxEntry,
-        test_support::{fake_entry_info, fake_tx, fake_txid, p2wpkh_script},
-    };
-
-    #[test]
-    fn outspend_resolves_parent_and_spender_from_one_snapshot() {
-        let mempool = Mempool::for_test();
-        let parent = fake_tx(
-            1,
-            &[],
-            &[(p2wpkh_script(1), 1_000), (p2wpkh_script(2), 2_000)],
-        );
-        let mut spender = fake_tx(2, &[None], &[(p2wpkh_script(2), 900)]);
-        spender.input[0].txid = parent.txid;
-        spender.input[0].vout = Vout::ZERO;
-
-        let parent_entry = TxEntry::new(&fake_entry_info(parent.txid, 100, 100), 100, false);
-        let spender_entry = TxEntry::new(&fake_entry_info(spender.txid, 100, 100), 100, false);
-        let mut state = mempool.test_state_lock().write();
-        state
-            .outpoint_spends
-            .insert_spends(&spender, spender_entry.txid_prefix());
-        state.txs.insert(parent.clone(), parent_entry);
-        state.txs.insert(spender.clone(), spender_entry);
-        drop(state);
-
-        let outspend = mempool
-            .outspend_if_present(&parent.txid, Vout::ZERO)
-            .unwrap();
-        assert!(outspend.spent);
-        assert_eq!(outspend.txid, Some(spender.txid));
-        assert_eq!(outspend.vin, Some(0usize.into()));
-        assert!(outspend.status.is_some_and(|status| !status.confirmed));
-
-        let outspends = mempool.outspends_if_present(&parent.txid).unwrap();
-        assert_eq!(outspends.len(), 2);
-        assert!(outspends[0].spent);
-        assert!(!outspends[1].spent);
-
-        assert!(
-            !mempool
-                .outspend_if_present(&parent.txid, Vout::from(2usize))
-                .unwrap()
-                .spent
-        );
-        assert!(
-            mempool
-                .outspend_if_present(&fake_txid(3), Vout::ZERO)
-                .is_none()
-        );
+fn check_output_count(count: usize) -> Result<()> {
+    if count > usize::from(Vout::MAX) + 1 {
+        return Err(Error::Internal(
+            "Mempool output count exceeds index capacity",
+        ));
     }
-
-    #[test]
-    fn transaction_times_hash_includes_order_and_length() {
-        assert_ne!(
-            transaction_times_hash(&[1, 2]),
-            transaction_times_hash(&[2, 1])
-        );
-        assert_ne!(
-            transaction_times_hash(&[1]),
-            transaction_times_hash(&[1, 0])
-        );
-        assert_eq!(
-            transaction_times_hash(&[1, 2]),
-            transaction_times_hash(&[1, 2])
-        );
-    }
+    Ok(())
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/api/tx.rs"]
+mod tests;

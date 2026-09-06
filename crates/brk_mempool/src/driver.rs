@@ -10,6 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use brk_error::{Error, Result};
 use brk_types::{TxOut, Txid, Vout};
 use rustc_hash::FxHashMap;
 use tracing::error;
@@ -63,6 +64,7 @@ impl Mempool {
                 }
             }));
             if let Err(payload) = outcome {
+                self.0.state.write().published_tip = None;
                 error!(
                     "mempool update panicked, continuing loop: {}",
                     Self::panic_msg(&payload)
@@ -81,11 +83,11 @@ impl Mempool {
     ///
     /// # Errors
     ///
-    /// Propagates any failure from the initial RPC fetch (network drop,
-    /// auth, bitcoind error). Steps after `Fetcher::fetch` are infallible
-    /// today. The resolver itself swallows its own errors and retries
-    /// next cycle.
-    pub fn tick(&self) -> brk_error::Result<Cycle> {
+    /// Propagates initial RPC failures and rejects a concurrent cycle or a
+    /// changed chain before mutation. A failed final chain observation or
+    /// incomplete prevout fill keeps anchored reads unavailable, but preserves
+    /// the Cycle events for mutations already applied.
+    pub fn tick(&self) -> Result<Cycle> {
         self.tick_with(Prevouts::rpc_resolver(self.0.client.clone()))
     }
 
@@ -96,8 +98,22 @@ impl Mempool {
     ///
     /// # Errors
     ///
-    /// Same as [`Mempool::tick`]: only the RPC fetch is fallible.
-    pub fn tick_with<F>(&self, resolver: F) -> brk_error::Result<Cycle>
+    /// Same as [`Mempool::tick`].
+    pub fn tick_with<F>(&self, resolver: F) -> Result<Cycle>
+    where
+        F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
+    {
+        let Some(_cycle) = self.0.cycle.try_lock() else {
+            return Err(Error::StateUpdating);
+        };
+        let result = self.tick_once(resolver);
+        if result.is_err() {
+            self.0.state.write().published_tip = None;
+        }
+        result
+    }
+
+    fn tick_once<F>(&self, resolver: F) -> Result<Cycle>
     where
         F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
@@ -109,24 +125,38 @@ impl Mempool {
             ..
         } = &*self.0;
 
+        // A JSON-RPC batch is not an atomic chain observation. Bracket both
+        // the fetch and external prevout resolution with full best-block hashes.
+        let tip_before = client.get_best_block_hash()?;
+
         let Fetched {
             state: rpc,
             new_entries,
             new_txs,
             block_template_txids,
+            address_view_complete,
         } = Fetcher::fetch(client, state)?;
+        if rpc.tip_hash != tip_before {
+            return Err(Error::StateUpdating);
+        }
         let pulled = Preparer::prepare(&rpc.live_txids, new_entries, new_txs, state);
         let mut diff = CycleDiff::default();
         let prev_snapshot = rebuilder.snapshot();
         Applier::apply(state, &prev_snapshot, pulled, &mut diff);
         drop(prev_snapshot);
         Prevouts::fill(state, &mut diff, resolver);
+        // Mutations already happened: preserve their Cycle events even if the
+        // final observation fails. Anchored address/histogram reads stay closed.
+        let coherent_tip = client.get_best_block_hash().ok() == Some(tip_before);
         rebuilder.tick(
             state,
             &block_template_txids,
             rpc.min_fee,
             diff.membership_changed(),
         );
+        if coherent_tip && address_view_complete {
+            state.write().publish_at(rpc.tip_hash, &rpc.live_txids);
+        }
         let CycleDiff {
             added,
             removed,
@@ -141,7 +171,9 @@ impl Mempool {
             addr_leaves,
             tip_hash: rpc.tip_hash,
             tip_height: rpc.tip_height,
-            info: self.info(),
+            // Preserve diagnostics/events even when the final observation left
+            // public aggregate reads unavailable.
+            info: state.read().info.clone(),
             snapshot: rebuilder.snapshot(),
             took: started.elapsed(),
         })
@@ -157,45 +189,5 @@ impl Mempool {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::panic::{catch_unwind, panic_any};
-
-    use rustc_hash::FxHashMap;
-
-    use super::*;
-
-    #[test]
-    #[should_panic(expected = "Mempool::start_with already running on this instance")]
-    fn double_start_panics_with_documented_message() {
-        let mempool = Mempool::for_test();
-        // Simulate a prior `start_with` having grabbed the latch. We
-        // can't actually call it first because the real call enters an
-        // infinite loop. Flipping the atomic is what the runtime check
-        // observes anyway.
-        mempool.0.started.store(true, Ordering::Release);
-        mempool.start_with(|_: &[(Txid, Vout)]| FxHashMap::default());
-    }
-
-    #[test]
-    fn panic_msg_extracts_static_str_payload() {
-        let payload = catch_unwind(|| panic!("boom static")).unwrap_err();
-        assert_eq!(Mempool::panic_msg(payload.as_ref()), "boom static");
-    }
-
-    #[test]
-    fn panic_msg_extracts_string_payload() {
-        let payload = catch_unwind(|| panic!("boom owned {}", 42)).unwrap_err();
-        assert_eq!(Mempool::panic_msg(payload.as_ref()), "boom owned 42");
-    }
-
-    #[test]
-    fn panic_msg_falls_back_for_non_string_payload() {
-        // Payload that isn't &str or String: the helper labels it
-        // explicitly instead of dropping it on the floor.
-        let payload = catch_unwind(|| panic_any(42u32)).unwrap_err();
-        assert_eq!(
-            Mempool::panic_msg(payload.as_ref()),
-            "<non-string panic payload>"
-        );
-    }
-}
+#[path = "../tests/unit/driver.rs"]
+mod tests;

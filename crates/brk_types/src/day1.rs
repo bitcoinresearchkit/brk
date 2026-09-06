@@ -3,7 +3,7 @@ use std::{
     ops::{Add, Rem},
 };
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use jiff::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -74,13 +74,11 @@ impl Add<usize> for Day1 {
 
 impl TryFrom<Date> for Day1 {
     type Error = Error;
-    fn try_from(value: Date) -> Result<Self, Self::Error> {
-        let value_ = jiff::civil::Date::from(value);
-        if value_ < Date::INDEX_ZERO_ {
-            Err(Error::UnindexableDate)
-        } else {
-            Ok(Self(Date::INDEX_ZERO_.until(value_)?.get_days() as u16))
-        }
+    fn try_from(value: Date) -> Result<Self> {
+        let days = Date::INDEX_ZERO_.until(value.try_into_jiff()?)?.get_days();
+        u16::try_from(days)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 
@@ -221,3 +219,7 @@ impl Formattable for Day1 {
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/day1.rs"]
+mod tests;

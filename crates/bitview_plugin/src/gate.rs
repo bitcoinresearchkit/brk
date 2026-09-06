@@ -1,8 +1,17 @@
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+    time::Duration,
+};
 
-use parking_lot::{ArcRwLockWriteGuard, Mutex, RawRwLock, RwLock};
+use parking_lot::{ArcRwLockReadGuard, ArcRwLockWriteGuard, Mutex, RawRwLock, RwLock};
 
-use crate::{PluginReadGuard, read_guard};
+#[path = "read_guard.rs"]
+mod read_guard;
+
+pub use read_guard::PluginReadGuard;
 
 /// Shared publication gate for one Bitview plugin.
 ///
@@ -16,6 +25,7 @@ pub struct PluginGate(Arc<Inner>);
 struct Inner {
     gate: Arc<RwLock<()>>,
     writer: Mutex<Option<ArcRwLockWriteGuard<RawRwLock, ()>>>,
+    publication: AtomicU64,
 }
 
 impl PluginGate {
@@ -46,7 +56,15 @@ impl PluginGate {
             .lock()
             .take()
             .expect("plugin update is not running");
+        self.0.publication.fetch_add(1, Ordering::Release);
         drop(writer);
+    }
+
+    /// Process-local revision of completed publications, shared by gate clones.
+    /// Read while holding this gate when pairing the revision with plugin data.
+    /// It advances even if a publication leaves the chain tip unchanged.
+    pub fn publication(&self) -> u64 {
+        self.0.publication.load(Ordering::Acquire)
     }
 
     /// Attempts to stabilize this plugin for one logical read.
@@ -54,7 +72,11 @@ impl PluginGate {
     /// This never blocks. Async callers can retry cooperatively while an
     /// update is running without tying up an executor thread.
     pub fn try_read(&self) -> Option<PluginReadGuard> {
-        self.0.gate.try_read_arc().map(read_guard::single)
+        self.try_read_guard().map(read_guard::single)
+    }
+
+    fn try_read_guard(&self) -> Option<ArcRwLockReadGuard<RawRwLock, ()>> {
+        self.0.gate.try_read_arc()
     }
 
     /// Waits up to `timeout` to stabilize this plugin for one logical read.
@@ -67,76 +89,5 @@ impl PluginGate {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::{sync::mpsc, thread, time::Duration};
-
-    use super::*;
-
-    #[test]
-    fn update_waits_for_readers_and_stays_closed_until_published() {
-        let gate = PluginGate::new();
-        let read = gate.try_read().unwrap();
-        let writer_gate = gate.clone();
-        let (started_tx, started_rx) = mpsc::channel();
-        let (closed_tx, closed_rx) = mpsc::channel();
-
-        let writer = thread::spawn(move || {
-            started_tx.send(()).unwrap();
-            writer_gate.begin_update();
-            closed_tx.send(()).unwrap();
-            writer_gate
-        });
-
-        started_rx.recv().unwrap();
-        assert!(closed_rx.try_recv().is_err());
-
-        drop(read);
-        closed_rx.recv_timeout(Duration::from_secs(1)).unwrap();
-        let gate = writer.join().unwrap();
-        assert!(gate.try_read().is_none());
-
-        gate.finish_update();
-        assert!(gate.try_read().is_some());
-    }
-
-    #[test]
-    fn begin_update_is_idempotent() {
-        let gate = PluginGate::new();
-        gate.begin_update();
-        gate.begin_update();
-        assert!(gate.try_read().is_none());
-
-        gate.finish_update();
-        assert!(gate.try_read().is_some());
-    }
-
-    #[test]
-    fn timed_read_stops_waiting_at_its_deadline() {
-        let gate = PluginGate::new();
-        gate.begin_update();
-
-        assert!(gate.read_for(Duration::from_millis(10)).is_none());
-
-        gate.finish_update();
-        assert!(gate.read_for(Duration::ZERO).is_some());
-    }
-
-    #[test]
-    fn timed_read_wakes_when_update_finishes() {
-        let gate = PluginGate::new();
-        gate.begin_update();
-        let reader_gate = gate.clone();
-        let (started_tx, started_rx) = mpsc::channel();
-
-        let reader = thread::spawn(move || {
-            started_tx.send(()).unwrap();
-            reader_gate.read_for(Duration::from_secs(1))
-        });
-
-        started_rx.recv().unwrap();
-        thread::sleep(Duration::from_millis(10));
-        gate.finish_update();
-
-        assert!(reader.join().unwrap().is_some());
-    }
-}
+#[path = "../tests/unit/gate.rs"]
+mod tests;

@@ -1,6 +1,6 @@
-mod read_only;
-mod read_write;
-mod strategy;
+pub mod read_only;
+pub mod read_write;
+pub mod strategy;
 
 pub use read_only::*;
 pub use read_write::*;

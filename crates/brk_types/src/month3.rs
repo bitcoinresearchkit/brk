@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
@@ -85,6 +86,18 @@ impl Div<usize> for Month3 {
     type Output = Self;
     fn div(self, _: usize) -> Self::Output {
         unreachable!()
+    }
+}
+
+impl TryFrom<Date> for Month3 {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(value: Date) -> Result<Self> {
+        let months = u16::from(Month1::try_from(value)?);
+        u8::try_from(months / 3)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 

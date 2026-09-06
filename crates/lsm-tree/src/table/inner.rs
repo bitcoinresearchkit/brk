@@ -17,10 +17,10 @@ use std::{
 pub struct Inner {
     pub path: Arc<PathBuf>,
 
-    pub(crate) tree_id: u32,
+    pub tree_id: u32,
 
     #[doc(hidden)]
-    pub(crate) file_accessor: FileAccessor,
+    pub file_accessor: FileAccessor,
 
     /// Parsed metadata
     #[doc(hidden)]
@@ -41,7 +41,7 @@ pub struct Inner {
     pub cache: Arc<Cache>,
 
     /// Pinned filter index (in case of partitioned filters)
-    pub(super) pinned_filter_index: Option<IndexBlock>,
+    pub pinned_filter_index: Option<IndexBlock>,
 
     /// Pinned AMQ filter
     pub pinned_filter_block: Option<FilterBlock>,
@@ -51,13 +51,13 @@ pub struct Inner {
     /// Open readers keep the table alive until they finish.
     pub is_deleted: AtomicBool,
 
-    pub(super) global_seqno: u64,
+    pub global_seqno: u64,
 }
 
 impl Inner {
     /// Gets the global table ID.
     #[must_use]
-    pub(super) fn global_id(&self) -> GlobalTableId {
+    pub fn global_id(&self) -> GlobalTableId {
         (self.tree_id, self.metadata.id).into()
     }
 }

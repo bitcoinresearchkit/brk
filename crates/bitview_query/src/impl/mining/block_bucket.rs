@@ -1,6 +1,6 @@
 use std::{iter::Sum, ops::Div};
 
-use brk_types::{Height, Timestamp};
+use brk_types::{Cents, Dollars, Height, Timestamp};
 
 use super::block_window::round_half_up;
 
@@ -36,12 +36,24 @@ impl BlockBucket {
         T: Copy + From<u64>,
         u64: From<T>,
     {
-        let n = self.offsets.len() as u64;
-        let sum: u64 = self
+        let n = self.offsets.len() as u128;
+        let sum: u128 = self
             .offsets
             .iter()
-            .map(|&index| u64::from(values[index]))
+            .map(|&index| u128::from(u64::from(values[index])))
             .sum();
         T::from(round_half_up(sum, n))
+    }
+
+    /// Preserve the price source's unavailable sentinel instead of converting
+    /// it to an integer (which panics). Finite averages retain cent rounding.
+    pub fn mean_price(&self, prices: &[Cents]) -> Dollars {
+        let sum = self.offsets.iter().try_fold(0u128, |sum, &index| {
+            prices[index]
+                .finite_inner()
+                .map(|value| sum + u128::from(value))
+        });
+        sum.map(|sum| Dollars::from(Cents::from(round_half_up(sum, self.offsets.len() as u128))))
+            .unwrap_or(Dollars::NAN)
     }
 }

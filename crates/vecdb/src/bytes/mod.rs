@@ -1,5 +1,5 @@
-mod array;
-mod numeric;
+pub mod array;
+pub mod numeric;
 
 /// Trait for types that can be serialized to/from bytes with explicit byte order.
 ///

@@ -16,9 +16,8 @@ fn main() -> Result<()> {
         blocks_path,
         server,
     } = Config::import()?;
+    brk_logger::init(Some(&server.logs_path()))?;
     let data_path = server.data_path;
-
-    brk_logger::init(Some(&data_path.join("logs")))?;
     client.wait_for_synced_node()?;
 
     let chain_height = client.get_last_height()?;

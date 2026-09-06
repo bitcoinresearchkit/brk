@@ -1,16 +1,20 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
+    body::Bytes,
     extract::{Path, State},
     http::HeaderMap,
     response::Response,
 };
-use bitview_query::{AddrMempoolTxsPreflight, AddrTxsPreflight};
-use brk_types::{AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version};
+use bitview_query::RepresentationId;
+use brk_types::{
+    Addr, AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version,
+};
+use serde_json::to_vec;
 
 use crate::{
-    AppState, CacheStrategy,
-    error::RouteResult,
-    extended::TransformResponseExtended,
+    AppState, CacheParams, CacheStrategy, CdnCacheMode,
+    error::Result,
+    extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
     params::{AddrAfterTxidParam, AddrHashPrefixParam, AddrParam, Empty, ValidateAddrParam},
 };
 
@@ -36,7 +40,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 _: Empty,
                 State(state): State<AppState>
             | {
-                state.respond_json(&headers, state.tip_strategy(), move |q| {
+                state.respond_json_content(&headers, move |q| {
                     q.addr_hash_prefix_matches(path.addr_type, &path.prefix)
                 }).await
             }, |op| op
@@ -57,10 +61,7 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
-                if let Some(stats) = state.addr_stats_preflight(&path.addr)? {
-                    return Ok(state.respond_json_content_value(&headers, stats));
-                }
+            | -> Result<Response> {
                 Ok(state
                     .respond_json_content(&headers, move |q| q.addr(path.addr))
                     .await)
@@ -83,30 +84,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
-                match state.addr_txs_preflight(
-                    &path.addr,
-                    MEMPOOL_PAGE,
-                    CHAIN_PAGE,
-                    TXS_TOTAL_TARGET,
-                )? {
-                    AddrTxsPreflight::Cached(bytes, identity) => Ok(state
-                        .respond_json_cached_value(&headers, Version::ONE, bytes, identity)),
-                    AddrTxsPreflight::Chain(resolved) => {
-                        let strategy =
-                            AppState::addr_chain_txs_strategy(Version::ONE, &resolved);
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| {
-                                q.addr_txs_chain_resolved(resolved)
-                            })
-                            .await)
-                    }
-                    AddrTxsPreflight::Resolved(resolved) => Ok(state
-                        .respond_json_cached(&headers, Version::ONE, None, move |q| {
-                            q.addr_txs_json_resolved(*resolved)
-                        })
-                        .await),
-                }
+            | -> Result<Response> {
+                serve_txs(state, headers, path.addr).await
             }, |op| op
                 .id("get_address_txs")
                 .addrs_tag()
@@ -126,13 +105,13 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
+            | -> Result<Response> {
                 let (resolved, strategy) = state.addr_chain_txs_preflight(
                     Version::ONE,
                     &path.addr,
                     None,
                     CHAIN_PAGE,
-                )?;
+                ).await?;
                 Ok(state.respond_json(&headers, strategy, move |q| {
                     q.addr_txs_chain_resolved(resolved)
                 }).await)
@@ -155,13 +134,13 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrAfterTxidParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
+            | -> Result<Response> {
                 let (resolved, strategy) = state.addr_chain_txs_preflight(
                     Version::ONE,
                     &path.addr,
                     Some(path.after_txid),
                     CHAIN_PAGE,
-                )?;
+                ).await?;
                 Ok(state.respond_json(&headers, strategy, move |q| {
                     q.addr_txs_chain_resolved(resolved)
                 }).await)
@@ -184,16 +163,10 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
-                match state.addr_mempool_txs_preflight(&path.addr, MEMPOOL_PAGE)? {
-                    AddrMempoolTxsPreflight::Cached(bytes, identity) => Ok(state
-                        .respond_json_cached_value(&headers, Version::ONE, bytes, identity)),
-                    AddrMempoolTxsPreflight::Resolved(resolved) => Ok(state
-                        .respond_json_cached(&headers, Version::ONE, None, move |q| {
-                            q.addr_mempool_txs_json_resolved(resolved)
-                        })
-                        .await),
-                }
+            | -> Result<Response> {
+                Ok(state.respond_json_content(&headers, move |q| {
+                    q.addr_mempool_txs(&path.addr, MEMPOOL_PAGE)
+                }).await)
             }, |op| op
                 .id("get_address_mempool_txs")
                 .addrs_tag()
@@ -213,24 +186,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 Path(path): Path<AddrParam>,
                 _: Empty,
                 State(state): State<AppState>
-            | -> RouteResult<Response> {
-                let max_utxos = state.max_utxos;
-                match state.addr_utxos_preflight(Version::ONE, &path.addr)? {
-                    Some((resolved, strategy)) => Ok(state
-                        .respond_json_adaptive(&headers, Some(strategy), move |q, _| {
-                            let (utxos, block_hash) =
-                                q.addr_utxos_resolved(resolved, max_utxos)?;
-                            let strategy =
-                                AppState::addr_utxos_strategy(Version::ONE, block_hash);
-                            Ok((utxos, strategy))
-                        })
-                        .await),
-                    None => Ok(state
-                        .respond_json(&headers, state.tip_strategy(), move |q| {
-                            q.addr_utxos(path.addr, max_utxos)
-                        })
-                        .await),
-                }
+            | -> Result<Response> {
+                serve_utxos(state, headers, path.addr).await
             }, |op| op
                 .id("get_address_utxos")
                 .addrs_tag()
@@ -264,4 +221,64 @@ impl AddrRoutes for ApiRouter<AppState> {
             ),
         )
     }
+}
+
+async fn serve_txs(state: AppState, headers: HeaderMap, addr: Addr) -> Result<Response> {
+    Ok(state
+        .run_admitted(move |q| {
+            let resolved = q.resolve_addr_txs(&addr, MEMPOOL_PAGE, CHAIN_PAGE, TXS_TOTAL_TARGET)?;
+            // The confirmed selection is fixed by its full activity anchor. Only
+            // the bounded, already-captured mempool bodies contribute dynamic JSON.
+            // Revalidation never loads or serializes confirmed transaction bodies.
+            let params = {
+                let source = to_vec(&(
+                    "addr-txs-v2",
+                    resolved.chain_anchor(),
+                    resolved.mempool_transactions(),
+                ))?;
+                CacheParams::resolve(
+                    &AppState::representation_strategy(
+                        Version::ONE,
+                        RepresentationId::content(&source),
+                    ),
+                    CdnCacheMode::Live,
+                )
+            };
+            if params.matches_etag(&headers) {
+                return Ok(Response::new_not_modified(&params));
+            }
+            let transactions = q.addr_txs_resolved(resolved)?;
+            let bytes = Bytes::from(to_vec(&transactions)?);
+            Ok(AppState::assemble_response(
+                params,
+                Ok(bytes),
+                HeaderMap::insert_content_type_application_json,
+            ))
+        })
+        .await?)
+}
+
+/// Validate policy and select the representation in one admitted worker. Do not
+/// carry a publication guard across a second admission wait.
+async fn serve_utxos(state: AppState, headers: HeaderMap, addr: Addr) -> Result<Response> {
+    let max_utxos = state.max_utxos;
+    Ok(state
+        .run_admitted(move |q| {
+            let resolved = q.resolve_addr_utxos(&addr, max_utxos)?;
+            let params = CacheParams::resolve(
+                &CacheStrategy::Live(format!("addr-utxos-v2-{}", resolved.block_hash()).into()),
+                CdnCacheMode::Live,
+            );
+            if params.matches_etag(&headers) {
+                return Ok(Response::new_not_modified(&params));
+            }
+            let (utxos, _) = q.addr_utxos_resolved(resolved, max_utxos)?;
+            let bytes = Bytes::from(to_vec(&utxos)?);
+            Ok(AppState::assemble_response(
+                params,
+                Ok(bytes),
+                HeaderMap::insert_content_type_application_json,
+            ))
+        })
+        .await?)
 }

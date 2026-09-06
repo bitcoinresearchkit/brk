@@ -1,6 +1,6 @@
-mod aggregates;
-mod arithmetic;
-mod cumulative;
-mod lookback;
-mod statistics;
-mod transforms;
+pub mod aggregates;
+pub mod arithmetic;
+pub mod cumulative;
+pub mod lookback;
+pub mod statistics;
+pub mod transforms;

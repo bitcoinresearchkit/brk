@@ -11,11 +11,11 @@ use super::{Format, HEADER_OFFSET, Header, ImportOptions, ReadOnlyBaseVec, Share
 /// Derefs to [`ReadOnlyBaseVec`] for read-only access to region, header, name,
 /// stored_len, and version. Write state (pushed, rollback) lives here.
 #[derive(Debug)]
-pub(crate) struct ReadWriteBaseVec<I, T> {
-    pub(crate) read_only: ReadOnlyBaseVec<I, T>,
-    pub(super) pushed: WithPrev<Vec<T>>,
-    pub(super) previous_stored_len: usize,
-    pub(super) saved_stamped_changes: u16,
+pub struct ReadWriteBaseVec<I, T> {
+    pub read_only: ReadOnlyBaseVec<I, T>,
+    pub pushed: WithPrev<Vec<T>>,
+    pub previous_stored_len: usize,
+    pub saved_stamped_changes: u16,
 }
 
 impl<I, T> Deref for ReadWriteBaseVec<I, T> {

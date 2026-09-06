@@ -6,14 +6,14 @@ use rayon::prelude::*;
 use super::{PendingStoresCheckpoint, PersistedStoresCheckpoint};
 
 #[must_use = "persist this deferred commit before publishing its checkpoint"]
-pub(crate) struct DeferredStoresCommit {
+pub struct DeferredStoresCommit {
     checkpoint: PendingStoresCheckpoint,
     database: Database,
     ingests: Vec<PendingIngest>,
 }
 
 impl DeferredStoresCommit {
-    pub(crate) fn new(
+    pub fn new(
         database: Database,
         ingests: Vec<PendingIngest>,
         checkpoint: PendingStoresCheckpoint,
@@ -25,7 +25,7 @@ impl DeferredStoresCommit {
         }
     }
 
-    pub(crate) fn persist(self) -> Result<PersistedStoresCheckpoint> {
+    pub fn persist(self) -> Result<PersistedStoresCheckpoint> {
         let Self {
             checkpoint,
             database,

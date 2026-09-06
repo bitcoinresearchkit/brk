@@ -1,4 +1,4 @@
-pub(crate) struct Parameter {
+pub struct Parameter {
     pub api_name: &'static str,
     pub name: &'static str,
     pub required: bool,

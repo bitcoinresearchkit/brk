@@ -2,7 +2,15 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use rmcp::model::Tool;
 use serde::Deserialize;
-use serde_json::{Map, Value};
+use serde_json::{Map, Number, Value, from_str};
+
+mod http_operation;
+mod operation;
+mod parameter;
+
+pub use http_operation::HttpOperation;
+pub use operation::Operation;
+pub use parameter::{Parameter, ParameterLocation};
 
 const MANIFEST_JSON: &str = include_str!("../generated/manifest.json");
 const MAX_SCHEMA_DEPTH: usize = 32;
@@ -13,32 +21,6 @@ const MAX_PARAMETER_BYTES: usize = 8 * 1024;
 struct Manifest {
     schema_version: u32,
     operations: Vec<Operation>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Operation {
-    pub tool: Tool,
-    pub http: HttpOperation,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct HttpOperation {
-    pub method: String,
-    pub path: String,
-    pub parameters: Vec<Parameter>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Parameter {
-    pub name: String,
-    pub location: ParameterLocation,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ParameterLocation {
-    Path,
-    Query,
 }
 
 #[derive(Debug)]
@@ -53,8 +35,8 @@ impl Catalog {
     }
 
     fn parse(source: &str) -> Result<Self, String> {
-        let manifest: Manifest = serde_json::from_str(source)
-            .map_err(|error| format!("invalid generated LLM manifest: {error}"))?;
+        let manifest: Manifest =
+            from_str(source).map_err(|error| format!("invalid generated LLM manifest: {error}"))?;
         if manifest.schema_version != 1 {
             return Err(format!(
                 "unsupported generated LLM manifest version {}",
@@ -373,7 +355,7 @@ fn validate_string(schema: &Map<String, Value>, value: &str) -> Result<(), Strin
     Ok(())
 }
 
-fn validate_number(schema: &Map<String, Value>, value: &serde_json::Number) -> Result<(), String> {
+fn validate_number(schema: &Map<String, Value>, value: &Number) -> Result<(), String> {
     let value = value
         .as_f64()
         .ok_or_else(|| "number cannot be represented safely".to_string())?;
@@ -475,10 +457,12 @@ fn validate_object(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::sync::Arc;
+
     use rmcp::model::ToolAnnotations;
     use serde_json::json;
-    use std::sync::Arc;
+
+    use super::*;
 
     fn operation() -> Operation {
         let input_schema = json!({

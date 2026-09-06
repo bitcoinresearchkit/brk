@@ -8,7 +8,7 @@ use crate::{
     short_type_name,
 };
 
-use super::{ColumnId, ColumnarVec, LazyColumnVec, ReadOnlyColumnarVec, ReadableColumnarVec};
+use super::{ColumnId, ColumnarVec, ReadOnlyColumnarVec};
 
 impl<V, C> ImportableVec for ColumnarVec<V, C>
 where
@@ -66,76 +66,6 @@ where
     }
 }
 
-impl<V, C> AnyVec for ReadOnlyColumnarVec<V, C>
-where
-    V: StoredVec,
-    C: ColumnId,
-{
-    fn version(&self) -> Version {
-        self.columns[0].version()
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn len(&self) -> usize {
-        self.visible_rows.get()
-    }
-
-    fn index_type_to_string(&self) -> &'static str {
-        self.columns[0].index_type_to_string()
-    }
-
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<C::Row<V::T>>()
-    }
-
-    fn value_type_to_string(&self) -> &'static str {
-        short_type_name::<C::Row<V::T>>()
-    }
-
-    fn region_names(&self) -> Vec<String> {
-        self.columns.iter().flat_map(AnyVec::region_names).collect()
-    }
-}
-
-impl<S, C> AnyVec for LazyColumnVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-{
-    fn version(&self) -> Version {
-        self.base_version
-            .combine(self.source.version())
-            .combine(Version::from(self.column.index() + 1))
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn len(&self) -> usize {
-        self.source.len()
-    }
-
-    fn index_type_to_string(&self) -> &'static str {
-        self.source.index_type_to_string()
-    }
-
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<S::T>()
-    }
-
-    fn value_type_to_string(&self) -> &'static str {
-        short_type_name::<S::T>()
-    }
-
-    fn region_names(&self) -> Vec<String> {
-        Vec::new()
-    }
-}
-
 impl<V, C> TypedVec for ColumnarVec<V, C>
 where
     V: StoredVec,
@@ -143,24 +73,6 @@ where
 {
     type I = V::I;
     type T = C::Row<V::T>;
-}
-
-impl<V, C> TypedVec for ReadOnlyColumnarVec<V, C>
-where
-    V: StoredVec,
-    C: ColumnId,
-{
-    type I = V::I;
-    type T = C::Row<V::T>;
-}
-
-impl<S, C> TypedVec for LazyColumnVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-{
-    type I = S::I;
-    type T = S::T;
 }
 
 impl<V, C> AnyStoredVec for ColumnarVec<V, C>

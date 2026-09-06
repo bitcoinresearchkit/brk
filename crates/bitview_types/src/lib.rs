@@ -23,7 +23,6 @@ mod series_name;
 mod series_name_with_index;
 mod series_paginated;
 mod series_selection;
-mod series_selection_legacy;
 mod sync_status;
 mod tree_node;
 
@@ -45,7 +44,6 @@ pub use series_name::*;
 pub use series_name_with_index::*;
 pub use series_paginated::*;
 pub use series_selection::*;
-pub use series_selection_legacy::*;
 pub use sync_status::*;
 pub use tree_node::*;
 

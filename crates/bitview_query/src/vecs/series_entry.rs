@@ -8,10 +8,10 @@ pub struct SeriesEntry<'a> {
     vec: &'a dyn AnyExportableVec,
     plugin: &'a dyn Plugin,
     index: Index,
-    requires_gate: bool,
+    is_mutable: bool,
 }
 
-pub(crate) enum SeriesEntryLookup<'a> {
+pub enum SeriesEntryLookup<'a> {
     Found(SeriesEntry<'a>),
     Unsupported(Vec<Index>),
     Missing,
@@ -22,13 +22,13 @@ impl<'a> SeriesEntry<'a> {
         index: Index,
         vec: &'a dyn AnyExportableVec,
         plugin: &'a dyn Plugin,
-        requires_gate: bool,
+        is_mutable: bool,
     ) -> Self {
         Self {
             vec,
             plugin,
             index,
-            requires_gate,
+            is_mutable,
         }
     }
 
@@ -44,19 +44,13 @@ impl<'a> SeriesEntry<'a> {
         self.plugin
     }
 
-    pub fn requires_gate(self) -> bool {
-        self.requires_gate
+    /// Whether existing values may change, preventing an immutable cache prefix.
+    /// Publication guards are required independently of this flag.
+    pub fn is_mutable(self) -> bool {
+        self.is_mutable
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use std::mem::size_of;
-
-    use super::SeriesEntry;
-
-    #[test]
-    fn index_uses_existing_series_entry_padding() {
-        assert_eq!(size_of::<SeriesEntry<'static>>(), 5 * size_of::<usize>());
-    }
-}
+#[path = "../../tests/unit/vecs/series_entry.rs"]
+mod tests;

@@ -1,137 +1,173 @@
 use brk_error::{Error, OptionData, Result};
-use brk_types::{BlockTimestamp, Date, Day1, Height, Timestamp};
+use brk_types::{BlockHash, BlockTimestamp, Height, Timestamp};
 use jiff::Timestamp as JiffTimestamp;
 use vecdb::ReadableVec;
 
 use crate::Query;
 
-/// Per BIP113, a block's timestamp must exceed the median of the previous 11
-/// blocks. Eleven consecutive `ts > target` therefore prove no later block can
-/// have `ts ≤ target` (its median floor would already exceed `target`).
-const MTP_TERMINAL_STREAK: usize = 11;
+#[cfg(test)]
+#[path = "../../../benches/unit/block_timestamp.rs"]
+mod bench;
 
-/// A timestamp lookup plus its chain-finality proof and snapshot height.
+/// An owned timestamp selection from one published chain view.
 pub struct ResolvedBlockTimestamp {
-    block: BlockTimestamp,
-    terminal_height: Option<Height>,
-    tip_height: Height,
+    height: Height,
+    hash: BlockHash,
+    timestamp: JiffTimestamp,
 }
 
 impl ResolvedBlockTimestamp {
-    #[inline]
-    pub fn is_final(&self) -> bool {
-        self.terminal_height
-            .is_some_and(|height| height.is_deeply_confirmed(self.tip_height))
+    pub fn hash(&self) -> BlockHash {
+        self.hash
     }
 
-    #[inline]
+    /// Format the timestamp only when a response body is needed.
     pub fn into_value(self) -> BlockTimestamp {
-        self.block
+        BlockTimestamp {
+            height: self.height,
+            hash: self.hash,
+            timestamp: self
+                .timestamp
+                .strftime("%Y-%m-%dT%H:%M:%S%.3fZ")
+                .to_string(),
+        }
     }
 }
 
 impl Query {
-    /// Most recent block with `timestamp ≤ ts`. Backs mempool.space's
-    /// `GET /api/v1/mining/blocks/timestamp/{ts}`. Future timestamps return
-    /// the chain tip; pre-genesis timestamps return 404.
-    ///
-    /// Uses `day1.first_height` for an O(1) seek to the target date, then a
-    /// linear scan bounded by the BIP113 MTP rule (see `MTP_TERMINAL_STREAK`).
-    /// Symmetric backward scan handles targets earlier than the seeded day's
-    /// first block.
+    /// Greatest header timestamp at or before the target, with earliest-height
+    /// ties. Future targets need not select the highest block.
     pub fn block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
         self.resolve_block_by_timestamp(timestamp)
             .map(ResolvedBlockTimestamp::into_value)
     }
 
-    /// Resolve the timestamp lookup and the first height at which BIP113 makes
-    /// the selected block terminal on this chain. [`ResolvedBlockTimestamp::is_final`]
-    /// additionally requires that proof height to be beyond the reorg window.
-    pub fn resolve_block_by_timestamp(
-        &self,
-        timestamp: Timestamp,
-    ) -> Result<ResolvedBlockTimestamp> {
+    pub fn resolve_block_by_timestamp(&self, target: Timestamp) -> Result<ResolvedBlockTimestamp> {
         let indexer = self.indexer();
-        let plugins = self.plugins();
-        let _guard = self.read_plugin(indexer)?;
-
-        let tip_height = self
-            .safe_lengths()
-            .last_height()
-            .ok_or_else(|| Error::NotFound("No blocks indexed".into()))?;
-        let tip: usize = tip_height.into();
-
-        let target = timestamp;
-        let date = Date::from(target);
-        let day1 = Day1::try_from(date).unwrap_or_default();
-
-        let first_height_of_day = plugins
-            .mappings
-            .day1
-            .first_height
-            .collect_one(day1)
-            .unwrap_or(Height::from(0usize));
-
-        let start: usize = usize::from(first_height_of_day).min(tip);
-
-        let mut ts_cursor = indexer.vecs().blocks.timestamp.cursor();
-        let mut best: Option<(usize, Timestamp)> = None;
-
-        let mut above_streak = 0usize;
-        let mut terminal_height = None;
-        for h in start..=tip {
-            let block_ts = ts_cursor.get(h).data()?;
-            if block_ts <= target {
-                if best.is_none_or(|(_, bts)| block_ts > bts) {
-                    best = Some((h, block_ts));
-                }
-                above_streak = 0;
-            } else {
-                above_streak += 1;
-                if above_streak >= MTP_TERMINAL_STREAK {
-                    terminal_height = Some(Height::from(h));
-                    break;
-                }
-            }
-        }
-
-        if best.is_none() && start > 0 {
-            let mut above_streak = 0usize;
-            for h in (0..start).rev() {
-                let block_ts = ts_cursor.get(h).data()?;
-                if block_ts <= target {
-                    if best.is_none_or(|(_, bts)| block_ts > bts) {
-                        best = Some((h, block_ts));
-                    }
-                    above_streak = 0;
-                } else {
-                    above_streak += 1;
-                    if above_streak >= MTP_TERMINAL_STREAK {
-                        break;
-                    }
-                }
-            }
-        }
-
-        let (best_height, best_ts) =
-            best.ok_or_else(|| Error::NotFound("No block at or before timestamp".into()))?;
-
-        let height = Height::from(best_height);
-        let blockhash = indexer.vecs().blocks.blockhash.collect_one(height).data()?;
-
-        let ts_secs: i64 = (*best_ts).into();
-        let iso_timestamp = JiffTimestamp::from_second(ts_secs)
-            .map(|t| t.strftime("%Y-%m-%dT%H:%M:%S%.3fZ").to_string())
-            .unwrap_or_else(|_| best_ts.to_string());
-
-        Ok(ResolvedBlockTimestamp {
-            block: BlockTimestamp {
-                height,
-                hash: blockhash,
-                timestamp: iso_timestamp,
+        let mappings = self.plugins().mappings;
+        let _guard = self.read_plugins(vec![indexer, mappings])?;
+        let len = usize::from(self.safe_lengths().height);
+        let monotonic = &mappings.timestamp.monotonic;
+        let timestamps = &indexer.vecs().blocks.timestamp;
+        // Reuse existing snapshots without filling or retaining whole histories.
+        // Cold cursors retain only their current Pco page.
+        let warm_max = monotonic.cached_snapshot();
+        let warm_raw = timestamps.cached_snapshot();
+        let mut max_cursor = monotonic.inner.cursor();
+        let mut raw_cursor = timestamps.inner.cursor();
+        let (height, timestamp) = select_timestamp(
+            len,
+            target,
+            |h| {
+                warm_max
+                    .as_ref()
+                    .and_then(|v| v.get(h).copied())
+                    .or_else(|| max_cursor.get(h))
+                    .data()
             },
-            terminal_height,
-            tip_height,
+            |h| {
+                warm_raw
+                    .as_ref()
+                    .and_then(|v| v.get(h).copied())
+                    .or_else(|| raw_cursor.get(h))
+                    .data()
+            },
+        )?;
+        let selected = warm_raw
+            .as_ref()
+            .and_then(|v| v.get(height).copied())
+            .or_else(|| raw_cursor.get(height))
+            .data()?;
+        if selected != timestamp {
+            return Err(Error::Internal(
+                "Timestamp mapping disagrees with indexed block",
+            ));
+        }
+        let height = Height::from(height);
+        let hash = indexer
+            .vecs()
+            .blocks
+            .blockhash
+            .inner
+            .collect_one(height)
+            .data()?;
+        let timestamp = JiffTimestamp::from_second(i64::from(*timestamp))
+            .map_err(|_| Error::Internal("Invalid indexed timestamp"))?;
+        Ok(ResolvedBlockTimestamp {
+            height,
+            hash,
+            timestamp,
         })
     }
 }
+
+fn lower_bound(
+    mut end: usize,
+    target: Timestamp,
+    inclusive: bool,
+    read: &mut impl FnMut(usize) -> Result<Timestamp>,
+) -> Result<usize> {
+    let mut begin = 0;
+    while begin < end {
+        let mid = begin + (end - begin) / 2;
+        let value = read(mid)?;
+        if value < target || (inclusive && value == target) {
+            begin = mid + 1;
+        } else {
+            end = mid;
+        }
+    }
+    Ok(begin)
+}
+
+/// O(log n + k), not universally O(log n): the first future-skewed header can
+/// precede the MTP crossing by many blocks. Far-future inputs never scan.
+fn select_timestamp(
+    len: usize,
+    target: Timestamp,
+    mut maximum: impl FnMut(usize) -> Result<Timestamp>,
+    mut raw: impl FnMut(usize) -> Result<Timestamp>,
+) -> Result<(usize, Timestamp)> {
+    if len == 0 {
+        return Err(Error::StateUpdating);
+    }
+    let crossing = lower_bound(len, target, true, &mut maximum)?;
+    if crossing == 0 {
+        return Err(Error::NotFound("No block at or before timestamp".into()));
+    }
+    let mut best = maximum(crossing - 1)?;
+    let mut height = lower_bound(crossing, best, false, &mut maximum)?;
+    if best == target {
+        return Ok((height, best));
+    }
+    // Before the first crossing every timestamp is <= target, so the initial
+    // window is known without reading ten preceding blocks. Count above-target
+    // values instead of loading or sorting a separate median-time source.
+    let mut window = [false; 11];
+    let mut above = 0usize;
+    for h in crossing..len {
+        let timestamp = raw(h)?;
+        if timestamp <= target && timestamp > best {
+            best = timestamp;
+            height = h;
+        }
+        if best == target {
+            break;
+        }
+        // Header consensus requires descendants to exceed previous MTP.
+        // BIP113 reused that clock, rather than introducing the header rule.
+        let slot = h % 11;
+        above -= usize::from(window[slot]);
+        window[slot] = timestamp > target;
+        above += usize::from(window[slot]);
+        let len = (h + 1).min(11);
+        if above >= len.div_ceil(2) {
+            break;
+        }
+    }
+    Ok((height, best))
+}
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/block/timestamp.rs"]
+mod tests;

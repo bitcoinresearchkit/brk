@@ -1,14 +1,27 @@
+use crate::internals::*;
+
 use crate::{AnyStoredVec, ChangeCursor, ReadWriteBaseVec, VecIndex, VecValue, WritableVec};
 
 use super::{super::CompressionStrategy, ReadWriteCompressedVec};
 
-impl<I, T, S> ReadWriteCompressedVec<I, T, S>
+pub trait VariantsCompressedInnerReadWriteRollbackReadWriteCompressedVecITSInternal<I, T, S>:
+    Sized
 where
     I: VecIndex,
     T: VecValue,
     S: CompressionStrategy<T>,
 {
-    pub(super) fn serialize_compressed_changes(&self) -> crate::Result<Vec<u8>> {
+    fn serialize_compressed_changes(&self) -> crate::Result<Vec<u8>>;
+    fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()>;
+}
+impl<I, T, S> VariantsCompressedInnerReadWriteRollbackReadWriteCompressedVecITSInternal<I, T, S>
+    for ReadWriteCompressedVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn serialize_compressed_changes(&self) -> crate::Result<Vec<u8>> {
         self.base.serialize_changes(
             Self::SIZE_OF_T,
             |from, to| self.collect_stored_range(from, to),
@@ -19,8 +32,7 @@ where
             },
         )
     }
-
-    pub(super) fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()> {
+    fn deserialize_then_undo_changes(&mut self, bytes: &[u8]) -> crate::Result<()> {
         let mut c = ChangeCursor::new(bytes);
         let change =
             ReadWriteBaseVec::<I, T>::parse_change_data(&mut c, Self::SIZE_OF_T, |b| S::read(b))?;

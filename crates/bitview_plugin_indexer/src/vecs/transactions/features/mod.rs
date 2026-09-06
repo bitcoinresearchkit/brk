@@ -1,8 +1,8 @@
 include!("schema.rs");
 
-mod counts;
-mod flags;
-mod transaction_counts;
+pub mod counts;
+pub mod flags;
+pub mod transaction_counts;
 
 pub use counts::TransactionCountVecs;
 pub use flags::TxFeatureFlags;

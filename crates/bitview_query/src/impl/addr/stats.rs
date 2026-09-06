@@ -1,9 +1,11 @@
+use crate::internals::*;
+
 use std::str::FromStr;
 
-use brk_error::{Error, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
     Addr, AddrBytes, AddrChainStats, AddrHash, AddrStats, DecodedAddrState, Dollars, OutputType,
-    TypeIndex,
+    Sats, TypeIndex,
 };
 use vecdb::ReadableVec;
 
@@ -32,7 +34,7 @@ impl Query {
     fn resolve_addr_stats(&self, bytes: &AddrBytes) -> Result<(OutputType, TypeIndex)> {
         let output_type = OutputType::from(bytes);
         let hash = AddrHash::from(bytes);
-        let type_index = super::resolve::type_index_for(self, output_type, &hash)?;
+        let type_index = self.type_index_for(output_type, &hash)?;
         if type_index >= self.safe_lengths().to_type_index(output_type) {
             return Err(Error::UnknownAddr);
         }
@@ -52,16 +54,15 @@ impl Query {
             .addr_state
             .get_once(output_type, type_index)?;
 
-        let (addr_data, realized_price) = match state.decode() {
+        let (addr_data, is_funded) = match state.decode() {
             DecodedAddrState::Funded(index) => {
                 let data = plugins
                     .distribution
                     .addr_state
                     .funded
                     .collect_one(index)
-                    .expect("funded address data index should be in bounds");
-                let price = data.realized_price().to_dollars();
-                (data, price)
+                    .data()?;
+                (data, true)
             }
             DecodedAddrState::ExtendedEmpty(index) => {
                 let data = plugins
@@ -69,26 +70,38 @@ impl Query {
                     .addr_state
                     .extended_empty
                     .collect_one(index)
-                    .expect("extended empty address data index should be in bounds")
+                    .data()?
                     .into();
-                (data, Dollars::default())
+                (data, false)
             }
-            DecodedAddrState::Empty(data) => (data.into(), Dollars::default()),
+            DecodedAddrState::Empty(data) => (data.into(), false),
         };
 
         let mempool_stats = self
             .mempool()
-            .and_then(|m| m.addr_stats(&bytes))
+            .map(|m| m.addr_stats(&bytes, &self.tip_blockhash()))
+            .transpose()?
             .unwrap_or_default();
-        let balance = addr_data.received + mempool_stats.funded_txo_sum
-            - addr_data.sent
-            - mempool_stats.spent_txo_sum;
+        let (chain_balance, balance) = address_balances(
+            addr_data.received,
+            addr_data.sent,
+            mempool_stats.funded_txo_sum,
+            mempool_stats.spent_txo_sum,
+        )?;
+        let realized_price = if is_funded {
+            addr_data
+                .realized_cap_raw()
+                .realized_price(chain_balance)
+                .to_dollars()
+        } else {
+            Dollars::default()
+        };
 
         Ok(AddrStats {
             addr,
             addr_type: output_type,
             chain_stats: AddrChainStats {
-                balance: addr_data.received - addr_data.sent,
+                balance: chain_balance,
                 type_index,
                 funded_txo_count: addr_data.funded_txo_count,
                 funded_txo_sum: addr_data.received,
@@ -102,3 +115,28 @@ impl Query {
         })
     }
 }
+
+fn address_balances(
+    received: Sats,
+    sent: Sats,
+    pending_received: Sats,
+    pending_sent: Sats,
+) -> Result<(Sats, Sats)> {
+    let chain = u64::from(received)
+        .checked_sub(sent.into())
+        .ok_or(Error::Internal(
+            "Address sent amount exceeds confirmed receipts",
+        ))?;
+    // The live mempool and indexer publish independently. A just-confirmed
+    // spend can still be present in the mempool view; never underflow or
+    // fabricate a zero balance when those views cannot be reconciled.
+    let combined = chain
+        .checked_add(pending_received.into())
+        .and_then(|value| value.checked_sub(pending_sent.into()))
+        .ok_or(Error::StateUpdating)?;
+    Ok((chain.into(), combined.into()))
+}
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/addr/stats.rs"]
+mod tests;

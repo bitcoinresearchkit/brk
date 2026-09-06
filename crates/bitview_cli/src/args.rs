@@ -5,10 +5,10 @@ use std::{
 
 use crate::command::Command;
 
-pub(crate) const BASE_URL_ENV: &str = "BITVIEW_URL";
-pub(crate) const DEFAULT_BASE_URL: &str = "http://localhost:3110";
+pub const BASE_URL_ENV: &str = "BITVIEW_URL";
+pub const DEFAULT_BASE_URL: &str = "http://localhost:3110";
 
-pub(crate) struct Args {
+pub struct Args {
     pub command: &'static Command,
     pub base_url: String,
     pub path_values: Vec<String>,

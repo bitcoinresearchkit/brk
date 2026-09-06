@@ -1,4 +1,4 @@
-mod sighash;
+pub mod sighash;
 
 use crate::TxFeatureFlags;
 

@@ -1,6 +1,6 @@
-mod address;
-mod op_return;
-mod processed;
+pub mod address;
+pub mod op_return;
+pub mod processed;
 
 pub use address::BlockAddresses;
 pub use processed::ProcessedOutput;

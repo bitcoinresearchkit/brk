@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::{
     fs::File,
     io::{Read, Seek, SeekFrom},
@@ -47,42 +49,6 @@ where
     const SIZE_OF_T: usize = size_of::<T>();
     const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / Self::SIZE_OF_T;
     const NO_PAGE: usize = usize::MAX;
-
-    pub(crate) fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
-        Self::new_from_parts(vec.region(), vec.pages(), vec.stored_len(), from, to)
-    }
-
-    pub(crate) fn new_from_parts(
-        region: &'a Region,
-        pages: &'a Arc<RwLock<Pages>>,
-        stored_len: usize,
-        from: usize,
-        to: usize,
-    ) -> Self {
-        let region_lock = region.meta();
-        let region_start = region_lock.start() as u64;
-        let file = region.open_db_read_only_file().expect("open file");
-        let pages = pages.read();
-        let from = from.min(stored_len);
-        let to = to.min(stored_len);
-
-        Self {
-            file,
-            file_position: 0,
-            region_start,
-            buffer: vec![0; BUFFER_SIZE],
-            buffer_len: 0,
-            buffer_start_offset: 0,
-            decoded_values: Vec::with_capacity(Self::PER_PAGE),
-            decoder: PageDecoder::default(),
-            decoded_page_index: Self::NO_PAGE,
-            pages,
-            index: from,
-            end_index: to,
-            _region_lock: region_lock,
-            _marker: std::marker::PhantomData,
-        }
-    }
 
     #[inline(always)]
     fn ensure_page_decoded(&mut self, page_index: usize) -> Option<()> {
@@ -177,9 +143,109 @@ where
         self.ensure_page_decoded(page_index)?;
         Some(&self.decoded_values)
     }
+}
 
+#[cfg(all(test, feature = "pco"))]
+mod tests {
+    use crate::internals::*;
+    use tempfile::tempdir;
+
+    use crate::{AnyStoredVec, Database, ImportableVec, PcoVec, Version, WritableVec};
+
+    use super::CompressedIoSource;
+
+    #[test]
+    fn read_into_handles_full_and_partial_pages() {
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
+        let mut vec: PcoVec<usize, u64> =
+            PcoVec::forced_import(&db, "values", Version::ONE).unwrap();
+        let per_page = 8 * 1024 / size_of::<u64>();
+        let values: Vec<_> = (0..per_page * 3 + 137)
+            .map(|index| index as u64 * 17 + index as u64 % 11)
+            .collect();
+        for &value in &values {
+            vec.push(value);
+        }
+        vec.write().unwrap();
+
+        for (from, to) in [
+            (0, values.len()),
+            (17, per_page + 9),
+            (per_page, per_page * 3),
+            (per_page * 2 + 31, values.len() - 7),
+        ] {
+            let mut output = vec![u64::MAX];
+            CompressedIoSource::new(&vec, from, to).read_into(&mut output);
+            assert_eq!(&output[1..], &values[from..to]);
+        }
+    }
+}
+pub trait VariantsCompressedSourcesIoCompressedIoSourceAITSInternal<'a, I, T, S>: Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self;
+    fn new_from_parts(
+        region: &'a Region,
+        pages: &'a Arc<RwLock<Pages>>,
+        stored_len: usize,
+        from: usize,
+        to: usize,
+    ) -> Self;
+    fn read_into(self, output: &mut Vec<T>);
+    fn fold<B, F: FnMut(B, T) -> B>(self, init: B, f: F) -> B;
+    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+        self,
+        init: B,
+        f: F,
+    ) -> std::result::Result<B, E>;
+}
+impl<'a, I, T, S> VariantsCompressedSourcesIoCompressedIoSourceAITSInternal<'a, I, T, S>
+    for CompressedIoSource<'a, I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
+        Self::new_from_parts(vec.region(), vec.pages(), vec.stored_len(), from, to)
+    }
+    fn new_from_parts(
+        region: &'a Region,
+        pages: &'a Arc<RwLock<Pages>>,
+        stored_len: usize,
+        from: usize,
+        to: usize,
+    ) -> Self {
+        let region_lock = region.meta();
+        let region_start = region_lock.start() as u64;
+        let file = region.open_db_read_only_file().expect("open file");
+        let pages = pages.read();
+        let from = from.min(stored_len);
+        let to = to.min(stored_len);
+
+        Self {
+            file,
+            file_position: 0,
+            region_start,
+            buffer: vec![0; BUFFER_SIZE],
+            buffer_len: 0,
+            buffer_start_offset: 0,
+            decoded_values: Vec::with_capacity(Self::PER_PAGE),
+            decoder: PageDecoder::default(),
+            decoded_page_index: Self::NO_PAGE,
+            pages,
+            index: from,
+            end_index: to,
+            _region_lock: region_lock,
+            _marker: std::marker::PhantomData,
+        }
+    }
     /// Reads remaining pages directly into the destination allocation.
-    pub(crate) fn read_into(mut self, output: &mut Vec<T>) {
+    fn read_into(mut self, output: &mut Vec<T>) {
         output.reserve(self.end_index - self.index);
         let start_page = self.index / Self::PER_PAGE;
         let end_page = (self.end_index - 1) / Self::PER_PAGE;
@@ -214,10 +280,9 @@ where
             }
         }
     }
-
     /// Fold all remaining elements — tight pointer loop per page so LLVM can vectorize.
     #[inline(always)]
-    pub(crate) fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
+    fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
         let per_page = Self::PER_PAGE;
         let end_index = self.end_index;
         let mut page_index = self.index / per_page;
@@ -243,10 +308,9 @@ where
         }
         accum
     }
-
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    pub(crate) fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         mut self,
         init: B,
         mut f: F,
@@ -271,41 +335,5 @@ where
             in_page_offset = 0;
         }
         Ok(accum)
-    }
-}
-
-#[cfg(all(test, feature = "pco"))]
-mod tests {
-    use tempfile::tempdir;
-
-    use crate::{AnyStoredVec, Database, ImportableVec, PcoVec, Version, WritableVec};
-
-    use super::CompressedIoSource;
-
-    #[test]
-    fn read_into_handles_full_and_partial_pages() {
-        let temp = tempdir().unwrap();
-        let db = Database::open(temp.path()).unwrap();
-        let mut vec: PcoVec<usize, u64> =
-            PcoVec::forced_import(&db, "values", Version::ONE).unwrap();
-        let per_page = 8 * 1024 / size_of::<u64>();
-        let values: Vec<_> = (0..per_page * 3 + 137)
-            .map(|index| index as u64 * 17 + index as u64 % 11)
-            .collect();
-        for &value in &values {
-            vec.push(value);
-        }
-        vec.write().unwrap();
-
-        for (from, to) in [
-            (0, values.len()),
-            (17, per_page + 9),
-            (per_page, per_page * 3),
-            (per_page * 2 + 31, values.len() - 7),
-        ] {
-            let mut output = vec![u64::MAX];
-            CompressedIoSource::new(&vec, from, to).read_into(&mut output);
-            assert_eq!(&output[1..], &values[from..to]);
-        }
     }
 }

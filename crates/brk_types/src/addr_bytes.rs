@@ -4,8 +4,8 @@ use bitcoin::{Network, PublicKey, ScriptBuf, opcodes, script::Builder};
 use brk_error::Error;
 
 use super::{
-    OutputType, P2ABytes, P2PK33Bytes, P2PK65Bytes, P2PKHBytes, P2SHBytes, P2TRBytes, P2WPKHBytes,
-    P2WSHBytes,
+    AddrHash, OutputType, P2ABytes, P2PK33Bytes, P2PK65Bytes, P2PKHBytes, P2SHBytes, P2TRBytes,
+    P2WPKHBytes, P2WSHBytes,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -18,6 +18,15 @@ pub enum AddrBytes {
     P2WSH(P2WSHBytes),   // 32
     P2TR(P2TRBytes),     // 32
     P2A(P2ABytes),       // 2
+}
+
+impl AddrHash {
+    #[inline]
+    pub fn from_script(script: &ScriptBuf, output_type: OutputType) -> Result<Self, Error> {
+        Ok(Self::new(rapidhash::v3::rapidhash_v3(
+            AddrBytes::script_payload(script, output_type)?,
+        )))
+    }
 }
 
 impl AddrBytes {
@@ -38,10 +47,7 @@ impl AddrBytes {
         rapidhash::v3::rapidhash_v3(self.as_slice())
     }
 
-    pub(crate) fn script_payload(
-        script: &ScriptBuf,
-        output_type: OutputType,
-    ) -> Result<&[u8], Error> {
+    fn script_payload(script: &ScriptBuf, output_type: OutputType) -> Result<&[u8], Error> {
         let bytes = script.as_bytes();
         match output_type {
             OutputType::P2PK65 => match bytes.len() {

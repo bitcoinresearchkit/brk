@@ -17,10 +17,24 @@ impl Etag {
     pub fn matches(&self, headers: &HeaderMap) -> bool {
         let target = self.token();
         headers.get_all(IF_NONE_MATCH).iter().any(|value| {
-            value.as_bytes().split(|&byte| byte == b',').any(|entry| {
-                let entry = entry.trim_ascii();
-                entry == b"*" || Self::normalize(entry) == target
-            })
+            let value = value.as_bytes().trim_ascii();
+            if value == b"*" {
+                return true;
+            }
+            // A whole-field match needs no list parsing. The target was validated
+            // at construction, so equality also establishes valid token bytes.
+            if Self::normalize(value) == Some(target) {
+                return true;
+            }
+            let mut quoted = false;
+            value
+                .split(|&byte| {
+                    if byte == b'"' {
+                        quoted = !quoted;
+                    }
+                    byte == b',' && !quoted
+                })
+                .any(|entry| Self::normalize(entry.trim_ascii()) == Some(target))
         })
     }
 
@@ -33,17 +47,20 @@ impl Etag {
         &value[3..value.len() - 1]
     }
 
-    fn normalize(value: &[u8]) -> &[u8] {
+    fn normalize(value: &[u8]) -> Option<&[u8]> {
         let value = value.strip_prefix(b"W/").unwrap_or(value);
-        value
-            .strip_prefix(b"\"")
-            .and_then(|value| value.strip_suffix(b"\""))
-            .unwrap_or(value)
+        value.strip_prefix(b"\"")?.strip_suffix(b"\"")
     }
 }
 
 impl From<String> for Etag {
     fn from(value: String) -> Self {
+        assert!(
+            value
+                .bytes()
+                .all(|byte| byte == 0x21 || (0x23..=0x7e).contains(&byte) || byte >= 0x80),
+            "invalid ETag token"
+        );
         let mut header = String::with_capacity(value.len() + 4);
         header.push_str("W/\"");
         header.push_str(&value);
@@ -53,48 +70,5 @@ impl From<String> for Etag {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn headers(values: &[&'static str]) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        for value in values {
-            headers.append(IF_NONE_MATCH, HeaderValue::from_static(value));
-        }
-        headers
-    }
-
-    #[test]
-    fn matches_weak_strong_wildcard_and_list() {
-        let etag = Etag::from("s1-abc".to_string());
-        assert!(etag.matches(&headers(&["W/\"s1-abc\""])));
-        assert!(etag.matches(&headers(&["\"s1-abc\""])));
-        assert!(etag.matches(&headers(&["*"])));
-        assert!(etag.matches(&headers(&["W/\"a\", W/\"s1-abc\""])));
-        assert!(etag.matches(&headers(&["  W/\"s1-abc\"  "])));
-    }
-
-    #[test]
-    fn checks_every_if_none_match_field() {
-        let etag = Etag::from("s1-abc".to_string());
-        assert!(etag.matches(&headers(&["W/\"other\"", "W/\"s1-abc\""])));
-    }
-
-    #[test]
-    fn rejects_mismatch_and_missing() {
-        let etag = Etag::from("s1-abc".to_string());
-        assert!(!etag.matches(&headers(&["W/\"other\""])));
-        assert!(!etag.matches(&HeaderMap::new()));
-    }
-
-    #[test]
-    fn inserts_exact_weak_header() {
-        let etag = Etag::from("s1-abc".to_string());
-        let mut headers = HeaderMap::new();
-        etag.insert(&mut headers);
-        assert_eq!(
-            headers.get(ETAG),
-            Some(&HeaderValue::from_static("W/\"s1-abc\""))
-        );
-    }
-}
+#[path = "../tests/unit/etag.rs"]
+mod tests;

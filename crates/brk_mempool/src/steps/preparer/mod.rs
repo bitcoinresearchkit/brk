@@ -12,6 +12,7 @@
 //! state on the live store. Removals are inferred by cross-referencing
 //! inputs against the full `live_txids` set from the cycle's pull.
 
+use bitcoin::Transaction as BitcoinTransaction;
 use brk_types::{MempoolEntryInfo, Transaction, Txid, TxidPrefix, Vout};
 use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -21,9 +22,9 @@ use crate::{
     stores::{TxGraveyard, TxStore},
 };
 
-mod tx_addition;
-mod tx_removal;
-mod txs_pulled;
+pub mod tx_addition;
+pub mod tx_removal;
+pub mod txs_pulled;
 
 pub use tx_addition::TxAddition;
 pub use tx_removal::TxRemoval;
@@ -35,7 +36,7 @@ impl Preparer {
     pub fn prepare(
         live_txids: &[Txid],
         new_entries: Vec<MempoolEntryInfo>,
-        new_txs: FxHashMap<Txid, bitcoin::Transaction>,
+        new_txs: FxHashMap<Txid, BitcoinTransaction>,
         lock: &RwLock<State>,
     ) -> TxsPulled {
         let state = lock.read();
@@ -53,7 +54,7 @@ impl Preparer {
 
     fn classify_additions(
         new_entries: Vec<MempoolEntryInfo>,
-        mut new_txs: FxHashMap<Txid, bitcoin::Transaction>,
+        mut new_txs: FxHashMap<Txid, BitcoinTransaction>,
         known: &TxStore,
         graveyard: &TxGraveyard,
     ) -> Vec<TxAddition> {
@@ -67,7 +68,7 @@ impl Preparer {
         info: &MempoolEntryInfo,
         known: &TxStore,
         graveyard: &TxGraveyard,
-        new_txs: &mut FxHashMap<Txid, bitcoin::Transaction>,
+        new_txs: &mut FxHashMap<Txid, BitcoinTransaction>,
     ) -> Option<TxAddition> {
         if known.contains(&info.txid) {
             return None;
@@ -127,7 +128,7 @@ impl Preparer {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::hashes::Hash;
+    use bitcoin::{OutPoint as BitcoinOutPoint, Txid as BitcoinTxid, hashes::Hash};
     use brk_types::{FeeRate, Sats, TxOut, VSize};
 
     use super::*;
@@ -173,7 +174,7 @@ mod tests {
         seed_known(&state, known_txid);
 
         let info = fake_entry_info(known_txid, 100, 100);
-        let mut new_txs: FxHashMap<Txid, bitcoin::Transaction> = FxHashMap::default();
+        let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         new_txs.insert(
             known_txid,
             fake_bitcoin_tx(0x11, &[(p2wpkh_script(7), 1_234)]),
@@ -206,7 +207,7 @@ mod tests {
         // info.txid, not by tx.compute_txid().
         let info = fake_entry_info(txid, 200, 120);
         let raw = fake_bitcoin_tx(0x31, &[(p2wpkh_script(8), 2_345)]);
-        let mut new_txs: FxHashMap<Txid, bitcoin::Transaction> = FxHashMap::default();
+        let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         new_txs.insert(txid, raw);
 
         let pulled = Preparer::prepare(&[txid], vec![info], new_txs, &state);
@@ -244,10 +245,10 @@ mod tests {
         }
 
         let info = fake_entry_info(replacer_txid, 200, 120);
-        let mut new_txs: FxHashMap<Txid, bitcoin::Transaction> = FxHashMap::default();
+        let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         let mut raw = fake_bitcoin_tx(0x52, &[(p2wpkh_script(82), 4_321)]);
-        raw.input[0].previous_output = bitcoin::OutPoint {
-            txid: bitcoin::Txid::from_byte_array({
+        raw.input[0].previous_output = BitcoinOutPoint {
+            txid: BitcoinTxid::from_byte_array({
                 let mut b = [0u8; 32];
                 b[0] = 0x50;
                 b
@@ -309,15 +310,15 @@ mod tests {
 
         let info = fake_entry_info(child_txid, 200, 120);
         let mut raw = fake_bitcoin_tx(0x70, &[(p2wpkh_script(101), 6_000)]);
-        raw.input[0].previous_output = bitcoin::OutPoint {
-            txid: bitcoin::Txid::from_byte_array({
+        raw.input[0].previous_output = BitcoinOutPoint {
+            txid: BitcoinTxid::from_byte_array({
                 let mut b = [0u8; 32];
                 b[0] = 0x70;
                 b
             }),
             vout: 0,
         };
-        let mut new_txs: FxHashMap<Txid, bitcoin::Transaction> = FxHashMap::default();
+        let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         new_txs.insert(child_txid, raw);
 
         let pulled = Preparer::prepare(&[parent_txid, child_txid], vec![info], new_txs, &state);

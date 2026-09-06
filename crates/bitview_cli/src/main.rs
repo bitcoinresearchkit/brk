@@ -13,7 +13,7 @@ use std::{
 use args::Args;
 use generated::COMMANDS;
 
-pub(crate) const PROGRAM_NAME: &str = env!("CARGO_BIN_NAME");
+const PROGRAM_NAME: &str = env!("CARGO_BIN_NAME");
 
 fn main() -> ExitCode {
     match run() {

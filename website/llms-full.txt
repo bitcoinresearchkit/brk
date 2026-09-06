@@ -460,7 +460,7 @@ curl -s "https://bitview.space/api/v1/fullrbf/replacements"
 
 Health check
 
-Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.
+Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
 
 Returns: JSON `Health`
 
@@ -474,7 +474,7 @@ curl -s "https://bitview.space/health"
 
 Historical price
 
-Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
+Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
 
 Parameters:
 - `timestamp` (query, Timestamp, optional)
@@ -503,7 +503,7 @@ curl -s "https://bitview.space/api/mempool"
 
 Mempool content hash
 
-Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.
 
 Returns: JSON `NextBlockHash`
 
@@ -640,7 +640,7 @@ curl -s "https://bitview.space/api/v1/mining/blocks/sizes-weights/<time_period>"
 
 Block by timestamp
 
-Find the block closest to a given UNIX timestamp. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
+Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
 
 Parameters:
 - `timestamp` (path, Timestamp, required)
@@ -751,7 +751,7 @@ curl -s "https://bitview.space/api/v1/mining/pool/<slug>"
 
 Mining pool blocks
 
-Get the 10 most recent blocks mined by a specific pool. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+Get up to 100 recent blocks mined by a specific pool. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
 Parameters:
 - `slug` (path, PoolSlug, required)
@@ -766,7 +766,7 @@ curl -s "https://bitview.space/api/v1/mining/pool/<slug>/blocks"
 
 Mining pool blocks from height
 
-Get 10 blocks mined by a specific pool before (and including) the given height. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
+Get up to 100 blocks mined by a specific pool before (and including) the given height. *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
 Parameters:
 - `slug` (path, PoolSlug, required)
@@ -855,7 +855,7 @@ curl -s "https://bitview.space/openapi.json"
 
 Live output value histogram
 
-Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
 
 Returns: JSON `integer[]`
 
@@ -882,7 +882,7 @@ curl -s "https://bitview.space/api/oracle/histogram/outputs/<point>"
 
 Live payment output histogram
 
-Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.
 
 Returns: JSON `integer[]`
 
@@ -1023,7 +1023,7 @@ curl -s "https://bitview.space/api/series/list?page=<page>&per_page=<per_page>"
 
 Search series
 
-Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.
+Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
 
 Parameters:
 - `q` (query, SeriesName, required): Search query string
@@ -1039,7 +1039,7 @@ curl -s "https://bitview.space/api/series/search?q=<q>&limit=<limit>"
 
 Get series info
 
-Returns the optional description, supported indexes, and value type for the specified series.
+Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.
 
 Parameters:
 - `series` (path, SeriesName, required)
@@ -1126,7 +1126,7 @@ curl -s "https://bitview.space/api/series/<series>/<index>/len"
 
 Get series version
 
-Returns the current version of a series. Changes when the series data is updated.
+Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.
 
 Parameters:
 - `series` (path, SeriesName, required): Series name
@@ -1144,7 +1144,7 @@ curl -s "https://bitview.space/api/series/<series>/<index>/version"
 
 Disk usage
 
-Returns the disk space used by BRK and Bitcoin data.
+Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.
 
 Returns: JSON `DiskUsage`
 
@@ -1156,7 +1156,7 @@ curl -s "https://bitview.space/api/server/disk"
 
 Sync status
 
-Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.
 
 Returns: JSON `SyncStatus`
 
@@ -1187,11 +1187,11 @@ curl -s "https://bitview.space/api/v1/transaction-times?txId[]=<txId[]>"
 
 Broadcast transaction
 
-Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success. *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
+Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry. *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
 
 Request body: `string` (required)
 
-Returns: JSON `Txid`
+Returns: text `Txid`
 
 ```bash
 curl -s -X POST --data '<string>' "https://bitview.space/api/tx"
@@ -1711,7 +1711,7 @@ curl -s "https://bitview.space/version"
 - `brk_bytes`: `integer` (required) — brk data size in bytes
 - `bitcoin`: `string` (required) — Human-readable Bitcoin blocks directory size
 - `bitcoin_bytes`: `integer` (required) — Bitcoin blocks directory size in bytes
-- `ratio`: `number` (required) — brk as percentage of Bitcoin data
+- `ratio`: `number` (required) — Ratio of BRK bytes to Bitcoin bytes; zero when Bitcoin bytes are zero.
 
 ### `Dollars`
 

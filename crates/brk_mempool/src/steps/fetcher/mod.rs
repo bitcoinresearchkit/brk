@@ -1,9 +1,9 @@
-mod fetched;
+pub mod fetched;
 
-pub use fetched::Fetched;
-
+use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, Timestamp, Txid, VSize};
+pub use fetched::Fetched;
 use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
 use tracing::warn;
@@ -33,12 +33,12 @@ const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 pub struct Fetcher;
 
 impl Fetcher {
-    pub fn fetch(client: &Client, lock: &RwLock<State>) -> brk_error::Result<Fetched> {
+    pub fn fetch(client: &Client, lock: &RwLock<State>) -> Result<Fetched> {
         let (mut state, block_template) = client.fetch_mempool_state()?;
 
         // One read snapshot decides both the RPC fetch list and the
         // GBT-synthesis set, so they agree on what's "already known".
-        let (new_txids, gbt_synth_set) = {
+        let (new_txids, gbt_synth_set, mut missing_from_listing) = {
             let mempool = lock.read();
             let mut gbt_txids: FxHashSet<Txid> =
                 FxHashSet::with_capacity_and_hasher(block_template.len(), Default::default());
@@ -62,7 +62,7 @@ impl Fetcher {
                     "Fetcher: new-tx batch hit the per-cycle cap; remainder defers to the next cycle"
                 );
             }
-            (new_txids, gbt_synth_set)
+            (new_txids, gbt_synth_set, gbt_txids)
         };
 
         let (mut new_entries, mut new_txs) = client.fetch_new_pool_data(&new_txids)?;
@@ -99,21 +99,28 @@ impl Fetcher {
             })
             .collect();
 
-        // Promote `live_txids` to the union of `getrawmempool` and GBT:
-        // the two RPC views can disagree by a cycle, so a tx visible to
-        // GBT but missing from `getrawmempool` (or vice versa) is still
-        // alive. Without the union, GBT-only txs would oscillate enter ↔
-        // leave every cycle as `Preparer::classify_removals` buried what
-        // GBT had just resurrected.
-        state
-            .live_txids
-            .extend(block_template_txids.iter().copied());
+        // Keep GBT-only bodies for the exact template projection, but do not
+        // call their union a coherent address view: a removed GBT transaction
+        // can conflict with a replacement in the newer raw listing.
+        // Reuse the block-sized GBT set instead of allocating a second full
+        // mempool set beside the one Preparer needs.
+        for txid in &state.live_txids {
+            missing_from_listing.remove(txid);
+        }
+        let address_view_complete = missing_from_listing.is_empty();
+        state.live_txids.extend(
+            block_template_txids
+                .iter()
+                .filter(|txid| missing_from_listing.contains(*txid))
+                .copied(),
+        );
 
         Ok(Fetched {
             state,
             new_entries,
             new_txs,
             block_template_txids,
+            address_view_complete,
         })
     }
 }

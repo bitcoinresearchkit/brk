@@ -18,12 +18,12 @@ use std::{path::PathBuf, sync::Arc};
 ///
 /// Only the top-level index is loaded into memory.
 pub struct TwoLevelBlockIndex {
-    pub(crate) top_level_index: IndexBlock,
-    pub(crate) table_id: GlobalTableId,
-    pub(crate) path: Arc<PathBuf>,
-    pub(crate) file_accessor: FileAccessor,
-    pub(crate) cache: Arc<Cache>,
-    pub(crate) compression: CompressionType,
+    pub top_level_index: IndexBlock,
+    pub table_id: GlobalTableId,
+    pub path: Arc<PathBuf>,
+    pub file_accessor: FileAccessor,
+    pub cache: Arc<Cache>,
+    pub compression: CompressionType,
 }
 
 impl TwoLevelBlockIndex {

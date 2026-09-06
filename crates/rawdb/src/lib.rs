@@ -1,5 +1,7 @@
 #![doc = include_str!("../README.md")]
 
+use crate::internals::*;
+
 use std::{
     collections::HashSet,
     fmt,
@@ -22,11 +24,13 @@ mod disk_usage;
 pub mod error;
 mod hints;
 mod hole_punch;
+mod internals;
 mod layout;
 mod mmap;
 mod reader;
 mod region;
 mod region_group;
+mod region_inner;
 mod region_metadata;
 mod regions;
 
@@ -39,7 +43,8 @@ use mmap::*;
 pub use reader::*;
 pub use region::*;
 pub use region_group::RegionGroup;
-pub use region_metadata::*;
+use region_inner::RegionInner;
+pub use region_metadata::{RegionMetadata, SIZE_OF_REGION_METADATA};
 use regions::*;
 
 pub const PAGE_SIZE: usize = 4096;
@@ -160,7 +165,7 @@ impl Database {
     pub fn get_region(&self, id: &str) -> Option<Region> {
         let region = self.regions().get_from_id(id).cloned();
         if let Some(region) = &region {
-            region.mark_accessed();
+            RegionInner::from_region(region).mark_accessed();
         }
         region
     }
@@ -204,23 +209,25 @@ impl Database {
 
             let region = regions.create(self, id.to_owned(), start)?;
             if reused_hole {
-                region.meta_mut().mark_tail_needs_punch();
+                RegionInner::from_region(&region)
+                    .meta_mut()
+                    .mark_tail_needs_punch();
             }
             layout.insert_region(start, &region);
             region
         };
         drop(regions);
         drop(layout);
-        region.mark_accessed();
+        RegionInner::from_region(&region).mark_accessed();
         Ok(region)
     }
 
     #[inline]
-    pub(crate) fn write(&self, start: usize, data: &[u8]) {
+    fn write(&self, start: usize, data: &[u8]) {
         write_to_mmap(&self.mmap(), start, data);
     }
 
-    pub(crate) fn copy(&self, src: usize, dst: usize, len: usize) -> Result<()> {
+    fn copy(&self, src: usize, dst: usize, len: usize) -> Result<()> {
         if len == 0 {
             return Ok(());
         }
@@ -292,7 +299,7 @@ impl Database {
             .index_to_region()
             .iter()
             .flatten()
-            .filter(|region| !region.was_accessed())
+            .filter(|region| !RegionInner::from_region(region).was_accessed())
             .cloned()
             .collect();
         drop(regions);
@@ -313,7 +320,7 @@ impl Database {
         }
 
         for region in regions {
-            let ref_count = Arc::strong_count(region.arc());
+            let ref_count = Arc::strong_count(RegionInner::from_region(&region));
             debug!(
                 "{}: removing '{}' (arc count: {})",
                 self,
@@ -344,7 +351,7 @@ impl Database {
             .iter()
             .flatten()
             .filter_map(|r| {
-                let ranges = r.take_dirty_ranges();
+                let ranges = RegionInner::from_region(r).take_dirty_ranges();
                 if !ranges.is_empty() {
                     Some((r.clone(), ranges))
                 } else {
@@ -381,7 +388,7 @@ impl Database {
                 if let Err(error) = mmap.flush_async_range(start, end - start) {
                     drop(mmap);
                     for (region, ranges) in &dirty_regions {
-                        region.restore_dirty_ranges(ranges);
+                        RegionInner::from_region(region).restore_dirty_ranges(ranges);
                     }
                     return Err(error.into());
                 }
@@ -389,7 +396,7 @@ impl Database {
 
             if let Err(error) = self.file().sync_data() {
                 for (region, ranges) in &dirty_regions {
-                    region.restore_dirty_ranges(ranges);
+                    RegionInner::from_region(region).restore_dirty_ranges(ranges);
                 }
                 return Err(error.into());
             }
@@ -490,7 +497,7 @@ impl Database {
 
         // Keep each region boundary stable while deriving and punching its tail.
         for region in regions.index_to_region().iter().flatten() {
-            let mut meta = region.meta_mut();
+            let mut meta = RegionInner::from_region(region).meta_mut();
             if !meta.tail_needs_punch() {
                 continue;
             }
@@ -560,7 +567,7 @@ impl Database {
     }
 
     #[inline(always)]
-    pub(crate) fn regions_mut(&self) -> RwLockWriteGuard<'_, Regions> {
+    fn regions_mut(&self) -> RwLockWriteGuard<'_, Regions> {
         self.0.regions.write()
     }
 
@@ -570,7 +577,7 @@ impl Database {
     }
 
     #[inline(always)]
-    pub(crate) fn layout_mut(&self) -> RwLockWriteGuard<'_, Layout> {
+    fn layout_mut(&self) -> RwLockWriteGuard<'_, Layout> {
         self.0.layout.write()
     }
 

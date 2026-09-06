@@ -1,7 +1,7 @@
-mod divide;
-mod minus;
-mod plus;
-mod times;
+pub mod divide;
+pub mod minus;
+pub mod plus;
+pub mod times;
 
 pub use divide::Divide;
 pub use minus::Minus;

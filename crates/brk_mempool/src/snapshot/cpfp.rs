@@ -6,30 +6,35 @@
 //! - cluster: connected component over `parents ∪ children`,
 //!   linearized for wire shape and seed chunk feerate.
 
+use brk_error::Result;
 use brk_types::{
-    CPFP_CHAIN_LIMIT, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry, CpfpInfo, FeeRate,
-    SigOps, Txid, VSize, find_seed_chunk,
+    BlockHash, CPFP_CHAIN_LIMIT, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry,
+    CpfpInfo, FeeRate, SigOps, Txid, VSize, find_seed_chunk,
 };
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use crate::Mempool;
-
 use super::{Cluster, SnapTx, Snapshot, TxIndex};
+use crate::Mempool;
 
 impl Mempool {
     /// CPFP info for a live mempool tx. Returns `None` when the tx
-    /// isn't in the live pool, so callers can fall through to the
-    /// confirmed path. The snapshot can lag `state.txs` by up to one
-    /// cycle: if the seed is in the snapshot but no longer in live
-    /// state we return `None` rather than a half-stale report.
-    pub fn cpfp_info(&self, txid: &Txid) -> Option<CpfpInfo> {
+    /// isn't in the completed live publication. Requires the graph and live
+    /// fields to share the same transaction revision and requested chain tip.
+    pub fn cpfp_info(&self, txid: &Txid, tip: &BlockHash) -> Result<Option<CpfpInfo>> {
         let snapshot = self.snapshot();
-        let seed_idx = snapshot.idx_of_txid(txid)?;
-        let seed = snapshot.tx(seed_idx)?;
-
-        let sigops = self.read().txs.get(txid)?.total_sigop_cost;
-
-        Some(snapshot.cpfp_info_at(seed_idx, seed, sigops))
+        let sigops = {
+            let state = self.read();
+            state.ensure_snapshot_at(tip, &snapshot)?;
+            let Some(tx) = state.txs.get(txid) else {
+                return Ok(None);
+            };
+            tx.total_sigop_cost
+        };
+        Ok(snapshot.idx_of_txid(txid).and_then(|index| {
+            snapshot
+                .tx(index)
+                .map(|seed| snapshot.cpfp_info_at(index, seed, sigops))
+        }))
     }
 }
 
@@ -152,98 +157,5 @@ impl Snapshot {
 }
 
 #[cfg(test)]
-mod tests {
-    use brk_types::{FeeRate, Txid};
-
-    use super::*;
-    use crate::{
-        state::TxEntry,
-        test_support::{fake_entry_info, fake_tx, p2wpkh_script},
-    };
-
-    /// Insert a tx, optionally declaring parent dependencies for the
-    /// snapshot builder's adjacency wire-up.
-    fn insert_with_depends(
-        mempool: &Mempool,
-        seed: u8,
-        fee: u64,
-        vsize: u64,
-        parents: &[Txid],
-    ) -> Txid {
-        let tx = fake_tx(seed, &[None], &[(p2wpkh_script(seed + 1), 1_234)]);
-        let txid = tx.txid;
-        let mut info = fake_entry_info(txid, fee, vsize);
-        info.depends = parents.to_vec();
-        let entry = TxEntry::new(&info, vsize, false);
-        let mut state = mempool.test_state_lock().write();
-        state.txs.insert(tx, entry);
-        txid
-    }
-
-    #[test]
-    fn singleton_cpfp_info_has_no_cluster() {
-        let mempool = Mempool::for_test();
-        let txid = insert_with_depends(&mempool, 0xB0, 10_000, 100, &[]);
-        mempool.test_tick(&[txid], FeeRate::new(1.0));
-
-        let info = mempool.cpfp_info(&txid).expect("tx is in mempool");
-        assert!(info.cluster.is_none(), "singletons emit no cluster");
-        assert!(info.ancestors.is_empty());
-        assert!(info.descendants.is_empty());
-        // Effective rate equals isolated rate when there's no package lift.
-        let isolated = FeeRate::from((info.fee, info.vsize));
-        assert_eq!(info.effective_fee_per_vsize, isolated);
-    }
-
-    #[test]
-    fn two_tx_cpfp_cluster_has_both_members_and_lifted_rate() {
-        let mempool = Mempool::for_test();
-        let parent = insert_with_depends(&mempool, 0xB1, 100, 100, &[]);
-        let child = insert_with_depends(&mempool, 0xB2, 1_900, 100, &[parent]);
-        mempool.test_tick(&[parent, child], FeeRate::new(1.0));
-
-        let parent_info = mempool.cpfp_info(&parent).unwrap();
-        let cluster = parent_info.cluster.expect("two-tx cluster present");
-        assert_eq!(cluster.txs.len(), 2);
-        // Topological order: parent first.
-        assert_eq!(cluster.txs[0].txid, parent);
-        assert_eq!(cluster.txs[1].txid, child);
-        // Child reports the parent as its only local parent.
-        assert_eq!(cluster.txs[1].parents.len(), 1);
-        // CPFP lift: parent's effective rate exceeds its isolated rate.
-        let parent_isolated = FeeRate::from((parent_info.fee, parent_info.vsize));
-        assert!(parent_info.effective_fee_per_vsize > parent_isolated);
-        // Same package -> child's reported chunk rate matches parent's.
-        let child_info = mempool.cpfp_info(&child).unwrap();
-        assert_eq!(
-            parent_info.effective_fee_per_vsize,
-            child_info.effective_fee_per_vsize
-        );
-    }
-
-    #[test]
-    fn cpfp_ancestor_and_descendant_walks_are_directional() {
-        // chain: A -> B -> C
-        let mempool = Mempool::for_test();
-        let a = insert_with_depends(&mempool, 0xB3, 100, 100, &[]);
-        let b = insert_with_depends(&mempool, 0xB4, 100, 100, &[a]);
-        let c = insert_with_depends(&mempool, 0xB5, 5_800, 100, &[b]);
-        mempool.test_tick(&[a, b, c], FeeRate::new(1.0));
-
-        // B sees A as an ancestor and C as a descendant.
-        let info_b = mempool.cpfp_info(&b).unwrap();
-        let ancestor_ids: Vec<_> = info_b.ancestors.iter().map(|e| e.txid).collect();
-        let descendant_ids: Vec<_> = info_b.descendants.iter().map(|e| e.txid).collect();
-        assert_eq!(ancestor_ids, vec![a]);
-        assert_eq!(descendant_ids, vec![c]);
-        // best_descendant picks the highest-rate descendant.
-        assert_eq!(info_b.best_descendant.as_ref().map(|e| e.txid), Some(c));
-    }
-
-    #[test]
-    fn cpfp_info_returns_none_for_unknown_txid() {
-        let mempool = Mempool::for_test();
-        mempool.test_tick(&[], FeeRate::new(1.0));
-        assert!(mempool.cpfp_info(&Txid::COINBASE).is_none());
-    }
-}
+#[path = "../../tests/unit/snapshot/cpfp.rs"]
+mod tests;

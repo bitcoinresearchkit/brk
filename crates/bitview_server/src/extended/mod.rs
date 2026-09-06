@@ -1,4 +1,5 @@
 mod header_map;
+mod not_modified_body;
 mod response;
 mod transform_operation;
 #[cfg(feature = "chain")]

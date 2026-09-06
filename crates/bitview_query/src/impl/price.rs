@@ -1,111 +1,101 @@
-use brk_error::Result;
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    CacheClass, Dollars, ExchangeRates, HistoricalPrice, HistoricalPriceEntry, Hour4, INDEX_EPOCH,
-    Index, Timestamp,
+    Cents, Dollars, ExchangeRates, HOUR4_INTERVAL, Height, HistoricalPrice, HistoricalPriceEntry,
+    INDEX_EPOCH, Index, Timestamp,
 };
-use vecdb::{AnyVec, ReadableVec};
+use vecdb::{AnyVec, ReadBounds, ReadableVec};
 
 use crate::Query;
 
-/// One historical-price response resolved against its stable Hour4 boundary.
-pub struct ResolvedHistoricalPrice {
-    value: HistoricalPrice,
-    stable: bool,
-}
-
-impl ResolvedHistoricalPrice {
-    #[inline]
-    pub const fn is_stable(&self) -> bool {
-        self.stable
-    }
-
-    #[inline]
-    pub fn into_value(self) -> HistoricalPrice {
-        self.value
-    }
-}
+// A timestamp is u32 seconds. Reject corrupt lengths before snapshotting.
+const MAX_BUCKETS: usize = ((u32::MAX - INDEX_EPOCH) / HOUR4_INTERVAL) as usize + 1;
 
 impl Query {
+    /// Completed four-hour closes, labeled by their exclusive interval end.
+    /// Point requests select the latest nonempty close at or before the timestamp.
     pub fn historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
-        match timestamp {
-            Some(timestamp) => self
-                .resolve_historical_price(timestamp)
-                .map(ResolvedHistoricalPrice::into_value),
-            None => self.all_prices(),
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.price])?;
+        let source_len = usize::from(self.safe_lengths().height);
+        let prices = &plugins.price.spot.cents.height;
+        if prices.len() < source_len || plugins.mappings.timestamp.monotonic.len() < source_len {
+            return Err(Error::StateUpdating);
         }
-    }
-
-    /// Resolve one requested Hour4 price and whether its bucket is outside the
-    /// canonical volatile tail.
-    pub fn resolve_historical_price(&self, target: Timestamp) -> Result<ResolvedHistoricalPrice> {
-        if *target < INDEX_EPOCH {
-            return Ok(ResolvedHistoricalPrice {
-                value: price_response(vec![]),
-                stable: true,
-            });
-        }
-
-        let price = self.plugins().price;
-        let _guard = self.read_plugin(price)?;
-        let hour4 = Hour4::from_timestamp(target);
-        let values = &price.spot.cents.hour4;
-        let cents = values.collect_one(hour4);
-
-        Ok(ResolvedHistoricalPrice {
-            value: price_response(vec![HistoricalPriceEntry {
-                time: hour4.to_timestamp(),
-                usd: Dollars::from(cents.flatten().unwrap_or_default()),
-            }]),
-            stable: hour4_is_stable(hour4, values.len()),
+        let mut bounds = ReadBounds::new();
+        bounds.set(Index::Height.name(), source_len);
+        bounds.scope(|| {
+            let first_heights = &plugins.mappings.cached_first_height.hour4;
+            if first_heights.len() > MAX_BUCKETS {
+                return Err(Error::Internal(
+                    "Historical price mapping exceeds timestamp range",
+                ));
+            }
+            let mapping = first_heights.snapshot();
+            // Reuse one decompressed page while walking ordered closes.
+            let mut cursor = prices.cursor();
+            historical_prices(&mapping, source_len, timestamp, |height| {
+                cursor.get(usize::from(height)).data()
+            })
         })
     }
-
-    fn all_prices(&self) -> Result<HistoricalPrice> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugin(plugins.price)?;
-        let prices = plugins
-            .price
-            .spot
-            .cents
-            .hour4
-            .collect()
-            .into_iter()
-            .enumerate()
-            .filter_map(|(i, cents)| {
-                Some(HistoricalPriceEntry {
-                    time: Hour4::from(i).to_timestamp(),
-                    usd: Dollars::from(cents?),
-                })
-            })
-            .collect();
-        Ok(price_response(prices))
-    }
 }
 
-#[inline]
-fn price_response(prices: Vec<HistoricalPriceEntry>) -> HistoricalPrice {
-    HistoricalPrice {
+fn historical_prices(
+    mapping: &[Height],
+    source_len: usize,
+    target: Option<Timestamp>,
+    mut price_at: impl FnMut(Height) -> Result<Cents>,
+) -> Result<HistoricalPrice> {
+    if mapping.len() > MAX_BUCKETS
+        || mapping
+            .last()
+            .is_some_and(|height| usize::from(*height) > source_len)
+        || mapping.windows(2).any(|pair| pair[0] > pair[1])
+    {
+        return Err(Error::Internal("Invalid historical price mapping"));
+    }
+    // A following boundary proves completion. Never use the current partial close.
+    let completed = mapping.len().saturating_sub(1);
+    let end = target
+        .map_or(completed, |target| {
+            ((*target).saturating_sub(INDEX_EPOCH) / HOUR4_INTERVAL) as usize
+        })
+        .min(completed);
+    let mut prices = Vec::with_capacity(if target.is_some() { 1 } else { end });
+    let mut push = |index: usize| -> Result<()> {
+        let next = usize::from(mapping[index + 1]);
+        if usize::from(mapping[index]) == next {
+            return Ok(());
+        }
+        let cents = price_at(Height::from(next - 1))?;
+        if cents.is_nan() {
+            return Err(Error::Internal("Invalid historical price"));
+        }
+        prices.push(HistoricalPriceEntry {
+            // The mapping ceiling proves this arithmetic fits u32.
+            time: Timestamp::new(INDEX_EPOCH + (index as u32 + 1) * HOUR4_INTERVAL),
+            usd: Dollars::from(cents),
+        });
+        Ok(())
+    };
+    if target.is_some() {
+        if let Some(index) = (0..end)
+            .rev()
+            .find(|&index| mapping[index] != mapping[index + 1])
+        {
+            push(index)?;
+        }
+    } else {
+        for index in 0..end {
+            push(index)?;
+        }
+    }
+    Ok(HistoricalPrice {
         prices,
         exchange_rates: ExchangeRates {},
-    }
-}
-
-#[inline]
-fn hour4_is_stable(hour4: Hour4, total: usize) -> bool {
-    match Index::Hour4.cache_class() {
-        CacheClass::Bucket { margin } => usize::from(hour4) < total.saturating_sub(margin),
-        CacheClass::Entity | CacheClass::Mutable => false,
-    }
+    })
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn hour4_stability_uses_the_canonical_volatile_tail() {
-        assert!(hour4_is_stable(Hour4::from(7usize), 10));
-        assert!(!hour4_is_stable(Hour4::from(8usize), 10));
-        assert!(!hour4_is_stable(Hour4::from(10usize), 10));
-    }
-}
+#[path = "../../tests/unit/impl/price.rs"]
+mod tests;

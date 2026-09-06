@@ -22,7 +22,7 @@ const MATURED_VERSION: Version = Version::new(5);
 
 #[derive(Traversable)]
 pub struct SupplyVecs<M: StorageMode = Rw> {
-    /// Amount of bitcoin held in unspent transaction outputs.
+    /// Supply: amount of bitcoin held in unspent transaction outputs.
     pub total: SupplyTotal<M>,
     /// Amount of unspent bitcoin that ages out of an exact UTXO age range
     /// during the represented block interval.
@@ -33,11 +33,11 @@ pub struct SupplyVecs<M: StorageMode = Rw> {
     >,
     /// One half of a UTXO cohort's unspent supply.
     pub half: UTXOGroupsWithoutAmount<LazyValuePerBlock>,
-    /// Unspent supply in a UTXO cohort whose creation price is less than or
-    /// equal to the represented block's spot price.
+    /// Unspent supply in profit: UTXO cohort outputs whose creation price is
+    /// less than or equal to the represented block's spot price.
     pub in_profit: SupplyByCohort<M>,
-    /// Unspent supply in a UTXO cohort whose creation price is greater than the
-    /// represented block's spot price.
+    /// Unspent supply in loss: UTXO cohort outputs whose creation price is
+    /// greater than the represented block's spot price.
     pub in_loss: SupplyByCohort<M>,
     /// Change in a UTXO cohort's unspent supply over a trailing window, with
     /// the relative change measured against the window's starting value.

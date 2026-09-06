@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use lz4_flex::{compress_prepend_size, decompress_size_prepended};
 
-use crate::{EncodedChunk, impl_bytes_value_strategy};
+use crate::EncodedChunk;
 
 use super::{super::inner::CompressionStrategy, value::LZ4VecValue};
 

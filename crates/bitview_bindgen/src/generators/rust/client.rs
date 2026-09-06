@@ -2,6 +2,10 @@
 
 use std::fmt::Write;
 
+#[cfg(test)]
+#[path = "../../../tests/unit/generators/rust/client_endpoint_tests.rs"]
+mod endpoint_tests;
+
 use crate::{
     ClientMetadata, GenericSyntax, IndexSetPattern, RustSyntax, StructuralPattern,
     escape_rust_keyword, generate_parameterized_field, index_to_field_name, to_snake_case,
@@ -451,32 +455,38 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {{
     }}
 }}
 
+fn required_date_index(position: Option<usize>) -> Result<usize> {{
+    position.ok_or_else(|| BitviewError {{
+        message: "Date or timestamp is not representable for this index".to_owned(),
+    }})
+}}
+
 /// Date-specific methods available only on `DateSeriesEndpoint`.
 impl<T: DeserializeOwned> SeriesEndpoint<T, DateSeriesData<T>> {{
     /// Select a specific date position (for day-precision or coarser indexes).
-    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {{
-        let index = self.config.index.date_to_index(date).unwrap_or(0);
-        self.get(index)
+    pub fn get_date(self, date: Date) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {{
+        let index = required_date_index(self.config.index.date_to_index(date))?;
+        Ok(self.get(index))
     }}
 
     /// Select a date range (for day-precision or coarser indexes).
-    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateSeriesData<T>> {{
-        let s = self.config.index.date_to_index(start).unwrap_or(0);
-        let e = self.config.index.date_to_index(end).unwrap_or(0);
-        self.range(s..e)
+    pub fn date_range(self, start: Date, end: Date) -> Result<RangeBuilder<T, DateSeriesData<T>>> {{
+        let s = required_date_index(self.config.index.date_to_index(start))?;
+        let e = required_date_index(self.config.index.date_to_index(end))?;
+        Ok(self.range(s..e))
     }}
 
     /// Select a specific timestamp position (works for all date-based indexes including sub-daily).
-    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateSeriesData<T>> {{
-        let index = self.config.index.timestamp_to_index(ts).unwrap_or(0);
-        self.get(index)
+    pub fn get_timestamp(self, ts: Timestamp) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {{
+        let index = required_date_index(self.config.index.timestamp_to_index(ts))?;
+        Ok(self.get(index))
     }}
 
     /// Select a timestamp range (works for all date-based indexes including sub-daily).
-    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> RangeBuilder<T, DateSeriesData<T>> {{
-        let s = self.config.index.timestamp_to_index(start).unwrap_or(0);
-        let e = self.config.index.timestamp_to_index(end).unwrap_or(0);
-        self.range(s..e)
+    pub fn timestamp_range(self, start: Timestamp, end: Timestamp) -> Result<RangeBuilder<T, DateSeriesData<T>>> {{
+        let s = required_date_index(self.config.index.timestamp_to_index(start))?;
+        let e = required_date_index(self.config.index.timestamp_to_index(end))?;
+        Ok(self.range(s..e))
     }}
 }}
 
@@ -526,15 +536,15 @@ impl<T: DeserializeOwned> DateSeriesEndpoint<T> {{
         self.0.path()
     }}
 
-    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {{
+    pub fn get_date(self, date: Date) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {{
         self.0.get_date(date)
     }}
 
-    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateSeriesData<T>> {{
+    pub fn date_range(self, start: Date, end: Date) -> Result<RangeBuilder<T, DateSeriesData<T>>> {{
         self.0.date_range(start, end)
     }}
 
-    pub fn get_timestamp(self, timestamp: Timestamp) -> SingleItemBuilder<T, DateSeriesData<T>> {{
+    pub fn get_timestamp(self, timestamp: Timestamp) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {{
         self.0.get_timestamp(timestamp)
     }}
 
@@ -542,8 +552,50 @@ impl<T: DeserializeOwned> DateSeriesEndpoint<T> {{
         self,
         start: Timestamp,
         end: Timestamp,
-    ) -> RangeBuilder<T, DateSeriesData<T>> {{
+    ) -> Result<RangeBuilder<T, DateSeriesData<T>>> {{
         self.0.timestamp_range(start, end)
+    }}
+}}
+
+#[cfg(test)]
+mod date_selector_tests {{
+    use super::*;
+
+    fn endpoint(index: Index) -> DateSeriesEndpoint<u64> {{
+        DateSeriesEndpoint::new(Arc::new(BitviewClientBase::new("http://127.0.0.1:1")), "fixture".into(), index)
+    }}
+
+    #[test]
+    fn rejected_selectors_do_not_become_zero() {{
+        let valid = Date::new(2009, 1, 3);
+        for date in [Date::new(2008, 12, 31), Date::new(9999, 12, 31)] {{
+            assert!(endpoint(Index::Day1).get_date(date).is_err());
+            assert!(endpoint(Index::Day1).date_range(date, valid).is_err());
+            assert!(endpoint(Index::Day1).date_range(valid, date).is_err());
+        }}
+        let timestamp = Timestamp::from(valid);
+        assert!(endpoint(Index::Day1).get_timestamp(Timestamp::ZERO).is_err());
+        assert!(endpoint(Index::Day1).timestamp_range(Timestamp::ZERO, timestamp).is_err());
+        assert!(endpoint(Index::Day1).timestamp_range(timestamp, Timestamp::ZERO).is_err());
+        assert!(endpoint(Index::Hour1).get_date(valid).is_err());
+        assert!(endpoint(Index::Month3).get_date(Date::new(2073, 1, 1)).is_err());
+    }}
+
+    #[test]
+    fn accepted_selectors_preserve_numeric_bounds() {{
+        let date = Date::new(2009, 1, 3);
+        let single = endpoint(Index::Day1).get_date(date).unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(2), Some(3)));
+        let range = endpoint(Index::Day1).date_range(date, Date::new(2009, 1, 5)).unwrap();
+        assert_eq!((range.config.start, range.config.end), (Some(2), Some(4)));
+        let timestamp = Timestamp::from(date);
+        let single = endpoint(Index::Day1).get_timestamp(timestamp).unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(2), Some(3)));
+        let range = endpoint(Index::Day1).timestamp_range(timestamp, Timestamp::from(Date::new(2009, 1, 5))).unwrap();
+        assert_eq!((range.config.start, range.config.end), (Some(2), Some(4)));
+        // Preserve the existing intentional sub-daily clamp.
+        let single = endpoint(Index::Hour1).get_timestamp(Timestamp::ZERO).unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(0), Some(1)));
     }}
 }}
 

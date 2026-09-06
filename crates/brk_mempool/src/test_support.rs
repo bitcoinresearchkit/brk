@@ -2,7 +2,11 @@
 //! constructor noise out of the test bodies so each test reads as
 //! "set up, mutate, assert" without 20 lines of struct literals.
 
-use bitcoin::{ScriptBuf, absolute::LockTime, hashes::Hash, transaction::Version};
+use bitcoin::{
+    Amount, OutPoint as BitcoinOutPoint, ScriptBuf, Sequence, Transaction as BitcoinTransaction,
+    TxIn as BitcoinTxIn, TxOut as BitcoinTxOut, Txid as BitcoinTxid, WPubkeyHash,
+    Witness as BitcoinWitness, absolute::LockTime, hashes::Hash, transaction::Version,
+};
 use brk_types::{
     MempoolEntryInfo, RawLockTime, Sats, SigOps, Timestamp, Transaction, TxIn, TxOut, TxStatus,
     TxVersionRaw, Txid, VSize, Vout, Weight, Witness,
@@ -14,7 +18,7 @@ use brk_types::{
 pub fn fake_txid(seed: u8) -> Txid {
     let mut bytes = [0u8; 32];
     bytes[0] = seed;
-    Txid::from(bitcoin::Txid::from_byte_array(bytes))
+    Txid::from(BitcoinTxid::from_byte_array(bytes))
 }
 
 /// Minimal P2WPKH `script_pubkey` keyed off `seed` so distinct inputs
@@ -22,7 +26,7 @@ pub fn fake_txid(seed: u8) -> Txid {
 pub fn p2wpkh_script(seed: u8) -> ScriptBuf {
     let mut bytes = [0u8; 20];
     bytes[0] = seed;
-    ScriptBuf::new_p2wpkh(&bitcoin::WPubkeyHash::from_byte_array(bytes))
+    ScriptBuf::new_p2wpkh(&WPubkeyHash::from_byte_array(bytes))
 }
 
 /// Build a `Transaction` with one input per entry in `prevouts` (each
@@ -86,10 +90,10 @@ pub fn fake_entry_info(txid: Txid, fee: u64, vsize: u64) -> MempoolEntryInfo {
 /// Bitcoin-protocol `Transaction` matching `fake_tx`. Round-trippable
 /// against a brk `Transaction`, lets the Preparer's `Fresh` path decode
 /// it without a real RPC payload.
-pub fn fake_bitcoin_tx(prev_txid_seed: u8, outputs: &[(ScriptBuf, u64)]) -> bitcoin::Transaction {
-    let input = vec![bitcoin::TxIn {
-        previous_output: bitcoin::OutPoint {
-            txid: bitcoin::Txid::from_byte_array({
+pub fn fake_bitcoin_tx(prev_txid_seed: u8, outputs: &[(ScriptBuf, u64)]) -> BitcoinTransaction {
+    let input = vec![BitcoinTxIn {
+        previous_output: BitcoinOutPoint {
+            txid: BitcoinTxid::from_byte_array({
                 let mut b = [0u8; 32];
                 b[0] = prev_txid_seed;
                 b
@@ -97,17 +101,17 @@ pub fn fake_bitcoin_tx(prev_txid_seed: u8, outputs: &[(ScriptBuf, u64)]) -> bitc
             vout: 0,
         },
         script_sig: ScriptBuf::new(),
-        sequence: bitcoin::Sequence(0xffff_fffe),
-        witness: bitcoin::Witness::new(),
+        sequence: Sequence(0xffff_fffe),
+        witness: BitcoinWitness::new(),
     }];
     let output = outputs
         .iter()
-        .map(|(script, value)| bitcoin::TxOut {
-            value: bitcoin::Amount::from_sat(*value),
+        .map(|(script, value)| BitcoinTxOut {
+            value: Amount::from_sat(*value),
             script_pubkey: script.clone(),
         })
         .collect();
-    bitcoin::Transaction {
+    BitcoinTransaction {
         version: Version::TWO,
         lock_time: LockTime::ZERO,
         input,

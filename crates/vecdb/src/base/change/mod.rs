@@ -1,5 +1,5 @@
-mod cursor;
-mod data;
+pub mod cursor;
+pub mod data;
 
-pub(crate) use cursor::ChangeCursor;
-pub(crate) use data::ChangeData;
+pub use cursor::ChangeCursor;
+pub use data::ChangeData;

@@ -1,5 +1,5 @@
-mod script_type;
-mod script_type_with_sigops;
+pub mod script_type;
+pub mod script_type_with_sigops;
 
 pub use script_type::ScriptTypeVecs;
 pub use script_type_with_sigops::ScriptTypeWithSigOpsVecs;

@@ -1,5 +1,7 @@
 use brk_types::{BlockHashPrefix, Version};
 
+use crate::etag::Etag;
+
 /// Cache strategy for HTTP responses.
 ///
 /// The series strategy is computed directly in `api/series::serve` because
@@ -8,21 +10,17 @@ use brk_types::{BlockHashPrefix, Version};
 /// [`CacheParams`](super::CacheParams) via
 /// [`CacheParams::series`](super::CacheParams::series).
 pub enum CacheStrategy {
-    /// Chain-dependent data (addresses, mining stats, txs, outspends).
-    /// Etag = `t{tip_hash_prefix:x}`. Invalidates on any tip change including reorgs.
-    Tip(BlockHashPrefix),
+    /// Live response with an exact, versioned representation tag.
+    Live(Etag),
 
     /// Immutable data identified by hash in the URL (blocks by hash, confirmed tx data).
     /// Etag = `i{version}`. Permanent, only bumped when response format changes.
     Immutable(Version),
 
     /// Non-chain data tied to the deploy (validate-address, series catalog, pool list).
-    /// Etag = `d{CARGO_PKG_VERSION}`. Invalidates on deploy.
+    /// Etag = `d{CARGO_PKG_VERSION}`. Changes with the package version.
+    /// Browser and CDN freshness are capped at one second without stale reuse.
     Deploy,
-
-    /// Immutable data bound to a specific block (confirmed tx data, block status).
-    /// Etag = `b{version}-{block_hash_prefix:x}`. Invalidates naturally on reorg.
-    BlockBound(Version, BlockHashPrefix),
 
     /// Mutable state whose current representation is anchored to its latest
     /// relevant block (address state and latest pool-block pages).
@@ -33,14 +31,4 @@ pub enum CacheStrategy {
     /// Mutable data identified by a representation-specific hash.
     /// Etag = `l{hash:x}`. Uses the live CDN policy.
     LiveHash(u64),
-}
-
-impl CacheStrategy {
-    #[inline]
-    pub(crate) const fn tip_hash(&self) -> Option<BlockHashPrefix> {
-        match self {
-            Self::Tip(tip) => Some(*tip),
-            _ => None,
-        }
-    }
 }

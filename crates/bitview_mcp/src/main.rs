@@ -3,20 +3,29 @@ mod config;
 mod logo;
 mod manifest;
 mod page;
+mod prepared_request;
 mod server;
 #[cfg(test)]
 mod server_tests;
 mod upstream;
+mod upstream_response;
 
-use std::{env, error::Error, io, process};
+use std::{
+    env,
+    error::Error,
+    io,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    process,
+};
 
 use arguments::Arguments;
+use axum::serve;
 use manifest::Catalog;
+use page::Pages;
 use tokio::net::TcpListener;
 use tracing::info;
 
-const BIND_START: std::net::SocketAddr =
-    std::net::SocketAddr::new(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST), 3111);
+const BIND_START: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 3111);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -26,12 +35,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (api_bases, api_url, public_url, display_name) = arguments.into_parts();
     let catalog = Catalog::embedded().map_err(io::Error::other)?;
     let tool_count = catalog.tools().len();
-    let pages = page::Pages::render(&display_name, &public_url, &api_url);
+    let pages = Pages::render(&display_name, &public_url, &api_url);
     let app = server::router(api_bases, catalog, display_name, public_url, pages);
     let (listener, bind) = bind_available(BIND_START).await?;
 
     info!("BRK MCP server listening on http://{bind} with {tool_count} tools");
-    axum::serve(listener, app).await?;
+    serve(listener, app).await?;
     Ok(())
 }
 
@@ -43,9 +52,7 @@ fn usage(error: &str) -> ! {
     process::exit(2);
 }
 
-async fn bind_available(
-    start: std::net::SocketAddr,
-) -> io::Result<(TcpListener, std::net::SocketAddr)> {
+async fn bind_available(start: SocketAddr) -> io::Result<(TcpListener, SocketAddr)> {
     let last_port = start.port().saturating_add(100);
     let mut last_error = None;
     for port in start.port()..=last_port {

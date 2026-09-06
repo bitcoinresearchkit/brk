@@ -1,6 +1,6 @@
-mod compute;
-mod import;
-mod urpd;
+pub mod compute;
+pub mod import;
+pub mod urpd;
 
 use std::path::PathBuf;
 

@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use crate::cycle::AddrTransitions;
 
-mod addr_entry;
+pub mod addr_entry;
 
 pub use addr_entry::AddrEntry;
 
@@ -118,12 +118,13 @@ impl AddrTracker {
 
 #[cfg(test)]
 mod tests {
+    use bitcoin::ScriptBuf;
     use brk_types::{Sats, SatsSigned, TxOut};
 
     use super::*;
     use crate::test_support::{fake_tx, p2wpkh_script};
 
-    fn addr_of(script: &bitcoin::ScriptBuf) -> AddrBytes {
+    fn addr_of(script: &ScriptBuf) -> AddrBytes {
         AddrBytes::try_from(script).expect("p2wpkh script must yield AddrBytes")
     }
 

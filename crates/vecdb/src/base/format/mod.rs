@@ -1,4 +1,4 @@
-mod bytes;
+pub mod bytes;
 
 /// Storage format selection for stored vectors.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

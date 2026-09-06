@@ -1,10 +1,10 @@
-mod decoder;
-mod encoded_chunk;
-mod page;
-mod pages;
-mod read_only;
-mod read_write;
-mod strategy;
+pub mod decoder;
+pub mod encoded_chunk;
+pub mod page;
+pub mod pages;
+pub mod read_only;
+pub mod read_write;
+pub mod strategy;
 
 pub use decoder::PageDecoder;
 pub use encoded_chunk::*;

@@ -8,7 +8,10 @@ use std::{
     sync::atomic::{AtomicU64, Ordering, fence},
 };
 
-pub use crate::builder::Builder;
+#[path = "builder.rs"]
+mod builder;
+
+pub use builder::Builder;
 
 #[cfg(target_pointer_width = "64")]
 const INLINE_SIZE: usize = 20;
@@ -205,7 +208,7 @@ impl ByteView {
         self.len() <= INLINE_SIZE
     }
 
-    pub(crate) fn update_prefix(&mut self) {
+    fn update_prefix(&mut self) {
         if !self.is_inline() {
             unsafe {
                 let slice_ptr: &[u8] = &*self;
@@ -549,7 +552,7 @@ impl ByteView {
         unsafe { self.trailer.short.len as usize }
     }
 
-    pub(crate) fn get_mut_slice(&mut self) -> &mut [u8] {
+    fn get_mut_slice(&mut self) -> &mut [u8] {
         let len = self.len();
 
         if self.is_inline() {

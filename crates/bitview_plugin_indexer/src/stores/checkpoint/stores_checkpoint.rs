@@ -13,18 +13,18 @@ use super::{PendingStoresCheckpoint, PersistedStoresCheckpoint};
 /// The file contains the next block height to index. A missing or malformed
 /// file means a commit was interrupted and the stores must not be resumed.
 #[derive(Debug, Clone)]
-pub(crate) struct StoresCheckpoint {
-    pub(super) path: PathBuf,
+pub struct StoresCheckpoint {
+    pub path: PathBuf,
 }
 
 impl StoresCheckpoint {
-    pub(crate) fn new(stores_path: &Path) -> Self {
+    pub fn new(stores_path: &Path) -> Self {
         Self {
             path: stores_path.join("height"),
         }
     }
 
-    pub(crate) fn next_height(&self) -> Result<Option<Height>> {
+    pub fn next_height(&self) -> Result<Option<Height>> {
         let bytes = match fs::read(&self.path) {
             Ok(bytes) => bytes,
             Err(err) if err.kind() == ErrorKind::NotFound => return Ok(None),
@@ -36,7 +36,7 @@ impl StoresCheckpoint {
         Ok(Some(Height::new(u32::from_le_bytes(bytes))))
     }
 
-    pub(crate) fn initialize_empty(&self) -> Result<()> {
+    pub fn initialize_empty(&self) -> Result<()> {
         let pending_path = self.invalidate()?;
         PersistedStoresCheckpoint(PendingStoresCheckpoint {
             next_height: Height::ZERO,
@@ -46,7 +46,7 @@ impl StoresCheckpoint {
         .publish()
     }
 
-    pub(crate) fn begin(&self, completed_height: Height) -> Result<PendingStoresCheckpoint> {
+    pub fn begin(&self, completed_height: Height) -> Result<PendingStoresCheckpoint> {
         let pending_path = self.invalidate()?;
 
         Ok(PendingStoresCheckpoint {

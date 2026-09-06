@@ -1,96 +1,67 @@
 //! Address-keyed reads.
 
-use std::cmp::Reverse;
+use std::{cmp::Reverse, collections::BinaryHeap, sync::Arc};
 
-use brk_types::{AddrBytes, AddrMempoolStats, Timestamp, Transaction, TxidPrefix};
+use brk_error::Result;
+use brk_types::{AddrBytes, AddrMempoolStats, BlockHash, Transaction, TxidPrefix};
 
 use crate::Mempool;
 
 impl Mempool {
-    /// Per-address mempool stats. `None` if the address has no live mempool activity.
-    pub fn addr_stats(&self, addr: &AddrBytes) -> Option<AddrMempoolStats> {
-        self.read().addrs.get(addr).map(|e| e.stats.clone())
-    }
-
-    /// Process-local source revision and bounded transaction count for an address
-    /// with live mempool activity. Used only to locate exact cached
-    /// representations, never as an HTTP validator.
-    pub fn addr_txs_source(&self, addr: &AddrBytes, limit: usize) -> Option<(u64, usize)> {
+    /// Statistics from a completed publication anchored to the requested chain.
+    pub fn addr_stats(&self, addr: &AddrBytes, tip: &BlockHash) -> Result<AddrMempoolStats> {
         let state = self.read();
-        let entry = state.addrs.get(addr)?;
-        Some((state.txs.content_revision(), entry.txids.len().min(limit)))
+        state.ensure_published_at(tip)?;
+        Ok(state
+            .addrs
+            .get(addr)
+            .map(|entry| entry.stats.clone())
+            .unwrap_or_default())
     }
 
     /// Live mempool txs touching `addr`, newest first by `first_seen`,
-    /// capped at `limit`. Returns owned `Transaction`s.
-    #[must_use]
-    pub fn addr_txs(&self, addr: &AddrBytes, limit: usize) -> Vec<Transaction> {
-        self.addr_txs_with_revision(addr, limit).0
-    }
-
-    /// Address transactions and the exact process-local source revision read
-    /// under the same state guard. `None` means the address has no live activity.
-    #[must_use]
-    pub fn addr_txs_with_revision(
+    /// capped at `limit`. Shares immutable bodies from one completed publication;
+    /// later prevout fills use copy-on-write and cannot mutate this selection.
+    pub fn addr_txs(
         &self,
         addr: &AddrBytes,
         limit: usize,
-    ) -> (Vec<Transaction>, Option<u64>) {
+        tip: &BlockHash,
+    ) -> Result<Vec<Arc<Transaction>>> {
         let state = self.read();
+        state.ensure_published_at(tip)?;
         let Some(entry) = state.addrs.get(addr) else {
-            return (Vec::new(), None);
+            return Ok(Vec::new());
         };
-        let revision = state.txs.content_revision();
-        let mut ordered: Vec<(Timestamp, &Transaction)> = entry
-            .txids
-            .iter()
-            .filter_map(|txid| {
-                let record = state.txs.record_by_prefix(&TxidPrefix::from(txid))?;
-                Some((record.entry.first_seen, &record.tx))
-            })
-            .collect();
-        ordered.sort_unstable_by_key(|b| Reverse(b.0));
-        let transactions = ordered
+        if limit == 0 {
+            return Ok(Vec::new());
+        }
+        // Retain only the requested page. The smallest timestamp is at the
+        // heap root; prefix breaks equal-time ties deterministically.
+        let mut newest = BinaryHeap::with_capacity(limit.min(entry.txids.len()));
+        for txid in &entry.txids {
+            let Some(record) = state.txs.record(txid) else {
+                continue;
+            };
+            let candidate = Reverse((record.entry.first_seen, TxidPrefix::from(txid)));
+            if newest.len() < limit {
+                newest.push(candidate);
+            } else if let Some(mut oldest) = newest.peek_mut()
+                && candidate < *oldest
+            {
+                *oldest = candidate;
+            }
+        }
+        let transactions = newest
+            .into_sorted_vec()
             .into_iter()
-            .take(limit)
-            .map(|(_, tx)| tx.clone())
+            .filter_map(|Reverse((_, prefix))| state.txs.record_by_prefix(&prefix))
+            .map(|record| Arc::clone(&record.tx))
             .collect();
-        (transactions, Some(revision))
+        Ok(transactions)
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use brk_types::{AddrBytes, Sats, TxOut};
-
-    use super::*;
-    use crate::{
-        cycle::AddrTransitions,
-        state::TxEntry,
-        test_support::{fake_entry_info, fake_tx, p2wpkh_script},
-    };
-
-    #[test]
-    fn source_and_transactions_share_revision_and_bounded_count() {
-        let mempool = Mempool::for_test();
-        let script = p2wpkh_script(1);
-        let addr = AddrBytes::try_from(&script).unwrap();
-        assert_eq!(mempool.addr_txs_source(&addr, 50), None);
-
-        let mut transitions = AddrTransitions::default();
-        let mut state = mempool.test_state_lock().write();
-        for seed in 1..=2 {
-            let prevout = TxOut::from((script.clone(), Sats::from(2_000u64)));
-            let tx = fake_tx(seed, &[Some(prevout)], &[]);
-            let entry = TxEntry::new(&fake_entry_info(tx.txid, 100, 100), 100, false);
-            state.addrs.add_tx(&mut transitions, &tx);
-            state.txs.insert(tx, entry);
-        }
-        drop(state);
-
-        assert_eq!(mempool.addr_txs_source(&addr, 1), Some((2, 1)));
-        let (transactions, revision) = mempool.addr_txs_with_revision(&addr, 1);
-        assert_eq!(transactions.len(), 1);
-        assert_eq!(revision, Some(2));
-    }
-}
+#[path = "../../tests/unit/api/addr.rs"]
+mod tests;

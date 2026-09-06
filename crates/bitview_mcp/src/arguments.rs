@@ -1,7 +1,7 @@
 use crate::config::{api_bases, public_url};
 
 #[derive(Debug)]
-pub(crate) struct Arguments {
+pub struct Arguments {
     api_bases: Vec<String>,
     api_url: String,
     public_url: String,

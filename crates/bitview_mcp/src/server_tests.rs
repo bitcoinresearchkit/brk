@@ -1,8 +1,9 @@
 use axum::{
+    Router,
     body::{Body, to_bytes},
     http::{Request, StatusCode, header::CONTENT_TYPE},
 };
-use serde_json::{Value, json};
+use serde_json::{Value, from_slice, json};
 use tower::ServiceExt;
 
 use crate::{manifest::Catalog, page, server};
@@ -11,7 +12,7 @@ const API_URL: &str = "https://api.example.com";
 const PUBLIC_URL: &str = "https://mcp.example.com/";
 const DISPLAY_NAME: &str = "Example Node";
 
-fn app() -> axum::Router {
+fn app() -> Router {
     server::router(
         vec![API_URL.to_owned()],
         Catalog::embedded().expect("embedded MCP catalog should be valid"),
@@ -205,7 +206,7 @@ async fn post_root_still_reaches_mcp_discovery() {
         StatusCode::OK,
         "unexpected discovery response: {raw_body}"
     );
-    let body: Value = serde_json::from_slice(&body).expect("discovery response should be JSON");
+    let body: Value = from_slice(&body).expect("discovery response should be JSON");
     assert_eq!(body["result"]["supportedVersions"], json!(["2026-07-28"]));
     let server_info = &body["result"]["_meta"]["io.modelcontextprotocol/serverInfo"];
     assert_eq!(server_info["name"], "bitview_mcp");

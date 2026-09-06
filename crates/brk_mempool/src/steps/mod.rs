@@ -1,9 +1,9 @@
 //! Cycle stages in pipeline order.
 
-mod applier;
-mod fetcher;
-mod preparer;
-mod prevouts;
+pub mod applier;
+pub mod fetcher;
+pub mod preparer;
+pub mod prevouts;
 
 pub use applier::Applier;
 pub use fetcher::{Fetched, Fetcher};

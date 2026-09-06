@@ -5,12 +5,12 @@ use bitcoin::{
     consensus::encode,
 };
 use brk_error::{Error, Result};
-use brk_types::{BlockHash, FeeRate, Height, MempoolEntryInfo, Sats, Txid, Vout, Weight};
+use brk_types::{BlockHash, FeeRate, Height, MempoolEntryInfo, Txid, Vout};
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::{
     v17::{
-        BlockTemplateTransaction, GetBlockCount, GetBlockHeader, GetBlockHeaderVerbose,
-        GetBlockTemplate, GetBlockVerboseOne, GetBlockVerboseZero, GetTxOut,
+        GetBlockCount, GetBlockHeader, GetBlockHeaderVerbose, GetBlockTemplate, GetBlockVerboseOne,
+        GetBlockVerboseZero, GetTxOut,
     },
     v24::GetMempoolInfo,
     v28::GetBlockchainInfo,
@@ -41,46 +41,23 @@ use super::{
 const BATCH_CHUNK: usize = 2000;
 
 impl Client {
-    fn build_gbt(raw: GetBlockTemplate) -> Result<Vec<BlockTemplateTx>> {
-        let mut result = Vec::with_capacity(raw.transactions.len());
-        for transaction in raw.transactions {
-            let BlockTemplateTransaction {
-                data,
-                txid,
-                depends,
-                fee,
-                weight,
-                ..
-            } = transaction;
-            let fee =
-                u64::try_from(fee).map_err(|_| Error::Parse(format!("negative gbt fee: {fee}")))?;
-            // Core defines dependencies as one-based indices of preceding
-            // transactions, so resolve them while consuming the template.
-            let depends = depends
-                .into_iter()
-                .filter_map(|dependency| {
-                    result
-                        .get(usize::try_from(dependency).ok()?.checked_sub(1)?)
-                        .map(|tx: &BlockTemplateTx| tx.txid)
-                })
-                .collect();
-            result.push(BlockTemplateTx {
-                txid: Self::parse_txid(&txid, "gbt txid")?,
-                fee: Sats::from(fee),
-                weight: Weight::from(weight),
-                depends,
-                tx: encode::deserialize_hex(&data)?,
-            });
-        }
-        Ok(result)
+    /// Full current best-chain identity for bracketing related observations.
+    pub fn get_best_block_hash(&self) -> Result<BlockHash> {
+        let hash: BitcoinBlockHash = self.0.call_with_retry("getbestblockhash", &NO_ARGS)?;
+        Ok(hash.into())
     }
 
     /// Convert bitcoind's `mempoolminfee` (BTC/kvB f64) to sat/vB. Round-trip
     /// via integer sat/kvB (bitcoind's native CFeeRate unit) so JSON f64 drift
     /// cannot move an exact sat/vB boundary upward.
-    fn build_min_fee(raw: GetMempoolInfo) -> FeeRate {
-        let sat_per_kvb = (raw.mempool_min_fee * 100_000_000.0).round() as u64;
-        FeeRate::from_milli(sat_per_kvb)
+    fn build_min_fee(btc_per_kvb: f64) -> Result<FeeRate> {
+        let sat_per_kvb = (btc_per_kvb * 100_000_000.0).round();
+        if !btc_per_kvb.is_finite() || btc_per_kvb < 0.0 || sat_per_kvb >= u64::MAX as f64 {
+            return Err(Error::Parse(format!(
+                "mempool fee floor out of range: {btc_per_kvb}"
+            )));
+        }
+        Ok(FeeRate::from_milli(sat_per_kvb as u64))
     }
 
     /// Returns the numbers of block in the longest chain.
@@ -274,23 +251,12 @@ impl Client {
         Ok(out)
     }
 
+    /// Submit without replaying an ambiguous transport failure or redirect.
+    /// This blocking operation has a 60-second total deadline including waiting
+    /// for another submission. An error may leave the submission outcome unknown.
+    /// HTTP callers use the async client to support request cancellation.
     pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
-        let txid: BitcoinTxid = self
-            .0
-            .call_once("sendrawtransaction", &(hex,))
-            .map_err(|e| {
-                // Bitcoin Core returns RPC error codes for client-side problems
-                // (decode failed, verification failed, already in chain, etc.).
-                // Surface these as 400 (Parse) so HTTP callers see a 4xx, matching
-                // mempool.space's POST /api/tx behavior.
-                if let Error::CorepcRPC(JsonRpcError::Rpc(rpc)) = &e
-                    && matches!(rpc.code, -22 | -25 | -26 | -27)
-                {
-                    return Error::Parse(rpc.message.clone());
-                }
-                e
-            })?;
-        Ok(Txid::from(txid))
+        self.0.send_raw_transaction(hex)
     }
 
     /// Core's projected next block + live mempool txid set +
@@ -317,12 +283,10 @@ impl Client {
         let live_txids = TxidArrayParser::parse(txids_raw.get())?;
         let template: GetBlockTemplate = from_str(template_raw.get())?;
         let tip_hash = Self::parse_block_hash(&template.previous_block_hash, "previousblockhash")?;
-        let tip_height =
-            Height::from(u64::try_from(template.height - 1).map_err(|_| {
-                Error::Parse(format!("gbt height out of range: {}", template.height))
-            })?);
-        let block_template = Self::build_gbt(template)?;
-        let min_fee = Self::build_min_fee(from_str(info_raw.get())?);
+        let tip_height = Self::template_tip_height(template.height)?;
+        let block_template = super::ClientInner::build_gbt(template.transactions)?;
+        let info: GetMempoolInfo = from_str(info_raw.get())?;
+        let min_fee = Self::build_min_fee(info.mempool_min_fee)?;
 
         Ok((
             MempoolState {
@@ -437,10 +401,12 @@ impl Client {
         Ok(())
     }
 
-    fn parse_txid(s: &str, label: &str) -> Result<Txid> {
-        s.parse::<BitcoinTxid>()
-            .map(Txid::from)
-            .map_err(|e| Error::Parse(format!("{label}: {e}")))
+    fn template_tip_height(next_height: i64) -> Result<Height> {
+        next_height
+            .checked_sub(1)
+            .and_then(|tip| u32::try_from(tip).ok())
+            .map(Height::from)
+            .ok_or_else(|| Error::Parse(format!("gbt height out of range: {next_height}")))
     }
 
     fn parse_block_hash(s: &str, label: &str) -> Result<BlockHash> {
@@ -449,3 +415,7 @@ impl Client {
             .map_err(|e| Error::Parse(format!("{label}: {e}")))
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/rpc_client/methods.rs"]
+mod tests;

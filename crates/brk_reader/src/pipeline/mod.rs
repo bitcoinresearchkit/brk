@@ -13,7 +13,7 @@ mod forward;
 mod reorder;
 mod tail;
 
-pub(crate) const CHANNEL_CAPACITY: usize = 50;
+pub const CHANNEL_CAPACITY: usize = 50;
 
 /// Forward pays the bisection + 21-file backoff (~2.7 GB of reads)
 /// regardless of how few canonical blocks live in the window, so
@@ -22,14 +22,14 @@ const TAIL_DISTANCE_FILES: usize = 8;
 
 /// The indexer is CPU-bound on the consumer side, so 1 reader + 1
 /// parser leaves the rest of the cores for it.
-pub(crate) const DEFAULT_PARSER_THREADS: usize = 1;
+pub const DEFAULT_PARSER_THREADS: usize = 1;
 
 enum Strategy {
     Tail,
     Forward { first_blk_index: u16 },
 }
 
-pub(crate) fn spawn(
+pub fn spawn(
     reader: Arc<ReaderInner>,
     canonical: CanonicalRange,
     parser_threads: usize,

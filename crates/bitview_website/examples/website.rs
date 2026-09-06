@@ -20,7 +20,20 @@ use tracing::{error, info};
 async fn main() -> std::io::Result<()> {
     let _ = brk_logger::init(None);
 
-    let website = Website::Default;
+    // cargo run -p bitview_website --example website -- website_next_next
+    let website = match std::env::args_os().nth(1) {
+        Some(path) => {
+            let path = std::path::PathBuf::from(path);
+            if !path.is_dir() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("Website folder does not exist: {}", path.display()),
+                ));
+            }
+            Website::Filesystem(path)
+        }
+        None => Website::Default,
+    };
 
     if !website.is_enabled() {
         eprintln!("Website is disabled");

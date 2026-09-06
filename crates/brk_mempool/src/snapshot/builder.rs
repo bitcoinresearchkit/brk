@@ -8,9 +8,8 @@ use derive_more::{Deref, DerefMut};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
 
-use crate::{state::TxEntry, stores::TxStore};
-
 use super::{Cluster, SnapTx, Snapshot, TxIndex};
+use crate::{state::TxEntry, stores::TxStore};
 
 #[derive(Default, Deref, DerefMut)]
 pub struct PrefixIndex(FxHashMap<TxidPrefix, TxIndex>);
@@ -100,7 +99,7 @@ impl Snapshot {
 mod tests {
     use std::sync::atomic::{AtomicU32, Ordering};
 
-    use bitcoin::hashes::Hash;
+    use bitcoin::{Txid as BitcoinTxid, hashes::Hash};
     use brk_types::{FeeRate, Sats, Txid, VSize, Weight};
 
     use super::*;
@@ -114,7 +113,7 @@ mod tests {
         let mut bytes = [0u8; 32];
         bytes[..4].copy_from_slice(&COUNTER.fetch_add(1, Ordering::Relaxed).to_le_bytes());
         SnapTx {
-            txid: Txid::from(bitcoin::Txid::from_byte_array(bytes)),
+            txid: Txid::from(BitcoinTxid::from_byte_array(bytes)),
             fee,
             vsize,
             weight: Weight::from(vsize),

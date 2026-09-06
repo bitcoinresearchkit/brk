@@ -1,13 +1,10 @@
-mod activity;
-mod hash_prefix;
-mod mempool;
-mod resolve;
-mod stats;
-mod txs;
-mod utxos;
+pub mod activity;
+pub mod hash_prefix;
+pub mod mempool;
+pub mod resolve;
+pub mod stats;
+pub mod txs;
+pub mod utxos;
 
-pub(crate) use mempool::AddrMempoolTxsCache;
-pub use mempool::{AddrMempoolTxsPreflight, ResolvedAddrMempoolTxs};
-pub(crate) use txs::AddrTxsCache;
-pub use txs::{AddrTxsPreflight, ResolvedAddrChainTxs, ResolvedAddrTxs};
+pub use txs::{ResolvedAddrChainTxs, ResolvedAddrTxs};
 pub use utxos::ResolvedAddrUtxos;

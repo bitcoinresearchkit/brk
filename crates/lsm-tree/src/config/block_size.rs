@@ -15,14 +15,6 @@ impl std::ops::Deref for BlockSizePolicy {
 }
 
 impl BlockSizePolicy {
-    pub(crate) fn get(&self, level: usize) -> u32 {
-        #[expect(clippy::expect_used, reason = "policy is expected not to be empty")]
-        self.0
-            .get(level)
-            .copied()
-            .unwrap_or_else(|| self.last().copied().expect("policy should not be empty"))
-    }
-
     /// Uses the same block size in every level.
     #[must_use]
     pub fn all(c: u32) -> Self {

@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::{fmt::Debug, iter::once};
 
 use crate::{Error, ReadableVec, Result, VecIndex, VecValue, Version};
@@ -85,7 +87,7 @@ where
     }
 }
 
-pub(super) fn validate_schema<C: ColumnId>() -> Result<Version> {
+pub fn validate_schema<C: ColumnId>() -> Result<Version> {
     if C::ALL.is_empty() {
         return Err(Error::InvalidArgument(
             "ColumnarVec requires at least one column",
@@ -120,7 +122,7 @@ pub(super) fn validate_schema<C: ColumnId>() -> Result<Version> {
     Ok(Version::new(fingerprint))
 }
 
-pub(super) fn validate_column<C: ColumnId>(column: C) {
+pub fn validate_column<C: ColumnId>(column: C) {
     let index = column.index();
     assert_eq!(
         C::ALL.get(index),

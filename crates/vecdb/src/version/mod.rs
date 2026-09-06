@@ -1,11 +1,11 @@
 use std::{fs, io, path::Path};
 
-mod add;
-mod bytes;
-mod conversions;
-mod display;
-mod sum;
-mod try_from_path;
+pub mod add;
+pub mod bytes;
+pub mod conversions;
+pub mod display;
+pub mod sum;
+pub mod try_from_path;
 
 use crate::Bytes;
 
@@ -18,7 +18,7 @@ use crate::Bytes;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[must_use = "Version values should be used for compatibility checks"]
-pub struct Version(pub(super) u32);
+pub struct Version(u32);
 
 impl Version {
     pub const ZERO: Self = Self(0);

@@ -14,11 +14,12 @@ pub struct QuickMatchConfig {
     /// - Min: 1
     /// - Max: No hard limit (but large values may impact performance)
     limit: usize,
-    /// Budget of trigrams to process from unknown words.
+    /// Budget of trigrams to process from unknown words. The same bound also
+    /// limits adjacent-letter correction probes before trigram matching.
     /// This budget is distributed fairly across all unknown words.
     ///
     /// Default: 6 (recommended: 3-9)
-    /// - 0: Disable trigram matching (only exact word matches)
+    /// - 0: Disable typo matching (only indexed word matches)
     /// - Low (3-6): Faster, less accurate fuzzy matching
     /// - High (9-15): Slower, more accurate fuzzy matching
     /// - Max: 20
@@ -67,7 +68,12 @@ impl QuickMatchConfig {
         self
     }
 
+    /// Use ASCII word separators. Panics if any separator is non-ASCII.
     pub fn with_separators(mut self, separators: &'static [char]) -> Self {
+        assert!(
+            separators.iter().all(char::is_ascii),
+            "QuickMatch separators must be ASCII"
+        );
         self.separators = separators;
         self
     }

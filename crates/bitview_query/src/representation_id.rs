@@ -15,7 +15,7 @@ impl RepresentationId {
     }
 }
 
-pub(crate) fn content_hash(bytes: &[u8]) -> u64 {
+pub fn content_hash(bytes: &[u8]) -> u64 {
     let digest = sha256d::Hash::hash(bytes).to_byte_array();
     u64::from_le_bytes(digest[..8].try_into().unwrap())
 }

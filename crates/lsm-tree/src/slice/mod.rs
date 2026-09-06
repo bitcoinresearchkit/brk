@@ -9,7 +9,12 @@ use std::{
     sync::Arc,
 };
 
-pub use slice_default::Slice;
+pub use slice_default::SliceExt;
+
+/// An immutable byte slice that can be cloned without additional heap allocation.
+/// There is no guarantee of alignment for zero-copy (de)serialization.
+#[derive(Debug, Default, Clone, Eq, Hash, Ord)]
+pub struct Slice(byteview::ByteView);
 
 impl AsRef<[u8]> for Slice {
     fn as_ref(&self) -> &[u8] {
@@ -133,7 +138,7 @@ impl PartialOrd<Slice> for &[u8] {
 #[cfg(test)]
 #[expect(clippy::expect_used)]
 mod tests {
-    use super::Slice;
+    use super::{Slice, SliceExt};
     use std::{fmt::Debug, sync::Arc};
     use test_log::test;
 

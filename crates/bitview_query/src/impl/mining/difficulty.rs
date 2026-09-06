@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use brk_error::OptionData;
+use brk_error::{OptionData, Result};
 use brk_types::{DifficultyAdjustment, Epoch, Height};
 use vecdb::ReadableVec;
 
@@ -19,7 +19,8 @@ impl Query {
     /// remaining blocks/time, the previous retarget percentage (current epoch
     /// vs previous epoch first-block difficulty), and the time offset from a
     /// 600s/block schedule. Output time fields are in milliseconds.
-    pub fn difficulty_adjustment(&self) -> brk_error::Result<DifficultyAdjustment> {
+    pub fn difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
+        let _guard = self.read_plugin(self.indexer())?;
         let indexer = self.indexer();
         let plugins = self.plugins();
         let current_height = self.height();

@@ -1,5 +1,5 @@
-mod features;
-mod metadata;
+pub mod features;
+pub mod metadata;
 
 pub use features::TransactionFeaturesVecs;
 pub use features::{TransactionCounts, TxFeatureFlags};

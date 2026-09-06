@@ -1,9 +1,11 @@
+use crate::internals::*;
+
 use brk_error::Result;
 use brk_types::{Transaction, Txid};
-
-use crate::{Query, RepresentationId, representation_id::content_hash};
+use serde_json::to_vec;
 
 use super::{ResolvedConfirmedTx, resolved::TransactionSource};
+use crate::{Query, RepresentationId, representation_id::content_hash};
 
 /// Transaction JSON resolved to one exact in-memory or indexed source.
 pub struct ResolvedTransaction {
@@ -16,8 +18,8 @@ enum TransactionInfoSource {
 }
 
 impl ResolvedTransaction {
-    fn memory(transaction: Transaction) -> Self {
-        let bytes = serde_json::to_vec(&transaction).unwrap();
+    fn memory(transaction: &Transaction) -> Self {
+        let bytes = to_vec(&transaction).unwrap();
         let hash = content_hash(&bytes);
         Self {
             source: TransactionInfoSource::Memory { bytes, hash },
@@ -36,7 +38,7 @@ impl Query {
     /// Resolve transaction JSON once before an async response handoff.
     pub fn resolve_transaction(&self, txid: &Txid) -> Result<ResolvedTransaction> {
         Ok(match self.resolve_transaction_source(txid)? {
-            TransactionSource::Memory(transaction) => ResolvedTransaction::memory(transaction),
+            TransactionSource::Memory(transaction) => ResolvedTransaction::memory(&transaction),
             TransactionSource::Chain(transaction) => ResolvedTransaction {
                 source: TransactionInfoSource::Chain(transaction),
             },
@@ -48,10 +50,10 @@ impl Query {
         match transaction.source {
             TransactionInfoSource::Memory { bytes, .. } => Ok(bytes),
             TransactionInfoSource::Chain(transaction) => {
+                let _guard = self.read_plugin(self.indexer())?;
                 let (_, index, _) = self.revalidate_confirmed_tx(transaction)?;
                 let value = self.transaction_by_index(index)?;
-                let bytes = serde_json::to_vec(&value).unwrap();
-                self.revalidate_confirmed_tx(transaction)?;
+                let bytes = to_vec(&value).unwrap();
                 Ok(bytes)
             }
         }

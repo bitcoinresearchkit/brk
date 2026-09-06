@@ -1,27 +1,32 @@
+use crate::internals::*;
+
 use brk_error::{Error, Result};
 use brk_types::{Transaction, Txid};
+use std::sync::Arc;
 
 use crate::Query;
 
 use super::ResolvedConfirmedTx;
 
-pub(super) enum TransactionSource {
-    Memory(Transaction),
+pub enum TransactionSource {
+    Memory(Arc<Transaction>),
     Chain(ResolvedConfirmedTx),
 }
 
-impl Query {
+impl Query {}
+pub trait RImplTxResolvedQueryInternal: Sized {
+    fn resolve_transaction_source(&self, txid: &Txid) -> Result<TransactionSource>;
+}
+impl RImplTxResolvedQueryInternal for Query {
     /// Resolve one exact live, confirmed, or recently vanished transaction.
-    pub(super) fn resolve_transaction_source(&self, txid: &Txid) -> Result<TransactionSource> {
-        let mempool = self.mempool();
-        if let Some(transaction) = mempool.and_then(|m| m.with_tx(txid, Transaction::clone)) {
-            return Ok(TransactionSource::Memory(transaction));
-        }
-
-        match self.resolve_confirmed_tx(txid) {
+    fn resolve_transaction_source(&self, txid: &Txid) -> Result<TransactionSource> {
+        let _guard = self.read_plugin(self.indexer())?;
+        match self.resolve_confirmed_tx_guarded(txid) {
             Ok(transaction) => Ok(TransactionSource::Chain(transaction)),
-            Err(Error::UnknownTxid) => mempool
-                .and_then(|m| m.with_vanished_tx(txid, Transaction::clone))
+            Err(Error::UnknownTxid) => self
+                .mempool()
+                .ok_or(Error::UnknownTxid)?
+                .transaction(txid, &self.tip_blockhash())?
                 .map(TransactionSource::Memory)
                 .ok_or(Error::UnknownTxid),
             Err(error) => Err(error),

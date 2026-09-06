@@ -17,9 +17,16 @@ pub struct Reader {
     _db: Database,
 }
 
+impl Region {
+    #[inline]
+    pub fn create_reader(&self) -> Reader {
+        Reader::new(self)
+    }
+}
+
 impl Reader {
     #[inline]
-    pub(crate) fn new(region: &Region) -> Self {
+    fn new(region: &Region) -> Self {
         let db = region.db();
         let region = region.clone();
 

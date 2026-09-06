@@ -1,8 +1,8 @@
-mod block;
-mod buffer;
-mod transaction;
-mod txin;
-mod txout;
+pub mod block;
+pub mod buffer;
+pub mod transaction;
+pub mod txin;
+pub mod txout;
 
 pub use buffer::BlockBuffers;
 

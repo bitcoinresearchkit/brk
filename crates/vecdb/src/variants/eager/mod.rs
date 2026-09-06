@@ -1,14 +1,14 @@
 use log::debug;
 
-mod any_stored_vec;
-mod any_vec;
-mod compute;
-mod importable;
-mod readable;
-mod readable_cloneable;
-mod stored;
-mod typed;
-mod writable;
+pub mod any_stored_vec;
+pub mod any_vec;
+pub mod compute;
+pub mod importable;
+pub mod readable;
+pub mod readable_cloneable;
+pub mod stored;
+pub mod typed;
+pub mod writable;
 
 use crate::{
     AnyStoredVec, AnyVec, StoredVec, Version, WritableVec, traits::writable::MAX_CACHE_SIZE,
@@ -34,7 +34,7 @@ use brk_exit::Exit;
 /// - Lookback calculations: `compute_change()`, `compute_percentage_change()`
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct EagerVec<V>(pub(super) V);
+pub struct EagerVec<V>(V);
 
 impl<V> EagerVec<V>
 where

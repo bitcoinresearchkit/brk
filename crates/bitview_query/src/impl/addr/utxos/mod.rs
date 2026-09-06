@@ -1,95 +1,82 @@
+use crate::internals::*;
+
 use std::str::FromStr;
 
-use brk_error::{Error, Result};
+use bitview_plugin::PluginReadGuard;
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    Addr, AddrBytes, BlockHash, Height, OutputType, TxIndex, TxStatus, TypeIndex, Utxo, Vout,
+    Addr, AddrBytes, BlockHash, Height, OutputType, TxIndex, TxOutIndex, TxStatus, TypeIndex, Utxo,
+    Vout,
 };
 
-use crate::{
-    Query,
-    r#impl::tx::{confirmed_status_at, confirmed_status_height},
-};
+use crate::Query;
 
-mod resolved;
+pub mod resolved;
 
 pub use resolved::ResolvedAddrUtxos;
 
 impl Query {
     pub fn addr_utxos(&self, addr: Addr, max_utxos: usize) -> Result<Vec<Utxo>> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let addr = AddrBytes::from_str(&addr)?;
-        let (output_type, type_index) = super::resolve::resolve_addr_bytes(self, &addr)?;
-        self.addr_utxos_for(output_type, type_index, max_utxos)
+        let resolved = self.resolve_addr_utxos(&addr, max_utxos)?;
+        self.addr_utxos_resolved(resolved, max_utxos)
+            .map(|(utxos, _)| utxos)
     }
 
-    /// Resolve one address and its exact chain snapshot without waiting if the
-    /// indexer is updating. The server falls back to the guarded query path
-    /// when this returns `None`.
-    pub fn addr_utxos_preflight(&self, addr: &Addr) -> Result<Option<ResolvedAddrUtxos>> {
+    /// Capture a bounded selection without waiting if the indexer is updating.
+    pub fn addr_utxos_preflight(
+        &self,
+        addr: &Addr,
+        max_utxos: usize,
+    ) -> Result<Option<ResolvedAddrUtxos>> {
         let addr = AddrBytes::from_str(addr)?;
-        let Some(_guard) = self.try_read_plugin(self.indexer()) else {
+        let Some(guard) = self.try_read_plugin(self.indexer()) else {
             return Ok(None);
         };
-        let (output_type, type_index) = super::resolve::resolve_addr_bytes(self, &addr)?;
-        let anchor = self.addr_utxos_anchor_for(output_type, type_index)?;
-        let tip = self.tip_blockhash();
-        Ok(Some(ResolvedAddrUtxos::new(
-            addr,
-            output_type,
-            type_index,
-            anchor,
-            tip,
-        )))
+        self.resolve_addr_utxos_guarded(&addr, guard, max_utxos)
+            .map(Some)
     }
 
-    /// Load UTXOs for a resolved address and return its exact block identity for
-    /// the loaded representation. A tip change re-resolves only the potentially
-    /// stale identity and activity anchor, never the original address text.
+    pub fn resolve_addr_utxos(&self, addr: &Addr, max_utxos: usize) -> Result<ResolvedAddrUtxos> {
+        let addr = AddrBytes::from_str(addr)?;
+        let guard = self.read_plugin(self.indexer())?;
+        self.resolve_addr_utxos_guarded(&addr, guard, max_utxos)
+    }
+
+    fn resolve_addr_utxos_guarded(
+        &self,
+        addr: &AddrBytes,
+        guard: PluginReadGuard,
+        max_utxos: usize,
+    ) -> Result<ResolvedAddrUtxos> {
+        let (output_type, type_index) = self.resolve_addr_bytes(addr)?;
+        let lengths = self.safe_lengths();
+        if type_index >= lengths.to_type_index(output_type) {
+            return Err(Error::UnknownAddr);
+        }
+        let (_, anchor) = self.addr_utxos_anchor_for(output_type, type_index)?;
+        let outpoints: Vec<(TxIndex, Vout)> = self
+            .indexer()
+            .stores()
+            .addr_unspent_outpoints(output_type, type_index)?
+            // Store keys order outpoints by transaction index, then vout.
+            .take_while(|(tx_index, _)| *tx_index < lengths.tx_index)
+            .take(max_utxos.saturating_add(1))
+            .collect();
+        if outpoints.len() > max_utxos {
+            return Err(Error::TooManyUtxos);
+        }
+        Ok(ResolvedAddrUtxos::new(guard, lengths, outpoints, anchor))
+    }
+
+    /// Load the captured selection while retaining its publication guard.
     pub fn addr_utxos_resolved(
         &self,
         resolved: ResolvedAddrUtxos,
         max_utxos: usize,
     ) -> Result<(Vec<Utxo>, BlockHash)> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let (addr, output_type, type_index, (height, hash), tip) = resolved.into_parts();
-        let (output_type, type_index, block_hash) = if self.tip_blockhash() == tip {
-            self.validate_block_at_height(&hash, height)?;
-            (output_type, type_index, hash)
-        } else {
-            let (output_type, type_index) = super::resolve::resolve_addr_bytes(self, &addr)?;
-            let (_, hash) = self.addr_utxos_anchor_for(output_type, type_index)?;
-            (output_type, type_index, hash)
-        };
-        let utxos = self.addr_utxos_for(output_type, type_index, max_utxos)?;
-        Ok((utxos, block_hash))
-    }
-
-    fn addr_utxos_anchor_for(
-        &self,
-        output_type: OutputType,
-        type_index: TypeIndex,
-    ) -> Result<(Height, BlockHash)> {
-        let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
-        let hash = self.block_hash_by_height(height)?;
-        Ok((height, hash))
-    }
-
-    fn addr_utxos_for(
-        &self,
-        output_type: OutputType,
-        type_index: TypeIndex,
-        max_utxos: usize,
-    ) -> Result<Vec<Utxo>> {
+        let (_guard, lengths, outpoints, block_hash) = resolved.into_parts();
         let indexer = self.indexer();
-        let stores = indexer.stores();
         let vecs = indexer.vecs();
-
-        let tx_index_len = self.safe_lengths().tx_index;
-        let outpoints: Vec<(TxIndex, Vout)> = stores
-            .addr_unspent_outpoints(output_type, type_index)?
-            .filter(|(tx_index, _)| *tx_index < tx_index_len)
-            .take(max_utxos.saturating_add(1))
-            .collect();
         if outpoints.len() > max_utxos {
             return Err(Error::TooManyUtxos);
         }
@@ -102,17 +89,31 @@ impl Query {
         let mut utxos = Vec::with_capacity(outpoints.len());
 
         for (tx_index, vout) in outpoints {
-            let txid = txid_reader.get(tx_index);
-            let first_txout_index = first_txout_index_reader.get(tx_index);
-            let value = value_reader.get(first_txout_index + vout);
+            let txid = txid_reader.try_get(tx_index).data()?;
+            let first = first_txout_index_reader.try_get(tx_index).data()?;
+            let next_tx = tx_index.incremented();
+            let next = if next_tx < lengths.tx_index {
+                first_txout_index_reader.try_get(next_tx).data()?
+            } else {
+                lengths.txout_index
+            };
+            let output = usize::from(first)
+                .checked_add(usize::from(vout))
+                .ok_or(Error::Internal("UTXO output index overflow"))?;
+            if first > next || next > lengths.txout_index || output >= usize::from(next) {
+                return Err(Error::Internal(
+                    "UTXO outside transaction output boundaries",
+                ));
+            }
+            let value = value_reader.try_get(TxOutIndex::from(output)).data()?;
 
-            let height = confirmed_status_height(self, tx_index)?;
+            let height = self.confirmed_status_height(tx_index)?;
             let status = if let Some((h, ref s)) = cached_status
                 && h == height
             {
                 s.clone()
             } else {
-                let s = confirmed_status_at(self, height)?;
+                let s = self.confirmed_status_at(height)?;
                 cached_status = Some((height, s.clone()));
                 s
             };
@@ -125,6 +126,16 @@ impl Query {
             });
         }
 
-        Ok(utxos)
+        Ok((utxos, block_hash))
+    }
+
+    fn addr_utxos_anchor_for(
+        &self,
+        output_type: OutputType,
+        type_index: TypeIndex,
+    ) -> Result<(Height, BlockHash)> {
+        let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
+        let hash = self.block_hash_by_height(height)?;
+        Ok((height, hash))
     }
 }

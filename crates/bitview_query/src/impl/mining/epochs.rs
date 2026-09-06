@@ -1,5 +1,5 @@
-use brk_error::Error;
-use brk_types::{DifficultyAdjustmentEntry, Height};
+use brk_error::{Error, Result};
+use brk_types::{DifficultyAdjustmentEntry, Epoch, Height, StoredF64, Timestamp};
 use vecdb::{ReadableVec, VecIndex};
 
 use crate::query_plugins::QueryPlugins;
@@ -17,7 +17,7 @@ pub fn iter_difficulty_epochs(
     plugins: &QueryPlugins,
     start_height: usize,
     end_height: usize,
-) -> brk_error::Result<Vec<DifficultyAdjustmentEntry>> {
+) -> Result<Vec<DifficultyAdjustmentEntry>> {
     let start_epoch = plugins
         .mappings
         .height
@@ -35,14 +35,38 @@ pub fn iter_difficulty_epochs(
             "iter_difficulty_epochs: end_height not in epoch index",
         ))?;
 
-    let mut height_cursor = plugins.mappings.epoch.first_height.cursor();
-    let mut timestamp_cursor = plugins.mappings.timestamp.epoch.cursor();
-    let mut difficulty_cursor = plugins.blocks.difficulty.value.epoch.cursor();
+    read_epoch_window(
+        start_height,
+        start_epoch.to_usize(),
+        end_epoch.to_usize(),
+        &plugins.mappings.epoch.first_height,
+        &plugins.mappings.timestamp.epoch,
+        &plugins.blocks.difficulty.value.epoch,
+    )
+}
 
-    let mut results = Vec::with_capacity(end_epoch.to_usize() - start_epoch.to_usize() + 1);
+fn read_epoch_window(
+    start_height: usize,
+    start_epoch: usize,
+    end_epoch: usize,
+    heights: &impl ReadableVec<Epoch, Height>,
+    timestamps: &impl ReadableVec<Epoch, Timestamp>,
+    difficulties: &impl ReadableVec<Epoch, StoredF64>,
+) -> Result<Vec<DifficultyAdjustmentEntry>> {
+    let mut height_cursor = heights.cursor();
+    let mut timestamp_cursor = timestamps.cursor();
+    let mut difficulty_cursor = difficulties.cursor();
+
+    let count = end_epoch
+        .checked_sub(start_epoch)
+        .ok_or(Error::Internal("Reversed mining epoch window"))?
+        + 1;
+    let mut results = Vec::with_capacity(count);
     let mut prev_difficulty: Option<f64> = None;
 
-    for epoch_usize in start_epoch.to_usize()..=end_epoch.to_usize() {
+    // Include the predecessor even when the requested window starts exactly at
+    // a retarget. Otherwise the first returned adjustment incorrectly becomes 0.
+    for epoch_usize in start_epoch.saturating_sub(1)..=end_epoch {
         let epoch_height = height_cursor.get(epoch_usize).ok_or(Error::Internal(
             "iter_difficulty_epochs: missing epoch first_height",
         ))?;
@@ -80,3 +104,7 @@ pub fn iter_difficulty_epochs(
 
     Ok(results)
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/mining/epochs.rs"]
+mod tests;

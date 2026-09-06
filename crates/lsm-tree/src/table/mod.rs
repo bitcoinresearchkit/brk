@@ -160,7 +160,7 @@ impl Table {
     }
 
     /// Returns the (possibly compressed) file size.
-    pub(crate) fn file_size(&self) -> u64 {
+    pub fn file_size(&self) -> u64 {
         self.metadata.file_size
     }
 
@@ -494,12 +494,12 @@ impl Table {
         })))
     }
 
-    pub(crate) fn mark_as_deleted(&self) {
+    pub fn mark_as_deleted(&self) {
         self.0.is_deleted.store(true, Ordering::Release);
     }
 
     /// Checks if a key range is (partially or fully) contained in this table.
-    pub(crate) fn check_key_range_overlap(&self, bounds: &(Bound<&[u8]>, Bound<&[u8]>)) -> bool {
+    pub fn check_key_range_overlap(&self, bounds: &(Bound<&[u8]>, Bound<&[u8]>)) -> bool {
         self.metadata.key_range.overlaps_with_bounds(bounds)
     }
 

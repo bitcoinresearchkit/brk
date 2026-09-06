@@ -20,7 +20,7 @@ where
 {
     let config = Config::import()?;
 
-    brk_logger::init(Some(&config.server.data_path.join("logs")))?;
+    brk_logger::init(Some(&config.server.logs_path()))?;
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();

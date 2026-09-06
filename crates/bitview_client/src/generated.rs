@@ -505,25 +505,31 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {
     }
 }
 
+fn required_date_index(position: Option<usize>) -> Result<usize> {
+    position.ok_or_else(|| BitviewError {
+        message: "Date or timestamp is not representable for this index".to_owned(),
+    })
+}
+
 /// Date-specific methods available only on `DateSeriesEndpoint`.
 impl<T: DeserializeOwned> SeriesEndpoint<T, DateSeriesData<T>> {
     /// Select a specific date position (for day-precision or coarser indexes).
-    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {
-        let index = self.config.index.date_to_index(date).unwrap_or(0);
-        self.get(index)
+    pub fn get_date(self, date: Date) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {
+        let index = required_date_index(self.config.index.date_to_index(date))?;
+        Ok(self.get(index))
     }
 
     /// Select a date range (for day-precision or coarser indexes).
-    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateSeriesData<T>> {
-        let s = self.config.index.date_to_index(start).unwrap_or(0);
-        let e = self.config.index.date_to_index(end).unwrap_or(0);
-        self.range(s..e)
+    pub fn date_range(self, start: Date, end: Date) -> Result<RangeBuilder<T, DateSeriesData<T>>> {
+        let s = required_date_index(self.config.index.date_to_index(start))?;
+        let e = required_date_index(self.config.index.date_to_index(end))?;
+        Ok(self.range(s..e))
     }
 
     /// Select a specific timestamp position (works for all date-based indexes including sub-daily).
-    pub fn get_timestamp(self, ts: Timestamp) -> SingleItemBuilder<T, DateSeriesData<T>> {
-        let index = self.config.index.timestamp_to_index(ts).unwrap_or(0);
-        self.get(index)
+    pub fn get_timestamp(self, ts: Timestamp) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {
+        let index = required_date_index(self.config.index.timestamp_to_index(ts))?;
+        Ok(self.get(index))
     }
 
     /// Select a timestamp range (works for all date-based indexes including sub-daily).
@@ -531,10 +537,10 @@ impl<T: DeserializeOwned> SeriesEndpoint<T, DateSeriesData<T>> {
         self,
         start: Timestamp,
         end: Timestamp,
-    ) -> RangeBuilder<T, DateSeriesData<T>> {
-        let s = self.config.index.timestamp_to_index(start).unwrap_or(0);
-        let e = self.config.index.timestamp_to_index(end).unwrap_or(0);
-        self.range(s..e)
+    ) -> Result<RangeBuilder<T, DateSeriesData<T>>> {
+        let s = required_date_index(self.config.index.timestamp_to_index(start))?;
+        let e = required_date_index(self.config.index.timestamp_to_index(end))?;
+        Ok(self.range(s..e))
     }
 }
 
@@ -584,15 +590,18 @@ impl<T: DeserializeOwned> DateSeriesEndpoint<T> {
         self.0.path()
     }
 
-    pub fn get_date(self, date: Date) -> SingleItemBuilder<T, DateSeriesData<T>> {
+    pub fn get_date(self, date: Date) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {
         self.0.get_date(date)
     }
 
-    pub fn date_range(self, start: Date, end: Date) -> RangeBuilder<T, DateSeriesData<T>> {
+    pub fn date_range(self, start: Date, end: Date) -> Result<RangeBuilder<T, DateSeriesData<T>>> {
         self.0.date_range(start, end)
     }
 
-    pub fn get_timestamp(self, timestamp: Timestamp) -> SingleItemBuilder<T, DateSeriesData<T>> {
+    pub fn get_timestamp(
+        self,
+        timestamp: Timestamp,
+    ) -> Result<SingleItemBuilder<T, DateSeriesData<T>>> {
         self.0.get_timestamp(timestamp)
     }
 
@@ -600,8 +609,76 @@ impl<T: DeserializeOwned> DateSeriesEndpoint<T> {
         self,
         start: Timestamp,
         end: Timestamp,
-    ) -> RangeBuilder<T, DateSeriesData<T>> {
+    ) -> Result<RangeBuilder<T, DateSeriesData<T>>> {
         self.0.timestamp_range(start, end)
+    }
+}
+
+#[cfg(test)]
+mod date_selector_tests {
+    use super::*;
+
+    fn endpoint(index: Index) -> DateSeriesEndpoint<u64> {
+        DateSeriesEndpoint::new(
+            Arc::new(BitviewClientBase::new("http://127.0.0.1:1")),
+            "fixture".into(),
+            index,
+        )
+    }
+
+    #[test]
+    fn rejected_selectors_do_not_become_zero() {
+        let valid = Date::new(2009, 1, 3);
+        for date in [Date::new(2008, 12, 31), Date::new(9999, 12, 31)] {
+            assert!(endpoint(Index::Day1).get_date(date).is_err());
+            assert!(endpoint(Index::Day1).date_range(date, valid).is_err());
+            assert!(endpoint(Index::Day1).date_range(valid, date).is_err());
+        }
+        let timestamp = Timestamp::from(valid);
+        assert!(
+            endpoint(Index::Day1)
+                .get_timestamp(Timestamp::ZERO)
+                .is_err()
+        );
+        assert!(
+            endpoint(Index::Day1)
+                .timestamp_range(Timestamp::ZERO, timestamp)
+                .is_err()
+        );
+        assert!(
+            endpoint(Index::Day1)
+                .timestamp_range(timestamp, Timestamp::ZERO)
+                .is_err()
+        );
+        assert!(endpoint(Index::Hour1).get_date(valid).is_err());
+        assert!(
+            endpoint(Index::Month3)
+                .get_date(Date::new(2073, 1, 1))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn accepted_selectors_preserve_numeric_bounds() {
+        let date = Date::new(2009, 1, 3);
+        let single = endpoint(Index::Day1).get_date(date).unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(2), Some(3)));
+        let range = endpoint(Index::Day1)
+            .date_range(date, Date::new(2009, 1, 5))
+            .unwrap();
+        assert_eq!((range.config.start, range.config.end), (Some(2), Some(4)));
+        let timestamp = Timestamp::from(date);
+        let single = endpoint(Index::Day1).get_timestamp(timestamp).unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(2), Some(3)));
+        let range = endpoint(Index::Day1)
+            .timestamp_range(timestamp, Timestamp::from(Date::new(2009, 1, 5)))
+            .unwrap();
+        assert_eq!((range.config.start, range.config.end), (Some(2), Some(4)));
+        // Preserve the existing intentional sub-daily clamp.
+        let single = endpoint(Index::Hour1)
+            .get_timestamp(Timestamp::ZERO)
+            .unwrap();
+        assert_eq!((single.config.start, single.config.end), (Some(0), Some(1)));
     }
 }
 
@@ -45706,7 +45783,7 @@ impl BitviewClient {
 
     /// Health check
     ///
-    /// Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.
+    /// Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
     ///
     /// Endpoint: `GET /health`
     pub fn get_health(&self) -> Result<Health> {
@@ -45724,7 +45801,7 @@ impl BitviewClient {
 
     /// Sync status
     ///
-    /// Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+    /// Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.
     ///
     /// Endpoint: `GET /api/server/sync`
     pub fn get_sync_status(&self) -> Result<SyncStatus> {
@@ -45733,7 +45810,7 @@ impl BitviewClient {
 
     /// Disk usage
     ///
-    /// Returns the disk space used by BRK and Bitcoin data.
+    /// Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.
     ///
     /// Endpoint: `GET /api/server/disk`
     pub fn get_disk_usage(&self) -> Result<DiskUsage> {
@@ -45791,7 +45868,7 @@ impl BitviewClient {
 
     /// Search series
     ///
-    /// Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.
+    /// Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
     ///
     /// Endpoint: `GET /api/series/search`
     pub fn search_series(&self, q: SeriesName, limit: Option<Limit>) -> Result<Vec<String>> {
@@ -45811,7 +45888,7 @@ impl BitviewClient {
 
     /// Get series info
     ///
-    /// Returns the optional description, supported indexes, and value type for the specified series.
+    /// Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.
     ///
     /// Endpoint: `GET /api/series/{series}`
     pub fn get_series_info(&self, series: SeriesName) -> Result<SeriesInfo> {
@@ -45920,7 +45997,7 @@ impl BitviewClient {
 
     /// Get series version
     ///
-    /// Returns the current version of a series. Changes when the series data is updated.
+    /// Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.
     ///
     /// Endpoint: `GET /api/series/{series}/{index}/version`
     pub fn get_series_version(&self, series: SeriesName, index: Index) -> Result<Version> {
@@ -46078,7 +46155,7 @@ impl BitviewClient {
 
     /// Historical price
     ///
-    /// Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+    /// Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
     ///
@@ -46242,7 +46319,7 @@ impl BitviewClient {
 
     /// Block by timestamp
     ///
-    /// Find the block closest to a given UNIX timestamp.
+    /// Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
     ///
@@ -46465,7 +46542,7 @@ impl BitviewClient {
 
     /// Mining pool blocks
     ///
-    /// Get the 10 most recent blocks mined by a specific pool.
+    /// Get up to 100 recent blocks mined by a specific pool.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
     ///
@@ -46477,7 +46554,7 @@ impl BitviewClient {
 
     /// Mining pool blocks from height
     ///
-    /// Get 10 blocks mined by a specific pool before (and including) the given height.
+    /// Get up to 100 blocks mined by a specific pool before (and including) the given height.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
     ///
@@ -46645,7 +46722,7 @@ impl BitviewClient {
 
     /// Mempool content hash
     ///
-    /// Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+    /// Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.
     ///
     /// Endpoint: `GET /api/mempool/hash`
     pub fn get_mempool_hash(&self) -> Result<NextBlockHash> {
@@ -46869,13 +46946,18 @@ impl BitviewClient {
 
     /// Broadcast transaction
     ///
-    /// Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+    /// Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.
     ///
     /// *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
     ///
     /// Endpoint: `POST /api/tx`
     pub fn post_tx(&self, body: &str) -> Result<Txid> {
-        self.base.post_json(&format!("/api/tx"), body)
+        self.base
+            .post_text(&format!("/api/tx"), body)?
+            .parse::<Txid>()
+            .map_err(|error| BitviewError {
+                message: format!("Invalid submission response; outcome may be unknown: {error}"),
+            })
     }
 
     /// Live BTC/USD price
@@ -46889,7 +46971,7 @@ impl BitviewClient {
 
     /// Live payment output histogram
     ///
-    /// Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+    /// Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.
     ///
     /// Endpoint: `GET /api/oracle/histogram/payments/live`
     pub fn get_oracle_histogram_payments_live(&self) -> Result<Vec<i64>> {
@@ -46909,7 +46991,7 @@ impl BitviewClient {
 
     /// Live output value histogram
     ///
-    /// Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+    /// Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
     ///
     /// Endpoint: `GET /api/oracle/histogram/outputs/live`
     pub fn get_oracle_histogram_outputs_live(&self) -> Result<Vec<i64>> {

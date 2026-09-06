@@ -28,6 +28,22 @@ Generic composition and update lifecycle traits live in
 The plugin API remains experimental while the built-in Bitview modules are
 extracted into independent crates.
 
+## Publication-read allocation review
+
+Multi-plugin acquisition inserts owned lock guards directly into its final vector.
+Previously each gate allocated a one-element `PluginReadGuard` vector, which was
+immediately appended and freed. The crate-private accessor removes that temporary
+allocation per acquired gate without changing the public API, pointer ordering,
+deduplication, deadline, partial-set release or writer exclusion. No retained
+state or dependency was added.
+
+Eight plugin tests pass, including deadline, partial-release and duplicate-gate
+coverage. Three isolated collection-loop comparisons measured 44–47 ns before
+versus 15–17 ns after for two gates, and 145–151 ns versus 32–33 ns for eight.
+The ignored benchmark uses four warmup and 20 alternating batches of 10,000
+acquire/drop cycles; it excludes sorting, waiting and HTTP dispatch. These are
+small allocation savings, not an end-to-end server performance claim.
+
 ## License
 
 MIT

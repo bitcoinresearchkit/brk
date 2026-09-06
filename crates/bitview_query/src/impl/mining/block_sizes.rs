@@ -1,3 +1,4 @@
+use brk_error::Result;
 use brk_types::{
     BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, StoredU64, TimePeriod, Weight,
 };
@@ -12,10 +13,8 @@ impl Query {
     /// bucket's average height/timestamp and the round-half-up mean of the
     /// corresponding metric. Single bucket-pass: built via `.map(...).unzip()`
     /// to avoid re-walking buckets.
-    pub fn block_sizes_weights(
-        &self,
-        time_period: TimePeriod,
-    ) -> brk_error::Result<BlockSizesWeights> {
+    pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
+        let _guard = self.read_plugin(self.indexer())?;
         let blocks = &self.indexer().vecs().blocks;
         let bw = BlockWindow::new(self, time_period)?;
 

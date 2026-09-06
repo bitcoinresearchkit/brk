@@ -7,7 +7,7 @@ use crate::{
     request_body::RequestBody,
 };
 
-pub(crate) struct Command {
+pub struct Command {
     pub name: &'static str,
     pub method: &'static str,
     pub path: &'static str,
@@ -106,7 +106,7 @@ impl Command {
     }
 }
 
-pub(crate) fn print_help(commands: &[Command]) -> io::Result<()> {
+pub fn print_help(commands: &[Command]) -> io::Result<()> {
     let stdout = io::stdout();
     let mut output = stdout.lock();
     writeln!(output, "{PROGRAM_NAME} {}", env!("CARGO_PKG_VERSION"))?;

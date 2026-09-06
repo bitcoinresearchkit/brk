@@ -1,4 +1,6 @@
-use std::sync::LazyLock;
+use crate::internals::*;
+
+use std::fmt::Write;
 
 use bitview_plugin::PluginReadGuard;
 use bitview_traversable::TreeNode;
@@ -6,23 +8,20 @@ use bitview_types::{
     DetailedSeriesCount, Format, IndexInfo, Limit, PaginatedSeries, Pagination, SearchQuery,
     SeriesInfo, SeriesName, SeriesSelection,
 };
-use brk_error::{Error, Result};
+use brk_error::{Error, Result, SeriesNotFound, truncate_series_name};
 use brk_types::{
-    BlockHashPrefix, CacheClass, Date, Epoch, Halving, Height, Index, RangeIndex, RangeMap,
-    Timestamp, Version,
+    BlockHashPrefix, CacheClass, Date, Epoch, Halving, Height, Index, RangeIndex, Timestamp,
+    Version,
 };
 use itoa::Buffer;
-use parking_lot::RwLock;
-use vecdb::{AnyExportableVec, AnySerializableVec, ReadBounds, ReadableVec};
+use jiff::civil::Date as CivilDate;
+use serde_json::{Value, from_slice, to_writer};
+use vecdb::{AnyExportableVec, AnySerializableVec, AnyVec, ReadBounds, ReadableVec, i64_to_usize};
 
 use crate::{
-    LegacyValue, Output, OutputLegacy, Query, SeriesOutput, SeriesOutputLegacy,
+    Output, Query, ResolvedSeriesInfo, SeriesOutput,
     vecs::{SeriesEntry, SeriesEntryLookup},
 };
-
-/// Monotonic block timestamps → height. Lazily extended as new blocks are indexed.
-static HEIGHT_BY_MONOTONIC_TIMESTAMP: LazyLock<RwLock<RangeMap<Timestamp, Height>>> =
-    LazyLock::new(|| RwLock::new(RangeMap::default()));
 
 /// Estimated bytes per column header
 const CSV_HEADER_BYTES_PER_COL: usize = 10;
@@ -70,10 +69,10 @@ impl Query {
 
     /// Build the fuzzy not-found error after an exact series lookup failed.
     pub fn missing_series_error(&self, series: &SeriesName) -> Error {
-        let matches = self.vecs().matches_after_exact_miss(series, Limit::DEFAULT);
+        let matches = self.vecs().matches(series, Limit::DEFAULT);
         let total_matches = matches.len();
         let suggestions = matches.into_iter().take(3).collect();
-        Error::SeriesNotFound(brk_error::SeriesNotFound::new(
+        Error::SeriesNotFound(SeriesNotFound::new(
             series.to_string(),
             suggestions,
             total_matches,
@@ -98,6 +97,10 @@ impl Query {
             csv.push_str(col.name());
         }
         csv.push('\n');
+
+        if start == end {
+            return Ok(csv);
+        }
 
         // Stream a single column without materializing Vec<T>.
         if num_cols == 1 {
@@ -129,8 +132,17 @@ impl Query {
     }
 
     fn get_entry(&self, series: &SeriesName, index: Index) -> Result<SeriesEntry<'static>> {
+        self.find_entry(series, index)?
+            .ok_or_else(|| self.missing_series_error(series))
+    }
+
+    fn find_entry(
+        &self,
+        series: &SeriesName,
+        index: Index,
+    ) -> Result<Option<SeriesEntry<'static>>> {
         match self.vecs().lookup_entry(series, index) {
-            SeriesEntryLookup::Found(entry) => Ok(entry),
+            SeriesEntryLookup::Found(entry) => Ok(Some(entry)),
             SeriesEntryLookup::Unsupported(indexes) => {
                 let supported = indexes
                     .iter()
@@ -138,19 +150,28 @@ impl Query {
                     .collect::<Vec<_>>()
                     .join(", ");
                 Err(Error::SeriesUnsupportedIndex {
-                    series: brk_error::truncate_series_name(series.to_string()),
+                    series: truncate_series_name(series.to_string()),
                     supported,
                 })
             }
-            SeriesEntryLookup::Missing => Err(self.missing_series_error(series)),
+            SeriesEntryLookup::Missing => Ok(None),
         }
     }
 
     /// Returns the latest value for a single series as a JSON value.
-    pub fn latest(&self, series: &SeriesName, index: Index) -> Result<serde_json::Value> {
+    pub fn latest(&self, series: &SeriesName, index: Index) -> Result<Value> {
+        from_slice(&self.read_latest_json(series, index)?).map_err(Into::into)
+    }
+
+    /// Latest value with the same JSON representation as serializing `latest`.
+    pub fn latest_json(&self, series: &SeriesName, index: Index) -> Result<Vec<u8>> {
+        reserialize_json(self.read_latest_json(series, index)?)
+    }
+
+    fn read_latest_json(&self, series: &SeriesName, index: Index) -> Result<Vec<u8>> {
         let entry = self.get_entry(series, index)?;
         let vec = entry.vec();
-        let _guard = self.mutable_series_guard(&[entry])?;
+        let _guard = self.series_guard(&[entry])?;
         let bounds = self.read_bounds(self.safe_lengths());
         bounds.scope(|| {
             let len = vec.visible_len();
@@ -159,7 +180,7 @@ impl Query {
             }
             let mut value = Vec::new();
             vec.write_json_value_at(len - 1, &mut value)?;
-            serde_json::from_slice(&value).map_err(Into::into)
+            Ok(value)
         })
     }
 
@@ -167,7 +188,7 @@ impl Query {
     pub fn len(&self, series: &SeriesName, index: Index) -> Result<usize> {
         let entry = self.get_entry(series, index)?;
         let vec = entry.vec();
-        let _guard = self.mutable_series_guard(&[entry])?;
+        let _guard = self.series_guard(&[entry])?;
         let bounds = self.read_bounds(self.safe_lengths());
         bounds.scope(|| Ok(vec.visible_len()))
     }
@@ -175,6 +196,14 @@ impl Query {
     /// Returns the version for a single series.
     pub fn version(&self, series: &SeriesName, index: Index) -> Result<Version> {
         Ok(self.get_entry(series, index)?.vec().version())
+    }
+
+    /// Metadata lookup without missing-name suggestions. Unsupported indexes
+    /// retain their normal error; only an unknown name returns `None`.
+    pub fn find_version(&self, series: &SeriesName, index: Index) -> Result<Option<Version>> {
+        Ok(self
+            .find_entry(series, index)?
+            .map(|entry| entry.vec().version()))
     }
 
     /// Search for vecs matching the given series and index.
@@ -204,8 +233,8 @@ impl Query {
     /// decide whether the representation body is needed before formatting.
     pub fn resolve(&self, params: SeriesSelection, max_weight: usize) -> Result<ResolvedQuery> {
         let entries = self.search_entries(&params)?;
-        let plugin_guard = self.mutable_series_guard(&entries)?;
-        let is_mutable = plugin_guard.is_some();
+        let is_mutable = entries.iter().any(|entry| entry.is_mutable());
+        let plugin_guard = self.series_guard(&entries)?;
         let vecs = entries
             .into_iter()
             .map(SeriesEntry::vec)
@@ -221,7 +250,7 @@ impl Query {
 
             let resolve_bound = |ri: RangeIndex| -> Result<usize> {
                 let i = self.range_index_to_i64(ri, index)?;
-                Ok(vecdb::i64_to_usize(i, total))
+                Ok(i64_to_usize(i, total))
             };
 
             let start = match params.start() {
@@ -272,18 +301,16 @@ impl Query {
         })
     }
 
-    fn mutable_series_guard(&self, entries: &[SeriesEntry<'_>]) -> Result<Option<PluginReadGuard>> {
-        let plugins = entries
+    fn series_guard(&self, entries: &[SeriesEntry<'_>]) -> Result<PluginReadGuard> {
+        let mut plugins = entries
             .iter()
-            .filter(|entry| entry.requires_gate())
             .map(|entry| entry.plugin())
             .collect::<Vec<_>>();
-
-        if plugins.is_empty() {
-            Ok(None)
-        } else {
-            self.read_plugins(&plugins).map(Some)
-        }
+        // Bounds and lazy resolution mappings are dependencies even when the
+        // caller supplies integer offsets rather than date/timestamp bounds.
+        plugins.push(self.indexer());
+        plugins.push(self.plugins().mappings);
+        self.read_plugins(plugins)
     }
 
     /// Count of leading entries provably immutable across a 6-block reorg.
@@ -475,6 +502,10 @@ impl Query {
         self.vecs().series_info(series)
     }
 
+    pub fn resolve_series_info(&self, series: &SeriesName) -> Option<ResolvedSeriesInfo<'static>> {
+        self.vecs().resolve_series_info(series)
+    }
+
     /// Resolve a RangeIndex to an i64 offset for the given index type.
     fn range_index_to_i64(&self, ri: RangeIndex, index: Index) -> Result<i64> {
         match ri {
@@ -485,21 +516,25 @@ impl Query {
     }
 
     fn date_to_i64(&self, date: Date, index: Index) -> Result<i64> {
+        let calendar = date.try_into_jiff()?;
         if let Some(idx) = index.date_to_index(date) {
             return Ok(idx as i64);
         }
-        self.timestamp_to_i64(Timestamp::from(date), index)
+        let days = CivilDate::constant(1970, 1, 1).until(calendar)?.get_days();
+        let seconds = u32::try_from(i64::from(days) * 86_400)
+            .map_err(|_| Error::Parse(format!("date out of timestamp range: {date}")))?;
+        self.timestamp_to_i64(Timestamp::new(seconds), index)
     }
 
     fn timestamp_to_i64(&self, ts: Timestamp, index: Index) -> Result<i64> {
         if let Some(idx) = index.timestamp_to_index(ts) {
             return Ok(idx as i64);
         }
-        let height = Height::from(self.height_for_timestamp(ts));
+        let height = || self.height_for_timestamp(ts).map(Height::from);
         match index {
-            Index::Height => Ok(usize::from(height) as i64),
-            Index::Epoch => Ok(usize::from(Epoch::from(height)) as i64),
-            Index::Halving => Ok(usize::from(Halving::from(height)) as i64),
+            Index::Height => Ok(usize::from(height()?) as i64),
+            Index::Epoch => Ok(usize::from(Epoch::from(height()?)) as i64),
+            Index::Halving => Ok(usize::from(Halving::from(height()?)) as i64),
             _ => Err(Error::Parse(format!(
                 "date/timestamp ranges not supported for index '{index}'"
             ))),
@@ -507,97 +542,34 @@ impl Query {
     }
 
     /// Find the first block height at or after a given timestamp.
-    /// O(log n) binary search. Lazily rebuilt as new blocks arrive.
-    fn height_for_timestamp(&self, ts: Timestamp) -> usize {
+    /// Search the guarded published vector; no copied cross-query timestamp map.
+    fn height_for_timestamp(&self, ts: Timestamp) -> Result<usize> {
         let current_height: usize = self.height().into();
-        let lookup = |map: &RangeMap<Timestamp, Height>| {
-            map.ceil(ts).map(usize::from).unwrap_or(current_height)
-        };
-
-        {
-            let map = HEIGHT_BY_MONOTONIC_TIMESTAMP.read();
-            if map.len() > current_height {
-                return lookup(&map);
-            }
-        }
-
-        let mut map = HEIGHT_BY_MONOTONIC_TIMESTAMP.write();
-        if map.len() <= current_height {
-            *map = RangeMap::from(self.plugins().mappings.timestamp.monotonic.collect());
-        }
-        lookup(&map)
-    }
-
-    /// Deprecated - format a resolved query as legacy output (expensive).
-    pub fn format_legacy(&self, resolved: ResolvedQuery) -> Result<SeriesOutputLegacy> {
-        let bounds = resolved.read_bounds.clone();
-        bounds.scope(|| self.format_legacy_inner(resolved))
-    }
-
-    fn format_legacy_inner(&self, resolved: ResolvedQuery) -> Result<SeriesOutputLegacy> {
-        let ResolvedQuery {
-            vecs,
-            format,
-            version,
-            total,
-            start,
-            end,
-            ..
-        } = resolved;
-
-        if vecs.is_empty() {
-            return Ok(SeriesOutputLegacy {
-                output: OutputLegacy::default(format),
-                version: Version::ZERO,
-                total: 0,
-                start: 0,
-                end: 0,
-            });
-        }
-
-        let from = Some(start as i64);
-        let to = Some(end as i64);
-
-        let output = match format {
-            Format::CSV => OutputLegacy::CSV(Self::columns_to_csv(&vecs, start, end)?),
-            Format::JSON => {
-                if vecs.len() == 1 {
-                    let col = vecs[0];
-                    let count = col.range_count(from, to);
-                    let mut buf = Vec::new();
-                    if count == 1 {
-                        col.write_json_value_at(start, &mut buf)?;
-                        OutputLegacy::Json(LegacyValue::Value(buf))
-                    } else {
-                        col.write_json(Some(start), Some(end), &mut buf)?;
-                        OutputLegacy::Json(LegacyValue::List(buf))
-                    }
-                } else {
-                    let mut values = Vec::with_capacity(vecs.len());
-                    for vec in &vecs {
-                        let mut buf = Vec::new();
-                        vec.write_json(Some(start), Some(end), &mut buf)?;
-                        values.push(buf);
-                    }
-                    OutputLegacy::Json(LegacyValue::Matrix(values))
-                }
-            }
-        };
-
-        Ok(SeriesOutputLegacy {
-            output,
-            version,
-            total,
-            start,
-            end,
+        let timestamps = &self.plugins().mappings.timestamp.monotonic;
+        let len = timestamps.visible_len();
+        let snapshot = timestamps.snapshot();
+        let visible = snapshot.get(..len).ok_or(Error::NoData)?;
+        let position = visible.partition_point(|value| *value < ts);
+        Ok(if position == len {
+            current_height
+        } else {
+            position
         })
     }
 }
 
+// Preserve Value serialization and parse errors, but reuse the writer's buffer.
+fn reserialize_json(mut bytes: Vec<u8>) -> Result<Vec<u8>> {
+    let value: Value = from_slice(&bytes)?;
+    bytes.clear();
+    to_writer(&mut bytes, &value)?;
+    Ok(bytes)
+}
+
 /// A resolved series query ready for formatting.
-/// Carries the vecs plus the metadata callers need to derive an etag or cache
-/// policy. `stable_count` is `None` when any selected series can mutate
-/// existing entries.
+/// Keeps selected plugins and the indexer's published bounds stable through
+/// formatting. `stable_count` is `None` when any selected series can mutate
+/// existing entries independently of its append/reorg window.
 pub struct ResolvedQuery {
     pub vecs: Vec<&'static dyn AnyExportableVec>,
     pub format: Format,
@@ -609,49 +581,27 @@ pub struct ResolvedQuery {
     pub hash_prefix: BlockHashPrefix,
     pub stable_count: Option<usize>,
     read_bounds: ReadBounds,
-    _plugin_guard: Option<PluginReadGuard>,
+    _plugin_guard: PluginReadGuard,
 }
 
 impl ResolvedQuery {
     pub fn csv_filename(&self) -> String {
-        let names: Vec<_> = self.vecs.iter().map(|v| v.name()).collect();
-        format!("{}-{}.csv", names.join("_"), self.index)
+        let capacity = self.vecs.iter().map(|v| v.name().len()).sum::<usize>()
+            + self.vecs.len().saturating_sub(1)
+            + self.index.name().len()
+            + 5;
+        let mut filename = String::with_capacity(capacity);
+        for (position, vec) in self.vecs.iter().enumerate() {
+            if position != 0 {
+                filename.push('_');
+            }
+            filename.push_str(vec.name());
+        }
+        write!(filename, "-{}.csv", self.index).unwrap();
+        filename
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::Query;
-
-    #[test]
-    fn json_shape_is_stable_for_empty_single_and_multiple_values() {
-        let empty: [&[u8]; 0] = [];
-        let single_value = [b"{}".as_slice()];
-        let multiple_values = [b"{}".as_slice(), b"[]".as_slice()];
-        let write = |value: &&[u8], buf: &mut Vec<u8>| {
-            buf.extend_from_slice(value);
-            Ok(())
-        };
-
-        assert_eq!(
-            Query::write_json_array(&single_value, 0, 0, false, write).unwrap(),
-            b"{}"
-        );
-        assert_eq!(
-            Query::write_json_array(&multiple_values, 0, 0, false, write).unwrap(),
-            b"[{},[]]"
-        );
-        assert_eq!(
-            Query::write_json_array(&empty, 0, 0, true, write).unwrap(),
-            b"[]"
-        );
-        assert_eq!(
-            Query::write_json_array(&single_value, 0, 0, true, write).unwrap(),
-            b"[{}]"
-        );
-        assert_eq!(
-            Query::write_json_array(&multiple_values, 0, 0, true, write).unwrap(),
-            b"[{},[]]"
-        );
-    }
-}
+#[path = "../../tests/unit/impl/series.rs"]
+mod tests;

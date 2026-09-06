@@ -1,9 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-    AnyStoredVec, AnyVec, Bytes, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue,
-    ChangeCursor, ChangeData, ImportableVec, ReadWriteBaseVec, Stamp, StoredVec, ValueStrategy,
-    VecIndex, WritableVec,
+    AnyVec, BytesVec, BytesVecReader, BytesVecValue, ImportableVec, Stamp, StoredVec, VecIndex,
+    WritableVec,
 };
 
 #[cfg(feature = "zerocopy")]
@@ -35,127 +34,6 @@ pub trait MutableRawVec: StoredVec + ImportableVec + WritableVec<Self::I, Self::
     fn save_previous(&mut self);
     fn save_previous_for_rollback(&mut self);
 }
-
-macro_rules! impl_mutable_raw_vec {
-    ($vec:ident, $value:ident, $strategy:ident, $reader:ty) => {
-        impl<I, T> MutableRawVec for $vec<I, T>
-        where
-            I: VecIndex,
-            T: $value,
-        {
-            type Reader = $reader;
-
-            #[inline]
-            fn reader(&self) -> Self::Reader {
-                self.0.reader().into()
-            }
-
-            #[inline(always)]
-            fn reader_len(reader: &Self::Reader) -> usize {
-                reader.len()
-            }
-
-            #[inline(always)]
-            fn read_stored(reader: &Self::Reader, index: usize) -> T {
-                reader.get_at(index)
-            }
-
-            #[inline(always)]
-            fn rollback_len(&self) -> usize {
-                self.0.base.prev_stored_len()
-            }
-
-            #[inline]
-            fn pushed_mut(&mut self) -> &mut Vec<T> {
-                self.0.mut_pushed()
-            }
-
-            #[inline]
-            fn reserve_pushed(&mut self, additional: usize) {
-                self.0.reserve_pushed(additional);
-            }
-
-            fn write_updates(&mut self, updated: BTreeMap<usize, T>) {
-                self.region().batch_write_ordered(
-                    updated.into_iter().map(|(index, value)| {
-                        (index * size_of::<T>() + crate::HEADER_OFFSET, value)
-                    }),
-                    size_of::<T>(),
-                    $strategy::<T>::write_to_slice,
-                );
-            }
-
-            fn append_previous_values(
-                &self,
-                indices: &BTreeSet<usize>,
-                previous: &BTreeMap<usize, T>,
-                bytes: &mut Vec<u8>,
-            ) {
-                let reader = self.reader();
-                for index in indices {
-                    let value = previous
-                        .get(index)
-                        .cloned()
-                        .unwrap_or_else(|| reader.get_at(*index));
-                    $strategy::<T>::write_to_vec(&value, bytes);
-                }
-            }
-
-            fn parse_mutable_changes(
-                bytes: &[u8],
-            ) -> crate::Result<(Vec<(usize, T)>, BTreeSet<usize>)> {
-                let mut cursor = ChangeCursor::new(bytes);
-                let _: ChangeData<T> = ReadWriteBaseVec::<I, T>::parse_change_data(
-                    &mut cursor,
-                    size_of::<T>(),
-                    $strategy::<T>::read,
-                )?;
-                let modified_len = cursor.read_u64()?;
-                let indices =
-                    cursor.read_values(modified_len, crate::SIZE_OF_U64, usize::from_bytes)?;
-                let values =
-                    cursor.read_values(modified_len, size_of::<T>(), $strategy::<T>::read)?;
-                let previous_holes_len = cursor.read_u64()?;
-                let previous_holes = cursor
-                    .read_values(previous_holes_len, crate::SIZE_OF_U64, usize::from_bytes)?
-                    .into_iter()
-                    .collect();
-                Ok((indices.into_iter().zip(values).collect(), previous_holes))
-            }
-
-            fn save_change_file(&self, stamp: Stamp, bytes: &[u8]) -> crate::Result<()> {
-                self.0.base.save_change_file(stamp, bytes)
-            }
-
-            fn read_current_change_file(&self) -> crate::Result<Vec<u8>> {
-                self.0.base.read_current_change_file()
-            }
-
-            fn save_previous(&mut self) {
-                self.0.base.save_prev();
-            }
-
-            fn save_previous_for_rollback(&mut self) {
-                self.0.base.save_prev_for_rollback();
-            }
-        }
-    };
-}
-
-impl_mutable_raw_vec!(
-    BytesVec,
-    BytesVecValue,
-    BytesStrategy,
-    BytesVecReader<I, T>
-);
-
-#[cfg(feature = "zerocopy")]
-impl_mutable_raw_vec!(
-    ZeroCopyVec,
-    ZeroCopyVecValue,
-    ZeroCopyStrategy,
-    VecReader<I, T, ZeroCopyStrategy<T>>
-);
 
 impl<V> MutableVec<V>
 where

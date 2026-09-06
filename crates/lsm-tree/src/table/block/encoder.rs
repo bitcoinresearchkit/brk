@@ -63,22 +63,22 @@ pub trait Encodable<Context: Default> {
 ///
 /// For explanation of hash index, see `hash_index/mod.rs`.
 pub struct Encoder<'a, Context: Default, Item: Encodable<Context>> {
-    pub(crate) phantom: PhantomData<(Context, Item)>,
+    pub phantom: PhantomData<(Context, Item)>,
 
-    pub(crate) writer: &'a mut Vec<u8>,
+    pub writer: &'a mut Vec<u8>,
 
-    pub(crate) state: Context,
+    pub state: Context,
 
-    pub(crate) item_count: usize,
-    pub(crate) restart_count: usize,
+    pub item_count: usize,
+    pub restart_count: usize,
 
-    pub(crate) restart_interval: u8,
-    // pub(crate) use_prefix_truncation: bool, // TODO: support non-prefix truncation?
-    pub(crate) binary_index_builder: BinaryIndexBuilder,
-    pub(crate) hash_index_builder: HashIndexBuilder,
+    pub restart_interval: u8,
+    // pub use_prefix_truncation: bool, // TODO: support non-prefix truncation?
+    pub binary_index_builder: BinaryIndexBuilder,
+    pub hash_index_builder: HashIndexBuilder,
 
-    pub(crate) fixed_key_len: Option<u16>,
-    pub(crate) fixed_value_len: Option<u32>,
+    pub fixed_key_len: Option<u16>,
+    pub fixed_value_len: Option<u32>,
 
     base_key: &'a [u8],
 }

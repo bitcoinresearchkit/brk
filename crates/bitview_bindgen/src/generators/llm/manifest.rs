@@ -72,7 +72,7 @@ enum ParameterLocation {
 /// Generate the immutable machine-readable tool catalog in the LLM bundle.
 /// Every MCP-visible, non-deprecated operation is included. Operations marked
 /// with `x-mcp-ignore: true` are excluded regardless of their HTTP method.
-pub(super) fn generate_tool_manifest(
+pub fn generate_tool_manifest(
     endpoints: &[Endpoint],
     schemas: &TypeSchemas,
     path: &Path,

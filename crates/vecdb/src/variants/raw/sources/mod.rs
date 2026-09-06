@@ -1,9 +1,9 @@
-mod io;
-mod mmap;
-mod range_cursor;
-mod reader;
+pub mod io;
+pub mod mmap;
+pub mod range_cursor;
+pub mod reader;
 
-pub(crate) use io::*;
-pub(crate) use mmap::*;
+pub use io::*;
+pub use mmap::*;
 pub use range_cursor::RawRangeCursor;
 pub use reader::*;

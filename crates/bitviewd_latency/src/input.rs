@@ -1,0 +1,50 @@
+use crate::Result;
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
+
+pub fn discover(location: &Path) -> Result<Vec<PathBuf>> {
+    let mut days: BTreeMap<String, Vec<PathBuf>> = BTreeMap::new();
+    for entry in fs::read_dir(location)
+        .map_err(|e| format!("Cannot read logs at {}: {e}", location.display()))?
+    {
+        let path = entry?.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        let Some(stem) = name.strip_suffix(".txt") else {
+            continue;
+        };
+        let (day, suffix) = stem.split_once('_').unwrap_or((stem, ""));
+        if day.parse::<jiff::civil::Date>().is_err() || day.len() != 10 {
+            continue;
+        }
+        if !["", "info", "debug", "error", "warn", "trace"].contains(&suffix) {
+            continue;
+        }
+        days.entry(day.to_string())
+            .or_default()
+            .push(fs::canonicalize(path)?);
+    }
+    let mut files = Vec::new();
+    for (day, mut paths) in days {
+        paths.sort();
+        if let Some(combined) = paths
+            .iter()
+            .find(|p| p.file_name().unwrap() == format!("{day}.txt").as_str())
+        {
+            files.push(combined.clone());
+        } else {
+            files.extend(paths);
+        }
+    }
+    if files.is_empty() {
+        return Err(format!("No daily log files at {}", location.display()).into());
+    }
+    Ok(files)
+}

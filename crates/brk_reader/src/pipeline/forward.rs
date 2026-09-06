@@ -28,7 +28,7 @@ enum Stop {
     Failed(Error),
 }
 
-pub(super) fn pipeline_forward(
+pub fn pipeline_forward(
     paths: &BlkIndexToBlkPath,
     first_blk_index: u16,
     xor_bytes: XORBytes,

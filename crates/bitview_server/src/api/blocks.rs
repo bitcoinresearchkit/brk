@@ -1,27 +1,429 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
+    body::Bytes,
     extract::{Path, State},
-    http::HeaderMap,
-    response::Response,
+    http::{HeaderMap, HeaderValue, Method, header},
+    response::{IntoResponse, Response},
 };
+use bitcoin::hashes::{Hash, HashEngine, sha256};
+use bitview_query::{Query, ResolvedBlocks, ResolvedBlocksV1};
+use brk_error::{Error as QueryError, Result as QueryResult};
 use brk_types::{
-    BlockHash, BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, BlockTxIndex, Height, Hex,
-    Transaction, Txid, Version,
+    BlockHash, BlockInfo, BlockInfoV1, BlockStatus, BlockTimestamp, BlockTxIndex, Dollars, Height,
+    Hex, Timestamp, Transaction, Txid,
 };
+use serde::Serialize;
+use serde_json::to_vec;
 
 use crate::{
-    AppState, CacheStrategy, Error,
-    extended::TransformResponseExtended,
+    AppState, CacheParams, CacheStrategy, CdnCacheMode, Error,
+    extended::{ResponseExtended, TransformResponseExtended},
     params::{
         BlockHashParam, BlockHashStartIndex, BlockHashTxIndex, Empty, HeightParam, TimestampParam,
     },
+    raw_body::RawBodyPermit,
 };
 
 const BLOCK_TXS_PAGE_SIZE: u32 = 25;
+const BASE_BLOCK_SCHEMA: &str = "v3";
+const HEADER_SCHEMA: &str = "header-v2";
+const RAW_SCHEMA: &str = "raw-v2";
+pub const V1_BLOCK_SCHEMA: &str = "v1-4";
+
+fn recent_blocks_params(tip: Option<BlockHash>) -> CacheParams {
+    let tag = match tip {
+        Some(hash) => format!("blocks2-{hash}"),
+        None => "blocks2-empty".to_owned(),
+    };
+    CacheParams::resolve(&CacheStrategy::Live(tag.into()), CdnCacheMode::Live)
+}
+
+// The namespace covers the row formulas and bundled pool catalog. Bump it when
+// either changes. Prices also participate because oracle checkpoints can produce
+// different prices for the same chain. Hash exactly the values used by the body.
+pub fn blocks_v1_identity(anchor: Option<BlockHash>, prices: &[Dollars]) -> sha256::Hash {
+    let mut engine = sha256::Hash::engine();
+    engine.input(&[u8::from(anchor.is_some())]);
+    if let Some(hash) = anchor {
+        engine.input(&*hash);
+    }
+    for price in prices {
+        engine.input(&f64::from(*price).to_bits().to_le_bytes());
+    }
+    sha256::Hash::from_engine(engine)
+}
+
+fn blocks_v1_params(anchor: Option<BlockHash>, prices: &[Dollars]) -> CacheParams {
+    let identity = blocks_v1_identity(anchor, prices);
+    let tag = format!("blocks-{V1_BLOCK_SCHEMA}-{identity}");
+    CacheParams::resolve(&CacheStrategy::Live(tag.into()), CdnCacheMode::Live)
+}
+
+fn block_v1_params(snapshot: &ResolvedBlocksV1) -> QueryResult<CacheParams> {
+    let height = snapshot
+        .last_height()
+        .ok_or(QueryError::Internal("Missing resolved block"))?;
+    let identity = blocks_v1_identity(snapshot.anchor(), snapshot.prices());
+    Ok(CacheParams::resolve(
+        &CacheStrategy::Live(format!("block-{V1_BLOCK_SCHEMA}-{height}-{identity}").into()),
+        CdnCacheMode::Live,
+    ))
+}
+
+fn block_params(snapshot: &ResolvedBlocks, schema: &str) -> QueryResult<CacheParams> {
+    let height = snapshot
+        .last_height()
+        .ok_or(QueryError::Internal("Missing resolved block"))?;
+    let hash = snapshot
+        .anchor()
+        .ok_or(QueryError::Internal("Missing resolved block hash"))?;
+    // Availability is best-chain-only, even at historical heights. A reorg can
+    // remove the resource, so depth alone cannot justify immutable freshness.
+    Ok(CacheParams::revalidate(
+        format!("block-{schema}-{height}-{hash}").into(),
+    ))
+}
+
+// A hint only: at most one candidate is checked against the full canonical hash.
+// Actual conditional matching still uses the complete computed ETag afterward.
+fn block_height_hint(headers: &HeaderMap, schema: &str) -> Option<Height> {
+    headers
+        .get_all(header::IF_NONE_MATCH)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .find_map(|tag| {
+            let tag = tag.trim();
+            let tag = tag.strip_prefix("W/").unwrap_or(tag);
+            let token = tag.strip_prefix('"')?.strip_suffix('"')?;
+            let suffix = token
+                .strip_prefix("block-")?
+                .strip_prefix(schema)?
+                .strip_prefix('-')?;
+            let (height, _) = suffix.split_once('-')?;
+            height.parse::<u32>().ok().map(Height::from)
+        })
+}
+
+fn block_json_response(params: CacheParams, value: &impl Serialize) -> QueryResult<Response> {
+    let bytes = Bytes::from(to_vec(value)?);
+    Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+        headers.insert(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/json"),
+        );
+    }))
+}
+
+impl AppState {
+    async fn respond_block_tip(&self, headers: HeaderMap, hash: bool) -> Result<Response, Error> {
+        self.run_block_response(move |q| {
+            let snapshot = q.resolve_blocks(None, 1)?;
+            let value = if hash {
+                snapshot
+                    .anchor()
+                    .ok_or(QueryError::Internal("Missing chain tip"))?
+                    .to_string()
+            } else {
+                snapshot
+                    .last_height()
+                    .ok_or(QueryError::Internal("Missing chain tip"))?
+                    .to_string()
+            };
+            // The owned value is the whole representation. In particular, a
+            // same-height reorg changes the hash endpoint but not the height.
+            let params = CacheParams::revalidate(format!("block-tip-v2-{value}").into());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            Ok(AppState::assemble_response(
+                params,
+                Ok(Bytes::from(value)),
+                |headers| {
+                    headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+                },
+            ))
+        })
+        .await
+    }
+
+    pub async fn respond_block_raw(
+        &self,
+        headers: HeaderMap,
+        hash: BlockHash,
+        method: Method,
+    ) -> Result<Response, Error> {
+        let budget = self.raw_block_bodies.clone();
+        self.respond_exact_block(
+            headers,
+            hash,
+            RAW_SCHEMA,
+            None,
+            move |q, snapshot, params| {
+                let (bytes, length, permit) = if method == Method::HEAD {
+                    (Bytes::new(), Some(snapshot.anchor_raw_size(q)?), None)
+                } else {
+                    let Some(permit) = RawBodyPermit::try_acquire(&budget) else {
+                        return Ok(Error::overloaded("Raw block response capacity exhausted")
+                            .into_response());
+                    };
+                    let bytes = permit.bytes(Bytes::from(snapshot.anchor_raw(q)?));
+                    (bytes, None, Some(permit))
+                };
+                let mut response = AppState::assemble_response(params, Ok(bytes), |headers| {
+                    headers.insert(
+                        header::CONTENT_TYPE,
+                        HeaderValue::from_static("application/octet-stream"),
+                    );
+                    if let Some(length) = length {
+                        headers.insert(header::CONTENT_LENGTH, length.into());
+                    }
+                });
+                if let Some(permit) = permit {
+                    response.extensions_mut().insert(permit);
+                }
+                Ok(response)
+            },
+        )
+        .await
+    }
+
+    /// Exact former responder for worker-path comparisons; not in release builds.
+    #[cfg(test)]
+    pub async fn respond_block_timestamp_eager_for_bench(
+        &self,
+        headers: HeaderMap,
+        timestamp: Timestamp,
+    ) -> Result<Response, Error> {
+        self.run_block_response(move |q| {
+            let block = q.block_by_timestamp(timestamp)?;
+            let params =
+                CacheParams::revalidate(format!("block-timestamp-v2-{}", block.hash).into());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            block_json_response(params, &block)
+        })
+        .await
+    }
+
+    pub async fn respond_block_timestamp(
+        &self,
+        headers: HeaderMap,
+        timestamp: Timestamp,
+    ) -> Result<Response, Error> {
+        self.run_block_response(move |q| {
+            let block = q.resolve_block_by_timestamp(timestamp)?;
+            let params =
+                CacheParams::revalidate(format!("block-timestamp-v2-{}", block.hash()).into());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            block_json_response(params, &block.into_value())
+        })
+        .await
+    }
+
+    pub async fn respond_block_height(
+        &self,
+        headers: HeaderMap,
+        height: Height,
+    ) -> Result<Response, Error> {
+        // The owned hash is the entire representation: no second source read,
+        // retained snapshot or body cache is needed after resolution.
+        let respond = move |hash: BlockHash| {
+            let body = hash.to_string();
+            let params = CacheParams::revalidate(format!("block-height-v2-{body}").into());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            Ok(AppState::assemble_response(
+                params,
+                Ok(Bytes::from(body)),
+                |headers| {
+                    headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+                },
+            ))
+        };
+        if let Some(hash) = self.sync(|q| q.try_resolve_block_hash(height))? {
+            return Ok(respond(hash)?);
+        }
+        self.run_block_response(move |q| respond(q.resolve_block_hash(height)?))
+            .await
+    }
+
+    pub async fn respond_block(
+        &self,
+        headers: HeaderMap,
+        hash: BlockHash,
+    ) -> Result<Response, Error> {
+        self.respond_exact_block(
+            headers,
+            hash,
+            BASE_BLOCK_SCHEMA,
+            None,
+            |q, snapshot, params| {
+                let block = snapshot
+                    .build(q)?
+                    .pop()
+                    .ok_or(QueryError::Internal("Missing resolved block"))?;
+                block_json_response(params, &block)
+            },
+        )
+        .await
+    }
+
+    pub async fn respond_block_header(
+        &self,
+        headers: HeaderMap,
+        hash: BlockHash,
+    ) -> Result<Response, Error> {
+        self.respond_exact_block(headers, hash, HEADER_SCHEMA, None, |q, snapshot, params| {
+            let bytes = Bytes::from(snapshot.anchor_header_hex(q)?);
+            Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+                headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+            }))
+        })
+        .await
+    }
+
+    /// Shared exact-block selection and admission; the callback consumes a
+    /// stable snapshot and builds the response only after conditional checks.
+    async fn respond_exact_block(
+        &self,
+        headers: HeaderMap,
+        hash: BlockHash,
+        schema: &'static str,
+        tx_index: Option<BlockTxIndex>,
+        build: impl FnOnce(&Query, ResolvedBlocks, CacheParams) -> QueryResult<Response>
+        + Send
+        + 'static,
+    ) -> Result<Response, Error> {
+        if let Some(height) = block_height_hint(&headers, schema) {
+            if let Some(snapshot) = self.sync(|q| q.try_resolve_block_snapshot(&hash, height))? {
+                if let Some(index) = tx_index {
+                    self.sync(|q| snapshot.validate_tx_index(q, index))?;
+                }
+                let params = block_params(&snapshot, schema)?;
+                if params.matches_etag(&headers) {
+                    return Ok(ResponseExtended::new_not_modified(&params));
+                }
+            }
+        }
+
+        self.run_block_response(move |q| {
+            let snapshot = q.resolve_block_snapshot(&hash)?;
+            if let Some(index) = tx_index {
+                snapshot.validate_tx_index(q, index)?;
+            }
+            let params = block_params(&snapshot, schema)?;
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            build(q, snapshot, params)
+        })
+        .await
+    }
+
+    pub async fn respond_block_v1(
+        &self,
+        headers: HeaderMap,
+        hash: BlockHash,
+    ) -> Result<Response, Error> {
+        if let Some(height) = block_height_hint(&headers, V1_BLOCK_SCHEMA) {
+            if let Some(snapshot) = self.sync(|q| q.try_resolve_block_v1(&hash, height))? {
+                let params = block_v1_params(&snapshot)?;
+                if params.matches_etag(&headers) {
+                    return Ok(ResponseExtended::new_not_modified(&params));
+                }
+            }
+        }
+
+        self.run_block_response(move |q| {
+            let snapshot = q.resolve_block_v1(&hash)?;
+            let params = block_v1_params(&snapshot)?;
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            let block = snapshot
+                .build(q)?
+                .pop()
+                .ok_or(QueryError::Internal("Missing resolved block"))?;
+            block_json_response(params, &block)
+        })
+        .await
+    }
+
+    /// The job owns admission even if its request is cancelled. Callers must
+    /// resolve their publication snapshot inside `build`, never before queuing.
+    async fn run_block_response(
+        &self,
+        build: impl FnOnce(&Query) -> QueryResult<Response> + Send + 'static,
+    ) -> Result<Response, Error> {
+        Ok(self.run_admitted(build).await?)
+    }
+
+    pub async fn respond_blocks_v1(
+        &self,
+        headers: HeaderMap,
+        start_height: Option<Height>,
+    ) -> Result<Response, Error> {
+        if headers.contains_key(header::IF_NONE_MATCH) {
+            if let Some(snapshot) = self.sync(|q| q.try_resolve_blocks_v1(start_height, 15))? {
+                let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
+                if params.matches_etag(&headers) {
+                    return Ok(ResponseExtended::new_not_modified(&params));
+                }
+            }
+        }
+
+        // The optimistic snapshot has been dropped before admission.
+        self.run_block_response(move |q| {
+            let snapshot = q.resolve_blocks_v1(start_height, 15)?;
+            let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            block_json_response(params, &snapshot.build(q)?)
+        })
+        .await
+    }
+
+    pub async fn respond_blocks(
+        &self,
+        headers: HeaderMap,
+        start_height: Option<Height>,
+    ) -> Result<Response, Error> {
+        if headers.contains_key(header::IF_NONE_MATCH) {
+            if let Some(snapshot) = self.sync(|q| q.try_resolve_blocks(start_height, 10))? {
+                let params = recent_blocks_params(snapshot.anchor());
+                if params.matches_etag(&headers) {
+                    return Ok(ResponseExtended::new_not_modified(&params));
+                }
+            }
+        }
+
+        // Do not retain a publication guard while queued for admission. Re-resolve
+        // after admission so a concurrent update cannot attach an old tag to new rows.
+        self.run_block_response(move |q| {
+            let snapshot = q.resolve_blocks(start_height, 10)?;
+            let params = recent_blocks_params(snapshot.anchor());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+            block_json_response(params, &snapshot.build(q)?)
+        })
+        .await
+    }
+}
 
 pub trait BlockRoutes {
     fn add_block_routes(self) -> Self;
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/api/blocks.rs"]
+mod tests;
 
 impl BlockRoutes for ApiRouter<AppState> {
     fn add_block_routes(self) -> Self {
@@ -33,10 +435,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| q.block_resolved(block))
-                            .await)
+                        state.respond_block(headers, path.hash).await
                     },
                     |op| {
                         op.id("get_block")
@@ -49,7 +448,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
@@ -61,10 +460,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| q.block_resolved_v1(block))
-                            .await)
+                        state.respond_block_v1(headers, path.hash).await
                     },
                     |op| {
                         op.id("get_block_v1")
@@ -75,7 +471,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
@@ -87,12 +483,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_text(&headers, strategy, move |q| {
-                                q.block_header_hex_resolved(block)
-                            })
-                            .await)
+                        state.respond_block_header(headers, path.hash).await
                     },
                     |op| {
                         op.id("get_block_header")
@@ -103,7 +494,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
@@ -113,7 +504,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            _: Empty, State(state): State<AppState>| {
-                        state.respond_text(&headers, state.height_strategy(Version::ONE, path.height), move |q| q.block_hash_by_height(path.height).map(|h| h.to_string())).await
+                        state.respond_block_height(headers, path.height).await
                     },
                     |op| {
                         op.id("get_block_by_height")
@@ -126,7 +517,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
@@ -136,44 +527,31 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<TimestampParam>,
                            _: Empty, State(state): State<AppState>| {
-                        let version = Version::ONE;
-                        state.respond_json_adaptive(&headers, None, move |q, tip| {
-                            let resolved = q.resolve_block_by_timestamp(path.timestamp)?;
-                            let strategy = if resolved.is_final() {
-                                CacheStrategy::Immutable(version)
-                            } else {
-                                CacheStrategy::Tip(tip)
-                            };
-                            Ok((resolved.into_value(), strategy))
-                        }).await
+                        state.respond_block_timestamp(headers, path.timestamp).await
                     },
                     |op| {
                         op.id("get_block_by_timestamp")
                             .blocks_tag()
                             .summary("Block by timestamp")
-                            .description("Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
+                            .description("Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*")
                             .json_response::<BlockTimestamp>()
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
             .api_route(
                 "/api/block/{hash}/raw",
                 get_with(
-                    async |headers: HeaderMap,
+                    async |method: Method,
+                           headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_bytes(&headers, strategy, move |q| {
-                                q.block_raw_resolved(block)
-                            })
-                            .await)
+                        state.respond_block_raw(headers, path.hash, method).await
                     },
                     |op| {
                         op.id("get_block_raw")
@@ -187,7 +565,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .not_modified()
                             .bad_request()
                             .not_found()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )
@@ -199,13 +577,8 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) =
-                            state.block_status_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| {
-                                q.block_status_resolved(block)
-                            })
-                            .await)
+                        let status = state.run_admitted(move |q| q.block_status(&path.hash)).await?;
+                        Ok(state.respond_json_content_value(&headers, status))
                     },
                     |op| {
                         op.id("get_block_status")
@@ -226,7 +599,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/blocks/tip/height",
                 get_with(
                     async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                        state.respond_text(&headers, state.tip_strategy(), |q| Ok(q.height().to_string())).await
+                        state.respond_block_tip(headers, false).await
                     },
                     |op| {
                         op.id("get_block_tip_height")
@@ -243,7 +616,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/blocks/tip/hash",
                 get_with(
                     async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                        state.respond_text(&headers, state.tip_strategy(), |q| Ok(q.tip_blockhash().to_string())).await
+                        state.respond_block_tip(headers, true).await
                     },
                     |op| {
                         op.id("get_block_tip_hash")
@@ -264,13 +637,12 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_text(&headers, strategy, move |q| {
-                                q.block_txid_at_index_resolved(block, path.index)
-                                    .map(|txid| txid.to_string())
-                            })
-                            .await)
+                        state.respond_exact_block(headers, path.hash, "txid-v2", Some(path.index), move |q, snapshot, params| {
+                            let bytes = Bytes::from(snapshot.anchor_txid(q, path.index)?.to_string());
+                            Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+                                headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+                            }))
+                        }).await
                     },
                     |op| {
                         op.id("get_block_txid")
@@ -295,12 +667,9 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| {
-                                q.block_txids_resolved(block)
-                            })
-                            .await)
+                        state.respond_exact_block(headers, path.hash, "txids-v2", None, |q, snapshot, params| {
+                            block_json_response(params, &snapshot.anchor_txids(q)?)
+                        }).await
                     },
                     |op| {
                         op.id("get_block_txids")
@@ -326,16 +695,9 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| {
-                                q.block_txs_resolved(
-                                    block,
-                                    BlockTxIndex::default(),
-                                    BLOCK_TXS_PAGE_SIZE,
-                                )
-                            })
-                            .await)
+                        state.respond_exact_block(headers, path.hash, "txs-v2", Some(BlockTxIndex::default()), |q, snapshot, params| {
+                            block_json_response(params, &snapshot.anchor_txs(q, BlockTxIndex::default(), BLOCK_TXS_PAGE_SIZE)?)
+                        }).await
                     },
                     |op| {
                         op.id("get_block_txs")
@@ -362,12 +724,9 @@ impl BlockRoutes for ApiRouter<AppState> {
                            _: Empty,
                            State(state): State<AppState>|
                            -> Result<Response, Error> {
-                        let (block, strategy) = state.block_preflight(Version::ONE, &path.hash)?;
-                        Ok(state
-                            .respond_json(&headers, strategy, move |q| {
-                                q.block_txs_resolved(block, path.start_index, BLOCK_TXS_PAGE_SIZE)
-                            })
-                            .await)
+                        state.respond_exact_block(headers, path.hash, "txs-v2", Some(path.start_index), move |q, snapshot, params| {
+                            block_json_response(params, &snapshot.anchor_txs(q, path.start_index, BLOCK_TXS_PAGE_SIZE)?)
+                        }).await
                     },
                     |op| {
                         op.id("get_block_txs_from_index")
@@ -389,14 +748,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/blocks",
                 get_with(
                     async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                        state
-                            .respond_json_tip_cached(
-                                &headers,
-                                &state.block_caches.recent,
-                                (),
-                                move |q| q.blocks(None, 10),
-                            )
-                            .await
+                        state.respond_blocks(headers, None).await
                     },
                     |op| {
                         op.id("get_blocks")
@@ -405,7 +757,8 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description("Retrieve the last 10 blocks. Returns block metadata for each block.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks)*")
                             .json_response::<Vec<BlockInfo>>()
                             .not_modified()
-                            .server_error()
+                            .bad_request()
+                            .server_errors()
                     },
                 ),
             )
@@ -415,7 +768,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            _: Empty, State(state): State<AppState>| {
-                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), move |q| q.blocks(Some(path.height), 10)).await
+                        state.respond_blocks(headers, Some(path.height)).await
                     },
                     |op| {
                         op.id("get_blocks_from_height")
@@ -435,14 +788,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 "/api/v1/blocks",
                 get_with(
                     async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
-                        state
-                            .respond_json_tip_cached(
-                                &headers,
-                                &state.block_caches.recent_v1,
-                                (),
-                                move |q| q.blocks_v1(None, 15),
-                            )
-                            .await
+                        state.respond_blocks_v1(headers, None).await
                     },
                     |op| {
                         op.id("get_blocks_v1")
@@ -451,7 +797,8 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .description("Retrieve the last 15 blocks with extended data including pool identification and fee statistics.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-blocks-v1)*")
                             .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
-                            .server_error()
+                            .bad_request()
+                            .server_errors()
                     },
                 ),
             )
@@ -461,7 +808,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
                            _: Empty, State(state): State<AppState>| {
-                        state.respond_json(&headers, state.height_strategy(Version::ONE, path.height), move |q| q.blocks_v1(Some(path.height), 15)).await
+                        state.respond_blocks_v1(headers, Some(path.height)).await
                     },
                     |op| {
                         op.id("get_blocks_v1_from_height")
@@ -471,7 +818,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                             .json_response::<Vec<BlockInfoV1>>()
                             .not_modified()
                             .bad_request()
-                            .server_error()
+                            .server_errors()
                     },
                 ),
             )

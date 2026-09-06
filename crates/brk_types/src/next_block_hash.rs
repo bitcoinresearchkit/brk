@@ -4,7 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Content hash of the projected next block (block 0 of the mempool
-/// snapshot). Same value as the mempool ETag. Opaque token: pass back
+/// snapshot), including its statistics and complete transaction bodies.
+/// Opaque token, distinct from HTTP ETag formatting: pass back
 /// to `GET /api/v1/mempool/block-template/diff/{hash}` to fetch deltas.
 #[derive(
     Debug,

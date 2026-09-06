@@ -1,10 +1,10 @@
-use crate::{Format, ReadOnlyRawVec, impl_vec_wrapper};
+use crate::{Format, ReadOnlyRawVec};
 
 use super::ReadWriteRawVec;
 
-mod reader;
-mod strategy;
-mod value;
+pub mod reader;
+pub mod strategy;
+pub mod value;
 
 pub use reader::*;
 pub use strategy::*;
@@ -33,7 +33,7 @@ pub use value::*;
 /// - Data stays on the same architecture
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct BytesVec<I, T>(pub(crate) ReadWriteRawVec<I, T, BytesStrategy<T>>);
+pub struct BytesVec<I, T>(ReadWriteRawVec<I, T, BytesStrategy<T>>);
 
 impl<I, T> BytesVec<I, T>
 where
@@ -53,3 +53,5 @@ impl_vec_wrapper!(
     ReadOnlyRawVec<I, T, BytesStrategy<T>>,
     no_deref_mut
 );
+
+impl_mutable_raw_vec!(BytesVec, BytesVecValue, BytesStrategy, BytesVecReader<I, T>);

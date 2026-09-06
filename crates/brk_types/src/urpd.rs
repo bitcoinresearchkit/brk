@@ -2,6 +2,10 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+#[cfg(test)]
+#[path = "../benches/unit/urpd.rs"]
+mod bench;
+
 use crate::{
     Bitcoin, Cents, CentsSats, CentsSigned, Cohort, Date, Dollars, Sats, UrpdAggregation,
     UrpdBucket, UrpdRaw, UrpdWeight,
@@ -44,18 +48,7 @@ impl Urpd {
         raw: &UrpdRaw,
         aggregation: UrpdAggregation,
     ) -> Self {
-        let mut agg: FxHashMap<Cents, BucketAccum> =
-            FxHashMap::with_capacity_and_hasher(raw.map.len(), Default::default());
-        for (&price_cents, &sats) in &raw.map {
-            let price = Cents::from(price_cents);
-            let key = aggregation.bucket_floor(price);
-            let slot = agg.entry(key).or_default();
-            slot.supply += sats;
-            slot.realized_cap += CentsSats::from_price_sats(price, sats);
-        }
-
-        let mut sorted: Vec<_> = agg.into_iter().collect();
-        sorted.sort_unstable_by_key(|&(price, _)| price);
+        let sorted = sorted_buckets(raw, aggregation);
 
         let close = Dollars::from(close_cents);
         let total_supply: Sats = raw.map.values().copied().sum();
@@ -87,4 +80,36 @@ impl Urpd {
             buckets,
         }
     }
+}
+
+fn sorted_buckets(raw: &UrpdRaw, aggregation: UrpdAggregation) -> Vec<(Cents, BucketAccum)> {
+    // Raw prices are already unique and ordered by the source BTreeMap.
+    if aggregation == UrpdAggregation::Raw {
+        return raw
+            .map
+            .iter()
+            .map(|(&price, &supply)| {
+                let price = Cents::from(price);
+                (
+                    price,
+                    BucketAccum {
+                        supply,
+                        realized_cap: CentsSats::from_price_sats(price, supply),
+                    },
+                )
+            })
+            .collect();
+    }
+    let mut agg: FxHashMap<Cents, BucketAccum> =
+        FxHashMap::with_capacity_and_hasher(raw.map.len(), Default::default());
+    for (&price_cents, &sats) in &raw.map {
+        let price = Cents::from(price_cents);
+        let key = aggregation.bucket_floor(price);
+        let slot = agg.entry(key).or_default();
+        slot.supply += sats;
+        slot.realized_cap += CentsSats::from_price_sats(price, sats);
+    }
+    let mut sorted: Vec<_> = agg.into_iter().collect();
+    sorted.sort_unstable_by_key(|&(price, _)| price);
+    sorted
 }

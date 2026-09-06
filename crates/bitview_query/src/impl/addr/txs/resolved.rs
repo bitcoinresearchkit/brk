@@ -1,54 +1,62 @@
-use brk_types::{AddrBytes, BlockHash, OutputType, TypeIndex};
+use std::sync::Arc;
 
-use super::{ResolvedAddrChainTxs, combined::AddrTxsLimits};
-use crate::r#impl::addr::mempool::AddrMempoolTxsPagePreflight;
+use bitview_plugin::PluginReadGuard;
+use brk_types::{BlockHash, Transaction};
 
-/// A mixed address transaction page resolved before its body is loaded.
+use super::ResolvedAddrChainTxs;
+
+/// One address page with frozen mempool bodies and a guarded confirmed selection.
 pub struct ResolvedAddrTxs {
-    addr: AddrBytes,
-    mempool: AddrMempoolTxsPagePreflight,
-    chain_addr: Option<(OutputType, TypeIndex)>,
+    guard: PluginReadGuard,
+    mempool: Vec<Arc<Transaction>>,
     chain: Option<ResolvedAddrChainTxs>,
-    chain_tip: BlockHash,
-    limits: AddrTxsLimits,
 }
 
 impl ResolvedAddrTxs {
-    pub(super) fn new(
-        addr: AddrBytes,
-        mempool: AddrMempoolTxsPagePreflight,
-        chain_addr: Option<(OutputType, TypeIndex)>,
-        chain: Option<ResolvedAddrChainTxs>,
-        chain_tip: BlockHash,
-        limits: AddrTxsLimits,
-    ) -> Self {
-        Self {
-            addr,
-            mempool,
-            chain_addr,
-            chain,
-            chain_tip,
-            limits,
-        }
+    /// Latest relevant block for the captured confirmed page.
+    pub fn chain_anchor(&self) -> Option<BlockHash> {
+        self.chain
+            .as_ref()
+            .map(ResolvedAddrChainTxs::activity_anchor)
     }
 
-    pub(super) fn into_parts(
+    pub fn mempool_transactions(&self) -> &[Arc<Transaction>] {
+        &self.mempool
+    }
+}
+pub trait RImplAddrTxsResolvedResolvedAddrTxsInternal: Sized {
+    fn new(
+        guard: PluginReadGuard,
+        mempool: Vec<Arc<Transaction>>,
+        chain: Option<ResolvedAddrChainTxs>,
+    ) -> Self;
+    fn into_parts(
         self,
     ) -> (
-        AddrBytes,
-        AddrMempoolTxsPagePreflight,
-        Option<(OutputType, TypeIndex)>,
+        PluginReadGuard,
+        Vec<Arc<Transaction>>,
         Option<ResolvedAddrChainTxs>,
-        BlockHash,
-        AddrTxsLimits,
+    );
+}
+impl RImplAddrTxsResolvedResolvedAddrTxsInternal for ResolvedAddrTxs {
+    fn new(
+        guard: PluginReadGuard,
+        mempool: Vec<Arc<Transaction>>,
+        chain: Option<ResolvedAddrChainTxs>,
+    ) -> Self {
+        Self {
+            guard,
+            mempool,
+            chain,
+        }
+    }
+    fn into_parts(
+        self,
+    ) -> (
+        PluginReadGuard,
+        Vec<Arc<Transaction>>,
+        Option<ResolvedAddrChainTxs>,
     ) {
-        (
-            self.addr,
-            self.mempool,
-            self.chain_addr,
-            self.chain,
-            self.chain_tip,
-            self.limits,
-        )
+        (self.guard, self.mempool, self.chain)
     }
 }

@@ -9,7 +9,7 @@ pub struct ParsedMeta {
     pub id: u32,
     pub data_block_count: u64,
     pub key_range: KeyRange,
-    pub(super) highest_seqno: u64,
+    pub highest_seqno: u64,
     pub file_size: u64,
     pub item_count: u64,
     pub data_block_compression: CompressionType,

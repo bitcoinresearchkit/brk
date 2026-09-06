@@ -60,15 +60,12 @@ def brk_paths(brk_routes) -> set[str]:
 def brk_compat_paths(brk_paths) -> set[str]:
     """Brk paths that are part of the mempool.space compat surface.
 
-    Strips out brk-only namespaces (series, metrics, urpd, vecs, server, etc.)
+    Strips out brk-only namespaces (series, urpd, server, etc.)
     so we're left with paths that belong in the registry.
     """
     brk_only_prefixes = (
         "/api/series",
-        "/api/metric",
-        "/api/metrics",
         "/api/urpd",
-        "/api/vecs",
         "/api/server",
         "/api.json",
     )

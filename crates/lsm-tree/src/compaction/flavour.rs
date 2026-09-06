@@ -1,3 +1,5 @@
+use crate::LevelPolicy as _;
+
 // Copyright (c) 2024-present, fjall-rs
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
@@ -29,8 +31,8 @@ impl StandardCompaction {
     }
 
     fn consume_writer(self, worker: &Worker, dst_lvl: usize) -> Result<Vec<Table>> {
-        let pin_filter = worker.config.filter_block_pinning_policy.get(dst_lvl);
-        let pin_index = worker.config.index_block_pinning_policy.get(dst_lvl);
+        let pin_filter = worker.config.filter_block_pinning_policy.at_level(dst_lvl);
+        let pin_index = worker.config.index_block_pinning_policy.at_level(dst_lvl);
         let (table_base_folder, results) = self.table_writer.finish()?;
 
         results

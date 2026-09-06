@@ -95,7 +95,7 @@ pub enum Error {
     #[error("Wrong address type")]
     WrongAddrType,
 
-    #[error("Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater")]
+    #[error("Date is outside the supported index range")]
     UnindexableDate,
 
     #[error("Quick cache error")]
@@ -227,19 +227,8 @@ impl Error {
 }
 
 #[cfg(all(test, feature = "vecdb"))]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn direct_rawdb_lock_is_classified_as_a_lock_error() {
-        let error = Error::RawDB(vecdb::RawDBError::TryLock(
-            std::fs::TryLockError::WouldBlock,
-        ));
-
-        assert!(error.is_lock_error());
-        assert!(!error.is_data_error());
-    }
-}
+#[path = "../tests/unit/lib.rs"]
+mod tests;
 
 #[cfg(feature = "ureq")]
 fn is_ureq_error_permanent(e: &ureq::Error) -> bool {

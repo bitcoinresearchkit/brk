@@ -13,7 +13,7 @@ mod transient;
 /// Rounding precision for UTXO cost basis prices (5 significant digits in dollars).
 pub const COST_BASIS_PRICE_DIGITS: i32 = 5;
 
-pub use age_range_urpds::AgeRangeUrpds;
+pub use age_range_urpds::{AgeRangeUrpds, EncodedAgeRangeUrpds};
 pub use cohort::UTXOCohortState;
 pub use collection::UTXOStates;
 pub use fenwick::CostBasisFenwick;

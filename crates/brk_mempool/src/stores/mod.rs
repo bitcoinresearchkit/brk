@@ -3,11 +3,11 @@
 //! single `RwLock` so the cycle steps and read-side accessors share
 //! one lock-order discipline.
 
-mod addr_tracker;
-mod live_histograms;
-mod outpoint_spends;
-mod tx_graveyard;
-mod tx_store;
+pub mod addr_tracker;
+pub mod live_histograms;
+pub mod outpoint_spends;
+pub mod tx_graveyard;
+pub mod tx_store;
 
 pub use addr_tracker::AddrTracker;
 pub use live_histograms::LiveHistograms;

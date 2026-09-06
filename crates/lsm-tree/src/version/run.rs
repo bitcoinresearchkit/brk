@@ -34,7 +34,7 @@ impl<T: Ranged> Run<T> {
         &mut self.0
     }
 
-    pub(crate) fn into_inner(self) -> Vec<T> {
+    pub fn into_inner(self) -> Vec<T> {
         self.0
     }
 

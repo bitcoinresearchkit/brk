@@ -1,6 +1,6 @@
-mod halve;
-mod ident;
-mod negate;
+pub mod halve;
+pub mod ident;
+pub mod negate;
 
 pub use halve::Halve;
 pub use ident::Ident;

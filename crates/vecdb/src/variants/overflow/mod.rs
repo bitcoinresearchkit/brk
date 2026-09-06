@@ -1,8 +1,8 @@
-mod read_only;
-mod reader;
-mod reader_cursor;
-mod value;
-mod vec;
+pub mod read_only;
+pub mod reader;
+pub mod reader_cursor;
+pub mod value;
+pub mod vec;
 
 const DECODE_CHUNK_SIZE: usize = 1_024;
 

@@ -1,12 +1,12 @@
-mod deferred;
-mod pending;
-mod persisted;
-mod stores_checkpoint;
+pub mod deferred;
+pub mod pending;
+pub mod persisted;
+pub mod stores_checkpoint;
 
-pub(super) use deferred::DeferredStoresCommit;
-pub(super) use pending::PendingStoresCheckpoint;
-pub(super) use persisted::PersistedStoresCheckpoint;
-pub(super) use stores_checkpoint::StoresCheckpoint;
+pub use deferred::DeferredStoresCommit;
+pub use pending::PendingStoresCheckpoint;
+pub use persisted::PersistedStoresCheckpoint;
+pub use stores_checkpoint::StoresCheckpoint;
 
 #[cfg(test)]
 mod tests;

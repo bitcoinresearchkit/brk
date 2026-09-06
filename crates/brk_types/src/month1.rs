@@ -3,11 +3,12 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::{Date, Day1, Timestamp, Year1};
+use super::{Date, Day1, Timestamp};
 
 #[derive(
     Debug,
@@ -98,14 +99,25 @@ impl Div<usize> for Month1 {
 impl From<Day1> for Month1 {
     #[inline]
     fn from(value: Day1) -> Self {
-        Self::from(Date::from(value))
+        let date = Date::from(value);
+        Self::from(usize::from(date.year() - 2009) * 12 + usize::from(date.month()) - 1)
     }
 }
 
-impl From<Date> for Month1 {
+impl TryFrom<Date> for Month1 {
+    type Error = Error;
+
     #[inline]
-    fn from(value: Date) -> Self {
-        Self(u8::from(Year1::from(value)) as u16 * 12 + value.month() as u16 - 1)
+    fn try_from(value: Date) -> Result<Self> {
+        value.try_into_jiff()?;
+        let years = value
+            .year()
+            .checked_sub(2009)
+            .ok_or(Error::UnindexableDate)?;
+        let months = u32::from(years) * 12 + u32::from(value.month()) - 1;
+        u16::try_from(months)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 

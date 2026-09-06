@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use brk_error::{Error, Result};
 use brk_types::{Addr, Height, OutputType, Txid, TypeIndex};
 
@@ -13,11 +15,21 @@ impl Query {
         addr: &Addr,
         before_txid: Option<&Txid>,
     ) -> Result<Height> {
-        let (output_type, type_index) = super::resolve::resolve_addr(self, addr)?;
+        let _guard = self.read_plugin(self.indexer())?;
+        let (output_type, type_index) = self.resolve_addr(addr)?;
         self.addr_last_activity_height_for(output_type, type_index, before_txid)
     }
-
-    pub(super) fn addr_last_activity_height_for(
+}
+pub trait RImplAddrActivityQueryInternal: Sized {
+    fn addr_last_activity_height_for(
+        &self,
+        output_type: OutputType,
+        type_index: TypeIndex,
+        before_txid: Option<&Txid>,
+    ) -> Result<Height>;
+}
+impl RImplAddrActivityQueryInternal for Query {
+    fn addr_last_activity_height_for(
         &self,
         output_type: OutputType,
         type_index: TypeIndex,
@@ -27,7 +39,7 @@ impl Query {
         let tx_index_len = self.safe_lengths().tx_index;
         let last_tx_index = match before_txid {
             Some(txid) => {
-                let before_tx_index = super::super::tx::resolve_tx_index(self, txid)?;
+                let before_tx_index = self.resolve_tx_index(txid)?;
                 stores
                     .addr_tx_indexes_before(output_type, type_index, before_tx_index)?
                     .rev()
@@ -40,6 +52,6 @@ impl Query {
                 .find(|tx_index| *tx_index < tx_index_len)
                 .ok_or(Error::UnknownAddr)?,
         };
-        super::super::tx::confirmed_status_height(self, last_tx_index)
+        self.confirmed_status_height(last_tx_index)
     }
 }

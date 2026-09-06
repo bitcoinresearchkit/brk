@@ -1,5 +1,5 @@
-mod addr;
-mod script;
+pub mod addr;
+pub mod script;
 
 pub use addr::AddrReaders;
 pub use script::ScriptReaders;

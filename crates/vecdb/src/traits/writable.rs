@@ -7,7 +7,7 @@ use crate::{AnyStoredVec, Error, Stamp, VecIndex, VecValue, Version};
 
 /// Maximum in-memory cache size before forcing a flush (1 GiB).
 /// Prevents unbounded memory growth when pushing many values without flushing.
-pub(crate) const MAX_CACHE_SIZE: usize = 1024 * 1024 * 1024;
+pub const MAX_CACHE_SIZE: usize = 1024 * 1024 * 1024;
 
 /// Typed interface for stored vectors (push, truncate, rollback).
 ///

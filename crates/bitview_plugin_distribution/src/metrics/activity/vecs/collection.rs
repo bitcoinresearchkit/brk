@@ -36,7 +36,7 @@ pub struct ActivityVecs<M: StorageMode = Rw> {
     /// output value; USD representations value it at the spending block's spot
     /// price.
     pub transfer_volume: Box<CumulativeValueByCohort<M>>,
-    /// Coin days destroyed by outputs from a UTXO cohort: each spent
+    /// Coin days destroyed (CDD) by outputs from a UTXO cohort: each spent
     /// output's BTC value multiplied by its age in days.
     pub coindays_destroyed: CoindaysDestroyedByCohort<M>,
     #[traversable(wrap = "transfer_volume", rename = "in_profit")]

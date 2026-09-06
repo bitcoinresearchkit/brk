@@ -24,6 +24,9 @@ impl AgeRangeUrpds {
         let sections =
             AgeRange::par_try_from_fn(|id| UrpdRaw::serialize_iter(self.get(id).iter().copied()))?;
         let capacity = HEADER_LEN + sections.iter().map(Vec::len).sum::<usize>();
+        if capacity > UrpdRaw::MAX_ENCODED_BYTES {
+            return Err(Self::invalid("file exceeds snapshot limit"));
+        }
         let mut buffer = Self::new_buffer(capacity);
         for (index, id) in AgeRangeId::ALL.iter().copied().enumerate() {
             buffer.extend_from_slice(id.select(&sections));
@@ -68,48 +71,5 @@ impl UTXOStates {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-
-    use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregateId};
-    use brk_types::{CentsCompact, Date, Sats};
-    use vecdb::ColumnId;
-
-    use super::AgeRangeUrpds;
-
-    #[test]
-    fn packed_file_reads_all_or_one_age_range() {
-        let root = tempfile::tempdir().unwrap();
-        let date = Date::new(2026, 8, 23);
-        let expected = AgeRangeUrpds {
-            entries: AgeRange::from_fn(|id| {
-                vec![(
-                    CentsCompact::new((id.index() as u32 + 1) * 100),
-                    Sats::from(id.index() as u64 + 1),
-                )]
-            }),
-        };
-        expected.write(root.path(), date).unwrap();
-
-        let actual = AgeRangeUrpds::read(root.path(), date).unwrap();
-        for id in AgeRangeId::ALL.iter().copied() {
-            assert_eq!(actual.get(id), expected.get(id));
-        }
-
-        let id = AgeRangeId::From2YTo3Y;
-        let one = AgeRangeUrpds::read_one(root.path(), id, date).unwrap();
-        assert_eq!(
-            one.map,
-            expected.get(id).iter().copied().collect::<BTreeMap<_, _>>()
-        );
-
-        for id in UTXOAggregateId::ALL.iter().copied() {
-            assert_eq!(
-                AgeRangeUrpds::read_aggregate(root.path(), id, date)
-                    .unwrap()
-                    .map,
-                expected.aggregate(id).map
-            );
-        }
-    }
-}
+#[path = "../../../../tests/unit/state/utxo/age_range_urpds/write.rs"]
+mod tests;

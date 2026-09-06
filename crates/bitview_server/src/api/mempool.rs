@@ -1,20 +1,22 @@
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
+    body::Bytes,
     extract::{Path, State},
     http::HeaderMap,
     response::Response,
 };
-use bitview_query::BlockTemplateDiffPreflight;
 use brk_types::{
     BlockTemplate, BlockTemplateDiff, Dollars, MempoolInfo, MempoolRecentTx, NextBlockHash,
     ReplacementNode, Txid, Version,
 };
+use serde_json::to_vec;
 
+use super::mempool_txids;
 use crate::{
-    AppState, CacheStrategy,
+    AppState, CacheParams, CacheStrategy, CdnCacheMode,
     api::oracle::serve_live_price,
-    error::RouteResult,
-    extended::TransformResponseExtended,
+    error::Result,
+    extended::{HeaderMapExtended, TransformResponseExtended},
     params::{Empty, NextBlockHashParam},
 };
 
@@ -46,7 +48,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/mempool/hash",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
+                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
                     let (hash, strategy) = state.mempool_hash_preflight()?;
                     Ok(state.respond_json_value(&headers, strategy, hash))
                 },
@@ -54,7 +56,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                     op.id("get_mempool_hash")
                         .mempool_tag()
                         .summary("Mempool content hash")
-                        .description("Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.")
+                        .description("Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.")
                         .json_response::<NextBlockHash>()
                         .not_modified()
                         .server_error()
@@ -64,14 +66,8 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/mempool/txids",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let strategy = state.mempool_txids_strategy()?;
-                    Ok(state
-                        .respond_json_adaptive(&headers, Some(strategy), |q, _| {
-                            let (txids, hash) = q.mempool_txids_with_hash()?;
-                            Ok((txids, CacheStrategy::LiveHash(hash)))
-                        })
-                        .await)
+                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    mempool_txids::serve(state, headers).await
                 },
                 |op| {
                     op.id("get_mempool_txids")
@@ -149,13 +145,17 @@ impl MempoolRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mempool/block-template",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> RouteResult<Response> {
-                    let cached = state.block_template_preflight()?;
-                    Ok(state
-                        .respond_json_cached(&headers, Version::ONE, cached, |q| {
-                            q.block_template_json()
-                        })
-                        .await)
+                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                    let source = state.block_template_preflight()?;
+                    let params = CacheParams::resolve(&CacheStrategy::Live(
+                        format!("template-v2-{}", source.hash()?).into(),
+                    ), CdnCacheMode::Live);
+                    Ok(AppState::respond_with_future(&headers, params, async {
+                        let bytes = state.run_admitted(move |_| {
+                            Ok(Bytes::from(to_vec(&source.build()?)?))
+                        }).await?;
+                        Ok((bytes, HeaderMap::insert_content_type_application_json))
+                    }).await)
                 },
                 |op| {
                     op.id("get_block_template")
@@ -175,21 +175,17 @@ impl MempoolRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(path): Path<NextBlockHashParam>,
                        _: Empty,
-                       State(state): State<AppState>| -> RouteResult<Response> {
-                    match state.block_template_diff_preflight(path.hash)? {
-                        BlockTemplateDiffPreflight::Cached(bytes, binding) => Ok(state
-                            .respond_json_cached_value(
-                                &headers,
-                                Version::ONE,
-                                bytes,
-                                binding,
-                            )),
-                        BlockTemplateDiffPreflight::Resolved(resolved) => Ok(state
-                            .respond_json_cached(&headers, Version::ONE, None, move |q| {
-                                q.block_template_diff_json_resolved(resolved)
-                            })
-                            .await),
-                    }
+                       State(state): State<AppState>| -> Result<Response> {
+                    let resolved = state.block_template_diff_preflight(path.hash)?;
+                    let params = CacheParams::resolve(&CacheStrategy::Live(
+                        format!("template-diff-v2-{}-{}", resolved.since(), resolved.source().hash()?).into(),
+                    ), CdnCacheMode::Live);
+                    Ok(AppState::respond_with_future(&headers, params, async {
+                        let bytes = state.run_admitted(move |_| {
+                            Ok(Bytes::from(to_vec(&resolved.build()?)?))
+                        }).await?;
+                        Ok((bytes, HeaderMap::insert_content_type_application_json))
+                    }).await)
                 },
                 |op| {
                     op.id("get_block_template_diff")

@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::{borrow::Cow, cmp::Reverse};
 
 use brk_error::{Error, OptionData, Result};
@@ -8,6 +10,7 @@ use brk_types::{
 };
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
+use super::start_height;
 use crate::Query;
 
 /// 7-day lookback for share computation.
@@ -33,6 +36,7 @@ impl Query {
     /// timestamp-based lookback vecs (`_24h`, `_3d`, ...) rather than
     /// block-count math; `TimePeriod::All` walks from genesis.
     pub fn mining_pools(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
+        let _guard = self.read_plugin(self.indexer())?;
         let plugins = self.plugins();
         let current_height = self.height();
 
@@ -46,7 +50,7 @@ impl Query {
             });
         }
 
-        let start = super::start_height(self, time_period)?.to_usize();
+        let start = start_height(self, time_period)?.to_usize();
         let lookback = &plugins.blocks.lookback;
 
         let pools = pools();
@@ -98,11 +102,11 @@ impl Query {
             })
             .collect();
 
-        let last_estimated_hashrate = super::hashrate_at(self, current_height)?;
+        let last_estimated_hashrate = self.hashrate_at(current_height)?;
         let last_estimated_hashrate3d =
-            super::hashrate_at(self, lookback._3d.collect_one(current_height).data()?)?;
+            self.hashrate_at(lookback._3d.collect_one(current_height).data()?)?;
         let last_estimated_hashrate1w =
-            super::hashrate_at(self, lookback._1w.collect_one(current_height).data()?)?;
+            self.hashrate_at(lookback._1w.collect_one(current_height).data()?)?;
 
         Ok(PoolsSummary {
             pools: pool_stats,
@@ -126,6 +130,7 @@ impl Query {
     /// major pool's reward vec this errors rather than silently reporting
     /// `None`.
     pub fn pool_detail(&self, slug: PoolSlug) -> Result<PoolDetail> {
+        let _guard = self.read_plugin(self.indexer())?;
         let plugins = self.plugins();
         let current_height = self.height();
         let end = current_height.to_usize();
@@ -171,8 +176,14 @@ impl Query {
         let total_1w = total_all.saturating_sub(count_before_1w);
 
         let network_blocks_all = (end + 1) as u64;
-        let network_blocks_24h = (end - start_24h + 1) as u64;
-        let network_blocks_1w = (end - start_1w + 1) as u64;
+        let network_blocks_24h =
+            end.checked_sub(start_24h)
+                .ok_or(Error::Internal("Pool lookback exceeds published tip"))? as u64
+                + 1;
+        let network_blocks_1w =
+            end.checked_sub(start_1w)
+                .ok_or(Error::Internal("Pool lookback exceeds published tip"))? as u64
+                + 1;
 
         let share_all = if network_blocks_all > 0 {
             total_all as f64 / network_blocks_all as f64
@@ -190,7 +201,7 @@ impl Query {
             0.0
         };
 
-        let network_hr = super::hashrate_at(self, current_height)?;
+        let network_hr = self.hashrate_at(current_height)?;
         let estimated_hashrate = (share_24h * network_hr as f64) as u128;
 
         let total_reward = if let Some(major) = plugins.pools.major.get(&slug) {
@@ -230,6 +241,7 @@ impl Query {
     /// where the share is the pool's last-7-days block count divided by the
     /// network's last-7-days block count.
     pub fn pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
+        let _guard = self.read_plugin(self.indexer())?;
         let pool_name = pools().get(slug).name;
         let shared = self.hashrate_shared_data(0)?;
         let pool_cum = self.pool_daily_cumulative(slug, shared.start_day, shared.end_day)?;
@@ -251,8 +263,9 @@ impl Query {
         &self,
         time_period: Option<TimePeriod>,
     ) -> Result<Vec<PoolHashrateEntry>> {
+        let _guard = self.read_plugin(self.indexer())?;
         let start_height = match time_period {
-            Some(tp) => super::start_height(self, tp)?.to_usize(),
+            Some(tp) => start_height(self, tp)?.to_usize(),
             None => 0,
         };
 
@@ -309,6 +322,12 @@ impl Query {
             .day1
             .first_height
             .collect_range_at(start_day, end_day);
+        let len = end_day
+            .checked_sub(start_day)
+            .ok_or(Error::Internal("Reversed pool hashrate window"))?;
+        if daily_hashrate.len() != len || first_heights.len() != len {
+            return Err(Error::Internal("Incomplete pool hashrate window"));
+        }
 
         Ok(HashrateSharedData {
             start_day,
@@ -332,7 +351,7 @@ impl Query {
         end_day: usize,
     ) -> Result<Vec<Option<StoredU64>>> {
         let plugins = self.plugins();
-        plugins
+        let values: Vec<Option<StoredU64>> = plugins
             .pools
             .major
             .get(&slug)
@@ -355,7 +374,11 @@ impl Query {
                 Error::Internal(
                     "pool slug present in static list but missing from major/minor maps",
                 )
-            })
+            })?;
+        if end_day.checked_sub(start_day) != Some(values.len()) {
+            return Err(Error::Internal("Incomplete pool cumulative window"));
+        }
+        Ok(values)
     }
 
     /// Per-pool hashrate-share entries from pre-loaded daily cumulative blocks
@@ -367,11 +390,8 @@ impl Query {
     ///   avg_hashrate = daily_hashrate[i] * share
     /// Skips samples where either cumulative value is `None`, where
     /// `pool_blocks == 0`, where `total_blocks == 0`, or where the network
-    /// hashrate for that day is unavailable. The iteration is bounded by
-    /// the shortest of `pool_cum`, `shared.first_heights`, and
-    /// `shared.daily_hashrate` so per-vec stamp-lag truncation from
-    /// `collect_range_at` degrades the chart's tail rather than panicking
-    /// on out-of-bounds indexing. `LOOKBACK_DAYS` (rolling window) and
+    /// hashrate for that day is unavailable. Source reads require complete
+    /// matching windows before this computation. `LOOKBACK_DAYS` (rolling window) and
     /// `sample_days` (point spacing) are independent.
     fn compute_hashrate_entries(
         shared: &HashrateSharedData,

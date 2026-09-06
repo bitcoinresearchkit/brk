@@ -1,16 +1,18 @@
+use crate::internals::*;
+
 use parking_lot::Mutex;
 
 use crate::region_metadata::MAX_RESERVED_SIZE;
-use crate::{Error, PAGE_SIZE, Region, Result};
+use crate::{Error, PAGE_SIZE, Region, RegionInner, Result};
 
 #[derive(Debug)]
-pub(crate) struct RegionGroupInner {
+pub struct RegionGroupInner {
     regions: Box<[Region]>,
     relocation_lock: Mutex<()>,
 }
 
 impl RegionGroupInner {
-    pub(crate) fn new(regions: &[Region]) -> Result<Self> {
+    pub fn new(regions: &[Region]) -> Result<Self> {
         let group = Self {
             regions: regions.into(),
             relocation_lock: Mutex::new(()),
@@ -19,7 +21,7 @@ impl RegionGroupInner {
         Ok(group)
     }
 
-    pub(crate) fn matches(&self, regions: &[Region]) -> bool {
+    pub fn matches(&self, regions: &[Region]) -> bool {
         self.regions
             .iter()
             .map(Region::index)
@@ -38,7 +40,7 @@ impl RegionGroupInner {
         self.relocate(&reservations)
     }
 
-    pub(crate) fn reserve(&self, region: &Region, capacity: usize) -> Result<()> {
+    pub fn reserve(&self, region: &Region, capacity: usize) -> Result<()> {
         let _guard = self.relocation_lock.lock();
         let current = region.meta().reserved();
         if capacity <= current {
@@ -142,7 +144,7 @@ impl RegionGroupInner {
 
         let mut offset = 0usize;
         for (region, &reserved) in self.regions.iter().zip(reservations) {
-            let mut meta = region.meta_mut();
+            let mut meta = RegionInner::from_region(region).meta_mut();
             meta.set_start(target + offset);
             meta.set_reserved(reserved);
             drop(meta);
@@ -156,7 +158,9 @@ impl RegionGroupInner {
             if len > 0 {
                 region.mark_dirty(0, len);
             }
-            region.meta_mut().write_if_dirty(region.index(), &regions);
+            RegionInner::from_region(region)
+                .meta_mut()
+                .write_if_dirty(region.index(), &regions);
         }
         Ok(())
     }

@@ -1,7 +1,7 @@
 use crate::{Bytes, Error, SIZE_OF_U64, Stamp};
 
 /// Position-tracking reader for change-file payloads.
-pub(crate) struct ChangeCursor<'a> {
+pub struct ChangeCursor<'a> {
     bytes: &'a [u8],
     pos: usize,
 }

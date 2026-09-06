@@ -4,11 +4,22 @@
 
 use byteview::{Builder, ByteView};
 
-/// An immutable byte slice that can be cloned without additional heap allocation
-///
-/// There is no guarantee of any sort of alignment for zero-copy (de)serialization.
-#[derive(Debug, Default, Clone, Eq, Hash, Ord)]
-pub struct Slice(pub(super) ByteView);
+use super::Slice;
+
+pub trait SliceExt: Sized {
+    fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self;
+    fn fused(left: &[u8], right: &[u8]) -> Self;
+}
+
+impl SliceExt for Slice {
+    fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self {
+        Self(self.0.slice(range))
+    }
+
+    fn fused(left: &[u8], right: &[u8]) -> Self {
+        Self(ByteView::fused(left, right))
+    }
+}
 
 impl Slice {
     /// Construct a [`Slice`] from a byte slice.
@@ -33,14 +44,6 @@ impl Slice {
     #[must_use]
     pub unsafe fn builder_unzeroed(len: usize) -> Builder {
         unsafe { ByteView::builder_unzeroed(len) }
-    }
-
-    pub(crate) fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self {
-        Self(self.0.slice(range))
-    }
-
-    pub(crate) fn fused(left: &[u8], right: &[u8]) -> Self {
-        Self(ByteView::fused(left, right))
     }
 
     #[doc(hidden)]

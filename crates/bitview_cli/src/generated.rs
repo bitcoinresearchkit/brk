@@ -3,7 +3,7 @@
 use crate::{command::Command, parameter::Parameter, request_body::RequestBody};
 
 #[rustfmt::skip]
-pub(crate) static COMMANDS: &[Command] = &[
+pub static COMMANDS: &[Command] = &[
     Command {
         name: "get-address",
         method: "GET",
@@ -140,7 +140,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/v1/mining/blocks/timestamp/{timestamp}",
         summary: "Block by timestamp",
-        description: "Find the block closest to a given UNIX timestamp.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*",
+        description: "Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*",
         path_parameters: &[
             Parameter { api_name: "timestamp", name: "timestamp", required: true, value_name: "Timestamp", repeatable: false, description: None },
         ],
@@ -460,7 +460,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/server/disk",
         summary: "Disk usage",
-        description: "Returns the disk space used by BRK and Bitcoin data.",
+        description: "Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -509,7 +509,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/health",
         summary: "Health check",
-        description: "Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.",
+        description: "Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -521,7 +521,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/v1/historical-price",
         summary: "Historical price",
-        description: "Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*",
+        description: "Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -582,7 +582,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/mempool/hash",
         summary: "Mempool content hash",
-        description: "Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.",
+        description: "Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -643,7 +643,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/oracle/histogram/outputs/live",
         summary: "Live output value histogram",
-        description: "Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.",
+        description: "Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -668,7 +668,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/oracle/histogram/payments/live",
         summary: "Live payment output histogram",
-        description: "Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.",
+        description: "Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -705,7 +705,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/v1/mining/pool/{slug}/blocks",
         summary: "Mining pool blocks",
-        description: "Get the 10 most recent blocks mined by a specific pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*",
+        description: "Get up to 100 recent blocks mined by a specific pool.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*",
         path_parameters: &[
             Parameter { api_name: "slug", name: "slug", required: true, value_name: "PoolSlug", repeatable: false, description: None },
         ],
@@ -718,7 +718,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/v1/mining/pool/{slug}/blocks/{height}",
         summary: "Mining pool blocks from height",
-        description: "Get 10 blocks mined by a specific pool before (and including) the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*",
+        description: "Get up to 100 blocks mined by a specific pool before (and including) the given height.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*",
         path_parameters: &[
             Parameter { api_name: "slug", name: "slug", required: true, value_name: "PoolSlug", repeatable: false, description: None },
             Parameter { api_name: "height", name: "height", required: true, value_name: "Height", repeatable: false, description: None },
@@ -922,7 +922,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/series/{series}",
         summary: "Get series info",
-        description: "Returns the optional description, supported indexes, and value type for the specified series.",
+        description: "Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.",
         path_parameters: &[
             Parameter { api_name: "series", name: "series", required: true, value_name: "SeriesName", repeatable: false, description: None },
         ],
@@ -975,7 +975,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/series/{series}/{index}/version",
         summary: "Get series version",
-        description: "Returns the current version of a series. Changes when the series data is updated.",
+        description: "Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.",
         path_parameters: &[
             Parameter { api_name: "series", name: "series", required: true, value_name: "SeriesName", repeatable: false, description: Some("Series name") },
             Parameter { api_name: "index", name: "index", required: true, value_name: "Index", repeatable: false, description: Some("Aggregation index") },
@@ -989,7 +989,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/server/sync",
         summary: "Sync status",
-        description: "Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.",
+        description: "Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -1228,7 +1228,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "POST",
         path: "/api/tx",
         summary: "Broadcast transaction",
-        description: "Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*",
+        description: "Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.\n\n*[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*",
         path_parameters: &[
         ],
         query_parameters: &[
@@ -1240,7 +1240,7 @@ pub(crate) static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/series/search",
         summary: "Search series",
-        description: "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.",
+        description: "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.",
         path_parameters: &[
         ],
         query_parameters: &[

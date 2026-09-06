@@ -1,27 +1,29 @@
-mod block_stats;
-mod builder;
-mod cluster;
-mod cpfp;
-mod fees;
-mod partition;
-mod rebuilder;
-mod snap_tx;
-mod tx_index;
+pub mod block_stats;
+pub mod builder;
+pub mod cluster;
+pub mod cpfp;
+pub mod fees;
+pub mod partition;
+pub mod rebuilder;
+pub mod snap_tx;
+pub mod tx_index;
+
+use std::{hash::Hasher, sync::Arc};
 
 pub use block_stats::BlockStats;
-pub use cluster::Cluster;
-pub use rebuilder::Rebuilder;
-pub use snap_tx::SnapTx;
-pub use tx_index::TxIndex;
-
+use brk_error::{Error as QueryError, Result};
+use brk_types::{
+    FeeRate, MempoolBlock, NextBlockHash, RecommendedFees, Transaction, Txid, TxidPrefix,
+};
 use builder::PrefixIndex;
+pub use cluster::Cluster;
 use fees::Fees;
 use partition::Partitioner;
-
-use std::hash::{Hash, Hasher};
-
-use brk_types::{FeeRate, NextBlockHash, RecommendedFees, Txid, TxidPrefix};
+pub use rebuilder::Rebuilder;
 use rustc_hash::FxHasher;
+use serde_json::to_vec;
+pub use snap_tx::SnapTx;
+pub use tx_index::TxIndex;
 
 #[derive(Default)]
 pub struct Snapshot {
@@ -35,10 +37,12 @@ pub struct Snapshot {
     pub block_stats: Vec<BlockStats>,
     pub fees: RecommendedFees,
     min_fee: FeeRate,
-    /// Content hash of the projected next block. Same value as the
-    /// mempool `ETag`.
+    /// Content identity of the published template statistics and complete bodies.
     pub next_block_hash: NextBlockHash,
     prefix_to_idx: PrefixIndex,
+    template_transactions: Arc<[Arc<Transaction>]>,
+    content_revision: u64,
+    template_missing: bool,
 }
 
 impl Snapshot {
@@ -52,29 +56,37 @@ impl Snapshot {
     ) -> Self {
         let block_stats = BlockStats::for_blocks(&blocks, &txs);
         let fees = Fees::compute(&block_stats, min_fee);
-        let next_block_hash = Self::hash_next_block(&blocks, &txs);
         Self {
             txs,
             blocks,
             block_stats,
             fees,
             min_fee,
-            next_block_hash,
+            next_block_hash: NextBlockHash::ZERO,
             prefix_to_idx,
+            template_transactions: Arc::from([]),
+            content_revision: 0,
+            template_missing: false,
         }
     }
 
-    /// Content tag over block 0 in template order. Hashes txids, not
-    /// `TxIndex` slots, because slot assignment is per-cycle.
-    fn hash_next_block(blocks: &[Vec<TxIndex>], txs: &[SnapTx]) -> NextBlockHash {
-        let Some(block) = blocks.first() else {
-            return NextBlockHash::ZERO;
-        };
+    /// Freeze selected bodies before publication. Hash the complete public
+    /// content, not only txids: prevout fills also change fee/sigop fields.
+    fn set_template(&mut self, bodies: Vec<Arc<Transaction>>, revision: u64, missing: bool) {
+        let stats = self
+            .block_stats
+            .first()
+            .map(MempoolBlock::from)
+            .unwrap_or_default();
+        let borrowed: Vec<&Transaction> = bodies.iter().map(Arc::as_ref).collect();
+        let bytes = to_vec(&(stats, borrowed)).expect("template fields serialize");
         let mut hasher = FxHasher::default();
-        for idx in block {
-            txs[idx.as_usize()].txid.hash(&mut hasher);
-        }
-        NextBlockHash::new(hasher.finish())
+        hasher.write(b"template-v2");
+        hasher.write(&bytes);
+        self.next_block_hash = NextBlockHash::new(hasher.finish());
+        self.template_transactions = bodies.into();
+        self.content_revision = revision;
+        self.template_missing = missing;
     }
 
     pub fn tx(&self, idx: TxIndex) -> Option<&SnapTx> {
@@ -107,140 +119,30 @@ impl Snapshot {
         let idx = self.idx_of_txid(txid)?;
         Some(self.txs[idx.as_usize()].chunk_rate)
     }
-
-    /// Test-only: stitch a snapshot from `(prefix, chunk_rate)` pairs
-    /// without running the full builder.
-    #[cfg(test)]
-    pub(crate) fn for_test_with_chunk_rates(entries: &[(TxidPrefix, FeeRate, Txid)]) -> Self {
-        use brk_types::{Sats, VSize, Weight};
-        use smallvec::SmallVec;
-
-        let mut prefix_to_idx = PrefixIndex::default();
-        let mut txs = Vec::with_capacity(entries.len());
-        for (i, (prefix, rate, txid)) in entries.iter().enumerate() {
-            prefix_to_idx.insert(*prefix, TxIndex::from(i));
-            txs.push(SnapTx {
-                txid: *txid,
-                fee: Sats::ZERO,
-                vsize: VSize::from(0u64),
-                weight: Weight::from(0u64),
-                size: 0,
-                chunk_rate: *rate,
-                parents: SmallVec::new(),
-                children: SmallVec::new(),
-            });
-        }
-        Self {
-            txs,
-            blocks: vec![],
-            block_stats: vec![],
-            fees: RecommendedFees::default(),
-            min_fee: FeeRate::default(),
-            next_block_hash: NextBlockHash::ZERO,
-            prefix_to_idx,
-        }
-    }
 }
 
 #[cfg(test)]
-mod tests {
-    use bitcoin::hashes::Hash;
-    use brk_types::{Sats, VSize, Weight};
-    use smallvec::SmallVec;
+#[path = "../../tests/unit/snapshot.rs"]
+mod tests;
+pub trait SnapshotSnapshotInternal: Sized {
+    fn template_transactions(&self) -> &Arc<[Arc<Transaction>]>;
+    fn content_revision(&self) -> u64;
+    fn ensure_projection(&self) -> Result<()>;
+}
+impl SnapshotSnapshotInternal for Snapshot {
+    fn template_transactions(&self) -> &Arc<[Arc<Transaction>]> {
+        &self.template_transactions
+    }
 
-    use super::*;
-
-    fn snap_tx(seed: u8) -> SnapTx {
-        let mut bytes = [0u8; 32];
-        bytes[0] = seed;
-        SnapTx {
-            txid: Txid::from(bitcoin::Txid::from_byte_array(bytes)),
-            fee: Sats::from(1_234u64),
-            vsize: VSize::from(100u64),
-            weight: Weight::from(400u64),
-            size: 100,
-            chunk_rate: FeeRate::from((Sats::from(1_234u64), VSize::from(100u64))),
-            parents: SmallVec::new(),
-            children: SmallVec::new(),
+    fn content_revision(&self) -> u64 {
+        self.content_revision
+    }
+    /// A default snapshot is not an observed empty mempool. A real publication
+    /// always contains block zero, even when Core selected no transactions.
+    fn ensure_projection(&self) -> Result<()> {
+        if self.blocks.is_empty() || self.template_missing {
+            return Err(QueryError::StateUpdating);
         }
-    }
-
-    #[test]
-    fn next_block_hash_is_deterministic_across_runs() {
-        let txs = vec![snap_tx(1), snap_tx(2), snap_tx(3)];
-        let blocks = vec![vec![
-            TxIndex::from(0usize),
-            TxIndex::from(1usize),
-            TxIndex::from(2usize),
-        ]];
-        let h1 = Snapshot::hash_next_block(&blocks, &txs);
-        let h2 = Snapshot::hash_next_block(&blocks, &txs);
-        assert_eq!(h1, h2);
-    }
-
-    #[test]
-    fn next_block_hash_changes_with_block0_membership() {
-        let txs = vec![snap_tx(1), snap_tx(2), snap_tx(3)];
-        let two_member = vec![vec![TxIndex::from(0usize), TxIndex::from(1usize)]];
-        let three_member = vec![vec![
-            TxIndex::from(0usize),
-            TxIndex::from(1usize),
-            TxIndex::from(2usize),
-        ]];
-        assert_ne!(
-            Snapshot::hash_next_block(&two_member, &txs),
-            Snapshot::hash_next_block(&three_member, &txs),
-        );
-    }
-
-    #[test]
-    fn next_block_hash_changes_with_block0_order() {
-        // hash_next_block hashes txids in template order: reordering
-        // block 0 must produce a different hash.
-        let txs = vec![snap_tx(1), snap_tx(2), snap_tx(3)];
-        let forward = vec![vec![
-            TxIndex::from(0usize),
-            TxIndex::from(1usize),
-            TxIndex::from(2usize),
-        ]];
-        let reversed = vec![vec![
-            TxIndex::from(2usize),
-            TxIndex::from(1usize),
-            TxIndex::from(0usize),
-        ]];
-        assert_ne!(
-            Snapshot::hash_next_block(&forward, &txs),
-            Snapshot::hash_next_block(&reversed, &txs),
-        );
-    }
-
-    #[test]
-    fn empty_blocks_hash_is_zero() {
-        let txs = vec![snap_tx(1)];
-        let blocks: Vec<Vec<TxIndex>> = vec![];
-        assert_eq!(
-            Snapshot::hash_next_block(&blocks, &txs),
-            NextBlockHash::ZERO
-        );
-    }
-
-    #[test]
-    fn full_txid_lookup_rejects_prefix_collision() {
-        let indexed = snap_tx(1).txid;
-        let mut bytes = [0u8; 32];
-        bytes[0] = 1;
-        bytes[8] = 1;
-        let collision = Txid::from(bitcoin::Txid::from_byte_array(bytes));
-        assert_eq!(TxidPrefix::from(&indexed), TxidPrefix::from(&collision));
-
-        let snapshot = Snapshot::for_test_with_chunk_rates(&[(
-            TxidPrefix::from(&indexed),
-            FeeRate::default(),
-            indexed,
-        )]);
-        assert_eq!(snapshot.idx_of_txid(&indexed), Some(TxIndex::from(0usize)));
-        assert_eq!(snapshot.idx_of_txid(&collision), None);
-        assert_eq!(snapshot.chunk_rate_for(&indexed), Some(FeeRate::default()));
-        assert_eq!(snapshot.chunk_rate_for(&collision), None);
+        Ok(())
     }
 }

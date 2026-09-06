@@ -15,14 +15,6 @@ impl std::ops::Deref for PinningPolicy {
 }
 
 impl PinningPolicy {
-    pub(crate) fn get(&self, level: usize) -> bool {
-        #[expect(clippy::expect_used, reason = "policy is expected not to be empty")]
-        self.0
-            .get(level)
-            .copied()
-            .unwrap_or_else(|| self.last().copied().expect("policy should not be empty"))
-    }
-
     /// Uses the same policy in every level.
     #[must_use]
     pub fn all(c: bool) -> Self {

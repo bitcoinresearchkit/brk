@@ -1,10 +1,11 @@
-use std::ops::Add;
+use std::{fmt, ops::Add};
 
+use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
-use super::{INDEX_EPOCH, Timestamp};
+use super::{Date, INDEX_EPOCH, Timestamp};
 
 pub const DAY3_INTERVAL: u32 = 259200;
 
@@ -26,11 +27,24 @@ pub struct Day3(u16);
 
 impl Day3 {
     pub fn from_timestamp(ts: Timestamp) -> Self {
-        Self(((*ts - INDEX_EPOCH + 86400) / DAY3_INTERVAL) as u16)
+        Self(((*ts).saturating_sub(INDEX_EPOCH - 86400) / DAY3_INTERVAL) as u16)
     }
 
     pub fn to_timestamp(&self) -> Timestamp {
         Timestamp::new(INDEX_EPOCH - 86400 + self.0 as u32 * DAY3_INTERVAL)
+    }
+}
+
+impl TryFrom<Date> for Day3 {
+    type Error = Error;
+
+    fn try_from(date: Date) -> Result<Self> {
+        // Bucket zero starts one day before the daily index epoch.
+        let days = Date::INDEX_ZERO_.until(date.try_into_jiff()?)?.get_days() + 1;
+        let days = u32::try_from(days).map_err(|_| Error::UnindexableDate)?;
+        u16::try_from(days / 3)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 
@@ -71,13 +85,17 @@ impl PrintableIndex for Day3 {
     }
 }
 
-impl std::fmt::Display for Day3 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Day3 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/day3.rs"]
+mod tests;
 
 impl Formattable for Day3 {
     #[inline(always)]

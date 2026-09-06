@@ -1,4 +1,4 @@
-mod addr_type;
+pub mod addr_type;
 
 pub use addr_type::AddrTypeVecs;
 

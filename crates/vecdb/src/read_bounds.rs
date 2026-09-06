@@ -35,7 +35,7 @@ impl Drop for ScopeGuard {
     }
 }
 
-pub(crate) fn visible_len(index: &str, len: usize) -> usize {
+pub fn visible_len(index: &str, len: usize) -> usize {
     CURRENT.with(|current| {
         current
             .borrow()

@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-mod raw;
-mod value;
+pub mod raw;
+pub mod value;
 
 /// Serialization strategy using the Bytes trait with portable byte order.
 ///

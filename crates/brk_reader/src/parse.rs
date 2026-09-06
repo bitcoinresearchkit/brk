@@ -6,11 +6,11 @@ use brk_types::{BlkMetadata, Block, BlockHash, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex, canonical::CanonicalRange};
 
-pub(crate) const HEADER_LEN: usize = 80;
+pub const HEADER_LEN: usize = 80;
 
 /// Decodes the header onto a stack buffer so `bytes` stays untouched:
 /// the body parse later re-XORs the full block from the original phase.
-pub(crate) fn peek_canonical(
+pub fn peek_canonical(
     bytes: &[u8],
     mut xor_state: XORIndex,
     xor_bytes: XORBytes,
@@ -27,7 +27,7 @@ pub(crate) fn peek_canonical(
     Some((offset, header))
 }
 
-pub(crate) fn parse_canonical_body(
+pub fn parse_canonical_body(
     mut bytes: Vec<u8>,
     metadata: BlkMetadata,
     mut xor_state: XORIndex,

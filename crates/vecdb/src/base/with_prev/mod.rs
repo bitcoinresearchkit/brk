@@ -1,10 +1,10 @@
-mod default;
+pub mod default;
 
 /// Tracks current and previous values for rollback support.
 #[derive(Debug, Clone)]
 pub struct WithPrev<T> {
-    pub(super) current: T,
-    pub(super) previous: T,
+    current: T,
+    previous: T,
 }
 
 impl<T> WithPrev<T> {

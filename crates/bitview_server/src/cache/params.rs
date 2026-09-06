@@ -3,24 +3,22 @@ use brk_types::{BlockHashPrefix, Version};
 
 use crate::{VERSION, etag::Etag, extended::HeaderMapExtended};
 
-use super::{
-    mode::{CDN_LIVE, cdn_cached},
-    strategy::CacheStrategy,
-};
+use super::{mode::CdnCacheMode, strategy::CacheStrategy};
 
 // Browser-facing: always revalidate via ETag. `no-cache` means "cache it but
 // check before use" (not "don't cache"); ETag makes the check cheap.
-const CC: &str = "public, no-cache, stale-if-error=86400";
+const CC: &str = "public, no-cache, must-revalidate";
+const CDN_LIVE: &str = "public, max-age=1, must-revalidate";
 
 // Revalidating errors are briefly cacheable, but never served stale. Permanent
 // input errors can be cached indefinitely. Transient and private errors are
 // never stored. Browser and CDN policies intentionally match for errors.
-const CC_ERROR_REVALIDATE: &str = "public, max-age=1, must-revalidate";
+const CC_REVALIDATE: &str = "public, max-age=1, must-revalidate";
 const CC_ERROR_IMMUTABLE: &str = "public, max-age=31536000, immutable";
 const CC_ERROR_NO_STORE: &str = "no-store";
 
 #[derive(Clone, Copy)]
-pub(crate) enum ErrorCachePolicy {
+pub enum ErrorCachePolicy {
     Revalidate,
     Immutable,
     NoStore,
@@ -29,7 +27,7 @@ pub(crate) enum ErrorCachePolicy {
 impl ErrorCachePolicy {
     fn cache_control(self) -> &'static str {
         match self {
-            Self::Revalidate => CC_ERROR_REVALIDATE,
+            Self::Revalidate => CC_REVALIDATE,
             Self::Immutable => CC_ERROR_IMMUTABLE,
             Self::NoStore => CC_ERROR_NO_STORE,
         }
@@ -37,6 +35,7 @@ impl ErrorCachePolicy {
 }
 
 /// Resolved cache parameters: an ETag plus the two Cache-Control directives.
+#[derive(Clone)]
 pub struct CacheParams {
     pub etag: Etag,
     cache_control: &'static str,
@@ -44,27 +43,18 @@ pub struct CacheParams {
 }
 
 impl CacheParams {
-    fn tip(tip: BlockHashPrefix) -> Self {
-        Self {
-            etag: format!("t{:x}", *tip).into(),
-            cache_control: CC,
-            cdn_cache_control: CDN_LIVE,
+    const fn cdn_cache_control(mode: CdnCacheMode) -> &'static str {
+        match mode {
+            CdnCacheMode::Live => CDN_LIVE,
+            CdnCacheMode::Aggressive => "public, max-age=31536000, immutable",
         }
     }
 
-    fn immutable(version: Version) -> Self {
+    fn immutable(version: Version, cdn_cache_mode: CdnCacheMode) -> Self {
         Self {
             etag: format!("i{version}").into(),
             cache_control: CC,
-            cdn_cache_control: cdn_cached(),
-        }
-    }
-
-    fn block_bound(version: Version, prefix: BlockHashPrefix) -> Self {
-        Self {
-            etag: format!("b{version}-{:x}", *prefix).into(),
-            cache_control: CC,
-            cdn_cache_control: cdn_cached(),
+            cdn_cache_control: Self::cdn_cache_control(cdn_cache_mode),
         }
     }
 
@@ -80,10 +70,15 @@ impl CacheParams {
     /// by static handlers (OpenAPI spec, scalar bundle) that don't have
     /// a [`CacheStrategy`] context.
     pub fn deploy() -> Self {
+        Self::revalidate(format!("d{VERSION}").into())
+    }
+
+    /// Short freshness for a mutable URL with an already-resolved validator.
+    pub fn revalidate(etag: Etag) -> Self {
         Self {
-            etag: format!("d{VERSION}").into(),
-            cache_control: CC,
-            cdn_cache_control: cdn_cached(),
+            etag,
+            cache_control: CC_REVALIDATE,
+            cdn_cache_control: CC_REVALIDATE,
         }
     }
 
@@ -116,13 +111,14 @@ impl CacheParams {
         end: usize,
         stable_count: Option<usize>,
         hash: BlockHashPrefix,
+        cdn_cache_mode: CdnCacheMode,
     ) -> Self {
         let v = u32::from(version);
         match stable_count {
             Some(s) if end <= s => Self {
                 etag: format!("s{v}-h{start}-{end}").into(),
                 cache_control: CC,
-                cdn_cache_control: cdn_cached(),
+                cdn_cache_control: Self::cdn_cache_control(cdn_cache_mode),
             },
             _ => Self {
                 etag: format!("s{v}-t{:x}", *hash).into(),
@@ -134,7 +130,7 @@ impl CacheParams {
 
     /// Apply an error cache policy. Error responses deliberately have no ETag:
     /// a conditional error request must receive the error status again, not 304.
-    pub(crate) fn apply_error_cache_control(headers: &mut HeaderMap, policy: ErrorCachePolicy) {
+    pub fn apply_error_cache_control(headers: &mut HeaderMap, policy: ErrorCachePolicy) {
         let cache_control = policy.cache_control();
         headers.insert_cache_control(cache_control);
         headers.insert_cdn_cache_control(cache_control);
@@ -151,11 +147,16 @@ impl CacheParams {
         headers.insert_cdn_cache_control(self.cdn_cache_control);
     }
 
-    pub fn resolve(strategy: &CacheStrategy) -> Self {
+    pub fn resolve(strategy: &CacheStrategy, cdn_cache_mode: CdnCacheMode) -> Self {
         match strategy {
-            CacheStrategy::Tip(tip) => Self::tip(*tip),
-            CacheStrategy::Immutable(v) => Self::immutable(*v),
-            CacheStrategy::BlockBound(v, prefix) => Self::block_bound(*v, *prefix),
+            CacheStrategy::Live(etag) => Self {
+                etag: etag.clone(),
+                cache_control: CC,
+                cdn_cache_control: CDN_LIVE,
+            },
+
+            CacheStrategy::Immutable(v) => Self::immutable(*v, cdn_cache_mode),
+
             CacheStrategy::ActivityBound(v, prefix) => Self::activity_bound(*v, *prefix),
             CacheStrategy::Deploy => Self::deploy(),
             CacheStrategy::LiveHash(hash) => Self::live_hash(*hash),
@@ -164,88 +165,5 @@ impl CacheParams {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn v(n: u32) -> Version {
-        Version::new(n)
-    }
-
-    fn h(n: u64) -> BlockHashPrefix {
-        BlockHashPrefix::from(n)
-    }
-
-    #[test]
-    fn activity_bound_has_a_distinct_etag_and_live_cdn_policy() {
-        let p = CacheParams::activity_bound(v(1), h(0xabcd));
-        assert_eq!(p.etag.as_str(), "a1-abcd");
-        assert_eq!(p.cdn_cache_control, CDN_LIVE);
-    }
-
-    #[test]
-    fn tip_uses_the_hash_bound_into_its_strategy() {
-        let p = CacheParams::resolve(&CacheStrategy::Tip(h(0xabcd)));
-        assert_eq!(p.etag.as_str(), "tabcd");
-        assert_eq!(p.cdn_cache_control, CDN_LIVE);
-    }
-
-    #[test]
-    fn live_hash_uses_hash_and_live_cdn_policy() {
-        let p = CacheParams::resolve(&CacheStrategy::LiveHash(0xabcd));
-        assert_eq!(p.etag.as_str(), "labcd");
-        assert_eq!(p.cdn_cache_control, CDN_LIVE);
-    }
-
-    #[test]
-    fn series_tail_when_end_exceeds_stable_count() {
-        let p = CacheParams::series(v(3), 0, 60, Some(50), h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-tabcd");
-    }
-
-    #[test]
-    fn series_historical_when_end_at_or_below_stable_count() {
-        let p = CacheParams::series(v(3), 10, 50, Some(50), h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-h10-50");
-    }
-
-    #[test]
-    fn series_historical_ignores_tip_hash() {
-        let a = CacheParams::series(v(3), 0, 50, Some(100), h(0xabcd));
-        let b = CacheParams::series(v(3), 0, 50, Some(100), h(0xdead));
-        assert_eq!(a.etag.as_str(), b.etag.as_str());
-    }
-
-    #[test]
-    fn series_tail_changes_with_tip_hash() {
-        let a = CacheParams::series(v(3), 0, 100, Some(50), h(0xabcd));
-        let b = CacheParams::series(v(3), 0, 100, Some(50), h(0xdead));
-        assert_ne!(a.etag.as_str(), b.etag.as_str());
-    }
-
-    #[test]
-    fn series_mutable_class_always_tail() {
-        let small = CacheParams::series(v(3), 0, 5, None, h(0xabcd));
-        let large = CacheParams::series(v(3), 0, 1_000_000, None, h(0xabcd));
-        assert_eq!(small.etag.as_str(), "s3-tabcd");
-        assert_eq!(large.etag.as_str(), "s3-tabcd");
-    }
-
-    #[test]
-    fn series_at_stable_boundary_is_historical() {
-        let p = CacheParams::series(v(3), 0, 50, Some(50), h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-h0-50");
-    }
-
-    #[test]
-    fn series_just_past_stable_boundary_is_tail() {
-        let p = CacheParams::series(v(3), 0, 51, Some(50), h(0xabcd));
-        assert_eq!(p.etag.as_str(), "s3-tabcd");
-    }
-
-    #[test]
-    fn series_different_ranges_get_different_etags() {
-        let a = CacheParams::series(v(3), 0, 50, Some(100), h(0xabcd));
-        let b = CacheParams::series(v(3), 10, 50, Some(100), h(0xabcd));
-        assert_ne!(a.etag.as_str(), b.etag.as_str());
-    }
-}
+#[path = "../../tests/unit/cache/params.rs"]
+mod tests;

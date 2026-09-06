@@ -56,7 +56,7 @@ impl Partitioner {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::hashes::Hash;
+    use bitcoin::{Txid as BitcoinTxid, hashes::Hash};
     use brk_types::{Sats, Txid, Weight};
     use smallvec::SmallVec;
 
@@ -66,7 +66,7 @@ mod tests {
         let mut bytes = [0u8; 32];
         bytes[0] = seed;
         SnapTx {
-            txid: Txid::from(bitcoin::Txid::from_byte_array(bytes)),
+            txid: Txid::from(BitcoinTxid::from_byte_array(bytes)),
             fee: Sats::from(fee),
             vsize: VSize::from(vsize),
             weight: Weight::from(vsize * 4),

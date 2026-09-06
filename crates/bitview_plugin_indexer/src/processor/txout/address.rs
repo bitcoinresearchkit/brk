@@ -1,4 +1,4 @@
-mod cache;
+pub mod cache;
 
 use brk_error::Result;
 

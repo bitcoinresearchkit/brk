@@ -1,4 +1,4 @@
-use std::{fmt, mem};
+use std::{borrow::Cow, fmt, mem};
 
 use derive_more::Deref;
 use schemars::JsonSchema;
@@ -8,6 +8,9 @@ use serde_json::Value;
 use super::SeriesName;
 
 /// Comma-separated list of series names
+///
+/// Deserialization permits at most 32 normalized names and 2,048 decoded input
+/// string bytes. For arrays, the byte budget is shared by their string values.
 #[derive(Debug, Deref, JsonSchema)]
 #[schemars(
     with = "String",
@@ -49,30 +52,31 @@ impl<'de> Deserialize<'de> for SeriesList {
     {
         let value = Value::deserialize(deserializer)?;
 
-        if let Some(str) = value.as_str() {
-            if str.len() <= MAX_STRING_SIZE {
-                Ok(Self(
-                    sanitize(str.split(",").map(|s| s.to_string()))
-                        .into_iter()
-                        .map(SeriesName::from)
-                        .collect(),
-                ))
-            } else {
+        match value {
+            Value::String(text) if text.len() <= MAX_STRING_SIZE => sanitize(text.split(','))
+                .map(Self)
+                .map_err(D::Error::custom),
+            Value::Array(values)
+                if values.len() <= MAX_VECS
+                    && values
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .try_fold(MAX_STRING_SIZE, |remaining, text| {
+                            remaining.checked_sub(text.len())
+                        })
+                        .is_some() =>
+            {
+                sanitize(values.into_iter().filter_map(|value| match value {
+                    Value::String(text) => Some(text),
+                    _ => None,
+                }))
+                .map(Self)
+                .map_err(D::Error::custom)
+            }
+            Value::String(_) | Value::Array(_) => {
                 Err(D::Error::custom("Given parameter is too long"))
             }
-        } else if let Some(vec) = value.as_array() {
-            if vec.len() <= MAX_VECS {
-                Ok(Self(
-                    sanitize(vec.iter().filter_map(|s| s.as_str().map(String::from)))
-                        .into_iter()
-                        .map(SeriesName::from)
-                        .collect(),
-                ))
-            } else {
-                Err(D::Error::custom("Given parameter is too long"))
-            }
-        } else {
-            Err(D::Error::custom("Bad ids format"))
+            _ => Err(D::Error::custom("Bad ids format")),
         }
     }
 }
@@ -89,23 +93,42 @@ impl fmt::Display for SeriesList {
     }
 }
 
-fn sanitize(dirty: impl Iterator<Item = String>) -> Vec<String> {
+fn sanitize<'a, S: Into<Cow<'a, str>>>(
+    dirty: impl Iterator<Item = S>,
+) -> Result<Vec<SeriesName>, &'static str> {
     let mut clean = Vec::new();
-    dirty.for_each(|s| {
+    for s in dirty {
+        let s = s.into();
+        if s.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+        {
+            if !s.is_empty() {
+                if clean.len() == MAX_VECS {
+                    return Err("At most 32 series may be requested");
+                }
+                clean.push(SeriesName::from(s.into_owned()));
+            }
+            continue;
+        }
         let mut current = String::new();
-        for c in s.to_lowercase().chars() {
+        // A final separator flushes the last name through the same bound check.
+        for c in s.to_lowercase().chars().chain([' ']) {
             match c {
                 ' ' | ',' | '+' if !current.is_empty() => {
-                    clean.push(mem::take(&mut current));
+                    if clean.len() == MAX_VECS {
+                        return Err("At most 32 series may be requested");
+                    }
+                    clean.push(SeriesName::from(mem::take(&mut current)));
                 }
                 '-' => current.push('_'),
                 c if c.is_alphanumeric() || c == '_' => current.push(c),
                 _ => {}
             }
         }
-        if !current.is_empty() {
-            clean.push(current);
-        }
-    });
-    clean
+    }
+    Ok(clean)
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/series_list.rs"]
+mod tests;

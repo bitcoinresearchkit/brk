@@ -2,6 +2,7 @@ use std::{
     env, fs, io,
     net::IpAddr,
     path::{Path, PathBuf},
+    process::exit,
 };
 
 use bitview::Config as RunnerConfig;
@@ -67,6 +68,12 @@ pub struct Config {
 }
 
 impl Config {
+    /// Load persisted settings without creating directories, validating Bitcoin
+    /// paths, parsing arguments, or constructing an RPC client.
+    pub fn load() -> io::Result<Self> {
+        Self::read(&default_bitview_dir().join("config.toml"))
+    }
+
     pub fn import() -> Result<RunnerConfig> {
         let config_args = Self::parse_args();
 
@@ -74,9 +81,7 @@ impl Config {
 
         fs::create_dir_all(&config_dir)?;
 
-        let path = config_dir.join("config.toml");
-
-        let mut config = Self::read(&path);
+        let mut config = Self::load()?;
 
         if let Some(v) = config_args.bitviewdir {
             config.bitviewdir = Some(v);
@@ -126,7 +131,7 @@ impl Config {
         config.check();
         fs::create_dir_all(&data_path)?;
 
-        config.runner(data_path)
+        config.runner()
     }
 
     fn parse_args() -> Self {
@@ -138,11 +143,11 @@ impl Config {
             match arg {
                 Short('h') | Long("help") => {
                     Self::print_help(&command);
-                    std::process::exit(0);
+                    exit(0);
                 }
                 Short('V') | Long("version") => {
                     println!("{command} {}", env!("CARGO_PKG_VERSION"));
-                    std::process::exit(0);
+                    exit(0);
                 }
                 Long("bitviewdir") => {
                     config.bitviewdir = Some(parser.value().unwrap().parse().unwrap())
@@ -180,7 +185,7 @@ impl Config {
                 }
                 _ => {
                     eprintln!("{}", arg.unexpected());
-                    std::process::exit(1);
+                    exit(1);
                 }
             }
         }
@@ -316,14 +321,14 @@ impl Config {
             println!("{:?} isn't a valid directory", self.bitcoindir());
             println!("Please use the --bitcoindir parameter to set a valid path.");
             println!("Run the program with '-h' for help.");
-            std::process::exit(1);
+            exit(1);
         }
 
         if !self.blocksdir().is_dir() {
             println!("{:?} isn't a valid directory", self.blocksdir());
             println!("Please use the --blocksdir parameter to set a valid path.");
             println!("Run the program with '-h' for help.");
-            std::process::exit(1);
+            exit(1);
         }
 
         if self.rpc_auth().is_err() {
@@ -332,22 +337,26 @@ impl Config {
 First make sure that `bitcoind` is running. If it is then please either set --rpccookiefile or --rpcuser and --rpcpassword as the default values seemed to have failed.
 Finally, you can run the program with '-h' for help."
             );
-            std::process::exit(1);
+            exit(1);
         }
     }
 
-    fn read(path: &Path) -> Self {
+    fn read(path: &Path) -> io::Result<Self> {
         let contents = match fs::read_to_string(path) {
             Ok(contents) => contents,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => return Config::default(),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(Config::default()),
             Err(e) => {
-                eprintln!("Cannot read {}: {e}", path.display());
-                std::process::exit(1);
+                return Err(io::Error::new(
+                    e.kind(),
+                    format!("Cannot read {}: {e}", path.display()),
+                ));
             }
         };
-        toml::from_str(&contents).unwrap_or_else(|e| {
-            eprintln!("Invalid {}:\n{e}", path.display());
-            std::process::exit(1);
+        toml::from_str(&contents).map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Invalid config: {}", path.display()),
+            )
         })
     }
 
@@ -439,43 +448,28 @@ Finally, you can run the program with '-h' for help."
         self.serverport.unwrap_or_default()
     }
 
-    fn runner(&self, data_path: PathBuf) -> Result<RunnerConfig> {
+    /// Resolve server settings without validating node paths or constructing RPC.
+    pub fn server_config(&self) -> ServerConfig {
+        ServerConfig {
+            bind: self.serverbind(),
+            port: self.serverport(),
+            data_path: self.bitviewdir(),
+            website: self.website(),
+            cdn_cache_mode: self.cdn_cache_mode(),
+            max_weight: self.max_weight(),
+            max_utxos: self.max_utxos(),
+        }
+    }
+
+    fn runner(&self) -> Result<RunnerConfig> {
         Ok(RunnerConfig {
             client: self.rpc()?,
             blocks_path: self.blocksdir(),
-            server: ServerConfig {
-                bind: self.serverbind(),
-                port: self.serverport(),
-                data_path,
-                website: self.website(),
-                cdn_cache_mode: self.cdn_cache_mode(),
-                max_weight: self.max_weight(),
-                max_utxos: self.max_utxos(),
-            },
+            server: self.server_config(),
         })
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use std::net::Ipv4Addr;
-
-    use super::*;
-
-    #[test]
-    fn server_listener_is_typed_and_defaults_are_centralized() {
-        let defaults = Config::default();
-        assert_eq!(defaults.serverbind(), DEFAULT_BIND);
-        assert_eq!(defaults.serverport(), Port::DEFAULT);
-
-        let config: Config = toml::from_str(
-            r#"
-                serverbind = "127.0.0.1"
-                serverport = 3111
-            "#,
-        )
-        .unwrap();
-        assert_eq!(config.serverbind(), IpAddr::V4(Ipv4Addr::LOCALHOST));
-        assert_eq!(config.serverport(), Port::new(3111));
-    }
-}
+#[path = "../tests/unit/config.rs"]
+mod tests;

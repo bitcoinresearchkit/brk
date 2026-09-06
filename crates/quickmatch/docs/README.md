@@ -20,6 +20,12 @@ npm install quickmatch-js
 
 ## Usage
 
+Corpus items must be lowercase ASCII, and custom separators must be ASCII.
+Constructors enforce these programmer preconditions with diagnostic panics;
+normalize or validate dynamic input before building a matcher. Query text is
+lowercased and non-ASCII query characters are ignored. This is not a Unicode
+search engine.
+
 **Rust**
 
 ```rust
@@ -68,7 +74,7 @@ Queries go through three matching stages:
 2. **Compound match** — adjacent words are indexed as compounds, so `hashrate` finds `hash_rate`
 3. **Trigram fallback** — unknown words are matched via character trigrams for fuzzy/typo tolerance
 
-Results are ranked by prefix score (exact > prefix > unordered), then by trigram score, then by length.
+Query words match in any order, including prefixes and joined adjacent words. Bounded adjacent-letter corrections run before the trigram fallback and must match whole indexed words. Results rank by matched-word count, fuzzy score, first match position, item length, text, then original index.
 
 ## Config
 

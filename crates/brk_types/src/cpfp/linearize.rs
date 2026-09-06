@@ -1,134 +1,129 @@
-//! Single Fee Linearization (Bitcoin Core 31's cluster mempool SFL).
+//! Single Fee Linearization for topologically ordered dependency components.
 //!
-//! Partition a topo-ordered cluster into chunks ordered by descending
-//! feerate, where each chunk is the highest-rate ancestor-closed set
-//! of remaining txs. Spec-equivalent to Core's `fees.chunk` /
-//! `chunkweight`; works on any Core version.
+//! Preserve the greedy ancestor-closed extension and tie-breaking rules without
+//! rebuilding every candidate's ancestor closure for each chunk. Ancestor sets
+//! are immutable bitsets; accepting a transaction subtracts its fee and size
+//! from every remaining candidate that depends on it.
 //!
-//! The "lift" this implements is what makes CPFP visible at the
-//! cluster level: a child whose rate exceeds its parent's gets folded
-//! into a chunk with the parent at the combined `(parent_fee +
-//! child_fee) / (parent_vsize + child_vsize)`. Cascades upward through
-//! any further parents until rates are non-increasing.
-//!
-//! `O(n^2)` per linearization, `n` bounded by the cluster cap.
-
-use rustc_hash::{FxBuildHasher, FxHashSet};
+//! Selection and aggregate updates take O(n²) work. Building ancestor bitsets
+//! takes O((n + edges) * ceil(n / 64)) work and O(n² / 64) words of scratch space.
+//! This also supports confirmed components larger than mempool policy limits.
 
 use crate::{ChunkInput, CpfpClusterChunk, CpfpClusterTxIndex, FeeRate, Sats, VSize};
 
-/// Linearize `items` into chunks. `items` must be in topological order
-/// (parents before children); `parents` indices must point earlier in
-/// the slice. Returns chunks sorted by descending feerate, with each
-/// chunk's `txs` listed in the input topological order.
+struct Candidate {
+    ancestors: Vec<u64>,
+    fee: Sats,
+    vsize: VSize,
+    count: usize,
+}
+
+impl Candidate {
+    fn contains(&self, index: usize) -> bool {
+        self.ancestors[index / 64] & (1u64 << (index % 64)) != 0
+    }
+}
+
+/// Linearize `items` into descending-feerate chunks, preserving input order
+/// within each chunk. Parents must point earlier in the topological input.
 pub fn linearize(items: &[ChunkInput<'_>]) -> Vec<CpfpClusterChunk> {
     let n = items.len();
-    if n == 0 {
-        return Vec::new();
+    let mut candidates: Vec<Candidate> = Vec::with_capacity(n);
+    for (index, item) in items.iter().enumerate() {
+        let mut ancestors = vec![0u64; n.div_ceil(64)];
+        ancestors[index / 64] |= 1u64 << (index % 64);
+        for &parent in item.parents {
+            let parent = u32::from(parent) as usize;
+            assert!(parent < index, "CPFP parents must precede their children");
+            for (word, parent_word) in ancestors.iter_mut().zip(&candidates[parent].ancestors) {
+                *word |= parent_word;
+            }
+        }
+        let mut candidate = Candidate {
+            ancestors,
+            fee: Sats::ZERO,
+            vsize: VSize::from(0u64),
+            count: 0,
+        };
+        for (ancestor, input) in items[..=index].iter().enumerate() {
+            if candidate.contains(ancestor) {
+                candidate.fee += input.fee;
+                candidate.vsize += input.vsize;
+                candidate.count += 1;
+            }
+        }
+        candidates.push(candidate);
     }
-    let mut remaining: Vec<bool> = vec![true; n];
-    let mut chunks: Vec<CpfpClusterChunk> = Vec::new();
 
-    while remaining.iter().any(|&r| r) {
-        // Build one chunk by repeatedly absorbing the highest-rate
-        // ancestor-closed extension. Starting from empty: the first
-        // pick is the top-rate single-anchor closure (Phase 1 of
-        // canonical SFL); subsequent picks merge in disjoint
-        // components whose rate is >= the chunk's current rate, which
-        // is what makes a parent + chain + same-rate siblings collapse
-        // into one chunk instead of trailing same-rate singletons that
-        // can even sort "above" the main chunk under integer-vsize
-        // rounding. Size tiebreak ensures a uniform-rate chain is
-        // taken in one swallow.
-        let mut anc: FxHashSet<u32> = FxHashSet::default();
-        let mut chunk_fee = Sats::ZERO;
-        let mut chunk_vsize = VSize::from(0u64);
-        let mut chunk_rate: Option<FeeRate> = None;
+    let mut remaining = vec![true; n];
+    let mut remaining_count = n;
+    let mut chunks = Vec::new();
+    while remaining_count != 0 {
+        let mut txs = Vec::new();
+        let mut fee = Sats::ZERO;
+        let mut vsize = VSize::from(0u64);
+        let mut rate: Option<FeeRate> = None;
 
         loop {
-            let mut best: Option<(FeeRate, FxHashSet<u32>, Sats, VSize)> = None;
-            for i in 0..n {
-                if !remaining[i] || anc.contains(&(i as u32)) {
+            let mut best: Option<(usize, FeeRate)> = None;
+            for (index, candidate) in candidates.iter().enumerate() {
+                if !remaining[index] {
                     continue;
                 }
-                let extra = closure(items, &remaining, &anc, i as u32);
-                if extra.is_empty() {
+                let next_rate = FeeRate::from((fee + candidate.fee, vsize + candidate.vsize));
+                if rate.is_some_and(|rate| next_rate < rate) {
                     continue;
                 }
-                let (ef, ev) = sum_fee_vsize(items, &extra);
-                let new_fee = chunk_fee + ef;
-                let new_vsize = chunk_vsize + ev;
-                let new_rate = FeeRate::from((new_fee, new_vsize));
-                if chunk_rate.is_some_and(|cr| new_rate < cr) {
-                    continue;
-                }
-                let replace = match &best {
-                    None => true,
-                    Some((br, ba, _, _)) => {
-                        new_rate > *br || (new_rate == *br && extra.len() > ba.len())
-                    }
-                };
-                if replace {
-                    best = Some((new_rate, extra, new_fee, new_vsize));
+                if best.is_none_or(|(best_index, best_rate)| {
+                    next_rate > best_rate
+                        || (next_rate == best_rate
+                            && candidate.count > candidates[best_index].count)
+                }) {
+                    best = Some((index, next_rate));
                 }
             }
-            match best {
-                Some((r, e, f, v)) => {
-                    anc.extend(&e);
-                    chunk_fee = f;
-                    chunk_vsize = v;
-                    chunk_rate = Some(r);
+
+            let Some((selected, next_rate)) = best else {
+                break;
+            };
+            fee += candidates[selected].fee;
+            vsize += candidates[selected].vsize;
+            rate = Some(next_rate);
+
+            let added: Vec<_> = (0..n)
+                .filter(|&index| remaining[index] && candidates[selected].contains(index))
+                .collect();
+            for &index in &added {
+                remaining[index] = false;
+                txs.push(CpfpClusterTxIndex::from(index as u32));
+            }
+            remaining_count -= added.len();
+
+            // Each transaction is subtracted at most once from each candidate.
+            // Completed chunks and the current chunk share the same exclusion.
+            for (index, candidate) in candidates.iter_mut().enumerate() {
+                if !remaining[index] {
+                    continue;
                 }
-                None => break,
+                for &removed in &added {
+                    if candidate.contains(removed) {
+                        candidate.fee -= items[removed].fee;
+                        candidate.vsize -= items[removed].vsize;
+                        candidate.count -= 1;
+                    }
+                }
             }
         }
 
-        let mut indices: Vec<u32> = anc.into_iter().collect();
-        indices.sort_unstable();
-        for &x in &indices {
-            remaining[x as usize] = false;
-        }
-        let txs: Vec<CpfpClusterTxIndex> =
-            indices.into_iter().map(CpfpClusterTxIndex::from).collect();
+        txs.sort_unstable_by_key(|index| u32::from(*index));
         chunks.push(CpfpClusterChunk {
             txs,
-            feerate: chunk_rate.expect("at least one remaining tx"),
+            feerate: rate.expect("a remaining transaction forms a chunk"),
         });
     }
     chunks
 }
 
-fn closure(
-    items: &[ChunkInput<'_>],
-    remaining: &[bool],
-    excluded: &FxHashSet<u32>,
-    start: u32,
-) -> FxHashSet<u32> {
-    let mut set: FxHashSet<u32> = FxHashSet::with_capacity_and_hasher(8, FxBuildHasher);
-    if !remaining[start as usize] || excluded.contains(&start) {
-        return set;
-    }
-    let mut stack: Vec<u32> = vec![start];
-    while let Some(x) = stack.pop() {
-        if !set.insert(x) {
-            continue;
-        }
-        for &p in items[x as usize].parents {
-            let pu: u32 = u32::from(p);
-            if remaining[pu as usize] && !excluded.contains(&pu) && !set.contains(&pu) {
-                stack.push(pu);
-            }
-        }
-    }
-    set
-}
-
-fn sum_fee_vsize(items: &[ChunkInput<'_>], set: &FxHashSet<u32>) -> (Sats, VSize) {
-    let mut fee = Sats::ZERO;
-    let mut vsize = VSize::from(0u64);
-    for &x in set {
-        fee += items[x as usize].fee;
-        vsize += items[x as usize].vsize;
-    }
-    (fee, vsize)
-}
+#[cfg(test)]
+#[path = "../../tests/unit/cpfp/linearize.rs"]
+mod tests;

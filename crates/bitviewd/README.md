@@ -58,6 +58,16 @@ bitviewd
 Bitview indexes the blockchain, computes datasets, starts the server on
 `localhost:3110`, and waits for new blocks.
 
+## Generating clients during development
+
+From the workspace, run `cargo bindgen` after API changes and before building
+consumers of generated clients. `cargo bindgen -- --check` verifies that the
+checked-in outputs are current without overwriting them. `cargo dev` generates
+first and starts the daemon only after generation succeeds; daemon arguments
+can be passed with `cargo dev -- --port 3110`. `cargo prod` starts the daemon
+without generation. Normal server startup never generates files; installed
+users do not need to run bindgen.
+
 ## First sync
 
 The initial sync processes the entire blockchain and can take several hours.

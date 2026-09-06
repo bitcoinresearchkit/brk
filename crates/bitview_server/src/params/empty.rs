@@ -16,12 +16,16 @@ where
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         match parts.uri.query() {
-            Some(q) if !q.is_empty() => Err(Error::bad_request(format!(
-                "this endpoint does not accept query parameters (got `?{q}`)"
-            ))),
+            Some(q) if !q.is_empty() => Err(Error::bad_request(
+                "this endpoint does not accept query parameters",
+            )),
             _ => Ok(Empty),
         }
     }
 }
 
 impl OperationInput for Empty {}
+
+#[cfg(test)]
+#[path = "../../tests/unit/params/empty.rs"]
+mod tests;

@@ -12,9 +12,6 @@ pub trait HeaderMapExtended {
     fn insert_content_type_text_csv(&mut self);
 
     fn insert_vary_accept_encoding(&mut self);
-
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn insert_deprecation(&mut self, sunset: &'static str);
 }
 
 impl HeaderMapExtended for HeaderMap {
@@ -31,11 +28,23 @@ impl HeaderMapExtended for HeaderMap {
 
     #[cfg(feature = "series")]
     fn insert_content_disposition_attachment(&mut self, filename: &str) {
+        if filename.is_ascii() && !filename.contains('"') && !filename.contains('\\') {
+            let mut value = String::with_capacity(filename.len() + 23);
+            value.push_str("attachment; filename=\"");
+            value.push_str(filename);
+            value.push('"');
+            if let Ok(value) = HeaderValue::try_from(value) {
+                self.insert(header::CONTENT_DISPOSITION, value);
+                return;
+            }
+        }
+        let mut value = String::from("attachment; filename*=UTF-8''");
+        for byte in filename.bytes() {
+            write!(value, "%{byte:02X}").unwrap();
+        }
         self.insert(
             header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{filename}\"")
-                .parse()
-                .unwrap(),
+            HeaderValue::try_from(value).expect("ASCII attachment header"),
         );
     }
 
@@ -54,10 +63,10 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_vary_accept_encoding(&mut self) {
         self.insert(header::VARY, HeaderValue::from_static("Accept-Encoding"));
     }
-
-    #[cfg(all(feature = "series", feature = "urpd"))]
-    fn insert_deprecation(&mut self, sunset: &'static str) {
-        self.insert("Deprecation", HeaderValue::from_static("true"));
-        self.insert("Sunset", HeaderValue::from_static(sunset));
-    }
 }
+
+#[cfg(all(test, feature = "series"))]
+#[path = "../../tests/unit/extended/header_map.rs"]
+mod tests;
+#[cfg(feature = "series")]
+use std::fmt::Write;

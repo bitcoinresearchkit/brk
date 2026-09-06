@@ -9,7 +9,7 @@ HTTP API server for Bitcoin on-chain analytics.
 - **MCP-ready**: The same OpenAPI operations are available through the official
   stateless, read-only endpoint at [mcp.bitview.space](https://mcp.bitview.space/)
 - **HTTP caching**: ETag revalidation with separate browser and CDN policies
-- **Compression**: Brotli, gzip, deflate, zstd
+- **Compression**: Brotli, gzip, zstd; small responses skip compression
 - **Static files**: Optional web interface hosting
 
 Plugin features mirror `bitview_query` and gate the routes that can use them.
@@ -51,30 +51,47 @@ server.serve().await?;
 
 ## Caching
 
-ETag-based revalidation. Six strategies pick the etag scheme:
+Validators are selected with their source data before conditional matching:
 
 - **Tip**: chain-state, etag = tip hash prefix (invalidates per block + reorgs)
+- **Live**: exact, versioned representation tag
+- **LiveHash**: mutable data, etag = a representation-specific content hash
 - **Immutable**: deeply-confirmed data, etag = format version
 - **BlockBound**: immutable content tied to a specific block hash
 - **ActivityBound**: mutable state anchored to its latest relevant block
-- **Deploy**: catalog/static data, etag = build version
-- **MempoolHash**: mempool data, etag = the relevant mempool-state hash
+- **Deploy**: build-version tag for version-bound responses
+
+Catalogs, pool metadata and specifications use content-based validators, not
+the package version alone. Dynamic transaction, block and mempool reads validate
+current availability before returning 304; a matching tag is not permission to
+serve an unpublished or displaced result.
 
 Series responses use a separate range-aware scheme: immutable historical
 ranges are keyed by schema version and bounds, while mutable tails are keyed by
 the current tip hash.
 
-Browser sees `Cache-Control: public, no-cache, stale-if-error=86400` (always
-revalidate, ETag makes it cheap). CDN sees a separate `CDN-Cache-Control`
-directive whose stable tier is selected by `CdnCacheMode` (`Live` revalidates
-every request; `Aggressive` caches up to a year as `immutable` and requires a
-purge on deploy).
+Most data responses use `Cache-Control: public, no-cache, must-revalidate` for
+browsers. Exact live and deployment-bound responses allow one second of browser
+freshness. The separate `CDN-Cache-Control` live tier allows one second of edge
+freshness, then requires revalidation; neither policy allows stale-on-error reuse.
+`CdnCacheMode::Live` applies that same edge policy to stable responses.
+`Aggressive` instead caches the stable tier for up to a year as `immutable` and
+requires an operator purge on deploy. Mutable and deployment-bound URLs retain
+their short freshness under either mode.
 
 Errors deliberately have no ETag: a conditional request must receive the error
 status again rather than `304`. Unknown-resource and other recoverable client
 errors use a one-second, must-revalidate policy; permanently invalid address,
 network, and transaction-ID inputs are immutable; authorization,
 service-unavailable, and server errors use `no-store`.
+
+`POST /api/tx` is an action: every response is `no-store`, with no validator.
+It accepts at most 8,000,000 bytes of hexadecimal text including surrounding
+whitespace, and admits at most four buffered/pending submissions. Requests wait
+asynchronously for the shared node connection within the HTTP deadline; excess
+admission returns 503. Submission is not automatically replayed after a lost
+response. A timeout or cancellation after dispatch can leave the outcome unknown
+and cannot undo a transaction already received by the node.
 
 ## Configuration
 

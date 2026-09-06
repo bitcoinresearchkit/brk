@@ -1,10 +1,9 @@
-use std::collections::BTreeMap;
-
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Height, TimePeriod, Timestamp};
-use vecdb::{ReadableVec, VecValue};
+use rustc_hash::FxHashMap;
+use vecdb::{ReadableVec, VecIndex, VecValue};
 
-use super::block_bucket::BlockBucket;
+use super::{block_bucket::BlockBucket, start_height};
 use crate::Query;
 
 /// Time-bucket divisor in seconds: blocks are grouped by `timestamp / div`.
@@ -23,9 +22,19 @@ fn time_div(period: TimePeriod) -> u32 {
     }
 }
 
+fn bucket_offsets(timestamps: &[Timestamp], div: u32) -> Vec<(u32, Vec<usize>)> {
+    let mut groups: FxHashMap<u32, Vec<usize>> = FxHashMap::default();
+    for (i, timestamp) in timestamps.iter().enumerate() {
+        groups.entry(**timestamp / div).or_default().push(i);
+    }
+    let mut groups: Vec<_> = groups.into_iter().collect();
+    groups.sort_unstable_by_key(|(key, _)| *key);
+    groups
+}
+
 /// Round-half-up integer division, matching MySQL's `CAST(AVG(...) AS INT)`.
-pub const fn round_half_up(sum: u64, n: u64) -> u64 {
-    (sum + n / 2) / n
+pub const fn round_half_up(sum: u128, n: u128) -> u64 {
+    ((sum + n / 2) / n) as u64
 }
 
 /// Mempool-compatible time-bucketed block window. Groups blocks by
@@ -34,10 +43,8 @@ pub struct BlockWindow {
     pub start: Height,
     pub end: Height,
     pub buckets: Vec<BlockBucket>,
-    /// Number of blocks observed in `[start, end)` at construction. Equals
-    /// `timestamps.len()` after the prefetch; may be less than `end - start`
-    /// when the timestamp vec lags under per-vec stamp race. Every value vec
-    /// passed to `read` must yield at least this many elements.
+    /// Exact number of published blocks in `[start, end)`. Every source must
+    /// provide this complete window; a missing tail is not a partial success.
     pub len: usize,
 }
 
@@ -48,31 +55,45 @@ impl BlockWindow {
     /// into the prefetched slice. Downstream metric reads (`BlockWindow::read`)
     /// reuse the same `[start, end)` so each bucket's offsets index directly
     /// into the value vec without a second walk.
-    pub fn new(query: &Query, period: TimePeriod) -> brk_error::Result<Self> {
-        let start = super::start_height(query, period)?;
+    pub fn new(query: &Query, period: TimePeriod) -> Result<Self> {
+        let start = start_height(query, period)?;
         let end = query.height() + 1usize;
-        let div = time_div(period);
-
         let timestamps: Vec<Timestamp> = query
             .indexer()
             .vecs()
             .blocks
             .timestamp
             .collect_range(start, end);
+        Self::from_timestamps(start, end, period, &timestamps)
+    }
 
-        let mut groups: BTreeMap<u32, Vec<usize>> = BTreeMap::new();
-        for (i, ts) in timestamps.iter().enumerate() {
-            groups.entry(**ts / div).or_default().push(i);
+    fn from_timestamps(
+        start: Height,
+        end: Height,
+        period: TimePeriod,
+        timestamps: &[Timestamp],
+    ) -> Result<Self> {
+        let div = time_div(period);
+        let len = end
+            .to_usize()
+            .checked_sub(start.to_usize())
+            .ok_or(Error::Internal("Reversed mining block window"))?;
+        if timestamps.len() != len {
+            return Err(Error::Internal("Incomplete mining timestamp window"));
         }
 
-        let len = timestamps.len();
-
-        let buckets = groups
-            .into_values()
-            .map(|offsets| {
-                let n = offsets.len() as u64;
-                let sum_h: u64 = offsets.iter().map(|&i| u64::from(start + i)).sum();
-                let sum_ts: u64 = offsets.iter().map(|&i| u64::from(timestamps[i])).sum();
+        let buckets = bucket_offsets(timestamps, div)
+            .into_iter()
+            .map(|(_, offsets)| {
+                let n = offsets.len() as u128;
+                let sum_h: u128 = offsets
+                    .iter()
+                    .map(|&i| u128::from(u64::from(start + i)))
+                    .sum();
+                let sum_ts: u128 = offsets
+                    .iter()
+                    .map(|&i| u128::from(u64::from(timestamps[i])))
+                    .sum();
                 BlockBucket::new(
                     Height::from(round_half_up(sum_h, n)),
                     Timestamp::from(round_half_up(sum_ts, n) as u32),
@@ -90,20 +111,24 @@ impl BlockWindow {
     }
 
     /// Read a height-keyed vec over this window's `[start, end)` range.
-    /// Errors if the vec returns fewer elements than the window observed at
-    /// construction (per-vec stamp lag): bucket offsets reach up to `len - 1`
-    /// and would otherwise panic in `BlockBucket::mean(&values)`.
-    pub fn read<V, T>(&self, vec: &V) -> brk_error::Result<Vec<T>>
+    /// Require the complete published range before indexing its bucket offsets.
+    pub fn read<V, T>(&self, vec: &V) -> Result<Vec<T>>
     where
         V: ReadableVec<Height, T>,
         T: VecValue,
     {
         let values = vec.collect_range(self.start, self.end);
-        if values.len() < self.len {
-            return Err(Error::Internal(
-                "BlockWindow::read: value vec shorter than window (per-vec stamp lag)",
-            ));
+        if values.len() != self.len {
+            return Err(Error::Internal("Incomplete mining value window"));
         }
         Ok(values)
     }
 }
+
+#[cfg(test)]
+#[path = "../../../benches/unit/mining_storage.rs"]
+mod storage_bench;
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/mining/block_window.rs"]
+mod tests;

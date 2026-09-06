@@ -1,6 +1,21 @@
+use std::sync::Arc;
+
 use crate::{ReadableVec, TypedVec};
 
 use super::CachedVec;
+
+impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
+    /// Return a current snapshot without waiting for its cache lock or filling it.
+    /// Writers must still provide publication exclusion for multi-source reads.
+    pub fn cached_snapshot(&self) -> Option<Arc<Vec<V::T>>> {
+        let data = self
+            .cache
+            .try_read()?
+            .matching_data(self.inner.len(), self.inner.version())?;
+        self.record_cache_access();
+        Some(data)
+    }
+}
 
 impl<V: TypedVec + ReadableVec<V::I, V::T>> ReadableVec<V::I, V::T> for CachedVec<V> {
     #[inline(always)]

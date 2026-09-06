@@ -1,9 +1,6 @@
 #![doc = include_str!("../README.md")]
 
 use std::{
-    collections::BTreeMap,
-    fs::File,
-    io::{Read, Result as IoResult},
     os::unix::fs::FileExt,
     path::{Path, PathBuf},
     sync::Arc,
@@ -12,29 +9,32 @@ use std::{
 use brk_error::{Error, Result};
 use brk_rpc::Client;
 use brk_types::{BlkPosition, BlockHash, Height};
-use parking_lot::RwLock;
 use tracing::warn;
 
 mod bisect;
 mod blk_index_to_blk_path;
+mod blk_read;
 mod block_receiver;
 mod canonical;
 mod parse;
 mod pipeline;
+mod reader_inner;
 mod scan;
 mod xor_bytes;
 mod xor_index;
 
 pub use blk_index_to_blk_path::BlkIndexToBlkPath;
+pub use blk_read::BlkRead;
 pub use block_receiver::BlockReceiver;
-pub use canonical::CanonicalRange;
+use canonical::CanonicalRange;
+use reader_inner::ReaderInner;
 pub use xor_bytes::*;
-pub use xor_index::*;
+use xor_index::XORIndex;
 
 /// bitcoind writes blocks slightly out of height order across files
 /// during initial sync, headers-first body fetch, and reindex, so a
 /// single "out of bounds" signal isn't enough to declare failure.
-pub(crate) const OUT_OF_ORDER_FILE_BACKOFF: usize = 21;
+const OUT_OF_ORDER_FILE_BACKOFF: usize = 21;
 
 const TARGET_NOFILE: u64 = 15_000;
 
@@ -50,12 +50,7 @@ impl Reader {
     }
 
     pub fn new_without_rlimit(blocks_dir: PathBuf, client: &Client) -> Self {
-        Self(Arc::new(ReaderInner {
-            xor_bytes: XORBytes::from(blocks_dir.as_path()),
-            blk_file_cache: RwLock::new(BTreeMap::new()),
-            blocks_dir,
-            client: client.clone(),
-        }))
+        Self(Arc::new(ReaderInner::new(blocks_dir, client)))
     }
 
     /// Raises only the soft limit, clamped to the current hard limit:
@@ -96,16 +91,6 @@ impl Reader {
         file.read_exact_at(&mut buffer, position.offset() as u64)?;
         XORIndex::decode_at(&mut buffer, position.offset() as usize, self.0.xor_bytes);
         Ok(buffer)
-    }
-
-    pub fn reader_at(&self, position: BlkPosition) -> Result<BlkRead> {
-        let file = self.0.open_blk(position.blk_index())?;
-        Ok(BlkRead {
-            file,
-            offset: position.offset() as u64,
-            xor_index: XORIndex::at_offset(position.offset() as usize),
-            xor_bytes: self.0.xor_bytes,
-        })
     }
 
     /// Streams every canonical block from genesis to the current
@@ -149,49 +134,5 @@ impl Reader {
         }
         let canonical = CanonicalRange::between(&self.0.client, start, end)?;
         pipeline::spawn(self.0.clone(), canonical, parser_threads)
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct ReaderInner {
-    /// Invalidated on every `refresh_paths` so a pruned or reindexed
-    /// blk file can't keep serving stale bytes from a dead inode.
-    blk_file_cache: RwLock<BTreeMap<u16, Arc<File>>>,
-    pub(crate) xor_bytes: XORBytes,
-    pub(crate) blocks_dir: PathBuf,
-    pub(crate) client: Client,
-}
-
-impl ReaderInner {
-    pub(crate) fn refresh_paths(&self) -> Result<BlkIndexToBlkPath> {
-        let paths = BlkIndexToBlkPath::scan(&self.blocks_dir)?;
-        self.blk_file_cache.write().clear();
-        Ok(paths)
-    }
-
-    fn open_blk(&self, blk_index: u16) -> Result<Arc<File>> {
-        if let Some(file) = self.blk_file_cache.read().get(&blk_index).cloned() {
-            return Ok(file);
-        }
-        let path = self.blocks_dir.join(format!("blk{blk_index:05}.dat"));
-        let file = Arc::new(File::open(&path)?);
-        let mut cache = self.blk_file_cache.write();
-        Ok(cache.entry(blk_index).or_insert(file).clone())
-    }
-}
-
-pub struct BlkRead {
-    file: Arc<File>,
-    offset: u64,
-    xor_index: XORIndex,
-    xor_bytes: XORBytes,
-}
-
-impl Read for BlkRead {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
-        let n = self.file.read_at(buf, self.offset)?;
-        self.xor_index.bytes(&mut buf[..n], self.xor_bytes);
-        self.offset += n as u64;
-        Ok(n)
     }
 }

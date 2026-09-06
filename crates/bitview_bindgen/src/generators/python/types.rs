@@ -6,8 +6,9 @@ use std::fmt::Write;
 use serde_json::Value;
 
 use crate::{
-    TypeSchemas, escape_python_keyword, generators::MANUAL_GENERIC_TYPES, get_union_variants,
-    is_rust_concrete_generic, ref_to_type_name, rust_array_element_type,
+    TypeSchemas, escape_python_keyword,
+    generators::{MANUAL_GENERIC_TYPES, write_description},
+    get_union_variants, is_rust_concrete_generic, ref_to_type_name, rust_array_element_type,
 };
 
 /// Generate type definitions from schemas.
@@ -43,9 +44,7 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
         let type_desc = schema.get("description").and_then(|d| d.as_str());
         let py_type = schema_to_python_type(schema, Some(&name), Some(&typed_dict_set));
         if let Some(desc) = type_desc {
-            for line in desc.lines() {
-                writeln!(output, "# {}", line).unwrap();
-            }
+            write_description(output, desc, "# ", "#");
         }
         writeln!(output, "{} = {}", name, py_type).unwrap();
     }

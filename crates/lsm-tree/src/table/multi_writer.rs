@@ -10,7 +10,7 @@ use std::{mem, path::PathBuf};
 ///
 /// This results in a sorted "run" of tables
 pub struct MultiWriter {
-    pub(crate) base_path: PathBuf,
+    pub base_path: PathBuf,
 
     data_block_hash_ratio: f32,
 
@@ -113,7 +113,7 @@ impl MultiWriter {
     }
 
     #[must_use]
-    pub(crate) fn use_data_block_size(mut self, size: u32) -> Self {
+    pub fn use_data_block_size(mut self, size: u32) -> Self {
         assert!(
             size <= 4 * 1_024 * 1_024,
             "data block size must be <= 4 MiB",
@@ -186,7 +186,7 @@ impl MultiWriter {
         Ok(())
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.results.is_empty() && self.writer.meta.first_key.is_none()
     }
 

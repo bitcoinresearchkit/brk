@@ -34,7 +34,7 @@ OutputType = Literal["p2pk65", "p2pk33", "p2pkh", "p2ms", "p2sh", "opreturn", "p
 # Used for changes, deltas, profit/loss calculations, etc.
 SatsSigned = int
 # Four-byte primary state stored for every address.
-# 
+#
 # Empty addresses with small lifetime totals are stored inline. The upper two
 # bits select an inline layout or a sidecar, whose index occupies the lower 30
 # bits.
@@ -58,7 +58,8 @@ BlockHash = str
 # Distinct from `TxIndex`, which is the chain-wide global tx index.
 BlockTxIndex = int
 # Content hash of the projected next block (block 0 of the mempool
-# snapshot). Same value as the mempool ETag. Opaque token: pass back
+# snapshot), including its statistics and complete transaction bodies.
+# Opaque token, distinct from HTTP ETag formatting: pass back
 # to `GET /api/v1/mempool/block-template/diff/{hash}` to fetch deltas.
 NextBlockHash = int
 # Output type names used by Esplora and mempool.space.
@@ -67,7 +68,7 @@ OutputTypeNormalized = Literal["p2pk", "p2pkh", "multisig", "p2sh", "op_return",
 RawLockTime = int
 # BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
 # fits a single tx's count with room to spare.
-# 
+#
 # Witness sigops count as 1; legacy and P2SH-redeem sigops count as 4.
 # Five vbytes per sigop is the policy adjustment Core applies in
 # `nSigOpCost` to discourage sigop-heavy txs (`max(weight/4, sigops*5)`).
@@ -75,7 +76,7 @@ SigOps = int
 # Index of the output being spent in the previous transaction
 Vout = int
 # Transaction witness: a stack of byte arrays, one per witness item.
-# 
+#
 # Wraps `bitcoin::Witness` (single-buffer layout with offsets, much
 # more compact than `Vec<Vec<u8>>`). Serializes as a JSON array of
 # hex strings - the format used by Bitcoin Core REST and mempool.space
@@ -90,20 +91,20 @@ TxIndex = int
 # used in coinbase txs for miner signaling/branding.
 TxVersionRaw = int
 # One slot of the new template in a `BlockTemplateDiff`.
-# 
+#
 # Untagged on the wire so JSON type disambiguates the variants:
 # - `Retained(idx)` serializes as a bare integer - index into the
 #   transactions of the prior template (which the client cached at
 #   `since`).
 # - `New(tx)` serializes as a transaction object - a body that was
-#   not in the prior template and must be added at this position.
-# 
+#   new or changed since the prior template and must replace this position.
+#
 # Reconstruction is a single pass: for each entry, either copy
 # `prior[idx]` or append the inline body.
 BlockTemplateDiffEntry = Union[int, "Transaction"]
 Bytes = int
 # Investor phase from the Capital Sentiment model.
-# 
+#
 # Codes are explicit because phase values are persisted. Code `0` represents
 # unavailable model inputs and is therefore not a phase.
 CapitalSentimentPhase = Literal["raging_bull", "bull", "cautious_bull", "hopeful_bull", "early_bull", "weak_bull", "limbo", "deep_bear", "bear", "early_bear"]
@@ -124,7 +125,7 @@ CentsSquaredSats = int
 # Closing price value for a time period
 Close = Dollars
 # URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
-# 
+#
 # Validated at construction: non-empty, ASCII `[a-z0-9_]+`. Matches the
 # schemars enum value set; the type therefore proves "this is a valid
 # cohort name" wherever a `Cohort` is held.
@@ -134,19 +135,13 @@ Cohort = Literal["all", "sth", "lth", "utxos_under_1h_old", "utxos_1h_to_1d_old"
 # mapping each byte to the same-valued Unicode code point. Pool attribution
 # may search this raw value, but the value itself is not a normalized pool
 # label.
-# 
+#
 # Stored as a fixed 101-byte record (1 byte length + 100 bytes data).
 # Uses `[u8; 101]` internally so that `size_of::<CoinbaseTag>()` matches
 # the serialized `Bytes::Array` size (vecdb requires this for alignment).
-# 
+#
 # Bitcoin consensus limits coinbase scriptSig to 2-100 bytes.
 CoinbaseTag = str
-# Value type for the deprecated cost-basis distribution output.
-CostBasisValue = Literal["supply", "realized", "unrealized"]
-# Aggregation strategy for URPD buckets.
-# Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
-# log10/log50/log100/log200/log500/log1000/log2000 (logarithmic with 10/50/100/200/500/1000/2000 buckets per decade).
-UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200", "log500", "log1000", "log2000"]
 # Position of a transaction inside a `CpfpCluster.txs` array. Cluster-local,
 # has no meaning outside the enclosing cluster.
 CpfpClusterTxIndex = int
@@ -182,8 +177,6 @@ Hour4 = int
 # Aggregation dimension for querying series. Includes time-based (date, week, month, year),
 # block-based (height, tx_index), and address/output type indexes.
 Index = Literal["minute10", "minute30", "hour1", "hour4", "hour12", "day1", "day3", "week1", "month1", "month3", "month6", "year1", "year10", "halving", "epoch", "height", "tx_index", "txin_index", "txout_index", "empty_output_index", "op_return_index", "p2a_addr_index", "p2ms_output_index", "p2pk33_addr_index", "p2pk65_addr_index", "p2pkh_addr_index", "p2sh_addr_index", "p2tr_addr_index", "p2wpkh_addr_index", "p2wsh_addr_index", "unknown_output_index", "funded_addr_index", "empty_addr_index", "extended_empty_addr_index"]
-# Series name
-SeriesName = str
 # Signed parts per million stored as i32.
 # One unit is 0.000001. Range: -2,147.483647 to +2,147.483647.
 # Use for precise bounded signed ratios and percentages.
@@ -239,21 +232,26 @@ PartsPerMillion64 = int
 # `i64::MIN` is reserved as a NaN sentinel.
 PartsPerMillionSigned64 = int
 # Fractional satoshis (f64) - for representing USD prices in sats
-# 
+#
 # Formula: `sats_fract = usd_value * 100_000_000 / btc_price`
-# 
+#
 # When BTC is $100,000:
 # - $1 = 1,000 sats
 # - $0.001 = 1 sat
 # - $0.0001 = 0.1 sats (fractional)
 SatsFract = float
+# Series name
+SeriesName = str
 # Version tracking for data schema and computed values.
-# 
+#
 # Used to detect when stored data needs to be recomputed due to changes
 # in computation logic or source data versions. Supports validation
 # against persisted versions to ensure compatibility.
 Version = int
 # Comma-separated list of series names
+#
+# Deserialization permits at most 32 normalized names and 2,048 decoded input
+# string bytes. For arrays, the byte budget is shared by their string values.
 SeriesList = str
 StoredBool = bool
 # Stored 32-bit floating point value
@@ -270,7 +268,7 @@ StoredU32 = int
 StoredU64 = int
 StoredU8 = int
 # Time period for mining statistics.
-# 
+#
 # Used to specify the lookback window for pool statistics, hashrate calculations,
 # and other time-based mining series.
 TimePeriod = Literal["24h", "3d", "1w", "1m", "3m", "6m", "1y", "2y", "3y", "all"]
@@ -285,6 +283,10 @@ Vin = int
 # other version.
 TxVersion = int
 UnknownOutputIndex = TypeIndex
+# Aggregation strategy for URPD buckets.
+# Options: raw (no aggregation), lin200/lin500/lin1000 (linear $200/$500/$1000),
+# log10/log50/log100/log200/log500/log1000/log2000 (logarithmic with 10/50/100/200/500/1000/2000 buckets per decade).
+UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200", "log500", "log1000", "log2000"]
 # Weighting applied to a URPD: raw (unweighted), cointime, or coinflow.
 UrpdWeight = Literal["raw", "cointime", "coinflow"]
 Week1 = int
@@ -839,8 +841,9 @@ class BlockTemplateDiff(TypedDict):
     once to rebuild the new template; no separate `added` array to
     cross-reference.
     
-    `removed` is redundant (computable from `order` by collecting prior
-    indices that don't appear) but shipped for cache-eviction ergonomics.
+    `removed` lists txids no longer present. A changed body can be emitted as
+    `New` without removing its txid; absence of a retained index alone does not
+    imply removal.
 
     Attributes:
         hash: Current next-block hash. Use as `since` on the next diff call.
@@ -867,17 +870,6 @@ class BlockTimestamp(TypedDict):
     height: Height
     hash: BlockHash
     timestamp: str
-
-class CostBasisCohortParam(TypedDict):
-    cohort: Cohort
-
-class CostBasisParams(TypedDict):
-    cohort: Cohort
-    date: str
-
-class CostBasisQuery(TypedDict):
-    bucket: UrpdAggregation
-    value: CostBasisValue
 
 class CpfpClusterChunk(TypedDict):
     """
@@ -1054,7 +1046,7 @@ class DiskUsage(TypedDict):
         brk_bytes: brk data size in bytes
         bitcoin: Human-readable Bitcoin blocks directory size
         bitcoin_bytes: Bitcoin blocks directory size in bytes
-        ratio: brk as percentage of Bitcoin data
+        ratio: Ratio of BRK bytes to Bitcoin bytes; zero when Bitcoin bytes are zero.
     """
     brk: str
     brk_bytes: int
@@ -1219,19 +1211,6 @@ class IndexInfo(TypedDict):
     """
     index: Index
     aliases: List[str]
-
-class LegacySeriesParam(TypedDict):
-    """
-    Legacy path parameter for `/api/metric/{metric}`
-    """
-    metric: SeriesName
-
-class LegacySeriesWithIndex(TypedDict):
-    """
-    Legacy path parameters for `/api/metric/{metric}/{index}`
-    """
-    metric: SeriesName
-    index: Index
 
 class Loss(TypedDict):
     """
@@ -1827,23 +1806,6 @@ class SeriesSelection(TypedDict):
     """
     series: SeriesList
     index: Index
-    start: Union[RangeIndex, None]
-    end: Union[RangeIndex, None]
-    limit: Union[Limit, None]
-    format: Format
-
-class SeriesSelectionLegacy(TypedDict):
-    """
-    Legacy series selection parameters (deprecated)
-
-    Attributes:
-        start: Inclusive start: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `from`, `f`, `s`
-        end: Exclusive end: integer index, date (YYYY-MM-DD), or timestamp (ISO 8601). Negative integers count from end. Aliases: `to`, `t`, `e`
-        limit: Maximum number of values to return (ignored if `end` is set). Aliases: `count`, `c`, `l`
-        format: Format of the output
-    """
-    index: Index
-    ids: SeriesList
     start: Union[RangeIndex, None]
     end: Union[RangeIndex, None]
     limit: Union[Limit, None]
@@ -15527,7 +15489,7 @@ class BitviewClient(BitviewClientBase):
     def get_health(self) -> Health:
         """Health check.
 
-        Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.
+        Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
 
         Endpoint: `GET /health`"""
         return self.get_json('/health')
@@ -15543,7 +15505,7 @@ class BitviewClient(BitviewClientBase):
     def get_sync_status(self) -> SyncStatus:
         """Sync status.
 
-        Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+        Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.
 
         Endpoint: `GET /api/server/sync`"""
         return self.get_json('/api/server/sync')
@@ -15551,7 +15513,7 @@ class BitviewClient(BitviewClientBase):
     def get_disk_usage(self) -> DiskUsage:
         """Disk usage.
 
-        Returns the disk space used by BRK and Bitcoin data.
+        Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.
 
         Endpoint: `GET /api/server/disk`"""
         return self.get_json('/api/server/disk')
@@ -15596,7 +15558,7 @@ class BitviewClient(BitviewClientBase):
     def search_series(self, q: SeriesName, limit: Optional[Limit] = None) -> List[str]:
         """Search series.
 
-        Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.
+        Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
 
         Endpoint: `GET /api/series/search`"""
         params = []
@@ -15609,7 +15571,7 @@ class BitviewClient(BitviewClientBase):
     def get_series_info(self, series: SeriesName) -> SeriesInfo:
         """Get series info.
 
-        Returns the optional description, supported indexes, and value type for the specified series.
+        Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.
 
         Endpoint: `GET /api/series/{series}`"""
         return self.get_json(f'/api/series/{series}')
@@ -15667,7 +15629,7 @@ class BitviewClient(BitviewClientBase):
     def get_series_version(self, series: SeriesName, index: Index) -> Version:
         """Get series version.
 
-        Returns the current version of a series. Changes when the series data is updated.
+        Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.
 
         Endpoint: `GET /api/series/{series}/{index}/version`"""
         return self.get_json(f'/api/series/{series}/{index}/version')
@@ -15760,7 +15722,7 @@ class BitviewClient(BitviewClientBase):
     def get_historical_price(self, timestamp: Optional[Timestamp] = None) -> HistoricalPrice:
         """Historical price.
 
-        Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+        Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
 
@@ -15892,7 +15854,7 @@ class BitviewClient(BitviewClientBase):
     def get_block_by_timestamp(self, timestamp: Timestamp) -> BlockTimestamp:
         """Block by timestamp.
 
-        Find the block closest to a given UNIX timestamp.
+        Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
 
@@ -16082,7 +16044,7 @@ class BitviewClient(BitviewClientBase):
     def get_pool_blocks(self, slug: PoolSlug) -> List[BlockInfoV1]:
         """Mining pool blocks.
 
-        Get the 10 most recent blocks mined by a specific pool.
+        Get up to 100 recent blocks mined by a specific pool.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
@@ -16092,7 +16054,7 @@ class BitviewClient(BitviewClientBase):
     def get_pool_blocks_from(self, slug: PoolSlug, height: Height) -> List[BlockInfoV1]:
         """Mining pool blocks from height.
 
-        Get 10 blocks mined by a specific pool before (and including) the given height.
+        Get up to 100 blocks mined by a specific pool before (and including) the given height.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
@@ -16232,7 +16194,7 @@ class BitviewClient(BitviewClientBase):
     def get_mempool_hash(self) -> NextBlockHash:
         """Mempool content hash.
 
-        Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+        Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.
 
         Endpoint: `GET /api/mempool/hash`"""
         return self.get_json('/api/mempool/hash')
@@ -16426,12 +16388,12 @@ class BitviewClient(BitviewClientBase):
     def post_tx(self, body: str) -> Txid:
         """Broadcast transaction.
 
-        Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+        Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.
 
         *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
 
         Endpoint: `POST /api/tx`"""
-        return self.post_json('/api/tx', body)
+        return self.post_text('/api/tx', body)
 
     def get_oracle_price(self) -> Dollars:
         """Live BTC/USD price.
@@ -16444,7 +16406,7 @@ class BitviewClient(BitviewClientBase):
     def get_oracle_histogram_payments_live(self) -> List[int]:
         """Live payment output histogram.
 
-        Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+        Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.
 
         Endpoint: `GET /api/oracle/histogram/payments/live`"""
         return self.get_json('/api/oracle/histogram/payments/live')
@@ -16460,7 +16422,7 @@ class BitviewClient(BitviewClientBase):
     def get_oracle_histogram_outputs_live(self) -> List[int]:
         """Live output value histogram.
 
-        Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+        Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
 
         Endpoint: `GET /api/oracle/histogram/outputs/live`"""
         return self.get_json('/api/oracle/histogram/outputs/live')

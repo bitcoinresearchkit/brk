@@ -16,7 +16,7 @@ use std::{
     },
 };
 
-use brk_types::{FeeRate, NextBlockHash, Txid, TxidPrefix};
+use brk_types::{FeeRate, NextBlockHash, Transaction, Txid, TxidPrefix};
 use parking_lot::RwLock;
 
 use crate::State;
@@ -29,10 +29,10 @@ const HISTORY: usize = 10;
 #[derive(Default)]
 pub struct Rebuilder {
     snapshot: RwLock<Arc<Snapshot>>,
-    /// Past block-0 txid lists keyed by `next_block_hash`, oldest first.
-    /// Ordered so `block_template_diff` can emit `Retained(prior_index)`
-    /// entries that line up with the client's cached prior template.
-    history: RwLock<VecDeque<(NextBlockHash, Arc<[Txid]>)>>,
+    /// Past block-0 body references keyed by content hash, oldest first.
+    /// Shared immutable bodies let diffs verify retained entries without
+    /// duplicating transaction payloads for every history entry.
+    history: RwLock<VecDeque<(NextBlockHash, Arc<[Arc<Transaction>]>)>>,
     rebuild_count: AtomicU64,
 }
 
@@ -47,17 +47,22 @@ impl Rebuilder {
         min_fee: FeeRate,
         membership_changed: bool,
     ) {
-        if self.can_reuse(gbt_txids, min_fee, membership_changed) {
+        let revision = lock.read().txs.content_revision();
+        if self.can_reuse(gbt_txids, min_fee, membership_changed)
+            && self.snapshot().content_revision == revision
+        {
             return;
         }
 
         let snap = Self::build_snapshot(lock, gbt_txids, min_fee);
-        let block0: Arc<[Txid]> = snap.block0_txids().collect::<Vec<_>>().into();
+        let block0 = snap.template_transactions.clone();
         let next_hash = snap.next_block_hash;
 
         let mut hist = self.history.write();
-        hist.retain(|(h, _)| *h != next_hash);
-        hist.push_back((next_hash, block0));
+        if !snap.template_missing {
+            hist.retain(|(h, _)| *h != next_hash);
+            hist.push_back((next_hash, block0));
+        }
         while hist.len() > HISTORY {
             hist.pop_front();
         }
@@ -81,7 +86,7 @@ impl Rebuilder {
     /// Past block-0 ordered txid list for `hash`, or `None` if it has
     /// aged out (or was never seen). Used by `block_template_diff` to
     /// decide 200 vs 404 and to resolve `Retained(prior_index)` entries.
-    pub fn historical_block0(&self, hash: NextBlockHash) -> Option<Arc<[Txid]>> {
+    pub fn historical_block0(&self, hash: NextBlockHash) -> Option<Arc<[Arc<Transaction>]>> {
         self.history
             .read()
             .iter()
@@ -94,14 +99,24 @@ impl Rebuilder {
     }
 
     fn build_snapshot(lock: &RwLock<State>, gbt_txids: &[Txid], min_fee: FeeRate) -> Snapshot {
-        let (txs, prefix_to_idx) = {
+        let (txs, prefix_to_idx, bodies, revision) = {
             let state = lock.read();
-            Snapshot::build_txs(&state.txs)
+            let (txs, prefix_to_idx) = Snapshot::build_txs(&state.txs);
+            let bodies: Vec<_> = gbt_txids
+                .iter()
+                .filter_map(|txid| state.txs.record(txid).map(|record| record.tx.clone()))
+                .collect();
+            (txs, prefix_to_idx, bodies, state.txs.content_revision())
         };
 
         let block0: Vec<TxIndex> = gbt_txids
             .iter()
-            .filter_map(|txid| prefix_to_idx.get(&TxidPrefix::from(txid)).copied())
+            .filter_map(|txid| {
+                prefix_to_idx
+                    .get(&TxidPrefix::from(txid))
+                    .copied()
+                    .filter(|index| txs[index.as_usize()].txid == *txid)
+            })
             .collect();
         let mut excluded = vec![0; txs.len()];
         for index in &block0 {
@@ -113,7 +128,10 @@ impl Rebuilder {
         blocks.push(block0);
         blocks.extend(rest);
 
-        Snapshot::build(txs, blocks, prefix_to_idx, min_fee)
+        let missing = bodies.len() != gbt_txids.len();
+        let mut snapshot = Snapshot::build(txs, blocks, prefix_to_idx, min_fee);
+        snapshot.set_template(bodies, revision, missing);
+        snapshot
     }
 
     pub fn snapshot(&self) -> Arc<Snapshot> {
@@ -122,84 +140,5 @@ impl Rebuilder {
 }
 
 #[cfg(test)]
-mod tests {
-    use brk_types::{Sats, VSize};
-
-    use super::*;
-    use crate::{
-        state::TxEntry,
-        test_support::{fake_entry_info, fake_tx, p2wpkh_script},
-    };
-
-    fn state_with(seeds: &[u8]) -> (RwLock<State>, Vec<Txid>) {
-        let state = RwLock::new(State::default());
-        let mut txids = Vec::with_capacity(seeds.len());
-        for &seed in seeds {
-            let tx = fake_tx(seed, &[], &[(p2wpkh_script(seed), 1_000)]);
-            let txid = tx.txid;
-            let entry = TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false);
-            state.write().txs.insert(tx, entry);
-            txids.push(txid);
-        }
-        (state, txids)
-    }
-
-    fn min_fee(sats: u64) -> FeeRate {
-        FeeRate::from((Sats::from(sats), VSize::from(1_000u64)))
-    }
-
-    #[test]
-    fn first_tick_always_builds() {
-        let rebuilder = Rebuilder::default();
-        let state = RwLock::new(State::default());
-
-        rebuilder.tick(&state, &[], min_fee(1), false);
-
-        assert_eq!(rebuilder.rebuild_count(), 1);
-    }
-
-    #[test]
-    fn identical_inputs_reuse_snapshot() {
-        let rebuilder = Rebuilder::default();
-        let (state, txids) = state_with(&[1, 2]);
-        rebuilder.tick(&state, &txids, min_fee(1), true);
-
-        rebuilder.tick(&state, &txids, min_fee(1), false);
-
-        assert_eq!(rebuilder.rebuild_count(), 1);
-    }
-
-    #[test]
-    fn reordered_template_rebuilds() {
-        let rebuilder = Rebuilder::default();
-        let (state, mut txids) = state_with(&[1, 2]);
-        rebuilder.tick(&state, &txids, min_fee(1), true);
-        txids.reverse();
-
-        rebuilder.tick(&state, &txids, min_fee(1), false);
-
-        assert_eq!(rebuilder.rebuild_count(), 2);
-    }
-
-    #[test]
-    fn changed_min_fee_rebuilds() {
-        let rebuilder = Rebuilder::default();
-        let (state, txids) = state_with(&[1]);
-        rebuilder.tick(&state, &txids, min_fee(1), true);
-
-        rebuilder.tick(&state, &txids, min_fee(2), false);
-
-        assert_eq!(rebuilder.rebuild_count(), 2);
-    }
-
-    #[test]
-    fn changed_pool_rebuilds() {
-        let rebuilder = Rebuilder::default();
-        let (state, txids) = state_with(&[1]);
-        rebuilder.tick(&state, &txids, min_fee(1), true);
-
-        rebuilder.tick(&state, &txids, min_fee(1), true);
-
-        assert_eq!(rebuilder.rebuild_count(), 2);
-    }
-}
+#[path = "../../tests/unit/snapshot/rebuilder.rs"]
+mod tests;

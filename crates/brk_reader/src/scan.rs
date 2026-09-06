@@ -9,7 +9,7 @@ const MAGIC_BYTES: [u8; 4] = [0xF9, 0xBE, 0xB4, 0xD9];
 /// Returns the position immediately after the matched magic, or
 /// `None` if no match. Advances `xor_i` by the bytes consumed either
 /// way.
-pub(crate) fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes) -> Option<usize> {
+pub fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes) -> Option<usize> {
     let len = bytes.len();
     if len < MAGIC_BYTES.len() {
         xor_i.add_assign(len);
@@ -42,14 +42,14 @@ pub(crate) fn find_magic(bytes: &[u8], xor_i: &mut XORIndex, xor_bytes: XORBytes
     None
 }
 
-pub(crate) struct ScanResult {
+pub struct ScanResult {
     pub first_magic: Option<usize>,
 }
 
 /// Scans `buf` for blocks and calls `on_block` for each. `file_offset`
 /// is the absolute file position of `buf[0]`, used to seed the XOR
 /// phase and to report absolute `BlkPosition`s.
-pub(crate) fn scan_bytes(
+pub fn scan_bytes(
     buf: &mut [u8],
     blk_index: u16,
     file_offset: usize,

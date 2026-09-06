@@ -1,3 +1,5 @@
+use crate::LevelPolicy as _;
+
 pub mod ingest;
 pub mod inner;
 
@@ -235,8 +237,8 @@ impl Tree {
                     tree_id,
                     config.cache.clone(),
                     config.descriptor_table.clone(),
-                    config.filter_block_pinning_policy.get(level.into()),
-                    config.index_block_pinning_policy.get(level.into()),
+                    config.filter_block_pinning_policy.at_level(level.into()),
+                    config.index_block_pinning_policy.at_level(level.into()),
                 )?);
             } else {
                 orphaned.push(entry.path());

@@ -1,6 +1,6 @@
-mod redeem;
-mod script_sig;
-mod witness;
+pub mod redeem;
+pub mod script_sig;
+pub mod witness;
 
 use bitcoin::{TxIn, taproot::LeafVersion};
 use brk_types::OutputType;

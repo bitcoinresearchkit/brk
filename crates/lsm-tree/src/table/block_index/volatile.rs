@@ -19,12 +19,12 @@ use std::{path::PathBuf, sync::Arc};
 ///
 /// The index is loaded on demand.
 pub struct VolatileBlockIndex {
-    pub(crate) table_id: GlobalTableId,
-    pub(crate) path: Arc<PathBuf>,
-    pub(crate) file_accessor: FileAccessor,
-    pub(crate) cache: Arc<Cache>,
-    pub(crate) handle: BlockHandle,
-    pub(crate) compression: CompressionType,
+    pub table_id: GlobalTableId,
+    pub path: Arc<PathBuf>,
+    pub file_accessor: FileAccessor,
+    pub cache: Arc<Cache>,
+    pub handle: BlockHandle,
+    pub compression: CompressionType,
 }
 
 impl VolatileBlockIndex {

@@ -1,50 +1,44 @@
-use brk_types::{AddrBytes, BlockHash, Height, OutputType, TypeIndex};
+use bitview_plugin::PluginReadGuard;
+use bitview_plugin_indexer::Lengths;
+use brk_types::{BlockHash, TxIndex, Vout};
 
-/// An address UTXO query bound to one best-chain view.
+/// A bounded UTXO selection retaining publication exclusion until consumed.
 pub struct ResolvedAddrUtxos {
-    addr: AddrBytes,
-    output_type: OutputType,
-    type_index: TypeIndex,
-    anchor: (Height, BlockHash),
-    tip: BlockHash,
+    guard: PluginReadGuard,
+    lengths: Lengths,
+    outpoints: Vec<(TxIndex, Vout)>,
+    anchor: BlockHash,
 }
 
 impl ResolvedAddrUtxos {
-    pub(super) fn new(
-        addr: AddrBytes,
-        output_type: OutputType,
-        type_index: TypeIndex,
-        anchor: (Height, BlockHash),
-        tip: BlockHash,
+    pub fn block_hash(&self) -> BlockHash {
+        self.anchor
+    }
+}
+pub trait RImplAddrUtxosResolvedResolvedAddrUtxosInternal: Sized {
+    fn new(
+        guard: PluginReadGuard,
+        lengths: Lengths,
+        outpoints: Vec<(TxIndex, Vout)>,
+        anchor: BlockHash,
+    ) -> Self;
+    fn into_parts(self) -> (PluginReadGuard, Lengths, Vec<(TxIndex, Vout)>, BlockHash);
+}
+impl RImplAddrUtxosResolvedResolvedAddrUtxosInternal for ResolvedAddrUtxos {
+    fn new(
+        guard: PluginReadGuard,
+        lengths: Lengths,
+        outpoints: Vec<(TxIndex, Vout)>,
+        anchor: BlockHash,
     ) -> Self {
         Self {
-            addr,
-            output_type,
-            type_index,
+            guard,
+            lengths,
+            outpoints,
             anchor,
-            tip,
         }
     }
-
-    pub fn block_hash(&self) -> BlockHash {
-        self.anchor.1
-    }
-
-    pub(super) fn into_parts(
-        self,
-    ) -> (
-        AddrBytes,
-        OutputType,
-        TypeIndex,
-        (Height, BlockHash),
-        BlockHash,
-    ) {
-        (
-            self.addr,
-            self.output_type,
-            self.type_index,
-            self.anchor,
-            self.tip,
-        )
+    fn into_parts(self) -> (PluginReadGuard, Lengths, Vec<(TxIndex, Vout)>, BlockHash) {
+        (self.guard, self.lengths, self.outpoints, self.anchor)
     }
 }

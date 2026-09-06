@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc, time::Duration};
+use std::{borrow::Cow, future::ready, sync::Arc, time::Duration};
 
 use axum::{
     Router,
@@ -21,14 +21,13 @@ use rmcp::{
         StreamableHttpServerConfig, StreamableHttpService, session::never::NeverSessionManager,
     },
 };
-use serde_json::{Value, json};
-use tokio::sync::Semaphore;
+use serde_json::{Value, from_slice, json};
+use tokio::{sync::Semaphore, task::spawn_blocking, time::timeout};
 use tracing::{debug, warn};
 
 use crate::{
-    manifest::Catalog,
-    page::Pages,
-    upstream::{Upstream, UpstreamResponse},
+    logo, manifest::Catalog, page, page::Pages, upstream::Upstream,
+    upstream_response::UpstreamResponse,
 };
 
 const CACHE_META_KEY: &str = "org.bitcoinresearchkit/upstreamCache";
@@ -99,27 +98,27 @@ pub fn router(
     let home_html = pages.home();
     let home_handler = move || {
         let home_html = home_html.clone();
-        async move { crate::page::get(home_html).await }
+        async move { page::get(home_html).await }
     };
     let privacy_html = pages.privacy();
     let privacy_handler = move || {
         let privacy_html = privacy_html.clone();
-        async move { crate::page::get(privacy_html).await }
+        async move { page::get(privacy_html).await }
     };
     let terms_html = pages.terms();
     let terms_handler = move || {
         let terms_html = terms_html.clone();
-        async move { crate::page::get(terms_html).await }
+        async move { page::get(terms_html).await }
     };
     let support_html = pages.support();
     let support_handler = move || {
         let support_html = support_html.clone();
-        async move { crate::page::get(support_html).await }
+        async move { page::get(support_html).await }
     };
 
     Router::new()
         .route("/", get(home_handler).post_service(service))
-        .route("/logo.png", get(crate::logo::get))
+        .route("/logo.png", get(logo::get))
         .route("/privacy", get(privacy_handler))
         .route("/terms", get(terms_handler))
         .route("/support", get(support_handler))
@@ -184,7 +183,7 @@ impl BrkMcp {
         let meta = Some(upstream_meta(&response));
 
         if content_type == "application/json" || content_type.ends_with("+json") {
-            return match serde_json::from_slice::<Value>(&response.body) {
+            return match from_slice::<Value>(&response.body) {
                 Ok(value) => CallToolResult::structured(value).with_meta(meta).into(),
                 Err(_) => self.tool_error("Bitview API returned invalid JSON"),
             };
@@ -221,7 +220,7 @@ impl ServerHandler for BrkMcp {
         &self,
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<DiscoverResult, McpError>> + Send + '_ {
-        std::future::ready(Ok(DiscoverResult::from_server_info(
+        ready(Ok(DiscoverResult::from_server_info(
             SUPPORTED_PROTOCOL_VERSIONS.to_vec(),
             self.server_info(),
         )
@@ -246,7 +245,7 @@ impl ServerHandler for BrkMcp {
             result.meta = Some(server_meta());
             Ok(result)
         };
-        std::future::ready(result)
+        ready(result)
     }
 
     fn get_tool(&self, name: &str) -> Option<Tool> {
@@ -277,7 +276,7 @@ impl ServerHandler for BrkMcp {
             .upstream
             .prepare(operation, arguments)
             .map_err(|error| McpError::invalid_params(error, None))?;
-        let permit = match tokio::time::timeout(
+        let permit = match timeout(
             CONCURRENCY_WAIT,
             self.state.concurrency.clone().acquire_owned(),
         )
@@ -293,7 +292,7 @@ impl ServerHandler for BrkMcp {
         };
 
         let upstream = self.state.upstream.clone();
-        let response = match tokio::task::spawn_blocking(move || {
+        let response = match spawn_blocking(move || {
             let _permit = permit;
             upstream.fetch(prepared)
         })

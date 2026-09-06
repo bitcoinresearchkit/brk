@@ -1,10 +1,10 @@
 use std::{collections::HashSet, sync::Arc};
 
-use crate::{Database, Error, Region, Result};
+use crate::{Database, Error, Region, RegionInner, Result};
 
-mod inner;
+pub mod inner;
 
-pub(crate) use inner::RegionGroupInner;
+pub use inner::RegionGroupInner;
 
 /// Opaque handle keeping a set of regions in one contiguous allocation.
 ///
@@ -40,17 +40,20 @@ impl Database {
             }
         }
 
-        if let Some(group) = regions[0].group()
+        if let Some(group) = RegionInner::from_region(&regions[0]).group()
             && group.matches(regions)
             && regions.iter().all(|region| {
-                region
+                RegionInner::from_region(region)
                     .group()
                     .is_some_and(|other| Arc::ptr_eq(&group, &other))
             })
         {
             return Ok(RegionGroup { _inner: group });
         }
-        if let Some(region) = regions.iter().find(|region| region.group().is_some()) {
+        if let Some(region) = regions
+            .iter()
+            .find(|region| RegionInner::from_region(region).group().is_some())
+        {
             return Err(Error::RegionAlreadyGrouped {
                 id: region.meta().id().to_owned(),
             });
@@ -58,7 +61,7 @@ impl Database {
 
         let group = Arc::new(RegionGroupInner::new(regions)?);
         for region in regions {
-            region.set_group(Arc::downgrade(&group));
+            RegionInner::from_region(region).set_group(Arc::downgrade(&group));
         }
         Ok(RegionGroup { _inner: group })
     }

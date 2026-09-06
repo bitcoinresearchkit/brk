@@ -1,3 +1,4 @@
+use brk_error::Result;
 use brk_types::{BlockFeeRatesEntry, FeeRatePercentiles, TimePeriod};
 
 use super::block_window::BlockWindow;
@@ -8,10 +9,8 @@ impl Query {
     /// bucket, ordered chronologically. Each entry carries the bucket's
     /// average height/timestamp and the seven percentile means
     /// (`min, pct10, pct25, median, pct75, pct90, max`).
-    pub fn block_fee_rates(
-        &self,
-        time_period: TimePeriod,
-    ) -> brk_error::Result<Vec<BlockFeeRatesEntry>> {
+    pub fn block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
+        let _guard = self.read_plugin(self.indexer())?;
         let bw = BlockWindow::new(self, time_period)?;
         let frd = &self
             .plugins()

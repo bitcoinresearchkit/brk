@@ -37,6 +37,15 @@ See the `website` example for a complete standalone server with compression, tra
 cargo run -p bitview_website --example website
 ```
 
+Pass a folder to serve it instead of the default website:
+
+```sh
+cargo run -p bitview_website --example website -- website_next_next
+```
+
+Open `http://localhost:3110/studio.html` (or port 3111 if 3110 is occupied).
+Studio loads QuickMatch locally through `website_next_next/modules`.
+
 ## Dependencies
 
 - `axum` - HTTP routing

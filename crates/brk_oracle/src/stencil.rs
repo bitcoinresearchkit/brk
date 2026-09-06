@@ -51,7 +51,7 @@ fn bin_value(ema: &HistogramEma, idx: i64) -> f64 {
 
 /// Raw EMA mass on each of the 19 stencil arms at `center`.
 fn arms_at(ema: &HistogramEma, center: i64) -> Arms {
-    Arms(STENCIL_OFFSETS.map(|offset| bin_value(ema, center + offset as i64)))
+    Arms(STENCIL_OFFSETS.map(|offset| bin_value(ema, center.saturating_add(offset as i64))))
 }
 
 /// [`arms_at`] L1-normalized to sum 1, or `None` when the center carries no mass.
@@ -73,18 +73,18 @@ fn normalized_arms_at(ema: &HistogramEma, center: i64) -> Option<Arms> {
 /// Output: next reference bin. Internal state is only the adaptive shape profile
 /// used by the slow cold-start regime.
 #[derive(Clone)]
-pub(super) struct Stencil {
+pub struct Stencil {
     shape: ShapeAnchor,
 }
 
 impl Stencil {
-    pub(super) fn new(shape_weight: f64) -> Self {
+    pub fn new(shape_weight: f64) -> Self {
         Self {
             shape: ShapeAnchor::new(shape_weight),
         }
     }
 
-    pub(super) fn pick(
+    pub fn pick(
         &mut self,
         ema: &HistogramEma,
         prev_bin: f64,
@@ -228,12 +228,24 @@ impl<'a> CandidateScorer<'a> {
 }
 
 fn search_range(prev_bin: f64, search_below: usize, search_above: usize) -> Option<Range<usize>> {
+    // A zero historical price maps to +infinity. It has no searchable bin;
+    // preserve that price while the histogram window continues to advance.
+    if !prev_bin.is_finite() {
+        return None;
+    }
     let center = prev_bin.round() as usize;
     let search_start = center.saturating_sub(search_below);
-    let search_end = (center + search_above + 1).min(NUM_BINS);
+    let search_end = center
+        .saturating_add(search_above)
+        .saturating_add(1)
+        .min(NUM_BINS);
 
     (search_start < search_end).then_some(search_start..search_end)
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/stencil.rs"]
+mod tests;
 
 fn arm_peaks(ema: &HistogramEma, range: Range<usize>) -> Arms {
     let mut peaks = Arms([0.0; N_ARMS]);

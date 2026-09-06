@@ -182,7 +182,23 @@ fn generate_get_method(output: &mut String, endpoint: &Endpoint) {
 
 fn generate_post_method(output: &mut String, endpoint: &Endpoint) {
     let method_name = endpoint_to_method_name(endpoint);
-    let return_type = build_return_type(endpoint);
+    // Keep typed action results (notably Txid) when their wire body is text.
+    // Existing GET text methods retain their String API.
+    let return_type = if endpoint.returns_text() {
+        endpoint
+            .schema_name()
+            .map(js_type_to_rust)
+            .unwrap_or_else(|| "String".to_owned())
+    } else {
+        build_return_type(endpoint)
+    };
+    let decode = if endpoint.returns_text() && return_type != "String" {
+        format!(
+            "?.parse::<{return_type}>().map_err(|error| BitviewError {{ message: format!(\"Invalid submission response; outcome may be unknown: {{error}}\") }})"
+        )
+    } else {
+        String::new()
+    };
 
     write_method_doc(output, endpoint);
 
@@ -214,16 +230,16 @@ fn generate_post_method(output: &mut String, endpoint: &Endpoint) {
     if endpoint.query_params.is_empty() {
         writeln!(
             output,
-            "        self.base.{}(&format!(\"{}\"{}), {})",
-            fetch_method, path, index_arg, body_arg
+            "        self.base.{}(&format!(\"{}\"{}), {}){}",
+            fetch_method, path, index_arg, body_arg, decode
         )
         .unwrap();
     } else {
         write_query_assembly(output, endpoint, &path, index_arg);
         writeln!(
             output,
-            "        self.base.{}(&path, {})",
-            fetch_method, body_arg
+            "        self.base.{}(&path, {}){}",
+            fetch_method, body_arg, decode
         )
         .unwrap();
     }
@@ -248,6 +264,10 @@ fn build_return_type(endpoint: &Endpoint) -> String {
         base
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/generators/rust/api.rs"]
+mod tests;
 
 fn write_method_doc(output: &mut String, endpoint: &Endpoint) {
     let method_name = endpoint_to_method_name(endpoint);

@@ -2,12 +2,13 @@ use std::str::FromStr;
 
 use aide::{
     OperationInput,
+    generate::GenContext,
+    openapi::Operation,
     operation::{ParamLocation, add_parameters, parameters_from_schema},
 };
 use axum::{extract::FromRequestParts, http::request::Parts};
-use schemars::JsonSchema;
-
 use brk_types::Txid;
+use schemars::JsonSchema;
 
 use crate::Error;
 
@@ -66,10 +67,7 @@ where
 }
 
 impl OperationInput for TxidsParam {
-    fn operation_input(
-        ctx: &mut aide::generate::GenContext,
-        operation: &mut aide::openapi::Operation,
-    ) {
+    fn operation_input(ctx: &mut GenContext, operation: &mut Operation) {
         let schema = ctx.schema.subschema_for::<Self>();
         let params = parameters_from_schema(ctx, schema, ParamLocation::Query);
         add_parameters(ctx, operation, params);

@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::ptr::NonNull;
 
 use rawdb::Region;
@@ -32,37 +34,6 @@ where
     S: RawStrategy<T>,
 {
     const SIZE_OF_T: usize = size_of::<T>();
-
-    pub(crate) fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
-        let from = from.min(stored_len);
-        let to = to.min(stored_len).max(from);
-        let bytes = (to - from) * Self::SIZE_OF_T;
-        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
-
-        if region.prefers_mmap(offset, bytes) {
-            let source = RawMmapSource::new_from_parts(region, stored_len, from, to);
-            let (window, window_len) = source.byte_window();
-            Self {
-                owner: Owner::Mmap { _source: source },
-                window,
-                window_position: 0,
-                window_len,
-                unbuffered_bytes: 0,
-                range_end: to,
-            }
-        } else {
-            Self {
-                owner: Owner::Io {
-                    source: RawIoSource::new_from_parts(region, stored_len, from, to),
-                },
-                window: NonNull::dangling().as_ptr(),
-                window_position: 0,
-                window_len: 0,
-                unbuffered_bytes: bytes,
-                range_end: to,
-            }
-        }
-    }
 
     /// Returns the current absolute vector position.
     #[inline(always)]
@@ -155,6 +126,52 @@ where
     pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
         for _ in 0..n.min(self.remaining()) {
             f(self.next().unwrap());
+        }
+    }
+}
+pub trait VariantsRawSourcesRangeCursorRawRangeCursorAITSInternal<'a, I, T, S>: Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self;
+}
+impl<'a, I, T, S> VariantsRawSourcesRangeCursorRawRangeCursorAITSInternal<'a, I, T, S>
+    for RawRangeCursor<'a, I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
+        let from = from.min(stored_len);
+        let to = to.min(stored_len).max(from);
+        let bytes = (to - from) * Self::SIZE_OF_T;
+        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
+
+        if region.prefers_mmap(offset, bytes) {
+            let source = RawMmapSource::new_from_parts(region, stored_len, from, to);
+            let (window, window_len) = source.byte_window();
+            Self {
+                owner: Owner::Mmap { _source: source },
+                window,
+                window_position: 0,
+                window_len,
+                unbuffered_bytes: 0,
+                range_end: to,
+            }
+        } else {
+            Self {
+                owner: Owner::Io {
+                    source: RawIoSource::new_from_parts(region, stored_len, from, to),
+                },
+                window: NonNull::dangling().as_ptr(),
+                window_position: 0,
+                window_len: 0,
+                unbuffered_bytes: bytes,
+                range_end: to,
+            }
         }
     }
 }

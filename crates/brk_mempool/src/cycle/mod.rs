@@ -1,11 +1,11 @@
 //! Per-cycle types. Every type here lives exactly one tick.
 
-mod added_kind;
-mod addr_transitions;
-mod diff;
-mod event;
-mod tx_added;
-mod tx_removed;
+pub mod added_kind;
+pub mod addr_transitions;
+pub mod diff;
+pub mod event;
+pub mod tx_added;
+pub mod tx_removed;
 
 pub use added_kind::AddedKind;
 pub use addr_transitions::AddrTransitions;

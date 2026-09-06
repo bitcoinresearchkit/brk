@@ -5,34 +5,35 @@ use axum::{
     response::{Html, Redirect, Response},
     routing::get,
 };
+use serde_json::Value;
 
+use super::AppState;
+#[cfg(feature = "series")]
+use crate::api::series::ApiSeriesRoutes;
+#[cfg(feature = "urpd")]
+use crate::api::urpd::ApiUrpdRoutes;
 use crate::{
     Error,
     api::server::ServerRoutes,
     extended::{ResponseExtended, TransformResponseExtended},
 };
 
-#[cfg(feature = "series")]
-use crate::api::series::ApiSeriesRoutes;
-#[cfg(feature = "urpd")]
-use crate::api::urpd::ApiUrpdRoutes;
-#[cfg(all(feature = "series", feature = "urpd"))]
-use crate::api::{metrics::ApiMetricsLegacyRoutes, series_legacy::ApiSeriesLegacyRoutes};
-
-use super::AppState;
-
 #[cfg(feature = "chain")]
 mod addrs;
 #[cfg(feature = "chain")]
 mod blocks;
 #[cfg(feature = "chain")]
+pub mod broadcast;
+#[cfg(feature = "chain")]
 mod fees;
 #[cfg(feature = "chain")]
 mod general;
 #[cfg(feature = "chain")]
+mod historical_price;
+#[cfg(feature = "chain")]
 mod mempool;
-#[cfg(all(feature = "series", feature = "urpd"))]
-mod metrics;
+#[cfg(feature = "chain")]
+mod mempool_txids;
 #[cfg(feature = "chain")]
 mod mining;
 mod openapi;
@@ -40,8 +41,6 @@ mod openapi;
 mod oracle;
 #[cfg(feature = "series")]
 mod series;
-#[cfg(all(feature = "series", feature = "urpd"))]
-mod series_legacy;
 mod server;
 #[cfg(feature = "chain")]
 mod transactions;
@@ -70,15 +69,15 @@ pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
 }
 
+#[cfg(test)]
+#[path = "../../tests/unit/api.rs"]
+mod tests;
+
 impl ApiRoutes for ApiRouter<AppState> {
     fn add_api_routes(self) -> Self {
         let router = self.add_server_routes();
         #[cfg(feature = "series")]
         let router = router.add_series_routes();
-        #[cfg(all(feature = "series", feature = "urpd"))]
-        let router = router
-            .add_series_legacy_routes()
-            .add_metrics_legacy_routes();
         #[cfg(feature = "urpd")]
         let router = router.add_urpd_routes();
         #[cfg(feature = "chain")]
@@ -129,7 +128,7 @@ impl ApiRoutes for ApiRouter<AppState> {
                                  Removes redundant fields while preserving essential API information. \
                                  The full specification is available at `GET /openapi.json`.",
                             )
-                            .json_response::<serde_json::Value>()
+                            .json_response::<Value>()
                     },
                 ),
             )

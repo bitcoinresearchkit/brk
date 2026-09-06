@@ -1,3 +1,5 @@
+use crate::LevelPolicy as _;
+
 use crate::{
     InternalValue, Result, Slice, Table, Tree, ValueType,
     config::{BloomConstructionPolicy, FilterPolicyEntry},
@@ -30,24 +32,38 @@ impl<'a> Ingestion<'a> {
         )?
         .use_bloom_policy(if config.expect_point_read_hits {
             BloomConstructionPolicy::BitsPerKey(0.0)
-        } else if let FilterPolicyEntry::Bloom(policy) = config.filter_policy.get(INGESTION_LEVEL) {
+        } else if let FilterPolicyEntry::Bloom(policy) =
+            config.filter_policy.at_level(INGESTION_LEVEL)
+        {
             policy
         } else {
             BloomConstructionPolicy::BitsPerKey(0.0)
         })
-        .use_data_block_size(config.data_block_size_policy.get(INGESTION_LEVEL))
-        .use_data_block_hash_ratio(config.data_block_hash_ratio_policy.get(INGESTION_LEVEL))
-        .use_data_block_compression(config.data_block_compression_policy.get(INGESTION_LEVEL))
-        .use_index_block_compression(config.index_block_compression_policy.get(INGESTION_LEVEL))
+        .use_data_block_size(config.data_block_size_policy.at_level(INGESTION_LEVEL))
+        .use_data_block_hash_ratio(
+            config
+                .data_block_hash_ratio_policy
+                .at_level(INGESTION_LEVEL),
+        )
+        .use_data_block_compression(
+            config
+                .data_block_compression_policy
+                .at_level(INGESTION_LEVEL),
+        )
+        .use_index_block_compression(
+            config
+                .index_block_compression_policy
+                .at_level(INGESTION_LEVEL),
+        )
         .use_data_block_restart_interval(
             config
                 .data_block_restart_interval_policy
-                .get(INGESTION_LEVEL),
+                .at_level(INGESTION_LEVEL),
         )
         .use_index_block_restart_interval(
             config
                 .index_block_restart_interval_policy
-                .get(INGESTION_LEVEL),
+                .at_level(INGESTION_LEVEL),
         );
 
         if config.index_block_partitioning_policy.get(INGESTION_LEVEL) {

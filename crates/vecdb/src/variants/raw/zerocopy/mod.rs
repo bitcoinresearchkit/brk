@@ -1,9 +1,11 @@
-use crate::{AnyStoredVec, Format, ReadOnlyRawVec, VecIndex, VecReader, impl_vec_wrapper};
+use crate::internals::*;
+
+use crate::{AnyStoredVec, Format, ReadOnlyRawVec, VecIndex, VecReader};
 
 use super::ReadWriteRawVec;
 
-mod strategy;
-mod value;
+pub mod strategy;
+pub mod value;
 
 pub use strategy::*;
 pub use value::*;
@@ -36,7 +38,7 @@ pub use value::*;
 /// - Sharing data between different architectures
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct ZeroCopyVec<I, T>(pub(crate) ReadWriteRawVec<I, T, ZeroCopyStrategy<T>>);
+pub struct ZeroCopyVec<I, T>(ReadWriteRawVec<I, T, ZeroCopyStrategy<T>>);
 
 impl<I, T> ZeroCopyVec<I, T>
 where
@@ -98,3 +100,5 @@ impl_vec_wrapper!(
     ReadOnlyRawVec<I, T, ZeroCopyStrategy<T>>,
     no_deref_mut
 );
+
+impl_mutable_raw_vec!(ZeroCopyVec, ZeroCopyVecValue, ZeroCopyStrategy, VecReader<I, T, ZeroCopyStrategy<T>>);

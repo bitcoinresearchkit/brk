@@ -1027,6 +1027,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
+ "tempfile",
  "tokio",
  "vecdb",
 ]
@@ -1062,15 +1063,26 @@ version = "0.12.2"
 dependencies = [
  "aide",
  "axum",
- "bitview_bindgen",
+ "bitcoin",
+ "bitview_default",
+ "bitview_plugin",
+ "bitview_plugin_distribution",
+ "bitview_plugin_indexer",
+ "bitview_plugin_price",
  "bitview_query",
+ "bitview_runtime",
  "bitview_traversable",
  "bitview_types",
  "bitview_website",
  "brk_error",
+ "brk_exit",
+ "brk_mempool",
  "brk_oracle",
+ "brk_reader",
+ "brk_rpc",
  "brk_types",
  "derive_more",
+ "http-body",
  "jiff",
  "parking_lot",
  "rayon",
@@ -1080,6 +1092,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+ "tower",
  "tower-http",
  "tower-layer",
  "tracing",
@@ -1194,6 +1207,15 @@ version = "0.12.2"
 dependencies = [
  "derive_more",
  "plotters",
+]
+
+[[package]]
+name = "bitviewd_latency"
+version = "0.12.2"
+dependencies = [
+ "bitviewd",
+ "jiff",
+ "tempfile",
 ]
 
 [[package]]
@@ -1355,6 +1377,7 @@ dependencies = [
  "indexmap",
  "parking_lot",
  "rustc-hash",
+ "serde_json",
  "smallvec",
  "tracing",
 ]
@@ -1393,6 +1416,7 @@ dependencies = [
  "parking_lot",
  "rlimit",
  "rustc-hash",
+ "tempfile",
  "tracing",
 ]
 
@@ -1400,17 +1424,24 @@ dependencies = [
 name = "brk_rpc"
 version = "0.12.2"
 dependencies = [
+ "base64 0.22.1",
  "bitcoin",
  "brk_error",
  "brk_logger",
  "brk_types",
  "corepc-types",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
  "jsonrpc",
  "parking_lot",
  "rustc-hash",
  "serde",
  "serde_json",
+ "tempfile",
+ "tokio",
  "tracing",
+ "ureq",
 ]
 
 [[package]]
@@ -2513,6 +2544,7 @@ dependencies = [
  "pin-project-lite",
  "smallvec",
  "tokio",
+ "want",
 ]
 
 [[package]]
@@ -4361,6 +4393,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "try-lock"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
 name = "ttf-parser"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4530,6 +4568,15 @@ checksum = "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
 dependencies = [
  "same-file",
  "winapi-util",
+]
+
+[[package]]
+name = "want"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa7760aed19e106de2c7c0b581b509f2f25d3dacaf737cb82ac61bc6d760b0e"
+dependencies = [
+ "try-lock",
 ]
 
 [[package]]

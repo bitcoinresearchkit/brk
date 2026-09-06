@@ -1,19 +1,19 @@
-mod inner;
+pub mod inner;
 #[cfg(feature = "lz4")]
-mod lz4;
+pub mod lz4;
 #[cfg(feature = "pco")]
-mod pco;
-mod sources;
+pub mod pco;
+pub mod sources;
 #[cfg(feature = "zstd")]
-mod zstd;
+pub mod zstd;
 
-pub(crate) use inner::*;
+pub use inner::*;
 pub use inner::{CompressionStrategy, EncodedChunk, ReadOnlyCompressedVec};
 #[cfg(feature = "lz4")]
 pub use lz4::*;
 #[cfg(feature = "pco")]
 pub use pco::*;
 pub use sources::CompressedRangeCursor;
-pub(crate) use sources::*;
+pub use sources::*;
 #[cfg(feature = "zstd")]
 pub use zstd::*;

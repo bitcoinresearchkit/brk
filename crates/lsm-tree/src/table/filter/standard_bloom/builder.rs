@@ -18,10 +18,10 @@ pub struct Builder {
     inner: BitArrayBuilder,
 
     /// Bit count
-    pub(super) m: usize,
+    pub m: usize,
 
     /// Number of hash functions
-    pub(super) k: usize,
+    pub k: usize,
 }
 
 impl Builder {
@@ -126,7 +126,7 @@ impl Builder {
         }
     }
 
-    pub(crate) fn calculate_m(n: usize, fp_rate: f32) -> usize {
+    pub fn calculate_m(n: usize, fp_rate: f32) -> usize {
         use std::f32::consts::LN_2;
 
         #[expect(

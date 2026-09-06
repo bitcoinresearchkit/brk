@@ -6,7 +6,7 @@ use std::{
 use pco::wrapped::{ChunkDecompressor, FileCompressor, FileDecompressor};
 use pco::{ChunkConfig, PagingSpec};
 
-use crate::{EncodedChunk, Error, impl_bytes_value_strategy, likely};
+use crate::{EncodedChunk, Error, likely};
 
 use super::{super::inner::CompressionStrategy, value::PcoVecValue};
 

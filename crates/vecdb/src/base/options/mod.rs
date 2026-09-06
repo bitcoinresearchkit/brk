@@ -1,6 +1,6 @@
 use rawdb::Database;
 
-mod from;
+pub mod from;
 
 use crate::Version;
 

@@ -11,12 +11,12 @@ use super::{Header, SharedLen};
 /// Contains region (I/O), shared length (bounds), name/header (metadata).
 /// No pushed buffers, no rollback state.
 #[derive(Debug, Clone)]
-pub(crate) struct ReadOnlyBaseVec<I, T> {
-    pub(crate) region: Region,
-    pub(crate) stored_len: SharedLen,
-    pub(crate) name: Arc<str>,
-    pub(crate) header: Header,
-    pub(crate) phantom: PhantomData<(I, T)>,
+pub struct ReadOnlyBaseVec<I, T> {
+    pub region: Region,
+    pub stored_len: SharedLen,
+    pub name: Arc<str>,
+    pub header: Header,
+    pub phantom: PhantomData<(I, T)>,
 }
 
 impl<I, T> ReadOnlyBaseVec<I, T>

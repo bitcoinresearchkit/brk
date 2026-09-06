@@ -1,26 +1,30 @@
-use brk_error::{OptionData, Result};
+use crate::internals::*;
+
+use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockHash, Height, Timestamp, TxInIndex, TxIndex, TxOutIndex, TxOutspend, TxStatus, Txid, Vin,
     Vout,
 };
+use serde_json::to_vec;
 use vecdb::{ReadableVec, VecIndex};
 
 use crate::{Query, RepresentationId};
 
-#[cfg(test)]
-use crate::representation_id::content_hash;
-
 impl Query {
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        if let Some(outspend) = self
-            .mempool()
-            .and_then(|mempool| mempool.outspend_if_present(txid, vout))
-        {
-            return Ok(outspend);
-        }
-
-        let _guard = self.read_plugin(self.plugins().outputs)?;
-        let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.outputs])?;
+        let (_, first_txout, output_count) = match self.resolve_tx_outputs(txid) {
+            Ok(outputs) => outputs,
+            Err(Error::UnknownTxid) => {
+                return self
+                    .mempool()
+                    .ok_or(Error::UnknownTxid)?
+                    .outspend_if_present(txid, vout, &self.tip_blockhash())?
+                    .ok_or(Error::UnknownTxid);
+            }
+            Err(error) => return Err(error),
+        };
         if usize::from(vout) >= output_count {
             return Ok(TxOutspend::UNSPENT);
         }
@@ -28,31 +32,35 @@ impl Query {
         if confirmed.spent {
             return Ok(confirmed);
         }
-        Ok(self.mempool_outspend(txid, vout))
+        self.mempool_outspend(txid, vout)
     }
 
     /// Resolve and serialize one outspend exactly once, identifying confirmed
     /// results by their spending block and live results by their content.
     pub fn outspend_json(&self, txid: &Txid, vout: Vout) -> Result<(Vec<u8>, RepresentationId)> {
         let outspend = self.outspend(txid, vout)?;
-        let bytes = serde_json::to_vec(&outspend).unwrap();
+        let bytes = to_vec(&outspend).unwrap();
         let identity = outspend_identity(&outspend, &bytes);
         Ok((bytes, identity))
     }
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
-        if let Some(outspends) = self
-            .mempool()
-            .and_then(|mempool| mempool.outspends_if_present(txid))
-        {
-            return Ok(outspends);
-        }
-
-        let _guard = self.read_plugin(self.plugins().outputs)?;
-        let (_, first_txout, output_count) = self.resolve_tx_outputs(txid)?;
+        let plugins = self.plugins();
+        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.outputs])?;
+        let (_, first_txout, output_count) = match self.resolve_tx_outputs(txid) {
+            Ok(outputs) => outputs,
+            Err(Error::UnknownTxid) => {
+                return self
+                    .mempool()
+                    .ok_or(Error::UnknownTxid)?
+                    .outspends_if_present(txid, &self.tip_blockhash())?
+                    .ok_or(Error::UnknownTxid);
+            }
+            Err(error) => return Err(error),
+        };
         let mut outspends = self.resolve_outspends(first_txout, output_count)?;
         if let Some(mempool) = self.mempool() {
-            mempool.merge_outspends(txid, &mut outspends);
+            mempool.merge_outspends(txid, &mut outspends, &self.tip_blockhash())?;
         }
         Ok(outspends)
     }
@@ -62,14 +70,9 @@ impl Query {
     /// live element are identified by their exact content.
     pub fn outspends_json(&self, txid: &Txid) -> Result<(Vec<u8>, RepresentationId)> {
         let outspends = self.outspends(txid)?;
-        let bytes = serde_json::to_vec(&outspends).unwrap();
+        let bytes = to_vec(&outspends).unwrap();
         let identity = outspends_identity(&outspends, &bytes);
         Ok((bytes, identity))
-    }
-
-    pub(super) fn mempool_outspend(&self, txid: &Txid, vout: Vout) -> TxOutspend {
-        self.mempool()
-            .map_or(TxOutspend::UNSPENT, |mempool| mempool.outspend(txid, vout))
     }
 
     /// Resolve spend status for a single output. Minimal reads.
@@ -91,6 +94,10 @@ impl Query {
 
     /// Build a single TxOutspend from a known-spent TxInIndex.
     fn build_outspend(&self, txin_index: TxInIndex) -> Result<TxOutspend> {
+        let bound = self.safe_lengths();
+        if txin_index >= bound.txin_index {
+            return Ok(TxOutspend::UNSPENT);
+        }
         let indexer = self.indexer();
         let spending_tx_index: TxIndex = indexer
             .vecs()
@@ -98,13 +105,16 @@ impl Query {
             .tx_index
             .collect_one(txin_index)
             .data()?;
+        if spending_tx_index >= bound.tx_index {
+            return Ok(TxOutspend::UNSPENT);
+        }
         let spending_first_txin: TxInIndex = indexer
             .vecs()
             .transactions
             .first_txin_index
             .collect_one(spending_tx_index)
             .data()?;
-        let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
+        let vin = checked_vin(txin_index, spending_first_txin)?;
         let spending_txid = indexer
             .vecs()
             .transactions
@@ -112,6 +122,9 @@ impl Query {
             .collect_one(spending_tx_index)
             .data()?;
         let spending_height = self.confirmed_status_height(spending_tx_index)?;
+        if spending_height >= bound.height {
+            return Err(Error::UnknownTxid);
+        }
         let (block_hash, block_time) = self.block_hash_and_time(spending_height)?;
 
         Ok(TxOutspend {
@@ -142,9 +155,11 @@ impl Query {
         let mut cached_status: Option<(Height, BlockHash, Timestamp)> = None;
         let mut outspends = Vec::with_capacity(output_count);
         for index in 0..output_count {
-            let txin_index = txin_index_reader.get(first_txout + Vout::from(index));
+            let txin_index = txin_index_reader
+                .try_get(first_txout + Vout::from(index))
+                .data()?;
 
-            if txin_index == TxInIndex::UNSPENT {
+            if txin_index == TxInIndex::UNSPENT || txin_index >= bound.txin_index {
                 outspends.push(TxOutspend::UNSPENT);
                 continue;
             }
@@ -155,9 +170,12 @@ impl Query {
                 continue;
             }
             let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).data()?;
-            let vin = Vin::from(usize::from(txin_index) - usize::from(spending_first_txin));
-            let spending_txid = txid_reader.get(spending_tx_index);
+            let vin = checked_vin(txin_index, spending_first_txin)?;
+            let spending_txid = txid_reader.try_get(spending_tx_index).data()?;
             let spending_height: Height = tx_heights.get_shared(spending_tx_index).data()?;
+            if spending_height >= bound.height {
+                return Err(Error::UnknownTxid);
+            }
 
             let (block_hash, block_time) = if let Some((height, hash, time)) = cached_status
                 && height == spending_height
@@ -179,6 +197,14 @@ impl Query {
 
         Ok(outspends)
     }
+}
+
+fn checked_vin(input: TxInIndex, first: TxInIndex) -> Result<Vin> {
+    usize::from(input)
+        .checked_sub(usize::from(first))
+        .filter(|vin| *vin <= usize::from(u16::MAX))
+        .map(Vin::from)
+        .ok_or(Error::Internal("Invalid spending input position"))
 }
 
 fn outspend_identity(outspend: &TxOutspend, bytes: &[u8]) -> RepresentationId {
@@ -226,105 +252,12 @@ fn outspends_identity(outspends: &[TxOutspend], bytes: &[u8]) -> RepresentationI
 }
 
 #[cfg(test)]
-mod tests {
-    use brk_types::{BlockHash, Height, Timestamp};
-
-    use super::*;
-
-    #[test]
-    fn identity_is_content_based_until_a_spending_block_is_known() {
-        let bytes = br#"{"spent":false}"#;
-        assert!(matches!(
-            outspend_identity(&TxOutspend::UNSPENT, bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-
-        let unconfirmed = TxOutspend {
-            spent: true,
-            txid: Some(Txid::COINBASE),
-            vin: Some(Vin::from(0usize)),
-            status: Some(TxStatus::UNCONFIRMED),
-        };
-        assert!(matches!(
-            outspend_identity(&unconfirmed, bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-
-        let hash = BlockHash::default();
-        let height = Height::new(42);
-        let confirmed = TxOutspend {
-            status: Some(TxStatus::confirmed(height, hash, Timestamp::ZERO)),
-            ..unconfirmed
-        };
-        assert!(matches!(
-            outspend_identity(&confirmed, bytes),
-            RepresentationId::Block {
-                hash: bound_hash,
-                height: bound_height,
-            } if bound_hash == hash && bound_height == height
-        ));
-    }
-
-    #[test]
-    fn array_identity_uses_content_until_every_spend_is_confirmed() {
-        let bytes = br#"[{"spent":false}]"#;
-        assert!(matches!(
-            outspends_identity(&[], bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-        assert!(matches!(
-            outspends_identity(&[TxOutspend::UNSPENT], bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-
-        let unconfirmed = TxOutspend {
-            spent: true,
-            txid: Some(Txid::COINBASE),
-            vin: Some(Vin::from(0usize)),
-            status: Some(TxStatus::UNCONFIRMED),
-        };
-        assert!(matches!(
-            outspends_identity(&[unconfirmed], bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-
-        let confirmed = TxOutspend {
-            spent: true,
-            txid: Some(Txid::COINBASE),
-            vin: Some(Vin::from(0usize)),
-            status: Some(TxStatus::confirmed(
-                Height::new(10),
-                BlockHash::default(),
-                Timestamp::ZERO,
-            )),
-        };
-        assert!(matches!(
-            outspends_identity(&[confirmed, TxOutspend::UNSPENT], bytes),
-            RepresentationId::Content(hash) if hash == content_hash(bytes)
-        ));
-    }
-
-    #[test]
-    fn array_identity_uses_the_newest_confirmed_spending_block() {
-        let older_hash = BlockHash::default();
-        let newer_hash =
-            BlockHash::try_from("0000000000000000000000000000000000000000000000000000000000000001")
-                .unwrap();
-        let confirmed = |hash, height| TxOutspend {
-            spent: true,
-            txid: Some(Txid::COINBASE),
-            vin: Some(Vin::from(0usize)),
-            status: Some(TxStatus::confirmed(height, hash, Timestamp::ZERO)),
-        };
-        let outspends = [
-            confirmed(newer_hash, Height::new(20)),
-            confirmed(older_hash, Height::new(10)),
-        ];
-
-        assert!(matches!(
-            outspends_identity(&outspends, b"ignored"),
-            RepresentationId::Block { hash, height }
-                if hash == newer_hash && height == Height::new(20)
-        ));
+#[path = "../../../tests/unit/impl/tx/outspend.rs"]
+mod tests;
+impl Query {
+    fn mempool_outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
+        self.mempool().map_or(Ok(TxOutspend::UNSPENT), |mempool| {
+            mempool.outspend(txid, vout, &self.tip_blockhash())
+        })
     }
 }

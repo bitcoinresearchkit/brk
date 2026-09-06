@@ -293,7 +293,11 @@ fn extract_response_kind(operation: &Operation, spec: &Spec) -> ResponseKind {
             schema_name_from_content(content).unwrap_or_else(|| "*".to_string()),
         );
     }
-    if let Some(content) = response.content.get("text/plain; charset=utf-8") {
+    if let Some(content) = response
+        .content
+        .get("text/plain; charset=utf-8")
+        .or_else(|| response.content.get("text/plain"))
+    {
         let schema = schema_name_from_content(content).map(|name| {
             let is_numeric = is_numeric_schema(spec, &name);
             TextSchema { name, is_numeric }
@@ -412,95 +416,5 @@ fn single_type_to_name(t: &SchemaType, schema: &ObjectSchema) -> Option<String> 
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn extracts_mcp_ignore_without_disabling_client_generation() {
-        let spec = parse_openapi_json(
-            r#"{
-                "openapi": "3.1.0",
-                "info": { "title": "Test", "version": "1" },
-                "paths": {
-                    "/api/items": {
-                        "get": {
-                            "operationId": "get_items",
-                            "x-mcp-ignore": true,
-                            "responses": {
-                                "200": { "description": "Successful response" }
-                            }
-                        }
-                    }
-                }
-            }"#,
-        )
-        .unwrap();
-        let endpoint = extract_endpoints(&spec).into_iter().next().unwrap();
-
-        assert!(endpoint.mcp_ignored);
-        assert!(endpoint.should_generate());
-    }
-
-    #[test]
-    fn extracts_request_body_media_type() {
-        let spec = parse_openapi_json(
-            r#"{
-                "openapi": "3.1.0",
-                "info": { "title": "Test", "version": "1" },
-                "paths": {
-                    "/api/items": {
-                        "post": {
-                            "operationId": "post_items",
-                            "requestBody": {
-                                "required": true,
-                                "content": {
-                                    "application/json": {
-                                        "schema": { "type": "object" }
-                                    }
-                                }
-                            },
-                            "responses": {
-                                "200": { "description": "Successful response" }
-                            }
-                        }
-                    }
-                }
-            }"#,
-        )
-        .unwrap();
-        let body = extract_endpoints(&spec)
-            .into_iter()
-            .next()
-            .unwrap()
-            .request_body
-            .unwrap();
-
-        assert_eq!(body.body_type, "Object");
-        assert_eq!(body.content_type, "application/json");
-        assert!(body.required);
-    }
-
-    #[test]
-    fn extracts_every_openapi_http_method() {
-        let spec = parse_openapi_json(
-            r#"{
-                "openapi": "3.1.0",
-                "info": { "title": "Test", "version": "1" },
-                "paths": {
-                    "/api/trace": {
-                        "trace": {
-                            "operationId": "trace_items",
-                            "responses": {
-                                "200": { "description": "Successful response" }
-                            }
-                        }
-                    }
-                }
-            }"#,
-        )
-        .unwrap();
-        let endpoint = extract_endpoints(&spec).into_iter().next().unwrap();
-
-        assert_eq!(endpoint.method, "TRACE");
-    }
-}
+#[path = "../../tests/unit/openapi.rs"]
+mod tests;

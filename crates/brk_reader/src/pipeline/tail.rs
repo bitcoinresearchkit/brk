@@ -14,7 +14,7 @@ use crate::{
 
 const TAIL_CHUNK: usize = 8 * 1024 * 1024;
 
-pub(super) fn pipeline_tail(
+pub fn pipeline_tail(
     client: &Client,
     paths: &BlkIndexToBlkPath,
     xor_bytes: XORBytes,

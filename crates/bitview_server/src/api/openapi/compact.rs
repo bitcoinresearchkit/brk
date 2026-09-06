@@ -1,6 +1,6 @@
 use aide::openapi::OpenApi;
 use axum::body::Bytes;
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, from_str, to_string};
 
 /// Compact OpenAPI spec optimized for LLM consumption.
 /// Pre-serialized at startup, served as raw bytes per request.
@@ -9,7 +9,7 @@ pub struct ApiJson(Bytes);
 
 impl ApiJson {
     pub fn new(openapi: &OpenApi) -> Self {
-        let json = serde_json::to_string(openapi).unwrap();
+        let json = to_string(openapi).unwrap();
         Self(Bytes::from(compact_json(&json)))
     }
 
@@ -43,7 +43,7 @@ impl ApiJson {
 /// 18. Flatten single-element type arrays
 /// 19. Replace large enums (>40 values) with string type
 fn compact_json(json: &str) -> String {
-    let mut spec: Value = serde_json::from_str(json).expect("Invalid OpenAPI JSON");
+    let mut spec: Value = from_str(json).expect("Invalid OpenAPI JSON");
 
     // Step 1: Remove deprecated endpoints from paths
     if let Some(Value::Object(paths)) = spec.get_mut("paths") {
@@ -71,7 +71,7 @@ fn compact_json(json: &str) -> String {
     }
 
     compact_value(&mut spec);
-    serde_json::to_string(&spec).unwrap()
+    to_string(&spec).unwrap()
 }
 
 fn compact_value(value: &mut Value) {
@@ -421,7 +421,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         // Property should be simplified to array, not {"type": [...]}
         let index = &parsed["properties"]["index"];
@@ -446,7 +446,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         // Parameter should have type array including null
         let param = &parsed["parameters"][0];
@@ -467,7 +467,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         // Property with $ref should be simplified to just the type name
         assert_eq!(parsed["properties"]["txid"], "Txid");
@@ -495,7 +495,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         let props = &parsed["components"]["schemas"]["AddressStats"]["properties"];
         assert_eq!(props["address"], "Address", "address should be simplified");
@@ -521,7 +521,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         assert_eq!(parsed["properties"]["address"], "Address");
     }
@@ -541,7 +541,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         // Array with $ref items should be simplified to "array[Type]"
         assert_eq!(parsed["properties"]["vin"], "array[TxIn]");
@@ -564,7 +564,7 @@ mod tests {
         }"##;
 
         let result = compact_json(input);
-        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let parsed: Value = from_str(&result).unwrap();
 
         assert_eq!(parsed["returns"], "Block");
         assert!(parsed.get("responses").is_none());

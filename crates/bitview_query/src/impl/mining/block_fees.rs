@@ -1,4 +1,5 @@
-use brk_types::{BlockFeesEntry, Cents, Dollars, Sats, TimePeriod};
+use brk_error::Result;
+use brk_types::{BlockFeesEntry, Cents, Sats, TimePeriod};
 
 use super::block_window::BlockWindow;
 use crate::Query;
@@ -9,7 +10,8 @@ impl Query {
     /// average height/timestamp, the round-half-up mean of block fees in
     /// sats, and the bucket-mean USD spot price (the spot price, not
     /// fees-in-USD: clients multiply).
-    pub fn block_fees(&self, time_period: TimePeriod) -> brk_error::Result<Vec<BlockFeesEntry>> {
+    pub fn block_fees(&self, time_period: TimePeriod) -> Result<Vec<BlockFeesEntry>> {
+        let _guard = self.read_plugin(self.indexer())?;
         let bw = BlockWindow::new(self, time_period)?;
         let fees: Vec<Sats> = bw.read(&self.plugins().mining.rewards.fees.block.sats)?;
         let prices: Vec<Cents> = bw.read(&self.plugins().price.spot.cents.height)?;
@@ -21,7 +23,7 @@ impl Query {
                 avg_height: b.avg_height,
                 timestamp: b.avg_timestamp,
                 avg_fees: b.mean_rounded(&fees),
-                usd: Dollars::from(b.mean_rounded(&prices)),
+                usd: b.mean_price(&prices),
             })
             .collect())
     }

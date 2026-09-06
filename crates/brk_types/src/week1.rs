@@ -1,13 +1,18 @@
 use std::{
-    fmt::Debug,
+    fmt::{self, Debug},
     ops::{Add, AddAssign, Div},
 };
 
+use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
 
 use super::{Date, Day1, Timestamp};
+
+#[cfg(test)]
+#[path = "../benches/unit/week1.rs"]
+mod bench;
 
 #[derive(
     Debug,
@@ -91,31 +96,26 @@ impl Add<usize> for Week1 {
 impl From<Day1> for Week1 {
     #[inline]
     fn from(value: Day1) -> Self {
-        Self::from(Date::from(value))
+        Self(((usize::from(value) + 3) / 7) as u16)
     }
 }
 
-impl From<Date> for Week1 {
+impl TryFrom<Date> for Week1 {
+    type Error = Error;
+
     #[inline]
-    fn from(value: Date) -> Self {
-        let date = jiff::civil::Date::from(value).iso_week_date();
-
-        let mut week: u16 = 0;
-        let mut year = 2009;
-
-        while date.year() > year {
-            let d = jiff::civil::Date::new(year, 6, 6).unwrap();
-            let i = d.iso_week_date();
-            let w = i.weeks_in_year();
-            week += w as u16;
-            year += 1;
-        }
-
-        week += date.week() as u16;
-
-        week -= 1;
-
-        Self(week)
+    fn try_from(value: Date) -> Result<Self> {
+        // ISO week 2009-W01 starts three days before the daily epoch.
+        let days = value
+            .try_into_jiff()?
+            .duration_since(Date::INDEX_ZERO_)
+            .as_secs()
+            / 86_400
+            + 3;
+        let days = u32::try_from(days).map_err(|_| Error::UnindexableDate)?;
+        u16::try_from(days / 7)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 
@@ -135,8 +135,8 @@ impl PrintableIndex for Week1 {
     }
 }
 
-impl std::fmt::Display for Week1 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Week1 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut buf = itoa::Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)

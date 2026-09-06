@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, File},
+    fs::File,
     io,
     ops::Range,
     os::unix::fs::FileExt,
@@ -7,11 +7,22 @@ use std::{
 };
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregateId};
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_types::{CentsCompact, Date, Sats, UrpdRaw};
 use vecdb::ColumnId;
 
 use super::{AgeRangeUrpds, DIR_NAME, HEADER_LEN};
+
+#[path = "encoded.rs"]
+mod encoded;
+
+/// Owned compressed input for one aggregate, captured under publication protection.
+pub struct EncodedAgeRangeUrpds {
+    data: Vec<u8>,
+    ranges: AgeRange<Range<usize>>,
+    start: usize,
+    id: UTXOAggregateId,
+}
 
 impl AgeRangeUrpds {
     pub fn dir(states_path: &Path) -> PathBuf {
@@ -23,13 +34,7 @@ impl AgeRangeUrpds {
     }
 
     pub fn read(states_path: &Path, date: Date) -> Result<Self> {
-        let path = Self::path(states_path, date);
-        let data = fs::read(&path).map_err(|error| {
-            io::Error::new(
-                error.kind(),
-                format!("Cannot read age-range URPD '{}': {error}", path.display()),
-            )
-        })?;
+        let data = Self::read_bytes(states_path, date)?;
         let ranges = Self::ranges(&data, data.len())?;
         let entries = AgeRange::try_from_fn(|id| {
             UrpdRaw::deserialize_entries(&data[id.select(&ranges).clone()])
@@ -37,20 +42,54 @@ impl AgeRangeUrpds {
         Ok(Self { entries })
     }
 
-    pub fn read_one(states_path: &Path, id: AgeRangeId, date: Date) -> Result<UrpdRaw> {
+    fn read_bytes(states_path: &Path, date: Date) -> Result<Vec<u8>> {
         let path = Self::path(states_path, date);
-        let (file, ranges) = Self::open(&path)?;
-        let range = id.select(&ranges);
-        let mut data = vec![0; range.len()];
-        file.read_exact_at(&mut data, range.start as u64)?;
+        let data = UrpdRaw::read_encoded_file(&path).map_err(|error| {
+            io::Error::new(
+                error.kind(),
+                format!("Cannot read age-range URPD '{}': {error}", path.display()),
+            )
+        })?;
+        Ok(data)
+    }
+
+    pub fn read_one(states_path: &Path, id: AgeRangeId, date: Date) -> Result<UrpdRaw> {
+        let data = Self::read_one_bytes(states_path, id, date)?;
         Ok(UrpdRaw {
             map: UrpdRaw::deserialize_entries(&data)?.into_iter().collect(),
         })
     }
 
+    /// Read one encoded section without decompressing it or loading other cohorts.
+    /// Callers must hold the producer's publication guard during the file read.
+    pub fn read_one_bytes(states_path: &Path, id: AgeRangeId, date: Date) -> Result<Vec<u8>> {
+        let path = Self::path(states_path, date);
+        let (file, ranges) = Self::open(&path)?;
+        let range = id.select(&ranges);
+        let mut data = vec![0; range.len()];
+        file.read_exact_at(&mut data, range.start as u64)?;
+        Ok(data)
+    }
+
     pub fn read_aggregate(states_path: &Path, id: UTXOAggregateId, date: Date) -> Result<UrpdRaw> {
+        Self::read_aggregate_encoded(states_path, id, date)?.decode()
+    }
+
+    /// Capture encoded aggregate input while holding the producer's publication guard.
+    pub fn read_aggregate_encoded(
+        states_path: &Path,
+        id: UTXOAggregateId,
+        date: Date,
+    ) -> Result<EncodedAgeRangeUrpds> {
         if id == UTXOAggregateId::All {
-            return Ok(Self::read(states_path, date)?.aggregate(id));
+            let data = Self::read_bytes(states_path, date)?;
+            let ranges = Self::ranges(&data, data.len())?;
+            return Ok(EncodedAgeRangeUrpds {
+                data,
+                ranges,
+                start: 0,
+                id,
+            });
         }
 
         let path = Self::path(states_path, date);
@@ -67,14 +106,11 @@ impl AgeRangeUrpds {
         let mut data = vec![0; end - start];
         file.read_exact_at(&mut data, start as u64)?;
 
-        let entries = ids.iter().try_fold(Vec::new(), |left, id| {
-            let range = id.select(&ranges);
-            let section = &data[range.start - start..range.end - start];
-            let right = UrpdRaw::deserialize_entries(section)?;
-            Ok::<_, Error>(Self::merge_sorted(&left, &right))
-        })?;
-        Ok(UrpdRaw {
-            map: entries.into_iter().collect(),
+        Ok(EncodedAgeRangeUrpds {
+            data,
+            ranges,
+            start,
+            id,
         })
     }
 
@@ -86,8 +122,12 @@ impl AgeRangeUrpds {
             )
         })?;
         let mut header = [0; HEADER_LEN];
+        let file_len = file.metadata()?.len();
+        if file_len > UrpdRaw::MAX_ENCODED_BYTES as u64 {
+            return Err(Self::invalid("file exceeds snapshot limit"));
+        }
         file.read_exact_at(&mut header, 0)?;
-        let ranges = Self::ranges(&header, file.metadata()?.len() as usize)?;
+        let ranges = Self::ranges(&header, file_len as usize)?;
         Ok((file, ranges))
     }
 

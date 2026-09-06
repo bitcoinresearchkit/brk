@@ -106,11 +106,4 @@ impl Exit {
             exit(0);
         });
     }
-
-    /// Acquires a read lock to protect a critical section from shutdown.
-    /// The shutdown thread will wait for all read locks to be released before exiting.
-    /// Returns an owned guard that is Send + 'static (can be moved to background threads).
-    pub fn lock(&self) -> ExitGuard {
-        ExitGuard::new(&self.lock)
-    }
 }

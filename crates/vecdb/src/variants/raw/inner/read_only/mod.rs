@@ -1,8 +1,10 @@
+use crate::internals::*;
+
 use std::marker::PhantomData;
 
-mod any_vec;
-mod readable;
-mod typed;
+pub mod any_vec;
+pub mod readable;
+pub mod typed;
 
 use crate::{
     Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, ReadOnlyBaseVec, Stamp,
@@ -20,17 +22,8 @@ use super::RawStrategy;
 /// Created via `ReadWriteRawVec::read_only_clone`.
 #[derive(Debug, Clone)]
 pub struct ReadOnlyRawVec<I, T, S> {
-    pub(super) base: ReadOnlyBaseVec<I, T>,
+    base: ReadOnlyBaseVec<I, T>,
     _strategy: PhantomData<S>,
-}
-
-impl<I, T, S> ReadOnlyRawVec<I, T, S> {
-    pub(crate) fn new(base: ReadOnlyBaseVec<I, T>) -> Self {
-        Self {
-            base,
-            _strategy: PhantomData,
-        }
-    }
 }
 
 impl<I, T, S> ReadOnlyRawVec<I, T, S>
@@ -39,14 +32,6 @@ where
     T: VecValue,
     S: RawStrategy<T>,
 {
-    pub(crate) fn region(&self) -> &rawdb::Region {
-        self.base.region()
-    }
-
-    pub(crate) fn stored_len(&self) -> usize {
-        self.base.stored_len()
-    }
-
     #[inline]
     pub fn stamp(&self) -> Stamp {
         self.base.header().stamp()
@@ -82,9 +67,60 @@ where
     pub fn read_once(&self, index: I) -> crate::Result<T> {
         self.read_at_once(index.to_usize())
     }
+}
+pub trait VariantsRawInnerReadOnlyReadOnlyRawVecITSInternalCtor<I, T, S>: Sized {
+    fn new(base: ReadOnlyBaseVec<I, T>) -> Self;
+}
+impl<I, T, S> VariantsRawInnerReadOnlyReadOnlyRawVecITSInternalCtor<I, T, S>
+    for ReadOnlyRawVec<I, T, S>
+{
+    fn new(base: ReadOnlyBaseVec<I, T>) -> Self {
+        Self {
+            base,
+            _strategy: PhantomData,
+        }
+    }
+}
 
+pub trait VariantsRawInnerReadOnlyReadOnlyRawVecITSInternal<I, T, S>: Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn region(&self) -> &rawdb::Region;
+    fn stored_len(&self) -> usize;
+    fn fold_source<B, F: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        len: usize,
+        init: B,
+        f: F,
+    ) -> B;
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+        &self,
+        from: usize,
+        to: usize,
+        len: usize,
+        init: B,
+        f: F,
+    ) -> std::result::Result<B, E>;
+}
+impl<I, T, S> VariantsRawInnerReadOnlyReadOnlyRawVecITSInternal<I, T, S> for ReadOnlyRawVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: RawStrategy<T>,
+{
+    fn region(&self) -> &rawdb::Region {
+        self.base.region()
+    }
+    fn stored_len(&self) -> usize {
+        self.base.stored_len()
+    }
     #[inline(always)]
-    pub(super) fn fold_source<B, F: FnMut(B, T) -> B>(
+    fn fold_source<B, F: FnMut(B, T) -> B>(
         &self,
         from: usize,
         to: usize,
@@ -101,9 +137,8 @@ where
             RawIoSource::<I, T, S>::new_from_parts(self.base.region(), len, from, to).fold(init, f)
         }
     }
-
     #[inline(always)]
-    pub(super) fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         &self,
         from: usize,
         to: usize,

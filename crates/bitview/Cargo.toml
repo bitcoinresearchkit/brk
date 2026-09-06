@@ -45,7 +45,6 @@ urpd = [
     "price",
     "bitview_server/urpd",
 ]
-bindgen = ["bitview_server/bindgen"]
 
 [dependencies]
 brk_exit = { workspace = true }

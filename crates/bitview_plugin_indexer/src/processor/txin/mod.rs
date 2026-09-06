@@ -1,5 +1,5 @@
-mod resolver;
-mod source;
+pub mod resolver;
+pub mod source;
 
 pub use resolver::InputResolver;
 pub use source::InputSource;

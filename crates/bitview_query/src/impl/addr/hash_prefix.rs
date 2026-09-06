@@ -1,4 +1,4 @@
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Addr, AddrHash, AddrHashPrefixMatches, OutputType};
 
 use crate::Query;
@@ -10,12 +10,13 @@ impl Query {
         &self,
         addr_type: OutputType,
         prefix: &str,
-    ) -> brk_error::Result<AddrHashPrefixMatches> {
+    ) -> Result<AddrHashPrefixMatches> {
         if !addr_type.is_addr() {
             return Err(Error::UnsupportedType(addr_type.to_string()));
         }
 
         let prefix = AddrHashPrefix::parse(prefix)?;
+        let _guard = self.read_plugin(self.indexer())?;
         let stores = self.indexer().stores();
         let safe_type_index = self.safe_lengths().to_type_index(addr_type);
         let addr_readers = self.indexer().vecs().addrs.addr_readers();
@@ -79,9 +80,11 @@ struct AddrHashPrefix {
 impl AddrHashPrefix {
     const MAX_NIBBLES: usize = u64::BITS as usize / 4;
 
-    fn parse(prefix: &str) -> brk_error::Result<Self> {
+    fn parse(prefix: &str) -> Result<Self> {
         let nibbles = prefix.len();
-        if !(1..=Self::MAX_NIBBLES).contains(&nibbles) {
+        if !(1..=Self::MAX_NIBBLES).contains(&nibbles)
+            || !prefix.bytes().all(|byte| byte.is_ascii_hexdigit())
+        {
             return Err(Self::parse_error());
         }
 
@@ -108,3 +111,7 @@ impl AddrHashPrefix {
         ))
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/addr/hash_prefix.rs"]
+mod tests;

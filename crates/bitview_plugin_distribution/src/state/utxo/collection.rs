@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{Error, Result};
 
 use std::path::Path;
 
@@ -179,7 +179,11 @@ impl UTXOStates {
             return Ok(Height::ZERO);
         };
 
-        previous_height = state.import_at_or_before(previous_height)?;
+        previous_height = match state.import_at_or_before(previous_height) {
+            Ok(height) => height,
+            Err(Error::NotFound(_)) => return Ok(Height::ZERO),
+            Err(error) => return Err(error),
+        };
         state.supply.value = total_supply.collect_one(previous_height).unwrap();
         state.supply.utxo_count = *unspent_count.collect_one(previous_height).unwrap();
         state.restore_realized_cap();

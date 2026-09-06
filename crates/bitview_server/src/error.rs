@@ -1,19 +1,22 @@
 use std::result::Result as StdResult;
 
-use crate::{
-    cache::{CacheParams, ErrorCachePolicy},
-    error_body::ErrorBody,
-};
 use aide::OperationOutput;
 use axum::{
     http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use brk_error::Error as BrkError;
+use serde_json::to_vec;
+
+use crate::{
+    cache::{CacheParams, ErrorCachePolicy},
+    error_body::ErrorBody,
+    read_availability::ReadAvailability,
+};
 
 const DOC_URL: &str = "/api";
 
-pub(crate) type RouteResult<T> = StdResult<T, Error>;
+pub type Result<T> = StdResult<T, Error>;
 
 fn error_type(status: StatusCode) -> &'static str {
     match status {
@@ -78,11 +81,11 @@ fn error_code(e: &BrkError) -> &'static str {
 }
 
 fn build_error_body(status: StatusCode, code: &'static str, message: String) -> Vec<u8> {
-    serde_json::to_vec(&ErrorBody::new(error_type(status), code, message, DOC_URL)).unwrap()
+    to_vec(&ErrorBody::new(error_type(status), code, message, DOC_URL)).unwrap()
 }
 
 fn apply_retry_after(code: &str, response: &mut Response) {
-    if code == "state_updating" {
+    if matches!(code, "state_updating" | "overloaded") {
         response
             .headers_mut()
             .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
@@ -97,7 +100,7 @@ pub struct Error {
 }
 
 impl Error {
-    fn new(status: StatusCode, code: &'static str, msg: impl Into<String>) -> Self {
+    pub fn new(status: StatusCode, code: &'static str, msg: impl Into<String>) -> Self {
         Self {
             status,
             code,
@@ -125,6 +128,10 @@ impl Error {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg)
     }
 
+    pub fn overloaded(msg: impl Into<String>) -> Self {
+        Self::new(StatusCode::SERVICE_UNAVAILABLE, "overloaded", msg)
+    }
+
     fn cache_policy(&self) -> ErrorCachePolicy {
         match self.code {
             "invalid_addr" | "invalid_network" | "invalid_txid" => ErrorCachePolicy::Immutable,
@@ -144,12 +151,19 @@ impl Error {
         )
             .into_response();
         apply_retry_after(self.code, &mut response);
+        match self.code {
+            "state_updating" => {
+                response
+                    .extensions_mut()
+                    .insert(ReadAvailability::Publication);
+            }
+            "overloaded" => {
+                response.extensions_mut().insert(ReadAvailability::Capacity);
+            }
+            _ => {}
+        }
         response
     }
-}
-
-pub fn new(status: StatusCode, code: &'static str, msg: impl Into<String>) -> Error {
-    Error::new(status, code, msg)
 }
 
 impl From<BrkError> for Error {
@@ -176,51 +190,5 @@ impl IntoResponse for Error {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::http::{
-        HeaderName,
-        header::{CACHE_CONTROL, ETAG},
-    };
-
-    fn assert_cache_control(response: &Response, expected: &'static str) {
-        let expected = HeaderValue::from_static(expected);
-        assert_eq!(response.headers().get(CACHE_CONTROL), Some(&expected));
-        assert_eq!(
-            response
-                .headers()
-                .get(HeaderName::from_static("cdn-cache-control")),
-            Some(&expected)
-        );
-        assert!(!response.headers().contains_key(ETAG));
-    }
-
-    #[test]
-    fn unknown_address_is_briefly_cacheable_without_a_validator() {
-        let response = Error::from(BrkError::UnknownAddr).into_response();
-        assert_eq!(response.status(), StatusCode::NOT_FOUND);
-        assert_cache_control(&response, "public, max-age=1, must-revalidate");
-    }
-
-    #[test]
-    fn invalid_address_is_immutable_without_a_validator() {
-        let response = Error::from(BrkError::InvalidAddr).into_response();
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        assert_cache_control(&response, "public, max-age=31536000, immutable");
-    }
-
-    #[test]
-    fn state_updating_is_a_retryable_service_unavailable_response() {
-        let error = Error::from(BrkError::StateUpdating);
-        assert_eq!(error.status, StatusCode::SERVICE_UNAVAILABLE);
-        assert_eq!(error.code, "state_updating");
-
-        let response = error.into_response();
-        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
-        assert_eq!(
-            response.headers().get(header::RETRY_AFTER),
-            Some(&HeaderValue::from_static("1"))
-        );
-        assert_cache_control(&response, "no-store");
-    }
-}
+#[path = "../tests/unit/error.rs"]
+mod tests;

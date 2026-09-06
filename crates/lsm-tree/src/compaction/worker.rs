@@ -1,3 +1,5 @@
+use crate::LevelPolicy as _;
+
 use crate::{
     Config, InternalValue, Result, SequenceNumberCounter, Table, Tree,
     compaction::{
@@ -145,7 +147,11 @@ impl Worker {
         let bloom_policy = if is_last_level && self.config.expect_point_read_hits {
             BloomConstructionPolicy::BitsPerKey(0.0)
         } else {
-            match self.config.filter_policy.get(usize::from(input.dest_level)) {
+            match self
+                .config
+                .filter_policy
+                .at_level(usize::from(input.dest_level))
+            {
                 FilterPolicyEntry::Bloom(policy) => policy,
                 FilterPolicyEntry::None => BloomConstructionPolicy::BitsPerKey(0.0),
             }
@@ -161,15 +167,19 @@ impl Worker {
 
         Ok(writer
             .use_data_block_restart_interval(
-                self.config.data_block_restart_interval_policy.get(level),
+                self.config
+                    .data_block_restart_interval_policy
+                    .at_level(level),
             )
             .use_index_block_restart_interval(
-                self.config.index_block_restart_interval_policy.get(level),
+                self.config
+                    .index_block_restart_interval_policy
+                    .at_level(level),
             )
-            .use_data_block_compression(self.config.data_block_compression_policy.get(level))
-            .use_data_block_size(self.config.data_block_size_policy.get(level))
-            .use_data_block_hash_ratio(self.config.data_block_hash_ratio_policy.get(level))
-            .use_index_block_compression(self.config.index_block_compression_policy.get(level))
+            .use_data_block_compression(self.config.data_block_compression_policy.at_level(level))
+            .use_data_block_size(self.config.data_block_size_policy.at_level(level))
+            .use_data_block_hash_ratio(self.config.data_block_hash_ratio_policy.at_level(level))
+            .use_index_block_compression(self.config.index_block_compression_policy.at_level(level))
             .use_bloom_policy(bloom_policy))
     }
 

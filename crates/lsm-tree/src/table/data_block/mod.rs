@@ -1,3 +1,5 @@
+use crate::SliceExt as _;
+
 // Copyright (c) 2025-present, fjall-rs
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
@@ -601,7 +603,7 @@ impl DataBlock {
         )
     }
 
-    pub(crate) fn encode_into_with_fixed_lengths(
+    pub fn encode_into_with_fixed_lengths(
         writer: &mut Vec<u8>,
         items: &[InternalValue],
         restart_interval: u8,

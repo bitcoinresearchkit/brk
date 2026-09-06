@@ -1,9 +1,12 @@
-use brk_error::Result;
+use crate::internals::*;
+
+use brk_error::{Error, Result};
 use brk_types::{CpfpInfo, Txid};
+use serde_json::to_vec;
 
-use crate::{Query, RepresentationId, representation_id::content_hash};
-
-use crate::r#impl::tx::ResolvedConfirmedTx;
+use crate::{
+    Query, RepresentationId, r#impl::tx::ResolvedConfirmedTx, representation_id::content_hash,
+};
 
 /// CPFP JSON resolved to one exact live or confirmed transaction source.
 pub struct ResolvedCpfp {
@@ -15,14 +18,14 @@ enum ResolvedCpfpSource {
     Chain(ResolvedConfirmedTx),
 }
 
-pub(super) enum CpfpSource {
+pub enum CpfpSource {
     Memory(CpfpInfo),
     Chain(ResolvedConfirmedTx),
 }
 
 impl ResolvedCpfp {
     fn memory(info: CpfpInfo) -> Self {
-        let bytes = serde_json::to_vec(&info).unwrap();
+        let bytes = to_vec(&info).unwrap();
         let hash = content_hash(&bytes);
         Self {
             source: ResolvedCpfpSource::Memory { bytes, hash },
@@ -38,13 +41,6 @@ impl ResolvedCpfp {
 }
 
 impl Query {
-    pub(super) fn resolve_cpfp_source(&self, txid: &Txid) -> Result<CpfpSource> {
-        if let Some(info) = self.mempool().and_then(|m| m.cpfp_info(txid)) {
-            return Ok(CpfpSource::Memory(info));
-        }
-        self.resolve_confirmed_tx(txid).map(CpfpSource::Chain)
-    }
-
     /// Resolve CPFP JSON once before an async response handoff.
     pub fn resolve_cpfp(&self, txid: &Txid) -> Result<ResolvedCpfp> {
         Ok(match self.resolve_cpfp_source(txid)? {
@@ -61,8 +57,26 @@ impl Query {
             ResolvedCpfpSource::Memory { bytes, .. } => Ok(bytes),
             ResolvedCpfpSource::Chain(transaction) => {
                 let info = self.confirmed_cpfp_resolved(transaction)?;
-                Ok(serde_json::to_vec(&info).unwrap())
+                Ok(to_vec(&info).unwrap())
             }
+        }
+    }
+}
+pub trait RImplCpfpResolvedQueryInternal: Sized {
+    fn resolve_cpfp_source(&self, txid: &Txid) -> Result<CpfpSource>;
+}
+impl RImplCpfpResolvedQueryInternal for Query {
+    fn resolve_cpfp_source(&self, txid: &Txid) -> Result<CpfpSource> {
+        let _guard = self.read_plugin(self.indexer())?;
+        match self.resolve_confirmed_tx_guarded(txid) {
+            Ok(transaction) => Ok(CpfpSource::Chain(transaction)),
+            Err(Error::UnknownTxid) => self
+                .mempool()
+                .ok_or(Error::UnknownTxid)?
+                .cpfp_info(txid, &self.tip_blockhash())?
+                .map(CpfpSource::Memory)
+                .ok_or(Error::UnknownTxid),
+            Err(error) => Err(error),
         }
     }
 }

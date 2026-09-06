@@ -1,8 +1,6 @@
-use std::ops::Sub;
-
 use brk_error::{Error, OptionData, Result};
 use brk_types::{Height, RewardStats};
-use vecdb::{AnyVec, ReadableVec, VecIndex, VecValue};
+use vecdb::{AnyVec, CheckedSub, ReadableVec, VecIndex, VecValue};
 
 use crate::Query;
 
@@ -15,6 +13,8 @@ impl Query {
         if block_count == 0 {
             return Err(Error::OutOfRange("block_count must be >= 1".into()));
         }
+
+        let _guard = self.read_plugin(self.indexer())?;
 
         let plugins = self.plugins();
         let current_height = self.height();
@@ -54,7 +54,7 @@ fn cumulative_delta<T>(
     end: Height,
 ) -> Result<T>
 where
-    T: Sub<Output = T> + VecValue,
+    T: CheckedSub + VecValue,
 {
     let start = start.to_usize();
     let end = end.to_usize();
@@ -63,7 +63,10 @@ where
         return cumulative.collect_one_at(end).data();
     }
 
-    if end - start < cumulative.cursor_chunk_size() {
+    let distance = end
+        .checked_sub(start)
+        .ok_or(Error::Internal("Reversed reward window"))?;
+    if distance < cumulative.cursor_chunk_size() {
         let mut previous = None;
         let end_value = cumulative
             .fold_range_at(start - 1, end + 1, None, |_, value| {
@@ -72,69 +75,18 @@ where
             })
             .data()?;
 
-        return Ok(end_value - previous.data()?);
+        return end_value
+            .checked_sub(previous.data()?)
+            .ok_or(Error::Internal("Decreasing cumulative rewards"));
     }
 
     let end_value = cumulative.collect_one_at(end).data()?;
     let previous = cumulative.collect_one_at(start - 1).data()?;
-    Ok(end_value - previous)
+    end_value
+        .checked_sub(previous)
+        .ok_or(Error::Internal("Decreasing cumulative rewards"))
 }
 
 #[cfg(test)]
-mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    use brk_types::{Sats, Version};
-    use vecdb::{
-        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec,
-        WritableVec,
-    };
-
-    use super::*;
-
-    #[test]
-    fn cumulative_delta_matches_range_sum_across_read_strategies() {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "bitview-reward-stats-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
-        let mut cumulative: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();
-        let values = (0_usize..2_051)
-            .map(|index| Sats::from(index + 1))
-            .collect::<Vec<_>>();
-        let mut total = Sats::ZERO;
-
-        for value in &values {
-            total += *value;
-            cumulative.push(total);
-        }
-        cumulative.write().unwrap();
-
-        let read_only = cumulative.read_only_clone();
-        let page = read_only.cursor_chunk_size();
-        for (start, end) in [
-            (0, 0),
-            (0, values.len() - 1),
-            (values.len() - 1, values.len() - 1),
-            (values.len() - page, values.len() - 1),
-            (values.len() - page - 1, values.len() - 1),
-            (32, 1_750),
-        ] {
-            let expected = values[start..=end].iter().copied().sum();
-            let actual =
-                cumulative_delta(&read_only, Height::from(start), Height::from(end)).unwrap();
-            assert_eq!(actual, expected, "range {start}..={end}");
-        }
-
-        drop(read_only);
-        drop(cumulative);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
-    }
-}
+#[path = "../../../tests/unit/impl/mining/reward_stats.rs"]
+mod tests;

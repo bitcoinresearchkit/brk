@@ -33,14 +33,14 @@ impl AddrTransitions {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::{ScriptBuf, hashes::Hash};
+    use bitcoin::{ScriptBuf, WPubkeyHash, hashes::Hash};
 
     use super::*;
 
     fn addr(seed: u8) -> AddrBytes {
         let mut bytes = [0u8; 20];
         bytes[0] = seed;
-        let script = ScriptBuf::new_p2wpkh(&bitcoin::WPubkeyHash::from_byte_array(bytes));
+        let script = ScriptBuf::new_p2wpkh(&WPubkeyHash::from_byte_array(bytes));
         AddrBytes::try_from(&script).expect("p2wpkh -> AddrBytes")
     }
 

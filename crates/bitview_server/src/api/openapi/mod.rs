@@ -13,10 +13,10 @@
 mod compact;
 mod full;
 
+use aide::openapi::{Contact, Info, License, OpenApi, Tag};
 pub use compact::ApiJson;
 pub use full::OpenApiJson;
-
-use aide::openapi::{Contact, Info, License, OpenApi, Tag};
+use serde_json::Value;
 
 use crate::VERSION;
 
@@ -221,7 +221,7 @@ All errors return structured JSON with a consistent format:
         Tag {
             name: "Metrics".to_string(),
             description: Some("Deprecated - use Series".to_string()),
-            extensions: [("deprecated".to_string(), serde_json::Value::Bool(true))].into(),
+            extensions: [("deprecated".to_string(), Value::Bool(true))].into(),
             ..Default::default()
         },
     ];

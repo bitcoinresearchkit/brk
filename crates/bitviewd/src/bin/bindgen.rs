@@ -1,16 +1,24 @@
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+#[cfg(not(unix))]
+use std::process::exit;
 use std::{
     env, fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use aide::axum::ApiRouter;
 use bitview::ImportContext;
+use bitview_bindgen::{ClientOutputPaths, generate_clients};
 use bitview_default::DefaultPlugins;
 use bitview_query::Vecs;
-use bitview_server::{ApiRoutes, finish_openapi, generate_bindings};
+use bitview_server::{ApiRoutes, finish_openapi};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use color_eyre::eyre::{Result, bail};
+use serde_json::{json, to_string, to_string_pretty};
+use tempfile::tempdir;
 
 const GENERATED_OUTPUTS: &[(&str, &str)] = &[
     (
@@ -47,25 +55,41 @@ pub fn main() -> Result<()> {
     color_eyre::install()?;
 
     let args = env::args().skip(1).collect::<Vec<_>>();
-    let check = match args.as_slice() {
-        [] => false,
-        [arg] if arg == "--check" => true,
-        _ => {
-            bail!(
-                "usage: cargo run -p bitviewd --bin bitview-bindgen --features bindgen [-- --check]"
-            )
+    match args.as_slice() {
+        [] => generate(false),
+        [arg] if arg == "--check" => generate(true),
+        [arg, daemon_args @ ..] if arg == "--run" => {
+            // Drop generation's plugin state before starting the daemon.
+            generate(false)?;
+            let daemon_args = daemon_args
+                .strip_prefix(&["--".to_owned()])
+                .unwrap_or(daemon_args);
+            let mut command = Command::new(env::var_os("CARGO").unwrap_or_else(|| "cargo".into()));
+            command
+                .args(["run", "-p", "bitviewd", "--bin", "bitviewd", "--"])
+                .args(daemon_args);
+            #[cfg(unix)]
+            {
+                Err(command.exec().into())
+            }
+            #[cfg(not(unix))]
+            {
+                exit(command.status()?.code().unwrap_or(1));
+            }
         }
-    };
-
-    let tmp = env::temp_dir().join(format!("bitview_bindgen_{}", std::process::id()));
-    if tmp.exists() {
-        fs::remove_dir_all(&tmp)?;
+        _ => {
+            bail!("usage: cargo bindgen [-- --check | -- --run [-- daemon arguments]]")
+        }
     }
-    fs::create_dir_all(&tmp)?;
+}
+
+fn generate(check: bool) -> Result<()> {
+    let temporary = tempdir()?;
+    let tmp = temporary.path();
 
     let client = Client::new("http://127.0.0.1:1", Auth::None)?;
     let reader = Reader::new_without_rlimit(tmp.join("blocks"), &client);
-    let context = ImportContext::new(&tmp);
+    let context = ImportContext::new(tmp);
     let plugins = DefaultPlugins::import(context, &reader)?;
     let vecs = Vecs::build(&plugins);
 
@@ -84,7 +108,7 @@ pub fn main() -> Result<()> {
     };
     let output_paths = output_paths(&output_root);
 
-    generate_bindings(&vecs, &openapi, &output_paths)?;
+    generate_clients(&vecs, &to_string(&openapi)?, &output_paths)?;
     generate_registry_manifest(&output_root)?;
 
     let result = if check {
@@ -93,7 +117,6 @@ pub fn main() -> Result<()> {
         Ok(())
     };
 
-    fs::remove_dir_all(&tmp)?;
     result?;
 
     eprintln!(
@@ -108,8 +131,8 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-fn output_paths(root: &Path) -> bitview_bindgen::ClientOutputPaths {
-    bitview_bindgen::ClientOutputPaths::new()
+fn output_paths(root: &Path) -> ClientOutputPaths {
+    ClientOutputPaths::new()
         .rust(root.join("crates/bitview_client/src/generated.rs"))
         .cli(root.join("crates/bitview_cli/src/generated.rs"))
         .javascript(root.join("modules/bitview-client/index.js"))
@@ -122,7 +145,7 @@ fn output_paths(root: &Path) -> bitview_bindgen::ClientOutputPaths {
 fn generate_registry_manifest(root: &Path) -> Result<()> {
     let path = root.join("crates/bitview_mcp/server.json");
     fs::create_dir_all(path.parent().unwrap())?;
-    let mut contents = serde_json::to_string_pretty(&serde_json::json!({
+    let mut contents = to_string_pretty(&json!({
         "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
         "name": "io.github.bitcoinresearchkit/bitview",
         "title": "Bitview",
@@ -182,12 +205,14 @@ fn verify_output_pairs(
 
 #[cfg(test)]
 mod tests {
+    use serde_json::{Value, from_slice};
+
     use super::*;
 
     #[test]
     fn check_reports_stale_outputs() {
-        let root =
-            env::temp_dir().join(format!("bitview_bindgen_check_test_{}", std::process::id()));
+        let directory = tempdir().unwrap();
+        let root = directory.path();
         let generated = root.join("generated");
         let workspace = root.join("workspace");
         fs::create_dir_all(&generated).unwrap();
@@ -199,19 +224,16 @@ mod tests {
             verify_output_pairs(&generated, &workspace, &[("artifact", "artifact")]).unwrap_err();
 
         assert!(error.to_string().contains("artifact"));
-        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
     fn registry_manifest_uses_package_version() {
-        let root =
-            env::temp_dir().join(format!("brk_registry_manifest_test_{}", std::process::id()));
-        fs::create_dir_all(&root).unwrap();
+        let directory = tempdir().unwrap();
+        let root = directory.path();
 
-        generate_registry_manifest(&root).unwrap();
-        let manifest: serde_json::Value =
-            serde_json::from_slice(&fs::read(root.join("crates/bitview_mcp/server.json")).unwrap())
-                .unwrap();
+        generate_registry_manifest(root).unwrap();
+        let manifest: Value =
+            from_slice(&fs::read(root.join("crates/bitview_mcp/server.json")).unwrap()).unwrap();
 
         assert_eq!(manifest["version"], env!("CARGO_PKG_VERSION"));
         assert_eq!(manifest["name"], "io.github.bitcoinresearchkit/bitview");
@@ -223,6 +245,5 @@ mod tests {
         assert_eq!(manifest["repository"]["subfolder"], "crates/bitview_mcp");
         assert_eq!(manifest["remotes"][0]["type"], "streamable-http");
         assert_eq!(manifest["remotes"][0]["url"], "https://mcp.bitview.space/");
-        fs::remove_dir_all(root).unwrap();
     }
 }

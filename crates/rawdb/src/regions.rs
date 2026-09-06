@@ -1,3 +1,5 @@
+use crate::internals::*;
+
 use std::{
     collections::HashMap,
     fs::{self, File, OpenOptions},
@@ -10,8 +12,8 @@ use memmap2::MmapMut;
 use parking_lot::Mutex;
 
 use crate::{
-    Database, Error, PAGE_SIZE, RegionMetadata, Result, SIZE_OF_REGION_METADATA, create_mmap,
-    region::Region, write_to_mmap,
+    Database, Error, PAGE_SIZE, RegionInner, RegionMetadata, Result, SIZE_OF_REGION_METADATA,
+    create_mmap, region::Region, write_to_mmap,
 };
 
 static EMPTY_REGION_METADATA: [u8; SIZE_OF_REGION_METADATA] = [0; SIZE_OF_REGION_METADATA];
@@ -53,7 +55,45 @@ impl Regions {
         Ok(self.file.metadata()?.len() as usize)
     }
 
-    pub(crate) fn fill(&mut self, db: &Database) -> Result<()> {
+    #[inline]
+    pub fn get_from_index(&self, index: usize) -> Option<&Region> {
+        self.index_to_region.get(index).and_then(Option::as_ref)
+    }
+
+    #[inline]
+    pub fn get_from_id(&self, id: &str) -> Option<&Region> {
+        self.id_to_index
+            .get(id)
+            .and_then(|&index| self.get_from_index(index))
+    }
+
+    #[inline]
+    pub fn index_to_region(&self) -> &[Option<Region>] {
+        &self.index_to_region
+    }
+
+    #[inline]
+    pub fn id_to_index(&self) -> &HashMap<String, usize> {
+        &self.id_to_index
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.id_to_index.len()
+    }
+}
+pub trait RegionsRegionsInternal: Sized {
+    fn fill(&mut self, db: &Database) -> Result<()>;
+    fn set_min_len(&mut self, len: usize) -> Result<()>;
+    fn shrink_to_fit(&mut self) -> Result<()>;
+    fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region>;
+    fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()>;
+    fn remove(&mut self, region: &Region) -> Result<()>;
+    fn flush(&self) -> Result<bool>;
+    fn write_at(&self, index: usize, data: &[u8]);
+}
+impl RegionsRegionsInternal for Regions {
+    fn fill(&mut self, db: &Database) -> Result<()> {
         let metadata_len = self.file_len()?;
         let data_len = db.file_len();
 
@@ -103,13 +143,12 @@ impl Regions {
                     meta.id()
                 )));
             }
-            self.index_to_region[index] = Some(Region::from(db, index, meta));
+            self.index_to_region[index] = Some(RegionInner::new(db, index, meta).into_region());
         }
 
         Ok(())
     }
-
-    pub(crate) fn set_min_len(&mut self, len: usize) -> Result<()> {
+    fn set_min_len(&mut self, len: usize) -> Result<()> {
         let file_len = self.file_len()?;
         if file_len < len {
             let target_len = len.max(file_len.saturating_mul(2));
@@ -118,8 +157,7 @@ impl Regions {
         }
         Ok(())
     }
-
-    pub(crate) fn shrink_to_fit(&mut self) -> Result<()> {
+    fn shrink_to_fit(&mut self) -> Result<()> {
         while self.index_to_region.last().is_some_and(Option::is_none) {
             self.index_to_region.pop();
         }
@@ -132,8 +170,7 @@ impl Regions {
         }
         Ok(())
     }
-
-    pub(crate) fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region> {
+    fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region> {
         let index = if self.id_to_index.len() == self.index_to_region.len() {
             self.index_to_region.len()
         } else {
@@ -143,7 +180,8 @@ impl Regions {
                 .expect("region index must contain a free slot")
         };
 
-        let region = Region::new(db, id.clone(), index, start, 0, PAGE_SIZE);
+        let meta = RegionMetadata::new(id.clone(), start, 0, PAGE_SIZE);
+        let region = RegionInner::new(db, index, meta).into_region();
 
         self.set_min_len((index + 1) * SIZE_OF_REGION_METADATA)?;
 
@@ -158,24 +196,13 @@ impl Regions {
             return Err(Error::RegionAlreadyExists);
         }
 
-        region.meta_mut().write_if_dirty(index, self);
+        RegionInner::from_region(&region)
+            .meta_mut()
+            .write_if_dirty(index, self);
 
         Ok(region)
     }
-
-    #[inline]
-    pub fn get_from_index(&self, index: usize) -> Option<&Region> {
-        self.index_to_region.get(index).and_then(Option::as_ref)
-    }
-
-    #[inline]
-    pub fn get_from_id(&self, id: &str) -> Option<&Region> {
-        self.id_to_index
-            .get(id)
-            .and_then(|&index| self.get_from_index(index))
-    }
-
-    pub(crate) fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()> {
+    fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()> {
         let index = self
             .id_to_index
             .get(old_id)
@@ -191,10 +218,9 @@ impl Regions {
 
         Ok(())
     }
-
-    pub(crate) fn remove(&mut self, region: &Region) -> Result<()> {
+    fn remove(&mut self, region: &Region) -> Result<()> {
         // Expected 2: one from caller, one from self.index_to_region.
-        let ref_count = Arc::strong_count(region.arc());
+        let ref_count = Arc::strong_count(RegionInner::from_region(region));
         let meta = region.meta();
         debug!(
             "regions.remove '{}': arc count = {} (expected <= 2)",
@@ -224,9 +250,8 @@ impl Regions {
 
         Ok(())
     }
-
     /// Makes every completed metadata write preceding this call durable.
-    pub(crate) fn flush(&self) -> Result<bool> {
+    fn flush(&self) -> Result<bool> {
         let mut dirty = self.dirty.lock();
         if !*dirty {
             return Ok(false);
@@ -238,27 +263,11 @@ impl Regions {
 
         Ok(true)
     }
-
-    pub(crate) fn write_at(&self, index: usize, data: &[u8]) {
+    fn write_at(&self, index: usize, data: &[u8]) {
         debug_assert_eq!(data.len(), SIZE_OF_REGION_METADATA);
         let offset = index * SIZE_OF_REGION_METADATA;
         let mut dirty = self.dirty.lock();
         write_to_mmap(&self.mmap, offset, data);
         *dirty = true;
-    }
-
-    #[inline]
-    pub fn index_to_region(&self) -> &[Option<Region>] {
-        &self.index_to_region
-    }
-
-    #[inline]
-    pub fn id_to_index(&self) -> &HashMap<String, usize> {
-        &self.id_to_index
-    }
-
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.id_to_index.len()
     }
 }

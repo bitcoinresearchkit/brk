@@ -1,3 +1,3 @@
-mod writer;
+pub mod writer;
 
 pub use writer::*;

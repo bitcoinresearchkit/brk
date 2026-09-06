@@ -12,7 +12,7 @@ pub struct DiskUsage {
     pub bitcoin: String,
     /// Bitcoin blocks directory size in bytes
     pub bitcoin_bytes: u64,
-    /// brk as percentage of Bitcoin data
+    /// Ratio of BRK bytes to Bitcoin bytes; zero when Bitcoin bytes are zero.
     pub ratio: f64,
 }
 

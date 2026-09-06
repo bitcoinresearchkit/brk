@@ -48,6 +48,13 @@ fn main() -> bitview_client::Result<()> {
 }
 ```
 
+## Date and timestamp selectors
+
+Date and timestamp selectors return `Result`: use
+`endpoint.get_date(date)?.fetch()` (and likewise for `date_range`,
+`get_timestamp`, and `timestamp_range`). Invalid or unsupported selectors fail
+locally instead of silently selecting index zero. Numeric selectors are unchanged.
+
 ## Configuration
 
 ```rust,ignore

@@ -13,7 +13,7 @@ use crate::{
 
 const PROBE_BUF_LEN: usize = 4096;
 
-pub(crate) fn first_block_height(
+pub fn first_block_height(
     client: &Client,
     blk_path: &Path,
     xor_bytes: XORBytes,
@@ -54,7 +54,7 @@ pub(crate) fn first_block_height(
 /// read error mid-bisect breaks out rather than narrowing further:
 /// the bound at `mid` is unknown, so any further step could skip
 /// valid lower indices. The backoff still provides a safe lower bound.
-pub(crate) fn find_start_blk_index(
+pub fn find_start_blk_index(
     client: &Client,
     target_start: Height,
     paths: &BlkIndexToBlkPath,

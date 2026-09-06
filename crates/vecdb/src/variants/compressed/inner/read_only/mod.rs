@@ -1,10 +1,12 @@
+use crate::internals::*;
+
 use std::{marker::PhantomData, sync::Arc};
 
 use parking_lot::RwLock;
 
-mod any_vec;
-mod readable;
-mod typed;
+pub mod any_vec;
+pub mod readable;
+pub mod typed;
 
 use crate::{
     CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, ReadOnlyBaseVec, VecIndex,
@@ -21,19 +23,9 @@ use super::{CompressionStrategy, Pages, ReadWriteCompressedVec};
 /// Created via `ReadWriteCompressedVec::read_only_clone`.
 #[derive(Debug, Clone)]
 pub struct ReadOnlyCompressedVec<I, T, S> {
-    pub(super) base: ReadOnlyBaseVec<I, T>,
-    pub(super) pages: Arc<RwLock<Pages>>,
+    base: ReadOnlyBaseVec<I, T>,
+    pages: Arc<RwLock<Pages>>,
     _strategy: PhantomData<S>,
-}
-
-impl<I, T, S> ReadOnlyCompressedVec<I, T, S> {
-    pub(crate) fn new(base: ReadOnlyBaseVec<I, T>, pages: Arc<RwLock<Pages>>) -> Self {
-        Self {
-            base,
-            pages,
-            _strategy: PhantomData,
-        }
-    }
 }
 
 impl<I, T, S> ReadOnlyCompressedVec<I, T, S>
@@ -47,9 +39,56 @@ where
     pub fn range_cursor_at(&self, from: usize, to: usize) -> CompressedRangeCursor<'_, I, T, S> {
         CompressedRangeCursor::new(self.base.region(), &self.pages, self.base.len(), from, to)
     }
+}
+pub trait VariantsCompressedInnerReadOnlyReadOnlyCompressedVecITSInternalCtor<I, T, S>:
+    Sized
+{
+    fn new(base: ReadOnlyBaseVec<I, T>, pages: Arc<RwLock<Pages>>) -> Self;
+}
+impl<I, T, S> VariantsCompressedInnerReadOnlyReadOnlyCompressedVecITSInternalCtor<I, T, S>
+    for ReadOnlyCompressedVec<I, T, S>
+{
+    fn new(base: ReadOnlyBaseVec<I, T>, pages: Arc<RwLock<Pages>>) -> Self {
+        Self {
+            base,
+            pages,
+            _strategy: PhantomData,
+        }
+    }
+}
 
+pub trait VariantsCompressedInnerReadOnlyReadOnlyCompressedVecITSInternal<I, T, S>: Sized
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
+    fn fold_source<B, F: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        len: usize,
+        init: B,
+        f: F,
+    ) -> B;
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+        &self,
+        from: usize,
+        to: usize,
+        len: usize,
+        init: B,
+        f: F,
+    ) -> std::result::Result<B, E>;
+}
+impl<I, T, S> VariantsCompressedInnerReadOnlyReadOnlyCompressedVecITSInternal<I, T, S>
+    for ReadOnlyCompressedVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue,
+    S: CompressionStrategy<T>,
+{
     #[inline(always)]
-    pub(super) fn fold_source<B, F: FnMut(B, T) -> B>(
+    fn fold_source<B, F: FnMut(B, T) -> B>(
         &self,
         from: usize,
         to: usize,
@@ -83,9 +122,8 @@ where
             .fold(init, f)
         }
     }
-
     #[inline(always)]
-    pub(super) fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         &self,
         from: usize,
         to: usize,

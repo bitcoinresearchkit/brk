@@ -1,19 +1,33 @@
-use brk_error::Result;
-use brk_types::{BlockHash, BlockInfoV1, Height, PoolSlug};
-use vecdb::VecIndex;
+use crate::internals::*;
 
-use crate::Query;
+use brk_error::{Error, OptionData, Result};
+use brk_types::{BlockHash, BlockInfoV1, Dollars, Height, PoolSlug};
+use vecdb::ReadableVec;
+
+use crate::{Query, ResolvedBlocks};
 
 /// A pool-block page resolved against one exact published chain view.
 pub struct ResolvedPoolBlocks {
+    _publication: PluginReadGuard,
+    chain: ResolvedBlocks,
     heights: Vec<Height>,
-    activity_anchor: BlockHash,
+    prices: Vec<Dollars>,
+    activity_anchor: Option<BlockHash>,
 }
 
 impl ResolvedPoolBlocks {
     #[inline]
-    pub const fn activity_anchor(&self) -> BlockHash {
+    pub const fn activity_anchor(&self) -> Option<BlockHash> {
         self.activity_anchor
+    }
+
+    pub fn heights(&self) -> &[Height] {
+        &self.heights
+    }
+
+    /// Captured prices in the same descending order as the selected heights.
+    pub fn prices(&self) -> &[Dollars] {
+        &self.prices
     }
 }
 
@@ -25,20 +39,46 @@ impl Query {
         before_height: Option<Height>,
         limit: usize,
     ) -> Result<ResolvedPoolBlocks> {
-        let tip = self.height();
+        let publication = self.read_plugin(self.indexer())?;
+        let chain = self.resolve_blocks(None, 0)?;
+        let tip = chain.last_height().ok_or(Error::StateUpdating)?;
         let through_height = before_height.unwrap_or(tip).min(tip);
         let heights = self
             .plugins()
             .pools
             .heights
             .latest_heights(slug, through_height, limit);
-        let activity_anchor = match heights.first() {
-            Some(height) => self.block_hash_by_height(*height)?,
-            None => self.tip_blockhash(),
-        };
+        let activity_anchor = heights
+            .first()
+            .map(|height| {
+                self.indexer()
+                    .vecs()
+                    .blocks
+                    .blockhash
+                    .inner
+                    .collect_one(*height)
+                    .data()
+            })
+            .transpose()?;
+        let prices = heights
+            .iter()
+            .map(|height| {
+                self.price()
+                    .spot
+                    .cents
+                    .height
+                    .inner
+                    .collect_one(*height)
+                    .data()
+                    .map(Dollars::from)
+            })
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(ResolvedPoolBlocks {
+            _publication: publication,
+            chain,
             heights,
+            prices,
             activity_anchor,
         })
     }
@@ -46,33 +86,13 @@ impl Query {
     /// Load a resolved page without repeating its pool-height lookup.
     pub fn pool_blocks_resolved(&self, resolved: ResolvedPoolBlocks) -> Result<Vec<BlockInfoV1>> {
         let ResolvedPoolBlocks {
+            _publication,
+            chain,
             heights,
-            activity_anchor,
+            prices,
+            ..
         } = resolved;
-        let anchor_height = heights.first().copied();
-
-        if let Some(height) = anchor_height {
-            self.validate_block_at_height(&activity_anchor, height)?;
-        }
-
-        let mut blocks = Vec::with_capacity(heights.len());
-        let mut i = 0;
-        while i < heights.len() {
-            let hi = heights[i].to_usize();
-            while i + 1 < heights.len() && heights[i + 1].to_usize() + 1 == heights[i].to_usize() {
-                i += 1;
-            }
-            let mut range =
-                crate::r#impl::block::blocks_v1_range(self, heights[i].to_usize(), hi + 1)?;
-            blocks.append(&mut range);
-            i += 1;
-        }
-
-        if let Some(height) = anchor_height {
-            self.validate_block_at_height(&activity_anchor, height)?;
-        }
-
-        Ok(blocks)
+        chain.build_v1_heights(self, &heights, &prices)
     }
 
     /// Page of blocks mined by `slug`, in descending height order, capped at
@@ -87,3 +107,4 @@ impl Query {
         self.pool_blocks_resolved(resolved)
     }
 }
+use bitview_plugin::PluginReadGuard;

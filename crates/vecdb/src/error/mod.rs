@@ -3,7 +3,7 @@ use std::{fmt, fs, io, time};
 use thiserror::Error;
 
 #[cfg(feature = "zerocopy")]
-mod zerocopy;
+pub mod zerocopy;
 
 use crate::{Format, Stamp, Version};
 

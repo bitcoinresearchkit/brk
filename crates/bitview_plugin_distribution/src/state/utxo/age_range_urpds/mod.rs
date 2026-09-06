@@ -2,12 +2,14 @@ use std::{cmp::Ordering, ops::Range};
 
 use bitview_cohort::{AGE_RANGE_COUNT, AgeRange, AgeRangeId};
 use brk_error::{Error, Result};
-use brk_types::{CentsCompact, Sats, Version};
+use brk_types::{CentsCompact, Sats, UrpdRaw, Version};
 use vecdb::{Bytes, ColumnId};
 
 mod aggregate;
 mod read;
 mod write;
+
+pub use read::EncodedAgeRangeUrpds;
 
 const DIR_NAME: &str = "utxos_age_range_urpds";
 const MAGIC: [u8; 8] = *b"BRKARURP";
@@ -26,12 +28,19 @@ impl AgeRangeUrpds {
     fn merge_sorted(
         left: &[(CentsCompact, Sats)],
         right: &[(CentsCompact, Sats)],
-    ) -> Vec<(CentsCompact, Sats)> {
-        let mut merged = Vec::with_capacity(left.len() + right.len());
+    ) -> Result<Vec<(CentsCompact, Sats)>> {
+        let capacity = left
+            .len()
+            .saturating_add(right.len())
+            .min(UrpdRaw::MAX_ENTRIES);
+        let mut merged = Vec::with_capacity(capacity);
         let mut left_index = 0;
         let mut right_index = 0;
 
         while left_index < left.len() && right_index < right.len() {
+            if merged.len() == UrpdRaw::MAX_ENTRIES {
+                return Err(Self::invalid("aggregate exceeds snapshot entry limit"));
+            }
             let left_entry = left[left_index];
             let right_entry = right[right_index];
             match left_entry.0.cmp(&right_entry.0) {
@@ -44,16 +53,23 @@ impl AgeRangeUrpds {
                     right_index += 1;
                 }
                 Ordering::Equal => {
-                    merged.push((left_entry.0, left_entry.1 + right_entry.1));
+                    let sats = u64::from(left_entry.1)
+                        .checked_add(u64::from(right_entry.1))
+                        .ok_or_else(|| Self::invalid("aggregate supply overflows"))?;
+                    merged.push((left_entry.0, Sats::from(sats)));
                     left_index += 1;
                     right_index += 1;
                 }
             }
         }
 
+        if left.len() - left_index + right.len() - right_index > UrpdRaw::MAX_ENTRIES - merged.len()
+        {
+            return Err(Self::invalid("aggregate exceeds snapshot entry limit"));
+        }
         merged.extend_from_slice(&left[left_index..]);
         merged.extend_from_slice(&right[right_index..]);
-        merged
+        Ok(merged)
     }
 
     fn new_buffer(capacity: usize) -> Vec<u8> {

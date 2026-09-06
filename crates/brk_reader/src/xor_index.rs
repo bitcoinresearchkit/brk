@@ -12,12 +12,12 @@ impl XORIndex {
     }
 
     #[inline]
-    pub(crate) fn phase(self) -> usize {
+    pub fn phase(self) -> usize {
         self.0
     }
 
     #[inline]
-    pub(crate) fn set_phase(&mut self, phase: usize) {
+    pub fn set_phase(&mut self, phase: usize) {
         self.0 = phase & (XOR_LEN - 1);
     }
 

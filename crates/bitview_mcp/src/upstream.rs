@@ -1,8 +1,13 @@
 use std::time::Duration;
 
 use serde_json::{Map, Value};
+use ureq::{Agent, Body, http::Response};
 
-use crate::manifest::{Operation, ParameterLocation};
+use crate::{
+    manifest::{Operation, ParameterLocation},
+    prepared_request::PreparedRequest,
+    upstream_response::UpstreamResponse,
+};
 
 const MAX_UPSTREAM_URL_BYTES: usize = 32 * 1024;
 const MAX_RESPONSE_BYTES: usize = 8 * 1024 * 1024;
@@ -10,34 +15,20 @@ const UPSTREAM_TIMEOUT: Duration = Duration::from_secs(15);
 
 #[derive(Clone)]
 pub struct Upstream {
-    agent: ureq::Agent,
+    agent: Agent,
     api_bases: Vec<String>,
-}
-
-pub struct PreparedRequest {
-    path: String,
-    query: Vec<(String, String)>,
-}
-
-pub struct UpstreamResponse {
-    pub url: String,
-    pub status: u16,
-    pub content_type: String,
-    pub body: Vec<u8>,
-    pub cache_status: Option<String>,
-    pub cache_age: Option<String>,
 }
 
 impl Upstream {
     pub fn new(api_bases: Vec<String>) -> Self {
-        let config = ureq::Agent::config_builder()
+        let config = Agent::config_builder()
             .timeout_global(Some(UPSTREAM_TIMEOUT))
             .http_status_as_error(false)
             .max_redirects(0)
             .user_agent(format!("brk-mcp/{}", env!("CARGO_PKG_VERSION")))
             .build();
         Self {
-            agent: ureq::Agent::new_with_config(config),
+            agent: Agent::new_with_config(config),
             api_bases,
         }
     }
@@ -48,7 +39,7 @@ impl Upstream {
         arguments: &Map<String, Value>,
     ) -> Result<PreparedRequest, String> {
         let mut path = operation.http.path.clone();
-        let mut query = Vec::new();
+        let mut query = String::new();
 
         for parameter in &operation.http.parameters {
             let Some(value) = arguments.get(&parameter.name) else {
@@ -68,15 +59,16 @@ impl Upstream {
                     }
                     path = path.replace(
                         &format!("{{{}}}", parameter.name),
-                        &encode_path_segment(&values[0]),
+                        &encode_component(&values[0]),
                     );
                 }
                 ParameterLocation::Query => {
-                    query.extend(
-                        values
-                            .into_iter()
-                            .map(|value| (parameter.name.clone(), value)),
-                    );
+                    for value in values {
+                        query.push(if query.is_empty() { '?' } else { '&' });
+                        query.push_str(&encode_component(&parameter.name));
+                        query.push('=');
+                        query.push_str(&encode_component(&value));
+                    }
                 }
             }
         }
@@ -84,33 +76,25 @@ impl Upstream {
         if path.contains('{') || path.contains('}') {
             return Err("a required path parameter is missing".to_string());
         }
-        let query_bytes = query
-            .iter()
-            .map(|(name, value)| name.len() + value.len() + 2)
-            .sum::<usize>();
+        path.push_str(&query);
         let longest_base = self.api_bases.iter().map(String::len).max().unwrap_or(0);
-        if longest_base
-            .saturating_add(path.len())
-            .saturating_add(query_bytes)
-            > MAX_UPSTREAM_URL_BYTES
-        {
+        if longest_base.saturating_add(path.len()) > MAX_UPSTREAM_URL_BYTES {
             return Err(format!(
                 "upstream URL exceeds the {MAX_UPSTREAM_URL_BYTES}-byte limit"
             ));
         }
 
-        Ok(PreparedRequest { path, query })
+        Ok(PreparedRequest { path })
     }
 
     pub fn fetch(&self, request: PreparedRequest) -> Result<UpstreamResponse, String> {
-        let PreparedRequest { path, query } = request;
+        let PreparedRequest { path } = request;
         let mut last_error = None;
         for api_base in &self.api_bases {
             let url = format!("{api_base}{path}");
             let response = self
                 .agent
                 .get(&url)
-                .query_pairs(query.iter().cloned())
                 .header(
                     "Accept",
                     "application/json, text/plain, text/csv, application/octet-stream",
@@ -132,7 +116,7 @@ impl Upstream {
     fn read_response(
         &self,
         url: String,
-        mut response: ureq::http::Response<ureq::Body>,
+        mut response: Response<Body>,
     ) -> Result<UpstreamResponse, String> {
         let status = response.status().as_u16();
         let content_type = response
@@ -193,7 +177,7 @@ fn parameter_values(value: &Value) -> Result<Vec<String>, String> {
     }
 }
 
-fn encode_path_segment(value: &str) -> String {
+fn encode_component(value: &str) -> String {
     const HEX: &[u8; 16] = b"0123456789ABCDEF";
     let mut encoded = String::with_capacity(value.len());
     for byte in value.bytes() {
@@ -210,17 +194,49 @@ fn encode_path_segment(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::{
         io::{Read, Write},
         net::TcpListener,
         thread,
     };
 
+    use serde_json::json;
+
+    use super::*;
+    use crate::manifest::Catalog;
+
     #[test]
     fn encodes_path_segments_without_leaving_separators() {
-        assert_eq!(encode_path_segment("a/b c"), "a%2Fb%20c");
-        assert_eq!(encode_path_segment("ż"), "%C5%BC");
+        assert_eq!(encode_component("a/b c"), "a%2Fb%20c");
+        assert_eq!(encode_component("ż"), "%C5%BC");
+    }
+
+    #[test]
+    fn url_limit_counts_encoded_query_bytes() {
+        let catalog = Catalog::embedded().unwrap();
+        let operation = catalog.operation("get_series").unwrap();
+        let upstream = Upstream::new(vec!["http://127.0.0.1:3110".into()]);
+        let arguments = json!({
+            "series": "price_close", "index": "day1",
+            "start": "#".repeat(8192), "end": "#".repeat(8192),
+        });
+        let error = upstream
+            .prepare(operation, arguments.as_object().unwrap())
+            .err()
+            .unwrap();
+        assert!(error.contains("32768-byte limit"));
+
+        let arguments = json!({
+            "series": "price_close", "index": "day1",
+            "start": "a b+#&ż", "end": "2025-01-01",
+        });
+        let prepared = upstream
+            .prepare(operation, arguments.as_object().unwrap())
+            .unwrap();
+        assert_eq!(
+            prepared.path,
+            "/api/series/price_close/day1?start=a%20b%2B%23%26%C5%BC&end=2025-01-01"
+        );
     }
 
     #[test]
@@ -250,7 +266,6 @@ mod tests {
         let response = upstream
             .fetch(PreparedRequest {
                 path: "/health".to_string(),
-                query: Vec::new(),
             })
             .unwrap();
 

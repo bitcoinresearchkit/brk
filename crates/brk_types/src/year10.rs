@@ -3,6 +3,7 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
@@ -91,18 +92,23 @@ impl Div<usize> for Year10 {
 impl From<Day1> for Year10 {
     #[inline]
     fn from(value: Day1) -> Self {
-        Self::from(Date::from(value))
+        Self::from(usize::from((Date::from(value).year() - 2000) / 10))
     }
 }
 
-impl From<Date> for Year10 {
+impl TryFrom<Date> for Year10 {
+    type Error = Error;
+
     #[inline]
-    fn from(value: Date) -> Self {
-        let year = value.year();
-        if year < 2000 {
-            panic!("unsupported")
-        }
-        Self(((year - 2000) / 10) as u8)
+    fn try_from(value: Date) -> Result<Self> {
+        value.try_into_jiff()?;
+        let years = value
+            .year()
+            .checked_sub(2000)
+            .ok_or(Error::UnindexableDate)?;
+        u8::try_from(years / 10)
+            .map(Self)
+            .map_err(|_| Error::UnindexableDate)
     }
 }
 

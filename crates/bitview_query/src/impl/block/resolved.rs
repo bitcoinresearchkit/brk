@@ -1,5 +1,6 @@
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, BlockHashPrefix, Height};
+use vecdb::ReadableVec;
 
 use crate::Query;
 
@@ -43,23 +44,45 @@ impl Query {
     pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
         self.resolve_block(hash).map(ResolvedBlock::height)
     }
+}
+pub trait RImplBlockResolvedResolvedBlockInternal: Sized {
+    fn hash(self) -> BlockHash;
+}
+impl RImplBlockResolvedResolvedBlockInternal for ResolvedBlock {
+    fn hash(self) -> BlockHash {
+        self.hash
+    }
+}
+pub trait RImplBlockResolvedQueryInternal: Sized {
+    fn revalidate_block(&self, block: ResolvedBlock) -> Result<Height>;
 
+    fn validate_block_at_height(&self, hash: &BlockHash, height: Height) -> Result<()>;
+}
+impl RImplBlockResolvedQueryInternal for Query {
     /// Revalidate a resolved pair without repeating the prefix-store lookup.
     /// This protects server calls from a reorg between cache selection and the
     /// blocking response task.
-    pub(super) fn revalidate_block(&self, block: ResolvedBlock) -> Result<Height> {
+    fn revalidate_block(&self, block: ResolvedBlock) -> Result<Height> {
         self.validate_block_at_height(&block.hash, block.height)?;
         Ok(block.height)
     }
-
     /// Validate between two safe-bound snapshots. Rollback lowers the bound
     /// before mutating vectors, so either snapshot rejects a concurrent change.
-    pub(crate) fn validate_block_at_height(&self, hash: &BlockHash, height: Height) -> Result<()> {
+    fn validate_block_at_height(&self, hash: &BlockHash, height: Height) -> Result<()> {
         if height >= self.safe_lengths().height {
             return Err(Error::NotFound("Block not found".into()));
         }
 
-        if self.indexer().vecs().blocks.blockhash.get(height) != Some(*hash) {
+        // Validate one stored row without materializing the hash-history cache.
+        if self
+            .indexer()
+            .vecs()
+            .blocks
+            .blockhash
+            .inner
+            .collect_one(height)
+            != Some(*hash)
+        {
             return Err(Error::NotFound("Block not found".into()));
         }
 

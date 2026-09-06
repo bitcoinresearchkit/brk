@@ -17,7 +17,18 @@ impl<M: StorageMode> Vecs<M> {
 
     /// Read a persisted aggregate Bedrock-weighted URPD.
     pub fn urpd_raw(&self, weight: UrpdWeight, cohort: &Cohort, date: Date) -> Result<UrpdRaw> {
-        UrpdRaw::read(
+        let bytes = self.urpd_raw_bytes(weight, cohort, date)?;
+        UrpdRaw::deserialize_exact(&bytes)
+    }
+
+    /// Capture a persisted weighted snapshot under the producer's publication guard.
+    pub fn urpd_raw_bytes(
+        &self,
+        weight: UrpdWeight,
+        cohort: &Cohort,
+        date: Date,
+    ) -> Result<Vec<u8>> {
+        UrpdRaw::read_bytes(
             &self.states_path,
             &DayUrpds::weighted_name(weight, cohort),
             date,
