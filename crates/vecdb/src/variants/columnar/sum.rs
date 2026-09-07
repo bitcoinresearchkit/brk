@@ -1,6 +1,6 @@
 use std::{ops::AddAssign, sync::Arc};
 
-use crate::{AnyVec, ReadOnlyClone, ReadableVec, TypedVec, Version, short_type_name};
+use crate::{AnyVec, Cursor, ReadOnlyClone, ReadableVec, TypedVec, Version, short_type_name};
 
 use super::{
     ColumnId, ReadableColumnarVec,
@@ -125,6 +125,36 @@ where
 {
     fn cursor_chunk_size(&self) -> usize {
         self.source.cursor_chunk_size()
+    }
+
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<S::T>) {
+        let len = self.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        let (Some(&first), Some(&last)) = (indices.first(), indices.last()) else {
+            return;
+        };
+        if indices.len() > 1 && last - first < indices.len() {
+            // Dense requests retain the efficient range/chunk summation path.
+            let mut cursor = Cursor::new(self);
+            out.extend(indices.iter().filter_map(|&i| cursor.get(i)));
+            return;
+        }
+        let out_start = out.len();
+        self.source
+            .for_each_column_sorted_at(&self.columns, indices, &mut |column, values| {
+                if column == self.columns[0] {
+                    out.extend_from_slice(values);
+                } else {
+                    assert_eq!(
+                        out.len() - out_start,
+                        values.len(),
+                        "column read returned incomplete rows"
+                    );
+                    for (sum, value) in out[out_start..].iter_mut().zip(values) {
+                        *sum += value.clone();
+                    }
+                }
+            });
     }
 
     fn read_into_at(&self, from: usize, to: usize, out: &mut Vec<S::T>) {

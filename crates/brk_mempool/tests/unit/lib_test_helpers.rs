@@ -8,15 +8,7 @@ impl Mempool {
     /// touching the network. `simple_http` only parses the URL on init.
     pub fn for_test() -> Self {
         let client = Client::new(Client::default_url(), Auth::None).unwrap();
-        Self(Arc::new(Inner {
-            client,
-            state: RwLock::new(State::default()),
-            rebuilder: Rebuilder::default(),
-            started: AtomicBool::new(false),
-            cycle: Mutex::new(()),
-            #[cfg(feature = "tokio")]
-            changed: tokio::sync::watch::channel(()).0,
-        }))
+        Self::new(&client)
     }
 
     pub fn test_state_lock(&self) -> &RwLock<State> {

@@ -1,0 +1,348 @@
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, AtomicUsize, Ordering},
+};
+
+use tempfile::tempdir;
+use vecdb::{
+    AnyStoredVec, BytesVec, CachedVec, Database, DeltaOp, DeltaSub, EagerVec, Ident, ImportableVec,
+    LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec, ReadableVec, StoredVec, UnaryTransform,
+    Version, WritableVec,
+};
+
+#[cfg(feature = "pco")]
+use vecdb::PcoVec;
+
+struct Double;
+
+static DELTA_TRANSFORMS: AtomicUsize = AtomicUsize::new(0);
+static DELTA_READS: AtomicUsize = AtomicUsize::new(0);
+struct CountDelta;
+impl DeltaOp<u64, u64> for CountDelta {
+    fn ago_index(start: usize) -> Option<usize> {
+        start.checked_sub(1)
+    }
+    fn ago_default() -> u64 {
+        0
+    }
+    fn combine(current: u64, previous: u64, _: usize) -> u64 {
+        DELTA_TRANSFORMS.fetch_add(1, Ordering::Relaxed);
+        current - previous
+    }
+}
+
+#[test]
+fn delta_reads_only_needed_ranges_and_preserves_fallible_order() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source = BytesVec::<usize, u64>::import(&db, "delta", Version::ONE).unwrap();
+    for i in 0..40_000u64 {
+        source.push((i + 1) * 3);
+    }
+    source.write().unwrap();
+    let reads = &DELTA_READS;
+    let counted = LazyVec::<usize, u64, usize, u64>::init(
+        "counted",
+        Version::ONE,
+        ReadableBoxedVec::new(source.read_only_clone()),
+        |_, value| {
+            DELTA_READS.fetch_add(1, Ordering::Relaxed);
+            value
+        },
+    );
+    for window in [0, 17, 20_000, 50_000] {
+        let starts = Arc::new(
+            (0..35_000usize)
+                .map(|i| i.saturating_sub(window))
+                .collect::<Vec<_>>(),
+        );
+        let metadata = starts.clone();
+        let delta = LazyDeltaVec::<usize, u64, u64, DeltaSub>::new(
+            "delta",
+            Version::ONE,
+            ReadableBoxedVec::new(counted.clone()),
+            Version::ONE,
+            move || metadata.clone(),
+        );
+        for (from, to) in [
+            (0usize, 45_000usize),
+            (16_380, 33_000),
+            (34_990, 45_000),
+            (7, 2),
+            (usize::MAX, usize::MAX),
+        ] {
+            let expected: Vec<_> = (from.min(35_000)..to.min(35_000).max(from.min(35_000)))
+                .map(|i| (i + 1).min(window + 1) as u64 * 3)
+                .collect();
+            assert_eq!(delta.collect_range_at(from, to), expected);
+            let mut actual = Vec::new();
+            delta.for_each_chunk_at(from, to, &mut |at, values| {
+                assert_eq!(at, from + actual.len());
+                actual.extend_from_slice(values);
+            });
+            assert_eq!(actual, expected);
+        }
+        reads.store(0, Ordering::Relaxed);
+        delta.collect_range_at(34_990, 35_000);
+        let expected_reads = match window {
+            0 => 11,
+            17 | 20_000 => 20,
+            _ => 10,
+        };
+        assert_eq!(reads.load(Ordering::Relaxed), expected_reads);
+    }
+    let starts = Arc::new(
+        (0..40_000usize)
+            .map(|i| i.saturating_sub(17))
+            .collect::<Vec<_>>(),
+    );
+    let delta = LazyDeltaVec::<usize, u64, u64, CountDelta>::new(
+        "fallible",
+        Version::ONE,
+        ReadableBoxedVec::new(counted),
+        Version::ONE,
+        move || starts.clone(),
+    );
+    DELTA_TRANSFORMS.store(0, Ordering::Relaxed);
+    let mut seen = 0;
+    assert_eq!(
+        delta.try_fold_range_at(100, 30_000, (), |(), _| {
+            seen += 1;
+            if seen == 3 { Err("stop") } else { Ok(()) }
+        }),
+        Err("stop")
+    );
+    assert_eq!(DELTA_TRANSFORMS.load(Ordering::Relaxed), 3);
+}
+
+#[test]
+#[cfg(feature = "pco")]
+fn eager_and_storage_wrappers_preserve_source_chunk_boundaries() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source = EagerVec::<PcoVec<usize, u64>>::import(&db, "eager", Version::ONE).unwrap();
+    for i in 0..40_000u64 {
+        source.push(i);
+    }
+    source.write().unwrap();
+    let reader = source.read_only_clone();
+    assert_eq!(source.cursor_chunk_size(), reader.cursor_chunk_size());
+    let mut actual = Vec::new();
+    source.for_each_chunk_at(17, 39_999, &mut |at, values| {
+        assert_eq!(at, 17 + actual.len());
+        actual.extend_from_slice(values);
+    });
+    assert_eq!(actual, reader.collect_range_at(17, 39_999));
+}
+
+impl UnaryTransform<u64> for Double {
+    fn apply(value: u64) -> u64 {
+        value * 2
+    }
+}
+
+#[test]
+fn chunked_transforms_preserve_emitted_indices_across_holes_and_empty_pages() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source =
+        MutableVec::<BytesVec<usize, u64>>::import(&db, "holes", Version::ONE).unwrap();
+    let len = 20_000;
+    for value in 0..len as u64 {
+        source.push(value);
+    }
+    for index in [0, 1, 4095, 8192, 19_999] {
+        source.delete_at(index);
+    }
+    for index in 4096..8192 {
+        source.delete_at(index);
+    }
+    source.write().unwrap();
+    // Sparse vectors remain uncached: CachedVec requires dense snapshots.
+    let boxed = ReadableBoxedVec::new(source.read_only_clone());
+    let indexed = LazyVec::<usize, u64, usize, u64>::init(
+        "indexed",
+        Version::ONE,
+        boxed.clone(),
+        |index, value| index as u64 + value,
+    );
+    let identity = LazyVec::<usize, u64, usize, u64>::transformed::<Ident>(
+        "identity",
+        Version::ONE,
+        ReadableBoxedVec::new(indexed.clone()),
+    );
+    for (from, to) in [(0, len), (3990, 9000), (4096, 8192), (19_000, len)] {
+        let values = boxed.collect_range_at(from, to);
+        let expected: Vec<_> = values
+            .iter()
+            .enumerate()
+            .map(|(i, value)| (from + i) as u64 + value)
+            .collect();
+        let mut chunks = Vec::new();
+        identity.for_each_chunk_at(from, to, &mut |at, values| {
+            assert!(!values.is_empty());
+            assert_eq!(at, from + chunks.len());
+            chunks.extend_from_slice(values);
+        });
+        assert_eq!(chunks, expected);
+        assert_eq!(identity.collect_range_at(from, to), expected);
+        assert_eq!(
+            indexed.fold_range_at(from, to, Vec::new(), |mut out, value| {
+                out.push(value);
+                out
+            }),
+            expected
+        );
+        let mut visited = Vec::new();
+        indexed.for_each_range_dyn_at(from, to, &mut |value| visited.push(value));
+        assert_eq!(visited, expected);
+    }
+}
+
+#[test]
+fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source = EagerVec::<BytesVec<usize, u64>>::import(&db, "source", Version::ONE).unwrap();
+    let len = 20_000;
+    for value in 0..len as u64 {
+        source.push(value);
+    }
+    source.write().unwrap();
+    let budget = Box::leak(Box::new(AtomicUsize::new(len * size_of::<u64>())));
+    let cached = CachedVec::wrap_budgeted(
+        StoredVec::read_only_clone(&source),
+        budget,
+        Arc::new(AtomicU64::new(0)),
+        Arc::new(AtomicUsize::new(0)),
+    );
+    let boxed = ReadableBoxedVec::new(cached.clone());
+    let mut values = Vec::new();
+    boxed.for_each_chunk_at(17, 21, &mut |at, chunk| {
+        assert_eq!(at, 17);
+        values.extend_from_slice(chunk);
+    });
+    assert_eq!(values, [17, 18, 19, 20]);
+    assert!(
+        cached.cached_snapshot().is_none(),
+        "small cold read must not admit a full cache"
+    );
+
+    values.clear();
+    boxed.for_each_chunk_at(0, usize::MAX, &mut |at, chunk| {
+        assert_eq!(at, values.len());
+        values.extend_from_slice(chunk);
+    });
+    assert_eq!(values, (0..len as u64).collect::<Vec<_>>());
+    let snapshot = cached.cached_snapshot().expect("full read admits cache");
+    let mut calls = 0;
+    boxed.for_each_chunk_at(17, len + 50, &mut |at, chunk| {
+        calls += 1;
+        assert_eq!(at, 17);
+        assert_eq!(
+            chunk.as_ptr(),
+            snapshot[17..].as_ptr(),
+            "borrow the actual cached allocation"
+        );
+        assert_eq!(chunk.len(), len - 17);
+    });
+    assert_eq!(calls, 1);
+    for (from, to) in [
+        (2, 2),
+        (50, 20),
+        (len, usize::MAX),
+        (usize::MAX, usize::MAX),
+    ] {
+        boxed.for_each_chunk_at(from, to, &mut |_, _| panic!("empty range"));
+    }
+
+    let identity = LazyVec::<usize, u64, usize, u64>::transformed::<Ident>(
+        "identity",
+        Version::ONE,
+        boxed.clone(),
+    );
+    let doubled = LazyVec::<usize, u64, usize, u64>::transformed::<Double>(
+        "double",
+        Version::ONE,
+        boxed.clone(),
+    );
+    let mut appended = vec![999];
+    identity.read_into_at(17, 21, &mut appended);
+    doubled.read_into_at(17, 21, &mut appended);
+    assert_eq!(appended, [999, 17, 18, 19, 20, 34, 36, 38, 40]);
+
+    cached.invalidate();
+    source.truncate_if_needed_at(len - 1).unwrap();
+    source.push(123);
+    source.write().unwrap();
+    assert_eq!(identity.collect_range_at(len - 1, len), [123]);
+    assert_eq!(doubled.collect_range_at(len - 1, len), [246]);
+    assert_eq!(
+        snapshot[len - 1],
+        (len - 1) as u64,
+        "old snapshot remains immutable"
+    );
+    assert!(cached.cached_snapshot().is_none());
+
+    // Force budget denial even for an eligible complete read.
+    budget.store(0, Ordering::Relaxed);
+    let mut fallback = Vec::new();
+    boxed.for_each_chunk_at(0, len, &mut |at, chunk| {
+        assert_eq!(at, fallback.len());
+        fallback.extend_from_slice(chunk);
+    });
+    assert_eq!(fallback.len(), len);
+    assert_eq!(fallback[len - 1], 123);
+    assert!(cached.cached_snapshot().is_none());
+}
+
+#[test]
+fn bulk_lazy_reads_preserve_absolute_indices_clones_folds_and_early_exit() {
+    static TRANSFORM_CALLS: AtomicUsize = AtomicUsize::new(0);
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source = EagerVec::<BytesVec<usize, u64>>::import(&db, "source", Version::ONE).unwrap();
+    for value in 0..10_000 {
+        source.push(value);
+    }
+    source.write().unwrap();
+    let source = ReadableBoxedVec::new(CachedVec::wrap(StoredVec::read_only_clone(&source)));
+    let indexed =
+        LazyVec::<usize, u64, usize, u64>::init("indexed", Version::ONE, source, |index, value| {
+            TRANSFORM_CALLS.fetch_add(1, Ordering::Relaxed);
+            index as u64 + value
+        });
+    for (from, to) in [
+        (0, 10_000),
+        (4000, 9000),
+        (7, 10_005),
+        (8, 2),
+        (usize::MAX, usize::MAX),
+    ] {
+        let expected: Vec<_> = (from..to.min(10_000)).map(|v| 2 * v as u64).collect();
+        assert_eq!(indexed.clone().collect_range_at(from, to), expected);
+        assert_eq!(
+            indexed.fold_range_at(from, to, Vec::new(), |mut out, v| {
+                out.push(v);
+                out
+            }),
+            expected
+        );
+        let mut visited = Vec::new();
+        indexed.for_each_range_dyn_at(from, to, &mut |v| visited.push(v));
+        assert_eq!(visited, expected);
+    }
+    let mut visited = Vec::new();
+    TRANSFORM_CALLS.store(0, Ordering::Relaxed);
+    let result = indexed.try_fold_range_at(4000, 9000, (), |(), value| {
+        visited.push(value);
+        if visited.len() == 3 {
+            Err("stop")
+        } else {
+            Ok(())
+        }
+    });
+    assert_eq!(result, Err("stop"));
+    assert_eq!(visited, [8000, 8002, 8004]);
+    assert_eq!(TRANSFORM_CALLS.load(Ordering::Relaxed), 3);
+}

@@ -274,6 +274,39 @@ where
             }
         }
     }
+
+    /// Batch adjacent requested pages. Separate disjoint runs before choosing
+    /// mmap versus buffered I/O, so sparse reads do not prefetch unused gaps.
+    pub(crate) fn read_sorted_stored_into(
+        region: &Region,
+        pages: &Arc<RwLock<Pages>>,
+        stored_len: usize,
+        mut indices: &[usize],
+        out: &mut Vec<T>,
+    ) {
+        while let Some(&first) = indices.first() {
+            let mut count = 1;
+            let mut last_page = first / Self::PER_PAGE;
+            while count < indices.len() {
+                let page = indices[count] / Self::PER_PAGE;
+                if page > last_page + 1 {
+                    break;
+                }
+                last_page = page;
+                count += 1;
+            }
+            let (run, rest) = indices.split_at(count);
+            CompressedRangeCursor::<I, T, S>::new(
+                region,
+                pages,
+                stored_len,
+                first,
+                run[count - 1] + 1,
+            )
+            .read_sorted_into(run, out);
+            indices = rest;
+        }
+    }
     #[inline]
     pub fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool {
         let Some((offset, len)) = pages.read().stored_byte_range(from, to, Self::PER_PAGE) else {

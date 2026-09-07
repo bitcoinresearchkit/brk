@@ -6,11 +6,11 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, BinaryTransform, CachedBoxedVec, CheckedSub, Formattable,
-    PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue, Version,
-    short_type_name,
+    PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue,
+    Version, short_type_name,
 };
 
-use super::SparseRead;
+use super::{SparseRead, rolling_inputs::for_each_rolling_input};
 
 /// Rolling transform derived from one cumulative source and one cached
 /// cumulative operand.
@@ -116,95 +116,76 @@ where
         init: B,
         mut fold: impl FnMut(B, T) -> Result<B, E>,
     ) -> Result<B, E> {
-        let mut accumulator = init;
+        let mut accumulator = Some(Ok(init));
+        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
+            accumulator = Some(accumulator.take().unwrap().and_then(|accumulator| {
+                self.transformed_values(at, current, base, previous, cached, starts)
+                    .try_fold(accumulator, &mut fold)
+            }));
+        });
+        accumulator.unwrap()
+    }
+
+    fn for_each_input(
+        &self,
+        from: usize,
+        to: usize,
+        mut visit: impl FnMut(usize, &[S], usize, &[S], &[C], &[Height]),
+    ) {
         let cached = self.cached.snapshot();
-        let window_starts = self.window_starts.snapshot();
+        let starts = self.window_starts.snapshot();
         let to = to
             .min(self.source.len())
             .min(cached.len())
-            .min(window_starts.len());
+            .min(starts.len());
         if from >= to {
-            return Ok(accumulator);
+            return;
         }
-
-        let starts = &window_starts[from..to];
-        let first_previous = starts.iter().find_map(|start| Self::previous_index(*start));
-        let last_previous = starts
-            .iter()
-            .rev()
-            .find_map(|start| Self::previous_index(*start));
-
-        if let Some((first_previous, last_previous)) = first_previous.zip(last_previous)
-            && last_previous + 1 >= from
-        {
-            let read_from = first_previous.min(from);
-            let source = self.source.collect_range_dyn(read_from, to);
-            for (offset, start) in starts.iter().enumerate() {
-                let index = from + offset;
-                let source_current = source[index - read_from].clone();
-                let previous = Self::previous_index(*start);
-                let source_previous = previous
-                    .map(|previous| source[previous - read_from].clone())
-                    .unwrap_or_default();
-                let cached_current = cached[index].clone();
-                let cached_previous = previous
-                    .map(|previous| cached[previous].clone())
-                    .unwrap_or_default();
-                accumulator = fold(
-                    accumulator,
-                    self.compute(
-                        index,
-                        previous,
-                        source_current,
-                        source_previous,
-                        cached_current,
-                        cached_previous,
-                    ),
-                )?;
-            }
-            return Ok(accumulator);
-        }
-
-        let current = self.source.collect_range_dyn(from, to);
-        let previous = first_previous
-            .zip(last_previous)
-            .map(|(first, last)| (first, self.source.collect_range_dyn(first, last + 1)));
-
-        for (offset, (source_current, start)) in current.into_iter().zip(starts).enumerate() {
-            let index = from + offset;
-            let previous_index = Self::previous_index(*start);
-            let source_previous = previous_index
-                .and_then(|previous_index| {
-                    previous
-                        .as_ref()
-                        .map(|(first, values)| values[previous_index - first].clone())
-                })
-                .unwrap_or_default();
-            let cached_current = cached[index].clone();
-            let cached_previous = previous_index
-                .map(|previous| cached[previous].clone())
-                .unwrap_or_default();
-            accumulator = fold(
-                accumulator,
-                self.compute(
-                    index,
-                    previous_index,
-                    source_current,
-                    source_previous,
-                    cached_current,
-                    cached_previous,
-                ),
-            )?;
-        }
-        Ok(accumulator)
+        for_each_rolling_input(
+            &self.source,
+            from,
+            to,
+            &starts[from..to],
+            |at, current, base, previous| {
+                visit(
+                    at,
+                    current,
+                    base,
+                    previous,
+                    &cached,
+                    &starts[at..at + current.len()],
+                );
+            },
+        );
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_values(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+    fn transformed_values<'a>(
+        &'a self,
+        at: usize,
+        current: &'a [S],
+        base: usize,
+        previous: &'a [S],
+        cached: &'a [C],
+        starts: &'a [Height],
+    ) -> impl Iterator<Item = T> + 'a {
+        current
+            .iter()
+            .zip(starts)
+            .enumerate()
+            .map(move |(offset, (current, start))| {
+                let index = at + offset;
+                let prior = Self::previous_index(*start);
+                self.compute(
+                    index,
+                    prior,
+                    current.clone(),
+                    prior
+                        .map(|i| previous[i - base].clone())
+                        .unwrap_or_default(),
+                    cached[index].clone(),
+                    prior.map(|i| cached[i].clone()).unwrap_or_default(),
+                )
+            })
     }
 }
 
@@ -288,12 +269,40 @@ where
     F: BinaryTransform<S, C, T> + Send + Sync,
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_value(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
+            buf.extend(self.transformed_values(at, current, base, previous, cached, starts));
+        });
+    }
+
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, each: &mut dyn FnMut(usize, &[T])) {
+        let size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        let mut output = Vec::new();
+        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
+            for (chunk, current) in current.chunks(size).enumerate() {
+                let offset = chunk * size;
+                output.clear();
+                output.extend(self.transformed_values(
+                    at + offset,
+                    current,
+                    base,
+                    previous,
+                    cached,
+                    &starts[offset..offset + current.len()],
+                ));
+                each(at + offset, &output);
+            }
+        });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(T)) {
-        self.for_each_value(from, to, each);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut *each)
+        });
     }
 
     fn fold_range_at<B, G: FnMut(B, T) -> B>(
@@ -362,24 +371,19 @@ where
 
         let cached = self.cached.snapshot();
         let window_starts = self.window_starts.snapshot();
-        let source = SparseRead::new(
-            &*self.source,
-            indices.iter().flat_map(|&index| {
-                [Some(index), Self::previous_index(window_starts[index])]
-                    .into_iter()
-                    .flatten()
-            }),
-        );
+        let source = SparseRead::new(&*self.source, indices, |index| {
+            Self::previous_index(window_starts[index])
+        });
 
         out.reserve(indices.len());
-        for &index in indices {
+        for (output, &index) in indices.iter().enumerate() {
             let previous = Self::previous_index(window_starts[index]);
             out.push(
                 self.compute(
                     index,
                     previous,
-                    source.at(index),
-                    previous.map(|index| source.at(index)).unwrap_or_default(),
+                    source.current(output),
+                    source.previous(output).unwrap_or_default(),
                     cached[index].clone(),
                     previous
                         .map(|index| cached[index].clone())

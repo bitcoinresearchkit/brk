@@ -24,5 +24,5 @@ pub fn last_source_index(mapping: &[Day1], index: usize, source_len: usize) -> O
         .map(|day| day.to_usize())
         .unwrap_or(source_len)
         .min(source_len);
-    (first < next_first).then_some(next_first - 1)
+    (first < next_first).then(|| next_first - 1)
 }

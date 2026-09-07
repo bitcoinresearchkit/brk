@@ -621,6 +621,27 @@ where
             .map(|compact| self.decode_current(compact))
     }
 
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
+        let len = self.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        if indices.is_empty() {
+            return;
+        }
+        let compact = if indices.len() > 1 && indices.windows(2).all(|pair| pair[1] == pair[0] + 1)
+        {
+            self.compact
+                .collect_range_at(indices[0], indices[indices.len() - 1] + 1)
+        } else {
+            self.compact.read_sorted_at(indices)
+        };
+        let overflow = self.overflow.reader();
+        out.extend(
+            compact
+                .into_iter()
+                .map(|value| Self::decode_with_overflow_reader(value, &self.overflow, &overflow)),
+        );
+    }
+
     #[inline]
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
         let len = self.len();

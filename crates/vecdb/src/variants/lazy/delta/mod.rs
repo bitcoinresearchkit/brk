@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 pub mod any_vec;
 pub mod avg;
@@ -61,9 +61,58 @@ where
         }
     }
 
-    /// Core bulk iteration with fold + early exit support: collect source range
-    /// covering both current and ago positions in a single sequential read,
-    /// then apply Op per element.
+    /// Read overlapping ranges once, but never read the gap between disjoint
+    /// current and historical ranges. Complete reads before invoking callbacks:
+    /// sources may hold non-reentrant publication locks while lending chunks.
+    fn with_source_ranges<R>(
+        &self,
+        from: usize,
+        to: usize,
+        starts: &[I],
+        visit: impl FnOnce(&[S], usize, &[S]) -> R,
+    ) -> R {
+        let starts = &starts[from..to];
+        let first = starts
+            .iter()
+            .find_map(|start| Op::ago_index(start.to_usize()));
+        let last = starts
+            .iter()
+            .rev()
+            .find_map(|start| Op::ago_index(start.to_usize()));
+        if let Some((first, last)) = first.zip(last) {
+            if last.saturating_add(1) >= from {
+                let read_from = first.min(from);
+                let values = self.source.collect_range_dyn(read_from, to);
+                return visit(&values[from - read_from..], read_from, &values);
+            }
+            let previous = self.source.collect_range_dyn(first, last + 1);
+            let current = self.source.collect_range_dyn(from, to);
+            return visit(&current, first, &previous);
+        }
+        let current = self.source.collect_range_dyn(from, to);
+        visit(&current, 0, &[])
+    }
+
+    fn transformed_values<'a>(
+        at: usize,
+        current: &'a [S],
+        starts: &'a [I],
+        previous_from: usize,
+        previous: &'a [S],
+    ) -> impl Iterator<Item = T> + 'a {
+        (at..at + current.len())
+            .zip(current)
+            .zip(starts)
+            .map(move |((index, current), start)| {
+                let start = start.to_usize();
+                let ago = Op::ago_index(start)
+                    .map(|index| previous[index - previous_from].clone())
+                    .unwrap_or_else(Op::ago_default);
+                Op::combine(current.clone(), ago, Op::count(index, start))
+            })
+    }
+
+    /// Scalar transform/consumer ordering is retained for fallible folds.
     #[inline]
     fn bulk_try_fold<B, E>(
         &self,
@@ -71,38 +120,24 @@ where
         to: usize,
         starts: &[I],
         init: B,
-        mut f: impl FnMut(B, T) -> std::result::Result<B, E>,
-    ) -> std::result::Result<B, E> {
+        f: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
         if from >= to {
             return Ok(init);
         }
 
-        // Starts are monotonically non-decreasing, so the earliest ago is from starts[from].
-        let read_from = Op::ago_index(starts[from].to_usize())
-            .unwrap_or(0)
-            .min(from);
-
-        let source_data = self.source.collect_range_dyn(read_from, to);
-
-        let mut acc = init;
-        for i in from..to {
-            let start = starts[i].to_usize();
-            let current = source_data[i - read_from].clone();
-            let ago = match Op::ago_index(start) {
-                Some(idx) => source_data[idx - read_from].clone(),
-                None => Op::ago_default(),
-            };
-            acc = f(acc, Op::combine(current, ago, Op::count(i, start)))?;
-        }
-        Ok(acc)
+        self.with_source_ranges(from, to, starts, |current, previous_from, previous| {
+            Self::transformed_values(from, current, &starts[from..to], previous_from, previous)
+                .try_fold(init, f)
+        })
     }
 
     #[inline]
     fn bulk_for_each(&self, from: usize, to: usize, starts: &[I], mut each: impl FnMut(T)) {
         self.bulk_try_fold(from, to, starts, (), |(), v| {
             each(v);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         })
-        .unwrap_or_else(|e: std::convert::Infallible| match e {})
+        .unwrap_or_else(|e: Infallible| match e {})
     }
 }

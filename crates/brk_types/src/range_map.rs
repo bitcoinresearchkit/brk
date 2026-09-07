@@ -3,6 +3,9 @@
 const CACHE_SIZE: usize = 1024;
 const CACHE_MASK: usize = CACHE_SIZE - 1;
 
+mod cursor;
+pub use cursor::RangeMapCursor;
+
 #[derive(Clone, Copy)]
 struct CacheEntry<I, V>(I, I, V, bool);
 
@@ -39,6 +42,12 @@ impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
 }
 
 impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> RangeMap<I, V> {
+    /// Request-local floor lookup hint. The shared borrow prevents mutations
+    /// from invalidating a remembered interval.
+    pub fn cursor(&self) -> RangeMapCursor<'_, I, V> {
+        RangeMapCursor::new(self)
+    }
+
     /// Number of ranges stored.
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {

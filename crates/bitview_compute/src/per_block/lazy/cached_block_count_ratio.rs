@@ -2,8 +2,8 @@ use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use brk_types::{Height, StoredU64};
 use vecdb::{
-    AnyVec, BinaryTransform, Cursor, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecValue, Version, short_type_name,
+    AnyVec, BinaryTransform, Cursor, PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecValue, Version, short_type_name,
 };
 
 use crate::CachedBlockCountReader;
@@ -64,14 +64,6 @@ where
                     F::apply(numerators.next().unwrap(), denominator),
                 )
             })
-    }
-
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_values(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
     }
 }
 
@@ -139,12 +131,37 @@ where
     F: BinaryTransform<StoredU64, StoredU64, T> + Send + Sync,
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_value(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.try_fold_values(from, to, (), |(), value| {
+            buf.push(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, each: &mut dyn FnMut(usize, &[T])) {
+        let size = READ_CHUNK_SIZE;
+        let mut at = from;
+        let mut output = Vec::new();
+        self.try_fold_values(from, to, (), |(), value| {
+            output.push(value);
+            if output.len() == size {
+                each(at, &output);
+                at += output.len();
+                output.clear();
+            }
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
+        if !output.is_empty() {
+            each(at, &output);
+        }
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(T)) {
-        self.for_each_value(from, to, each);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut *each)
+        });
     }
 
     fn fold_range_at<B, G: FnMut(B, T) -> B>(

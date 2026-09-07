@@ -40,6 +40,21 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> ReadableVec<V::I, V::T> for CachedVe
         }
     }
 
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[V::T])) {
+        let to = to.min(self.inner.len());
+        if from >= to {
+            return;
+        }
+        if let Some(data) = self.try_snapshot(|| self.range_touches_every_chunk(from, to)) {
+            let to = to.min(data.len());
+            if from < to {
+                f(from, &data[from..to]);
+            }
+        } else {
+            self.inner.for_each_chunk_at(from, to, f);
+        }
+    }
+
     #[inline]
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(V::T)) {
         if let Some(data) = self.try_snapshot(|| self.range_touches_every_chunk(from, to)) {

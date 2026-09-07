@@ -1,14 +1,61 @@
-use std::{convert::Infallible, sync::Arc};
+use std::{iter::once, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::SparseRead;
+
+struct WindowInputs<'a, I, S> {
+    at: usize,
+    starts: &'a [I],
+    previous: &'a [S],
+    previous_from: usize,
+    inclusive: bool,
+}
+
+trait WindowTransform<I, S, T>: Send + Sync {
+    fn apply(&self, current: S, previous: S, count: usize) -> T;
+    fn append(&self, current: &[S], inputs: &WindowInputs<I, S>, out: &mut Vec<T>);
+}
+
+impl<I, S, T, F> WindowTransform<I, S, T> for F
+where
+    I: VecIndex,
+    S: VecValue + Default,
+    F: Fn(S, S, usize) -> T + Send + Sync,
+{
+    fn apply(&self, current: S, previous: S, count: usize) -> T {
+        self(current, previous, count)
+    }
+    fn append(&self, current: &[S], inputs: &WindowInputs<I, S>, out: &mut Vec<T>) {
+        out.extend(
+            (inputs.at..inputs.at + current.len())
+                .zip(current.iter().cloned())
+                .zip(inputs.starts)
+                .map(|((at, current), start)| {
+                    let start = start.to_usize();
+                    let ago = if inputs.inclusive {
+                        start.checked_sub(1)
+                    } else {
+                        Some(start)
+                    };
+                    let previous = ago
+                        .map(|i| inputs.previous[i - inputs.previous_from].clone())
+                        .unwrap_or_default();
+                    self(
+                        current,
+                        previous,
+                        at - start + usize::from(inputs.inclusive),
+                    )
+                }),
+        );
+    }
+}
 
 /// Lazily combines the current and window-start values of one metric source.
 ///
@@ -26,7 +73,7 @@ where
     source: ReadableBoxedVec<I, S>,
     window_starts: CachedBoxedVec<I, I>,
     inclusive: bool,
-    compute: Arc<dyn Fn(S, S, usize) -> T + Send + Sync>,
+    compute: Arc<dyn WindowTransform<I, S, T>>,
 }
 
 impl<I, S, T> LazyWindowVec<I, S, T>
@@ -111,18 +158,51 @@ where
                 .unwrap_or_default();
             accumulator = fold(
                 accumulator,
-                (self.compute)(current, previous, self.count(from + offset, start)),
+                self.compute
+                    .apply(current, previous, self.count(from + offset, start)),
             )?;
         }
         Ok(accumulator)
     }
 
-    fn for_each_window(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_window(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+    fn for_each_input(
+        &self,
+        from: usize,
+        to: usize,
+        mut each: impl FnMut(&[S], WindowInputs<I, S>),
+    ) {
+        let window_starts = self.window_starts.snapshot();
+        let to = to.min(self.len()).min(window_starts.len());
+        if from >= to {
+            return;
+        }
+        let starts = &window_starts[from..to];
+        let first = starts
+            .iter()
+            .find_map(|start| self.ago_index(start.to_usize()));
+        let last = starts
+            .iter()
+            .rev()
+            .find_map(|start| self.ago_index(start.to_usize()));
+        let (previous_from, previous_to) = first
+            .zip(last)
+            .map(|(first, last)| (first, last + 1))
+            .unwrap_or((0, 0));
+        // Do not recursively read the source while it lends current chunks;
+        // columnar sources may hold their publication lock in the callback.
+        let previous = self.source.collect_range_dyn(previous_from, previous_to);
+        self.source.for_each_chunk_at(from, to, &mut |at, current| {
+            each(
+                current,
+                WindowInputs {
+                    at,
+                    starts: &window_starts[at..at + current.len()],
+                    previous: &previous,
+                    previous_from,
+                    inclusive: self.inclusive,
+                },
+            );
+        });
     }
 }
 
@@ -195,13 +275,39 @@ where
     S: VecValue + Default,
     T: VecValue,
 {
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_window(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.for_each_input(from, to, |current, inputs| {
+            self.compute.append(current, &inputs, buf);
+        });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let chunk_size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        let mut output = Vec::new();
+        self.for_each_input(from, to, |current, inputs| {
+            for (chunk, current) in current.chunks(chunk_size).enumerate() {
+                let offset = chunk * chunk_size;
+                let inputs = WindowInputs {
+                    at: inputs.at + offset,
+                    starts: &inputs.starts[offset..offset + current.len()],
+                    ..inputs
+                };
+                output.clear();
+                self.compute.append(current, &inputs, &mut output);
+                f(inputs.at, &output);
+            }
+        });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
-        self.for_each_window(from, to, f);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut *f);
+        });
     }
 
     fn fold_range_at<B, F: FnMut(B, T) -> B>(
@@ -211,10 +317,11 @@ where
         init: B,
         mut f: F,
     ) -> B {
-        self.try_fold_window(from, to, init, |accumulator, value| {
-            Ok::<_, Infallible>(f(accumulator, value))
-        })
-        .unwrap()
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
@@ -235,7 +342,10 @@ where
             .ago_index(start)
             .and_then(|index| self.source.collect_one_at(index))
             .unwrap_or_default();
-        Some((self.compute)(current, previous, self.count(index, start)))
+        Some(
+            self.compute
+                .apply(current, previous, self.count(index, start)),
+        )
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
@@ -257,24 +367,16 @@ where
             return;
         }
 
-        let source = SparseRead::new(
-            &*self.source,
-            indices.iter().flat_map(|&index| {
-                [Some(index), self.ago_index(window_starts[index].to_usize())]
-                    .into_iter()
-                    .flatten()
-            }),
-        );
+        let source = SparseRead::new(&*self.source, indices, |index| {
+            self.ago_index(window_starts[index].to_usize())
+        });
 
         out.reserve(indices.len());
-        for &index in indices {
+        for (output, &index) in indices.iter().enumerate() {
             let start = window_starts[index].to_usize();
-            let previous = self
-                .ago_index(start)
-                .map(|index| source.at(index))
-                .unwrap_or_default();
-            out.push((self.compute)(
-                source.at(index),
+            let previous = source.previous(output).unwrap_or_default();
+            out.push(self.compute.apply(
+                source.current(output),
                 previous,
                 self.count(index, start),
             ));
@@ -289,7 +391,7 @@ where
     T: VecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -300,6 +402,7 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
         ReadableVec, WritableVec,
@@ -309,7 +412,7 @@ mod tests {
 
     #[test]
     fn sorted_reads_batch_inclusive_and_exclusive_windows() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();

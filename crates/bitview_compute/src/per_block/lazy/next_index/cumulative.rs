@@ -170,6 +170,22 @@ where
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<StoredU64>) {
         let len = self.len();
         let terminal = S::from(self.terminal_len.get());
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        if let (Some(&first), Some(&last)) = (indices.first(), indices.last())
+            && last - first >= indices.len()
+            && !self.first_indexes.is_mutable()
+        {
+            let split = indices.partition_point(|&i| i + 1 < len);
+            let next: Vec<_> = indices[..split].iter().map(|&i| i + 1).collect();
+            out.extend(
+                self.first_indexes
+                    .read_sorted_at(&next)
+                    .into_iter()
+                    .map(StoredU64::from),
+            );
+            out.extend(indices[split..].iter().map(|_| StoredU64::from(terminal)));
+            return;
+        }
         let mut first_indexes = Cursor::new(&*self.first_indexes);
 
         out.reserve(indices.len());

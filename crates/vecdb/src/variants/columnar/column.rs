@@ -53,12 +53,12 @@ where
         let mut acc = Some(init);
         self.source
             .for_each_column_chunk_at(&[self.column], from, to, &mut |_, _, values| {
-                for value in values {
-                    acc = Some(f(
-                        acc.take().expect("column fold accumulator"),
-                        value.clone(),
-                    ));
-                }
+                acc = Some(
+                    values
+                        .iter()
+                        .cloned()
+                        .fold(acc.take().expect("column fold accumulator"), &mut f),
+                );
             });
         acc.expect("column fold accumulator")
     }
@@ -116,6 +116,11 @@ where
             });
     }
 
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<S::T>) {
+        self.source
+            .read_column_sorted_into_at(self.column, indices, out);
+    }
+
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(S::T)) {
         self.source
             .for_each_column_chunk_at(&[self.column], from, to, &mut |_, _, values| {
@@ -123,6 +128,11 @@ where
                     f(value.clone());
                 }
             });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[S::T])) {
+        self.source
+            .for_each_column_chunk_at(&[self.column], from, to, &mut |_, at, values| f(at, values));
     }
 
     fn fold_range_at<B, F: FnMut(B, S::T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {

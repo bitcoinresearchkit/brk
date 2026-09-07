@@ -975,14 +975,21 @@ where
     }
     vec.write()?;
     let projection = Arc::new(vec.column("third", Version::ONE, TestColumn::Third));
+    let sum = Arc::new(vec.sum_columns("sum", Version::ONE, TestColumn::ALL.iter().copied()));
     let readers = (0..4)
         .map(|_| {
             let projection = Arc::clone(&projection);
+            let sum = Arc::clone(&sum);
             thread::spawn(move || {
                 for _ in 0..2_000 {
                     let len = projection.len();
                     if len != 0 {
                         assert_eq!(projection.collect_one_at(len - 1), Some(row(len - 1)[2]));
+                        let indices = [0, len / 2, len - 1];
+                        assert_eq!(
+                            sum.read_sorted_at(&indices),
+                            indices.map(|i| row(i).into_iter().sum::<u64>())
+                        );
                     }
                     thread::yield_now();
                 }

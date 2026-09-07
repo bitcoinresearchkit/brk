@@ -7,6 +7,16 @@ where
     V: StoredVec,
 {
     #[inline(always)]
+    fn cursor_chunk_size(&self) -> usize {
+        self.0.cursor_chunk_size()
+    }
+
+    #[inline(always)]
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[V::T])) {
+        self.0.for_each_chunk_at(from, to, f);
+    }
+
+    #[inline(always)]
     fn collect_one_at(&self, index: usize) -> Option<V::T> {
         self.0.collect_one_at(index)
     }

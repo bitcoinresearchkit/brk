@@ -112,6 +112,29 @@ impl CachedBlockCountReader {
         ))
     }
 
+    pub(crate) fn for_each_sorted_rolling_sum(
+        &self,
+        indices: &[usize],
+        starts: &[Height],
+        mut each: impl FnMut(usize, StoredU64),
+    ) {
+        let (block, checkpoints) = self.snapshot();
+        let mut current = (0, 0);
+        let mut previous = (0, 0);
+        for (slot, &index) in indices.iter().enumerate() {
+            if index >= block.len() || index >= starts.len() {
+                break;
+            }
+            let start = starts[index].to_usize();
+            if start > index {
+                continue;
+            }
+            let end = Self::advance_sum(&block, &checkpoints, index + 1, &mut current);
+            let before = Self::advance_sum(&block, &checkpoints, start, &mut previous);
+            each(slot, StoredU64::from(end - before));
+        }
+    }
+
     fn snapshot(&self) -> (Arc<Vec<StoredU16>>, Arc<Vec<u64>>) {
         let block = self.block.snapshot();
 
@@ -177,6 +200,24 @@ impl CachedBlockCountReader {
         let checkpoint = end / CHECKPOINT_INTERVAL;
         let from = checkpoint * CHECKPOINT_INTERVAL;
         checkpoints[checkpoint] + block[from..end].iter().map(Self::as_u64).sum::<u64>()
+    }
+
+    /// Reuse the preceding sum only when advancing scans no more values than
+    /// restarting from the nearest checkpoint. Large gaps remain bounded.
+    fn advance_sum(
+        block: &[StoredU16],
+        checkpoints: &[u64],
+        end: usize,
+        state: &mut (usize, u64),
+    ) -> u64 {
+        let (previous, sum) = *state;
+        let value = if end >= previous && end - previous <= end % CHECKPOINT_INTERVAL {
+            sum + block[previous..end].iter().map(Self::as_u64).sum::<u64>()
+        } else {
+            Self::sum_before(block, checkpoints, end)
+        };
+        *state = (end, value);
+        value
     }
 
     #[inline(always)]
@@ -268,15 +309,17 @@ impl ReadableVec<Height, StoredU64> for CachedBlockCountReader {
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<StoredU64>) {
         let (block, checkpoints) = self.snapshot();
+        let mut state = (0, 0);
         out.reserve(indices.len());
         indices
             .iter()
             .take_while(|&&index| index < block.len())
             .for_each(|&index| {
-                out.push(StoredU64::from(Self::sum_before(
+                out.push(StoredU64::from(Self::advance_sum(
                     &block,
                     &checkpoints,
                     index + 1,
+                    &mut state,
                 )));
             });
     }
@@ -288,6 +331,97 @@ mod tests {
     use vecdb::{AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
 
     use super::*;
+    use vecdb::{CachedReadableVec, ReadOnlyClone};
+
+    #[test]
+    fn sorted_counts_reuse_tails_and_handle_gaps_duplicates_and_rewrites() {
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let mut block =
+            EagerVec::<PcoVec<Height, StoredU16>>::forced_import(&db, "sorted", Version::ONE)
+                .unwrap();
+        for i in 0..4300 {
+            block.push(StoredU16::new((i % 17) as u16));
+        }
+        block.write().unwrap();
+        let cached = CachedVec::wrap(block.read_only_clone());
+        let count = CachedBlockCountReader::new(cached.cached_boxed_clone());
+        for rewrite in [false, true] {
+            if rewrite {
+                block.truncate_if_needed_at(4000).unwrap();
+                for _ in 4000..4300 {
+                    block.push(StoredU16::new(19));
+                }
+                block.write().unwrap();
+                count.invalidate();
+            }
+            let values = block.collect_range_at(0, 4300);
+            let mut sum = 0u64;
+            let cumulative: Vec<_> = values
+                .iter()
+                .map(|v| {
+                    sum += u64::from(**v);
+                    StoredU64::from(sum)
+                })
+                .collect();
+            for indices in [
+                vec![],
+                vec![usize::MAX],
+                vec![
+                    0,
+                    0,
+                    254,
+                    255,
+                    255,
+                    256,
+                    257,
+                    2047,
+                    2048,
+                    4299,
+                    4300,
+                    usize::MAX,
+                ],
+                (0..4300).collect(),
+                (0..4300).step_by(13).flat_map(|i| [i, i]).collect(),
+            ] {
+                let mut actual = vec![StoredU64::from(99u64)];
+                count.read_sorted_into_at(&indices, &mut actual);
+                assert_eq!(
+                    &actual[1..],
+                    indices
+                        .iter()
+                        .filter_map(|&i| cumulative.get(i).copied())
+                        .collect::<Vec<_>>()
+                );
+                for nonmonotonic in [false, true] {
+                    let starts: Vec<_> = (0..4300usize)
+                        .map(|i| {
+                            Height::from(if nonmonotonic {
+                                if i % 5 == 0 { i + 1 } else { i % 311 }
+                            } else {
+                                i.saturating_sub(517)
+                            })
+                        })
+                        .collect();
+                    let expected: Vec<_> = indices
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(slot, &i)| {
+                            starts
+                                .get(i)
+                                .and_then(|start| count.rolling_sum_at(start.to_usize(), i))
+                                .map(|v| (slot, v))
+                        })
+                        .collect();
+                    let mut actual = Vec::new();
+                    count.for_each_sorted_rolling_sum(&indices, &starts, |slot, value| {
+                        actual.push((slot, value))
+                    });
+                    assert_eq!(actual, expected);
+                }
+            }
+        }
+    }
 
     #[test]
     fn reconstructs_cumulative_and_rolling_counts() {

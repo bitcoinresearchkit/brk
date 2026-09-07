@@ -1,12 +1,41 @@
-use std::{convert::Infallible, sync::Arc};
+use std::{iter::once, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
+
+/// One captured operation, dispatched once for each scalar read or whole chunk.
+trait IndexedTransform<I, S, M, T>: Send + Sync {
+    fn apply(&self, index: I, source: S, metadata: M) -> T;
+    fn append(&self, at: usize, source: &[S], metadata: &[M], out: &mut Vec<T>);
+}
+
+impl<I, S, M, T, F> IndexedTransform<I, S, M, T> for F
+where
+    I: VecIndex,
+    S: VecValue,
+    M: VecValue,
+    F: Fn(I, S, M) -> T + Send + Sync,
+{
+    fn apply(&self, index: I, source: S, metadata: M) -> T {
+        self(index, source, metadata)
+    }
+
+    fn append(&self, at: usize, source: &[S], metadata: &[M], out: &mut Vec<T>) {
+        // Validate the end once rather than checked addition per element.
+        let indices = at..at + source.len();
+        out.extend(
+            indices
+                .zip(source.iter().cloned())
+                .zip(metadata.iter().cloned())
+                .map(|((index, source), metadata)| self(I::from(index), source, metadata)),
+        );
+    }
+}
 
 /// Lazily transforms one metric source with aligned index metadata.
 pub struct LazyIndexedVec<I, S, M, T>
@@ -20,7 +49,7 @@ where
     base_version: Version,
     source: ReadableBoxedVec<I, S>,
     metadata: CachedBoxedVec<I, M>,
-    compute: Arc<dyn Fn(I, S, M) -> T + Send + Sync>,
+    compute: Arc<dyn IndexedTransform<I, S, M, T>>,
 }
 
 impl<I, S, M, T> LazyIndexedVec<I, S, M, T>
@@ -67,17 +96,15 @@ where
             .try_fold(init, |accumulator, (offset, (source, metadata))| {
                 fold(
                     accumulator,
-                    (self.compute)(I::from(from + offset), source, metadata),
+                    self.compute.apply(I::from(from + offset), source, metadata),
                 )
             })
     }
 
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_values(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut each);
+        });
     }
 }
 
@@ -153,9 +180,43 @@ where
     M: VecValue,
     T: VecValue,
 {
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let metadata = self.metadata.snapshot();
+        let to = to.min(metadata.len());
         buf.reserve(to.saturating_sub(from));
-        self.for_each_value(from, to, |value| buf.push(value));
+        self.source.for_each_chunk_at(from, to, &mut |at, values| {
+            self.compute
+                .append(at, values, &metadata[at..at + values.len()], buf);
+        });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let metadata = self.metadata.snapshot();
+        let to = to.min(metadata.len());
+        let mut output = Vec::new();
+        let chunk_size = self.source.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        self.source.for_each_chunk_at(from, to, &mut |at, values| {
+            let mut at = at;
+            for values in values.chunks(chunk_size) {
+                output.clear();
+                self.compute
+                    .append(at, values, &metadata[at..at + values.len()], &mut output);
+                f(at, &output);
+                at += values.len();
+            }
+        });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
@@ -169,10 +230,11 @@ where
         init: B,
         mut fold: F,
     ) -> B {
-        self.try_fold_values(from, to, init, |accumulator, value| {
-            Ok::<_, Infallible>(fold(accumulator, value))
-        })
-        .unwrap()
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut fold));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
@@ -188,7 +250,7 @@ where
     fn collect_one_at(&self, index: usize) -> Option<T> {
         let source = self.source.collect_one_at(index)?;
         let metadata = self.metadata.snapshot().get(index)?.clone();
-        Some((self.compute)(I::from(index), source, metadata))
+        Some(self.compute.apply(I::from(index), source, metadata))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
@@ -199,11 +261,10 @@ where
 
         out.reserve(source.len());
         for (&index, value) in indices.iter().zip(source) {
-            out.push((self.compute)(
-                I::from(index),
-                value,
-                metadata[index].clone(),
-            ));
+            out.push(
+                self.compute
+                    .apply(I::from(index), value, metadata[index].clone()),
+            );
         }
     }
 }
@@ -216,7 +277,7 @@ where
     T: VecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -227,6 +288,7 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
         ReadableVec, VecIndex, WritableVec,
@@ -236,7 +298,7 @@ mod tests {
 
     #[test]
     fn folds_aligned_values_and_stops_on_error() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();

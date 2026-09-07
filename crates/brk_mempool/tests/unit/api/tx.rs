@@ -176,7 +176,6 @@ fn aggregates_require_completed_observations_including_empty_results() {
     let mempool = Mempool::for_test();
     let txid = fake_txid(1);
     let check = |ready| {
-        assert_eq!(mempool.info().is_ok(), ready);
         assert_eq!(mempool.txids().is_ok(), ready);
         assert_eq!(mempool.txids_hash().is_ok(), ready);
         assert_eq!(mempool.txids_with_hash().is_ok(), ready);

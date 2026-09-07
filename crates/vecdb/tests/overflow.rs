@@ -43,6 +43,101 @@ impl OverflowVecValue for TestValue {
     }
 }
 
+fn assert_sorted_reads(
+    source: &impl ReadableVec<usize, TestValue>,
+    expected: &[Option<TestValue>],
+) {
+    for indices in [
+        vec![],
+        vec![usize::MAX],
+        vec![
+            0,
+            0,
+            1,
+            2,
+            210,
+            211,
+            211,
+            4095,
+            4096,
+            10_010,
+            10_011,
+            10_012,
+            usize::MAX,
+        ],
+        (0..expected.len() + 1).collect(),
+        (0..expected.len())
+            .step_by(13)
+            .flat_map(|i| [i, i])
+            .collect(),
+    ] {
+        let values: Vec<_> = indices
+            .iter()
+            .filter_map(|&i| expected.get(i).copied().flatten())
+            .collect();
+        let mut actual = vec![TestValue(99)];
+        source.read_sorted_into_at(&indices, &mut actual);
+        assert_eq!(&actual[1..], values);
+    }
+}
+
+#[test]
+fn sorted_reads_preserve_holes_staged_sidecar_reuse_truncation_and_reopen() -> vecdb::Result<()> {
+    let temp = tempdir()?;
+    let db = vecdb::Database::open(temp.path())?;
+    let mut source = OverflowVec::<usize, TestValue>::import(&db, "sorted", Version::ONE)?;
+    let mut expected: Vec<_> = (0..10_011)
+        .map(|i| {
+            Some(TestValue(if i % 211 == 0 {
+                1_000_000 + i as u64
+            } else {
+                i as u64 % 97
+            }))
+        })
+        .collect();
+    for value in &expected {
+        source.push(value.unwrap());
+    }
+    source.write()?;
+    let reader = source.read_only_clone();
+    let published = expected.clone();
+    assert_sorted_reads(&source, &expected);
+    assert_sorted_reads(&reader, &published);
+    for (index, value) in [
+        (0, TestValue(7)),
+        (1, TestValue(9000)),
+        (211, TestValue(11)),
+    ] {
+        source.update(index, value)?;
+        expected[index] = Some(value);
+    }
+    for index in [2, 422] {
+        source.delete(index);
+        expected[index] = None;
+    }
+    source.push(TestValue(77_777));
+    expected.push(Some(TestValue(77_777)));
+    assert_sorted_reads(&source, &expected);
+    assert_sorted_reads(&reader, &published);
+    source.write()?;
+    assert_sorted_reads(&reader, &expected);
+    source.truncate_if_needed_at(6000)?;
+    expected.truncate(6000);
+    for i in 0..100 {
+        let value = TestValue(i);
+        source.push(value);
+        expected.push(Some(value));
+    }
+    source.write()?;
+    assert_sorted_reads(&source, &expected);
+    assert_sorted_reads(&reader, &expected);
+    drop(source);
+    let source = OverflowVec::<usize, TestValue>::import(&db, "sorted", Version::ONE)?;
+    assert_sorted_reads(&source, &expected);
+    assert_sorted_reads(&source.read_only_clone(), &expected);
+    Ok(())
+}
+
 #[test]
 fn large_range_decodes_inline_and_overflow_values() -> vecdb::Result<()> {
     let temp = tempdir()?;

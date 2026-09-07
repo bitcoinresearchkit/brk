@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Timestamp, Version};
@@ -14,7 +14,7 @@ const DAY_SECONDS: u64 = 24 * HOUR_SECONDS;
 /// cache.
 ///
 /// Range and sorted reads find the first window start once, then advance it
-/// monotonically as current heights advance.
+/// monotonically. Sorted reads jump over large request gaps with binary search.
 #[derive(Clone)]
 pub struct LazyWindowStartVec {
     name: Arc<str>,
@@ -91,7 +91,7 @@ impl LazyWindowStartVec {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Height)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}
@@ -189,14 +189,24 @@ impl ReadableVec<Height, Height> for LazyWindowStartVec {
         }
 
         let mut start = self.start_at(&timestamps, first);
+        let mut previous = first;
         out.reserve(indices.len());
         for &current in indices {
             if current >= timestamps.len() {
                 break;
             }
-            while start < current && self.is_expired(timestamps[current], timestamps[start]) {
-                start += 1;
+            // For a large request gap, binary search costs fewer comparisons
+            // than walking the skipped history. Nearby requests keep the
+            // existing forward scan, including its cheap duplicate handling.
+            if start < current && current - previous > (current - start).ilog2() as usize + 1 {
+                start += timestamps[start..current]
+                    .partition_point(|&older| self.is_expired(timestamps[current], older));
+            } else {
+                while start < current && self.is_expired(timestamps[current], timestamps[start]) {
+                    start += 1;
+                }
             }
+            previous = current;
             out.push(Height::from(start));
         }
     }
@@ -355,6 +365,60 @@ mod tests {
 
         assert_eq!(day.collect(), [0_usize, 0, 1, 2, 3].map(Height::from));
         assert_eq!(hour.collect(), [0_usize, 1, 2, 3, 4].map(Height::from));
+    }
+
+    #[test]
+    fn sorted_gap_search_matches_linear_reference_across_duplicates_and_rewrites() {
+        let mut time = 0u32;
+        let mut values: Vec<_> = (0..50_000)
+            .map(|i| {
+                time += if i % 7 == 0 {
+                    0
+                } else {
+                    (i % 9 * 600 + if i % 211 == 0 { 86400 } else { 0 }) as u32
+                };
+                time
+            })
+            .collect();
+        let source = TimestampVec::new(values.iter().copied());
+        let cached = CachedVec::wrap(source.clone());
+        for rewrite in [false, true] {
+            if rewrite {
+                values[49_999] += 86_400;
+                source.replace(49_999, values[49_999]);
+                cached.invalidate();
+            }
+            for duration in [0, 1, HOUR_SECONDS, DAY_SECONDS, 14 * DAY_SECONDS, u64::MAX] {
+                let window = lazy_window(&cached, duration);
+                for indices in [
+                    vec![],
+                    vec![usize::MAX],
+                    vec![0, 0, 10, 511, 15_000, 49_999, 50_000, usize::MAX],
+                    (20_000..24_096).collect(),
+                    vec![49_999, 49_999],
+                ] {
+                    let mut expected = Vec::new();
+                    if let Some(&first) = indices.first().filter(|&&i| i < values.len()) {
+                        let mut start = values[..=first].partition_point(|&old| {
+                            u64::from(values[first]).saturating_sub(u64::from(old)) >= duration
+                        });
+                        for &current in indices.iter().take_while(|&&i| i < values.len()) {
+                            while start < current
+                                && u64::from(values[current])
+                                    .saturating_sub(u64::from(values[start]))
+                                    >= duration
+                            {
+                                start += 1;
+                            }
+                            expected.push(Height::from(start));
+                        }
+                    }
+                    let mut actual = vec![Height::from(99usize)];
+                    window.read_sorted_into_at(&indices, &mut actual);
+                    assert_eq!(&actual[1..], expected, "duration={duration}");
+                }
+            }
+        }
     }
 
     #[test]

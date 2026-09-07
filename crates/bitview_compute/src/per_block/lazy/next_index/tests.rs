@@ -71,5 +71,29 @@ fn next_boundaries_produce_cumulative_and_per_item_counts() {
             Some(StoredU64::new(5))
         );
         assert_eq!(count.collect_one(Height::new(2)), Some(StoredU64::new(0)));
+        assert_eq!(
+            count.read_sorted_at(&[0, 2, usize::MAX]),
+            [2_u64, 0].map(StoredU64::from)
+        );
+        assert_eq!(
+            cumulative.read_sorted_at(&[0, 2, usize::MAX]),
+            [2_u64, 5].map(StoredU64::from)
+        );
     });
+    first.truncate_if_needed_at(1).unwrap();
+    first.push(Height::new(1));
+    first.push(Height::new(4));
+    first.write().unwrap();
+    terminal.truncate_if_needed_at(4).unwrap();
+    terminal.write().unwrap();
+    assert_eq!(
+        count.read_sorted_at(&[0, 2, usize::MAX]),
+        [1_u64, 0].map(StoredU64::from)
+    );
+    assert_eq!(
+        cumulative.read_sorted_at(&[0, 2, usize::MAX]),
+        [1_u64, 4].map(StoredU64::from)
+    );
+    assert!(count.read_sorted_at(&[]).is_empty());
+    assert!(cumulative.read_sorted_at(&[usize::MAX]).is_empty());
 }

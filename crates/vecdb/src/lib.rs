@@ -13,6 +13,7 @@ mod error;
 mod iterators;
 mod ops;
 mod read_bounds;
+mod sparse_read;
 mod stamp;
 #[macro_use]
 mod traits;
@@ -37,6 +38,7 @@ pub use iterators::ValueWriter;
 pub use ops::{BinaryTransform, CheckedSub, Divide, Minus, Plus, SaturatingAdd, Times};
 
 pub use read_bounds::{BoundedVec, BoundedWriter, ReadBounds};
+pub use sparse_read::SparseRead;
 
 pub use stamp::Stamp;
 

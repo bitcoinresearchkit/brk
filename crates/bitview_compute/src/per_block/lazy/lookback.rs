@@ -1,14 +1,37 @@
-use std::{convert::Infallible, sync::Arc};
+use std::{iter::once, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, Formattable, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex,
-    VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec,
+    TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::SparseRead;
+
+trait LookbackTransform<S, T>: Send + Sync {
+    fn apply(&self, current: S, previous: Option<S>) -> T;
+    fn append(&self, current: &[S], previous: Option<&[S]>, out: &mut Vec<T>);
+}
+
+impl<S: VecValue, T, F: Fn(S, Option<S>) -> T + Send + Sync> LookbackTransform<S, T> for F {
+    fn apply(&self, current: S, previous: Option<S>) -> T {
+        self(current, previous)
+    }
+    fn append(&self, current: &[S], previous: Option<&[S]>, out: &mut Vec<T>) {
+        match previous {
+            Some(previous) => out.extend(
+                current
+                    .iter()
+                    .cloned()
+                    .zip(previous.iter().cloned())
+                    .map(|(current, previous)| self(current, Some(previous))),
+            ),
+            None => out.extend(current.iter().cloned().map(|current| self(current, None))),
+        }
+    }
+}
 
 /// Lazily combines values a fixed number of positions apart from one source.
 ///
@@ -24,7 +47,7 @@ where
     base_version: Version,
     source: ReadableBoxedVec<I, S>,
     lookback: usize,
-    compute: fn(S, Option<S>) -> T,
+    compute: Arc<dyn LookbackTransform<S, T>>,
 }
 
 impl<I, S, T> LazyLookbackVec<I, S, T>
@@ -38,14 +61,14 @@ where
         version: Version,
         source: ReadableBoxedVec<I, S>,
         lookback: usize,
-        compute: fn(S, Option<S>) -> T,
+        compute: impl Fn(S, Option<S>) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
             source,
             lookback,
-            compute,
+            compute: Arc::new(compute),
         }
     }
 }
@@ -79,17 +102,39 @@ where
             let previous = index
                 .checked_sub(self.lookback)
                 .map(|index| previous[index - previous_from].clone());
-            accumulator = fold(accumulator, (self.compute)(current, previous))?;
+            accumulator = fold(accumulator, self.compute.apply(current, previous))?;
         }
         Ok(accumulator)
     }
 
-    fn for_each_lookback(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_lookback(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+    fn for_each_input(
+        &self,
+        from: usize,
+        to: usize,
+        mut each: impl FnMut(usize, &[S], Option<&[S]>),
+    ) {
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let previous_from = from.saturating_sub(self.lookback);
+        let previous_to = to.saturating_sub(self.lookback);
+        // Finish the historical read before borrowing current chunks: a source
+        // may hold a non-reentrant publication lock during its callback.
+        let previous = self.source.collect_range_dyn(previous_from, previous_to);
+        self.source.for_each_chunk_at(from, to, &mut |at, current| {
+            let prefix = self.lookback.saturating_sub(at).min(current.len());
+            if prefix > 0 {
+                each(at, &current[..prefix], None);
+            }
+            let current = &current[prefix..];
+            if current.is_empty() {
+                return;
+            }
+            let at = at + prefix;
+            let offset = at - self.lookback - previous_from;
+            each(at, current, Some(&previous[offset..offset + current.len()]));
+        });
     }
 }
 
@@ -105,7 +150,7 @@ where
             base_version: self.base_version,
             source: self.source.clone(),
             lookback: self.lookback,
-            compute: self.compute,
+            compute: Arc::clone(&self.compute),
         }
     }
 }
@@ -161,13 +206,35 @@ where
     S: VecValue,
     T: VecValue,
 {
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_lookback(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.for_each_input(from, to, |_, current, previous| {
+            self.compute.append(current, previous, buf);
+        });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let chunk_size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        let mut output = Vec::new();
+        self.for_each_input(from, to, |at, current, previous| {
+            for (chunk, current) in current.chunks(chunk_size).enumerate() {
+                let offset = chunk * chunk_size;
+                let previous = previous.map(|values| &values[offset..offset + current.len()]);
+                output.clear();
+                self.compute.append(current, previous, &mut output);
+                f(at + offset, &output);
+            }
+        });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
-        self.for_each_lookback(from, to, f);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut *f);
+        });
     }
 
     fn fold_range_at<B, F: FnMut(B, T) -> B>(
@@ -177,10 +244,11 @@ where
         init: B,
         mut f: F,
     ) -> B {
-        self.try_fold_lookback(from, to, init, |accumulator, value| {
-            Ok::<_, Infallible>(f(accumulator, value))
-        })
-        .unwrap()
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
@@ -198,7 +266,7 @@ where
         let previous = index
             .checked_sub(self.lookback)
             .and_then(|index| self.source.collect_one_at(index));
-        Some((self.compute)(current, previous))
+        Some(self.compute.apply(current, previous))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
@@ -214,22 +282,15 @@ where
         }
 
         let indices = &indices[..indices.partition_point(|&index| index < self.len())];
-        let source = SparseRead::new(
-            &*self.source,
-            indices.iter().flat_map(|&index| {
-                [Some(index), index.checked_sub(self.lookback)]
-                    .into_iter()
-                    .flatten()
-            }),
-        );
+        let source = SparseRead::new(&*self.source, indices, |index| {
+            index.checked_sub(self.lookback)
+        });
 
         out.reserve(indices.len());
-        for &index in indices {
-            let current = source.at(index);
-            let previous = index
-                .checked_sub(self.lookback)
-                .map(|previous| source.at(previous));
-            out.push((self.compute)(current, previous));
+        for output in 0..indices.len() {
+            let current = source.current(output);
+            let previous = source.previous(output);
+            out.push(self.compute.apply(current, previous));
         }
     }
 }
@@ -241,7 +302,7 @@ where
     T: VecValue + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -252,6 +313,7 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
         WritableVec,
@@ -261,7 +323,7 @@ mod tests {
 
     #[test]
     fn sorted_reads_batch_current_and_lookback_values() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();

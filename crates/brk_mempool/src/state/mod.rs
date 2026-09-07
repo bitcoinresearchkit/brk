@@ -60,11 +60,13 @@ impl State {
         Ok(())
     }
 
-    pub fn publish_at(&mut self, tip: BlockHash, live_txids: &[Txid]) {
-        self.published_tip = (self.txs.unresolved().is_empty()
-            && self.txs.len() == live_txids.len()
-            && live_txids.iter().all(|txid| self.txs.contains(txid)))
-        .then_some(tip);
+    /// Publish the address view when inputs are complete. Return whether the
+    /// membership is complete, which is sufficient for aggregate statistics.
+    pub fn publish_at(&mut self, tip: BlockHash, live_txids: &[Txid]) -> bool {
+        let complete = self.txs.len() == live_txids.len()
+            && live_txids.iter().all(|txid| self.txs.contains(txid));
+        self.published_tip = (complete && self.txs.unresolved().is_empty()).then_some(tip);
+        complete
     }
 
     /// Smooths the flicker between drop and indexer catch-up. `Replaced`

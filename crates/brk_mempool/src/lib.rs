@@ -30,12 +30,15 @@
 //!
 //! # Locking domains
 //!
-//! Two independent data-lock domains. No path holds both simultaneously.
+//! Independent data-lock domains. No path holds more than one simultaneously.
 //! A separate cycle mutex excludes concurrent writers across RPC and mutation
 //! phases; readers never acquire it.
 //!
 //! - `State` (`RwLock<State>`): the live mempool. Cycle steps 3 and 4
-//!   take the write guard. Every read-side accessor takes a read guard.
+//!   take the write guard. Live read-side accessors take a read guard.
+//! - `info` (`RwLock<Option<MempoolInfo>>`): last complete statistics only.
+//!   Built from `State` before briefly locking to replace the publication.
+//!   Readers clone it under the lock and serialize after releasing it.
 //! - `Rebuilder.{history, snapshot}` (two `RwLock`s, written in that
 //!   order each cycle): the published projection. Readers grab one or
 //!   the other. The cycle drops its `State` guard before touching them.
@@ -63,6 +66,7 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
 use brk_rpc::Client;
+use brk_types::MempoolInfo;
 use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 
 mod api;
@@ -93,6 +97,7 @@ pub struct Mempool(Arc<Inner>);
 struct Inner {
     client: Client,
     state: RwLock<State>,
+    info: RwLock<Option<MempoolInfo>>,
     rebuilder: Rebuilder,
     started: AtomicBool,
     cycle: Mutex<()>,
@@ -105,6 +110,7 @@ impl Mempool {
         Self(Arc::new(Inner {
             client: client.clone(),
             state: RwLock::new(State::default()),
+            info: RwLock::new(None),
             rebuilder: Rebuilder::default(),
             started: AtomicBool::new(false),
             cycle: Mutex::new(()),

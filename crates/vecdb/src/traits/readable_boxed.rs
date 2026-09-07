@@ -1,4 +1,4 @@
-use std::{convert::Infallible, ops::Deref};
+use std::ops::Deref;
 
 use crate::{AnyVec, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex, VecValue, Version};
 
@@ -119,6 +119,11 @@ where
         self.0.read_into_at(from, to, buf);
     }
 
+    #[inline]
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        self.0.for_each_chunk_at(from, to, f);
+    }
+
     #[inline(always)]
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
         self.0.for_each_range_dyn_at(from, to, f);
@@ -132,10 +137,11 @@ where
         init: B,
         mut f: F,
     ) -> B {
-        self.try_fold_range_at(from, to, init, |acc, value| {
-            Ok::<_, Infallible>(f(acc, value))
-        })
-        .unwrap_or_else(|error| match error {})
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     #[inline]

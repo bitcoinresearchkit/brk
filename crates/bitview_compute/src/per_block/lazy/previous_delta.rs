@@ -1,11 +1,12 @@
-use std::{convert::Infallible, marker::PhantomData, sync::Arc};
+use std::{iter::once, marker::PhantomData, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CheckedSub, Cursor, Formattable, Ident, ReadableBoxedVec,
-    ReadableVec, TypedVec, UnaryTransform, VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, CheckedSub, Cursor, Formattable, Ident, READ_CHUNK_SIZE,
+    ReadableBoxedVec, ReadableVec, SparseRead, TypedVec, UnaryTransform, VecIndex, VecValue,
+    Version, short_type_name,
 };
 
 /// Lazy `source[index] - source[index - 1]`, with zero before the first value.
@@ -150,12 +151,45 @@ where
         Ok(accumulator)
     }
 
-    fn for_each_delta(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_delta(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+    fn for_each_input(&self, from: usize, to: usize, mut each: impl FnMut(usize, &[S], &mut S)) {
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let mut previous = if from == 0 { Some(S::default()) } else { None };
+        let mut emitted = from;
+        self.source
+            .for_each_chunk_at(from.saturating_sub(1), to, &mut |_, mut values| {
+                if previous.is_none() {
+                    previous = Some(values[0].clone());
+                    values = &values[1..];
+                }
+                if !values.is_empty() {
+                    each(emitted, values, previous.as_mut().unwrap());
+                    emitted += values.len();
+                }
+            });
+    }
+
+    fn append_delta(values: &[S], previous: &mut S, out: &mut Vec<T>) {
+        let Some((first, rest)) = values.split_first() else {
+            return;
+        };
+        out.push(F::apply(
+            first
+                .clone()
+                .checked_sub(previous.clone())
+                .unwrap_or_default(),
+        ));
+        out.extend(
+            rest.iter()
+                .cloned()
+                .zip(values.iter().cloned())
+                .map(|(current, previous)| {
+                    F::apply(current.checked_sub(previous).unwrap_or_default())
+                }),
+        );
+        *previous = values.last().unwrap().clone();
     }
 }
 
@@ -166,13 +200,33 @@ where
     T: VecValue,
     F: UnaryTransform<S, T>,
 {
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_delta(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.for_each_input(from, to, |_, values, previous| {
+            Self::append_delta(values, previous, buf);
+        });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let chunk_size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        let mut output = Vec::new();
+        self.for_each_input(from, to, |at, values, previous| {
+            for (offset, values) in values.chunks(chunk_size).enumerate() {
+                output.clear();
+                Self::append_delta(values, previous, &mut output);
+                f(at + offset * chunk_size, &output);
+            }
+        });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
-        self.for_each_delta(from, to, f);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut *f);
+        });
     }
 
     fn fold_range_at<B, G: FnMut(B, T) -> B>(
@@ -182,10 +236,11 @@ where
         init: B,
         mut f: G,
     ) -> B {
-        self.try_fold_delta(from, to, init, |accumulator, value| {
-            Ok::<_, Infallible>(f(accumulator, value))
-        })
-        .unwrap()
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, G: FnMut(B, T) -> Result<B, E>>(
@@ -209,6 +264,29 @@ where
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
         let len = self.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        if indices.len() > 1
+            && indices.windows(2).all(|pair| pair[1] == pair[0] + 1)
+            && !self.source.is_mutable()
+        {
+            self.read_into_at(indices[0], indices[indices.len() - 1] + 1, out);
+            return;
+        }
+        if let (Some(&first), Some(&last)) = (indices.first(), indices.last())
+            && last - first >= indices.len()
+            && !self.source.is_mutable()
+            && let Some(values) = SparseRead::try_new(&*self.source, indices, |i| i.checked_sub(1))
+        {
+            out.extend((0..indices.len()).map(|slot| {
+                F::apply(
+                    values
+                        .current(slot)
+                        .checked_sub(values.previous(slot).unwrap_or_default())
+                        .unwrap_or_default(),
+                )
+            }));
+            return;
+        }
         let mut source = Cursor::new(&*self.source);
         let mut cached: Option<(usize, T)> = None;
 
@@ -246,7 +324,7 @@ where
     F: UnaryTransform<S, T>,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {

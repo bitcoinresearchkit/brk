@@ -59,6 +59,32 @@ where
     type I = V::I;
     type T = V::T;
 
+    fn read_column_sorted_into_at(&self, column: C, indices: &[usize], out: &mut Vec<V::T>) {
+        validate_column(column);
+        let _guard = self.gate.read();
+        let len = self.visible_rows.get();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        self.columns[column.index()].read_sorted_into_at(indices, out);
+    }
+
+    fn for_each_column_sorted_at<F>(&self, columns: &[C], indices: &[usize], f: &mut F)
+    where
+        F: FnMut(C, &[V::T]),
+    {
+        for &column in columns {
+            validate_column(column);
+        }
+        let _guard = self.gate.read();
+        let len = self.visible_rows.get();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        let mut values = Vec::with_capacity(indices.len());
+        for &column in columns {
+            values.clear();
+            self.columns[column.index()].read_sorted_into_at(indices, &mut values);
+            f(column, &values);
+        }
+    }
+
     fn for_each_column_chunk_at<F>(&self, columns: &[C], from: usize, to: usize, f: &mut F)
     where
         F: FnMut(C, usize, &[V::T]),

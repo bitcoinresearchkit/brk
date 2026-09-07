@@ -12,8 +12,8 @@ use brk_types::{Day1, Version};
 use schemars::SchemaGenerator;
 use serde_json::to_value;
 use vecdb::{
-    AnyExportableVec, AnyVec, Cursor, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue,
-    short_type_name,
+    AnyExportableVec, AnyVec, Cursor, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, TypedVec,
+    VecIndex, VecValue, short_type_name,
 };
 
 use super::DailyValue;
@@ -92,32 +92,45 @@ where
     where
         F: FnMut(B, Option<T>) -> Result<B, E>,
     {
+        self.with_repeated_inputs(from, to, |mapping, start, values| {
+            Self::repeated_values(mapping, start, values).try_fold(init, &mut f)
+        })
+    }
+
+    /// Read the mapping once, then only the daily values it spans. Complete both
+    /// reads before lending output chunks, since inputs can share publication locks.
+    fn with_repeated_inputs<R>(
+        &self,
+        from: usize,
+        to: usize,
+        visit: impl FnOnce(&[Day1], usize, &[T]) -> R,
+    ) -> R {
+        let mapping = self.mapping.collect_range_dyn(from, to);
         let source_len = self.source.visible_len();
-        let mut mapping = Cursor::new(&*self.mapping);
-        // Leave the first mapping chunk buffered for the sequential fold.
-        let mapped_source_end = mapping
-            .get(to - 1)
-            .map(|day| day.to_usize().saturating_add(1));
-        let source_start = mapping
-            .get(from)
+        let start = mapping
+            .first()
             .map(|day| day.to_usize())
             .unwrap_or(source_len)
             .min(source_len);
-        let source_end = mapped_source_end.unwrap_or(source_start).min(source_len);
-        let values = if source_start < source_end {
-            self.source.collect_range_dyn(source_start, source_end)
-        } else {
-            Vec::new()
-        };
+        let end = mapping
+            .last()
+            .map(|day| day.to_usize().saturating_add(1))
+            .unwrap_or(start)
+            .min(source_len);
+        let values = self.source.collect_range_dyn(start, end);
+        visit(&mapping, start, &values)
+    }
 
-        mapping.advance(from);
-        mapping.try_fold(to - from, init, |acc, day| {
-            let value = day
-                .to_usize()
-                .checked_sub(source_start)
-                .and_then(|index| values.get(index))
-                .cloned();
-            f(acc, value)
+    fn repeated_values<'a>(
+        mapping: &'a [Day1],
+        start: usize,
+        values: &'a [T],
+    ) -> impl Iterator<Item = Option<T>> + 'a {
+        mapping.iter().map(move |day| {
+            day.to_usize()
+                .checked_sub(start)
+                .and_then(|i| values.get(i))
+                .cloned()
         })
     }
 
@@ -233,7 +246,53 @@ where
     S: DayStrategy,
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Option<T>>) {
-        self.fold_values(from, to, (), |(), value| buf.push(value));
+        let to = to.min(self.mapping.len());
+        if from >= to {
+            return;
+        }
+        buf.reserve(to - from);
+        if S::REPEATS_DAY {
+            self.with_repeated_inputs(from, to, |mapping, start, values| {
+                buf.extend(Self::repeated_values(mapping, start, values));
+            });
+        } else {
+            self.fold_values(from, to, (), |(), value| buf.push(value));
+        }
+    }
+
+    fn cursor_chunk_size(&self) -> usize {
+        self.mapping.cursor_chunk_size()
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[Option<T>])) {
+        let to = to.min(self.mapping.len());
+        if from >= to {
+            return;
+        }
+        let size = READ_CHUNK_SIZE;
+        let mut output = Vec::new();
+        if S::REPEATS_DAY {
+            self.with_repeated_inputs(from, to, |mapping, start, values| {
+                for (chunk, mapping) in mapping.chunks(size).enumerate() {
+                    output.clear();
+                    output.extend(Self::repeated_values(mapping, start, values));
+                    f(from + chunk * size, &output);
+                }
+            });
+        } else {
+            let mut at = from;
+            self.fold_values(from, to, (), |(), value| {
+                output.push(value);
+                if output.len() == size {
+                    f(at, &output);
+                    at += output.len();
+                    output.clear();
+                }
+            });
+            if !output.is_empty() {
+                f(at, &output);
+            }
+        }
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(Option<T>)) {
@@ -273,6 +332,55 @@ where
             S::source_index(&mapping, 0, self.source.visible_len())
                 .and_then(|day| self.source.collect_one_at(day)),
         )
+    }
+
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Option<T>>) {
+        if indices.is_empty() {
+            return;
+        }
+        let mapping_len = self.mapping.len();
+        let indices = &indices[..indices.partition_point(|&i| i < mapping_len)];
+        if indices.is_empty() {
+            return;
+        }
+        if let &[index] = indices {
+            if let Some(value) = self.collect_one_at(index) {
+                out.push(value);
+            }
+            return;
+        }
+        if indices.windows(2).all(|pair| pair[1] == pair[0] + 1) {
+            self.read_into_at(indices[0], indices[indices.len() - 1] + 1, out);
+            return;
+        }
+        let source_len = self.source.visible_len();
+        let mut mapping = Cursor::new(&*self.mapping);
+        let mut window = Vec::with_capacity(2);
+        let mut requested = Vec::with_capacity(indices.len());
+        let mut slots = Vec::with_capacity(indices.len());
+        for &index in indices {
+            window.clear();
+            for i in index..S::mapping_end(index + 1, mapping_len) {
+                if let Some(day) = mapping.get(i) {
+                    window.push(day);
+                }
+            }
+            if window.is_empty() {
+                continue;
+            }
+            slots.push(S::source_index(&window, 0, source_len).map(|i| {
+                if requested.last() != Some(&i) {
+                    requested.push(i);
+                }
+                requested.len() - 1
+            }));
+        }
+        let values = self.source.read_sorted_at(&requested);
+        out.extend(
+            slots
+                .into_iter()
+                .map(|slot| slot.map(|slot| values[slot].clone())),
+        );
     }
 }
 

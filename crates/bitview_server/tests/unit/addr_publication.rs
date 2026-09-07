@@ -195,8 +195,8 @@ impl AddrPublication {
         fixture.tick(false).await;
         fixture.check_unavailable(true).await;
 
-        // The resolver runs outside State's lock. HTTP reads must wait through
-        // this gap, never returning partial data or premature wildcard 304s.
+        // Address-dependent reads wait through unresolved inputs; statistics
+        // continue serving the last complete membership observation.
         let mempool = fixture.mempool.clone();
         let resolver = fixture.query.sync(|q| q.indexer_prevout_resolver());
         let (started, ready) = oneshot::channel();
@@ -217,9 +217,12 @@ impl AddrPublication {
                 .unwrap();
         });
         ready.await.unwrap();
+        fixture
+            .aggregates
+            .check_stats_available(fixture.address)
+            .await;
         let mut requests = JoinSet::new();
         for path in fixture.paths.iter().cloned().chain([
-            "/api/mempool".to_owned(),
             "/api/mempool/recent".to_owned(),
             "/api/mempool/txids".to_owned(),
         ]) {
@@ -247,12 +250,21 @@ impl AddrPublication {
             .check_revalidation_without_chain_body(&directory.join("blocks/blk00000.dat"))
             .await;
 
+        let published_info = to_value(fixture.mempool.info().unwrap()).unwrap();
         fixture.node.lock().unwrap().listed = false;
         fixture.tick(true).await;
+        assert_eq!(
+            to_value(fixture.mempool.info().unwrap()).unwrap(),
+            published_info
+        );
         fixture.check_unavailable(true).await;
         fixture.node.lock().unwrap().listed = true;
         fixture.node.lock().unwrap().final_tip = Some("11".repeat(32));
         fixture.tick(true).await;
+        assert_eq!(
+            to_value(fixture.mempool.info().unwrap()).unwrap(),
+            published_info
+        );
         fixture.check_unavailable(true).await;
         fixture.node.lock().unwrap().final_tip = None;
         fixture.tick(true).await;

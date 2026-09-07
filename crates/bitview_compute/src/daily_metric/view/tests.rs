@@ -25,6 +25,11 @@ fn coarser_period_uses_its_last_available_day() {
     assert_eq!(last_source_index(&mapping, 2, 8), Some(7));
     assert_eq!(last_source_index(&mapping, 1, 5), Some(4));
     assert_eq!(last_source_index(&mapping, 2, 5), None);
+    assert_eq!(last_source_index(&mapping, 0, 0), None);
+    assert_eq!(
+        last_source_index(&[Day1::from(0), Day1::from(0)], 0, 8),
+        None
+    );
 }
 
 #[test]

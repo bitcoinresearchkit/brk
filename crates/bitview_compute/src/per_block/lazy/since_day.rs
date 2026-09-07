@@ -1,13 +1,32 @@
-use std::{convert::Infallible, sync::Arc};
+use std::{iter::once, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Day1, Height};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, PrintableIndex, ReadableBoxedVec,
-    ReadableVec, TypedVec, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, PrintableIndex, READ_CHUNK_SIZE,
+    ReadableBoxedVec, ReadableVec, TypedVec, VecValue, Version, short_type_name,
 };
+
+trait SinceDayTransform<S, T>: Send + Sync {
+    fn apply(&self, current: S, before: S) -> T;
+    fn append(&self, current: &[S], before: &S, out: &mut Vec<T>);
+}
+
+impl<S: VecValue, T, F: Fn(S, S) -> T + Send + Sync> SinceDayTransform<S, T> for F {
+    fn apply(&self, current: S, before: S) -> T {
+        self(current, before)
+    }
+    fn append(&self, current: &[S], before: &S, out: &mut Vec<T>) {
+        out.extend(
+            current
+                .iter()
+                .cloned()
+                .map(|value| self(value, before.clone())),
+        );
+    }
+}
 
 /// Lazily derives values accumulated since a fixed day from one cumulative source.
 pub struct LazySinceDayVec<S, T>
@@ -20,7 +39,7 @@ where
     source: ReadableBoxedVec<Height, S>,
     days: CachedBoxedVec<Height, Day1>,
     start_day: Day1,
-    compute: Arc<dyn Fn(S, S) -> T + Send + Sync>,
+    compute: Arc<dyn SinceDayTransform<S, T>>,
 }
 
 impl<S, T> LazySinceDayVec<S, T>
@@ -89,17 +108,15 @@ where
             .and_then(|index| self.source.collect_one_at(index))
             .unwrap_or_default();
         for current in self.source.collect_range_dyn(active_from, to) {
-            accumulator = fold(accumulator, (self.compute)(current, before.clone()))?;
+            accumulator = fold(accumulator, self.compute.apply(current, before.clone()))?;
         }
         Ok(accumulator)
     }
 
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
-        self.try_fold_values(from, to, (), |(), value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        })
-        .unwrap();
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            values.iter().cloned().for_each(&mut each);
+        });
     }
 }
 
@@ -168,9 +185,63 @@ where
     S: VecValue + Default,
     T: VecValue + Default,
 {
+    fn cursor_chunk_size(&self) -> usize {
+        self.source.cursor_chunk_size()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_value(from, to, |value| buf.push(value));
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let start = self.start_height();
+        let active_from = from.max(start).min(to);
+        buf.reserve(to - from);
+        buf.resize_with(buf.len() + active_from - from, T::default);
+        if active_from == to {
+            return;
+        }
+        let before = start
+            .checked_sub(1)
+            .and_then(|index| self.source.collect_one_at(index))
+            .unwrap_or_default();
+        self.source
+            .for_each_chunk_at(active_from, to, &mut |_, values| {
+                self.compute.append(values, &before, buf);
+            });
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let to = to.min(self.len());
+        if from >= to {
+            return;
+        }
+        let start = self.start_height();
+        let active_from = from.max(start).min(to);
+        let chunk_size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+        let mut output = Vec::new();
+        let mut at = from;
+        while at < active_from {
+            let end = at.saturating_add(chunk_size).min(active_from);
+            output.resize_with(end - at, T::default);
+            f(at, &output);
+            at = end;
+        }
+        if active_from == to {
+            return;
+        }
+        let before = start
+            .checked_sub(1)
+            .and_then(|index| self.source.collect_one_at(index))
+            .unwrap_or_default();
+        self.source
+            .for_each_chunk_at(active_from, to, &mut |at, values| {
+                for (offset, values) in values.chunks(chunk_size).enumerate() {
+                    output.clear();
+                    self.compute.append(values, &before, &mut output);
+                    f(at + offset * chunk_size, &output);
+                }
+            });
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
@@ -184,10 +255,11 @@ where
         init: B,
         mut f: F,
     ) -> B {
-        self.try_fold_values(from, to, init, |accumulator, value| {
-            Ok::<_, Infallible>(f(accumulator, value))
-        })
-        .unwrap()
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, values| {
+            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
@@ -215,7 +287,7 @@ where
             .checked_sub(1)
             .and_then(|index| self.source.collect_one_at(index))
             .unwrap_or_default();
-        Some((self.compute)(current, before))
+        Some(self.compute.apply(current, before))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
@@ -251,7 +323,7 @@ where
             .and_then(|index| self.source.collect_one_at(index))
             .unwrap_or_default();
         for current in self.source.read_sorted_at(&indices[inactive_end..]) {
-            out.push((self.compute)(current, before.clone()));
+            out.push(self.compute.apply(current, before.clone()));
         }
     }
 }
@@ -262,7 +334,7 @@ where
     T: VecValue + Default + Formattable + Serialize + JsonSchema,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -273,6 +345,7 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Day1, Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
         ReadableVec, WritableVec,
@@ -282,7 +355,7 @@ mod tests {
 
     #[test]
     fn sorted_reads_reuse_the_fixed_start_and_handle_boundaries() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();

@@ -5,6 +5,65 @@ use rustc_hash::FxHashMap;
 use super::*;
 
 #[test]
+fn statistics_retain_complete_membership_independently_of_live_state() {
+    use crate::{
+        state::TxEntry,
+        test_support::{fake_entry_info, fake_tx},
+    };
+    let mempool = Mempool::for_test();
+    let tip = Default::default();
+    assert!(matches!(mempool.info(), Err(Error::StateUpdating)));
+    mempool.publish_observation(tip, &[]);
+    assert_eq!(mempool.info().unwrap().count, 0);
+
+    let tx = fake_tx(1, &[None], &[]);
+    let txid = tx.txid;
+    {
+        let mut state = mempool.0.state.write();
+        state.published_tip = None;
+        state.info.add(&tx, 100_u64.into());
+        state.txs.insert(
+            tx,
+            TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false),
+        );
+        // Holding the live write lock must not block statistics readers.
+        let reader = mempool.clone();
+        let (send, receive) = std::sync::mpsc::channel();
+        let reading = std::thread::spawn(move || send.send(reader.info().unwrap().count).unwrap());
+        assert_eq!(
+            receive
+                .recv_timeout(std::time::Duration::from_secs(1))
+                .unwrap(),
+            0
+        );
+        reading.join().unwrap();
+    }
+    mempool.publish_observation(tip, &[]);
+    assert_eq!(
+        mempool.info().unwrap().count,
+        0,
+        "incomplete membership retains the previous snapshot"
+    );
+    mempool.publish_observation(tip, &[txid]);
+    assert!(
+        mempool.0.state.read().published_tip.is_none(),
+        "unresolved inputs still hide address data"
+    );
+    let first = mempool.info().unwrap();
+    assert_eq!(first.count, 1);
+    assert_eq!(u64::from(first.total_fee), 100);
+    {
+        let mut state = mempool.0.state.write();
+        let record = state.txs.remove_by_prefix(&txid.into()).unwrap();
+        state.info.remove(&record.tx, record.entry.fee);
+    }
+    assert_eq!(mempool.info().unwrap().count, 1);
+    mempool.publish_observation(tip, &[]);
+    assert_eq!(mempool.info().unwrap().count, 0);
+    assert_eq!(first.count, 1, "captured statistics are owned");
+}
+
+#[test]
 fn concurrent_cycles_are_rejected_before_rpc_or_mutation() {
     let mempool = Mempool::for_test();
     let _cycle = mempool.0.cycle.lock();
@@ -28,8 +87,10 @@ fn fetch_failure_preserves_the_previous_publication() {
         Client::new_with(&format!("http://{address}"), Auth::None, 0, Duration::ZERO).unwrap();
     let tip = Default::default();
     mempool.0.state.write().published_tip = Some(tip);
+    mempool.publish_observation(tip, &[]);
     assert!(mempool.tick_with(|_| FxHashMap::default()).is_err());
     assert_eq!(mempool.0.state.read().published_tip, Some(tip));
+    assert_eq!(mempool.info().unwrap().count, 0);
 }
 
 #[test]

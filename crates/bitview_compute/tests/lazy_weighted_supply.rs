@@ -1,16 +1,22 @@
 mod common;
 
+use std::{hint::black_box, time::Instant};
+
 use bitview_cohort::{AgeRange, AgeRangeId};
-use bitview_compute::{CACHE_BUDGET, ColumnarPerBlock, WeightedCohortState, lazy_weighted_supply};
+use bitview_compute::{
+    CACHE_BUDGET, ColumnarPerBlock, LazyIndexedVec, WeightedCohortState, lazy_weighted_supply,
+};
 use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
+use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, CachedColumnarVec, CachedReadableVec, CachedVec, Database, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableCloneableVec, ReadableColumnarVec, ReadableVec, WritableVec,
+    AnySerializableVec, AnyStoredVec, CachedColumnarVec, CachedReadableVec, CachedVec, Database,
+    ImportableVec, PcoVec, ReadOnlyClone, ReadableCloneableVec, ReadableColumnarVec, ReadableVec,
+    WritableVec,
 };
 
 #[test]
 fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.cached_first_height.day1 = CachedVec::wrap(common::stored::<Day1, _>(
@@ -147,9 +153,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
 #[test]
 #[ignore = "synthetic compressed-history benchmark; excludes indexing and HTTP"]
 fn benchmark_shared_age_inputs() {
-    use std::{hint::black_box, time::Instant};
-
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let mut supply = ColumnarPerBlock::<Sats, AgeRangeId, ()>::forced_import(
@@ -280,7 +284,7 @@ fn benchmark_shared_age_inputs() {
     let indexed: Vec<_> = AgeRangeId::ALL
         .iter()
         .map(|&id| {
-            bitview_compute::LazyIndexedVec::new(
+            LazyIndexedVec::new(
                 "diagnostic",
                 Version::ONE,
                 supplies.cached_column(id).read_only_boxed_clone(),
@@ -383,4 +387,64 @@ fn benchmark_shared_age_inputs() {
             samples.last().unwrap()
         );
     }
+
+    // Exercise the export boundary too, not just collect_range_at.
+    let mut stored_json_times = Vec::new();
+    let mut lazy_json_times = Vec::new();
+    for round in 0..7 {
+        let stored_json = || {
+            AgeRangeId::ALL
+                .iter()
+                .map(|&id| {
+                    let mut json = Vec::new();
+                    stored
+                        .height
+                        .read_only_clone()
+                        .column("reference", Version::ONE, id)
+                        .write_json(Some(0), Some(rows), &mut json)
+                        .unwrap();
+                    json
+                })
+                .collect::<Vec<_>>()
+        };
+        let lazy_json = || {
+            lazy.iter()
+                .map(|v| {
+                    let mut json = Vec::new();
+                    v.sats
+                        .height
+                        .write_json(Some(0), Some(rows), &mut json)
+                        .unwrap();
+                    json
+                })
+                .collect::<Vec<_>>()
+        };
+        let (reference, actual, stored_time, lazy_time) = if round % 2 == 0 {
+            let start = Instant::now();
+            let reference = stored_json();
+            let stored_time = start.elapsed();
+            let start = Instant::now();
+            let actual = lazy_json();
+            (reference, actual, stored_time, start.elapsed())
+        } else {
+            let start = Instant::now();
+            let actual = lazy_json();
+            let lazy_time = start.elapsed();
+            let start = Instant::now();
+            let reference = stored_json();
+            (reference, actual, start.elapsed(), lazy_time)
+        };
+        assert_eq!(actual, reference);
+        black_box(&actual);
+        if round > 0 {
+            stored_json_times.push(stored_time);
+            lazy_json_times.push(lazy_time);
+        }
+    }
+    stored_json_times.sort();
+    lazy_json_times.sort();
+    eprintln!(
+        "JSON export: stored={:?}, warm lazy={:?}; all bytes equal",
+        stored_json_times[3], lazy_json_times[3]
+    );
 }

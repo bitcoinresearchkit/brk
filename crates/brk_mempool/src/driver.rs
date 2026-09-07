@@ -11,7 +11,7 @@ use std::{
 };
 
 use brk_error::{Error, Result};
-use brk_types::{TxOut, Txid, Vout};
+use brk_types::{BlockHash, TxOut, Txid, Vout};
 use rustc_hash::FxHashMap;
 use tracing::error;
 
@@ -158,7 +158,7 @@ impl Mempool {
             diff.membership_changed(),
         );
         if coherent_tip && address_view_complete {
-            state.write().publish_at(rpc.tip_hash, &rpc.live_txids);
+            self.publish_observation(rpc.tip_hash, &rpc.live_txids);
         }
         let CycleDiff {
             added,
@@ -180,6 +180,22 @@ impl Mempool {
             snapshot: rebuilder.snapshot(),
             took: started.elapsed(),
         })
+    }
+
+    fn publish_observation(&self, tip: BlockHash, live_txids: &[Txid]) {
+        let next = {
+            let mut state = self.0.state.write();
+            state
+                .publish_at(tip, live_txids)
+                .then(|| state.info.clone())
+        };
+        if let Some(next) = next {
+            // No live-state lock, allocation or old-histogram destruction
+            // under the publication lock. Incomplete cycles retain the last
+            // complete statistics, independently of prevout availability.
+            let previous = self.0.info.write().replace(next);
+            drop(previous);
+        }
     }
 
     fn panic_msg(payload: &(dyn Any + Send)) -> &str {

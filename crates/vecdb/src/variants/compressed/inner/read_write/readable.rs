@@ -45,6 +45,29 @@ where
         }
     }
 
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
+        let len = self.base.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        let stored_len = self.stored_len();
+        let split = indices.partition_point(|&i| i < stored_len);
+        out.reserve(indices.len());
+        Self::read_sorted_stored_into(
+            self.region(),
+            &self.pages,
+            stored_len,
+            &indices[..split],
+            out,
+        );
+        if split < indices.len() {
+            let pushed = self.base.pushed();
+            out.extend(
+                indices[split..]
+                    .iter()
+                    .map(|&i| pushed[i - stored_len].clone()),
+            );
+        }
+    }
+
     #[inline]
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
         self.fold_range_at(from, to, (), |(), v| f(v));

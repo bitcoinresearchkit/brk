@@ -17,6 +17,40 @@ where
     Io(CompressedIoSource<'a, I, T, S>),
 }
 
+#[cfg(all(test, feature = "pco"))]
+mod sorted_tests {
+    use super::{
+        CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, CursorState, Owner,
+    };
+    use crate::{AnyStoredVec, Database, ImportableVec, PcoVec, Version, WritableVec};
+    use tempfile::tempdir;
+
+    #[test]
+    fn sorted_gather_matches_forced_io_and_mmap_decoders() {
+        let directory = tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let mut source = PcoVec::<usize, u64>::import(&db, "gather", Version::ONE).unwrap();
+        let expected: Vec<_> = (0..20_137u64).map(|i| i * 7).collect();
+        for &value in &expected {
+            source.push(value);
+        }
+        source.write().unwrap();
+        let indices = [0, 0, 7, 1023, 1024, 4096, 19_999, 20_136];
+        for owner in [
+            Owner::Io(CompressedIoSource::new(&source, 0, expected.len())),
+            Owner::Mmap(CompressedMmapSource::new(&source, 0, expected.len())),
+        ] {
+            let cursor = CompressedRangeCursor {
+                owner,
+                state: CursorState::new(0, expected.len()),
+            };
+            let mut actual = vec![99];
+            cursor.read_sorted_into(&indices, &mut actual);
+            assert_eq!(&actual[1..], indices.map(|i| expected[i]));
+        }
+    }
+}
+
 struct CursorState<T> {
     position: usize,
     end: usize,
@@ -223,6 +257,24 @@ where
     #[inline]
     pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
         self.fold(n, (), |(), value| f(value));
+    }
+
+    /// Consume a sorted request directly from decoded pages, without copying
+    /// each page through the generic Cursor buffer. Consumes this cursor so no
+    /// buffered pointer survives a decoder refill performed by this method.
+    pub(crate) fn read_sorted_into(mut self, mut indices: &[usize], out: &mut Vec<T>) {
+        while let Some(&first) = indices.first() {
+            let page_index = first / CursorState::<T>::PER_PAGE;
+            let count = indices.partition_point(|&i| i / CursorState::<T>::PER_PAGE == page_index);
+            let page = match &mut self.owner {
+                Owner::Mmap(source) => source.decoded_page(page_index),
+                Owner::Io(source) => source.decoded_page(page_index),
+            }
+            .expect("requested compressed page must exist");
+            let base = page_index * CursorState::<T>::PER_PAGE;
+            out.extend(indices[..count].iter().map(|&i| page[i - base].clone()));
+            indices = &indices[count..];
+        }
     }
 
     pub fn new(

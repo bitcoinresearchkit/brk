@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, CheckedSub, Cursor, Formattable, ReadableBoxedVec, ReadableVec,
-    TypedVec, VecIndex, VecValue, Version, short_type_name,
+    SparseRead, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::terminal_len::TerminalLen;
@@ -192,6 +192,29 @@ where
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<StoredU64>) {
         let len = self.len();
         let terminal = S::from(self.terminal_len.get());
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        if indices.len() > 1
+            && indices.windows(2).all(|pair| pair[1] == pair[0] + 1)
+            && !self.first_indexes.is_mutable()
+        {
+            self.read_into_at(indices[0], indices[indices.len() - 1] + 1, out);
+            return;
+        }
+        if let (Some(&first), Some(&last)) = (indices.first(), indices.last())
+            && last - first >= indices.len()
+            && !self.first_indexes.is_mutable()
+            && let Some(values) = SparseRead::try_new(&*self.first_indexes, indices, |i| {
+                (i + 1 < len).then_some(i + 1)
+            })
+        {
+            out.extend((0..indices.len()).map(|slot| {
+                Self::count(
+                    values.current(slot),
+                    values.previous(slot).unwrap_or(terminal),
+                )
+            }));
+            return;
+        }
         let mut first_indexes = Cursor::new(&*self.first_indexes);
         let mut previous = None;
 

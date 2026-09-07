@@ -80,6 +80,32 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
     /// Object-safe: `&mut Vec<T>` is a concrete type, no `Self: Sized` needed.
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>);
 
+    /// Visits borrowed chunks of the values emitted by `[from, to)`, in order.
+    /// Each offset is `from + previously_emitted_values`; for vectors with
+    /// holes this is not the physical position of every value in the slice.
+    /// Slices are valid only during the callback. Sources may choose any chunk
+    /// size. Empty chunks and ranges do not invoke the callback.
+    ///
+    /// The default reuses one read buffer. Resident sources can lend their
+    /// storage directly, avoiding copies through type-erased readers.
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+        let to = to.min(self.len());
+        let chunk_size = self.cursor_chunk_size().max(1);
+        let mut values = Vec::with_capacity(chunk_size.min(to.saturating_sub(from)));
+        let mut at = from;
+        let mut emitted_at = from;
+        while at < to {
+            let end = at.saturating_add(chunk_size - at % chunk_size).min(to);
+            values.clear();
+            self.read_into_at(at, end, &mut values);
+            if !values.is_empty() {
+                f(emitted_at, &values);
+                emitted_at += values.len();
+            }
+            at = end;
+        }
+    }
+
     /// Iterates over `[from, to)` by raw index, calling `f` for each value.
     ///
     /// Object-safe: callable on `&dyn ReadableVec`. Every implementor must

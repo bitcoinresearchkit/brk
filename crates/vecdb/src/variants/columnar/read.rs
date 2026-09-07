@@ -64,16 +64,13 @@ pub fn for_each_column<I, T, R, C, F>(
         return;
     }
 
-    let mut values = Vec::with_capacity(to - from);
     for &column in columns {
-        values.clear();
-        sources[column.index()].read_into_at(from, to, &mut values);
-        assert_eq!(
-            values.len(),
-            to - from,
-            "column read returned incomplete rows"
-        );
-        f(column, from, &values);
+        let mut emitted = 0;
+        sources[column.index()].for_each_chunk_at(from, to, &mut |at, values| {
+            emitted += values.len();
+            f(column, at, values);
+        });
+        assert_eq!(emitted, to - from, "column read returned incomplete rows");
     }
 }
 

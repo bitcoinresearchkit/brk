@@ -49,6 +49,19 @@ where
         }
     }
 
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
+        let len = self.base.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        out.reserve(indices.len());
+        ReadWriteCompressedVec::<I, T, S>::read_sorted_stored_into(
+            self.base.region(),
+            &self.pages,
+            len,
+            indices,
+            out,
+        );
+    }
+
     #[inline]
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
         self.fold_range_at(from, to, (), |(), v| f(v));

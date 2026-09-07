@@ -109,6 +109,10 @@ where
     type I = S::I;
     type T = S::T;
 
+    fn read_column_sorted_into_at(&self, column: C, indices: &[usize], out: &mut Vec<S::T>) {
+        self.cached_column(column).read_sorted_into_at(indices, out);
+    }
+
     fn for_each_column_chunk_at<F>(&self, columns: &[C], from: usize, to: usize, f: &mut F)
     where
         F: FnMut(C, usize, &[S::T]),

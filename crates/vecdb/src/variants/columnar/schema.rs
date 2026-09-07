@@ -1,6 +1,6 @@
 use std::{fmt::Debug, iter::once};
 
-use crate::{Error, ReadableVec, Result, VecIndex, VecValue, Version};
+use crate::{Cursor, Error, ReadableVec, Result, VecIndex, VecValue, Version};
 
 use super::{LazyColumnSumVec, LazyColumnVec};
 
@@ -64,6 +64,28 @@ where
     fn for_each_column_chunk_at<F>(&self, columns: &[C], from: usize, to: usize, f: &mut F)
     where
         F: FnMut(C, usize, &[Self::T]);
+
+    /// Append a single column's values at sorted row indices, preserving duplicates.
+    fn read_column_sorted_into_at(&self, column: C, indices: &[usize], out: &mut Vec<Self::T>) {
+        validate_column(column);
+        let projection = self.column("sorted_column", Version::ZERO, column);
+        let mut cursor = Cursor::new(&projection);
+        out.extend(indices.iter().filter_map(|&index| cursor.get(index)));
+    }
+
+    /// Visits requested rows of each selected column, in column order.
+    /// Implementations with a publication gate keep it across all columns.
+    fn for_each_column_sorted_at<F>(&self, columns: &[C], indices: &[usize], f: &mut F)
+    where
+        F: FnMut(C, &[Self::T]),
+    {
+        let mut values = Vec::with_capacity(indices.len());
+        for &column in columns {
+            values.clear();
+            self.read_column_sorted_into_at(column, indices, &mut values);
+            f(column, &values);
+        }
+    }
 
     fn column(&self, name: &str, version: Version, column: C) -> LazyColumnVec<Self, C>
     where

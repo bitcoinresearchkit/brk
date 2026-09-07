@@ -8,7 +8,7 @@ pub mod typed;
 
 pub use transform::*;
 
-use crate::{ReadableBoxedVec, VecIndex, VecValue, Version};
+use crate::{READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, VecIndex, VecValue, Version};
 
 /// Lazily computed vector deriving values on-the-fly from one source vector.
 ///
@@ -29,6 +29,8 @@ where
     base_version: Version,
     source: ReadableBoxedVec<S1I, S1T>,
     compute: fn(I, S1T) -> T,
+    read: fn(&Self, usize, usize, &mut Vec<T>),
+    visit: fn(&Self, usize, usize, &mut dyn FnMut(usize, &[T])),
 }
 
 impl<I, T, S1I, S1T> LazyVec<I, T, S1I, S1T>
@@ -57,6 +59,36 @@ where
             base_version: version,
             source,
             compute,
+            read: |this, from, to, out| {
+                this.source.for_each_chunk_at(from, to, &mut |at, values| {
+                    out.extend(
+                        values
+                            .iter()
+                            .cloned()
+                            .enumerate()
+                            .map(|(offset, value)| (this.compute)(I::from(at + offset), value)),
+                    );
+                });
+            },
+            visit: |this, from, to, f| {
+                let mut output = Vec::new();
+                let chunk_size = this.source.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+                this.source.for_each_chunk_at(from, to, &mut |at, values| {
+                    let mut at = at;
+                    for values in values.chunks(chunk_size) {
+                        output.clear();
+                        output.extend(
+                            values
+                                .iter()
+                                .cloned()
+                                .enumerate()
+                                .map(|(offset, value)| (this.compute)(I::from(at + offset), value)),
+                        );
+                        f(at, &output);
+                        at += values.len();
+                    }
+                });
+            },
         }
     }
 }
@@ -74,6 +106,9 @@ where
         version: Version,
         source: ReadableBoxedVec<I, S1T>,
     ) -> Self {
-        Self::init(name, version, source, |_, v| F::apply(v))
+        let mut vec = Self::init(name, version, source, |_, v| F::apply(v));
+        vec.read = |this, from, to, out| F::read_into(&this.source, from, to, out);
+        vec.visit = |this, from, to, f| F::for_each_chunk(&this.source, from, to, f);
+        vec
     }
 }

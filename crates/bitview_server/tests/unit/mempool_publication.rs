@@ -30,6 +30,10 @@ impl MempoolPublication {
     pub async fn check_unavailable(&self, address: SocketAddr) {
         let mut requests = JoinSet::new();
         for (index, path) in PATHS.iter().enumerate() {
+            if index == 0 && self.state.sync(|q| q.mempool_info().is_ok()) {
+                self.check_stats_available(address).await;
+                continue;
+            }
             for method in ["GET", "HEAD"] {
                 for tag in [
                     "*",
@@ -52,6 +56,29 @@ impl MempoolPublication {
         while let Some(result) = requests.join_next().await {
             result.unwrap();
         }
+    }
+
+    pub async fn check_stats_available(&self, address: SocketAddr) {
+        tokio::time::timeout(std::time::Duration::from_secs(1), async {
+            let expected = self
+                .state
+                .sync(|q| to_value(q.mempool_info().unwrap()).unwrap());
+            let response = exchange_with_etag(address, "GET", PATHS[0], "\"old\"").await;
+            assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+            let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+            assert_eq!(body, expected);
+            let tag = response
+                .lines()
+                .find_map(|line| line.strip_prefix("etag: "))
+                .unwrap();
+            for method in ["GET", "HEAD"] {
+                let response = exchange_with_etag(address, method, PATHS[0], tag).await;
+                assert!(response.starts_with("HTTP/1.1 304"), "{response}");
+                assert!(response.ends_with("\r\n\r\n"));
+            }
+        })
+        .await
+        .expect("published statistics must not wait for the live update");
     }
 
     pub async fn check_available(&mut self, address: SocketAddr) {

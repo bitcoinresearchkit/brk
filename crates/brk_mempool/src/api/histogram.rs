@@ -1,16 +1,16 @@
 //! Mempool info + price-blending output histogram.
 
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_oracle::HistogramRaw;
 use brk_types::{BlockHash, MempoolInfo};
 
 use crate::Mempool;
 
 impl Mempool {
+    /// Last complete membership statistics. Live updates and unresolved inputs
+    /// do not hide this publication; only startup has no statistics yet.
     pub fn info(&self) -> Result<MempoolInfo> {
-        let state = self.read();
-        state.ensure_published()?;
-        Ok(state.info.clone())
+        self.0.info.read().clone().ok_or(Error::StateUpdating)
     }
 
     /// Snapshot of pre-bucketed round-dollar-eligible bins across all live

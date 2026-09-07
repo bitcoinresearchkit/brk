@@ -2,8 +2,8 @@ use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use brk_types::{Height, StoredU64};
 use vecdb::{
-    AnyVec, BinaryTransform, CachedBoxedVec, CheckedSub, PrintableIndex, ReadableBoxedVec,
-    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
+    AnyVec, BinaryTransform, CachedBoxedVec, CheckedSub, PrintableIndex, READ_CHUNK_SIZE,
+    ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::SparseRead;
@@ -126,12 +126,23 @@ where
             })
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn for_each_output(&self, from: usize, to: usize, mut each: impl FnMut(usize, &[T])) {
+        let size = READ_CHUNK_SIZE;
+        let mut at = from;
+        let mut output = Vec::new();
         self.try_fold_values(from, to, (), |(), value| {
-            each(value);
+            output.push(value);
+            if output.len() == size {
+                each(at, &output);
+                at += output.len();
+                output.clear();
+            }
             Ok::<_, Infallible>(())
         })
         .unwrap();
+        if !output.is_empty() {
+            each(at, &output);
+        }
     }
 }
 
@@ -206,12 +217,22 @@ where
     F: BinaryTransform<StoredU64, StoredU64, T> + Send + Sync,
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        buf.reserve(to.saturating_sub(from));
-        self.for_each_value(from, to, |value| buf.push(value));
+        buf.reserve(to.min(self.len()).saturating_sub(from));
+        self.try_fold_values(from, to, (), |(), value| {
+            buf.push(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, each: &mut dyn FnMut(usize, &[T])) {
+        self.for_each_output(from, to, each);
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(T)) {
-        self.for_each_value(from, to, each);
+        self.for_each_output(from, to, |_, values| {
+            values.iter().cloned().for_each(&mut *each)
+        });
     }
 
     fn fold_range_at<B, G: FnMut(B, T) -> B>(
@@ -275,34 +296,24 @@ where
         }
 
         let window_starts = self.window_starts.snapshot();
-        let numerator = SparseRead::new(
-            &*self.numerator,
-            indices.iter().flat_map(|&index| {
-                [Some(index), Self::previous_index(window_starts[index])]
-                    .into_iter()
-                    .flatten()
-            }),
-        );
+        let numerator = SparseRead::new(&*self.numerator, indices, |index| {
+            Self::previous_index(window_starts[index])
+        });
 
         out.reserve(indices.len());
-        for &index in indices {
-            let start = window_starts[index];
-            let previous = Self::previous_index(start);
-            let Some(denominator) = self.denominator.rolling_sum_at(start.to_usize(), index) else {
-                continue;
-            };
-            out.push(F::apply(
-                numerator
-                    .at(index)
-                    .checked_sub(
-                        previous
-                            .map(|index| numerator.at(index))
-                            .unwrap_or_default(),
-                    )
-                    .unwrap_or_default(),
-                denominator,
-            ));
-        }
+        self.denominator.for_each_sorted_rolling_sum(
+            indices,
+            &window_starts,
+            |output, denominator| {
+                out.push(F::apply(
+                    numerator
+                        .current(output)
+                        .checked_sub(numerator.previous(output).unwrap_or_default())
+                        .unwrap_or_default(),
+                    denominator,
+                ));
+            },
+        );
     }
 }
 

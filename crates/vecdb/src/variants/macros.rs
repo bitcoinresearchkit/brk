@@ -301,6 +301,11 @@ macro_rules! impl_vec_wrapper {
             }
 
             #[inline(always)]
+            fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
+                $crate::ReadableVec::<I, T>::for_each_chunk_at(&self.0, from, to, f)
+            }
+
+            #[inline(always)]
             fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
                 $crate::ReadableVec::<I, T>::read_sorted_into_at(&self.0, indices, out)
             }

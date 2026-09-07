@@ -1,8 +1,8 @@
 use std::{marker::PhantomData, sync::Arc};
 
 use crate::{
-    AnyVec, ReadOnlyClone, ReadableVec, TypedVec, UnaryTransform, VecValue, Version,
-    short_type_name,
+    AnyVec, READ_CHUNK_SIZE, ReadOnlyClone, ReadableVec, TypedVec, UnaryTransform, VecValue,
+    Version, short_type_name,
 };
 
 use super::{ColumnId, ReadableColumnarVec};
@@ -18,6 +18,9 @@ where
     base_version: Version,
     source: S,
     compute: fn(S::T) -> T,
+    read_rows: fn(&S, usize, usize, &mut Vec<C::Row<T>>),
+    visit_rows: fn(&S, usize, usize, &mut dyn FnMut(usize, &[C::Row<T>])),
+    visit_columns: fn(&S, &[C], usize, usize, &mut dyn FnMut(C, usize, &[T])),
     columns: PhantomData<C>,
 }
 
@@ -33,6 +36,9 @@ where
             base_version: self.base_version,
             source: self.source.clone(),
             compute: self.compute,
+            read_rows: self.read_rows,
+            visit_rows: self.visit_rows,
+            visit_columns: self.visit_columns,
             columns: PhantomData,
         }
     }
@@ -54,6 +60,33 @@ where
             base_version: version,
             source,
             compute: F::apply,
+            read_rows: |source, from, to, out| {
+                source.for_each_chunk_at(from, to, &mut |_, rows| {
+                    out.extend(rows.iter().cloned().map(|row| C::map(row, F::apply)));
+                });
+            },
+            visit_rows: |source, from, to, f| {
+                let chunk_size = source.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+                let mut output = Vec::new();
+                source.for_each_chunk_at(from, to, &mut |at, rows| {
+                    for (chunk, rows) in rows.chunks(chunk_size).enumerate() {
+                        output.clear();
+                        output.extend(rows.iter().cloned().map(|row| C::map(row, F::apply)));
+                        f(at + chunk * chunk_size, &output);
+                    }
+                });
+            },
+            visit_columns: |source, columns, from, to, f| {
+                let chunk_size = source.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
+                let mut output = Vec::new();
+                source.for_each_column_chunk_at(columns, from, to, &mut |column, at, values| {
+                    for (chunk, values) in values.chunks(chunk_size).enumerate() {
+                        output.clear();
+                        output.extend(values.iter().cloned().map(F::apply));
+                        f(column, at + chunk * chunk_size, &output);
+                    }
+                });
+            },
             columns: PhantomData,
         }
     }
@@ -113,22 +146,45 @@ where
     type I = S::I;
     type T = T;
 
+    fn read_column_sorted_into_at(&self, column: C, indices: &[usize], out: &mut Vec<T>) {
+        let len = self.len();
+        let indices = &indices[..indices.partition_point(|&i| i < len)];
+        if let (Some(&first), Some(&last)) = (indices.first(), indices.last())
+            && last - first + 1 < indices.len()
+        {
+            // A dense duplicate-heavy request needs fewer transformations if
+            // the requested span is evaluated once and then gathered.
+            let mut values = Vec::with_capacity(last - first + 1);
+            self.for_each_column_chunk_at(&[column], first, last + 1, &mut |_, _, chunk| {
+                values.extend_from_slice(chunk);
+            });
+            out.extend(indices.iter().map(|&i| values[i - first].clone()));
+            return;
+        }
+        let mut values = Vec::with_capacity(indices.len());
+        self.source
+            .read_column_sorted_into_at(column, indices, &mut values);
+        out.extend(values.into_iter().map(self.compute));
+    }
+
     fn for_each_column_chunk_at<F>(&self, columns: &[C], from: usize, to: usize, f: &mut F)
     where
         F: FnMut(C, usize, &[T]),
     {
-        let compute = self.compute;
-        let mut transformed = Vec::new();
-        self.source.for_each_column_chunk_at(
-            columns,
-            from,
-            to,
-            &mut |column, row_start, values| {
-                transformed.clear();
-                transformed.extend(values.iter().cloned().map(compute));
-                f(column, row_start, &transformed);
-            },
-        );
+        (self.visit_columns)(&self.source, columns, from, to, f);
+    }
+
+    fn for_each_column_sorted_at<F>(&self, columns: &[C], indices: &[usize], f: &mut F)
+    where
+        F: FnMut(C, &[T]),
+    {
+        let mut output = Vec::with_capacity(indices.len());
+        self.source
+            .for_each_column_sorted_at(columns, indices, &mut |column, values| {
+                output.clear();
+                output.extend(values.iter().cloned().map(self.compute));
+                f(column, &output);
+            });
     }
 }
 
@@ -149,16 +205,18 @@ where
             return;
         }
 
-        let compute = self.compute;
         out.reserve(to - from);
-        self.source
-            .for_each_range_dyn_at(from, to, &mut |row| out.push(C::map(row, compute)));
+        (self.read_rows)(&self.source, from, to, out);
+    }
+
+    fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[C::Row<T>])) {
+        (self.visit_rows)(&self.source, from, to, f);
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(C::Row<T>)) {
-        let compute = self.compute;
-        self.source
-            .for_each_range_dyn_at(from, to, &mut |row| f(C::map(row, compute)));
+        self.for_each_chunk_at(from, to, &mut |_, rows| {
+            rows.iter().cloned().for_each(&mut *f);
+        });
     }
 
     fn fold_range_at<B, F: FnMut(B, C::Row<T>) -> B>(
@@ -168,9 +226,11 @@ where
         init: B,
         mut f: F,
     ) -> B {
-        let compute = self.compute;
-        self.source
-            .fold_range_at(from, to, init, |acc, row| f(acc, C::map(row, compute)))
+        let mut acc = Some(init);
+        self.for_each_chunk_at(from, to, &mut |_, rows| {
+            acc = Some(rows.iter().cloned().fold(acc.take().unwrap(), &mut f));
+        });
+        acc.unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, C::Row<T>) -> Result<B, E>>(
