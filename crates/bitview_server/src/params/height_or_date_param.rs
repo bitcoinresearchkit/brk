@@ -28,7 +28,7 @@ impl HeightOrDateParam {
     pub fn resolve(&self) -> Result<HeightOrDate, Error> {
         if let Ok(date) = self.point.parse::<Date>() {
             Ok(HeightOrDate::Date(date))
-        } else if let Ok(height) = self.point.parse::<usize>() {
+        } else if let Ok(height) = self.point.parse::<u32>() {
             Ok(HeightOrDate::Height(Height::from(height)))
         } else {
             Err(Error::bad_request(format!(
@@ -36,5 +36,39 @@ impl HeightOrDateParam {
                 self.point
             )))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn height_parsing_uses_the_domain_width_without_truncation() {
+        for point in ["0", "840000", "4294967295"] {
+            let param = HeightOrDateParam {
+                point: point.into(),
+            };
+            let Ok(HeightOrDate::Height(height)) = param.resolve() else {
+                panic!("expected height");
+            };
+            assert_eq!(u32::from(height), point.parse::<u32>().unwrap());
+        }
+        for point in ["4294967296", "18446744073709551615", "-1", "invalid"] {
+            assert!(
+                HeightOrDateParam {
+                    point: point.into()
+                }
+                .resolve()
+                .is_err()
+            );
+        }
+        assert!(matches!(
+            HeightOrDateParam {
+                point: "2024-01-01".into()
+            }
+            .resolve(),
+            Ok(HeightOrDate::Date(_))
+        ));
     }
 }

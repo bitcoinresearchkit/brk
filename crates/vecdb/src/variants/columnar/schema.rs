@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{fmt::Debug, iter::once};
 
 use crate::{Error, ReadableVec, Result, VecIndex, VecValue, Version};

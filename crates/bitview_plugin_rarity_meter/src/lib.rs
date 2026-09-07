@@ -21,7 +21,6 @@ use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_traversable::Traversable;
-use brk_exit::Exit;
 use brk_types::{Cents, Height, Version};
 use vecdb::{Database, Rw, StorageMode};
 
@@ -97,8 +96,31 @@ impl Vecs {
         STORAGE.finalize_database(&this.db)?;
         Ok(this)
     }
+}
 
-    fn compute_inner(&mut self, dependencies: Dependencies<'_>, exit: &Exit) -> Result<()> {
+impl<M: StorageMode> Plugin for Vecs<M>
+where
+    Self: Traversable + Send + Sync,
+{
+    fn storage(&self) -> PluginStorage {
+        STORAGE
+    }
+
+    fn gate(&self) -> &PluginGate {
+        &self.plugin_gate
+    }
+}
+
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
+        &mut self,
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let exit = context.exit();
         let Dependencies {
             indexer,
             bedrock,
@@ -212,38 +234,8 @@ impl Vecs {
             exit,
         )?;
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
 
         Ok(())
-    }
-}
-
-impl<M: StorageMode> Plugin for Vecs<M>
-where
-    Self: Traversable + Send + Sync,
-{
-    fn storage(&self) -> PluginStorage {
-        STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(dependencies, context.exit())
     }
 }

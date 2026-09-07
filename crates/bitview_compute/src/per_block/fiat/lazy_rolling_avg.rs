@@ -1,10 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
-use vecdb::{DeltaAvg, LazyDeltaVec, LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    AvgCentsToUsd, CachedWindowStartVec, DerivedResolutions, FiatType, LazyPerBlock,
-    LazyRollingAvgFromHeight, Resolutions,
+    AvgCentsToUsd, CachedWindowStartVec, FiatType, LazyPerBlock, LazyRollingAvgFromHeight,
 };
 
 #[derive(Clone, Traversable)]
@@ -23,36 +22,19 @@ impl<C: FiatType> LazyRollingAvgFiatFromHeight<C> {
         cached_start: &CachedWindowStartVec,
         indexes: &crate::IndexSources,
     ) -> Self {
-        let cached = cached_start.read_only_clone();
-        let average = LazyDeltaVec::<Height, C, StoredF32, DeltaAvg>::new(
+        let cents = LazyRollingAvgFromHeight::new(
             &format!("{name}_cents"),
             version,
             cumulative.read_only_boxed_clone(),
-            cached.version(),
-            move || cached.snapshot(),
-        );
-        let resolutions = Resolutions::from_height_source(
-            &format!("{name}_cents"),
-            average.clone(),
-            version,
+            cached_start,
             indexes,
         );
-        let cents = LazyRollingAvgFromHeight {
-            height: average,
-            resolutions: Box::new(resolutions),
-        };
-        let usd = LazyPerBlock {
-            height: LazyVec::transformed::<AvgCentsToUsd>(
-                name,
-                version,
-                cents.height.read_only_boxed_clone(),
-            ),
-            resolutions: Box::new(DerivedResolutions::from_derived_computed::<AvgCentsToUsd>(
-                name,
-                version,
-                &cents.resolutions,
-            )),
-        };
+        let usd = LazyPerBlock::from_resolutions::<AvgCentsToUsd>(
+            name,
+            version,
+            cents.height.read_only_boxed_clone(),
+            &cents.resolutions,
+        );
 
         Self { usd, cents }
     }

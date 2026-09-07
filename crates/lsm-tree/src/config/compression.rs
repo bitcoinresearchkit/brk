@@ -17,6 +17,16 @@ impl std::ops::Deref for CompressionPolicy {
 }
 
 impl CompressionPolicy {
+    /// Uses the last configured value for deeper levels.
+    #[must_use]
+    #[expect(
+        clippy::indexing_slicing,
+        reason = "constructors reject empty policies; the index is clamped"
+    )]
+    pub fn at_level(&self, level: usize) -> CompressionType {
+        self.0[level.min(self.0.len() - 1)]
+    }
+
     /// Disables all compression.
     #[must_use]
     pub fn disabled() -> Self {

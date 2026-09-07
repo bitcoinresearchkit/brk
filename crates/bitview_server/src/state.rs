@@ -6,18 +6,10 @@ use axum::{
     response::IntoResponse,
 };
 use bitview_query::{AsyncQuery, Query, RepresentationId};
-#[cfg(feature = "chain")]
-use bitview_query::{
-    BlockTemplateSource, ResolvedAddrChainTxs, ResolvedBlockTemplateDiff, ResolvedConfirmedTx,
-    ResolvedCpfp, ResolvedPoolBlocks, ResolvedRawTransaction, ResolvedRbf, ResolvedTransaction,
-};
 use brk_error::{Error as BrkError, Result};
 use brk_rpc::AsyncClient;
 #[cfg(feature = "chain")]
-use brk_types::{
-    Addr, BlockHashPrefix, Height, MempoolBlock, NextBlockHash, PoolSlug, RecommendedFees, TxIndex,
-    TxStatus, Txid, TxidPrefix, Version,
-};
+use brk_types::Version;
 use derive_more::Deref;
 use jiff::Timestamp;
 use serde::Serialize;
@@ -46,7 +38,7 @@ pub struct AppState {
     pub broadcast_requests: Arc<Semaphore>,
     pub node: AsyncClient,
     #[cfg(feature = "series")]
-    pub series_bodies: SeriesBodies,
+    pub series_bodies: Arc<SeriesBodies>,
     #[cfg(feature = "urpd")]
     pub urpd_query: Arc<Semaphore>,
     #[cfg(feature = "urpd")]
@@ -88,242 +80,28 @@ impl AppState {
         .await
     }
 
-    /// Resolve one confirmed address page and its exact chain anchor once.
-    #[cfg(feature = "chain")]
-    pub async fn addr_chain_txs_preflight(
-        &self,
-        version: Version,
-        addr: &Addr,
-        after_txid: Option<Txid>,
-        limit: usize,
-    ) -> Result<(ResolvedAddrChainTxs, CacheStrategy)> {
-        let addr = addr.clone();
-        self.run_admitted(move |q| {
-            let resolved = q.resolve_addr_chain_txs(&addr, after_txid, limit)?;
-            let strategy = Self::addr_chain_txs_strategy(version, &resolved);
-            Ok((resolved, strategy))
-        })
-        .await
-    }
-
-    #[cfg(feature = "chain")]
-    pub fn addr_chain_txs_strategy(
-        version: Version,
-        resolved: &ResolvedAddrChainTxs,
-    ) -> CacheStrategy {
-        CacheStrategy::ActivityBound(version, BlockHashPrefix::from(&resolved.activity_anchor()))
-    }
-
-    /// Resolve an exact confirmed transaction once and bind its response to
-    /// the block that currently contains it.
-    #[cfg(feature = "chain")]
-    pub async fn confirmed_tx_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(ResolvedConfirmedTx, CacheStrategy)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let tx = q.resolve_confirmed_tx(&txid)?;
-            let strategy = Self::representation_strategy(version, tx.identity());
-            Ok((tx, strategy))
-        })
-        .await
-    }
-
-    /// Resolve exact raw transaction bytes and derive their witness-aware cache strategy.
-    #[cfg(feature = "chain")]
-    pub async fn raw_transaction_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(ResolvedRawTransaction, CacheStrategy)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let transaction = q.resolve_raw_transaction(&txid)?;
-            let strategy = Self::representation_strategy(version, transaction.identity());
-            Ok((transaction, strategy))
-        })
-        .await
-    }
-
-    /// Resolve exact transaction JSON and derive its content- or block-bound cache strategy.
-    #[cfg(feature = "chain")]
-    pub async fn transaction_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(ResolvedTransaction, CacheStrategy)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let transaction = q.resolve_transaction(&txid)?;
-            let strategy = Self::representation_strategy(version, transaction.identity());
-            Ok((transaction, strategy))
-        })
-        .await
-    }
-
-    /// Resolve exact CPFP JSON and derive its content- or block-bound cache strategy.
-    #[cfg(feature = "chain")]
-    pub async fn cpfp_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(ResolvedCpfp, CacheStrategy)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let cpfp = q.resolve_cpfp(&txid)?;
-            let strategy = Self::representation_strategy(version, cpfp.identity());
-            Ok((cpfp, strategy))
-        })
-        .await
-    }
-
-    /// Resolve one exact RBF tree. Empty responses get an exact strategy here.
-    #[cfg(feature = "chain")]
-    pub async fn rbf_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(ResolvedRbf, Option<CacheStrategy>)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let rbf = q.resolve_rbf(&txid)?;
-            let strategy = rbf
-                .identity()
-                .map(|identity| Self::representation_strategy(version, identity));
-            Ok((rbf, strategy))
-        })
-        .await
-    }
-
     #[cfg(feature = "chain")]
     pub fn representation_strategy(version: Version, identity: RepresentationId) -> CacheStrategy {
         match identity {
             RepresentationId::Content(hash) => CacheStrategy::LiveHash(hash),
             // Anchor identity and availability are distinct: a displaced
             // confirmed transaction must be resolved again even at depth.
-            RepresentationId::Block { hash, .. } => {
+            RepresentationId::Block(hash) => {
                 CacheStrategy::Live(format!("tx3-{version}-{hash}").into())
             }
         }
     }
 
-    /// Resolve a transaction status and its exact cache strategy without
-    /// dispatching a second query.
-    #[cfg(feature = "chain")]
-    pub async fn tx_status_preflight(
-        &self,
-        version: Version,
-        txid: &Txid,
-    ) -> Result<(TxStatus, CacheStrategy)> {
-        let txid = *txid;
-        self.run_admitted(move |q| {
-            let status = q.transaction_status(&txid)?;
-            let strategy = match status.block_hash {
-                Some(hash) => CacheStrategy::Live(format!("tx-status3-{version}-{hash}").into()),
-                None => CacheStrategy::LiveHash(*TxidPrefix::from(txid)),
-            };
-            Ok((status, strategy))
-        })
-        .await
-    }
-
-    /// Resolve the complete text representation before deriving its validator.
-    #[cfg(feature = "chain")]
-    pub async fn txid_by_index_preflight(
-        &self,
-        version: Version,
-        index: TxIndex,
-    ) -> Result<(Txid, CacheStrategy)> {
-        self.run_admitted(move |q| {
-            let txid = q.txid_by_index(index)?;
-            let strategy = CacheStrategy::Live(format!("tx-index3-{version}-{txid}").into());
-            Ok((txid, strategy))
-        })
-        .await
-    }
-
-    /// Resolve transaction first-seen times and their exact response validator
-    /// from one mempool snapshot.
-    #[cfg(feature = "chain")]
-    pub fn transaction_times_preflight(&self, txids: &[Txid]) -> Result<(Vec<u64>, CacheStrategy)> {
-        self.sync(|q| {
-            let (times, hash) = q.transaction_times_with_hash(txids)?;
-            Ok((times, CacheStrategy::LiveHash(hash)))
-        })
-    }
-
-    /// Resolve one latest pool-block page and its exact activity anchor once.
-    #[cfg(feature = "chain")]
-    pub async fn pool_blocks_preflight(
-        &self,
-        slug: PoolSlug,
-        before_height: Option<Height>,
-        limit: usize,
-    ) -> Result<ResolvedPoolBlocks> {
-        self.run_admitted(move |q| q.resolve_pool_blocks(slug, before_height, limit))
-            .await
-    }
-
-    /// Resolve every projected mempool-block statistic from one snapshot.
-    #[cfg(feature = "chain")]
-    pub fn mempool_blocks(&self) -> Result<Vec<MempoolBlock>> {
-        self.sync(|query| query.mempool_blocks())
-    }
-
-    /// Resolve recommended fees from one projected-mempool snapshot.
-    #[cfg(feature = "chain")]
-    pub fn recommended_fees(&self) -> Result<RecommendedFees> {
-        self.sync(|query| query.recommended_fees())
-    }
-
-    /// Resolve the projected-next-block hash and its matching cache strategy once.
-    #[cfg(feature = "chain")]
-    pub fn mempool_hash_preflight(&self) -> Result<(NextBlockHash, CacheStrategy)> {
-        self.sync(|q| {
-            let hash = q.mempool_hash()?;
-            let strategy = CacheStrategy::LiveHash(hash.into());
-            Ok((hash, strategy))
-        })
-    }
-
-    /// Resolve the order-sensitive mempool-txid validator without copying the list.
-    #[cfg(feature = "chain")]
-    pub fn mempool_txids_strategy(&self) -> Result<CacheStrategy> {
-        self.sync(|q| q.mempool_txids_hash().map(CacheStrategy::LiveHash))
-    }
-
-    /// Capture a complete published block template before ETag handling.
-    #[cfg(feature = "chain")]
-    pub fn block_template_preflight(&self) -> Result<BlockTemplateSource> {
-        self.sync(|q| q.resolve_block_template())
-    }
-
-    /// Validate historical availability before ETag handling.
-    #[cfg(feature = "chain")]
-    pub fn block_template_diff_preflight(
-        &self,
-        since: NextBlockHash,
-    ) -> Result<ResolvedBlockTemplateDiff> {
-        self.sync(|q| q.resolve_block_template_diff(since))
-    }
-
     pub fn assemble_response(
         params: CacheParams,
-        result: Result<Bytes>,
+        bytes: Bytes,
         apply_content_headers: impl FnOnce(&mut HeaderMap),
     ) -> Response<Body> {
-        match result {
-            Ok(bytes) => {
-                let mut response = Response::new(Body::from(bytes));
-                let headers = response.headers_mut();
-                apply_content_headers(headers);
-                params.apply_to(headers);
-                response
-            }
-            Err(error) => Error::from(error).into_response(),
-        }
+        let mut response = Response::new(Body::from(bytes));
+        let headers = response.headers_mut();
+        apply_content_headers(headers);
+        params.apply_to(headers);
+        response
     }
 
     /// Shared response pipeline: ETag short-circuit, body computation on the
@@ -358,7 +136,7 @@ impl AppState {
 
         match body.await {
             Ok((bytes, apply_content_headers)) => {
-                Self::assemble_response(params, Ok(bytes), apply_content_headers)
+                Self::assemble_response(params, bytes, apply_content_headers)
             }
             Err(error) => Error::from(error).into_response(),
         }
@@ -399,7 +177,7 @@ impl AppState {
             return ResponseExtended::new_not_modified(&params);
         }
 
-        Self::assemble_response(params, Ok(bytes()), |headers| {
+        Self::assemble_response(params, bytes(), |headers| {
             headers.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
         })
     }
@@ -493,37 +271,27 @@ impl AppState {
     where
         F: FnOnce(&Query) -> Result<(Vec<u8>, RepresentationId)> + Send + 'static,
     {
-        let request_headers = headers.clone();
-        let cdn_cache_mode = self.cdn_cache_mode;
         let outcome = self
             .run_admitted(move |query| {
                 let initial_tip = query.tip_hash_prefix();
                 let (bytes, identity) = f(query)?;
                 let current_tip = query.tip_hash_prefix();
-                if matches!(identity, RepresentationId::Block { .. }) && initial_tip != current_tip
-                {
+                if matches!(identity, RepresentationId::Block(_)) && initial_tip != current_tip {
                     return Err(BrkError::StateUpdating);
                 }
-                let strategy = Self::representation_strategy(version, identity);
-                let params = CacheParams::resolve(&strategy, cdn_cache_mode);
-                if params.matches_etag(&request_headers) {
-                    return Ok((params, None));
-                }
-                Ok((params, Some(Bytes::from(bytes))))
+                Ok((bytes, identity))
             })
             .await;
 
-        let (params, body) = match outcome {
-            Ok((params, None)) => return ResponseExtended::new_not_modified(&params),
-            Ok((params, Some(body))) => (params, body),
-            Err(error) => return Error::from(error).into_response(),
-        };
-        Self::assemble_response(params, Ok(body), |headers| {
-            headers.insert(
-                header::CONTENT_TYPE,
-                HeaderValue::from_static("application/json"),
-            );
-        })
+        match outcome {
+            Ok((bytes, identity)) => self.respond_immediate(
+                headers,
+                Self::representation_strategy(version, identity),
+                "application/json",
+                || Bytes::from(bytes),
+            ),
+            Err(error) => Error::from(error).into_response(),
+        }
     }
 
     /// JSON response whose validator is derived from the exact serialized value.
@@ -551,9 +319,7 @@ impl AppState {
     }
 
     pub fn respond_json_content_bytes(&self, headers: &HeaderMap, bytes: Bytes) -> Response<Body> {
-        let RepresentationId::Content(hash) = RepresentationId::content(&bytes) else {
-            unreachable!("content identity constructor returned a block identity");
-        };
+        let hash = RepresentationId::content_hash(&bytes);
         self.respond_immediate(
             headers,
             CacheStrategy::LiveHash(hash),

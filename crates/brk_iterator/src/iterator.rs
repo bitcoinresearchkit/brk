@@ -1,5 +1,5 @@
 use brk_error::{Error, Result};
-use brk_types::Block;
+use brk_types::{Block, Height};
 
 use crate::State;
 
@@ -16,12 +16,13 @@ impl Iterator for BlockIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         match &mut self.0 {
+            State::Empty => None,
             State::Rpc {
                 client,
                 heights,
                 prev_hash,
             } => {
-                let height = heights.next()?;
+                let height = Height::new(heights.next()?);
                 let hash = match client.get_block_hash(height) {
                     Ok(h) => h,
                     Err(e) => return Some(Err(e)),
@@ -51,3 +52,7 @@ impl Iterator for BlockIterator {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/factory.rs"]
+mod tests;

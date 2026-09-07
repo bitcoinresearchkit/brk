@@ -3,10 +3,12 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use crate::Weight;
 
@@ -23,9 +25,9 @@ use crate::Weight;
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[schemars(
     example = &110,
     example = &140,
@@ -153,6 +155,13 @@ impl CheckedSub for VSize {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for VSize {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for VSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -162,6 +171,7 @@ impl std::fmt::Display for VSize {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for VSize {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

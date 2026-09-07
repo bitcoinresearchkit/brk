@@ -1,30 +1,13 @@
-use crate::internals::*;
-
-use std::marker::PhantomData;
-
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
 
 use crate::{
-    Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, ReadOnlyBaseVec, Stamp,
-    VecIndex, VecReader, VecValue,
+    Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, Stamp, VecIndex, VecReader,
+    VecValue,
 };
 
-use super::RawStrategy;
-
-/// Lean read-only view of a raw vector (~40 bytes).
-///
-/// Carries only the fields needed for disk reads: region, shared length,
-/// name/header metadata. No holes, no updated map, no pushed buffer,
-/// no rollback state.
-///
-/// Created via `ReadWriteRawVec::read_only_clone`.
-#[derive(Debug, Clone)]
-pub struct ReadOnlyRawVec<I, T, S> {
-    base: ReadOnlyBaseVec<I, T>,
-    _strategy: PhantomData<S>,
-}
+use super::{RawStrategy, ReadOnlyRawVec};
 
 impl<I, T, S> ReadOnlyRawVec<I, T, S>
 where
@@ -67,56 +50,11 @@ where
     pub fn read_once(&self, index: I) -> crate::Result<T> {
         self.read_at_once(index.to_usize())
     }
-}
-pub trait VariantsRawInnerReadOnlyReadOnlyRawVecITSInternalCtor<I, T, S>: Sized {
-    fn new(base: ReadOnlyBaseVec<I, T>) -> Self;
-}
-impl<I, T, S> VariantsRawInnerReadOnlyReadOnlyRawVecITSInternalCtor<I, T, S>
-    for ReadOnlyRawVec<I, T, S>
-{
-    fn new(base: ReadOnlyBaseVec<I, T>) -> Self {
-        Self {
-            base,
-            _strategy: PhantomData,
-        }
-    }
-}
 
-pub trait VariantsRawInnerReadOnlyReadOnlyRawVecITSInternal<I, T, S>: Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn region(&self) -> &rawdb::Region;
-    fn stored_len(&self) -> usize;
-    fn fold_source<B, F: FnMut(B, T) -> B>(
-        &self,
-        from: usize,
-        to: usize,
-        len: usize,
-        init: B,
-        f: F,
-    ) -> B;
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        &self,
-        from: usize,
-        to: usize,
-        len: usize,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<I, T, S> VariantsRawInnerReadOnlyReadOnlyRawVecITSInternal<I, T, S> for ReadOnlyRawVec<I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn region(&self) -> &rawdb::Region {
+    pub fn region(&self) -> &rawdb::Region {
         self.base.region()
     }
-    fn stored_len(&self) -> usize {
+    pub fn stored_len(&self) -> usize {
         self.base.stored_len()
     }
     #[inline(always)]

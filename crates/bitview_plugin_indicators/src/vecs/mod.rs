@@ -1,7 +1,10 @@
 mod compute;
 mod import;
 
-use bitview_compute::{LazyPerBlock, LazyRatioPerBlock, PerBlock, PercentPerBlock, RatioPerBlock};
+use bitview_compute::{
+    BasisPointsPerBlock, LazyBasisPointsPerBlock, LazyPerBlock, PerBlock, PercentPerBlock,
+    RatioPerBlock,
+};
 use bitview_plugin::{Plugin, PluginGate, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::{PartsPerMillion32, PartsPerMillion64, StoredF32};
@@ -20,12 +23,12 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// divided by its trailing 365-day per-block arithmetic mean. Values above
     /// one mean current subsidy revenue is above its one-year average; values
     /// below one mean it is below average.
-    pub puell_multiple: RatioPerBlock<PartsPerMillion64, M>,
+    pub puell_multiple: BasisPointsPerBlock<M>,
     /// Network Value to Transactions ratio: market capitalization divided by
     /// trailing-24-hour transfer volume, both valued in USD. Returns zero when
     /// the ratio is not finite. Larger values mean the network's market value
     /// is high relative to the on-chain value transferred in the last day.
-    pub nvt: LazyRatioPerBlock<PartsPerMillion64>,
+    pub nvt: LazyBasisPointsPerBlock,
     /// Approximate Gini coefficient of UTXO-held supply, derived from the
     /// Lorenz curve across ordered UTXO-amount cohorts. Zero means equal
     /// distribution; larger values mean greater concentration.
@@ -39,7 +42,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// USD value of derived block subsidies. Returns zero when the ratio is not
     /// finite. Larger values mean Bitcoin's market value is higher relative to
     /// the historical issuance value assigned to miners.
-    pub thermo_cap_multiple: LazyRatioPerBlock<PartsPerMillion64>,
+    pub thermo_cap_multiple: LazyBasisPointsPerBlock,
     /// Trailing 24-hour coin days destroyed divided by all-chain supply in BTC
     /// at the represented block. Larger values mean more accumulated holding
     /// time was consumed by spending relative to the supply. Returns zero when

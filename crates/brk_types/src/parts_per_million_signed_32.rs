@@ -1,9 +1,12 @@
 use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
+use crate::CheckedSub;
+use crate::unlikely;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, unlikely};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::StoredF32;
 
@@ -24,9 +27,9 @@ use super::StoredF32;
     Hash,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct PartsPerMillionSigned32(i32);
 
 impl PartsPerMillionSigned32 {
@@ -206,6 +209,12 @@ impl CheckedSub for PartsPerMillionSigned32 {
         }
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for PartsPerMillionSigned32 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for PartsPerMillionSigned32 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -214,6 +223,7 @@ impl std::fmt::Display for PartsPerMillionSigned32 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for PartsPerMillionSigned32 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -250,8 +260,11 @@ mod tests {
         assert!(PartsPerMillionSigned32::from(f64::NAN).is_nan());
         assert!(!PartsPerMillionSigned32::NAN.is_negative());
 
-        let mut json = Vec::new();
-        PartsPerMillionSigned32::NAN.fmt_json(&mut json);
-        assert_eq!(json, b"null");
+        #[cfg(feature = "storage")]
+        {
+            let mut json = Vec::new();
+            PartsPerMillionSigned32::NAN.fmt_json(&mut json);
+            assert_eq!(json, b"null");
+        }
     }
 }

@@ -80,7 +80,7 @@ impl Kraken {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(Error::NotFound("Couldn't find date".into()))
+            .ok_or_else(|| Error::NotFound("Couldn't find date".into()))
     }
 
     pub fn fetch_1d(&self) -> brk_error::Result<BTreeMap<Date, OHLCCents>> {
@@ -100,7 +100,7 @@ impl Kraken {
             .get("result")
             .and_then(|r| r.get("XXBTZUSD"))
             .and_then(|v| v.as_array())
-            .ok_or(Error::Parse("Invalid Kraken response format".into()))?
+            .ok_or_else(|| Error::Parse("Invalid Kraken response format".into()))?
             .iter()
             .filter_map(|v| v.as_array())
             .map(|arr| {
@@ -161,3 +161,7 @@ impl PriceSource for Kraken {
         self._1mn.take();
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/kraken.rs"]
+mod tests;

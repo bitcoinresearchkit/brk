@@ -1240,7 +1240,7 @@ pub static COMMANDS: &[Command] = &[
         method: "GET",
         path: "/api/series/search",
         summary: "Search series",
-        description: "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.",
+        description: "Search series by name or descriptive terms. Results prioritize whole query words in names, then descriptions, then fuzzy names, then fuzzy descriptions. Word order does not matter. Descriptions provide cohort terminology and formulas. The decoded q parameter is limited to 1024 UTF-8 bytes.",
         path_parameters: &[
         ],
         query_parameters: &[

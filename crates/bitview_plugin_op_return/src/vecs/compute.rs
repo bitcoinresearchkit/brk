@@ -1,9 +1,6 @@
 use brk_error::Result;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use bitview_plugin_transactions::FeesVecs;
-use brk_exit::Exit;
 use vecdb::AnyVec;
 
 use super::{Vecs, batch::Batch};
@@ -20,12 +17,9 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(dependencies.indexer, dependencies.fees, context.exit())
-    }
-}
+        let Dependencies { indexer, fees } = dependencies;
+        let exit = context.exit();
 
-impl Vecs {
-    fn compute_inner(&mut self, indexer: &Indexer, fees: &FeesVecs, exit: &Exit) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
         let starting_lengths = indexer.safe_lengths();
@@ -55,11 +49,7 @@ impl Vecs {
             }
         }
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
         Ok(())
     }
 }

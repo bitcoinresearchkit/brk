@@ -39,6 +39,9 @@ where
         self.repeat_until_complete(exit, |this| {
             let skip = this.len();
             let end = window_starts.len().min(values.len());
+            if skip >= end {
+                return Ok(());
+            }
 
             let range_start = if skip > 0 {
                 window_starts.collect_one_at(skip - 1).unwrap().to_usize()

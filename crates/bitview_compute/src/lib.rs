@@ -15,6 +15,7 @@ mod lazy_indexes;
 mod per_block;
 mod per_tx;
 mod percentile_prices;
+mod resolution_fields;
 mod traits;
 mod transform;
 mod value;
@@ -37,7 +38,9 @@ pub use percentile_prices::*;
 pub use traits::*;
 pub use transform::*;
 pub use value::*;
-pub use weighted::{WeightedCohortContribution, WeightedCohortState, WeightedRatio};
+pub use weighted::{
+    WeightedCohortContribution, WeightedCohortState, WeightedRatio, lazy_weighted_supply,
+};
 pub use with_addr_types::*;
 
 pub const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;

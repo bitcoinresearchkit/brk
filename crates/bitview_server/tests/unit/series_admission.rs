@@ -12,6 +12,7 @@ use tower::ServiceExt;
 use crate::{AppState, api::ApiRoutes, read_availability};
 
 pub async fn check(state: &AppState) {
+    check_format_shapes(state);
     let router = ApiRouter::new().add_api_routes().with_state(state.clone());
     let request = |method, path: &str, tag: &str| {
         Request::builder()
@@ -21,7 +22,7 @@ pub async fn check(state: &AppState) {
             .body(Body::empty())
             .unwrap()
     };
-    let budget = state.series_bodies.response_bodies();
+    let budget = &state.series_bodies.response_bodies;
     for endpoint in ["timestamp/height", "timestamp/height/data", "bulk"] {
         for format in ["json", "csv"] {
             let selection = if endpoint == "bulk" {
@@ -81,4 +82,81 @@ pub async fn check(state: &AppState) {
             assert_eq!(budget.available_permits(), 2);
         }
     }
+}
+
+fn check_format_shapes(state: &AppState) {
+    use bitview_types::{SeriesList, SeriesSelection};
+    use serde_json::{Value, from_str, from_value, json};
+
+    state.sync(|query| {
+        for columns in [1, 2] {
+            for limit in [0, 1, 2] {
+                for format in ["json", "csv"] {
+                    let outputs = [0, 1, 2].map(|shape| {
+                        let mut params: SeriesSelection = from_value(json!({
+                            "series": "timestamp", "index": "height", "limit": limit,
+                            "format": format,
+                        }))
+                        .unwrap();
+                        params.series = SeriesList::from(vec!["timestamp"; columns]);
+                        let resolved = query.resolve(params, usize::MAX).unwrap();
+                        match shape {
+                            0 => query.format(resolved),
+                            1 => query.format_bulk(resolved),
+                            _ => query.format_raw(resolved),
+                        }
+                        .unwrap()
+                    });
+                    let expected_metadata = (
+                        outputs[0].version,
+                        outputs[0].total,
+                        outputs[0].start,
+                        outputs[0].end,
+                    );
+                    for output in &outputs {
+                        assert_eq!(
+                            (output.version, output.total, output.start, output.end),
+                            expected_metadata
+                        );
+                    }
+                    let [single, bulk, raw] = outputs.map(|output| output.output.to_string());
+                    if format == "csv" {
+                        assert_eq!(single, bulk);
+                        assert_eq!(single, raw);
+                        continue;
+                    }
+                    let mut single: Value = from_str(&single).unwrap();
+                    let mut bulk: Value = from_str(&bulk).unwrap();
+                    let raw: Value = from_str(&raw).unwrap();
+                    let entries = bulk.as_array_mut().unwrap();
+                    assert_eq!(entries.len(), columns);
+                    let data: Vec<_> = entries
+                        .iter_mut()
+                        .map(|entry| {
+                            assert!(
+                                entry
+                                    .as_object_mut()
+                                    .unwrap()
+                                    .remove("stamp")
+                                    .unwrap()
+                                    .is_string()
+                            );
+                            entry["data"].clone()
+                        })
+                        .collect();
+                    if columns == 1 {
+                        single.as_object_mut().unwrap().remove("stamp");
+                        assert_eq!(single, entries[0]);
+                        assert_eq!(raw, data[0]);
+                    } else {
+                        for entry in single.as_array_mut().unwrap() {
+                            entry.as_object_mut().unwrap().remove("stamp");
+                        }
+                        assert_eq!(single, bulk);
+                        assert_eq!(raw, Value::Array(data));
+                    }
+                }
+            }
+        }
+    });
 }

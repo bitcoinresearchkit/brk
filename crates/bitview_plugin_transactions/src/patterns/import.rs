@@ -17,71 +17,56 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, cached_starts)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
-        let count_source = ColumnarPerBlockCumulativeRolling::forced_import(
-            db,
-            "transaction_pattern_count_cumulative",
+    let count_source = ColumnarPerBlockCumulativeRolling::forced_import(
+        db,
+        "transaction_pattern_count_cumulative",
+        version,
+        |_| (),
+    )?;
+    let counts = count_source.cumulative.read_only_clone();
+    let count = CountVecs {
+        coinjoin: LazyColumnPerBlockCumulativeRolling::new(
+            "coinjoin_count",
             version,
-            |_| (),
+            &counts,
+            PatternId::Coinjoin,
+            mappings,
+            cached_starts,
+        ),
+        consolidation: LazyColumnPerBlockCumulativeRolling::new(
+            "consolidation_count",
+            version,
+            &counts,
+            PatternId::Consolidation,
+            mappings,
+            cached_starts,
+        ),
+        batch_payout: LazyColumnPerBlockCumulativeRolling::new(
+            "batch_payout_count",
+            version,
+            &counts,
+            PatternId::BatchPayout,
+            mappings,
+            cached_starts,
+        ),
+        source: count_source,
+    };
+
+    let flags_source =
+        EagerVec::<ColumnarVec<PcoVec<TxIndex, StoredBool>, PatternId>>::forced_import(
+            db,
+            "transaction_pattern_flags",
+            version,
         )?;
-        let counts = count_source.cumulative.read_only_clone();
-        let count = CountVecs {
-            coinjoin: LazyColumnPerBlockCumulativeRolling::new(
-                "coinjoin_count",
-                version,
-                &counts,
-                PatternId::Coinjoin,
-                mappings,
-                cached_starts,
-            ),
-            consolidation: LazyColumnPerBlockCumulativeRolling::new(
-                "consolidation_count",
-                version,
-                &counts,
-                PatternId::Consolidation,
-                mappings,
-                cached_starts,
-            ),
-            batch_payout: LazyColumnPerBlockCumulativeRolling::new(
-                "batch_payout_count",
-                version,
-                &counts,
-                PatternId::BatchPayout,
-                mappings,
-                cached_starts,
-            ),
-            source: count_source,
-        };
+    let flags = flags_source.read_only_clone();
 
-        let flags_source =
-            EagerVec::<ColumnarVec<PcoVec<TxIndex, StoredBool>, PatternId>>::forced_import(
-                db,
-                "transaction_pattern_flags",
-                version,
-            )?;
-        let flags = flags_source.read_only_clone();
-
-        Ok(Self {
-            count,
-            flags: Flags {
-                is_coinjoin: flags.column("is_coinjoin", version, PatternId::Coinjoin),
-                is_consolidation: flags.column(
-                    "is_consolidation",
-                    version,
-                    PatternId::Consolidation,
-                ),
-                is_batch_payout: flags.column("is_batch_payout", version, PatternId::BatchPayout),
-            },
-            flags_source,
-        })
-    }
+    Ok(Vecs {
+        count,
+        flags: Flags {
+            is_coinjoin: flags.column("is_coinjoin", version, PatternId::Coinjoin),
+            is_consolidation: flags.column("is_consolidation", version, PatternId::Consolidation),
+            is_batch_payout: flags.column("is_batch_payout", version, PatternId::BatchPayout),
+        },
+        flags_source,
+    })
 }

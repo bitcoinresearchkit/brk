@@ -8,12 +8,8 @@ use super::{LazyCumulativeIndexVec, LazyIndexCountVec};
 
 #[test]
 fn next_boundaries_produce_cumulative_and_per_item_counts() {
-    let suffix = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!("brk-next-index-{}-{suffix}", std::process::id()));
-    let db = Database::open(&path).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
     let mut first: EagerVec<PcoVec<Height, Height>> =
         EagerVec::forced_import(&db, "first", Version::ONE).unwrap();
     let mut terminal: EagerVec<PcoVec<Height, StoredU64>> =
@@ -76,11 +72,4 @@ fn next_boundaries_produce_cumulative_and_per_item_counts() {
         );
         assert_eq!(count.collect_one(Height::new(2)), Some(StoredU64::new(0)));
     });
-
-    drop(count);
-    drop(cumulative);
-    drop(first);
-    drop(terminal);
-    drop(db);
-    std::fs::remove_dir_all(path).unwrap();
 }

@@ -28,33 +28,33 @@ impl CostBasisVecs {
             )
         })
     }
-}
-pub trait CostBasisVecsCostBasisVecsInternal: Sized {
-    fn forced_import(db: &Database, version: Version, mappings: &DailyMappings) -> Result<Self>;
-    fn push(&mut self, prices: &WeightedPair<CostBasisPercentilePrices>);
-    fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec>;
-    fn minimum_len(&mut self) -> usize;
-}
-impl CostBasisVecsCostBasisVecsInternal for CostBasisVecs {
-    fn forced_import(db: &Database, version: Version, mappings: &DailyMappings) -> Result<Self> {
+
+    pub fn forced_import(
+        db: &Database,
+        version: Version,
+        mappings: &DailyMappings,
+    ) -> Result<Self> {
         Ok(Self {
             per_coin: Self::import_weighting(db, "per_coin", version, mappings)?,
             per_dollar: Self::import_weighting(db, "per_dollar", version, mappings)?,
         })
     }
-    fn push(&mut self, prices: &WeightedPair<CostBasisPercentilePrices>) {
+
+    pub fn push(&mut self, prices: &WeightedPair<CostBasisPercentilePrices>) {
         self.per_coin.cointime.push(&prices.cointime.per_coin);
         self.per_coin.coinflow.push(&prices.coinflow.per_coin);
         self.per_dollar.cointime.push(&prices.cointime.per_dollar);
         self.per_dollar.coinflow.push(&prices.coinflow.per_dollar);
     }
-    fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+
+    pub fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
         self.per_coin
             .iter_mut()
             .chain(self.per_dollar.iter_mut())
             .map(|percentiles| percentiles.stored_mut())
     }
-    fn minimum_len(&mut self) -> usize {
+
+    pub fn minimum_len(&mut self) -> usize {
         self.stored_vecs_mut()
             .map(|vec| vec.len())
             .min()

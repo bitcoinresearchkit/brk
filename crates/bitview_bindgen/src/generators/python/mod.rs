@@ -66,7 +66,5 @@ pub fn generate_python_client(
     tree::generate_tree_classes(&mut output, &metadata.catalog, metadata);
     api::generate_main_client(&mut output, endpoints);
 
-    write_if_changed(output_path, &output)?;
-
-    Ok(())
+    write_if_changed(output_path, &output)
 }

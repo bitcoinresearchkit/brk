@@ -3,12 +3,12 @@ use bitview_compute::{
     LazyPercentPerBlock, Resolutions,
 };
 use bitview_plugin_indexer::Indexer;
-use brk_types::{Epoch, Height, PartsPerMillionSigned32, StoredF64, StoredU32, Version};
+use brk_types::{
+    BLOCKS_PER_DIFF_EPOCHS, Epoch, Height, PartsPerMillionSigned32, StoredF64, StoredU32, Version,
+};
 use vecdb::{LazyVec, ReadOnlyClone, ReadableCloneableVec};
 
 use super::Vecs;
-
-const DIFFICULTY_ADJUSTMENT_LOOKBACK: usize = 2016;
 
 fn blocks_left_to_retarget(height: Height, _: Epoch) -> StoredU32 {
     StoredU32::from(height.left_before_next_diff_adj())
@@ -26,12 +26,12 @@ fn difficulty_adjustment(
     }
 }
 
-pub trait Import {
-    fn new(version: Version, indexer: &Indexer, mappings: &bitview_plugin_mappings::Vecs) -> Self;
-}
-
-impl Import for Vecs {
-    fn new(version: Version, indexer: &Indexer, mappings: &bitview_plugin_mappings::Vecs) -> Self {
+impl Vecs {
+    pub fn new(
+        version: Version,
+        indexer: &Indexer,
+        mappings: &bitview_plugin_mappings::Vecs,
+    ) -> Self {
         let v2 = Version::TWO;
 
         let difficulty_source =
@@ -82,7 +82,7 @@ impl Import for Vecs {
                 "difficulty_adjustment",
                 version + Version::ONE,
                 &indexer.vecs().blocks.difficulty,
-                DIFFICULTY_ADJUSTMENT_LOOKBACK,
+                BLOCKS_PER_DIFF_EPOCHS as usize,
                 difficulty_adjustment,
                 mappings,
             ),

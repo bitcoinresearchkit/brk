@@ -12,8 +12,8 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
+use bitview_catalog::TreeNode;
 use bitview_query::{Output, Query as BrkQuery, ResolvedQuery, SeriesOutput};
-use bitview_traversable::TreeNode;
 use bitview_types::{
     DataRangeFormat, DetailedSeriesCount, Format, IndexInfo, PaginatedSeries, Pagination,
     SearchQuery, SeriesData, SeriesInfo, SeriesName, SeriesNameWithIndex, SeriesSelection,
@@ -31,22 +31,22 @@ use crate::{
 };
 
 pub fn serve_catalog(state: AppState, headers: HeaderMap) -> Response {
-    state.series_bodies.catalog().respond(&headers)
+    state.series_bodies.catalog.respond(&headers)
 }
 
 pub fn serve_count(state: AppState, headers: HeaderMap) -> Response {
-    state.series_bodies.count().respond(&headers)
+    state.series_bodies.count.respond(&headers)
 }
 
 pub fn serve_indexes(state: AppState, headers: HeaderMap) -> Response {
-    state.series_bodies.indexes().respond(&headers)
+    state.series_bodies.indexes.respond(&headers)
 }
 
 pub async fn serve_list(state: AppState, headers: HeaderMap, pagination: Pagination) -> Response {
     state
         .respond_with_params(
             &headers,
-            state.series_bodies.list().clone(),
+            state.series_bodies.list.clone(),
             |headers| headers.insert_content_type_application_json(),
             move |query| Ok(Bytes::from(to_vec(&query.series_list(pagination))?)),
         )
@@ -63,9 +63,9 @@ pub async fn serve_search(state: AppState, headers: HeaderMap, search: SearchQue
     if search.limit.is_zero() {
         return empty_search(&headers, state.cdn_cache_mode);
     }
-    AppState::respond_with_future(&headers, state.series_bodies.search().clone(), async {
+    AppState::respond_with_future(&headers, state.series_bodies.search.clone(), async {
         let bytes = state
-            .run_with_admission(state.series_bodies.search_query(), move |query| {
+            .run_with_admission(&state.series_bodies.search_query, move |query| {
                 Ok(Bytes::from(to_vec(&query.search_series(&search))?))
             })
             .await?;
@@ -99,13 +99,13 @@ pub async fn serve_series_info(
     if let Some(info) = state.sync(|q| q.resolve_series_info(&series)) {
         return Ok(Response::json_bytes(
             &headers,
-            state.series_bodies.info(),
+            &state.series_bodies.info,
             || Bytes::from(to_vec(&info.into_info()).unwrap()),
         ));
     }
 
     let error = state
-        .run_with_admission(state.series_bodies.search_query(), move |q| {
+        .run_with_admission(&state.series_bodies.search_query, move |q| {
             Ok(q.missing_series_error(&series))
         })
         .await?;
@@ -129,7 +129,7 @@ pub async fn serve_latest(
 ) -> Result<Response> {
     validate_name(&series)?;
     let bytes = state
-        .run_with_admission(state.series_bodies.data_query(), move |q| {
+        .run_with_admission(&state.series_bodies.data_query, move |q| {
             Ok(Bytes::from(q.latest_json(&series, index)?))
         })
         .await?;
@@ -144,7 +144,7 @@ pub async fn serve_len(
 ) -> Result<Response> {
     validate_name(&series)?;
     let length = state
-        .run_with_admission(state.series_bodies.data_query(), move |q| {
+        .run_with_admission(&state.series_bodies.data_query, move |q| {
             q.len(&series, index)
         })
         .await?;
@@ -165,7 +165,7 @@ pub async fn serve_version(
         return Ok(state.respond_json_value(&headers, strategy, version));
     }
     let error = state
-        .run_with_admission(state.series_bodies.search_query(), move |q| {
+        .run_with_admission(&state.series_bodies.search_query, move |q| {
             Ok(q.missing_series_error(&series))
         })
         .await?;
@@ -185,9 +185,9 @@ pub async fn serve(
     params.series.iter().try_for_each(validate_name)?;
     let max_weight = state.max_weight;
     let cdn_cache_mode = state.cdn_cache_mode;
-    let bodies = state.series_bodies.response_bodies().clone();
+    let bodies = state.series_bodies.response_bodies.clone();
     state
-        .run_with_admission(state.series_bodies.data_query(), move |q| {
+        .run_with_admission(&state.series_bodies.data_query, move |q| {
             let resolved = q.resolve(params, max_weight)?;
             let cache_params = CacheParams::series(
                 resolved.version,
@@ -207,27 +207,26 @@ pub async fn serve(
                 Format::CSV => Some(resolved.csv_filename()),
                 Format::JSON => None,
             };
-            let bytes = permit.bytes(to_bytes(q, resolved)?);
-            let mut response =
-                AppState::assemble_response(cache_params, Ok(bytes), move |h| match csv_filename {
+            let bytes = to_bytes(q, resolved)?;
+            Ok(
+                permit.response(cache_params, bytes, move |h| match csv_filename {
                     Some(filename) => {
                         h.insert_content_disposition_attachment(&filename);
                         h.insert_content_type_text_csv();
                     }
                     None => h.insert_content_type_application_json(),
-                });
-            response.extensions_mut().insert(permit);
-            Ok(response)
+                }),
+            )
         })
         .await
         .map_err(Into::into)
 }
 
-fn output_to_bytes(out: SeriesOutput) -> StdResult<Bytes, BrkError> {
-    Ok(match out.output {
+fn output_to_bytes(out: SeriesOutput) -> Bytes {
+    match out.output {
         Output::CSV(s) => Bytes::from(s),
         Output::Json(v) => Bytes::from(v),
-    })
+    }
 }
 
 async fn data_handler(
@@ -235,7 +234,10 @@ async fn data_handler(
     Query(params): Query<SeriesSelection>,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    serve(state, headers, params, |q, r| output_to_bytes(q.format(r)?)).await
+    serve(state, headers, params, |q, r| {
+        q.format(r).map(output_to_bytes)
+    })
+    .await
 }
 
 async fn data_bulk_handler(
@@ -244,7 +246,7 @@ async fn data_bulk_handler(
     State(state): State<AppState>,
 ) -> Result<Response> {
     serve(state, headers, params, |q, r| {
-        output_to_bytes(q.format_bulk(r)?)
+        q.format_bulk(r).map(output_to_bytes)
     })
     .await
 }
@@ -255,7 +257,7 @@ async fn data_raw_handler(
     State(state): State<AppState>,
 ) -> Result<Response> {
     serve(state, headers, params, |q, r| {
-        output_to_bytes(q.format_raw(r)?)
+        q.format_raw(r).map(output_to_bytes)
     })
     .await
 }

@@ -30,19 +30,13 @@ where
         }
     }
 }
-pub trait VariantsColumnarColumnLazyColumnVecSCInternal<S, C>: Sized
+
+impl<S, C> LazyColumnVec<S, C>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
 {
-    fn new(name: &str, version: Version, source: S, column: C) -> Self;
-}
-impl<S, C> VariantsColumnarColumnLazyColumnVecSCInternal<S, C> for LazyColumnVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-{
-    fn new(name: &str, version: Version, source: S, column: C) -> Self {
+    pub fn new(name: &str, version: Version, source: S, column: C) -> Self {
         validate_column(column);
         Self {
             name: name.into(),
@@ -51,13 +45,7 @@ where
             column,
         }
     }
-}
 
-impl<S, C> LazyColumnVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-{
     fn fold_column<B, F>(&self, from: usize, to: usize, init: B, mut f: F) -> B
     where
         F: FnMut(B, S::T) -> B,

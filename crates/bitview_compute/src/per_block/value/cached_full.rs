@@ -121,18 +121,7 @@ impl CachedValuePerBlockFull {
                 exit,
             )?;
 
-        self.compute_distribution(max_from, windows, exit)
-    }
-
-    fn compute_distribution(
-        &mut self,
-        max_from: Height,
-        windows: &WindowStarts<'_>,
-        exit: &Exit,
-    ) -> Result<()> {
         self.distribution
-            .compute(max_from, windows, &self.block.sats, &self.block.cents, exit)?;
-
-        Ok(())
+            .compute(max_from, windows, &self.block.sats, &self.block.cents, exit)
     }
 }

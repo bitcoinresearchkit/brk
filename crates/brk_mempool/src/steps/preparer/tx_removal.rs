@@ -1,5 +1,5 @@
 //! Why a tx left the mempool between two pull cycles. The diff that
-//! produces one [`TxRemoval`] per loser lives on [`super::Preparer`].
+//! produces one [`TxRemoval`] per loser lives in [`super::prepare`].
 
 use brk_types::Txid;
 

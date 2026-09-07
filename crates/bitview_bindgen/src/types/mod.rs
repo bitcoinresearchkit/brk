@@ -1,16 +1,20 @@
 //! Core types for client generation.
 
 mod case;
+mod index_set_pattern;
 mod metadata;
+mod pattern_field;
 mod positions;
 mod schema;
-mod structs;
+mod structural_pattern;
 
 pub use case::*;
+pub use index_set_pattern::*;
 pub use metadata::*;
+pub use pattern_field::*;
 pub use positions::*;
 pub use schema::*;
-pub use structs::*;
+pub use structural_pattern::*;
 
 /// Language-specific syntax for generic type annotations.
 #[derive(Clone, Copy)]
@@ -53,29 +57,29 @@ impl GenericSyntax {
         // just type aliases in generated code, not actual generic classes.
         let converted = extract_inner_type_recursive(type_str);
 
-        let Some(element) = rust_array_element_type(&converted) else {
-            return converted;
+        let Some(element) = rust_array_element_type(converted) else {
+            return converted.to_owned();
         };
-        let element = self.convert(element);
 
         match self.default_type {
-            "Any" => format!("List[{element}]"),
-            "unknown" => format!("{element}[]"),
-            _ => converted,
+            "Any" => format!("List[{}]", self.convert(element)),
+            "unknown" => format!("{}[]", self.convert(element)),
+            _ => converted.to_owned(),
         }
     }
 }
 
 /// Extract the innermost type from nested generics.
 /// E.g., `Close<Cents>` -> `Cents`, `Foo<Bar<Baz>>` -> `Baz`
-fn extract_inner_type_recursive(type_str: &str) -> String {
+fn extract_inner_type_recursive(type_str: &str) -> &str {
     if let Some(start) = type_str.find('<')
         && let Some(end) = type_str.rfind('>')
+        && start < end
     {
         let inner = &type_str[start + 1..end];
         return extract_inner_type_recursive(inner);
     }
-    type_str.to_string()
+    type_str
 }
 
 #[cfg(test)]
@@ -87,5 +91,10 @@ mod tests {
         assert_eq!(GenericSyntax::JAVASCRIPT.convert("[Cents; 19]"), "Cents[]");
         assert_eq!(GenericSyntax::PYTHON.convert("[Cents; 19]"), "List[Cents]");
         assert_eq!(GenericSyntax::RUST.convert("[Cents; 19]"), "[Cents; 19]");
+    }
+
+    #[test]
+    fn malformed_generic_delimiters_are_left_unchanged() {
+        assert_eq!(GenericSyntax::PYTHON.convert(">Cents<"), ">Cents<");
     }
 }

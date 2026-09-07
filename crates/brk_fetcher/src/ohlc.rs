@@ -37,19 +37,17 @@ pub fn compute_ohlc_from_range(
     previous_timestamp: Option<Timestamp>,
     source_name: &str,
 ) -> brk_error::Result<OHLCCents> {
-    let previous_ohlc =
-        previous_timestamp.map_or(Some(OHLCCents::default()), |t| tree.get(&t).cloned());
+    let previous_close = previous_timestamp.map_or(Some(Close::default()), |t| {
+        tree.get(&t).map(|ohlc| ohlc.close)
+    });
 
-    let last_ohlc = tree.get(&timestamp);
-
-    if previous_ohlc.is_none() || last_ohlc.is_none() {
-        return Err(Error::NotFound(format!(
-            "Couldn't find timestamp in {source_name}"
-        )));
+    let missing_timestamp = || Error::NotFound(format!("Couldn't find timestamp in {source_name}"));
+    let previous_close = previous_close.ok_or_else(missing_timestamp)?;
+    if !tree.contains_key(&timestamp) {
+        return Err(missing_timestamp());
     }
 
-    let previous_ohlc = previous_ohlc.unwrap();
-    let mut result = OHLCCents::from(previous_ohlc.close);
+    let mut result = OHLCCents::from(previous_close);
 
     let start = previous_timestamp.unwrap_or(Timestamp::new(0));
     let end = timestamp;

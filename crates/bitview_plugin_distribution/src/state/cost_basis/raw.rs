@@ -16,28 +16,11 @@ use super::CostBasisOps;
 
 const STATE_TO_KEEP: usize = 10;
 
-#[derive(Clone, Default, Debug)]
-struct RawState {
-    cap_raw: CentsSats,
-}
-
-impl RawState {
-    fn serialize(&self) -> Vec<u8> {
-        self.cap_raw.to_bytes().to_vec()
-    }
-
-    fn deserialize(data: &[u8]) -> Result<Self> {
-        Ok(Self {
-            cap_raw: CentsSats::from_bytes(&data[0..16])?,
-        })
-    }
-}
-
 /// Cost-basis tracking for cohorts that only need realized cap on restart.
 #[derive(Clone, Debug)]
 pub struct CostBasisRaw {
     pathbuf: PathBuf,
-    state: Option<RawState>,
+    state: Option<CentsSats>,
     pending_cap: PendingCapDelta,
 }
 
@@ -89,37 +72,40 @@ impl CostBasisRaw {
     }
 
     pub fn import_state(&mut self, data: &[u8]) -> Result<()> {
-        self.state = Some(RawState::deserialize(data)?);
+        self.state = Some(CentsSats::from_bytes(
+            data.get(..16)
+                .ok_or(Error::Internal("cost-basis scalar state is truncated"))?,
+        )?);
         self.pending_cap = PendingCapDelta::default();
         Ok(())
     }
 
     pub fn serialized_state(&self) -> Vec<u8> {
-        self.state.as_ref().unwrap().serialize()
+        self.state.as_ref().unwrap().to_bytes().to_vec()
     }
 
     pub fn apply_pending_cap(&mut self) {
         if self.pending_cap.is_zero() {
             return;
         }
-        let state = self.state.as_mut().unwrap();
+        let cap_raw = self.state.as_mut().unwrap();
 
-        state.cap_raw += self.pending_cap.inc;
-        if unlikely(state.cap_raw.inner() < self.pending_cap.dec.inner()) {
+        *cap_raw += self.pending_cap.inc;
+        if unlikely(cap_raw.inner() < self.pending_cap.dec.inner()) {
             panic!(
                 "CostBasis cap_raw underflow!\n\
                 Path: {:?}\n\
                 Current cap_raw (after increments): {}\n\
                 Trying to decrement by: {}",
-                self.pathbuf, state.cap_raw, self.pending_cap.dec
+                self.pathbuf, cap_raw, self.pending_cap.dec
             );
         }
-        state.cap_raw -= self.pending_cap.dec;
+        *cap_raw -= self.pending_cap.dec;
 
         self.pending_cap = PendingCapDelta::default();
     }
 
-    pub fn write_and_cleanup(&mut self, height: Height, cleanup: bool) -> Result<()> {
+    pub fn cleanup_checkpoints(&self, height: Height, cleanup: bool) -> Result<()> {
         if cleanup {
             let files = self.read_dir(Some(height))?;
             for (_, path) in files
@@ -130,6 +116,14 @@ impl CostBasisRaw {
             }
         }
         Ok(())
+    }
+
+    pub(super) fn read_state_at_or_before(&self, height: Height) -> Result<(Height, Vec<u8>)> {
+        let files = self.read_dir(None)?;
+        let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
+            "No cost basis state found at or before height".into(),
+        ))?;
+        Ok((height, fs::read(path)?))
     }
 }
 
@@ -143,11 +137,7 @@ impl CostBasisOps for CostBasisRaw {
     }
 
     fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
-        let files = self.read_dir(None)?;
-        let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
-            "No cost basis state found at or before height".into(),
-        ))?;
-        let data = fs::read(path)?;
+        let (height, data) = self.read_state_at_or_before(height)?;
         if data.len() == 16 {
             self.import_state(&data)?;
         } else {
@@ -159,7 +149,7 @@ impl CostBasisOps for CostBasisRaw {
 
     fn cap_raw(&self) -> CentsSats {
         debug_assert!(self.pending_cap.is_zero());
-        self.state.as_ref().unwrap().cap_raw
+        self.state.unwrap()
     }
 
     fn capitalized_cap_raw(&self) -> CentsSquaredSats {
@@ -193,7 +183,7 @@ impl CostBasisOps for CostBasisRaw {
     }
 
     fn init(&mut self) {
-        self.state.replace(RawState::default());
+        self.state = Some(CentsSats::ZERO);
         self.pending_cap = PendingCapDelta::default();
     }
 
@@ -205,7 +195,7 @@ impl CostBasisOps for CostBasisRaw {
 
     fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.apply_pending_cap();
-        self.write_and_cleanup(height, cleanup)?;
+        self.cleanup_checkpoints(height, cleanup)?;
         fs::write(self.path_state(height), self.serialized_state())?;
         Ok(())
     }

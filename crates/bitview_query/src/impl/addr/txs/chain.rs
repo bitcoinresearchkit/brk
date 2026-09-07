@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use brk_error::Result;
 use brk_types::{Addr, BlockHash, Height, OutputType, Transaction, TxIndex, Txid, TypeIndex};
 
@@ -9,7 +7,7 @@ use crate::Query;
 #[derive(Debug)]
 pub struct ResolvedAddrChainTxs {
     txindices: Vec<TxIndex>,
-    anchor: Option<(Height, BlockHash)>,
+    anchor_height: Option<Height>,
     activity_anchor: BlockHash,
 }
 
@@ -17,7 +15,7 @@ impl ResolvedAddrChainTxs {
     /// The newest block represented by this page, when the page is non-empty.
     #[inline]
     pub fn block_hash(&self) -> Option<BlockHash> {
-        self.anchor.map(|(_, hash)| hash)
+        self.anchor_height.map(|_| self.activity_anchor)
     }
 
     /// Latest relevant block, or the resolved tip while the page is empty.
@@ -95,37 +93,20 @@ impl Query {
         let stores = self.indexer().stores();
         let tx_index_len = self.safe_lengths().tx_index;
 
-        if let Some(after_txid) = after_txid {
-            let after_tx_index = self.resolve_tx_index_bounded(&after_txid)?;
-            Ok(stores
-                .addr_tx_indexes_before(output_type, type_index, after_tx_index)?
-                .rev()
-                .filter(|tx_index| *tx_index < tx_index_len)
-                .take(limit)
-                .collect())
-        } else {
-            Ok(stores
-                .addr_tx_indexes(output_type, type_index)?
-                .rev()
-                .filter(|tx_index| *tx_index < tx_index_len)
-                .take(limit)
-                .collect())
-        }
+        let before = after_txid
+            .as_ref()
+            .map(|txid| self.resolve_tx_index_bounded(txid))
+            .transpose()?
+            .unwrap_or(tx_index_len)
+            .min(tx_index_len);
+        Ok(stores
+            .addr_tx_indexes_before(output_type, type_index, before)?
+            .rev()
+            .take(limit)
+            .collect())
     }
-}
-pub trait RImplAddrTxsChainQueryInternal: Sized {
-    fn resolve_addr_chain_txs_for(
-        &self,
-        output_type: OutputType,
-        type_index: TypeIndex,
-        after_txid: Option<Txid>,
-        limit: usize,
-    ) -> Result<ResolvedAddrChainTxs>;
 
-    fn addr_txs_chain_at(&self, resolved: ResolvedAddrChainTxs) -> Result<Vec<Transaction>>;
-}
-impl RImplAddrTxsChainQueryInternal for Query {
-    fn resolve_addr_chain_txs_for(
+    pub fn resolve_addr_chain_txs_for(
         &self,
         output_type: OutputType,
         type_index: TypeIndex,
@@ -147,15 +128,20 @@ impl RImplAddrTxsChainQueryInternal for Query {
 
         Ok(ResolvedAddrChainTxs {
             txindices,
-            anchor,
+            anchor_height: anchor.map(|(height, _)| height),
             activity_anchor,
         })
     }
+
     /// Caller holds publication exclusion across any source selection and read.
-    fn addr_txs_chain_at(&self, resolved: ResolvedAddrChainTxs) -> Result<Vec<Transaction>> {
-        if let Some((height, hash)) = resolved.anchor {
-            self.validate_block_at_height(&hash, height)?;
+    pub fn addr_txs_chain_at(&self, resolved: ResolvedAddrChainTxs) -> Result<Vec<Transaction>> {
+        if let Some(height) = resolved.anchor_height {
+            self.validate_block_at_height(&resolved.activity_anchor, height)?;
         }
         self.transactions_at_indices(&resolved.txindices)
     }
 }
+
+#[cfg(test)]
+#[path = "../../../../tests/unit/impl/addr/txs/chain.rs"]
+mod tests;

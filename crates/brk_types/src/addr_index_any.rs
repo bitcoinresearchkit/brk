@@ -2,6 +2,7 @@ use std::fmt;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 use crate::{EmptyAddrIndex, FundedAddrIndex, TypeIndex};
@@ -9,7 +10,8 @@ use crate::{EmptyAddrIndex, FundedAddrIndex, TypeIndex};
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
 /// Unified index for any address type (funded or empty)
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Bytes, JsonSchema)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 pub struct AnyAddrIndex(TypeIndex);
 
 impl AnyAddrIndex {
@@ -60,6 +62,7 @@ impl fmt::Display for AnyAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for AnyAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

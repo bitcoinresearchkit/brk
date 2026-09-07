@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use brk_types::Day1;
 use vecdb::{ReadableVec, VecValue};
 
-use super::{ModeId, Modes, Percentiles, Thresholds, WeightedModeId, WeightedModes};
+use super::{ModeId, Modes, Percentiles, Thresholds, WeightedModes};
 
 const MINIMUM_DAYS: usize = 365;
 const PERCENTILES: Percentiles<f64> = Percentiles {
@@ -29,12 +29,10 @@ impl Calibration {
         U: VecValue,
         f64: From<T> + From<U>,
     {
-        let mut histories = Modes::from_fn(|_| Vec::new());
-        histories.raw = Self::history(raw, end);
-        for id in WeightedModeId::ALL {
-            let source = weighted.select(id);
-            *histories.select_mut(id.mode()) = Self::history(*source, end);
-        }
+        let histories = Modes::from_fn(|mode| match mode.weighted() {
+            None => Self::history(raw, end),
+            Some(id) => Self::history(*weighted.select(id), end),
+        });
         Self { histories }
     }
 
@@ -48,13 +46,10 @@ impl Calibration {
         U: VecValue,
         f64: From<T> + From<U>,
     {
-        let mut shares = Modes::from_fn(|_| None);
-        shares.raw = Self::loss_share(raw, day);
-        for id in WeightedModeId::ALL {
-            let source = weighted.select(id);
-            *shares.select_mut(id.mode()) = Self::loss_share(*source, day);
-        }
-        shares
+        Modes::from_fn(|mode| match mode.weighted() {
+            None => Self::loss_share(raw, day),
+            Some(id) => Self::loss_share(*weighted.select(id), day),
+        })
     }
 
     pub fn thresholds(&self, current: &Modes<Option<f64>>) -> Thresholds {
@@ -131,6 +126,57 @@ impl Calibration {
 mod tests {
     use super::{Calibration, MINIMUM_DAYS};
     use crate::Modes;
+
+    #[test]
+    fn source_construction_selects_each_mode_and_filters_missing_values() {
+        use brk_types::{Day1, StoredF64, Version};
+        use vecdb::{
+            AnyStoredVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadableCloneableVec,
+            ReadableVec, WritableVec,
+        };
+
+        use crate::{ModeId, WeightedModes};
+
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let source = |mode: ModeId| {
+            let mut values: EagerVec<PcoVec<Day1, StoredF64>> =
+                EagerVec::forced_import(&db, mode.name(), Version::ONE).unwrap();
+            let value = mode as u8 as f64 / 16.0;
+            for value in [value + 0.125, f64::NAN, value] {
+                values.push(StoredF64::from(value));
+            }
+            values.write().unwrap();
+            LazyVec::init(
+                mode.name(),
+                Version::ONE,
+                values.read_only_boxed_clone(),
+                |_, v| Some(v),
+            )
+        };
+        let raw = source(ModeId::Raw);
+        let weighted = WeightedModes::from_fn(|id| source(id.mode()));
+        let sources = WeightedModes::from_fn(|id| {
+            weighted.select(id) as &dyn ReadableVec<Day1, Option<StoredF64>>
+        });
+        let calibration = Calibration::from_sources(&raw, &sources, 3);
+        let shares = Calibration::loss_shares(&raw, &sources, Day1::from(2));
+        for mode in ModeId::ALL {
+            let value = mode as u8 as f64 / 16.0;
+            assert_eq!(calibration.histories.select(mode), &[value, value + 0.125]);
+            assert_eq!(*shares.select(mode), Some(value));
+        }
+        assert!(
+            Calibration::loss_shares(&raw, &sources, Day1::from(1))
+                .iter()
+                .all(Option::is_none)
+        );
+        assert!(
+            Calibration::loss_shares(&raw, &sources, Day1::from(3))
+                .iter()
+                .all(Option::is_none)
+        );
+    }
 
     #[test]
     fn quantile_linearly_interpolates() {

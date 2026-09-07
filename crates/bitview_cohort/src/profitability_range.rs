@@ -1,8 +1,8 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::Cents;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CohortName, PROFIT_COUNT};
 
@@ -221,7 +221,8 @@ impl ProfitabilityRange<CohortName> {
 ///
 /// During the k-way merge (ascending price order), the cursor starts at bucket 0
 /// (over_1000pct_in_profit, lowest cost basis) and advances as price crosses each boundary.
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ProfitabilityRange<T> {
     /// Uses UTXOs whose represented-block spot price is more than 1,000% above
     /// creation price.
@@ -344,232 +345,23 @@ impl<T> ProfitabilityRange<T> {
     where
         F: FnMut(&'static str) -> T,
     {
-        let n = &PROFITABILITY_RANGE_NAMES;
-        Self {
-            over_1000pct_in_profit: create(n.over_1000pct_in_profit.id),
-            _500pct_to_1000pct_in_profit: create(n._500pct_to_1000pct_in_profit.id),
-            _300pct_to_500pct_in_profit: create(n._300pct_to_500pct_in_profit.id),
-            _200pct_to_300pct_in_profit: create(n._200pct_to_300pct_in_profit.id),
-            _100pct_to_200pct_in_profit: create(n._100pct_to_200pct_in_profit.id),
-            _90pct_to_100pct_in_profit: create(n._90pct_to_100pct_in_profit.id),
-            _80pct_to_90pct_in_profit: create(n._80pct_to_90pct_in_profit.id),
-            _70pct_to_80pct_in_profit: create(n._70pct_to_80pct_in_profit.id),
-            _60pct_to_70pct_in_profit: create(n._60pct_to_70pct_in_profit.id),
-            _50pct_to_60pct_in_profit: create(n._50pct_to_60pct_in_profit.id),
-            _40pct_to_50pct_in_profit: create(n._40pct_to_50pct_in_profit.id),
-            _30pct_to_40pct_in_profit: create(n._30pct_to_40pct_in_profit.id),
-            _20pct_to_30pct_in_profit: create(n._20pct_to_30pct_in_profit.id),
-            _10pct_to_20pct_in_profit: create(n._10pct_to_20pct_in_profit.id),
-            _0pct_to_10pct_in_profit: create(n._0pct_to_10pct_in_profit.id),
-            _0pct_to_10pct_in_loss: create(n._0pct_to_10pct_in_loss.id),
-            _10pct_to_20pct_in_loss: create(n._10pct_to_20pct_in_loss.id),
-            _20pct_to_30pct_in_loss: create(n._20pct_to_30pct_in_loss.id),
-            _30pct_to_40pct_in_loss: create(n._30pct_to_40pct_in_loss.id),
-            _40pct_to_50pct_in_loss: create(n._40pct_to_50pct_in_loss.id),
-            _50pct_to_60pct_in_loss: create(n._50pct_to_60pct_in_loss.id),
-            _60pct_to_70pct_in_loss: create(n._60pct_to_70pct_in_loss.id),
-            _70pct_to_80pct_in_loss: create(n._70pct_to_80pct_in_loss.id),
-            _80pct_to_90pct_in_loss: create(n._80pct_to_90pct_in_loss.id),
-            _90pct_to_100pct_in_loss: create(n._90pct_to_100pct_in_loss.id),
-        }
+        Self::from_fn(|id| create(id.select(&PROFITABILITY_RANGE_NAMES).id))
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(&'static str) -> Result<T, E>,
     {
-        let n = &PROFITABILITY_RANGE_NAMES;
-        Ok(Self {
-            over_1000pct_in_profit: create(n.over_1000pct_in_profit.id)?,
-            _500pct_to_1000pct_in_profit: create(n._500pct_to_1000pct_in_profit.id)?,
-            _300pct_to_500pct_in_profit: create(n._300pct_to_500pct_in_profit.id)?,
-            _200pct_to_300pct_in_profit: create(n._200pct_to_300pct_in_profit.id)?,
-            _100pct_to_200pct_in_profit: create(n._100pct_to_200pct_in_profit.id)?,
-            _90pct_to_100pct_in_profit: create(n._90pct_to_100pct_in_profit.id)?,
-            _80pct_to_90pct_in_profit: create(n._80pct_to_90pct_in_profit.id)?,
-            _70pct_to_80pct_in_profit: create(n._70pct_to_80pct_in_profit.id)?,
-            _60pct_to_70pct_in_profit: create(n._60pct_to_70pct_in_profit.id)?,
-            _50pct_to_60pct_in_profit: create(n._50pct_to_60pct_in_profit.id)?,
-            _40pct_to_50pct_in_profit: create(n._40pct_to_50pct_in_profit.id)?,
-            _30pct_to_40pct_in_profit: create(n._30pct_to_40pct_in_profit.id)?,
-            _20pct_to_30pct_in_profit: create(n._20pct_to_30pct_in_profit.id)?,
-            _10pct_to_20pct_in_profit: create(n._10pct_to_20pct_in_profit.id)?,
-            _0pct_to_10pct_in_profit: create(n._0pct_to_10pct_in_profit.id)?,
-            _0pct_to_10pct_in_loss: create(n._0pct_to_10pct_in_loss.id)?,
-            _10pct_to_20pct_in_loss: create(n._10pct_to_20pct_in_loss.id)?,
-            _20pct_to_30pct_in_loss: create(n._20pct_to_30pct_in_loss.id)?,
-            _30pct_to_40pct_in_loss: create(n._30pct_to_40pct_in_loss.id)?,
-            _40pct_to_50pct_in_loss: create(n._40pct_to_50pct_in_loss.id)?,
-            _50pct_to_60pct_in_loss: create(n._50pct_to_60pct_in_loss.id)?,
-            _60pct_to_70pct_in_loss: create(n._60pct_to_70pct_in_loss.id)?,
-            _70pct_to_80pct_in_loss: create(n._70pct_to_80pct_in_loss.id)?,
-            _80pct_to_90pct_in_loss: create(n._80pct_to_90pct_in_loss.id)?,
-            _90pct_to_100pct_in_loss: create(n._90pct_to_100pct_in_loss.id)?,
-        })
-    }
-
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
-        [
-            &self.over_1000pct_in_profit,
-            &self._500pct_to_1000pct_in_profit,
-            &self._300pct_to_500pct_in_profit,
-            &self._200pct_to_300pct_in_profit,
-            &self._100pct_to_200pct_in_profit,
-            &self._90pct_to_100pct_in_profit,
-            &self._80pct_to_90pct_in_profit,
-            &self._70pct_to_80pct_in_profit,
-            &self._60pct_to_70pct_in_profit,
-            &self._50pct_to_60pct_in_profit,
-            &self._40pct_to_50pct_in_profit,
-            &self._30pct_to_40pct_in_profit,
-            &self._20pct_to_30pct_in_profit,
-            &self._10pct_to_20pct_in_profit,
-            &self._0pct_to_10pct_in_profit,
-            &self._0pct_to_10pct_in_loss,
-            &self._10pct_to_20pct_in_loss,
-            &self._20pct_to_30pct_in_loss,
-            &self._30pct_to_40pct_in_loss,
-            &self._40pct_to_50pct_in_loss,
-            &self._50pct_to_60pct_in_loss,
-            &self._60pct_to_70pct_in_loss,
-            &self._70pct_to_80pct_in_loss,
-            &self._80pct_to_90pct_in_loss,
-            &self._90pct_to_100pct_in_loss,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> + ExactSizeIterator {
-        self.iter_mut_with_is_profit().map(|(_, v)| v)
+        Self::try_from_fn(|id| create(id.select(&PROFITABILITY_RANGE_NAMES).id))
     }
 
     /// Iterate mutably, yielding `(is_profit, &mut T)` for each range.
     pub fn iter_mut_with_is_profit(
         &mut self,
     ) -> impl DoubleEndedIterator<Item = (bool, &mut T)> + ExactSizeIterator {
-        [
-            (true, &mut self.over_1000pct_in_profit),
-            (true, &mut self._500pct_to_1000pct_in_profit),
-            (true, &mut self._300pct_to_500pct_in_profit),
-            (true, &mut self._200pct_to_300pct_in_profit),
-            (true, &mut self._100pct_to_200pct_in_profit),
-            (true, &mut self._90pct_to_100pct_in_profit),
-            (true, &mut self._80pct_to_90pct_in_profit),
-            (true, &mut self._70pct_to_80pct_in_profit),
-            (true, &mut self._60pct_to_70pct_in_profit),
-            (true, &mut self._50pct_to_60pct_in_profit),
-            (true, &mut self._40pct_to_50pct_in_profit),
-            (true, &mut self._30pct_to_40pct_in_profit),
-            (true, &mut self._20pct_to_30pct_in_profit),
-            (true, &mut self._10pct_to_20pct_in_profit),
-            (true, &mut self._0pct_to_10pct_in_profit),
-            (false, &mut self._0pct_to_10pct_in_loss),
-            (false, &mut self._10pct_to_20pct_in_loss),
-            (false, &mut self._20pct_to_30pct_in_loss),
-            (false, &mut self._30pct_to_40pct_in_loss),
-            (false, &mut self._40pct_to_50pct_in_loss),
-            (false, &mut self._50pct_to_60pct_in_loss),
-            (false, &mut self._60pct_to_70pct_in_loss),
-            (false, &mut self._70pct_to_80pct_in_loss),
-            (false, &mut self._80pct_to_90pct_in_loss),
-            (false, &mut self._90pct_to_100pct_in_loss),
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self.over_1000pct_in_profit,
-            &mut self._500pct_to_1000pct_in_profit,
-            &mut self._300pct_to_500pct_in_profit,
-            &mut self._200pct_to_300pct_in_profit,
-            &mut self._100pct_to_200pct_in_profit,
-            &mut self._90pct_to_100pct_in_profit,
-            &mut self._80pct_to_90pct_in_profit,
-            &mut self._70pct_to_80pct_in_profit,
-            &mut self._60pct_to_70pct_in_profit,
-            &mut self._50pct_to_60pct_in_profit,
-            &mut self._40pct_to_50pct_in_profit,
-            &mut self._30pct_to_40pct_in_profit,
-            &mut self._20pct_to_30pct_in_profit,
-            &mut self._10pct_to_20pct_in_profit,
-            &mut self._0pct_to_10pct_in_profit,
-            &mut self._0pct_to_10pct_in_loss,
-            &mut self._10pct_to_20pct_in_loss,
-            &mut self._20pct_to_30pct_in_loss,
-            &mut self._30pct_to_40pct_in_loss,
-            &mut self._40pct_to_50pct_in_loss,
-            &mut self._50pct_to_60pct_in_loss,
-            &mut self._60pct_to_70pct_in_loss,
-            &mut self._70pct_to_80pct_in_loss,
-            &mut self._80pct_to_90pct_in_loss,
-            &mut self._90pct_to_100pct_in_loss,
-        ]
-        .into_par_iter()
-    }
-
-    /// Access as a fixed-size array of references (for indexed access during merge).
-    pub fn as_array(&self) -> [&T; PROFITABILITY_RANGE_COUNT] {
-        [
-            &self.over_1000pct_in_profit,
-            &self._500pct_to_1000pct_in_profit,
-            &self._300pct_to_500pct_in_profit,
-            &self._200pct_to_300pct_in_profit,
-            &self._100pct_to_200pct_in_profit,
-            &self._90pct_to_100pct_in_profit,
-            &self._80pct_to_90pct_in_profit,
-            &self._70pct_to_80pct_in_profit,
-            &self._60pct_to_70pct_in_profit,
-            &self._50pct_to_60pct_in_profit,
-            &self._40pct_to_50pct_in_profit,
-            &self._30pct_to_40pct_in_profit,
-            &self._20pct_to_30pct_in_profit,
-            &self._10pct_to_20pct_in_profit,
-            &self._0pct_to_10pct_in_profit,
-            &self._0pct_to_10pct_in_loss,
-            &self._10pct_to_20pct_in_loss,
-            &self._20pct_to_30pct_in_loss,
-            &self._30pct_to_40pct_in_loss,
-            &self._40pct_to_50pct_in_loss,
-            &self._50pct_to_60pct_in_loss,
-            &self._60pct_to_70pct_in_loss,
-            &self._70pct_to_80pct_in_loss,
-            &self._80pct_to_90pct_in_loss,
-            &self._90pct_to_100pct_in_loss,
-        ]
-    }
-
-    /// Access as a fixed-size array of mutable references (for indexed access during merge).
-    pub fn as_array_mut(&mut self) -> [&mut T; PROFITABILITY_RANGE_COUNT] {
-        [
-            &mut self.over_1000pct_in_profit,
-            &mut self._500pct_to_1000pct_in_profit,
-            &mut self._300pct_to_500pct_in_profit,
-            &mut self._200pct_to_300pct_in_profit,
-            &mut self._100pct_to_200pct_in_profit,
-            &mut self._90pct_to_100pct_in_profit,
-            &mut self._80pct_to_90pct_in_profit,
-            &mut self._70pct_to_80pct_in_profit,
-            &mut self._60pct_to_70pct_in_profit,
-            &mut self._50pct_to_60pct_in_profit,
-            &mut self._40pct_to_50pct_in_profit,
-            &mut self._30pct_to_40pct_in_profit,
-            &mut self._20pct_to_30pct_in_profit,
-            &mut self._10pct_to_20pct_in_profit,
-            &mut self._0pct_to_10pct_in_profit,
-            &mut self._0pct_to_10pct_in_loss,
-            &mut self._10pct_to_20pct_in_loss,
-            &mut self._20pct_to_30pct_in_loss,
-            &mut self._30pct_to_40pct_in_loss,
-            &mut self._40pct_to_50pct_in_loss,
-            &mut self._50pct_to_60pct_in_loss,
-            &mut self._60pct_to_70pct_in_loss,
-            &mut self._70pct_to_80pct_in_loss,
-            &mut self._80pct_to_90pct_in_loss,
-            &mut self._90pct_to_100pct_in_loss,
-        ]
+        ProfitabilityRangeId::ALL
+            .iter()
+            .zip(self.iter_mut())
+            .map(|(id, value)| (id.is_profit(), value))
     }
 }

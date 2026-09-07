@@ -1,4 +1,4 @@
-use brk_types::{PartsPerMillion64, PartsPerMillionSigned32};
+use brk_types::{PartsPerMillionSigned32, PriceRatio};
 
 use crate::metrics::{
     RealizedSources, SupplySources, UnrealizedAggregateSources, UnrealizedSources,
@@ -10,5 +10,5 @@ pub struct RelativeSource<'a> {
     pub unrealized: UnrealizedSources,
     pub unrealized_aggregate: UnrealizedAggregateSources,
     pub realized: RealizedSources,
-    pub nupl: &'a LazyRatioPerBlock<PartsPerMillionSigned32, PartsPerMillion64>,
+    pub nupl: &'a LazyRatioPerBlock<PartsPerMillionSigned32, PriceRatio>,
 }

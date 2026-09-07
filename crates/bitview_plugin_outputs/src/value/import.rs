@@ -11,22 +11,12 @@ pub fn forced_import(
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
-        Ok(Self {
-            op_return: ValuePerBlockCumulative::forced_import(
-                db,
-                "op_return_value",
-                version,
-                mappings,
-            )?,
-        })
-    }
+    Ok(Vecs {
+        op_return: ValuePerBlockCumulative::forced_import(
+            db,
+            "op_return_value",
+            version,
+            mappings,
+        )?,
+    })
 }

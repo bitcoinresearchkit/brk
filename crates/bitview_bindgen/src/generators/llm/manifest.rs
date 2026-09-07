@@ -358,9 +358,9 @@ fn standalone_schema(mut root: Value, schemas: &TypeSchemas) -> io::Result<Value
         definitions.insert(name, schema.clone());
     }
 
-    rewrite_component_refs(&mut root)?;
+    rewrite_component_refs(&mut root);
     for schema in definitions.values_mut() {
-        rewrite_component_refs(schema)?;
+        rewrite_component_refs(schema);
     }
 
     let object = root.as_object_mut().expect("root checked above");
@@ -404,7 +404,7 @@ fn collect_component_refs(value: &Value, pending: &mut VecDeque<String>) -> io::
     Ok(())
 }
 
-fn rewrite_component_refs(value: &mut Value) -> io::Result<()> {
+fn rewrite_component_refs(value: &mut Value) {
     match value {
         Value::Object(object) => {
             if let Some(reference) = object.get_mut("$ref") {
@@ -422,17 +422,16 @@ fn rewrite_component_refs(value: &mut Value) -> io::Result<()> {
                 }
             }
             for nested in object.values_mut() {
-                rewrite_component_refs(nested)?;
+                rewrite_component_refs(nested);
             }
         }
         Value::Array(array) => {
             for nested in array {
-                rewrite_component_refs(nested)?;
+                rewrite_component_refs(nested);
             }
         }
         _ => {}
     }
-    Ok(())
 }
 
 fn validate_tool_name(name: &str) -> io::Result<()> {

@@ -7,12 +7,12 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{
-    Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, PartsPerMillion32, PartsPerMillion64,
-    PartsPerMillionSigned64, StoredF32, Version,
+    Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, PartsPerMillion32,
+    PartsPerMillionSigned64, PriceRatio, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CachedBoxedVec, ColumnId, Database, LazyVec,
-    ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, CachedBoxedVec, Database, LazyVec, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode,
 };
 
 use crate::{
@@ -306,7 +306,7 @@ impl RealizedVecs {
         )?;
 
         let mvrv = price.cohorts.map_named(|filter, cohort_name, price| {
-            LazyPerBlock::from_lazy::<Identity<StoredF32>, PartsPerMillion64>(
+            LazyPerBlock::from_lazy::<Identity<StoredF32>, PriceRatio>(
                 &CohortContext::Utxo.metric_name(filter, cohort_name, "mvrv"),
                 Self::cohort_version(version, filter),
                 &price.ratio,
@@ -448,7 +448,7 @@ impl RealizedVecs {
     }
 
     #[inline(always)]
-    fn mvrv_to_realized_cap_ratio(_: Height, mvrv: PartsPerMillion64) -> PartsPerMillion32 {
+    fn mvrv_to_realized_cap_ratio(_: Height, mvrv: PriceRatio) -> PartsPerMillion32 {
         PartsPerMillion32::from(1.0 / f64::from(mvrv))
     }
 
@@ -683,5 +683,22 @@ impl RealizedVecs {
                 .map(|value| value.stored_mut()),
         );
         vecs
+    }
+}
+
+#[cfg(test)]
+mod price_ratio_tests {
+    use super::*;
+
+    #[test]
+    fn inverse_mvrv_keeps_saturated_values_finite() {
+        let inverse = |ratio| RealizedVecs::mvrv_to_realized_cap_ratio(Height::from(0usize), ratio);
+        assert_eq!(inverse(PriceRatio::from(2.0)), PartsPerMillion32::from(0.5));
+        assert_eq!(
+            inverse(PriceRatio::from(10_000.0)),
+            PartsPerMillion32::new(233)
+        );
+        assert!(inverse(PriceRatio::NAN).is_nan());
+        assert!(inverse(PriceRatio::ZERO).is_nan());
     }
 }

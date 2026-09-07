@@ -1,12 +1,13 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use vecdb::ColumnId;
 
 use crate::{
     ByAge, ByEntry, ByEpoch, ByTerm, CLASS_FILTERS, CLASS_NAMES, Class, ClassId, ENTRY_FILTERS,
     ENTRY_NAMES, EPOCH_FILTERS, EPOCH_NAMES, EntryId, EpochId, Filter, TERM_FILTERS, TERM_NAMES,
 };
 
-#[derive(Default, Clone, Traversable)]
+#[derive(Default, Clone)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct UTXOGroupsWithoutAmountOrType<T> {
     /// Uses all UTXOs.
     pub all: T,

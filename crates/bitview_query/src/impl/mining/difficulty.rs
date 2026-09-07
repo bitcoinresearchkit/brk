@@ -1,13 +1,10 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use brk_error::{OptionData, Result};
-use brk_types::{DifficultyAdjustment, Epoch, Height};
+use brk_types::{BLOCKS_PER_DIFF_EPOCHS as BLOCKS_PER_EPOCH, DifficultyAdjustment, Epoch, Height};
 use vecdb::ReadableVec;
 
 use crate::Query;
-
-/// Blocks per difficulty epoch (2 weeks target)
-const BLOCKS_PER_EPOCH: u32 = 2016;
 
 /// Target block time in seconds (10 minutes)
 const TARGET_BLOCK_TIME: u64 = 600;
@@ -96,7 +93,7 @@ impl Query {
 
         let time_offset = expected_time as i64 - elapsed_time as i64;
 
-        let (previous_retarget, previous_time) = if current_epoch_usize > 0 {
+        let previous_retarget = if current_epoch_usize > 0 {
             let prev_epoch = Epoch::from(current_epoch_usize - 1);
             let prev_epoch_start = plugins
                 .mappings
@@ -118,15 +115,13 @@ impl Query {
                 .collect_one(epoch_start_height)
                 .data()?;
 
-            let retarget = if *prev_difficulty > 0.0 {
+            if *prev_difficulty > 0.0 {
                 ((*curr_difficulty / *prev_difficulty) - 1.0) * 100.0
             } else {
                 0.0
-            };
-
-            (retarget, epoch_start_timestamp)
+            }
         } else {
-            (0.0, epoch_start_timestamp)
+            0.0
         };
 
         let expected_blocks = elapsed_time as f64 / TARGET_BLOCK_TIME as f64;
@@ -138,7 +133,7 @@ impl Query {
             remaining_blocks,
             remaining_time: remaining_time * 1000,
             previous_retarget,
-            previous_time,
+            previous_time: epoch_start_timestamp,
             next_retarget_height: Height::from(next_retarget_height),
             time_avg: time_avg * 1000,
             adjusted_time_avg: adjusted_time_avg * 1000,

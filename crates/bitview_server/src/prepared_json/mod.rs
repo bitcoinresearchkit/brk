@@ -14,9 +14,7 @@ pub struct PreparedJson {
 impl PreparedJson {
     pub fn new(value: impl Serialize) -> Self {
         let bytes = Bytes::from(to_vec(&value).unwrap());
-        let RepresentationId::Content(hash) = RepresentationId::content(&bytes) else {
-            unreachable!()
-        };
+        let hash = RepresentationId::content_hash(&bytes);
         let params = CacheParams::revalidate(format!("c{hash:x}").into());
         Self { bytes, params }
     }

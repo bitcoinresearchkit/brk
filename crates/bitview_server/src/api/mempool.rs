@@ -49,8 +49,8 @@ impl MempoolRoutes for ApiRouter<AppState> {
             "/api/mempool/hash",
             get_with(
                 async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
-                    let (hash, strategy) = state.mempool_hash_preflight()?;
-                    Ok(state.respond_json_value(&headers, strategy, hash))
+                    let hash = state.sync(|q| q.mempool_hash())?;
+                    Ok(state.respond_json_value(&headers, CacheStrategy::LiveHash(hash.into()), hash))
                 },
                 |op| {
                     op.id("get_mempool_hash")
@@ -146,7 +146,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
             "/api/v1/mempool/block-template",
             get_with(
                 async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
-                    let source = state.block_template_preflight()?;
+                    let source = state.sync(|q| q.resolve_block_template())?;
                     let params = CacheParams::resolve(&CacheStrategy::Live(
                         format!("template-v2-{}", source.hash()?).into(),
                     ), CdnCacheMode::Live);
@@ -176,7 +176,7 @@ impl MempoolRoutes for ApiRouter<AppState> {
                        Path(path): Path<NextBlockHashParam>,
                        _: Empty,
                        State(state): State<AppState>| -> Result<Response> {
-                    let resolved = state.block_template_diff_preflight(path.hash)?;
+                    let resolved = state.sync(|q| q.resolve_block_template_diff(path.hash))?;
                     let params = CacheParams::resolve(&CacheStrategy::Live(
                         format!("template-diff-v2-{}-{}", resolved.since(), resolved.source().hash()?).into(),
                     ), CdnCacheMode::Live);

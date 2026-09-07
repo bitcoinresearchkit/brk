@@ -1,12 +1,31 @@
-use crate::internals::*;
-
 use std::{str::FromStr, sync::Arc};
 
+use bitview_plugin::PluginReadGuard;
 use brk_error::{Error, Result};
-use brk_types::{Addr, AddrBytes, Transaction};
+use brk_types::{Addr, AddrBytes, BlockHash, Transaction};
 
-use super::ResolvedAddrTxs;
+use super::ResolvedAddrChainTxs;
 use crate::Query;
+
+/// One address page with frozen mempool bodies and a guarded confirmed selection.
+pub struct ResolvedAddrTxs {
+    guard: PluginReadGuard,
+    mempool: Vec<Arc<Transaction>>,
+    chain: Option<ResolvedAddrChainTxs>,
+}
+
+impl ResolvedAddrTxs {
+    /// Latest relevant block for the captured confirmed page.
+    pub fn chain_anchor(&self) -> Option<BlockHash> {
+        self.chain
+            .as_ref()
+            .map(ResolvedAddrChainTxs::activity_anchor)
+    }
+
+    pub fn mempool_transactions(&self) -> &[Arc<Transaction>] {
+        &self.mempool
+    }
+}
 
 impl Query {
     /// Select both parts against the same indexed chain. Mempool bodies are
@@ -35,11 +54,19 @@ impl Query {
                 self.resolve_addr_chain_txs_for(output_type, type_index, None, chain_limit)
             })
             .transpose()?;
-        Ok(ResolvedAddrTxs::new(guard, mempool, chain))
+        Ok(ResolvedAddrTxs {
+            guard,
+            mempool,
+            chain,
+        })
     }
 
     pub fn addr_txs_resolved(&self, resolved: ResolvedAddrTxs) -> Result<Vec<Arc<Transaction>>> {
-        let (_guard, mut mempool, chain) = resolved.into_parts();
+        let ResolvedAddrTxs {
+            guard: _guard,
+            mut mempool,
+            chain,
+        } = resolved;
         if let Some(chain) = chain {
             mempool.extend(self.addr_txs_chain_at(chain)?.into_iter().map(Arc::new));
         }

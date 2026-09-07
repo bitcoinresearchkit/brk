@@ -10,6 +10,7 @@ use brk_error::Error;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, Pco};
 
 use crate::AddrBytes;
@@ -91,6 +92,7 @@ impl OutputType {
         Self::P2A,
     ];
 
+    #[cfg(feature = "storage")]
     fn is_valid(value: u8) -> bool {
         value <= Self::Unknown as u8
     }
@@ -270,12 +272,11 @@ impl TryFrom<OutputType> for AddressType {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for OutputType {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {
@@ -285,6 +286,7 @@ impl Formattable for OutputType {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for OutputType {
     type Array = [u8; size_of::<Self>()];
 
@@ -312,6 +314,7 @@ impl Bytes for OutputType {
 }
 
 // SAFETY: The non-transparent conversion validates every decoded discriminant.
+#[cfg(feature = "storage")]
 unsafe impl Pco for OutputType {
     type NumberType = u8;
 
@@ -425,6 +428,7 @@ mod tests {
         assert!(serde_json::from_str::<OutputTypeNormalized>(r#""p2a""#).is_err());
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn pco_conversion_rejects_invalid_discriminants() {
         const { assert!(!OutputType::IS_TRANSPARENT) };

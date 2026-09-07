@@ -1,5 +1,3 @@
-use crate::LevelPolicy as _;
-
 use crate::{
     Config, InternalValue, Result, SequenceNumberCounter, Table, Tree,
     compaction::{

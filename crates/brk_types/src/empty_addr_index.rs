@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -19,9 +21,9 @@ use crate::TypeIndex;
     Deref,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct EmptyAddrIndex(TypeIndex);
 
 impl From<TypeIndex> for EmptyAddrIndex {
@@ -63,17 +65,32 @@ impl CheckedSub<EmptyAddrIndex> for EmptyAddrIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-
-impl PrintableIndex for EmptyAddrIndex {
-    fn to_string() -> &'static str {
-        "empty_addr_index"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["emptyaddr", "empty_addr_index"]
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<EmptyAddrIndex> for EmptyAddrIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
+impl EmptyAddrIndex {
+    pub fn index_name() -> &'static str {
+        "empty_addr_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["emptyaddr", "empty_addr_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for EmptyAddrIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
+
+#[cfg(feature = "storage")]
 impl VecIndex for EmptyAddrIndex {
     const INITIAL_CAPACITY: usize = 1_800_000_000;
 }
@@ -84,6 +101,7 @@ impl std::fmt::Display for EmptyAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for EmptyAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

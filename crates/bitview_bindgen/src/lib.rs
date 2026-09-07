@@ -2,7 +2,7 @@
 
 use std::{collections::btree_map::Entry, fs::create_dir_all, io, path::PathBuf};
 
-use bitview_query::Vecs;
+use bitview_catalog::TreeNode;
 
 /// Output path configuration for each client.
 ///
@@ -75,6 +75,7 @@ impl ClientOutputPaths {
 
 mod analysis;
 mod backends;
+mod catalog;
 mod generate;
 mod generators;
 mod openapi;
@@ -83,6 +84,7 @@ mod types;
 
 pub use analysis::*;
 pub use backends::*;
+pub use catalog::*;
 pub use generators::*;
 pub use openapi::*;
 pub use syntax::*;
@@ -92,7 +94,7 @@ use generate::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Generate all client libraries from the query vecs and OpenAPI JSON.
+/// Generate all client libraries from a series catalog and OpenAPI JSON.
 ///
 /// Uses `ClientOutputPaths` to specify the output location for each client.
 /// Only clients with a configured location will be generated.
@@ -108,28 +110,28 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 ///     .llm("website")
 ///     .llm("website_next");
 ///
-/// generate_clients(&vecs, &openapi_json, &paths)?;
+/// generate_clients(&catalog, &openapi_json, &paths)?;
 /// ```
 pub fn generate_clients(
-    vecs: &Vecs,
+    catalog: &TreeNode,
     openapi_json: &str,
     output_paths: &ClientOutputPaths,
 ) -> io::Result<()> {
-    let metadata = ClientMetadata::from_vecs(vecs);
-
     // Parse OpenAPI spec
     let spec = parse_openapi_json(openapi_json)?;
     let endpoints = extract_endpoints(&spec);
-    let mut schemas = extract_schemas(openapi_json);
-
-    // Collect leaf type schemas from the catalog and merge into schemas
-    collect_leaf_type_schemas(&metadata.catalog, &mut schemas);
-
-    // Also collect definitions from all schemas (including OpenAPI schemas)
-    // We need to do this after collecting leaf schemas so we process everything
-    let schema_values: Vec<_> = schemas.values().cloned().collect();
-    for schema in &schema_values {
-        collect_schema_definitions(schema, &mut schemas);
+    let mut schemas = TypeSchemas::default();
+    if output_paths.javascript.is_some()
+        || output_paths.python.is_some()
+        || !output_paths.llm.is_empty()
+        || output_paths.llm_manifest.is_some()
+    {
+        schemas = extract_schemas(openapi_json);
+        collect_leaf_type_schemas(catalog, &mut schemas);
+        let schema_values: Vec<_> = schemas.values().cloned().collect();
+        for schema in &schema_values {
+            collect_schema_definitions(schema, &mut schemas);
+        }
     }
 
     // Generate Rust client (uses real brk_types, no schema conversion needed)
@@ -137,7 +139,7 @@ pub fn generate_clients(
         if let Some(parent) = rust_path.parent() {
             create_dir_all(parent)?;
         }
-        generate_rust_client(&metadata, &endpoints, rust_path)?;
+        generate_rust_client(catalog, &endpoints, rust_path)?;
     }
 
     if let Some(cli_path) = &output_paths.cli {
@@ -148,23 +150,26 @@ pub fn generate_clients(
     }
 
     // Generate JavaScript client (needs schemas for type definitions)
-    if let Some(js_path) = &output_paths.javascript {
-        if let Some(parent) = js_path.parent() {
-            create_dir_all(parent)?;
+    if output_paths.javascript.is_some() || output_paths.python.is_some() {
+        let metadata = ClientMetadata::from_catalog(catalog.clone());
+        if let Some(js_path) = &output_paths.javascript {
+            if let Some(parent) = js_path.parent() {
+                create_dir_all(parent)?;
+            }
+            generate_javascript_client(&metadata, &endpoints, &schemas, js_path)?;
         }
-        generate_javascript_client(&metadata, &endpoints, &schemas, js_path)?;
-    }
 
-    // Generate Python client (needs schemas for type definitions)
-    if let Some(python_path) = &output_paths.python {
-        if let Some(parent) = python_path.parent() {
-            create_dir_all(parent)?;
+        // Generate Python client (needs schemas for type definitions)
+        if let Some(python_path) = &output_paths.python {
+            if let Some(parent) = python_path.parent() {
+                create_dir_all(parent)?;
+            }
+            generate_python_client(&metadata, &endpoints, &schemas, python_path)?;
         }
-        generate_python_client(&metadata, &endpoints, &schemas, python_path)?;
     }
 
     generate_llm_clients(
-        &metadata,
+        catalog,
         &spec,
         &endpoints,
         &schemas,
@@ -175,7 +180,6 @@ pub fn generate_clients(
     Ok(())
 }
 
-use bitview_types::TreeNode;
 use serde_json::Value;
 
 /// Recursively collect leaf type schemas from the tree and add to schemas map.

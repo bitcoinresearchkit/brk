@@ -12,17 +12,8 @@ fn cumulative_block_count(height: Height, _: Weight) -> StoredU64 {
     StoredU64::from(u64::from(height) + 1)
 }
 
-pub trait Import {
-    fn new(
-        version: Version,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Self;
-}
-
-impl Import for Vecs {
-    fn new(
+impl Vecs {
+    pub fn new(
         version: Version,
         indexer: &Indexer,
         mappings: &bitview_plugin_mappings::Vecs,

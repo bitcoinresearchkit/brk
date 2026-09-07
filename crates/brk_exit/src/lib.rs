@@ -47,10 +47,7 @@ pub struct Exit {
 impl Exit {
     /// Creates a shutdown coordinator without installing signal handlers.
     pub fn new() -> Self {
-        Self {
-            lock: Arc::new(RwLock::new(())),
-            cleanup_callbacks: Arc::new(Mutex::new(Vec::new())),
-        }
+        Self::default()
     }
 
     /// Registers a callback to be executed during shutdown.

@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 /// Direct-mapped cache size. Power of 2 for fast masking.
 /// 1024 entries × ~32 bytes = 32 KB (fits in L1 cache).
 const CACHE_SIZE: usize = 1024;
@@ -17,16 +15,11 @@ struct CacheEntry<I, V>(I, I, V, bool);
 pub struct RangeMap<I, V> {
     first_indexes: Vec<I>,
     cache: [CacheEntry<I, V>; CACHE_SIZE],
-    _phantom: PhantomData<V>,
 }
 
 impl<I: Default + Copy, V: Default + Copy> Clone for RangeMap<I, V> {
     fn clone(&self) -> Self {
-        Self {
-            first_indexes: self.first_indexes.clone(),
-            cache: [CacheEntry(I::default(), I::default(), V::default(), false); CACHE_SIZE],
-            _phantom: PhantomData,
-        }
+        Self::from(self.first_indexes.clone())
     }
 }
 
@@ -35,18 +28,13 @@ impl<I: Default + Copy, V: Default + Copy> From<Vec<I>> for RangeMap<I, V> {
         Self {
             first_indexes,
             cache: [CacheEntry(I::default(), I::default(), V::default(), false); CACHE_SIZE],
-            _phantom: PhantomData,
         }
     }
 }
 
 impl<I: Default + Copy, V: Default + Copy> Default for RangeMap<I, V> {
     fn default() -> Self {
-        Self {
-            first_indexes: Vec::new(),
-            cache: [CacheEntry(I::default(), I::default(), V::default(), false); CACHE_SIZE],
-            _phantom: PhantomData,
-        }
+        Self::from(Vec::new())
     }
 }
 

@@ -1,12 +1,10 @@
 use brk_types::{Cents, Height, RangeMap, Timestamp, TxIndex};
-use vecdb::Database;
 
 use super::{compute::PriceRangeMax, state::BlockState};
 
-/// Private storage and transient computation state for distribution.
-#[derive(Clone)]
+/// Transient computation state, absent from the read-only distribution view.
+#[derive(Default)]
 pub struct Inner {
-    pub db: Database,
     pub chain_state: Vec<BlockState>,
     pub tx_index_to_height: RangeMap<TxIndex, Height>,
     pub prices: Vec<Cents>,
@@ -15,22 +13,70 @@ pub struct Inner {
 }
 
 impl Inner {
-    pub fn new(db: Database) -> Self {
-        Self {
-            db,
-            chain_state: Vec::new(),
-            tx_index_to_height: RangeMap::default(),
-            prices: Vec::new(),
-            timestamps: Vec::new(),
-            price_range_max: PriceRangeMax::default(),
-        }
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::marker::PhantomData;
+
+    use bitview_traversable::Traversable;
+    use vecdb::{
+        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec, Ro,
+        Rw, StorageMode, WritableVec,
+    };
+
+    use super::*;
+
+    #[derive(Traversable)]
+    struct Projection<M: StorageMode = Rw> {
+        #[traversable(skip)]
+        mode: PhantomData<M>,
+        #[traversable(skip)]
+        db: Database,
+        inner: M::WriteOnly<Inner>,
+        values: M::Stored<EagerVec<PcoVec<Height, Cents>>>,
     }
 
-    pub fn reset(&mut self) {
-        self.chain_state = Vec::new();
-        self.tx_index_to_height = RangeMap::default();
-        self.prices = Vec::new();
-        self.timestamps = Vec::new();
-        self.price_range_max = PriceRangeMax::default();
+    #[test]
+    fn projection_does_not_copy_distribution_history() {
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let mut inner = Inner::default();
+        inner.prices = vec![Cents::new(10), Cents::new(20)];
+        inner.timestamps = vec![Timestamp::default(); 2];
+        inner.tx_index_to_height.push(TxIndex::default());
+        inner.price_range_max.extend(&inner.prices);
+        inner.chain_state.push(BlockState {
+            supply: Default::default(),
+            entry: bitview_cohort::EntryPrice::Discount,
+            price: Cents::new(10),
+            timestamp: Timestamp::default(),
+        });
+        let mut values =
+            EagerVec::forced_import(&db, "projection", brk_types::Version::ONE).unwrap();
+        values.push(Cents::new(7));
+        values.write().unwrap();
+        let writer = Projection::<Rw> {
+            mode: PhantomData,
+            db,
+            inner,
+            values,
+        };
+        let reader: Projection<Ro> = writer.read_only_clone();
+
+        assert_eq!(writer.inner.prices.len(), 2);
+        assert_eq!(writer.inner.timestamps.len(), 2);
+        assert_eq!(writer.inner.chain_state.len(), 1);
+        assert_eq!(writer.inner.tx_index_to_height.len(), 1);
+        assert_eq!(writer.inner.price_range_max.range_max(0, 1), Cents::new(20));
+        let (): () = reader.inner;
+        assert_eq!(size_of_val(&reader.inner), 0);
+        assert_eq!(reader.values.collect(), [Cents::new(7)]);
+        assert_eq!(reader.iter_any_visible().count(), 1);
+        drop(writer);
+        assert_eq!(reader.values.collect(), [Cents::new(7)]);
     }
 }

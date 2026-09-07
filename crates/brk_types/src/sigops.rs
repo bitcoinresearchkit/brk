@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
 use crate::VSize;
@@ -22,9 +23,9 @@ use crate::VSize;
     Hash,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[serde(transparent)]
 pub struct SigOps(u32);
 
@@ -75,6 +76,7 @@ impl From<SigOps> for u32 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for SigOps {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

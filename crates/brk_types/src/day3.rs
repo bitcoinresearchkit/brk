@@ -1,28 +1,20 @@
 use std::{fmt, ops::Add};
 
+use crate::CheckedSub;
 use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, INDEX_EPOCH, Timestamp};
 
 pub const DAY3_INTERVAL: u32 = 259200;
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Day3(u16);
 
 impl Day3 {
@@ -74,14 +66,28 @@ impl CheckedSub for Day3 {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Day3 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
-impl PrintableIndex for Day3 {
-    fn to_string() -> &'static str {
+impl Day3 {
+    pub fn index_name() -> &'static str {
         "day3"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["3d", "day3"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Day3 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -97,6 +103,7 @@ impl fmt::Display for Day3 {
 #[path = "../tests/unit/day3.rs"]
 mod tests;
 
+#[cfg(feature = "storage")]
 impl Formattable for Day3 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

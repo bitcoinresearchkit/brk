@@ -3,15 +3,18 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use crate::CheckedSub;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, Timestamp};
 
 /// Bitcoin year (2009, 2010, ..., 2025+)
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash, Serialize, Deserialize, Pco,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Year(u16);
 
 impl Year {
@@ -96,6 +99,12 @@ impl CheckedSub for Year {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Year {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl Div<usize> for Year {
     type Output = Self;
@@ -104,13 +113,21 @@ impl Div<usize> for Year {
     }
 }
 
-impl PrintableIndex for Year {
-    fn to_string() -> &'static str {
+impl Year {
+    pub fn index_name() -> &'static str {
         "year"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["year"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Year {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -122,6 +139,7 @@ impl std::fmt::Display for Year {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Year {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

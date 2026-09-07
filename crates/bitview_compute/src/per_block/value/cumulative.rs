@@ -18,8 +18,6 @@ pub struct ValuePerBlockCumulative<M: StorageMode = Rw> {
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
     pub cumulative: ValuePerBlock<M>,
-    #[traversable(skip)]
-    last_cumulative_sats: Option<(usize, Sats)>,
 }
 
 const VERSION: Version = Version::ONE;
@@ -34,18 +32,9 @@ impl ValuePerBlockCumulative {
         let v = version + VERSION;
         let cumulative =
             ValuePerBlock::forced_import(db, &format!("{name}_cumulative"), v, indexes)?;
-        let last_cumulative_sats = cumulative
-            .sats
-            .height
-            .collect_last()
-            .map(|value| (cumulative.sats.height.len(), value));
         let block = LazyValueBlock::from_cumulative(name, v, &cumulative);
 
-        Ok(Self {
-            block,
-            cumulative,
-            last_cumulative_sats,
-        })
+        Ok(Self { block, cumulative })
     }
 
     pub fn compute_from<S>(
@@ -133,7 +122,6 @@ impl ValuePerBlockCumulative {
             },
             exit,
         )?;
-        self.last_cumulative_sats = None;
         Ok(())
     }
 
@@ -166,7 +154,6 @@ impl ValuePerBlockCumulative {
             },
             exit,
         )?;
-        self.last_cumulative_sats = None;
         Ok(())
     }
 
@@ -194,7 +181,6 @@ impl ValuePerBlockCumulative {
             filter,
             exit,
         )?;
-        self.last_cumulative_sats = None;
         Ok(())
     }
 }

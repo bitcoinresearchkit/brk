@@ -65,24 +65,31 @@ impl Endpoint {
         if let Some(op_id) = &self.operation_id {
             return op_id.clone();
         }
-        let mut parts: Vec<String> = Vec::new();
-        let mut prev_segment = "";
+        let mut result = String::from("get");
+        let mut previous = String::new();
 
         for segment in self.path.split('/').filter(|s| !s.is_empty()) {
             if segment == "api" {
                 continue;
             }
             if let Some(param) = segment.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                let prev_normalized = prev_segment.replace('-', "_");
-                if !prev_normalized.ends_with(param) {
-                    parts.push(format!("by_{}", param));
+                if !previous.ends_with(param) {
+                    result.push_str("_by_");
+                    result.push_str(param);
                 }
             } else {
-                let normalized = segment.replace('-', "_");
-                parts.push(normalized);
-                prev_segment = segment;
+                previous = segment.replace('-', "_");
+                result.push('_');
+                result.push_str(&previous);
             }
         }
-        format!("get_{}", parts.join("_"))
+        if result == "get" {
+            result.push('_');
+        }
+        result
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/openapi_endpoint.rs"]
+mod tests;

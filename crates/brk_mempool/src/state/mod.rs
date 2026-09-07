@@ -9,8 +9,6 @@
 //! a `State` guard at the same time as a `Rebuilder` lock, so the two
 //! domains are independent and lock-ordering between them is moot.
 
-use crate::internals::*;
-
 pub mod tx_entry;
 
 use brk_error::{Error, Result};

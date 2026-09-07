@@ -34,98 +34,83 @@ pub fn compute(
     prices: &bitview_plugin_price::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, mappings, lookback, transactions, prices, exit)
-}
+    let starting_height = indexer.safe_lengths().height;
 
-impl Vecs {
-    #[allow(clippy::too_many_arguments)]
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        lookback: &bitview_plugin_blocks::LookbackVecs,
-        transactions: &bitview_plugin_transactions::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
+    // coinbase and fees are independent — parallelize
+    let window_starts = lookback.window_starts();
+    let (r_coinbase, r_fees) = rayon::join(
+        || {
+            vecs.coinbase.compute_from(
+                starting_height,
+                &prices.spot.cents.height,
+                &indexer.vecs().transactions.first_tx_index,
+                |_, tx_index| {
+                    let mut txout_cursor = indexer
+                        .vecs()
+                        .transactions
+                        .first_txout_index
+                        .reader()
+                        .cursor();
+                    let mut count_cursor = mappings.tx_index.output_count.cursor();
 
-        // coinbase and fees are independent — parallelize
-        let window_starts = lookback.window_starts();
-        let (r_coinbase, r_fees) = rayon::join(
-            || {
-                self.coinbase.compute_from(
-                    starting_height,
-                    &prices.spot.cents.height,
-                    &indexer.vecs().transactions.first_tx_index,
-                    |_, tx_index| {
-                        let mut txout_cursor = indexer
-                            .vecs()
-                            .transactions
-                            .first_txout_index
-                            .reader()
-                            .cursor();
-                        let mut count_cursor = mappings.tx_index.output_count.cursor();
+                    let ti = tx_index.to_usize();
 
-                        let ti = tx_index.to_usize();
+                    txout_cursor.advance(ti - txout_cursor.position());
+                    let first_txout_index = txout_cursor.next().unwrap().to_usize();
 
-                        txout_cursor.advance(ti - txout_cursor.position());
-                        let first_txout_index = txout_cursor.next().unwrap().to_usize();
+                    count_cursor.advance(ti - count_cursor.position());
+                    let output_count: usize = count_cursor.next().unwrap().into();
 
-                        count_cursor.advance(ti - count_cursor.position());
-                        let output_count: usize = count_cursor.next().unwrap().into();
+                    indexer.vecs().outputs.value.fold_range_at(
+                        first_txout_index,
+                        first_txout_index + output_count,
+                        Sats::ZERO,
+                        |acc, v| acc + v,
+                    )
+                },
+                exit,
+            )
+        },
+        || {
+            vecs.fees.compute_from_indexes(
+                starting_height,
+                &window_starts,
+                &prices.spot.cents.height,
+                &indexer.vecs().transactions.first_tx_index,
+                &mappings.height.tx_index_count,
+                &transactions.fees.fee.tx_index,
+                exit,
+            )
+        },
+    );
+    r_coinbase?;
+    r_fees?;
 
-                        indexer.vecs().outputs.value.fold_range_at(
-                            first_txout_index,
-                            first_txout_index + output_count,
-                            Sats::ZERO,
-                            |acc, v| acc + v,
-                        )
-                    },
-                    exit,
-                )
-            },
-            || {
-                self.fees.compute_from_indexes(
-                    starting_height,
-                    &window_starts,
-                    &prices.spot.cents.height,
-                    &indexer.vecs().transactions.first_tx_index,
-                    &mappings.height.tx_index_count,
-                    &transactions.fees.fee.tx_index,
-                    exit,
-                )
-            },
-        );
-        r_coinbase?;
-        r_fees?;
+    vecs.subsidy.compute_from_pair(
+        starting_height,
+        &prices.spot.cents.height,
+        &vecs.coinbase.block.sats,
+        &vecs.fees.block.sats,
+        derived_subsidy,
+        exit,
+    )?;
 
-        self.subsidy.compute_from_pair(
-            starting_height,
-            &prices.spot.cents.height,
-            &self.coinbase.block.sats,
-            &self.fees.block.sats,
-            derived_subsidy,
-            exit,
-        )?;
+    vecs.output_volume.compute_subtract(
+        starting_height,
+        &transactions.volume.transfer_volume.block.sats,
+        &vecs.fees.block.sats,
+        exit,
+    )?;
 
-        self.output_volume.compute_subtract(
-            starting_height,
-            &transactions.volume.transfer_volume.block.sats,
-            &self.fees.block.sats,
-            exit,
-        )?;
+    vecs.unclaimed.compute_from(
+        starting_height,
+        &prices.spot.cents.height,
+        &vecs.subsidy.block.sats,
+        unclaimed_rewards,
+        exit,
+    )?;
 
-        self.unclaimed.compute_from(
-            starting_height,
-            &prices.spot.cents.height,
-            &self.subsidy.block.sats,
-            unclaimed_rewards,
-            exit,
-        )?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 #[cfg(test)]

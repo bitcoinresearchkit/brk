@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-use crate::internals::*;
-
 use std::{
     collections::HashSet,
     fmt,
@@ -9,7 +7,7 @@ use std::{
     mem::ManuallyDrop,
     path::{Path, PathBuf},
     sync::{
-        Arc, Weak,
+        Arc,
         atomic::{AtomicUsize, Ordering},
     },
     thread::{self, JoinHandle},
@@ -24,7 +22,6 @@ mod disk_usage;
 pub mod error;
 mod hints;
 mod hole_punch;
-mod internals;
 mod layout;
 mod mmap;
 mod reader;
@@ -33,6 +30,7 @@ mod region_group;
 mod region_inner;
 mod region_metadata;
 mod regions;
+mod weak_database;
 
 pub use disk_usage::*;
 pub use error::*;
@@ -46,6 +44,7 @@ pub use region_group::RegionGroup;
 use region_inner::RegionInner;
 pub use region_metadata::{RegionMetadata, SIZE_OF_REGION_METADATA};
 use regions::*;
+pub use weak_database::WeakDatabase;
 
 pub const PAGE_SIZE: usize = 4096;
 pub const PAGE_SIZE_MINUS_1: usize = PAGE_SIZE - 1;
@@ -309,7 +308,7 @@ impl Database {
     fn remove_regions(&self, regions: Vec<Region>) -> Result<()> {
         if !regions.is_empty() {
             debug!(
-                "{}: removing {} regions: {:?}",
+                "Removing regions — database={} count={} regions={:?}",
                 self,
                 regions.len(),
                 regions
@@ -322,10 +321,10 @@ impl Database {
         for region in regions {
             let ref_count = Arc::strong_count(RegionInner::from_region(&region));
             debug!(
-                "{}: removing '{}' (arc count: {})",
+                "Removing region — database={} region={} ref_count={}",
                 self,
                 region.meta().id(),
-                ref_count
+                ref_count,
             );
             region.remove()?;
         }
@@ -601,11 +600,6 @@ impl Database {
     }
 
     #[inline]
-    pub fn weak_clone(&self) -> WeakDatabase {
-        WeakDatabase(Arc::downgrade(&self.0))
-    }
-
-    #[inline]
     pub fn name(&self) -> &str {
         &self.0.name
     }
@@ -622,19 +616,5 @@ impl Drop for Database {
 impl fmt::Display for Database {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name())
-    }
-}
-
-/// Weak reference to a [`Database`], held by regions to avoid reference cycles.
-#[derive(Debug, Clone)]
-pub struct WeakDatabase(Weak<DatabaseInner>);
-
-impl WeakDatabase {
-    pub fn upgrade(&self) -> Database {
-        Database(
-            self.0
-                .upgrade()
-                .expect("Database was dropped while Region still exists"),
-        )
     }
 }

@@ -2,17 +2,16 @@ use std::ops::AddAssign;
 
 use bitview_cohort::{AgeRangeId, CohortContext, TermId, UTXOAggregateId};
 use bitview_compute::{
-    AgeBand, CACHE_BUDGET, ColumnarPerBlock, Identity, LazyColumnPerBlock,
-    LazyColumnSpotValuePerBlock, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
-    LazySpotValuePerBlock,
+    BoundedToF64, CACHE_BUDGET, ColumnarPerBlock, LazyColumnPerBlock, LazyFiatPerBlock,
+    LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, lazy_weighted_supply,
 };
 use bitview_plugin::ImportContext;
 use brk_error::Result;
-use brk_types::{Cents, Height, StoredF64, Version};
+use brk_types::{BoundedRatio, Cents, Height, StoredF64, Version};
 use vecdb::{
-    CachedBoxedVec, ColumnId, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
-    ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec,
-    UnaryTransform,
+    CachedBoxedVec, CachedColumnarVec, CachedReadableVec, Database, ImportableVec, PcoVec,
+    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableColumnarVec,
 };
 
 use super::Vecs;
@@ -21,19 +20,11 @@ use crate::{
     STORAGE, SpendingExposureSeries,
 };
 
-struct ExposureToMobility;
-
-impl UnaryTransform<StoredF64, StoredF64> for ExposureToMobility {
-    #[inline(always)]
-    fn apply(exposure: StoredF64) -> StoredF64 {
-        StoredF64::from(AgeBand::mobility(*exposure))
-    }
-}
-
 impl SpendingExposureSeries {
     fn new(
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF64>, AgeRangeId>,
+        mobility_source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
         mappings: &bitview_plugin_mappings::Vecs,
     ) -> Self {
         let age_range = AgeRangeId::series(CohortContext::Utxo, |column, name| {
@@ -45,17 +36,20 @@ impl SpendingExposureSeries {
                 mappings,
             )
         });
+        let cached_mobility = CachedColumnarVec::new(mobility_source.clone(), version, |column| {
+            CACHE_BUDGET.wrap(column)
+        });
         let mobility = AgeRangeId::series(CohortContext::Utxo, |column, name| {
-            let exposure = column.select(&age_range);
-            LazyPerBlock::from_resolutions::<ExposureToMobility>(
+            LazyPerBlock::from_height_source::<BoundedToF64>(
                 &format!("{name}_mobility"),
                 version,
-                exposure.height.read_only_boxed_clone(),
-                &exposure.resolutions,
+                cached_mobility.cached_column(column).clone(),
+                mappings,
             )
         });
 
         Self {
+            cached_mobility,
             age_range,
             mobility,
         }
@@ -74,17 +68,17 @@ impl AggregateSources {
             })?,
             supply_in_loss_share: ImportableVec::forced_import(
                 db,
-                "coinflow_supply_in_loss_share_by_aggregate",
-                version,
+                "coinflow_supply_in_loss_share_bounded_by_aggregate",
+                version + Version::ONE,
             )?,
             horizon: HorizonId::try_from_fn(|horizon| {
                 ImportableVec::forced_import(
                     db,
                     &format!(
-                        "coinflow_{}_supply_in_loss_share_by_aggregate",
+                        "coinflow_{}_supply_in_loss_share_bounded_by_aggregate",
                         horizon.name()
                     ),
-                    version,
+                    version + Version::ONE,
                 )
             })?,
             cap: ImportableVec::forced_import(db, "coinflow_cap_cents_by_term", version)?,
@@ -159,7 +153,7 @@ impl AggregateVecs {
                 spot_price,
             ),
         };
-        let supply_in_loss_share = LazyPerBlock::from_boxed_height_source::<Identity<StoredF64>>(
+        let supply_in_loss_share = LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
             &metric_name("coinflow_supply_in_loss_share"),
             version,
             AggregateSources::exact_source(
@@ -173,7 +167,7 @@ impl AggregateVecs {
         let horizon = HorizonId::from_fn(|horizon| {
             let name = metric_name(&format!("coinflow_{}_supply_in_loss_share", horizon.name()));
             HorizonVecs {
-                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<Identity<StoredF64>>(
+                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
                     &name,
                     version,
                     AggregateSources::exact_source(
@@ -225,6 +219,7 @@ impl Vecs {
         context: ImportContext<'_>,
         mappings: &bitview_plugin_mappings::Vecs,
         prices: &bitview_plugin_price::Vecs,
+        distribution: &bitview_plugin_distribution::Vecs,
     ) -> Result<Self> {
         let database = STORAGE.open_database(context, 250_000)?;
         let db = &database;
@@ -246,32 +241,65 @@ impl Vecs {
                 })
             },
         )?;
+        let mobility_source = ColumnarPerBlock::forced_import(
+            db,
+            &CohortContext::Utxo.prefixed("age_range_mobility_bounded_source"),
+            version,
+            |_| (),
+        )?;
         let spending_exposure = ColumnarPerBlock::forced_import(
             db,
             &CohortContext::Utxo.prefixed("age_range_spending_exposure"),
             version,
-            |source| SpendingExposureSeries::new(version, source, mappings),
+            |source| {
+                SpendingExposureSeries::new(
+                    version,
+                    source,
+                    &mobility_source.height.read_only_clone(),
+                    mappings,
+                )
+            },
         )?;
-        let supply = MobilityId::try_from_fn(|side| {
+        let supply_for = |side: MobilityId| {
             let side = side.name();
-            ColumnarPerBlock::forced_import(
-                db,
-                &CohortContext::Utxo.prefixed(&format!("age_range_{side}_supply_sats")),
-                version,
-                |source| {
-                    AgeRangeId::series(CohortContext::Utxo, |column, name| {
-                        LazyColumnSpotValuePerBlock::new(
-                            &format!("{name}_{side}_supply"),
-                            version,
-                            source,
-                            column,
-                            mappings,
-                            &spot_price,
-                        )
-                    })
-                },
-            )
-        })?;
+            AgeRangeId::series(CohortContext::Utxo, |column, name| {
+                let name = format!("{name}_{side}_supply");
+                let supply = distribution
+                    .cohorts
+                    .supply
+                    .total
+                    .age_ranges
+                    .cached_column(column)
+                    .read_only_boxed_clone();
+                let weight = spending_exposure
+                    .cached_mobility
+                    .cached_column(column)
+                    .cached_boxed_clone();
+                if side == "immobile" {
+                    lazy_weighted_supply::<true>(
+                        &name,
+                        version,
+                        supply,
+                        weight,
+                        mappings,
+                        &spot_price,
+                    )
+                } else {
+                    lazy_weighted_supply::<false>(
+                        &name,
+                        version,
+                        supply,
+                        weight,
+                        mappings,
+                        &spot_price,
+                    )
+                }
+            })
+        };
+        let supply = Mobility {
+            mobile: supply_for(MobilityId::Mobile),
+            immobile: supply_for(MobilityId::Immobile),
+        };
 
         let aggregate_sources = AggregateSources::forced_import(db, version)?;
         let all = AggregateVecs::new(
@@ -302,6 +330,7 @@ impl Vecs {
             age_range: AgeRangeVecs {
                 spending_rate,
                 spending_exposure,
+                mobility_source,
                 supply,
             },
             all,

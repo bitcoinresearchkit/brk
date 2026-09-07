@@ -1,16 +1,27 @@
-use crate::internals::*;
-
-use brk_error::{Error, Result};
+use brk_error::Result;
 use brk_types::{BlockHash, Height, TxIndex, Txid};
-use vecdb::ReadableVec;
 
 use crate::{Query, RepresentationId};
+
+mod indexer_read;
+
+pub(crate) use indexer_read::IndexerRead;
 
 /// An exact confirmed transaction identified by its published chain position.
 ///
 /// Private fields prevent callers from constructing mismatched transaction,
 /// height, and block-hash combinations. Query methods revalidate the token
 /// after an async handoff.
+///
+/// Revalidation alone is not exposed on `Query`: the internal read view must
+/// retain publication exclusion through the subsequent dependent reads.
+///
+/// ```compile_fail
+/// use bitview_query::{Query, ResolvedConfirmedTx};
+/// fn unguarded(query: &Query, tx: ResolvedConfirmedTx) {
+///     query.revalidate_confirmed_tx(tx).unwrap();
+/// }
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct ResolvedConfirmedTx {
     txid: Txid,
@@ -20,107 +31,26 @@ pub struct ResolvedConfirmedTx {
 }
 
 impl ResolvedConfirmedTx {
-    /// The block hash that identifies the containing best-chain block.
-    #[inline]
-    pub const fn block_hash(self) -> BlockHash {
-        self.block_hash
-    }
-
     #[inline]
     pub const fn identity(self) -> RepresentationId {
-        RepresentationId::Block {
-            hash: self.block_hash,
-            height: self.height,
-        }
-    }
-
-    #[inline]
-    pub fn is_deeply_confirmed(self, current_height: Height) -> bool {
-        self.height.is_deeply_confirmed(current_height)
+        RepresentationId::Block(self.block_hash)
     }
 }
 
 impl Query {
     /// Resolve an exact transaction confirmed in the published best chain.
+    ///
+    /// The public entry point acquires its own read view. The old caller-guarded
+    /// entry point is deliberately unavailable.
+    ///
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::Txid;
+    /// fn unguarded(query: &Query, txid: &Txid) {
+    ///     query.resolve_confirmed_tx_guarded(txid).unwrap();
+    /// }
+    /// ```
     pub fn resolve_confirmed_tx(&self, txid: &Txid) -> Result<ResolvedConfirmedTx> {
-        let _guard = self.read_plugin(self.indexer())?;
-        self.resolve_confirmed_tx_guarded(txid)
-    }
-
-    /// Validate between safe-bound snapshots. Rollback lowers the published
-    /// bounds before mutating transaction vectors or confirmed-height data.
-    fn validate_confirmed_position(&self, txid: &Txid, index: TxIndex) -> Result<Height> {
-        let safe = self.safe_lengths();
-        if index >= safe.tx_index
-            || self.indexer().vecs().transactions.txid.collect_one(index) != Some(*txid)
-        {
-            return Err(Error::UnknownTxid);
-        }
-
-        let height = self.confirmed_status_height(index)?;
-        let safe = self.safe_lengths();
-        if index >= safe.tx_index || height >= safe.height {
-            return Err(Error::UnknownTxid);
-        }
-
-        Ok(height)
-    }
-
-    /// Read a confirmed block hash between safe-bound snapshots.
-    fn confirmed_block_hash(&self, height: Height) -> Result<BlockHash> {
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
-        let hash = self
-            .indexer()
-            .vecs()
-            .blocks
-            .blockhash
-            .inner
-            .collect_one(height)
-            .ok_or(Error::UnknownTxid)?;
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
-        Ok(hash)
-    }
-}
-pub trait RImplTxConfirmedQueryInternal: Sized {
-    fn resolve_confirmed_tx_guarded(&self, txid: &Txid) -> Result<ResolvedConfirmedTx>;
-
-    fn resolve_confirmed_position(&self, txid: &Txid) -> Result<(TxIndex, Height)>;
-
-    fn revalidate_confirmed_tx(&self, tx: ResolvedConfirmedTx) -> Result<(Txid, TxIndex, Height)>;
-}
-impl RImplTxConfirmedQueryInternal for Query {
-    /// Internal resolution while the caller retains indexer publication exclusion.
-    fn resolve_confirmed_tx_guarded(&self, txid: &Txid) -> Result<ResolvedConfirmedTx> {
-        let (index, height) = self.resolve_confirmed_position(txid)?;
-        let block_hash = self.confirmed_block_hash(height)?;
-
-        Ok(ResolvedConfirmedTx {
-            txid: *txid,
-            index,
-            height,
-            block_hash,
-        })
-    }
-    /// Preserve the existing `(TxIndex, Height)` API without resolving a block
-    /// hash that its callers may not need.
-    /// Internal callers must hold publication exclusion through their reads.
-    fn resolve_confirmed_position(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        let index = self.resolve_tx_index(txid)?;
-        let height = self.validate_confirmed_position(txid, index)?;
-        Ok((index, height))
-    }
-    /// Revalidate a token without repeating its txid-prefix store lookup.
-    fn revalidate_confirmed_tx(&self, tx: ResolvedConfirmedTx) -> Result<(Txid, TxIndex, Height)> {
-        // The block hash commits to the transaction list and its ordering.
-        // Since the token was exactly verified when constructed, confirming
-        // that the same block remains at the same height is sufficient.
-        if self.confirmed_block_hash(tx.height)? != tx.block_hash {
-            return Err(Error::UnknownTxid);
-        }
-        Ok((tx.txid, tx.index, tx.height))
+        self.read_indexer()?.resolve_confirmed_tx(txid)
     }
 }

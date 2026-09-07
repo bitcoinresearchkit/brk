@@ -29,12 +29,8 @@ fn coarser_period_uses_its_last_available_day() {
 
 #[test]
 fn repeated_view_maps_ranges_and_preserves_missing_days() {
-    let suffix = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!("brk-daily-view-{}-{suffix}", std::process::id()));
-    let db = Database::open(&path).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
 
     let mut source: EagerVec<PcoVec<Day1, StoredF64>> =
         EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
@@ -66,22 +62,12 @@ fn repeated_view_maps_ranges_and_preserves_missing_days() {
             None,
         ]
     );
-
-    drop(view);
-    drop(mapping);
-    drop(source);
-    drop(db);
-    std::fs::remove_dir_all(path).unwrap();
 }
 
 #[test]
 fn repeated_view_supports_stored_booleans() {
-    let suffix = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!("brk-daily-bool-{}-{suffix}", std::process::id()));
-    let db = Database::open(&path).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
 
     let mut source: EagerVec<PcoVec<Day1, StoredBool>> =
         EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
@@ -111,10 +97,4 @@ fn repeated_view_supports_stored_booleans() {
             Some(StoredBool::TRUE),
         ]
     );
-
-    drop(view);
-    drop(mapping);
-    drop(source);
-    drop(db);
-    std::fs::remove_dir_all(path).unwrap();
 }

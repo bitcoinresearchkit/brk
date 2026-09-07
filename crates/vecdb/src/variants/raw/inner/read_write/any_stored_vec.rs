@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{mem, path::PathBuf};
 
 use rawdb::{Database, Region};
@@ -103,7 +101,8 @@ where
     }
 
     fn serialize_changes(&self) -> crate::Result<Vec<u8>> {
-        self.serialize_raw_changes()
+        self.base
+            .serialize_changes::<S>(|from, to| self.collect_stored_range(from, to))
     }
 
     fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {

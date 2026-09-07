@@ -12,27 +12,15 @@ pub fn compute(
     prices: &bitview_plugin_price::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, blocks, prices, exit)
-}
+    let starting_lengths = indexer.safe_lengths();
+    let close = &prices.spot.cents.height;
 
-impl Vecs {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        blocks: &bitview_plugin_blocks::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_lengths = indexer.safe_lengths();
-        let close = &prices.spot.cents.height;
+    vecs.ema.height.compute_rolling_ema_columns(
+        starting_lengths.height,
+        |period| blocks.lookback.start_vec(period.days()),
+        close,
+        exit,
+    )?;
 
-        self.ema.height.compute_rolling_ema_columns(
-            starting_lengths.height,
-            |period| blocks.lookback.start_vec(period.days()),
-            close,
-            exit,
-        )?;
-
-        Ok(())
-    }
+    Ok(())
 }

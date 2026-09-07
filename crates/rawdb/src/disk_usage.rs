@@ -1,7 +1,7 @@
-use std::{fmt, fs::File, io, mem};
+use std::{fmt, fs::File};
 
 #[cfg(unix)]
-use std::os::unix::io::AsRawFd;
+use std::os::unix::fs::MetadataExt;
 
 /// Actual disk usage (accounts for sparse files / holes).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -10,12 +10,7 @@ pub struct DiskUsage(u64);
 impl DiskUsage {
     #[cfg(unix)]
     pub fn from_file(file: &File) -> crate::Result<Self> {
-        let mut stat: libc::stat = unsafe { mem::zeroed() };
-        let result = unsafe { libc::fstat(file.as_raw_fd(), &mut stat) };
-        if result == -1 {
-            return Err(io::Error::last_os_error().into());
-        }
-        Ok(Self(stat.st_blocks as u64 * 512))
+        Ok(Self(file.metadata()?.blocks() * 512))
     }
 
     #[cfg(not(unix))]

@@ -8,13 +8,17 @@ use crate::{ImportOptions, Version};
 /// enabling generic wrappers like `EagerVec` to work with any storage format.
 pub trait ImportableVec: Sized {
     /// Import from database, creating if needed.
-    fn import(db: &Database, name: &str, version: Version) -> crate::Result<Self>;
+    fn import(db: &Database, name: &str, version: Version) -> crate::Result<Self> {
+        Self::import_with((db, name, version).into())
+    }
 
     /// Import with custom options.
     fn import_with(options: ImportOptions) -> crate::Result<Self>;
 
     /// Import from database, resetting on version/format mismatch.
-    fn forced_import(db: &Database, name: &str, version: Version) -> crate::Result<Self>;
+    fn forced_import(db: &Database, name: &str, version: Version) -> crate::Result<Self> {
+        Self::forced_import_with((db, name, version).into())
+    }
 
     /// Forced import with custom options.
     fn forced_import_with(options: ImportOptions) -> crate::Result<Self>;

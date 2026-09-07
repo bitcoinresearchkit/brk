@@ -10,7 +10,7 @@ use bitview_plugin::{Plugin, PluginReadGuard};
 use bitview_plugin_distribution::AgeRangeUrpds;
 use brk_error::{Error, Result};
 use brk_types::{Cents, Cohort, Date, Day1, Urpd, UrpdAggregation, UrpdRaw, UrpdWeight};
-use vecdb::{ColumnId, ReadableOptionVec};
+use vecdb::ReadableOptionVec;
 
 use crate::Query;
 

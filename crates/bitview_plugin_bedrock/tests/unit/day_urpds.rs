@@ -5,6 +5,74 @@ use brk_types::{Cents, CentsCompact, Date, PercentileId, Sats, UrpdRaw};
 use super::{DayUrpds, ModeWeights};
 
 #[test]
+fn capitalized_prices_use_each_weighted_distribution_and_backfill_identically() {
+    let root = tempfile::tempdir().unwrap();
+    let date = Date::new(2026, 9, 7);
+    let names = DayUrpds::names();
+    let mut weights = ModeWeights::from_fn(|_| None);
+    weights.cointime = Some(AgeRange::from_fn(|age| {
+        if age == AgeRangeId::Under1H { 1.0 } else { 0.5 }
+    }));
+    weights.coinflow = Some(AgeRange::from_fn(|age| {
+        if age == AgeRangeId::Under1H { 0.5 } else { 1.0 }
+    }));
+    let entries = [
+        (AgeRangeId::Under1H, 100),
+        (AgeRangeId::Under1H, 200),
+        (AgeRangeId::From5MTo6M, 400),
+        (AgeRangeId::From5MTo6M, 800),
+    ];
+    let urpds = DayUrpds::from_age_entries(
+        entries.map(|(age, p)| (age, CentsCompact::new(p), Sats::from(10_u64))),
+        &weights,
+    );
+    let actual = urpds.capitalized_prices();
+    assert_eq!(actual.all.cointime, Cents::new(500));
+    assert_eq!(actual.all.coinflow, Cents::new(611));
+    assert_eq!(actual.sth.cointime, Cents::new(166));
+    assert_eq!(actual.sth.coinflow, Cents::new(166));
+    assert_eq!(actual.lth.cointime, Cents::new(666));
+    assert_eq!(actual.lth.coinflow, Cents::new(666));
+    urpds.write(root.path(), &names, date).unwrap();
+    let saved = DayUrpds::read_capitalized_prices(root.path(), &names, date).unwrap();
+    for (a, b) in actual.iter().zip(saved.iter()) {
+        assert_eq!(a.cointime, b.cointime);
+        assert_eq!(a.coinflow, b.coinflow);
+    }
+    // A rewritten daily snapshot must not retain the old derived prices.
+    DayUrpds::repeated([(300, 10)])
+        .write(root.path(), &names, date)
+        .unwrap();
+    let rewritten = DayUrpds::read_capitalized_prices(root.path(), &names, date).unwrap();
+    assert!(
+        rewritten
+            .iter()
+            .all(|pair| pair.cointime == Cents::new(300) && pair.coinflow == Cents::new(300))
+    );
+}
+
+#[test]
+fn capitalized_backfill_distinguishes_missing_and_incomplete_snapshots() {
+    let root = tempfile::tempdir().unwrap();
+    let names = DayUrpds::names();
+    let date = Date::new(2026, 9, 7);
+    let missing = DayUrpds::read_capitalized_prices(root.path(), &names, date).unwrap();
+    assert!(
+        missing
+            .iter()
+            .all(|pair| pair.cointime.is_nan() && pair.coinflow.is_nan())
+    );
+    UrpdRaw::write(
+        root.path(),
+        &names.all.cointime,
+        date,
+        [(CentsCompact::new(100), Sats::from(1_u64))].into_iter(),
+    )
+    .unwrap();
+    assert!(DayUrpds::read_capitalized_prices(root.path(), &names, date).is_err());
+}
+
+#[test]
 fn weighted_sats_are_floored_after_summing() {
     assert_eq!(DayUrpds::floor_sats(0.6 + 0.6), Sats::from(1_u64));
     assert_eq!(DayUrpds::floor_sats(0.6), Sats::ZERO);

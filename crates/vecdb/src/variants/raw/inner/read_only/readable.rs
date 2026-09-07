@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use crate::{HEADER_OFFSET, RawIoSource, ReadableVec, VecIndex, VecValue};
 
 use super::{super::RawStrategy, ReadOnlyRawVec};

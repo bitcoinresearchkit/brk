@@ -1,6 +1,6 @@
 use aide::openapi::OpenApi;
 use axum::body::Bytes;
-use serde_json::{Map, Value, from_str, to_string};
+use serde_json::{Map, Value, to_value, to_vec};
 
 /// Compact OpenAPI spec optimized for LLM consumption.
 /// Pre-serialized at startup, served as raw bytes per request.
@@ -9,8 +9,7 @@ pub struct ApiJson(Bytes);
 
 impl ApiJson {
     pub fn new(openapi: &OpenApi) -> Self {
-        let json = to_string(openapi).unwrap();
-        Self(Bytes::from(compact_json(&json)))
+        Self(Bytes::from(compact_json(to_value(openapi).unwrap())))
     }
 
     pub fn bytes(&self) -> Bytes {
@@ -42,9 +41,7 @@ impl ApiJson {
 /// 17. Remove redundant "type": "object" when properties exist
 /// 18. Flatten single-element type arrays
 /// 19. Replace large enums (>40 values) with string type
-fn compact_json(json: &str) -> String {
-    let mut spec: Value = from_str(json).expect("Invalid OpenAPI JSON");
-
+fn compact_json(mut spec: Value) -> Vec<u8> {
     // Step 1: Remove deprecated endpoints from paths
     if let Some(Value::Object(paths)) = spec.get_mut("paths") {
         paths.retain(|_, v| {
@@ -71,7 +68,7 @@ fn compact_json(json: &str) -> String {
     }
 
     compact_value(&mut spec);
-    to_string(&spec).unwrap()
+    to_vec(&spec).unwrap()
 }
 
 fn compact_value(value: &mut Value) {
@@ -130,21 +127,7 @@ fn compact_value(value: &mut Value) {
 
             // Step 8: Flatten anyOf to type array
             if let Some(Value::Array(any_of)) = obj.remove("anyOf") {
-                let types: Vec<Value> = any_of
-                    .into_iter()
-                    .filter_map(|item| {
-                        if let Value::Object(o) = item {
-                            if let Some(Value::String(ref_path)) = o.get("$ref") {
-                                return Some(Value::String(
-                                    ref_path.split('/').next_back().unwrap_or("any").to_string(),
-                                ));
-                            }
-                            o.get("type").cloned()
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
+                let types = union_types(any_of);
                 if !types.is_empty() {
                     obj.insert("type".to_string(), Value::Array(types));
                 }
@@ -163,15 +146,16 @@ fn compact_value(value: &mut Value) {
             }
 
             // Step 17: Flatten single-element type arrays: ["object"] -> "object"
-            if let Some(Value::Array(arr)) = obj.get("type").cloned()
+            if let Some(value) = obj.get_mut("type")
+                && let Value::Array(arr) = value
                 && arr.len() == 1
             {
-                obj.insert("type".to_string(), arr.into_iter().next().unwrap());
+                *value = arr.pop().unwrap();
             }
 
             // Step 18: Remove "type": "object" when properties exist (it's redundant)
             if obj.contains_key("properties")
-                && obj.get("type") == Some(&Value::String("object".to_string()))
+                && obj.get("type").and_then(Value::as_str) == Some("object")
             {
                 obj.remove("type");
             }
@@ -254,67 +238,51 @@ fn simplify_parameter(param: &mut Value) {
 
         // Extract type from schema
         if let Some(schema) = obj.remove("schema") {
-            let type_val = extract_type_from_schema(&schema);
+            let type_val = extract_type_from_schema(schema);
             obj.insert("type".to_string(), type_val);
         }
     }
 }
 
-fn extract_type_from_schema(schema: &Value) -> Value {
-    if let Value::Object(obj) = schema {
-        // Handle anyOf (optional fields)
-        if let Some(Value::Array(any_of)) = obj.get("anyOf") {
-            let types: Vec<Value> = any_of
-                .iter()
-                .filter_map(|item| {
-                    if let Value::Object(o) = item {
-                        if let Some(Value::String(ref_path)) = o.get("$ref") {
-                            return Some(Value::String(
-                                ref_path.split('/').next_back().unwrap_or("any").to_string(),
-                            ));
-                        }
-                        o.get("type").cloned()
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            if types.len() == 1 {
-                return types.into_iter().next().unwrap();
-            }
-            return Value::Array(types);
-        }
-
-        // Handle $ref
-        if let Some(Value::String(ref_path)) = obj.get("$ref") {
-            return Value::String(ref_path.split('/').next_back().unwrap_or("any").to_string());
-        }
-
-        // Handle type
-        if let Some(t) = obj.get("type") {
-            return t.clone();
-        }
+fn simple_type(schema: Value) -> Option<Value> {
+    let Value::Object(mut obj) = schema else {
+        return None;
+    };
+    if let Some(Value::String(path)) = obj.remove("$ref") {
+        return Some(Value::String(
+            path.rsplit('/').next().unwrap_or("any").to_owned(),
+        ));
     }
-    Value::String("any".to_string())
+    obj.remove("type")
+}
+
+fn union_types(schemas: Vec<Value>) -> Vec<Value> {
+    schemas.into_iter().filter_map(simple_type).collect()
+}
+
+fn extract_type_from_schema(mut schema: Value) -> Value {
+    if let Value::Object(obj) = &mut schema
+        && let Some(Value::Array(any_of)) = obj.remove("anyOf")
+    {
+        let mut types = union_types(any_of);
+        return if types.len() == 1 {
+            types.pop().unwrap()
+        } else {
+            Value::Array(types)
+        };
+    }
+    simple_type(schema).unwrap_or_else(|| Value::String("any".to_owned()))
 }
 
 fn simplify_properties(props: &mut Map<String, Value>) {
-    let keys: Vec<String> = props.keys().cloned().collect();
-    for key in keys {
-        if let Some(prop_value) = props.get_mut(&key)
-            && let Value::Object(prop_obj) = prop_value
-        {
-            // Remove description
-            prop_obj.remove("description");
-
-            // Check if we can simplify to just the type
-            let simplified = simplify_property_value(prop_obj);
-            *prop_value = simplified;
+    for value in props.values_mut() {
+        if let Value::Object(obj) = value {
+            *value = simplify_property_value(std::mem::take(obj));
         }
     }
 }
 
-fn simplify_property_value(obj: &mut Map<String, Value>) -> Value {
+fn simplify_property_value(mut obj: Map<String, Value>) -> Value {
     // Remove validation constraints, format, and examples
     for key in &[
         "default",
@@ -346,45 +314,26 @@ fn simplify_property_value(obj: &mut Map<String, Value>) -> Value {
     if let Some(Value::Array(all_of)) = obj.remove("allOf")
         && all_of.len() == 1
         && let Some(Value::Object(inner)) = all_of.into_iter().next()
+        && let Some(t) = simple_type(Value::Object(inner))
     {
-        if let Some(Value::String(ref_path)) = inner.get("$ref") {
-            let type_name = ref_path.split('/').next_back().unwrap_or("any");
-            return Value::String(type_name.to_string());
-        }
-        if let Some(t) = inner.get("type") {
-            return t.clone();
-        }
+        return t;
     }
 
     // Handle anyOf - flatten to type array (runs before recursion would)
     if let Some(Value::Array(any_of)) = obj.remove("anyOf") {
-        let types: Vec<Value> = any_of
-            .into_iter()
-            .filter_map(|item| {
-                if let Value::Object(o) = item {
-                    if let Some(Value::String(ref_path)) = o.get("$ref") {
-                        return Some(Value::String(
-                            ref_path.split('/').next_back().unwrap_or("any").to_string(),
-                        ));
-                    }
-                    o.get("type").cloned()
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let types = union_types(any_of);
         return Value::Array(types);
     }
 
     // If only "type" remains, return just the type value
     if obj.len() == 1
-        && let Some(t) = obj.get("type")
+        && let Some(t) = obj.remove("type")
     {
-        return t.clone();
+        return t;
     }
 
     // Handle array with items
-    if obj.get("type") == Some(&Value::String("array".to_string()))
+    if obj.get("type").and_then(Value::as_str) == Some("array")
         && let Some(items) = obj.get("items")
         && let Value::Object(items_obj) = items
         && items_obj.len() == 1
@@ -399,12 +348,51 @@ fn simplify_property_value(obj: &mut Map<String, Value>) -> Value {
         }
     }
 
-    Value::Object(obj.clone())
+    Value::Object(obj)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ApiRoutes;
+    use aide::axum::ApiRouter;
+    use serde_json::{from_slice, from_str};
+
+    #[test]
+    fn generated_schema_compaction_matches_the_json_round_trip() {
+        let (_, spec) = crate::finish_openapi(ApiRouter::<crate::AppState>::new().add_api_routes());
+        let serialized = serde_json::to_string(&spec).unwrap();
+        let through_json = compact_json(from_str(&serialized).unwrap());
+        assert_eq!(ApiJson::new(&spec).bytes().as_ref(), through_json);
+    }
+
+    #[test]
+    fn nested_properties_preserve_extra_fields_and_union_shape() {
+        let spec = serde_json::json!({
+            "properties": {
+                "object": {"type": "object", "properties": {
+                    "id": {"$ref": "#/components/schemas/Txid", "description": "drop"}
+                }, "additionalProperties": false},
+                "single": {"anyOf": [{"type": "string"}]},
+                "empty": {"anyOf": [true, {}, {"$ref": 1}]},
+                "non_object": false
+            },
+            "parameters": [{"schema": {"anyOf": [{"type": "string"}]}, "required": true}]
+        });
+        let value: Value = from_slice(&compact_json(spec)).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({
+                "properties": {
+                    "object": {"properties": {"id": "Txid"}, "additionalProperties": false},
+                    "single": ["string"],
+                    "empty": [],
+                    "non_object": false
+                },
+                "parameters": [{"type": "string", "required": true}]
+            })
+        );
+    }
 
     #[test]
     fn test_trim_property_anyof() {
@@ -420,8 +408,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         // Property should be simplified to array, not {"type": [...]}
         let index = &parsed["properties"]["index"];
@@ -445,8 +433,8 @@ mod tests {
             }]
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         // Parameter should have type array including null
         let param = &parsed["parameters"][0];
@@ -466,8 +454,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         // Property with $ref should be simplified to just the type name
         assert_eq!(parsed["properties"]["txid"], "Txid");
@@ -494,8 +482,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         let props = &parsed["components"]["schemas"]["AddressStats"]["properties"];
         assert_eq!(props["address"], "Address", "address should be simplified");
@@ -520,8 +508,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         assert_eq!(parsed["properties"]["address"], "Address");
     }
@@ -540,8 +528,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         // Array with $ref items should be simplified to "array[Type]"
         assert_eq!(parsed["properties"]["vin"], "array[TxIn]");
@@ -563,8 +551,8 @@ mod tests {
             }
         }"##;
 
-        let result = compact_json(input);
-        let parsed: Value = from_str(&result).unwrap();
+        let result = compact_json(from_str(input).unwrap());
+        let parsed: Value = from_slice(&result).unwrap();
 
         assert_eq!(parsed["returns"], "Block");
         assert!(parsed.get("responses").is_none());

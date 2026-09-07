@@ -4,8 +4,6 @@ pub mod source;
 pub use resolver::InputResolver;
 pub use source::InputSource;
 
-use brk_error::Result;
-
 use bitcoin::Transaction;
 use bitview_cohort::ByAddrType;
 use brk_store::Store;
@@ -15,18 +13,8 @@ use brk_types::{
 };
 use vecdb::{PcoVec, WritableVec, unlikely};
 
-use super::{BlockProcessor, transaction::ComputedTx, txout::ProcessedOutput};
+use super::txout::ProcessedOutput;
 use crate::InputsVecs;
-
-impl<'a> BlockProcessor<'a> {
-    pub fn process_inputs<'b>(
-        &self,
-        txs: &[ComputedTx],
-        resolver: &'b mut InputResolver,
-    ) -> Result<&'b [InputSource]> {
-        resolver.resolve(self, txs)
-    }
-}
 
 #[allow(clippy::too_many_arguments)]
 pub fn finalize_inputs(
@@ -95,16 +83,13 @@ pub fn finalize_inputs(
             if unlikely(!output_type.is_addr()) {
                 continue;
             }
-            let addr_type = output_type;
-            let addr_index = type_index;
-
             addr_tx_index_stores
-                .get_mut_unwrap(addr_type)
-                .insert(AddrIndexTxIndex::from((addr_index, tx_index)), Unit);
+                .get_mut_unwrap(output_type)
+                .insert(AddrIndexTxIndex::from((type_index, tx_index)), Unit);
 
             addr_outpoint_stores
-                .get_mut_unwrap(addr_type)
-                .remove(AddrIndexOutPoint::from((addr_index, outpoint)));
+                .get_mut_unwrap(output_type)
+                .remove(AddrIndexOutPoint::from((type_index, outpoint)));
         }
 
         input_offset = next_input_offset;

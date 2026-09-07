@@ -1,10 +1,12 @@
 use bitview_compute::{
-    Identity, LazyPerBlock, LazyRatioPerBlock, PerBlock, PercentPerBlock, RatioPerBlock,
+    BasisPointsPerBlock, Identity, LazyBasisPointsPerBlock, LazyPerBlock, PerBlock,
+    PercentPerBlock, RatioPerBlock,
 };
 use bitview_plugin::ImportContext;
 use bitview_plugin_distribution::AllChainSources;
 use brk_error::Result;
-use brk_types::{Bitcoin, Cents, PartsPerMillion64, Sats, StoredF32, Version};
+use brk_types::{BasisPoints32, Bitcoin, Cents, Sats, StoredF32, Version};
+use vecdb::unlikely;
 
 use super::Vecs;
 use crate::{STORAGE, dormancy_vecs::DormancyVecs};
@@ -23,25 +25,28 @@ impl Vecs {
         let db = STORAGE.open_database(context, 100_000)?;
         let v = STORAGE.schema_version();
 
-        let puell_multiple = RatioPerBlock::forced_import_ppm(&db, "puell_multiple", v, mappings)?;
+        let bps_version = v + Version::ONE;
+        let puell_multiple =
+            BasisPointsPerBlock::forced_import(&db, "puell_multiple", bps_version, mappings)?;
         let nvt_source = all_chain.with_market_cap(
-            "nvt_ppm_source",
-            v,
+            "nvt_bps_source",
+            bps_version,
             &transactions.volume.transfer_volume.sum._24h.cents.height,
             |_, volume, market_cap| Self::market_ratio(market_cap, volume),
         );
-        let nvt = LazyRatioPerBlock::from_height_source("nvt", v, nvt_source, mappings);
+        let nvt =
+            LazyBasisPointsPerBlock::from_height_source("nvt", bps_version, nvt_source, mappings);
         let gini = PercentPerBlock::forced_import(&db, "gini", v, mappings)?;
         let rhodl_ratio = RatioPerBlock::forced_import_ppm(&db, "rhodl_ratio", v, mappings)?;
         let thermo_source = all_chain.with_market_cap(
-            "thermo_cap_multiple_ppm_source",
-            v,
+            "thermo_cap_multiple_bps_source",
+            bps_version,
             &mining.rewards.subsidy.cumulative.cents.height,
             |_, thermo_cap, market_cap| Self::market_ratio(market_cap, thermo_cap),
         );
-        let thermo_cap_multiple = LazyRatioPerBlock::from_height_source(
+        let thermo_cap_multiple = LazyBasisPointsPerBlock::from_height_source(
             "thermo_cap_multiple",
-            v,
+            bps_version,
             thermo_source,
             mappings,
         );
@@ -131,12 +136,12 @@ impl Vecs {
         Ok(this)
     }
 
-    fn market_ratio(numerator: Cents, denominator: Cents) -> PartsPerMillion64 {
+    fn market_ratio(numerator: Cents, denominator: Cents) -> BasisPoints32 {
         let ratio = f64::from(numerator) / f64::from(denominator);
-        if ratio.is_finite() {
-            PartsPerMillion64::from(ratio)
+        if unlikely(!ratio.is_finite()) {
+            BasisPoints32::ZERO
         } else {
-            PartsPerMillion64::default()
+            BasisPoints32::from(ratio)
         }
     }
 
@@ -164,6 +169,29 @@ impl Vecs {
             StoredF32::from(0.0f32)
         } else {
             StoredF32::from((f64::from(Bitcoin::from(supply)) / dormancy) as f32)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn market_ratios_use_basis_points_and_keep_zero_fallback() {
+        for (numerator, denominator, expected) in [
+            (Cents::new(123_499), Cents::new(100_000), 12_349),
+            (
+                Cents::new(18_567_412_935),
+                Cents::new(1_000_000),
+                185_674_129,
+            ),
+            (Cents::new(74_641), Cents::new(1), 746_410_000),
+            (Cents::new(1), Cents::ZERO, 0),
+            (Cents::NAN, Cents::new(1), 0),
+            (Cents::new(1), Cents::NAN, 0),
+        ] {
+            assert_eq!(Vecs::market_ratio(numerator, denominator).inner(), expected);
         }
     }
 }

@@ -7,7 +7,7 @@ Bitcoin domain and storage-index types shared across BRK and Bitview.
 Purpose-built types for heights, amounts, hashes, addresses, transactions,
 calendar indexes, protocol epochs, and API values that are intrinsically tied
 to Bitcoin. Query-protocol types such as `SeriesSelection`, `SeriesData`,
-`Pagination`, and `TreeNode` live in `bitview_types`.
+and `Pagination` live in `bitview_types`; `TreeNode` lives in `bitview_catalog`.
 
 ## Type categories
 
@@ -21,8 +21,30 @@ to Bitcoin. Query-protocol types such as `SeriesSelection`, `SeriesData`,
 | Protocol | `Epoch`, `Halving`, `TxVersion`, `RawLockTime` |
 
 The types implement the serialization, JSON Schema, arithmetic, formatting,
-and vecdb traits needed by their domains rather than exposing a parallel set of
-API wrapper types.
+and optional vecdb traits needed by their domains rather than exposing a parallel
+set of API wrapper types.
+
+## Storage support
+
+The default build has no `vecdb` or `rawdb` dependency. Enable `storage` in crates
+that persist domain values; this adds byte/compression derives, vector traits,
+storage versions, and storage error conversions. Catalog and API-only consumers
+leave it disabled.
+
+Index names and aliases, arithmetic (including `CheckedSub`), Serde, and JSON
+Schema remain available without storage. Optional vecdb implementations delegate
+to those domain definitions. `bitview_types::SeriesData::version` and Rust client
+version endpoints expose the wire value as `u32`, not the storage engine's
+`Version` type.
+
+Verify both modes separately to avoid workspace feature unification hiding an
+accidental storage dependency:
+
+```sh
+cargo test -p brk_types --no-default-features
+cargo test -p brk_types --features storage
+cargo tree -p bitview_catalog
+```
 
 ## Example
 
@@ -38,4 +60,4 @@ let day = Day1::try_from(Date::new(2024, 4, 20))?;
 
 - `bitcoin` for consensus primitives and address parsing
 - `brk_error` for shared errors
-- `vecdb` for persistent-vector traits
+- `vecdb` for optional persistent-vector traits

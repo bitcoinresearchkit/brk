@@ -27,20 +27,28 @@ impl ImportMap {
 mod tests {
     use super::*;
     use include_dir::include_dir;
+    use std::path::Path;
 
-    static TEST_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/src");
+    static TEST_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures");
 
     #[test]
     fn scan_embedded_finds_js_files() {
         let map = ImportMap::scan_embedded(&TEST_DIR, "");
-        assert!(map.0.is_empty() || !map.0.is_empty());
+        assert_eq!(map.len(), 2);
+        assert!(map.contains_key("/modules/app.js"));
+        assert!(map.contains_key("/style.css"));
+        assert!(!map.contains_key("/service-worker.js"));
     }
 
     #[test]
     fn scan_embedded_with_base_url() {
         let map = ImportMap::scan_embedded(&TEST_DIR, "/assets");
-        for key in map.0.keys() {
-            assert!(key.starts_with("/assets/") || key.starts_with("/assets"));
-        }
+        let filesystem = ImportMap::scan(
+            Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures")),
+            "/assets/",
+        )
+        .unwrap();
+        assert_eq!(map, filesystem);
+        assert!(map.keys().all(|key| key.starts_with("/assets/")));
     }
 }

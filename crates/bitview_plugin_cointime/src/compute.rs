@@ -1,42 +1,49 @@
 use brk_error::Result;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
-use brk_types::{Height, PartsPerMillionSigned64, StoredF64};
-use vecdb::ReadableVec;
 
 use super::Vecs;
 use crate::Dependencies;
 
-impl Vecs {
-    #[allow(clippy::too_many_arguments)]
-    fn compute_inner(
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        prices: &bitview_plugin_price::Vecs,
-        blocks: &bitview_plugin_blocks::Vecs,
-        inflation_rate: &impl ReadableVec<Height, PartsPerMillionSigned64>,
-        velocity_native: &impl ReadableVec<Height, StoredF64>,
-        velocity_fiat: &impl ReadableVec<Height, StoredF64>,
-        distribution: &bitview_plugin_distribution::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            price: prices,
+            blocks,
+            inflation_rate,
+            velocity_native,
+            velocity_fiat,
+            distribution,
+        } = dependencies;
+        let inflation_rate = &inflation_rate.ppm.height;
+        let velocity_native = &velocity_native.height;
+        let velocity_fiat = &velocity_fiat.height;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         // Activity computes first (liveliness, vaultedness, etc.)
         super::activity::compute(&mut self.activity, indexer, distribution, exit)?;
         super::age_range::compute(&mut self.age_range, indexer, distribution, exit)?;
 
-        // Phase 2: age-weighted aggregates, adjusted, and value are independent.
+        // Age-range supply is lazy over the same cached inputs as aggregates.
+        // Adjusted and value compute independently.
         let (r1, r2) = rayon::join(
             || {
                 super::aggregate::compute(
                     &mut self.aggregate,
                     indexer,
                     distribution,
-                    &self.age_range,
-                    &mut self.supply.active_supply_in_loss_share,
+                    &mut self.age_range,
+                    &mut self.supply.active_supply_in_loss_share.bounded,
                     exit,
                 )
             },
@@ -86,7 +93,6 @@ impl Vecs {
                 super::prices::compute(
                     &mut self.prices,
                     indexer,
-                    prices,
                     distribution,
                     &self.activity,
                     &self.supply,
@@ -108,34 +114,8 @@ impl Vecs {
         r3?;
         r4?;
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
 
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.price,
-            dependencies.blocks,
-            &dependencies.inflation_rate.ppm.height,
-            &dependencies.velocity_native.height,
-            &dependencies.velocity_fiat.height,
-            dependencies.distribution,
-            context.exit(),
-        )
     }
 }

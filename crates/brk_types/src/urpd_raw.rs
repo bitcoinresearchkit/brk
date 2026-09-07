@@ -11,7 +11,6 @@ mod decode;
 use pco::{ChunkConfig, standalone::simple_compress};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::Bytes;
 
 use crate::{
     Cents, CentsCompact, CostBasisPercentilePrices, Date, PERCENTILES, PERCENTILES_LEN, Sats,
@@ -232,9 +231,14 @@ impl UrpdRaw {
                 data.len()
             )));
         }
-        let entry_count = usize::from_bytes(&data[0..8])?;
-        let keys_len = usize::from_bytes(&data[8..16])?;
-        let values_len = usize::from_bytes(&data[16..24])?;
+        let read_length = |bytes: &[u8]| {
+            usize::try_from(u64::from_le_bytes(bytes.try_into().unwrap())).map_err(|_| {
+                Error::Deserialization("UrpdRaw: length exceeds platform capacity".into())
+            })
+        };
+        let entry_count = read_length(&data[0..8])?;
+        let keys_len = read_length(&data[8..16])?;
+        let values_len = read_length(&data[16..24])?;
 
         let keys_start = 24_usize;
         let values_start = keys_start.checked_add(keys_len).ok_or_else(|| {
@@ -329,9 +333,9 @@ impl UrpdRaw {
         let compressed_values = simple_compress(&values, &config)?;
 
         let mut buffer = Vec::new();
-        buffer.extend(keys.len().to_bytes());
-        buffer.extend(compressed_keys.len().to_bytes());
-        buffer.extend(compressed_values.len().to_bytes());
+        buffer.extend((keys.len() as u64).to_le_bytes());
+        buffer.extend((compressed_keys.len() as u64).to_le_bytes());
+        buffer.extend((compressed_values.len() as u64).to_le_bytes());
         buffer.extend(compressed_keys);
         buffer.extend(compressed_values);
 

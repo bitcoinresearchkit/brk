@@ -1,19 +1,14 @@
 use brk_error::Result;
 
-use bitview_cohort::{
-    CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{
-    AnyStoredVec, Database, LazyVec, PcoVec, ReadOnlyClone, ReadOnlyColumnarVec,
-    ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
-};
+use vecdb::{AnyStoredVec, Database, ReadOnlyClone, Rw, StorageMode};
 
-use bitview_compute::{ColumnarPerBlock, FixedRatio, LazyPercentPerBlock};
+use bitview_compute::{ColumnarPerBlock, LazyPercentPerBlock};
 
-use super::RelativeSource;
+use super::{RelativeSource, share_views};
 
 const VERSION: Version = Version::ONE;
 
@@ -54,21 +49,21 @@ impl GrossPnlComposition {
             |_| (),
         )?;
         let source = profit_share_source.height.read_only_clone();
-        let unrealized_profit_to_own_gross_pnl = Self::views(
+        let unrealized_profit_to_own_gross_pnl = share_views(
             &source,
             "unrealized_profit_to_own_gross_pnl",
             version,
             Self::public_profit_share,
             mappings,
         );
-        let unrealized_loss_to_own_gross_pnl = Self::views(
+        let unrealized_loss_to_own_gross_pnl = share_views(
             &source,
             "unrealized_loss_to_own_gross_pnl",
             version,
             Self::public_loss_share,
             mappings,
         );
-        let net_unrealized_pnl_to_own_gross_pnl = Self::views(
+        let net_unrealized_pnl_to_own_gross_pnl = share_views(
             &source,
             "net_unrealized_pnl_to_own_gross_pnl",
             version,
@@ -81,30 +76,6 @@ impl GrossPnlComposition {
             unrealized_loss_to_own_gross_pnl,
             net_unrealized_pnl_to_own_gross_pnl,
             profit_share_source,
-        })
-    }
-
-    fn views<B: FixedRatio>(
-        source: &ReadOnlyColumnarVec<PcoVec<Height, PartsPerMillion32>, UTXOAggregateId>,
-        metric: &str,
-        version: Version,
-        compute: fn(Height, PartsPerMillion32) -> B,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> UTXOAggregate<LazyPercentPerBlock<B>> {
-        UTXOAggregate::from_fn(|id| {
-            let name = CohortContext::Utxo.metric_name(
-                id.select(&UTXO_AGGREGATE_FILTERS),
-                id.select(&UTXO_AGGREGATE_NAMES).id,
-                metric,
-            );
-            let source = source.column(&format!("{name}_source"), version, id);
-            let source = LazyVec::init(
-                &format!("{name}_{}_source", B::SUFFIX),
-                version,
-                source.read_only_boxed_clone(),
-                compute,
-            );
-            LazyPercentPerBlock::from_height_source(&name, version, source, mappings)
         })
     }
 

@@ -30,7 +30,6 @@ impl Mempool {
     /// direct predecessors. Single read-lock window.
     /// Rejects histories exceeding 4096 traversal steps or 32 nested nodes;
     /// never returns a silently truncated tree.
-    #[must_use]
     pub fn rbf_for_tx(&self, txid: &Txid, tip: &BlockHash) -> Result<RbfForTx> {
         let snapshot = self.snapshot();
         let mut rbf = {
@@ -62,7 +61,6 @@ impl Mempool {
     /// non-signaling predecessor.
     /// The whole request shares the same work/depth limits as `rbf_for_tx`,
     /// including discarded candidates and stale graveyard order entries.
-    #[must_use]
     pub fn recent_rbf_trees(
         &self,
         full_rbf_only: bool,
@@ -100,10 +98,8 @@ impl Mempool {
             }
             trees
         };
-        if !trees.is_empty() {
-            for root in &mut trees {
-                Self::apply_snapshot_rates(root, &snapshot);
-            }
+        for root in &mut trees {
+            Self::apply_snapshot_rates(root, &snapshot);
         }
         Ok(trees)
     }

@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
-use brk_types::{Date, Index, Timestamp, Version};
+use brk_types::{Date, Index, Timestamp};
 
 /// Series data with range information.
 ///
@@ -12,7 +12,7 @@ use brk_types::{Date, Index, Timestamp, Version};
 #[derive(Debug, JsonSchema, Deserialize)]
 pub struct SeriesData<T = Value> {
     /// Version of the series data
-    pub version: Version,
+    pub version: u32,
     /// The index type used for this query
     pub index: Index,
     /// Value type (e.g. "f32", "u64", "Sats")

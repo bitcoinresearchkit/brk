@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{mem, ops::Range, path::PathBuf};
 
 use rawdb::{Database, Region};
@@ -236,7 +234,8 @@ where
 
     #[inline]
     fn serialize_changes(&self) -> crate::Result<Vec<u8>> {
-        self.serialize_compressed_changes()
+        self.base
+            .serialize_changes::<S>(|from, to| self.collect_stored_range(from, to))
     }
 
     #[inline]

@@ -4,6 +4,7 @@ mod formatter;
 mod mode;
 mod path;
 mod selector;
+mod step;
 mod usage;
 
 use std::process::ExitCode;
@@ -14,7 +15,6 @@ use args::Args;
 use fields::Ctx;
 use formatter::Formatter;
 use mode::Mode;
-use selector::Selector;
 
 fn main() -> ExitCode {
     match run() {
@@ -35,7 +35,7 @@ fn run() -> brk_error::Result<()> {
     let args = Args::parse(raw)?;
 
     let client = args.rpc()?;
-    let (start, end) = Selector::parse(&args.selector, &client)?;
+    let (start, end) = selector::parse(&args.selector, &client)?;
     let network = client.get_network()?;
 
     let mode = Mode::pick(args.pretty, args.compact, args.paths.len())?;

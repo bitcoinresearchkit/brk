@@ -1,8 +1,8 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::Sats;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{AmountFilter, CohortName, Filter};
 
@@ -57,7 +57,8 @@ pub const UNDER_AMOUNT_FILTERS: UnderAmount<Filter> = UnderAmount {
     _100k_btc: Filter::Amount(AmountFilter::LowerThan(UNDER_AMOUNT_THRESHOLDS._100k_btc)),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct UnderAmount<T> {
     /// Uses values less than 10 satoshis.
     pub _10sats: T,
@@ -116,105 +117,23 @@ impl<T> UnderAmount<T> {
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = UNDER_AMOUNT_FILTERS;
-        let n = UNDER_AMOUNT_NAMES;
-        Self {
-            _10sats: create(f._10sats.clone(), n._10sats.id),
-            _100sats: create(f._100sats.clone(), n._100sats.id),
-            _1k_sats: create(f._1k_sats.clone(), n._1k_sats.id),
-            _10k_sats: create(f._10k_sats.clone(), n._10k_sats.id),
-            _100k_sats: create(f._100k_sats.clone(), n._100k_sats.id),
-            _1m_sats: create(f._1m_sats.clone(), n._1m_sats.id),
-            _10m_sats: create(f._10m_sats.clone(), n._10m_sats.id),
-            _1btc: create(f._1btc.clone(), n._1btc.id),
-            _10btc: create(f._10btc.clone(), n._10btc.id),
-            _100btc: create(f._100btc.clone(), n._100btc.id),
-            _1k_btc: create(f._1k_btc.clone(), n._1k_btc.id),
-            _10k_btc: create(f._10k_btc.clone(), n._10k_btc.id),
-            _100k_btc: create(f._100k_btc.clone(), n._100k_btc.id),
-        }
+        Self::from_fn(|id| {
+            create(
+                id.select(&UNDER_AMOUNT_FILTERS).clone(),
+                id.select(&UNDER_AMOUNT_NAMES).id,
+            )
+        })
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = UNDER_AMOUNT_FILTERS;
-        let n = UNDER_AMOUNT_NAMES;
-        Ok(Self {
-            _10sats: create(f._10sats.clone(), n._10sats.id)?,
-            _100sats: create(f._100sats.clone(), n._100sats.id)?,
-            _1k_sats: create(f._1k_sats.clone(), n._1k_sats.id)?,
-            _10k_sats: create(f._10k_sats.clone(), n._10k_sats.id)?,
-            _100k_sats: create(f._100k_sats.clone(), n._100k_sats.id)?,
-            _1m_sats: create(f._1m_sats.clone(), n._1m_sats.id)?,
-            _10m_sats: create(f._10m_sats.clone(), n._10m_sats.id)?,
-            _1btc: create(f._1btc.clone(), n._1btc.id)?,
-            _10btc: create(f._10btc.clone(), n._10btc.id)?,
-            _100btc: create(f._100btc.clone(), n._100btc.id)?,
-            _1k_btc: create(f._1k_btc.clone(), n._1k_btc.id)?,
-            _10k_btc: create(f._10k_btc.clone(), n._10k_btc.id)?,
-            _100k_btc: create(f._100k_btc.clone(), n._100k_btc.id)?,
+        Self::try_from_fn(|id| {
+            create(
+                id.select(&UNDER_AMOUNT_FILTERS).clone(),
+                id.select(&UNDER_AMOUNT_NAMES).id,
+            )
         })
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._10sats,
-            &self._100sats,
-            &self._1k_sats,
-            &self._10k_sats,
-            &self._100k_sats,
-            &self._1m_sats,
-            &self._10m_sats,
-            &self._1btc,
-            &self._10btc,
-            &self._100btc,
-            &self._1k_btc,
-            &self._10k_btc,
-            &self._100k_btc,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._10sats,
-            &mut self._100sats,
-            &mut self._1k_sats,
-            &mut self._10k_sats,
-            &mut self._100k_sats,
-            &mut self._1m_sats,
-            &mut self._10m_sats,
-            &mut self._1btc,
-            &mut self._10btc,
-            &mut self._100btc,
-            &mut self._1k_btc,
-            &mut self._10k_btc,
-            &mut self._100k_btc,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self._10sats,
-            &mut self._100sats,
-            &mut self._1k_sats,
-            &mut self._10k_sats,
-            &mut self._100k_sats,
-            &mut self._1m_sats,
-            &mut self._10m_sats,
-            &mut self._1btc,
-            &mut self._10btc,
-            &mut self._100btc,
-            &mut self._1k_btc,
-            &mut self._10k_btc,
-            &mut self._100k_btc,
-        ]
-        .into_par_iter()
     }
 }

@@ -1,4 +1,4 @@
-use brk_types::{Cents, CentsCompact, Sats, StoredF64, UrpdRaw};
+use brk_types::{BoundedRatio, Cents, CentsCompact, Sats, UrpdRaw};
 
 use super::{
     DayUrpds, LEVEL_IDS, Levels, LossPercentileId, ModeId, ModeResult, Modes, Percentiles,
@@ -27,22 +27,24 @@ impl DayResult {
             by_mode: Modes::from_fn(|mode| ModeResult {
                 loss_threshold: match thresholds.select(mode) {
                     Some(values) => Percentiles::from_fn(|percentile| {
-                        StoredF64::from(*percentile.select(values))
+                        BoundedRatio::from(*percentile.select(values))
                     }),
-                    None => Percentiles::from_fn(|_| StoredF64::NAN),
+                    None => Percentiles::from_fn(|_| BoundedRatio::NAN),
                 },
                 prices: PriceBands::from_fn(|_| Cents::NAN),
             }),
         }
     }
 
-    pub fn evaluate(&mut self, urpds: &DayUrpds, thresholds: &Thresholds) {
+    pub fn evaluate(&mut self, urpds: &DayUrpds) {
         for mode in ModeId::ALL {
             let urpd = urpds.mode(mode);
             let denominator = urpd.map.values().copied().map(u64::from).sum::<u64>();
-            let Some(thresholds) = thresholds.select(mode) else {
+            let mode_result = self.by_mode.select_mut(mode);
+            let thresholds = &mode_result.loss_threshold;
+            if thresholds.iter().all(|threshold| threshold.is_nan()) {
                 continue;
-            };
+            }
             if denominator == 0
                 || !urpd
                     .map
@@ -60,7 +62,9 @@ impl DayResult {
                 let remaining_share = remaining_loss as f64 / denominator as f64;
                 for percentile in LossPercentileId::ALL {
                     let floor = percentile.select_mut(&mut floors);
-                    if floor.is_nan() && remaining_share <= *percentile.select(thresholds) {
+                    if floor.is_nan()
+                        && remaining_share <= f64::from(*percentile.select(thresholds))
+                    {
                         *floor = Cents::from(*price);
                         if percentile == LossPercentileId::Pct95 {
                             p95_floor = Some(*price);
@@ -71,7 +75,6 @@ impl DayResult {
                     break;
                 }
             }
-            let mode_result = self.by_mode.select_mut(mode);
             mode_result.prices.floor = floors;
             if let Some(p95_floor) = p95_floor {
                 mode_result.prices.level = Self::conditional_levels(urpd, p95_floor);
@@ -114,7 +117,7 @@ impl DayResult {
 
 #[cfg(test)]
 mod tests {
-    use brk_types::{Cents, StoredF64};
+    use brk_types::{BoundedRatio, Cents};
 
     use super::DayResult;
     use crate::{DayUrpds, Levels, Percentiles, Thresholds};
@@ -128,12 +131,12 @@ mod tests {
         let urpds = repeated_urpds([(100, 50), (200, 50)]);
         let thresholds = Thresholds::from_fn(|_| Some(Percentiles::from_fn(|_| 0.5)));
         let mut result = DayResult::from_thresholds(&thresholds);
-        result.evaluate(&urpds, &thresholds);
+        result.evaluate(&urpds);
         let result = &result.by_mode.coinflow;
 
         assert_eq!(
             result.loss_threshold,
-            Percentiles::from_fn(|_| StoredF64::from(0.5))
+            Percentiles::from_fn(|_| BoundedRatio::from(0.5))
         );
         assert_eq!(
             result.prices.floor,
@@ -160,7 +163,19 @@ mod tests {
         let urpds = repeated_urpds([(0, 100)]);
         let thresholds = Thresholds::from_fn(|_| Some(Percentiles::from_fn(|_| 1.0)));
         let mut result = DayResult::from_thresholds(&thresholds);
-        result.evaluate(&urpds, &thresholds);
+        result.evaluate(&urpds);
         assert!(result.by_mode.raw.prices.floor.pct95.is_nan());
+    }
+
+    #[test]
+    fn floors_use_the_same_bounded_threshold_that_is_published() {
+        let urpds = repeated_urpds([(100, 9), (200, 1)]);
+        let thresholds = Thresholds::from_fn(|_| Some(Percentiles::from_fn(|_| 0.1)));
+        let mut result = DayResult::from_thresholds(&thresholds);
+        assert!(f64::from(result.by_mode.raw.loss_threshold.pct95) < 0.1);
+        result.evaluate(&urpds);
+        assert_eq!(result.by_mode.raw.prices.floor.pct95, Cents::new(200));
+        let missing = DayResult::from_thresholds(&Thresholds::from_fn(|_| None));
+        assert!(missing.by_mode.raw.loss_threshold.pct95.is_nan());
     }
 }

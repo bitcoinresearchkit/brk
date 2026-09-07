@@ -1,21 +1,17 @@
 //! Fee reads: tier recommendations, projected-block stats, per-tx rates.
 
-use crate::internals::*;
-
 use brk_error::Result;
 use brk_types::{BlockHash, FeeRate, RecommendedFees, Txid};
 
 use crate::{Mempool, snapshot::BlockStats};
 
 impl Mempool {
-    #[must_use]
     pub fn fees(&self) -> Result<RecommendedFees> {
         let snapshot = self.snapshot();
         snapshot.ensure_projection()?;
         Ok(snapshot.fees.clone())
     }
 
-    #[must_use]
     pub fn block_stats(&self) -> Result<Vec<BlockStats>> {
         let snapshot = self.snapshot();
         snapshot.ensure_projection()?;

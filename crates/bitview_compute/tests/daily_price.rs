@@ -1,0 +1,158 @@
+mod common;
+
+use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
+use bitview_compute::{
+    CACHE_BUDGET, ColumnarDailyMetric, DailyMappings, LazyColumnDailyPriceWithRatio,
+};
+use brk_types::{Cents, Day1, Height, PriceRatio, Version};
+use vecdb::{
+    AnySerializableVec, AnyStoredVec, AnyVec, CachedVec, Database, ReadableCloneableVec,
+    ReadableVec, WritableVec,
+};
+
+#[test]
+fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut indexes = common::indexes(&db);
+    indexes.height_day1 = common::stored::<Height, _>(
+        &db,
+        "test_height_day",
+        [0usize, 0, 1, 1, 2, 2].map(Day1::from),
+    )
+    .read_only_boxed_clone();
+    indexes.cached_first_height.day1 = CachedVec::wrap(common::stored::<Day1, _>(
+        &db,
+        "test_first_height",
+        [0usize, 2, 4].map(Height::from),
+    ))
+    .read_only_cached_boxed_clone();
+    let spot = CachedVec::wrap(common::stored::<Height, _>(
+        &db,
+        "test_spot",
+        [200, 300, 400, 500, 1_000_000, 1_000_000].map(Cents::new),
+    ))
+    .read_only_cached_boxed_clone();
+    let mappings = DailyMappings::new(&indexes);
+    let import = || {
+        ColumnarDailyMetric::forced_import(
+            &db,
+            "test_capitalized_price_cents_by_aggregate",
+            Version::ONE,
+            |source| {
+                let price = |id: UTXOAggregateId| {
+                    LazyColumnDailyPriceWithRatio::new(
+                        &id.metric_name("test_capitalized_price"),
+                        Version::ONE,
+                        source,
+                        id,
+                        &indexes,
+                        &mappings,
+                        &spot,
+                    )
+                };
+                UTXOAggregate {
+                    all: price(UTXOAggregateId::All),
+                    sth: price(UTXOAggregateId::Sth),
+                    lth: price(UTXOAggregateId::Lth),
+                }
+            },
+        )
+        .unwrap()
+    };
+    let mut prices = import();
+    for (all, sth, lth) in [
+        (Cents::new(100), 50, 200),
+        (Cents::NAN, 75, 300),
+        (Cents::new(1), 1, 1),
+    ] {
+        prices.push(UTXOAggregate {
+            all,
+            sth: Cents::new(sth),
+            lth: Cents::new(lth),
+        });
+    }
+    prices.day1.write().unwrap();
+    let mut json = Vec::new();
+    prices
+        .all
+        .usd
+        .day1
+        .write_json(Some(0), Some(3), &mut json)
+        .unwrap();
+    assert_eq!(json, b"[1.0,null,0.01]");
+    assert_eq!(
+        prices.all.ppm.height.collect_one_at(0),
+        Some(PriceRatio::from(2.0))
+    );
+    assert_eq!(
+        prices.all.ppm.height.collect_one_at(1),
+        Some(PriceRatio::from(3.0))
+    );
+    assert!(prices.all.ppm.height.collect_one_at(2).unwrap().is_nan());
+    assert_eq!(
+        prices.all.ppm.height.collect_one_at(4),
+        Some(PriceRatio::MAX)
+    );
+    assert_eq!(
+        prices.all.ppm.day1.collect_one_at(0).flatten(),
+        Some(PriceRatio::from(3.0))
+    );
+    assert!(
+        prices
+            .all
+            .ppm
+            .day1
+            .collect_one_at(1)
+            .flatten()
+            .unwrap()
+            .is_nan()
+    );
+    assert_eq!(
+        prices.sth.ppm.height.collect_one_at(0),
+        Some(PriceRatio::from(4.0))
+    );
+    assert_eq!(
+        prices.lth.ppm.height.collect_one_at(0),
+        Some(PriceRatio::ONE)
+    );
+    drop(prices);
+    let mut prices = import();
+    assert_eq!(
+        prices.all.cents.day1.collect_one_at(0),
+        Some(Cents::new(100))
+    );
+    // Matches the production invalidation-before-computation sequence.
+    CACHE_BUDGET.invalidate();
+    prices.day1.truncate_if_needed_at(1).unwrap();
+    prices.push(UTXOAggregate {
+        all: Cents::new(200),
+        sth: Cents::new(40),
+        lth: Cents::new(600),
+    });
+    prices.push(UTXOAggregate {
+        all: Cents::new(50),
+        sth: Cents::new(25),
+        lth: Cents::new(100),
+    });
+    prices.day1.write().unwrap();
+    assert_eq!(
+        prices.all.ppm.height.collect_one_at(2),
+        Some(PriceRatio::from(2.0))
+    );
+    assert_eq!(
+        prices.all.cents.day1.collect_one_at(0),
+        Some(Cents::new(100))
+    );
+    for price in prices.series.iter() {
+        assert_eq!(price.cents.day1.len(), 3);
+    }
+    assert_eq!(
+        prices.sth.cents.day1.collect_one_at(1),
+        Some(Cents::new(40))
+    );
+    assert_eq!(
+        prices.lth.cents.day1.collect_one_at(1),
+        Some(Cents::new(600))
+    );
+}

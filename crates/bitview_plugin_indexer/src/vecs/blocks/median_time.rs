@@ -8,19 +8,15 @@ use super::BlocksVecs;
 #[path = "../../../benches/unit/median_time.rs"]
 mod bench;
 
-impl BlocksVecs {}
-
 #[cfg(test)]
 #[path = "../../../tests/unit/vecs/blocks/median_time.rs"]
 mod tests;
-pub trait VecsBlocksMedianTimeBlocksVecsInternal: Sized {
-    fn compute_median_times(&mut self) -> Result<()>;
-}
-impl VecsBlocksMedianTimeBlocksVecsInternal for BlocksVecs {
+
+impl BlocksVecs {
     /// Extend once per export batch, seeding the rolling window from at most
     /// ten preceding timestamps. The source cursor decodes each page once;
     /// neither the source history nor a per-block heap buffer is materialized.
-    fn compute_median_times(&mut self) -> Result<()> {
+    pub fn compute_median_times(&mut self) -> Result<()> {
         let begin = self.median_time.len();
         let end = self.timestamp.len();
         if begin > end {

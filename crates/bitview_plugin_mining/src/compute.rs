@@ -1,22 +1,28 @@
 use brk_error::Result;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
 
 use super::Vecs;
 use crate::Dependencies;
 
-impl Vecs {
-    fn compute_inner(
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        blocks: &bitview_plugin_blocks::Vecs,
-        transactions: &bitview_plugin_transactions::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            mappings,
+            blocks,
+            transactions,
+            price: prices,
+        } = dependencies;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         // Block rewards (coinbase, subsidy, fee_dominance, etc.)
@@ -41,31 +47,7 @@ impl Vecs {
             exit,
         )?;
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mappings,
-            dependencies.blocks,
-            dependencies.transactions,
-            dependencies.price,
-            context.exit(),
-        )
     }
 }

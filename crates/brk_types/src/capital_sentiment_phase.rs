@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, Pco};
 
 /// Investor phase from the Capital Sentiment model.
@@ -83,6 +84,7 @@ impl CapitalSentimentPhase {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for CapitalSentimentPhase {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -96,6 +98,7 @@ impl Formattable for CapitalSentimentPhase {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for CapitalSentimentPhase {
     type Array = [u8; size_of::<Self>()];
 
@@ -119,6 +122,7 @@ impl Bytes for CapitalSentimentPhase {
 }
 
 // SAFETY: The non-transparent conversion validates every decoded code.
+#[cfg(feature = "storage")]
 unsafe impl Pco for CapitalSentimentPhase {
     type NumberType = u8;
 
@@ -139,6 +143,7 @@ unsafe impl Pco for CapitalSentimentPhase {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn codes_round_trip_and_zero_is_reserved() {
         assert_eq!(CapitalSentimentPhase::from_code(0), None);

@@ -789,7 +789,7 @@ where
 
             let mut pop_idx = 0;
             let mut i = skip;
-            source.try_fold_range_at(skip, end, (), |(), value: A| {
+            source.fold_range_at(skip, end, (), |(), value: A| {
                 if min_i.is_none_or(|m| m <= i) {
                     let value_f32 = f32::from(value);
                     let effective_i = i - min_prev_i;
@@ -808,8 +808,8 @@ where
                     this.push(V::T::from(f32::NAN));
                 }
                 i += 1;
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 
@@ -863,14 +863,14 @@ where
             }
 
             let mut scratch = Vec::with_capacity(window.min(1024));
-            source.try_fold_range_at(skip, end, (), |(), value: A| {
+            source.fold_range_at(skip, end, (), |(), value: A| {
                 buf.push_back(f32::from(value));
                 if buf.len() > window {
                     buf.pop_front();
                 }
                 this.push(V::T::from(median(&buf, &mut scratch)));
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 
@@ -962,7 +962,7 @@ where
             };
 
             let mut index = skip;
-            source.try_fold_range_at(skip, end, (), |(), value: A| {
+            source.fold_range_at(skip, end, (), |(), value: A| {
                 if index >= min_start {
                     let processed = index - min_start + 1;
                     let value = f32::from(value);
@@ -982,8 +982,8 @@ where
                 }
 
                 index += 1;
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 
@@ -1017,7 +1017,7 @@ where
                 let extreme = compare(prev.as_ref().unwrap().clone(), v.clone());
 
                 let next = if !exclude_default || extreme != V::T::default() {
-                    extreme.clone()
+                    extreme
                 } else {
                     // Keep the non-default value for future comparisons
                     if v != V::T::default() {

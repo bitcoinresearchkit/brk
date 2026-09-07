@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 pub struct Fetched {
     /// Passthrough fields from the batched RPC fetch: live txid set,
     /// fee floor, chain tip. `live_txids` is the union of
-    /// `getrawmempool` and `getblocktemplate` (see [`super::Fetcher::fetch`]),
+    /// `getrawmempool` and `getblocktemplate` (see [`super::fetch`]),
     /// retained to build the template even when the two observations disagree.
     pub state: MempoolState,
     /// `MempoolEntryInfo` for newly-observed txids only (existing ones

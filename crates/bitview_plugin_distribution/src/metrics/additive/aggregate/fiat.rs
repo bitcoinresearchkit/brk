@@ -7,10 +7,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, Database, ReadableCloneableVec, ReadableColumnarVec, Rw,
-    StorageMode,
-};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
 
 use bitview_compute::{CACHE_BUDGET, ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 
@@ -34,7 +31,6 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
             &format!("{metric}_cents_by_term"),
             version,
             |source| {
-                let source = source.clone();
                 UTXOAggregate::from_fn(|aggregate| {
                     let name = CohortContext::Utxo.metric_name(
                         aggregate.select(&UTXO_AGGREGATE_FILTERS),
@@ -73,9 +69,5 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
 
     pub fn len(&self) -> usize {
         self.values.height.len()
-    }
-
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.values.stored_mut()
     }
 }

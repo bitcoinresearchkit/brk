@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use brk_types::{Height, StoredU64};
 use vecdb::{
@@ -53,14 +53,20 @@ where
         start.to_usize().checked_sub(1)
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn try_fold_values<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
         let window_starts = self.window_starts.snapshot();
         let to = to
             .min(self.numerator.len())
             .min(self.denominator.len())
             .min(window_starts.len());
         if from >= to {
-            return;
+            return Ok(init);
         }
 
         let starts = &window_starts[from..to];
@@ -76,20 +82,24 @@ where
             let read_from = first_previous.min(from);
             let numerators = self.numerator.collect_range_dyn(read_from, to);
             let mut offset = 0;
-            self.denominator
-                .for_each_rolling_sum(from, starts, |denominator| {
+            return self.denominator.try_fold_rolling_sum(
+                from,
+                starts,
+                init,
+                |accumulator, denominator| {
                     let index = from + offset;
                     let current = numerators[index - read_from];
                     let previous = Self::previous_index(starts[offset])
                         .map(|previous| numerators[previous - read_from])
                         .unwrap_or_default();
-                    each(F::apply(
+                    let value = F::apply(
                         current.checked_sub(previous).unwrap_or_default(),
                         denominator,
-                    ));
+                    );
                     offset += 1;
-                });
-            return;
+                    fold(accumulator, value)
+                },
+            );
         }
 
         let current = self.numerator.collect_range_dyn(from, to);
@@ -99,7 +109,7 @@ where
         let mut offset = 0;
 
         self.denominator
-            .for_each_rolling_sum(from, starts, |denominator| {
+            .try_fold_rolling_sum(from, starts, init, |accumulator, denominator| {
                 let previous = Self::previous_index(starts[offset])
                     .and_then(|index| {
                         previous
@@ -107,12 +117,21 @@ where
                             .map(|(first, values)| values[index - first])
                     })
                     .unwrap_or_default();
-                each(F::apply(
+                let value = F::apply(
                     current[offset].checked_sub(previous).unwrap_or_default(),
                     denominator,
-                ));
+                );
                 offset += 1;
-            });
+                fold(accumulator, value)
+            })
+    }
+
+    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+        self.try_fold_values(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -195,10 +214,17 @@ where
         self.for_each_value(from, to, each);
     }
 
-    fn fold_range_at<B, G: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, fold: G) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, fold)
+    fn fold_range_at<B, G: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: G,
+    ) -> B {
+        self.try_fold_values(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(fold(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, G: FnMut(B, T) -> Result<B, E>>(
@@ -208,9 +234,7 @@ where
         init: B,
         fold: G,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, fold)
+        self.try_fold_values(from, to, init, fold)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
@@ -295,11 +319,8 @@ mod tests {
 
     #[test]
     fn derives_cumulative_and_rolling_ratios_from_compact_counts() {
-        let path = std::env::temp_dir().join(format!(
-            "brk-cached-block-count-ratio-{}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut numerator: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "numerator", Version::ONE).unwrap();
         let mut denominator: EagerVec<PcoVec<Height, StoredU16>> =
@@ -362,12 +383,5 @@ mod tests {
             rolling.read_sorted_at(&[3]),
             [7.0 / 9.0].map(PartsPerMillion32::from)
         );
-
-        drop(rolling);
-        drop(cumulative);
-        drop(starts);
-        drop(numerator);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

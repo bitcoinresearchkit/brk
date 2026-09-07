@@ -47,7 +47,7 @@ tokio = ["indexer", "dep:tokio", "brk_error/tokio"]
 
 [dependencies]
 bitcoin = { workspace = true }
-bitview_cohort = { workspace = true }
+bitview_cohort = { workspace = true, features = ["storage"] }
 bitview_plugin_bedrock = { workspace = true, optional = true }
 bitview_plugin_blocks = { workspace = true, optional = true }
 bitview_plugin_coinflow = { workspace = true, optional = true }
@@ -62,6 +62,7 @@ bitview_plugin_price = { workspace = true, optional = true }
 bitview_plugin_transactions = { workspace = true, optional = true }
 bitview_runtime = { workspace = true }
 bitview_types = { workspace = true }
+bitview_catalog = { workspace = true }
 brk_error = { workspace = true, features = ["jiff", "vecdb"] }
 bitview_plugin_indexer = { workspace = true, optional = true }
 brk_mempool = { workspace = true }
@@ -70,7 +71,7 @@ bitview_plugin = { workspace = true }
 brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
 bitview_traversable = { workspace = true }
-brk_types = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 itoa = "1.0.18"
 jiff = { workspace = true }
 parking_lot = { workspace = true }

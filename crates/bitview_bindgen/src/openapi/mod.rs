@@ -49,21 +49,16 @@ pub fn parse_openapi_json(json: &str) -> io::Result<Spec> {
 
 /// Extract type schemas from OpenAPI JSON
 pub fn extract_schemas(json: &str) -> TypeSchemas {
-    let Ok(value) = serde_json::from_str::<Value>(json) else {
+    let Ok(mut value) = serde_json::from_str::<Value>(json) else {
         return TypeSchemas::default();
     };
 
     TypeSchemas(
         value
-            .get("components")
-            .and_then(|c| c.get("schemas"))
-            .and_then(|s| s.as_object())
-            .map(|schemas| {
-                schemas
-                    .iter()
-                    .map(|(name, schema)| (name.clone(), schema.clone()))
-                    .collect()
-            })
+            .get_mut("components")
+            .and_then(|c| c.get_mut("schemas"))
+            .and_then(Value::as_object_mut)
+            .map(|schemas| std::mem::take(schemas).into_iter().collect())
             .unwrap_or_default(),
     )
 }
@@ -108,21 +103,14 @@ pub fn extract_endpoints(spec: &Spec) -> Vec<Endpoint> {
 
     for (path, path_item) in paths {
         for (method, operation) in path_item.methods() {
-            if let Some(endpoint) = extract_endpoint(path, method.as_str(), operation, spec) {
-                endpoints.push(endpoint);
-            }
+            endpoints.push(extract_endpoint(path, method.as_str(), operation, spec));
         }
     }
 
     endpoints
 }
 
-fn extract_endpoint(
-    path: &str,
-    method: &str,
-    operation: &Operation,
-    spec: &Spec,
-) -> Option<Endpoint> {
+fn extract_endpoint(path: &str, method: &str, operation: &Operation, spec: &Spec) -> Endpoint {
     let path_params = extract_path_parameters(path, operation);
     let query_params = extract_parameters(operation, ParameterIn::Query);
 
@@ -131,7 +119,7 @@ fn extract_endpoint(
     let request_body = extract_request_body(operation);
     let supports_csv = check_csv_support(operation);
 
-    Some(Endpoint {
+    Endpoint {
         method: method.to_string(),
         path: path.to_string(),
         operation_id: operation.operation_id.clone(),
@@ -145,7 +133,7 @@ fn extract_endpoint(
         deprecated: operation.deprecated.unwrap_or(false),
         mcp_ignored: operation.extensions.get("mcp-ignore") == Some(&Value::Bool(true)),
         supports_csv,
-    })
+    }
 }
 
 /// Preserve the complete JSON response schema for MCP output schema

@@ -38,7 +38,10 @@ impl OperationInput for BroadcastPermit {}
 
 fn validate_hex(body: &str) -> Result<&str> {
     let hex = body.trim();
-    if hex.is_empty() || hex.len() % 2 != 0 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+    if hex.is_empty()
+        || !hex.len().is_multiple_of(2)
+        || !hex.bytes().all(|byte| byte.is_ascii_hexdigit())
+    {
         return Err(Error::bad_request(
             "transaction body must contain nonempty, even-length hexadecimal",
         ));

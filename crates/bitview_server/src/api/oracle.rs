@@ -2,7 +2,7 @@ use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::{IntoResponse, Response},
+    response::Response,
 };
 use brk_oracle::{HistogramEmaCompact, HistogramRaw};
 use brk_types::{Day1, Dollars};
@@ -80,19 +80,17 @@ impl OracleRoutes for ApiRouter<AppState> {
                        _: Empty,
                        State(state): State<AppState>|
                        -> Result<Response> {
-                    match path.resolve() {
-                        Ok(HeightOrDate::Date(date)) => Ok(state
-                            .respond_json_content(&headers, move |q| {
+                    let point = path.resolve()?;
+                    Ok(state
+                        .respond_json_content(&headers, move |q| match point {
+                            HeightOrDate::Date(date) => {
                                 q.confirmed_payment_histogram_day(Day1::try_from(date)?)
-                            })
-                            .await),
-                        Ok(HeightOrDate::Height(height)) => Ok(state
-                            .respond_json_content(&headers, move |q| {
+                            }
+                            HeightOrDate::Height(height) => {
                                 q.confirmed_payment_histogram(usize::from(height))
-                            })
-                            .await),
-                        Err(e) => Ok(e.into_response()),
-                    }
+                            }
+                        })
+                        .await)
                 },
                 |op| {
                     op.id("get_oracle_histogram_payments")
@@ -145,19 +143,17 @@ impl OracleRoutes for ApiRouter<AppState> {
                        _: Empty,
                        State(state): State<AppState>|
                        -> Result<Response> {
-                    match path.resolve() {
-                        Ok(HeightOrDate::Date(date)) => Ok(state
-                            .respond_json_content(&headers, move |q| {
+                    let point = path.resolve()?;
+                    Ok(state
+                        .respond_json_content(&headers, move |q| match point {
+                            HeightOrDate::Date(date) => {
                                 q.confirmed_output_histogram_day(Day1::try_from(date)?)
-                            })
-                            .await),
-                        Ok(HeightOrDate::Height(height)) => Ok(state
-                            .respond_json_content(&headers, move |q| {
+                            }
+                            HeightOrDate::Height(height) => {
                                 q.confirmed_output_histogram(usize::from(height))
-                            })
-                            .await),
-                        Err(e) => Ok(e.into_response()),
-                    }
+                            }
+                        })
+                        .await)
                 },
                 |op| {
                     op.id("get_oracle_histogram_outputs")

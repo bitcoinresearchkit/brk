@@ -18,7 +18,7 @@ use vecs::{
 use bitview_plugin::{PluginId, PluginStorage};
 use brk_types::Version;
 
-const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("coinflow"), Version::new(14));
+const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("coinflow"), Version::new(15));
 pub const ID: PluginId = STORAGE.id();
 
 const AGE_COHORT_COUNT: usize = bitview_cohort::AGE_RANGE_COUNT;

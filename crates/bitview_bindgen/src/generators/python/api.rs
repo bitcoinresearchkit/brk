@@ -261,20 +261,13 @@ pub fn generate_api_methods(output: &mut String, endpoints: &[Endpoint]) {
             if endpoint.supports_csv {
                 writeln!(output, "        if format == 'csv':").unwrap();
                 writeln!(output, "            return self.get_text(path)").unwrap();
-                writeln!(
-                    output,
-                    "        return {}self.{}(path{}){}",
-                    wrap_prefix, fetch_method, body_arg, wrap_suffix
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    output,
-                    "        return {}self.{}(path{}){}",
-                    wrap_prefix, fetch_method, body_arg, wrap_suffix
-                )
-                .unwrap();
             }
+            writeln!(
+                output,
+                "        return {}self.{}(path{}){}",
+                wrap_prefix, fetch_method, body_arg, wrap_suffix
+            )
+            .unwrap();
         }
 
         writeln!(output).unwrap();
@@ -286,37 +279,37 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {
-    let mut params = Vec::new();
+    let mut params = String::new();
     // Path params are always required
     for param in &endpoint.path_params {
         let safe_name = escape_python_keyword(&param.name);
         let py_type = js_type_to_python(&param.param_type);
-        params.push(format!(", {}: {}", safe_name, py_type));
+        write!(params, ", {}: {}", safe_name, py_type).unwrap();
     }
     // Required query params must come before optional ones (Python syntax requirement)
     for param in &endpoint.query_params {
         if param.required {
             let safe_name = escape_python_keyword(&param.name);
             let py_type = js_type_to_python(&param.param_type);
-            params.push(format!(", {}: {}", safe_name, py_type));
+            write!(params, ", {}: {}", safe_name, py_type).unwrap();
         }
     }
     for param in &endpoint.query_params {
         if !param.required {
             let safe_name = escape_python_keyword(&param.name);
             let py_type = js_type_to_python(&param.param_type);
-            params.push(format!(", {}: Optional[{}] = None", safe_name, py_type));
+            write!(params, ", {}: Optional[{}] = None", safe_name, py_type).unwrap();
         }
     }
     if let Some(body) = &endpoint.request_body {
         let py_type = js_type_to_python(&body.body_type);
         if body.required {
-            params.push(format!(", body: {}", py_type));
+            write!(params, ", body: {}", py_type).unwrap();
         } else {
-            params.push(format!(", body: Optional[{}] = None", py_type));
+            write!(params, ", body: Optional[{}] = None", py_type).unwrap();
         }
     }
-    params.join("")
+    params
 }
 
 fn build_path_template(path: &str, path_params: &[Parameter]) -> String {

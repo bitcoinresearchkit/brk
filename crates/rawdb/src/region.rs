@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{fs::File, sync::Arc};
 
 #[cfg(unix)]
@@ -583,7 +581,11 @@ impl Region {
     /// Space becomes reusable after the next `flush()`.
     pub fn remove(self) -> Result<()> {
         let db = self.db();
-        debug!("{}: '{}' remove", db, self.meta().id());
+        debug!(
+            "Removing region — database={} region={}",
+            db,
+            self.meta().id()
+        );
         trace!("{}: remove acquiring layout_mut", db);
         // Lock order: layout → regions
         let mut layout = db.layout_mut();

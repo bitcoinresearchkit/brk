@@ -1,11 +1,10 @@
 use std::ops::{Add, AddAssign, Range};
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::Sats;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
-use vecdb::ColumnId;
+use serde::{Deserialize, Serialize};
 
 use super::{AmountBucket, AmountFilter, CohortName, Filter};
 
@@ -82,7 +81,8 @@ pub const AMOUNT_RANGE_FILTERS: AmountRange<Filter> = AmountRange {
     over_100k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS.over_100k_btc)),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct AmountRange<T> {
     /// Uses zero-satoshi values.
     pub _0sats: T,
@@ -168,70 +168,23 @@ impl<T> AmountRange<T> {
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = AMOUNT_RANGE_FILTERS;
-        let n = AMOUNT_RANGE_NAMES;
-        Self {
-            _0sats: create(f._0sats.clone(), n._0sats.id),
-            _1sat_to_10sats: create(f._1sat_to_10sats.clone(), n._1sat_to_10sats.id),
-            _10sats_to_100sats: create(f._10sats_to_100sats.clone(), n._10sats_to_100sats.id),
-            _100sats_to_1k_sats: create(f._100sats_to_1k_sats.clone(), n._100sats_to_1k_sats.id),
-            _1k_sats_to_10k_sats: create(f._1k_sats_to_10k_sats.clone(), n._1k_sats_to_10k_sats.id),
-            _10k_sats_to_100k_sats: create(
-                f._10k_sats_to_100k_sats.clone(),
-                n._10k_sats_to_100k_sats.id,
-            ),
-            _100k_sats_to_1m_sats: create(
-                f._100k_sats_to_1m_sats.clone(),
-                n._100k_sats_to_1m_sats.id,
-            ),
-            _1m_sats_to_10m_sats: create(f._1m_sats_to_10m_sats.clone(), n._1m_sats_to_10m_sats.id),
-            _10m_sats_to_1btc: create(f._10m_sats_to_1btc.clone(), n._10m_sats_to_1btc.id),
-            _1btc_to_10btc: create(f._1btc_to_10btc.clone(), n._1btc_to_10btc.id),
-            _10btc_to_100btc: create(f._10btc_to_100btc.clone(), n._10btc_to_100btc.id),
-            _100btc_to_1k_btc: create(f._100btc_to_1k_btc.clone(), n._100btc_to_1k_btc.id),
-            _1k_btc_to_10k_btc: create(f._1k_btc_to_10k_btc.clone(), n._1k_btc_to_10k_btc.id),
-            _10k_btc_to_100k_btc: create(f._10k_btc_to_100k_btc.clone(), n._10k_btc_to_100k_btc.id),
-            over_100k_btc: create(f.over_100k_btc.clone(), n.over_100k_btc.id),
-        }
+        Self::from_fn(|id| {
+            create(
+                id.select(&AMOUNT_RANGE_FILTERS).clone(),
+                id.select(&AMOUNT_RANGE_NAMES).id,
+            )
+        })
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = AMOUNT_RANGE_FILTERS;
-        let n = AMOUNT_RANGE_NAMES;
-        Ok(Self {
-            _0sats: create(f._0sats.clone(), n._0sats.id)?,
-            _1sat_to_10sats: create(f._1sat_to_10sats.clone(), n._1sat_to_10sats.id)?,
-            _10sats_to_100sats: create(f._10sats_to_100sats.clone(), n._10sats_to_100sats.id)?,
-            _100sats_to_1k_sats: create(f._100sats_to_1k_sats.clone(), n._100sats_to_1k_sats.id)?,
-            _1k_sats_to_10k_sats: create(
-                f._1k_sats_to_10k_sats.clone(),
-                n._1k_sats_to_10k_sats.id,
-            )?,
-            _10k_sats_to_100k_sats: create(
-                f._10k_sats_to_100k_sats.clone(),
-                n._10k_sats_to_100k_sats.id,
-            )?,
-            _100k_sats_to_1m_sats: create(
-                f._100k_sats_to_1m_sats.clone(),
-                n._100k_sats_to_1m_sats.id,
-            )?,
-            _1m_sats_to_10m_sats: create(
-                f._1m_sats_to_10m_sats.clone(),
-                n._1m_sats_to_10m_sats.id,
-            )?,
-            _10m_sats_to_1btc: create(f._10m_sats_to_1btc.clone(), n._10m_sats_to_1btc.id)?,
-            _1btc_to_10btc: create(f._1btc_to_10btc.clone(), n._1btc_to_10btc.id)?,
-            _10btc_to_100btc: create(f._10btc_to_100btc.clone(), n._10btc_to_100btc.id)?,
-            _100btc_to_1k_btc: create(f._100btc_to_1k_btc.clone(), n._100btc_to_1k_btc.id)?,
-            _1k_btc_to_10k_btc: create(f._1k_btc_to_10k_btc.clone(), n._1k_btc_to_10k_btc.id)?,
-            _10k_btc_to_100k_btc: create(
-                f._10k_btc_to_100k_btc.clone(),
-                n._10k_btc_to_100k_btc.id,
-            )?,
-            over_100k_btc: create(f.over_100k_btc.clone(), n.over_100k_btc.id)?,
+        Self::try_from_fn(|id| {
+            create(
+                id.select(&AMOUNT_RANGE_FILTERS).clone(),
+                id.select(&AMOUNT_RANGE_NAMES).id,
+            )
         })
     }
 
@@ -284,91 +237,11 @@ impl<T> AmountRange<T> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._0sats,
-            &self._1sat_to_10sats,
-            &self._10sats_to_100sats,
-            &self._100sats_to_1k_sats,
-            &self._1k_sats_to_10k_sats,
-            &self._10k_sats_to_100k_sats,
-            &self._100k_sats_to_1m_sats,
-            &self._1m_sats_to_10m_sats,
-            &self._10m_sats_to_1btc,
-            &self._1btc_to_10btc,
-            &self._10btc_to_100btc,
-            &self._100btc_to_1k_btc,
-            &self._1k_btc_to_10k_btc,
-            &self._10k_btc_to_100k_btc,
-            &self.over_100k_btc,
-        ]
-        .into_iter()
-    }
-
     pub fn iter_typed(&self) -> impl Iterator<Item = (Sats, &T)> {
-        [
-            (Sats::ZERO, &self._0sats),
-            (Sats::_1, &self._1sat_to_10sats),
-            (Sats::_10, &self._10sats_to_100sats),
-            (Sats::_100, &self._100sats_to_1k_sats),
-            (Sats::_1K, &self._1k_sats_to_10k_sats),
-            (Sats::_10K, &self._10k_sats_to_100k_sats),
-            (Sats::_100K, &self._100k_sats_to_1m_sats),
-            (Sats::_1M, &self._1m_sats_to_10m_sats),
-            (Sats::_10M, &self._10m_sats_to_1btc),
-            (Sats::_1BTC, &self._1btc_to_10btc),
-            (Sats::_10BTC, &self._10btc_to_100btc),
-            (Sats::_100BTC, &self._100btc_to_1k_btc),
-            (Sats::_1K_BTC, &self._1k_btc_to_10k_btc),
-            (Sats::_10K_BTC, &self._10k_btc_to_100k_btc),
-            (Sats::_100K_BTC, &self.over_100k_btc),
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._0sats,
-            &mut self._1sat_to_10sats,
-            &mut self._10sats_to_100sats,
-            &mut self._100sats_to_1k_sats,
-            &mut self._1k_sats_to_10k_sats,
-            &mut self._10k_sats_to_100k_sats,
-            &mut self._100k_sats_to_1m_sats,
-            &mut self._1m_sats_to_10m_sats,
-            &mut self._10m_sats_to_1btc,
-            &mut self._1btc_to_10btc,
-            &mut self._10btc_to_100btc,
-            &mut self._100btc_to_1k_btc,
-            &mut self._1k_btc_to_10k_btc,
-            &mut self._10k_btc_to_100k_btc,
-            &mut self.over_100k_btc,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self._0sats,
-            &mut self._1sat_to_10sats,
-            &mut self._10sats_to_100sats,
-            &mut self._100sats_to_1k_sats,
-            &mut self._1k_sats_to_10k_sats,
-            &mut self._10k_sats_to_100k_sats,
-            &mut self._100k_sats_to_1m_sats,
-            &mut self._1m_sats_to_10m_sats,
-            &mut self._10m_sats_to_1btc,
-            &mut self._1btc_to_10btc,
-            &mut self._10btc_to_100btc,
-            &mut self._100btc_to_1k_btc,
-            &mut self._1k_btc_to_10k_btc,
-            &mut self._10k_btc_to_100k_btc,
-            &mut self.over_100k_btc,
-        ]
-        .into_par_iter()
+        AMOUNT_RANGE_BOUNDS
+            .iter()
+            .zip(self.iter())
+            .map(|(bounds, value)| (bounds.start, value))
     }
 }
 

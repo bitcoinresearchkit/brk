@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -20,9 +22,9 @@ use crate::TypeIndex;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct P2TRAddrIndex(TypeIndex);
 
 impl From<TypeIndex> for P2TRAddrIndex {
@@ -86,17 +88,32 @@ impl CheckedSub<P2TRAddrIndex> for P2TRAddrIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-
-impl PrintableIndex for P2TRAddrIndex {
-    fn to_string() -> &'static str {
-        "p2tr_addr_index"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["traddr", "p2traddr", "p2tr_addr_index"]
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<P2TRAddrIndex> for P2TRAddrIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
+impl P2TRAddrIndex {
+    pub fn index_name() -> &'static str {
+        "p2tr_addr_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["traddr", "p2traddr", "p2tr_addr_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for P2TRAddrIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
+
+#[cfg(feature = "storage")]
 impl VecIndex for P2TRAddrIndex {
     const INITIAL_CAPACITY: usize = 100_000_000;
 }
@@ -107,6 +124,7 @@ impl std::fmt::Display for P2TRAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for P2TRAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

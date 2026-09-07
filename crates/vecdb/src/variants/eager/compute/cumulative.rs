@@ -36,11 +36,9 @@ where
                 V::T::default()
             };
 
-            let mut i = skip;
             source.try_fold_range_at(skip, end, (), |(), v: S| {
                 cumulative_val += v.into();
                 this.push(cumulative_val);
-                i += 1;
                 Ok(())
             })
         })
@@ -110,13 +108,11 @@ where
 
                 let batch2 = source2.collect_range_at(skip, end);
                 let mut iter2 = batch2.into_iter();
-                let mut i = skip;
 
                 source1.try_fold_range_at(skip, end, (), |(), v1: S1| {
                     let v2 = iter2.next().unwrap();
                     cumulative_val += transform(v1, v2);
                     this.push(cumulative_val);
-                    i += 1;
                     Ok(())
                 })
             },
@@ -184,7 +180,7 @@ where
 
             let mut leave_idx = 0;
             let mut i = skip;
-            source.try_fold_range_at(skip, end, (), |(), v: S| {
+            source.fold_range_at(skip, end, (), |(), v: S| {
                 if i >= window_size {
                     if predicate(&leave_batch[leave_idx]) {
                         count -= 1;
@@ -197,8 +193,8 @@ where
 
                 this.push(V::T::from(count));
                 i += 1;
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 

@@ -81,50 +81,7 @@ impl Config {
 
         fs::create_dir_all(&config_dir)?;
 
-        let mut config = Self::load()?;
-
-        if let Some(v) = config_args.bitviewdir {
-            config.bitviewdir = Some(v);
-        }
-        if let Some(v) = config_args.serverbind {
-            config.serverbind = Some(v);
-        }
-        if let Some(v) = config_args.serverport {
-            config.serverport = Some(v);
-        }
-        if let Some(v) = config_args.website {
-            config.website = Some(v);
-        }
-        if let Some(v) = config_args.cdn {
-            config.cdn = Some(v);
-        }
-        if let Some(v) = config_args.maxweight {
-            config.maxweight = Some(v);
-        }
-        if let Some(v) = config_args.maxutxos {
-            config.maxutxos = Some(v);
-        }
-        if let Some(v) = config_args.bitcoindir {
-            config.bitcoindir = Some(v);
-        }
-        if let Some(v) = config_args.blocksdir {
-            config.blocksdir = Some(v);
-        }
-        if let Some(v) = config_args.rpcconnect {
-            config.rpcconnect = Some(v);
-        }
-        if let Some(v) = config_args.rpcport {
-            config.rpcport = Some(v);
-        }
-        if let Some(v) = config_args.rpccookiefile {
-            config.rpccookiefile = Some(v);
-        }
-        if let Some(v) = config_args.rpcuser {
-            config.rpcuser = Some(v);
-        }
-        if let Some(v) = config_args.rpcpassword {
-            config.rpcpassword = Some(v);
-        }
+        let config = Self::load()?.with_overrides(config_args);
 
         let data_path = config.bitviewdir();
 
@@ -132,6 +89,25 @@ impl Config {
         fs::create_dir_all(&data_path)?;
 
         config.runner()
+    }
+
+    fn with_overrides(self, overrides: Self) -> Self {
+        Self {
+            bitviewdir: overrides.bitviewdir.or(self.bitviewdir),
+            serverbind: overrides.serverbind.or(self.serverbind),
+            serverport: overrides.serverport.or(self.serverport),
+            website: overrides.website.or(self.website),
+            cdn: overrides.cdn.or(self.cdn),
+            maxweight: overrides.maxweight.or(self.maxweight),
+            maxutxos: overrides.maxutxos.or(self.maxutxos),
+            bitcoindir: overrides.bitcoindir.or(self.bitcoindir),
+            blocksdir: overrides.blocksdir.or(self.blocksdir),
+            rpcconnect: overrides.rpcconnect.or(self.rpcconnect),
+            rpcport: overrides.rpcport.or(self.rpcport),
+            rpccookiefile: overrides.rpccookiefile.or(self.rpccookiefile),
+            rpcuser: overrides.rpcuser.or(self.rpcuser),
+            rpcpassword: overrides.rpcpassword.or(self.rpcpassword),
+        }
     }
 
     fn parse_args() -> Self {
@@ -364,8 +340,8 @@ Finally, you can run the program with '-h' for help."
         Client::new(
             &format!(
                 "http://{}:{}",
-                self.rpcconnect().unwrap_or(&"localhost".to_string()),
-                self.rpcport().unwrap_or(8332)
+                self.rpcconnect.as_deref().unwrap_or("localhost"),
+                self.rpcport.unwrap_or(8332)
             ),
             self.rpc_auth()?,
         )
@@ -376,22 +352,11 @@ Finally, you can run the program with '-h' for help."
 
         if cookie.is_file() {
             Ok(Auth::CookieFile(cookie))
-        } else if self.rpcuser.is_some() && self.rpcpassword.is_some() {
-            Ok(Auth::UserPass(
-                self.rpcuser.clone().unwrap(),
-                self.rpcpassword.clone().unwrap(),
-            ))
+        } else if let (Some(user), Some(password)) = (&self.rpcuser, &self.rpcpassword) {
+            Ok(Auth::UserPass(user.clone(), password.clone()))
         } else {
             Err(Error::AuthFailed)
         }
-    }
-
-    fn rpcconnect(&self) -> Option<&String> {
-        self.rpcconnect.as_ref()
-    }
-
-    fn rpcport(&self) -> Option<u16> {
-        self.rpcport
     }
 
     fn bitcoindir(&self) -> PathBuf {

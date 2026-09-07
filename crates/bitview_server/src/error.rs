@@ -28,67 +28,30 @@ fn error_type(status: StatusCode) -> &'static str {
     }
 }
 
-fn error_status(e: &BrkError) -> StatusCode {
-    match e {
-        BrkError::InvalidTxid
-        | BrkError::InvalidNetwork
-        | BrkError::InvalidAddr
-        | BrkError::UnsupportedType(_)
-        | BrkError::Parse(_)
-        | BrkError::NoSeries
-        | BrkError::SeriesUnsupportedIndex { .. }
-        | BrkError::WeightExceeded { .. }
-        | BrkError::TooManyUtxos => StatusCode::BAD_REQUEST,
-
-        BrkError::UnknownAddr
-        | BrkError::UnknownTxid
-        | BrkError::NotFound(_)
-        | BrkError::NoData
-        | BrkError::OutOfRange(_)
-        | BrkError::UnindexableDate
-        | BrkError::SeriesNotFound(_) => StatusCode::NOT_FOUND,
-
-        BrkError::AuthFailed => StatusCode::FORBIDDEN,
-        BrkError::MempoolNotAvailable | BrkError::StateUpdating => StatusCode::SERVICE_UNAVAILABLE,
-
-        _ => StatusCode::INTERNAL_SERVER_ERROR,
-    }
-}
-
-fn error_code(e: &BrkError) -> &'static str {
-    match e {
-        BrkError::InvalidAddr => "invalid_addr",
-        BrkError::InvalidTxid => "invalid_txid",
-        BrkError::InvalidNetwork => "invalid_network",
-        BrkError::UnsupportedType(_) => "unsupported_type",
-        BrkError::Parse(_) => "parse_error",
-        BrkError::NoSeries => "no_series",
-        BrkError::SeriesUnsupportedIndex { .. } => "series_unsupported_index",
-        BrkError::WeightExceeded { .. } => "weight_exceeded",
-        BrkError::TooManyUtxos => "too_many_utxos",
-        BrkError::UnknownAddr => "unknown_addr",
-        BrkError::UnknownTxid => "unknown_txid",
-        BrkError::NotFound(_) => "not_found",
-        BrkError::OutOfRange(_) => "out_of_range",
-        BrkError::UnindexableDate => "unindexable_date",
-        BrkError::NoData => "no_data",
-        BrkError::SeriesNotFound(_) => "series_not_found",
-        BrkError::MempoolNotAvailable => "mempool_not_available",
-        BrkError::StateUpdating => "state_updating",
-        BrkError::AuthFailed => "auth_failed",
-        _ => "internal_error",
-    }
-}
-
-fn build_error_body(status: StatusCode, code: &'static str, message: String) -> Vec<u8> {
-    to_vec(&ErrorBody::new(error_type(status), code, message, DOC_URL)).unwrap()
-}
-
-fn apply_retry_after(code: &str, response: &mut Response) {
-    if matches!(code, "state_updating" | "overloaded") {
-        response
-            .headers_mut()
-            .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
+fn error_details(error: &BrkError) -> (StatusCode, &'static str) {
+    match error {
+        BrkError::InvalidAddr => (StatusCode::BAD_REQUEST, "invalid_addr"),
+        BrkError::InvalidTxid => (StatusCode::BAD_REQUEST, "invalid_txid"),
+        BrkError::InvalidNetwork => (StatusCode::BAD_REQUEST, "invalid_network"),
+        BrkError::UnsupportedType(_) => (StatusCode::BAD_REQUEST, "unsupported_type"),
+        BrkError::Parse(_) => (StatusCode::BAD_REQUEST, "parse_error"),
+        BrkError::NoSeries => (StatusCode::BAD_REQUEST, "no_series"),
+        BrkError::SeriesUnsupportedIndex { .. } => {
+            (StatusCode::BAD_REQUEST, "series_unsupported_index")
+        }
+        BrkError::WeightExceeded { .. } => (StatusCode::BAD_REQUEST, "weight_exceeded"),
+        BrkError::TooManyUtxos => (StatusCode::BAD_REQUEST, "too_many_utxos"),
+        BrkError::UnknownAddr => (StatusCode::NOT_FOUND, "unknown_addr"),
+        BrkError::UnknownTxid => (StatusCode::NOT_FOUND, "unknown_txid"),
+        BrkError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found"),
+        BrkError::OutOfRange(_) => (StatusCode::NOT_FOUND, "out_of_range"),
+        BrkError::UnindexableDate => (StatusCode::NOT_FOUND, "unindexable_date"),
+        BrkError::NoData => (StatusCode::NOT_FOUND, "no_data"),
+        BrkError::SeriesNotFound(_) => (StatusCode::NOT_FOUND, "series_not_found"),
+        BrkError::MempoolNotAvailable => (StatusCode::SERVICE_UNAVAILABLE, "mempool_not_available"),
+        BrkError::StateUpdating => (StatusCode::SERVICE_UNAVAILABLE, "state_updating"),
+        BrkError::AuthFailed => (StatusCode::FORBIDDEN, "auth_failed"),
+        _ => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error"),
     }
 }
 
@@ -112,22 +75,15 @@ impl Error {
         Self::new(StatusCode::BAD_REQUEST, "bad_request", msg)
     }
 
-    pub fn forbidden(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::FORBIDDEN, "forbidden", msg)
-    }
-
     pub fn not_found(msg: impl Into<String>) -> Self {
         Self::new(StatusCode::NOT_FOUND, "not_found", msg)
-    }
-
-    pub fn not_implemented(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::NOT_IMPLEMENTED, "not_implemented", msg)
     }
 
     pub fn internal(msg: impl Into<String>) -> Self {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg)
     }
 
+    #[cfg(any(feature = "chain", feature = "series", feature = "urpd", test))]
     pub fn overloaded(msg: impl Into<String>) -> Self {
         Self::new(StatusCode::SERVICE_UNAVAILABLE, "overloaded", msg)
     }
@@ -141,36 +97,14 @@ impl Error {
             },
         }
     }
-
-    fn build_response(self) -> Response {
-        let body = build_error_body(self.status, self.code, self.message);
-        let mut response = (
-            self.status,
-            [(header::CONTENT_TYPE, "application/problem+json")],
-            body,
-        )
-            .into_response();
-        apply_retry_after(self.code, &mut response);
-        match self.code {
-            "state_updating" => {
-                response
-                    .extensions_mut()
-                    .insert(ReadAvailability::Publication);
-            }
-            "overloaded" => {
-                response.extensions_mut().insert(ReadAvailability::Capacity);
-            }
-            _ => {}
-        }
-        response
-    }
 }
 
 impl From<BrkError> for Error {
     fn from(e: BrkError) -> Self {
+        let (status, code) = error_details(&e);
         Self {
-            status: error_status(&e),
-            code: error_code(&e),
+            status,
+            code,
             message: e.to_string(),
         }
     }
@@ -183,7 +117,30 @@ impl OperationOutput for Error {
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         let policy = self.cache_policy();
-        let mut response = self.build_response();
+        let body = to_vec(&ErrorBody::new(
+            error_type(self.status),
+            self.code,
+            self.message,
+            DOC_URL,
+        ))
+        .unwrap();
+        let mut response = (
+            self.status,
+            [(header::CONTENT_TYPE, "application/problem+json")],
+            body,
+        )
+            .into_response();
+        let availability = match self.code {
+            "state_updating" => Some(ReadAvailability::Publication),
+            "overloaded" => Some(ReadAvailability::Capacity),
+            _ => None,
+        };
+        if let Some(availability) = availability {
+            response
+                .headers_mut()
+                .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
+            response.extensions_mut().insert(availability);
+        }
         CacheParams::apply_error_cache_control(response.headers_mut(), policy);
         response
     }

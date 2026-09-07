@@ -3,6 +3,7 @@ use std::sync::Arc;
 use axum::{
     http::{HeaderValue, header::CACHE_CONTROL},
     response::{Html, IntoResponse, Response},
+    routing::{MethodRouter, get},
 };
 
 const HTML: &str = include_str!("../assets/index.html");
@@ -117,7 +118,11 @@ fn render(
     ])
 }
 
-pub async fn get(html: Arc<str>) -> Response {
+pub fn route(html: Arc<str>) -> MethodRouter {
+    get(move || std::future::ready(response(html.clone())))
+}
+
+fn response(html: Arc<str>) -> Response {
     let mut response = Html(html.to_string()).into_response();
     response.headers_mut().insert(
         CACHE_CONTROL,

@@ -1,3 +1,5 @@
+use std::{fmt::Display, str::FromStr};
+
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
@@ -5,54 +7,45 @@ pub fn de_unquote_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let value: Option<Value> = Option::deserialize(deserializer)?;
-
-    if value.is_none() {
-        return Ok(None);
-    }
-
-    let value = value.unwrap();
-
-    if let Some(mut s) = value.as_str().map(|s| s.to_string()) {
-        if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
-            s = s[1..s.len() - 1].to_string();
-        }
-        if s == "null" || s.is_empty() {
-            return Ok(None);
-        }
-        s.parse::<i64>().map(Some).map_err(serde::de::Error::custom)
-    } else if let Some(n) = value.as_i64() {
-        Ok(Some(n))
-    } else {
-        Err(serde::de::Error::custom("expected a string or number"))
-    }
+    de_unquote(deserializer, Value::as_i64)
 }
 
 pub fn de_unquote_usize<'de, D>(deserializer: D) -> Result<Option<usize>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let value: Option<Value> = Option::deserialize(deserializer)?;
+    de_unquote(deserializer, |value| value.as_u64().map(|n| n as usize))
+}
 
-    if value.is_none() {
+fn de_unquote<'de, D, T>(
+    deserializer: D,
+    number: impl FnOnce(&Value) -> Option<T>,
+) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    T::Err: Display,
+{
+    let Some(value) = Option::<Value>::deserialize(deserializer)? else {
         return Ok(None);
-    }
+    };
 
-    let value = value.unwrap();
-
-    if let Some(mut s) = value.as_str().map(|s| s.to_string()) {
-        if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
-            s = s[1..s.len() - 1].to_string();
-        }
+    if let Some(s) = value.as_str() {
+        let s = s
+            .strip_prefix('"')
+            .and_then(|s| s.strip_suffix('"'))
+            .unwrap_or(s);
         if s == "null" || s.is_empty() {
             return Ok(None);
         }
-        s.parse::<usize>()
-            .map(Some)
-            .map_err(serde::de::Error::custom)
-    } else if let Some(n) = value.as_u64() {
-        Ok(Some(n as usize))
+        s.parse().map(Some).map_err(serde::de::Error::custom)
     } else {
-        Err(serde::de::Error::custom("expected a string or number"))
+        number(&value)
+            .map(Some)
+            .ok_or_else(|| serde::de::Error::custom("expected a string or number"))
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/deser.rs"]
+mod tests;

@@ -13,6 +13,9 @@ use jiff::{Timestamp, tz};
 use tracing::{Level, Metadata};
 use tracing_subscriber::fmt::MakeWriter;
 
+mod writer;
+pub use writer::FileWriter;
+
 const MAX_WRITES_PER_SEC: u64 = 100;
 const LEVELS: usize = 5;
 const LEVEL_SUFFIX: [&str; LEVELS] = ["error", "warn", "info", "debug", "trace"];
@@ -33,10 +36,9 @@ pub fn is_log_file(name: &str) -> bool {
     let Some(stem) = name.strip_suffix(".txt") else {
         return false;
     };
-    if stem.len() < 10 {
+    let Some((date, rest)) = stem.split_at_checked(10) else {
         return false;
-    }
-    let (date, rest) = stem.split_at(10);
+    };
     if !is_date_yyyymmdd(date) {
         return false;
     }
@@ -155,42 +157,6 @@ impl RateLimitedFile {
     }
 }
 
-pub struct FileWriter {
-    inner: Arc<Inner>,
-    level: Option<Level>,
-}
-
-impl Write for FileWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let level_idx = self.level.map(level_index);
-
-        if let Some(i) = level_idx
-            && !self.inner.level_limits[i].can_write()
-        {
-            return Ok(buf.len());
-        }
-
-        let date = today();
-        let dir = &self.inner.dir;
-
-        self.inner
-            .combined_slot
-            .write(dir, &date, buf, || dir.join(format!("{date}.txt")))?;
-
-        if let Some(i) = level_idx {
-            self.inner.level_slots[i].write(dir, &date, buf, || {
-                dir.join(format!("{date}_{}.txt", LEVEL_SUFFIX[i]))
-            })?;
-        }
-
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
 impl<'a> MakeWriter<'a> for RateLimitedFile {
     type Writer = FileWriter;
 
@@ -245,5 +211,8 @@ mod tests {
         assert!(!is_log_file("notes.txt"));
         assert!(!is_log_file("README"));
         assert!(!is_log_file("2026-05-06.log"));
+        for name in ["🦀🦀🦀.txt", "123456789é.txt", "é_notes_for_today.txt"] {
+            assert!(!is_log_file(name));
+        }
     }
 }

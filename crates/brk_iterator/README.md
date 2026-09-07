@@ -48,6 +48,11 @@ let blocks = Blocks::new_reader(&reader);
 | `last(n)` | Last n blocks from tip |
 | `after(hash)` | All blocks after given hash |
 
+Ranges are inclusive. Reversed ranges and `last(0)` return an empty iterator
+without contacting either source. A start above the current tip also produces
+an empty iterator after resolving the tip. Counts support the full `u32` height
+domain without overflow.
+
 ## Built On
 
 - `brk_error` for error handling

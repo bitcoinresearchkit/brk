@@ -1,10 +1,12 @@
 use std::ops::{Add, AddAssign, Div};
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use jiff::{civil::date, tz::TimeZone};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::Date;
 
@@ -21,9 +23,9 @@ use super::Date;
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[schemars(
     example = &1231006505,
     example = &1672531200,
@@ -170,6 +172,12 @@ impl CheckedSub<Timestamp> for Timestamp {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<Timestamp> for Timestamp {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl Div<usize> for Timestamp {
     type Output = Self;
@@ -215,6 +223,7 @@ impl std::fmt::Display for Timestamp {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Timestamp {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

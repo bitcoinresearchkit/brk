@@ -7,10 +7,6 @@ use super::{
     CountVecs, DifficultyVecs, HalvingVecs, IntervalVecs, LookbackVecs, STORAGE, SizeVecs, Vecs,
     WeightVecs,
 };
-use super::{
-    count::Import as _, difficulty::Import as _, halving::Import as _, interval::Import as _,
-    lookback::Internal as _, size::Import as _, weight::Import as _,
-};
 
 impl Vecs {
     pub fn import(

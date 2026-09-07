@@ -1,10 +1,12 @@
 use byteview::ByteView;
 use derive_more::Deref;
+#[cfg(feature = "storage")]
 use vecdb::Bytes;
 
 use super::AddrBytes;
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Bytes, Hash)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 pub struct AddrHash(u64);
 
 impl AddrHash {

@@ -23,14 +23,7 @@ with_range_format! {
 impl From<(Index, SeriesName, DataRangeFormat)> for SeriesSelection {
     #[inline]
     fn from((index, series, range): (Index, SeriesName, DataRangeFormat)) -> Self {
-        Self {
-            index,
-            series: SeriesList::from(series),
-            start: range.start(),
-            end: range.end(),
-            limit: range.limit(),
-            format: range.format(),
-        }
+        Self::from((index, SeriesList::from(series), range))
     }
 }
 

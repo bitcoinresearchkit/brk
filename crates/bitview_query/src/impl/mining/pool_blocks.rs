@@ -1,5 +1,4 @@
-use crate::internals::*;
-
+use bitview_plugin::PluginReadGuard;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockHash, BlockInfoV1, Dollars, Height, PoolSlug};
 use vecdb::ReadableVec;
@@ -107,4 +106,3 @@ impl Query {
         self.pool_blocks_resolved(resolved)
     }
 }
-use bitview_plugin::PluginReadGuard;

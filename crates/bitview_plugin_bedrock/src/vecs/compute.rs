@@ -1,12 +1,9 @@
-use crate::internals::*;
-
 use brk_error::Result;
 
-use bitview_cohort::{AgeRange, AgeRangeId};
+use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregate};
 use bitview_compute::{AgeBand, db_utils::validate_any_computed_version_or_reset};
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_coinflow::HorizonId;
-use bitview_plugin_distribution::UTXOStates;
 use bitview_plugin_indexer::Indexer;
 use brk_exit::Exit;
 use brk_types::{
@@ -46,34 +43,20 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mappings,
-            dependencies.distribution,
-            dependencies.utxo_states,
-            dependencies.cointime,
-            dependencies.coinflow,
-            context.exit(),
-        )
-    }
-}
+        let Dependencies {
+            indexer,
+            mappings,
+            distribution,
+            utxo_states,
+            cointime,
+            coinflow,
+        } = dependencies;
+        let exit = context.exit();
 
-impl Vecs {
-    #[allow(clippy::too_many_arguments)]
-    fn compute_inner(
-        &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        utxo_states: &UTXOStates,
-        cointime: &bitview_plugin_cointime::Vecs,
-        coinflow: &bitview_plugin_coinflow::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
         self.db.sync_bg_tasks()?;
 
         let cointime_wakefulness =
-            AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1);
+            AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1.0);
         let age_supplies = AgeRange::from_fn(|id| {
             &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
                 .sats
@@ -99,7 +82,9 @@ impl Vecs {
         let weighted_loss_shares =
             WeightedModes::from_fn(|mode| -> &dyn ReadableVec<Day1, Option<StoredF64>> {
                 match mode {
-                    WeightedModeId::Cointime => &cointime.supply.active_supply_in_loss_share.day1,
+                    WeightedModeId::Cointime => {
+                        &cointime.supply.active_supply_in_loss_share.ratio.day1.0
+                    }
                     WeightedModeId::Coinflow => &coinflow.all.supply_in_loss_share.day1.0,
                     WeightedModeId::Coinflow8Y => {
                         &coinflow.all.horizon._8y.supply_in_loss_share.day1.0
@@ -146,6 +131,9 @@ impl Vecs {
         for vec in self.cost_basis.stored_vecs_mut() {
             validate_any_computed_version_or_reset(vec, weighted_urpd_source_version)?;
         }
+        for vec in self.capitalized_price.stored_vecs_mut() {
+            validate_any_computed_version_or_reset(vec, weighted_urpd_source_version)?;
+        }
 
         let source_end = std::iter::once(mappings.day1.date.len())
             .chain(std::iter::once(raw_loss_share.len()))
@@ -180,12 +168,32 @@ impl Vecs {
             .min(recompute_from)
             .min(weighted_urpd_start)
             .min(source_end);
+        let capitalized_start = self
+            .capitalized_price
+            .minimum_len()
+            .min(recompute_from)
+            .min(weighted_urpd_start)
+            .min(source_end);
 
         for vec in self.model_stored_vecs_mut() {
             vec.any_truncate_if_needed_at(model_start)?;
         }
         for vec in self.cost_basis.stored_vecs_mut() {
             vec.any_truncate_if_needed_at(cost_basis_start)?;
+        }
+        for vec in self.capitalized_price.stored_vecs_mut() {
+            vec.any_truncate_if_needed_at(capitalized_start)?;
+        }
+
+        if capitalized_start < model_start {
+            debug_assert!(weighted_urpd_is_current);
+            self.backfill_capitalized_prices(
+                mappings,
+                &weighted_urpd_names,
+                capitalized_start,
+                model_start,
+                exit,
+            )?;
         }
 
         if cost_basis_start < model_start {
@@ -210,12 +218,14 @@ impl Vecs {
             let thresholds = calibration.thresholds(&loss_shares);
             let mut result = DayResult::from_thresholds(&thresholds);
             let mut cost_basis_prices = Self::missing_cost_basis_prices();
+            let mut capitalized_prices = Self::missing_capitalized_prices();
 
             let needs_evaluation = thresholds.iter().any(Option::is_some);
             let needs_rebuild = !weighted_urpd_is_current || day_index >= recompute_from;
             let needs_cost_basis = day_index >= cost_basis_start;
+            let needs_capitalized = day_index >= capitalized_start;
             if let Some(date) = mappings.day1.date.collect_one(day)
-                && (needs_rebuild || needs_evaluation || needs_cost_basis)
+                && (needs_rebuild || needs_evaluation || needs_cost_basis || needs_capitalized)
             {
                 let weights = Self::mode_weights(
                     day,
@@ -236,10 +246,13 @@ impl Vecs {
                         urpds.write(&self.states_path, &weighted_urpd_names, date)?;
                     }
                     if needs_evaluation {
-                        result.evaluate(&urpds, &thresholds);
+                        result.evaluate(&urpds);
                     }
                     if needs_cost_basis {
                         cost_basis_prices = urpds.all_cost_basis_percentile_prices();
+                    }
+                    if needs_capitalized {
+                        capitalized_prices = urpds.capitalized_prices();
                     }
                 }
             }
@@ -247,6 +260,9 @@ impl Vecs {
 
             if needs_cost_basis {
                 self.cost_basis.push(&cost_basis_prices);
+            }
+            if needs_capitalized {
+                self.capitalized_price.push(&capitalized_prices);
             }
 
             for mode in ModeId::ALL {
@@ -265,6 +281,11 @@ impl Vecs {
                         vec.write()?;
                     }
                 }
+                if needs_capitalized {
+                    for vec in self.capitalized_price.stored_vecs_mut() {
+                        vec.write()?;
+                    }
+                }
             }
         }
 
@@ -273,13 +294,44 @@ impl Vecs {
             DayUrpds::write_version(&self.states_path, weighted_urpd_source_version)?;
         }
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
 
         Ok(())
+    }
+}
+
+impl Vecs {
+    fn backfill_capitalized_prices(
+        &mut self,
+        mappings: &bitview_plugin_mappings::Vecs,
+        names: &crate::WeightedUrpdNames,
+        start: usize,
+        end: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        for day_index in start..end {
+            let prices = if let Some(date) = mappings.day1.date.collect_one(Day1::from(day_index)) {
+                DayUrpds::read_capitalized_prices(&self.states_path, names, date)?
+            } else {
+                Self::missing_capitalized_prices()
+            };
+            self.capitalized_price.push(&prices);
+            if (day_index + 1).is_multiple_of(WRITE_INTERVAL_DAYS) || day_index + 1 == end {
+                let _lock = exit.lock();
+                for vec in self.capitalized_price.stored_vecs_mut() {
+                    vec.write()?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn missing_capitalized_prices() -> UTXOAggregate<WeightedPair<Cents>> {
+        UTXOAggregate {
+            all: WeightedPair::from_fn(|_| Cents::NAN),
+            sth: WeightedPair::from_fn(|_| Cents::NAN),
+            lth: WeightedPair::from_fn(|_| Cents::NAN),
+        }
     }
 
     fn backfill_cost_basis(

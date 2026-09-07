@@ -16,15 +16,12 @@ mod search_query;
 mod series_count;
 mod series_data;
 mod series_info;
-mod series_leaf;
-mod series_leaf_with_schema;
 mod series_list;
 mod series_name;
 mod series_name_with_index;
 mod series_paginated;
 mod series_selection;
 mod sync_status;
-mod tree_node;
 
 pub use data_range_format::*;
 pub use detailed_series_count::*;
@@ -37,15 +34,12 @@ pub use search_query::*;
 pub use series_count::*;
 pub use series_data::*;
 pub use series_info::*;
-pub use series_leaf::*;
-pub use series_leaf_with_schema::*;
 pub use series_list::*;
 pub use series_name::*;
 pub use series_name_with_index::*;
 pub use series_paginated::*;
 pub use series_selection::*;
 pub use sync_status::*;
-pub use tree_node::*;
 
 fn de_unquote_limit<'de, D>(deserializer: D) -> Result<Option<Limit>, D::Error>
 where

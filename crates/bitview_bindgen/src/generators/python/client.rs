@@ -3,8 +3,8 @@
 use std::fmt::Write;
 
 use crate::{
-    ClientConstants, ClientMetadata, CohortConstants, IndexSetPattern, PythonSyntax,
-    StructuralPattern, format_json, generate_parameterized_field, index_to_field_name,
+    ClientConstants, ClientMetadata, IndexSetPattern, PythonSyntax, StructuralPattern,
+    cohort_constants, format_json, generate_parameterized_field, index_to_field_name,
 };
 
 /// Generate class-level constants for the BitviewClient class.
@@ -16,34 +16,30 @@ pub fn generate_class_constants(output: &mut String) {
 
     // INDEXES, POOL_ID_TO_POOL_NAME
     write_class_const(output, "INDEXES", &format_json(&constants.indexes));
-    // Python needs string keys for pool map
-    let pool_map: std::collections::BTreeMap<String, &str> = constants
-        .pool_map
-        .iter()
-        .map(|(k, v)| (k.to_string(), *v))
-        .collect();
-    write_class_const(output, "POOL_ID_TO_POOL_NAME", &format_json(&pool_map));
+    write_class_const(
+        output,
+        "POOL_ID_TO_POOL_NAME",
+        &format_json(&constants.pool_map),
+    );
 
     // Cohort constants (no camelCase conversion for Python)
-    for (name, value) in CohortConstants::all() {
+    for (name, value) in cohort_constants() {
         write_class_const(output, name, &format_json(&value));
     }
 }
 
 fn write_class_const(output: &mut String, name: &str, json: &str) {
-    let indented = json
-        .lines()
-        .enumerate()
-        .map(|(i, line)| {
-            if i == 0 {
-                format!("    {} = {}", name, line)
-            } else {
-                format!("    {}", line)
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-    writeln!(output, "{}\n", indented).unwrap();
+    for (i, line) in json.lines().enumerate() {
+        if i > 0 {
+            output.push('\n');
+        }
+        output.push_str("    ");
+        if i == 0 {
+            write!(output, "{name} = ").unwrap();
+        }
+        output.push_str(line);
+    }
+    output.push_str("\n\n");
 }
 
 /// Generate the base BitviewClient class with HTTP functionality

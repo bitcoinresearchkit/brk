@@ -16,8 +16,8 @@ zstd = ["vecdb/zstd"]
 
 [dependencies]
 bitview_traversable_derive = { workspace = true, optional = true }
-bitview_types = { workspace = true }
-brk_types = { workspace = true }
+bitview_catalog = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 indexmap = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }

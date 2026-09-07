@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::StoredU64;
@@ -54,11 +54,17 @@ where
         StoredU64::from(next.checked_sub(current).unwrap_or_default())
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(StoredU64)) {
+    fn try_fold_values<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, StoredU64) -> Result<B, E>,
+    ) -> Result<B, E> {
         let len = self.len();
         let to = to.min(len);
         if from >= to {
-            return;
+            return Ok(init);
         }
 
         let mut boundaries = self
@@ -67,9 +73,17 @@ where
         if to == len {
             boundaries.push(S::from(self.terminal_len.get()));
         }
-        boundaries
-            .windows(2)
-            .for_each(|pair| each(Self::count(pair[0], pair[1])));
+        boundaries.windows(2).try_fold(init, |accumulator, pair| {
+            fold(accumulator, Self::count(pair[0], pair[1]))
+        })
+    }
+
+    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(StoredU64)) {
+        self.try_fold_values(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -140,11 +154,12 @@ where
         from: usize,
         to: usize,
         init: B,
-        fold: F,
+        mut fold: F,
     ) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, fold)
+        self.try_fold_values(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(fold(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, StoredU64) -> Result<B, E>>(
@@ -154,9 +169,7 @@ where
         init: B,
         fold: F,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, fold)
+        self.try_fold_values(from, to, init, fold)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<StoredU64> {

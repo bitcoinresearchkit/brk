@@ -18,7 +18,7 @@ use tracing::error;
 use crate::{
     Inner, Mempool,
     cycle::{Cycle, CycleDiff},
-    steps::{Applier, Fetched, Fetcher, Preparer, Prevouts},
+    steps::{Fetched, applier, fetcher, preparer, prevouts},
 };
 
 const PERIOD: Duration = Duration::from_millis(1000);
@@ -29,7 +29,7 @@ impl Mempool {
     /// resolver. Requires bitcoind started with `txindex=1`. Discards
     /// per-cycle [`Cycle`] events - use [`Mempool::tick`] to consume them.
     pub fn start(&self) {
-        self.start_with(Prevouts::rpc_resolver(self.0.client.clone()));
+        self.start_with(prevouts::rpc_resolver(self.0.client.clone()));
     }
 
     /// Variant of `start` that uses a caller-supplied resolver for
@@ -88,7 +88,7 @@ impl Mempool {
     /// incomplete prevout fill keeps anchored reads unavailable, but preserves
     /// the Cycle events for mutations already applied.
     pub fn tick(&self) -> Result<Cycle> {
-        self.tick_with(Prevouts::rpc_resolver(self.0.client.clone()))
+        self.tick_with(prevouts::rpc_resolver(self.0.client.clone()))
     }
 
     /// Variant of [`Mempool::tick`] with a caller-supplied resolver for
@@ -135,16 +135,16 @@ impl Mempool {
             new_txs,
             block_template_txids,
             address_view_complete,
-        } = Fetcher::fetch(client, state)?;
+        } = fetcher::fetch(client, state)?;
         if rpc.tip_hash != tip_before {
             return Err(Error::StateUpdating);
         }
-        let pulled = Preparer::prepare(&rpc.live_txids, new_entries, new_txs, state);
+        let pulled = preparer::prepare(&rpc.live_txids, new_entries, new_txs, state);
         let mut diff = CycleDiff::default();
         let prev_snapshot = rebuilder.snapshot();
-        Applier::apply(state, &prev_snapshot, pulled, &mut diff);
+        applier::apply(state, &prev_snapshot, pulled, &mut diff);
         drop(prev_snapshot);
-        Prevouts::fill(state, &mut diff, resolver);
+        prevouts::fill(state, &mut diff, resolver);
         // Mutations already happened: preserve their Cycle events even if the
         // final observation fails. Anchored address/histogram reads stay closed.
         let coherent_tip = client.get_best_block_hash().ok() == Some(tip_before);

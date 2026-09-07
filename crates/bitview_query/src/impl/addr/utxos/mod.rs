@@ -1,19 +1,25 @@
-use crate::internals::*;
-
 use std::str::FromStr;
 
 use bitview_plugin::PluginReadGuard;
+use bitview_plugin_indexer::Lengths;
 use brk_error::{Error, OptionData, Result};
-use brk_types::{
-    Addr, AddrBytes, BlockHash, Height, OutputType, TxIndex, TxOutIndex, TxStatus, TypeIndex, Utxo,
-    Vout,
-};
+use brk_types::{Addr, AddrBytes, BlockHash, Height, TxIndex, TxOutIndex, TxStatus, Utxo, Vout};
 
 use crate::Query;
 
-pub mod resolved;
+/// A bounded UTXO selection retaining publication exclusion until consumed.
+pub struct ResolvedAddrUtxos {
+    guard: PluginReadGuard,
+    lengths: Lengths,
+    outpoints: Vec<(TxIndex, Vout)>,
+    anchor: BlockHash,
+}
 
-pub use resolved::ResolvedAddrUtxos;
+impl ResolvedAddrUtxos {
+    pub fn block_hash(&self) -> BlockHash {
+        self.anchor
+    }
+}
 
 impl Query {
     pub fn addr_utxos(&self, addr: Addr, max_utxos: usize) -> Result<Vec<Utxo>> {
@@ -50,10 +56,8 @@ impl Query {
     ) -> Result<ResolvedAddrUtxos> {
         let (output_type, type_index) = self.resolve_addr_bytes(addr)?;
         let lengths = self.safe_lengths();
-        if type_index >= lengths.to_type_index(output_type) {
-            return Err(Error::UnknownAddr);
-        }
-        let (_, anchor) = self.addr_utxos_anchor_for(output_type, type_index)?;
+        let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
+        let anchor = self.block_hash_by_height(height)?;
         let outpoints: Vec<(TxIndex, Vout)> = self
             .indexer()
             .stores()
@@ -65,7 +69,12 @@ impl Query {
         if outpoints.len() > max_utxos {
             return Err(Error::TooManyUtxos);
         }
-        Ok(ResolvedAddrUtxos::new(guard, lengths, outpoints, anchor))
+        Ok(ResolvedAddrUtxos {
+            guard,
+            lengths,
+            outpoints,
+            anchor,
+        })
     }
 
     /// Load the captured selection while retaining its publication guard.
@@ -74,7 +83,12 @@ impl Query {
         resolved: ResolvedAddrUtxos,
         max_utxos: usize,
     ) -> Result<(Vec<Utxo>, BlockHash)> {
-        let (_guard, lengths, outpoints, block_hash) = resolved.into_parts();
+        let ResolvedAddrUtxos {
+            guard: _guard,
+            lengths,
+            outpoints,
+            anchor: block_hash,
+        } = resolved;
         let indexer = self.indexer();
         let vecs = indexer.vecs();
         if outpoints.len() > max_utxos {
@@ -127,15 +141,5 @@ impl Query {
         }
 
         Ok((utxos, block_hash))
-    }
-
-    fn addr_utxos_anchor_for(
-        &self,
-        output_type: OutputType,
-        type_index: TypeIndex,
-    ) -> Result<(Height, BlockHash)> {
-        let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
-        let hash = self.block_hash_by_height(height)?;
-        Ok((height, hash))
     }
 }

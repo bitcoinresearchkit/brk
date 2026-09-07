@@ -3,6 +3,7 @@ use std::{fmt, str::FromStr};
 use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
 use schemars::{JsonSchema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Visitor};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
 use crate::ONE_DAY_IN_SEC_F64;
@@ -10,7 +11,8 @@ use crate::ONE_DAY_IN_SEC_F64;
 use super::{Day1, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10};
 
 /// Date in YYYYMMDD format stored as u32
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Pco)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Date(u32);
 
 impl JsonSchema for Date {
@@ -280,12 +282,11 @@ impl FromStr for Date {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Date {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {

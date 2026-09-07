@@ -18,17 +18,20 @@ use std::{
 use tempfile::Builder;
 
 use super::write_if_changed;
-use crate::{ClientMetadata, Endpoint};
+use crate::{CatalogTree, Endpoint, detect_index_patterns};
+use bitview_catalog::TreeNode;
 
-/// Generate Rust client from metadata and OpenAPI endpoints.
+/// Generate a Rust client directly from the source catalog and OpenAPI endpoints.
 ///
 /// `output_path` is the full path to the output file (e.g., "crates/bitview_client/src/generated.rs").
 pub fn generate_rust_client(
-    metadata: &ClientMetadata,
+    catalog: &TreeNode,
     endpoints: &[Endpoint],
     output_path: &Path,
 ) -> io::Result<()> {
     let mut output = String::new();
+    let indexes = detect_index_patterns(catalog);
+    let tree = CatalogTree::from_catalog(catalog, &indexes);
 
     writeln!(output, "// Auto-generated Bitview Rust client").unwrap();
     writeln!(output, "// Do not edit manually\n").unwrap();
@@ -43,15 +46,12 @@ pub fn generate_rust_client(
     client::generate_base_client(&mut output);
     client::generate_series_pattern_trait(&mut output);
     client::generate_endpoint(&mut output);
-    client::generate_index_accessors(&mut output, &metadata.index_set_patterns);
-    client::generate_pattern_structs(&mut output, &metadata.structural_patterns, metadata);
-    tree::generate_tree(&mut output, &metadata.catalog, metadata);
+    client::generate_index_accessors(&mut output, &indexes);
+    tree::generate_tree(&mut output, &tree, &indexes);
     api::generate_main_client(&mut output, endpoints);
 
     let output = format_rust(output)?;
-    write_if_changed(output_path, &output)?;
-
-    Ok(())
+    write_if_changed(output_path, &output)
 }
 
 fn format_rust(source: String) -> io::Result<String> {

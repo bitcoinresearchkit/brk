@@ -58,7 +58,19 @@ pub fn forced_import(
     parent_version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
 ) -> Result<Extremes> {
-    Extremes::forced_import(db, parent_version, mappings)
+    let version = parent_version + VERSION;
+    Ok(Extremes {
+        coins_in_loss: Extreme::forced_import(db, "rarity_meter_coins_in_loss", version, mappings)?,
+        profit_taking: Extreme::forced_import(db, "rarity_meter_profit_taking", version, mappings)?,
+        capitulation: Extreme::forced_import(db, "rarity_meter_capitulation", version, mappings)?,
+        peak_regret: Extreme::forced_import(db, "rarity_meter_peak_regret", version, mappings)?,
+        seller_exhaustion: Extreme::forced_import(
+            db,
+            "rarity_meter_seller_exhaustion",
+            version,
+            mappings,
+        )?,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -72,74 +84,20 @@ pub fn compute(
     seller_exhaustion: &impl ReadableVec<Height, StoredF32>,
     exit: &Exit,
 ) -> Result<()> {
-    extremes.compute(
-        indexer,
-        coins_in_loss,
-        realized_profit,
-        realized_loss,
-        peak_regret,
-        seller_exhaustion,
-        exit,
-    )
-}
-
-impl Extremes {
-    fn forced_import(
-        db: &Database,
-        parent_version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
-        let version = parent_version + VERSION;
-        Ok(Self {
-            coins_in_loss: Extreme::forced_import(
-                db,
-                "rarity_meter_coins_in_loss",
-                version,
-                mappings,
-            )?,
-            profit_taking: Extreme::forced_import(
-                db,
-                "rarity_meter_profit_taking",
-                version,
-                mappings,
-            )?,
-            capitulation: Extreme::forced_import(
-                db,
-                "rarity_meter_capitulation",
-                version,
-                mappings,
-            )?,
-            peak_regret: Extreme::forced_import(db, "rarity_meter_peak_regret", version, mappings)?,
-            seller_exhaustion: Extreme::forced_import(
-                db,
-                "rarity_meter_seller_exhaustion",
-                version,
-                mappings,
-            )?,
-        })
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        coins_in_loss: &impl ReadableVec<Height, Bitcoin>,
-        realized_profit: &impl ReadableVec<Height, Dollars>,
-        realized_loss: &impl ReadableVec<Height, Dollars>,
-        peak_regret: &impl ReadableVec<Height, Dollars>,
-        seller_exhaustion: &impl ReadableVec<Height, StoredF32>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.coins_in_loss
-            .compute_coins_in_loss(indexer, coins_in_loss, exit)?;
-        self.profit_taking
-            .compute_realized(indexer, realized_profit, exit)?;
-        self.capitulation
-            .compute_realized(indexer, realized_loss, exit)?;
-        self.peak_regret
-            .compute_realized(indexer, peak_regret, exit)?;
-        self.seller_exhaustion
-            .compute_seller_exhaustion(indexer, seller_exhaustion, exit)?;
-        Ok(())
-    }
+    extremes
+        .coins_in_loss
+        .compute_coins_in_loss(indexer, coins_in_loss, exit)?;
+    extremes
+        .profit_taking
+        .compute_realized(indexer, realized_profit, exit)?;
+    extremes
+        .capitulation
+        .compute_realized(indexer, realized_loss, exit)?;
+    extremes
+        .peak_regret
+        .compute_realized(indexer, peak_regret, exit)?;
+    extremes
+        .seller_exhaustion
+        .compute_seller_exhaustion(indexer, seller_exhaustion, exit)?;
+    Ok(())
 }

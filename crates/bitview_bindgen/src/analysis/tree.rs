@@ -5,7 +5,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bitview_types::{TreeNode, extract_json_type};
+use bitview_catalog::{TreeNode, extract_json_type};
 use brk_types::Index;
 use indexmap::IndexMap;
 
@@ -18,11 +18,15 @@ use super::{find_common_prefix, find_common_suffix, normalize_prefix};
 /// This is useful for pattern base analysis where we want the "base" case
 /// (e.g., the leaf without suffix like `_btc` or `_usd`).
 pub fn get_shortest_leaf_name(node: &TreeNode) -> Option<String> {
+    shortest_leaf_name(node).map(str::to_owned)
+}
+
+fn shortest_leaf_name(node: &TreeNode) -> Option<&str> {
     match node {
-        TreeNode::Leaf(leaf) => Some(leaf.name().to_string()),
+        TreeNode::Leaf(leaf) => Some(leaf.name()),
         TreeNode::Branch(children) => children
             .values()
-            .filter_map(get_shortest_leaf_name)
+            .filter_map(shortest_leaf_name)
             .min_by_key(|name| name.len()),
     }
 }
@@ -67,7 +71,7 @@ pub fn get_node_fields(
 
 /// Detect index patterns (sets of indexes that appear together on series).
 pub fn detect_index_patterns(tree: &TreeNode) -> Vec<IndexSetPattern> {
-    let mut unique_index_sets: BTreeSet<BTreeSet<Index>> = BTreeSet::new();
+    let mut unique_index_sets = BTreeSet::new();
     collect_index_sets_from_tree(tree, &mut unique_index_sets);
 
     // Sort by count (descending) then by first index name for deterministic ordering
@@ -87,18 +91,18 @@ pub fn detect_index_patterns(tree: &TreeNode) -> Vec<IndexSetPattern> {
         .enumerate()
         .map(|(i, indexes)| IndexSetPattern {
             name: format!("SeriesPattern{}", i + 1),
-            indexes,
+            indexes: indexes.clone(),
         })
         .collect()
 }
 
-fn collect_index_sets_from_tree(
-    node: &TreeNode,
-    unique_index_sets: &mut BTreeSet<BTreeSet<Index>>,
+fn collect_index_sets_from_tree<'a>(
+    node: &'a TreeNode,
+    unique_index_sets: &mut BTreeSet<&'a BTreeSet<Index>>,
 ) {
     match node {
         TreeNode::Leaf(leaf) => {
-            unique_index_sets.insert(leaf.indexes().clone());
+            unique_index_sets.insert(leaf.indexes());
         }
         TreeNode::Branch(children) => {
             for child in children.values() {
@@ -165,12 +169,7 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
 
     // Try to find common base from leaf names
     if let Some(result) = try_find_base(&child_names, false) {
-        return PatternBaseResult {
-            base: result.base,
-            has_outlier: result.has_outlier,
-            is_suffix_mode: result.is_suffix_mode,
-            field_parts: result.field_parts,
-        };
+        return result;
     }
 
     // If no common pattern found and we have enough children, try excluding outliers
@@ -180,16 +179,11 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
                 .iter()
                 .enumerate()
                 .filter(|(j, _)| *j != i)
-                .map(|(_, v)| v.clone())
+                .map(|(_, v)| *v)
                 .collect();
 
             if let Some(result) = try_find_base(&filtered, true) {
-                return PatternBaseResult {
-                    base: result.base,
-                    has_outlier: true,
-                    is_suffix_mode: result.is_suffix_mode,
-                    field_parts: result.field_parts,
-                };
+                return result;
             }
         }
     }
@@ -199,21 +193,13 @@ pub fn get_pattern_instance_base(node: &TreeNode) -> PatternBaseResult {
     PatternBaseResult::empty()
 }
 
-/// Result of try_find_base: base name, has_outlier flag, is_suffix_mode flag, and field_parts.
-struct FindBaseResult {
-    base: String,
-    has_outlier: bool,
-    is_suffix_mode: bool,
-    field_parts: BTreeMap<String, String>,
-}
-
 /// Try to find a common base from child names using prefix/suffix detection.
-/// Returns Some(FindBaseResult) if found.
+/// Returns the pattern base if found.
 fn try_find_base(
-    child_names: &[(String, String)],
+    child_names: &[(&str, &str)],
     is_outlier_attempt: bool,
-) -> Option<FindBaseResult> {
-    let leaf_names: Vec<&str> = child_names.iter().map(|(_, n)| n.as_str()).collect();
+) -> Option<PatternBaseResult> {
+    let leaf_names: Vec<&str> = child_names.iter().map(|(_, n)| *n).collect();
 
     // Try common prefix first (suffix mode)
     if let Some(prefix) = find_common_prefix(&leaf_names) {
@@ -221,7 +207,7 @@ fn try_find_base(
         let mut field_parts = BTreeMap::new();
         for (field_name, leaf_name) in child_names {
             // Compute the suffix part for this field
-            let suffix = if leaf_name == &base {
+            let suffix = if *leaf_name == base {
                 String::new()
             } else {
                 leaf_name
@@ -229,9 +215,9 @@ fn try_find_base(
                     .unwrap_or(leaf_name)
                     .to_string()
             };
-            field_parts.insert(field_name.clone(), suffix);
+            field_parts.insert((*field_name).to_owned(), suffix);
         }
-        return Some(FindBaseResult {
+        return Some(PatternBaseResult {
             base,
             has_outlier: is_outlier_attempt,
             is_suffix_mode: true,
@@ -249,9 +235,9 @@ fn try_find_base(
                 .strip_suffix(&suffix)
                 .map(normalize_prefix)
                 .unwrap_or_default();
-            field_parts.insert(field_name.clone(), prefix_part);
+            field_parts.insert((*field_name).to_owned(), prefix_part);
         }
-        return Some(FindBaseResult {
+        return Some(PatternBaseResult {
             base,
             has_outlier: is_outlier_attempt,
             is_suffix_mode: false,
@@ -266,13 +252,13 @@ fn try_find_base(
 ///
 /// Uses the shortest leaf name from each child subtree to find the "base" case
 /// (the leaf without suffix modifiers like `_btc` or `_usd`).
-fn get_direct_children_for_analysis(node: &TreeNode) -> Vec<(String, String)> {
+fn get_direct_children_for_analysis(node: &TreeNode) -> Vec<(&str, &str)> {
     match node {
-        TreeNode::Leaf(leaf) => vec![(leaf.name().to_string(), leaf.name().to_string())],
+        TreeNode::Leaf(leaf) => vec![(leaf.name(), leaf.name())],
         TreeNode::Branch(children) => children
             .iter()
             .filter_map(|(field_name, child)| {
-                get_shortest_leaf_name(child).map(|leaf_name| (field_name.clone(), leaf_name))
+                shortest_leaf_name(child).map(|leaf_name| (field_name.as_str(), leaf_name))
             })
             .collect(),
     }
@@ -280,17 +266,8 @@ fn get_direct_children_for_analysis(node: &TreeNode) -> Vec<(String, String)> {
 
 /// Infer the accumulated name for a child node based on a descendant leaf name.
 pub fn infer_accumulated_name(parent_acc: &str, field_name: &str, descendant_leaf: &str) -> String {
-    if let Some(pos) = descendant_leaf.find(field_name) {
-        if pos == 0 {
-            return field_name.to_string();
-        }
-        if pos > 0 && descendant_leaf.chars().nth(pos - 1) == Some('_') {
-            return if parent_acc.is_empty() {
-                field_name.to_string()
-            } else {
-                format!("{}_{}", parent_acc, field_name)
-            };
-        }
+    if descendant_leaf.starts_with(field_name) {
+        return field_name.to_string();
     }
 
     if parent_acc.is_empty() {
@@ -347,7 +324,7 @@ pub fn get_fields_with_child_info(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bitview_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
+    use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 
     fn make_leaf(name: &str) -> TreeNode {
         let leaf = SeriesLeaf {
@@ -364,7 +341,64 @@ mod tests {
             .into_iter()
             .map(|(k, v)| (k.to_string(), v))
             .collect();
-        TreeNode::Branch(map)
+        TreeNode::branch(map)
+    }
+
+    #[test]
+    fn shortest_name_borrows_the_first_tied_leaf_and_skips_empty_branches() {
+        let tree = make_branch(vec![
+            ("empty", make_branch(vec![])),
+            (
+                "nested",
+                make_branch(vec![
+                    ("long", make_leaf("long_name")),
+                    ("first", make_leaf("é")),
+                ]),
+            ),
+            ("last", make_leaf("aa")),
+        ]);
+        assert_eq!(get_shortest_leaf_name(&tree).as_deref(), Some("é"));
+        let TreeNode::Branch(root) = &tree else {
+            unreachable!()
+        };
+        let TreeNode::Branch(nested) = &root["nested"] else {
+            unreachable!()
+        };
+        let TreeNode::Leaf(first) = &nested["first"] else {
+            unreachable!()
+        };
+        assert!(std::ptr::eq(
+            shortest_leaf_name(&tree).unwrap().as_ptr(),
+            first.name().as_ptr()
+        ));
+        assert!(get_shortest_leaf_name(&make_branch(vec![])).is_none());
+    }
+
+    #[test]
+    fn index_patterns_deduplicate_by_value_and_keep_names_after_catalog_drop() {
+        let with_indexes = |name: &str, indexes: BTreeSet<Index>| {
+            let mut node = make_leaf(name);
+            let TreeNode::Leaf(leaf) = &mut node else {
+                unreachable!()
+            };
+            leaf.leaf.indexes = indexes;
+            node
+        };
+        let both = BTreeSet::from([Index::Height, Index::Day1]);
+        let height = BTreeSet::from([Index::Height]);
+        let tree = make_branch(vec![
+            ("height", with_indexes("height", height.clone())),
+            ("both", with_indexes("both", both.clone())),
+            ("again", with_indexes("again", both.clone())),
+            ("empty", make_leaf("empty")),
+        ]);
+        let patterns = detect_index_patterns(&tree);
+        drop(tree);
+        assert_eq!(patterns.len(), 2);
+        assert_eq!(patterns[0].name, "SeriesPattern1");
+        assert_eq!(patterns[0].indexes, both);
+        assert_eq!(patterns[1].name, "SeriesPattern2");
+        assert_eq!(patterns[1].indexes, height);
     }
 
     #[test]

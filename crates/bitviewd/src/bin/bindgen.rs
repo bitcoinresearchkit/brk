@@ -51,16 +51,32 @@ const GENERATED_OUTPUTS: &[(&str, &str)] = &[
     ),
 ];
 
+#[derive(Clone, Copy)]
+enum OutputScope {
+    All,
+    Rust,
+}
+
+impl OutputScope {
+    fn includes(self, path: &str) -> bool {
+        matches!(self, Self::All) || path.ends_with(".rs")
+    }
+}
+
 pub fn main() -> Result<()> {
     color_eyre::install()?;
 
     let args = env::args().skip(1).collect::<Vec<_>>();
     match args.as_slice() {
-        [] => generate(false),
-        [arg] if arg == "--check" => generate(true),
+        [] => generate(false, OutputScope::All),
+        [arg] if arg == "--check" => generate(true, OutputScope::All),
+        [arg] if arg == "--rust" => generate(false, OutputScope::Rust),
+        [scope, check] if scope == "--rust" && check == "--check" => {
+            generate(true, OutputScope::Rust)
+        }
         [arg, daemon_args @ ..] if arg == "--run" => {
             // Drop generation's plugin state before starting the daemon.
-            generate(false)?;
+            generate(false, OutputScope::All)?;
             let daemon_args = daemon_args
                 .strip_prefix(&["--".to_owned()])
                 .unwrap_or(daemon_args);
@@ -78,12 +94,14 @@ pub fn main() -> Result<()> {
             }
         }
         _ => {
-            bail!("usage: cargo bindgen [-- --check | -- --run [-- daemon arguments]]")
+            bail!(
+                "usage: cargo bindgen [-- --check | -- --rust [--check] | -- --run [-- daemon arguments]]"
+            )
         }
     }
 }
 
-fn generate(check: bool) -> Result<()> {
+fn generate(check: bool, scope: OutputScope) -> Result<()> {
     let temporary = tempdir()?;
     let tmp = temporary.path();
 
@@ -106,13 +124,15 @@ fn generate(check: bool) -> Result<()> {
     } else {
         workspace_root.clone()
     };
-    let output_paths = output_paths(&output_root);
+    let output_paths = output_paths(&output_root, scope);
 
-    generate_clients(&vecs, &to_string(&openapi)?, &output_paths)?;
-    generate_registry_manifest(&output_root)?;
+    generate_clients(vecs.catalog(), &to_string(&openapi)?, &output_paths)?;
+    if matches!(scope, OutputScope::All) {
+        generate_registry_manifest(&output_root)?;
+    }
 
     let result = if check {
-        verify_outputs(&output_root, &workspace_root)
+        verify_outputs(&output_root, &workspace_root, scope)
     } else {
         Ok(())
     };
@@ -131,10 +151,14 @@ fn generate(check: bool) -> Result<()> {
     Ok(())
 }
 
-fn output_paths(root: &Path) -> ClientOutputPaths {
-    ClientOutputPaths::new()
+fn output_paths(root: &Path, scope: OutputScope) -> ClientOutputPaths {
+    let paths = ClientOutputPaths::new()
         .rust(root.join("crates/bitview_client/src/generated.rs"))
-        .cli(root.join("crates/bitview_cli/src/generated.rs"))
+        .cli(root.join("crates/bitview_cli/src/generated.rs"));
+    if matches!(scope, OutputScope::Rust) {
+        return paths;
+    }
+    paths
         .javascript(root.join("modules/bitview-client/index.js"))
         .python(root.join("packages/bitview_client/bitview_client/__init__.py"))
         .llm(root.join("website"))
@@ -177,8 +201,13 @@ fn generate_registry_manifest(root: &Path) -> Result<()> {
     Ok(())
 }
 
-fn verify_outputs(generated_root: &Path, workspace_root: &Path) -> Result<()> {
-    verify_output_pairs(generated_root, workspace_root, GENERATED_OUTPUTS)
+fn verify_outputs(generated_root: &Path, workspace_root: &Path, scope: OutputScope) -> Result<()> {
+    let outputs: Vec<_> = GENERATED_OUTPUTS
+        .iter()
+        .copied()
+        .filter(|(path, _)| scope.includes(path))
+        .collect();
+    verify_output_pairs(generated_root, workspace_root, &outputs)
 }
 
 fn verify_output_pairs(
@@ -208,6 +237,29 @@ mod tests {
     use serde_json::{Value, from_slice};
 
     use super::*;
+
+    #[test]
+    fn rust_scope_selects_only_client_and_cli() {
+        let paths = output_paths(Path::new("fixture"), OutputScope::Rust);
+        assert!(paths.rust.is_some());
+        assert!(paths.cli.is_some());
+        assert!(paths.javascript.is_none());
+        assert!(paths.python.is_none());
+        assert!(paths.llm.is_empty());
+        assert!(paths.llm_manifest.is_none());
+        let selected: Vec<_> = GENERATED_OUTPUTS
+            .iter()
+            .filter(|(path, _)| OutputScope::Rust.includes(path))
+            .map(|(path, _)| *path)
+            .collect();
+        assert_eq!(
+            selected,
+            [
+                "crates/bitview_client/src/generated.rs",
+                "crates/bitview_cli/src/generated.rs"
+            ]
+        );
+    }
 
     #[test]
     fn check_reports_stale_outputs() {

@@ -13,6 +13,10 @@ The optional `derive` feature re-exports `#[derive(Traversable)]`. The derive
 also implements `vecdb::ReadOnlyClone`, so storage-mode structs can expose a
 read-only query projection from the same field definition.
 
+Fields declared as `M::WriteOnly<T>` hold `T` in the writer and disappear into
+`()` in the read-only view. They are excluded from traversal automatically;
+no per-state projection implementation is needed.
+
 The crate implements traversal for vecdb's stored, mutable, columnar,
 overflow, cached, and lazy vector families, plus common containers such as
 `Box`, `Option`, and `BTreeMap`. Backend-specific implementations

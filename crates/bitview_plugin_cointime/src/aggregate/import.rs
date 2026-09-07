@@ -2,16 +2,16 @@ use brk_error::Result;
 
 use std::ops::AddAssign;
 
-use bitview_cohort::{TermId, UTXOAggregateId};
-use brk_types::{Cents, Height, StoredF64, Version};
+use bitview_cohort::{TERM_NAMES, TermId, UTXOAggregateId};
+use brk_types::{BoundedRatio, Cents, Height, Version};
 use vecdb::{
-    CachedBoxedVec, ColumnId, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
+    CachedBoxedVec, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
     ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec,
 };
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
 use bitview_compute::{
-    CACHE_BUDGET, Identity, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
+    BoundedToF64, CACHE_BUDGET, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
     LazySpotValuePerBlock, PerBlock,
 };
 
@@ -20,9 +20,54 @@ pub fn forced_import(
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
-    all_supply_in_loss_share: &PerBlock<StoredF64>,
+    all_supply_in_loss_share: &PerBlock<BoundedRatio>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, spot_price, all_supply_in_loss_share)
+    let version = version + Version::ONE;
+    let sources = Sources::forced_import(db, version)?;
+    let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
+    let term_loss_share = |term: TermId| {
+        let name = term.select(&TERM_NAMES).id;
+        sources
+            .supply_in_loss_share
+            .read_only_clone()
+            .column(
+                &format!("{name}_awake_supply_in_loss_share"),
+                version + Version::ONE,
+                term,
+            )
+            .read_only_boxed_clone()
+    };
+    let all = CohortVecs::new(
+        UTXOAggregateId::All,
+        version,
+        &sources,
+        all_loss_share,
+        mappings,
+        spot_price,
+    );
+    let sth = CohortVecs::new(
+        UTXOAggregateId::Sth,
+        version,
+        &sources,
+        term_loss_share(TermId::Short),
+        mappings,
+        spot_price,
+    );
+    let lth = CohortVecs::new(
+        UTXOAggregateId::Lth,
+        version,
+        &sources,
+        term_loss_share(TermId::Long),
+        mappings,
+        spot_price,
+    );
+
+    Ok(Vecs {
+        all,
+        sth,
+        lth,
+        sources,
+    })
 }
 
 impl Sources {
@@ -50,8 +95,8 @@ impl Sources {
             )?,
             supply_in_loss_share: ImportableVec::forced_import(
                 db,
-                "cointime_awake_supply_in_loss_share_by_term",
-                version,
+                "cointime_awake_supply_in_loss_share_bounded_by_term",
+                version + Version::ONE,
             )?,
         })
     }
@@ -79,7 +124,7 @@ impl CohortVecs {
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &Sources,
-        supply_in_loss_share: ReadableBoxedVec<Height, StoredF64>,
+        supply_in_loss_share: ReadableBoxedVec<Height, BoundedRatio>,
         mappings: &bitview_plugin_mappings::Vecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Self {
@@ -117,7 +162,7 @@ impl CohortVecs {
                     mappings,
                     spot_price,
                 ),
-                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<Identity<StoredF64>>(
+                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
                     &metric_name("awake_supply_in_loss_share"),
                     version,
                     supply_in_loss_share,
@@ -147,60 +192,5 @@ impl CohortVecs {
                 ),
             },
         }
-    }
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
-        all_supply_in_loss_share: &PerBlock<StoredF64>,
-    ) -> Result<Self> {
-        let version = version + Version::ONE;
-        let sources = Sources::forced_import(db, version)?;
-        let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
-        let term_loss_share = |aggregate: UTXOAggregateId| {
-            let name = aggregate.cohort_name().id;
-            debug_assert!(aggregate.term().is_some());
-            Sources::additive_source(
-                &sources.supply_in_loss_share.read_only_clone(),
-                &format!("{name}_awake_supply_in_loss_share"),
-                version,
-                aggregate,
-            )
-        };
-        let all = CohortVecs::new(
-            UTXOAggregateId::All,
-            version,
-            &sources,
-            all_loss_share,
-            mappings,
-            spot_price,
-        );
-        let sth = CohortVecs::new(
-            UTXOAggregateId::Sth,
-            version,
-            &sources,
-            term_loss_share(UTXOAggregateId::Sth),
-            mappings,
-            spot_price,
-        );
-        let lth = CohortVecs::new(
-            UTXOAggregateId::Lth,
-            version,
-            &sources,
-            term_loss_share(UTXOAggregateId::Lth),
-            mappings,
-            spot_price,
-        );
-
-        Ok(Self {
-            all,
-            sth,
-            lth,
-            sources,
-        })
     }
 }

@@ -85,14 +85,12 @@ pub struct CachedVec<V: TypedVec> {
 
 impl<V: TypedVec> CachedVec<V> {
     pub fn wrap(inner: V) -> Self {
-        Self {
+        Self::wrap_budgeted(
             inner,
-            cache: Arc::new(RwLock::new(CacheState::empty())),
-            materialize: Arc::new(Mutex::new(())),
-            budget: &NO_BUDGET,
-            last_access: Arc::new(AtomicU64::new(0)),
-            resident_bytes: Arc::new(AtomicUsize::new(0)),
-        }
+            &NO_BUDGET,
+            Arc::new(AtomicU64::new(0)),
+            Arc::new(AtomicUsize::new(0)),
+        )
     }
 
     pub fn wrap_budgeted(
@@ -124,13 +122,33 @@ impl<V: TypedVec> CachedVec<V> {
         };
         self.budget.release(released_bytes);
     }
+
+    /// Invalidates this cache without retaining the vector or its source.
+    /// Returns false once every reader has dropped its shared cache.
+    pub fn weak_invalidator(&self) -> impl Fn() -> bool + Send + Sync + 'static {
+        let cache = Arc::downgrade(&self.cache);
+        let resident_bytes = self.resident_bytes.clone();
+        let budget = self.budget;
+        move || {
+            let cache = cache.upgrade();
+            let released = if let Some(cache) = &cache {
+                let mut state = cache.write();
+                state.invalidate();
+                resident_bytes.swap(0, Relaxed)
+            } else {
+                resident_bytes.swap(0, Relaxed)
+            };
+            budget.release(released);
+            cache.is_some()
+        }
+    }
 }
 
 impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
     /// Returns a full snapshot, retaining it when the budget allows.
     #[inline(always)]
     pub fn snapshot(&self) -> Arc<Vec<V::T>> {
-        self.materialize(|| true)
+        self.try_snapshot(|| true)
             .unwrap_or_else(|| Arc::new(self.inner.collect_range_dyn(0, self.inner.len())))
     }
 
@@ -148,12 +166,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
 
     /// Returns `None` when this read should not populate an empty budgeted cache
     /// or when the budget cannot retain the snapshot.
-    #[inline]
     fn try_snapshot(&self, cache_worthy: impl Fn() -> bool) -> Option<Arc<Vec<V::T>>> {
-        self.materialize(cache_worthy)
-    }
-
-    fn materialize(&self, cache_worthy: impl Fn() -> bool) -> Option<Arc<Vec<V::T>>> {
         let mut admitted = None;
         loop {
             let len = self.inner.len();
@@ -190,14 +203,9 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
             }
 
             let bytes = len.checked_mul(size_of::<V::T>())?;
-            let reserved_bytes = if bytes > 0 {
-                if !self.budget.try_reserve(bytes) {
-                    return None;
-                }
-                bytes
-            } else {
-                0
-            };
+            if bytes > 0 && !self.budget.try_reserve(bytes) {
+                return None;
+            }
 
             let data = self.inner.collect_range_dyn(0, len);
             let mut cache = self.cache.write();
@@ -205,7 +213,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
                 || self.inner.len() != len
                 || self.inner.version() != version
             {
-                self.budget.release(reserved_bytes);
+                self.budget.release(bytes);
                 continue;
             }
             debug_assert_eq!(data.len(), len);
@@ -213,7 +221,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
 
             let data = Arc::new(data);
             self.record_cache_access();
-            self.resident_bytes.store(reserved_bytes, Relaxed);
+            self.resident_bytes.store(bytes, Relaxed);
             cache.replace(len, version, data.clone());
 
             return Some(data);

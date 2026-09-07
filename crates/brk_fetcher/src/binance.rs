@@ -105,7 +105,7 @@ impl Binance {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(Error::NotFound("Couldn't find date".into()))
+            .ok_or_else(|| Error::NotFound("Couldn't find date".into()))
     }
 
     pub fn fetch_1d(&self) -> brk_error::Result<BTreeMap<Date, OHLCCents>> {
@@ -147,13 +147,13 @@ impl Binance {
         };
 
         json.get("log")
-            .ok_or(Error::Parse("HAR missing 'log' field".into()))?
+            .ok_or_else(|| Error::Parse("HAR missing 'log' field".into()))?
             .as_object()
-            .ok_or(Error::Parse("HAR 'log' is not an object".into()))?
+            .ok_or_else(|| Error::Parse("HAR 'log' is not an object".into()))?
             .get("entries")
-            .ok_or(Error::Parse("HAR missing 'entries' field".into()))?
+            .ok_or_else(|| Error::Parse("HAR missing 'entries' field".into()))?
             .as_array()
-            .ok_or(Error::Parse("HAR 'entries' is not an array".into()))?
+            .ok_or_else(|| Error::Parse("HAR 'entries' is not an array".into()))?
             .iter()
             .filter(|entry| {
                 entry
@@ -199,7 +199,7 @@ impl Binance {
     fn parse_ohlc_array(json: &Value) -> brk_error::Result<BTreeMap<Timestamp, OHLCCents>> {
         let result = json
             .as_array()
-            .ok_or(Error::Parse("Expected JSON array".into()))?
+            .ok_or_else(|| Error::Parse("Expected JSON array".into()))?
             .iter()
             .filter_map(|v| v.as_array())
             .map(|arr| {
@@ -260,3 +260,7 @@ impl PriceSource for Binance {
         self._1mn.take();
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/binance.rs"]
+mod tests;

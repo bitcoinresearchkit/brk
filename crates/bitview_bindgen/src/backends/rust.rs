@@ -7,10 +7,19 @@ pub struct RustSyntax;
 
 /// Escape braces in a template string for use in `format!()`, preserving `{disc}`.
 fn escape_rust_format(template: &str) -> String {
-    template
-        .replace('{', "{{")
-        .replace('}', "}}")
-        .replace("{{disc}}", "{disc}")
+    let mut result = String::with_capacity(template.len());
+    for (index, part) in template.split("{disc}").enumerate() {
+        if index != 0 {
+            result.push_str("{disc}");
+        }
+        for ch in part.chars() {
+            if matches!(ch, '{' | '}') {
+                result.push(ch);
+            }
+            result.push(ch);
+        }
+    }
+    result
 }
 
 impl LanguageSyntax for RustSyntax {
@@ -98,3 +107,7 @@ impl LanguageSyntax for RustSyntax {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/backends/rust.rs"]
+mod tests;

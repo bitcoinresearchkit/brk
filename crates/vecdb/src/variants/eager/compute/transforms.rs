@@ -136,12 +136,12 @@ where
             }
 
             let mut i = skip;
-            source.try_fold_range_at(skip, end, (), |(), b: A| {
+            source.fold_range_at(skip, end, (), |(), b: A| {
                 let (idx, v) = t((V::I::from(i), b, &*this));
                 i += 1;
                 this.debug_checked_push(idx, v);
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 
@@ -187,12 +187,12 @@ where
                 let mut iter2 = batch2.into_iter();
                 let mut i = range.start;
 
-                other1.try_fold_range_at(range.start, range.end, (), |(), b: A| {
+                other1.fold_range_at(range.start, range.end, (), |(), b: A| {
                     let (idx, v) = t((V::I::from(i), b, iter2.next().unwrap(), &*this));
                     i += 1;
                     this.debug_checked_push(idx, v);
-                    Ok(())
-                })
+                });
+                Ok(())
             },
             exit,
         )
@@ -252,7 +252,7 @@ where
                 let mut iter3 = batch3.into_iter();
                 let mut i = skip;
 
-                other1.try_fold_range_at(skip, end, (), |(), b: A| {
+                other1.fold_range_at(skip, end, (), |(), b: A| {
                     let (idx, v) = t((
                         V::I::from(i),
                         b,
@@ -262,8 +262,8 @@ where
                     ));
                     i += 1;
                     this.debug_checked_push(idx, v);
-                    Ok(())
-                })
+                });
+                Ok(())
             },
         )
     }
@@ -310,7 +310,7 @@ where
                 let mut iter4 = batch4.into_iter();
                 let mut i = skip;
 
-                other1.try_fold_range_at(skip, end, (), |(), b: A| {
+                other1.fold_range_at(skip, end, (), |(), b: A| {
                     let (idx, v) = t((
                         V::I::from(i),
                         b,
@@ -321,8 +321,8 @@ where
                     ));
                     i += 1;
                     this.debug_checked_push(idx, v);
-                    Ok(())
-                })
+                });
+                Ok(())
             },
         )
     }

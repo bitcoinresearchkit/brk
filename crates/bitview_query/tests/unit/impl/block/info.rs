@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::io;
 
 use bitcoin::{

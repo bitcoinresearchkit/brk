@@ -6,11 +6,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bitview_types::TreeNode;
+use bitview_catalog::TreeNode;
 use oas3::Spec;
 use serde_json::Value;
 
-use crate::{ClientMetadata, Endpoint, ResponseKind, TypeSchemas};
+use crate::{Endpoint, ResponseKind, TypeSchemas};
 
 use super::write_if_changed;
 
@@ -20,14 +20,14 @@ const BASE_URL: &str = "https://bitview.space";
 const MCP_URL: &str = "https://mcp.bitview.space/";
 
 pub fn generate_llm_clients(
-    metadata: &ClientMetadata,
+    catalog: &TreeNode,
     spec: &Spec,
     endpoints: &[Endpoint],
     schemas: &TypeSchemas,
     roots: &[PathBuf],
     manifest_path: Option<&Path>,
 ) -> io::Result<()> {
-    let metric_count = count_metrics(&metadata.catalog);
+    let metric_count = count_metrics(catalog);
     let generated = endpoints
         .iter()
         .filter(|endpoint| endpoint.should_generate())
@@ -163,10 +163,10 @@ fn render_llms_full(
     if !referenced.is_empty() {
         writeln!(output, "## Schemas\n").unwrap();
         for name in referenced {
-            let Some(schema) = schemas.get(&name) else {
+            let Some(schema) = schemas.get(name) else {
                 continue;
             };
-            render_schema(&mut output, &name, schema);
+            render_schema(&mut output, name, schema);
         }
     }
     output
@@ -181,18 +181,18 @@ fn endpoint_group(path: &str) -> String {
 }
 
 fn title_case(value: &str) -> String {
-    value
-        .split(['-', '_'])
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            chars
-                .next()
-                .map(|first| first.to_uppercase().collect::<String>() + chars.as_str())
-                .unwrap_or_default()
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
+    let mut result = String::new();
+    for part in value.split(['-', '_']) {
+        let mut chars = part.chars();
+        if let Some(first) = chars.next() {
+            if !result.is_empty() {
+                result.push(' ');
+            }
+            result.extend(first.to_uppercase());
+            result.push_str(chars.as_str());
+        }
+    }
+    result
 }
 
 fn render_endpoint(output: &mut String, endpoint: &Endpoint) {
@@ -314,28 +314,31 @@ fn curl_example(endpoint: &Endpoint) -> String {
     }
 }
 
-fn referenced_schemas(endpoints: &[&Endpoint], schemas: &TypeSchemas) -> BTreeSet<String> {
+fn referenced_schemas<'a>(
+    endpoints: &[&'a Endpoint],
+    schemas: &'a TypeSchemas,
+) -> BTreeSet<&'a str> {
     let mut names = BTreeSet::new();
     for endpoint in endpoints {
         if let Some(name) = endpoint.schema_name().filter(|name| *name != "*") {
-            names.insert(name.to_owned());
+            names.insert(name);
         }
         if let Some(body) = &endpoint.request_body
             && schemas.contains_key(&body.body_type)
         {
-            names.insert(body.body_type.clone());
+            names.insert(body.body_type.as_str());
         }
     }
 
-    let mut pending = names.iter().cloned().collect::<Vec<_>>();
+    let mut pending = names.iter().copied().collect::<Vec<_>>();
     while let Some(name) = pending.pop() {
-        let Some(schema) = schemas.get(&name) else {
+        let Some(schema) = schemas.get(name) else {
             continue;
         };
         let mut refs = BTreeSet::new();
         collect_refs(schema, &mut refs);
         for referenced in refs {
-            if schemas.contains_key(&referenced) && names.insert(referenced.clone()) {
+            if schemas.contains_key(referenced) && names.insert(referenced) {
                 pending.push(referenced);
             }
         }
@@ -343,13 +346,13 @@ fn referenced_schemas(endpoints: &[&Endpoint], schemas: &TypeSchemas) -> BTreeSe
     names
 }
 
-fn collect_refs(value: &Value, refs: &mut BTreeSet<String>) {
+fn collect_refs<'a>(value: &'a Value, refs: &mut BTreeSet<&'a str>) {
     match value {
         Value::Object(object) => {
             if let Some(reference) = object.get("$ref").and_then(Value::as_str)
                 && let Some(name) = reference.rsplit('/').next()
             {
-                refs.insert(name.to_owned());
+                refs.insert(name);
             }
             for child in object.values() {
                 collect_refs(child, refs);
@@ -444,13 +447,98 @@ fn schema_type(schema: &Value) -> String {
 }
 
 fn one_line(value: &str) -> String {
-    value.split_whitespace().collect::<Vec<_>>().join(" ")
+    let mut result = String::new();
+    for word in value.split_whitespace() {
+        if !result.is_empty() {
+            result.push(' ');
+        }
+        result.push_str(word);
+    }
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Parameter;
+
+    #[test]
+    fn text_rendering_keeps_case_expansion_and_unicode_whitespace() {
+        let fragments = [
+            "", "_", "-", " ", "\n", "\t", "ß", "é", "🙂", "\u{2003}", "word", "ΟΣ",
+        ];
+        for a in fragments {
+            for b in fragments {
+                for c in fragments {
+                    let input = format!("{a}{b}{c}");
+                    let title = input
+                        .split(['-', '_'])
+                        .filter(|part| !part.is_empty())
+                        .map(|part| {
+                            let mut chars = part.chars();
+                            chars
+                                .next()
+                                .map(|first| {
+                                    first.to_uppercase().collect::<String>() + chars.as_str()
+                                })
+                                .unwrap_or_default()
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                    assert_eq!(title_case(&input), title);
+                    assert_eq!(
+                        one_line(&input),
+                        input.split_whitespace().collect::<Vec<_>>().join(" ")
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_schema_references_keep_cycles_missing_roots_and_sorted_docs() {
+        let mut first = endpoint("/api/thing/{id}", "GET");
+        first.request_body = Some(crate::RequestBody {
+            body_type: "Body".into(),
+            content_type: "application/json".into(),
+            required: true,
+        });
+        let mut missing = endpoint("/api/missing", "GET");
+        missing.response_kind = ResponseKind::Json("MissingRoot".into());
+        let schemas = TypeSchemas::from(BTreeMap::from([
+            (
+                "Thing".into(),
+                serde_json::json!({"properties": {"related": {"$ref": "#/components/schemas/Related"}, "again": {"$ref": "#/components/schemas/Related"}, "missing": {"$ref": "#/components/schemas/MissingChild"}}}),
+            ),
+            (
+                "Related".into(),
+                serde_json::json!({"allOf": [{"$ref": "#/components/schemas/Thing"}, {"$ref": "#/components/schemas/Nested"}]}),
+            ),
+            ("Nested".into(), serde_json::json!({"type": "string"})),
+            ("Body".into(), serde_json::json!({"type": "object"})),
+        ]));
+        let endpoints = [&first, &missing];
+        let referenced = referenced_schemas(&endpoints, &schemas);
+        assert_eq!(
+            referenced.iter().copied().collect::<Vec<_>>(),
+            ["Body", "MissingRoot", "Nested", "Related", "Thing"]
+        );
+        assert!(std::ptr::eq(
+            referenced.get("Thing").unwrap().as_ptr(),
+            first.schema_name().unwrap().as_ptr()
+        ));
+        let output = render_llms_full("Fixture", "1", 0, &endpoints, &schemas);
+        let mut previous = 0;
+        for name in ["Body", "Nested", "Related", "Thing"] {
+            let heading = format!("### `{name}`\n");
+            assert_eq!(output.matches(&heading).count(), 1);
+            let position = output.find(&heading).unwrap();
+            assert!(position > previous);
+            previous = position;
+        }
+        assert!(!output.contains("### `MissingRoot`"));
+        assert!(!output.contains("### `MissingChild`"));
+    }
 
     fn endpoint(path: &str, method: &str) -> Endpoint {
         Endpoint {

@@ -1,5 +1,3 @@
-use crate::LevelPolicy as _;
-
 pub mod ingest;
 pub mod inner;
 

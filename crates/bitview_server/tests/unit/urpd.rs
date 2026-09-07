@@ -82,7 +82,7 @@ fn benchmark_response_assembly() {
             } else {
                 AppState::assemble_response(
                     params,
-                    Ok(body.clone()),
+                    body.clone(),
                     HeaderMapExtended::insert_content_type_application_json,
                 )
             }

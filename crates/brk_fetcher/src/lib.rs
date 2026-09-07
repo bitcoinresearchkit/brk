@@ -73,34 +73,21 @@ impl Fetcher {
     }
 
     /// Iterate over all active sources in priority order
-    fn for_each_source<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&mut dyn PriceSource),
-    {
-        f(&mut self.binance);
-        f(&mut self.kraken);
-        f(&mut self.brk);
+    fn sources_mut(&mut self) -> [&mut dyn PriceSource; 3] {
+        [&mut self.binance, &mut self.kraken, &mut self.brk]
     }
 
     /// Try fetching from each source in order, return first success
-    fn try_sources<F>(&mut self, mut fetch: F) -> Option<brk_error::Result<OHLCCents>>
+    fn try_sources<F>(&mut self, mut fetch: F) -> Option<OHLCCents>
     where
         F: FnMut(&mut dyn PriceSource) -> Option<brk_error::Result<OHLCCents>>,
     {
-        match fetch(&mut self.binance) {
-            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
-            Some(Err(e)) => warn!("Binance fetch failed: {e}"),
-            None => {}
-        }
-        match fetch(&mut self.kraken) {
-            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
-            Some(Err(e)) => warn!("Kraken fetch failed: {e}"),
-            None => {}
-        }
-        match fetch(&mut self.brk) {
-            Some(Ok(ohlc)) => return Some(Ok(ohlc)),
-            Some(Err(e)) => warn!("Brk fetch failed: {e}"),
-            None => {}
+        for source in self.sources_mut() {
+            match fetch(source) {
+                Some(Ok(ohlc)) => return Some(ohlc),
+                Some(Err(e)) => warn!("{} fetch failed: {e}", source.name()),
+                None => {}
+            }
         }
         None
     }
@@ -167,32 +154,25 @@ How to fix this:
     {
         for retry in 0..=MAX_RETRIES {
             if let Some(ohlc) = self.try_sources(&mut fetch) {
-                return ohlc;
+                return Ok(ohlc);
             }
 
             // All sources failed
             if retry < MAX_RETRIES {
                 warn!("All price sources failed; retrying in 60s...");
                 sleep(Duration::from_secs(60));
-                self.clear_caches();
+                self.clear();
             }
         }
 
         Err(Error::FetchFailed(error_message()))
     }
 
-    fn clear_caches(&mut self) {
-        self.for_each_source(|s| s.clear());
-    }
-
     /// Clear caches and reset health state for all sources
     pub fn clear(&mut self) {
-        self.binance.clear();
-        self.binance.reset_health();
-        self.kraken.clear();
-        self.kraken.reset_health();
-        self.brk.clear();
-        self.brk.reset_health();
+        for source in self.sources_mut() {
+            source.clear();
+        }
     }
 
     /// Ping all sources and return results for each
@@ -202,5 +182,36 @@ How to fix this:
             (self.kraken.name(), self.kraken.ping()),
             (self.brk.name(), self.brk.ping()),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn source_fallback_preserves_priority_and_stops_at_first_success() {
+        let mut fetcher = Fetcher::new(None).unwrap();
+        for successful in 0..=3 {
+            for unsupported in [false, true] {
+                let mut visited = Vec::new();
+                let result = fetcher.try_sources(|source| {
+                    let index = visited.len();
+                    visited.push(source.name());
+                    if index == successful {
+                        Some(Ok(OHLCCents::default()))
+                    } else if unsupported {
+                        None
+                    } else {
+                        Some(Err(Error::Internal("fixture failure")))
+                    }
+                });
+                assert_eq!(result.is_some(), successful < 3);
+                assert_eq!(
+                    visited,
+                    ["Binance", "Kraken", "BRK"][..(successful + 1).min(3)]
+                );
+            }
+        }
     }
 }

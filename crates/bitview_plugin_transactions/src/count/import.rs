@@ -12,25 +12,14 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, cached_starts)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
-        Ok(Self {
-            total: PerBlockFullFromCumulative::forced_import(
-                db,
-                "tx_count",
-                version,
-                mappings.transaction_count_source(),
-                mappings,
-                cached_starts,
-            )?,
-        })
-    }
+    Ok(Vecs {
+        total: PerBlockFullFromCumulative::forced_import(
+            db,
+            "tx_count",
+            version,
+            mappings.transaction_count_source(),
+            mappings,
+            cached_starts,
+        )?,
+    })
 }

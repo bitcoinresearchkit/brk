@@ -2,6 +2,7 @@
 
 use std::{
     collections::BTreeMap,
+    fmt::Write,
     fs, io,
     ops::Deref,
     path::{Path, PathBuf},
@@ -149,70 +150,54 @@ impl ImportMap {
         }
 
         // Partition by file type
-        let (mut css, js): (BTreeMap<_, _>, Vec<_>) = self.0.iter().fold(
-            (BTreeMap::new(), Vec::new()),
-            |(mut css, mut js), (k, v)| {
-                match Path::new(k).extension().and_then(|e| e.to_str()) {
-                    Some("css") => {
-                        css.insert(k.clone(), v.clone());
-                    }
-                    Some("js" | "mjs") => js.push((k, v)),
-                    _ => {}
+        let mut css = BTreeMap::new();
+        let mut js = BTreeMap::new();
+        for (url, hashed) in &self.0 {
+            match Path::new(url).extension().and_then(|e| e.to_str()) {
+                Some("css") => {
+                    css.insert(url.as_str(), hashed);
                 }
-                (css, js)
-            },
-        );
+                Some("js" | "mjs") => {
+                    js.insert(url, hashed);
+                }
+                _ => {}
+            }
+        }
 
         // Only include CSS already in HTML (preserves order for cascade correctness)
-        let css_urls: Vec<_> = Self::extract_href_values(html, "stylesheet")
-            .into_iter()
-            .filter_map(|url| css.remove(&url))
-            .collect();
+        let mut content = String::new();
+        for url in Self::extract_href_values(html, "stylesheet") {
+            if let Some(hashed) = css.remove(url) {
+                writeln!(content, r#"<link rel="stylesheet" href="{hashed}">"#).unwrap();
+            }
+        }
 
-        // Generate output
-        let stylesheets = css_urls
-            .iter()
-            .map(|url| format!(r#"<link rel="stylesheet" href="{url}">"#))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        let js_map: BTreeMap<_, _> = js.iter().map(|(k, v)| (*k, *v)).collect();
-        let json = serde_json::to_string_pretty(&serde_json::json!({ "imports": js_map })).ok()?;
-        let script = format!("<script type=\"importmap\">\n{json}\n</script>");
-
-        let preloads = js
-            .iter()
-            .map(|(_, url)| format!(r#"<link rel="modulepreload" href="{url}">"#))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        let content = [stylesheets, script, preloads]
-            .into_iter()
-            .filter(|s| !s.is_empty())
-            .collect::<Vec<_>>()
-            .join("\n");
+        let json = serde_json::to_string_pretty(&serde_json::json!({ "imports": js })).ok()?;
+        write!(content, "<script type=\"importmap\">\n{json}\n</script>").unwrap();
+        for url in js.values() {
+            write!(content, "\n<link rel=\"modulepreload\" href=\"{url}\">").unwrap();
+        }
 
         Self::replace_between_markers(html, &content)
     }
 
     /// Extract href values from link tags with the given rel attribute.
-    fn extract_href_values(html: &str, rel: &str) -> Vec<String> {
+    fn extract_href_values<'a>(html: &'a str, rel: &str) -> impl Iterator<Item = &'a str> {
         let start = html.find(Self::MARKER_OPEN).unwrap_or(0);
         let end = html.find(Self::MARKER_CLOSE).unwrap_or(html.len());
 
-        html[start..end]
+        let double_quoted = format!(r#"rel="{rel}""#);
+        let single_quoted = format!(r#"rel='{rel}'"#);
+        html.get(start..end)
+            .unwrap_or("")
             .lines()
-            .filter(|line| {
-                line.contains(&format!(r#"rel="{rel}""#))
-                    || line.contains(&format!(r#"rel='{rel}'"#))
-            })
+            .filter(move |line| line.contains(&double_quoted) || line.contains(&single_quoted))
             .filter_map(|line| {
                 let href_start = line.find("href=\"").or_else(|| line.find("href='"))? + 6;
                 let quote = line.as_bytes().get(href_start - 1).copied()? as char;
                 let href_end = line[href_start..].find(quote)?;
-                Some(line[href_start..href_start + href_end].to_string())
+                Some(&line[href_start..href_start + href_end])
             })
-            .collect()
     }
 
     fn replace_between_markers(html: &str, content: &str) -> Option<String> {
@@ -223,24 +208,21 @@ impl ImportMap {
         let line_start = html[..start_pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
         let indent = &html[line_start..start_pos];
 
-        let indented: String = content
-            .lines()
-            .map(|line| {
-                if line.is_empty() {
-                    String::new()
-                } else {
-                    format!("{indent}{line}")
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        Some(format!(
-            "{}\n{}\n{}{}",
-            &html[..after_open],
-            indented,
-            indent,
-            &html[end_pos..]
-        ))
+        let mut output = String::with_capacity(html.len() + content.len());
+        output.push_str(&html[..after_open]);
+        output.push('\n');
+        for (i, line) in content.lines().enumerate() {
+            if i != 0 {
+                output.push('\n');
+            }
+            if !line.is_empty() {
+                output.push_str(indent);
+                output.push_str(line);
+            }
+        }
+        output.push('\n');
+        output.push_str(indent);
+        output.push_str(&html[end_pos..]);
+        Some(output)
     }
 }

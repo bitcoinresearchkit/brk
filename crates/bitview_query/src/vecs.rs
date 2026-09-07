@@ -3,9 +3,10 @@ use std::{
     collections::{BTreeMap, BTreeSet, btree_map::Entry},
 };
 
+use bitview_catalog::TreeNode;
 use bitview_plugin::Plugin;
 use bitview_runtime::PluginSet;
-use bitview_traversable::{Traversable, TreeNode};
+use bitview_traversable::Traversable;
 use bitview_types::{
     DetailedSeriesCount, IndexInfo, PaginatedSeries, Pagination, SeriesCount, SeriesInfo,
     SeriesName,
@@ -221,6 +222,17 @@ impl<'a> Vecs<'a> {
             })
             .ok()
     }
+
+    pub fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a> {
+        let Some(index_to_vec) = self.by_series.get(series.normalize().as_ref()) else {
+            return SeriesEntryLookup::Missing;
+        };
+
+        match index_to_vec.get(index).copied() {
+            Some(entry) => SeriesEntryLookup::Found(entry),
+            None => SeriesEntryLookup::Unsupported(index_to_vec.indexes().collect()),
+        }
+    }
 }
 
 impl DescriptionSearch {
@@ -230,12 +242,12 @@ impl DescriptionSearch {
         let mut descriptions_by_series = Vec::with_capacity(series.len());
 
         for (id, name) in series.iter().copied().enumerate() {
-            let description = descriptions_by_name.get(name).cloned();
-            descriptions_by_series.push(description.clone());
+            let description = descriptions_by_name.get(name);
+            descriptions_by_series.push(description.cloned());
             let Some(description) = description else {
                 continue;
             };
-            let description = normalize::normalize(&description);
+            let description = normalize::normalize(description);
             if description.is_empty() {
                 continue;
             }
@@ -299,21 +311,6 @@ impl<'a> Builder<'a> {
         }
         if self.seen_by_db.entry(db).or_default().insert(name) {
             by_db.distinct += 1;
-        }
-    }
-}
-pub trait VecsVecsAInternal<'a>: Sized {
-    fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a>;
-}
-impl<'a> VecsVecsAInternal<'a> for Vecs<'a> {
-    fn lookup_entry(&self, series: &SeriesName, index: Index) -> SeriesEntryLookup<'a> {
-        let Some(index_to_vec) = self.by_series.get(series.normalize().as_ref()) else {
-            return SeriesEntryLookup::Missing;
-        };
-
-        match index_to_vec.get(index).copied() {
-            Some(entry) => SeriesEntryLookup::Found(entry),
-            None => SeriesEntryLookup::Unsupported(index_to_vec.indexes().collect()),
         }
     }
 }

@@ -67,6 +67,92 @@ macro_rules! column_ids {
 }
 
 column_ids!(TestColumn, 3, Version::ONE, [First, Second, Third]);
+
+#[test]
+fn cached_columns_share_inputs_between_projections_and_sums() {
+    use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed};
+    use vecdb::{CachedColumnarVec, CachedVec};
+
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut source =
+        ColumnarVec::<BytesVec<usize, u64>, TestColumn>::import(&db, "shared", Version::ONE)
+            .unwrap();
+    for i in 0..MULTI_BLOCK_ROWS {
+        source.push([i as u64, 2, 3]);
+    }
+    source.write().unwrap();
+    let bytes = MULTI_BLOCK_ROWS * size_of::<u64>();
+    let budget = Box::leak(Box::new(AtomicUsize::new(bytes * 3)));
+    let mut caches = Vec::new();
+    let cached = CachedColumnarVec::new(source.read_only_clone(), Version::ONE, |column| {
+        let cache = CachedVec::wrap_budgeted(
+            column,
+            budget,
+            Arc::new(AtomicU64::new(0)),
+            Arc::new(AtomicUsize::new(0)),
+        );
+        caches.push(cache.clone());
+        cache
+    });
+    assert_eq!(cached.version(), source.version());
+    assert_eq!(
+        cached.cached_column(TestColumn::First).version(),
+        source
+            .read_only_clone()
+            .column("first", Version::ONE, TestColumn::First)
+            .version(),
+    );
+    let first_two = cached.sum_columns(
+        "first_two",
+        Version::ONE,
+        [TestColumn::First, TestColumn::Second],
+    );
+    assert_eq!(
+        first_two.collect_range_at(0, MULTI_BLOCK_ROWS),
+        (0..MULTI_BLOCK_ROWS)
+            .map(|i| i as u64 + 2)
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(budget.load(Relaxed), bytes);
+    let first_snapshot = caches[0].cached_snapshot().unwrap();
+    assert!(caches[2].cached_snapshot().is_none());
+    let all = cached
+        .clone()
+        .sum_columns("all", Version::ONE, TestColumn::ALL.iter().copied());
+    assert_eq!(
+        all.collect_range_at(0, MULTI_BLOCK_ROWS),
+        (0..MULTI_BLOCK_ROWS)
+            .map(|i| i as u64 + 5)
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(budget.load(Relaxed), 0);
+    assert!(Arc::ptr_eq(
+        &first_snapshot,
+        &caches[0].cached_snapshot().unwrap()
+    ));
+    assert_eq!(
+        cached
+            .column("first", Version::ONE, TestColumn::First)
+            .collect_one_at(7),
+        Some(7)
+    );
+    assert_eq!(cached.collect_one_at(7), Some([7, 2, 3]));
+    // Same-length replacement needs explicit invalidation, as with CachedVec.
+    cached.invalidate();
+    source.truncate_if_needed_at(0).unwrap();
+    for i in 0..MULTI_BLOCK_ROWS {
+        source.push([i as u64 + 10, 20, 30]);
+    }
+    source.write().unwrap();
+    assert_eq!(budget.load(Relaxed), bytes * 3);
+    assert_eq!(all.collect_range_at(0, MULTI_BLOCK_ROWS)[7], 67);
+    source.truncate_if_needed_at(2).unwrap();
+    source.write().unwrap();
+    assert_eq!(all.collect_range_at(0, MULTI_BLOCK_ROWS), vec![60, 61]);
+    cached.invalidate();
+    assert_eq!(budget.load(Relaxed), bytes * 3);
+}
 column_ids!(ChangedTestColumn, 3, Version::TWO, [First, Second, Third]);
 column_ids!(
     RenamedTestColumn,

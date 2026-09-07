@@ -5,7 +5,7 @@ use std::path::Path;
 use bitview_cohort::{AmountRange, AmountRangeId, CohortContext, Filter};
 use brk_types::{Cents, Height, StoredU64};
 use rayon::prelude::*;
-use vecdb::{ColumnId, ReadableVec};
+use vecdb::ReadableVec;
 
 use crate::{addr::FundedAddrCountsVecs, metrics::CohortMetrics};
 

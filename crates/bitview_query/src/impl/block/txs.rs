@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use bitcoin::{ScriptBuf, Transaction as BitcoinTransaction};
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
@@ -10,7 +8,6 @@ use brk_types::{
 use rustc_hash::FxHashMap;
 use vecdb::{ReadableVec, VecIndex};
 
-use super::ResolvedBlock;
 use crate::{Query, r#impl::indexed_transaction};
 
 impl Query {
@@ -20,14 +17,7 @@ impl Query {
     /// Unpaginated by design.
     pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
         let guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_txids_by_height(block.height(), guard.lengths())
-    }
-
-    /// Transaction IDs for a block previously resolved by exact hash.
-    pub fn block_txids_resolved(&self, block: ResolvedBlock) -> Result<Vec<Txid>> {
-        let guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
+        let height = self.height_by_hash(hash)?;
         self.block_txids_by_height(height, guard.lengths())
     }
 
@@ -41,19 +31,7 @@ impl Query {
         count: u32,
     ) -> Result<Vec<Transaction>> {
         let guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_txs_at_height(block.height(), start_index, count, guard.lengths())
-    }
-
-    /// A transaction page for a block previously resolved by exact hash.
-    pub fn block_txs_resolved(
-        &self,
-        block: ResolvedBlock,
-        start_index: BlockTxIndex,
-        count: u32,
-    ) -> Result<Vec<Transaction>> {
-        let guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
+        let height = self.height_by_hash(hash)?;
         self.block_txs_at_height(height, start_index, count, guard.lengths())
     }
 
@@ -63,18 +41,7 @@ impl Query {
     /// the block.
     pub fn block_txid_at_index(&self, hash: &BlockHash, index: BlockTxIndex) -> Result<Txid> {
         let guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_txid_at_index_by_height(block.height(), index.into(), guard.lengths())
-    }
-
-    /// One transaction ID from a block previously resolved by exact hash.
-    pub fn block_txid_at_index_resolved(
-        &self,
-        block: ResolvedBlock,
-        index: BlockTxIndex,
-    ) -> Result<Txid> {
-        let guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
+        let height = self.height_by_hash(hash)?;
         self.block_txid_at_index_by_height(height, index.into(), guard.lengths())
     }
 
@@ -97,36 +64,8 @@ impl Query {
         let _guard = self.indexer().pin_safe_lengths();
         self.transactions_at_indices(indices)
     }
-}
 
-#[inline]
-pub fn block_txids_by_height(query: &Query, height: Height) -> Result<Vec<Txid>> {
-    query.block_txids_by_height(height, query.safe_lengths())
-}
-pub trait RImplBlockTxsQueryInternal: Sized {
-    fn block_txs_at_height(
-        &self,
-        height: Height,
-        start_index: BlockTxIndex,
-        count: u32,
-        safe: Lengths,
-    ) -> Result<Vec<Transaction>>;
-
-    fn block_txids_by_height(&self, height: Height, safe: Lengths) -> Result<Vec<Txid>>;
-
-    fn block_txid_at_index_by_height(
-        &self,
-        height: Height,
-        index: usize,
-        safe: Lengths,
-    ) -> Result<Txid>;
-
-    fn transactions_at_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>>;
-
-    fn block_tx_range(&self, height: Height, safe: Lengths) -> Result<(usize, usize)>;
-}
-impl RImplBlockTxsQueryInternal for Query {
-    fn block_txs_at_height(
+    pub fn block_txs_at_height(
         &self,
         height: Height,
         start_index: BlockTxIndex,
@@ -151,7 +90,7 @@ impl RImplBlockTxsQueryInternal for Query {
     /// the stamp-before-data race or short-returns. Used by both the
     /// hash-keyed and height-keyed entry points so they share bounds
     /// semantics.
-    fn block_txids_by_height(&self, height: Height, safe: Lengths) -> Result<Vec<Txid>> {
+    pub fn block_txids_by_height(&self, height: Height, safe: Lengths) -> Result<Vec<Txid>> {
         let (first, tx_count) = self.block_tx_range(height, safe)?;
         let txids = self
             .indexer()
@@ -167,7 +106,7 @@ impl RImplBlockTxsQueryInternal for Query {
     /// Single txid at an in-block offset. `OutOfRange` when `index` is past
     /// the last tx in the block. `Internal` if the underlying read finds
     /// the stamp-before-data race (`first_tx_index` flushed ahead of `txid`).
-    fn block_txid_at_index_by_height(
+    pub fn block_txid_at_index_by_height(
         &self,
         height: Height,
         index: usize,
@@ -187,7 +126,7 @@ impl RImplBlockTxsQueryInternal for Query {
             ))
     }
     /// Internal batch read; caller holds publication exclusion from selection.
-    fn transactions_at_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
+    pub fn transactions_at_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
         if indices.is_empty() {
             return Ok(Vec::new());
         }
@@ -305,11 +244,12 @@ impl RImplBlockTxsQueryInternal for Query {
 
         let addr_readers = indexer.vecs().addrs.addr_readers();
 
-        let mut sorted_prevouts: Vec<(OutPoint, OutputType, TypeIndex, Sats)> =
-            Vec::with_capacity(prevout_input_data.len());
-        for (&op, &(ot, ti, val)) in &prevout_input_data {
-            sorted_prevouts.push((op, ot, ti, val));
-        }
+        let mut sorted_prevouts: Vec<_> = prevout_input_data
+            .into_iter()
+            .map(|(outpoint, (output_type, type_index, value))| {
+                (outpoint, output_type, type_index, value)
+            })
+            .collect();
         sorted_prevouts.sort_unstable_by_key(|&(_, ot, ti, _)| (ot, ti));
 
         let mut prevout_map: FxHashMap<OutPoint, TxOut> =
@@ -318,7 +258,7 @@ impl RImplBlockTxsQueryInternal for Query {
         // Non-address output indices are chronological within each script type.
         // Keep at most one decoded parent, reusing it for adjacent outputs.
         let mut raw_parent: Option<(TxIndex, BitcoinTransaction)> = None;
-        for &(op, output_type, type_index, value) in &sorted_prevouts {
+        for (op, output_type, type_index, value) in sorted_prevouts {
             let script_pubkey = if let Some(addr) = addr_readers.get(output_type, type_index) {
                 addr.to_script_pubkey()
             } else if output_type == OutputType::Empty {
@@ -423,7 +363,7 @@ impl RImplBlockTxsQueryInternal for Query {
     /// stamp-before-data race. The tip-of-safe block falls back to
     /// `safe.tx_index` (not live `txid.len()`, which can be ahead of the
     /// writer's stamped boundary mid-block).
-    fn block_tx_range(&self, height: Height, safe: Lengths) -> Result<(usize, usize)> {
+    pub fn block_tx_range(&self, height: Height, safe: Lengths) -> Result<(usize, usize)> {
         if height >= safe.height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }

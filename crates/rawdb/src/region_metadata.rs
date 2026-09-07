@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::fmt;
 
 use crate::{Error, GiB, PAGE_SIZE, Regions};
@@ -217,6 +215,30 @@ impl RegionMetadata {
             tail_needs_punch: true,
         })
     }
+
+    #[inline]
+    pub fn tail_needs_punch(&self) -> bool {
+        self.tail_needs_punch
+    }
+
+    #[inline]
+    pub fn mark_tail_needs_punch(&mut self) {
+        self.tail_needs_punch = true;
+    }
+
+    #[inline]
+    pub fn mark_tail_punched(&mut self) {
+        self.tail_needs_punch = false;
+    }
+
+    pub fn write_if_dirty(&mut self, index: usize, regions: &Regions) {
+        if !self.needs_write {
+            return;
+        }
+
+        regions.write_at(index, &self.to_bytes());
+        self.needs_write = false;
+    }
 }
 
 impl Clone for RegionMetadata {
@@ -239,33 +261,5 @@ impl fmt::Display for RegionMetadata {
             "'{}' (start={}, len={}, reserved={})",
             self.id, self.start, self.len, self.reserved
         )
-    }
-}
-pub trait RegionMetadataRegionMetadataInternal: Sized {
-    fn tail_needs_punch(&self) -> bool;
-    fn mark_tail_needs_punch(&mut self);
-    fn mark_tail_punched(&mut self);
-    fn write_if_dirty(&mut self, index: usize, regions: &Regions);
-}
-impl RegionMetadataRegionMetadataInternal for RegionMetadata {
-    #[inline]
-    fn tail_needs_punch(&self) -> bool {
-        self.tail_needs_punch
-    }
-    #[inline]
-    fn mark_tail_needs_punch(&mut self) {
-        self.tail_needs_punch = true;
-    }
-    #[inline]
-    fn mark_tail_punched(&mut self) {
-        self.tail_needs_punch = false;
-    }
-    fn write_if_dirty(&mut self, index: usize, regions: &Regions) {
-        if !self.needs_write {
-            return;
-        }
-
-        regions.write_at(index, &self.to_bytes());
-        self.needs_write = false;
     }
 }

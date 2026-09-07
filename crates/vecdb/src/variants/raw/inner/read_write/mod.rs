@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::marker::PhantomData;
 
 use log::debug;
@@ -8,7 +6,6 @@ use rawdb::Reader;
 pub mod any_stored_vec;
 pub mod any_vec;
 pub mod readable;
-pub mod rollback;
 pub mod typed;
 pub mod writable;
 
@@ -45,7 +42,10 @@ where
     pub const SIZE_OF_T: usize = size_of::<T>();
 
     pub fn read_only_clone(&self) -> ReadOnlyRawVec<I, T, S> {
-        ReadOnlyRawVec::new(self.base.read_only_base())
+        ReadOnlyRawVec {
+            base: self.base.read_only_base(),
+            _strategy: PhantomData,
+        }
     }
 
     /// # Warning
@@ -221,36 +221,11 @@ where
         }
         RawMmapSource::new(self, from, to).fold(init, f)
     }
-}
-pub trait VariantsRawInnerReadWriteReadWriteRawVecITSInternal<I, T, S>: Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn base(&self) -> &ReadWriteBaseVec<I, T>;
-    fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T>;
-    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>>;
-    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B;
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<I, T, S> VariantsRawInnerReadWriteReadWriteRawVecITSInternal<I, T, S>
-    for ReadWriteRawVec<I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn base(&self) -> &ReadWriteBaseVec<I, T> {
+
+    pub fn base(&self) -> &ReadWriteBaseVec<I, T> {
         &self.base
     }
-    fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T> {
+    pub fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T> {
         &mut self.base
     }
     fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {

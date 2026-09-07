@@ -5,6 +5,7 @@ use std::result::Result as StdResult;
 use bitview_traversable::Traversable;
 
 #[derive(Clone, Traversable)]
+#[traversable(field_suffixes)]
 pub struct DistributionStats<A> {
     /// Minimum value in the represented distribution.
     pub min: A,

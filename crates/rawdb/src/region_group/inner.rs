@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use parking_lot::Mutex;
 
 use crate::region_metadata::MAX_RESERVED_SIZE;

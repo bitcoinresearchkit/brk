@@ -35,7 +35,7 @@ impl BitviewClient {{
     /// Get the series tree for navigating series.
     pub fn series(&self) -> &SeriesTree {{
         self.series
-            .get_or_init(|| Box::new(SeriesTree::new(self.base.clone(), String::new())))
+            .get_or_init(|| Box::new(create_series_tree(self.base.clone())))
     }}
 
     /// Create a dynamic series endpoint builder for any series/index combination.
@@ -335,21 +335,21 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {
-    let mut params = Vec::new();
+    let mut params = String::new();
     for param in &endpoint.path_params {
         let rust_type = param_type_to_rust(&param.param_type);
-        params.push(format!(", {}: {}", sanitize_ident(&param.name), rust_type));
+        write!(params, ", {}: {}", sanitize_ident(&param.name), rust_type).unwrap();
     }
     for param in &endpoint.query_params {
         let rust_type = param_type_to_rust(&param.param_type);
         let name = sanitize_ident(&param.name);
         if param.required {
-            params.push(format!(", {}: {}", name, rust_type));
+            write!(params, ", {}: {}", name, rust_type).unwrap();
         } else {
-            params.push(format!(", {}: Option<{}>", name, rust_type));
+            write!(params, ", {}: Option<{}>", name, rust_type).unwrap();
         }
     }
-    params.join("")
+    params
 }
 
 /// Strip characters invalid in Rust identifiers (e.g. `[]` from `txId[]`).

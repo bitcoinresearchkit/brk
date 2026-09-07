@@ -1,8 +1,10 @@
 use std::ops::{Add, AddAssign};
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::OutputType;
 use rayon::prelude::*;
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
 
 use super::{Filter, SpendableType, UnspendableType};
@@ -78,30 +80,34 @@ impl OutputTypeId {
     }
 }
 
+impl OutputTypeId {
+    pub const ALL: &'static [Self] = &OUTPUT_TYPE_IDS;
+
+    #[inline]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+}
+#[cfg(feature = "storage")]
 impl ColumnId for OutputTypeId {
     type Row<T>
         = [T; OUTPUT_TYPE_COUNT]
     where
         T: VecValue;
-
     const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &OUTPUT_TYPE_IDS;
-
+    const ALL: &'static [Self] = Self::ALL;
     #[inline]
     fn index(self) -> usize {
-        self as usize
+        Self::index(self)
     }
-
     #[inline]
     fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
         &row[self as usize]
     }
-
     #[inline]
     fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
         &mut row[self as usize]
     }
-
     #[inline]
     fn from_fn<T, F>(mut f: F) -> Self::Row<T>
     where
@@ -110,7 +116,6 @@ impl ColumnId for OutputTypeId {
     {
         std::array::from_fn(|index| f(OUTPUT_TYPE_IDS[index]))
     }
-
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
     where
@@ -122,11 +127,12 @@ impl ColumnId for OutputTypeId {
     }
 }
 
-#[derive(Default, Clone, Debug, Traversable)]
+#[derive(Default, Clone, Debug)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByType<T> {
-    #[traversable(flatten)]
+    #[cfg_attr(feature = "storage", traversable(flatten))]
     pub spendable: SpendableType<T>,
-    #[traversable(flatten)]
+    #[cfg_attr(feature = "storage", traversable(flatten))]
     pub unspendable: UnspendableType<T>,
 }
 
@@ -254,8 +260,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn column_ids_match_by_type_order() {
         let by_type = ByType::new(|filter, _| {

@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, OverflowVecValue, Version};
 
 use crate::{FundedAddrData, Sats};
@@ -48,12 +49,11 @@ impl std::fmt::Display for EmptyAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for EmptyAddrData {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
@@ -73,6 +73,7 @@ impl Formattable for EmptyAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for EmptyAddrData {
     type Array = [u8; size_of::<Self>()];
 
@@ -93,6 +94,7 @@ impl Bytes for EmptyAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl OverflowVecValue for EmptyAddrData {
     type Compact = u64;
 
@@ -156,8 +158,10 @@ impl OverflowVecValue for EmptyAddrData {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn compact_roundtrip_and_boundaries() {
         let max_inline = EmptyAddrData {
@@ -199,6 +203,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn default_and_overflow_tags_are_unambiguous() {
         let default = EmptyAddrData::default().to_compact().unwrap();

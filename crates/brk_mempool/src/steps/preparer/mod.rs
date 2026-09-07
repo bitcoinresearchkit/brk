@@ -30,100 +30,96 @@ pub use tx_addition::TxAddition;
 pub use tx_removal::TxRemoval;
 pub use txs_pulled::TxsPulled;
 
-pub struct Preparer;
+pub fn prepare(
+    live_txids: &[Txid],
+    new_entries: Vec<MempoolEntryInfo>,
+    new_txs: FxHashMap<Txid, BitcoinTransaction>,
+    lock: &RwLock<State>,
+) -> TxsPulled {
+    let state = lock.read();
 
-impl Preparer {
-    pub fn prepare(
-        live_txids: &[Txid],
-        new_entries: Vec<MempoolEntryInfo>,
-        new_txs: FxHashMap<Txid, BitcoinTransaction>,
-        lock: &RwLock<State>,
-    ) -> TxsPulled {
-        let state = lock.read();
+    let live: FxHashSet<TxidPrefix> = live_txids.iter().map(TxidPrefix::from).collect();
+    let added = classify_additions(new_entries, new_txs, &state.txs, &state.graveyard);
+    let removed = classify_removals(&live, &added, &state.txs);
 
-        let live: FxHashSet<TxidPrefix> = live_txids.iter().map(TxidPrefix::from).collect();
-        let added = Self::classify_additions(new_entries, new_txs, &state.txs, &state.graveyard);
-        let removed = Self::classify_removals(&live, &added, &state.txs);
-
-        TxsPulled {
-            live_len: live.len(),
-            added,
-            removed,
-        }
+    TxsPulled {
+        live_len: live.len(),
+        added,
+        removed,
     }
+}
 
-    fn classify_additions(
-        new_entries: Vec<MempoolEntryInfo>,
-        mut new_txs: FxHashMap<Txid, BitcoinTransaction>,
-        known: &TxStore,
-        graveyard: &TxGraveyard,
-    ) -> Vec<TxAddition> {
-        new_entries
-            .iter()
-            .filter_map(|info| Self::classify_addition(info, known, graveyard, &mut new_txs))
-            .collect()
+fn classify_additions(
+    new_entries: Vec<MempoolEntryInfo>,
+    mut new_txs: FxHashMap<Txid, BitcoinTransaction>,
+    known: &TxStore,
+    graveyard: &TxGraveyard,
+) -> Vec<TxAddition> {
+    new_entries
+        .iter()
+        .filter_map(|info| classify_addition(info, known, graveyard, &mut new_txs))
+        .collect()
+}
+
+fn classify_addition(
+    info: &MempoolEntryInfo,
+    known: &TxStore,
+    graveyard: &TxGraveyard,
+    new_txs: &mut FxHashMap<Txid, BitcoinTransaction>,
+) -> Option<TxAddition> {
+    if known.contains(&info.txid) {
+        return None;
     }
-
-    fn classify_addition(
-        info: &MempoolEntryInfo,
-        known: &TxStore,
-        graveyard: &TxGraveyard,
-        new_txs: &mut FxHashMap<Txid, BitcoinTransaction>,
-    ) -> Option<TxAddition> {
-        if known.contains(&info.txid) {
-            return None;
-        }
-        if let Some(tomb) = graveyard.get(&info.txid) {
-            return Some(TxAddition::revived(info, tomb));
-        }
-        let tx = new_txs.remove(&info.txid)?;
-        Some(TxAddition::fresh(info, tx, known))
+    if let Some(tomb) = graveyard.get(&info.txid) {
+        return Some(TxAddition::revived(info, tomb));
     }
+    let tx = new_txs.remove(&info.txid)?;
+    Some(TxAddition::fresh(info, tx, known))
+}
 
-    /// One `(prefix, reason)` per known tx that's gone from the live set,
-    /// in `known` iteration order.
-    ///
-    /// Cost is `O(R * avg_inputs)` where R is the removed-tx count and
-    /// `avg_inputs` is small for non-pathological txs. Worst case is a
-    /// `mempoolminfee` jump dropping ~10k txs in one cycle - still well
-    /// under the cycle budget.
-    fn classify_removals(
-        live: &FxHashSet<TxidPrefix>,
-        added: &[TxAddition],
-        known: &TxStore,
-    ) -> Vec<(TxidPrefix, TxRemoval)> {
-        let spent_by = Self::build_spent_by(added);
-        known
-            .records()
-            .filter_map(|(prefix, record)| {
-                if live.contains(prefix) {
-                    return None;
-                }
-                Some((*prefix, Self::removal_reason(&record.tx, &spent_by)))
-            })
-            .collect()
-    }
+/// One `(prefix, reason)` per known tx that's gone from the live set,
+/// in `known` iteration order.
+///
+/// Cost is `O(R * avg_inputs)` where R is the removed-tx count and
+/// `avg_inputs` is small for non-pathological txs. Worst case is a
+/// `mempoolminfee` jump dropping ~10k txs in one cycle - still well
+/// under the cycle budget.
+fn classify_removals(
+    live: &FxHashSet<TxidPrefix>,
+    added: &[TxAddition],
+    known: &TxStore,
+) -> Vec<(TxidPrefix, TxRemoval)> {
+    let spent_by = build_spent_by(added);
+    known
+        .records()
+        .filter_map(|(prefix, record)| {
+            if live.contains(prefix) {
+                return None;
+            }
+            Some((*prefix, removal_reason(&record.tx, &spent_by)))
+        })
+        .collect()
+}
 
-    fn removal_reason(tx: &Transaction, spent_by: &FxHashMap<(Txid, Vout), Txid>) -> TxRemoval {
-        tx.input
-            .iter()
-            .find_map(|i| spent_by.get(&(i.txid, i.vout)).copied())
-            .map_or(TxRemoval::Vanished, |by| TxRemoval::Replaced { by })
-    }
+fn removal_reason(tx: &Transaction, spent_by: &FxHashMap<(Txid, Vout), Txid>) -> TxRemoval {
+    tx.input
+        .iter()
+        .find_map(|i| spent_by.get(&(i.txid, i.vout)).copied())
+        .map_or(TxRemoval::Vanished, |by| TxRemoval::Replaced { by })
+}
 
-    /// Only `Fresh` additions carry tx input data. Revived txs were
-    /// already in-pool, so they can't be new spenders of anything.
-    fn build_spent_by(added: &[TxAddition]) -> FxHashMap<(Txid, Vout), Txid> {
-        let mut spent_by: FxHashMap<(Txid, Vout), Txid> = FxHashMap::default();
-        for addition in added {
-            if let TxAddition::Fresh { tx, .. } = addition {
-                for txin in &tx.input {
-                    spent_by.insert((txin.txid, txin.vout), tx.txid);
-                }
+/// Only `Fresh` additions carry tx input data. Revived txs were
+/// already in-pool, so they can't be new spenders of anything.
+fn build_spent_by(added: &[TxAddition]) -> FxHashMap<(Txid, Vout), Txid> {
+    let mut spent_by: FxHashMap<(Txid, Vout), Txid> = FxHashMap::default();
+    for addition in added {
+        if let TxAddition::Fresh { tx, .. } = addition {
+            for txin in &tx.input {
+                spent_by.insert((txin.txid, txin.vout), tx.txid);
             }
         }
-        spent_by
     }
+    spent_by
 }
 
 #[cfg(test)]
@@ -180,7 +176,7 @@ mod tests {
             fake_bitcoin_tx(0x11, &[(p2wpkh_script(7), 1_234)]),
         );
 
-        let pulled = Preparer::prepare(&[known_txid], vec![info], new_txs, &state);
+        let pulled = prepare(&[known_txid], vec![info], new_txs, &state);
         assert!(pulled.added.is_empty(), "known tx must be filtered out");
         assert!(pulled.removed.is_empty(), "still live, nothing removed");
     }
@@ -192,7 +188,7 @@ mod tests {
         seed_graveyard(&state, txid);
 
         let info = fake_entry_info(txid, 100, 100);
-        let pulled = Preparer::prepare(&[txid], vec![info], FxHashMap::default(), &state);
+        let pulled = prepare(&[txid], vec![info], FxHashMap::default(), &state);
 
         assert_eq!(pulled.added.len(), 1);
         assert!(matches!(pulled.added[0].kind(), AddedKind::Revived));
@@ -210,7 +206,7 @@ mod tests {
         let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         new_txs.insert(txid, raw);
 
-        let pulled = Preparer::prepare(&[txid], vec![info], new_txs, &state);
+        let pulled = prepare(&[txid], vec![info], new_txs, &state);
         assert_eq!(pulled.added.len(), 1);
         assert!(matches!(pulled.added[0].kind(), AddedKind::Fresh));
     }
@@ -221,7 +217,7 @@ mod tests {
         let txid = fake_txid(0x40);
         let info = fake_entry_info(txid, 100, 100);
 
-        let pulled = Preparer::prepare(&[txid], vec![info], FxHashMap::default(), &state);
+        let pulled = prepare(&[txid], vec![info], FxHashMap::default(), &state);
         assert!(pulled.added.is_empty(), "no payload, no tomb -> filtered");
     }
 
@@ -257,7 +253,7 @@ mod tests {
         };
         new_txs.insert(replacer_txid, raw);
 
-        let pulled = Preparer::prepare(&[replacer_txid], vec![info], new_txs, &state);
+        let pulled = prepare(&[replacer_txid], vec![info], new_txs, &state);
         assert_eq!(pulled.removed.len(), 1);
         let (_, reason) = pulled.removed[0];
         match reason {
@@ -281,7 +277,7 @@ mod tests {
         }
 
         // No live txids in this cycle, no replacers staged.
-        let pulled = Preparer::prepare(&[], vec![], FxHashMap::default(), &state);
+        let pulled = prepare(&[], vec![], FxHashMap::default(), &state);
         assert_eq!(pulled.removed.len(), 1);
         assert!(matches!(pulled.removed[0].1, TxRemoval::Vanished));
     }
@@ -321,7 +317,7 @@ mod tests {
         let mut new_txs: FxHashMap<Txid, BitcoinTransaction> = FxHashMap::default();
         new_txs.insert(child_txid, raw);
 
-        let pulled = Preparer::prepare(&[parent_txid, child_txid], vec![info], new_txs, &state);
+        let pulled = prepare(&[parent_txid, child_txid], vec![info], new_txs, &state);
         let TxAddition::Fresh { tx, .. } = &pulled.added[0] else {
             panic!("expected Fresh classification");
         };

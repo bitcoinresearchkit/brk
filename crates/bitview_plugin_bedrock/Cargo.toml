@@ -15,11 +15,11 @@ bitview_plugin_coinflow = { workspace = true }
 bitview_plugin_cointime = { workspace = true }
 bitview_plugin_distribution = { workspace = true }
 bitview_plugin_mappings = { workspace = true }
-bitview_cohort = { workspace = true }
+bitview_cohort = { workspace = true, features = ["storage"] }
 brk_error = { workspace = true, features = ["vecdb"] }
 bitview_plugin_indexer = { workspace = true }
 bitview_traversable = { workspace = true }
-brk_types = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 derive_more = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }

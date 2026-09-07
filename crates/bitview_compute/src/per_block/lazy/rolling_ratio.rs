@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::Height;
@@ -109,7 +109,14 @@ where
         )
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn try_fold_values<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
+        let mut accumulator = init;
         let cached = self.cached.snapshot();
         let window_starts = self.window_starts.snapshot();
         let to = to
@@ -117,7 +124,7 @@ where
             .min(cached.len())
             .min(window_starts.len());
         if from >= to {
-            return;
+            return Ok(accumulator);
         }
 
         let starts = &window_starts[from..to];
@@ -143,16 +150,19 @@ where
                 let cached_previous = previous
                     .map(|previous| cached[previous].clone())
                     .unwrap_or_default();
-                each(self.compute(
-                    index,
-                    previous,
-                    source_current,
-                    source_previous,
-                    cached_current,
-                    cached_previous,
-                ));
+                accumulator = fold(
+                    accumulator,
+                    self.compute(
+                        index,
+                        previous,
+                        source_current,
+                        source_previous,
+                        cached_current,
+                        cached_previous,
+                    ),
+                )?;
             }
-            return;
+            return Ok(accumulator);
         }
 
         let current = self.source.collect_range_dyn(from, to);
@@ -174,15 +184,27 @@ where
             let cached_previous = previous_index
                 .map(|previous| cached[previous].clone())
                 .unwrap_or_default();
-            each(self.compute(
-                index,
-                previous_index,
-                source_current,
-                source_previous,
-                cached_current,
-                cached_previous,
-            ));
+            accumulator = fold(
+                accumulator,
+                self.compute(
+                    index,
+                    previous_index,
+                    source_current,
+                    source_previous,
+                    cached_current,
+                    cached_previous,
+                ),
+            )?;
         }
+        Ok(accumulator)
+    }
+
+    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+        self.try_fold_values(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -274,10 +296,17 @@ where
         self.for_each_value(from, to, each);
     }
 
-    fn fold_range_at<B, G: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, fold: G) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, fold)
+    fn fold_range_at<B, G: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: G,
+    ) -> B {
+        self.try_fold_values(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(fold(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, G: FnMut(B, T) -> Result<B, E>>(
@@ -287,9 +316,7 @@ where
         init: B,
         fold: G,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, fold)
+        self.try_fold_values(from, to, init, fold)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
@@ -396,15 +423,8 @@ mod tests {
 
     #[test]
     fn derives_rolling_ratios_from_one_source_and_cached_denominator() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-lazy-rolling-ratio-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
         let mut denominator: EagerVec<PcoVec<Height, Sats>> =
@@ -498,13 +518,5 @@ mod tests {
                 PartsPerMillion32::from(35.0 / 90.0),
             ],
         );
-
-        drop(transformed);
-        drop(ratio);
-        drop(starts);
-        drop(denominator);
-        drop(source);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

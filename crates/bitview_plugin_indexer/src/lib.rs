@@ -24,7 +24,6 @@ use vecdb::{
 };
 mod constants;
 mod has;
-mod internals;
 mod lengths;
 mod processor;
 mod readers;
@@ -41,10 +40,10 @@ use processor::{BlockBuffers, BlockProcessor};
 use readers::Readers;
 pub use safe_lengths::SafeLengths;
 use state::State;
-use stores::{IndexerStores as _, Stores};
+use stores::Stores;
 use vecs::{
-    AddrsVecs, IndexerVecs as _, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs,
-    TransactionCounts, TransactionFeaturesVecs, TxFeatureFlags, TxMetadataVecs, Vecs,
+    AddrsVecs, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs, TransactionCounts,
+    TransactionFeaturesVecs, TxFeatureFlags, TxMetadataVecs, Vecs,
 };
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("indexer"), VERSION);
@@ -53,14 +52,10 @@ const MAX_PENDING_RECORDS: usize = 35_000_000;
 pub const ID: PluginId = STORAGE.id();
 
 pub struct Indexer<M: StorageMode = Rw> {
-    inner: IndexerInner<M>,
-}
-
-struct IndexerInner<M: StorageMode> {
     reader: Reader,
     vecs: Vecs<M>,
     stores: Stores,
-    buffers: BlockBuffers,
+    buffers: M::WriteOnly<BlockBuffers>,
     state: State,
     plugin_gate: PluginGate,
 }
@@ -153,7 +148,6 @@ impl<M: StorageMode> Indexer<M> {
     pub fn tip_blockhash(&self) -> BlockHash {
         match self.safe_lengths().last_height() {
             Some(h) => self
-                .inner
                 .vecs
                 .blocks
                 .blockhash
@@ -167,17 +161,17 @@ impl<M: StorageMode> Indexer<M> {
     /// advance and lower this internally; readers clamp non-series
     /// answers against this loaded snapshot.
     pub fn safe_lengths(&self) -> Lengths {
-        self.inner.state.lengths()
+        self.state.lengths()
     }
 
     /// Stabilize the already published immutable prefix, including across
     /// rollback. This does not wait for an append-only compute pass.
     pub fn pin_safe_lengths(&self) -> SafeLengths {
-        self.inner.state.pin()
+        self.state.pin()
     }
 
     pub fn try_pin_safe_lengths(&self) -> Option<SafeLengths> {
-        self.inner.state.try_pin()
+        self.state.try_pin()
     }
 
     /// Latest safely published indexed height.
@@ -186,17 +180,17 @@ impl<M: StorageMode> Indexer<M> {
     }
 
     pub fn reader(&self) -> &Reader {
-        &self.inner.reader
+        &self.reader
     }
 
     #[inline]
     pub fn vecs(&self) -> &Vecs<M> {
-        &self.inner.vecs
+        &self.vecs
     }
 
     #[inline]
     pub fn stores(&self) -> &Stores {
-        &self.inner.stores
+        &self.stores
     }
 }
 
@@ -205,15 +199,15 @@ where
     Vecs<M>: Traversable,
 {
     fn to_tree_node(&self) -> TreeNode {
-        self.inner.vecs.to_tree_node()
+        self.vecs.to_tree_node()
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.inner.vecs.iter_any_exportable()
+        self.vecs.iter_any_exportable()
     }
 
     fn iter_any_visible(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.inner.vecs.iter_any_visible()
+        self.vecs.iter_any_visible()
     }
 
     fn collect_series_descriptions<'a>(
@@ -221,8 +215,7 @@ where
         description_fragments: &mut Vec<&'static str>,
         descriptions: &mut BTreeMap<&'a str, Vec<&'static str>>,
     ) {
-        self.inner
-            .vecs
+        self.vecs
             .collect_series_descriptions(description_fragments, descriptions);
     }
 }
@@ -233,43 +226,30 @@ impl Indexer {
     /// Any reset happens before this function returns, after all handles from
     /// the failed import attempt have been dropped.
     pub fn import(context: ImportContext<'_>, reader: &Reader) -> Result<Self> {
-        Ok(Self {
-            inner: IndexerInner::import(context, reader)?,
-        })
+        validate_reader_source(reader)?;
+        Self::import_inner(context, reader, true)
     }
 
     pub fn index(&mut self, exit: &Exit) -> Result<()> {
         self.begin_update();
-        self.inner.index(exit, false)
+        self.index_inner(exit, false)
     }
 
     pub fn checked_index(&mut self, exit: &Exit) -> Result<()> {
         self.begin_update();
-        self.inner.index(exit, true)
+        self.index_inner(exit, true)
     }
 
     pub fn begin_update(&self) {
-        self.inner.plugin_gate.begin_update();
+        self.plugin_gate.begin_update();
     }
 
     /// Publish disk state as the new safe-lengths snapshot. Drains pending
     /// bg ingest first so stores are queryable at the new bound.
     pub fn finish_update(&mut self) -> Result<()> {
         self.commit()?;
-        self.inner.plugin_gate.finish_update();
+        self.plugin_gate.finish_update();
         Ok(())
-    }
-
-    /// Commits indexed disk state as the pipeline-wide safe-lengths snapshot.
-    pub fn commit(&mut self) -> Result<()> {
-        self.inner.commit()
-    }
-}
-
-impl IndexerInner<Rw> {
-    fn import(context: ImportContext<'_>, reader: &Reader) -> Result<Self> {
-        validate_reader_source(reader)?;
-        Self::import_inner(context, reader, true)
     }
 
     fn import_inner(context: ImportContext<'_>, reader: &Reader, can_retry: bool) -> Result<Self> {
@@ -413,7 +393,7 @@ impl IndexerInner<Rw> {
         persisted.publish()
     }
 
-    fn index(&mut self, exit: &Exit, check_collisions: bool) -> Result<()> {
+    fn index_inner(&mut self, exit: &Exit, check_collisions: bool) -> Result<()> {
         let reader = self.reader.clone();
         validate_reader_source(&reader)?;
         let client = reader.client();
@@ -543,7 +523,7 @@ impl IndexerInner<Rw> {
             processor.push_block_size_and_weight(&txs);
 
             let (txins_result, txouts_result) = rayon::join(
-                || processor.process_inputs(&txs, &mut buffers.inputs),
+                || buffers.inputs.resolve(&processor, &txs),
                 || processor.process_outputs(&mut buffers.addresses),
             );
             let txins = txins_result?;
@@ -609,7 +589,8 @@ impl IndexerInner<Rw> {
         Ok(())
     }
 
-    fn commit(&mut self) -> Result<()> {
+    /// Commits indexed disk state as the pipeline-wide safe-lengths snapshot.
+    pub fn commit(&mut self) -> Result<()> {
         self.vecs.sync_bg_tasks()?;
         let lengths = match Lengths::from_local(&self.vecs, &self.stores)? {
             Some(lengths) => lengths,
@@ -634,14 +615,12 @@ impl ReadOnlyClone for Indexer {
 
     fn read_only_clone(&self) -> Indexer<Ro> {
         Indexer {
-            inner: IndexerInner {
-                reader: self.inner.reader.clone(),
-                vecs: self.inner.vecs.read_only_clone(),
-                stores: self.inner.stores.clone(),
-                buffers: BlockBuffers::default(),
-                state: self.inner.state.clone(),
-                plugin_gate: self.inner.plugin_gate.clone(),
-            },
+            reader: self.reader.clone(),
+            vecs: self.vecs.read_only_clone(),
+            stores: self.stores.clone(),
+            buffers: (),
+            state: self.state.clone(),
+            plugin_gate: self.plugin_gate.clone(),
         }
     }
 }
@@ -655,7 +634,7 @@ where
     }
 
     fn gate(&self) -> &PluginGate {
-        &self.inner.plugin_gate
+        &self.plugin_gate
     }
 }
 
@@ -668,7 +647,7 @@ impl ComputePlugin for Indexer {
         (): Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.inner.index(context.exit(), cfg!(debug_assertions))
+        self.index_inner(context.exit(), cfg!(debug_assertions))
     }
 }
 
@@ -850,11 +829,10 @@ mod import_tests {
         {
             let mut indexer = Indexer::import(ImportContext::new(dir.path()), &reader)?;
             indexer
-                .inner
                 .stores
                 .insert_block_height(BlockHashPrefix::from(1_u64), Height::ZERO);
-            let checkpoint = indexer.inner.stores.begin_commit(Height::ZERO)?;
-            let persisted = indexer.inner.stores.persist(checkpoint)?;
+            let checkpoint = indexer.stores.begin_commit(Height::ZERO)?;
+            let persisted = indexer.stores.persist(checkpoint)?;
             drop(persisted);
         }
         fs::write(plugin.join("stale"), b"stale")?;

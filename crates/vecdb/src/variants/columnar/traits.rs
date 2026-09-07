@@ -15,16 +15,8 @@ where
     V: StoredVec,
     C: ColumnId,
 {
-    fn import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        Self::import_with((db, name, version).into())
-    }
-
     fn import_with(options: ImportOptions) -> Result<Self> {
         Self::import_inner(options, false)
-    }
-
-    fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        Self::forced_import_with((db, name, version).into())
     }
 
     fn forced_import_with(options: ImportOptions) -> Result<Self> {

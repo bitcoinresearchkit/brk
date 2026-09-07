@@ -6,14 +6,12 @@ use bitview_cohort::{AddrTypeId, AgeRange, AgeRangeId, CohortContext, EntryPrice
 use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginGate, PluginStorage, UpdateContext,
 };
-use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
-use brk_exit::Exit;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::{Cents, Height, StoredF64, SupplyState, Version};
 use tracing::{debug, info, warn};
 use vecdb::{
-    AnyVec, BytesVec, ImportOptions, ImportableVec, ReadableVec, Rw, Stamp, StorageMode,
+    AnyVec, BytesVec, Database, ImportOptions, ImportableVec, ReadableVec, Rw, Stamp, StorageMode,
     WritableVec,
 };
 
@@ -44,7 +42,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     plugin_gate: PluginGate,
     #[traversable(skip)]
-    inner: Inner,
+    db: Database,
+    inner: M::WriteOnly<Inner>,
     #[traversable(skip)]
     pub states_path: PathBuf,
 
@@ -230,11 +229,12 @@ impl Vecs {
             )?,
 
             addr_state,
-            inner: Inner::new(db),
+            db,
+            inner: Inner::default(),
             states_path,
         };
 
-        STORAGE.finalize_database(&this.inner.db)?;
+        STORAGE.finalize_database(&this.db)?;
         Ok(this)
     }
 
@@ -257,6 +257,26 @@ impl Vecs {
         Ok(())
     }
 
+    fn min_resume_len(&self) -> Height {
+        self.cohorts
+            .min_resume_len()
+            .min(Height::from(self.supply_state.len()))
+            .min(self.addr_state.min_stamped_len())
+            .min(Height::from(self.addrs.min_resume_len()))
+            .min(Height::from(self.coindays_created.cumulative.len()))
+            .min(Height::from(self.coinblocks_destroyed.block.len()))
+    }
+}
+
+pub fn flush(vecs: &Vecs) -> Result<()> {
+    vecs.db.flush()?;
+    Ok(())
+}
+
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = UTXOStates;
+
     /// Main computation loop.
     ///
     /// Processes blocks to compute UTXO and address cohort metrics:
@@ -265,18 +285,21 @@ impl Vecs {
     /// 3. Flushes checkpoints periodically
     /// 4. Computes aggregate cohorts from separate cohorts
     /// 5. Computes derived metrics
-    #[allow(clippy::too_many_arguments)]
-    fn compute_inner(
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        inputs: &bitview_plugin_inputs::Vecs,
-        outputs: &bitview_plugin_outputs::Vecs,
-        transactions: &bitview_plugin_transactions::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        exit: &Exit,
-    ) -> Result<UTXOStates> {
-        self.inner.db.sync_bg_tasks()?;
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            mappings,
+            inputs,
+            outputs,
+            transactions,
+            price: prices,
+        } = dependencies;
+        let exit = context.exit();
+        self.db.sync_bg_tasks()?;
         let mut utxo_states = UTXOStates::new(&self.states_path);
         let mut addr_states = AddrStates::new(&self.states_path);
 
@@ -354,11 +377,8 @@ impl Vecs {
                     &mut addr_states,
                 )?;
 
-                debug!(
-                    "recover_state completed, starting_height={}",
-                    recovered.starting_height
-                );
-                recovered.starting_height
+                debug!("recover_state completed, starting_height={}", recovered);
+                recovered
             }
             StartMode::Fresh => Height::ZERO,
         };
@@ -564,51 +584,7 @@ impl Vecs {
         debug!("Computing rest part 2...");
         self.cohorts.compute_rest_part2(&starting_lengths, exit)?;
 
-        let exit = exit.clone();
-        self.inner.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
         Ok(utxo_states)
-    }
-
-    fn flush(&self) -> Result<()> {
-        self.inner.db.flush()?;
-        Ok(())
-    }
-
-    fn min_resume_len(&self) -> Height {
-        self.cohorts
-            .min_resume_len()
-            .min(Height::from(self.supply_state.len()))
-            .min(self.addr_state.min_stamped_len())
-            .min(Height::from(self.addrs.min_resume_len()))
-            .min(Height::from(self.coindays_created.cumulative.len()))
-            .min(Height::from(self.coinblocks_destroyed.block.len()))
-    }
-}
-
-pub fn flush(vecs: &Vecs) -> Result<()> {
-    vecs.flush()
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = UTXOStates;
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mappings,
-            dependencies.inputs,
-            dependencies.outputs,
-            dependencies.transactions,
-            dependencies.price,
-            context.exit(),
-        )
     }
 }

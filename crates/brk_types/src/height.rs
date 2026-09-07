@@ -1,14 +1,17 @@
 use std::{
     fmt::Debug,
-    fs,
     ops::{Add, AddAssign, Rem},
 };
 
+use crate::CheckedSub;
 use byteview::ByteView;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{Bytes, CheckedSub, Formattable, Pco, PrintableIndex, Stamp, VecIndex};
+#[cfg(feature = "storage")]
+use std::fs;
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable, Pco, PrintableIndex, Stamp, VecIndex};
 
 use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, FromCoarserIndex};
 
@@ -27,10 +30,10 @@ use super::{Epoch, Halving, StoredU64};
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
     Hash,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[allow(clippy::duplicated_attributes)]
 #[schemars(example = 0, example = 210_000, example = 420_000, example = 840_000)]
 pub struct Height(u32);
@@ -43,6 +46,7 @@ impl Height {
         Self(height)
     }
 
+    #[cfg(feature = "storage")]
     pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
         fs::write(path, self.to_bytes())
     }
@@ -127,16 +131,34 @@ impl CheckedSub<Height> for Height {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<Height> for Height {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<u32> for Height {
     fn checked_sub(self, rhs: u32) -> Option<Self> {
         self.0.checked_sub(rhs).map(Height::from)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<u32> for Height {
+    fn checked_sub(self, rhs: u32) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<usize> for Height {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         self.0.checked_sub(rhs as u32).map(Height::from)
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for Height {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -149,6 +171,12 @@ impl AddAssign<usize> for Height {
 impl CheckedSub<u64> for Height {
     fn checked_sub(self, rhs: u64) -> Option<Self> {
         self.0.checked_sub(rhs as u32).map(Height::from)
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<u64> for Height {
+    fn checked_sub(self, rhs: u64) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -226,6 +254,7 @@ impl From<bitcoin::locktime::absolute::Height> for Height {
     }
 }
 
+#[cfg(feature = "storage")]
 impl TryFrom<&std::path::Path> for Height {
     type Error = brk_error::Error;
     fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
@@ -254,6 +283,7 @@ impl From<&Height> for ByteView {
     }
 }
 
+#[cfg(feature = "storage")]
 impl From<Stamp> for Height {
     #[inline]
     fn from(value: Stamp) -> Self {
@@ -263,6 +293,7 @@ impl From<Stamp> for Height {
     }
 }
 
+#[cfg(feature = "storage")]
 impl From<Height> for Stamp {
     #[inline]
     fn from(value: Height) -> Self {
@@ -270,16 +301,25 @@ impl From<Height> for Stamp {
     }
 }
 
-impl PrintableIndex for Height {
-    fn to_string() -> &'static str {
+impl Height {
+    pub fn index_name() -> &'static str {
         "height"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["h", "height", "blk", "block"]
     }
 }
+#[cfg(feature = "storage")]
+impl PrintableIndex for Height {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
 
+#[cfg(feature = "storage")]
 impl VecIndex for Height {
     const INITIAL_CAPACITY: usize = 1_200_000;
 }
@@ -292,6 +332,7 @@ impl std::fmt::Display for Height {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Height {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

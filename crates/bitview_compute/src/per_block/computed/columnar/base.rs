@@ -250,15 +250,8 @@ mod tests {
 
     #[test]
     fn computes_from_scalar_columns_and_matrix_rows() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-columnar-compute-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
 
         let mut left_a: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "left_a", Version::ONE).unwrap();
@@ -355,16 +348,5 @@ mod tests {
                 [StoredU64::from(66_u64), StoredU64::from(385_u64)],
             ]
         );
-
-        drop(products);
-        drop(sums);
-        drop(factor_b);
-        drop(factor_a);
-        drop(right_b);
-        drop(right_a);
-        drop(left_b);
-        drop(left_a);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

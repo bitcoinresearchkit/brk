@@ -11,6 +11,7 @@ struct StructAttr {
     merge: bool,
     transparent: bool,
     hidden: bool,
+    field_suffixes: bool,
     wrap: Option<String>,
 }
 
@@ -26,6 +27,7 @@ fn get_struct_attr(attrs: &[syn::Attribute]) -> StructAttr {
                 "merge" => result.merge = true,
                 "transparent" => result.transparent = true,
                 "hidden" => result.hidden = true,
+                "field_suffixes" => result.field_suffixes = true,
                 _ => {}
             }
             continue;
@@ -51,6 +53,7 @@ enum FieldAttr {
 
 struct FieldInfo<'a> {
     name: &'a syn::Ident,
+    ty: &'a Type,
     is_option: bool,
     attr: FieldAttr,
     rename: Option<String>,
@@ -68,6 +71,9 @@ struct ParsedFieldAttr {
 
 /// Returns `None` for skipped fields and parsed traversal metadata otherwise.
 fn get_field_attr(field: &syn::Field) -> Option<ParsedFieldAttr> {
+    if is_write_only_type(&field.ty) {
+        return None;
+    }
     let mut attr_type = FieldAttr::Normal;
     let mut rename = None;
     let mut wrap = None;
@@ -155,10 +161,7 @@ fn with_description_fragment(
 }
 
 fn is_field_skipped(field: &syn::Field) -> bool {
-    field.attrs.iter().any(|attr| {
-        attr.path().is_ident("traversable")
-            && attr.parse_args::<syn::Ident>().is_ok_and(|id| id == "skip")
-    })
+    get_field_attr(field).is_none()
 }
 
 // ===========================================================================
@@ -172,6 +175,16 @@ fn is_option_type(ty: &Type) -> bool {
         if type_path.path.segments.last()
             .is_some_and(|seg| seg.ident == "Option")
     )
+}
+
+/// Writer-only associated fields have no traversal or read-only payload.
+fn is_write_only_type(ty: &Type) -> bool {
+    matches!(ty, Type::Path(path)
+        if (path.qself.is_some() || path.path.segments.len() > 1)
+            && path.path.segments.last().is_some_and(|segment|
+            segment.ident == "WriteOnly"
+                && matches!(&segment.arguments, syn::PathArguments::AngleBracketed(args)
+                    if args.args.len() == 1)))
 }
 
 fn is_box_type(ty: &Type) -> bool {
@@ -288,6 +301,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
     // Single-field tuple struct: delegate (automatic transparent).
     if let Fields::Unnamed(fields) = &data.fields
         && fields.unnamed.len() == 1
+        && !is_write_only_type(&fields.unnamed[0].ty)
     {
         let field = fields.unnamed.first().unwrap();
         let field_ty = &field.ty;
@@ -306,7 +320,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         return quote! {
             impl #impl_generics Traversable for #name #ty_generics #where_clause {
                 fn to_tree_node(&self) -> bitview_traversable::TreeNode {
-                    #to_tree_node_body
+                    { #to_tree_node_body }.with_source(concat!(module_path!(), "::", stringify!(#name)))
                 }
 
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
@@ -333,7 +347,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         return quote! {
             impl #impl_generics Traversable for #name #ty_generics {
                 fn to_tree_node(&self) -> bitview_traversable::TreeNode {
-                    bitview_traversable::TreeNode::Branch(bitview_traversable::IndexMap::new())
+                    bitview_traversable::TreeNode::branch(bitview_traversable::IndexMap::new())
                 }
 
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
@@ -349,12 +363,13 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         };
     };
 
-    // Transparent delegation: forward everything to the first field.
-    if struct_attr.transparent {
-        let first_field = named_fields
+    // Transparent delegation: writer-only fields never participate.
+    if struct_attr.transparent
+        && let Some(first_field) = named_fields
             .named
-            .first()
-            .expect("transparent requires at least one field");
+            .iter()
+            .find(|field| !is_write_only_type(&field.ty))
+    {
         let field_name = first_field
             .ident
             .as_ref()
@@ -370,7 +385,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
         return quote! {
             impl #impl_generics Traversable for #name #ty_generics #where_clause {
                 fn to_tree_node(&self) -> bitview_traversable::TreeNode {
-                    self.#field_name.to_tree_node()
+                    self.#field_name.to_tree_node().with_source(concat!(module_path!(), "::", stringify!(#name)))
                 }
 
                 fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn vecdb::AnyExportableVec> {
@@ -397,7 +412,7 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
     let (field_infos, generics_needing_traversable, field_traversable_types) =
         analyze_fields(named_fields, &generic_params);
 
-    let field_traversals = generate_field_traversals(&field_infos, struct_attr.merge);
+    let field_traversals = generate_field_traversals(&field_infos, struct_attr.merge, name);
     let iterator_impl = generate_iterator_impl(&field_infos, struct_attr.hidden);
     let description_impl = generate_description_impl(&field_infos, struct_attr.hidden);
     let where_clause = build_where_clause(
@@ -407,15 +422,21 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
     );
 
     let to_tree_node_body = if struct_attr.hidden {
-        quote! { bitview_traversable::TreeNode::Branch(bitview_traversable::IndexMap::new()) }
+        quote! { bitview_traversable::TreeNode::branch(bitview_traversable::IndexMap::new()) }
     } else {
         field_traversals
+    };
+
+    let to_tree_node_body = if struct_attr.field_suffixes {
+        quote! { { #to_tree_node_body }.with_field_suffixes() }
+    } else {
+        to_tree_node_body
     };
 
     quote! {
         impl #impl_generics Traversable for #name #ty_generics #where_clause {
             fn to_tree_node(&self) -> bitview_traversable::TreeNode {
-                #to_tree_node_body
+                { #to_tree_node_body }.with_source(concat!(module_path!(), "::", stringify!(#name)))
             }
 
             #iterator_impl
@@ -461,6 +482,7 @@ fn analyze_fields<'a>(
 
         field_infos.push(FieldInfo {
             name: field_name,
+            ty: &field.ty,
             is_option,
             attr: parsed.attr,
             rename: parsed.rename,
@@ -502,45 +524,42 @@ fn build_where_clause(
     }
 }
 
-fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::TokenStream {
+fn generate_field_traversals(
+    infos: &[FieldInfo],
+    merge: bool,
+    owner: &syn::Ident,
+) -> proc_macro2::TokenStream {
     // Process all fields in declaration order (interleaving normal and flatten)
     // so that struct field order determines tree key order.
     let field_operations: Vec<_> = infos
         .iter()
         .filter(|i| !i.hidden)
         .map(|info| {
+            let ty = info.ty;
+            let declaration = quote! { Some(concat!(module_path!(), "::", stringify!(#owner), "::", stringify!(#ty))) };
             match info.attr {
                 FieldAttr::Normal => {
                     let field_name = info.name;
                     let field_name_str = {
                         let s = field_name.to_string();
-                        let s = s.strip_prefix("r#").unwrap_or(&s).to_string();
-                        s.strip_prefix('_').map(String::from).unwrap_or(s)
+                        let s = s.strip_prefix("r#").unwrap_or(&s);
+                        s.strip_prefix('_').unwrap_or(s).to_string()
                     };
 
                     // Determine the tree key and optional wrapping path.
                     // wrap = "a/b" means: outer_key = "a", wrap the node under "b" then under the rename/field name.
                     // wrap = "a" means: outer_key = "a", wrap under rename or field name.
                     // No wrap: outer_key = rename or field name, no wrapping.
-                    let (outer_key, wrap_path): (String, Vec<&str>) =
-                        match (info.wrap.as_deref(), info.rename.as_deref()) {
-                            (Some(wrap), Some(rename)) => {
-                                let parts: Vec<&str> = wrap.split('/').collect();
-                                let outer = parts[0].to_string();
-                                let mut path: Vec<&str> = parts[1..].to_vec();
-                                path.push(rename);
-                                (outer, path)
-                            }
-                            (Some(wrap), None) => {
-                                let parts: Vec<&str> = wrap.split('/').collect();
-                                let outer = parts[0].to_string();
-                                let mut path: Vec<&str> = parts[1..].to_vec();
-                                path.push(&field_name_str);
-                                (outer, path)
-                            }
-                            (None, Some(rename)) => (rename.to_string(), vec![]),
-                            (None, None) => (field_name_str.clone(), vec![]),
-                        };
+                    let key = info.rename.as_deref().unwrap_or(&field_name_str);
+                    let (outer_key, wrap_path) = match info.wrap.as_deref() {
+                        Some(wrap) => {
+                            let mut parts = wrap.split('/');
+                            let outer = parts.next().unwrap();
+                            let path = parts.chain(std::iter::once(key)).collect::<Vec<_>>();
+                            (outer, path)
+                        }
+                        None => (key, vec![]),
+                    };
 
                     // Build nested wrapping: wrap(path[last], wrap(path[last-1], ... node))
                     let build_wrapped = |base: proc_macro2::TokenStream| -> proc_macro2::TokenStream {
@@ -553,14 +572,14 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
                         let node_expr = build_wrapped(quote! { nested.to_tree_node() });
                         quote! {
                             if let Some(entry) = self.#field_name.as_ref().map(|nested| (String::from(#outer_key), #node_expr)) {
-                                bitview_traversable::TreeNode::merge_node(&mut collected, entry.0, entry.1)
+                                collected.merge_field(entry.0, entry.1, #declaration)
                                     .expect("Conflicting values for same key");
                             }
                         }
                     } else {
                         let node_expr_self = build_wrapped(quote! { self.#field_name.to_tree_node() });
                         quote! {
-                            bitview_traversable::TreeNode::merge_node(&mut collected, String::from(#outer_key), #node_expr_self)
+                            collected.merge_field(String::from(#outer_key), #node_expr_self, #declaration)
                                 .expect("Conflicting values for same key");
                         }
                     }
@@ -569,13 +588,11 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
                     let field_name = info.name;
                     let merge_branch = quote! {
                         bitview_traversable::TreeNode::Branch(map) => {
-                            for (key, node) in map {
-                                bitview_traversable::TreeNode::merge_node(&mut collected, key, node)
-                                    .expect("Conflicting values for same key during flatten");
-                            }
+                            collected.merge_fields(map)
+                                .expect("Conflicting values for same key during flatten");
                         }
                         leaf @ bitview_traversable::TreeNode::Leaf(_) => {
-                            bitview_traversable::TreeNode::merge_node(&mut collected, String::from(stringify!(#field_name)), leaf)
+                            collected.merge_field(String::from(stringify!(#field_name)), leaf, #declaration)
                                 .expect("Conflicting values for same key during flatten");
                         }
                     };
@@ -603,8 +620,7 @@ fn generate_field_traversals(infos: &[FieldInfo], merge: bool) -> proc_macro2::T
     };
 
     let init_collected = quote! {
-        let mut collected: bitview_traversable::IndexMap<String, bitview_traversable::TreeNode> =
-            bitview_traversable::IndexMap::new();
+        let mut collected = bitview_traversable::TreeBranch::default();
     };
 
     quote! {
@@ -860,8 +876,9 @@ fn find_bare_field_params<'a>(
 
 /// Generate the value expression for a single field in a ReadOnlyClone impl.
 ///
+/// - `M::WriteOnly<T>` → `()`
 /// - Skipped + Option → `None`
-/// - Skipped + non-Option → `Default::default()`
+/// - Skipped + non-Option → `Clone::clone()`
 /// - Contains relevant param + Box → `Box::new(read_only_clone(&*self.field))`
 /// - Contains relevant param → `read_only_clone(&self.field)`
 /// - Otherwise → `self.field.clone()`
@@ -870,6 +887,9 @@ fn gen_roc_field_value(
     self_access: proc_macro2::TokenStream,
     is_relevant: impl Fn(&Type) -> bool,
 ) -> proc_macro2::TokenStream {
+    if is_write_only_type(&field.ty) {
+        return quote! { () };
+    }
     if is_field_skipped(field) {
         if is_option_type(&field.ty) {
             return quote! { None };

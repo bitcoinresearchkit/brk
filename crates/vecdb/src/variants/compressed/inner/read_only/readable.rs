@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use crate::{CompressedIoSource, ReadableVec, VecIndex, VecValue};
 
 use super::{

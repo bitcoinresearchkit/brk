@@ -6,7 +6,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, ColumnId, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, ReadableVec, Rw, StorageMode};
 
 use bitview_compute::{
     CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, ColumnarRollingWindows,

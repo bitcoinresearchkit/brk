@@ -4,7 +4,7 @@ use brk_types::{Cents, Height, Version};
 use vecdb::{CachedBoxedVec, Database};
 
 use super::{LazyBaseVecs, Vecs};
-use bitview_compute::{LazySpotValuePerBlock, PerBlock};
+use bitview_compute::{BoundedRatioPerBlock, LazySpotValuePerBlock};
 use bitview_plugin_distribution::AllChainSources;
 
 use super::super::activity;
@@ -17,7 +17,15 @@ pub fn forced_import(
     activity: &activity::Vecs,
     all_chain: &AllChainSources,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, spot_price, activity, all_chain)
+    Ok(Vecs {
+        base: LazyBaseVecs::new(version, mappings, spot_price, activity, all_chain),
+        active_supply_in_loss_share: BoundedRatioPerBlock::forced_import(
+            db,
+            "cointime_supply_in_loss_share",
+            version + Version::ONE,
+            mappings,
+        )?,
+    })
 }
 
 impl LazyBaseVecs {
@@ -57,26 +65,5 @@ impl LazyBaseVecs {
                 spot_price,
             ),
         }
-    }
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
-        activity: &activity::Vecs,
-        all_chain: &AllChainSources,
-    ) -> Result<Self> {
-        Ok(Self {
-            base: LazyBaseVecs::new(version, mappings, spot_price, activity, all_chain),
-            active_supply_in_loss_share: PerBlock::forced_import(
-                db,
-                "cointime_supply_in_loss_share",
-                version,
-                mappings,
-            )?,
-        })
     }
 }

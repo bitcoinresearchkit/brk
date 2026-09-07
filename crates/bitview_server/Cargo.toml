@@ -55,7 +55,8 @@ brk_error = { workspace = true, features = ["jiff", "serde_json", "tokio", "vecd
 brk_oracle = { workspace = true }
 bitview_query = { workspace = true, default-features = false, features = ["tokio"] }
 bitview_types = { workspace = true }
-brk_types = { workspace = true }
+bitview_catalog = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 bitview_traversable = { workspace = true }
 bitview_website = { workspace = true }
 derive_more = { workspace = true }

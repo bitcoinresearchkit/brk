@@ -12,7 +12,7 @@ use bitview_types::SeriesName;
 use brk_types::{Index, Timestamp};
 use serde_json::{from_value, json, to_value, to_vec};
 use tokio::sync::Semaphore;
-use vecdb::Formattable;
+use vecdb::{Formattable, ValueWriter};
 
 use super::chain_fixture::{
     raw_fixture_block, run as run_fixture, run_populated as run_fixture_with_first,
@@ -101,10 +101,11 @@ fn benchmark_csv(state: &AppState) {
                         for sample in 0..1000 {
                             let selection = from_value(json!({"series": names, "index": "height", "limit": limit, "format": "csv"})).unwrap();
                             let resolved = query.resolve(selection, usize::MAX).unwrap();
+                            let bounded_columns = resolved.columns().collect::<Vec<_>>();
                             let csv = {
                                 // Identical formatting controls; only empty-range writer setup differs.
                                 let mut csv = String::with_capacity(columns * 10);
-                                for (i, col) in resolved.vecs.iter().enumerate() {
+                                for (i, col) in bounded_columns.iter().enumerate() {
                                     if i > 0 { csv.push(','); }
                                     csv.push_str(col.name());
                                 }
@@ -112,13 +113,13 @@ fn benchmark_csv(state: &AppState) {
                                 if variant == 1 && resolved.start == resolved.end {
                                     // Candidate returns the header without creating any writers.
                                 } else if columns == 1 {
-                                    resolved.vecs[0].write_csv_column(Some(resolved.start), Some(resolved.end), &mut csv).unwrap();
+                                    bounded_columns[0].write_csv_column(Some(resolved.start), Some(resolved.end), &mut csv).unwrap();
                                 } else {
                                     let from = Some(resolved.start as i64);
                                     let to = Some(resolved.end as i64);
-                                    let rows = resolved.vecs[0].range_count(from, to);
+                                    let rows = bounded_columns[0].range_count(from, to);
                                     csv.reserve(rows * columns * 15);
-                                    let mut writers: Vec<_> = resolved.vecs.iter().map(|col| col.create_writer(from, to)).collect();
+                                    let mut writers: Vec<_> = bounded_columns.iter().map(|col| col.create_writer(from, to)).collect();
                                     for _ in 0..rows {
                                         for (i, writer) in writers.iter_mut().enumerate() {
                                             if i > 0 { csv.push(','); }
@@ -311,7 +312,7 @@ async fn benchmark_scalar(state: &AppState, length: bool) {
                     } else if variant == 2 {
                         let permit = state
                             .series_bodies
-                            .data_query()
+                            .data_query
                             .clone()
                             .acquire_owned()
                             .await
@@ -328,7 +329,7 @@ async fn benchmark_scalar(state: &AppState, length: bool) {
                     } else {
                         let permit = state
                             .series_bodies
-                            .data_query()
+                            .data_query
                             .clone()
                             .acquire_owned()
                             .await

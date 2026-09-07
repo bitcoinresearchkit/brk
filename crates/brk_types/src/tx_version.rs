@@ -1,6 +1,7 @@
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
 use super::StoredU8;
@@ -9,19 +10,9 @@ use super::StoredU8;
 /// those exact signed 32-bit Bitcoin transaction versions; 255 represents every
 /// other version.
 #[derive(
-    Debug,
-    Deref,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct TxVersion(u8);
 
 impl TxVersion {
@@ -65,6 +56,7 @@ impl std::fmt::Display for TxVersion {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for TxVersion {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

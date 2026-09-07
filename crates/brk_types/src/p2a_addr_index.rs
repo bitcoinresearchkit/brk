@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -20,9 +22,9 @@ use crate::TypeIndex;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct P2AAddrIndex(TypeIndex);
 
 impl From<TypeIndex> for P2AAddrIndex {
@@ -86,17 +88,32 @@ impl CheckedSub<P2AAddrIndex> for P2AAddrIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-
-impl PrintableIndex for P2AAddrIndex {
-    fn to_string() -> &'static str {
-        "p2a_addr_index"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["aaddr", "p2aaddr", "p2a_addr_index"]
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<P2AAddrIndex> for P2AAddrIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
+impl P2AAddrIndex {
+    pub fn index_name() -> &'static str {
+        "p2a_addr_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["aaddr", "p2aaddr", "p2a_addr_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for P2AAddrIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
+
+#[cfg(feature = "storage")]
 impl VecIndex for P2AAddrIndex {
     const INITIAL_CAPACITY: usize = 1_000_000;
 }
@@ -107,6 +124,7 @@ impl std::fmt::Display for P2AAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for P2AAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

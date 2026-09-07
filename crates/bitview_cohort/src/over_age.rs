@@ -1,7 +1,7 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{
     CohortName, Filter, HOURS_1D, HOURS_1M, HOURS_1W, HOURS_1Y, HOURS_2M, HOURS_2Y, HOURS_3M,
@@ -81,7 +81,8 @@ pub const OVER_AGE_NAMES: OverAge<CohortName> = OverAge {
     _12y: CohortName::new("over_12y_old", "12y+", "Over 12 Years Old"),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct OverAge<T> {
     /// Uses UTXOs at least 1 day old.
     pub _1d: T,
@@ -161,124 +162,24 @@ impl<T> OverAge<T> {
     where
         F: FnMut(Filter, &'static str) -> T,
     {
-        let f = OVER_AGE_FILTERS;
-        let n = OVER_AGE_NAMES;
-        Self {
-            _1d: create(f._1d.clone(), n._1d.id),
-            _1w: create(f._1w.clone(), n._1w.id),
-            _1m: create(f._1m.clone(), n._1m.id),
-            _2m: create(f._2m.clone(), n._2m.id),
-            _3m: create(f._3m.clone(), n._3m.id),
-            _4m: create(f._4m.clone(), n._4m.id),
-            _5m: create(f._5m.clone(), n._5m.id),
-            _6m: create(f._6m.clone(), n._6m.id),
-            _9m: create(f._9m.clone(), n._9m.id),
-            _1y: create(f._1y.clone(), n._1y.id),
-            _18m: create(f._18m.clone(), n._18m.id),
-            _2y: create(f._2y.clone(), n._2y.id),
-            _3y: create(f._3y.clone(), n._3y.id),
-            _4y: create(f._4y.clone(), n._4y.id),
-            _5y: create(f._5y.clone(), n._5y.id),
-            _6y: create(f._6y.clone(), n._6y.id),
-            _7y: create(f._7y.clone(), n._7y.id),
-            _8y: create(f._8y.clone(), n._8y.id),
-            _10y: create(f._10y.clone(), n._10y.id),
-            _12y: create(f._12y.clone(), n._12y.id),
-        }
+        Self::from_fn(|id| {
+            create(
+                id.select(&OVER_AGE_FILTERS).clone(),
+                id.select(&OVER_AGE_NAMES).id,
+            )
+        })
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(Filter, &'static str) -> Result<T, E>,
     {
-        let f = OVER_AGE_FILTERS;
-        let n = OVER_AGE_NAMES;
-        Ok(Self {
-            _1d: create(f._1d.clone(), n._1d.id)?,
-            _1w: create(f._1w.clone(), n._1w.id)?,
-            _1m: create(f._1m.clone(), n._1m.id)?,
-            _2m: create(f._2m.clone(), n._2m.id)?,
-            _3m: create(f._3m.clone(), n._3m.id)?,
-            _4m: create(f._4m.clone(), n._4m.id)?,
-            _5m: create(f._5m.clone(), n._5m.id)?,
-            _6m: create(f._6m.clone(), n._6m.id)?,
-            _9m: create(f._9m.clone(), n._9m.id)?,
-            _1y: create(f._1y.clone(), n._1y.id)?,
-            _18m: create(f._18m.clone(), n._18m.id)?,
-            _2y: create(f._2y.clone(), n._2y.id)?,
-            _3y: create(f._3y.clone(), n._3y.id)?,
-            _4y: create(f._4y.clone(), n._4y.id)?,
-            _5y: create(f._5y.clone(), n._5y.id)?,
-            _6y: create(f._6y.clone(), n._6y.id)?,
-            _7y: create(f._7y.clone(), n._7y.id)?,
-            _8y: create(f._8y.clone(), n._8y.id)?,
-            _10y: create(f._10y.clone(), n._10y.id)?,
-            _12y: create(f._12y.clone(), n._12y.id)?,
+        Self::try_from_fn(|id| {
+            create(
+                id.select(&OVER_AGE_FILTERS).clone(),
+                id.select(&OVER_AGE_NAMES).id,
+            )
         })
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._1d, &self._1w, &self._1m, &self._2m, &self._3m, &self._4m, &self._5m, &self._6m,
-            &self._9m, &self._1y, &self._18m, &self._2y, &self._3y, &self._4y, &self._5y,
-            &self._6y, &self._7y, &self._8y, &self._10y, &self._12y,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._1d,
-            &mut self._1w,
-            &mut self._1m,
-            &mut self._2m,
-            &mut self._3m,
-            &mut self._4m,
-            &mut self._5m,
-            &mut self._6m,
-            &mut self._9m,
-            &mut self._1y,
-            &mut self._18m,
-            &mut self._2y,
-            &mut self._3y,
-            &mut self._4y,
-            &mut self._5y,
-            &mut self._6y,
-            &mut self._7y,
-            &mut self._8y,
-            &mut self._10y,
-            &mut self._12y,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self._1d,
-            &mut self._1w,
-            &mut self._1m,
-            &mut self._2m,
-            &mut self._3m,
-            &mut self._4m,
-            &mut self._5m,
-            &mut self._6m,
-            &mut self._9m,
-            &mut self._1y,
-            &mut self._18m,
-            &mut self._2y,
-            &mut self._3y,
-            &mut self._4y,
-            &mut self._5y,
-            &mut self._6y,
-            &mut self._7y,
-            &mut self._8y,
-            &mut self._10y,
-            &mut self._12y,
-        ]
-        .into_par_iter()
     }
 }
 

@@ -70,13 +70,13 @@ brk_error = { workspace = true }
 brk_logger = { workspace = true }
 brk_reader = { workspace = true }
 brk_rpc = { workspace = true }
-brk_types = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 color-eyre = { workspace = true, optional = true }
 lexopt = "0.3"
 owo-colors = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true, optional = true }
-toml = "1.1.4"
+toml = "1.1.5"
 tempfile = { workspace = true, optional = true }
 vecdb = { workspace = true }
 

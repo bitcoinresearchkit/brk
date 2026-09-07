@@ -7,7 +7,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredF32, StoredF64, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, ColumnId, Database, Rw, StorageMode, UnaryTransform};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode, UnaryTransform};
 
 use crate::metrics::UTXORows;
 use bitview_compute::{

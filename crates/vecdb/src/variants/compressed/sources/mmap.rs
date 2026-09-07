@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{marker::PhantomData, sync::Arc};
 
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -72,40 +70,12 @@ where
         self.ensure_page_decoded(page_index)?;
         Some(&self.page_buf)
     }
-}
-pub trait VariantsCompressedSourcesMmapCompressedMmapSourceAITSInternal<'a, I, T, S>:
-    Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
-    fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self;
-    fn new_from_parts(
-        region: &Region,
-        pages: &'a Arc<RwLock<Pages>>,
-        stored_len: usize,
-        from: usize,
-        to: usize,
-    ) -> Self;
-    fn fold<B, F: FnMut(B, T) -> B>(self, init: B, f: F) -> B;
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        self,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<'a, I, T, S> VariantsCompressedSourcesMmapCompressedMmapSourceAITSInternal<'a, I, T, S>
-    for CompressedMmapSource<'a, I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
-    fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
+
+    pub fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
         Self::new_from_parts(vec.region(), vec.pages(), vec.stored_len(), from, to)
     }
-    fn new_from_parts(
+
+    pub fn new_from_parts(
         region: &Region,
         pages: &'a Arc<RwLock<Pages>>,
         stored_len: usize,
@@ -125,9 +95,10 @@ where
             _marker: PhantomData,
         }
     }
+
     /// Fold all remaining elements — tight pointer loop per page so LLVM can vectorize.
     #[inline(always)]
-    fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
+    pub fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
         let per_page = Self::PER_PAGE;
         let end = self.end;
         let mut page_index = self.pos / per_page;
@@ -153,9 +124,10 @@ where
         }
         accum
     }
+
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         mut self,
         init: B,
         mut f: F,

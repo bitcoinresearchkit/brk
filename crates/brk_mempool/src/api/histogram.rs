@@ -7,7 +7,6 @@ use brk_types::{BlockHash, MempoolInfo};
 use crate::Mempool;
 
 impl Mempool {
-    #[must_use]
     pub fn info(&self) -> Result<MempoolInfo> {
         let state = self.read();
         state.ensure_published()?;

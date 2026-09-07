@@ -1,3 +1,9 @@
+use std::{marker::PhantomData, sync::Arc};
+
+use parking_lot::RwLock;
+
+use crate::ReadOnlyBaseVec;
+
 pub mod decoder;
 pub mod encoded_chunk;
 pub mod page;
@@ -10,6 +16,18 @@ pub use decoder::PageDecoder;
 pub use encoded_chunk::*;
 pub use page::*;
 pub use pages::*;
-pub use read_only::*;
 pub use read_write::*;
 pub use strategy::*;
+
+/// Lean read-only view of a compressed vector (~48 bytes).
+///
+/// Carries only the fields needed for disk reads: region, shared length,
+/// name/header metadata, and the pages index. No pushed buffer, no rollback state.
+///
+/// Created via `ReadWriteCompressedVec::read_only_clone`.
+#[derive(Debug, Clone)]
+pub struct ReadOnlyCompressedVec<I, T, S> {
+    base: ReadOnlyBaseVec<I, T>,
+    pages: Arc<RwLock<Pages>>,
+    _strategy: PhantomData<S>,
+}

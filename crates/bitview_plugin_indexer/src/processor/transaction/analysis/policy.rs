@@ -51,7 +51,8 @@ impl Accumulator {
 
         self.nonstandard |= match output_type {
             OutputType::P2SH => facts
-                .redeem_sigops()
+                .redeem
+                .sigops()
                 .is_some_and(|count| count > MAX_P2SH_SIGOPS),
             OutputType::P2A => p2a_spend_is_nonstandard(self.height),
             OutputType::P2TR => facts.witness.has_annex,
@@ -167,13 +168,13 @@ pub fn has_nonstandard_witness(output_type: OutputType, facts: &input::Facts<'_>
             facts.witness.has_annex || has_nonstandard_taproot_witness(&facts.witness)
         }
         OutputType::P2SH => {
-            if facts.redeem_sigops().is_none() {
+            if facts.redeem.sigops().is_none() {
                 return true;
             }
-            if facts.redeem_is_p2wsh() {
+            if facts.redeem.is_p2wsh() {
                 has_nonstandard_p2wsh_witness(&facts.witness)
             } else {
-                !facts.redeem_is_witness_program()
+                !facts.redeem.is_witness_program()
             }
         }
         _ => true,

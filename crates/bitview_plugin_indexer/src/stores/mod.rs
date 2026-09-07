@@ -14,7 +14,7 @@ use rayon::{join, prelude::*};
 use tracing::debug;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
-use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES, vecs::IndexerVecs as _};
+use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES};
 
 use super::Vecs;
 
@@ -28,11 +28,6 @@ pub use transaction::TransactionStoresMut;
 
 #[derive(Clone)]
 pub struct Stores {
-    inner: StoresInner,
-}
-
-#[derive(Clone)]
-struct StoresInner {
     db: Database,
     checkpoint: StoresCheckpoint,
 
@@ -43,23 +38,10 @@ struct StoresInner {
     txid_prefix_to_tx_index: Store<TxidPrefix, TxIndex>,
 }
 
-pub trait IndexerStores: Sized {
-    fn forced_import(parent: &Path, version: Version) -> Result<Self>;
-    fn next_height(&self) -> Result<Option<Height>>;
-    fn begin_commit(&self, completed_height: Height) -> Result<PendingStoresCheckpoint>;
-    fn persist(&mut self, checkpoint: PendingStoresCheckpoint)
-    -> Result<PersistedStoresCheckpoint>;
-    fn take_deferred_commit(&mut self, completed_height: Height) -> Result<DeferredStoresCommit>;
-    fn rollback_if_needed(&mut self, vecs: &Vecs, starting_lengths: &Lengths) -> Result<()>;
-    fn insert_block_height(&mut self, prefix: BlockHashPrefix, height: Height);
-    fn transaction_stores_mut(&mut self) -> TransactionStoresMut<'_>;
-}
-
 impl Stores {
     #[inline]
     pub fn addr_index(&self, addr_type: OutputType, hash: &AddrHash) -> Result<Option<TypeIndex>> {
         Ok(self
-            .inner
             .addr_type_to_addr_hash_to_addr_index
             .get(addr_type)
             .data()?
@@ -73,7 +55,6 @@ impl Stores {
         range: Range<AddrHash>,
     ) -> Result<impl DoubleEndedIterator<Item = (AddrHash, TypeIndex)> + '_> {
         Ok(self
-            .inner
             .addr_type_to_addr_hash_to_addr_index
             .get(addr_type)
             .data()?
@@ -86,7 +67,6 @@ impl Stores {
         addr_index: TypeIndex,
     ) -> Result<impl DoubleEndedIterator<Item = TxIndex> + '_> {
         Ok(self
-            .inner
             .addr_type_to_addr_index_and_tx_index
             .get(addr_type)
             .data()?
@@ -103,7 +83,6 @@ impl Stores {
         let min = AddrIndexTxIndex::min_for_addr(addr_index);
         let cursor = AddrIndexTxIndex::from((addr_index, before));
         Ok(self
-            .inner
             .addr_type_to_addr_index_and_tx_index
             .get(addr_type)
             .data()?
@@ -117,7 +96,6 @@ impl Stores {
         addr_index: TypeIndex,
     ) -> Result<impl DoubleEndedIterator<Item = (TxIndex, Vout)> + '_> {
         Ok(self
-            .inner
             .addr_type_to_addr_index_and_unspent_outpoint
             .get(addr_type)
             .data()?
@@ -128,7 +106,6 @@ impl Stores {
     #[inline]
     pub fn block_height(&self, prefix: &BlockHashPrefix) -> Result<Option<Height>> {
         Ok(self
-            .inner
             .blockhash_prefix_to_height
             .get(prefix)?
             .map(|height| height.into_owned()))
@@ -137,15 +114,12 @@ impl Stores {
     #[inline]
     pub fn tx_index(&self, prefix: &TxidPrefix) -> Result<Option<TxIndex>> {
         Ok(self
-            .inner
             .txid_prefix_to_tx_index
             .get(prefix)?
             .map(|index| index.into_owned()))
     }
-}
 
-impl StoresInner {
-    fn open(parent: &Path, version: Version) -> Result<Self> {
+    pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
         let pathbuf = parent.join("stores");
         let path = pathbuf.as_path();
 
@@ -237,7 +211,7 @@ impl StoresInner {
         Ok(stores)
     }
 
-    fn checkpoint_height(&self) -> Result<Option<Height>> {
+    pub fn next_height(&self) -> Result<Option<Height>> {
         self.checkpoint.next_height()
     }
 
@@ -264,11 +238,11 @@ impl StoresInner {
         )
     }
 
-    fn prepare_checkpoint(&self, completed_height: Height) -> Result<PendingStoresCheckpoint> {
+    pub fn begin_commit(&self, completed_height: Height) -> Result<PendingStoresCheckpoint> {
         self.checkpoint.begin(completed_height)
     }
 
-    fn persist_checkpoint(
+    pub fn persist(
         &mut self,
         checkpoint: PendingStoresCheckpoint,
     ) -> Result<PersistedStoresCheckpoint> {
@@ -312,7 +286,10 @@ impl StoresInner {
         tasks
     }
 
-    fn defer_commit(&mut self, completed_height: Height) -> Result<DeferredStoresCommit> {
+    pub fn take_deferred_commit(
+        &mut self,
+        completed_height: Height,
+    ) -> Result<DeferredStoresCommit> {
         let checkpoint = self.checkpoint.begin(completed_height)?;
         let ingests = self.take_pending_ingests();
         Ok(DeferredStoresCommit::new(
@@ -323,7 +300,7 @@ impl StoresInner {
     }
 
     /// Stages reverse-key entries below the lowered bound for persistence.
-    fn rollback(&mut self, vecs: &Vecs, starting_lengths: &Lengths) -> Result<()> {
+    pub fn rollback_if_needed(&mut self, vecs: &Vecs, starting_lengths: &Lengths) -> Result<()> {
         if self.is_empty()? {
             return Ok(());
         }
@@ -498,48 +475,17 @@ impl StoresInner {
 
         Ok(())
     }
-}
 
-impl IndexerStores for Stores {
-    fn forced_import(parent: &Path, version: Version) -> Result<Self> {
-        Ok(Self {
-            inner: StoresInner::open(parent, version)?,
-        })
+    pub fn insert_block_height(&mut self, prefix: BlockHashPrefix, height: Height) {
+        self.blockhash_prefix_to_height.insert(prefix, height);
     }
 
-    fn next_height(&self) -> Result<Option<Height>> {
-        self.inner.checkpoint_height()
-    }
-
-    fn begin_commit(&self, completed_height: Height) -> Result<PendingStoresCheckpoint> {
-        self.inner.prepare_checkpoint(completed_height)
-    }
-
-    fn persist(
-        &mut self,
-        checkpoint: PendingStoresCheckpoint,
-    ) -> Result<PersistedStoresCheckpoint> {
-        self.inner.persist_checkpoint(checkpoint)
-    }
-
-    fn take_deferred_commit(&mut self, completed_height: Height) -> Result<DeferredStoresCommit> {
-        self.inner.defer_commit(completed_height)
-    }
-
-    fn rollback_if_needed(&mut self, vecs: &Vecs, starting_lengths: &Lengths) -> Result<()> {
-        self.inner.rollback(vecs, starting_lengths)
-    }
-
-    fn insert_block_height(&mut self, prefix: BlockHashPrefix, height: Height) {
-        self.inner.blockhash_prefix_to_height.insert(prefix, height);
-    }
-
-    fn transaction_stores_mut(&mut self) -> TransactionStoresMut<'_> {
+    pub fn transaction_stores_mut(&mut self) -> TransactionStoresMut<'_> {
         TransactionStoresMut {
-            addr_hashes: &mut self.inner.addr_type_to_addr_hash_to_addr_index,
-            addr_tx_indexes: &mut self.inner.addr_type_to_addr_index_and_tx_index,
-            addr_unspent_outpoints: &mut self.inner.addr_type_to_addr_index_and_unspent_outpoint,
-            txid_prefixes: &mut self.inner.txid_prefix_to_tx_index,
+            addr_hashes: &mut self.addr_type_to_addr_hash_to_addr_index,
+            addr_tx_indexes: &mut self.addr_type_to_addr_index_and_tx_index,
+            addr_unspent_outpoints: &mut self.addr_type_to_addr_index_and_unspent_outpoint,
+            txid_prefixes: &mut self.txid_prefix_to_tx_index,
         }
     }
 }
@@ -603,16 +549,15 @@ mod tests {
 
         {
             let mut stores = Stores::forced_import(dir.path(), Version::ZERO)?;
-            let inner = &mut stores.inner;
-            inner
+            stores
                 .blockhash_prefix_to_height
                 .insert(BlockHashPrefix::from(1_u64), Height::ZERO);
-            inner
+            stores
                 .blockhash_prefix_to_height
                 .take_pending_ingest()
                 .unwrap()
                 .run()?;
-            let pending_checkpoint = inner.checkpoint.begin(Height::ZERO)?;
+            let pending_checkpoint = stores.checkpoint.begin(Height::ZERO)?;
             drop(pending_checkpoint);
         }
 
@@ -629,7 +574,6 @@ mod tests {
         {
             let mut stores = Stores::forced_import(dir.path(), Version::ZERO)?;
             stores
-                .inner
                 .blockhash_prefix_to_height
                 .insert(prefix, Height::ZERO);
             let checkpoint = stores.begin_commit(Height::new(42))?;

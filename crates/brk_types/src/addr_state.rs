@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 use crate::{DecodedAddrState, EmptyAddrData, ExtendedEmptyAddrIndex, FundedAddrIndex, Sats};
@@ -25,19 +26,9 @@ const COUNT_HEAVY_TRANSFER_BITS: u32 = 23;
 /// bits select an inline layout or a sidecar, whose index occupies the lower 30
 /// bits.
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Bytes,
-    JsonSchema,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 #[serde(transparent)]
 pub struct AddrState(u32);
 
@@ -140,6 +131,7 @@ impl AddrState {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for AddrState {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -151,6 +143,7 @@ impl Formattable for AddrState {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn state_is_one_native_u32() {
         const { assert!(AddrState::IS_NATIVE_LAYOUT) };

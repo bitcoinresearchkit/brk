@@ -6,9 +6,9 @@ use bitview_compute::{
     db_utils::validate_any_computed_version_or_reset,
 };
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::{Indexer, Lengths};
+use bitview_plugin_indexer::Lengths;
 use brk_exit::Exit;
-use brk_types::{Bitcoin, Cents, Height, Sats, StoredF64, Timestamp, Version};
+use brk_types::{Bitcoin, BoundedRatio, Cents, Height, Sats, StoredF64, Timestamp, Version};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use vecdb::{AnyStoredVec, ColumnId, ReadableVec, VecValue, WritableVec};
 
@@ -34,12 +34,61 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mappings,
-            dependencies.distribution,
-            context.exit(),
-        )
+        let Dependencies {
+            indexer,
+            mappings,
+            distribution,
+        } = dependencies;
+        let exit = context.exit();
+
+        self.db.sync_bg_tasks()?;
+
+        let starting_lengths = indexer.safe_lengths();
+        let transfer_volumes = AgeRange::from_fn(|id| {
+            &id.select(
+                &distribution
+                    .cohorts
+                    .activity
+                    .transfer_volume
+                    .cohorts
+                    .age
+                    .range,
+            )
+            .cumulative
+            .sats
+            .height
+        });
+        let supplies = AgeRange::from_fn(|id| {
+            &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
+                .sats
+                .height
+        });
+        let loss_supplies = AgeRange::from_fn(|id| {
+            &id.select(&distribution.cohorts.supply.in_loss.cohorts.age.range)
+                .sats
+                .height
+        });
+        let realized_caps = AgeRange::from_fn(|id| {
+            &id.select(&distribution.cohorts.realized.cap.cohorts.age.range)
+                .cents
+                .height
+        });
+        let coindays_created = &distribution.coindays_created.cumulative;
+
+        self.compute_primary(
+            &starting_lengths,
+            &mappings.timestamp.monotonic,
+            &transfer_volumes,
+            coindays_created,
+            &supplies,
+            &loss_supplies,
+            &realized_caps,
+            exit,
+        )?;
+
+        context.compact_database(&self.db);
+
+        Ok(())
     }
 }
 
@@ -64,7 +113,7 @@ impl AggregateState {
         total_supply: Sats,
         loss_supply: Sats,
         total_cap: Cents,
-        mobility: StoredF64,
+        mobility: BoundedRatio,
         horizon_mobilities: &Horizons<AgeRange<f64>>,
         age: AgeRangeId,
     ) -> WeightedCohortContribution {
@@ -159,17 +208,16 @@ impl PrimaryBatch {
             .difference_in_days_between_float(genesis_timestamp)
             .max(MINIMUM_DURATION_DAYS);
         let exposures = DecayFit::exposures(&hazards, network_age, bounds);
-        let mobilities = AgeRange::from_fn(|id| AgeBand::mobility(*id.select(&exposures)));
+        let mobilities =
+            AgeRange::from_fn(|id| BoundedRatio::from(AgeBand::mobility(*id.select(&exposures))));
         let horizon_mobilities: Horizons<AgeRange<f64>> = HorizonId::from_fn(|horizon| {
             let horizon = horizon.days();
             AgeRange::from_fn(|age| AgeBand::horizon_mobility(&hazards, age, horizon, bounds))
         });
         let mut terms = ByTerm::<AggregateState>::default();
-        let mut mobile_supply = AgeRange::default();
-        let mut immobile_supply = AgeRange::default();
 
         for &id in AgeRangeId::ALL {
-            let mobility = StoredF64::from(*id.select(&mobilities));
+            let mobility = *id.select(&mobilities);
             let total_supply = id.select(&self.supplies)[offset];
             let total_cap = id.select(&self.realized_caps)[offset];
             let loss_supply = id.select(&self.loss_supplies)[offset];
@@ -179,7 +227,7 @@ impl PrimaryBatch {
             } else {
                 &mut terms.long
             };
-            let contribution = term.add(
+            term.add(
                 total_supply,
                 loss_supply,
                 total_cap,
@@ -187,16 +235,12 @@ impl PrimaryBatch {
                 &horizon_mobilities,
                 id,
             );
-
-            *id.select_mut(&mut mobile_supply) = contribution.weighted_supply;
-            *id.select_mut(&mut immobile_supply) = contribution.complement_supply;
         }
 
         PrimaryRow {
             spending_rate: AgeRangeId::from_fn(|id| StoredF64::from(*id.select(&hazards))),
             spending_exposure: AgeRangeId::from_fn(|id| StoredF64::from(*id.select(&exposures))),
-            mobile_supply: AgeRangeId::from_fn(|id| *id.select(&mobile_supply)),
-            immobile_supply: AgeRangeId::from_fn(|id| *id.select(&immobile_supply)),
+            mobility: mobilities,
             terms,
         }
     }
@@ -215,73 +259,11 @@ impl PrimaryBatch {
 struct PrimaryRow {
     spending_rate: AgeRange<StoredF64>,
     spending_exposure: AgeRange<StoredF64>,
-    mobile_supply: AgeRange<Sats>,
-    immobile_supply: AgeRange<Sats>,
+    mobility: AgeRange<BoundedRatio>,
     terms: ByTerm<AggregateState>,
 }
 
 impl Vecs {
-    fn compute_inner(
-        &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.db.sync_bg_tasks()?;
-
-        let starting_lengths = indexer.safe_lengths();
-        let transfer_volumes = AgeRange::from_fn(|id| {
-            &id.select(
-                &distribution
-                    .cohorts
-                    .activity
-                    .transfer_volume
-                    .cohorts
-                    .age
-                    .range,
-            )
-            .cumulative
-            .sats
-            .height
-        });
-        let supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
-                .sats
-                .height
-        });
-        let loss_supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.in_loss.cohorts.age.range)
-                .sats
-                .height
-        });
-        let realized_caps = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.realized.cap.cohorts.age.range)
-                .cents
-                .height
-        });
-        let coindays_created = &distribution.coindays_created.cumulative;
-
-        self.compute_primary(
-            &starting_lengths,
-            &mappings.timestamp.monotonic,
-            &transfer_volumes,
-            coindays_created,
-            &supplies,
-            &loss_supplies,
-            &realized_caps,
-            exit,
-        )?;
-
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
-
-        Ok(())
-    }
-
     #[allow(clippy::too_many_arguments)]
     fn compute_primary(
         &mut self,
@@ -369,8 +351,7 @@ impl Vecs {
     fn push_primary(&mut self, row: PrimaryRow) {
         self.age_range.spending_rate.push(row.spending_rate);
         self.age_range.spending_exposure.push(row.spending_exposure);
-        self.age_range.supply.mobile.push(row.mobile_supply);
-        self.age_range.supply.immobile.push(row.immobile_supply);
+        self.age_range.mobility_source.push(row.mobility);
 
         let all = row.terms.short.merged(row.terms.long);
         self.aggregate_sources.push(row.terms, all);
@@ -380,8 +361,7 @@ impl Vecs {
         [
             self.age_range.spending_rate.stored_mut(),
             self.age_range.spending_exposure.stored_mut(),
-            self.age_range.supply.mobile.stored_mut(),
-            self.age_range.supply.immobile.stored_mut(),
+            self.age_range.mobility_source.stored_mut(),
         ]
         .into_iter()
         .chain(self.aggregate_sources.primary_vecs_mut())
@@ -651,7 +631,7 @@ mod tests {
     fn mobile_and_immobile_supply_are_independently_floored() {
         let total_supply = Sats::from(123_456_789_u64);
         let total_cap = Cents::from(987_654_321_u64);
-        let mobility = StoredF64::from(0.321);
+        let mobility = BoundedRatio::from(0.321);
         let mut state = WeightedCohortState::default();
 
         state.add(total_supply, Sats::ZERO, total_cap, mobility);
@@ -663,6 +643,41 @@ mod tests {
     }
 
     #[test]
+    fn primary_row_reuses_bounded_mobility_for_weighted_outputs() {
+        let bounds = AgeBand::all();
+        let supply = Sats::from(123_456_789_u64);
+        let cap = Cents::from(987_654_321_u64);
+        let batch = PrimaryBatch {
+            timestamps: vec![Timestamp::from(20 * 365 * 86_400_u32)],
+            transfer_volumes: AgeRange::from_fn(|id| {
+                let age = id.select(&bounds).lower;
+                vec![Sats::from((100_000_000.0 * (-age / 1_000.0).exp()) as u64)]
+            }),
+            coindays_created: vec![AgeRange::from_fn(|_| StoredF64::from(100.0))],
+            supplies: AgeRange::from_fn(|_| vec![supply]),
+            loss_supplies: AgeRange::from_fn(|_| vec![Sats::from(10_u64)]),
+            realized_caps: AgeRange::from_fn(|_| vec![cap]),
+        };
+        let row = batch.row(0, Timestamp::ZERO, &bounds);
+        let mut expected = WeightedCohortState::default();
+        for &id in AgeRangeId::ALL {
+            let raw = *id.select(&row.mobility);
+            let exposure = f64::from(*id.select(&row.spending_exposure));
+            assert_eq!(raw, BoundedRatio::from(AgeBand::mobility(exposure)));
+            expected.add(supply, Sats::from(10_u64), cap, raw);
+        }
+        assert!(
+            row.mobility
+                .iter()
+                .any(|value| *value != BoundedRatio::ZERO)
+        );
+        let all = row.terms.short.merged(row.terms.long).weighted;
+        assert_eq!(all.weighted_supply, expected.weighted_supply);
+        assert_eq!(all.complement_supply, expected.complement_supply);
+        assert_eq!(all.weighted_cap, expected.weighted_cap);
+    }
+
+    #[test]
     fn term_aggregates_merge_into_all() {
         let horizons = HorizonId::from_fn(|_| AgeRange::from_fn(|_| 0.25));
         let mut direct = AggregateState::default();
@@ -670,7 +685,7 @@ mod tests {
             Sats::from(100_u64),
             Sats::from(20_u64),
             Cents::from(1_000_u64),
-            StoredF64::from(0.3),
+            BoundedRatio::from(0.3),
             &horizons,
             AgeRangeId::Under1H,
         );
@@ -678,7 +693,7 @@ mod tests {
             Sats::from(200_u64),
             Sats::from(50_u64),
             Cents::from(3_000_u64),
-            StoredF64::from(0.4),
+            BoundedRatio::from(0.4),
             &horizons,
             AgeRangeId::From1HTo1D,
         );
@@ -688,7 +703,7 @@ mod tests {
             Sats::from(100_u64),
             Sats::from(20_u64),
             Cents::from(1_000_u64),
-            StoredF64::from(0.3),
+            BoundedRatio::from(0.3),
             &horizons,
             AgeRangeId::Under1H,
         );
@@ -697,7 +712,7 @@ mod tests {
             Sats::from(200_u64),
             Sats::from(50_u64),
             Cents::from(3_000_u64),
-            StoredF64::from(0.4),
+            BoundedRatio::from(0.4),
             &horizons,
             AgeRangeId::From1HTo1D,
         );

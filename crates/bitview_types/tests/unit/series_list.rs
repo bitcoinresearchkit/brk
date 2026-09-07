@@ -1,6 +1,31 @@
 use super::*;
 
 #[test]
+fn display_streams_exact_names_and_propagates_writer_errors() {
+    use std::fmt::Write;
+
+    for names in [
+        vec![],
+        vec![""],
+        vec!["price"],
+        vec!["", "price", "ος", "price", ""],
+    ] {
+        let list = SeriesList::from(names.clone());
+        assert_eq!(list.to_string(), names.join(","));
+        assert_eq!(format!("{list:>100.2}"), names.join(","));
+    }
+
+    struct Reject;
+    impl std::fmt::Write for Reject {
+        fn write_str(&mut self, _: &str) -> std::fmt::Result {
+            Err(std::fmt::Error)
+        }
+    }
+    let list = SeriesList::from(vec!["price", "close"]);
+    assert!(write!(&mut Reject, "{list}").is_err());
+}
+
+#[test]
 fn normalized_count_is_bounded_for_strings_and_arrays() {
     for separator in [",", " ", "+"] {
         for count in [MAX_VECS, MAX_VECS + 1] {

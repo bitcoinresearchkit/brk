@@ -54,6 +54,15 @@ fn value_reads_require_the_complete_persisted_window() {
         window.read(&values).unwrap(),
         vec![Sats::from(1u64), Sats::from(2u64)]
     );
+
+    let tail =
+        BlockWindow::from_timestamps(1u32.into(), 2u32.into(), TimePeriod::All, &[101u32.into()])
+            .unwrap();
+    assert_eq!(tail.read(&values).unwrap(), vec![Sats::from(2u64)]);
+
+    let empty =
+        BlockWindow::from_timestamps(2u32.into(), 2u32.into(), TimePeriod::All, &[]).unwrap();
+    assert!(empty.read(&values).unwrap().is_empty());
 }
 
 #[test]

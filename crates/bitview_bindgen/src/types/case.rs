@@ -2,27 +2,28 @@ use brk_types::Index;
 
 /// Convert a string to PascalCase (e.g., "fee_rate" -> "FeeRate").
 pub fn to_pascal_case(s: &str) -> String {
-    s.replace('-', "_")
-        .split('_')
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-            }
-        })
-        .collect()
+    let mut result = String::with_capacity(s.len());
+    for word in s.split(['-', '_']) {
+        let mut chars = word.chars();
+        if let Some(first) = chars.next() {
+            result.extend(first.to_uppercase());
+            result.push_str(chars.as_str());
+        }
+    }
+    result
 }
 
 /// Convert a string to snake_case (no keyword escaping — backends handle that).
 pub fn to_snake_case(s: &str) -> String {
-    let sanitized = s.to_lowercase().replace('-', "_");
+    let mut sanitized = s.to_lowercase();
+    if sanitized.contains('-') {
+        sanitized = sanitized.replace('-', "_");
+    }
 
     if sanitized.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-        format!("_{}", sanitized)
-    } else {
-        sanitized
+        sanitized.insert(0, '_');
     }
+    sanitized
 }
 
 /// Escape Rust reserved keywords with `_` suffix (consistent with Python).
@@ -38,20 +39,23 @@ pub fn escape_rust_keyword(name: &str) -> String {
 
 /// Convert a string to camelCase (e.g., "fee_rate" -> "feeRate").
 pub fn to_camel_case(s: &str) -> String {
-    let pascal = to_pascal_case(s);
-    let mut chars = pascal.chars();
-
-    let result = match chars.next() {
-        None => String::new(),
-        Some(first) => first.to_lowercase().collect::<String>() + chars.as_str(),
-    };
+    let mut result = to_pascal_case(s);
+    if let Some(first) = result.chars().next() {
+        if first.is_ascii() {
+            result[..1].make_ascii_lowercase();
+        } else {
+            result.replace_range(
+                ..first.len_utf8(),
+                &first.to_lowercase().collect::<String>(),
+            );
+        }
+    }
 
     // Prefix with _ if starts with digit
     if result.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-        format!("_{}", result)
-    } else {
-        result
+        result.insert(0, '_');
     }
+    result
 }
 
 /// Convert an Index to a snake_case field name (e.g., Day1 -> day1).
@@ -75,19 +79,16 @@ pub fn escape_python_keyword(name: &str) -> String {
     ];
 
     // Strip characters invalid in identifiers (e.g. `[]` from `txId[]`)
-    let name = name.replace(['[', ']'], "");
+    let mut name = name.replace(['[', ']'], "");
 
     // Prefix with underscore if starts with digit
-    let name = if name.starts_with(|c: char| c.is_ascii_digit()) {
-        format!("_{}", name)
-    } else {
-        name.to_string()
-    };
+    if name.starts_with(|c: char| c.is_ascii_digit()) {
+        name.insert(0, '_');
+    }
 
     // Append underscore if it's a keyword
     if PYTHON_KEYWORDS.contains(&name.as_str()) {
-        format!("{}_", name)
-    } else {
-        name
+        name.push('_');
     }
+    name
 }

@@ -1,8 +1,8 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::{Timestamp, Year};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CohortName, Filter};
 
@@ -72,7 +72,8 @@ pub const CLASS_NAMES: Class<CohortName> = Class {
     _2026: CohortName::new("class_2026", "2026", "Class 2026"),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct Class<T> {
     /// Uses UTXOs created in calendar year 2009.
     pub _2009: T,
@@ -196,81 +197,6 @@ impl<T> Class<T> {
             _2025: create(f._2025, n._2025.id)?,
             _2026: create(f._2026, n._2026.id)?,
         })
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self._2009,
-            &self._2010,
-            &self._2011,
-            &self._2012,
-            &self._2013,
-            &self._2014,
-            &self._2015,
-            &self._2016,
-            &self._2017,
-            &self._2018,
-            &self._2019,
-            &self._2020,
-            &self._2021,
-            &self._2022,
-            &self._2023,
-            &self._2024,
-            &self._2025,
-            &self._2026,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._2009,
-            &mut self._2010,
-            &mut self._2011,
-            &mut self._2012,
-            &mut self._2013,
-            &mut self._2014,
-            &mut self._2015,
-            &mut self._2016,
-            &mut self._2017,
-            &mut self._2018,
-            &mut self._2019,
-            &mut self._2020,
-            &mut self._2021,
-            &mut self._2022,
-            &mut self._2023,
-            &mut self._2024,
-            &mut self._2025,
-            &mut self._2026,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self._2009,
-            &mut self._2010,
-            &mut self._2011,
-            &mut self._2012,
-            &mut self._2013,
-            &mut self._2014,
-            &mut self._2015,
-            &mut self._2016,
-            &mut self._2017,
-            &mut self._2018,
-            &mut self._2019,
-            &mut self._2020,
-            &mut self._2021,
-            &mut self._2022,
-            &mut self._2023,
-            &mut self._2024,
-            &mut self._2025,
-            &mut self._2026,
-        ]
-        .into_par_iter()
     }
 
     pub fn mut_vec_from_timestamp(&mut self, timestamp: Timestamp) -> Option<&mut T> {

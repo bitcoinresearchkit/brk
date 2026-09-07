@@ -15,6 +15,16 @@ impl std::ops::Deref for BlockSizePolicy {
 }
 
 impl BlockSizePolicy {
+    /// Uses the last configured value for deeper levels.
+    #[must_use]
+    #[expect(
+        clippy::indexing_slicing,
+        reason = "constructors reject empty policies; the index is clamped"
+    )]
+    pub fn at_level(&self, level: usize) -> u32 {
+        self.0[level.min(self.0.len() - 1)]
+    }
+
     /// Uses the same block size in every level.
     #[must_use]
     pub fn all(c: u32) -> Self {

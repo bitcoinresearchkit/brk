@@ -8,19 +8,16 @@ use tokio::sync::Semaphore;
 
 use crate::{CacheParams, prepared_json::PreparedJson};
 
-#[derive(Clone)]
-pub struct SeriesBodies(Arc<SeriesBodyBytes>);
-
-struct SeriesBodyBytes {
-    catalog: PreparedJson,
-    count: PreparedJson,
-    indexes: PreparedJson,
-    list: CacheParams,
-    search: CacheParams,
-    info: CacheParams,
-    search_query: Arc<Semaphore>,
-    data_query: Arc<Semaphore>,
-    response_bodies: Arc<Semaphore>,
+pub struct SeriesBodies {
+    pub catalog: PreparedJson,
+    pub count: PreparedJson,
+    pub indexes: PreparedJson,
+    pub list: CacheParams,
+    pub search: CacheParams,
+    pub info: CacheParams,
+    pub search_query: Arc<Semaphore>,
+    pub data_query: Arc<Semaphore>,
+    pub response_bodies: Arc<Semaphore>,
 }
 
 impl SeriesBodies {
@@ -28,7 +25,7 @@ impl SeriesBodies {
         let query_capacity = available_parallelism().map_or(1, |count| count.get());
         let catalog = PreparedJson::new(query.series_catalog());
         let search = search_params(catalog.bytes(), query.vecs().series_names());
-        Self(Arc::new(SeriesBodyBytes {
+        Self {
             catalog,
             count: PreparedJson::new(query.series_count()),
             indexes: PreparedJson::new(query.indexes()),
@@ -47,43 +44,7 @@ impl SeriesBodies {
             // Independent of worker count: slow clients retain encoded bodies
             // after formatting completes, while validators still need workers.
             response_bodies: Arc::new(Semaphore::new(2)),
-        }))
-    }
-
-    pub fn catalog(&self) -> &PreparedJson {
-        &self.0.catalog
-    }
-
-    pub fn count(&self) -> &PreparedJson {
-        &self.0.count
-    }
-
-    pub fn indexes(&self) -> &PreparedJson {
-        &self.0.indexes
-    }
-
-    pub fn list(&self) -> &CacheParams {
-        &self.0.list
-    }
-
-    pub fn search(&self) -> &CacheParams {
-        &self.0.search
-    }
-
-    pub fn search_query(&self) -> &Arc<Semaphore> {
-        &self.0.search_query
-    }
-
-    pub fn data_query(&self) -> &Arc<Semaphore> {
-        &self.0.data_query
-    }
-
-    pub fn response_bodies(&self) -> &Arc<Semaphore> {
-        &self.0.response_bodies
-    }
-
-    pub fn info(&self) -> &CacheParams {
-        &self.0.info
+        }
     }
 }
 

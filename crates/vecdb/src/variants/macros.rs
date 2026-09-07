@@ -58,24 +58,8 @@ macro_rules! impl_vec_wrapper {
             I: $crate::VecIndex,
             T: $value_trait,
         {
-            fn import(
-                db: &::rawdb::Database,
-                name: &str,
-                version: $crate::Version,
-            ) -> $crate::Result<Self> {
-                Self::import_with((db, name, version).into())
-            }
-
             fn import_with(options: $crate::ImportOptions) -> $crate::Result<Self> {
                 Ok(Self(<$inner>::import_with(options, $format)?))
-            }
-
-            fn forced_import(
-                db: &::rawdb::Database,
-                name: &str,
-                version: $crate::Version,
-            ) -> $crate::Result<Self> {
-                Self::forced_import_with((db, name, version).into())
             }
 
             fn forced_import_with(options: $crate::ImportOptions) -> $crate::Result<Self> {
@@ -438,11 +422,8 @@ macro_rules! impl_mutable_raw_vec {
                     bytes: &[u8],
                 ) -> crate::Result<(Vec<(usize, T)>, BTreeSet<usize>)> {
                     let mut cursor = ChangeCursor::new(bytes);
-                    let _: ChangeData<T> = ReadWriteBaseVec::<I, T>::parse_change_data(
-                        &mut cursor,
-                        size_of::<T>(),
-                        $strategy::<T>::read,
-                    )?;
+                    let _: ChangeData<T> =
+                        ReadWriteBaseVec::<I, T>::parse_change_data::<$strategy<T>>(&mut cursor)?;
                     let modified_len = cursor.read_u64()?;
                     let indices =
                         cursor.read_values(modified_len, crate::SIZE_OF_U64, usize::from_bytes)?;

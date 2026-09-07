@@ -107,6 +107,31 @@ fn block_template_diff_removed_lists_evicted_txs() {
 }
 
 #[test]
+fn block_template_diff_preserves_reordering_and_prior_removal_order() {
+    let mempool = Mempool::for_test();
+    let a = insert_tx(&mempool, 30, 100, 100);
+    let b = insert_tx(&mempool, 31, 100, 100);
+    let c = insert_tx(&mempool, 32, 100, 100);
+    let d = insert_tx(&mempool, 33, 100, 100);
+    let added = insert_tx(&mempool, 34, 100, 100);
+    mempool.test_tick(&[a, b, c, d], FeeRate::new(1.0));
+    let before = mempool.next_block_hash().unwrap();
+
+    mempool.test_tick(&[d, added, b], FeeRate::new(1.0));
+    let diff = mempool.block_template_diff(before).unwrap().unwrap();
+    assert_eq!(diff.removed, [a, c]);
+    assert_eq!(diff.order.len(), 3);
+    assert!(matches!(diff.order[0], BlockTemplateDiffEntry::Retained(3)));
+    assert!(matches!(&diff.order[1], BlockTemplateDiffEntry::New(tx) if tx.txid == added));
+    assert!(matches!(diff.order[2], BlockTemplateDiffEntry::Retained(1)));
+
+    mempool.test_tick(&[], FeeRate::new(1.0));
+    let empty = mempool.block_template_diff(before).unwrap().unwrap();
+    assert!(empty.order.is_empty());
+    assert_eq!(empty.removed, [a, b, c, d]);
+}
+
+#[test]
 fn block_template_diff_unknown_since_returns_none() {
     let mempool = Mempool::for_test();
     mempool.test_tick(&[], FeeRate::new(1.0));
@@ -188,6 +213,7 @@ fn body_fills_publish_a_new_identity_and_diff_reconstructs_every_field() {
         &mempool.snapshot().template_transactions()[1]
     ));
     let diff = mempool.block_template_diff(before.hash).unwrap().unwrap();
+    assert!(diff.removed.is_empty());
     assert!(matches!(&diff.order[0], BlockTemplateDiffEntry::New(_)));
     assert!(matches!(
         &diff.order[1],

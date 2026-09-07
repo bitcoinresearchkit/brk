@@ -5,7 +5,7 @@ use brk_types::{
 };
 use vecdb::{ReadableBoxedVec, ReadableCloneableVec, VecIndex, VecValue};
 
-use super::{DailyMappings, DailyValue, DailyView, LastDay, RepeatDay};
+use super::{DailyMappings, DailyValue, DailyView, LastDay, RepeatDay, view::DayStrategy};
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
@@ -41,49 +41,36 @@ where
         mappings: &DailyMappings,
     ) -> Self {
         Self {
-            height: repeated(name, source.clone(), version, &mappings.height),
-            minute10: repeated(name, source.clone(), version, &mappings.minute10),
-            minute30: repeated(name, source.clone(), version, &mappings.minute30),
-            hour1: repeated(name, source.clone(), version, &mappings.hour1),
-            hour4: repeated(name, source.clone(), version, &mappings.hour4),
-            hour12: repeated(name, source.clone(), version, &mappings.hour12),
-            day3: last(name, source.clone(), version, &mappings.day3),
-            week1: last(name, source.clone(), version, &mappings.week1),
-            month1: last(name, source.clone(), version, &mappings.month1),
-            month3: last(name, source.clone(), version, &mappings.month3),
-            month6: last(name, source.clone(), version, &mappings.month6),
-            year1: last(name, source.clone(), version, &mappings.year1),
-            year10: last(name, source.clone(), version, &mappings.year10),
-            halving: last(name, source.clone(), version, &mappings.halving),
-            epoch: last(name, source, version, &mappings.epoch),
+            height: view(name, source.clone(), version, &mappings.height),
+            minute10: view(name, source.clone(), version, &mappings.minute10),
+            minute30: view(name, source.clone(), version, &mappings.minute30),
+            hour1: view(name, source.clone(), version, &mappings.hour1),
+            hour4: view(name, source.clone(), version, &mappings.hour4),
+            hour12: view(name, source.clone(), version, &mappings.hour12),
+            day3: view(name, source.clone(), version, &mappings.day3),
+            week1: view(name, source.clone(), version, &mappings.week1),
+            month1: view(name, source.clone(), version, &mappings.month1),
+            month3: view(name, source.clone(), version, &mappings.month3),
+            month6: view(name, source.clone(), version, &mappings.month6),
+            year1: view(name, source.clone(), version, &mappings.year1),
+            year10: view(name, source.clone(), version, &mappings.year10),
+            halving: view(name, source.clone(), version, &mappings.halving),
+            epoch: view(name, source, version, &mappings.epoch),
         }
     }
 }
 
-fn repeated<I, T, V>(
+fn view<I, T, V, S>(
     name: &str,
     source: ReadableBoxedVec<Day1, T>,
     version: Version,
     mapping: &V,
-) -> DailyView<I, T, RepeatDay>
+) -> DailyView<I, T, S>
 where
     I: VecIndex,
     T: VecValue,
     V: ReadableCloneableVec<I, Day1> + ?Sized,
-{
-    DailyView::new(name, version, source, mapping.read_only_boxed_clone())
-}
-
-fn last<I, T, V>(
-    name: &str,
-    source: ReadableBoxedVec<Day1, T>,
-    version: Version,
-    mapping: &V,
-) -> DailyView<I, T, LastDay>
-where
-    I: VecIndex,
-    T: VecValue,
-    V: ReadableCloneableVec<I, Day1> + ?Sized,
+    S: DayStrategy,
 {
     DailyView::new(name, version, source, mapping.read_only_boxed_clone())
 }

@@ -1,7 +1,8 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CohortName, Filter, Term};
 
@@ -23,7 +24,8 @@ pub const TERM_NAMES: ByTerm<CohortName> = ByTerm {
     long: CohortName::new("lth", "LTH", "Long Term Holders"),
 };
 
-#[derive(Debug, Default, Clone, Copy, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByTerm<T> {
     /// Uses short-term-holder UTXOs younger than 150 days.
     pub short: T,
@@ -69,25 +71,10 @@ impl<T> ByTerm<T> {
         })
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [&self.short, &self.long].into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [&mut self.short, &mut self.long].into_iter()
-    }
-
     pub fn par_iter(&self) -> impl ParallelIterator<Item = &T>
     where
         T: Send + Sync,
     {
         [&self.short, &self.long].into_par_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [&mut self.short, &mut self.long].into_par_iter()
     }
 }

@@ -1,13 +1,7 @@
-use std::mem::take;
-
 pub fn normalize(text: &str) -> String {
-    words(text).join(" ")
-}
-
-fn words(text: &str) -> Vec<String> {
     let bytes = text.as_bytes();
-    let mut words = Vec::new();
-    let mut word = String::new();
+    let mut normalized = String::with_capacity(text.len());
+    let mut separated = false;
 
     for (index, char) in text.char_indices() {
         let is_decimal_point = char == '.'
@@ -20,16 +14,17 @@ fn words(text: &str) -> Vec<String> {
             || matches!(char, '<' | '>' | '=' | '+' | '%')
             || is_decimal_point
         {
-            word.push(char.to_ascii_lowercase());
-        } else if !word.is_empty() {
-            words.push(take(&mut word));
+            if separated && !normalized.is_empty() {
+                normalized.push(' ');
+            }
+            normalized.push(char.to_ascii_lowercase());
+            separated = false;
+        } else {
+            separated = true;
         }
     }
 
-    if !word.is_empty() {
-        words.push(word);
-    }
-    words
+    normalized
 }
 
 #[cfg(test)]

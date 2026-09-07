@@ -45,36 +45,31 @@ impl ClientConstants {
     }
 }
 
-/// Cohort name constants - shared data definitions.
-pub struct CohortConstants;
-
-impl CohortConstants {
-    /// Get all cohort constants as name-value pairs for iteration.
-    pub fn all() -> Vec<(&'static str, Value)> {
-        fn to_value<T: Serialize>(v: &T) -> Value {
-            serde_json::to_value(v).unwrap()
-        }
-
-        vec![
-            ("TERM_NAMES", to_value(&TERM_NAMES)),
-            ("EPOCH_NAMES", to_value(&EPOCH_NAMES)),
-            ("CLASS_NAMES", to_value(&CLASS_NAMES)),
-            ("ENTRY_NAMES", to_value(&ENTRY_NAMES)),
-            ("SPENDABLE_TYPE_NAMES", to_value(&SPENDABLE_TYPE_NAMES)),
-            ("AGE_RANGE_NAMES", to_value(&AGE_RANGE_NAMES)),
-            ("UNDER_AGE_NAMES", to_value(&UNDER_AGE_NAMES)),
-            ("OVER_AGE_NAMES", to_value(&OVER_AGE_NAMES)),
-            ("AMOUNT_RANGE_NAMES", to_value(&AMOUNT_RANGE_NAMES)),
-            ("OVER_AMOUNT_NAMES", to_value(&OVER_AMOUNT_NAMES)),
-            ("UNDER_AMOUNT_NAMES", to_value(&UNDER_AMOUNT_NAMES)),
-            (
-                "PROFITABILITY_RANGE_NAMES",
-                to_value(&PROFITABILITY_RANGE_NAMES),
-            ),
-            ("PROFIT_NAMES", to_value(&PROFIT_NAMES)),
-            ("LOSS_NAMES", to_value(&LOSS_NAMES)),
-        ]
+/// Get all cohort constants as name-value pairs for iteration.
+pub fn cohort_constants() -> Vec<(&'static str, Value)> {
+    fn to_value<T: Serialize>(v: &T) -> Value {
+        serde_json::to_value(v).unwrap()
     }
+
+    vec![
+        ("TERM_NAMES", to_value(&TERM_NAMES)),
+        ("EPOCH_NAMES", to_value(&EPOCH_NAMES)),
+        ("CLASS_NAMES", to_value(&CLASS_NAMES)),
+        ("ENTRY_NAMES", to_value(&ENTRY_NAMES)),
+        ("SPENDABLE_TYPE_NAMES", to_value(&SPENDABLE_TYPE_NAMES)),
+        ("AGE_RANGE_NAMES", to_value(&AGE_RANGE_NAMES)),
+        ("UNDER_AGE_NAMES", to_value(&UNDER_AGE_NAMES)),
+        ("OVER_AGE_NAMES", to_value(&OVER_AGE_NAMES)),
+        ("AMOUNT_RANGE_NAMES", to_value(&AMOUNT_RANGE_NAMES)),
+        ("OVER_AMOUNT_NAMES", to_value(&OVER_AMOUNT_NAMES)),
+        ("UNDER_AMOUNT_NAMES", to_value(&UNDER_AMOUNT_NAMES)),
+        (
+            "PROFITABILITY_RANGE_NAMES",
+            to_value(&PROFITABILITY_RANGE_NAMES),
+        ),
+        ("PROFIT_NAMES", to_value(&PROFIT_NAMES)),
+        ("LOSS_NAMES", to_value(&LOSS_NAMES)),
+    ]
 }
 
 /// Convert top-level keys of a JSON object to camelCase.

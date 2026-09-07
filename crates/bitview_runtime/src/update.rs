@@ -11,10 +11,7 @@ pub fn update<P>(plugins: &mut P, context: UpdateContext<'_>) -> Result<()>
 where
     P: ComputePluginSet,
 {
-    run(plugins, context, |plugins, context| {
-        plugins.compute(context)?;
-        Ok(())
-    })
+    run(plugins, context, ComputePluginSet::compute)
 }
 
 pub fn bootstrap_update<P>(plugins: &mut P, context: UpdateContext<'_>) -> Result<BootstrapAction>

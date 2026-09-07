@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use crate::{AnyStoredVec, Format, ReadOnlyRawVec, VecIndex, VecReader};
 
 use super::ReadWriteRawVec;

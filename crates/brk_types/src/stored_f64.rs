@@ -5,15 +5,18 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use crate::{Bitcoin, Cents, Dollars, Sats, StoredU64};
 
 /// Fixed-size 64-bit floating point value optimized for on-disk storage
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct StoredF64(f64);
 
 impl StoredF64 {
@@ -58,6 +61,12 @@ impl From<StoredU64> for StoredF64 {
 impl CheckedSub<StoredF64> for StoredF64 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         Some(Self(self.0 - rhs.0))
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<StoredF64> for StoredF64 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -184,6 +193,12 @@ impl CheckedSub<usize> for StoredF64 {
         Some(Self(self.0 - rhs as f64))
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for StoredF64 {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl PartialEq for StoredF64 {
     fn eq(&self, other: &Self) -> bool {
@@ -224,13 +239,21 @@ impl From<Bitcoin> for StoredF64 {
     }
 }
 
-impl PrintableIndex for StoredF64 {
-    fn to_string() -> &'static str {
+impl StoredF64 {
+    pub fn index_name() -> &'static str {
         "f64"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["f64"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredF64 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -260,6 +283,7 @@ impl std::fmt::Display for StoredF64 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for StoredF64 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

@@ -3,24 +3,15 @@ use std::fmt;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 use crate::U8x32;
 
 #[derive(
-    Debug,
-    Clone,
-    Deref,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Bytes,
-    Hash,
-    JsonSchema,
+    Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 pub struct P2WSHBytes(U8x32);
 
 impl From<&[u8]> for P2WSHBytes {
@@ -43,12 +34,11 @@ impl fmt::Display for P2WSHBytes {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for P2WSHBytes {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {

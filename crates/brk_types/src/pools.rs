@@ -3,11 +3,14 @@ use std::sync::OnceLock;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use crate::{AddrBytes, PoolSlug, Version};
+#[cfg(feature = "storage")]
+use crate::Version;
+use crate::{AddrBytes, PoolSlug};
 
 use super::Pool;
 
 /// Increment when pool IDs, payout addresses, or coinbase tags change.
+#[cfg(feature = "storage")]
 pub const POOL_ATTRIBUTION_VERSION: Version = Version::ONE;
 
 const JSON_DATA: &str = include_str!("../pools-v2.json");

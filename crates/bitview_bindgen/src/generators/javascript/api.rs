@@ -266,14 +266,19 @@ fn endpoint_to_method_name(endpoint: &Endpoint) -> String {
 }
 
 fn build_method_params(endpoint: &Endpoint) -> String {
-    let mut params = Vec::new();
-    for param in &endpoint.path_params {
-        params.push(sanitize_ident(&param.name));
+    let mut params = String::new();
+    for (index, param) in endpoint
+        .path_params
+        .iter()
+        .chain(&endpoint.query_params)
+        .enumerate()
+    {
+        if index != 0 {
+            params.push_str(", ");
+        }
+        params.push_str(&sanitize_ident(&param.name));
     }
-    for param in &endpoint.query_params {
-        params.push(sanitize_ident(&param.name));
-    }
-    params.join(", ")
+    params
 }
 
 /// Strip characters invalid in JS identifiers (e.g. `[]` from `txId[]`).
@@ -298,3 +303,7 @@ fn format_param_desc(desc: Option<&str>) -> String {
         _ => String::new(),
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/generators/javascript/api.rs"]
+mod tests;

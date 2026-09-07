@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 
-#[derive(Traversable)]
+#[derive(Clone, Traversable)]
 pub struct SupplyVecs<T> {
     /// Supply in each UTXO age range multiplied by that range's wakefulness.
     /// Each result is rounded down to whole satoshis.

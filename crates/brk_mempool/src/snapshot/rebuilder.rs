@@ -21,7 +21,7 @@ use parking_lot::RwLock;
 
 use crate::State;
 
-use super::{Partitioner, Snapshot, TxIndex};
+use super::{Snapshot, TxIndex, partition};
 
 const NUM_BLOCKS: usize = 8;
 const HISTORY: usize = 10;
@@ -48,9 +48,7 @@ impl Rebuilder {
         membership_changed: bool,
     ) {
         let revision = lock.read().txs.content_revision();
-        if self.can_reuse(gbt_txids, min_fee, membership_changed)
-            && self.snapshot().content_revision == revision
-        {
+        if self.can_reuse(gbt_txids, min_fee, membership_changed, revision) {
             return;
         }
 
@@ -73,7 +71,13 @@ impl Rebuilder {
         self.rebuild_count.fetch_add(1, Ordering::Relaxed);
     }
 
-    fn can_reuse(&self, gbt_txids: &[Txid], min_fee: FeeRate, membership_changed: bool) -> bool {
+    fn can_reuse(
+        &self,
+        gbt_txids: &[Txid],
+        min_fee: FeeRate,
+        membership_changed: bool,
+        revision: u64,
+    ) -> bool {
         if membership_changed {
             return false;
         }
@@ -81,6 +85,7 @@ impl Rebuilder {
         !snapshot.blocks.is_empty()
             && snapshot.min_fee == min_fee
             && snapshot.block0_txids().eq(gbt_txids.iter().copied())
+            && snapshot.content_revision == revision
     }
 
     /// Past block-0 ordered txid list for `hash`, or `None` if it has
@@ -122,7 +127,7 @@ impl Rebuilder {
         for index in &block0 {
             excluded[index.as_usize()] = 1;
         }
-        let rest = Partitioner::partition(&txs, &excluded, NUM_BLOCKS.saturating_sub(1));
+        let rest = partition::partition(&txs, &excluded, NUM_BLOCKS.saturating_sub(1));
 
         let mut blocks = Vec::with_capacity(NUM_BLOCKS);
         blocks.push(block0);

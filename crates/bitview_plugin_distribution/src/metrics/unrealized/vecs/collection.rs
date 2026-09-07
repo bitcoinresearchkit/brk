@@ -3,8 +3,8 @@ use brk_error::Result;
 use bitview_cohort::{CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount};
 use bitview_traversable::Traversable;
 use brk_types::{
-    Cents, CentsSigned, CentsSquaredSats, Dollars, PartsPerMillion64, PartsPerMillionSigned32,
-    Sats, Version,
+    Cents, CentsSigned, CentsSquaredSats, Dollars, PartsPerMillionSigned32, PriceRatio, Sats,
+    Version,
 };
 use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
@@ -74,7 +74,7 @@ pub struct UnrealizedVecs<M: StorageMode = Rw> {
     /// unrealized profit, negative values mean aggregate unrealized loss, and
     /// zero means spot equals the cohort's realized price. A zero or unavailable
     /// MVRV produces NaN.
-    pub nupl: UTXOGroups<LazyRatioPerBlock<PartsPerMillionSigned32, PartsPerMillion64>>,
+    pub nupl: UTXOGroups<LazyRatioPerBlock<PartsPerMillionSigned32, PriceRatio>>,
     #[traversable(wrap = "loss", rename = "negative")]
     /// Unrealized loss of a UTXO cohort's unspent outputs, expressed as a
     /// negative value.
@@ -131,7 +131,7 @@ impl UnrealizedVecs {
         let net_sentiment =
             AggregateFiatPerBlock::forced_import(db, "net_sentiment", aggregate_version, mappings)?;
         let nupl = realized_price.map_named(|filter, cohort_name, price| {
-            LazyRatioPerBlock::from_lazy_source::<MvrvToNupl, PartsPerMillion64>(
+            LazyRatioPerBlock::from_lazy_source::<MvrvToNupl, PriceRatio>(
                 &CohortContext::Utxo.metric_name(filter, cohort_name, "nupl"),
                 Self::cohort_version(version, filter) + Version::new(5),
                 &price.ppm,

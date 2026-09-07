@@ -1,5 +1,5 @@
 use bitview_traversable::Traversable;
-use brk_types::{PartsPerMillionSigned64, StoredF32};
+use brk_types::{PartsPerMillionSigned32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
 use bitview_compute::{LazyPerBlock, PerBlock, PercentPerBlock};
@@ -23,5 +23,5 @@ pub struct HashPriceValueVecs<M: StorageMode = Rw> {
     /// all-time minimum, minus one. Zero marks the historical floor and positive
     /// values measure the rebound above it. Returns zero before a nonzero
     /// minimum exists.
-    pub rebound: PercentPerBlock<PartsPerMillionSigned64, M>,
+    pub rebound: PercentPerBlock<PartsPerMillionSigned32, M>,
 }

@@ -36,33 +36,12 @@ where
     S: RawStrategy<T>,
 {
     const SIZE_OF_T: usize = size_of::<T>();
-}
-pub trait VariantsRawSourcesMmapRawMmapSourceITSInternal<I, T, S>: Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(vec: &ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self;
-    fn new_from_parts(region: &Region, stored_len: usize, from: usize, to: usize) -> Self;
-    fn byte_window(&self) -> (*const u8, usize);
-    fn fold<B, F: FnMut(B, T) -> B>(self, init: B, f: F) -> B;
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        self,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<I, T, S> VariantsRawSourcesMmapRawMmapSourceITSInternal<I, T, S> for RawMmapSource<I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(vec: &ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
+
+    pub fn new(vec: &ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
         Self::new_from_parts(vec.region(), vec.stored_len(), from, to)
     }
-    fn new_from_parts(region: &Region, stored_len: usize, from: usize, to: usize) -> Self {
+
+    pub fn new_from_parts(region: &Region, stored_len: usize, from: usize, to: usize) -> Self {
         let reader = region.create_reader();
         let from = from.min(stored_len);
         let to = to.min(stored_len);
@@ -77,14 +56,16 @@ where
             _marker: PhantomData,
         }
     }
-    fn byte_window(&self) -> (*const u8, usize) {
+
+    pub fn byte_window(&self) -> (*const u8, usize) {
         let byte_position = self.pos * Self::SIZE_OF_T;
         let byte_len = (self.end - self.pos) * Self::SIZE_OF_T;
         (unsafe { self.data.add(byte_position) }, byte_len)
     }
+
     /// Fold all elements in the range — tight pointer loop.
     #[inline(always)]
-    fn fold<B, F: FnMut(B, T) -> B>(self, init: B, mut f: F) -> B {
+    pub fn fold<B, F: FnMut(B, T) -> B>(self, init: B, mut f: F) -> B {
         let ptr = self.data;
         let mut byte_off = self.pos * Self::SIZE_OF_T;
         let end_byte = self.end * Self::SIZE_OF_T;
@@ -95,9 +76,10 @@ where
         }
         acc
     }
+
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         self,
         init: B,
         mut f: F,

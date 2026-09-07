@@ -1,6 +1,7 @@
 use std::fmt;
 
 use bitcoin::{BlockHash as BitcoinBlockHash, hashes::Hash};
+#[cfg(feature = "storage")]
 use vecdb::Formattable;
 
 use super::BlockHash;
@@ -26,8 +27,11 @@ fn formatting_preserves_bitcoin_order_and_wire_bytes() {
         let json = serde_json::to_string(&hash).unwrap();
         assert_eq!(json, format!("\"{expected}\""));
         assert_eq!(serde_json::from_str::<BlockHash>(&json).unwrap(), hash);
-        let mut bytes = vec![b'!'];
-        hash.fmt_json(&mut bytes);
-        assert_eq!(&bytes[1..], json.as_bytes());
+        #[cfg(feature = "storage")]
+        {
+            let mut bytes = vec![b'!'];
+            hash.fmt_json(&mut bytes);
+            assert_eq!(&bytes[1..], json.as_bytes());
+        }
     }
 }

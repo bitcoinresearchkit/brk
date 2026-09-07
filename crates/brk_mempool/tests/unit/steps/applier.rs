@@ -32,7 +32,7 @@ fn publish_one_inserts_into_all_stores() {
     let mut diff = CycleDiff::default();
     let (addition, txid) = fresh_addition(0xC0, 200, 100);
 
-    Applier::apply(&lock, &snapshot, fresh_pulled(addition), &mut diff);
+    apply(&lock, &snapshot, fresh_pulled(addition), &mut diff);
 
     let state = lock.read();
     assert!(state.txs.contains(&txid));
@@ -56,7 +56,7 @@ fn revived_path_exhumes_body_from_graveyard() {
         .bury(tx, entry.clone(), rate, TxRemoval::Vanished);
 
     let mut diff = CycleDiff::default();
-    Applier::apply(
+    apply(
         &lock,
         &snapshot,
         fresh_pulled(TxAddition::Revived { entry }),
@@ -78,7 +78,7 @@ fn revived_with_empty_graveyard_is_dropped() {
     let entry = TxEntry::new(&info, 100, false);
 
     let mut diff = CycleDiff::default();
-    Applier::apply(
+    apply(
         &lock,
         &snapshot,
         fresh_pulled(TxAddition::Revived { entry }),
@@ -97,7 +97,7 @@ fn bury_preserves_chunk_rate_from_snapshot() {
 
     // Publish first to plant the tx, with a fee-rate that differs
     // from the snapshot's stub rate so we can tell them apart.
-    Applier::apply(
+    apply(
         &lock,
         &Snapshot::default(),
         fresh_pulled(addition),
@@ -110,7 +110,7 @@ fn bury_preserves_chunk_rate_from_snapshot() {
     let snapshot = Snapshot::for_test_with_chunk_rates(&[(prefix, cpfp_rate, txid)]);
 
     let mut diff = CycleDiff::default();
-    Applier::apply(
+    apply(
         &lock,
         &snapshot,
         TxsPulled {
@@ -132,7 +132,7 @@ fn bury_preserves_chunk_rate_from_snapshot() {
 fn bury_falls_back_to_isolated_rate_when_snapshot_misses() {
     let lock = RwLock::new(State::default());
     let (addition, txid) = fresh_addition(0xC3, 700, 100);
-    Applier::apply(
+    apply(
         &lock,
         &Snapshot::default(),
         fresh_pulled(addition),
@@ -143,7 +143,7 @@ fn bury_falls_back_to_isolated_rate_when_snapshot_misses() {
     let prefix = TxidPrefix::from(&txid);
 
     let mut diff = CycleDiff::default();
-    Applier::apply(
+    apply(
         &lock,
         &Snapshot::default(),
         TxsPulled {

@@ -10,6 +10,10 @@ mod partitioning;
 mod pinning;
 mod restart_interval;
 
+#[cfg(test)]
+#[path = "../../tests/unit/config.rs"]
+mod tests;
+
 pub use block_size::BlockSizePolicy;
 pub use compression::CompressionPolicy;
 pub use filter::{BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry};

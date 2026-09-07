@@ -1,8 +1,8 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::{Halving, Height};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CohortName, Filter};
 
@@ -33,7 +33,8 @@ pub const EPOCH_NAMES: ByEpoch<CohortName> = ByEpoch {
     _4: CohortName::new("epoch_4", "4", "Epoch 4"),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByEpoch<T> {
     /// Uses UTXOs created during subsidy-halving epoch 0.
     pub _0: T,
@@ -92,35 +93,6 @@ impl<T> ByEpoch<T> {
             _3: create(f._3, n._3.id)?,
             _4: create(f._4, n._4.id)?,
         })
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [&self._0, &self._1, &self._2, &self._3, &self._4].into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self._0,
-            &mut self._1,
-            &mut self._2,
-            &mut self._3,
-            &mut self._4,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self._0,
-            &mut self._1,
-            &mut self._2,
-            &mut self._3,
-            &mut self._4,
-        ]
-        .into_par_iter()
     }
 
     pub fn mut_vec_from_height(&mut self, height: Height) -> Option<&mut T> {

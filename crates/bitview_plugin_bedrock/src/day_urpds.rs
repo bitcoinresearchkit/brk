@@ -12,9 +12,8 @@ use bitview_cohort::{
 };
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_types::{
-    CentsCompact, CostBasisPercentilePrices, Date, Sats, UrpdRaw, UrpdWeight, Version,
+    Cents, CentsCompact, CostBasisPercentilePrices, Date, Sats, UrpdRaw, UrpdWeight, Version,
 };
-use vecdb::ColumnId;
 
 use super::{ModeId, ModeWeights, WeightedModeId, WeightedModes, WeightedPair, WeightedUrpdNames};
 
@@ -41,6 +40,71 @@ pub struct DayUrpds {
 }
 
 impl DayUrpds {
+    pub fn capitalized_prices(&self) -> UTXOAggregate<WeightedPair<Cents>> {
+        let price = |urpd: &UrpdRaw| {
+            crate::capitalized_price::capitalized_price(urpd.map.iter().map(|(&p, &s)| (p, s)))
+        };
+        UTXOAggregate {
+            all: WeightedPair {
+                cointime: price(&self.all.cointime),
+                coinflow: price(&self.all.coinflow),
+            },
+            sth: WeightedPair {
+                cointime: price(&self.term.short.cointime),
+                coinflow: price(&self.term.short.coinflow),
+            },
+            lth: WeightedPair {
+                cointime: price(&self.term.long.cointime),
+                coinflow: price(&self.term.long.coinflow),
+            },
+        }
+    }
+
+    /// Backfill only the six new prices from version-validated saved URPDs.
+    /// Missing dates stay undefined; a half-written pair is an error.
+    pub fn read_capitalized_prices(
+        states_path: &Path,
+        names: &WeightedUrpdNames,
+        date: Date,
+    ) -> Result<UTXOAggregate<WeightedPair<Cents>>> {
+        let read_cohort = |cohort: UTXOAggregateId| -> Result<_> {
+            let names = cohort.select(names);
+            let paths = [
+                UrpdRaw::path(states_path, &names.cointime, date),
+                UrpdRaw::path(states_path, &names.coinflow, date),
+            ];
+            match (paths[0].try_exists()?, paths[1].try_exists()?) {
+                (false, false) => Ok(WeightedPair::from_fn(|_| Cents::NAN)),
+                (true, true) => {
+                    let read = |name: &str| -> Result<Cents> {
+                        let bytes = UrpdRaw::read_bytes(states_path, name, date)?;
+                        Ok(crate::capitalized_price::capitalized_price(
+                            UrpdRaw::deserialize_entries(&bytes)?,
+                        ))
+                    };
+                    Ok(WeightedPair {
+                        cointime: read(&names.cointime)?,
+                        coinflow: read(&names.coinflow)?,
+                    })
+                }
+                _ => Err(Error::new(
+                    ErrorKind::NotFound,
+                    format!(
+                        "Incomplete weighted URPD pair: '{}' and '{}'",
+                        paths[0].display(),
+                        paths[1].display()
+                    ),
+                )
+                .into()),
+            }
+        };
+        Ok(UTXOAggregate {
+            all: read_cohort(UTXOAggregateId::All)?,
+            sth: read_cohort(UTXOAggregateId::Sth)?,
+            lth: read_cohort(UTXOAggregateId::Lth)?,
+        })
+    }
+
     #[cfg(test)]
     pub fn repeated<const N: usize>(entries: [(u32, u64); N]) -> Self {
         let map = entries

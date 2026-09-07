@@ -13,7 +13,8 @@ use crate::{
 
 pub async fn serve(state: AppState, headers: HeaderMap) -> Result<Response> {
     // This hash read validates completed publication before a cheap 304.
-    let params = CacheParams::resolve(&state.mempool_txids_strategy()?, CdnCacheMode::Live);
+    let hash = state.sync(|q| q.mempool_txids_hash())?;
+    let params = CacheParams::resolve(&CacheStrategy::LiveHash(hash), CdnCacheMode::Live);
     if params.matches_etag(&headers) {
         return Ok(Response::new_not_modified(&params));
     }
@@ -32,13 +33,11 @@ pub async fn serve(state: AppState, headers: HeaderMap) -> Result<Response> {
                 return Ok(Response::new_not_modified(&params));
             }
             let bytes = to_vec(&txids)?;
-            let mut response = AppState::assemble_response(
+            Ok(permit.response(
                 params,
-                Ok(permit.bytes(bytes.into())),
+                bytes.into(),
                 HeaderMapExtended::insert_content_type_application_json,
-            );
-            response.extensions_mut().insert(permit);
-            Ok(response)
+            ))
         })
         .await
         .map_err(Into::into)

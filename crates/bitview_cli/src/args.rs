@@ -156,18 +156,11 @@ impl Args {
                 &encode_component(value),
             );
         }
-        if !self.query.is_empty() {
-            path.push('?');
-            path.push_str(
-                &self
-                    .query
-                    .iter()
-                    .map(|(name, value)| {
-                        format!("{}={}", encode_component(name), encode_component(value))
-                    })
-                    .collect::<Vec<_>>()
-                    .join("&"),
-            );
+        for (index, (name, value)) in self.query.iter().enumerate() {
+            path.push(if index == 0 { '?' } else { '&' });
+            path.push_str(&encode_component(name));
+            path.push('=');
+            path.push_str(&encode_component(value));
         }
         format!("{}{path}", self.base_url)
     }

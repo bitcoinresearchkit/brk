@@ -6,17 +6,8 @@ use rayon::join;
 
 use super::Vecs;
 
-pub trait Compute {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        lookback: &crate::LookbackVecs,
-        exit: &Exit,
-    ) -> Result<()>;
-}
-
-impl Compute for Vecs {
-    fn compute(
+impl Vecs {
+    pub fn compute(
         &mut self,
         indexer: &Indexer,
         lookback: &crate::LookbackVecs,

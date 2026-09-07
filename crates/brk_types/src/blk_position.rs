@@ -2,10 +2,12 @@ use std::ops::Add;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
 /// Position within a .blk file, encoding file index and byte offset
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct BlkPosition(u64);
 
 impl BlkPosition {
@@ -37,6 +39,7 @@ impl std::fmt::Display for BlkPosition {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for BlkPosition {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

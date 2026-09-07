@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, ColumnId, Formattable, Pco, VecValue, Version};
 
 pub const OP_RETURN_KIND_COUNT: usize = OpReturnKind::Unknown as usize + 1;
@@ -76,11 +77,13 @@ pub const OP_RETURN_KINDS: [OpReturnKind; OP_RETURN_KIND_COUNT] = [
 ];
 
 impl OpReturnKind {
+    #[cfg(feature = "storage")]
     fn is_valid(value: u8) -> bool {
         value <= Self::Unknown as u8
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for OpReturnKind {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -94,6 +97,7 @@ impl Formattable for OpReturnKind {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for OpReturnKind {
     type Array = [u8; size_of::<Self>()];
 
@@ -120,6 +124,7 @@ impl Bytes for OpReturnKind {
 }
 
 // SAFETY: The non-transparent conversion validates every decoded discriminant.
+#[cfg(feature = "storage")]
 unsafe impl Pco for OpReturnKind {
     type NumberType = u8;
 
@@ -134,6 +139,7 @@ unsafe impl Pco for OpReturnKind {
     }
 }
 
+#[cfg(feature = "storage")]
 impl ColumnId for OpReturnKind {
     type Row<T>
         = [T; OP_RETURN_KIND_COUNT]
@@ -180,8 +186,10 @@ impl ColumnId for OpReturnKind {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn column_order_matches_discriminants() {
         for (index, kind) in OP_RETURN_KINDS.into_iter().enumerate() {
@@ -190,6 +198,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn pco_conversion_rejects_invalid_discriminants() {
         const { assert!(!OpReturnKind::IS_TRANSPARENT) };

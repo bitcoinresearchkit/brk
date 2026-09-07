@@ -5,9 +5,10 @@ use axum::{
     http::HeaderMap,
     response::Response,
 };
-use bitview_query::RepresentationId;
+use bitview_query::{RepresentationId, ResolvedAddrChainTxs};
 use brk_types::{
-    Addr, AddrHashPrefixMatches, AddrStats, AddrValidation, Transaction, Utxo, Version,
+    Addr, AddrHashPrefixMatches, AddrStats, AddrValidation, BlockHashPrefix, Transaction, Txid,
+    Utxo, Version,
 };
 use serde_json::to_vec;
 
@@ -28,6 +29,24 @@ const TXS_TOTAL_TARGET: usize = 50;
 
 pub trait AddrRoutes {
     fn add_addr_routes(self) -> Self;
+}
+
+impl AppState {
+    /// Resolve one confirmed page before deriving its activity-bound validator.
+    async fn addr_chain_txs_preflight(
+        &self,
+        addr: Addr,
+        after_txid: Option<Txid>,
+    ) -> Result<(ResolvedAddrChainTxs, CacheStrategy)> {
+        let resolved = self
+            .run_admitted(move |q| q.resolve_addr_chain_txs(&addr, after_txid, CHAIN_PAGE))
+            .await?;
+        let strategy = CacheStrategy::ActivityBound(
+            Version::ONE,
+            BlockHashPrefix::from(&resolved.activity_anchor()),
+        );
+        Ok((resolved, strategy))
+    }
 }
 
 impl AddrRoutes for ApiRouter<AppState> {
@@ -107,10 +126,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | -> Result<Response> {
                 let (resolved, strategy) = state.addr_chain_txs_preflight(
-                    Version::ONE,
-                    &path.addr,
+                    path.addr,
                     None,
-                    CHAIN_PAGE,
                 ).await?;
                 Ok(state.respond_json(&headers, strategy, move |q| {
                     q.addr_txs_chain_resolved(resolved)
@@ -136,10 +153,8 @@ impl AddrRoutes for ApiRouter<AppState> {
                 State(state): State<AppState>
             | -> Result<Response> {
                 let (resolved, strategy) = state.addr_chain_txs_preflight(
-                    Version::ONE,
-                    &path.addr,
+                    path.addr,
                     Some(path.after_txid),
-                    CHAIN_PAGE,
                 ).await?;
                 Ok(state.respond_json(&headers, strategy, move |q| {
                     q.addr_txs_chain_resolved(resolved)
@@ -251,7 +266,7 @@ async fn serve_txs(state: AppState, headers: HeaderMap, addr: Addr) -> Result<Re
             let bytes = Bytes::from(to_vec(&transactions)?);
             Ok(AppState::assemble_response(
                 params,
-                Ok(bytes),
+                bytes,
                 HeaderMap::insert_content_type_application_json,
             ))
         })
@@ -276,7 +291,7 @@ async fn serve_utxos(state: AppState, headers: HeaderMap, addr: Addr) -> Result<
             let bytes = Bytes::from(to_vec(&utxos)?);
             Ok(AppState::assemble_response(
                 params,
-                Ok(bytes),
+                bytes,
                 HeaderMap::insert_content_type_application_json,
             ))
         })

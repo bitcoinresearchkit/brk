@@ -177,17 +177,27 @@ impl DefaultPlugins {
                             &price,
                             &mining.rewards.subsidy.cumulative.cents,
                             &all_chain,
+                            &distribution,
                         )?))
                     })
                 })?;
                 let coinflow = big_thread().spawn_scoped(scope, || -> Result<_> {
                     timed(Phase::Import, COINFLOW_ID, || {
-                        Ok(Box::new(Coinflow::import(context, &mappings, &price)?))
+                        Ok(Box::new(Coinflow::import(
+                            context,
+                            &mappings,
+                            &price,
+                            &distribution,
+                        )?))
                     })
                 })?;
                 let bedrock = big_thread().spawn_scoped(scope, || -> Result<_> {
                     timed(Phase::Import, BEDROCK_ID, || {
-                        Ok(Box::new(Bedrock::import(context, &mappings)?))
+                        Ok(Box::new(Bedrock::import(
+                            context,
+                            &mappings,
+                            &price.spot.cents.height.read_only_cached_boxed_clone(),
+                        )?))
                     })
                 })?;
                 let capital_sentiment = big_thread().spawn_scoped(scope, || -> Result<_> {

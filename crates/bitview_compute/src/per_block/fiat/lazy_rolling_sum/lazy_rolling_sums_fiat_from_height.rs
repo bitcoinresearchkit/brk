@@ -1,12 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaSub, LazyDeltaVec, LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
-use crate::{
-    CachedWindowStartVec, DerivedResolutions, FiatType, LazyPerBlock, LazyRollingSumFromHeight,
-    Resolutions, Windows,
-};
+use crate::{CachedWindowStartVec, FiatType, LazyPerBlock, LazyRollingSumFromHeight, Windows};
 
 use super::LazyRollingSumFiatFromHeight;
 
@@ -31,36 +28,20 @@ impl<C: FiatType> LazyRollingSumsFiatFromHeight<C> {
 
         Self(cached_starts.map_with_suffix(|suffix, cached_start| {
             let name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
-
-            let cents_name = format!("{name}_cents");
-            let height = LazyDeltaVec::<Height, C, C, DeltaSub>::new(
-                &cents_name,
+            let cents = LazyRollingSumFromHeight::new(
+                &format!("{name}_cents"),
                 version,
                 cumulative_cents.clone(),
-                starts_version,
-                move || cached.snapshot(),
+                cached_start,
+                indexes,
             );
-            let resolutions =
-                Resolutions::from_height_source(&cents_name, height.clone(), version, indexes);
-            let cents = LazyRollingSumFromHeight {
-                height,
-                resolutions: Box::new(resolutions),
-            };
 
-            let usd = LazyPerBlock {
-                height: LazyVec::transformed::<C::ToDollars>(
-                    &name,
-                    version,
-                    cents.height.read_only_boxed_clone(),
-                ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<C::ToDollars>(
-                    &name,
-                    version,
-                    &cents.resolutions,
-                )),
-            };
+            let usd = LazyPerBlock::from_resolutions::<C::ToDollars>(
+                &name,
+                version,
+                cents.height.read_only_boxed_clone(),
+                &cents.resolutions,
+            );
 
             LazyRollingSumFiatFromHeight { usd, cents }
         }))

@@ -25,12 +25,6 @@ impl CacheBudget {
         }
     }
 
-    fn try_reserve_bytes(&self, bytes: usize) -> bool {
-        self.remaining_bytes
-            .fetch_update(Relaxed, Relaxed, |n| n.checked_sub(bytes))
-            .is_ok()
-    }
-
     fn evict_one(&self) -> bool {
         let invalidate = self
             .caches
@@ -56,11 +50,10 @@ impl CacheBudget {
         let resident_bytes = Arc::new(AtomicUsize::new(0));
         let cached =
             CachedVec::wrap_budgeted(source, self, last_access.clone(), resident_bytes.clone());
-        let invalidated = cached.clone();
         self.caches.lock().push(CacheEntry {
             last_access,
             resident_bytes,
-            invalidate: Arc::new(move || invalidated.invalidate()),
+            invalidate: Arc::new(cached.weak_invalidator()),
         });
         cached
     }
@@ -80,22 +73,14 @@ impl CacheBudget {
 
     /// Invalidates every registered vec.
     pub fn invalidate(&self) {
-        let invalidate: Vec<_> = self
-            .caches
-            .lock()
-            .iter()
-            .map(|entry| Arc::clone(&entry.invalidate))
-            .collect();
-        for invalidate in invalidate {
-            invalidate();
-        }
+        self.caches.lock().retain(|entry| (entry.invalidate)());
     }
 }
 
 struct CacheEntry {
     last_access: Arc<AtomicU64>,
     resident_bytes: Arc<AtomicUsize>,
-    invalidate: Arc<dyn Fn() + Send + Sync>,
+    invalidate: Arc<dyn Fn() -> bool + Send + Sync>,
 }
 
 impl CachedVecBudget for CacheBudget {
@@ -108,17 +93,14 @@ impl CachedVecBudget for CacheBudget {
         if bytes > MAX_BYTES {
             return false;
         }
-        if self.try_reserve_bytes(bytes) {
-            return true;
-        }
-
-        while self.evict_one() {
-            if self.try_reserve_bytes(bytes) {
+        loop {
+            if self.remaining_bytes.try_reserve(bytes) {
                 return true;
             }
+            if !self.evict_one() {
+                return false;
+            }
         }
-
-        false
     }
 
     #[inline]
@@ -132,3 +114,53 @@ impl CachedVecBudget for CacheBudget {
 }
 
 pub static CACHE_BUDGET: CacheBudget = CacheBudget::new();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, StoredVec, Version, WritableVec};
+
+    #[test]
+    fn reservation_evicts_oldest_and_keeps_accounting_symmetric() {
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let budget = Box::leak(Box::new(CacheBudget::new()));
+        let mut sources = Vec::new();
+        for name in ["first", "second"] {
+            let mut source = BytesVec::<usize, u64>::import(&db, name, Version::ONE).unwrap();
+            source.push(42);
+            source.write().unwrap();
+            sources.push(budget.wrap(source.read_only_clone()));
+        }
+        assert_eq!(&*sources[0].snapshot(), &[42]);
+        assert_eq!(&*sources[1].snapshot(), &[42]);
+        assert_eq!(budget.remaining_bytes.load(Relaxed), MAX_BYTES - 16);
+        assert!(budget.try_reserve(MAX_BYTES - 8));
+        let caches = budget.caches.lock();
+        assert_eq!(caches[0].resident_bytes.load(Relaxed), 0);
+        assert_eq!(caches[1].resident_bytes.load(Relaxed), 8);
+        drop(caches);
+        assert_eq!(budget.remaining_bytes.load(Relaxed), 0);
+        budget.release(MAX_BYTES - 8);
+        budget.invalidate();
+        assert_eq!(budget.remaining_bytes.load(Relaxed), MAX_BYTES);
+        assert!(!budget.try_reserve(MAX_BYTES + 1));
+    }
+
+    #[test]
+    fn dropped_sources_release_registration_and_budget_on_invalidation() {
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let budget = Box::leak(Box::new(CacheBudget::new()));
+        let mut source = BytesVec::<usize, u64>::import(&db, "temporary", Version::ONE).unwrap();
+        source.push(42);
+        source.write().unwrap();
+        let cached = budget.wrap(source.read_only_clone());
+        assert_eq!(&*cached.snapshot(), &[42]);
+        assert_eq!(budget.remaining_bytes.load(Relaxed), MAX_BYTES - 8);
+        drop(cached);
+        budget.invalidate();
+        assert!(budget.caches.lock().is_empty());
+        assert_eq!(budget.remaining_bytes.load(Relaxed), MAX_BYTES);
+    }
+}

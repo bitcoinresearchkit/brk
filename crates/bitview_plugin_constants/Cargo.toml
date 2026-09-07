@@ -14,5 +14,5 @@ ignored = ["vecdb"]
 bitview_compute = { workspace = true }
 bitview_plugin = { workspace = true }
 bitview_traversable = { workspace = true }
-brk_types = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 vecdb = { workspace = true }

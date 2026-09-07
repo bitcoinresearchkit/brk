@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::io::Read;
 
 use bitcoin::{
@@ -17,7 +15,6 @@ use brk_types::{
 };
 use vecdb::{ReadableVec, VecIndex};
 
-use super::ResolvedBlock;
 use crate::Query;
 
 const HEADER_SIZE: usize = 80;
@@ -46,15 +43,7 @@ impl Query {
     /// Block by hash. Unknown hash → 404 via `height_by_hash`.
     pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
         let guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_at_height(block.height(), guard.lengths())
-    }
-
-    /// Block previously resolved by exact hash. Revalidates the cheap
-    /// hash-at-height pair under the same publication guard as the body read.
-    pub fn block_resolved(&self, block: ResolvedBlock) -> Result<BlockInfo> {
-        let guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
+        let height = self.height_by_hash(hash)?;
         self.block_at_height(height, guard.lengths())
     }
 
@@ -72,7 +61,7 @@ impl Query {
         let h = height.to_usize();
         self.blocks_range_at(h, h + 1, safe)?
             .pop()
-            .ok_or(Error::NotFound("Block not found".into()))
+            .ok_or_else(|| Error::NotFound("Block not found".into()))
     }
 
     /// V1 block by height. The safe ceiling covers every plugin series read by
@@ -86,34 +75,18 @@ impl Query {
         self.block_v1_at_height(height, safe)
     }
 
-    /// V1 block previously resolved by exact hash. Returns `NotFound` if the
-    /// block no longer occupies its resolved best-chain height.
-    pub fn block_resolved_v1(&self, block: ResolvedBlock) -> Result<BlockInfoV1> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let height = self.revalidate_block(block)?;
-        self.block_v1_at_height(height, self.safe_lengths())
-    }
-
     fn block_v1_at_height(&self, height: Height, safe: Lengths) -> Result<BlockInfoV1> {
         let h = height.to_usize();
         self.blocks_v1_range(h, h + 1, safe)?
             .pop()
-            .ok_or(Error::NotFound("Block not found".into()))
+            .ok_or_else(|| Error::NotFound("Block not found".into()))
     }
 
     /// The original 80 header bytes as hex, verified against the requested hash.
     pub fn block_header_hex(&self, hash: &BlockHash) -> Result<String> {
         let _guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_header_hex_at_height(block.height(), hash)
-    }
-
-    /// Header for a block previously resolved by exact hash. Returns
-    /// `NotFound` if the block was displaced before this read.
-    pub fn block_header_hex_resolved(&self, block: ResolvedBlock) -> Result<String> {
-        let _guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
-        self.block_header_hex_at_height(height, &block.hash())
+        let height = self.height_by_hash(hash)?;
+        self.block_header_hex_at_height(height, hash)
     }
 
     /// Resolve a height against one published chain view.
@@ -316,36 +289,8 @@ impl Query {
             total_size,
         })
     }
-}
 
-#[cfg(test)]
-#[path = "../../../tests/unit/impl/block/info.rs"]
-mod tests;
-pub trait RImplBlockInfoQueryInternal: Sized {
-    fn block_header_hex_at_height(&self, height: Height, hash: &BlockHash) -> Result<String>;
-
-    fn blocks_range_at(&self, begin: usize, end: usize, safe: Lengths) -> Result<Vec<BlockInfo>>;
-
-    fn blocks_v1_range_with_prices(
-        &self,
-        begin: usize,
-        end: usize,
-        safe: Lengths,
-        prices: Option<Vec<Dollars>>,
-    ) -> Result<Vec<BlockInfoV1>>;
-
-    fn resolve_block_range(
-        start_height: Option<Height>,
-        count: u32,
-        height_len: Height,
-    ) -> (usize, usize);
-    fn block_tx_count(first: TxIndex, next: TxIndex, limit: TxIndex) -> Result<u32>;
-    fn verify_header(bytes: &[u8], expected_hash: &BlockHash) -> Result<()>;
-
-    fn read_block_tx_count(reader: impl Read, expected: u32) -> Result<usize>;
-}
-impl RImplBlockInfoQueryInternal for Query {
-    fn block_header_hex_at_height(&self, height: Height, hash: &BlockHash) -> Result<String> {
+    pub fn block_header_hex_at_height(&self, height: Height, hash: &BlockHash) -> Result<String> {
         let position = self
             .indexer()
             .vecs()
@@ -358,7 +303,12 @@ impl RImplBlockInfoQueryInternal for Query {
         Ok(bytes.to_lower_hex_string())
     }
     /// Build descending-height rows within the caller's protected safe bounds.
-    fn blocks_range_at(&self, begin: usize, end: usize, safe: Lengths) -> Result<Vec<BlockInfo>> {
+    pub fn blocks_range_at(
+        &self,
+        begin: usize,
+        end: usize,
+        safe: Lengths,
+    ) -> Result<Vec<BlockInfo>> {
         let height_len = safe.height.to_usize();
         let end = end.min(height_len);
         if begin >= end {
@@ -446,7 +396,7 @@ impl RImplBlockInfoQueryInternal for Query {
         Ok(blocks)
     }
     /// Reuse captured prices under the caller's publication guard.
-    fn blocks_v1_range_with_prices(
+    pub fn blocks_v1_range_with_prices(
         &self,
         begin: usize,
         end: usize,
@@ -762,7 +712,7 @@ impl RImplBlockInfoQueryInternal for Query {
     }
     /// Half-open window ending at the requested height (default safe tip).
     /// `height_len` is the exclusive published bound, including zero for no blocks.
-    fn resolve_block_range(
+    pub fn resolve_block_range(
         start_height: Option<Height>,
         count: u32,
         height_len: Height,
@@ -773,13 +723,13 @@ impl RImplBlockInfoQueryInternal for Query {
         });
         (end.saturating_sub(count as usize), end)
     }
-    fn block_tx_count(first: TxIndex, next: TxIndex, limit: TxIndex) -> Result<u32> {
+    pub fn block_tx_count(first: TxIndex, next: TxIndex, limit: TxIndex) -> Result<u32> {
         (*next)
             .checked_sub(*first)
             .filter(|&count| count != 0 && next <= limit)
             .ok_or(Error::Internal("Invalid block transaction range"))
     }
-    fn verify_header(bytes: &[u8], expected_hash: &BlockHash) -> Result<()> {
+    pub fn verify_header(bytes: &[u8], expected_hash: &BlockHash) -> Result<()> {
         if bytes.len() != HEADER_SIZE {
             return Err(Error::Internal("Invalid block header length"));
         }
@@ -789,7 +739,7 @@ impl RImplBlockInfoQueryInternal for Query {
         Ok(())
     }
     /// Validate the on-disk count before interpreting the following coinbase.
-    fn read_block_tx_count(reader: impl Read, expected: u32) -> Result<usize> {
+    pub fn read_block_tx_count(reader: impl Read, expected: u32) -> Result<usize> {
         let count = VarInt::consensus_decode(&mut FromStd::new(reader))
             .map_err(|_| Error::Internal("Failed to decode block transaction count"))?;
         if count.0 != u64::from(expected) {
@@ -800,3 +750,7 @@ impl RImplBlockInfoQueryInternal for Query {
         Ok(count.size())
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/block/info.rs"]
+mod tests;

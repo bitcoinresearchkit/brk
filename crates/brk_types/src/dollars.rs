@@ -6,17 +6,20 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use crate::{Cents, Low, Open};
 
 use super::{Bitcoin, CentsSigned, Close, High, Sats, StoredF32, StoredF64};
 
 /// US Dollar amount
-#[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[schemars(
     example = &0.0,
     example = &100.50,
@@ -379,6 +382,12 @@ impl CheckedSub for Dollars {
         }
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Dollars {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<usize> for Dollars {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
@@ -387,6 +396,12 @@ impl CheckedSub<usize> for Dollars {
                 .checked_sub(CentsSigned::from(rhs))
                 .unwrap(),
         ))
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for Dollars {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -444,6 +459,7 @@ impl std::fmt::Display for Dollars {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Dollars {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

@@ -10881,11 +10881,9 @@
               "type": "object",
               "properties": {
                 "version": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/Version"
-                    }
-                  ]
+                  "minimum": 0,
+                  "type": "integer",
+                  "format": "uint32"
                 },
                 "index": {
                   "allOf": [
@@ -10915,11 +10913,6 @@
                   "type": "array"
                 }
               }
-            },
-            "Version": {
-              "minimum": 0,
-              "type": "integer",
-              "format": "uint32"
             }
           }
         },
@@ -11169,11 +11162,9 @@
               "type": "object",
               "properties": {
                 "version": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/Version"
-                    }
-                  ]
+                  "minimum": 0,
+                  "type": "integer",
+                  "format": "uint32"
                 },
                 "index": {
                   "allOf": [
@@ -11203,11 +11194,6 @@
                   "type": "array"
                 }
               }
-            },
-            "Version": {
-              "minimum": 0,
-              "type": "integer",
-              "format": "uint32"
             }
           }
         },
@@ -14006,7 +13992,7 @@
       "tool": {
         "name": "search_series",
         "title": "Search series",
-        "description": "Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.\n\nREST operation: `GET /api/series/search`.",
+        "description": "Search series by name or descriptive terms. Results prioritize whole query words in names, then descriptions, then fuzzy names, then fuzzy descriptions. Word order does not matter. Descriptions provide cohort terminology and formulas. The decoded q parameter is limited to 1024 UTF-8 bytes.\n\nREST operation: `GET /api/series/search`.",
         "inputSchema": {
           "type": "object",
           "properties": {

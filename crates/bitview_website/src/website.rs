@@ -21,7 +21,7 @@ struct CachedIndex {
     etag: String,
 }
 
-/// Cached index.html with importmap injected
+/// Cached embedded index.html with importmap injected.
 static INDEX_HTML: OnceLock<CachedIndex> = OnceLock::new();
 
 /// Website configuration:
@@ -41,12 +41,21 @@ impl Website {
         !matches!(self, Self::Disabled)
     }
 
-    /// Returns the cached index.html etag (None in debug mode or before first request)
+    /// Returns the embedded index ETag (None for filesystem sites, debug builds,
+    /// disabled sites, or before the first index request).
     pub fn index_etag(&self) -> Option<&str> {
-        if cfg!(debug_assertions) {
+        if cfg!(debug_assertions) || !matches!(self, Self::Default) {
             return None;
         }
         INDEX_HTML.get().map(|cached| cached.etag.as_str())
+    }
+
+    pub(crate) fn index_etag_for(&self, path: &str) -> Option<&str> {
+        let etag = self.index_etag()?;
+        (path.is_empty()
+            || path == "index.html"
+            || (Path::new(path).extension().is_none() && embedded_file(path).is_none()))
+        .then_some(etag)
     }
 
     /// Returns the filesystem path if available, None means use embedded
@@ -94,59 +103,41 @@ impl Website {
     }
 
     fn get_index(&self) -> Result<Vec<u8>, Error> {
-        // Debug mode: no importmap, no cache
-        if cfg!(debug_assertions) {
-            return match self.filesystem_path() {
-                Some(base) => {
-                    fs::read(base.join("index.html")).map_err(|e| Error::not_found(e.to_string()))
-                }
-                None => {
-                    let file = EMBEDDED_WEBSITE
-                        .get_file("index.html")
-                        .expect("index.html must exist in embedded website");
-                    Ok(file.contents().to_vec())
+        // Filesystem content is mutable and must never enter the embedded cache.
+        if let Some(base) = self.filesystem_path() {
+            if cfg!(debug_assertions) {
+                return fs::read(base.join("index.html"))
+                    .map_err(|e| Error::not_found(e.to_string()));
+            }
+            let html = fs::read_to_string(base.join("index.html"))
+                .map_err(|e| Error::not_found(e.to_string()))?;
+            let html = match ImportMap::scan(&base, "") {
+                Ok(importmap) => importmap.transform_html(&html).unwrap_or(html),
+                Err(e) => {
+                    error!("Failed to scan for importmap: {e}");
+                    html
                 }
             };
+            return Ok(html.into_bytes());
         }
 
-        // Release mode: cache with importmap
+        let file = EMBEDDED_WEBSITE
+            .get_file("index.html")
+            .expect("index.html must exist in embedded website");
+        if cfg!(debug_assertions) {
+            return Ok(file.contents().to_vec());
+        }
+
         let cached = INDEX_HTML.get_or_init(|| {
-            let html = match self.filesystem_path() {
-                None => {
-                    let file = EMBEDDED_WEBSITE
-                        .get_file("index.html")
-                        .expect("index.html must exist in embedded website");
-
-                    let html = std::str::from_utf8(file.contents())
-                        .expect("index.html must be valid UTF-8");
-
-                    let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
-                    importmap
-                        .transform_html(html)
-                        .unwrap_or_else(|| html.to_string())
-                }
-                Some(base) => {
-                    let html =
-                        fs::read_to_string(base.join("index.html")).expect("index.html must exist");
-
-                    match ImportMap::scan(&base, "") {
-                        Ok(importmap) => importmap.transform_html(&html).unwrap_or(html),
-                        Err(e) => {
-                            error!("Failed to scan for importmap: {e}");
-                            html
-                        }
-                    }
-                }
-            };
-
-            let mut hasher = DefaultHasher::new();
-            html.hash(&mut hasher);
-            let etag = format!("\"{}\"", hasher.finish());
-
-            CachedIndex {
-                html: html.into_bytes(),
-                etag,
-            }
+            let html =
+                std::str::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
+            let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
+            let html = importmap
+                .transform_html(html)
+                .unwrap_or_else(|| html.to_string());
+            let html = html.into_bytes();
+            let etag = content_etag(&html);
+            CachedIndex { html, etag }
         });
 
         Ok(cached.html.clone())
@@ -159,13 +150,8 @@ impl Website {
         }
 
         // Try direct lookup, then with hash stripped
-        let file = EMBEDDED_WEBSITE.get_file(path).or_else(|| {
-            ImportMap::strip_hash(Path::new(path))
-                .and_then(|unhashed| EMBEDDED_WEBSITE.get_file(unhashed.to_str()?))
-        });
-
-        if let Some(file) = file {
-            return Ok(file.contents().to_vec());
+        if let Some(bytes) = embedded_file(path) {
+            return Ok(bytes.to_vec());
         }
 
         // SPA fallback: no extension -> index.html
@@ -210,6 +196,22 @@ impl Website {
             Error::not_found("File not found")
         })
     }
+}
+
+pub(crate) fn content_etag(content: &[u8]) -> String {
+    let mut hasher = DefaultHasher::new();
+    content.hash(&mut hasher);
+    format!("\"{}\"", hasher.finish())
+}
+
+fn embedded_file(path: &str) -> Option<&'static [u8]> {
+    EMBEDDED_WEBSITE
+        .get_file(path)
+        .or_else(|| {
+            ImportMap::strip_hash(Path::new(path))
+                .and_then(|unhashed| EMBEDDED_WEBSITE.get_file(unhashed.to_str()?))
+        })
+        .map(|file| file.contents())
 }
 
 impl FromStr for Website {

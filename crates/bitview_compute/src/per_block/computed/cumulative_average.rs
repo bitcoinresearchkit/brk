@@ -28,8 +28,7 @@ where
     cumulative: M::Stored<EagerVec<PcoVec<Height, C>>>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
-    #[traversable(skip)]
-    last_cumulative: Option<(usize, C)>,
+    last_cumulative: M::WriteOnly<Option<(usize, C)>>,
 }
 
 impl<T, C, F> PerBlockCumulativeAverage<T, C, Rw, F>

@@ -236,13 +236,8 @@ mod tests {
 
     #[test]
     fn folds_aligned_values_and_stops_on_error() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("brk-lazy-indexed-{}-{suffix}", std::process::id()));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
         let mut metadata: EagerVec<PcoVec<Height, StoredU64>> =
@@ -288,11 +283,5 @@ mod tests {
         });
         assert_eq!(result, Err(35));
         assert_eq!(visited, [11, 23, 35]);
-
-        drop(indexed);
-        drop(metadata);
-        drop(source);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

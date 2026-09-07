@@ -1,12 +1,14 @@
 use derive_more::Deref;
 use schemars::{JsonSchema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex};
 
 /// Fixed-size boolean value optimized for on-disk storage (stored as u8)
 #[derive(
-    Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Pco,
+    Debug, Deref, Clone, Default, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct StoredBool(u8);
 
 impl JsonSchema for StoredBool {
@@ -46,13 +48,21 @@ impl From<StoredBool> for usize {
     }
 }
 
-impl PrintableIndex for StoredBool {
-    fn to_string() -> &'static str {
+impl StoredBool {
+    pub fn index_name() -> &'static str {
         "bool"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["bool"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredBool {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -66,6 +76,7 @@ impl std::fmt::Display for StoredBool {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for StoredBool {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

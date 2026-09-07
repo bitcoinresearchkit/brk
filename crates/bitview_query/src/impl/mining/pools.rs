@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{borrow::Cow, cmp::Reverse};
 
 use brk_error::{Error, OptionData, Result};
@@ -158,48 +156,25 @@ impl Query {
 
         let total_all: u64 = *cumulative.collect_one(current_height).data()?;
 
+        let window_stats = |start: Height| -> Result<(u64, f64)> {
+            let start = start.to_usize();
+            let count_before = if start == 0 {
+                0
+            } else {
+                *cumulative.collect_one(Height::from(start - 1)).data()?
+            };
+            let count = total_all.saturating_sub(count_before);
+            let network_blocks = end
+                .checked_sub(start)
+                .ok_or(Error::Internal("Pool lookback exceeds published tip"))?
+                + 1;
+            Ok((count, count as f64 / network_blocks as f64))
+        };
         let lookback = &plugins.blocks.lookback;
-        let start_24h = lookback._24h.collect_one(current_height).data()?.to_usize();
-        let count_before_24h: u64 = if start_24h == 0 {
-            0
-        } else {
-            *cumulative.collect_one(Height::from(start_24h - 1)).data()?
-        };
-        let total_24h = total_all.saturating_sub(count_before_24h);
-
-        let start_1w = lookback._1w.collect_one(current_height).data()?.to_usize();
-        let count_before_1w: u64 = if start_1w == 0 {
-            0
-        } else {
-            *cumulative.collect_one(Height::from(start_1w - 1)).data()?
-        };
-        let total_1w = total_all.saturating_sub(count_before_1w);
-
-        let network_blocks_all = (end + 1) as u64;
-        let network_blocks_24h =
-            end.checked_sub(start_24h)
-                .ok_or(Error::Internal("Pool lookback exceeds published tip"))? as u64
-                + 1;
-        let network_blocks_1w =
-            end.checked_sub(start_1w)
-                .ok_or(Error::Internal("Pool lookback exceeds published tip"))? as u64
-                + 1;
-
-        let share_all = if network_blocks_all > 0 {
-            total_all as f64 / network_blocks_all as f64
-        } else {
-            0.0
-        };
-        let share_24h = if network_blocks_24h > 0 {
-            total_24h as f64 / network_blocks_24h as f64
-        } else {
-            0.0
-        };
-        let share_1w = if network_blocks_1w > 0 {
-            total_1w as f64 / network_blocks_1w as f64
-        } else {
-            0.0
-        };
+        let (total_24h, share_24h) =
+            window_stats(lookback._24h.collect_one(current_height).data()?)?;
+        let (total_1w, share_1w) = window_stats(lookback._1w.collect_one(current_height).data()?)?;
+        let share_all = total_all as f64 / (end + 1) as f64;
 
         let network_hr = self.hashrate_at(current_height)?;
         let estimated_hashrate = (share_24h * network_hr as f64) as u128;
@@ -245,12 +220,7 @@ impl Query {
         let pool_name = pools().get(slug).name;
         let shared = self.hashrate_shared_data(0)?;
         let pool_cum = self.pool_daily_cumulative(slug, shared.start_day, shared.end_day)?;
-        Ok(Self::compute_hashrate_entries(
-            &shared,
-            &pool_cum,
-            pool_name,
-            SAMPLE_WEEKLY,
-        ))
+        Ok(Self::hashrate_entries(&shared, &pool_cum, pool_name).collect())
     }
 
     /// Multi-pool weekly-sampled hashrate series over `time_period`. Walks
@@ -276,12 +246,7 @@ impl Query {
         for pool in pools_list.iter() {
             let pool_cum =
                 self.pool_daily_cumulative(pool.slug, shared.start_day, shared.end_day)?;
-            entries.extend(Self::compute_hashrate_entries(
-                &shared,
-                &pool_cum,
-                pool.name,
-                SAMPLE_WEEKLY,
-            ));
+            entries.extend(Self::hashrate_entries(&shared, &pool_cum, pool.name));
         }
 
         Ok(entries)
@@ -351,30 +316,24 @@ impl Query {
         end_day: usize,
     ) -> Result<Vec<Option<StoredU64>>> {
         let plugins = self.plugins();
-        let values: Vec<Option<StoredU64>> = plugins
+        let cumulative = plugins
             .pools
             .major
             .get(&slug)
-            .map(|v| {
-                v.base
-                    .blocks_mined
-                    .cumulative
-                    .day1
-                    .collect_range_at(start_day, end_day)
-            })
+            .map(|v| &v.base.blocks_mined.cumulative.day1)
             .or_else(|| {
-                plugins.pools.minor.get(&slug).map(|v| {
-                    v.blocks_mined
-                        .cumulative
-                        .day1
-                        .collect_range_at(start_day, end_day)
-                })
+                plugins
+                    .pools
+                    .minor
+                    .get(&slug)
+                    .map(|v| &v.blocks_mined.cumulative.day1)
             })
             .ok_or_else(|| {
                 Error::Internal(
                     "pool slug present in static list but missing from major/minor maps",
                 )
             })?;
+        let values = cumulative.collect_range_at(start_day, end_day);
         if end_day.checked_sub(start_day) != Some(values.len()) {
             return Err(Error::Internal("Incomplete pool cumulative window"));
         }
@@ -383,7 +342,7 @@ impl Query {
 
     /// Per-pool hashrate-share entries from pre-loaded daily cumulative blocks
     /// plus the shared network series. Walks samples from `LOOKBACK_DAYS`
-    /// onward in `sample_days` strides; for each sample emits one entry with
+    /// onward in weekly strides; for each sample emits one entry with
     ///   pool_blocks  = pool_cum[i] - pool_cum[i - LOOKBACK_DAYS]
     ///   total_blocks = first_heights[i] - first_heights[i - LOOKBACK_DAYS]
     ///   share        = pool_blocks / total_blocks
@@ -391,50 +350,41 @@ impl Query {
     /// Skips samples where either cumulative value is `None`, where
     /// `pool_blocks == 0`, where `total_blocks == 0`, or where the network
     /// hashrate for that day is unavailable. Source reads require complete
-    /// matching windows before this computation. `LOOKBACK_DAYS` (rolling window) and
-    /// `sample_days` (point spacing) are independent.
-    fn compute_hashrate_entries(
-        shared: &HashrateSharedData,
-        pool_cum: &[Option<StoredU64>],
+    /// matching windows before this computation.
+    fn hashrate_entries<'a>(
+        shared: &'a HashrateSharedData,
+        pool_cum: &'a [Option<StoredU64>],
         pool_name: &'static str,
-        sample_days: usize,
-    ) -> Vec<PoolHashrateEntry> {
+    ) -> impl Iterator<Item = PoolHashrateEntry> + 'a {
         let total = pool_cum
             .len()
             .min(shared.first_heights.len())
             .min(shared.daily_hashrate.len());
-        if total <= LOOKBACK_DAYS {
-            return vec![];
-        }
-
-        let mut entries = Vec::new();
-        let mut i = LOOKBACK_DAYS;
-        while i < total {
-            if let (Some(cum_now), Some(cum_prev)) = (pool_cum[i], pool_cum[i - LOOKBACK_DAYS]) {
+        (LOOKBACK_DAYS..total)
+            .step_by(SAMPLE_WEEKLY)
+            .filter_map(move |i| {
+                let cum_now = pool_cum[i]?;
+                let cum_prev = pool_cum[i - LOOKBACK_DAYS]?;
+                let hr = shared.daily_hashrate[i]?;
                 let pool_blocks = (*cum_now).saturating_sub(*cum_prev);
-                if pool_blocks > 0 {
-                    let h_now = shared.first_heights[i].to_usize();
-                    let h_prev = shared.first_heights[i - LOOKBACK_DAYS].to_usize();
-                    let total_blocks = h_now.saturating_sub(h_prev);
-
-                    if total_blocks > 0
-                        && let Some(hr) = shared.daily_hashrate[i].as_ref()
-                    {
-                        let network_hr = **hr;
-                        let share = pool_blocks as f64 / total_blocks as f64;
-                        let day = Day1::from(shared.start_day + i);
-                        entries.push(PoolHashrateEntry {
-                            timestamp: day.to_timestamp(),
-                            avg_hashrate: (network_hr * share) as u128,
-                            share,
-                            pool_name: Cow::Borrowed(pool_name),
-                        });
-                    }
+                let total_blocks = shared.first_heights[i]
+                    .to_usize()
+                    .saturating_sub(shared.first_heights[i - LOOKBACK_DAYS].to_usize());
+                if pool_blocks == 0 || total_blocks == 0 {
+                    return None;
                 }
-            }
-            i += sample_days;
-        }
 
-        entries
+                let share = pool_blocks as f64 / total_blocks as f64;
+                Some(PoolHashrateEntry {
+                    timestamp: Day1::from(shared.start_day + i).to_timestamp(),
+                    avg_hashrate: (*hr * share) as u128,
+                    share,
+                    pool_name: Cow::Borrowed(pool_name),
+                })
+            })
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/mining/pools.rs"]
+mod tests;

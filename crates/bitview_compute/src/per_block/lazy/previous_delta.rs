@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
@@ -118,10 +118,17 @@ where
     T: VecValue,
     F: UnaryTransform<S, T>,
 {
-    fn for_each_delta(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn try_fold_delta<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
+        let mut accumulator = init;
         let to = to.min(self.len());
         if from >= to {
-            return;
+            return Ok(accumulator);
         }
 
         let read_from = from.saturating_sub(1);
@@ -134,11 +141,21 @@ where
         };
 
         for current in values {
-            each(F::apply(
-                current.clone().checked_sub(previous).unwrap_or_default(),
-            ));
+            accumulator = fold(
+                accumulator,
+                F::apply(current.clone().checked_sub(previous).unwrap_or_default()),
+            )?;
             previous = current;
         }
+        Ok(accumulator)
+    }
+
+    fn for_each_delta(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+        self.try_fold_delta(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -158,10 +175,17 @@ where
         self.for_each_delta(from, to, f);
     }
 
-    fn fold_range_at<B, G: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: G) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, f)
+    fn fold_range_at<B, G: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut f: G,
+    ) -> B {
+        self.try_fold_delta(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(f(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, G: FnMut(B, T) -> Result<B, E>>(
@@ -171,9 +195,7 @@ where
         init: B,
         f: G,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, f)
+        self.try_fold_delta(from, to, init, f)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {

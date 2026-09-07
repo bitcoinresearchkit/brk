@@ -66,6 +66,41 @@ let result = async_query.run(|q| q.block_by_height(height)).await;
 let height = async_query.inner().height();
 ```
 
+## Confirmed transaction reads
+
+Public transaction methods acquire their own publication protection. Internally,
+confirmed-position resolution and handoff revalidation are methods on an
+`IndexerRead` view that owns the query's indexer guard. Reads that also need other
+plugins acquire the complete guard set together. Keep the view alive through all
+dependent reads; do not reacquire a guard inside that scope.
+
+`resolve_confirmed_tx_guarded`, `resolve_confirmed_position`, and
+`revalidate_confirmed_tx` are no longer public `Query` methods. Use
+`resolve_confirmed_tx`, `resolve_tx`, and the resolved transaction/proof/CPFP
+operations instead. Resolved tokens do not retain a lock across async handoffs;
+the consuming operation reacquires protection and revalidates the block hash.
+Immutable block snapshots still use their separate safe-length protection.
+
+Raw block payload and size helpers borrow the snapshot's `SafeLengths` guard,
+not a copied `Lengths` value. They are internal to the block-query module; public
+callers use `block_raw` or `ResolvedBlocks::anchor_raw` / `anchor_raw_size`.
+The selected height is checked against the pinned prefix before reading the
+indexed record. HEAD still checks framing and identity without reading the full
+payload, and HTTP revalidation still precedes body preparation.
+
+## Series read bounds
+
+`search` returns a `SeriesRead` that owns the selected plugin guards and published
+bounds. `ResolvedQuery` retains that same view through formatting. Both expose
+`columns()` as bounded readers, never raw vectors; those readers cannot outlive
+their owning view. `Query::weight` accepts the view rather than unbounded vectors.
+
+Each column operation applies its limits automatically: length, latest values,
+JSON, CSV, and row writers all use the same published prefix. Binding a vector
+without a limit for its index fails closed. Nested lazy inputs still receive
+bounds through vecdb's internal thread-local scope, installed by every bounded
+operation rather than by callers. Ordinary storage/compute reads remain unbounded.
+
 ## Built On
 
 - `bitview_runtime::PluginSet` for generic plugin discovery

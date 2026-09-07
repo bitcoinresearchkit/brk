@@ -31,8 +31,7 @@ where
     pub cumulative: CachedPerBlock<T, M>,
     pub sum: LazyRollingSumsFromHeight<T>,
     pub average: LazyRollingAvgsFromHeight<T>,
-    #[traversable(skip)]
-    last_cumulative: Option<(usize, T)>,
+    last_cumulative: M::WriteOnly<Option<(usize, T)>>,
 }
 
 impl<T> CachedPerBlockCumulativeRolling<T>

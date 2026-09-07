@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Day1, Height};
@@ -61,20 +61,27 @@ where
         left
     }
 
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn try_fold_values<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
+        let mut accumulator = init;
         let to = to.min(self.len());
         if from >= to {
-            return;
+            return Ok(accumulator);
         }
 
         let start = self.start_height();
         let active_from = from.max(start).min(to);
         for _ in from..active_from {
-            each(T::default());
+            accumulator = fold(accumulator, T::default())?;
         }
 
         if active_from == to {
-            return;
+            return Ok(accumulator);
         }
 
         let before = start
@@ -82,8 +89,17 @@ where
             .and_then(|index| self.source.collect_one_at(index))
             .unwrap_or_default();
         for current in self.source.collect_range_dyn(active_from, to) {
-            each((self.compute)(current, before.clone()));
+            accumulator = fold(accumulator, (self.compute)(current, before.clone()))?;
         }
+        Ok(accumulator)
+    }
+
+    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+        self.try_fold_values(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -161,10 +177,17 @@ where
         self.for_each_value(from, to, f);
     }
 
-    fn fold_range_at<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, f)
+    fn fold_range_at<B, F: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut f: F,
+    ) -> B {
+        self.try_fold_values(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(f(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
@@ -174,9 +197,7 @@ where
         init: B,
         f: F,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, f)
+        self.try_fold_values(from, to, init, f)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
@@ -261,15 +282,8 @@ mod tests {
 
     #[test]
     fn sorted_reads_reuse_the_fixed_start_and_handle_boundaries() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-lazy-since-day-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
         let mut days: EagerVec<PcoVec<Height, Day1>> =
@@ -303,11 +317,5 @@ mod tests {
             [30_u64].map(StoredU64::from),
         );
         assert_eq!(since_day.read_sorted_at(&[5]), []);
-
-        drop(since_day);
-        drop(days);
-        drop(source);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

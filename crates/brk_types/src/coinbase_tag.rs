@@ -1,6 +1,7 @@
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// Up to the first 100 bytes of a coinbase transaction's first-input
@@ -17,6 +18,7 @@ use vecdb::{Bytes, Formattable};
 #[derive(Debug, Deref, Clone, JsonSchema)]
 pub struct CoinbaseTag(#[schemars(with = "String")] [u8; 101]);
 
+#[cfg(feature = "storage")]
 impl Bytes for CoinbaseTag {
     type Array = [u8; 101];
     const IS_NATIVE_LAYOUT: bool = true;
@@ -70,6 +72,7 @@ impl<'de> Deserialize<'de> for CoinbaseTag {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for CoinbaseTag {
     fn write_to(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.as_str().as_bytes());

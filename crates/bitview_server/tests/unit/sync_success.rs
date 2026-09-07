@@ -45,6 +45,104 @@ use super::{historical_price::HistoricalPriceChecks, oracle};
 use crate::{Server, ServerConfig};
 
 #[test]
+fn address_history_preserves_exclusive_cursors_and_published_bounds() {
+    run_genesis(default_first(), |mut fixture| async move {
+        fixture.publish(4, 2);
+        let addr = Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
+        fixture.query.sync(|q| {
+            let (output_type, type_index) = q.resolve_addr(&addr).unwrap();
+            let stores = q.indexer().stores();
+            let indices: Vec<_> = stores
+                .addr_tx_indexes(output_type, type_index)
+                .unwrap()
+                .rev()
+                .collect();
+            assert!(indices.len() >= 2);
+            // Compare the old filter contract with the bounded range, including
+            // an empty publication and a cursor above the published boundary.
+            for published in 0..=4u32 {
+                for cursor in 0..=4u32 {
+                    let expected: Vec<_> = indices
+                        .iter()
+                        .copied()
+                        .filter(|index| *index < published.into() && *index < cursor.into())
+                        .collect();
+                    let actual: Vec<_> = stores
+                        .addr_tx_indexes_before(
+                            output_type,
+                            type_index,
+                            published.min(cursor).into(),
+                        )
+                        .unwrap()
+                        .rev()
+                        .collect();
+                    assert_eq!(actual, expected);
+                }
+            }
+            let txids = q.addr_txids(addr.clone(), None, usize::MAX).unwrap();
+            assert_eq!(txids.len(), indices.len());
+            for limit in 0..=txids.len() + 1 {
+                assert_eq!(
+                    q.addr_txids(addr.clone(), None, limit).unwrap(),
+                    txids.iter().copied().take(limit).collect::<Vec<_>>()
+                );
+                for (position, cursor) in txids.iter().enumerate() {
+                    assert_eq!(
+                        q.addr_txids(addr.clone(), Some(*cursor), limit).unwrap(),
+                        txids
+                            .iter()
+                            .copied()
+                            .skip(position + 1)
+                            .take(limit)
+                            .collect::<Vec<_>>()
+                    );
+                }
+            }
+            for (position, cursor) in txids.iter().enumerate() {
+                let activity = q.addr_last_activity_height(&addr, Some(cursor));
+                if let Some(index) = indices.get(position + 1) {
+                    assert_eq!(
+                        activity.unwrap(),
+                        q.confirmed_status_height(*index).unwrap()
+                    );
+                } else {
+                    assert!(matches!(activity, Err(QueryError::UnknownAddr)));
+                }
+            }
+            let unknown = "00".repeat(32).parse().unwrap();
+            assert!(matches!(
+                q.addr_txids(addr.clone(), Some(unknown), 0),
+                Err(QueryError::UnknownTxid)
+            ));
+            assert!(matches!(
+                q.addr_last_activity_height(&addr, Some(&unknown)),
+                Err(QueryError::UnknownTxid)
+            ));
+        });
+        let txids = fixture
+            .query
+            .sync(|q| q.addr_txids(addr.clone(), None, usize::MAX).unwrap());
+        for (position, cursor) in txids.iter().enumerate() {
+            let path = format!("/api/address/{addr}/txs/chain/{cursor}");
+            let response = exchange_with_etag(fixture.address, "GET", &path, "\"old\"").await;
+            assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+            let body: Vec<Value> = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+            let actual: Vec<_> = body.iter().map(|tx| tx["txid"].as_str().unwrap()).collect();
+            let expected: Vec<_> = txids[position + 1..]
+                .iter()
+                .map(ToString::to_string)
+                .collect();
+            assert_eq!(actual, expected);
+            let response = exchange_with_etag(fixture.address, "GET", &path, "*").await;
+            assert!(response.starts_with("HTTP/1.1 304"), "{response}");
+        }
+        let path = format!("/api/address/{addr}/txs/chain/{}", "00".repeat(32));
+        let response = exchange_with_etag(fixture.address, "GET", &path, "*").await;
+        assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+    });
+}
+
+#[test]
 fn reorganization_preserves_publication_and_validator_contracts() {
     run_genesis(default_first(), |mut fixture| async move {
         let query = fixture.query.clone();
@@ -474,30 +572,33 @@ fn reorganization_preserves_publication_and_validator_contracts() {
             BlockHashPrefix::from(old_hash),
             BlockHashPrefix::from(wrong_hash)
         );
-        let resolved_v1 = query
+        query
             .sync(|q| {
                 let hashes = &q.indexer().vecs().blocks.blockhash;
                 hashes.invalidate();
-                let resolved = q.resolve_block(&old_hash)?;
+                let resolved = q.resolve_block_snapshot(&old_hash)?;
                 assert!(
                     hashes.cached_snapshot().is_none(),
                     "exact-hash resolution must not fill history"
                 );
                 assert!(
-                    matches!(q.resolve_block(&wrong_hash), Err(QueryError::NotFound(_))),
+                    matches!(
+                        q.resolve_block_snapshot(&wrong_hash),
+                        Err(QueryError::NotFound(_))
+                    ),
                     "a matching prefix is not an exact block hash"
                 );
                 assert!(
-                    q.try_resolve_block_snapshot(&wrong_hash, resolved.height())?
+                    q.try_resolve_block_snapshot(&wrong_hash, resolved.last_height().unwrap())?
                         .is_none(),
                     "a height hint must match the full hash"
                 );
-                assert_eq!(q.block_resolved(resolved)?.id, old_hash);
+                assert_eq!(resolved.build(q)?.pop().unwrap().id, old_hash);
                 assert!(
                     hashes.cached_snapshot().is_none(),
                     "block revalidation and base body reads must not fill history"
                 );
-                Ok::<_, QueryError>(resolved)
+                Ok::<_, QueryError>(())
             })
             .unwrap();
         let recent_v1 = query
@@ -750,7 +851,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 query
                     .run(move |q| {
                         if resolved {
-                            q.block_raw_resolved(resolved_v1)
+                            q.resolve_block_snapshot(&old_hash)?.anchor_raw(q)
                         } else {
                             q.block_raw(&old_hash)
                         }
@@ -810,7 +911,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 query
                     .run(move |q| {
                         if resolved {
-                            q.block_header_hex_resolved(resolved_v1)
+                            q.resolve_block_snapshot(&old_hash)?.anchor_header_hex(q)
                         } else {
                             q.block_header_hex(&old_hash)
                         }
@@ -833,7 +934,10 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     .run(move |q| match mode {
                         0 => q.block(&old_hash),
                         1 => q.block_by_height(1u32.into()),
-                        _ => q.block_resolved(resolved_v1),
+                        _ => q
+                            .resolve_block_snapshot(&old_hash)?
+                            .build(q)
+                            .map(|mut rows| rows.pop().unwrap()),
                     })
                     .await
             }));
@@ -851,7 +955,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                         match mode {
                             0 => q.blocks_v1(None, 15),
                             1 => q.block_by_height_v1(1u32.into()).map(|block| vec![block]),
-                            _ => q.block_resolved_v1(resolved_v1).map(|block| vec![block]),
+                            _ => q.resolve_block_v1(&old_hash)?.build(q),
                         }
                     })
                     .await

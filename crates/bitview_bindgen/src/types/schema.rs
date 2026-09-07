@@ -14,18 +14,23 @@ pub fn unwrap_allof(schema: &Value) -> &Value {
 /// Extract inner type from a wrapper generic like `Close<Dollars>` -> `Dollars`.
 /// Also handles malformed types like `Dollars>` (from vecdb's short_type_name).
 pub fn extract_inner_type(type_str: &str) -> String {
+    inner_type(type_str).to_owned()
+}
+
+/// Borrow the same normalized inner type when the caller does not need ownership.
+pub(crate) fn inner_type(type_str: &str) -> &str {
     // Handle proper generic wrappers like `Close<Dollars>` -> `Dollars`
     if let Some(start) = type_str.find('<')
         && let Some(end) = type_str.rfind('>')
         && start < end
     {
-        return type_str[start + 1..end].to_string();
+        return &type_str[start + 1..end];
     }
     // Handle malformed types like `Dollars>` (trailing > without <)
     if type_str.ends_with('>') && !type_str.contains('<') {
-        return type_str.trim_end_matches('>').to_string();
+        return type_str.trim_end_matches('>');
     }
-    type_str.to_string()
+    type_str
 }
 
 /// Extract type name from a JSON Schema $ref path.

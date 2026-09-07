@@ -59,7 +59,13 @@ fn check_publication_gates() {
         // Reopen even on assertion failure so the reader cannot be stranded.
         gate.finish_update();
         assert!(matches!(waiting, Err(mpsc::RecvTimeoutError::Timeout)));
-        assert_eq!(result_rx.recv_timeout(Duration::from_secs(1)).unwrap().unwrap(), expected);
+        assert_eq!(
+            result_rx
+                .recv_timeout(Duration::from_secs(1))
+                .unwrap()
+                .unwrap(),
+            expected
+        );
         reader.join().unwrap();
     }
 }

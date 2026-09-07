@@ -7,18 +7,17 @@
 /// Returns the prefix WITH trailing underscore if found at word boundary.
 /// Returns None if no common prefix exists.
 pub fn find_common_prefix(names: &[&str]) -> Option<String> {
-    if names.is_empty() || names.iter().any(|n| n.is_empty()) {
-        return None;
-    }
-
-    let first = names[0];
-
-    // Find character-by-character common prefix
-    let mut prefix_len = 0;
-    for (i, ch) in first.chars().enumerate() {
-        if names.iter().all(|n| n.chars().nth(i) == Some(ch)) {
-            prefix_len = i + 1;
-        } else {
+    let first = *names.first()?;
+    let mut prefix_len = first.len();
+    // Track UTF-8 byte lengths while comparing each name only once.
+    for name in &names[1..] {
+        prefix_len = first[..prefix_len]
+            .chars()
+            .zip(name.chars())
+            .take_while(|(left, right)| left == right)
+            .map(|(ch, _)| ch.len_utf8())
+            .sum();
+        if prefix_len == 0 {
             break;
         }
     }
@@ -41,44 +40,24 @@ pub fn find_common_prefix(names: &[&str]) -> Option<String> {
     }
 
     // Find the last underscore position
-    if let Some(last_underscore) = raw_prefix.rfind('_') {
-        let clean_prefix = &first[..=last_underscore];
-        if names.iter().all(|n| n.starts_with(clean_prefix)) {
-            return Some(clean_prefix.to_string());
-        }
-    }
-
-    None
+    raw_prefix.rfind('_').map(|end| first[..=end].to_string())
 }
 
 /// Find the longest common suffix among all strings.
 /// Returns the suffix WITH leading underscore if found at word boundary.
 /// Returns None if no common suffix exists.
 pub fn find_common_suffix(names: &[&str]) -> Option<String> {
-    if names.is_empty() || names.iter().any(|n| n.is_empty()) {
-        return None;
-    }
-
-    let first = names[0];
-    let first_chars: Vec<char> = first.chars().collect();
-
-    // Find character-by-character common suffix (from the end)
-    let mut suffix_len = 0;
-    for i in 0..first_chars.len() {
-        let idx_from_end = first_chars.len() - 1 - i;
-        let ch = first_chars[idx_from_end];
-
-        let all_match = names.iter().all(|n| {
-            let n_chars: Vec<char> = n.chars().collect();
-            if i >= n_chars.len() {
-                return false;
-            }
-            n_chars[n_chars.len() - 1 - i] == ch
-        });
-
-        if all_match {
-            suffix_len = i + 1;
-        } else {
+    let first = *names.first()?;
+    let mut suffix_len = first.len();
+    for name in &names[1..] {
+        suffix_len = first[first.len() - suffix_len..]
+            .chars()
+            .rev()
+            .zip(name.chars().rev())
+            .take_while(|(left, right)| left == right)
+            .map(|(ch, _)| ch.len_utf8())
+            .sum();
+        if suffix_len == 0 {
             break;
         }
     }
@@ -110,14 +89,9 @@ pub fn find_common_suffix(names: &[&str]) -> Option<String> {
     }
 
     // Find the first underscore position in suffix
-    if let Some(first_underscore) = raw_suffix.find('_') {
-        let clean_suffix = &raw_suffix[first_underscore..];
-        if names.iter().all(|n| n.ends_with(clean_suffix)) {
-            return Some(clean_suffix.to_string());
-        }
-    }
-
-    None
+    raw_suffix
+        .find('_')
+        .map(|start| raw_suffix[start..].to_string())
 }
 
 /// Normalize a prefix string by ensuring it ends with underscore.

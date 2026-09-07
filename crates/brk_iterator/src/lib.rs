@@ -53,7 +53,7 @@ impl Blocks {
         Self(Arc::new(source))
     }
 
-    /// Iterate over a specific range (start..=end)
+    /// Iterate over a specific range (start..=end). Reversed ranges are empty.
     pub fn range(&self, start: Height, end: Height) -> Result<BlockIterator> {
         self.iter(BlockRange::Span { start, end })
     }
@@ -68,7 +68,7 @@ impl Blocks {
         self.iter(BlockRange::End { end })
     }
 
-    /// Iterate over last n blocks
+    /// Iterate over last n blocks. Zero returns an empty iterator without I/O.
     pub fn last(&self, n: u32) -> Result<BlockIterator> {
         self.iter(BlockRange::Last { n })
     }
@@ -79,9 +79,12 @@ impl Blocks {
     }
 
     fn iter(&self, range: BlockRange) -> Result<BlockIterator> {
-        let (start, end, hash_opt) = self.resolve_range(range)?;
+        let Some((start, end, hash_opt)) = self.resolve_range(range)? else {
+            return Ok(BlockIterator::new(State::Empty));
+        };
 
-        let count = end.saturating_sub(*start) + 1;
+        // An inclusive range can contain 2^32 heights.
+        let count = u64::from(*end) - u64::from(*start) + 1;
 
         let state = match &*self.0 {
             Source::Smart { client, reader } => {
@@ -100,31 +103,42 @@ impl Blocks {
         Ok(BlockIterator::new(state))
     }
 
-    fn resolve_range(&self, range: BlockRange) -> Result<(Height, Height, Option<BlockHash>)> {
+    fn resolve_range(
+        &self,
+        range: BlockRange,
+    ) -> Result<Option<(Height, Height, Option<BlockHash>)>> {
         let client = self.0.client();
 
-        match range {
-            BlockRange::Span { start, end } => Ok((start, end, None)),
+        let resolved = match range {
+            BlockRange::Span { start, end } => (start, end, None),
             BlockRange::Start { start } => {
                 let end = client.get_last_height()?;
-                Ok((start, end, None))
+                (start, end, None)
             }
-            BlockRange::End { end } => Ok((Height::ZERO, end, None)),
+            BlockRange::End { end } => (Height::ZERO, end, None),
+            BlockRange::Last { n: 0 } => return Ok(None),
             BlockRange::Last { n } => {
                 let end = client.get_last_height()?;
                 let start = Height::new((*end).saturating_sub(n - 1));
-                Ok((start, end, None))
+                (start, end, None)
             }
             BlockRange::After { hash } => {
                 let start = if let Some(hash) = hash.as_ref() {
                     let block_info = client.get_block_header_info(hash)?;
-                    Height::from((block_info.height + 1) as u64)
+                    let Some(next) = u32::try_from(block_info.height)
+                        .ok()
+                        .and_then(|height| height.checked_add(1))
+                    else {
+                        return Ok(None);
+                    };
+                    Height::new(next)
                 } else {
                     Height::ZERO
                 };
                 let end = client.get_last_height()?;
-                Ok((start, end, hash))
+                (start, end, hash)
             }
-        }
+        };
+        Ok((resolved.0 <= resolved.1).then_some(resolved))
     }
 }

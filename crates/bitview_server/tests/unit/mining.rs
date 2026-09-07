@@ -11,11 +11,14 @@ pub const STAT_ROUTES: &[&str] = &[
     "/api/v1/mining/pools/24h",
     "/api/v1/mining/pool/unknown",
     "/api/v1/mining/hashrate/pools",
+    "/api/v1/mining/hashrate/pools/all",
     "/api/v1/mining/hashrate/pools/1m",
     "/api/v1/mining/pool/unknown/hashrate",
     "/api/v1/mining/hashrate",
+    "/api/v1/mining/hashrate/all",
     "/api/v1/mining/hashrate/24h",
     "/api/v1/mining/difficulty-adjustments",
+    "/api/v1/mining/difficulty-adjustments/all",
     "/api/v1/mining/difficulty-adjustments/24h",
     "/api/v1/mining/reward-stats/2",
     "/api/v1/mining/blocks/fees/24h",
@@ -56,6 +59,15 @@ pub async fn check_statistics(address: SocketAddr) -> Vec<(&'static str, String)
 }
 
 pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
+    state.sync(|q| {
+        let detail = q.pool_detail(PoolSlug::Unknown).unwrap();
+        assert_eq!(detail.block_count.all, 2);
+        assert!((1..=2).contains(&detail.block_count.day));
+        assert!((1..=2).contains(&detail.block_count.week));
+        assert_eq!(detail.block_share.all, 1.0);
+        assert_eq!(detail.block_share.day, 1.0);
+        assert_eq!(detail.block_share.week, 1.0);
+    });
     for (suffix, before, heights) in [
         ("", None, vec![1, 0]),
         ("/0", Some(0u32.into()), vec![0]),

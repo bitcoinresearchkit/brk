@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -19,9 +21,9 @@ use crate::TypeIndex;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct FundedAddrIndex(TypeIndex);
 
 impl From<TypeIndex> for FundedAddrIndex {
@@ -60,16 +62,31 @@ impl CheckedSub<FundedAddrIndex> for FundedAddrIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-impl PrintableIndex for FundedAddrIndex {
-    fn to_string() -> &'static str {
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<FundedAddrIndex> for FundedAddrIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
+impl FundedAddrIndex {
+    pub fn index_name() -> &'static str {
         "funded_addr_index"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["fundedaddr", "funded_addr_index"]
     }
 }
+#[cfg(feature = "storage")]
+impl PrintableIndex for FundedAddrIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
 
+#[cfg(feature = "storage")]
 impl VecIndex for FundedAddrIndex {
     const INITIAL_CAPACITY: usize = 70_000_000;
 }
@@ -80,6 +97,7 @@ impl std::fmt::Display for FundedAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for FundedAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

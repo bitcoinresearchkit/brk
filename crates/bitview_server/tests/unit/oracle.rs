@@ -20,9 +20,9 @@ pub async fn check(state: &AppState, address: SocketAddr) {
                 Some(&cap),
             )
         };
-        assert!(run(0..1, safe.clone()).is_ok());
-        assert!(run(usize::MAX..usize::MAX, safe.clone()).is_err());
-        let mut short_txs = safe.clone();
+        assert!(run(0..1, safe).is_ok());
+        assert!(run(usize::MAX..usize::MAX, safe).is_err());
+        let mut short_txs = safe;
         short_txs.tx_index = 0_usize.into();
         assert!(run(0..1, short_txs).is_err());
         let mut short_outputs = safe;

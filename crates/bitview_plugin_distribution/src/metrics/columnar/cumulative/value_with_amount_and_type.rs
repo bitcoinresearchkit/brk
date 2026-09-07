@@ -133,7 +133,7 @@ impl CumulativeUTXOValueColumnarMetric {
         ReadableBoxedVec<Height, Sats>,
         ReadableBoxedVec<Height, Cents>,
     )> {
-        let columns = CumulativeUTXOValueColumnarMetricWithoutAmountOrType::age_columns(filter)?;
+        let columns = AgeRangeId::aggregate_columns(filter)?;
         Some(Self::matrix_sources(
             &self.age_range,
             name,

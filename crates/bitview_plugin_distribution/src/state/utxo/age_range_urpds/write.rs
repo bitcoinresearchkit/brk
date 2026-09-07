@@ -3,7 +3,6 @@ use std::{collections::BTreeMap, fs, path::Path};
 use bitview_cohort::{AgeRange, AgeRangeId};
 use brk_error::Result;
 use brk_types::{CentsCompact, Date, Sats, UrpdRaw};
-use vecdb::ColumnId;
 
 use super::super::{COST_BASIS_PRICE_DIGITS, UTXOCohortState, UTXOStates};
 use super::{AgeRangeUrpds, HEADER_LEN};

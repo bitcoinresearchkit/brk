@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-pub use bitview_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
+pub use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeBranch, TreeNode};
 pub use brk_types::Index;
 pub use indexmap::IndexMap;
 
@@ -430,7 +430,7 @@ impl<T: Traversable> Traversable for Option<T> {
     fn to_tree_node(&self) -> TreeNode {
         match self {
             Some(inner) => inner.to_tree_node(),
-            None => TreeNode::Branch(IndexMap::new()),
+            None => TreeNode::branch(IndexMap::new()),
         }
     }
 
@@ -455,11 +455,18 @@ impl<T: Traversable> Traversable for Option<T> {
 
 impl<K: Display, V: Traversable> Traversable for BTreeMap<K, V> {
     fn to_tree_node(&self) -> TreeNode {
-        let children = self
-            .iter()
-            .map(|(k, v)| (format!("{}", k), v.to_tree_node()))
-            .collect();
-        TreeNode::Branch(children)
+        let mut branch = TreeBranch::default();
+        branch.source = Some("std::collections::BTreeMap");
+        for (key, value) in self {
+            branch
+                .merge_field(
+                    key.to_string(),
+                    value.to_tree_node(),
+                    Some("std::collections::BTreeMap::V"),
+                )
+                .expect("Conflicting displayed map keys");
+        }
+        TreeNode::Branch(branch)
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
@@ -485,7 +492,7 @@ impl<K: Display, V: Traversable> Traversable for BTreeMap<K, V> {
 /// (e.g., Unpriced variants where dollar fields are not needed)
 impl Traversable for () {
     fn to_tree_node(&self) -> TreeNode {
-        TreeNode::Branch(IndexMap::new())
+        TreeNode::branch(IndexMap::new())
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {

@@ -363,7 +363,7 @@ fn choose_auto_delta_encoding(
     let lookback_cost = calculate_compressed_sample_size(
       &sample,
       unoptimized_bins_log,
-      lookback_encoding.clone(),
+      lookback_encoding,
     )? + lookback_penalty;
     if lookback_cost < best_cost {
       best_encoding = delta::new_lookback(primary_latents.len());

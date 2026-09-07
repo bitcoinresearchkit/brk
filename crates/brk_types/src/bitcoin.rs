@@ -3,14 +3,17 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use crate::CheckedSub;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::{Sats, StoredF64};
 
 /// Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Bitcoin(f64);
 
 impl Add for Bitcoin {
@@ -127,9 +130,21 @@ impl CheckedSub<usize> for Bitcoin {
         Some(Self(self.0 - rhs as f64))
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for Bitcoin {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 impl CheckedSub<Bitcoin> for Bitcoin {
     fn checked_sub(self, rhs: Bitcoin) -> Option<Self> {
         Some(Self(self.0 - rhs.0))
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<Bitcoin> for Bitcoin {
+    fn checked_sub(self, rhs: Bitcoin) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -141,6 +156,7 @@ impl std::fmt::Display for Bitcoin {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Bitcoin {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

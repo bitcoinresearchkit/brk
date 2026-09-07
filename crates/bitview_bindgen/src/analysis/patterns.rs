@@ -8,7 +8,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
 };
 
-use bitview_types::{TreeNode, extract_json_type};
+use bitview_catalog::{TreeNode, extract_json_type};
 
 use super::analyze_pattern_modes;
 use crate::{PatternBaseResult, PatternField, StructuralPattern, to_pascal_case};
@@ -101,21 +101,19 @@ pub fn detect_structural_patterns(
 
     // Build pattern lookup for mode analysis (patterns appearing 2+ times)
     let mut pattern_lookup: BTreeMap<Vec<PatternField>, String> = BTreeMap::new();
-    for (sig, name) in &ctx.signature_to_pattern {
-        if ctx.signature_counts.get(sig).copied().unwrap_or(0) >= 2 {
-            pattern_lookup.insert(sig.clone(), name.clone());
+    for (sig, name) in ctx.signature_to_pattern {
+        if ctx.signature_counts.get(&sig).copied().unwrap_or(0) >= 2 {
+            pattern_lookup.insert(sig, name);
         }
     }
-    pattern_lookup.extend(generic_mappings.clone());
-
-    let concrete_to_pattern = pattern_lookup.clone();
+    pattern_lookup.extend(generic_mappings);
 
     // Analyze pattern modes (suffix vs prefix) from all instances
     // Also collects node bases for each tree path
     let node_bases = analyze_pattern_modes(tree, &mut patterns, &pattern_lookup);
 
     patterns.sort_by_key(|p| Reverse(p.fields.len()));
-    (patterns, concrete_to_pattern, type_mappings, node_bases)
+    (patterns, pattern_lookup, type_mappings, node_bases)
 }
 
 /// Detect generic patterns by grouping signatures by their normalized form.
@@ -128,16 +126,15 @@ fn detect_generic_patterns(
 ) {
     let mut normalized_groups: BTreeMap<
         Vec<PatternField>,
-        Vec<(Vec<PatternField>, String, String)>,
+        Vec<(&Vec<PatternField>, &String, String)>,
     > = BTreeMap::new();
 
     for (fields, name) in signature_to_pattern {
         if let Some((normalized, extracted_type)) = normalize_fields_for_generic(fields) {
-            normalized_groups.entry(normalized).or_default().push((
-                fields.clone(),
-                name.clone(),
-                extracted_type,
-            ));
+            normalized_groups
+                .entry(normalized)
+                .or_default()
+                .push((fields, name, extracted_type));
         }
     }
 
@@ -148,9 +145,9 @@ fn detect_generic_patterns(
     for (normalized_fields, group) in normalized_groups {
         if group.len() >= 2 {
             let generic_name = group[0].1.clone();
-            for (concrete_fields, _, extracted_type) in &group {
+            for (concrete_fields, _, extracted_type) in group {
                 pattern_mappings.insert(concrete_fields.clone(), generic_name.clone());
-                type_mappings.insert(concrete_fields.clone(), extracted_type.clone());
+                type_mappings.insert(concrete_fields.clone(), extracted_type);
             }
             patterns.push(StructuralPattern {
                 name: generic_name,
@@ -171,20 +168,15 @@ fn detect_generic_patterns(
 /// 2. All leaves have wrapper types with the same inner type (e.g., `Open<Sats>`, `High<Sats>`)
 ///    -> normalize to `Open<T>`, `High<T>`, etc.
 fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternField>, String)> {
-    let leaf_types: Vec<&str> = fields
+    let mut leaf_types = fields
         .iter()
         .filter(|f| f.is_leaf())
-        .map(|f| f.rust_type.as_str())
-        .collect();
+        .map(|f| f.rust_type.as_str());
 
-    if leaf_types.is_empty() {
-        return None;
-    }
-
-    let first_type = leaf_types[0];
+    let first_type = leaf_types.next()?;
 
     // Case 1: All leaf types are identical
-    if leaf_types.iter().all(|t| *t == first_type) {
+    if leaf_types.clone().all(|t| t == first_type) {
         let normalized = fields
             .iter()
             .map(|f| {
@@ -206,21 +198,17 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
 
     // Case 2: Check if all leaves have wrapper types with the same inner type
     // e.g., Open<Sats>, High<Sats>, Low<Sats>, Close<Sats> all have inner type Sats
-    let inner_types: Vec<String> = leaf_types
-        .iter()
-        .map(|t| crate::extract_inner_type(t))
-        .collect();
-
-    let first_inner = &inner_types[0];
+    let first_inner = crate::inner_type(first_type);
+    let mut has_wrapper = first_inner != first_type;
+    let same_inner = leaf_types.all(|original| {
+        let inner = crate::inner_type(original);
+        has_wrapper |= inner != original;
+        inner == first_inner
+    });
 
     // Only proceed if inner types differ from originals (meaning they had wrappers)
     // and all inner types are the same
-    if inner_types.iter().all(|t| t == first_inner)
-        && inner_types
-            .iter()
-            .zip(leaf_types.iter())
-            .any(|(inner, orig)| inner != *orig)
-    {
+    if same_inner && has_wrapper {
         let normalized = fields
             .iter()
             .map(|f| {
@@ -237,7 +225,7 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
                 }
             })
             .collect();
-        return Some((normalized, first_inner.clone()));
+        return Some((normalized, first_inner.to_owned()));
     }
 
     None
@@ -336,12 +324,13 @@ fn resolve_branch_patterns(
 /// mixed-type signatures (e.g., StoredU32 raw + StoredU64 cumulative) get a
 /// different name than same-type signatures that can be genericized.
 fn normalize_fields_for_naming(fields: &[PatternField]) -> Vec<PatternField> {
-    let leaf_types: Vec<&str> = fields
+    let mut leaf_types = fields
         .iter()
         .filter(|f| !f.is_branch())
-        .map(|f| f.rust_type.as_str())
-        .collect();
-    let all_same = !leaf_types.is_empty() && leaf_types.iter().all(|t| *t == leaf_types[0]);
+        .map(|f| f.rust_type.as_str());
+    let all_same = leaf_types
+        .next()
+        .is_some_and(|first| leaf_types.all(|t| t == first));
 
     fields
         .iter()
@@ -380,3 +369,7 @@ fn generate_pattern_name(field_name: &str, name_counts: &mut BTreeMap<String, us
         format!("{}{}", base_name, count)
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/analysis/patterns.rs"]
+mod tests;

@@ -3,6 +3,7 @@ use brk_types::{OutputType, SigOps};
 
 use crate::processor::txout::ProcessedOutput;
 
+pub use super::computed_sigops::ComputedSigOps;
 use super::input;
 
 #[derive(Default)]
@@ -50,7 +51,7 @@ impl Accumulator {
 
         match prev_kind {
             OutputType::P2SH => {
-                let Some(redeem_sigops) = facts.redeem_sigops() else {
+                let Some(redeem_sigops) = facts.redeem.sigops() else {
                     return;
                 };
                 self.redeem = self.redeem.saturating_add(redeem_sigops);
@@ -62,9 +63,9 @@ impl Accumulator {
                 if !facts.script_sig.push_only {
                     return;
                 }
-                if facts.redeem_is_p2wpkh() {
+                if facts.redeem.is_p2wpkh() {
                     self.witness = self.witness.saturating_add(1);
-                } else if facts.redeem_is_p2wsh()
+                } else if facts.redeem.is_p2wsh()
                     && let Some(last) = facts.witness.last
                 {
                     self.witness = self
@@ -108,12 +109,6 @@ impl Accumulator {
             executed_legacy: SigOps::from(self.executed_legacy),
         }
     }
-}
-
-#[derive(Clone, Copy, Default)]
-pub struct ComputedSigOps {
-    pub total: SigOps,
-    pub executed_legacy: SigOps,
 }
 
 /// Legacy sigop count of a script_pubkey, dispatched on `OutputType`.

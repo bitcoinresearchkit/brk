@@ -6,7 +6,7 @@ use tracing::error;
 use vecdb::{WritableVec, unlikely};
 
 use super::{BlockProcessor, transaction::ComputedTx};
-use crate::{lengths::IndexerLengths as _, stores::IndexerStores as _};
+use crate::lengths::IndexerLengths as _;
 
 impl BlockProcessor<'_> {
     pub fn process_block_metadata(&mut self) -> Result<()> {

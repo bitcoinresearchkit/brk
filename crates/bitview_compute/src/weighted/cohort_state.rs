@@ -1,4 +1,4 @@
-use brk_types::{Cents, Sats, StoredF64};
+use brk_types::{BoundedRatio, Cents, Sats, StoredF64};
 use vecdb::unlikely;
 
 use super::{WeightedCohortContribution, WeightedRatio};
@@ -13,8 +13,11 @@ pub struct WeightedCohortState {
 
 impl WeightedCohortState {
     #[inline]
-    pub fn split_supply(total: Sats, weight: StoredF64) -> (Sats, Sats) {
-        (weight * total, (StoredF64::from(1.0) - weight) * total)
+    pub fn split_supply(total: Sats, weight: BoundedRatio) -> (Sats, Sats) {
+        (
+            StoredF64::from(f64::from(weight)) * total,
+            StoredF64::from(f64::from(weight.complement())) * total,
+        )
     }
 
     #[inline]
@@ -23,9 +26,10 @@ impl WeightedCohortState {
         total_supply: Sats,
         loss_supply: Sats,
         total_cap: Cents,
-        weight: StoredF64,
+        weight: BoundedRatio,
     ) -> WeightedCohortContribution {
         let (weighted_supply, complement_supply) = Self::split_supply(total_supply, weight);
+        let weight = StoredF64::from(f64::from(weight));
         let contribution = WeightedCohortContribution {
             weighted_supply,
             complement_supply,
@@ -78,7 +82,7 @@ mod tests {
     fn empty_nan_cap_contributes_zero() {
         let mut state = WeightedCohortState::default();
 
-        let contribution = state.add(Sats::ZERO, Sats::ZERO, Cents::NAN, StoredF64::from(0.5));
+        let contribution = state.add(Sats::ZERO, Sats::ZERO, Cents::NAN, BoundedRatio::from(0.5));
 
         assert_eq!(contribution.weighted_cap, Cents::ZERO);
         assert_eq!(state.weighted_cap, Cents::ZERO);
@@ -93,10 +97,30 @@ mod tests {
             Sats::from(100_u64),
             Sats::ZERO,
             Cents::NAN,
-            StoredF64::from(0.5),
+            BoundedRatio::from(0.5),
         );
 
         assert!(state.weighted_cap.is_nan());
         assert!(state.realized_price().is_nan());
+    }
+
+    #[test]
+    fn bounded_weights_use_the_encoded_complement() {
+        let total = Sats::from(123_456_789_u64);
+        for value in [0.0, 1.0 / 3.0, 0.321, 1.0] {
+            let weight = BoundedRatio::from(value);
+            let split = WeightedCohortState::split_supply(total, weight);
+            assert_eq!(split.0, StoredF64::from(f64::from(weight)) * total);
+            assert_eq!(
+                split.1,
+                StoredF64::from(f64::from(weight.complement())) * total
+            );
+            assert!(split.0 + split.1 <= total);
+            assert!(total - split.0 - split.1 <= Sats::from(1_u64));
+            let mut state = WeightedCohortState::default();
+            let contribution = state.add(total, Sats::ZERO, Cents::from(100_u64), weight);
+            assert_eq!(contribution.weighted_supply, split.0);
+            assert_eq!(contribution.complement_supply, split.1);
+        }
     }
 }

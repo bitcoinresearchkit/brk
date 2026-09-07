@@ -1,7 +1,7 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::CohortName;
 
@@ -30,7 +30,8 @@ impl Loss<CohortName> {
 /// Total loss-side supply and eight "at least X% loss" aggregate thresholds.
 ///
 /// Each is a suffix sum over the profitability ranges, from most loss-making up.
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct Loss<T> {
     /// Uses UTXOs whose creation price is at or above the represented block's
     /// spot price.
@@ -80,99 +81,14 @@ impl<T> Loss<T> {
     where
         F: FnMut(&'static str) -> T,
     {
-        let n = &LOSS_NAMES;
-        Self {
-            total: create(n.total.id),
-            _10pct: create(n._10pct.id),
-            _20pct: create(n._20pct.id),
-            _30pct: create(n._30pct.id),
-            _40pct: create(n._40pct.id),
-            _50pct: create(n._50pct.id),
-            _60pct: create(n._60pct.id),
-            _70pct: create(n._70pct.id),
-            _80pct: create(n._80pct.id),
-        }
+        Self::from_fn(|id| create(id.select(&LOSS_NAMES).id))
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(&'static str) -> Result<T, E>,
     {
-        let n = &LOSS_NAMES;
-        Ok(Self {
-            total: create(n.total.id)?,
-            _10pct: create(n._10pct.id)?,
-            _20pct: create(n._20pct.id)?,
-            _30pct: create(n._30pct.id)?,
-            _40pct: create(n._40pct.id)?,
-            _50pct: create(n._50pct.id)?,
-            _60pct: create(n._60pct.id)?,
-            _70pct: create(n._70pct.id)?,
-            _80pct: create(n._80pct.id)?,
-        })
-    }
-
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
-        [
-            &self.total,
-            &self._10pct,
-            &self._20pct,
-            &self._30pct,
-            &self._40pct,
-            &self._50pct,
-            &self._60pct,
-            &self._70pct,
-            &self._80pct,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> + ExactSizeIterator {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-        ]
-        .into_par_iter()
-    }
-
-    /// Access as array for indexed accumulation.
-    pub fn as_array_mut(&mut self) -> [&mut T; LOSS_COUNT] {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-        ]
+        Self::try_from_fn(|id| create(id.select(&LOSS_NAMES).id))
     }
 
     /// Iterate from narrowest (_80pct) to broadest (total), yielding each threshold

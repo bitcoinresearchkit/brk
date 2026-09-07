@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use brk_types::{Height, StoredU64};
 use vecdb::{
@@ -44,17 +44,34 @@ where
     T: VecValue,
     F: BinaryTransform<StoredU64, StoredU64, T> + Send + Sync,
 {
-    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+    fn try_fold_values<B, E>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: impl FnMut(B, T) -> Result<B, E>,
+    ) -> Result<B, E> {
         let to = to.min(self.len());
         if from >= to {
-            return;
+            return Ok(init);
         }
 
         let mut numerators = self.numerator.collect_range_dyn(from, to).into_iter();
         self.denominator
-            .for_each_cumulative(from, to, |denominator| {
-                each(F::apply(numerators.next().unwrap(), denominator));
-            });
+            .try_fold_range_at(from, to, init, |accumulator, denominator| {
+                fold(
+                    accumulator,
+                    F::apply(numerators.next().unwrap(), denominator),
+                )
+            })
+    }
+
+    fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(T)) {
+        self.try_fold_values(from, to, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
     }
 }
 
@@ -130,10 +147,17 @@ where
         self.for_each_value(from, to, each);
     }
 
-    fn fold_range_at<B, G: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, fold: G) -> B {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().fold(init, fold)
+    fn fold_range_at<B, G: FnMut(B, T) -> B>(
+        &self,
+        from: usize,
+        to: usize,
+        init: B,
+        mut fold: G,
+    ) -> B {
+        self.try_fold_values(from, to, init, |accumulator, value| {
+            Ok::<_, Infallible>(fold(accumulator, value))
+        })
+        .unwrap()
     }
 
     fn try_fold_range_at<B, E, G: FnMut(B, T) -> Result<B, E>>(
@@ -143,9 +167,7 @@ where
         init: B,
         fold: G,
     ) -> Result<B, E> {
-        let mut values = Vec::with_capacity(to.saturating_sub(from));
-        self.read_into_at(from, to, &mut values);
-        values.into_iter().try_fold(init, fold)
+        self.try_fold_values(from, to, init, fold)
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {

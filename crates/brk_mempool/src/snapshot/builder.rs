@@ -8,7 +8,7 @@ use derive_more::{Deref, DerefMut};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use smallvec::SmallVec;
 
-use super::{Cluster, SnapTx, Snapshot, TxIndex};
+use super::{SnapTx, Snapshot, TxIndex, cluster};
 use crate::{state::TxEntry, stores::TxStore};
 
 #[derive(Default, Deref, DerefMut)]
@@ -77,14 +77,14 @@ impl Snapshot {
                 visited[seed] = true;
                 continue;
             }
-            let component = Cluster::walk(snap_txs, TxIndex::from(seed));
+            let component = cluster::walk(snap_txs, TxIndex::from(seed));
             for &m in &component {
                 visited[m.as_usize()] = true;
             }
             if component.len() <= 1 {
                 continue;
             }
-            let (members, chunks) = Cluster::linearize(snap_txs, &component);
+            let (members, chunks) = cluster::linearize(snap_txs, &component);
             for chunk in &chunks {
                 for &local in &chunk.txs {
                     let m = members[u32::from(local) as usize];

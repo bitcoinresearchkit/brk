@@ -97,8 +97,7 @@ where
     /// whether boundaries are crossed upward or downward.
     pub rank: PerBlock<StoredU8, M>,
 
-    #[traversable(skip)]
-    history: LiveHistory,
+    history: M::WriteOnly<LiveHistory>,
 }
 
 impl<T> Extreme<T>
@@ -422,7 +421,6 @@ impl<'a> CoordinateHistory<'a> {
     }
 }
 
-#[derive(Clone)]
 struct LiveHistory {
     stats: ExactOrderStats,
     processed: usize,

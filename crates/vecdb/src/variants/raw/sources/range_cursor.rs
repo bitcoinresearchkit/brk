@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::ptr::NonNull;
 
 use rawdb::Region;
@@ -128,23 +126,8 @@ where
             f(self.next().unwrap());
         }
     }
-}
-pub trait VariantsRawSourcesRangeCursorRawRangeCursorAITSInternal<'a, I, T, S>: Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self;
-}
-impl<'a, I, T, S> VariantsRawSourcesRangeCursorRawRangeCursorAITSInternal<'a, I, T, S>
-    for RawRangeCursor<'a, I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
+
+    pub fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
         let from = from.min(stored_len);
         let to = to.min(stored_len).max(from);
         let bytes = (to - from) * Self::SIZE_OF_T;

@@ -3,11 +3,13 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use bitcoin::Amount;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, OverflowVecValue, Pco, SaturatingAdd, Version};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, OverflowVecValue, Pco, SaturatingAdd, Version};
 
 use crate::{StoredF64, StoredU64};
 
@@ -27,9 +29,9 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Serialize,
     Deserialize,
     Hash,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[schemars(
     example = &0,
     example = &546,
@@ -39,6 +41,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
 )]
 pub struct Sats(u64);
 
+#[cfg(feature = "storage")]
 impl OverflowVecValue for Sats {
     type Compact = u32;
 
@@ -157,13 +160,26 @@ impl CheckedSub for Sats {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Sats {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<usize> for Sats {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         self.0.checked_sub(rhs as u64).map(Self::from)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for Sats {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
+#[cfg(feature = "storage")]
 impl SaturatingAdd for Sats {
     fn saturating_add(self, rhs: Self) -> Self {
         Self(self.0.saturating_add(rhs.0))
@@ -378,6 +394,7 @@ impl std::fmt::Display for Sats {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Sats {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -390,6 +407,7 @@ impl Formattable for Sats {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn overflow_encoding_preserves_inline_values_and_sidecar_indexes() {
         for value in [0, (1_u64 << 31) - 1] {

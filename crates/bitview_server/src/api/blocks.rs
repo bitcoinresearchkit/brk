@@ -107,7 +107,7 @@ fn block_height_hint(headers: &HeaderMap, schema: &str) -> Option<Height> {
 
 fn block_json_response(params: CacheParams, value: &impl Serialize) -> QueryResult<Response> {
     let bytes = Bytes::from(to_vec(value)?);
-    Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+    Ok(AppState::assemble_response(params, bytes, |headers| {
         headers.insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static("application/json"),
@@ -138,7 +138,7 @@ impl AppState {
             }
             Ok(AppState::assemble_response(
                 params,
-                Ok(Bytes::from(value)),
+                Bytes::from(value),
                 |headers| {
                     headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
                 },
@@ -160,29 +160,30 @@ impl AppState {
             RAW_SCHEMA,
             None,
             move |q, snapshot, params| {
-                let (bytes, length, permit) = if method == Method::HEAD {
-                    (Bytes::new(), Some(snapshot.anchor_raw_size(q)?), None)
-                } else {
-                    let Some(permit) = RawBodyPermit::try_acquire(&budget) else {
-                        return Ok(Error::overloaded("Raw block response capacity exhausted")
-                            .into_response());
-                    };
-                    let bytes = permit.bytes(Bytes::from(snapshot.anchor_raw(q)?));
-                    (bytes, None, Some(permit))
-                };
-                let mut response = AppState::assemble_response(params, Ok(bytes), |headers| {
+                let content_headers = |headers: &mut HeaderMap| {
                     headers.insert(
                         header::CONTENT_TYPE,
                         HeaderValue::from_static("application/octet-stream"),
                     );
-                    if let Some(length) = length {
-                        headers.insert(header::CONTENT_LENGTH, length.into());
-                    }
-                });
-                if let Some(permit) = permit {
-                    response.extensions_mut().insert(permit);
+                };
+                if method == Method::HEAD {
+                    let length = snapshot.anchor_raw_size(q)?;
+                    return Ok(AppState::assemble_response(
+                        params,
+                        Bytes::new(),
+                        |headers| {
+                            content_headers(headers);
+                            headers.insert(header::CONTENT_LENGTH, length.into());
+                        },
+                    ));
                 }
-                Ok(response)
+                let Some(permit) = RawBodyPermit::try_acquire(&budget) else {
+                    return Ok(
+                        Error::overloaded("Raw block response capacity exhausted").into_response()
+                    );
+                };
+                let bytes = Bytes::from(snapshot.anchor_raw(q)?);
+                Ok(permit.response(params, bytes, content_headers))
             },
         )
         .await
@@ -239,7 +240,7 @@ impl AppState {
             }
             Ok(AppState::assemble_response(
                 params,
-                Ok(Bytes::from(body)),
+                Bytes::from(body),
                 |headers| {
                     headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
                 },
@@ -280,7 +281,7 @@ impl AppState {
     ) -> Result<Response, Error> {
         self.respond_exact_block(headers, hash, HEADER_SCHEMA, None, |q, snapshot, params| {
             let bytes = Bytes::from(snapshot.anchor_header_hex(q)?);
-            Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+            Ok(AppState::assemble_response(params, bytes, |headers| {
                 headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
             }))
         })
@@ -299,15 +300,15 @@ impl AppState {
         + Send
         + 'static,
     ) -> Result<Response, Error> {
-        if let Some(height) = block_height_hint(&headers, schema) {
-            if let Some(snapshot) = self.sync(|q| q.try_resolve_block_snapshot(&hash, height))? {
-                if let Some(index) = tx_index {
-                    self.sync(|q| snapshot.validate_tx_index(q, index))?;
-                }
-                let params = block_params(&snapshot, schema)?;
-                if params.matches_etag(&headers) {
-                    return Ok(ResponseExtended::new_not_modified(&params));
-                }
+        if let Some(height) = block_height_hint(&headers, schema)
+            && let Some(snapshot) = self.sync(|q| q.try_resolve_block_snapshot(&hash, height))?
+        {
+            if let Some(index) = tx_index {
+                self.sync(|q| snapshot.validate_tx_index(q, index))?;
+            }
+            let params = block_params(&snapshot, schema)?;
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
             }
         }
 
@@ -330,12 +331,12 @@ impl AppState {
         headers: HeaderMap,
         hash: BlockHash,
     ) -> Result<Response, Error> {
-        if let Some(height) = block_height_hint(&headers, V1_BLOCK_SCHEMA) {
-            if let Some(snapshot) = self.sync(|q| q.try_resolve_block_v1(&hash, height))? {
-                let params = block_v1_params(&snapshot)?;
-                if params.matches_etag(&headers) {
-                    return Ok(ResponseExtended::new_not_modified(&params));
-                }
+        if let Some(height) = block_height_hint(&headers, V1_BLOCK_SCHEMA)
+            && let Some(snapshot) = self.sync(|q| q.try_resolve_block_v1(&hash, height))?
+        {
+            let params = block_v1_params(&snapshot)?;
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
             }
         }
 
@@ -368,12 +369,12 @@ impl AppState {
         headers: HeaderMap,
         start_height: Option<Height>,
     ) -> Result<Response, Error> {
-        if headers.contains_key(header::IF_NONE_MATCH) {
-            if let Some(snapshot) = self.sync(|q| q.try_resolve_blocks_v1(start_height, 15))? {
-                let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
-                if params.matches_etag(&headers) {
-                    return Ok(ResponseExtended::new_not_modified(&params));
-                }
+        if headers.contains_key(header::IF_NONE_MATCH)
+            && let Some(snapshot) = self.sync(|q| q.try_resolve_blocks_v1(start_height, 15))?
+        {
+            let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
             }
         }
 
@@ -394,12 +395,12 @@ impl AppState {
         headers: HeaderMap,
         start_height: Option<Height>,
     ) -> Result<Response, Error> {
-        if headers.contains_key(header::IF_NONE_MATCH) {
-            if let Some(snapshot) = self.sync(|q| q.try_resolve_blocks(start_height, 10))? {
-                let params = recent_blocks_params(snapshot.anchor());
-                if params.matches_etag(&headers) {
-                    return Ok(ResponseExtended::new_not_modified(&params));
-                }
+        if headers.contains_key(header::IF_NONE_MATCH)
+            && let Some(snapshot) = self.sync(|q| q.try_resolve_blocks(start_height, 10))?
+        {
+            let params = recent_blocks_params(snapshot.anchor());
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
             }
         }
 
@@ -639,7 +640,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            -> Result<Response, Error> {
                         state.respond_exact_block(headers, path.hash, "txid-v2", Some(path.index), move |q, snapshot, params| {
                             let bytes = Bytes::from(snapshot.anchor_txid(q, path.index)?.to_string());
-                            Ok(AppState::assemble_response(params, Ok(bytes), |headers| {
+                            Ok(AppState::assemble_response(params, bytes, |headers| {
                                 headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("text/plain"));
                             }))
                         }).await

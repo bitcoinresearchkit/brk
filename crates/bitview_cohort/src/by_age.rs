@@ -1,15 +1,16 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
-use vecdb::ColumnId;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AGE_RANGE_FILTERS, AgeRange, AgeRangeId, Filter, OVER_AGE_FILTERS, OverAge, OverAgeId,
     UNDER_AGE_FILTERS, UnderAge, UnderAgeId,
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByAge<T> {
     pub range: AgeRange<T>,
     pub under: UnderAge<T>,
@@ -58,25 +59,13 @@ impl<T> ByAge<T> {
     }
 
     pub fn map_named<U>(&self, mut map: impl FnMut(&Filter, &'static str, &T) -> U) -> ByAge<U> {
-        ByAge {
-            range: AgeRange::new(|filter, name| {
-                map(&filter, name, self.get(&filter).expect("exact age range"))
-            }),
-            under: UnderAge::new(|filter, name| {
-                map(
-                    &filter,
-                    name,
-                    self.get(&filter).expect("under-age threshold"),
-                )
-            }),
-            over: OverAge::new(|filter, name| {
-                map(
-                    &filter,
-                    name,
-                    self.get(&filter).expect("over-age threshold"),
-                )
-            }),
-        }
+        ByAge::new(|filter, name| {
+            map(
+                &filter,
+                name,
+                self.get(&filter).expect("known cohort filter"),
+            )
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

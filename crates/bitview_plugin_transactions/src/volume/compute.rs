@@ -14,30 +14,17 @@ pub fn compute(
     fees_vecs: &fees::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, mappings, prices, fees_vecs, exit)
-}
+    let starting_height = indexer.safe_lengths().height;
 
-impl Vecs {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        fees_vecs: &fees::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
+    vecs.transfer_volume.compute_filtered_from_indexes(
+        starting_height,
+        &prices.spot.cents.height,
+        &indexer.vecs().transactions.first_tx_index,
+        &mappings.height.tx_index_count,
+        &fees_vecs.input_value,
+        |sats| !sats.is_max(),
+        exit,
+    )?;
 
-        self.transfer_volume.compute_filtered_from_indexes(
-            starting_height,
-            &prices.spot.cents.height,
-            &indexer.vecs().transactions.first_tx_index,
-            &mappings.height.tx_index_count,
-            &fees_vecs.input_value,
-            |sats| !sats.is_max(),
-            exit,
-        )?;
-
-        Ok(())
-    }
+    Ok(())
 }

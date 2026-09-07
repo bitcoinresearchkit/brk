@@ -36,13 +36,11 @@ pub async fn serve(
                         .into_response(),
                 );
             };
-            let mut response = AppState::assemble_response(
+            Ok(permit.response(
                 params,
-                Ok(permit.bytes(bytes.into())),
+                bytes.into(),
                 HeaderMapExtended::insert_content_type_application_json,
-            );
-            response.extensions_mut().insert(permit);
-            Ok(response)
+            ))
         })
         .await
         .map_err(Into::into)

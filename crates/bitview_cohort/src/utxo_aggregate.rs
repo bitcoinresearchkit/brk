@@ -1,7 +1,7 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use schemars::JsonSchema;
-use serde::Serialize;
-use vecdb::ColumnId;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AgeRangeId, CohortContext, CohortName, Filter, LTH_AGE_RANGE_IDS, STH_AGE_RANGE_IDS,
@@ -24,7 +24,8 @@ pub const UTXO_AGGREGATE_NAMES: UTXOAggregate<CohortName> = UTXOAggregate {
     lth: TERM_NAMES.long,
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct UTXOAggregate<T> {
     /// Uses all UTXOs.
     pub all: T,
@@ -92,14 +93,6 @@ impl<T> UTXOAggregate<T> {
         }
     }
 
-    pub fn try_from_fn<E>(mut f: impl FnMut(UTXOAggregateId) -> Result<T, E>) -> Result<Self, E> {
-        Ok(Self {
-            all: f(UTXOAggregateId::All)?,
-            sth: f(UTXOAggregateId::Sth)?,
-            lth: f(UTXOAggregateId::Lth)?,
-        })
-    }
-
     pub fn get(&self, filter: &Filter) -> Option<&T> {
         match filter {
             Filter::All => Some(&self.all),
@@ -116,14 +109,6 @@ impl<T> UTXOAggregate<T> {
             Filter::Term(crate::Term::Lth) => Some(&mut self.lth),
             _ => None,
         }
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [&self.all, &self.sth, &self.lth].into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [&mut self.all, &mut self.sth, &mut self.lth].into_iter()
     }
 }
 

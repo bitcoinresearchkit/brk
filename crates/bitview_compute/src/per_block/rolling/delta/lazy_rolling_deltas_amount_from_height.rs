@@ -1,12 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
-use vecdb::{
-    DeltaChange, DeltaRate, LazyDeltaVec, LazyVec, ReadOnlyClone, ReadableCloneableVec, VecValue,
-};
+use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
 
-use crate::{
-    AmountType, CachedWindowStartVec, DerivedResolutions, FixedRatio, LazyPerBlock, Windows,
-};
+use crate::{AmountType, CachedWindowStartVec, FixedRatio, LazyPerBlock, Windows};
 
 use super::{LazyDeltaAmountFromHeight, LazyDeltaFromHeight, LazyDeltaPercentFromHeight};
 
@@ -58,19 +54,12 @@ where
                     },
                 );
                 let sats = LazyDeltaFromHeight::new(&sats_name, version, height, indexes);
-                let btc =
-                    LazyPerBlock {
-                        height: LazyVec::transformed::<C::ToBitcoin>(
-                            &name,
-                            version,
-                            sats.height.read_only_boxed_clone(),
-                        ),
-                        resolutions: Box::new(DerivedResolutions::from_derived_computed::<
-                            C::ToBitcoin,
-                        >(
-                            &name, version, &sats.resolutions
-                        )),
-                    };
+                let btc = LazyPerBlock::from_resolutions::<C::ToBitcoin>(
+                    &name,
+                    version,
+                    sats.height.read_only_boxed_clone(),
+                    &sats.resolutions,
+                );
                 let absolute = LazyDeltaAmountFromHeight { btc, sats };
 
                 let ppm_name = format!("{name}_rate_{}", B::SUFFIX);

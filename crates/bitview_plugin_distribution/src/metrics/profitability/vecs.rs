@@ -301,11 +301,11 @@ mod tests {
 
         let cap = ByTerm {
             short: cap.clone(),
-            long: cap.clone(),
+            long: cap,
         };
         let supply = ByTerm {
             short: supply.clone(),
-            long: supply.clone(),
+            long: supply,
         };
         let pnl = ProfitabilityVecs::unrealized_pnl_rows(spot, &cap, &supply);
         let all_cap = ProfitabilityVecs::sum_terms(&cap);

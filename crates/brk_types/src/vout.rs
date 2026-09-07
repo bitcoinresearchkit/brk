@@ -1,6 +1,7 @@
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// Index of the output being spent in the previous transaction
@@ -17,9 +18,9 @@ use vecdb::{Bytes, Formattable};
     Serialize,
     Deserialize,
     JsonSchema,
-    Bytes,
     Hash,
 )]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 #[schemars(example = &0, example = &1, example = &2, example = &5, example = &10)]
 pub struct Vout(u16);
 
@@ -103,6 +104,7 @@ impl std::fmt::Display for Vout {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Vout {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

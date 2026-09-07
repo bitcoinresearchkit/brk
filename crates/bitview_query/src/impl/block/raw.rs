@@ -1,14 +1,12 @@
-use crate::internals::*;
-
 use std::io::Read;
 
 use bitcoin::{Block as BitcoinBlock, Weight, consensus::deserialize, p2p::Magic};
+use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_reader::BlkRead;
-use brk_types::{BlkPosition, BlockHash, Height, Lengths};
+use brk_types::{BlkPosition, BlockHash, Height};
 use vecdb::ReadableVec;
 
-use super::ResolvedBlock;
 use crate::Query;
 
 // Serialized bytes cannot exceed weight: each byte contributes at least one WU.
@@ -22,20 +20,37 @@ struct RawRecord {
 }
 
 impl Query {
+    /// Read an exact block while pinning its published immutable prefix.
+    ///
+    /// Bare lengths cannot authorize a raw read; use this method or a resolved
+    /// block snapshot instead of calling the internal raw helpers.
+    ///
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::{BlockHash, Height, Lengths};
+    /// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
+    ///     query.block_raw_at_height(height, hash, safe).unwrap();
+    /// }
+    /// ```
+    ///
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::{BlockHash, Height, Lengths};
+    /// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
+    ///     query.block_raw_size_at_height(height, hash, safe).unwrap();
+    /// }
+    /// ```
     pub fn block_raw(&self, hash: &BlockHash) -> Result<Vec<u8>> {
         let guard = self.indexer().pin_safe_lengths();
-        let block = self.resolve_block(hash)?;
-        self.block_raw_at_height(block.height(), hash, guard.lengths())
+        let height = self.height_by_hash(hash)?;
+        self.block_raw_at_height(height, hash, &guard)
     }
 
-    /// Revalidate and read under one publication guard after an async handoff.
-    pub fn block_raw_resolved(&self, block: ResolvedBlock) -> Result<Vec<u8>> {
-        let guard = self.indexer().pin_safe_lengths();
-        let height = self.revalidate_block(block)?;
-        self.block_raw_at_height(height, &block.hash(), guard.lengths())
-    }
-
-    fn open_raw_record(&self, height: Height, safe: Lengths) -> Result<RawRecord> {
+    fn open_raw_record(&self, height: Height, guard: &SafeLengths) -> Result<RawRecord> {
+        let safe = guard.lengths();
+        if height >= safe.height {
+            return Err(Error::NotFound("Block not found".into()));
+        }
         let vecs = self.indexer().vecs();
         let position = vecs.blocks.position.collect_one(height).data()?;
         let size = *vecs.blocks.total.collect_one(height).data()?;
@@ -115,49 +130,33 @@ impl Query {
         }
         Ok(())
     }
-}
 
-#[cfg(test)]
-#[path = "../../../tests/unit/impl/block/raw.rs"]
-mod tests;
-pub trait RImplBlockRawQueryInternal: Sized {
-    fn block_raw_at_height(
+    /// Borrow the pinned immutable prefix through the complete payload read.
+    pub(super) fn block_raw_at_height(
         &self,
         height: Height,
         hash: &BlockHash,
-        safe: Lengths,
-    ) -> Result<Vec<u8>>;
-
-    fn block_raw_size_at_height(
-        &self,
-        height: Height,
-        hash: &BlockHash,
-        safe: Lengths,
-    ) -> Result<u64>;
-}
-impl RImplBlockRawQueryInternal for Query {
-    /// Caller retains indexer publication exclusion through this entire read.
-    fn block_raw_at_height(
-        &self,
-        height: Height,
-        hash: &BlockHash,
-        safe: Lengths,
+        guard: &SafeLengths,
     ) -> Result<Vec<u8>> {
-        let mut record = self.open_raw_record(height, safe)?;
+        let mut record = self.open_raw_record(height, guard)?;
         let bytes = Self::read_raw_record(&mut record.reader, record.size, hash)?;
         Self::verify_raw_payload(&bytes, record.weight, record.count)?;
         Ok(bytes)
     }
     /// Validate framing and identity without reading or allocating the payload.
-    /// Caller retains publication exclusion; payload integrity is a GET check.
-    fn block_raw_size_at_height(
+    /// Borrows the pinned prefix; payload integrity remains a GET check.
+    pub(super) fn block_raw_size_at_height(
         &self,
         height: Height,
         hash: &BlockHash,
-        safe: Lengths,
+        guard: &SafeLengths,
     ) -> Result<u64> {
-        let mut record = self.open_raw_record(height, safe)?;
+        let mut record = self.open_raw_record(height, guard)?;
         Self::read_raw_prefix(&mut record.reader, record.size, hash)?;
         Ok(record.size)
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/impl/block/raw.rs"]
+mod tests;

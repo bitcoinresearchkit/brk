@@ -5,10 +5,12 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use crate::{Close, Dollars};
 
@@ -20,7 +22,8 @@ use crate::{Close, Dollars};
 /// - $1 = 1,000 sats
 /// - $0.001 = 1 sat
 /// - $0.0001 = 0.1 sats (fractional)
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct SatsFract(f64);
 
 impl SatsFract {
@@ -134,10 +137,22 @@ impl CheckedSub for SatsFract {
         Some(Self(self.0 - rhs.0))
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for SatsFract {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<usize> for SatsFract {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         Some(Self(self.0 - rhs as f64))
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for SatsFract {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -186,6 +201,7 @@ impl std::fmt::Display for SatsFract {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for SatsFract {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

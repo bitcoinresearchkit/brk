@@ -8,7 +8,7 @@ use bitview_cohort::{
 };
 use brk_types::{Height, Sats, StoredU64};
 use rayon::prelude::*;
-use vecdb::{ColumnId, ReadableVec};
+use vecdb::ReadableVec;
 
 use super::{CostBasisFenwick, UTXOCohortState, UTXOTransientState};
 use crate::metrics::CohortMetrics;
@@ -266,15 +266,17 @@ impl UTXOStates {
             return;
         }
 
-        self.transient.fenwick.compute_is_sth(sth_filter);
-        let maps: Vec<_> = AgeRangeId::ALL
-            .iter()
-            .filter_map(|&id| {
-                let map = id.select(&self.age_range).cost_basis_map();
-                (!map.is_empty()).then(|| (map, sth_filter.includes(id.filter())))
-            })
-            .collect();
-        self.transient.fenwick.bulk_init(maps.into_iter());
+        let Self {
+            age_range,
+            transient,
+            ..
+        } = self;
+        transient.fenwick.compute_is_sth(sth_filter);
+        let maps = AgeRangeId::ALL.iter().filter_map(|&id| {
+            let map = id.select(age_range).cost_basis_map();
+            (!map.is_empty()).then(|| (map, sth_filter.includes(id.filter())))
+        });
+        transient.fenwick.bulk_init(maps);
     }
 
     pub fn update_fenwick_from_pending(&mut self) {

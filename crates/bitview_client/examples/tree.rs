@@ -3,8 +3,8 @@
 //! This example demonstrates how to recursively traverse the metrics catalog tree
 //! and fetch data from each endpoint. Run with: cargo run --example tree
 
+use bitview_catalog::TreeNode;
 use bitview_client::BitviewClient;
-use bitview_types::TreeNode;
 use brk_types::{Index, RangeIndex};
 use std::collections::BTreeSet;
 

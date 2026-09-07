@@ -3,30 +3,22 @@ use std::{
     ops::{Add, Rem},
 };
 
+use crate::CheckedSub;
 use brk_error::{Error, Result};
 use jiff::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use crate::{FromCoarserIndex, Month1, Month3, Month6, Week1, Year1, Year10};
 
 use super::{Date, Timestamp};
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Day1(u16);
 
 impl Day1 {
@@ -85,6 +77,12 @@ impl TryFrom<Date> for Day1 {
 impl CheckedSub for Day1 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Day1 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -194,13 +192,21 @@ impl FromCoarserIndex<Year10> for Day1 {
     }
 }
 
-impl PrintableIndex for Day1 {
-    fn to_string() -> &'static str {
+impl Day1 {
+    pub fn index_name() -> &'static str {
         "day1"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["1d", "d", "day", "date", "daily", "day1", "dateindex"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Day1 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -212,6 +218,7 @@ impl fmt::Display for Day1 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Day1 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

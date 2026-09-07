@@ -1,9 +1,11 @@
 use std::ops::{Add, AddAssign, Div};
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 #[derive(
     Default,
@@ -17,9 +19,9 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct StoredU8(u8);
 
 impl StoredU8 {
@@ -47,6 +49,12 @@ impl From<usize> for StoredU8 {
 impl CheckedSub<StoredU8> for StoredU8 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<StoredU8> for StoredU8 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -100,13 +108,21 @@ impl From<StoredU8> for usize {
     }
 }
 
-impl PrintableIndex for StoredU8 {
-    fn to_string() -> &'static str {
+impl StoredU8 {
+    pub fn index_name() -> &'static str {
         "u8"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["u8"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredU8 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -118,6 +134,7 @@ impl std::fmt::Display for StoredU8 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for StoredU8 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

@@ -13,7 +13,7 @@ fn malformed_snapshot_returns_errors() {
         (16, usize::MAX),
     ] {
         let mut bytes = valid.clone();
-        bytes[offset..offset + 8].copy_from_slice(value.to_bytes().as_ref());
+        bytes[offset..offset + 8].copy_from_slice(value.to_le_bytes().as_ref());
         assert!(UrpdRaw::deserialize_exact(&bytes).is_err());
     }
     for prices in [[100, 100], [200, 100]] {
@@ -37,7 +37,7 @@ fn reserved_price_is_rejected_without_constructing_a_nan_price() {
         let values = simple_compress(&[supply], &ChunkConfig::default()).unwrap();
         let mut bytes = Vec::new();
         for count in [1_usize, keys.len(), values.len()] {
-            bytes.extend(count.to_bytes());
+            bytes.extend(count.to_le_bytes());
         }
         bytes.extend(keys);
         bytes.extend(values);

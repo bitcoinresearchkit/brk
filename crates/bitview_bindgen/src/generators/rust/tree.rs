@@ -1,139 +1,120 @@
-//! Rust tree structure generation.
+//! Typed Rust records and exact catalog bindings; no name-pattern inference.
 
-use std::collections::BTreeSet;
 use std::fmt::Write;
 
-use bitview_types::TreeNode;
-
 use crate::{
-    ClientMetadata, GenericSyntax, LanguageSyntax, PatternField, RustSyntax, build_child_path,
-    escape_rust_keyword, leaf_field_parts, prepare_tree_node, to_snake_case, tree_node_field_parts,
+    CatalogTree, CatalogType, CatalogValue, IndexSetPattern, escape_rust_keyword, to_snake_case,
 };
 
-/// Generate tree structs.
-pub fn generate_tree(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
-    writeln!(output, "// Series tree\n").unwrap();
-
-    let pattern_lookup = metadata.pattern_lookup();
-    let mut generated = BTreeSet::new();
-    generate_tree_node(
-        output,
-        "SeriesTree",
-        "",
-        catalog,
-        pattern_lookup,
-        metadata,
-        &mut generated,
-    );
+pub fn generate_tree(output: &mut String, tree: &CatalogTree, indexes: &[IndexSetPattern]) {
+    output.push_str(
+        r#"
+enum CatalogBinding {
+    Leaf(&'static str),
+    Branch(&'static [usize]),
 }
 
-fn generate_tree_node(
-    output: &mut String,
-    name: &str,
-    path: &str,
-    node: &TreeNode,
-    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
-    metadata: &ClientMetadata,
-    generated: &mut BTreeSet<String>,
-) {
-    let Some(ctx) = prepare_tree_node(node, name, path, pattern_lookup, metadata, generated) else {
-        return;
-    };
+trait FromCatalog: Sized + Send + Sync + 'static {
+    fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self;
+}
+"#,
+    );
 
-    // Generate struct definition
-    writeln!(output, "/// Series tree node.").unwrap();
-    writeln!(output, "pub struct {} {{", name).unwrap();
-
-    for child in &ctx.children {
-        let field_name = escape_rust_keyword(&to_snake_case(child.name));
-        let type_annotation = if child.should_inline {
-            child.inline_type_name.clone()
+    for family in &tree.families {
+        let parameters = (0..family.parameters)
+            .map(|i| format!("T{i}"))
+            .collect::<Vec<_>>();
+        let generic = if parameters.is_empty() {
+            String::new()
         } else {
-            metadata.field_type_annotation(&child.field, false, None, GenericSyntax::RUST)
+            format!("<{}>", parameters.join(", "))
+        };
+        writeln!(output, "/// Catalog projection of {}.", family.source).unwrap();
+        writeln!(output, "pub struct {}{generic} {{", family.name).unwrap();
+        for (field, slot) in &family.fields {
+            let field = escape_rust_keyword(&to_snake_case(field));
+            writeln!(output, "    pub {field}: LazyNode<T{slot}>,").unwrap();
+        }
+        writeln!(output, "}}\n").unwrap();
+        let bounds = if parameters.is_empty() {
+            String::new()
+        } else {
+            format!(
+                "<{}>",
+                parameters
+                    .iter()
+                    .map(|p| format!("{p}: FromCatalog"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
         };
         writeln!(
             output,
-            "    pub {}: LazyNode<{}>,",
-            field_name, type_annotation
+            "impl{bounds} FromCatalog for {}{generic} {{",
+            family.name
         )
         .unwrap();
+        output.push_str("    fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self {\n        let CatalogBinding::Branch(children) = &CATALOG_BINDINGS[binding] else { unreachable!(\"expected catalog branch\") };\n        Self {\n");
+        for (i, (field, slot)) in family.fields.iter().enumerate() {
+            let field = escape_rust_keyword(&to_snake_case(field));
+            writeln!(output, "            {field}: lazy_node((client.clone(), children[{i}]), |(client, binding)| T{slot}::from_catalog(client, binding)),").unwrap();
+        }
+        output.push_str("        }\n    }\n}\n\n");
     }
 
-    writeln!(output, "}}\n").unwrap();
+    for accessor in indexes {
+        writeln!(
+            output,
+            "impl<T: DeserializeOwned + Send + Sync + 'static> FromCatalog for {}<T> {{",
+            accessor.name
+        )
+        .unwrap();
+        output.push_str("    fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self {\n        let CatalogBinding::Leaf(name) = &CATALOG_BINDINGS[binding] else { unreachable!(\"expected catalog leaf\") };\n        Self::new(client, (*name).to_string())\n    }\n}\n\n");
+    }
 
-    // Generate impl block
-    writeln!(output, "impl {} {{", name).unwrap();
+    // Child type IDs precede their parents. Aliases keep deeply nested
+    // instantiations compact without guessing generic relationships.
+    for (id, ty) in tree.types.iter().enumerate() {
+        let ty = match ty {
+            CatalogType::Leaf { accessor, value } => {
+                format!("{}<{value}>", indexes[*accessor].name)
+            }
+            CatalogType::Branch { family, arguments } => {
+                let name = &tree.families[*family].name;
+                if arguments.is_empty() {
+                    name.clone()
+                } else {
+                    format!(
+                        "{name}<{}>",
+                        arguments
+                            .iter()
+                            .map(|id| format!("_CatalogType{id}"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                }
+            }
+        };
+        writeln!(output, "type _CatalogType{id} = {ty};").unwrap();
+    }
     writeln!(
         output,
-        "    pub fn new(client: Arc<BitviewClientBase>, base_path: String) -> Self {{"
+        "pub type SeriesTree = _CatalogType{};",
+        tree.nodes[tree.root].type_id
     )
     .unwrap();
-    writeln!(output, "        Self {{").unwrap();
+    writeln!(output, "fn create_series_tree(client: Arc<BitviewClientBase>) -> SeriesTree {{ FromCatalog::from_catalog(client, {}) }}", tree.root).unwrap();
 
-    let syntax = RustSyntax;
-    for child in &ctx.children {
-        let field_name = escape_rust_keyword(&to_snake_case(child.name));
-
-        if child.is_leaf {
-            if let TreeNode::Leaf(leaf) = child.node {
-                let parts = leaf_field_parts(&syntax, "client", child.name, leaf, metadata);
-                generate_lazy_field(output, &parts.name, &parts.value, false);
+    output.push_str("static CATALOG_BINDINGS: &[CatalogBinding] = &[\n");
+    for node in &tree.nodes {
+        match &node.value {
+            CatalogValue::Leaf(name) => {
+                writeln!(output, "    CatalogBinding::Leaf({name:?}),").unwrap()
             }
-        } else if child.should_inline {
-            // Inline struct type - only for nodes that don't match any pattern
-            let path_expr = syntax.path_expr("base_path", &format!("_{}", child.name));
-            let value = format!("{}::new(client, {})", child.inline_type_name, path_expr);
-            generate_lazy_field(output, &field_name, &value, true);
-        } else {
-            let parts = tree_node_field_parts(
-                &syntax,
-                &child.field,
-                metadata,
-                "client",
-                &child.base_result,
-            );
-            generate_lazy_field(output, &parts.name, &parts.value, false);
+            CatalogValue::Branch(children) => {
+                writeln!(output, "    CatalogBinding::Branch(&{children:?}),").unwrap()
+            }
         }
     }
-
-    writeln!(output, "        }}").unwrap();
-    writeln!(output, "    }}").unwrap();
-    writeln!(output, "}}\n").unwrap();
-
-    // Generate child structs
-    for child in &ctx.children {
-        if child.should_inline {
-            let child_path = build_child_path(path, child.name);
-            generate_tree_node(
-                output,
-                &child.inline_type_name,
-                &child_path,
-                child.node,
-                pattern_lookup,
-                metadata,
-                generated,
-            );
-        }
-    }
-}
-
-fn generate_lazy_field(
-    output: &mut String,
-    field_name: &str,
-    value: &str,
-    capture_base_path: bool,
-) {
-    if capture_base_path {
-        writeln!(
-            output,
-            "            {field_name}: lazy_node((client.clone(), base_path.clone()), |(client, base_path)| {value}),"
-        )
-        .unwrap();
-    } else {
-        writeln!(
-            output,
-            "            {field_name}: lazy_node(client.clone(), |client| {value}),"
-        )
-        .unwrap();
-    }
+    output.push_str("];\n");
 }

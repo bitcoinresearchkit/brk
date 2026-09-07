@@ -1,6 +1,6 @@
 use bitview_cohort::{TermId, UTXOAggregateId};
 use bitview_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, StoredF64};
+use brk_types::{BoundedRatio, Cents, Height, Sats};
 use vecdb::{ColumnarVec, EagerVec, PcoVec, Rw, StorageMode};
 
 #[derive(Traversable)]
@@ -22,5 +22,6 @@ pub struct Sources<M: StorageMode = Rw> {
     /// Share of awake supply that is in loss: the sum of supply in loss
     /// multiplied by wakefulness divided by the sum of total supply multiplied
     /// by wakefulness. Returns NaN when the weighted supply is zero.
-    pub supply_in_loss_share: M::Stored<EagerVec<ColumnarVec<PcoVec<Height, StoredF64>, TermId>>>,
+    pub supply_in_loss_share:
+        M::Stored<EagerVec<ColumnarVec<PcoVec<Height, BoundedRatio>, TermId>>>,
 }

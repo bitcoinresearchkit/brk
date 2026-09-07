@@ -56,7 +56,7 @@ fn genesis_health_sync_and_series_limits() {
                 {
                     assert_eq!(query.sync(|q| q.len(&"timestamp".into(), Index::Height)).unwrap(), 1);
                     assert_eq!(query.sync(|q| q.len(&"timestamp_monotonic".into(), Index::Height)).unwrap(), 0);
-                    series_admission::check(&inspection_state).await;
+                    series_admission::check(inspection_state).await;
                 }
                 #[cfg(feature = "series")]
                 for (names, columns, available) in [
@@ -118,7 +118,7 @@ fn genesis_health_sync_and_series_limits() {
         #[cfg(feature = "series")]
         {
             let limited = Server::bind(
-                &query,
+                query,
                 ServerConfig {
                     bind: Ipv4Addr::LOCALHOST.into(),
                     port: 0.into(),

@@ -11,18 +11,8 @@ fn block_vbytes(_: Height, weight: Weight) -> StoredU64 {
     StoredU64::from(weight.to_vbytes_floor())
 }
 
-pub trait Import: Sized {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self>;
-}
-
-impl Import for Vecs {
-    fn forced_import(
+impl Vecs {
+    pub fn forced_import(
         db: &Database,
         version: Version,
         indexer: &Indexer,

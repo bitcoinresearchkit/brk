@@ -1,14 +1,14 @@
 use bitview_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, StoredF32, Version};
+use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaAvg, LazyDeltaVec, LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    AvgCentsToUsd, AvgSatsToBtc, CachedWindowStartVec, DerivedResolutions, LazyPerBlock,
-    LazyRollingAvgAmountFromHeight, LazyRollingAvgFromHeight, Resolutions, Windows,
+    AvgCentsToUsd, AvgSatsToBtc, CachedWindowStartVec, LazyPerBlock,
+    LazyRollingAvgAmountFromHeight, LazyRollingAvgFromHeight, Windows,
 };
 
-/// Lazy rolling averages for all 4 windows, for Amount (sats + btc + cents + usd), all as f64.
+/// Lazy rolling averages for all 4 windows, with StoredF32 sats/cents and BTC/USD views.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct LazyRollingAvgsAmountFromHeight(
@@ -32,77 +32,40 @@ impl LazyRollingAvgsAmountFromHeight {
 
         let make_slot = |suffix: &str, cached_start: &&CachedWindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
 
-            // Sats lazy rolling avg → f64
-            let sats_avg = LazyDeltaVec::<Height, Sats, StoredF32, DeltaAvg>::new(
+            // Sats rolling average, stored as a float.
+            let sats = LazyRollingAvgFromHeight::new(
                 &format!("{full_name}_sats"),
                 version,
                 cum_sats.clone(),
-                starts_version,
-                {
-                    let cached = cached.clone();
-                    move || cached.snapshot()
-                },
-            );
-            let sats_resolutions = Resolutions::from_height_source(
-                &format!("{full_name}_sats"),
-                sats_avg.clone(),
-                version,
+                cached_start,
                 indexes,
             );
-            let sats = LazyRollingAvgFromHeight {
-                height: sats_avg,
-                resolutions: Box::new(sats_resolutions),
-            };
 
-            // Btc: f64 sats avg / 1e8
-            let btc = LazyPerBlock {
-                height: LazyVec::transformed::<AvgSatsToBtc>(
-                    &full_name,
-                    version,
-                    sats.height.read_only_boxed_clone(),
-                ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<AvgSatsToBtc>(
-                    &full_name,
-                    version,
-                    &sats.resolutions,
-                )),
-            };
+            // BTC from the sats average.
+            let btc = LazyPerBlock::from_resolutions::<AvgSatsToBtc>(
+                &full_name,
+                version,
+                sats.height.read_only_boxed_clone(),
+                &sats.resolutions,
+            );
 
-            // Cents lazy rolling avg → f64
-            let cents_avg = LazyDeltaVec::<Height, Cents, StoredF32, DeltaAvg>::new(
+            // Cents rolling average, stored as a float.
+            let cents = LazyRollingAvgFromHeight::new(
                 &format!("{full_name}_cents"),
                 version,
                 cum_cents.clone(),
-                starts_version,
-                move || cached.snapshot(),
-            );
-            let cents_resolutions = Resolutions::from_height_source(
-                &format!("{full_name}_cents"),
-                cents_avg.clone(),
-                version,
+                cached_start,
                 indexes,
             );
-            let cents = LazyRollingAvgFromHeight {
-                height: cents_avg,
-                resolutions: Box::new(cents_resolutions),
-            };
 
-            // Usd: f64 cents avg / 100
-            let usd = LazyPerBlock {
-                height: LazyVec::transformed::<AvgCentsToUsd>(
-                    &format!("{full_name}_usd"),
-                    version,
-                    cents.height.read_only_boxed_clone(),
-                ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<AvgCentsToUsd>(
-                    &format!("{full_name}_usd"),
-                    version,
-                    &cents.resolutions,
-                )),
-            };
+            // USD from the cents average.
+            let usd = LazyPerBlock::from_resolutions::<AvgCentsToUsd>(
+                &format!("{full_name}_usd"),
+                version,
+                cents.height.read_only_boxed_clone(),
+                &cents.resolutions,
+            );
 
             LazyRollingAvgAmountFromHeight {
                 btc,

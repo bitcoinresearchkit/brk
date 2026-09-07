@@ -7,6 +7,7 @@ use std::{
     path::PathBuf,
 };
 
+#[derive(Default)]
 pub struct Analysis {
     pub files: Vec<PathBuf>,
     pub groups: BTreeMap<(String, u16), Group>,
@@ -23,60 +24,54 @@ pub struct Analysis {
 impl Analysis {
     pub fn read(files: &[PathBuf]) -> Result<Self> {
         let catalog = routes::catalog();
-        let mut groups: BTreeMap<(String, u16), Group> = BTreeMap::new();
-        let (mut lines, mut ignored, mut malformed, mut unmatched, mut count, mut errors) =
-            (0usize, 0usize, 0usize, 0usize, 0usize, 0usize);
-        let (mut first, mut last) = (None, None);
+        let mut analysis = Self {
+            files: files.to_vec(),
+            ..Self::default()
+        };
         for path in files {
             for line in BufReader::new(File::open(path)?).lines() {
                 let line = line?;
-                lines += 1;
+                analysis.lines += 1;
                 let record = match Record::parse(&line) {
                     Ok(Some(record)) => record,
                     Ok(None) => {
-                        ignored += 1;
+                        analysis.ignored += 1;
                         continue;
                     }
                     Err(()) => {
-                        malformed += 1;
+                        analysis.malformed += 1;
                         continue;
                     }
                 };
-                first = Some(first.map_or(record.timestamp, |t: jiff::civil::DateTime| {
-                    t.min(record.timestamp)
-                }));
-                last = Some(last.map_or(record.timestamp, |t: jiff::civil::DateTime| {
-                    t.max(record.timestamp)
-                }));
-                count += 1;
-                errors += usize::from(record.status >= 400);
+                analysis.first = Some(
+                    analysis
+                        .first
+                        .map_or(record.timestamp, |t| t.min(record.timestamp)),
+                );
+                analysis.last = Some(
+                    analysis
+                        .last
+                        .map_or(record.timestamp, |t| t.max(record.timestamp)),
+                );
+                analysis.count += 1;
+                analysis.errors += usize::from(record.status >= 400);
                 let endpoint = routes::endpoint(&record.uri, &catalog);
                 let matched = catalog.contains(&endpoint);
                 if !matched {
-                    unmatched += 1;
+                    analysis.unmatched += 1;
                 }
-                let group = groups
+                let group = analysis
+                    .groups
                     .entry((endpoint.to_string(), record.status))
                     .or_default();
                 group.matched = matched;
                 group.push(record);
             }
         }
-        for group in groups.values_mut() {
+        for group in analysis.groups.values_mut() {
             group.durations.sort_unstable();
         }
-        Ok(Self {
-            files: files.to_vec(),
-            groups,
-            lines,
-            ignored,
-            malformed,
-            unmatched,
-            count,
-            errors,
-            first,
-            last,
-        })
+        Ok(analysis)
     }
 }
 

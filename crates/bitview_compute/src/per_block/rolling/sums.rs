@@ -2,9 +2,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{DeltaSub, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
-use crate::{CachedWindowStartVec, NumericValue, Resolutions, Windows};
+use crate::{CachedWindowStartVec, NumericValue, Windows};
 
 use super::LazyRollingSumFromHeight;
 
@@ -12,7 +12,8 @@ use super::LazyRollingSumFromHeight;
 /// derived from a cumulative vec + cached window starts.
 ///
 /// Nothing is stored on disk — all values are computed on-the-fly via
-/// `LazyDeltaVec<Height, T, T, DeltaSub>`: `cum[h] - cum[window_start[h]]`.
+/// `LazyDeltaVec<Height, T, T, DeltaSub>`: `cum[h] - cum[window_start[h] - 1]`,
+/// using zero when the window starts at genesis.
 ///
 /// Implements `Traversable` to expose `_24h`, `_1w`, `_1m`, `_1y` with
 /// the same tree structure as the old `RollingWindows<T>`.
@@ -41,22 +42,13 @@ where
         let cum_source = cumulative.read_only_boxed_clone();
 
         Self(cached_starts.map_with_suffix(|suffix, cached_start| {
-            let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
-            let sum = LazyDeltaVec::<Height, T, T, DeltaSub>::new(
-                &full_name,
+            LazyRollingSumFromHeight::new(
+                &format!("{name}_{suffix}"),
                 version,
                 cum_source.clone(),
-                starts_version,
-                move || cached.snapshot(),
-            );
-            let resolutions =
-                Resolutions::from_height_source(&full_name, sum.clone(), version, indexes);
-            LazyRollingSumFromHeight {
-                height: sum,
-                resolutions: Box::new(resolutions),
-            }
+                cached_start,
+                indexes,
+            )
         }))
     }
 
@@ -69,25 +61,6 @@ where
         cached_starts: &Windows<&CachedWindowStartVec>,
         indexes: &crate::IndexSources,
     ) -> Self {
-        let cum_source = cumulative.read_only_boxed_clone();
-
-        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
-            let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
-            let sum = LazyDeltaVec::<Height, T, T, DeltaSub>::new(
-                &full_name,
-                version,
-                cum_source.clone(),
-                starts_version,
-                move || cached.snapshot(),
-            );
-            let resolutions =
-                Resolutions::from_height_source(&full_name, sum.clone(), version, indexes);
-            LazyRollingSumFromHeight {
-                height: sum,
-                resolutions: Box::new(resolutions),
-            }
-        }))
+        Self::new(name, version, cumulative, cached_starts, indexes)
     }
 }

@@ -36,13 +36,14 @@ macro_rules! impl_named_row_formattable {
 }
 
 mod calibration;
+mod capitalized_price;
+mod capitalized_price_vecs;
 mod cost_basis_vecs;
 mod daily_percentiles_vecs;
 mod day_result;
 mod day_urpds;
 mod dependencies;
 mod has;
-mod internals;
 mod level_id;
 mod levels;
 mod loss_percentile_id;
@@ -62,6 +63,7 @@ mod weighted_pair;
 mod weighted_urpd_names;
 
 use calibration::Calibration;
+use capitalized_price_vecs::CapitalizedPriceVecs;
 use cost_basis_vecs::CostBasisVecs;
 use daily_percentiles_vecs::DailyPercentilesVecs;
 use day_result::DayResult;

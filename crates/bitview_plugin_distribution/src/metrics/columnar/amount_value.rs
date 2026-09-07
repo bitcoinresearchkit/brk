@@ -1,6 +1,6 @@
 use brk_error::Result;
 
-use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext, Filter};
+use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
@@ -40,7 +40,7 @@ impl<S: Clone> ColumnarAmountValue<S> {
         )?;
 
         let series = Amount::new(|filter, cohort_name| {
-            let name = Self::metric_name(context, &filter, cohort_name, metric);
+            let name = context.metric_name(&filter, cohort_name, metric);
             let amounts = AmountRangeId::matching(&filter);
             let (sats, cents) = match amounts {
                 Some(amount) => values.sources(&format!("{name}_cumulative"), version, [amount]),
@@ -54,15 +54,6 @@ impl<S: Clone> ColumnarAmountValue<S> {
         });
 
         Ok(Self { series, values })
-    }
-
-    fn metric_name(
-        context: CohortContext,
-        filter: &Filter,
-        cohort_name: &str,
-        metric: &str,
-    ) -> String {
-        context.metric_name(filter, cohort_name, metric)
     }
 
     #[inline(always)]

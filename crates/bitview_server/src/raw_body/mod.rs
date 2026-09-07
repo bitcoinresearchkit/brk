@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     body::{Body, Bytes},
+    http::HeaderMap,
     response::Response,
 };
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
@@ -9,6 +10,7 @@ use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 mod body;
 mod bytes;
 
+use crate::{AppState, CacheParams};
 use body::RetainedBody;
 use bytes::RetainedBytes;
 
@@ -35,6 +37,18 @@ impl RawBodyPermit {
             bytes,
             _permit: self.clone(),
         })
+    }
+
+    /// Retain admission through both the raw bytes and any outer encoder.
+    pub fn response(
+        self,
+        params: CacheParams,
+        bytes: Bytes,
+        content_headers: impl FnOnce(&mut HeaderMap),
+    ) -> Response {
+        let mut response = AppState::assemble_response(params, self.bytes(bytes), content_headers);
+        response.extensions_mut().insert(self);
+        response
     }
 
     /// Called outside compression so encoder state and emitted frames retain

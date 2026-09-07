@@ -1,6 +1,6 @@
 use bitview_cohort::{TermId, UTXOAggregateId};
 use bitview_traversable::Traversable;
-use brk_types::{Cents, Height, Sats, StoredF64};
+use brk_types::{BoundedRatio, Cents, Height, Sats};
 use vecdb::{ColumnarVec, EagerVec, PcoVec, Rw, StorageMode};
 
 use super::super::{super::Horizons, Mobility};
@@ -13,14 +13,14 @@ pub struct AggregateSources<M: StorageMode = Rw> {
     /// the sum of total supply multiplied by that probability. Returns NaN
     /// when the weighted supply is zero.
     pub supply_in_loss_share:
-        M::Stored<EagerVec<ColumnarVec<PcoVec<Height, StoredF64>, UTXOAggregateId>>>,
+        M::Stored<EagerVec<ColumnarVec<PcoVec<Height, BoundedRatio>, UTXOAggregateId>>>,
     /// For each supported forward horizon, the share of supply likely to move
     /// within that horizon that is in loss at the represented block. Each age
     /// range is weighted by one minus exp of the
     /// negative sum of its observed spending hazards times days across that
     /// horizon. Returns NaN when the weighted supply is zero.
     pub horizon:
-        Horizons<M::Stored<EagerVec<ColumnarVec<PcoVec<Height, StoredF64>, UTXOAggregateId>>>>,
+        Horizons<M::Stored<EagerVec<ColumnarVec<PcoVec<Height, BoundedRatio>, UTXOAggregateId>>>>,
     /// Sum of creation-date USD value multiplied by remaining-lifetime spending
     /// probability across a set of UTXO age ranges. Creation-date value is each
     /// unspent output's BTC value multiplied by Bitcoin's spot price when it was

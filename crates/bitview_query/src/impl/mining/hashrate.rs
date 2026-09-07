@@ -95,15 +95,11 @@ impl Query {
             current_difficulty,
         })
     }
-}
-pub trait RImplMiningHashrateQueryInternal: Sized {
-    fn hashrate_at(&self, height: Height) -> Result<u128>;
-}
-impl RImplMiningHashrateQueryInternal for Query {
+
     /// Network 1-day hashrate at the day containing `height`. Errors on
     /// stamp lag in the day1 index or in the daily-hashrate vec, so a
     /// transient dropout surfaces instead of silently reporting zero.
-    fn hashrate_at(&self, height: Height) -> Result<u128> {
+    pub fn hashrate_at(&self, height: Height) -> Result<u128> {
         let plugins = self.plugins();
         let day = plugins.mappings.height.day1.collect_one(height).data()?;
         Ok(*plugins

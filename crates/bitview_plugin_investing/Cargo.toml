@@ -15,7 +15,7 @@ bitview_plugin_mappings = { workspace = true }
 bitview_plugin_price = { workspace = true }
 brk_error = { workspace = true }
 bitview_traversable = { workspace = true }
-brk_types = { workspace = true }
+brk_types = { workspace = true, features = ["storage"] }
 vecdb = { workspace = true }
 
 [dev-dependencies]

@@ -12,11 +12,11 @@ pub mod rbf;
 
 pub use rbf::ResolvedRbf;
 
-use crate::{Query, RepresentationId, representation_id::content_hash};
+use crate::{Query, RepresentationId};
 
 fn serialize_json<T: Serialize>(value: &T) -> (Vec<u8>, RepresentationId) {
     let bytes = to_vec(value).unwrap();
-    let identity = RepresentationId::Content(content_hash(&bytes));
+    let identity = RepresentationId::Content(RepresentationId::content_hash(&bytes));
     (bytes, identity)
 }
 

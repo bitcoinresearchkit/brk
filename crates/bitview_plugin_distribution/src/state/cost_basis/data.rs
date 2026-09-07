@@ -130,17 +130,11 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
     }
 
     fn import_at_or_before(&mut self, height: Height) -> Result<Height> {
-        let files = self.raw.read_dir(None)?;
-        let (&height, path) = files.range(..=height).next_back().ok_or(Error::NotFound(
-            "No cost basis state found at or before height".into(),
-        ))?;
-        let data = fs::read(path)?;
+        let (height, data) = self.raw.read_state_at_or_before(height)?;
         let (base, rest) = UrpdRaw::deserialize_with_rest(&data)?;
-        debug_assert!(
-            rest.len() >= if S::TRACK_CAPITAL { 32 } else { 16 },
-            "CostBasisData state too short: {} bytes",
-            rest.len()
-        );
+        if rest.len() < if S::TRACK_CAPITAL { 32 } else { 16 } {
+            return Err(Error::Internal("cost-basis scalar state is truncated"));
+        }
         self.map = Some(base);
         self.raw.import_state(rest)?;
         self.capitalized_cap_raw = if S::TRACK_CAPITAL {
@@ -241,7 +235,7 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
 
     fn write(&mut self, height: Height, cleanup: bool) -> Result<()> {
         self.apply_pending();
-        self.raw.write_and_cleanup(height, cleanup)?;
+        self.raw.cleanup_checkpoints(height, cleanup)?;
 
         let mut buffer = self.map.as_ref().unwrap().serialize()?;
         buffer.extend(self.raw.serialized_state());
@@ -256,35 +250,22 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs,
-        path::PathBuf,
-        sync::atomic::{AtomicU64, Ordering},
-    };
+    use std::fs;
 
     use super::*;
     use crate::state::{WithCapital, WithoutCapital};
 
-    static NEXT_PATH_ID: AtomicU64 = AtomicU64::new(0);
-
-    fn test_path() -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "brk-cost-basis-data-{}-{}",
-            std::process::id(),
-            NEXT_PATH_ID.fetch_add(1, Ordering::Relaxed)
-        ))
-    }
-
     #[test]
     fn checkpoint_layout_tracks_capital_capability() {
-        let root = test_path();
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
 
-        let mut compact = CostBasisData::<WithoutCapital>::create(&root, "compact");
+        let mut compact = CostBasisData::<WithoutCapital>::create(root, "compact");
         compact.clean().unwrap();
         compact.init();
         compact.write(Height::ZERO, false).unwrap();
 
-        let mut full = CostBasisData::<WithCapital>::create(&root, "full");
+        let mut full = CostBasisData::<WithCapital>::create(root, "full");
         full.clean().unwrap();
         full.init();
         full.write(Height::ZERO, false).unwrap();
@@ -297,19 +278,46 @@ mod tests {
             .len();
         assert_eq!(full_len, compact_len + 16);
 
-        let mut compact_reader = CostBasisData::<WithoutCapital>::create(&root, "compact");
+        let mut compact_reader = CostBasisData::<WithoutCapital>::create(root, "compact");
         assert_eq!(
             compact_reader.import_at_or_before(Height::ZERO).unwrap(),
             Height::ZERO
         );
 
-        let mut legacy_reader = CostBasisData::<WithoutCapital>::create(&root, "full");
+        let mut legacy_reader = CostBasisData::<WithoutCapital>::create(root, "full");
         assert_eq!(
             legacy_reader.import_at_or_before(Height::ZERO).unwrap(),
             Height::ZERO
         );
         assert_eq!(legacy_reader.capitalized_cap_raw(), CentsSquaredSats::ZERO);
+    }
 
-        fs::remove_dir_all(root).unwrap();
+    #[test]
+    fn truncated_scalar_checkpoints_return_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut raw = CostBasisRaw::create(dir.path(), "raw");
+        for len in 0..16 {
+            assert!(raw.import_state(&vec![0; len]).is_err());
+        }
+        assert!(raw.import_state(&[0; 16]).is_ok());
+
+        let mut full = CostBasisData::<WithCapital>::create(dir.path(), "full");
+        full.clean().unwrap();
+        full.init();
+        full.write(Height::ZERO, false).unwrap();
+        let path = full.raw.path_state(Height::ZERO);
+        let data = fs::read(&path).unwrap();
+        let scalar_offset = data.len() - 32;
+        for len in 0..32 {
+            fs::write(&path, &data[..scalar_offset + len]).unwrap();
+            let mut reader = CostBasisData::<WithCapital>::create(dir.path(), "full");
+            assert!(reader.import_at_or_before(Height::ZERO).is_err());
+        }
+        fs::write(&path, data).unwrap();
+        let mut reader = CostBasisData::<WithCapital>::create(dir.path(), "full");
+        assert_eq!(
+            reader.import_at_or_before(Height::ZERO).unwrap(),
+            Height::ZERO
+        );
     }
 }

@@ -45,6 +45,32 @@ fn identical_inputs_reuse_snapshot() {
 }
 
 #[test]
+fn content_changes_rebuild_even_when_other_reuse_inputs_match() {
+    let rebuilder = Rebuilder::default();
+    let (state, txids) = state_with(&[1]);
+    rebuilder.tick(&state, &txids, min_fee(1), true);
+    let before = rebuilder.snapshot();
+
+    let tx = fake_tx(2, &[], &[(p2wpkh_script(2), 2_000)]);
+    let entry = TxEntry::new(&fake_entry_info(tx.txid, 200, 100), 100, false);
+    state.write().txs.insert(tx, entry);
+    rebuilder.tick(&state, &txids, min_fee(1), false);
+
+    let after = rebuilder.snapshot();
+    assert_eq!(rebuilder.rebuild_count(), 2);
+    assert!(!Arc::ptr_eq(&before, &after));
+    assert_eq!(after.txs.len(), 2);
+    assert_eq!(
+        after.content_revision(),
+        state.read().txs.content_revision()
+    );
+
+    rebuilder.tick(&state, &txids, min_fee(1), false);
+    assert!(Arc::ptr_eq(&after, &rebuilder.snapshot()));
+    assert_eq!(rebuilder.rebuild_count(), 2);
+}
+
+#[test]
 fn reordered_template_rebuilds() {
     let rebuilder = Rebuilder::default();
     let (state, mut txids) = state_with(&[1, 2]);

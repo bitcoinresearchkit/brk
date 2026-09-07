@@ -1,4 +1,4 @@
-use crate::internals::*;
+use std::sync::Arc;
 
 use bitcoin::{
     MerkleBlock, Txid as BitcoinTxid,
@@ -13,14 +13,14 @@ use brk_types::{
 };
 use vecdb::{ReadableVec, VecIndex};
 
-use super::{block::block_txids_by_height, indexed_transaction};
+use super::indexed_transaction;
 
+pub(crate) mod body;
 pub mod confirmed;
 pub mod info;
 pub mod output_count;
 pub mod outspend;
 pub mod raw;
-pub mod resolved;
 
 pub use confirmed::ResolvedConfirmedTx;
 pub use info::ResolvedTransaction;
@@ -28,7 +28,27 @@ pub use raw::ResolvedRawTransaction;
 
 use crate::Query;
 
+enum TransactionSource {
+    Memory(Arc<Transaction>),
+    Chain(ResolvedConfirmedTx),
+}
+
 impl Query {
+    /// Resolve one exact live, confirmed, or recently vanished transaction.
+    fn resolve_transaction_source(&self, txid: &Txid) -> Result<TransactionSource> {
+        let read = self.read_indexer()?;
+        match read.resolve_confirmed_tx(txid) {
+            Ok(transaction) => Ok(TransactionSource::Chain(transaction)),
+            Err(Error::UnknownTxid) => self
+                .mempool()
+                .ok_or(Error::UnknownTxid)?
+                .transaction(txid, &self.tip_blockhash())?
+                .map(TransactionSource::Memory)
+                .ok_or(Error::UnknownTxid),
+            Err(error) => Err(error),
+        }
+    }
+
     // ── Txid → TxIndex resolution (single source of truth) ─────────
 
     pub fn txid_by_index(&self, index: TxIndex) -> Result<Txid> {
@@ -55,9 +75,18 @@ impl Query {
     }
 
     /// Resolve a txid to (TxIndex, Height).
+    ///
+    /// Position resolution without acquiring a read view is internal only.
+    ///
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::Txid;
+    /// fn unguarded(query: &Query, txid: &Txid) {
+    ///     query.resolve_confirmed_position(txid).unwrap();
+    /// }
+    /// ```
     pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        let _guard = self.read_plugin(self.indexer())?;
-        self.resolve_confirmed_position(txid)
+        self.read_indexer()?.resolve_confirmed_position(txid)
     }
 
     // ── TxStatus construction (single source of truth) ─────────────
@@ -105,8 +134,8 @@ impl Query {
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
-        let _guard = self.read_plugin(self.indexer())?;
-        match self.resolve_confirmed_position(txid) {
+        let read = self.read_indexer()?;
+        match read.resolve_confirmed_position(txid) {
             Ok((_, height)) => self.confirmed_status_at(height),
             Err(Error::UnknownTxid) => self
                 .mempool()
@@ -188,21 +217,21 @@ impl Query {
     }
 
     pub fn merkleblock_proof(&self, txid: &Txid) -> Result<String> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let (_, height) = self.resolve_confirmed_position(txid)?;
+        let read = self.read_indexer()?;
+        let (_, height) = read.resolve_confirmed_position(txid)?;
         self.merkleblock_proof_at(*txid, height)
     }
 
     /// Build a merkleblock proof from a pre-resolved confirmed transaction.
     pub fn merkleblock_proof_resolved(&self, tx: ResolvedConfirmedTx) -> Result<String> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let (txid, _, height) = self.revalidate_confirmed_tx(tx)?;
+        let read = self.read_indexer()?;
+        let (txid, _, height) = read.revalidate_confirmed_tx(tx)?;
         self.merkleblock_proof_at(txid, height)
     }
 
     fn merkleblock_proof_at(&self, txid: Txid, height: Height) -> Result<String> {
         let header = self.read_block_header(height)?;
-        let txids = block_txids_by_height(self, height)?;
+        let txids = self.block_txids_by_height(height, self.safe_lengths())?;
 
         let target: BitcoinTxid = (&txid).into();
         let mb = MerkleBlock::from_header_txids_with_predicate(
@@ -214,15 +243,15 @@ impl Query {
     }
 
     pub fn merkle_proof(&self, txid: &Txid) -> Result<MerkleProof> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let (tx_index, height) = self.resolve_confirmed_position(txid)?;
+        let read = self.read_indexer()?;
+        let (tx_index, height) = read.resolve_confirmed_position(txid)?;
         self.merkle_proof_at(tx_index, height)
     }
 
     /// Build a merkle proof from a pre-resolved confirmed transaction.
     pub fn merkle_proof_resolved(&self, tx: ResolvedConfirmedTx) -> Result<MerkleProof> {
-        let _guard = self.read_plugin(self.indexer())?;
-        let (_, tx_index, height) = self.revalidate_confirmed_tx(tx)?;
+        let read = self.read_indexer()?;
+        let (_, tx_index, height) = read.revalidate_confirmed_tx(tx)?;
         self.merkle_proof_at(tx_index, height)
     }
 
@@ -238,7 +267,7 @@ impl Query {
             .to_usize()
             .checked_sub(first_tx.to_usize())
             .ok_or(Error::Internal("Transaction precedes its block"))?;
-        let txids = block_txids_by_height(self, height)?;
+        let txids = self.block_txids_by_height(height, self.safe_lengths())?;
         if pos >= txids.len() {
             return Err(Error::Internal("Transaction exceeds its block"));
         }
@@ -248,6 +277,66 @@ impl Query {
             merkle: merkle_path(&txids, pos),
             pos,
         })
+    }
+
+    /// Resolve a txid to its internal TxIndex via prefix lookup.
+    /// Raw store hit — caller should prefer [`Self::resolve_tx_index_bounded`]
+    /// when subsequent reads dereference indexer/plugins vecs by `tx_index`.
+    /// Use this raw form only for "is this mined?" probes that don't deref
+    /// derived data (mempool merge, cpfp fee-rate fall-through).
+    #[inline]
+    pub fn resolve_tx_index(&self, txid: &Txid) -> Result<TxIndex> {
+        self.indexer()
+            .stores()
+            .tx_index(&TxidPrefix::from(txid))?
+            .ok_or(Error::UnknownTxid)
+    }
+    /// Exact txid verification after a prefix lookup, clamped to published data.
+    /// Returns `UnknownTxid` for tx_indices the store knows but the snapshot
+    /// has not yet covered. Use this from any path that will subsequently
+    /// dereference indexer/plugins vecs by `tx_index`.
+    #[inline]
+    pub fn resolve_tx_index_bounded(&self, txid: &Txid) -> Result<TxIndex> {
+        let tx_index = self.resolve_tx_index(txid)?;
+        if tx_index >= self.safe_lengths().tx_index
+            || self
+                .indexer()
+                .vecs()
+                .transactions
+                .txid
+                .collect_one(tx_index)
+                != Some(*txid)
+        {
+            return Err(Error::UnknownTxid);
+        }
+        Ok(tx_index)
+    }
+    /// Height for a confirmed tx_index via in-memory TxHeights lookup.
+    /// Bounded against the safe-lengths snapshot so rejected tx_indices
+    /// never dereference slots a concurrent writer might be populating.
+    #[inline]
+    pub fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
+        let bound = self.safe_lengths();
+        if tx_index >= bound.tx_index {
+            return Err(Error::UnknownTxid);
+        }
+        self.plugins()
+            .mappings
+            .tx_heights
+            .get_shared(tx_index)
+            .data()
+    }
+    /// Full confirmed TxStatus from a known height.
+    #[inline]
+    pub fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
+        if height >= self.safe_lengths().height {
+            return Err(Error::UnknownTxid);
+        }
+        let (block_hash, block_time) = self.block_hash_and_time(height)?;
+        if height >= self.safe_lengths().height {
+            return Err(Error::UnknownTxid);
+        }
+        Ok(TxStatus::confirmed(height, block_hash, block_time))
     }
 }
 
@@ -282,74 +371,4 @@ fn merkle_path(txids: &[Txid], pos: usize) -> Vec<String> {
     }
 
     proof
-}
-pub trait RImplTxQueryInternal: Sized {
-    fn resolve_tx_index(&self, txid: &Txid) -> Result<TxIndex>;
-
-    fn resolve_tx_index_bounded(&self, txid: &Txid) -> Result<TxIndex>;
-
-    fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height>;
-
-    fn confirmed_status_at(&self, height: Height) -> Result<TxStatus>;
-}
-impl RImplTxQueryInternal for Query {
-    /// Resolve a txid to its internal TxIndex via prefix lookup.
-    /// Raw store hit — caller should prefer [`Self::resolve_tx_index_bounded`]
-    /// when subsequent reads dereference indexer/plugins vecs by `tx_index`.
-    /// Use this raw form only for "is this mined?" probes that don't deref
-    /// derived data (mempool merge, cpfp fee-rate fall-through).
-    #[inline]
-    fn resolve_tx_index(&self, txid: &Txid) -> Result<TxIndex> {
-        self.indexer()
-            .stores()
-            .tx_index(&TxidPrefix::from(txid))?
-            .ok_or(Error::UnknownTxid)
-    }
-    /// Exact txid verification after a prefix lookup, clamped to published data.
-    /// Returns `UnknownTxid` for tx_indices the store knows but the snapshot
-    /// has not yet covered. Use this from any path that will subsequently
-    /// dereference indexer/plugins vecs by `tx_index`.
-    #[inline]
-    fn resolve_tx_index_bounded(&self, txid: &Txid) -> Result<TxIndex> {
-        let tx_index = self.resolve_tx_index(txid)?;
-        if tx_index >= self.safe_lengths().tx_index
-            || self
-                .indexer()
-                .vecs()
-                .transactions
-                .txid
-                .collect_one(tx_index)
-                != Some(*txid)
-        {
-            return Err(Error::UnknownTxid);
-        }
-        Ok(tx_index)
-    }
-    /// Height for a confirmed tx_index via in-memory TxHeights lookup.
-    /// Bounded against the safe-lengths snapshot so rejected tx_indices
-    /// never dereference slots a concurrent writer might be populating.
-    #[inline]
-    fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
-        let bound = self.safe_lengths();
-        if tx_index >= bound.tx_index {
-            return Err(Error::UnknownTxid);
-        }
-        self.plugins()
-            .mappings
-            .tx_heights
-            .get_shared(tx_index)
-            .data()
-    }
-    /// Full confirmed TxStatus from a known height.
-    #[inline]
-    fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
-        let (block_hash, block_time) = self.block_hash_and_time(height)?;
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
-        Ok(TxStatus::confirmed(height, block_hash, block_time))
-    }
 }

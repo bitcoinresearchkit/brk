@@ -25,6 +25,30 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
             state.sync(|q| q.len(&"price_close".into(), index)).unwrap(),
             last + 1
         );
+        // Public readers must install their own bounds, without a caller scope.
+        state.sync(|query| {
+            let params = serde_json::from_value(serde_json::json!({
+                "series": "price_close", "index": index.name(),
+            }))
+            .unwrap();
+            let read = query.search(&params).unwrap();
+            let column = read.columns().next().unwrap();
+            assert_eq!(column.len(), last + 1);
+            let mut expected = Vec::new();
+            column.write_json(None, None, &mut expected).unwrap();
+            let values: Value = serde_json::from_slice(&expected).unwrap();
+            assert_eq!(values.as_array().unwrap().len(), last + 1);
+            assert_eq!(values[last].as_f64(), Some(0.0));
+            drop(read);
+
+            let resolved = query.resolve(params, usize::MAX).unwrap();
+            let column = resolved.columns().next().unwrap();
+            let mut actual = Vec::new();
+            column
+                .write_json(None, Some(usize::MAX), &mut actual)
+                .unwrap();
+            assert_eq!(actual, expected);
+        });
         let path = format!(
             "/api/series/price_close/{}?start={last}&limit=1",
             index.name()

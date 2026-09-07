@@ -4,16 +4,19 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use crate::CheckedSub;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::{Sats, VSize, Weight};
 
 const MILLIS_PER_SAT_VBYTE: u64 = 1_000;
 
 /// Fee rate stored in milli-sat/vB and exposed as sat/vB.
-#[derive(Debug, Default, Clone, Copy, Pco, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 #[repr(transparent)]
 #[schemars(
     with = "f64",
@@ -264,6 +267,13 @@ impl CheckedSub for FeeRate {
         }
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for FeeRate {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl Serialize for FeeRate {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -284,6 +294,7 @@ impl std::fmt::Display for FeeRate {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for FeeRate {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

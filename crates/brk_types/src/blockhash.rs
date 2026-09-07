@@ -9,11 +9,13 @@ use brk_error::Error;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer, de};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// Double-SHA256 block-header hash, serialized in Bitcoin's conventional
 /// hexadecimal byte order.
-#[derive(Default, Debug, Deref, Clone, Copy, PartialEq, Eq, Hash, Bytes, JsonSchema)]
+#[derive(Default, Debug, Deref, Clone, Copy, PartialEq, Eq, Hash, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 #[repr(C)]
 #[schemars(
     transparent,
@@ -107,6 +109,7 @@ impl<'de> Deserialize<'de> for BlockHash {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for BlockHash {
     fn write_to(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(&self.hex());

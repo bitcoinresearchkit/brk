@@ -3,10 +3,13 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
+use crate::unlikely;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, unlikely};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::{CentsSats, Dollars, Sats, StoredF64};
 
@@ -26,9 +29,9 @@ use super::{CentsSats, Dollars, Sats, StoredF64};
     Hash,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Cents(u64);
 
 impl Cents {
@@ -377,6 +380,12 @@ impl CheckedSub for Cents {
         Cents::checked_sub(self, rhs)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Cents {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for Cents {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -386,6 +395,7 @@ impl std::fmt::Display for Cents {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Cents {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -418,9 +428,12 @@ mod tests {
         assert!(Cents::from(Dollars::NAN).is_nan());
         assert_eq!(Cents::from(f64::MAX), Cents::MAX_FINITE);
 
-        let mut json = Vec::new();
-        Cents::NAN.fmt_json(&mut json);
-        assert_eq!(json, b"null");
+        #[cfg(feature = "storage")]
+        {
+            let mut json = Vec::new();
+            Cents::NAN.fmt_json(&mut json);
+            assert_eq!(json, b"null");
+        }
     }
 
     #[test]

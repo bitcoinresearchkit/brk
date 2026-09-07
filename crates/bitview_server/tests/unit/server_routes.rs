@@ -246,7 +246,11 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .to_owned();
     let single_expected = state.sync(|q| {
         serde_json::to_string(
-            &q.block_resolved_v1(q.resolve_block(&hash).unwrap())
+            &q.resolve_block_v1(&hash)
+                .unwrap()
+                .build(q)
+                .unwrap()
+                .pop()
                 .unwrap(),
         )
         .unwrap()
@@ -834,9 +838,9 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
             let admission = server.state.sync_query.clone();
             let disk_admission = server.state.disk_query.clone();
             #[cfg(feature = "series")]
-            let search_admission = server.state.series_bodies.search_query().clone();
+            let search_admission = server.state.series_bodies.search_query.clone();
             #[cfg(feature = "series")]
-            let data_admission = server.state.series_bodies.data_query().clone();
+            let data_admission = server.state.series_bodies.data_query.clone();
             let disk_file = server.state.data_path.join("data");
             let serving = tokio::spawn(server.serve());
             // Several intentionally unavailable reads now spend their bounded
@@ -1043,9 +1047,9 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                         assert!(!response.contains("\r\netag:"));
                     }
                     assert!(query.sync(|query| query.vecs().series_names().iter().all(|name| name.len() <= 1024)));
-                    for path in ["a".repeat(1024), "%C3%A9".repeat(512)].iter().flat_map(|encoded| series_name_paths(encoded)) {
+                    for path in ["a".repeat(1024), "%C3%A9".repeat(512), "%E6%BC%A2".repeat(341)].iter().flat_map(|encoded| series_name_paths(encoded)) {
                         let response = exchange(address, "GET", &path).await;
-                        assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+                        assert!(response.starts_with("HTTP/1.1 404"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                     }
                     let response = exchange(address, "GET", "/api/series/no_such_series_zzzz").await;

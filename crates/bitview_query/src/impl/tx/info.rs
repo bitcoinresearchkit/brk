@@ -1,57 +1,40 @@
-use crate::internals::*;
-
 use brk_error::Result;
-use brk_types::{Transaction, Txid};
+use brk_types::Txid;
 use serde_json::to_vec;
 
-use super::{ResolvedConfirmedTx, resolved::TransactionSource};
-use crate::{Query, RepresentationId, representation_id::content_hash};
+use super::{TransactionSource, body::ResolvedTxBody};
+use crate::{Query, RepresentationId};
 
 /// Transaction JSON resolved to one exact in-memory or indexed source.
 pub struct ResolvedTransaction {
-    source: TransactionInfoSource,
-}
-
-enum TransactionInfoSource {
-    Memory { bytes: Vec<u8>, hash: u64 },
-    Chain(ResolvedConfirmedTx),
+    source: ResolvedTxBody,
 }
 
 impl ResolvedTransaction {
-    fn memory(transaction: &Transaction) -> Self {
-        let bytes = to_vec(&transaction).unwrap();
-        let hash = content_hash(&bytes);
-        Self {
-            source: TransactionInfoSource::Memory { bytes, hash },
-        }
-    }
-
     pub fn identity(&self) -> RepresentationId {
-        match &self.source {
-            TransactionInfoSource::Memory { hash, .. } => RepresentationId::Content(*hash),
-            TransactionInfoSource::Chain(transaction) => transaction.identity(),
-        }
+        self.source.identity()
     }
 }
 
 impl Query {
     /// Resolve transaction JSON once before an async response handoff.
     pub fn resolve_transaction(&self, txid: &Txid) -> Result<ResolvedTransaction> {
-        Ok(match self.resolve_transaction_source(txid)? {
-            TransactionSource::Memory(transaction) => ResolvedTransaction::memory(&transaction),
-            TransactionSource::Chain(transaction) => ResolvedTransaction {
-                source: TransactionInfoSource::Chain(transaction),
-            },
-        })
+        let source = match self.resolve_transaction_source(txid)? {
+            TransactionSource::Memory(transaction) => {
+                ResolvedTxBody::memory(to_vec(transaction.as_ref()).unwrap())
+            }
+            TransactionSource::Chain(transaction) => ResolvedTxBody::Chain(transaction),
+        };
+        Ok(ResolvedTransaction { source })
     }
 
     /// Build JSON bytes without repeating the transaction-prefix lookup.
     pub fn transaction_json_resolved(&self, transaction: ResolvedTransaction) -> Result<Vec<u8>> {
         match transaction.source {
-            TransactionInfoSource::Memory { bytes, .. } => Ok(bytes),
-            TransactionInfoSource::Chain(transaction) => {
-                let _guard = self.read_plugin(self.indexer())?;
-                let (_, index, _) = self.revalidate_confirmed_tx(transaction)?;
+            ResolvedTxBody::Memory { bytes, .. } => Ok(bytes),
+            ResolvedTxBody::Chain(transaction) => {
+                let read = self.read_indexer()?;
+                let (_, index, _) = read.revalidate_confirmed_tx(transaction)?;
                 let value = self.transaction_by_index(index)?;
                 let bytes = to_vec(&value).unwrap();
                 Ok(bytes)

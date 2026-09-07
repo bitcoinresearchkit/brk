@@ -1,3 +1,4 @@
+use crate::CheckedSub;
 use crate::{
     FeeRate, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize,
     Weight, Witness,
@@ -5,7 +6,6 @@ use crate::{
 use bitcoin::{Script, constants::WITNESS_SCALE_FACTOR};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::CheckedSub;
 
 /// Transaction information compatible with mempool.space API format
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

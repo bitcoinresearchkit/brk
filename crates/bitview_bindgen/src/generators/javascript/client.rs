@@ -3,8 +3,8 @@
 use std::fmt::Write;
 
 use crate::{
-    ClientConstants, ClientMetadata, CohortConstants, GenericSyntax, IndexSetPattern,
-    JavaScriptSyntax, StructuralPattern, camel_case_keys, format_json,
+    ClientConstants, ClientMetadata, GenericSyntax, IndexSetPattern, JavaScriptSyntax,
+    StructuralPattern, camel_case_keys, cohort_constants, format_json,
     generate_parameterized_field, to_camel_case,
 };
 
@@ -891,7 +891,7 @@ pub fn generate_static_constants(output: &mut String) {
     );
 
     // Cohort constants with camelCase keys
-    for (name, value) in CohortConstants::all() {
+    for (name, value) in cohort_constants() {
         write_static_const(output, name, &format_json(&camel_case_keys(value)));
     }
 

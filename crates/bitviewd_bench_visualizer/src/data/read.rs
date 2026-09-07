@@ -3,33 +3,30 @@ use std::{error::Error, fs, path::Path};
 use super::{DataPoint, DualRun, Run};
 
 pub fn read_runs(crate_path: &Path, filename: &str) -> Result<Vec<Run>, Box<dyn Error>> {
-    let mut runs = Vec::new();
-    for entry in fs::read_dir(crate_path)? {
-        let path = entry?.path();
-        if !path.is_dir() {
-            continue;
-        }
-
-        let id = path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .ok_or("Invalid run ID")?
-            .to_owned();
-        if id.starts_with('_') || id.chars().all(|character| character.is_ascii_digit()) {
-            continue;
-        }
-
-        let csv = path.join(filename);
-        if csv.exists()
-            && let Ok(data) = read_csv(&csv)
-        {
-            runs.push(Run { id, data });
-        }
-    }
-    Ok(runs)
+    read_run_files(crate_path, filename, |id, path| {
+        Ok(Run {
+            id,
+            data: read_csv(path)?,
+        })
+    })
 }
 
 pub fn read_dual_runs(crate_path: &Path, filename: &str) -> Result<Vec<DualRun>, Box<dyn Error>> {
+    read_run_files(crate_path, filename, |id, path| {
+        let (primary, secondary) = read_dual_csv(path)?;
+        Ok(DualRun {
+            id,
+            primary,
+            secondary,
+        })
+    })
+}
+
+fn read_run_files<R>(
+    crate_path: &Path,
+    filename: &str,
+    read: impl Fn(String, &Path) -> Result<R, Box<dyn Error>>,
+) -> Result<Vec<R>, Box<dyn Error>> {
     let mut runs = Vec::new();
     for entry in fs::read_dir(crate_path)? {
         let path = entry?.path();
@@ -48,13 +45,9 @@ pub fn read_dual_runs(crate_path: &Path, filename: &str) -> Result<Vec<DualRun>,
 
         let csv = path.join(filename);
         if csv.exists()
-            && let Ok((primary, secondary)) = read_dual_csv(&csv)
+            && let Ok(run) = read(id, &csv)
         {
-            runs.push(DualRun {
-                id,
-                primary,
-                secondary,
-            });
+            runs.push(run);
         }
     }
     Ok(runs)

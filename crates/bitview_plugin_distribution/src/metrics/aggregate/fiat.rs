@@ -6,9 +6,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
-};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
 
 use bitview_compute::{ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 
@@ -52,16 +50,7 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
         Ok(Self { values })
     }
 
-    #[inline(always)]
-    pub fn push(&mut self, row: UTXOAggregate<C>) {
-        self.values.push(row);
-    }
-
     pub fn len(&self) -> usize {
         self.values.height.len()
-    }
-
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.values.stored_mut()
     }
 }

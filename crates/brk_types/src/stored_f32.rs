@@ -5,17 +5,20 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
 
 /// Stored 32-bit floating point value
-#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, Pco, JsonSchema)]
+#[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct StoredF32(f32);
 
 impl StoredF32 {
@@ -77,10 +80,22 @@ impl CheckedSub<StoredF32> for StoredF32 {
         Some(Self(self.0 - rhs.0))
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<StoredF32> for StoredF32 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl CheckedSub<usize> for StoredF32 {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         Some(Self(self.0 - rhs as f32))
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<usize> for StoredF32 {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -237,13 +252,21 @@ impl Ord for StoredF32 {
     }
 }
 
-impl PrintableIndex for StoredF32 {
-    fn to_string() -> &'static str {
+impl StoredF32 {
+    pub fn index_name() -> &'static str {
         "f32"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["f32"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredF32 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -261,6 +284,7 @@ impl std::fmt::Display for StoredF32 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for StoredF32 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

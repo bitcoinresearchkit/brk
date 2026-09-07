@@ -9,7 +9,7 @@ use bitcoin::hashes::{Hash, HashEngine, sha256};
 use brk_types::{
     BlockFeeRatesEntry, BlockFeesEntry, BlockHash, BlockInfoV1, BlockRewardsEntry,
     BlockSizesWeights, DifficultyAdjustmentEntry, Dollars, HashrateSummary, Height, PoolDetail,
-    PoolHashrateEntry, PoolInfo, PoolSlug, PoolsSummary, RewardStats, TimePeriod,
+    PoolHashrateEntry, PoolInfo, PoolSlug, PoolsSummary, RewardStats,
 };
 use serde_json::to_vec;
 
@@ -51,7 +51,7 @@ async fn serve_pool_blocks(
     before_height: Option<Height>,
 ) -> Result<Response> {
     let blocks = state
-        .pool_blocks_preflight(slug, before_height, POOL_BLOCKS_LIMIT)
+        .run_admitted(move |q| q.resolve_pool_blocks(slug, before_height, POOL_BLOCKS_LIMIT))
         .await?;
     let params = pool_blocks_params(blocks.activity_anchor(), blocks.heights(), blocks.prices());
     Ok(AppState::respond_with_future(&headers, params, async {
@@ -149,10 +149,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/hashrate/pools/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
-                    let time_period = match path.time_period {
-                        TimePeriod::All => None,
-                        time_period => Some(time_period),
-                    };
+                    let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.pools_hashrate(time_period)).await
                 },
                 |op| {
@@ -243,10 +240,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/hashrate/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
-                    let time_period = match path.time_period {
-                        TimePeriod::All => None,
-                        time_period => Some(time_period),
-                    };
+                    let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.hashrate(time_period, HASHRATE_MAX_POINTS)).await
                 },
                 |op| {
@@ -282,10 +276,7 @@ impl MiningRoutes for ApiRouter<AppState> {
             "/api/v1/mining/difficulty-adjustments/{time_period}",
             get_with(
                 async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
-                    let time_period = match path.time_period {
-                        TimePeriod::All => None,
-                        time_period => Some(time_period),
-                    };
+                    let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.difficulty_adjustments(time_period)).await
                 },
                 |op| {

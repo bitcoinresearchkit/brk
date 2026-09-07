@@ -3,27 +3,19 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use crate::CheckedSub;
 use brk_error::{Error, Result};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, Day1, Timestamp};
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Default,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Month1(u16);
 
 impl Month1 {
@@ -126,14 +118,28 @@ impl CheckedSub for Month1 {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Month1 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
-impl PrintableIndex for Month1 {
-    fn to_string() -> &'static str {
+impl Month1 {
+    pub fn index_name() -> &'static str {
         "month1"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["month", "m", "monthly", "month1", "monthindex", "1m", "1mo"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Month1 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -145,6 +151,7 @@ impl std::fmt::Display for Month1 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Month1 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

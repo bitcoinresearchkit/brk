@@ -1,8 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-    AnyVec, BytesVec, BytesVecReader, BytesVecValue, ImportableVec, Stamp, StoredVec, VecIndex,
-    WritableVec,
+    BytesVec, BytesVecReader, BytesVecValue, ImportableVec, Stamp, StoredVec, VecIndex, WritableVec,
 };
 
 #[cfg(feature = "zerocopy")]
@@ -40,12 +39,12 @@ where
     V: MutableRawVec,
 {
     #[inline]
-    fn reader_inner(&self) -> V::Reader {
+    pub fn reader(&self) -> V::Reader {
         self.vec.reader()
     }
 
     #[inline]
-    fn get_with_reader_inner(&self, index: usize, reader: &V::Reader) -> Option<V::T> {
+    pub fn get_with_reader_at(&self, index: usize, reader: &V::Reader) -> Option<V::T> {
         if !self.current_holes().is_empty() && self.current_holes().contains(&index) {
             return None;
         }
@@ -66,7 +65,7 @@ where
     }
 
     #[inline]
-    fn delete_inner(&mut self, index: usize) {
+    pub fn delete_at(&mut self, index: usize) {
         if index >= self.vec.len() {
             return;
         }
@@ -76,28 +75,87 @@ where
         self.mut_holes().insert(index);
     }
 
-    fn collect_holed_inner(&self) -> Vec<Option<V::T>> {
-        let reader = self.reader_inner();
+    pub fn collect_holed(&self) -> Vec<Option<V::T>> {
+        let reader = self.reader();
         (0..self.vec.len())
-            .map(|index| self.get_with_reader_inner(index, &reader))
+            .map(|index| self.get_with_reader_at(index, &reader))
             .collect()
     }
 
-    fn take_inner(&mut self, index: usize, reader: &V::Reader) -> Option<V::T> {
-        let value = self.get_with_reader_inner(index, reader);
+    pub fn take_at(&mut self, index: usize, reader: &V::Reader) -> Option<V::T> {
+        let value = self.get_with_reader_at(index, reader);
         if value.is_some() {
-            self.delete_inner(index);
+            self.delete_at(index);
         }
         value
     }
 
-    fn fill_first_hole_or_push_inner(&mut self, value: V::T) -> crate::Result<V::I> {
+    #[inline]
+    pub fn fill_first_hole_or_push(&mut self, value: V::T) -> crate::Result<V::I> {
         if let Some(index) = self.mut_holes().pop_first() {
             self.update_value_at(index, value)?;
             return Ok(V::I::from(index));
         }
         self.vec.push(value);
         Ok(V::I::from(self.vec.len() - 1))
+    }
+
+    #[inline]
+    pub fn holes(&self) -> &BTreeSet<usize> {
+        self.current_holes()
+    }
+
+    #[inline]
+    pub fn prev_holes(&self) -> &BTreeSet<usize> {
+        self.holes.previous()
+    }
+
+    #[inline]
+    pub fn updated(&self) -> &BTreeMap<usize, V::T> {
+        self.current_updated()
+    }
+
+    #[inline]
+    pub fn prev_updated(&self) -> &BTreeMap<usize, V::T> {
+        self.previous_updated()
+    }
+
+    #[inline]
+    pub fn get_with_reader(&self, index: V::I, reader: &V::Reader) -> Option<V::T> {
+        self.get_with_reader_at(index.to_usize(), reader)
+    }
+
+    #[inline]
+    pub fn update(&mut self, index: V::I, value: V::T) -> crate::Result<()> {
+        self.update_value_at(index.to_usize(), value)
+    }
+
+    #[inline]
+    pub fn update_at(&mut self, index: usize, value: V::T) -> crate::Result<()> {
+        self.update_value_at(index, value)
+    }
+
+    #[inline]
+    pub fn delete(&mut self, index: V::I) {
+        self.delete_at(index.to_usize());
+    }
+
+    #[inline]
+    pub fn get_first_empty_index(&self) -> V::I {
+        self.current_holes()
+            .first()
+            .copied()
+            .map(V::I::from)
+            .unwrap_or_else(|| V::I::from(self.vec.len()))
+    }
+
+    #[inline]
+    pub fn reserve_pushed(&mut self, additional: usize) {
+        self.vec.reserve_pushed(additional);
+    }
+
+    pub fn take(&mut self, index: V::I, reader: &V::Reader) -> Option<V::T> {
+        self.take_at(index.to_usize(), reader)
     }
 }
 
@@ -107,98 +165,12 @@ where
     T: BytesVecValue,
 {
     #[inline]
-    pub fn reader(&self) -> BytesVecReader<I, T> {
-        self.reader_inner()
-    }
-
-    #[inline]
-    pub fn holes(&self) -> &BTreeSet<usize> {
-        self.current_holes()
-    }
-
-    #[inline]
-    pub fn prev_holes(&self) -> &BTreeSet<usize> {
-        self.holes.previous()
-    }
-
-    #[inline]
-    pub fn updated(&self) -> &BTreeMap<usize, T> {
-        self.current_updated()
-    }
-
-    #[inline]
-    pub fn prev_updated(&self) -> &BTreeMap<usize, T> {
-        self.previous_updated()
-    }
-
-    pub fn collect_holed(&self) -> Vec<Option<T>> {
-        self.collect_holed_inner()
-    }
-
-    #[inline]
-    pub fn get_with_reader(&self, index: I, reader: &BytesVecReader<I, T>) -> Option<T> {
-        self.get_with_reader_inner(index.to_usize(), reader)
-    }
-
-    #[inline]
-    pub fn get_with_reader_at(&self, index: usize, reader: &BytesVecReader<I, T>) -> Option<T> {
-        self.get_with_reader_inner(index, reader)
-    }
-
-    #[inline]
     pub fn get_append_only(&self, index: I, reader: &BytesVecReader<I, T>) -> Option<T> {
         debug_assert!(
             self.current_holes().is_empty() && self.current_updated().is_empty(),
             "get_append_only requires a vector without holes or updates"
         );
         self.vec.get_append_only(index, reader)
-    }
-
-    #[inline]
-    pub fn update(&mut self, index: I, value: T) -> crate::Result<()> {
-        self.update_value_at(index.to_usize(), value)
-    }
-
-    #[inline]
-    pub fn update_at(&mut self, index: usize, value: T) -> crate::Result<()> {
-        self.update_value_at(index, value)
-    }
-
-    #[inline]
-    pub fn delete(&mut self, index: I) {
-        self.delete_inner(index.to_usize());
-    }
-
-    #[inline]
-    pub fn delete_at(&mut self, index: usize) {
-        self.delete_inner(index);
-    }
-
-    #[inline]
-    pub fn get_first_empty_index(&self) -> I {
-        self.current_holes()
-            .first()
-            .copied()
-            .map(I::from)
-            .unwrap_or_else(|| I::from(self.vec.len()))
-    }
-
-    #[inline]
-    pub fn fill_first_hole_or_push(&mut self, value: T) -> crate::Result<I> {
-        self.fill_first_hole_or_push_inner(value)
-    }
-
-    #[inline]
-    pub fn reserve_pushed(&mut self, additional: usize) {
-        self.vec.reserve_pushed(additional);
-    }
-
-    pub fn take(&mut self, index: I, reader: &BytesVecReader<I, T>) -> Option<T> {
-        self.take_inner(index.to_usize(), reader)
-    }
-
-    pub fn take_at(&mut self, index: usize, reader: &BytesVecReader<I, T>) -> Option<T> {
-        self.take_inner(index, reader)
     }
 }
 
@@ -208,53 +180,6 @@ where
     I: VecIndex,
     T: ZeroCopyVecValue,
 {
-    #[inline]
-    pub fn reader(&self) -> VecReader<I, T, ZeroCopyStrategy<T>> {
-        self.reader_inner()
-    }
-
-    #[inline]
-    pub fn holes(&self) -> &BTreeSet<usize> {
-        self.current_holes()
-    }
-
-    #[inline]
-    pub fn prev_holes(&self) -> &BTreeSet<usize> {
-        self.holes.previous()
-    }
-
-    #[inline]
-    pub fn updated(&self) -> &BTreeMap<usize, T> {
-        self.current_updated()
-    }
-
-    #[inline]
-    pub fn prev_updated(&self) -> &BTreeMap<usize, T> {
-        self.previous_updated()
-    }
-
-    pub fn collect_holed(&self) -> Vec<Option<T>> {
-        self.collect_holed_inner()
-    }
-
-    #[inline]
-    pub fn get_with_reader(
-        &self,
-        index: I,
-        reader: &VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<T> {
-        self.get_with_reader_inner(index.to_usize(), reader)
-    }
-
-    #[inline]
-    pub fn get_with_reader_at(
-        &self,
-        index: usize,
-        reader: &VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<T> {
-        self.get_with_reader_inner(index, reader)
-    }
-
     #[inline]
     pub fn get_append_only(
         &self,
@@ -279,56 +204,5 @@ where
             return None;
         }
         self.vec.read_ref_at(index, reader)
-    }
-
-    #[inline]
-    pub fn update(&mut self, index: I, value: T) -> crate::Result<()> {
-        self.update_value_at(index.to_usize(), value)
-    }
-
-    #[inline]
-    pub fn update_at(&mut self, index: usize, value: T) -> crate::Result<()> {
-        self.update_value_at(index, value)
-    }
-
-    #[inline]
-    pub fn delete(&mut self, index: I) {
-        self.delete_inner(index.to_usize());
-    }
-
-    #[inline]
-    pub fn delete_at(&mut self, index: usize) {
-        self.delete_inner(index);
-    }
-
-    #[inline]
-    pub fn get_first_empty_index(&self) -> I {
-        self.current_holes()
-            .first()
-            .copied()
-            .map(I::from)
-            .unwrap_or_else(|| I::from(self.vec.len()))
-    }
-
-    #[inline]
-    pub fn fill_first_hole_or_push(&mut self, value: T) -> crate::Result<I> {
-        self.fill_first_hole_or_push_inner(value)
-    }
-
-    #[inline]
-    pub fn reserve_pushed(&mut self, additional: usize) {
-        self.vec.reserve_pushed(additional);
-    }
-
-    pub fn take(&mut self, index: I, reader: &VecReader<I, T, ZeroCopyStrategy<T>>) -> Option<T> {
-        self.take_inner(index.to_usize(), reader)
-    }
-
-    pub fn take_at(
-        &mut self,
-        index: usize,
-        reader: &VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<T> {
-        self.take_inner(index, reader)
     }
 }

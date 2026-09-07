@@ -1,9 +1,22 @@
 use bitview_traversable::Traversable;
-use brk_types::{Height, StoredF32, Version};
+use brk_types::{Cents, Height, PriceRatio, StoredF32, Version};
 use schemars::JsonSchema;
-use vecdb::{ReadableVec, TypedVec, UnaryTransform};
+use vecdb::{CachedBoxedVec, ReadableBoxedVec, ReadableVec, TypedVec, UnaryTransform};
 
 use crate::{ComputedVecValue, FixedRatio, Identity, LazyPerBlock, NumericValue};
+
+impl LazyRatioPerBlock<PriceRatio> {
+    /// Reuse the standard spot/reference-price ratio policy for a price source.
+    pub fn from_price_source(
+        name: &str,
+        version: Version,
+        price: ReadableBoxedVec<Height, Cents>,
+        spot: &CachedBoxedVec<Height, Cents>,
+        indexes: &crate::IndexSources,
+    ) -> Self {
+        super::price::cached_price_ratio(name, version, price, spot, indexes)
+    }
+}
 
 /// Fully lazy variant of `RatioPerBlock` derived from one per-block source.
 #[derive(Clone, Traversable)]

@@ -1,8 +1,8 @@
 use std::ops::Sub;
 
+use crate::unlikely;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::unlikely;
 
 use super::{Cents, Dollars};
 

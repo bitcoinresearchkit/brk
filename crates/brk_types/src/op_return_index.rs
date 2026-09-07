@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use crate::TypeIndex;
 
@@ -20,9 +22,9 @@ use crate::TypeIndex;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct OpReturnIndex(TypeIndex);
 
 impl From<TypeIndex> for OpReturnIndex {
@@ -65,14 +67,28 @@ impl CheckedSub<OpReturnIndex> for OpReturnIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<OpReturnIndex> for OpReturnIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
-impl PrintableIndex for OpReturnIndex {
-    fn to_string() -> &'static str {
+impl OpReturnIndex {
+    pub fn index_name() -> &'static str {
         "op_return_index"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["op", "opreturn", "op_return", "op_return_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for OpReturnIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -82,6 +98,7 @@ impl std::fmt::Display for OpReturnIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for OpReturnIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

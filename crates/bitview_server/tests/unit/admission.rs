@@ -12,6 +12,69 @@ use super::chain_fixture::run;
 use crate::{CacheParams, CacheStrategy};
 
 #[test]
+fn bound_responses_preserve_body_identity_and_validate_before_revalidation() {
+    run(|state, _| async move {
+        for identity in [
+            RepresentationId::content(b"[]"),
+            RepresentationId::Block(state.sync(|query| query.tip_blockhash())),
+        ] {
+            let params = CacheParams::resolve(
+                &crate::AppState::representation_strategy(Version::ONE, identity),
+                state.cdn_cache_mode,
+            );
+            for conditional in [false, true] {
+                let mut headers = HeaderMap::new();
+                if conditional {
+                    headers.insert(IF_NONE_MATCH, "*".parse().unwrap());
+                }
+                let response = state
+                    .respond_json_bound(&headers, Version::ONE, move |_| {
+                        Ok((b"[]".to_vec(), identity))
+                    })
+                    .await;
+                assert_eq!(
+                    response.status(),
+                    if conditional {
+                        StatusCode::NOT_MODIFIED
+                    } else {
+                        StatusCode::OK
+                    }
+                );
+                let mut expected = HeaderMap::new();
+                params.apply_to(&mut expected);
+                for (name, value) in &expected {
+                    assert_eq!(response.headers().get(name), Some(value));
+                }
+                assert_eq!(
+                    response.headers().contains_key("content-type"),
+                    !conditional
+                );
+                let bytes = axum::body::to_bytes(response.into_body(), 1024)
+                    .await
+                    .unwrap();
+                assert_eq!(
+                    &bytes[..],
+                    if conditional {
+                        b"".as_slice()
+                    } else {
+                        b"[]".as_slice()
+                    }
+                );
+
+                let error = state
+                    .respond_json_bound(&headers, Version::ONE, |_| {
+                        Err(brk_error::Error::StateUpdating)
+                    })
+                    .await;
+                assert_eq!(error.status(), StatusCode::SERVICE_UNAVAILABLE);
+                assert!(!error.headers().contains_key("etag"));
+                assert_eq!(error.headers()["cache-control"], "no-store");
+            }
+        }
+    });
+}
+
+#[test]
 fn generic_body_jobs_remain_admitted_after_cancellation() {
     run(|state, _| async move {
         for bound in [false, true] {

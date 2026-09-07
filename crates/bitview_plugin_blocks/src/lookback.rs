@@ -96,12 +96,8 @@ pub struct Vecs {
     pub _26y: LazyWindowStartVec,
 }
 
-pub trait Internal: Sized {
-    fn new(version: Version, timestamps: CachedBoxedVec<Height, Timestamp>) -> Self;
-}
-
-impl Internal for Vecs {
-    fn new(version: Version, timestamps: CachedBoxedVec<Height, Timestamp>) -> Self {
+impl Vecs {
+    pub fn new(version: Version, timestamps: CachedBoxedVec<Height, Timestamp>) -> Self {
         macro_rules! hours {
             ($suffix:literal, $hours:literal) => {
                 LazyWindowStartVec::hours(
@@ -175,9 +171,7 @@ impl Internal for Vecs {
             _26y: days!("26y", 26 * 365),
         }
     }
-}
 
-impl Vecs {
     pub fn cached_window_starts(&self) -> Windows<&CachedWindowStartVec> {
         Windows {
             _24h: &self._24h,
@@ -263,14 +257,8 @@ impl Vecs {
             _ => panic!("No cached start vec for {days} days"),
         }
     }
-}
 
-pub trait Invalidate {
-    fn invalidate_caches(&self);
-}
-
-impl Invalidate for Vecs {
-    fn invalidate_caches(&self) {
+    pub fn invalidate_caches(&self) {
         self._24h.invalidate();
         self._1w.invalidate();
         self._1m.invalidate();

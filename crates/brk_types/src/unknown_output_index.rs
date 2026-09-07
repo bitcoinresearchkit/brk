@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -20,9 +22,9 @@ use crate::TypeIndex;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct UnknownOutputIndex(TypeIndex);
 
 impl From<TypeIndex> for UnknownOutputIndex {
@@ -60,17 +62,32 @@ impl CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-
-impl PrintableIndex for UnknownOutputIndex {
-    fn to_string() -> &'static str {
-        "unknown_output_index"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["unknownout", "unknown_output_index"]
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
+impl UnknownOutputIndex {
+    pub fn index_name() -> &'static str {
+        "unknown_output_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["unknownout", "unknown_output_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for UnknownOutputIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
+
+#[cfg(feature = "storage")]
 impl VecIndex for UnknownOutputIndex {
     const INITIAL_CAPACITY: usize = 200_000;
 }
@@ -81,6 +98,7 @@ impl std::fmt::Display for UnknownOutputIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for UnknownOutputIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

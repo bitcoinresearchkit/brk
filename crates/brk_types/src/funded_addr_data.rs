@@ -1,9 +1,13 @@
+use crate::unlikely;
 use brk_error::Error;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
-use vecdb::{Bytes, Formattable, OverflowVecValue, Version, unlikely};
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable, OverflowVecValue, Version};
 
-use crate::{Cents, CentsSats, EmptyAddrData, FundedAddrDataCompact, OutputType, Sats};
+#[cfg(feature = "storage")]
+use crate::FundedAddrDataCompact;
+use crate::{Cents, CentsSats, EmptyAddrData, OutputType, Sats};
 
 const CENTS_SATS_96_LIMIT: u128 = 1_u128 << 96;
 
@@ -57,6 +61,7 @@ impl CentsSats96 {
     }
 
     #[inline]
+    #[cfg(feature = "storage")]
     fn to_bytes(self) -> [u8; 12] {
         let mut bytes = [0; 12];
         bytes[0..4].copy_from_slice(&self.0[0].to_le_bytes());
@@ -66,6 +71,7 @@ impl CentsSats96 {
     }
 
     #[inline]
+    #[cfg(feature = "storage")]
     fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
         Ok(Self([
             u32::from_bytes(&bytes[0..4])?,
@@ -295,12 +301,11 @@ impl std::fmt::Display for FundedAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for FundedAddrData {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
@@ -320,6 +325,7 @@ impl Formattable for FundedAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for FundedAddrData {
     type Array = [u8; size_of::<Self>()];
 
@@ -346,6 +352,7 @@ impl Bytes for FundedAddrData {
     }
 }
 
+#[cfg(feature = "storage")]
 impl OverflowVecValue for FundedAddrData {
     type Compact = FundedAddrDataCompact;
 
@@ -390,6 +397,7 @@ impl OverflowVecValue for FundedAddrData {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use crate::SupplyState;
 
     use super::*;
@@ -403,13 +411,17 @@ mod tests {
         value.subtract(CentsSats::new(1));
         assert_eq!(value.widen(), CentsSats::new(u64::MAX as u128));
 
-        let max = CentsSats96::from_wide(CentsSats::new(CENTS_SATS_96_LIMIT - 1));
-        assert_eq!(
-            CentsSats96::from_bytes(&max.to_bytes()).unwrap().widen(),
-            max.widen()
-        );
+        #[cfg(feature = "storage")]
+        {
+            let max = CentsSats96::from_wide(CentsSats::new(CENTS_SATS_96_LIMIT - 1));
+            assert_eq!(
+                CentsSats96::from_bytes(&max.to_bytes()).unwrap().widen(),
+                max.widen()
+            );
+        }
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn funded_addr_data_stays_compact_and_roundtrips() {
         assert_eq!(size_of::<FundedAddrData>(), 40);
@@ -436,6 +448,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn overflow_compact_roundtrips_and_rejects_wide_values() {
         let mut data = FundedAddrData::default();

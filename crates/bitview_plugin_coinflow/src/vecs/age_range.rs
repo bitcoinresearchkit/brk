@@ -1,9 +1,9 @@
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_traversable::Traversable;
-use brk_types::{Sats, StoredF64};
+use brk_types::{BoundedRatio, StoredF64};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{ColumnarPerBlock, LazyColumnPerBlock, LazyColumnSpotValuePerBlock};
+use bitview_compute::{ColumnarPerBlock, LazyColumnPerBlock, LazySpotValuePerBlock};
 
 use super::{Mobility, SpendingExposureSeries};
 
@@ -27,7 +27,8 @@ pub struct AgeRangeVecs<M: StorageMode = Rw> {
     /// zero when a decreasing finite tail cannot be fitted. Larger exposure
     /// implies a greater eventual probability of spending.
     pub spending_exposure: ColumnarPerBlock<StoredF64, AgeRangeId, SpendingExposureSeries, M>,
-    pub supply: Mobility<
-        ColumnarPerBlock<Sats, AgeRangeId, AgeRange<LazyColumnSpotValuePerBlock<AgeRangeId>>, M>,
-    >,
+    /// Canonical bounded spending probability, batched by age range.
+    #[traversable(hidden)]
+    pub mobility_source: ColumnarPerBlock<BoundedRatio, AgeRangeId, (), M>,
+    pub supply: Mobility<AgeRange<LazySpotValuePerBlock>>,
 }

@@ -1,8 +1,6 @@
-use crate::internals::*;
-
 use std::{collections::BTreeMap, path::PathBuf};
 
-use crate::{AnyStoredVec, Stamp, VecIndex, VecValue, WritableVec};
+use crate::{AnyStoredVec, ChangeCursor, ReadWriteBaseVec, Stamp, VecIndex, VecValue, WritableVec};
 
 use super::{super::CompressionStrategy, ReadWriteCompressedVec};
 
@@ -58,7 +56,11 @@ where
 
     fn rollback(&mut self) -> crate::Result<()> {
         let bytes = self.base.read_current_change_file()?;
-        self.deserialize_then_undo_changes(&bytes)
+        let change =
+            ReadWriteBaseVec::<I, T>::parse_change_data::<S>(&mut ChangeCursor::new(&bytes))?;
+        let (stamp, stored_len, pushed) = change.into_rollback(|| self.real_stored_len());
+        self.base.apply_rollback(stamp, stored_len, pushed);
+        Ok(())
     }
 
     fn find_rollback_files(&self) -> crate::Result<BTreeMap<Stamp, PathBuf>> {

@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// Raw cents squared (u128) - stores cents² × sats without division.
@@ -107,6 +108,7 @@ impl Div<usize> for CentsSquaredSats {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for CentsSquaredSats {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -115,6 +117,7 @@ impl Formattable for CentsSquaredSats {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for CentsSquaredSats {
     type Array = [u8; 16];
 

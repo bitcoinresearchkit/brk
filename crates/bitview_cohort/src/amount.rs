@@ -1,15 +1,16 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::ColumnId;
 
 use crate::{
     AmountRange, AmountRangeId, Filter, OVER_AMOUNT_FILTERS, OverAmount, OverAmountId,
     UNDER_AMOUNT_FILTERS, UnderAmount, UnderAmountId,
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct Amount<T> {
     pub range: AmountRange<T>,
     pub under: UnderAmount<T>,
@@ -55,29 +56,13 @@ impl<T> Amount<T> {
     }
 
     pub fn map_named<U>(&self, mut map: impl FnMut(&Filter, &'static str, &T) -> U) -> Amount<U> {
-        Amount {
-            range: AmountRange::new(|filter, name| {
-                map(
-                    &filter,
-                    name,
-                    self.get(&filter).expect("exact amount range"),
-                )
-            }),
-            under: UnderAmount::new(|filter, name| {
-                map(
-                    &filter,
-                    name,
-                    self.get(&filter).expect("under-amount threshold"),
-                )
-            }),
-            over: OverAmount::new(|filter, name| {
-                map(
-                    &filter,
-                    name,
-                    self.get(&filter).expect("over-amount threshold"),
-                )
-            }),
-        }
+        Amount::new(|filter, name| {
+            map(
+                &filter,
+                name,
+                self.get(&filter).expect("known cohort filter"),
+            )
+        })
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

@@ -6,7 +6,7 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, LazyVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, VecValue};
+use vecdb::{Database, LazyVec, ReadableCloneableVec, Rw, StorageMode, VecValue};
 
 use crate::{CachedWindowStartVec, NumericValue, PerBlock, RollingComplete, WindowStarts, Windows};
 
@@ -69,32 +69,9 @@ where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
-        compute_rest(
-            &mut self.cumulative,
-            &mut self.rolling,
-            &self.block,
-            max_from,
-            windows,
-            exit,
-        )
+        self.cumulative
+            .height
+            .compute_cumulative(max_from, &self.block, exit)?;
+        self.rolling.compute(max_from, windows, &self.block, exit)
     }
-}
-
-fn compute_rest<T>(
-    cumulative: &mut PerBlock<T>,
-    rolling: &mut RollingComplete<T>,
-    source: &impl ReadableVec<Height, T>,
-    max_from: Height,
-    windows: &WindowStarts<'_>,
-    exit: &Exit,
-) -> Result<()>
-where
-    T: NumericValue + JsonSchema + From<f64> + Default + Copy + Ord,
-    f64: From<T>,
-{
-    cumulative
-        .height
-        .compute_cumulative(max_from, source, exit)?;
-    rolling.compute(max_from, windows, source, exit)?;
-    Ok(())
 }

@@ -15,6 +15,16 @@ impl std::ops::Deref for RestartIntervalPolicy {
 }
 
 impl RestartIntervalPolicy {
+    /// Uses the last configured value for deeper levels.
+    #[must_use]
+    #[expect(
+        clippy::indexing_slicing,
+        reason = "constructors reject empty policies; the index is clamped"
+    )]
+    pub fn at_level(&self, level: usize) -> u8 {
+        self.0[level.min(self.0.len() - 1)]
+    }
+
     // TODO: accept Vec... Into<Vec<...>>? or owned
 
     /// Uses the same block size in every level.

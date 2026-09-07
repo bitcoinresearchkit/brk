@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// URL-friendly mining pool identifier
@@ -416,12 +417,11 @@ impl PoolSlug {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for PoolSlug {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {
@@ -431,6 +431,7 @@ impl Formattable for PoolSlug {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for PoolSlug {
     type Array = [u8; size_of::<Self>()];
 

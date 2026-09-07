@@ -1,13 +1,15 @@
 use std::ops::Range;
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::Age;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
 
-use super::{CohortContext, CohortName, Filter, TimeFilter};
+use super::{CohortContext, CohortName, Filter, OVER_AGE_FILTERS, TimeFilter, UNDER_AGE_FILTERS};
 
 // Age boundary constants in hours
 pub const HOURS_1H: usize = 1;
@@ -121,30 +123,34 @@ pub const LTH_AGE_RANGE_IDS: [AgeRangeId; LTH_AGE_RANGE_COUNT] = [
     AgeRangeId::Over15Y,
 ];
 
+impl AgeRangeId {
+    pub const ALL: &'static [Self] = &AGE_RANGE_IDS;
+
+    #[inline]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+}
+#[cfg(feature = "storage")]
 impl ColumnId for AgeRangeId {
     type Row<T>
         = AgeRange<T>
     where
         T: VecValue;
-
     const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &AGE_RANGE_IDS;
-
+    const ALL: &'static [Self] = Self::ALL;
     #[inline]
     fn index(self) -> usize {
-        self as usize
+        Self::index(self)
     }
-
     #[inline]
     fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
         self.select(row)
     }
-
     #[inline]
     fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
         self.select_mut(row)
     }
-
     #[inline]
     fn from_fn<T, F>(f: F) -> Self::Row<T>
     where
@@ -153,7 +159,6 @@ impl ColumnId for AgeRangeId {
     {
         AgeRange::from_fn(f)
     }
-
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
     where
@@ -183,6 +188,19 @@ impl AgeRangeId {
             .iter()
             .copied()
             .filter(|column| filter.includes(column.filter()))
+    }
+
+    /// Columns for a named aggregate, excluding exact ranges and unsupported thresholds.
+    pub fn aggregate_columns(filter: &Filter) -> Option<impl Iterator<Item = Self> + '_> {
+        let supported = match filter {
+            Filter::All | Filter::Term(_) => true,
+            Filter::Time(_) => UNDER_AGE_FILTERS
+                .iter()
+                .chain(OVER_AGE_FILTERS.iter())
+                .any(|candidate| candidate == filter),
+            _ => false,
+        };
+        supported.then(|| Self::included_by(filter))
     }
 
     #[inline]
@@ -387,7 +405,8 @@ pub const AGE_RANGE_NAMES: AgeRange<CohortName> = AgeRange {
     over_15y: CohortName::new("over_15y_old", "15y+", "15+ Years Old"),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct AgeRange<T> {
     /// Uses UTXOs less than 1 hour old.
     pub under_1h: T,
@@ -694,6 +713,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn column_ids_match_storage_order_and_term_split() {
         assert_eq!(AgeRangeId::ALL, &AGE_RANGE_IDS);

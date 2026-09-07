@@ -1,0 +1,30 @@
+use derive_more::{Deref, DerefMut};
+use schemars::{JsonSchema, SchemaGenerator};
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
+use vecdb::Bytes;
+
+#[derive(
+    Debug, Clone, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
+pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
+
+impl JsonSchema for U8x65 {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "U8x65".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+        Vec::<u8>::json_schema(generator)
+    }
+}
+
+impl From<&[u8]> for U8x65 {
+    #[inline]
+    fn from(slice: &[u8]) -> Self {
+        let mut arr = [0; 65];
+        arr.copy_from_slice(slice);
+        Self(arr)
+    }
+}

@@ -68,22 +68,7 @@ impl<T> ByDcaPeriod<T> {
     where
         F: FnMut(&'static str, u32) -> Result<T, E>,
     {
-        let n = DCA_PERIOD_NAMES;
-        let d = DCA_PERIOD_DAYS;
-        Ok(Self {
-            _1w: create(n._1w, d._1w)?,
-            _1m: create(n._1m, d._1m)?,
-            _3m: create(n._3m, d._3m)?,
-            _6m: create(n._6m, d._6m)?,
-            _1y: create(n._1y, d._1y)?,
-            _2y: create(n._2y, d._2y)?,
-            _3y: create(n._3y, d._3y)?,
-            _4y: create(n._4y, d._4y)?,
-            _5y: create(n._5y, d._5y)?,
-            _6y: create(n._6y, d._6y)?,
-            _8y: create(n._8y, d._8y)?,
-            _10y: create(n._10y, d._10y)?,
-        })
+        Self::try_from_period(&DCA_PERIOD_DAYS, |name, days, _| create(name, days))
     }
 
     pub fn try_from_period<U, F, E>(period: &ByDcaPeriod<U>, mut create: F) -> Result<Self, E>
@@ -125,6 +110,36 @@ impl<T> ByDcaPeriod<&T> {
             _6y: &lookback._6y,
             _8y: &lookback._8y,
             _10y: &lookback._10y,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructors_preserve_period_order_and_stop_at_each_error() {
+        let mut expected = Vec::new();
+        let _: ByDcaPeriod<()> =
+            ByDcaPeriod::try_from_period(&DCA_PERIOD_DAYS, |name, days, stored_days| {
+                assert_eq!(days, *stored_days);
+                expected.push((name, days));
+                Ok::<_, usize>(())
+            })
+            .unwrap();
+        assert_eq!(expected.len(), 12);
+        assert_eq!(expected[0], ("1w", 7));
+        assert_eq!(expected[11], ("10y", 3650));
+        for stop in 0..=expected.len() {
+            let mut visited = Vec::new();
+            let result = ByDcaPeriod::try_new(|name, days| {
+                let index = visited.len();
+                visited.push((name, days));
+                if index == stop { Err(index) } else { Ok(()) }
+            });
+            assert_eq!(result.err(), (stop < expected.len()).then_some(stop));
+            assert_eq!(visited, expected[..(stop + 1).min(expected.len())]);
         }
     }
 }

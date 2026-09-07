@@ -13,7 +13,7 @@ use brk_types::{
 };
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use super::{Cluster, SnapTx, Snapshot, TxIndex};
+use super::{SnapTx, Snapshot, TxIndex, cluster};
 use crate::Mempool;
 
 impl Mempool {
@@ -108,12 +108,12 @@ impl Snapshot {
         seed: &SnapTx,
     ) -> (Option<CpfpCluster>, FeeRate) {
         let seed_per_tx_rate = FeeRate::from((seed.fee, seed.vsize));
-        let component = Cluster::walk(txs, seed_idx);
+        let component = cluster::walk(txs, seed_idx);
         if component.len() <= 1 {
             return (None, seed_per_tx_rate);
         }
 
-        let (members, chunks) = Cluster::linearize(txs, &component);
+        let (members, chunks) = cluster::linearize(txs, &component);
         let cluster_txs = Self::wire_cluster_members(txs, &members);
         let seed_local = CpfpClusterTxIndex::from(
             members
@@ -136,7 +136,7 @@ impl Snapshot {
     /// Materialize wire-shape `CpfpClusterTx`s for every topo-ordered
     /// member with parent edges remapped to local indices.
     fn wire_cluster_members(txs: &[SnapTx], members: &[TxIndex]) -> Vec<CpfpClusterTx> {
-        let local_of = Cluster::local_index(members);
+        let local_of = cluster::local_index(members);
         members
             .iter()
             .map(|&idx| {

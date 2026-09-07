@@ -11,6 +11,13 @@ macro_rules! define_column_id {
         }
 
         impl $id {
+            pub const ALL: &'static [Self] = &[$(Self::$variant),+];
+
+            #[inline]
+            pub const fn index(self) -> usize {
+                self as usize
+            }
+
             #[inline]
             pub fn select<T>(self, row: &$row<T>) -> &T {
                 match self {
@@ -27,13 +34,43 @@ macro_rules! define_column_id {
         }
 
         impl<T> $row<T> {
+            pub fn as_array(&self) -> [&T; $id::ALL.len()] {
+                [$(&self.$field),+]
+            }
+
+            pub fn as_array_mut(&mut self) -> [&mut T; $id::ALL.len()] {
+                [$(&mut self.$field),+]
+            }
+
+            pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
+                self.as_array().into_iter()
+            }
+
+            pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> + ExactSizeIterator {
+                self.as_array_mut().into_iter()
+            }
+
+            pub fn par_iter_mut(&mut self) -> impl rayon::iter::ParallelIterator<Item = &mut T>
+            where
+                T: Send + Sync,
+            {
+                rayon::iter::IntoParallelIterator::into_par_iter(self.as_array_mut())
+            }
+
             pub fn from_fn(mut f: impl FnMut($id) -> T) -> Self {
                 Self {
                     $($field: f($id::$variant)),+
                 }
             }
+
+            pub fn try_from_fn<E>(mut f: impl FnMut($id) -> Result<T, E>) -> Result<Self, E> {
+                Ok(Self {
+                    $($field: f($id::$variant)?),+
+                })
+            }
         }
 
+        #[cfg(feature = "storage")]
         impl vecdb::ColumnId for $id {
             type Row<T>
                 = $row<T>
@@ -41,11 +78,11 @@ macro_rules! define_column_id {
                 T: vecdb::VecValue;
 
             const VERSION: vecdb::Version = vecdb::Version::new($version);
-            const ALL: &'static [Self] = &[$(Self::$variant),+];
+            const ALL: &'static [Self] = Self::ALL;
 
             #[inline]
             fn index(self) -> usize {
-                self as usize
+                Self::index(self)
             }
 
             #[inline]
@@ -80,6 +117,7 @@ macro_rules! define_column_id {
             }
         }
 
+        #[cfg(feature = "storage")]
         impl<T: vecdb::Formattable> vecdb::Formattable for $row<T> {
             fn write_to(&self, output: &mut Vec<u8>) {
                 output.push(b'{');
@@ -121,6 +159,7 @@ macro_rules! impl_column_row_formattable {
             $($field:ident),+ $(,)?
         }
     ) => {
+        #[cfg(feature = "storage")]
         impl<T: vecdb::Formattable> vecdb::Formattable for $row<T> {
             fn write_to(&self, output: &mut Vec<u8>) {
                 output.push(b'{');

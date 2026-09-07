@@ -13,6 +13,14 @@ fn frame(block: &bitcoin::Block) -> Vec<u8> {
 }
 
 #[test]
+fn raw_helpers_require_a_borrowed_prefix_guard() {
+    let _: fn(&Query, Height, &BlockHash, &SafeLengths) -> Result<Vec<u8>> =
+        Query::block_raw_at_height;
+    let _: fn(&Query, Height, &BlockHash, &SafeLengths) -> Result<u64> =
+        Query::block_raw_size_at_height;
+}
+
+#[test]
 fn raw_records_bound_allocation_and_verify_framing_and_identity() {
     let block = genesis_block(Network::Bitcoin);
     let bytes = serialize(&block);
@@ -52,7 +60,7 @@ fn raw_payload_checks_transactions_weight_trailing_bytes_and_witness() {
     Query::verify_raw_payload(&bytes, weight, 1).unwrap();
     assert!(Query::verify_raw_payload(&bytes, weight + 1, 1).is_err());
     assert!(Query::verify_raw_payload(&bytes, weight, 2).is_err());
-    let mut trailing = bytes.clone();
+    let mut trailing = bytes;
     trailing.push(0);
     assert!(Query::verify_raw_payload(&trailing, weight, 1).is_err());
     block.txdata[0].output[0].value = bitcoin::Amount::from_sat(1);

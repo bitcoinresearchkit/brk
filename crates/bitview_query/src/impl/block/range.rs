@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockHash, BlockInfo, BlockTxIndex, Height, Lengths, Transaction, Txid};
@@ -80,14 +78,18 @@ impl ResolvedBlocks {
     /// Read the anchor's raw block while retaining publication exclusion.
     pub fn anchor_raw(self, query: &Query) -> Result<Vec<u8>> {
         let (height, hash) = self.anchor_pair()?;
-        query.block_raw_at_height(height, &hash, self.guard.lengths())
+        query.block_raw_at_height(height, &hash, &self.guard)
     }
 
     /// Return the framed raw length after verifying the anchor header.
     /// This does not read or validate transaction payload bytes.
     pub fn anchor_raw_size(self, query: &Query) -> Result<u64> {
         let (height, hash) = self.anchor_pair()?;
-        query.block_raw_size_at_height(height, &hash, self.guard.lengths())
+        query.block_raw_size_at_height(height, &hash, &self.guard)
+    }
+
+    pub fn range(&self) -> (usize, usize, Lengths) {
+        (self.begin, self.end, self.guard.lengths())
     }
 }
 
@@ -112,7 +114,7 @@ impl Query {
     /// the selected row is consumed. The prefix-store lookup may perform I/O.
     pub fn resolve_block_snapshot(&self, hash: &BlockHash) -> Result<ResolvedBlocks> {
         let guard = self.indexer().pin_safe_lengths();
-        let height = self.resolve_block(hash)?.height();
+        let height = self.height_by_hash(hash)?;
         self.blocks_snapshot(Some(height), 1, guard)
     }
 
@@ -135,16 +137,7 @@ impl Query {
     ) -> Result<ResolvedBlocks> {
         self.blocks_snapshot(start_height, count, self.indexer().pin_safe_lengths())
     }
-}
-pub trait RImplBlockRangeResolvedBlocksInternal: Sized {
-    fn range(&self) -> (usize, usize, Lengths);
-}
-impl RImplBlockRangeResolvedBlocksInternal for ResolvedBlocks {
-    fn range(&self) -> (usize, usize, Lengths) {
-        (self.begin, self.end, self.guard.lengths())
-    }
-}
-impl Query {
+
     fn blocks_snapshot(
         &self,
         start_height: Option<Height>,

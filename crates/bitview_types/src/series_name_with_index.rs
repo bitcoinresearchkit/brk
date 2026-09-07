@@ -25,15 +25,12 @@ impl SeriesNameWithIndex {
 
 impl From<(SeriesName, Index)> for SeriesNameWithIndex {
     fn from((series, index): (SeriesName, Index)) -> Self {
-        Self { series, index }
+        Self::new(series, index)
     }
 }
 
 impl From<(&str, Index)> for SeriesNameWithIndex {
     fn from((series, index): (&str, Index)) -> Self {
-        Self {
-            series: series.into(),
-            index,
-        }
+        Self::new(series, index)
     }
 }

@@ -3,14 +3,22 @@ use brk_error::Result;
 use std::thread;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
 
-use super::{Vecs, interval::Compute as _, lookback::Invalidate as _, size::Compute as _};
+use super::Vecs;
 use crate::Dependencies;
 
-impl Vecs {
-    fn compute_inner(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
+        &mut self,
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies { indexer } = dependencies;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         // Cached lookbacks depend on the monotonic timestamp vec, which may
@@ -31,24 +39,7 @@ impl Vecs {
             Ok(())
         })?;
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(dependencies.indexer, context.exit())
     }
 }

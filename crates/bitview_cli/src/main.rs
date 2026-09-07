@@ -101,9 +101,9 @@ fn execute(args: Args) -> Result<(), Box<dyn Error>> {
 
     let stdout = io::stdout();
     let mut output = stdout.lock();
-    if !args.pretty {
-        output.write_all(&bytes)?;
-    } else if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+    if args.pretty
+        && let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes)
+    {
         serde_json::to_writer_pretty(&mut output, &value)?;
         writeln!(output)?;
     } else {

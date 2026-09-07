@@ -83,13 +83,13 @@ impl<'de> Deserialize<'de> for SeriesList {
 
 impl fmt::Display for SeriesList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = self
-            .0
-            .iter()
-            .map(|m| m.to_string())
-            .collect::<Vec<_>>()
-            .join(",");
-        write!(f, "{s}")
+        for (index, name) in self.0.iter().enumerate() {
+            if index != 0 {
+                f.write_str(",")?;
+            }
+            fmt::Display::fmt(name, f)?;
+        }
+        Ok(())
     }
 }
 

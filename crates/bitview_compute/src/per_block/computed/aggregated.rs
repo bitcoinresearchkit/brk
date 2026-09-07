@@ -77,7 +77,6 @@ where
         T: From<f64> + Default + Copy + Ord,
         f64: From<T>,
     {
-        self.rolling.compute(max_from, windows, &self.sum, exit)?;
-        Ok(())
+        self.rolling.compute(max_from, windows, &self.sum, exit)
     }
 }

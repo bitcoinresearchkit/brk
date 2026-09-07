@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{
     collections::HashMap,
     fs::{self, File, OpenOptions},
@@ -81,19 +79,8 @@ impl Regions {
     pub fn len(&self) -> usize {
         self.id_to_index.len()
     }
-}
-pub trait RegionsRegionsInternal: Sized {
-    fn fill(&mut self, db: &Database) -> Result<()>;
-    fn set_min_len(&mut self, len: usize) -> Result<()>;
-    fn shrink_to_fit(&mut self) -> Result<()>;
-    fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region>;
-    fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()>;
-    fn remove(&mut self, region: &Region) -> Result<()>;
-    fn flush(&self) -> Result<bool>;
-    fn write_at(&self, index: usize, data: &[u8]);
-}
-impl RegionsRegionsInternal for Regions {
-    fn fill(&mut self, db: &Database) -> Result<()> {
+
+    pub fn fill(&mut self, db: &Database) -> Result<()> {
         let metadata_len = self.file_len()?;
         let data_len = db.file_len();
 
@@ -148,7 +135,8 @@ impl RegionsRegionsInternal for Regions {
 
         Ok(())
     }
-    fn set_min_len(&mut self, len: usize) -> Result<()> {
+
+    pub fn set_min_len(&mut self, len: usize) -> Result<()> {
         let file_len = self.file_len()?;
         if file_len < len {
             let target_len = len.max(file_len.saturating_mul(2));
@@ -157,7 +145,8 @@ impl RegionsRegionsInternal for Regions {
         }
         Ok(())
     }
-    fn shrink_to_fit(&mut self) -> Result<()> {
+
+    pub fn shrink_to_fit(&mut self) -> Result<()> {
         while self.index_to_region.last().is_some_and(Option::is_none) {
             self.index_to_region.pop();
         }
@@ -170,7 +159,8 @@ impl RegionsRegionsInternal for Regions {
         }
         Ok(())
     }
-    fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region> {
+
+    pub fn create(&mut self, db: &Database, id: String, start: usize) -> Result<Region> {
         let index = if self.id_to_index.len() == self.index_to_region.len() {
             self.index_to_region.len()
         } else {
@@ -202,7 +192,8 @@ impl RegionsRegionsInternal for Regions {
 
         Ok(region)
     }
-    fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()> {
+
+    pub fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()> {
         let index = self
             .id_to_index
             .get(old_id)
@@ -218,14 +209,15 @@ impl RegionsRegionsInternal for Regions {
 
         Ok(())
     }
-    fn remove(&mut self, region: &Region) -> Result<()> {
+
+    pub fn remove(&mut self, region: &Region) -> Result<()> {
         // Expected 2: one from caller, one from self.index_to_region.
         let ref_count = Arc::strong_count(RegionInner::from_region(region));
         let meta = region.meta();
         debug!(
-            "regions.remove '{}': arc count = {} (expected <= 2)",
+            "Checking region references before removal — region={} ref_count={} max_ref_count=2",
             meta.id(),
-            ref_count
+            ref_count,
         );
         if ref_count > 2 {
             return Err(Error::RegionStillReferenced {
@@ -250,8 +242,9 @@ impl RegionsRegionsInternal for Regions {
 
         Ok(())
     }
+
     /// Makes every completed metadata write preceding this call durable.
-    fn flush(&self) -> Result<bool> {
+    pub fn flush(&self) -> Result<bool> {
         let mut dirty = self.dirty.lock();
         if !*dirty {
             return Ok(false);
@@ -263,7 +256,8 @@ impl RegionsRegionsInternal for Regions {
 
         Ok(true)
     }
-    fn write_at(&self, index: usize, data: &[u8]) {
+
+    pub fn write_at(&self, index: usize, data: &[u8]) {
         debug_assert_eq!(data.len(), SIZE_OF_REGION_METADATA);
         let offset = index * SIZE_OF_REGION_METADATA;
         let mut dirty = self.dirty.lock();

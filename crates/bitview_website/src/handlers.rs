@@ -6,6 +6,7 @@ use axum::{
     http::{HeaderMap, Response, StatusCode},
 };
 
+use crate::website::content_etag;
 use crate::{Error, HeaderMapExtended, Website};
 
 pub async fn file_handler(
@@ -35,26 +36,32 @@ fn serve(
 
     // Etag 304 check (release mode, HTML only)
     if is_html
-        && let Some(etag) = website.index_etag()
+        && let Some(etag) = website.index_etag_for(&path)
         && request_headers.has_etag(etag)
     {
-        let mut response = Response::builder()
-            .status(StatusCode::NOT_MODIFIED)
-            .body(Body::empty())
-            .unwrap();
-        let headers = response.headers_mut();
-        headers.insert_etag(etag);
-        headers.insert_cache_control_must_revalidate();
-        return Ok(response);
+        return Ok(not_modified(etag));
     }
 
     let content = website.get_file(&path)?;
+    // Mutable files and standalone HTML must be read before their validator is
+    // known. Only the immutable embedded index can use the early path above.
+    let etag = (!cfg!(debug_assertions) && is_html).then(|| {
+        website
+            .index_etag_for(&path)
+            .map(str::to_owned)
+            .unwrap_or_else(|| content_etag(&content))
+    });
+    if let Some(etag) = etag.as_deref()
+        && request_headers.has_etag(etag)
+    {
+        return Ok(not_modified(etag));
+    }
     let mut response = Response::new(Body::from(content));
     let headers = response.headers_mut();
 
     if is_html {
         headers.insert_content_type_text_html();
-        if let Some(etag) = website.index_etag() {
+        if let Some(etag) = etag.as_deref() {
             headers.insert_etag(etag);
         }
     } else {
@@ -68,6 +75,15 @@ fn serve(
     }
 
     Ok(response)
+}
+
+fn not_modified(etag: &str) -> Response<Body> {
+    let mut response = Response::new(Body::empty());
+    *response.status_mut() = StatusCode::NOT_MODIFIED;
+    let headers = response.headers_mut();
+    headers.insert_etag(etag);
+    headers.insert_cache_control_must_revalidate();
+    response
 }
 
 /// Sanitize path to prevent directory traversal attacks
@@ -229,5 +245,96 @@ mod tests {
             .into_response();
 
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[test]
+    fn index_etag_never_validates_other_or_missing_html() {
+        let root = serve(&Website::Default, "", &HeaderMap::new()).unwrap();
+        let mut headers = HeaderMap::new();
+        if let Some(etag) = root.headers().get(header::ETAG) {
+            headers.insert(header::IF_NONE_MATCH, etag.clone());
+        }
+        for path in ["", "index.html", "charts/price"] {
+            let response = serve(&Website::Default, path, &headers).unwrap();
+            assert_eq!(
+                response.status(),
+                if cfg!(debug_assertions) {
+                    StatusCode::OK
+                } else {
+                    StatusCode::NOT_MODIFIED
+                }
+            );
+        }
+        let standalone = serve(&Website::Default, "assets/logo/demo.html", &headers).unwrap();
+        assert_eq!(standalone.status(), StatusCode::OK);
+        if let Some(etag) = standalone.headers().get(header::ETAG) {
+            assert_ne!(Some(etag), headers.get(header::IF_NONE_MATCH));
+            let mut own_headers = HeaderMap::new();
+            own_headers.insert(header::IF_NONE_MATCH, etag.clone());
+            let response = serve(&Website::Default, "assets/logo/demo.html", &own_headers).unwrap();
+            assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
+            assert!(body_bytes(response).is_empty());
+        }
+        assert!(!body_bytes(standalone).is_empty());
+        for (website, path) in [
+            (Website::Default, "missing-page.html"),
+            (Website::Disabled, ""),
+        ] {
+            assert_eq!(
+                serve(&website, path, &headers)
+                    .unwrap_err()
+                    .into_response()
+                    .status(),
+                StatusCode::NOT_FOUND
+            );
+        }
+    }
+
+    #[test]
+    fn filesystem_indexes_are_independent_and_revalidated_from_disk() {
+        let first = tempfile::tempdir().unwrap();
+        let second = tempfile::tempdir().unwrap();
+        let first_site = Website::Filesystem(first.path().to_owned());
+        let second_site = Website::Filesystem(second.path().to_owned());
+        let first_path = first.path().join("index.html");
+        std::fs::write(&first_path, "first site").unwrap();
+        std::fs::write(second.path().join("index.html"), "second site").unwrap();
+
+        let embedded = serve(&Website::Default, "", &HeaderMap::new()).unwrap();
+        let mut headers = HeaderMap::new();
+        if let Some(etag) = embedded.headers().get(header::ETAG) {
+            headers.insert(header::IF_NONE_MATCH, etag.clone());
+        }
+        for (site, expected) in [(&first_site, "first site"), (&second_site, "second site")] {
+            let response = serve(site, "", &headers).unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            if let Some(etag) = response.headers().get(header::ETAG) {
+                assert_ne!(Some(etag), headers.get(header::IF_NONE_MATCH));
+                let mut own_headers = HeaderMap::new();
+                own_headers.insert(header::IF_NONE_MATCH, etag.clone());
+                assert_eq!(
+                    serve(site, "", &own_headers).unwrap().status(),
+                    StatusCode::NOT_MODIFIED
+                );
+            }
+            assert_eq!(body_bytes(response), expected.as_bytes());
+        }
+        let previous = serve(&first_site, "", &headers).unwrap();
+        if let Some(etag) = previous.headers().get(header::ETAG) {
+            headers.insert(header::IF_NONE_MATCH, etag.clone());
+        }
+        std::fs::write(&first_path, "updated site").unwrap();
+        assert_eq!(
+            body_bytes(serve(&first_site, "", &headers).unwrap()),
+            b"updated site"
+        );
+        std::fs::remove_file(&first_path).unwrap();
+        assert_eq!(
+            serve(&first_site, "", &headers)
+                .unwrap_err()
+                .into_response()
+                .status(),
+            StatusCode::NOT_FOUND
+        );
     }
 }

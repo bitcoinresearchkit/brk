@@ -1,7 +1,5 @@
 use brk_error::Result;
 
-use std::collections::BTreeSet;
-
 use brk_types::Height;
 use tracing::{debug, warn};
 use vecdb::Stamp;
@@ -10,12 +8,6 @@ use super::super::{
     Vecs,
     state::{AddrStates, UTXOStates},
 };
-
-/// Result of state recovery.
-pub struct RecoveredState {
-    /// Height to start processing from. Zero means fresh start.
-    pub starting_height: Height,
-}
 
 impl Vecs {
     /// Perform state recovery for resuming from checkpoint.
@@ -29,7 +21,7 @@ impl Vecs {
         chain_state_rollback: Option<vecdb::Result<Stamp>>,
         utxo_states: &mut UTXOStates,
         addr_states: &mut AddrStates,
-    ) -> Result<RecoveredState> {
+    ) -> Result<Height> {
         // `None`: clean resume, already at the checkpoint, nothing to undo.
         // `Some`: reorg, undo state past the resume point.
         let consistent_height = match chain_state_rollback {
@@ -45,9 +37,7 @@ impl Vecs {
 
                 // If rollbacks are inconsistent, start fresh
                 if consistent_height.is_zero() {
-                    return Ok(RecoveredState {
-                        starting_height: Height::ZERO,
-                    });
+                    return Ok(Height::ZERO);
                 }
 
                 // Rollback can land at an earlier height (multi-block change file), which is fine.
@@ -57,9 +47,7 @@ impl Vecs {
                         "Distribution rollback stopped at block {} instead of {}; rebuilding from genesis",
                         consistent_height, height
                     );
-                    return Ok(RecoveredState {
-                        starting_height: Height::ZERO,
-                    });
+                    return Ok(Height::ZERO);
                 }
 
                 if consistent_height != height {
@@ -83,9 +71,7 @@ impl Vecs {
                 "Could not restore UTXO distribution state at block {}; rebuilding from genesis",
                 consistent_height
             );
-            return Ok(RecoveredState {
-                starting_height: Height::ZERO,
-            });
+            return Ok(Height::ZERO);
         }
         debug!("UTXO cohort states imported");
 
@@ -99,15 +85,11 @@ impl Vecs {
                 "Could not restore address distribution state at block {}; rebuilding from genesis",
                 consistent_height
             );
-            return Ok(RecoveredState {
-                starting_height: Height::ZERO,
-            });
+            return Ok(Height::ZERO);
         }
         debug!("addr cohort states imported");
 
-        Ok(RecoveredState {
-            starting_height: consistent_height,
-        })
+        Ok(consistent_height)
     }
 }
 
@@ -139,8 +121,6 @@ fn rollback_states(
     chain_state_rollback: vecdb::Result<Stamp>,
     addr_state_rollbacks: Result<Vec<Stamp>>,
 ) -> Height {
-    let mut heights: BTreeSet<Height> = BTreeSet::new();
-
     // All rollbacks must succeed - any error means fresh start
     let s = match chain_state_rollback {
         Ok(stamp) => stamp,
@@ -154,7 +134,6 @@ fn rollback_states(
         "chain_state rolled back to stamp {:?}, height {}",
         s, chain_height
     );
-    heights.insert(chain_height);
 
     let stamps = match addr_state_rollbacks {
         Ok(stamps) => stamps,
@@ -165,18 +144,19 @@ fn rollback_states(
             return Height::ZERO;
         }
     };
+    let mut consistent = true;
     for (i, s) in stamps.iter().enumerate() {
         let h = Height::from(*s).incremented();
         debug!(
             "addr_state[{}] rolled back to stamp {:?}, height {}",
             i, s, h
         );
-        heights.insert(h);
+        consistent &= h == chain_height;
     }
 
     // All must agree on the same height
-    if heights.len() == 1 {
-        heights.pop_first().unwrap()
+    if consistent {
+        chain_height
     } else {
         warn!("Distribution rollback checkpoints disagree; rebuilding from genesis");
         Height::ZERO
@@ -187,7 +167,42 @@ fn rollback_states(
 mod tests {
     use brk_types::Height;
 
-    use super::{StartMode, determine_start_mode};
+    use super::{StartMode, determine_start_mode, rollback_states};
+    use vecdb::Stamp;
+
+    #[test]
+    fn rollback_requires_every_checkpoint_to_agree() {
+        let stamp = Stamp::from(Height::new(99));
+        for count in [0, 1, 10] {
+            assert_eq!(
+                rollback_states(Ok(stamp), Ok(vec![stamp; count])),
+                Height::new(100)
+            );
+        }
+        for mismatch in [98, 100] {
+            assert_eq!(
+                rollback_states(
+                    Ok(stamp),
+                    Ok(vec![stamp, Stamp::from(Height::new(mismatch)), stamp])
+                ),
+                Height::ZERO
+            );
+        }
+        assert_eq!(
+            rollback_states(
+                Err(std::io::Error::other("chain rollback failed").into()),
+                Ok(vec![stamp])
+            ),
+            Height::ZERO
+        );
+        assert_eq!(
+            rollback_states(
+                Ok(stamp),
+                Err(std::io::Error::other("address rollback failed").into())
+            ),
+            Height::ZERO
+        );
+    }
 
     #[test]
     fn resumes_when_required_vectors_reach_checkpoint() {

@@ -1,7 +1,7 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use rayon::prelude::*;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::CohortName;
 
@@ -51,7 +51,8 @@ impl Profit<CohortName> {
 /// Total positive profit and 13 "more than X% profit" aggregate thresholds.
 ///
 /// Each is a prefix sum over the profitability ranges, from most profitable down.
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct Profit<T> {
     /// Uses UTXOs whose creation price is below the represented block's spot
     /// price.
@@ -121,129 +122,14 @@ impl<T> Profit<T> {
     where
         F: FnMut(&'static str) -> T,
     {
-        let n = &PROFIT_NAMES;
-        Self {
-            total: create(n.total.id),
-            _10pct: create(n._10pct.id),
-            _20pct: create(n._20pct.id),
-            _30pct: create(n._30pct.id),
-            _40pct: create(n._40pct.id),
-            _50pct: create(n._50pct.id),
-            _60pct: create(n._60pct.id),
-            _70pct: create(n._70pct.id),
-            _80pct: create(n._80pct.id),
-            _90pct: create(n._90pct.id),
-            _100pct: create(n._100pct.id),
-            _200pct: create(n._200pct.id),
-            _300pct: create(n._300pct.id),
-            _500pct: create(n._500pct.id),
-        }
+        Self::from_fn(|id| create(id.select(&PROFIT_NAMES).id))
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
         F: FnMut(&'static str) -> Result<T, E>,
     {
-        let n = &PROFIT_NAMES;
-        Ok(Self {
-            total: create(n.total.id)?,
-            _10pct: create(n._10pct.id)?,
-            _20pct: create(n._20pct.id)?,
-            _30pct: create(n._30pct.id)?,
-            _40pct: create(n._40pct.id)?,
-            _50pct: create(n._50pct.id)?,
-            _60pct: create(n._60pct.id)?,
-            _70pct: create(n._70pct.id)?,
-            _80pct: create(n._80pct.id)?,
-            _90pct: create(n._90pct.id)?,
-            _100pct: create(n._100pct.id)?,
-            _200pct: create(n._200pct.id)?,
-            _300pct: create(n._300pct.id)?,
-            _500pct: create(n._500pct.id)?,
-        })
-    }
-
-    pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
-        [
-            &self.total,
-            &self._10pct,
-            &self._20pct,
-            &self._30pct,
-            &self._40pct,
-            &self._50pct,
-            &self._60pct,
-            &self._70pct,
-            &self._80pct,
-            &self._90pct,
-            &self._100pct,
-            &self._200pct,
-            &self._300pct,
-            &self._500pct,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> + ExactSizeIterator {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-            &mut self._90pct,
-            &mut self._100pct,
-            &mut self._200pct,
-            &mut self._300pct,
-            &mut self._500pct,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-            &mut self._90pct,
-            &mut self._100pct,
-            &mut self._200pct,
-            &mut self._300pct,
-            &mut self._500pct,
-        ]
-        .into_par_iter()
-    }
-
-    /// Access as array for indexed accumulation.
-    pub fn as_array_mut(&mut self) -> [&mut T; PROFIT_COUNT] {
-        [
-            &mut self.total,
-            &mut self._10pct,
-            &mut self._20pct,
-            &mut self._30pct,
-            &mut self._40pct,
-            &mut self._50pct,
-            &mut self._60pct,
-            &mut self._70pct,
-            &mut self._80pct,
-            &mut self._90pct,
-            &mut self._100pct,
-            &mut self._200pct,
-            &mut self._300pct,
-            &mut self._500pct,
-        ]
+        Self::try_from_fn(|id| create(id.select(&PROFIT_NAMES).id))
     }
 
     /// Iterate from narrowest (_500pct) to broadest (total), yielding each threshold

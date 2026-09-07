@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign, Div};
 
 use brk_types::{
-    PartsPerMillion32, PartsPerMillion64, PartsPerMillionSigned32, PartsPerMillionSigned64,
-    StoredF32,
+    BasisPoints32, PartsPerMillion32, PartsPerMillion64, PartsPerMillionSigned32,
+    PartsPerMillionSigned64, PriceRatio, StoredF32,
 };
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -48,6 +48,20 @@ pub trait FixedRatio: NumericValue + JsonSchema {
 
 impl FixedRatio for PartsPerMillion32 {
     const SUFFIX: &'static str = "ppm";
+
+    type ToRatio = FixedToRatio;
+    type ToPercent = FixedToPercent;
+}
+
+impl FixedRatio for PriceRatio {
+    const SUFFIX: &'static str = "ppm";
+
+    type ToRatio = FixedToRatio;
+    type ToPercent = FixedToPercent;
+}
+
+impl FixedRatio for BasisPoints32 {
+    const SUFFIX: &'static str = "bps";
 
     type ToRatio = FixedToRatio;
     type ToPercent = FixedToPercent;

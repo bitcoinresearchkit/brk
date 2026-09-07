@@ -4,10 +4,12 @@ use bitcoin::hashes::Hash;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 /// Transaction ID (hash)
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, JsonSchema, Bytes, Hash)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, JsonSchema, Hash)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 #[schemars(
     example = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
     example = "2bb85f4b004be6da54f766c17c1e855187327112c231ef2ff35ebad0ea67c69e",
@@ -67,7 +69,7 @@ impl From<&Txid> for &bitcoin::Txid {
 
 impl fmt::Display for Txid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&bitcoin::Txid::from(self).to_string())
+        write!(f, "{}", bitcoin::Txid::from(self))
     }
 }
 
@@ -84,7 +86,7 @@ impl Serialize for Txid {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        serializer.collect_str(self)
     }
 }
 
@@ -114,12 +116,11 @@ impl de::Visitor<'_> for TxidVisitor {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Txid {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_json(&self, buf: &mut Vec<u8>) {

@@ -1,19 +1,14 @@
 use brk_error::Result;
 
-use bitview_cohort::{
-    CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
-use vecdb::{
-    AnyStoredVec, BinaryTransform, Database, LazyVec, PcoVec, ReadOnlyClone, ReadOnlyColumnarVec,
-    ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
-};
+use vecdb::{AnyStoredVec, BinaryTransform, Database, ReadOnlyClone, Rw, StorageMode};
 
 use bitview_compute::{ColumnarPerBlock, LazyPercentPerBlock, RatioSats};
 
-use super::RelativeSource;
+use super::{RelativeSource, share_views};
 
 const VERSION: Version = Version::ONE;
 
@@ -48,14 +43,14 @@ impl SupplyProfitabilityShares {
             |_| (),
         )?;
         let source = profit_share_source.height.read_only_clone();
-        let supply_in_profit_share = Self::views(
+        let supply_in_profit_share = share_views(
             &source,
             "supply_in_profit_share",
             version,
             Self::public_profit_share,
             mappings,
         );
-        let supply_in_loss_share = Self::views(
+        let supply_in_loss_share = share_views(
             &source,
             "supply_in_loss_share",
             version,
@@ -67,30 +62,6 @@ impl SupplyProfitabilityShares {
             supply_in_profit_share,
             supply_in_loss_share,
             profit_share_source,
-        })
-    }
-
-    fn views(
-        source: &ReadOnlyColumnarVec<PcoVec<Height, PartsPerMillion32>, UTXOAggregateId>,
-        metric: &str,
-        version: Version,
-        compute: fn(Height, PartsPerMillion32) -> PartsPerMillion32,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> UTXOAggregate<LazyPercentPerBlock<PartsPerMillion32>> {
-        UTXOAggregate::from_fn(|id| {
-            let name = CohortContext::Utxo.metric_name(
-                id.select(&UTXO_AGGREGATE_FILTERS),
-                id.select(&UTXO_AGGREGATE_NAMES).id,
-                metric,
-            );
-            let source = source.column(&format!("{name}_source"), version, id);
-            let source = LazyVec::init(
-                &format!("{name}_ppm_source"),
-                version,
-                source.read_only_boxed_clone(),
-                compute,
-            );
-            LazyPercentPerBlock::from_height_source(&name, version, source, mappings)
         })
     }
 

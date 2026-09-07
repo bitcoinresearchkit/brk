@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{ptr::NonNull, sync::Arc};
 
 use parking_lot::RwLock;
@@ -226,30 +224,8 @@ where
     pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
         self.fold(n, (), |(), value| f(value));
     }
-}
-pub trait VariantsCompressedSourcesRangeCursorCompressedRangeCursorAITSInternal<'a, I, T, S>:
-    Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
-    fn new(
-        region: &'a Region,
-        pages: &'a Arc<RwLock<Pages>>,
-        stored_len: usize,
-        from: usize,
-        to: usize,
-    ) -> Self;
-}
-impl<'a, I, T, S> VariantsCompressedSourcesRangeCursorCompressedRangeCursorAITSInternal<'a, I, T, S>
-    for CompressedRangeCursor<'a, I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
-    fn new(
+
+    pub fn new(
         region: &'a Region,
         pages: &'a Arc<RwLock<Pages>>,
         stored_len: usize,

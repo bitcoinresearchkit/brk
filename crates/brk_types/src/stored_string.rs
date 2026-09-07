@@ -3,6 +3,7 @@ use std::{borrow::Cow, str};
 use byteview::ByteView;
 use derive_more::Deref;
 use serde::Serialize;
+#[cfg(feature = "storage")]
 use vecdb::PrintableIndex;
 
 #[derive(Default, Debug, Deref, Clone, Serialize)]
@@ -57,12 +58,20 @@ impl From<&StoredString> for ByteView {
         Self::new(value.as_bytes())
     }
 }
-impl PrintableIndex for StoredString {
-    fn to_string() -> &'static str {
+impl StoredString {
+    pub fn index_name() -> &'static str {
         "string"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["string"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredString {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }

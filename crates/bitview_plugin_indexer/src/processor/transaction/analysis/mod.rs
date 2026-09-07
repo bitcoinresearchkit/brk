@@ -1,3 +1,4 @@
+mod computed_sigops;
 pub mod features;
 pub mod input;
 pub mod output;

@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use brk_error::{OptionData, Result};
 use brk_types::{
     CPFP_CHAIN_LIMIT, ChunkInput, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry,
@@ -192,6 +190,18 @@ impl Query {
             descendants,
         })
     }
+
+    pub fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
+        let plugins = self.plugins();
+        let read = self.read_indexer_with(vec![
+            plugins.mappings,
+            plugins.outputs,
+            plugins.transactions,
+        ])?;
+        let (_, seed, height) = read.revalidate_confirmed_tx(transaction)?;
+        let info = self.confirmed_cpfp_at(seed, height)?;
+        Ok(info)
+    }
 }
 
 fn walk_component(
@@ -306,20 +316,3 @@ fn build_cpfp_info(
 #[cfg(test)]
 #[path = "../../../tests/unit/impl/cpfp/confirmed.rs"]
 mod tests;
-pub trait RImplCpfpConfirmedQueryInternal: Sized {
-    fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo>;
-}
-impl RImplCpfpConfirmedQueryInternal for Query {
-    fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![
-            plugins.indexer,
-            plugins.mappings,
-            plugins.outputs,
-            plugins.transactions,
-        ])?;
-        let (_, seed, height) = self.revalidate_confirmed_tx(transaction)?;
-        let info = self.confirmed_cpfp_at(seed, height)?;
-        Ok(info)
-    }
-}

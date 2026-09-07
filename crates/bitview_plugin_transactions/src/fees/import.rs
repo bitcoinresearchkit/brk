@@ -20,69 +20,58 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, cached_starts)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
-        let v = version + VERSION;
-        let count_source = ColumnarPerBlockCumulativeRolling::forced_import(
-            db,
-            "cpfp_count_cumulative",
+    let v = version + VERSION;
+    let count_source = ColumnarPerBlockCumulativeRolling::forced_import(
+        db,
+        "cpfp_count_cumulative",
+        version,
+        |_| (),
+    )?;
+    let counts = count_source.cumulative.read_only_clone();
+    let count = CountVecs {
+        cpfp_parent: LazyColumnPerBlockCumulativeRolling::new(
+            "cpfp_parent_count",
             version,
-            |_| (),
+            &counts,
+            CpfpRoleId::Parent,
+            mappings,
+            cached_starts,
+        ),
+        cpfp_child: LazyColumnPerBlockCumulativeRolling::new(
+            "cpfp_child_count",
+            version,
+            &counts,
+            CpfpRoleId::Child,
+            mappings,
+            cached_starts,
+        ),
+        source: count_source,
+    };
+
+    let cpfp_flags_source =
+        EagerVec::<ColumnarVec<PcoVec<TxIndex, StoredBool>, CpfpRoleId>>::forced_import(
+            db,
+            "cpfp_flags",
+            version,
         )?;
-        let counts = count_source.cumulative.read_only_clone();
-        let count = CountVecs {
-            cpfp_parent: LazyColumnPerBlockCumulativeRolling::new(
-                "cpfp_parent_count",
-                version,
-                &counts,
-                CpfpRoleId::Parent,
-                mappings,
-                cached_starts,
-            ),
-            cpfp_child: LazyColumnPerBlockCumulativeRolling::new(
-                "cpfp_child_count",
-                version,
-                &counts,
-                CpfpRoleId::Child,
-                mappings,
-                cached_starts,
-            ),
-            source: count_source,
-        };
+    let flags = cpfp_flags_source.read_only_clone();
 
-        let cpfp_flags_source =
-            EagerVec::<ColumnarVec<PcoVec<TxIndex, StoredBool>, CpfpRoleId>>::forced_import(
-                db,
-                "cpfp_flags",
-                version,
-            )?;
-        let flags = cpfp_flags_source.read_only_clone();
-
-        Ok(Self {
-            count,
-            input_value: EagerVec::forced_import(db, "input_value", version)?,
-            output_value: EagerVec::forced_import(db, "output_value", version)?,
-            fee: PerTxDistribution::forced_import(db, "fee", v, mappings)?,
-            fee_rate: EagerVec::forced_import(db, "fee_rate", v)?,
-            effective_fee_rate: PerTxDistribution::forced_import(
-                db,
-                "effective_fee_rate",
-                v,
-                mappings,
-            )?,
-            cpfp_flags: CpfpFlags {
-                is_cpfp_parent: flags.column("is_cpfp_parent", version, CpfpRoleId::Parent),
-                is_cpfp_child: flags.column("is_cpfp_child", version, CpfpRoleId::Child),
-            },
-            cpfp_flags_source,
-        })
-    }
+    Ok(Vecs {
+        count,
+        input_value: EagerVec::forced_import(db, "input_value", version)?,
+        output_value: EagerVec::forced_import(db, "output_value", version)?,
+        fee: PerTxDistribution::forced_import(db, "fee", v, mappings)?,
+        fee_rate: EagerVec::forced_import(db, "fee_rate", v)?,
+        effective_fee_rate: PerTxDistribution::forced_import(
+            db,
+            "effective_fee_rate",
+            v,
+            mappings,
+        )?,
+        cpfp_flags: CpfpFlags {
+            is_cpfp_parent: flags.column("is_cpfp_parent", version, CpfpRoleId::Parent),
+            is_cpfp_child: flags.column("is_cpfp_child", version, CpfpRoleId::Child),
+        },
+        cpfp_flags_source,
+    })
 }

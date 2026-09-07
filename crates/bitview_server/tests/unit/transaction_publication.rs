@@ -20,6 +20,87 @@ const SUFFIXES: [&str; 10] = [
     "/fullrbf/replacements",
 ];
 
+#[test]
+fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
+    use bitview_plugin::Plugin;
+    use bitview_plugin_indexer::HasIndexer;
+    use brk_error::Error;
+
+    use super::chain_fixture::{default_first, run_genesis};
+
+    run_genesis(default_first(), |mut fixture| async move {
+        fixture.publish(1, 1);
+        let query = fixture.query.clone();
+        let txid = Txid::from(fixture.chain[1].txdata[0].compute_txid());
+        let confirmed = query.sync(|q| q.resolve_confirmed_tx(&txid).unwrap());
+        let raw = query.sync(|q| q.resolve_raw_transaction(&txid).unwrap());
+        let json = query.sync(|q| q.resolve_transaction(&txid).unwrap());
+        query.sync(|q| {
+            q.resolve_tx(&txid).unwrap();
+            q.merkle_proof_resolved(confirmed).unwrap();
+            q.merkleblock_proof_resolved(confirmed).unwrap();
+            q.confirmed_cpfp_resolved(confirmed).unwrap();
+        });
+
+        // Resolved tokens retain no guard. Every consumer must reacquire one,
+        // including consumers that acquire several plugin gates together.
+        let gate = fixture.plugins.indexer().gate().clone();
+        gate.begin_update();
+        let (resolve, proof, cpfp) = tokio::join!(
+            query.run(move |q| q.resolve_confirmed_tx(&txid)),
+            query.run(move |q| q.merkle_proof_resolved(confirmed)),
+            query.run(move |q| q.confirmed_cpfp_resolved(confirmed)),
+        );
+        assert!(matches!(resolve, Err(Error::StateUpdating)));
+        assert!(matches!(proof, Err(Error::StateUpdating)));
+        assert!(matches!(cpfp, Err(Error::StateUpdating)));
+        gate.finish_update();
+
+        // Multi-plugin views must also wait for the non-indexer participants.
+        let gate = query.sync(|q| q.transactions().gate().clone());
+        gate.begin_update();
+        assert!(matches!(
+            query
+                .run(move |q| q.confirmed_cpfp_resolved(confirmed))
+                .await,
+            Err(Error::StateUpdating),
+        ));
+        gate.finish_update();
+        query.sync(|q| q.confirmed_cpfp_resolved(confirmed).unwrap());
+
+        // Replace the block at the same height after the handoff. Its old
+        // position is no longer proof that the original transaction exists.
+        fixture.publish(2, 1);
+        query.sync(|q| {
+            assert!(matches!(q.resolve_tx(&txid), Err(Error::UnknownTxid)));
+            assert!(matches!(
+                q.resolve_confirmed_tx(&txid),
+                Err(Error::UnknownTxid),
+            ));
+            assert!(matches!(
+                q.transaction_raw_resolved(raw),
+                Err(Error::UnknownTxid),
+            ));
+            assert!(matches!(
+                q.transaction_json_resolved(json),
+                Err(Error::UnknownTxid),
+            ));
+            assert!(matches!(
+                q.merkle_proof_resolved(confirmed),
+                Err(Error::UnknownTxid),
+            ));
+            assert!(matches!(
+                q.merkleblock_proof_resolved(confirmed),
+                Err(Error::UnknownTxid),
+            ));
+            assert!(matches!(
+                q.confirmed_cpfp_resolved(confirmed),
+                Err(Error::UnknownTxid),
+            ));
+        });
+    });
+}
+
 pub struct TransactionPublication {
     txid: Txid,
     tags: Vec<String>,
@@ -74,6 +155,14 @@ impl TransactionPublication {
     }
 
     pub async fn check_available(&mut self, query: &AsyncQuery, address: SocketAddr) {
+        query.sync(|q| {
+            for (index, outspend) in q.outspends(&self.txid).unwrap().iter().enumerate() {
+                assert_eq!(
+                    to_vec(&q.outspend(&self.txid, Vout::from(index)).unwrap()).unwrap(),
+                    to_vec(outspend).unwrap(),
+                );
+            }
+        });
         self.tags.clear();
         for suffix in SUFFIXES {
             let expected = query.sync(|q| match suffix {

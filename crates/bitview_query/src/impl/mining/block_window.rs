@@ -40,12 +40,9 @@ pub const fn round_half_up(sum: u128, n: u128) -> u64 {
 /// Mempool-compatible time-bucketed block window. Groups blocks by
 /// `block.timestamp / div` and exposes arithmetic means per bucket.
 pub struct BlockWindow {
-    pub start: Height,
-    pub end: Height,
+    start: Height,
+    end: Height,
     pub buckets: Vec<BlockBucket>,
-    /// Exact number of published blocks in `[start, end)`. Every source must
-    /// provide this complete window; a missing tail is not a partial success.
-    pub len: usize,
 }
 
 impl BlockWindow {
@@ -106,7 +103,6 @@ impl BlockWindow {
             start,
             end,
             buckets,
-            len,
         })
     }
 
@@ -118,7 +114,7 @@ impl BlockWindow {
         T: VecValue,
     {
         let values = vec.collect_range(self.start, self.end);
-        if values.len() != self.len {
+        if values.len() != self.end.to_usize() - self.start.to_usize() {
             return Err(Error::Internal("Incomplete mining value window"));
         }
         Ok(values)

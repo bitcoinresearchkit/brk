@@ -25,12 +25,12 @@ fn content_identity_changes_with_witness_when_txid_does_not() {
         }],
     };
     let first_txid = transaction.compute_txid();
-    let first_hash = content_hash(&consensus::serialize(&transaction));
+    let first_hash = RepresentationId::content_hash(&consensus::serialize(&transaction));
 
     transaction.input[0].witness = Witness::from_slice(&[b"second"]);
     assert_eq!(transaction.compute_txid(), first_txid);
     assert_ne!(
-        content_hash(&consensus::serialize(&transaction)),
+        RepresentationId::content_hash(&consensus::serialize(&transaction)),
         first_hash
     );
 }

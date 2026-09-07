@@ -22,7 +22,6 @@ use bitview_plugin::{
 };
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
-use brk_exit::Exit;
 use brk_types::{
     Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
     Month6, StoredU64, TxInIndex, TxIndex, TxOutIndex, Version, Week1, Year1, Year10,
@@ -54,8 +53,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
-    #[traversable(skip)]
-    chain_counts: CachedChainCounts,
+    chain_counts: M::WriteOnly<CachedChainCounts>,
     #[traversable(skip)]
     sources: IndexSources,
     #[traversable(skip)]
@@ -285,32 +283,6 @@ impl Vecs {
         Ok(this)
     }
 
-    fn compute_inner(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
-        self.db.sync_bg_tasks()?;
-
-        let starting_height = indexer.safe_lengths().height;
-
-        self.tx_heights.update(indexer, starting_height);
-        if starting_height.to_usize() < indexer.vecs().transactions.first_tx_index.len() {
-            self.chain_counts.invalidate();
-        }
-
-        // timestamp_monotonic must be computed first — other mappings read it
-        let rewrote_existing = self
-            .timestamp
-            .compute_monotonic(indexer, starting_height, exit)?;
-        if rewrote_existing {
-            self.invalidate_timestamp_dependents();
-        }
-
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
-        Ok(())
-    }
-
     fn invalidate_timestamp_dependents(&self) {
         self.height.invalidate_timestamp_caches();
 
@@ -352,6 +324,26 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(dependencies.indexer, context.exit())
+        let Dependencies { indexer } = dependencies;
+        let exit = context.exit();
+        self.db.sync_bg_tasks()?;
+
+        let starting_height = indexer.safe_lengths().height;
+
+        self.tx_heights.update(indexer, starting_height);
+        if starting_height.to_usize() < indexer.vecs().transactions.first_tx_index.len() {
+            self.chain_counts.invalidate();
+        }
+
+        // timestamp_monotonic must be computed first — other mappings read it
+        let rewrote_existing = self
+            .timestamp
+            .compute_monotonic(indexer, starting_height, exit)?;
+        if rewrote_existing {
+            self.invalidate_timestamp_dependents();
+        }
+
+        context.compact_database(&self.db);
+        Ok(())
     }
 }

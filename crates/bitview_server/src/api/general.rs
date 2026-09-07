@@ -3,9 +3,7 @@ use axum::{
     extract::{Query, State},
     http::HeaderMap,
 };
-use bitview_query::RepresentationId;
-use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp, Version};
-use serde_json::to_vec;
+use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp};
 
 use super::historical_price;
 use crate::{
@@ -46,14 +44,11 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
                     state
-                        .respond_json_bound(&headers, Version::ONE, |q| {
-                            let prices = Prices {
+                        .respond_json_content(&headers, |q| {
+                            Ok(Prices {
                                 time: Timestamp::now(),
                                 usd: q.live_price()?,
-                            };
-                            let bytes = to_vec(&prices).unwrap();
-                            let identity = RepresentationId::content(&bytes);
-                            Ok((bytes, identity))
+                            })
                         })
                         .await
                 },

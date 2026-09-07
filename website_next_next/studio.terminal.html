@@ -36,13 +36,6 @@
         --rose: oklch(0.6155 0.2495 17.012);
       }
       @font-face {
-        font-family: Instrument;
-        src: url("https://bitview.space/assets/fonts/InstrumentSerif-Regular.woff2") format("woff2");
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-      }
-      @font-face {
         font-family: "Lilex";
         src: url("https://bitview.space/assets/fonts/Lilex[wght]-v2_620.woff2")
           format("woff2");
@@ -97,7 +90,6 @@
       body:has(#series-config:popover-open) #status { right: var(--series-sidebar-width); }
 
       #chart-header {
-        display: flex; align-items: center; gap: 0.75rem;
         position: absolute;
         top: 0.5rem;
         left: 0.75rem;
@@ -115,7 +107,7 @@
         padding: 0.25rem 0;
         background: transparent;
         color: var(--white);
-        font: 400 2.25rem Instrument, Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
+        font: inherit;
         text-overflow: ellipsis;
       }
       #chart-title:focus { outline: none; }
@@ -220,10 +212,11 @@
         font-size: var(--text-size);
       }
       #series-search:focus { border-bottom-color: var(--gray); }
-      #catalog-path { display: flex; align-items: center; gap: 0.5rem; overflow-x: auto; white-space: nowrap; flex-shrink: 0; padding: 0.625rem 1rem; color: var(--gray); border-bottom: 0.0625rem solid var(--dark-gray); }
-      #catalog-path button { padding: 0; }
-      #catalog-path button:hover { color: #fff; }
-      #catalog-path [aria-current] { color: #fff; }
+      .breadcrumb-path { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; color: var(--gray); }
+      :is(#chart-header, #catalog-path) button { flex: 0 0 auto; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; pointer-events: auto; }
+      :is(#chart-header, #catalog-path) button:hover, .breadcrumb-path [aria-current] { color: #fff; }
+      .breadcrumb-separator { flex: 0 0 auto; color: var(--gray); }
+      #catalog-path { overflow-x: auto; flex-shrink: 0; padding: 0.625rem 1rem; border-bottom: 0.0625rem solid var(--dark-gray); }
       #series-results { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0.375rem; scroll-padding: 0.375rem; }
       #series-picker .catalog-row { display: flex; align-items: center; gap: 1rem; width: 100%; min-height: 2.375rem; padding: 0.5625rem 0.625rem; text-align: left; border-radius: 0; }
       #series-picker .catalog-row:not(:disabled):hover, #series-picker .catalog-row:focus-visible { background: var(--dark-gray); }
@@ -310,19 +303,20 @@
       #chart-library:popover-open { display: block; transform: translateX(0); }
       @starting-style { #chart-library:popover-open { transform: translateX(-100%); } }
       #chart-library h2 { margin: 0 5rem 1.5rem 0; padding: 0.375rem 0; font: inherit; }
-      #chart-library button, #charts-toggle { padding: 0.375rem 0.625rem; border: 0.0625rem solid var(--dark-gray); border-radius: 0; background: #000; color: #fff; font: inherit; cursor: pointer; }
-      #charts-toggle { pointer-events: auto; }
+      #chart-library button { padding: 0.375rem 0.625rem; border: 0.0625rem solid var(--dark-gray); border-radius: 0; background: #000; color: #fff; font: inherit; cursor: pointer; }
       #chart-library #library-close { position: absolute; top: 1rem; right: 1rem; background: var(--yellow); color: #000; border: 0.1rem solid #000; }
       #library-list { display: grid; gap: 0.125rem; margin-top: 0.75rem; }
       .library-chart > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .library-chart small { display: block; color: var(--gray); margin-top: 0.25rem; font-size: 0.75rem; line-height: 1.5; }
+      .library-chart small { display: block; color: var(--gray); margin-top: 0.25rem; font-size: var(--text-size); line-height: 1.5; }
       #chart-library button:disabled { opacity: 0.4; cursor: wait; }
-      #chart-library button:focus-visible, #charts-toggle:focus-visible { outline: 0.0625rem solid #fff; outline-offset: 0.125rem; }
+      #chart-library button:focus-visible, .breadcrumb-path button:focus-visible { outline: 0.0625rem solid #fff; outline-offset: 0.125rem; }
       /* One visual system for the library and inspector. */
       body {
-        --library-width: min(22.5rem, 44vw);
+        --library-width: min(20rem, 44vw);
         --panel-inset: 1.25rem;
-        --panel-surface: #080808;
+        --panel-surface: #000;
+        --studio-accent: #eee;
+        --studio-ink: #15120c;
         --control-surface: #141414;
         --control-height: 2rem;
         --panel-muted: #858585;
@@ -330,21 +324,21 @@
       #chart-library, #series-config { background: var(--panel-surface); border-color: #262626; box-shadow: none; }
       #chart-library { padding: 0; overflow: hidden; }
       #chart-library:popover-open { display: flex; flex-direction: column; }
-      .library-header { display: flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; min-height: 3.75rem; padding: 0 var(--panel-inset); }
-      #chart-library .library-header h2 { flex: 1; margin: 0; padding: 0; font-size: 0.8125rem; }
+      .library-header { display: flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; min-height: 3.5rem; padding: 0 var(--panel-inset); }
+      #chart-library .library-header h2 { flex: 1; margin: 0; padding: 0; font: inherit; text-transform: uppercase; letter-spacing: 0.04em; }
       #chart-library .library-header #library-close { position: static; }
-      .library-toolbar { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem var(--panel-inset); border-top: 0.0625rem solid #202020; border-bottom: 0.0625rem solid #202020; }
+      .library-toolbar { display: flex; align-items: center; gap: 0.75rem; padding: 0 0.75rem 0.75rem; border: 0; }
 
       #series-config-body { padding: var(--panel-inset) var(--panel-inset) 4rem; }
       #chart-library h2, #series-config-heading {
         display: flex; align-items: baseline; gap: 0.625rem;
         margin: 0 4.5rem 2rem 0; padding: 0.25rem 0;
-        font: 500 1rem/1.5 "Lilex", monospace; letter-spacing: 0.025em;
+        font: 500 var(--text-size)/1.5 "Lilex", monospace; letter-spacing: 0.025em;
       }
-      #library-count { color: var(--panel-muted); font-size: 0.75rem; font-weight: 400; }
+      #library-count { align-self: baseline; margin-top: 0; color: #666; font: 400 var(--text-size)/1.5 "Lilex", monospace; letter-spacing: 0; }
       #chart-library #library-close, #series-config .series-config-action {
         right: var(--panel-inset); padding: 0.375rem 0.5rem;
-        font-size: 0.6875rem; line-height: 1.25; letter-spacing: 0.04em;
+        font-size: var(--text-size); line-height: 1.25; letter-spacing: 0.04em;
         border: 0.1rem solid #000;
       }
       #chart-library #library-close, #series-config #series-config-close { top: var(--panel-inset); }
@@ -352,49 +346,48 @@
       #chart-library #new-chart {
         display: inline-flex; align-items: center; gap: 0.375rem;
         box-sizing: border-box; height: 1.75rem; padding: 0 0.5rem;
-        border: 0; background: transparent; color: #ddd;
-        font-size: 0.6875rem; letter-spacing: 0.04em; white-space: nowrap;
+        border: 0; background: transparent; color: var(--studio-accent);
+        font-size: var(--text-size); letter-spacing: 0.04em; white-space: nowrap;
       }
-      #new-chart::before { content: "+"; font-size: 1rem; font-weight: 300; line-height: 1; }
+      #new-chart::before { content: "+"; font-size: var(--text-size); font-weight: 300; line-height: 1; }
       #chart-library #new-chart:hover:not(:disabled) { background: #e8e8e8; color: #000; }
       #library-sort-label, #series-config label, #series-config-colors-label, .series-config-meta-label {
-        color: var(--panel-muted); font-size: 0.6875rem; line-height: 1.5;
+        color: var(--panel-muted); font-size: var(--text-size); line-height: 1.5;
         text-transform: uppercase; letter-spacing: 0.075em;
       }
-      #library-sort-label { display: block; margin: 0; flex: 0 0 auto; font-size: 0.625rem; }
+      #library-sort-label { display: block; margin: 0; flex: 0 0 auto; font-size: var(--text-size); }
       #library-sort, .series-config-choices { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-      #library-sort { display: grid; flex: 1; min-width: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      #library-sort { display: grid; flex: 1; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
       :is(#series-config .series-config-choices, #library-sort) button {
         box-sizing: border-box; min-width: 2rem; height: var(--control-height);
-        padding: 0 0.5rem; border: 0.0625rem solid #272727; background: transparent;
-        color: #a0a0a0; font: 400 0.75rem/1 "Lilex", monospace;
+        padding: 0 0.5rem; border: 0; background: transparent;
+        color: #a0a0a0; font: 400 var(--text-size)/1 "Lilex", monospace;
       }
-      :is(#series-config .series-config-choices, #library-sort) button[aria-pressed="true"] { color: #000; background: #e8e8e8; border-color: #e8e8e8; }
+      :is(#series-config .series-config-choices, #library-sort) button[aria-pressed="true"] { color: var(--studio-ink); background: var(--studio-accent); border-color: var(--studio-accent); }
       :is(#series-config .series-config-choices, #library-sort) button:hover:not(:disabled):not([aria-pressed="true"]) { color: #fff; background: #242424; }
-      #chart-library #library-sort button { height: 1.625rem; min-width: 0; padding: 0 0.25rem; font-size: 0.625rem; }
+      #chart-library #library-sort button { height: 1.625rem; min-width: 0; padding: 0 0.25rem; font-size: var(--text-size); }
       #library-list { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; gap: 0; margin: 0; padding: 0.5rem; }
 
       #chart-library .library-chart {
-        position: relative; flex: 0 0 auto; min-width: 0; padding: 0.75rem;
+        position: relative; flex: 0 0 auto; min-width: 0; padding: 0.625rem 0.75rem;
         border: 0;
         text-align: left; background: transparent; color: #c0c0c0;
       }
       .library-chart > .library-row-title { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0; line-height: 1.5; }
-      .library-row-title > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
-      .library-row-title time { flex: 0 0 auto; font-size: 0.625rem; color: var(--panel-muted); }
+      .library-row-title > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-size); }
+      .library-row-title time { flex: 0 0 auto; font-size: var(--text-size); color: var(--panel-muted); }
 
       #chart-library .library-chart:hover:not(:disabled):not([aria-current="true"]) { color: #fff; background: #101010; }
-      #chart-library .library-chart[aria-current="true"] { color: #fff; background: #191919; }
-      .library-chart[aria-current="true"]::before {
-        content: ""; position: absolute; left: 0; top: 0.75rem; bottom: 0.75rem; width: 0.125rem; background: #e8e8e8;
-      }
+      #chart-library .library-chart[aria-current="true"] { color: #fff; background: #1b1b1b; }
+      #chart-library .library-chart[aria-current="true"] :is(small, time) { color: #999; }
       .library-chart small {
         display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
-        margin-top: 0.25rem; color: var(--panel-muted); font-size: 0.625rem; line-height: 1.5;
+        margin-top: 0.25rem; color: var(--panel-muted); font-size: var(--text-size); line-height: 1.5;
       }
       .library-chart time { white-space: nowrap; }
-      #library-footer { flex: 0 0 auto; margin: 0; padding: 0.75rem var(--panel-inset); border-top: 0.0625rem solid #202020; color: #777; font-size: 0.625rem; }
+      #library-footer { display: none; flex: 0 0 auto; margin: 0; padding: 0.75rem var(--panel-inset); border-top: 0.0625rem solid #202020; color: #777; font-size: var(--text-size); }
       #library-footer kbd { font: inherit; color: #aaa; }
+      #series-config-heading { font: inherit; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1.5rem; padding-top: 0.25rem; }
       #series-config-name { background: transparent; color: #eee; line-height: 1.75; }
       #series-config .series-config-identity { margin-bottom: 1.75rem; }
       #series-config .series-config-placement { gap: 0.625rem; margin-bottom: 1.75rem; }
@@ -403,12 +396,10 @@
       #series-config #series-config-colors-label { margin-bottom: 0.625rem; }
       #series-config-colors { gap: 0.375rem; margin-bottom: 1.75rem; }
       #series-config-colors button { height: 1.25rem; }
-      #series-config-id, #series-config-description, #series-config-data { font-size: 0.75rem; line-height: 1.65; }
+      #series-config-id, #series-config-description, #series-config-data { font-size: var(--text-size); line-height: 1.65; }
       #series-config-id { color: #aaa; }
       #series-config-description { color: var(--panel-muted); }
-      #series-config-style input { height: 2rem; background: var(--control-surface); border: 0; color: #eee; font-size: 0.75rem; }
-      #charts-toggle { padding: 0.375rem 0.5rem; border-color: #303030; color: #999; font-size: 0.6875rem; letter-spacing: 0.04em; }
-      #charts-toggle:hover { color: #fff; border-color: #666; }
+      #series-config-style input { height: 2rem; background: var(--control-surface); border: 0; color: #eee; font-size: var(--text-size); }
       @media (max-width: 42rem) {
         body { --panel-inset: 0.875rem; }
         .library-toolbar { flex-wrap: wrap; }
@@ -416,24 +407,27 @@
         .library-header { flex-wrap: wrap; gap: 0.375rem; padding-block: 0.75rem; }
         .library-chart small { flex-wrap: wrap; gap: 0.25rem; }
       }
+      #library-sort-label.visually-hidden { position: absolute; width: 0.0625rem; height: 0.0625rem; padding: 0; margin: -0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .library-chart .library-row-title { min-width: 0; }
+      #library-sort { gap: 0; }
+      #chart-library #library-sort button { height: 2rem; }
     </style>
   </head>
   <body>
     <aside id="chart-library" popover="manual" aria-labelledby="library-heading">
       <header class="library-header">
-        <h2 id="library-heading">CHARTS <span id="library-count" aria-label="Chart count"></span></h2>
+        <h2 id="library-heading">Charts <span id="library-count" aria-label="Chart count"></span></h2>
         <button id="new-chart" aria-label="Create new chart" title="Create new chart" disabled>NEW</button>
         <button id="library-close" popovertarget="chart-library" popovertargetaction="hide">CLOSE</button>
       </header>
       <div class="library-toolbar">
-        <span id="library-sort-label">SORT</span>
+        <span id="library-sort-label" class="visually-hidden">Sort charts by</span>
         <div id="library-sort" role="group" aria-labelledby="library-sort-label"></div>
       </div>
       <nav id="library-list" aria-label="Saved charts"></nav>
       <p id="library-footer"><kbd>↑ ↓</kbd> navigate · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close</p>
     </aside>
     <header id="chart-header">
-      <button id="charts-toggle" popovertarget="chart-library" aria-label="Toggle chart library">CHARTS</button>
       <input id="chart-title" aria-label="Chart title" title="Edit chart title" placeholder="Untitled chart" maxlength="160" autocomplete="off" />
     </header>
     <main id="chart" aria-label="Chart"></main>
@@ -486,7 +480,7 @@
       const status = document.getElementById("status");
       let chart;
       const storageKey = "bitview-studio-terminal-library-v1";
-      const sortLabels = { viewed: "VIEWED", changed: "CHANGED", created: "CREATED", name: "NAME" };
+      const sortLabels = { viewed: "VIEWED", created: "CREATED", name: "NAME" };
       const defaultChartState = () => ({ version: 3, title: "Untitled chart", timeframe: "day1", panes: [{ series: [{ name: "price_ohlc" }] }] });
       const validChartState = state => [1, 2, 3].includes(state?.version) && Array.isArray(state.panes) && state.panes.length > 0;
       function newChartRecord(state = defaultChartState()) {
@@ -538,6 +532,29 @@
       let saveState = () => {};
       const chartTitle = document.getElementById("chart-title");
       const chartHeader = document.getElementById("chart-header");
+      function renderPath(container, parts) {
+        container.classList.add("breadcrumb-path");
+        const children = [];
+        for (const part of parts) {
+          if (children.length) {
+            const separator = document.createElement("span");
+            separator.className = "breadcrumb-separator";
+            separator.textContent = "/";
+            separator.setAttribute("aria-hidden", "true");
+            children.push(separator);
+          }
+          const element = part.node || document.createElement(part.onClick ? "button" : "span");
+          if (!part.node) element.textContent = part.label;
+          if (part.onClick) { element.type = "button"; element.onclick = part.onClick; }
+          if (part.current) element.setAttribute("aria-current", "location");
+          children.push(element);
+        }
+        container.replaceChildren(...children);
+      }
+      renderPath(chartHeader, [
+        { label: "CHARTS", onClick: () => document.getElementById("chart-library").togglePopover() },
+        { node: chartTitle, current: true },
+      ]);
       for (const type of ["pointerdown", "mousedown", "touchstart", "click", "dblclick", "wheel", "keydown"]) {
         chartHeader.addEventListener(type, event => event.stopPropagation());
       }
@@ -1599,17 +1616,13 @@
         let addingSeries = false;
 
         function renderBreadcrumbs(path, searching = false) {
-          breadcrumbs.replaceChildren();
-          const parts = ["Browse", ...path];
-          parts.forEach((part, index) => {
-            if (index) breadcrumbs.append(" / ");
-            const button = document.createElement("button");
-            button.textContent = part.replaceAll("_", " ");
-            if (!searching && index === parts.length - 1) button.setAttribute("aria-current", "location");
-            button.onclick = () => browseCatalog(path.slice(0, index));
-            breadcrumbs.append(button);
-          });
-          if (searching) breadcrumbs.append(" / Search results");
+          const parts = ["Browse", ...path].map((part, index) => ({
+            label: part.replaceAll("_", " "),
+            current: !searching && index === path.length,
+            onClick: () => browseCatalog(path.slice(0, index)),
+          }));
+          if (searching) parts.push({ label: "Search results", current: true });
+          renderPath(breadcrumbs, parts);
         }
 
         function createAddButton(entry) {
@@ -1859,12 +1872,8 @@
             button.disabled = switchingChart;
             const title = document.createElement("span");
             title.textContent = entry.state.title || "Untitled chart";
-            const metadata = document.createElement("small");
-            const details = document.createElement("span");
-            const seriesCount = entry.state.panes.reduce((count, pane) => count + (pane.series?.length || 0), 0);
-            details.textContent = `${indexLabels[entry.state.timeframe] || entry.state.timeframe || "1d"} · ${seriesCount} series`;
             const date = document.createElement("time");
-            const key = library.sort === "name" ? "changed" : library.sort;
+            const key = library.sort === "name" ? "created" : library.sort;
             const timestamp = new Date(entry[key]);
             if (Number.isFinite(timestamp.getTime())) {
               date.dateTime = timestamp.toISOString();
@@ -1874,9 +1883,8 @@
             const rowTitle = document.createElement("span");
             rowTitle.className = "library-row-title";
             rowTitle.append(title, date);
-            metadata.append(details);
             button.title = entry.state.title || "Untitled chart";
-            button.append(rowTitle, metadata);
+            button.append(rowTitle);
             button.onclick = () => switchChart(entry);
             return button;
           }));

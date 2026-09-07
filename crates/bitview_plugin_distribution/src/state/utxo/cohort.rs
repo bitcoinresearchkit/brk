@@ -1,5 +1,3 @@
-use brk_error::Result;
-
 use std::path::Path;
 
 use brk_types::{Bitcoin, Cents, CentsSigned, Sats, StoredF64, StoredU64, SupplyState};
@@ -15,10 +13,6 @@ pub struct UTXOCohortState<R: RealizedOps, C: CostBasisOps>(pub CohortState<R, C
 impl<R: RealizedOps, C: CostBasisOps> UTXOCohortState<R, C> {
     pub fn new(path: &Path, name: &str) -> Self {
         Self(CohortState::new(path, name))
-    }
-
-    pub fn reset_cost_basis_data_if_needed(&mut self) -> Result<()> {
-        self.0.reset_cost_basis_data_if_needed()
     }
 
     /// Reset state for fresh start.

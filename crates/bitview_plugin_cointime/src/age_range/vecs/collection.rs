@@ -1,11 +1,11 @@
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_traversable::Traversable;
-use brk_types::{Sats, StoredF64};
+use brk_types::{BoundedRatio, StoredF64};
 use vecdb::{Rw, StorageMode};
 
 use bitview_compute::{
     ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    LazyColumnSpotValuePerBlock,
+    LazySpotValuePerBlock,
 };
 
 use super::{ActivitySeries, SupplyVecs};
@@ -34,9 +34,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// Wakefulness for each UTXO age range: cumulative coin days consumed from
     /// the range divided by cumulative coin days created in the range. Higher
     /// values mean more of the holding time accumulated in that range has been
-    /// consumed by spending.
-    pub activity: ColumnarPerBlock<StoredF64, AgeRangeId, ActivitySeries, M>,
-    pub supply: SupplyVecs<
-        ColumnarPerBlock<Sats, AgeRangeId, AgeRange<LazyColumnSpotValuePerBlock<AgeRangeId>>, M>,
-    >,
+    /// consumed by spending. The source is floored at bounded scale
+    /// 4,294,967,294; cumulative coin-day inputs remain full precision.
+    pub activity: ColumnarPerBlock<BoundedRatio, AgeRangeId, ActivitySeries, M>,
+    pub supply: SupplyVecs<AgeRange<LazySpotValuePerBlock>>,
 }

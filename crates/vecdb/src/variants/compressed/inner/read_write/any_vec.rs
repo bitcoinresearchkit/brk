@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use crate::{AnyVec, VecIndex, VecValue, Version, short_type_name};
 
 use super::{super::CompressionStrategy, ReadWriteCompressedVec};

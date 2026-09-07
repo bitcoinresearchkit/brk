@@ -1,8 +1,10 @@
 use std::ops::{Add, AddAssign};
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::OutputType;
 use rayon::prelude::*;
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
 
 use super::Filter;
@@ -42,30 +44,34 @@ pub const ADDR_TYPE_IDS: [AddrTypeId; ADDR_TYPE_COUNT] = [
     AddrTypeId::P2A,
 ];
 
+impl AddrTypeId {
+    pub const ALL: &'static [Self] = &ADDR_TYPE_IDS;
+
+    #[inline]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+}
+#[cfg(feature = "storage")]
 impl ColumnId for AddrTypeId {
     type Row<T>
         = [T; ADDR_TYPE_COUNT]
     where
         T: VecValue;
-
     const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &ADDR_TYPE_IDS;
-
+    const ALL: &'static [Self] = Self::ALL;
     #[inline]
     fn index(self) -> usize {
-        self as usize
+        Self::index(self)
     }
-
     #[inline]
     fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
         &row[self.index()]
     }
-
     #[inline]
     fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
         &mut row[self.index()]
     }
-
     #[inline]
     fn from_fn<T, F>(mut create: F) -> Self::Row<T>
     where
@@ -74,7 +80,6 @@ impl ColumnId for AddrTypeId {
     {
         std::array::from_fn(|index| create(ADDR_TYPE_IDS[index]))
     }
-
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
     where
@@ -126,7 +131,8 @@ impl AddrTypeId {
     }
 }
 
-#[derive(Default, Clone, Debug, Traversable)]
+#[derive(Default, Clone, Debug)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByAddrType<T> {
     /// Uses addresses derived from pay-to-public-key outputs with a 65-byte key
     /// field.
@@ -207,16 +213,7 @@ impl<T> ByAddrType<T> {
     }
 
     pub fn map_with_name<U>(&self, f: impl Fn(&'static str, &T) -> U) -> ByAddrType<U> {
-        ByAddrType {
-            p2pk65: f(P2PK65, &self.p2pk65),
-            p2pk33: f(P2PK33, &self.p2pk33),
-            p2pkh: f(P2PKH, &self.p2pkh),
-            p2sh: f(P2SH, &self.p2sh),
-            p2wpkh: f(P2WPKH, &self.p2wpkh),
-            p2wsh: f(P2WSH, &self.p2wsh),
-            p2tr: f(P2TR, &self.p2tr),
-            p2a: f(P2A, &self.p2a),
-        }
+        ByAddrType::from_fn(|id| f(id.name(), id.select(self)))
     }
 
     #[inline]
@@ -260,7 +257,7 @@ impl<T> ByAddrType<T> {
     }
 
     #[inline]
-    pub fn values(&self) -> impl Iterator<Item = &T> {
+    fn as_array(&self) -> [&T; ADDR_TYPE_COUNT] {
         [
             &self.p2pk65,
             &self.p2pk33,
@@ -271,11 +268,10 @@ impl<T> ByAddrType<T> {
             &self.p2tr,
             &self.p2a,
         ]
-        .into_iter()
     }
 
     #[inline]
-    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    fn as_array_mut(&mut self) -> [&mut T; ADDR_TYPE_COUNT] {
         [
             &mut self.p2pk65,
             &mut self.p2pk33,
@@ -286,7 +282,16 @@ impl<T> ByAddrType<T> {
             &mut self.p2tr,
             &mut self.p2a,
         ]
-        .into_iter()
+    }
+
+    #[inline]
+    pub fn values(&self) -> impl Iterator<Item = &T> {
+        self.as_array().into_iter()
+    }
+
+    #[inline]
+    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.as_array_mut().into_iter()
     }
 
     #[inline]
@@ -294,17 +299,7 @@ impl<T> ByAddrType<T> {
     where
         T: Send + Sync,
     {
-        [
-            &self.p2pk65,
-            &self.p2pk33,
-            &self.p2pkh,
-            &self.p2sh,
-            &self.p2wpkh,
-            &self.p2wsh,
-            &self.p2tr,
-            &self.p2a,
-        ]
-        .into_par_iter()
+        self.as_array().into_par_iter()
     }
 
     #[inline]
@@ -312,32 +307,15 @@ impl<T> ByAddrType<T> {
     where
         T: Send + Sync,
     {
-        [
-            &mut self.p2pk65,
-            &mut self.p2pk33,
-            &mut self.p2pkh,
-            &mut self.p2sh,
-            &mut self.p2wpkh,
-            &mut self.p2wsh,
-            &mut self.p2tr,
-            &mut self.p2a,
-        ]
-        .into_par_iter()
+        self.as_array_mut().into_par_iter()
     }
 
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (OutputType, &T)> {
-        [
-            (OutputType::P2PK65, &self.p2pk65),
-            (OutputType::P2PK33, &self.p2pk33),
-            (OutputType::P2PKH, &self.p2pkh),
-            (OutputType::P2SH, &self.p2sh),
-            (OutputType::P2WPKH, &self.p2wpkh),
-            (OutputType::P2WSH, &self.p2wsh),
-            (OutputType::P2TR, &self.p2tr),
-            (OutputType::P2A, &self.p2a),
-        ]
-        .into_iter()
+        ADDR_TYPE_IDS
+            .into_iter()
+            .map(AddrTypeId::output_type)
+            .zip(self.values())
     }
 
     #[inline]
@@ -367,17 +345,10 @@ impl<T> ByAddrType<T> {
 
     #[inline]
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
-        [
-            (OutputType::P2PK65, &mut self.p2pk65),
-            (OutputType::P2PK33, &mut self.p2pk33),
-            (OutputType::P2PKH, &mut self.p2pkh),
-            (OutputType::P2SH, &mut self.p2sh),
-            (OutputType::P2WPKH, &mut self.p2wpkh),
-            (OutputType::P2WSH, &mut self.p2wsh),
-            (OutputType::P2TR, &mut self.p2tr),
-            (OutputType::P2A, &mut self.p2a),
-        ]
-        .into_iter()
+        ADDR_TYPE_IDS
+            .into_iter()
+            .map(AddrTypeId::output_type)
+            .zip(self.values_mut())
     }
 }
 
@@ -426,6 +397,8 @@ impl<T> ByAddrType<Option<T>> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
+    #[cfg(feature = "storage")]
     use vecdb::ColumnId;
 
     use super::{ADDR_TYPE_IDS, AddrTypeId, ByAddrType};
@@ -438,6 +411,7 @@ mod tests {
         assert!(series.values().copied().eq(ADDR_TYPE_IDS));
     }
 
+    #[cfg(feature = "storage")]
     #[test]
     fn row_order_matches_column_indexes() {
         let row = AddrTypeId::from_fn(|column| column.index());

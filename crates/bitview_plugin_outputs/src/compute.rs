@@ -2,21 +2,27 @@ use brk_error::Result;
 use rayon::join;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
 
 use super::Vecs;
 use crate::Dependencies;
 
-impl Vecs {
-    fn compute_inner(
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        inputs: &bitview_plugin_inputs::Vecs,
-        blocks: &bitview_plugin_blocks::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            inputs,
+            blocks,
+            price: prices,
+        } = dependencies;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         let starting_lengths = indexer.safe_lengths();
@@ -42,24 +48,5 @@ impl Vecs {
             db.compact_deferred_default()
         });
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.inputs,
-            dependencies.blocks,
-            dependencies.price,
-            context.exit(),
-        )
     }
 }

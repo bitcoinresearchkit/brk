@@ -2,6 +2,7 @@ use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
 use super::{Cents, CentsSquaredSats, Sats};
@@ -118,6 +119,7 @@ impl Div<usize> for CentsSats {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for CentsSats {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
@@ -126,6 +128,7 @@ impl Formattable for CentsSats {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for CentsSats {
     type Array = [u8; 16];
 

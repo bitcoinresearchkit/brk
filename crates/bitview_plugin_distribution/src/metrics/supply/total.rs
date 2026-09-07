@@ -4,12 +4,12 @@ use bitview_cohort::{AgeRangeId, AmountRange, CohortContext, Filter, UTXOGroups}
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, CachedBoxedVec, ColumnId, Database, ReadOnlyClone, ReadableColumnarVec, Rw,
-    StorageMode,
+    AnyStoredVec, CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyClone,
+    ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
 };
 
 use crate::metrics::{ColumnarAmount, UTXOColumnarMetric, UTXORows};
-use bitview_compute::{LazySpotValuePerBlock, PinnedSpotValuePerBlock};
+use bitview_compute::{CACHE_BUDGET, LazySpotValuePerBlock, PinnedSpotValuePerBlock};
 
 #[derive(Traversable)]
 pub struct SupplyTotal<M: StorageMode = Rw> {
@@ -21,6 +21,10 @@ pub struct SupplyTotal<M: StorageMode = Rw> {
     pub addr_balance: ColumnarAmount<Sats, LazySpotValuePerBlock, M>,
     #[traversable(skip)]
     all: PinnedSpotValuePerBlock,
+    /// Shared decoded age inputs for raw sums and weighted consumers.
+    #[traversable(skip)]
+    pub age_ranges:
+        CachedColumnarVec<ReadOnlyColumnarVec<PcoVec<Height, Sats>, AgeRangeId>, AgeRangeId>,
 }
 
 impl SupplyTotal {
@@ -31,11 +35,16 @@ impl SupplyTotal {
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let matrices = UTXOColumnarMetric::forced_import(db, "supply_sats", version)?;
+        let age_ranges = CachedColumnarVec::new(
+            matrices.age_range_matrix.read_only_clone(),
+            version,
+            |column| CACHE_BUDGET.wrap(column),
+        );
         let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
         let all = PinnedSpotValuePerBlock::from_sats_source(
             &all_name,
             version,
-            matrices.age_range_matrix.read_only_clone().sum_columns(
+            age_ranges.sum_columns(
                 &format!("{all_name}_sats"),
                 version,
                 AgeRangeId::ALL.iter().copied(),
@@ -48,9 +57,18 @@ impl SupplyTotal {
             if matches!(filter, Filter::All) {
                 all.series.clone()
             } else {
-                let source = matrices
-                    .additive_source(&filter, &format!("{name}_sats"), version)
-                    .expect("total-supply cohort source");
+                let source_name = format!("{name}_sats");
+                let source = if let Some(column) = AgeRangeId::matching(&filter) {
+                    age_ranges.cached_column(column).read_only_boxed_clone()
+                } else if let Some(columns) = AgeRangeId::aggregate_columns(&filter) {
+                    CACHE_BUDGET
+                        .wrap(age_ranges.sum_columns(&source_name, version, columns))
+                        .read_only_boxed_clone()
+                } else {
+                    matrices
+                        .additive_source(&filter, &source_name, version)
+                        .expect("total-supply cohort source")
+                };
                 LazySpotValuePerBlock::from_boxed_sats_source(
                     &name, version, source, mappings, spot_price,
                 )
@@ -78,6 +96,7 @@ impl SupplyTotal {
             matrices,
             addr_balance,
             all,
+            age_ranges,
         })
     }
 

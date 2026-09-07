@@ -10,7 +10,6 @@ mod base;
 mod bytes;
 mod cursor;
 mod error;
-mod internals;
 mod iterators;
 mod ops;
 mod read_bounds;
@@ -37,7 +36,7 @@ pub use iterators::ValueWriter;
 
 pub use ops::{BinaryTransform, CheckedSub, Divide, Minus, Plus, SaturatingAdd, Times};
 
-pub use read_bounds::ReadBounds;
+pub use read_bounds::{BoundedVec, BoundedWriter, ReadBounds};
 
 pub use stamp::Stamp;
 
@@ -52,13 +51,14 @@ pub use traits::{
 
 pub use variants::{
     AggFold, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue, CachedBoxedVec,
-    CachedReadableVec, CachedVec, CachedVecBudget, ColumnId, ColumnarVec, CompressedRangeCursor,
-    CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec,
-    EncodedChunk, Halve, Ident, LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec,
-    LazyDeltaVec, LazyVec, MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader,
-    OverflowVecReaderCursor, OverflowVecValue, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
-    ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
-    ReadWriteRawVec, ReadableColumnarVec, UnaryTransform, VecReader, VecReaderCursor,
+    CachedColumnarVec, CachedReadableVec, CachedVec, CachedVecBudget, ColumnId, ColumnarVec,
+    CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate,
+    DeltaSub, EagerVec, EncodedChunk, Halve, Ident, LazyAggVec, LazyColumnSumVec, LazyColumnVec,
+    LazyColumnarVec, LazyDeltaVec, LazyVec, MutableVec, Negate, NoBudget, OverflowVec,
+    OverflowVecReader, OverflowVecReaderCursor, OverflowVecValue, RawRangeCursor, RawStrategy,
+    ReadOnlyColumnarVec, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec,
+    ReadOnlyRawVec, ReadWriteRawVec, ReadableColumnarVec, UnaryTransform, VecReader,
+    VecReaderCursor,
 };
 #[cfg(feature = "lz4")]
 pub use variants::{LZ4Strategy, LZ4Vec, LZ4VecValue};

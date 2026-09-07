@@ -1,10 +1,10 @@
 use bitview_traversable::Traversable;
-use brk_types::{Cents, StoredF64};
+use brk_types::{BoundedRatio, Cents, StoredF64};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
 use super::{LossPercentileId, Percentiles, PriceBandId, PriceBands, price::LazyColumnPrice};
-use bitview_compute::{ColumnarDailyMetric, LazyColumnDailyMetric};
+use bitview_compute::{ColumnarDailyMetric, LazyDailyMetric};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ModeVecs<M: StorageMode = Rw> {
@@ -12,12 +12,12 @@ pub struct ModeVecs<M: StorageMode = Rw> {
     /// condition for this mode. It is a linearly interpolated percentile of the
     /// mode's prior finite daily loss shares. The represented day is excluded,
     /// and the value is unavailable until its loss share exists and at least
-    /// 365 prior observations are available. Stored as a unitless decimal
-    /// share.
+    /// 365 prior observations are available. Stored as a bounded share and
+    /// exposed as a unitless decimal. Calibration remains full precision.
     pub loss_threshold: ColumnarDailyMetric<
-        StoredF64,
+        BoundedRatio,
         LossPercentileId,
-        Percentiles<LazyColumnDailyMetric<StoredF64, LossPercentileId>>,
+        Percentiles<LazyDailyMetric<StoredF64, BoundedRatio>>,
         M,
     >,
     #[deref]

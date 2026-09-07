@@ -1,14 +1,13 @@
-use crate::internals::*;
-
-use bitview_compute::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyMetric};
+use bitview_compute::{BoundedToF64, ColumnarDailyMetric, DailyMappings, LazyDailyMetric};
 use bitview_plugin::ImportContext;
 use brk_error::Result;
-use brk_types::Version;
-use vecdb::Database;
+use brk_types::{Cents, Height, Version};
+use vecdb::{CachedBoxedVec, Database, ReadableCloneableVec, ReadableColumnarVec};
 
 use super::Vecs;
 use crate::{
-    CostBasisVecs, LossPercentileId, ModeVecs, Modes, PriceBandId, STORAGE, price::LazyColumnPrice,
+    CapitalizedPriceVecs, CostBasisVecs, LossPercentileId, ModeVecs, Modes, PriceBandId, STORAGE,
+    price::LazyColumnPrice,
 };
 
 impl ModeVecs {
@@ -20,15 +19,20 @@ impl ModeVecs {
     ) -> Result<Self> {
         let loss_threshold = ColumnarDailyMetric::forced_import(
             db,
-            &format!("{name}_loss_thresholds"),
-            version,
+            &format!("{name}_loss_thresholds_bounded"),
+            version + Version::ONE,
             |source| {
                 LossPercentileId::series(|percentile| {
-                    LazyColumnDailyMetric::new(
+                    LazyDailyMetric::from_source::<BoundedToF64>(
                         &format!("{name}_loss_threshold_{}", percentile.suffix()),
-                        version,
-                        source,
-                        percentile,
+                        version + Version::ONE,
+                        source
+                            .column(
+                                &format!("{name}_loss_threshold_{}_bounded", percentile.suffix()),
+                                version + Version::ONE,
+                                percentile,
+                            )
+                            .read_only_boxed_clone(),
                         mappings,
                     )
                 })
@@ -63,22 +67,27 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &bitview_plugin_mappings::Vecs,
+        spot: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let states_path = STORAGE.path(context).join("states");
         let version = STORAGE.schema_version();
-        let mappings = DailyMappings::new(mappings);
+        let indexes = mappings;
+        let mappings = DailyMappings::new(indexes);
 
         let modes = Modes::try_from_fn(|mode| {
             let name = mode.name();
             ModeVecs::forced_import(&db, &format!("bedrock_{name}"), version, &mappings)
         })?;
         let cost_basis = CostBasisVecs::forced_import(&db, version, &mappings)?;
+        let capitalized_price =
+            CapitalizedPriceVecs::forced_import(&db, version, indexes, &mappings, spot)?;
         let this = Self {
             plugin_gate: Default::default(),
             db,
             states_path,
             cost_basis,
+            capitalized_price,
             modes,
         };
         STORAGE.finalize_database(&this.db)?;

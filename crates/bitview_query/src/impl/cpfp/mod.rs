@@ -1,7 +1,5 @@
 //! CPFP queries shared by live mempool and confirmed transactions.
 
-use crate::internals::*;
-
 pub mod confirmed;
 pub mod resolved;
 
@@ -11,9 +9,12 @@ use brk_error::{Error, OptionData, Result};
 use brk_types::{CpfpInfo, FeeRate, Txid};
 use vecdb::ReadableVec;
 
-use crate::Query;
+use crate::{Query, r#impl::tx::ResolvedConfirmedTx};
 
-use resolved::CpfpSource;
+enum CpfpSource {
+    Memory(CpfpInfo),
+    Chain(ResolvedConfirmedTx),
+}
 
 impl Query {
     /// Reconstruct the published same-block cluster, falling back to live
@@ -51,5 +52,19 @@ impl Query {
         }
 
         Err(Error::UnknownTxid)
+    }
+
+    fn resolve_cpfp_source(&self, txid: &Txid) -> Result<CpfpSource> {
+        let read = self.read_indexer()?;
+        match read.resolve_confirmed_tx(txid) {
+            Ok(transaction) => Ok(CpfpSource::Chain(transaction)),
+            Err(Error::UnknownTxid) => self
+                .mempool()
+                .ok_or(Error::UnknownTxid)?
+                .cpfp_info(txid, &self.tip_blockhash())?
+                .map(CpfpSource::Memory)
+                .ok_or(Error::UnknownTxid),
+            Err(error) => Err(error),
+        }
     }
 }

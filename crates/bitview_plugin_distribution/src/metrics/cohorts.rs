@@ -10,7 +10,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CachedBoxedVec, ColumnId, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CachedBoxedVec, Database, ReadOnlyClone, Rw, StorageMode};
 
 use crate::{
     AllChainSources,

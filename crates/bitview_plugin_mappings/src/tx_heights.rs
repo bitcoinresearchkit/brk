@@ -19,16 +19,7 @@ pub struct TxHeights(Arc<RwLock<RangeMap<TxIndex, Height>>>);
 impl TxHeights {
     /// Build from the full `first_tx_index` vec at startup.
     pub fn init(indexer: &Indexer) -> Self {
-        let len = indexer.vecs().transactions.first_tx_index.len();
-        let entries: Vec<TxIndex> = if len > 0 {
-            indexer
-                .vecs()
-                .transactions
-                .first_tx_index
-                .collect_range_at(0, len)
-        } else {
-            Vec::new()
-        };
+        let entries = indexer.vecs().transactions.first_tx_index.collect();
         Self(Arc::new(RwLock::new(RangeMap::from(entries))))
     }
 
@@ -57,5 +48,41 @@ impl TxHeights {
     #[inline]
     pub fn get_shared(&self, tx_index: TxIndex) -> Option<Height> {
         self.0.read().get_shared(tx_index)
+    }
+
+    /// Resume at the block containing the next transaction, or the height end
+    /// when every transaction in the requested range is already computed.
+    pub fn resume_height(&self, tx_len: usize, target_tx: usize, target_height: usize) -> usize {
+        if tx_len >= target_tx {
+            target_height
+        } else {
+            self.get_shared(TxIndex::from(tx_len)).unwrap().to_usize()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resume_height_includes_partial_blocks_and_stops_at_the_target() {
+        let heights = TxHeights(Arc::new(RwLock::new(RangeMap::from(
+            [0usize, 1, 4].map(TxIndex::from).to_vec(),
+        ))));
+        for (tx_len, expected) in [
+            (0, 0),
+            (1, 1),
+            (2, 1),
+            (3, 1),
+            (4, 2),
+            (5, 2),
+            (6, 3),
+            (7, 3),
+        ] {
+            assert_eq!(heights.resume_height(tx_len, 6, 3), expected);
+        }
+        assert_eq!(heights.resume_height(4, 4, 2), 2);
+        assert_eq!(heights.resume_height(0, 0, 0), 0);
     }
 }

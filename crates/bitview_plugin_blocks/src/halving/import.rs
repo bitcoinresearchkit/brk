@@ -8,12 +8,8 @@ fn blocks_left_to_halving(height: Height, _: Halving) -> StoredU32 {
     StoredU32::from(height.left_before_next_halving())
 }
 
-pub trait Import {
-    fn new(version: Version, mappings: &bitview_plugin_mappings::Vecs) -> Self;
-}
-
-impl Import for Vecs {
-    fn new(version: Version, mappings: &bitview_plugin_mappings::Vecs) -> Self {
+impl Vecs {
+    pub fn new(version: Version, mappings: &bitview_plugin_mappings::Vecs) -> Self {
         let v2 = Version::TWO;
 
         let epoch_source = CACHE_BUDGET.wrap(mappings.height.halving.read_only_clone());

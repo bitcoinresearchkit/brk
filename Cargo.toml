@@ -74,6 +74,7 @@ bitview_server = { version = "0.12.2", path = "crates/bitview_server", default-f
 bitview_traversable = { version = "0.12.2", path = "crates/bitview_traversable", features = ["pco", "derive"] }
 bitview_traversable_derive = { version = "0.12.2", path = "crates/bitview_traversable_derive" }
 bitview_types = { version = "0.12.2", path = "crates/bitview_types" }
+bitview_catalog = { version = "0.12.2", path = "crates/bitview_catalog" }
 bitview_website = { version = "0.12.2", path = "crates/bitview_website" }
 brk_alloc = { version = "0.12.2", path = "crates/brk_alloc" }
 brk_error = { version = "0.12.2", path = "crates/brk_error" }
@@ -95,7 +96,7 @@ derive_more = { version = "2.1.1", features = ["deref", "deref_mut"] }
 fjall = { package = "brk_fjall", path = "crates/fjall", version = "0.12.2" }
 include_dir = "0.7"
 importmap = { path = "crates/importmap", version = "0.12.2" }
-indexmap = { version = "2.14.1", features = ["serde"] }
+indexmap = { version = "2.14.2", features = ["serde"] }
 http-body = "1.1.0"
 jiff = { version = "0.2.35", features = ["perf-inline", "tz-system"], default-features = false }
 libc = "0.2"
@@ -115,14 +116,14 @@ serde = "1.0.229"
 serde_bytes = "0.11.19"
 serde_derive = "1.0.229"
 serde_json = { version = "1.0.151", features = ["float_roundtrip", "preserve_order"] }
-smallvec = "1.15.2"
+smallvec = "1.16.0"
 tempfile = "3.27.0"
 tokio = { version = "1.53.1", features = ["rt-multi-thread"] }
 tower = { version = "0.5.3", features = ["util"] }
-tower-http = { version = "0.7.0", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
+tower-http = { version = "0.7.1", features = ["catch-panic", "compression-br", "compression-gzip", "compression-zstd", "cors", "normalize-path", "timeout", "trace"] }
 tower-layer = "0.3"
 tracing = { version = "0.1", default-features = false, features = ["std"] }
-ureq = { version = "3.4.0", features = ["json"] }
+ureq = { version = "3.4.1", features = ["json"] }
 vecdb = { path = "crates/vecdb", version = "0.12.2", features = ["derive", "serde", "pco", "schemars"] }
 vecdb_derive = { path = "crates/vecdb_derive", version = "0.12.2" }
 

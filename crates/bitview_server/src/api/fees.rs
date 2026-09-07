@@ -9,7 +9,7 @@ async fn serve_recommended_fees(
     _: Empty,
     State(state): State<AppState>,
 ) -> Result<Response> {
-    let fees = state.recommended_fees()?;
+    let fees = state.sync(|q| q.recommended_fees())?;
     Ok(state.respond_json_content_value(&headers, fees))
 }
 
@@ -26,7 +26,7 @@ impl FeesRoutes for ApiRouter<AppState> {
                        _: Empty,
                        State(state): State<AppState>|
                        -> Result<Response> {
-                    let blocks = state.mempool_blocks()?;
+                    let blocks = state.sync(|q| q.mempool_blocks())?;
                     Ok(state.respond_json_content_value(&headers, blocks))
                 },
                 |op| {

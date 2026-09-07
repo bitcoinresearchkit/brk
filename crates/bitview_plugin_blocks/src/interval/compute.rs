@@ -7,12 +7,8 @@ use vecdb::ReadableVec;
 
 use super::Vecs;
 
-pub trait Compute {
-    fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()>;
-}
-
-impl Compute for Vecs {
-    fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
+impl Vecs {
+    pub fn compute(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;
         let mut prev_timestamp = None;
         self.0.compute_from(

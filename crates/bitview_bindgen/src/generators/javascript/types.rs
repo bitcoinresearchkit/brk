@@ -118,20 +118,19 @@ fn json_type_to_js(ty: &str, schema: &Value, current_type: Option<&str>) -> Stri
 /// JSDoc has no `integer` keyword, only `number`. Map `integer` (and `integer[]`,
 /// `Foo<integer>`, etc.) to `number` before emitting type strings to JS.
 pub fn jsdoc_normalize(ty: &str) -> String {
-    let mut out = ty.to_string();
-    let mut prev = String::new();
-    while prev != out {
-        prev = out.clone();
-        out = out.replace("integer[]", "number[]");
-        out = out.replace("<integer>", "<number>");
-        out = out.replace("(integer)", "(number)");
-        out = out.replace("integer | ", "number | ");
-        out = out.replace(" | integer", " | number");
-    }
-    if out == "integer" {
+    if ty == "integer" {
         return "number".to_string();
     }
-    out
+    if !ty.contains("integer") {
+        return ty.to_string();
+    }
+    // Every replacement preserves delimiters and removes an `integer` token;
+    // none can introduce a match that requires another pass.
+    ty.replace("integer[]", "number[]")
+        .replace("<integer>", "<number>")
+        .replace("(integer)", "(number)")
+        .replace("integer | ", "number | ")
+        .replace(" | integer", " | number")
 }
 
 /// Convert a JSON schema to a JavaScript type string.
@@ -225,3 +224,7 @@ pub fn schema_to_js_type(schema: &Value, current_type: Option<&str>) -> String {
 
     "*".to_string()
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/generators/javascript/types.rs"]
+mod tests;

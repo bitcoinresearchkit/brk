@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 use std::fmt::Write;
 
-use bitview_types::TreeNode;
+use bitview_catalog::TreeNode;
 
 use crate::{
     ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, build_child_path,

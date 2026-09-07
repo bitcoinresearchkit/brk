@@ -1,9 +1,7 @@
-use crate::internals::*;
-
 use std::fmt::Write;
 
+use bitview_catalog::TreeNode;
 use bitview_plugin::PluginReadGuard;
-use bitview_traversable::TreeNode;
 use bitview_types::{
     DetailedSeriesCount, Format, IndexInfo, Limit, PaginatedSeries, Pagination, SearchQuery,
     SeriesInfo, SeriesName, SeriesSelection,
@@ -16,12 +14,16 @@ use brk_types::{
 use itoa::Buffer;
 use jiff::civil::Date as CivilDate;
 use serde_json::{Value, from_slice, to_writer};
-use vecdb::{AnyExportableVec, AnySerializableVec, AnyVec, ReadBounds, ReadableVec, i64_to_usize};
+use vecdb::{BoundedVec, ReadableVec, ValueWriter, i64_to_usize};
 
 use crate::{
     Output, Query, ResolvedSeriesInfo, SeriesOutput,
     vecs::{SeriesEntry, SeriesEntryLookup},
 };
+
+mod read;
+
+pub use read::SeriesRead;
 
 /// Estimated bytes per column header
 const CSV_HEADER_BYTES_PER_COL: usize = 10;
@@ -30,11 +32,17 @@ const CSV_CELL_BYTES: usize = 15;
 /// Estimated bytes per JSON cell value
 const JSON_CELL_BYTES: usize = 20;
 
+enum JsonShape {
+    Single,
+    Bulk,
+    Raw,
+}
+
 impl Query {
     /// Write one series response without materializing an intermediate value tree.
     /// `total` is omitted so historical-range bodies remain cacheable across appends.
     fn write_series_data(
-        vec: &dyn AnySerializableVec,
+        vec: &BoundedVec<'_>,
         index: Index,
         start: usize,
         end: usize,
@@ -79,11 +87,7 @@ impl Query {
         ))
     }
 
-    fn columns_to_csv(
-        columns: &[&dyn AnyExportableVec],
-        start: usize,
-        end: usize,
-    ) -> Result<String> {
+    fn columns_to_csv(columns: &[BoundedVec<'_>], start: usize, end: usize) -> Result<String> {
         if columns.is_empty() {
             return Ok(String::new());
         }
@@ -170,27 +174,22 @@ impl Query {
 
     fn read_latest_json(&self, series: &SeriesName, index: Index) -> Result<Vec<u8>> {
         let entry = self.get_entry(series, index)?;
-        let vec = entry.vec();
-        let _guard = self.series_guard(&[entry])?;
-        let bounds = self.read_bounds(self.safe_lengths());
-        bounds.scope(|| {
-            let len = vec.visible_len();
-            if len == 0 {
-                return Err(Error::NoData);
-            }
-            let mut value = Vec::new();
-            vec.write_json_value_at(len - 1, &mut value)?;
-            Ok(value)
-        })
+        let read = SeriesRead::new(self, vec![entry])?;
+        let vec = read.columns().next().unwrap();
+        let len = vec.len();
+        if len == 0 {
+            return Err(Error::NoData);
+        }
+        let mut value = Vec::new();
+        vec.write_json_value_at(len - 1, &mut value)?;
+        Ok(value)
     }
 
     /// Returns the length (total data points) for a single series.
     pub fn len(&self, series: &SeriesName, index: Index) -> Result<usize> {
         let entry = self.get_entry(series, index)?;
-        let vec = entry.vec();
-        let _guard = self.series_guard(&[entry])?;
-        let bounds = self.read_bounds(self.safe_lengths());
-        bounds.scope(|| Ok(vec.visible_len()))
+        let read = SeriesRead::new(self, vec![entry])?;
+        Ok(read.columns().next().unwrap().len())
     }
 
     /// Returns the version for a single series.
@@ -208,9 +207,8 @@ impl Query {
 
     /// Search for vecs matching the given series and index.
     /// Returns error if no series requested or any requested series is not found.
-    pub fn search(&self, params: &SeriesSelection) -> Result<Vec<&'static dyn AnyExportableVec>> {
-        self.search_entries(params)
-            .map(|entries| entries.into_iter().map(SeriesEntry::vec).collect())
+    pub fn search(&self, params: &SeriesSelection) -> Result<SeriesRead> {
+        SeriesRead::new(self, self.search_entries(params)?)
     }
 
     fn search_entries(&self, params: &SeriesSelection) -> Result<Vec<SeriesEntry<'static>>> {
@@ -225,79 +223,69 @@ impl Query {
     }
 
     /// Calculate total weight of the vecs for the given range.
-    pub fn weight(vecs: &[&dyn AnyExportableVec], from: Option<i64>, to: Option<i64>) -> usize {
-        vecs.iter().map(|v| v.range_weight(from, to)).sum()
+    pub fn weight(read: &SeriesRead, from: Option<i64>, to: Option<i64>) -> usize {
+        read.columns()
+            .map(|v| v.range_weight(from, to))
+            .fold(0, usize::saturating_add)
     }
 
     /// Resolve query metadata without formatting (cheap), so callers can
     /// decide whether the representation body is needed before formatting.
     pub fn resolve(&self, params: SeriesSelection, max_weight: usize) -> Result<ResolvedQuery> {
-        let entries = self.search_entries(&params)?;
-        let is_mutable = entries.iter().any(|entry| entry.is_mutable());
-        let plugin_guard = self.series_guard(&entries)?;
-        let vecs = entries
-            .into_iter()
-            .map(SeriesEntry::vec)
-            .collect::<Vec<_>>();
-        let safe = self.safe_lengths();
-        let read_bounds = self.read_bounds(safe);
+        let read = self.search(&params)?;
+        let safe = read.safe_lengths();
+        let index = params.index;
 
-        read_bounds.clone().scope(|| {
-            let index = params.index;
+        let total = read.columns().map(|vec| vec.len()).min().unwrap_or(0);
+        let version: Version = read.columns().map(|v| v.version()).sum();
 
-            let total = vecs.iter().map(|vec| vec.visible_len()).min().unwrap_or(0);
-            let version: Version = vecs.iter().map(|v| v.version()).sum();
+        let resolve_bound = |ri: RangeIndex| -> Result<usize> {
+            let i = self.range_index_to_i64(ri, index, &read)?;
+            Ok(i64_to_usize(i, total))
+        };
 
-            let resolve_bound = |ri: RangeIndex| -> Result<usize> {
-                let i = self.range_index_to_i64(ri, index)?;
-                Ok(i64_to_usize(i, total))
-            };
+        let start = match params.start() {
+            Some(ri) => resolve_bound(ri)?,
+            None => 0,
+        };
 
-            let start = match params.start() {
-                Some(ri) => resolve_bound(ri)?,
-                None => 0,
-            };
+        let end = match params.end() {
+            Some(ri) => resolve_bound(ri)?,
+            None => params
+                .limit()
+                .map(|l| start.saturating_add(*l).min(total))
+                .unwrap_or(total),
+        };
 
-            let end = match params.end() {
-                Some(ri) => resolve_bound(ri)?,
-                None => params
-                    .limit()
-                    .map(|l| start.saturating_add(*l).min(total))
-                    .unwrap_or(total),
-            };
+        let end = end.max(start);
+        let weight = Self::weight(&read, Some(start as i64), Some(end as i64));
+        if weight > max_weight {
+            return Err(Error::WeightExceeded {
+                requested: weight,
+                max: max_weight,
+            });
+        }
 
-            let end = end.max(start);
-            let weight = Self::weight(&vecs, Some(start as i64), Some(end as i64));
-            if weight > max_weight {
-                return Err(Error::WeightExceeded {
-                    requested: weight,
-                    max: max_weight,
-                });
-            }
+        let last_height = safe.last_height();
+        let tip_height = last_height.unwrap_or_default();
+        let tip_hash = last_height
+            .and_then(|height| self.indexer().vecs().blocks.blockhash.collect_one(height))
+            .unwrap_or_default();
+        let hash_prefix = BlockHashPrefix::from(&tip_hash);
+        let stable_count = (!read.is_mutable())
+            .then(|| self.stable_count(params.index, total, tip_height))
+            .flatten();
 
-            let last_height = safe.last_height();
-            let tip_height = last_height.unwrap_or_default();
-            let tip_hash = last_height
-                .and_then(|height| self.indexer().vecs().blocks.blockhash.collect_one(height))
-                .unwrap_or_default();
-            let hash_prefix = BlockHashPrefix::from(&tip_hash);
-            let stable_count = (!is_mutable)
-                .then(|| self.stable_count(params.index, total, tip_height))
-                .flatten();
-
-            Ok(ResolvedQuery {
-                vecs,
-                format: params.format(),
-                index: params.index,
-                version,
-                total,
-                start,
-                end,
-                hash_prefix,
-                stable_count,
-                read_bounds,
-                _plugin_guard: plugin_guard,
-            })
+        Ok(ResolvedQuery {
+            read,
+            format: params.format(),
+            index: params.index,
+            version,
+            total,
+            start,
+            end,
+            hash_prefix,
+            stable_count,
         })
     }
 
@@ -366,30 +354,23 @@ impl Query {
     /// Format a resolved query (expensive).
     #[inline]
     pub fn format(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
-        self.format_json_shape::<false>(resolved)
+        Self::format_as(resolved, JsonShape::Single)
     }
 
     /// Format a resolved bulk query, always returning a JSON array.
     #[inline]
     pub fn format_bulk(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
-        self.format_json_shape::<true>(resolved)
+        Self::format_as(resolved, JsonShape::Bulk)
     }
 
-    #[inline]
-    fn format_json_shape<const ALWAYS_JSON_ARRAY: bool>(
-        &self,
-        resolved: ResolvedQuery,
-    ) -> Result<SeriesOutput> {
-        let bounds = resolved.read_bounds.clone();
-        bounds.scope(|| self.format_json_shape_inner::<ALWAYS_JSON_ARRAY>(resolved))
+    /// Raw JSON values without the SeriesData wrapper. CSV is unchanged.
+    pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
+        Self::format_as(resolved, JsonShape::Raw)
     }
 
-    fn format_json_shape_inner<const ALWAYS_JSON_ARRAY: bool>(
-        &self,
-        resolved: ResolvedQuery,
-    ) -> Result<SeriesOutput> {
+    fn format_as(resolved: ResolvedQuery, shape: JsonShape) -> Result<SeriesOutput> {
         let ResolvedQuery {
-            vecs,
+            read,
             format,
             index,
             version,
@@ -398,57 +379,35 @@ impl Query {
             end,
             ..
         } = resolved;
+        let vecs = read.columns().collect::<Vec<_>>();
 
         let output = match format {
             Format::CSV => Output::CSV(Self::columns_to_csv(&vecs, start, end)?),
             Format::JSON => {
                 let count = end.saturating_sub(start);
-                let buf =
-                    Self::write_json_array(&vecs, count, 256, ALWAYS_JSON_ARRAY, |v, buf| {
-                        Self::write_series_data(*v, index, start, end, buf)
-                    })?;
+                let overhead = if matches!(shape, JsonShape::Raw) {
+                    2
+                } else {
+                    256
+                };
+                let buf = Self::write_json_array(
+                    &vecs,
+                    count,
+                    overhead,
+                    matches!(shape, JsonShape::Bulk),
+                    |vec, buf| match shape {
+                        JsonShape::Raw => Ok(vec.write_json(Some(start), Some(end), buf)?),
+                        JsonShape::Single | JsonShape::Bulk => {
+                            Self::write_series_data(vec, index, start, end, buf)
+                        }
+                    },
+                )?;
                 Output::Json(buf)
             }
         };
 
         Ok(SeriesOutput {
             output,
-            version,
-            total,
-            start,
-            end,
-        })
-    }
-
-    /// Format a resolved query as raw data (just the JSON values, no SeriesData wrapper).
-    /// Single vec → `[v1,v2,...]`. Multi-vec → `[[v1,v2],[v3,v4],...]`.
-    /// CSV output is identical to `format` (no wrapper distinction for CSV).
-    pub fn format_raw(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
-        let bounds = resolved.read_bounds.clone();
-        bounds.scope(|| self.format_raw_inner(resolved))
-    }
-
-    fn format_raw_inner(&self, resolved: ResolvedQuery) -> Result<SeriesOutput> {
-        if resolved.format == Format::CSV {
-            return self.format(resolved);
-        }
-
-        let ResolvedQuery {
-            vecs,
-            version,
-            total,
-            start,
-            end,
-            ..
-        } = resolved;
-
-        let count = end.saturating_sub(start);
-        let buf = Self::write_json_array(&vecs, count, 2, false, |v, buf| {
-            Ok(v.write_json(Some(start), Some(end), buf)?)
-        })?;
-
-        Ok(SeriesOutput {
-            output: Output::Json(buf),
             version,
             total,
             start,
@@ -507,15 +466,15 @@ impl Query {
     }
 
     /// Resolve a RangeIndex to an i64 offset for the given index type.
-    fn range_index_to_i64(&self, ri: RangeIndex, index: Index) -> Result<i64> {
+    fn range_index_to_i64(&self, ri: RangeIndex, index: Index, read: &SeriesRead) -> Result<i64> {
         match ri {
             RangeIndex::Int(i) => Ok(i),
-            RangeIndex::Date(date) => self.date_to_i64(date, index),
-            RangeIndex::Timestamp(ts) => self.timestamp_to_i64(ts, index),
+            RangeIndex::Date(date) => self.date_to_i64(date, index, read),
+            RangeIndex::Timestamp(ts) => self.timestamp_to_i64(ts, index, read),
         }
     }
 
-    fn date_to_i64(&self, date: Date, index: Index) -> Result<i64> {
+    fn date_to_i64(&self, date: Date, index: Index, read: &SeriesRead) -> Result<i64> {
         let calendar = date.try_into_jiff()?;
         if let Some(idx) = index.date_to_index(date) {
             return Ok(idx as i64);
@@ -523,14 +482,14 @@ impl Query {
         let days = CivilDate::constant(1970, 1, 1).until(calendar)?.get_days();
         let seconds = u32::try_from(i64::from(days) * 86_400)
             .map_err(|_| Error::Parse(format!("date out of timestamp range: {date}")))?;
-        self.timestamp_to_i64(Timestamp::new(seconds), index)
+        self.timestamp_to_i64(Timestamp::new(seconds), index, read)
     }
 
-    fn timestamp_to_i64(&self, ts: Timestamp, index: Index) -> Result<i64> {
+    fn timestamp_to_i64(&self, ts: Timestamp, index: Index, read: &SeriesRead) -> Result<i64> {
         if let Some(idx) = index.timestamp_to_index(ts) {
             return Ok(idx as i64);
         }
-        let height = || self.height_for_timestamp(ts).map(Height::from);
+        let height = || self.height_for_timestamp(ts, read).map(Height::from);
         match index {
             Index::Height => Ok(usize::from(height()?) as i64),
             Index::Epoch => Ok(usize::from(Epoch::from(height()?)) as i64),
@@ -543,10 +502,10 @@ impl Query {
 
     /// Find the first block height at or after a given timestamp.
     /// Search the guarded published vector; no copied cross-query timestamp map.
-    fn height_for_timestamp(&self, ts: Timestamp) -> Result<usize> {
-        let current_height: usize = self.height().into();
+    fn height_for_timestamp(&self, ts: Timestamp, read: &SeriesRead) -> Result<usize> {
+        let current_height: usize = read.safe_lengths().last_height().unwrap_or_default().into();
         let timestamps = &self.plugins().mappings.timestamp.monotonic;
-        let len = timestamps.visible_len();
+        let len = read.bind(timestamps)?.len();
         let snapshot = timestamps.snapshot();
         let visible = snapshot.get(..len).ok_or(Error::NoData)?;
         let position = visible.partition_point(|value| *value < ts);
@@ -570,8 +529,27 @@ fn reserialize_json(mut bytes: Vec<u8>) -> Result<Vec<u8>> {
 /// Keeps selected plugins and the indexer's published bounds stable through
 /// formatting. `stable_count` is `None` when any selected series can mutate
 /// existing entries independently of its append/reorg window.
+///
+/// Raw vectors are not exposed outside the protected read view.
+///
+/// ```compile_fail
+/// use bitview_query::ResolvedQuery;
+/// fn unbounded(resolved: ResolvedQuery) {
+///     resolved.vecs[0].write_json(None, None, &mut Vec::new()).unwrap();
+/// }
+/// ```
+///
+/// A bounded column cannot outlive the query that owns its publication guards.
+///
+/// ```compile_fail
+/// use bitview_query::ResolvedQuery;
+/// use vecdb::BoundedVec;
+/// fn detached(resolved: ResolvedQuery) -> BoundedVec<'static> {
+///     resolved.columns().next().unwrap()
+/// }
+/// ```
 pub struct ResolvedQuery {
-    pub vecs: Vec<&'static dyn AnyExportableVec>,
+    read: SeriesRead,
     pub format: Format,
     pub index: Index,
     pub version: Version,
@@ -580,18 +558,20 @@ pub struct ResolvedQuery {
     pub end: usize,
     pub hash_prefix: BlockHashPrefix,
     pub stable_count: Option<usize>,
-    read_bounds: ReadBounds,
-    _plugin_guard: PluginReadGuard,
 }
 
 impl ResolvedQuery {
+    pub fn columns(&self) -> impl ExactSizeIterator<Item = BoundedVec<'_>> + '_ {
+        self.read.columns()
+    }
+
     pub fn csv_filename(&self) -> String {
-        let capacity = self.vecs.iter().map(|v| v.name().len()).sum::<usize>()
-            + self.vecs.len().saturating_sub(1)
+        let capacity = self.columns().map(|v| v.name().len()).sum::<usize>()
+            + self.columns().len().saturating_sub(1)
             + self.index.name().len()
             + 5;
         let mut filename = String::with_capacity(capacity);
-        for (position, vec) in self.vecs.iter().enumerate() {
+        for (position, vec) in self.columns().enumerate() {
             if position != 0 {
                 filename.push('_');
             }

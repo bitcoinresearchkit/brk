@@ -4,12 +4,12 @@ use std::collections::VecDeque;
 
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
-use brk_types::{Height, StoredU64, VSize, get_percentile, get_weighted_percentile};
+use brk_types::{Height, StoredU64, VSize, get_percentile, get_weighted_percentiles};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, CheckedSub, Database, ReadableVec, Rw, StorageMode, VecIndex, VecValue,
-    Version, WritableVec,
+    AnyStoredVec, AnyVec, CheckedSub, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode,
+    VecIndex, VecValue, Version, WritableVec,
 };
 
 use crate::{ComputedVecValue, DistributionStats, NumericValue, PerBlock};
@@ -72,6 +72,67 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         })?))
     }
 
+    // Preserve the validation, truncation, and write order of the stored outputs.
+    #[inline]
+    fn height_vecs_mut(&mut self) -> [&mut EagerVec<PcoVec<Height, T>>; 7] {
+        [
+            &mut self.0.min.height,
+            &mut self.0.max.height,
+            &mut self.0.median.height,
+            &mut self.0.pct10.height,
+            &mut self.0.pct25.height,
+            &mut self.0.pct75.height,
+            &mut self.0.pct90.height,
+        ]
+    }
+
+    #[inline(always)]
+    fn validate_versions(&mut self, max_from: Height, version: Version) -> Result<usize> {
+        let mut index = max_from;
+        for vec in self.height_vecs_mut() {
+            vec.validate_computed_version_or_reset(version)?;
+            index = index.min(Height::from(vec.len()));
+        }
+        Ok(index.to_usize())
+    }
+
+    // Keep this hot output path in the caller, as before extracting the helper.
+    #[inline(always)]
+    fn push_sorted(&mut self, values: &[T]) {
+        if let (Some(&min), Some(&max)) = (values.first(), values.last()) {
+            self.max.height.push(max);
+            self.pct90.height.push(get_percentile(values, 0.90));
+            self.pct75.height.push(get_percentile(values, 0.75));
+            self.median.height.push(get_percentile(values, 0.50));
+            self.pct25.height.push(get_percentile(values, 0.25));
+            self.pct10.height.push(get_percentile(values, 0.10));
+            self.min.height.push(min);
+        } else {
+            for vec in self.height_vecs_mut() {
+                vec.push(T::from(0_usize));
+            }
+        }
+    }
+
+    #[inline]
+    fn push_weighted_sorted(&mut self, values: &[(T, VSize)]) {
+        if let (Some(&(min, _)), Some(&(max, _))) = (values.first(), values.last()) {
+            self.max.height.push(max);
+            let [pct10, pct25, median, pct75, pct90] =
+                get_weighted_percentiles(values, [0.10, 0.25, 0.50, 0.75, 0.90]);
+            self.pct90.height.push(pct90);
+            self.pct75.height.push(pct75);
+            self.median.height.push(median);
+            self.pct25.height.push(pct25);
+            self.pct10.height.push(pct10);
+            self.min.height.push(min);
+        } else {
+            for vec in self.height_vecs_mut() {
+                vec.push(T::from(0_usize));
+            }
+        }
+    }
+
     pub fn compute_with_skip<A>(
         &mut self,
         max_from: Height,
@@ -84,51 +145,11 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
     where
         A: VecIndex + VecValue + CheckedSub<A>,
     {
-        let DistributionStats {
-            min,
-            max,
-            pct10,
-            pct25,
-            median,
-            pct75,
-            pct90,
-        } = &mut self.0;
-
-        let min = &mut min.height;
-        let max = &mut max.height;
-        let pct10 = &mut pct10.height;
-        let pct25 = &mut pct25.height;
-        let median = &mut median.height;
-        let pct75 = &mut pct75.height;
-        let pct90 = &mut pct90.height;
-
         let combined_version = source.version() + first_indexes.version() + count_indexes.version();
 
-        let mut index = max_from;
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
-            vec.validate_computed_version_or_reset(combined_version)?;
-            index = index.min(Height::from(vec.len()));
-        }
+        let start = self.validate_versions(max_from, combined_version)?;
 
-        let start = index.to_usize();
-
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
+        for vec in self.height_vecs_mut() {
             vec.truncate_if_needed_at(start)?;
         }
 
@@ -142,7 +163,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         first_indexes_batch
             .into_iter()
             .zip(count_indexes_batch)
-            .try_for_each(|(first_index, count_index)| -> Result<()> {
+            .for_each(|(first_index, count_index)| {
                 let count = u64::from(count_index) as usize;
                 let effective_count = count.saturating_sub(skip_count);
                 let effective_first_index = first_index + skip_count.min(count);
@@ -157,35 +178,12 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                     values.retain(|v| *v > zero);
                 }
 
-                if values.is_empty() {
-                    for vec in [
-                        &mut *min,
-                        &mut *max,
-                        &mut *median,
-                        &mut *pct10,
-                        &mut *pct25,
-                        &mut *pct75,
-                        &mut *pct90,
-                    ] {
-                        vec.push(zero);
-                    }
-                } else {
-                    values.sort_unstable();
-
-                    max.push(*values.last().unwrap());
-                    pct90.push(get_percentile(&values, 0.90));
-                    pct75.push(get_percentile(&values, 0.75));
-                    median.push(get_percentile(&values, 0.50));
-                    pct25.push(get_percentile(&values, 0.25));
-                    pct10.push(get_percentile(&values, 0.10));
-                    min.push(*values.first().unwrap());
-                }
-
-                Ok(())
-            })?;
+                values.sort_unstable();
+                self.push_sorted(&values);
+            });
 
         let _lock = exit.lock();
-        for vec in [min, max, median, pct10, pct25, pct75, pct90] {
+        for vec in self.height_vecs_mut() {
             vec.write()?;
         }
 
@@ -208,54 +206,14 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
     where
         A: VecIndex + VecValue + CheckedSub<A>,
     {
-        let DistributionStats {
-            min,
-            max,
-            pct10,
-            pct25,
-            median,
-            pct75,
-            pct90,
-        } = &mut self.0;
-
-        let min = &mut min.height;
-        let max = &mut max.height;
-        let pct10 = &mut pct10.height;
-        let pct25 = &mut pct25.height;
-        let median = &mut median.height;
-        let pct75 = &mut pct75.height;
-        let pct90 = &mut pct90.height;
-
         let combined_version = source.version()
             + vsize_source.version()
             + first_indexes.version()
             + count_indexes.version();
 
-        let mut index = max_from;
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
-            vec.validate_computed_version_or_reset(combined_version)?;
-            index = index.min(Height::from(vec.len()));
-        }
+        let start = self.validate_versions(max_from, combined_version)?;
 
-        let start = index.to_usize();
-
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
+        for vec in self.height_vecs_mut() {
             vec.truncate_if_needed_at(start)?;
         }
 
@@ -271,7 +229,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         first_indexes_batch
             .into_iter()
             .zip(count_indexes_batch)
-            .try_for_each(|(first_index, count_index)| -> Result<()> {
+            .for_each(|(first_index, count_index)| {
                 let count = u64::from(count_index) as usize;
                 let effective_count = count.saturating_sub(skip_count);
                 let effective_first_index = first_index + skip_count.min(count);
@@ -291,35 +249,12 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                         .filter(|(v, _)| skip_count == 0 || *v > zero),
                 );
 
-                if weighted.is_empty() {
-                    for vec in [
-                        &mut *min,
-                        &mut *max,
-                        &mut *median,
-                        &mut *pct10,
-                        &mut *pct25,
-                        &mut *pct75,
-                        &mut *pct90,
-                    ] {
-                        vec.push(zero);
-                    }
-                } else {
-                    weighted.sort_unstable_by_key(|a| a.0);
-
-                    max.push(weighted.last().unwrap().0);
-                    pct90.push(get_weighted_percentile(&weighted, 0.90));
-                    pct75.push(get_weighted_percentile(&weighted, 0.75));
-                    median.push(get_weighted_percentile(&weighted, 0.50));
-                    pct25.push(get_weighted_percentile(&weighted, 0.25));
-                    pct10.push(get_weighted_percentile(&weighted, 0.10));
-                    min.push(weighted.first().unwrap().0);
-                }
-
-                Ok(())
-            })?;
+                weighted.sort_unstable_by_key(|a| a.0);
+                self.push_weighted_sorted(&weighted);
+            });
 
         let _lock = exit.lock();
-        for vec in [min, max, median, pct10, pct25, pct75, pct90] {
+        for vec in self.height_vecs_mut() {
             vec.write()?;
         }
 
@@ -510,59 +445,19 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
     {
         assert!(n_blocks > 0);
 
-        let DistributionStats {
-            min,
-            max,
-            pct10,
-            pct25,
-            median,
-            pct75,
-            pct90,
-        } = &mut self.0;
-
-        let min = &mut min.height;
-        let max = &mut max.height;
-        let pct10 = &mut pct10.height;
-        let pct25 = &mut pct25.height;
-        let median = &mut median.height;
-        let pct75 = &mut pct75.height;
-        let pct90 = &mut pct90.height;
-
         let combined_version = source.version()
             + vsize_source.version()
             + first_indexes.version()
             + count_indexes.version();
 
-        let mut index = max_from;
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
-            vec.validate_computed_version_or_reset(combined_version)?;
-            index = index.min(Height::from(vec.len()));
-        }
-
-        let start = index.to_usize();
+        let start = self.validate_versions(max_from, combined_version)?;
         let fi_len = first_indexes.len();
         let batch_start = start.saturating_sub(n_blocks - 1);
         let first_indexes_batch: Vec<A> = first_indexes.collect_range_at(batch_start, fi_len);
         let count_indexes_all: Vec<StoredU64> = count_indexes.collect_range_at(batch_start, fi_len);
         let zero = T::from(0_usize);
 
-        for vec in [
-            &mut *min,
-            &mut *max,
-            &mut *median,
-            &mut *pct10,
-            &mut *pct25,
-            &mut *pct75,
-            &mut *pct90,
-        ] {
+        for vec in self.height_vecs_mut() {
             vec.truncate_if_needed_at(start)?;
         }
 
@@ -621,31 +516,11 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
                 remove_sorted(&mut sorted_window, &expired, &mut merge_buf);
             }
 
-            if sorted_window.is_empty() {
-                for vec in [
-                    &mut *min,
-                    &mut *max,
-                    &mut *median,
-                    &mut *pct10,
-                    &mut *pct25,
-                    &mut *pct75,
-                    &mut *pct90,
-                ] {
-                    vec.push(zero);
-                }
-            } else {
-                max.push(sorted_window.last().unwrap().0);
-                pct90.push(get_weighted_percentile(&sorted_window, 0.90));
-                pct75.push(get_weighted_percentile(&sorted_window, 0.75));
-                median.push(get_weighted_percentile(&sorted_window, 0.50));
-                pct25.push(get_weighted_percentile(&sorted_window, 0.25));
-                pct10.push(get_weighted_percentile(&sorted_window, 0.10));
-                min.push(sorted_window.first().unwrap().0);
-            }
+            self.push_weighted_sorted(&sorted_window);
         }
 
         let _lock = exit.lock();
-        for vec in [min, max, median, pct10, pct25, pct75, pct90] {
+        for vec in self.height_vecs_mut() {
             vec.write()?;
         }
 

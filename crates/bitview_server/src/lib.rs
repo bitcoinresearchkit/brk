@@ -10,12 +10,9 @@ use std::{
 use aide::{axum::ApiRouter, openapi::OpenApi};
 use axum::{
     Extension, Router, ServiceExt,
-    body::{Body, to_bytes},
-    http::{
-        Method, Request, Response, StatusCode,
-        header::{ALLOW, CONTENT_TYPE, ETAG},
-    },
-    middleware::{Next, from_fn},
+    body::Body,
+    http::{Request, StatusCode},
+    middleware::from_fn,
     response::{IntoResponse, Redirect},
     routing::get,
     serve,
@@ -35,7 +32,7 @@ use tower_http::{
     timeout::TimeoutLayer,
 };
 use tower_layer::Layer;
-use tracing::{error, info};
+use tracing::info;
 
 mod api;
 mod cache;
@@ -44,6 +41,7 @@ mod error;
 mod error_body;
 mod etag;
 mod extended;
+mod json_error;
 mod params;
 #[cfg(any(feature = "series", feature = "chain"))]
 mod prepared_json;
@@ -51,6 +49,7 @@ mod prepared_json;
 mod raw_body;
 mod read_availability;
 mod response_size_above;
+mod response_time;
 #[cfg(feature = "series")]
 mod series_bodies;
 mod state;
@@ -74,10 +73,6 @@ use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Cap for buffering an upstream error body before re-wrapping it as JSON.
-/// Larger bodies are truncated; the bound only affects the message we surface.
-const MAX_ERROR_BODY_BYTES: usize = 4096;
-
 /// Per-request timeout. Hits return 504 Gateway Timeout.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -98,13 +93,6 @@ fn compression_layer() -> CompressionLayer<impl Predicate> {
         )
 }
 
-/// Matches `application/json` and `application/...+json`, ignoring parameters
-/// like `; charset=utf-8`. Used to skip JSON-error rewriting for already-JSON bodies.
-fn is_json_content_type(s: &str) -> bool {
-    let mime = s.split(';').next().unwrap_or("").trim();
-    mime == "application/json" || (mime.starts_with("application/") && mime.ends_with("+json"))
-}
-
 pub struct Server {
     state: AppState,
     listener: TcpListener,
@@ -120,7 +108,9 @@ impl Server {
         config.website.log();
 
         #[cfg(feature = "series")]
-        let series_bodies = query.run(|query| Ok(SeriesBodies::new(query))).await?;
+        let series_bodies = query
+            .run(|query| Ok(Arc::new(SeriesBodies::new(query))))
+            .await?;
         #[cfg(feature = "chain")]
         let mining_pools_body = Arc::new(prepared_json::PreparedJson::new(
             query.sync(|query| query.all_pools()),
@@ -166,111 +156,6 @@ impl Server {
         let Self { state, listener } = self;
         let address = listener.local_addr()?;
 
-        let response_time_layer = from_fn(
-            async |request: Request<Body>, next: Next| -> Response<Body> {
-                let uri = request.uri().clone();
-                let method = request.method().clone();
-                let start = Instant::now();
-                let mut response = next.run(request).await;
-                let latency = start.elapsed();
-                let status_code = response.status();
-                let status = status_code.as_u16();
-
-                match status_code {
-                    status_code
-                        if status_code.is_informational()
-                            || status_code.is_success()
-                            || status_code.is_redirection() =>
-                    {
-                        info!(%method, status, %uri, ?latency)
-                    }
-                    _ => error!(%method, status, %uri, ?latency),
-                }
-
-                response.headers_mut().insert(
-                    "X-Response-Time",
-                    format!("{}us", latency.as_micros()).parse().unwrap(),
-                );
-                if method == Method::POST {
-                    CacheParams::apply_error_cache_control(
-                        response.headers_mut(),
-                        cache::ErrorCachePolicy::NoStore,
-                    );
-                    response.headers_mut().remove(ETAG);
-                }
-                #[cfg(any(feature = "chain", feature = "urpd", feature = "series"))]
-                let response = RawBodyPermit::retain(response);
-                response
-            },
-        );
-
-        // Wrap non-JSON error responses in structured JSON
-        let json_error_layer = from_fn(
-            async |request: Request<Body>, next: Next| -> Response<Body> {
-                let action = request.method() == Method::POST;
-                let response = next.run(request).await;
-                let status = response.status();
-                if status.is_success()
-                    || status.is_redirection()
-                    || status.is_informational()
-                    || response
-                        .headers()
-                        .get(CONTENT_TYPE)
-                        .is_some_and(|v| v.to_str().is_ok_and(is_json_content_type))
-                {
-                    return response;
-                }
-
-                let (parts, body) = response.into_parts();
-                let bytes = to_bytes(body, MAX_ERROR_BODY_BYTES)
-                    .await
-                    .unwrap_or_default();
-                let msg = String::from_utf8_lossy(&bytes);
-                let (code, msg) = match parts.status {
-                    StatusCode::NOT_FOUND => (
-                        "not_found",
-                        if msg.is_empty() {
-                            "Not found".into()
-                        } else {
-                            msg
-                        },
-                    ),
-                    StatusCode::METHOD_NOT_ALLOWED => (
-                        "method_not_allowed",
-                        "Method not allowed for this endpoint".into(),
-                    ),
-                    StatusCode::GATEWAY_TIMEOUT if action => (
-                        "timeout",
-                        "Request timed out; submission outcome may be unknown".into(),
-                    ),
-                    StatusCode::GATEWAY_TIMEOUT => ("timeout", "Request timed out".into()),
-                    s if s.is_client_error() => (
-                        "bad_request",
-                        if msg.is_empty() {
-                            "Bad request".into()
-                        } else {
-                            msg
-                        },
-                    ),
-                    _ => (
-                        "internal_error",
-                        if msg.is_empty() {
-                            "Internal server error".into()
-                        } else {
-                            msg
-                        },
-                    ),
-                };
-                let msg = msg.into_owned();
-                let mut response = Error::new(parts.status, code, msg).into_response();
-                response.extensions_mut().extend(parts.extensions);
-                if let Some(allow) = parts.headers.get(ALLOW) {
-                    response.headers_mut().insert(ALLOW, allow.clone());
-                }
-                response
-            },
-        );
-
         let website_router = bitview_website::router(state.website.clone());
         let mut router = ApiRouter::new()
             .add_api_routes()
@@ -285,7 +170,7 @@ impl Server {
         let router = router
             .with_state(state)
             .merge(website_router)
-            .layer(json_error_layer)
+            .layer(from_fn(json_error::respond))
             .layer(compression_layer())
             .layer(CorsLayer::permissive())
             .layer(CatchPanicLayer::custom(|panic: Box<dyn Any + Send>| {
@@ -296,7 +181,7 @@ impl Server {
                     .unwrap_or("Unknown panic");
                 Error::internal(msg).into_response()
             }))
-            .layer(response_time_layer);
+            .layer(from_fn(response_time::respond));
 
         info!("Server listening on http://{address}");
 

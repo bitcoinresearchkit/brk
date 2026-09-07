@@ -1,5 +1,5 @@
 use bitview_traversable::Traversable;
-use brk_types::{Cents, StoredF64};
+use brk_types::{BoundedRatio, Cents, StoredF64};
 
 mod sources;
 
@@ -19,7 +19,7 @@ pub struct AggregateVecs {
     /// the sum of total supply multiplied by that probability. Returns NaN
     /// when the weighted supply is zero.
     #[traversable(wrap = "supply/mobile/in_loss", rename = "share")]
-    pub supply_in_loss_share: LazyPerBlock<StoredF64>,
+    pub supply_in_loss_share: LazyPerBlock<StoredF64, BoundedRatio>,
     /// For each supported forward horizon, the share of supply likely to move
     /// within that horizon that is in loss at the represented block. Each age
     /// range is weighted by one minus exp of the

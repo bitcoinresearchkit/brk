@@ -16,9 +16,6 @@ use brk_types::{
     FeeRate, MempoolBlock, NextBlockHash, RecommendedFees, Transaction, Txid, TxidPrefix,
 };
 use builder::PrefixIndex;
-pub use cluster::Cluster;
-use fees::Fees;
-use partition::Partitioner;
 pub use rebuilder::Rebuilder;
 use rustc_hash::FxHasher;
 use serde_json::to_vec;
@@ -55,7 +52,7 @@ impl Snapshot {
         min_fee: FeeRate,
     ) -> Self {
         let block_stats = BlockStats::for_blocks(&blocks, &txs);
-        let fees = Fees::compute(&block_stats, min_fee);
+        let fees = fees::compute(&block_stats, min_fee);
         Self {
             txs,
             blocks,
@@ -119,30 +116,25 @@ impl Snapshot {
         let idx = self.idx_of_txid(txid)?;
         Some(self.txs[idx.as_usize()].chunk_rate)
     }
-}
 
-#[cfg(test)]
-#[path = "../../tests/unit/snapshot.rs"]
-mod tests;
-pub trait SnapshotSnapshotInternal: Sized {
-    fn template_transactions(&self) -> &Arc<[Arc<Transaction>]>;
-    fn content_revision(&self) -> u64;
-    fn ensure_projection(&self) -> Result<()>;
-}
-impl SnapshotSnapshotInternal for Snapshot {
-    fn template_transactions(&self) -> &Arc<[Arc<Transaction>]> {
+    pub fn template_transactions(&self) -> &Arc<[Arc<Transaction>]> {
         &self.template_transactions
     }
 
-    fn content_revision(&self) -> u64 {
+    pub fn content_revision(&self) -> u64 {
         self.content_revision
     }
+
     /// A default snapshot is not an observed empty mempool. A real publication
     /// always contains block zero, even when Core selected no transactions.
-    fn ensure_projection(&self) -> Result<()> {
+    pub fn ensure_projection(&self) -> Result<()> {
         if self.blocks.is_empty() || self.template_missing {
             return Err(QueryError::StateUpdating);
         }
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/snapshot.rs"]
+mod tests;

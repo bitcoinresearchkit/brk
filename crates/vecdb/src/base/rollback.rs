@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
-use crate::{Bytes, Error, SIZE_OF_U64, Stamp, VecIndex, VecValue};
+use crate::{Bytes, Error, SIZE_OF_U64, Stamp, ValueStrategy, VecIndex, VecValue};
 
 use super::{ChangeCursor, ChangeData, ReadWriteBaseVec, vec_region_name};
 
@@ -15,18 +15,21 @@ where
             .join(vec_region_name(&self.name, I::to_string()))
     }
 
-    pub fn serialize_changes(
+    pub fn serialize_changes<S: ValueStrategy<T>>(
         &self,
-        size_of_t: usize,
         collect_stored: impl FnOnce(usize, usize) -> crate::Result<Vec<T>>,
-        write_values: impl Fn(&[T], &mut Vec<u8>),
     ) -> crate::Result<Vec<u8>> {
+        let write_values = |values: &[T], bytes: &mut Vec<u8>| {
+            for value in values {
+                S::write_to_vec(value, bytes);
+            }
+        };
         let prev_stored_len = self.prev_stored_len();
         let stored_len = self.stored_len();
         let truncated = prev_stored_len.saturating_sub(stored_len);
 
         let value_count = truncated + self.prev_pushed().len() + self.pushed().len();
-        let mut bytes = Vec::with_capacity(6 * SIZE_OF_U64 + value_count * size_of_t);
+        let mut bytes = Vec::with_capacity(6 * SIZE_OF_U64 + value_count * size_of::<T>());
 
         bytes.extend(self.header.stamp().to_bytes());
         bytes.extend(prev_stored_len.to_bytes());
@@ -49,11 +52,10 @@ where
 
     /// Returns `Error::Overflow` on arithmetic overflow,
     /// `Error::WrongLength` if the data is truncated.
-    pub fn parse_change_data(
+    pub fn parse_change_data<S: ValueStrategy<T>>(
         c: &mut ChangeCursor,
-        size_of_t: usize,
-        read_value: impl Fn(&[u8]) -> crate::Result<T>,
     ) -> crate::Result<ChangeData<T>> {
+        let size_of_t = size_of::<T>();
         let prev_stamp = c.read_stamp()?;
         let prev_stored_len = c.read_u64()?;
         c.skip(SIZE_OF_U64)?; // stored_len, not needed for rollback
@@ -62,10 +64,10 @@ where
         let truncated_start = prev_stored_len
             .checked_sub(truncated_count)
             .ok_or(Error::Underflow)?;
-        let truncated_values = c.read_values(truncated_count, size_of_t, &read_value)?;
+        let truncated_values = c.read_values(truncated_count, size_of_t, S::read)?;
 
         let prev_pushed_len = c.read_u64()?;
-        let prev_pushed = c.read_values(prev_pushed_len, size_of_t, &read_value)?;
+        let prev_pushed = c.read_values(prev_pushed_len, size_of_t, S::read)?;
 
         let pushed_len = c.read_u64()?;
         c.skip(size_of_t.checked_mul(pushed_len).ok_or(Error::Overflow)?)?;
@@ -79,10 +81,7 @@ where
         })
     }
 
-    /// Restores the base rollback state. Caller resolves `stored_len` and
-    /// `pushed` from the parsed change data according to its own overlay
-    /// strategy (raw uses an `updated` map for truncated values, compressed
-    /// re-queues them in `pushed`).
+    /// Restores the base rollback state from resolved stored and pushed values.
     pub fn apply_rollback(&mut self, stamp: Stamp, stored_len: usize, pushed: Vec<T>) {
         self.read_only.header.update_stamp(stamp);
         self.read_only.stored_len.set(stored_len);

@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use crate::TypeIndex;
 
@@ -20,9 +22,9 @@ use crate::TypeIndex;
     Deref,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct ExtendedEmptyAddrIndex(TypeIndex);
 
 impl From<TypeIndex> for ExtendedEmptyAddrIndex {
@@ -68,17 +70,33 @@ impl CheckedSub for ExtendedEmptyAddrIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-
-impl PrintableIndex for ExtendedEmptyAddrIndex {
-    fn to_string() -> &'static str {
-        "extended_empty_addr_index"
-    }
-
-    fn to_possible_strings() -> &'static [&'static str] {
-        &["extendedemptyaddr", "extended_empty_addr_index"]
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for ExtendedEmptyAddrIndex {
+    #[inline(always)]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
+impl ExtendedEmptyAddrIndex {
+    pub fn index_name() -> &'static str {
+        "extended_empty_addr_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["extendedemptyaddr", "extended_empty_addr_index"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for ExtendedEmptyAddrIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
+
+#[cfg(feature = "storage")]
 impl VecIndex for ExtendedEmptyAddrIndex {
     const INITIAL_CAPACITY: usize = 1 << 30;
 }
@@ -89,6 +107,7 @@ impl std::fmt::Display for ExtendedEmptyAddrIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for ExtendedEmptyAddrIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

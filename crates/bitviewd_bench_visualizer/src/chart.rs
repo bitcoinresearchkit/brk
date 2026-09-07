@@ -40,49 +40,21 @@ pub fn generate(config: ChartConfig, runs: &[Run]) -> Result<(), Box<dyn Error>>
     }
 
     let max_time_ms = runs.iter().map(|r| r.max_timestamp()).max().unwrap_or(1000) + TIME_BUFFER_MS;
-    let max_time_s = max_time_ms as f64 / 1000.0;
     let max_value = runs.iter().map(|r| r.max_value()).fold(0.0, f64::max);
 
-    let (time_scaled, time_divisor, time_label) = format::time(max_time_s);
-    let (value_scaled, scale_factor, y_label) =
-        scale_y_axis(max_value, &config.y_label, &config.y_format);
-    let x_labels = label_count(time_scaled);
+    render_chart(
+        config,
+        max_time_ms,
+        max_value,
+        |chart, time_divisor, scale_factor| {
+            for (idx, run) in runs.iter().enumerate() {
+                let color = COLORS[idx % COLORS.len()];
+                draw_series(chart, &run.data, &run.id, color, time_divisor, scale_factor)?;
+            }
 
-    let root = SVGBackend::new(config.output_path, SIZE).into_drawing_area();
-    root.fill(&BG_COLOR)?;
-
-    let mut chart = Chart(
-        ChartBuilder::on(&root)
-            .caption(
-                &config.title,
-                (FONT, FONT_SIZE_BIG).into_font().color(&TEXT_COLOR),
-            )
-            .margin(20)
-            .margin_right(40)
-            .x_label_area_size(50)
-            .margin_left(50)
-            .right_y_label_area_size(75)
-            .build_cartesian_2d(0.0..time_scaled * 1.025, 0.0..value_scaled * 1.1)?,
-    );
-
-    configure_mesh(&mut chart, time_label, &y_label, &config.y_format, x_labels)?;
-
-    for (idx, run) in runs.iter().enumerate() {
-        let color = COLORS[idx % COLORS.len()];
-        draw_series(
-            &mut chart,
-            &run.data,
-            &run.id,
-            color,
-            time_divisor,
-            scale_factor,
-        )?;
-    }
-
-    configure_legend(&mut chart)?;
-    root.present()?;
-    println!("Generated: {}", config.output_path.display());
-    Ok(())
+            Ok(())
+        },
+    )
 }
 
 /// Generate a chart with dual series per run (e.g., current + peak memory)
@@ -103,8 +75,49 @@ pub fn generate_dual(
         .max()
         .unwrap_or(1000)
         + TIME_BUFFER_MS;
-    let max_time_s = max_time_ms as f64 / 1000.0;
     let max_value = runs.iter().map(|r| r.max_value()).fold(0.0, f64::max);
+
+    render_chart(
+        config,
+        max_time_ms,
+        max_value,
+        |chart, time_divisor, scale_factor| {
+            for (idx, run) in runs.iter().enumerate() {
+                let color = COLORS[idx % COLORS.len()];
+
+                // Primary series (solid)
+                draw_series(
+                    chart,
+                    &run.primary,
+                    &format!("{} {}", run.id, primary_suffix),
+                    color,
+                    time_divisor,
+                    scale_factor,
+                )?;
+
+                // Secondary series (dashed)
+                draw_dashed_series(
+                    chart,
+                    &run.secondary,
+                    &format!("{} {}", run.id, secondary_suffix),
+                    color.mix(0.5),
+                    time_divisor,
+                    scale_factor,
+                )?;
+            }
+
+            Ok(())
+        },
+    )
+}
+
+fn render_chart(
+    config: ChartConfig,
+    max_time_ms: u64,
+    max_value: f64,
+    draw: impl FnOnce(&mut Chart<'_, '_>, f64, f64) -> Result<(), Box<dyn Error>>,
+) -> Result<(), Box<dyn Error>> {
+    let max_time_s = max_time_ms as f64 / 1000.0;
 
     let (time_scaled, time_divisor, time_label) = format::time(max_time_s);
     let (value_scaled, scale_factor, y_label) =
@@ -130,29 +143,7 @@ pub fn generate_dual(
 
     configure_mesh(&mut chart, time_label, &y_label, &config.y_format, x_labels)?;
 
-    for (idx, run) in runs.iter().enumerate() {
-        let color = COLORS[idx % COLORS.len()];
-
-        // Primary series (solid)
-        draw_series(
-            &mut chart,
-            &run.primary,
-            &format!("{} {}", run.id, primary_suffix),
-            color,
-            time_divisor,
-            scale_factor,
-        )?;
-
-        // Secondary series (dashed)
-        draw_dashed_series(
-            &mut chart,
-            &run.secondary,
-            &format!("{} {}", run.id, secondary_suffix),
-            color.mix(0.5),
-            time_divisor,
-            scale_factor,
-        )?;
-    }
+    draw(&mut chart, time_divisor, scale_factor)?;
 
     configure_legend(&mut chart)?;
     root.present()?;

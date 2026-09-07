@@ -1,6 +1,36 @@
 use super::*;
 
 #[test]
+fn schema_extraction_preserves_owned_nested_values_and_invalid_input_fallbacks() {
+    for input in [
+        "invalid",
+        "null",
+        "[]",
+        "{}",
+        r#"{"components":false}"#,
+        r#"{"components":{"schemas":[]}}"#,
+    ] {
+        assert!(extract_schemas(input).is_empty(), "{input}");
+    }
+    let expected = serde_json::json!({
+        "Z": false,
+        "Nested": {"properties": {"value": {"anyOf": [{"type":"string"}, {"$ref":"#/components/schemas/Z"}]}}},
+        "A": {"enum": ["é", "", "value"]}
+    });
+    let input =
+        serde_json::json!({"components": {"schemas": expected}, "ignored": [1,2,3]}).to_string();
+    let schemas = extract_schemas(&input);
+    drop(input);
+    assert_eq!(
+        schemas.keys().map(String::as_str).collect::<Vec<_>>(),
+        ["A", "Nested", "Z"]
+    );
+    for (name, schema) in expected.as_object().unwrap() {
+        assert_eq!(&schemas[name], schema);
+    }
+}
+
+#[test]
 fn extracts_mcp_ignore_without_disabling_client_generation() {
     let spec = parse_openapi_json(
         r#"{

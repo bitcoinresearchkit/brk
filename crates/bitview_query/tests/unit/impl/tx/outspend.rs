@@ -1,7 +1,6 @@
 use brk_types::{BlockHash, Height, Timestamp};
 
 use super::*;
-use crate::representation_id::content_hash;
 
 #[test]
 fn invalid_spending_positions_fail_without_panicking() {
@@ -18,7 +17,7 @@ fn identity_is_content_based_until_a_spending_block_is_known() {
     let bytes = br#"{"spent":false}"#;
     assert!(matches!(
         outspend_identity(&TxOutspend::UNSPENT, bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
 
     let unconfirmed = TxOutspend {
@@ -29,7 +28,7 @@ fn identity_is_content_based_until_a_spending_block_is_known() {
     };
     assert!(matches!(
         outspend_identity(&unconfirmed, bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
 
     let hash = BlockHash::default();
@@ -40,10 +39,7 @@ fn identity_is_content_based_until_a_spending_block_is_known() {
     };
     assert!(matches!(
         outspend_identity(&confirmed, bytes),
-        RepresentationId::Block {
-            hash: bound_hash,
-            height: bound_height,
-        } if bound_hash == hash && bound_height == height
+        RepresentationId::Block(bound_hash) if bound_hash == hash
     ));
 }
 
@@ -52,11 +48,11 @@ fn array_identity_uses_content_until_every_spend_is_confirmed() {
     let bytes = br#"[{"spent":false}]"#;
     assert!(matches!(
         outspends_identity(&[], bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
     assert!(matches!(
         outspends_identity(&[TxOutspend::UNSPENT], bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
 
     let unconfirmed = TxOutspend {
@@ -67,7 +63,7 @@ fn array_identity_uses_content_until_every_spend_is_confirmed() {
     };
     assert!(matches!(
         outspends_identity(&[unconfirmed], bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
 
     let confirmed = TxOutspend {
@@ -82,7 +78,7 @@ fn array_identity_uses_content_until_every_spend_is_confirmed() {
     };
     assert!(matches!(
         outspends_identity(&[confirmed, TxOutspend::UNSPENT], bytes),
-        RepresentationId::Content(hash) if hash == content_hash(bytes)
+        RepresentationId::Content(hash) if hash == RepresentationId::content_hash(bytes)
     ));
 }
 
@@ -105,7 +101,6 @@ fn array_identity_uses_the_newest_confirmed_spending_block() {
 
     assert!(matches!(
         outspends_identity(&outspends, b"ignored"),
-        RepresentationId::Block { hash, height }
-            if hash == newer_hash && height == Height::new(20)
+        RepresentationId::Block(hash) if hash == newer_hash
     ));
 }

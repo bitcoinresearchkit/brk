@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use std::{marker::PhantomData, sync::Arc};
 
 use log::debug;
@@ -9,7 +7,6 @@ use rawdb::{Reader, Region, likely, unlikely};
 pub mod any_stored_vec;
 pub mod any_vec;
 pub mod readable;
-pub mod rollback;
 pub mod typed;
 pub mod writable;
 
@@ -43,7 +40,11 @@ where
     S: CompressionStrategy<T>,
 {
     pub fn read_only_clone(&self) -> ReadOnlyCompressedVec<I, T, S> {
-        ReadOnlyCompressedVec::new(self.base.read_only_base(), Arc::clone(&self.pages))
+        ReadOnlyCompressedVec {
+            base: self.base.read_only_base(),
+            pages: Arc::clone(&self.pages),
+            _strategy: PhantomData,
+        }
     }
 
     /// Creates a forward cursor over a bounded persisted range.
@@ -187,53 +188,11 @@ where
         }
         crate::CompressedMmapSource::new(self, from, to).fold(init, f)
     }
-}
-pub trait VariantsCompressedInnerReadWriteReadWriteCompressedVecITSInternal<I, T, S>:
-    Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
-    const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / size_of::<T>();
-    fn decode_page_with(
-        stored_len: usize,
-        page_index: usize,
-        reader: &Reader,
-        pages: &Pages,
-    ) -> crate::Result<Vec<T>>;
-    fn index_to_page_index(index: usize) -> usize;
-    fn page_index_to_index(page_index: usize) -> usize;
-    fn read_stored_pages_into(
-        reader: &Reader,
-        pages: &Pages,
-        from: usize,
-        to: usize,
-        buf: &mut Vec<T>,
-    );
-    fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool;
-    fn pages_region_name(&self) -> String;
-    fn create_reader(&self) -> Reader;
-    fn pages(&self) -> &Arc<RwLock<Pages>>;
-    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>>;
-    fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B;
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<I, T, S> VariantsCompressedInnerReadWriteReadWriteCompressedVecITSInternal<I, T, S>
-    for ReadWriteCompressedVec<I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: CompressionStrategy<T>,
-{
+
+    pub const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / size_of::<T>();
+
     #[inline]
-    fn decode_page_with(
+    pub fn decode_page_with(
         stored_len: usize,
         page_index: usize,
         reader: &Reader,
@@ -270,16 +229,16 @@ where
         Ok(values)
     }
     #[inline(always)]
-    fn index_to_page_index(index: usize) -> usize {
+    pub fn index_to_page_index(index: usize) -> usize {
         index / Self::PER_PAGE
     }
     #[inline(always)]
-    fn page_index_to_index(page_index: usize) -> usize {
+    pub fn page_index_to_index(page_index: usize) -> usize {
         page_index * Self::PER_PAGE
     }
     /// Reads stored page data into a buffer. Used by both ReadWrite and ReadOnly read_into_at.
     #[inline(always)]
-    fn read_stored_pages_into(
+    pub fn read_stored_pages_into(
         reader: &Reader,
         pages: &Pages,
         from: usize,
@@ -316,7 +275,7 @@ where
         }
     }
     #[inline]
-    fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool {
+    pub fn prefers_mmap(region: &Region, pages: &RwLock<Pages>, from: usize, to: usize) -> bool {
         let Some((offset, len)) = pages.read().stored_byte_range(from, to, Self::PER_PAGE) else {
             return true;
         };
@@ -330,7 +289,7 @@ where
         self.base.region().create_reader()
     }
     #[inline]
-    fn pages(&self) -> &Arc<RwLock<Pages>> {
+    pub fn pages(&self) -> &Arc<RwLock<Pages>> {
         &self.pages
     }
     fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {

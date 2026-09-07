@@ -6,17 +6,8 @@ use vecdb::Database;
 
 use super::Vecs;
 
-pub trait Import: Sized {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self>;
-}
-
-impl Import for Vecs {
-    fn forced_import(
+impl Vecs {
+    pub fn forced_import(
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,

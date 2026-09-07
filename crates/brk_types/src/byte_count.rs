@@ -3,10 +3,12 @@ use std::{
     ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 #[derive(
     Debug,
@@ -20,9 +22,9 @@ use vecdb::{CheckedSub, Formattable, Pco};
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Bytes(u64);
 
 impl Bytes {
@@ -127,6 +129,13 @@ impl CheckedSub for Bytes {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Bytes {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for Bytes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -135,6 +144,7 @@ impl std::fmt::Display for Bytes {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Bytes {
     #[inline(always)]
     fn write_to(&self, buffer: &mut Vec<u8>) {

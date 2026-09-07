@@ -74,15 +74,11 @@ impl Catalog {
 }
 
 impl Operation {
-    pub fn validate_arguments<'a>(
-        &'a self,
-        arguments: &'a Map<String, Value>,
-    ) -> Result<&'a Map<String, Value>, String> {
+    pub fn validate_arguments(&self, arguments: &Map<String, Value>) -> Result<(), String> {
         let root = Value::Object(self.tool.input_schema.as_ref().clone());
         let value = Value::Object(arguments.clone());
         validate_schema(&root, &root, &value, 0)
-            .map_err(|error| format!("invalid arguments: {error}"))?;
-        Ok(arguments)
+            .map_err(|error| format!("invalid arguments: {error}"))
     }
 }
 

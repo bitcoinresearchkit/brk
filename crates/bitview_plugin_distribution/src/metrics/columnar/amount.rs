@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use std::ops::AddAssign;
 
-use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext, Filter};
+use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext};
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
@@ -26,8 +26,7 @@ where
     /// Height-indexed matrix with one column per exact value range, ordered from
     /// smallest to largest.
     pub matrix: M::Stored<EagerVec<ColumnarVec<PcoVec<Height, T>, AmountRangeId>>>,
-    #[traversable(skip)]
-    last: Option<(usize, AmountRange<T>)>,
+    last: M::WriteOnly<Option<(usize, AmountRange<T>)>>,
 }
 
 impl<T, S: Clone> ColumnarAmount<T, S>
@@ -47,7 +46,7 @@ where
             matrix.read_only_clone();
 
         let series = Amount::new(|filter, cohort_name| {
-            let name = Self::metric_name(context, &filter, cohort_name, metric);
+            let name = context.metric_name(&filter, cohort_name, metric);
             let source = match AmountRangeId::matching(&filter) {
                 Some(column) => source
                     .column(&name, version, column)
@@ -64,15 +63,6 @@ where
             matrix,
             last: None,
         })
-    }
-
-    fn metric_name(
-        context: CohortContext,
-        filter: &Filter,
-        cohort_name: &str,
-        metric: &str,
-    ) -> String {
-        context.metric_name(filter, cohort_name, metric)
     }
 
     #[inline(always)]

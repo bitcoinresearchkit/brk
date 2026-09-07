@@ -1,10 +1,12 @@
 use std::ops::{Add, AddAssign};
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::OutputType;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
 
 use super::{CohortName, Filter};
@@ -110,30 +112,34 @@ impl SpendableTypeId {
     }
 }
 
+impl SpendableTypeId {
+    pub const ALL: &'static [Self] = &SPENDABLE_TYPE_IDS;
+
+    #[inline]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+}
+#[cfg(feature = "storage")]
 impl ColumnId for SpendableTypeId {
     type Row<T>
         = SpendableType<T>
     where
         T: VecValue;
-
     const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &SPENDABLE_TYPE_IDS;
-
+    const ALL: &'static [Self] = Self::ALL;
     #[inline]
     fn index(self) -> usize {
-        self as usize
+        Self::index(self)
     }
-
     #[inline]
     fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
         self.select(row)
     }
-
     #[inline]
     fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
         self.select_mut(row)
     }
-
     #[inline]
     fn from_fn<T, F>(mut f: F) -> Self::Row<T>
     where
@@ -154,7 +160,6 @@ impl ColumnId for SpendableTypeId {
             empty: f(Self::Empty),
         }
     }
-
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
     where
@@ -211,7 +216,8 @@ pub const SPENDABLE_TYPE_NAMES: SpendableType<CohortName> = SpendableType {
     empty: CohortName::new("empty_outputs", "Empty", "Empty Output"),
 };
 
-#[derive(Default, Clone, Debug, Traversable, Serialize, JsonSchema)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct SpendableType<T> {
     /// Uses pay-to-public-key outputs with a 65-byte key field.
     pub p2pk65: T,
@@ -484,8 +490,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn column_ids_match_spendable_type_order() {
         let output_types: Vec<_> = SPENDABLE_TYPE_VALUES.iter().copied().collect();

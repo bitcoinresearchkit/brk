@@ -4,7 +4,6 @@ use std::ops::Range;
 
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::{Indexer, Lengths};
-use brk_exit::Exit;
 use brk_oracle::{
     Config, Oracle, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents,
     cents_to_bin, pre_oracle_prices_from,
@@ -17,23 +16,6 @@ use super::Vecs;
 use crate::Dependencies;
 
 impl Vecs {
-    fn compute_inner(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
-        self.db.sync_bg_tasks()?;
-
-        self.compute_prices(indexer)?;
-        {
-            let _lock = exit.lock();
-            self.spot.cents.height.inner.write()?;
-        }
-
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
-        Ok(())
-    }
-
     fn compute_prices(&mut self, indexer: &Indexer) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;
 
@@ -317,6 +299,18 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(dependencies.indexer, context.exit())
+        let Dependencies { indexer } = dependencies;
+        let exit = context.exit();
+
+        self.db.sync_bg_tasks()?;
+
+        self.compute_prices(indexer)?;
+        {
+            let _lock = exit.lock();
+            self.spot.cents.height.inner.write()?;
+        }
+
+        context.compact_database(&self.db);
+        Ok(())
     }
 }

@@ -1,8 +1,12 @@
-use std::{fmt, ops::AddAssign};
+#[cfg(feature = "storage")]
+use std::fmt;
+use std::ops::AddAssign;
 
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, Formattable, VecValue, Version};
 
 use crate::{
@@ -12,7 +16,8 @@ use crate::{
 
 pub const PROFITABILITY_COUNT: usize = PROFITABILITY_RANGE_COUNT + PROFIT_COUNT + LOSS_COUNT;
 
-#[derive(Debug, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ProfitabilityRow<T> {
     pub range: ProfitabilityRange<T>,
     pub profit: Profit<T>,
@@ -48,6 +53,7 @@ where
     }
 }
 
+#[cfg(feature = "storage")]
 impl<T: Formattable> Formattable for ProfitabilityRow<T> {
     fn write_to(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(b"{\"range\":");
@@ -76,6 +82,7 @@ impl<T: Formattable> Formattable for ProfitabilityRow<T> {
     }
 }
 
+#[cfg(feature = "storage")]
 fn write_array<'a, T: Formattable + 'a>(values: impl Iterator<Item = &'a T>, buf: &mut Vec<u8>) {
     buf.push(b'[');
     for (index, value) in values.enumerate() {
@@ -228,144 +235,25 @@ impl ProfitabilityId {
     pub fn range_series<T>(
         mut create: impl FnMut(Self, &'static str) -> T,
     ) -> ProfitabilityRange<T> {
-        let names = ProfitabilityRange::names();
-        ProfitabilityRange {
-            over_1000pct_in_profit: create(
-                Self::RangeOver1000PctInProfit,
-                names.over_1000pct_in_profit.id,
-            ),
-            _500pct_to_1000pct_in_profit: create(
-                Self::Range500To1000PctInProfit,
-                names._500pct_to_1000pct_in_profit.id,
-            ),
-            _300pct_to_500pct_in_profit: create(
-                Self::Range300To500PctInProfit,
-                names._300pct_to_500pct_in_profit.id,
-            ),
-            _200pct_to_300pct_in_profit: create(
-                Self::Range200To300PctInProfit,
-                names._200pct_to_300pct_in_profit.id,
-            ),
-            _100pct_to_200pct_in_profit: create(
-                Self::Range100To200PctInProfit,
-                names._100pct_to_200pct_in_profit.id,
-            ),
-            _90pct_to_100pct_in_profit: create(
-                Self::Range90To100PctInProfit,
-                names._90pct_to_100pct_in_profit.id,
-            ),
-            _80pct_to_90pct_in_profit: create(
-                Self::Range80To90PctInProfit,
-                names._80pct_to_90pct_in_profit.id,
-            ),
-            _70pct_to_80pct_in_profit: create(
-                Self::Range70To80PctInProfit,
-                names._70pct_to_80pct_in_profit.id,
-            ),
-            _60pct_to_70pct_in_profit: create(
-                Self::Range60To70PctInProfit,
-                names._60pct_to_70pct_in_profit.id,
-            ),
-            _50pct_to_60pct_in_profit: create(
-                Self::Range50To60PctInProfit,
-                names._50pct_to_60pct_in_profit.id,
-            ),
-            _40pct_to_50pct_in_profit: create(
-                Self::Range40To50PctInProfit,
-                names._40pct_to_50pct_in_profit.id,
-            ),
-            _30pct_to_40pct_in_profit: create(
-                Self::Range30To40PctInProfit,
-                names._30pct_to_40pct_in_profit.id,
-            ),
-            _20pct_to_30pct_in_profit: create(
-                Self::Range20To30PctInProfit,
-                names._20pct_to_30pct_in_profit.id,
-            ),
-            _10pct_to_20pct_in_profit: create(
-                Self::Range10To20PctInProfit,
-                names._10pct_to_20pct_in_profit.id,
-            ),
-            _0pct_to_10pct_in_profit: create(
-                Self::Range0To10PctInProfit,
-                names._0pct_to_10pct_in_profit.id,
-            ),
-            _0pct_to_10pct_in_loss: create(
-                Self::Range0To10PctInLoss,
-                names._0pct_to_10pct_in_loss.id,
-            ),
-            _10pct_to_20pct_in_loss: create(
-                Self::Range10To20PctInLoss,
-                names._10pct_to_20pct_in_loss.id,
-            ),
-            _20pct_to_30pct_in_loss: create(
-                Self::Range20To30PctInLoss,
-                names._20pct_to_30pct_in_loss.id,
-            ),
-            _30pct_to_40pct_in_loss: create(
-                Self::Range30To40PctInLoss,
-                names._30pct_to_40pct_in_loss.id,
-            ),
-            _40pct_to_50pct_in_loss: create(
-                Self::Range40To50PctInLoss,
-                names._40pct_to_50pct_in_loss.id,
-            ),
-            _50pct_to_60pct_in_loss: create(
-                Self::Range50To60PctInLoss,
-                names._50pct_to_60pct_in_loss.id,
-            ),
-            _60pct_to_70pct_in_loss: create(
-                Self::Range60To70PctInLoss,
-                names._60pct_to_70pct_in_loss.id,
-            ),
-            _70pct_to_80pct_in_loss: create(
-                Self::Range70To80PctInLoss,
-                names._70pct_to_80pct_in_loss.id,
-            ),
-            _80pct_to_90pct_in_loss: create(
-                Self::Range80To90PctInLoss,
-                names._80pct_to_90pct_in_loss.id,
-            ),
-            _90pct_to_100pct_in_loss: create(
-                Self::Range90To100PctInLoss,
-                names._90pct_to_100pct_in_loss.id,
-            ),
-        }
+        ProfitabilityRange::from_fn(|id| {
+            create(
+                Self::range_ids()[id.index()],
+                id.select(ProfitabilityRange::names()).id,
+            )
+        })
     }
 
     pub fn profit_series<T>(mut create: impl FnMut(Self, &'static str) -> T) -> Profit<T> {
-        let names = Profit::names();
-        Profit {
-            total: create(Self::Profit, names.total.id),
-            _10pct: create(Self::ProfitOver10Pct, names._10pct.id),
-            _20pct: create(Self::ProfitOver20Pct, names._20pct.id),
-            _30pct: create(Self::ProfitOver30Pct, names._30pct.id),
-            _40pct: create(Self::ProfitOver40Pct, names._40pct.id),
-            _50pct: create(Self::ProfitOver50Pct, names._50pct.id),
-            _60pct: create(Self::ProfitOver60Pct, names._60pct.id),
-            _70pct: create(Self::ProfitOver70Pct, names._70pct.id),
-            _80pct: create(Self::ProfitOver80Pct, names._80pct.id),
-            _90pct: create(Self::ProfitOver90Pct, names._90pct.id),
-            _100pct: create(Self::ProfitOver100Pct, names._100pct.id),
-            _200pct: create(Self::ProfitOver200Pct, names._200pct.id),
-            _300pct: create(Self::ProfitOver300Pct, names._300pct.id),
-            _500pct: create(Self::ProfitOver500Pct, names._500pct.id),
-        }
+        Profit::from_fn(|id| {
+            create(
+                Self::profit_ids()[id.index()],
+                id.select(Profit::names()).id,
+            )
+        })
     }
 
     pub fn loss_series<T>(mut create: impl FnMut(Self, &'static str) -> T) -> Loss<T> {
-        let names = Loss::names();
-        Loss {
-            total: create(Self::Loss, names.total.id),
-            _10pct: create(Self::LossOver10Pct, names._10pct.id),
-            _20pct: create(Self::LossOver20Pct, names._20pct.id),
-            _30pct: create(Self::LossOver30Pct, names._30pct.id),
-            _40pct: create(Self::LossOver40Pct, names._40pct.id),
-            _50pct: create(Self::LossOver50Pct, names._50pct.id),
-            _60pct: create(Self::LossOver60Pct, names._60pct.id),
-            _70pct: create(Self::LossOver70Pct, names._70pct.id),
-            _80pct: create(Self::LossOver80Pct, names._80pct.id),
-        }
+        Loss::from_fn(|id| create(Self::loss_ids()[id.index()], id.select(Loss::names()).id))
     }
 
     #[inline]
@@ -448,38 +336,50 @@ impl ProfitabilityId {
     }
 }
 
+impl ProfitabilityId {
+    pub const ALL: &'static [Self] = &PROFITABILITY_IDS;
+
+    #[inline]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+
+    pub fn select<T>(self, row: &ProfitabilityRow<T>) -> &T {
+        match self.group() {
+            ProfitabilityGroupId::Range(id) => id.select(&row.range),
+            ProfitabilityGroupId::Profit(id) => id.select(&row.profit),
+            ProfitabilityGroupId::Loss(id) => id.select(&row.loss),
+        }
+    }
+
+    pub fn select_mut<T>(self, row: &mut ProfitabilityRow<T>) -> &mut T {
+        match self.group() {
+            ProfitabilityGroupId::Range(id) => id.select_mut(&mut row.range),
+            ProfitabilityGroupId::Profit(id) => id.select_mut(&mut row.profit),
+            ProfitabilityGroupId::Loss(id) => id.select_mut(&mut row.loss),
+        }
+    }
+}
+#[cfg(feature = "storage")]
 impl ColumnId for ProfitabilityId {
     type Row<T>
         = ProfitabilityRow<T>
     where
         T: VecValue;
-
     const VERSION: Version = Version::TWO;
-    const ALL: &'static [Self] = &PROFITABILITY_IDS;
-
+    const ALL: &'static [Self] = Self::ALL;
     #[inline]
     fn index(self) -> usize {
-        self as usize
+        Self::index(self)
     }
-
     #[inline]
     fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        match self.group() {
-            ProfitabilityGroupId::Range(id) => id.get(&row.range),
-            ProfitabilityGroupId::Profit(id) => id.get(&row.profit),
-            ProfitabilityGroupId::Loss(id) => id.get(&row.loss),
-        }
+        self.select(row)
     }
-
     #[inline]
     fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        match self.group() {
-            ProfitabilityGroupId::Range(id) => id.get_mut(&mut row.range),
-            ProfitabilityGroupId::Profit(id) => id.get_mut(&mut row.profit),
-            ProfitabilityGroupId::Loss(id) => id.get_mut(&mut row.loss),
-        }
+        self.select_mut(row)
     }
-
     #[inline]
     fn from_fn<T, F>(mut f: F) -> Self::Row<T>
     where
@@ -488,7 +388,6 @@ impl ColumnId for ProfitabilityId {
     {
         Self::series(|id, _| f(id))
     }
-
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
     where
@@ -542,7 +441,7 @@ mod tests {
 
     #[test]
     fn rows_expand_ranges_into_profit_prefixes_and_loss_suffixes() {
-        let ranges = ProfitabilityRangeId::from_fn(|id| id.index() + 1);
+        let ranges = ProfitabilityRange::from_fn(|id| id.index() + 1);
         let row = ProfitabilityRow::from_ranges(ranges.clone());
 
         assert_eq!(

@@ -92,7 +92,7 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
 
     let unknown_block = BlockHash::default();
     assert!(matches!(
-        query.resolve_block(&unknown_block),
+        query.resolve_block_snapshot(&unknown_block),
         Err(Error::NotFound(_))
     ));
     assert!(matches!(

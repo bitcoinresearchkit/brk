@@ -11,21 +11,10 @@ pub fn compute(
     lookback: &bitview_plugin_blocks::LookbackVecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, lookback, exit)
-}
+    let starting_height = indexer.safe_lengths().height;
 
-impl Vecs {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        lookback: &bitview_plugin_blocks::LookbackVecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
+    let window_starts = lookback.window_starts();
+    vecs.total.compute(starting_height, &window_starts, exit)?;
 
-        let window_starts = lookback.window_starts();
-        self.total.compute(starting_height, &window_starts, exit)?;
-
-        Ok(())
-    }
+    Ok(())
 }

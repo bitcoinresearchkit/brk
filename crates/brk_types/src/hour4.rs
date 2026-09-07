@@ -1,27 +1,19 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{INDEX_EPOCH, Timestamp};
 
 pub const HOUR4_INTERVAL: u32 = 14400;
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Hour4(u32);
 
 impl Hour4 {
@@ -60,14 +52,28 @@ impl CheckedSub for Hour4 {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Hour4 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
-impl PrintableIndex for Hour4 {
-    fn to_string() -> &'static str {
+impl Hour4 {
+    pub fn index_name() -> &'static str {
         "hour4"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["4h", "hour4"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Hour4 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -79,6 +85,7 @@ impl std::fmt::Display for Hour4 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Hour4 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

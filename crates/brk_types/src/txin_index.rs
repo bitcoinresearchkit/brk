@@ -1,9 +1,11 @@
 use std::ops::{Add, AddAssign};
 
+use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex, VecIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use super::Vin;
 
@@ -20,9 +22,9 @@ use super::Vin;
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct TxInIndex(u64);
 
 impl TxInIndex {
@@ -74,6 +76,12 @@ impl CheckedSub<TxInIndex> for TxInIndex {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<TxInIndex> for TxInIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl From<TxInIndex> for u32 {
     #[inline]
@@ -111,16 +119,25 @@ impl From<TxInIndex> for usize {
     }
 }
 
-impl PrintableIndex for TxInIndex {
-    fn to_string() -> &'static str {
+impl TxInIndex {
+    pub fn index_name() -> &'static str {
         "txin_index"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["txi", "txin", "txin_index"]
     }
 }
+#[cfg(feature = "storage")]
+impl PrintableIndex for TxInIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
 
+#[cfg(feature = "storage")]
 impl VecIndex for TxInIndex {
     const INITIAL_CAPACITY: usize = 4_200_000_000;
 }
@@ -133,6 +150,7 @@ impl std::fmt::Display for TxInIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for TxInIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

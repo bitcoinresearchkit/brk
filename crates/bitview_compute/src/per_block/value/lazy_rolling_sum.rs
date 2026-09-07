@@ -1,11 +1,11 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaSub, LazyDeltaVec, LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CachedWindowStartVec, CentsUnsignedToDollars, DerivedResolutions, LazyPerBlock,
-    LazyRollingSumAmountFromHeight, LazyRollingSumFromHeight, Resolutions, SatsToBitcoin, Windows,
+    CachedWindowStartVec, CentsUnsignedToDollars, LazyPerBlock, LazyRollingSumAmountFromHeight,
+    LazyRollingSumFromHeight, SatsToBitcoin, Windows,
 };
 
 /// Lazy rolling sums for all 4 windows, for Amount (sats + btc + cents + usd).
@@ -32,77 +32,40 @@ impl LazyRollingSumsAmountFromHeight {
 
         let make_slot = |suffix: &str, cached_start: &&CachedWindowStartVec| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
 
             // Sats lazy rolling sum
-            let sats_sum = LazyDeltaVec::<Height, Sats, Sats, DeltaSub>::new(
+            let sats = LazyRollingSumFromHeight::new(
                 &format!("{full_name}_sats"),
                 version,
                 cum_sats.clone(),
-                starts_version,
-                {
-                    let cached = cached.clone();
-                    move || cached.snapshot()
-                },
-            );
-            let sats_resolutions = Resolutions::from_height_source(
-                &format!("{full_name}_sats"),
-                sats_sum.clone(),
-                version,
+                cached_start,
                 indexes,
             );
-            let sats = LazyRollingSumFromHeight {
-                height: sats_sum,
-                resolutions: Box::new(sats_resolutions),
-            };
 
             // Btc lazy from sats
-            let btc = LazyPerBlock {
-                height: LazyVec::transformed::<SatsToBitcoin>(
-                    &full_name,
-                    version,
-                    sats.height.read_only_boxed_clone(),
-                ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<SatsToBitcoin>(
-                    &full_name,
-                    version,
-                    &sats.resolutions,
-                )),
-            };
+            let btc = LazyPerBlock::from_resolutions::<SatsToBitcoin>(
+                &full_name,
+                version,
+                sats.height.read_only_boxed_clone(),
+                &sats.resolutions,
+            );
 
             // Cents rolling sum
-            let cents_sum = LazyDeltaVec::<Height, Cents, Cents, DeltaSub>::new(
+            let cents = LazyRollingSumFromHeight::new(
                 &format!("{full_name}_cents"),
                 version,
                 cum_cents.clone(),
-                starts_version,
-                move || cached.snapshot(),
-            );
-            let cents_resolutions = Resolutions::from_height_source(
-                &format!("{full_name}_cents"),
-                cents_sum.clone(),
-                version,
+                cached_start,
                 indexes,
             );
-            let cents = LazyRollingSumFromHeight {
-                height: cents_sum,
-                resolutions: Box::new(cents_resolutions),
-            };
 
             // Usd lazy from cents
-            let usd = LazyPerBlock {
-                height: LazyVec::transformed::<CentsUnsignedToDollars>(
-                    &format!("{full_name}_usd"),
-                    version,
-                    cents.height.read_only_boxed_clone(),
-                ),
-                resolutions: Box::new(DerivedResolutions::from_derived_computed::<
-                    CentsUnsignedToDollars,
-                >(
-                    &format!("{full_name}_usd"), version, &cents.resolutions
-                )),
-            };
+            let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
+                &format!("{full_name}_usd"),
+                version,
+                cents.height.read_only_boxed_clone(),
+                &cents.resolutions,
+            );
 
             LazyRollingSumAmountFromHeight {
                 btc,

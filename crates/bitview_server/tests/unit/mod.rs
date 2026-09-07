@@ -20,6 +20,7 @@ mod historical_price;
 mod mempool;
 #[cfg(feature = "chain")]
 mod mempool_publication;
+mod middleware;
 #[cfg(feature = "chain")]
 mod mining;
 #[cfg(feature = "price")]
@@ -50,7 +51,7 @@ mod urpd;
 #[cfg(feature = "urpd")]
 mod urpd_sources;
 
-use super::is_json_content_type;
+use super::json_error::is_json_content_type;
 
 #[test]
 fn json_content_type_matches() {

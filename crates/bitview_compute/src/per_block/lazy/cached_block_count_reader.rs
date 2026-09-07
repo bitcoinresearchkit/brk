@@ -54,12 +54,27 @@ impl CachedBlockCountReader {
         starts: &[Height],
         mut each: impl FnMut(StoredU64),
     ) {
+        self.try_fold_rolling_sum(from, starts, (), |(), value| {
+            each(value);
+            Ok::<_, Infallible>(())
+        })
+        .unwrap();
+    }
+
+    pub(crate) fn try_fold_rolling_sum<B, E>(
+        &self,
+        from: usize,
+        starts: &[Height],
+        init: B,
+        mut fold: impl FnMut(B, StoredU64) -> Result<B, E>,
+    ) -> Result<B, E> {
         let (block, checkpoints) = self.snapshot();
         let to = (from + starts.len()).min(block.len());
         if from >= to {
-            return;
+            return Ok(init);
         }
 
+        let mut accumulator = init;
         let starts = &starts[..to - from];
         let mut start = starts[0].to_usize();
         let mut cumulative = Self::sum_before(&block, &checkpoints, from);
@@ -80,8 +95,9 @@ impl CachedBlockCountReader {
             start = next_start;
 
             cumulative += Self::as_u64(&block[from + offset]);
-            each(StoredU64::from(cumulative - before_start));
+            accumulator = fold(accumulator, StoredU64::from(cumulative - before_start))?;
         }
+        Ok(accumulator)
     }
 
     pub fn rolling_sum_at(&self, start: usize, end: usize) -> Option<StoredU64> {
@@ -275,9 +291,8 @@ mod tests {
 
     #[test]
     fn reconstructs_cumulative_and_rolling_counts() {
-        let path =
-            std::env::temp_dir().join(format!("brk-cached-block-count-{}", std::process::id()));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut block: EagerVec<PcoVec<Height, StoredU16>> =
             EagerVec::forced_import(&db, "count", Version::ONE).unwrap();
 
@@ -322,10 +337,5 @@ mod tests {
         block.invalidate();
 
         assert_eq!(count.cumulative_at(599), Some(StoredU64::from(600_u64)));
-
-        drop(count);
-        drop(block);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

@@ -31,7 +31,7 @@ let paths = ClientOutputPaths::new()
     .llm("website_next")
     .llm_manifest("crates/bitview_mcp/generated/manifest.json");
 
-generate_clients(&vecs, &openapi_json, &paths)?;
+generate_clients(&catalog, &openapi_json, &paths)?;
 ```
 
 ## Generated Clients
@@ -56,5 +56,23 @@ endpoint at [mcp.bitview.space](https://mcp.bitview.space/).
 
 ## Built On
 
-- `bitview_query` for series enumeration
+The Rust client is generated directly from source-declared catalog families,
+field-type relationships, and exact series names. It does not infer record
+families or reconstruct series names from prefixes and suffixes. Structured
+leaf types such as `ByTerm<Sats>` are preserved. Generated record names use
+`Catalog` plus their Rust source type; these replace the old inferred helper
+types. JavaScript and Python still use the existing inference pipeline.
+
+Regenerate or verify only Rust outputs (client and CLI):
+
+```sh
+cargo bindgen -- --rust
+cargo bindgen -- --rust --check
+```
+
+- `bitview_catalog::TreeNode` for the series catalog
 - `bitview_types` and `brk_types` for type schemas
+
+The generator consumes metadata only; it does not depend on the query runtime.
+The `bitviewd` generation command still imports plugins into temporary databases
+to obtain that catalog. Removing this initialization is a separate change.

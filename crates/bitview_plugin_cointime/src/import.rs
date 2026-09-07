@@ -16,14 +16,21 @@ impl Vecs {
         prices: &bitview_plugin_price::Vecs,
         subsidy_cents: &PerBlock<Cents>,
         all_chain: &AllChainSources,
+        distribution: &bitview_plugin_distribution::Vecs,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 250_000)?;
         let version = STORAGE.schema_version();
         let v1 = version + Version::ONE;
         let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
         let activity = super::activity::forced_import(&db, version, mappings, cached_starts)?;
-        let age_range =
-            super::age_range::forced_import(&db, version, mappings, cached_starts, &spot_price)?;
+        let age_range = super::age_range::forced_import(
+            &db,
+            version,
+            mappings,
+            cached_starts,
+            &spot_price,
+            distribution,
+        )?;
         let supply =
             super::supply::forced_import(&db, v1, mappings, &spot_price, &activity, all_chain)?;
         let aggregate = super::aggregate::forced_import(
@@ -31,7 +38,7 @@ impl Vecs {
             version + Version::new(4),
             mappings,
             &spot_price,
-            &supply.active_supply_in_loss_share,
+            &supply.active_supply_in_loss_share.bounded,
         )?;
         let value = super::value::forced_import(&db, v1, mappings, cached_starts)?;
         let cap = super::cap::forced_import(&db, version + Version::TWO, mappings, subsidy_cents)?;

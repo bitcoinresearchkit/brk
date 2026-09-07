@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, MempoolBlock, Sats, VSize, get_weighted_percentile};
+use brk_types::{FeeRate, MempoolBlock, Sats, VSize, get_weighted_percentiles};
 
 use super::{SnapTx, TxIndex};
 
@@ -75,7 +75,7 @@ impl BlockStats {
         let fee_range: [FeeRate; 7] = if rates.is_empty() {
             [FeeRate::default(); 7]
         } else {
-            percentiles.map(|p| get_weighted_percentile(&rates, p))
+            get_weighted_percentiles(&rates, percentiles)
         };
 
         Self {
@@ -99,3 +99,7 @@ impl From<&BlockStats> for MempoolBlock {
         )
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/snapshot/block_stats.rs"]
+mod tests;

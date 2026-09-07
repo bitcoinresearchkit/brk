@@ -38,8 +38,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
-    #[traversable(skip)]
-    pools: &'static Pools,
+    pools: M::WriteOnly<&'static Pools>,
 
     /// Mining pool attributed to each block. BRK first scans address-bearing
     /// outputs of the coinbase transaction for a known pool payout address; if
@@ -122,29 +121,6 @@ impl Vecs {
 
         STORAGE.finalize_database(&this.db)?;
         Ok(this)
-    }
-
-    fn compute_inner(
-        &mut self,
-        indexer: &Indexer,
-        prices: &bitview_plugin_price::Vecs,
-        mining: &bitview_plugin_mining::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.db.sync_bg_tasks()?;
-
-        self.compute_pool(indexer, exit)?;
-
-        self.major
-            .par_iter_mut()
-            .try_for_each(|(_, vecs)| vecs.compute(indexer, prices, mining, exit))?;
-
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
-        Ok(())
     }
 
     fn compute_pool(&mut self, indexer: &Indexer, exit: &Exit) -> Result<()> {
@@ -241,11 +217,21 @@ impl ComputePlugin for Vecs {
         dependencies: Self::Dependencies<'_>,
         context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.price,
-            dependencies.mining,
-            context.exit(),
-        )
+        let Dependencies {
+            indexer,
+            price: prices,
+            mining,
+        } = dependencies;
+        let exit = context.exit();
+        self.db.sync_bg_tasks()?;
+
+        self.compute_pool(indexer, exit)?;
+
+        self.major
+            .par_iter_mut()
+            .try_for_each(|(_, vecs)| vecs.compute(indexer, prices, mining, exit))?;
+
+        context.compact_database(&self.db);
+        Ok(())
     }
 }

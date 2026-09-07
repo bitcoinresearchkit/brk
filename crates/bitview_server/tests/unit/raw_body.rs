@@ -77,12 +77,10 @@ async fn compression_releases_input_without_releasing_response_admission() {
                 })
                 .collect();
             let input_lifetime = Arc::downgrade(&input);
-            let bytes = permit.bytes(Bytes::from_owner(input));
-            let mut response = Response::new(Body::from(bytes));
-            response
-                .headers_mut()
-                .insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
-            response.extensions_mut().insert(permit);
+            let response =
+                permit.response(CacheParams::deploy(), Bytes::from_owner(input), |headers| {
+                    headers.insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
+                });
             let mut response = Some(response);
             let service = crate::compression_layer().layer(service_fn(move |_: Request<Body>| {
                 ready(Ok::<_, Infallible>(response.take().unwrap()))

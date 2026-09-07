@@ -4,7 +4,7 @@ use brk_types::{Height, Lengths};
 use tracing::{debug, warn};
 use vecdb::{AnyStoredVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec};
 
-use crate::{Stores, Vecs, stores::IndexerStores as _};
+use crate::{Stores, Vecs};
 
 pub trait IndexerLengths: Sized {
     fn push(&self, vecs: &mut Vecs);
@@ -73,44 +73,33 @@ impl IndexerLengths for Lengths {
             .debug_checked_push(height, self.p2wsh_addr_index);
     }
 
+    /// Read current local lengths. `None` pre-genesis.
     fn from_local(vecs: &Vecs, stores: &Stores) -> Result<Option<Self>> {
-        read_local(vecs, stores)
+        let Some(height) = matching_height(vecs.next_height(), stores.next_height()?) else {
+            return Ok(None);
+        };
+        Ok(collect_at(height, vecs))
     }
 
+    /// Read lengths to resume at `required_height`. Reorg-aware:
+    /// - if vector and store checkpoints differ, return `None` (full reset);
+    /// - if local is ahead, clamp down to `required_height`;
+    /// - if local is behind, return `None` (caller must full-reset).
     fn resume_at(required_height: Height, vecs: &Vecs, stores: &Stores) -> Result<Option<Self>> {
-        read_resume(required_height, vecs, stores)
+        let Some(local) = matching_height(vecs.next_height(), stores.next_height()?) else {
+            return Ok(None);
+        };
+        if local < required_height {
+            return Ok(None);
+        }
+        if local > required_height {
+            warn!(
+                "Reorg detected: rolling back from {} to {}",
+                local, required_height
+            );
+        }
+        Ok(collect_at(required_height, vecs))
     }
-}
-
-/// Read current local lengths. `None` pre-genesis.
-fn read_local(vecs: &Vecs, stores: &Stores) -> Result<Option<Lengths>> {
-    let Some(height) = matching_height(vecs.next_height(), stores.next_height()?) else {
-        return Ok(None);
-    };
-    Ok(collect_at(height, vecs))
-}
-
-/// Read lengths to resume at `required_height`. Reorg-aware:
-/// - if vector and store checkpoints differ, return `None` (full reset);
-/// - if local is ahead, clamp down to `required_height`;
-/// - if local is behind, return `None` (caller must full-reset).
-fn read_resume(required_height: Height, vecs: &Vecs, stores: &Stores) -> Result<Option<Lengths>> {
-    let Some(local) = matching_height(vecs.next_height(), stores.next_height()?) else {
-        return Ok(None);
-    };
-    if local < required_height {
-        return Ok(None);
-    }
-    let height = if local > required_height {
-        warn!(
-            "Reorg detected: rolling back from {} to {}",
-            local, required_height
-        );
-        required_height
-    } else {
-        local
-    };
-    Ok(collect_at(height, vecs))
 }
 
 fn collect_at(height: Height, vecs: &Vecs) -> Option<Lengths> {

@@ -38,21 +38,19 @@ where
                 vec![]
             };
 
-            let mut prev_idx = 0;
+            let mut previous_values = prev_batch.into_iter();
             let mut i = skip;
-            source.try_fold_range_at(skip, end, (), |(), current: A| {
+            source.fold_range_at(skip, end, (), |(), current: A| {
                 let previous = if i >= lookback_len {
-                    let val = prev_batch[prev_idx].clone();
-                    prev_idx += 1;
-                    val
+                    previous_values.next().unwrap()
                 } else {
                     A::default()
                 };
                 let result = transform(i, current, previous);
                 this.push(result);
                 i += 1;
-                Ok(())
-            })
+            });
+            Ok(())
         })
     }
 

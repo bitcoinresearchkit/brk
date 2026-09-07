@@ -6,7 +6,7 @@
 
 use std::fmt::Write;
 
-use bitview_types::SeriesLeafWithSchema;
+use bitview_catalog::SeriesLeafWithSchema;
 
 use crate::{
     ClientMetadata, LanguageSyntax, PatternBaseResult, PatternField, PatternMode, StructuralPattern,

@@ -1,5 +1,3 @@
-use crate::LevelPolicy as _;
-
 use crate::{
     InternalValue, Result, Slice, Table, Tree, ValueType,
     config::{BloomConstructionPolicy, FilterPolicyEntry},

@@ -95,33 +95,12 @@ pub fn router(
         transport_config,
     );
 
-    let home_html = pages.home();
-    let home_handler = move || {
-        let home_html = home_html.clone();
-        async move { page::get(home_html).await }
-    };
-    let privacy_html = pages.privacy();
-    let privacy_handler = move || {
-        let privacy_html = privacy_html.clone();
-        async move { page::get(privacy_html).await }
-    };
-    let terms_html = pages.terms();
-    let terms_handler = move || {
-        let terms_html = terms_html.clone();
-        async move { page::get(terms_html).await }
-    };
-    let support_html = pages.support();
-    let support_handler = move || {
-        let support_html = support_html.clone();
-        async move { page::get(support_html).await }
-    };
-
     Router::new()
-        .route("/", get(home_handler).post_service(service))
+        .route("/", page::route(pages.home()).post_service(service))
         .route("/logo.png", get(logo::get))
-        .route("/privacy", get(privacy_handler))
-        .route("/terms", get(terms_handler))
-        .route("/support", get(support_handler))
+        .route("/privacy", page::route(pages.privacy()))
+        .route("/terms", page::route(pages.terms()))
+        .route("/support", page::route(pages.support()))
         .layer(middleware::from_fn(gateway_guard))
 }
 
@@ -267,14 +246,14 @@ impl ServerHandler for BrkMcp {
             .operation(&name)
             .ok_or_else(|| McpError::invalid_params("Unknown tool name", None))?;
         let arguments = request.arguments.unwrap_or_default();
-        let arguments = operation
+        operation
             .validate_arguments(&arguments)
             .map_err(|error| McpError::invalid_params(error, None))?;
         let has_output_schema = operation.tool.output_schema.is_some();
         let prepared = self
             .state
             .upstream
-            .prepare(operation, arguments)
+            .prepare(operation, &arguments)
             .map_err(|error| McpError::invalid_params(error, None))?;
         let permit = match timeout(
             CONCURRENCY_WAIT,

@@ -75,10 +75,7 @@ where
         version: Version,
         height_source: impl ReadableCloneableVec<Height, S1T> + 'static,
         indexes: &crate::IndexSources,
-    ) -> Self
-    where
-        S1T: NumericValue,
-    {
+    ) -> Self {
         Self::from_boxed_height_source::<F>(
             name,
             version,
@@ -92,10 +89,7 @@ where
         version: Version,
         height_source: ReadableBoxedVec<Height, S1T>,
         indexes: &crate::IndexSources,
-    ) -> Self
-    where
-        S1T: NumericValue,
-    {
+    ) -> Self {
         Self {
             height: LazyVec::transformed::<F>(name, version, height_source.clone()),
             resolutions: Box::new(DerivedResolutions::from_height_source::<F>(

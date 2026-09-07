@@ -158,11 +158,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        env, fs, process,
-        time::{SystemTime, UNIX_EPOCH},
-    };
-
     use brk_types::{Cents, Sats, Version};
     use vecdb::{AnyVec, ColumnId, Database, VecValue};
 
@@ -216,15 +211,8 @@ mod tests {
 
     #[test]
     fn stores_units_in_separate_cohort_matrices() {
-        let suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = env::temp_dir().join(format!(
-            "brk-columnar-value-cumulative-{}-{suffix}",
-            process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut values = ColumnarValuePerBlockCumulativeRolling::<Column, _>::forced_import(
             &db,
             "values",
@@ -264,9 +252,5 @@ mod tests {
             cents.collect_range_dyn(0, 2),
             [Cents::new(30), Cents::new(100)]
         );
-
-        drop(values);
-        drop(db);
-        fs::remove_dir_all(path).unwrap();
     }
 }

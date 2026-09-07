@@ -35,14 +35,7 @@ impl TryFrom<&Regions> for Layout {
             ));
         }
 
-        let mut layout = Self {
-            start_to_hole: BTreeMap::default(),
-            hole_to_starts: BTreeMap::default(),
-            start_to_reserved: BTreeMap::default(),
-            pending_holes: BTreeMap::default(),
-            start_to_region: BTreeMap::default(),
-            holes_need_punch: false,
-        };
+        let mut layout = Self::default();
 
         let mut prev_end = 0;
         for (&start, region) in &start_to_region {

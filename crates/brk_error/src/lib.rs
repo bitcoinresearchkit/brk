@@ -269,7 +269,7 @@ const SERIES_NAME_MAX_DISPLAY_LEN: usize = 100;
 /// blow up the response body.
 pub fn truncate_series_name(mut series: String) -> String {
     if series.len() > SERIES_NAME_MAX_DISPLAY_LEN {
-        series.truncate(SERIES_NAME_MAX_DISPLAY_LEN);
+        series.truncate(series.floor_char_boundary(SERIES_NAME_MAX_DISPLAY_LEN));
         series.push_str("...");
     }
     series
@@ -300,8 +300,14 @@ impl fmt::Display for SeriesNotFound {
             return Ok(());
         }
 
-        let quoted: Vec<_> = self.suggestions.iter().map(|s| format!("'{s}'")).collect();
-        write!(f, ", did you mean {}?", quoted.join(", "))?;
+        f.write_str(", did you mean ")?;
+        for (index, suggestion) in self.suggestions.iter().enumerate() {
+            if index != 0 {
+                f.write_str(", ")?;
+            }
+            write!(f, "'{suggestion}'")?;
+        }
+        f.write_str("?")?;
 
         let remaining = self.total_matches.saturating_sub(self.suggestions.len());
         if remaining > 0 {

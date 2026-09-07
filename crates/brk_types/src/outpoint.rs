@@ -1,10 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+#[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
 use crate::{TxIndex, Vout};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, JsonSchema, Hash, Pco)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, JsonSchema, Hash)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct OutPoint(u64);
 
 impl OutPoint {
@@ -46,12 +48,11 @@ impl std::fmt::Display for OutPoint {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for OutPoint {
     fn write_to(&self, buf: &mut Vec<u8>) {
-        use std::fmt::Write;
-        let mut s = String::new();
-        write!(s, "{}", self).unwrap();
-        buf.extend_from_slice(s.as_bytes());
+        use std::io::Write;
+        write!(buf, "{self}").unwrap();
     }
 
     fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {

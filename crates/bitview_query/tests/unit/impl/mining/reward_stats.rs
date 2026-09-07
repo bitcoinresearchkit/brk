@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use brk_types::{Sats, Version};
 use vecdb::{
     AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec,
@@ -23,15 +21,8 @@ fn cumulative_delta_rejects_reversed_ranges_and_decreasing_values() {
 
 #[test]
 fn cumulative_delta_matches_range_sum_across_read_strategies() {
-    let suffix = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let path = std::env::temp_dir().join(format!(
-        "bitview-reward-stats-{}-{suffix}",
-        std::process::id()
-    ));
-    let db = Database::open(&path).unwrap();
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
     let mut cumulative: EagerVec<PcoVec<Height, Sats>> =
         EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();
     let values = (0_usize..2_051)
@@ -59,9 +50,4 @@ fn cumulative_delta_matches_range_sum_across_read_strategies() {
         let actual = cumulative_delta(&read_only, Height::from(start), Height::from(end)).unwrap();
         assert_eq!(actual, expected, "range {start}..={end}");
     }
-
-    drop(read_only);
-    drop(cumulative);
-    drop(db);
-    std::fs::remove_dir_all(path).unwrap();
 }

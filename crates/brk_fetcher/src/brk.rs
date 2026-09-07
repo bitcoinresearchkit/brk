@@ -51,7 +51,7 @@ impl BRK {
             .get(&key)
             .and_then(|prices| prices.get(offset))
             .cloned()
-            .ok_or(Error::NotFound("Couldn't find height in BRK".into()))
+            .ok_or_else(|| Error::NotFound("Couldn't find height in BRK".into()))
     }
 
     fn height_chunk(height: Height) -> (Height, usize) {
@@ -70,7 +70,7 @@ impl BRK {
             let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
-                .ok_or(Error::Parse("Expected JSON array".into()))?
+                .ok_or_else(|| Error::Parse("Expected JSON array".into()))?
                 .iter()
                 .map(Self::value_to_height_ohlc)
                 .collect::<Result<Vec<_>>>()
@@ -93,7 +93,7 @@ impl BRK {
             .get(&key)
             .and_then(|prices| prices.get(offset))
             .cloned()
-            .ok_or(Error::NotFound("Couldn't find date in BRK".into()))
+            .ok_or_else(|| Error::NotFound("Couldn't find date in BRK".into()))
     }
 
     fn day_chunk(day: Day1) -> (Day1, usize) {
@@ -112,7 +112,7 @@ impl BRK {
             let body: Value = serde_json::from_slice(&bytes)?;
 
             body.as_array()
-                .ok_or(Error::Parse("Expected JSON array".into()))?
+                .ok_or_else(|| Error::Parse("Expected JSON array".into()))?
                 .iter()
                 .map(Self::value_to_ohlc)
                 .collect::<Result<Vec<_>>>()
@@ -149,7 +149,7 @@ impl BRK {
         let ohlc = value
             .as_array()
             .filter(|values| values.len() == 4)
-            .ok_or(Error::Parse("Expected OHLC array".into()))?;
+            .ok_or_else(|| Error::Parse("Expected OHLC array".into()))?;
 
         let get_value = |index: usize| -> Result<_> { Self::value_to_cents(&ohlc[index]) };
 

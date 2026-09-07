@@ -3,28 +3,20 @@ use std::{
     ops::{Add, AddAssign, Div},
 };
 
+use crate::CheckedSub;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::Height;
 
 pub const BLOCKS_PER_DIFF_EPOCHS: u32 = 2016;
 
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Default,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Epoch(u16);
 
 impl From<u16> for Epoch {
@@ -89,14 +81,28 @@ impl CheckedSub for Epoch {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Epoch {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
-impl PrintableIndex for Epoch {
-    fn to_string() -> &'static str {
+impl Epoch {
+    pub fn index_name() -> &'static str {
         "epoch"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["epoch", "difficulty", "difficultyepoch", "diff"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for Epoch {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -108,6 +114,7 @@ impl std::fmt::Display for Epoch {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Epoch {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 
-use bitview_types::TreeNode;
+use bitview_catalog::TreeNode;
 
 use super::{
     find_common_prefix, find_common_suffix, get_node_fields, get_shortest_leaf_name,
@@ -210,7 +210,11 @@ fn collect_instance_analyses(
             }
 
             // Analyze this instance
-            let mut analysis = analyze_instance(&child_bases);
+            let mut analysis = if children.field_suffixes {
+                analyze_field_suffixes(&child_bases, path)
+            } else {
+                analyze_instance(&child_bases)
+            };
 
             // When some field_parts are empty (children returned the same base),
             // replace empty parts with discriminators derived from shortest leaf names.
@@ -284,6 +288,31 @@ fn collect_instance_analyses(
                 Some(analysis.base)
             }
         }
+    }
+}
+
+/// A declared family uses its catalog keys directly, not prefix/suffix guessing.
+fn analyze_field_suffixes(child_bases: &BTreeMap<String, String>, path: &str) -> InstanceAnalysis {
+    let mut base = None;
+    for (field, child_base) in child_bases {
+        let suffix = format!("_{field}");
+        let parent = child_base.strip_suffix(&suffix).unwrap_or_else(|| {
+            panic!("Declared field suffix {suffix:?} does not match {child_base:?} at {path}")
+        });
+        if let Some(base) = base {
+            assert_eq!(base, parent, "Conflicting declared family bases at {path}");
+        } else {
+            base = Some(parent);
+        }
+    }
+    InstanceAnalysis {
+        base: base.unwrap().to_string(),
+        field_parts: child_bases
+            .keys()
+            .map(|key| (key.clone(), key.clone()))
+            .collect(),
+        is_suffix_mode: true,
+        has_outlier: false,
     }
 }
 
@@ -491,26 +520,18 @@ fn determine_pattern_mode(
     analyses: &[InstanceAnalysis],
     fields: &[PatternField],
 ) -> Option<PatternMode> {
-    analyses.first()?;
-
     // Filter out outlier instances — they'll be inlined individually at generation
     // time via the per-instance has_outlier check in prepare_tree_node.
     // Don't let a single outlier poison the entire pattern.
-    let non_outlier: Vec<&InstanceAnalysis> = analyses.iter().filter(|a| !a.has_outlier).collect();
-    if non_outlier.is_empty() {
-        return None;
-    }
+    let non_outlier = analyses.iter().filter(|a| !a.has_outlier);
 
     // Pick the majority mode
-    let suffix_count = non_outlier.iter().filter(|a| a.is_suffix_mode).count();
-    let is_suffix = suffix_count * 2 >= non_outlier.len();
+    let suffix_count = non_outlier.clone().filter(|a| a.is_suffix_mode).count();
+    let is_suffix = suffix_count * 2 >= non_outlier.clone().count();
 
     // All instances of the majority mode must agree on field_parts
-    let majority: Vec<&InstanceAnalysis> = non_outlier
-        .into_iter()
-        .filter(|a| a.is_suffix_mode == is_suffix)
-        .collect();
-    let first_majority = majority.first()?;
+    let mut majority = non_outlier.filter(|a| a.is_suffix_mode == is_suffix);
+    let first_majority = majority.next()?;
 
     // Verify all required fields have parts
     for field in fields {
@@ -520,7 +541,7 @@ fn determine_pattern_mode(
     }
 
     if majority
-        .iter()
+        .clone()
         .all(|a| a.field_parts == first_majority.field_parts)
     {
         let field_parts = first_majority.field_parts.clone();
@@ -540,6 +561,7 @@ fn determine_pattern_mode(
     // if each field's value varies by exactly one substring that's different
     // per instance, we can use a Templated mode with {disc} placeholder.
     if is_suffix {
+        let majority: Vec<_> = std::iter::once(first_majority).chain(majority).collect();
         try_detect_template(&majority, fields)
     } else {
         None
@@ -1288,7 +1310,7 @@ mod tests {
     fn test_loss_with_neg_suffix_has_correct_field_parts() {
         // Integration test: "loss" child has suffix-named children (realized_loss,
         // realized_loss_neg) so it returns a proper base that differs from parent.
-        use bitview_types::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
+        use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 
         fn leaf(name: &str) -> TreeNode {
             TreeNode::Leaf(SeriesLeafWithSchema::new(

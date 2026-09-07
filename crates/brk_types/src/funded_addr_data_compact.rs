@@ -1,3 +1,4 @@
+#[cfg(feature = "storage")]
 use vecdb::Bytes;
 
 const COUNT_BITS: u32 = 21;
@@ -90,6 +91,7 @@ impl FundedAddrDataCompact {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Bytes for FundedAddrDataCompact {
     type Array = [u8; 32];
 

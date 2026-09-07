@@ -1,8 +1,6 @@
 use std::collections::BTreeSet;
 
-use rawdb::Database;
-
-use crate::{Bytes, Error, ImportOptions, ImportableVec, Version};
+use crate::{Bytes, Error, ImportOptions, ImportableVec};
 
 use super::{MutableRawVec, MutableVec};
 
@@ -36,16 +34,8 @@ impl<V> ImportableVec for MutableVec<V>
 where
     V: MutableRawVec,
 {
-    fn import(db: &Database, name: &str, version: Version) -> crate::Result<Self> {
-        Self::import_with((db, name, version).into())
-    }
-
     fn import_with(options: ImportOptions) -> crate::Result<Self> {
         Self::import_inner(options)
-    }
-
-    fn forced_import(db: &Database, name: &str, version: Version) -> crate::Result<Self> {
-        Self::forced_import_with((db, name, version).into())
     }
 
     fn forced_import_with(options: ImportOptions) -> crate::Result<Self> {

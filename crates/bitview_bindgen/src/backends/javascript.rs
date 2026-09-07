@@ -78,32 +78,18 @@ impl LanguageSyntax for JavaScriptSyntax {
 
     fn template_expr(&self, acc_var: &str, template: &str) -> String {
         let var_name = to_camel_case(acc_var);
-        if template.is_empty() {
-            // Identity — just pass disc
-            format!("_m({}, disc)", var_name)
-        } else if template == "{disc}" {
-            // Template IS the discriminator
+        if template.is_empty() || template == "{disc}" {
             format!("_m({}, disc)", var_name)
         } else if !template.contains("{disc}") {
             // Static suffix — no disc involved
             format!("_m({}, '{}')", var_name, template)
+        } else if let Some(static_part) = template.strip_suffix("{disc}") {
+            let static_part = static_part.trim_end_matches('_');
+            format!("_m(_m({}, '{}'), disc)", var_name, static_part)
         } else {
-            // Template with {disc}: use nested _m for proper separator handling
-            // "ratio_{disc}_ppm" → split on {disc} → _m(_m(acc, 'ratio'), disc) then _ppm
-            // But this is complex. For embedded disc, use string interpolation.
-            // For suffix disc (ends with {disc}), use _m composition.
-            if let Some(static_part) = template.strip_suffix("{disc}") {
-                if static_part.is_empty() {
-                    format!("_m({}, disc)", var_name)
-                } else {
-                    let static_part = static_part.trim_end_matches('_');
-                    format!("_m(_m({}, '{}'), disc)", var_name, static_part)
-                }
-            } else {
-                // Embedded disc — use template literal
-                let js_template = template.replace("{disc}", "${disc}");
-                format!("_m({}, `{}`)", var_name, js_template)
-            }
+            // Embedded disc — use template literal.
+            let js_template = template.replace("{disc}", "${disc}");
+            format!("_m({}, `{}`)", var_name, js_template)
         }
     }
 }

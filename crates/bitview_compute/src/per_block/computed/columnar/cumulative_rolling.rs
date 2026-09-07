@@ -24,8 +24,7 @@ where
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
     pub cumulative: M::Stored<EagerVec<ColumnarVec<PcoVec<Height, T>, C>>>,
-    #[traversable(skip)]
-    last_cumulative: Option<(usize, C::Row<T>)>,
+    last_cumulative: M::WriteOnly<Option<(usize, C::Row<T>)>>,
 }
 
 impl<T, C, S: Clone> ColumnarPerBlockCumulativeRolling<T, C, S>
@@ -273,15 +272,8 @@ mod tests {
 
     #[test]
     fn pushes_delta_rows_and_recovers_after_truncation() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-columnar-cumulative-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut vec = ColumnarPerBlockCumulativeRolling::<StoredU64, Column, _>::forced_import(
             &db,
             "values",
@@ -334,11 +326,5 @@ mod tests {
                 [StoredU64::from(4_u64), StoredU64::from(6_u64)],
             ]
         );
-
-        drop(vec);
-        drop(b);
-        drop(a);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

@@ -34,12 +34,6 @@ impl Plugin for Vecs {
     }
 }
 
-impl Vecs {
-    fn invalidate_cache(&self) {
-        self.cached_dca_sats.invalidate();
-    }
-}
-
 impl ComputePlugin for Vecs {
     type Dependencies<'a> = ();
     type Output = ();
@@ -49,7 +43,7 @@ impl ComputePlugin for Vecs {
         (): Self::Dependencies<'_>,
         _context: UpdateContext<'_>,
     ) -> Result<Self::Output> {
-        self.invalidate_cache();
+        self.cached_dca_sats.invalidate();
         Ok(())
     }
 }

@@ -11,3 +11,6 @@ publish = false
 [dependencies]
 derive_more = { workspace = true }
 plotters = "0.3.7"
+
+[dev-dependencies]
+tempfile = { workspace = true }

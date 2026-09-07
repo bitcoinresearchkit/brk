@@ -3,7 +3,6 @@ use brk_error::Result;
 use bitview_compute::db_utils::validate_any_computed_version_or_reset;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
 use brk_types::{CapitalSentimentPhase, Cents, Day1, Height, StoredBool, StoredU8, Version};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
@@ -12,16 +11,24 @@ use crate::Dependencies;
 
 const WRITE_INTERVAL_DAYS: usize = 1_000;
 
-impl Vecs {
-    fn compute_inner(
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        moving_average: &bitview_plugin_market::MovingAverageVecs,
-        exit: &Exit,
-    ) -> Result<()> {
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            mappings,
+            price: prices,
+            distribution,
+            moving_average,
+        } = dependencies;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         let spot = &prices.spot.cents.height;
@@ -121,33 +128,9 @@ impl Vecs {
             }
         }
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
 
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mappings,
-            dependencies.price,
-            dependencies.distribution,
-            dependencies.moving_average,
-            context.exit(),
-        )
     }
 }
 
@@ -200,19 +183,12 @@ fn classify_phase_code(
     lth: Option<Cents>,
     sma: Option<Cents>,
 ) -> StoredU8 {
-    let Some((price, all, sth, lth)) = price
-        .zip(all)
-        .zip(sth)
-        .zip(lth)
-        .map(|(((price, all), sth), lth)| (price, all, sth, lth))
-        .filter(|values| {
-            [values.0, values.1, values.2, values.3]
-                .into_iter()
-                .all(is_finite_positive)
-        })
-    else {
+    let (Some(price), Some(all), Some(sth), Some(lth)) = (price, all, sth, lth) else {
         return StoredU8::ZERO;
     };
+    if ![price, all, sth, lth].into_iter().all(is_finite_positive) {
+        return StoredU8::ZERO;
+    }
 
     StoredU8::new(classify_phase(price, all, sth, lth, sma).code())
 }
@@ -438,6 +414,27 @@ mod tests {
             ),
             StoredU8::ZERO
         );
+    }
+
+    #[test]
+    fn every_capitalized_price_reference_must_be_present_and_positive() {
+        let valid = [
+            Some(cents(100)),
+            Some(cents(70)),
+            Some(cents(80)),
+            Some(cents(60)),
+        ];
+        for index in 0..valid.len() {
+            for invalid in [None, Some(Cents::ZERO), Some(Cents::NAN)] {
+                let mut references = valid;
+                references[index] = invalid;
+                let [price, all, sth, lth] = references;
+                assert_eq!(
+                    classify_phase_code(price, all, sth, lth, Some(cents(50))),
+                    StoredU8::ZERO,
+                );
+            }
+        }
     }
 
     #[test]

@@ -1,9 +1,11 @@
 use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 /// Fixed-size 64-bit signed integer optimized for on-disk storage
 #[derive(
@@ -18,9 +20,9 @@ use vecdb::{CheckedSub, Formattable, Pco, PrintableIndex};
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct StoredI64(i64);
 
 impl StoredI64 {
@@ -62,6 +64,12 @@ impl From<StoredI64> for usize {
 impl CheckedSub<StoredI64> for StoredI64 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<StoredI64> for StoredI64 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -112,13 +120,21 @@ impl From<StoredI64> for f64 {
     }
 }
 
-impl PrintableIndex for StoredI64 {
-    fn to_string() -> &'static str {
+impl StoredI64 {
+    pub fn index_name() -> &'static str {
         "i64"
     }
-
-    fn to_possible_strings() -> &'static [&'static str] {
+    pub fn index_aliases() -> &'static [&'static str] {
         &["i64"]
+    }
+}
+#[cfg(feature = "storage")]
+impl PrintableIndex for StoredI64 {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
     }
 }
 
@@ -130,6 +146,7 @@ impl std::fmt::Display for StoredI64 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for StoredI64 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

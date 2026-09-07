@@ -202,7 +202,6 @@ impl Mempool {
     /// Allocates `32 * len(mempool)` bytes under the read guard. Sized for
     /// diagnostics. Route layers serving large pools should paginate at
     /// their boundary rather than calling this per request.
-    #[must_use]
     pub fn txids(&self) -> Result<Vec<Txid>> {
         let state = self.read();
         state.ensure_published()?;
@@ -210,7 +209,6 @@ impl Mempool {
     }
 
     /// Order-sensitive validator for the current txid array.
-    #[must_use]
     pub fn txids_hash(&self) -> Result<u64> {
         let state = self.read();
         state.ensure_published()?;
@@ -218,7 +216,6 @@ impl Mempool {
     }
 
     /// Current txid array and its validator from one state-lock window.
-    #[must_use]
     pub fn txids_with_hash(&self) -> Result<(Vec<Txid>, u64)> {
         let state = self.read();
         state.ensure_published()?;
@@ -227,7 +224,6 @@ impl Mempool {
     }
 
     /// Snapshot of recent live txs.
-    #[must_use]
     pub fn recent_txs(&self) -> Result<Vec<MempoolRecentTx>> {
         let state = self.read();
         state.ensure_published()?;
@@ -238,7 +234,6 @@ impl Mempool {
     /// Returns 0 for unknown txids. `Vanished` tombstones fall back to
     /// the buried entry's `first_seen` to avoid flicker between drop
     /// and indexer catch-up.
-    #[must_use]
     pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
         let state = self.read();
         state.ensure_published()?;
@@ -247,7 +242,6 @@ impl Mempool {
 
     /// Transaction times and an order-sensitive hash of that exact result,
     /// captured from one state snapshot.
-    #[must_use]
     pub fn transaction_times_with_hash(&self, txids: &[Txid]) -> Result<(Vec<u64>, u64)> {
         let state = self.read();
         state.ensure_published()?;

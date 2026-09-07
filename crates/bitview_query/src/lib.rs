@@ -55,7 +55,6 @@ use vecdb::{ReadOnlyClone, ReadableVec, Ro};
 
 #[cfg(feature = "tokio")]
 mod r#async;
-mod internals;
 #[cfg(feature = "price")]
 mod live_oracle;
 mod output;
@@ -72,24 +71,23 @@ mod r#impl;
 
 #[cfg(feature = "tokio")]
 pub use r#async::*;
-#[cfg(feature = "series")]
-pub use r#impl::ResolvedQuery;
 #[cfg(feature = "urpd")]
 pub use r#impl::ResolvedUrpd;
 #[cfg(feature = "chain")]
 pub use r#impl::{
-    BlockTemplateSource, ResolvedAddrChainTxs, ResolvedAddrTxs, ResolvedAddrUtxos, ResolvedBlock,
+    BlockTemplateSource, ResolvedAddrChainTxs, ResolvedAddrTxs, ResolvedAddrUtxos,
     ResolvedBlockTemplateDiff, ResolvedBlockTimestamp, ResolvedBlocks, ResolvedBlocksV1,
     ResolvedConfirmedTx, ResolvedCpfp, ResolvedPoolBlocks, ResolvedRawTransaction, ResolvedRbf,
     ResolvedTransaction,
 };
+#[cfg(feature = "series")]
+pub use r#impl::{ResolvedQuery, SeriesRead};
 pub use output::*;
 #[cfg(feature = "indexer")]
 pub use query_plugin_set::{
-    QueryPluginSet, SupportsBedrock, SupportsBlocks, SupportsChainQueries, SupportsCoinflow,
-    SupportsCointime, SupportsDistribution, SupportsInputs, SupportsMappings, SupportsMining,
-    SupportsOutputs, SupportsPools, SupportsPrice, SupportsSeriesQueries, SupportsTransactions,
-    SupportsUrpdQueries,
+    QueryPluginSet, SupportsBedrock, SupportsBlocks, SupportsCoinflow, SupportsCointime,
+    SupportsDistribution, SupportsInputs, SupportsMappings, SupportsMining, SupportsOutputs,
+    SupportsPools, SupportsPrice, SupportsTransactions,
 };
 #[cfg(feature = "indexer")]
 use query_plugins::QueryPlugins;

@@ -6,7 +6,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{AnyVec, CachedBoxedVec, Database, Rw, StorageMode};
 
 use bitview_compute::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
 
@@ -51,16 +51,7 @@ impl AggregatePriceWithRatioPerBlock {
         Ok(Self { values })
     }
 
-    #[inline(always)]
-    pub fn push(&mut self, row: UTXOAggregate<Cents>) {
-        self.values.push(row);
-    }
-
     pub fn len(&self) -> usize {
         self.values.height.len()
-    }
-
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.values.stored_mut()
     }
 }

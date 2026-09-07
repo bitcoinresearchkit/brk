@@ -1,9 +1,11 @@
 use std::ops::Add;
 
+use crate::CheckedSub;
 use byteview::ByteView;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Index within its type (e.g., 0 for first P2WPKH address)
 #[derive(
@@ -17,10 +19,10 @@ use vecdb::{CheckedSub, Formattable, Pco};
     Default,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
     Hash,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct TypeIndex(u32);
 
 impl TypeIndex {
@@ -136,6 +138,12 @@ impl CheckedSub<TypeIndex> for TypeIndex {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub<TypeIndex> for TypeIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for TypeIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -145,6 +153,7 @@ impl std::fmt::Display for TypeIndex {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for TypeIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

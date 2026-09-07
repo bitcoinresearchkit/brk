@@ -1,15 +1,14 @@
-//! Client metadata extracted from bitview_query.
+//! Client metadata extracted from the series catalog.
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use bitview_query::Vecs;
-use bitview_types::{SeriesLeafWithSchema, TreeNode};
+use bitview_catalog::{SeriesLeafWithSchema, TreeNode};
 use brk_types::Index;
 
-use super::{GenericSyntax, IndexSetPattern, PatternField, StructuralPattern, extract_inner_type};
+use super::{GenericSyntax, IndexSetPattern, PatternField, StructuralPattern, inner_type};
 use crate::{PatternBaseResult, analysis};
 
-/// Metadata extracted from bitview_query for client generation.
+/// Metadata extracted from the series catalog for client generation.
 #[derive(Debug)]
 pub struct ClientMetadata {
     /// The catalog tree structure (with schemas in leaves)
@@ -27,11 +26,6 @@ pub struct ClientMetadata {
 }
 
 impl ClientMetadata {
-    /// Extract metadata from bitview_query::Vecs.
-    pub fn from_vecs(vecs: &Vecs) -> Self {
-        Self::from_catalog(vecs.catalog().clone())
-    }
-
     /// Extract metadata from a catalog TreeNode directly.
     pub fn from_catalog(catalog: TreeNode) -> Self {
         let (structural_patterns, concrete_to_pattern, concrete_to_type_param, node_bases) =
@@ -69,14 +63,18 @@ impl ClientMetadata {
     /// Check if a pattern is fully parameterizable (recursively).
     /// Returns false if the pattern or any nested branch pattern has no mode.
     pub fn is_parameterizable(&self, name: &str) -> bool {
-        self.find_pattern(name).is_some_and(|p| {
-            p.is_parameterizable()
-                && p.fields.iter().all(|f| {
-                    !f.is_branch()
-                        || self.find_pattern(&f.rust_type).is_none()
-                        || self.is_parameterizable(&f.rust_type)
-                })
-        })
+        self.find_pattern(name)
+            .is_some_and(|pattern| self.pattern_is_parameterizable(pattern))
+    }
+
+    fn pattern_is_parameterizable(&self, pattern: &StructuralPattern) -> bool {
+        pattern.is_parameterizable()
+            && pattern.fields.iter().all(|field| {
+                !field.is_branch()
+                    || self
+                        .find_pattern(&field.rust_type)
+                        .is_none_or(|child| self.pattern_is_parameterizable(child))
+            })
     }
 
     /// Find a pattern by its concrete fields.
@@ -129,14 +127,14 @@ impl ClientMetadata {
 
         // Leaf type
         let value_type = if is_generic && field.rust_type == "T" {
-            "T".to_string()
+            "T"
         } else {
-            extract_inner_type(&field.rust_type)
+            inner_type(&field.rust_type)
         };
         if let Some(accessor) = self.find_index_set_pattern(&field.indexes) {
-            syntax.wrap(&accessor.name, &value_type)
+            syntax.wrap(&accessor.name, value_type)
         } else {
-            syntax.wrap("SeriesNode", &value_type)
+            syntax.wrap("SeriesNode", value_type)
         }
     }
 
@@ -149,11 +147,15 @@ impl ClientMetadata {
         leaf: &SeriesLeafWithSchema,
         syntax: GenericSyntax,
     ) -> String {
-        let value_type = leaf.kind().to_string();
+        let value_type = leaf.kind();
         if let Some(accessor) = self.find_index_set_pattern(leaf.indexes()) {
-            syntax.wrap(&accessor.name, &value_type)
+            syntax.wrap(&accessor.name, value_type)
         } else {
-            syntax.wrap("SeriesNode", &value_type)
+            syntax.wrap("SeriesNode", value_type)
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/types/metadata.rs"]
+mod tests;

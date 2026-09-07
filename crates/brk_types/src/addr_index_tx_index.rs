@@ -2,11 +2,13 @@ use std::hash::Hash;
 
 use byteview::ByteView;
 use serde::Serialize;
+#[cfg(feature = "storage")]
 use vecdb::Bytes;
 
 use super::{TxIndex, TypeIndex};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Bytes, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Hash)]
+#[cfg_attr(feature = "storage", derive(Bytes))]
 pub struct AddrIndexTxIndex(u64);
 
 impl AddrIndexTxIndex {

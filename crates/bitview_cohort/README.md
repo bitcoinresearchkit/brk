@@ -2,6 +2,10 @@
 
 UTXO and address cohort filtering for on-chain analytics.
 
+Row types, filters, and column identifiers work without the storage engine.
+Enable the `storage` feature for traversal, vecdb column/formatting traits, and
+storage-enabled BRK types. The Rust client leaves this feature disabled.
+
 ## What It Enables
 
 Slice the UTXO set and address population by age, amount, output type, halving epoch, or holder classification (STH/LTH). Build complex cohorts by combining filters for metrics like "realized cap of 1+ BTC UTXOs older than 150 days."

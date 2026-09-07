@@ -1,7 +1,7 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::{CohortName, Filter};
 
@@ -37,7 +37,8 @@ pub const ENTRY_NAMES: ByEntry<CohortName> = ByEntry {
     premium: CohortName::new("rookie", "Rookie", "Rookie Coins"),
 };
 
-#[derive(Debug, Default, Clone, Traversable, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByEntry<T> {
     /// Uses UTXOs created when spot price was at or below the then-current
     /// all-chain capitalized price, the mean creation price of all unspent
@@ -99,20 +100,5 @@ impl<T> ByEntry<T> {
             EntryPrice::Discount => &mut self.discount,
             EntryPrice::Premium => &mut self.premium,
         }
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [&self.discount, &self.premium].into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [&mut self.discount, &mut self.premium].into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [&mut self.discount, &mut self.premium].into_par_iter()
     }
 }

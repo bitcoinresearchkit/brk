@@ -81,7 +81,7 @@ fn benchmark_full_history_storage() {
                 })
                 .unzip();
             let body = serde_json::to_vec(&BlockSizesWeights { sizes, weights }).unwrap();
-            black_box(crate::representation_id::content_hash(&body));
+            black_box(crate::RepresentationId::content_hash(&body));
             let elapsed = started.elapsed();
             if let Some(expected) = &expected {
                 assert_eq!(&body, expected);

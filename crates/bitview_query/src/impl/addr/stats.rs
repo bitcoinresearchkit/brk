@@ -1,11 +1,9 @@
-use crate::internals::*;
-
 use std::str::FromStr;
 
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    Addr, AddrBytes, AddrChainStats, AddrHash, AddrStats, DecodedAddrState, Dollars, OutputType,
-    Sats, TypeIndex,
+    Addr, AddrBytes, AddrChainStats, AddrStats, DecodedAddrState, Dollars, OutputType, Sats,
+    TypeIndex,
 };
 use vecdb::ReadableVec;
 
@@ -15,7 +13,7 @@ impl Query {
     pub fn addr(&self, addr: Addr) -> Result<AddrStats> {
         let bytes = AddrBytes::from_str(&addr)?;
         let _guard = self.read_plugin(self.plugins().distribution)?;
-        let (output_type, type_index) = self.resolve_addr_stats(&bytes)?;
+        let (output_type, type_index) = self.resolve_addr_bytes(&bytes)?;
         self.addr_stats(addr, bytes, output_type, type_index)
     }
 
@@ -26,19 +24,9 @@ impl Query {
         let Some(_guard) = self.try_read_plugin(self.plugins().distribution) else {
             return Ok(None);
         };
-        let (output_type, type_index) = self.resolve_addr_stats(&bytes)?;
+        let (output_type, type_index) = self.resolve_addr_bytes(&bytes)?;
         self.addr_stats(addr.clone(), bytes, output_type, type_index)
             .map(Some)
-    }
-
-    fn resolve_addr_stats(&self, bytes: &AddrBytes) -> Result<(OutputType, TypeIndex)> {
-        let output_type = OutputType::from(bytes);
-        let hash = AddrHash::from(bytes);
-        let type_index = self.type_index_for(output_type, &hash)?;
-        if type_index >= self.safe_lengths().to_type_index(output_type) {
-            return Err(Error::UnknownAddr);
-        }
-        Ok((output_type, type_index))
     }
 
     fn addr_stats(

@@ -7,10 +7,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, Database, ReadableCloneableVec, ReadableColumnarVec, Rw,
-    StorageMode,
-};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
 
 use bitview_compute::{
     CACHE_BUDGET, CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, FiatType,
@@ -43,7 +40,6 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
             &format!("{metric}_cumulative_cents_by_term"),
             version,
             |source| {
-                let source = source.clone();
                 UTXOAggregate::from_fn(|id| {
                     let name = CohortContext::Utxo.metric_name(
                         id.select(&UTXO_AGGREGATE_FILTERS),
@@ -88,9 +84,5 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
 
     pub fn len(&self) -> usize {
         self.values.cumulative.len()
-    }
-
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.values.stored_mut()
     }
 }

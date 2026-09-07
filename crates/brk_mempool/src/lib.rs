@@ -11,17 +11,17 @@
 //!                                            prevouts
 //! ```
 //!
-//! 1. [`steps::Fetcher`] - one mixed batched RPC for
+//! 1. [`steps::fetcher`] - one mixed batched RPC for
 //!    `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`,
 //!    then a single mixed `getmempoolentry`+`getrawtransaction` batch
 //!    on new txids only. GBT-only txs are synthesized inline from the
 //!    GBT payload so block 0 matches Core's selection exactly without
 //!    a follow-up entry fetch that could race the listing.
-//! 2. [`steps::Preparer`] - decode and classify into
+//! 2. [`steps::preparer`] - decode and classify into
 //!    `TxsPulled { live_len, added, removed }`. Pure CPU.
-//! 3. [`steps::Applier`] - apply the diff to [`state::State`] under a
+//! 3. [`steps::applier`] - apply the diff to [`state::State`] under a
 //!    single write lock.
-//! 4. [`steps::Prevouts::fill`] - fills `prevout: None` inputs in one
+//! 4. [`steps::prevouts::fill`] - fills `prevout: None` inputs in one
 //!    pass, using same-cycle in-mempool parents directly and the
 //!    caller-supplied resolver (default: `getrawtransaction`) for
 //!    confirmed parents.
@@ -36,7 +36,7 @@
 //!
 //! - `State` (`RwLock<State>`): the live mempool. Cycle steps 3 and 4
 //!   take the write guard. Every read-side accessor takes a read guard.
-//! - `Rebuilder.{snapshot, history}` (two `RwLock`s, written in that
+//! - `Rebuilder.{history, snapshot}` (two `RwLock`s, written in that
 //!   order each cycle): the published projection. Readers grab one or
 //!   the other. The cycle drops its `State` guard before touching them.
 //!
@@ -69,7 +69,6 @@ mod api;
 mod cycle;
 mod diagnostics;
 mod driver;
-mod internals;
 mod snapshot;
 mod state;
 mod steps;

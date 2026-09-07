@@ -86,11 +86,12 @@ where
         mempool_clone.start_with(resolver);
     });
 
-    let mut last_height = query.sync(|q| q.indexer().indexed_height());
     info!("Waiting for new blocks...");
 
     loop {
-        while last_height == client.get_last_height()? {
+        // Compare against published state, not a cached node observation: a
+        // reorg can replace the tip without changing its height.
+        while query.sync(|q| q.tip_blockhash()) == client.get_best_block_hash()? {
             if server_handle.is_finished() {
                 return server_stopped(&runtime, server_handle);
             }
@@ -99,9 +100,7 @@ where
 
         client.wait_for_synced_node()?;
 
-        last_height = client.get_last_height()?;
-
-        info!("New chain tip: block {last_height}");
+        info!("Chain tip changed; updating...");
 
         update(&mut plugins, update_context)?;
 

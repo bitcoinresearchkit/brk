@@ -2,23 +2,29 @@ use brk_error::Result;
 
 use bitview_compute::RatioDollars;
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use brk_exit::Exit;
-use brk_types::{Dollars, PartsPerMillion64, StoredF32};
+use brk_types::{BasisPoints32, Dollars, PartsPerMillion64, StoredF32};
 use rayon::join;
 
 use super::Vecs;
 use crate::{Dependencies, gini};
 
-impl Vecs {
-    fn compute_inner(
+impl ComputePlugin for Vecs {
+    type Dependencies<'a> = Dependencies<'a>;
+    type Output = ();
+
+    fn compute(
         &mut self,
-        indexer: &Indexer,
-        mining: &bitview_plugin_mining::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        market: &bitview_plugin_market::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
+        dependencies: Self::Dependencies<'_>,
+        context: UpdateContext<'_>,
+    ) -> Result<Self::Output> {
+        let Dependencies {
+            indexer,
+            mining,
+            distribution,
+            market,
+        } = dependencies;
+        let exit = context.exit();
+
         self.db.sync_bg_tasks()?;
 
         let starting_height = indexer.safe_lengths().height;
@@ -36,8 +42,8 @@ impl Vecs {
 
         let compute_puell = || {
             puell_multiple
-                .ppm
-                .compute_binary::<Dollars, Dollars, RatioDollars<PartsPerMillion64>>(
+                .bps
+                .compute_binary::<Dollars, Dollars, RatioDollars<BasisPoints32>>(
                     starting_height,
                     &subsidy.block.usd,
                     &subsidy.average._1y.usd.height,
@@ -97,30 +103,7 @@ impl Vecs {
         rhodl_result?;
         seller_exhaustion_result?;
 
-        let exit = exit.clone();
-        self.db.run_bg(move |db| {
-            let _lock = exit.lock();
-            db.compact_deferred_default()
-        });
+        context.compact_database(&self.db);
         Ok(())
-    }
-}
-
-impl ComputePlugin for Vecs {
-    type Dependencies<'a> = Dependencies<'a>;
-    type Output = ();
-
-    fn compute(
-        &mut self,
-        dependencies: Self::Dependencies<'_>,
-        context: UpdateContext<'_>,
-    ) -> Result<Self::Output> {
-        self.compute_inner(
-            dependencies.indexer,
-            dependencies.mining,
-            dependencies.distribution,
-            dependencies.market,
-            context.exit(),
-        )
     }
 }

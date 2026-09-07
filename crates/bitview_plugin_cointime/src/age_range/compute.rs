@@ -3,11 +3,10 @@ use brk_error::Result;
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_plugin_indexer::Indexer;
 use brk_exit::Exit;
-use brk_types::{Bitcoin, Height, Sats, StoredF64, Version};
-use vecdb::{AnyVec, CheckedSub, ColumnId, ReadableVec, StoredVec, WritableVec};
+use brk_types::{Bitcoin, BoundedRatio, Height, Sats, StoredF64, Version};
+use vecdb::{CheckedSub, ColumnId, ReadableVec, StoredVec, WritableVec};
 
 use super::Vecs;
-use bitview_compute::WeightedCohortState;
 
 const HOURS_PER_DAY: f64 = 24.0;
 const WRITE_INTERVAL: usize = 10_000;
@@ -18,58 +17,44 @@ pub fn compute(
     distribution: &bitview_plugin_distribution::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, distribution, exit)
+    let starting_height = indexer.safe_lengths().height;
+    let transfer_volumes = AgeRange::from_fn(|id| {
+        &id.select(
+            &distribution
+                .cohorts
+                .activity
+                .transfer_volume
+                .cohorts
+                .age
+                .range,
+        )
+        .block
+        .sats
+    });
+    let coindays_destroyed = AgeRange::from_fn(|id| {
+        &id.select(
+            &distribution
+                .cohorts
+                .activity
+                .coindays_destroyed
+                .cohorts
+                .age
+                .range,
+        )
+        .block
+    });
+    let coindays_created = &distribution.coindays_created.cumulative;
+
+    vecs.compute_consumed(
+        starting_height,
+        &transfer_volumes,
+        &coindays_destroyed,
+        exit,
+    )?;
+    vecs.compute_rest(starting_height, coindays_created, exit)
 }
 
 impl Vecs {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        distribution: &bitview_plugin_distribution::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
-        let supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
-                .sats
-                .height
-        });
-        let transfer_volumes = AgeRange::from_fn(|id| {
-            &id.select(
-                &distribution
-                    .cohorts
-                    .activity
-                    .transfer_volume
-                    .cohorts
-                    .age
-                    .range,
-            )
-            .block
-            .sats
-        });
-        let coindays_destroyed = AgeRange::from_fn(|id| {
-            &id.select(
-                &distribution
-                    .cohorts
-                    .activity
-                    .coindays_destroyed
-                    .cohorts
-                    .age
-                    .range,
-            )
-            .block
-        });
-        let coindays_created = &distribution.coindays_created.cumulative;
-
-        self.compute_consumed(
-            starting_height,
-            &transfer_volumes,
-            &coindays_destroyed,
-            exit,
-        )?;
-        self.compute_rest(starting_height, &supplies, coindays_created, exit)
-    }
-
     fn compute_consumed<V, D>(
         &mut self,
         starting_height: Height,
@@ -134,15 +119,8 @@ impl Vecs {
         Ok(())
     }
 
-    fn compute_rest<S, C>(
-        &mut self,
-        starting_height: Height,
-        supplies: &AgeRange<&S>,
-        created: &C,
-        exit: &Exit,
-    ) -> Result<()>
+    fn compute_rest<C>(&mut self, starting_height: Height, created: &C, exit: &Exit) -> Result<()>
     where
-        S: ReadableVec<Height, Sats>,
         C: ReadableVec<Height, AgeRange<StoredF64>>,
     {
         {
@@ -169,81 +147,14 @@ impl Vecs {
                 WRITE_INTERVAL,
                 |(height, consumed, created, ..)| {
                     let wakefulness = AgeRangeId::from_fn(|column| {
-                        *column.get(&consumed) / *column.get(&created)
+                        BoundedRatio::from(
+                            f64::from(*column.get(&consumed)) / f64::from(*column.get(&created)),
+                        )
                     });
                     (height, wakefulness)
                 },
                 exit,
             )?;
-        }
-
-        self.compute_supply(starting_height, supplies, exit)
-    }
-
-    fn compute_supply<S>(
-        &mut self,
-        starting_height: Height,
-        supplies: &AgeRange<&S>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        S: ReadableVec<Height, Sats>,
-    {
-        let wakefulness = self.activity.height.read_only_clone();
-        let source_version = Version::combine_all(
-            std::iter::once(wakefulness.version()).chain(supplies.iter().map(|vec| vec.version())),
-        );
-        let supply = &mut self.supply;
-        supply
-            .awake
-            .validate_computed_version_or_reset(source_version)?;
-        supply
-            .dormant
-            .validate_computed_version_or_reset(source_version)?;
-
-        let start = [supply.awake.height.len(), supply.dormant.height.len()]
-            .into_iter()
-            .min()
-            .unwrap_or_default()
-            .min(usize::from(starting_height));
-        supply.awake.truncate_if_needed_at(start)?;
-        supply.dormant.truncate_if_needed_at(start)?;
-
-        let source_end = supplies
-            .iter()
-            .map(|vec| vec.len())
-            .chain(std::iter::once(wakefulness.len()))
-            .min()
-            .unwrap_or_default();
-        let mut chunk_start = start;
-        while chunk_start < source_end {
-            let chunk_end = (chunk_start + WRITE_INTERVAL).min(source_end);
-            let supply_batches = AgeRange::from_fn(|id| {
-                id.select(supplies).collect_range_at(chunk_start, chunk_end)
-            });
-            let wakefulness_batch = wakefulness.collect_range_at(chunk_start, chunk_end);
-
-            for (offset, weights) in wakefulness_batch.iter().enumerate() {
-                let split = AgeRange::from_fn(|id| {
-                    WeightedCohortState::split_supply(
-                        id.select(&supply_batches)[offset],
-                        *id.get(weights),
-                    )
-                });
-                supply
-                    .awake
-                    .push(AgeRangeId::from_fn(|id| id.select(&split).0));
-                supply
-                    .dormant
-                    .push(AgeRangeId::from_fn(|id| id.select(&split).1));
-            }
-
-            {
-                let _lock = exit.lock();
-                supply.awake.write()?;
-                supply.dormant.write()?;
-            }
-            chunk_start = chunk_end;
         }
 
         Ok(())

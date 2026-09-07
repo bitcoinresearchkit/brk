@@ -60,7 +60,5 @@ fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
     let updated = serde_json::to_string_pretty(&package)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    write_if_changed(package_json_path, &(updated + "\n"))?;
-
-    Ok(())
+    write_if_changed(package_json_path, &(updated + "\n"))
 }

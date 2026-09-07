@@ -1,3 +1,4 @@
+#[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
 
 pub const OP_RETURN_POLICY_COUNT: usize = OpReturnPolicyId::Multiple as usize + 1;
@@ -18,6 +19,7 @@ pub const OP_RETURN_POLICY_IDS: [OpReturnPolicyId; OP_RETURN_POLICY_COUNT] = [
     OpReturnPolicyId::Multiple,
 ];
 
+#[cfg(feature = "storage")]
 impl ColumnId for OpReturnPolicyId {
     type Row<T>
         = [T; OP_RETURN_POLICY_COUNT]
@@ -64,8 +66,10 @@ impl ColumnId for OpReturnPolicyId {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "storage")]
     use super::*;
 
+    #[cfg(feature = "storage")]
     #[test]
     fn column_order_matches_discriminants() {
         for (index, policy) in OP_RETURN_POLICY_IDS.into_iter().enumerate() {

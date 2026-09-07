@@ -9,18 +9,8 @@ pub trait StorageMode: 'static {
     type Stored<V: StoredVec + 'static>: TypedVec<I = V::I, T = V::T>
         + ReadableVec<V::I, V::T>
         + 'static;
-}
 
-/// Read-write mode. `Stored<V>` is the identity — the full read-write vec.
-pub struct Rw;
-
-impl StorageMode for Rw {
-    type Stored<V: StoredVec + 'static> = V;
-}
-
-/// Read-only mode. `Stored<V>` is `V::ReadOnly` — a lean clone for disk reads.
-pub struct Ro;
-
-impl StorageMode for Ro {
-    type Stored<V: StoredVec + 'static> = V::ReadOnly;
+    /// Computation state present only in the writer: `T` in `Rw`, `()` in `Ro`.
+    /// No wrapper, cloning, or default construction of `T` is required.
+    type WriteOnly<T>;
 }

@@ -6,16 +6,14 @@ use std::fmt::Write;
 #[path = "../../../tests/unit/generators/rust/client_endpoint_tests.rs"]
 mod endpoint_tests;
 
-use crate::{
-    ClientMetadata, GenericSyntax, IndexSetPattern, RustSyntax, StructuralPattern,
-    escape_rust_keyword, generate_parameterized_field, index_to_field_name, to_snake_case,
-};
+use crate::{IndexSetPattern, index_to_field_name};
 
 /// Generate import statements.
 pub fn generate_imports(output: &mut String) {
     writeln!(
         output,
-        r#"pub use bitview_cohort::*;
+        r#"pub use bitview_catalog::*;
+pub use bitview_cohort::*;
 pub use bitview_types::*;
 pub use brk_types::*;
 use crate::{{DateSeriesData, FormatResponse}};
@@ -242,20 +240,6 @@ impl BitviewClientBase {{
     }}
 }}
 
-/// Build series name with suffix.
-#[inline]
-fn _m(acc: &str, s: &str) -> String {{
-    if s.is_empty() {{ acc.to_string() }}
-    else if acc.is_empty() {{ s.to_string() }}
-    else {{ format!("{{acc}}_{{s}}") }}
-}}
-
-/// Build series name with prefix.
-#[inline]
-fn _p(prefix: &str, acc: &str) -> String {{
-    if acc.is_empty() {{ prefix.to_string() }} else {{ format!("{{prefix}}_{{acc}}") }}
-}}
-
 "#
     )
     .unwrap();
@@ -345,7 +329,7 @@ impl EndpointConfig {{
         self.client.get_json(&format!("/api/series/{{}}/{{}}/len", self.name, self.index.name()))
     }}
 
-    fn get_version(&self) -> Result<Version> {{
+    fn get_version(&self) -> Result<u32> {{
         self.client.get_json(&format!("/api/series/{{}}/{{}}/version", self.name, self.index.name()))
     }}
 }}
@@ -445,7 +429,7 @@ impl<T: DeserializeOwned, D: DeserializeOwned> SeriesEndpoint<T, D> {{
     }}
 
     /// Current version of the series.
-    pub fn version(&self) -> Result<Version> {{
+    pub fn version(&self) -> Result<u32> {{
         self.config.get_version()
     }}
 
@@ -528,7 +512,7 @@ impl<T: DeserializeOwned> DateSeriesEndpoint<T> {{
         self.0.len()
     }}
 
-    pub fn version(&self) -> Result<Version> {{
+    pub fn version(&self) -> Result<u32> {{
         self.0.version()
     }}
 
@@ -771,85 +755,5 @@ fn _dep<T: DeserializeOwned>(
             pattern.name, idx_const
         )
         .unwrap();
-    }
-}
-
-/// Generate structural pattern structs.
-pub fn generate_pattern_structs(
-    output: &mut String,
-    patterns: &[StructuralPattern],
-    metadata: &ClientMetadata,
-) {
-    if patterns.is_empty() {
-        return;
-    }
-
-    writeln!(output, "// Reusable pattern structs\n").unwrap();
-
-    for pattern in patterns {
-        let generic_params = if pattern.is_generic { "<T>" } else { "" };
-
-        // Generate struct definition
-        writeln!(output, "/// Pattern struct for repeated tree structure.").unwrap();
-        writeln!(output, "pub struct {}{} {{", pattern.name, generic_params).unwrap();
-
-        for field in &pattern.fields {
-            let field_name = escape_rust_keyword(&to_snake_case(&field.name));
-            let type_annotation = metadata.field_type_annotation(
-                field,
-                pattern.is_generic,
-                None,
-                GenericSyntax::RUST,
-            );
-            writeln!(output, "    pub {}: {},", field_name, type_annotation).unwrap();
-        }
-
-        writeln!(output, "}}\n").unwrap();
-
-        // Skip constructor for non-parameterizable patterns (inlined at tree level)
-        if !metadata.is_parameterizable(&pattern.name) {
-            continue;
-        }
-
-        let impl_generic = if pattern.is_generic {
-            "<T: DeserializeOwned>"
-        } else {
-            ""
-        };
-        writeln!(
-            output,
-            "impl{} {}{} {{",
-            impl_generic, pattern.name, generic_params
-        )
-        .unwrap();
-
-        writeln!(
-            output,
-            "    /// Create a new pattern node with accumulated series name."
-        )
-        .unwrap();
-        if pattern.is_templated() {
-            writeln!(
-                output,
-                "    pub fn new(client: Arc<BitviewClientBase>, acc: String, disc: String) -> Self {{"
-            )
-            .unwrap();
-        } else {
-            writeln!(
-                output,
-                "    pub fn new(client: Arc<BitviewClientBase>, acc: String) -> Self {{"
-            )
-            .unwrap();
-        }
-        writeln!(output, "        Self {{").unwrap();
-
-        let syntax = RustSyntax;
-        for field in &pattern.fields {
-            generate_parameterized_field(output, &syntax, field, pattern, metadata, "            ");
-        }
-
-        writeln!(output, "        }}").unwrap();
-        writeln!(output, "    }}").unwrap();
-        writeln!(output, "}}\n").unwrap();
     }
 }

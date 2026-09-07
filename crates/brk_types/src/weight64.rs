@@ -3,10 +3,12 @@ use std::{
     ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
+use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use crate::{VSize, Weight};
 
@@ -23,9 +25,9 @@ use crate::{VSize, Weight};
     Ord,
     Serialize,
     Deserialize,
-    Pco,
     JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct Weight64(u64);
 
 impl Weight64 {
@@ -143,6 +145,13 @@ impl CheckedSub for Weight64 {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for Weight64 {
+    #[inline]
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for Weight64 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -151,6 +160,7 @@ impl std::fmt::Display for Weight64 {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Weight64 {
     #[inline(always)]
     fn write_to(&self, buffer: &mut Vec<u8>) {

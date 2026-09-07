@@ -30,8 +30,7 @@ where
     pub cumulative: PerBlock<T, M>,
     pub sum: LazyRollingSumsFromHeight<T>,
     pub average: LazyRollingAvgsFromHeight<T>,
-    #[traversable(skip)]
-    last_cumulative: Option<(usize, T)>,
+    last_cumulative: M::WriteOnly<Option<(usize, T)>>,
 }
 
 impl<T> PerBlockCumulativeRolling<T>
@@ -226,15 +225,8 @@ mod tests {
 
     #[test]
     fn lazy_block_is_the_delta_of_cumulative() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-lazy-block-cumulative-{}-{suffix}",
-            std::process::id()
-        ));
-        let db = Database::open(&path).unwrap();
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
         let mut cumulative: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();
 
@@ -276,11 +268,5 @@ mod tests {
             transformed.collect_range_at(1, 3),
             [2_u32, 3].map(StoredU32::from)
         );
-
-        drop(transformed);
-        drop(block);
-        drop(cumulative);
-        drop(db);
-        std::fs::remove_dir_all(path).unwrap();
     }
 }

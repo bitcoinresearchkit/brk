@@ -107,45 +107,43 @@ pub fn generate_type_definitions(output: &mut String, schemas: &TypeSchemas) {
 /// Types that reference other types (via $ref) must be defined after their dependencies.
 fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     // Build dependency graph
-    let mut deps: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    let mut deps: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
     for (name, schema) in schemas.iter() {
         let mut type_deps = BTreeSet::new();
         collect_schema_refs(schema, &mut type_deps);
         // Only keep deps that are in our schemas, and drop self-references
         // (handled at emit time by quoting via current_type)
-        type_deps.retain(|d| schemas.contains_key(d) && d != name);
-        deps.insert(name.clone(), type_deps);
+        type_deps.retain(|d| schemas.contains_key(*d) && *d != name);
+        deps.insert(name, type_deps);
     }
 
     // Kahn's algorithm for topological sort
-    let mut in_degree: BTreeMap<String, usize> = BTreeMap::new();
+    let mut in_degree: BTreeMap<&str, usize> = BTreeMap::new();
     for name in schemas.keys() {
-        in_degree.insert(name.clone(), 0);
+        in_degree.insert(name, 0);
     }
     for type_deps in deps.values() {
         for dep in type_deps {
-            *in_degree.entry(dep.clone()).or_insert(0) += 1;
+            *in_degree.entry(dep).or_insert(0) += 1;
         }
     }
 
     // Start with types that have no dependents (are not referenced by others)
-    let mut queue: Vec<String> = in_degree
+    let mut queue: BTreeSet<&str> = in_degree
         .iter()
         .filter(|(_, count)| **count == 0)
-        .map(|(name, _)| name.clone())
+        .map(|(name, _)| *name)
         .collect();
-    queue.sort(); // Deterministic order
 
     let mut result = Vec::new();
-    while let Some(name) = queue.pop() {
-        result.push(name.clone());
-        if let Some(type_deps) = deps.get(&name) {
+    while let Some(name) = queue.pop_last() {
+        result.push(name);
+        if let Some(type_deps) = deps.get(name) {
             for dep in type_deps {
                 if let Some(count) = in_degree.get_mut(dep) {
                     *count = count.saturating_sub(1);
                     if *count == 0 {
-                        queue.push(dep.clone());
-                        queue.sort(); // Keep sorted for determinism
+                        queue.insert(dep);
                     }
                 }
             }
@@ -156,26 +154,25 @@ fn topological_sort_schemas(schemas: &TypeSchemas) -> Vec<String> {
     result.reverse();
 
     // Add any types that weren't processed (e.g., due to circular refs or other edge cases)
-    let result_set: BTreeSet<_> = result.iter().cloned().collect();
-    let mut missing: Vec<_> = schemas
-        .keys()
-        .filter(|k| !result_set.contains(*k))
-        .cloned()
-        .collect();
-    missing.sort();
-    result.extend(missing);
+    let result_set: BTreeSet<_> = result.iter().copied().collect();
+    result.extend(
+        schemas
+            .keys()
+            .map(String::as_str)
+            .filter(|k| !result_set.contains(k)),
+    );
 
-    result
+    result.into_iter().map(str::to_owned).collect()
 }
 
 /// Collect all type references ($ref) from a schema
-fn collect_schema_refs(schema: &Value, refs: &mut BTreeSet<String>) {
+fn collect_schema_refs<'a>(schema: &'a Value, refs: &mut BTreeSet<&'a str>) {
     match schema {
         Value::Object(map) => {
             if let Some(ref_path) = map.get("$ref").and_then(|r| r.as_str())
                 && let Some(type_name) = ref_to_type_name(ref_path)
             {
-                refs.insert(type_name.to_string());
+                refs.insert(type_name);
             }
             for value in map.values() {
                 collect_schema_refs(value, refs);
@@ -342,3 +339,7 @@ pub fn js_type_to_python(js_type: &str) -> String {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/generators/python/schema_order.rs"]
+mod ordering_tests;

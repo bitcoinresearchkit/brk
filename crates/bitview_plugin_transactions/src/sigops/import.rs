@@ -12,24 +12,13 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, cached_starts)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
-        Ok(Self {
-            total: PerBlockCumulativeRolling::forced_import(
-                db,
-                "total_sigop_cost",
-                version,
-                mappings,
-                cached_starts,
-            )?,
-        })
-    }
+    Ok(Vecs {
+        total: PerBlockCumulativeRolling::forced_import(
+            db,
+            "total_sigop_cost",
+            version,
+            mappings,
+            cached_starts,
+        )?,
+    })
 }

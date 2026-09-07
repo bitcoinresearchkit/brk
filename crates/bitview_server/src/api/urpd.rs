@@ -60,14 +60,12 @@ async fn serve_snapshot(
                     ServerError::overloaded("URPD response capacity exhausted").into_response()
                 );
             };
-            let bytes = permit.bytes(to_vec(&input.build()?)?.into());
-            let mut response = AppState::assemble_response(
+            let bytes = to_vec(&input.build()?)?.into();
+            Ok(permit.response(
                 params,
-                Ok(bytes),
+                bytes,
                 HeaderMapExtended::insert_content_type_application_json,
-            );
-            response.extensions_mut().insert(permit);
-            Ok(response)
+            ))
         })
         .await?;
     Ok(response)

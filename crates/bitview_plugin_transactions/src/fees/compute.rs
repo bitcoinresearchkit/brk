@@ -24,66 +24,54 @@ pub fn compute(
     size_vecs: &size::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, input_values, mappings, size_vecs, exit)
+    let starting_lengths = indexer.safe_lengths();
+
+    vecs.input_value.compute_sum_from_indexes(
+        starting_lengths.tx_index,
+        &indexer.vecs().transactions.first_txin_index,
+        &mappings.tx_index.input_count,
+        input_values,
+        exit,
+    )?;
+    vecs.output_value.compute_sum_from_indexes(
+        starting_lengths.tx_index,
+        &indexer.vecs().transactions.first_txout_index,
+        &mappings.tx_index.output_count,
+        &indexer.vecs().outputs.value,
+        exit,
+    )?;
+
+    vecs.compute_fees(indexer, mappings, size_vecs, exit)?;
+
+    let vsize_source = &size_vecs.vsize.tx_index;
+    let (r1, r2) = rayon::join(
+        || {
+            vecs.fee.derive_from_with_skip(
+                mappings,
+                &starting_lengths,
+                &indexer.vecs().transactions.first_tx_index,
+                exit,
+                1,
+            )
+        },
+        || {
+            vecs.effective_fee_rate.derive_from_with_skip_weighted(
+                mappings,
+                &starting_lengths,
+                &indexer.vecs().transactions.first_tx_index,
+                vsize_source,
+                exit,
+                1,
+            )
+        },
+    );
+    r1?;
+    r2?;
+
+    Ok(())
 }
 
 impl Vecs {
-    #[allow(clippy::too_many_arguments)]
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        input_values: &PcoVec<TxInIndex, Sats>,
-        mappings: &bitview_plugin_mappings::Vecs,
-        size_vecs: &size::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_lengths = indexer.safe_lengths();
-
-        self.input_value.compute_sum_from_indexes(
-            starting_lengths.tx_index,
-            &indexer.vecs().transactions.first_txin_index,
-            &mappings.tx_index.input_count,
-            input_values,
-            exit,
-        )?;
-        self.output_value.compute_sum_from_indexes(
-            starting_lengths.tx_index,
-            &indexer.vecs().transactions.first_txout_index,
-            &mappings.tx_index.output_count,
-            &indexer.vecs().outputs.value,
-            exit,
-        )?;
-
-        self.compute_fees(indexer, mappings, size_vecs, exit)?;
-
-        let vsize_source = &size_vecs.vsize.tx_index;
-        let (r1, r2) = rayon::join(
-            || {
-                self.fee.derive_from_with_skip(
-                    mappings,
-                    &starting_lengths,
-                    &indexer.vecs().transactions.first_tx_index,
-                    exit,
-                    1,
-                )
-            },
-            || {
-                self.effective_fee_rate.derive_from_with_skip_weighted(
-                    mappings,
-                    &starting_lengths,
-                    &indexer.vecs().transactions.first_tx_index,
-                    vsize_source,
-                    exit,
-                    1,
-                )
-            },
-        );
-        r1?;
-        r2?;
-
-        Ok(())
-    }
-
     fn compute_fees(
         &mut self,
         indexer: &Indexer,
@@ -134,15 +122,9 @@ impl Vecs {
             .first_tx_index
             .len()
             .min(mappings.height.tx_index_count.len());
-        let next_height = if tx_len >= target {
-            max_height
-        } else {
-            mappings
-                .tx_heights
-                .get_shared(TxIndex::from(tx_len))
-                .unwrap()
-                .to_usize()
-        };
+        let next_height = mappings
+            .tx_heights
+            .resume_height(tx_len, target, max_height);
         let count_len = self.count.cumulative.len().min(max_height);
         let start_height = count_len.min(next_height);
         if start_height >= max_height {

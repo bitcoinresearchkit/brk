@@ -16,3 +16,7 @@ pub use cumulative::{
 };
 pub use exact::ExactUTXOColumnarMetric;
 pub use rows::{UTXOAggregateRows, UTXORows};
+
+#[cfg(test)]
+#[path = "../../../tests/unit/metrics/columnar/aggregate_sources.rs"]
+mod tests;

@@ -5,7 +5,7 @@
 - Version: `v0.12.2`
 - Base URL: https://bitview.space
 - MCP endpoint: https://mcp.bitview.space/
-- Metrics: 61992
+- Metrics: 62019
 - Operations: 97
 
 For machine-readable tool construction, use [https://bitview.space/openapi.json](https://bitview.space/openapi.json). For the complete source-derived series tree, use [https://bitview.space/api/series](https://bitview.space/api/series).
@@ -1023,7 +1023,7 @@ curl -s "https://bitview.space/api/series/list?page=<page>&per_page=<per_page>"
 
 Search series
 
-Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
+Search series by name or descriptive terms. Results prioritize whole query words in names, then descriptions, then fuzzy names, then fuzzy descriptions. Word order does not matter. Descriptions provide cohort terminology and formulas. The decoded q parameter is limited to 1024 UTF-8 bytes.
 
 Parameters:
 - `q` (query, SeriesName, required): Search query string
@@ -1939,7 +1939,7 @@ curl -s "https://bitview.space/version"
 
 ### `SeriesData`
 
-- `version`: `Version` (required) — Version of the series data
+- `version`: `integer` (required) — Version of the series data
 - `index`: `Index` (required) — The index type used for this query
 - `type`: `string` — Value type (e.g. "f32", "u64", "Sats")
 - `start`: `integer` (required) — Start index (inclusive) of the returned range

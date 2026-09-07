@@ -4,8 +4,7 @@ use std::ops::AddAssign;
 
 use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, CLASS_FILTERS, Class, ClassId,
-    ENTRY_FILTERS, EPOCH_FILTERS, EntryId, EpochId, Filter, OVER_AGE_FILTERS, SpendableType,
-    TERM_FILTERS, Term, UNDER_AGE_FILTERS,
+    ENTRY_FILTERS, EPOCH_FILTERS, EntryId, EpochId, Filter, SpendableType,
 };
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
@@ -133,46 +132,8 @@ where
         name: &str,
         version: Version,
     ) -> Option<ReadableBoxedVec<Height, T>> {
-        match filter {
-            Filter::All => Some(Self::sum(
-                age_range_matrix,
-                name,
-                version,
-                AgeRangeId::ALL.iter().copied(),
-            )),
-            Filter::Term(term) => {
-                let term = match term {
-                    Term::Sth => &TERM_FILTERS.short,
-                    Term::Lth => &TERM_FILTERS.long,
-                };
-                Some(Self::sum(
-                    age_range_matrix,
-                    name,
-                    version,
-                    AgeRangeId::ALL
-                        .iter()
-                        .copied()
-                        .filter(|column| term.includes(column.filter())),
-                ))
-            }
-            Filter::Time(_) => UNDER_AGE_FILTERS
-                .iter()
-                .chain(OVER_AGE_FILTERS.iter())
-                .find(|candidate| *candidate == filter)
-                .map(|filter| {
-                    Self::sum(
-                        age_range_matrix,
-                        name,
-                        version,
-                        AgeRangeId::included_by(filter),
-                    )
-                }),
-            Filter::Amount(_)
-            | Filter::Epoch(_)
-            | Filter::Class(_)
-            | Filter::Entry(_)
-            | Filter::Type(_) => None,
-        }
+        let columns = AgeRangeId::aggregate_columns(filter)?;
+        Some(Self::sum(age_range_matrix, name, version, columns))
     }
 
     pub fn column<C>(

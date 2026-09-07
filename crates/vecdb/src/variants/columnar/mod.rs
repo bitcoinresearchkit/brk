@@ -6,6 +6,7 @@ use rawdb::{Error as RawDbError, Region, RegionGroup};
 
 use crate::{Error, ImportOptions, Result, SharedLen, StoredVec, Version};
 
+pub mod cached;
 pub mod column;
 pub mod lazy;
 pub mod read;
@@ -14,6 +15,7 @@ pub mod schema;
 pub mod sum;
 pub mod traits;
 
+pub use cached::*;
 pub use column::*;
 pub use lazy::*;
 pub use read_only::*;

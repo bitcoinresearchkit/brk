@@ -62,126 +62,115 @@ pub struct ByDcaClass<T> {
     pub from_2026: T,
 }
 
-impl<T> ByDcaClass<T> {
-    fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(&'static str, u16, Day1) -> Result<T, E>,
-    {
-        let n = DCA_CLASS_NAMES;
-        let y = DCA_CLASS_YEARS;
-        Ok(Self {
-            from_2015: create(n.from_2015, y.from_2015, Self::day1(y.from_2015))?,
-            from_2016: create(n.from_2016, y.from_2016, Self::day1(y.from_2016))?,
-            from_2017: create(n.from_2017, y.from_2017, Self::day1(y.from_2017))?,
-            from_2018: create(n.from_2018, y.from_2018, Self::day1(y.from_2018))?,
-            from_2019: create(n.from_2019, y.from_2019, Self::day1(y.from_2019))?,
-            from_2020: create(n.from_2020, y.from_2020, Self::day1(y.from_2020))?,
-            from_2021: create(n.from_2021, y.from_2021, Self::day1(y.from_2021))?,
-            from_2022: create(n.from_2022, y.from_2022, Self::day1(y.from_2022))?,
-            from_2023: create(n.from_2023, y.from_2023, Self::day1(y.from_2023))?,
-            from_2024: create(n.from_2024, y.from_2024, Self::day1(y.from_2024))?,
-            from_2025: create(n.from_2025, y.from_2025, Self::day1(y.from_2025))?,
-            from_2026: create(n.from_2026, y.from_2026, Self::day1(y.from_2026))?,
-        })
-    }
-
-    fn try_from_class<U, F, E>(class: &ByDcaClass<U>, mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(&'static str, u16, Day1, &U) -> Result<T, E>,
-    {
-        let n = DCA_CLASS_NAMES;
-        let y = DCA_CLASS_YEARS;
-        Ok(Self {
-            from_2015: create(
-                n.from_2015,
-                y.from_2015,
-                Self::day1(y.from_2015),
-                &class.from_2015,
-            )?,
-            from_2016: create(
-                n.from_2016,
-                y.from_2016,
-                Self::day1(y.from_2016),
-                &class.from_2016,
-            )?,
-            from_2017: create(
-                n.from_2017,
-                y.from_2017,
-                Self::day1(y.from_2017),
-                &class.from_2017,
-            )?,
-            from_2018: create(
-                n.from_2018,
-                y.from_2018,
-                Self::day1(y.from_2018),
-                &class.from_2018,
-            )?,
-            from_2019: create(
-                n.from_2019,
-                y.from_2019,
-                Self::day1(y.from_2019),
-                &class.from_2019,
-            )?,
-            from_2020: create(
-                n.from_2020,
-                y.from_2020,
-                Self::day1(y.from_2020),
-                &class.from_2020,
-            )?,
-            from_2021: create(
-                n.from_2021,
-                y.from_2021,
-                Self::day1(y.from_2021),
-                &class.from_2021,
-            )?,
-            from_2022: create(
-                n.from_2022,
-                y.from_2022,
-                Self::day1(y.from_2022),
-                &class.from_2022,
-            )?,
-            from_2023: create(
-                n.from_2023,
-                y.from_2023,
-                Self::day1(y.from_2023),
-                &class.from_2023,
-            )?,
-            from_2024: create(
-                n.from_2024,
-                y.from_2024,
-                Self::day1(y.from_2024),
-                &class.from_2024,
-            )?,
-            from_2025: create(
-                n.from_2025,
-                y.from_2025,
-                Self::day1(y.from_2025),
-                &class.from_2025,
-            )?,
-            from_2026: create(
-                n.from_2026,
-                y.from_2026,
-                Self::day1(y.from_2026),
-                &class.from_2026,
-            )?,
-        })
-    }
-
-    fn day1(year: u16) -> Day1 {
-        Day1::try_from(Date::new(year, 1, 1)).unwrap()
-    }
-}
-
-pub fn try_new<T, F, E>(create: F) -> Result<ByDcaClass<T>, E>
+pub fn try_new<T, F, E>(mut create: F) -> Result<ByDcaClass<T>, E>
 where
     F: FnMut(&'static str, u16, Day1) -> Result<T, E>,
 {
-    ByDcaClass::try_new(create)
+    try_from_class(&DCA_CLASS_YEARS, |name, year, day, _| {
+        create(name, year, day)
+    })
 }
 
-pub fn try_from_class<T, U, F, E>(class: &ByDcaClass<U>, create: F) -> Result<ByDcaClass<T>, E>
+pub fn try_from_class<T, U, F, E>(class: &ByDcaClass<U>, mut create: F) -> Result<ByDcaClass<T>, E>
 where
     F: FnMut(&'static str, u16, Day1, &U) -> Result<T, E>,
 {
-    ByDcaClass::try_from_class(class, create)
+    macro_rules! fields {
+        ($($field:ident),+ $(,)?) => {
+            Ok(ByDcaClass {
+                $($field: create(
+                    DCA_CLASS_NAMES.$field,
+                    DCA_CLASS_YEARS.$field,
+                    Day1::try_from(Date::new(DCA_CLASS_YEARS.$field, 1, 1)).unwrap(),
+                    &class.$field,
+                )?),+
+            })
+        };
+    }
+    fields!(
+        from_2015, from_2016, from_2017, from_2018, from_2019, from_2020, from_2021, from_2022,
+        from_2023, from_2024, from_2025, from_2026,
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructors_preserve_every_class_name_year_date_and_source() {
+        let mut years = Vec::new();
+        let classes = try_new(|name, year, day| {
+            assert_eq!(name, format!("from_{year}"));
+            assert_eq!(day, Day1::try_from(Date::new(year, 1, 1)).unwrap());
+            years.push(year);
+            Ok::<_, ()>(name.to_owned())
+        })
+        .unwrap();
+        assert_eq!(years, (2015..=2026).collect::<Vec<_>>());
+
+        let fields = [
+            &classes.from_2015,
+            &classes.from_2016,
+            &classes.from_2017,
+            &classes.from_2018,
+            &classes.from_2019,
+            &classes.from_2020,
+            &classes.from_2021,
+            &classes.from_2022,
+            &classes.from_2023,
+            &classes.from_2024,
+            &classes.from_2025,
+            &classes.from_2026,
+        ];
+        for (field, year) in fields.into_iter().zip(2015..=2026) {
+            assert_eq!(field, &format!("from_{year}"));
+        }
+
+        let mut seen = 0;
+        let mapped = try_from_class(&classes, |name, year, day, source| {
+            assert_eq!(name, source);
+            assert_eq!(year, 2015 + seen as u16);
+            assert_eq!(day, Day1::try_from(Date::new(year, 1, 1)).unwrap());
+            assert!(std::ptr::eq(source, fields[seen]));
+            seen += 1;
+            Ok::<_, ()>(name)
+        })
+        .unwrap();
+        assert_eq!(seen, 12);
+        assert_eq!(mapped.from_2015, "from_2015");
+        assert_eq!(mapped.from_2026, "from_2026");
+    }
+
+    #[test]
+    fn both_constructors_stop_at_each_possible_error() {
+        for fail_at in 0..12 {
+            for from_class in [false, true] {
+                let mut seen = Vec::new();
+                let mut create = |name, year, day| {
+                    seen.push((name, year, day));
+                    if seen.len() == fail_at + 1 {
+                        Err(year)
+                    } else {
+                        Ok(())
+                    }
+                };
+                let result = if from_class {
+                    try_from_class(&DCA_CLASS_NAMES, |name, year, day, source| {
+                        assert_eq!(name, *source);
+                        create(name, year, day)
+                    })
+                } else {
+                    try_new(create)
+                };
+                assert!(matches!(result, Err(year) if year == 2015 + fail_at as u16));
+                assert_eq!(seen.len(), fail_at + 1);
+                for ((name, year, day), expected_year) in seen.into_iter().zip(2015..=2026) {
+                    assert_eq!(year, expected_year);
+                    assert_eq!(name, format!("from_{expected_year}"));
+                    assert_eq!(day, Day1::try_from(Date::new(expected_year, 1, 1)).unwrap());
+                }
+            }
+        }
+    }
 }

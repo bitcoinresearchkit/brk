@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use bitview_cohort::AgeRangeId;
 use brk_types::{Cohort, Date, Day1, UrpdRaw, UrpdWeight};
-use vecdb::{ColumnId, ReadableVec, StorageMode};
+use vecdb::{ReadableVec, StorageMode};
 
 use super::Vecs;
 use crate::DayUrpds;

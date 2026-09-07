@@ -2,7 +2,6 @@ use brk_error::Result;
 
 use bitview_cohort::{
     AgeRangeId, CLASS_FILTERS, ClassId, ENTRY_FILTERS, EPOCH_FILTERS, EntryId, EpochId, Filter,
-    OVER_AGE_FILTERS, TERM_FILTERS, Term, UNDER_AGE_FILTERS,
 };
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
@@ -126,7 +125,7 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
         ReadableBoxedVec<Height, Sats>,
         ReadableBoxedVec<Height, Cents>,
     )> {
-        let columns = Self::age_columns(filter)?;
+        let columns = AgeRangeId::aggregate_columns(filter)?;
         Some(Self::matrix_sources(
             &self.age_range,
             name,
@@ -136,26 +135,7 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
     }
 
     pub fn age_columns(filter: &Filter) -> Option<Vec<AgeRangeId>> {
-        Some(match filter {
-            Filter::All => AgeRangeId::ALL.to_vec(),
-            Filter::Term(term) => {
-                let filter = match term {
-                    Term::Sth => &TERM_FILTERS.short,
-                    Term::Lth => &TERM_FILTERS.long,
-                };
-                AgeRangeId::included_by(filter).collect()
-            }
-            Filter::Time(_) => UNDER_AGE_FILTERS
-                .iter()
-                .chain(OVER_AGE_FILTERS.iter())
-                .find(|candidate| *candidate == filter)
-                .map(|filter| AgeRangeId::included_by(filter).collect())?,
-            Filter::Amount(_)
-            | Filter::Epoch(_)
-            | Filter::Class(_)
-            | Filter::Entry(_)
-            | Filter::Type(_) => return None,
-        })
+        AgeRangeId::aggregate_columns(filter).map(Iterator::collect)
     }
 
     pub fn matrix_sources<C>(

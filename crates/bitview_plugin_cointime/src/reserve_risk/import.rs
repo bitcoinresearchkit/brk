@@ -12,34 +12,23 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
 ) -> Result<Vecs> {
-    Vecs::forced_import(db, version, mappings, spot_price)
-}
-
-impl Vecs {
-    fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
-    ) -> Result<Self> {
-        let v1 = version + Version::ONE;
-        let hodl_bank = EagerVec::forced_import(db, "hodl_bank", v1)?;
-        let value_source = LazyIndexedVec::new(
-            "reserve_risk_source",
+    let v1 = version + Version::ONE;
+    let hodl_bank = EagerVec::forced_import(db, "hodl_bank", v1)?;
+    let value_source = LazyIndexedVec::new(
+        "reserve_risk_source",
+        v1,
+        hodl_bank.read_only_boxed_clone(),
+        spot_price.clone(),
+        |_, hodl_bank, spot| StoredF64::from(Dollars::from(spot)) / hodl_bank,
+    );
+    Ok(Vecs {
+        vocdd_median_1y: EagerVec::forced_import(db, "vocdd_median_1y", v1)?,
+        hodl_bank,
+        value: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
+            "reserve_risk",
             v1,
-            hodl_bank.read_only_boxed_clone(),
-            spot_price.clone(),
-            |_, hodl_bank, spot| StoredF64::from(Dollars::from(spot)) / hodl_bank,
-        );
-        Ok(Self {
-            vocdd_median_1y: EagerVec::forced_import(db, "vocdd_median_1y", v1)?,
-            hodl_bank,
-            value: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
-                "reserve_risk",
-                v1,
-                CACHE_BUDGET.wrap(value_source),
-                mappings,
-            ),
-        })
-    }
+            CACHE_BUDGET.wrap(value_source),
+            mappings,
+        ),
+    })
 }

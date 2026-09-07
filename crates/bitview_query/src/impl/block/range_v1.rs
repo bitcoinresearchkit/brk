@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use bitview_plugin::PluginReadGuard;
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, BlockInfoV1, Dollars, Height};
@@ -50,8 +48,6 @@ impl ResolvedBlocksV1 {
         query.blocks_v1_range_with_prices(begin, end, lengths, Some(self.prices))
     }
 }
-
-impl ResolvedBlocks {}
 
 impl Query {
     /// Resolve using only already-materialized prices; otherwise retry on a worker.
@@ -141,18 +137,11 @@ impl Query {
         ResolvedBlocksV1::new(blocks, prices, publication)
     }
 }
-pub trait RImplBlockRangeV1ResolvedBlocksInternal: Sized {
-    fn build_v1_heights(
-        self,
-        query: &Query,
-        heights: &[Height],
-        prices: &[Dollars],
-    ) -> Result<Vec<BlockInfoV1>>;
-}
-impl RImplBlockRangeV1ResolvedBlocksInternal for ResolvedBlocks {
+
+impl ResolvedBlocks {
     /// Build sparse descending V1 rows under this snapshot's existing guard.
     /// Adjacent heights share a bulk read; supplied prices are never re-read.
-    fn build_v1_heights(
+    pub fn build_v1_heights(
         self,
         query: &Query,
         heights: &[Height],

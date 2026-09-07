@@ -1,63 +1,19 @@
+mod facts;
+mod script_sig_facts;
+mod witness_facts;
+
+pub use facts::Facts;
+pub use script_sig_facts::ScriptSigFacts;
+pub use witness_facts::WitnessFacts;
+
 pub mod redeem;
 pub mod script_sig;
 pub mod witness;
 
-use bitcoin::{TxIn, taproot::LeafVersion};
+use bitcoin::TxIn;
 use brk_types::OutputType;
 
 use crate::TxFeatureFlags;
-
-pub struct Facts<'a> {
-    pub script_sig: ScriptSigFacts<'a>,
-    pub redeem: redeem::Facts,
-    pub witness: WitnessFacts<'a>,
-}
-
-impl Facts<'_> {
-    #[inline]
-    pub fn redeem_sigops(&self) -> Option<usize> {
-        self.redeem.sigops()
-    }
-
-    #[inline]
-    pub fn redeem_is_p2wpkh(&self) -> bool {
-        self.redeem.is_p2wpkh()
-    }
-
-    #[inline]
-    pub fn redeem_is_p2wsh(&self) -> bool {
-        self.redeem.is_p2wsh()
-    }
-
-    #[inline]
-    pub fn redeem_is_witness_program(&self) -> bool {
-        self.redeem.is_witness_program()
-    }
-}
-
-pub struct ScriptSigFacts<'a> {
-    pub accurate_sigops: usize,
-    pub last_push: Option<&'a [u8]>,
-    pub legacy_sigops: usize,
-    pub push_only: bool,
-}
-
-impl ScriptSigFacts<'_> {
-    pub const EMPTY: Self = Self {
-        accurate_sigops: 0,
-        last_push: None,
-        legacy_sigops: 0,
-        push_only: true,
-    };
-}
-
-pub struct WitnessFacts<'a> {
-    pub has_annex: bool,
-    pub last: Option<&'a [u8]>,
-    pub leaf_version: Option<LeafVersion>,
-    pub max_argument_bytes: usize,
-    pub stack_items: usize,
-}
 
 pub fn analyze<'a>(
     input: &'a TxIn,

@@ -23,40 +23,27 @@ impl Query {
         let mut addresses = Vec::new();
         let max_hash = AddrHash::new(u64::MAX);
 
-        if let Some(upper) = prefix.upper {
-            for (_, type_index) in stores.addr_hash_range(addr_type, prefix.lower..upper)? {
-                if type_index >= safe_type_index {
-                    continue;
-                }
-
-                let script = addr_readers.script_pubkey(addr_type, type_index);
-                addresses.push(Addr::try_from((&script, addr_type))?);
-
-                if addresses.len() > ADDR_HASH_PREFIX_MATCH_LIMIT {
-                    break;
-                }
-            }
-        } else {
-            for (_, type_index) in stores.addr_hash_range(addr_type, prefix.lower..max_hash)? {
-                if type_index >= safe_type_index {
-                    continue;
-                }
-
-                let script = addr_readers.script_pubkey(addr_type, type_index);
-                addresses.push(Addr::try_from((&script, addr_type))?);
-
-                if addresses.len() > ADDR_HASH_PREFIX_MATCH_LIMIT {
-                    break;
-                }
+        let upper = prefix.upper.unwrap_or(max_hash);
+        for (_, type_index) in stores.addr_hash_range(addr_type, prefix.lower..upper)? {
+            if type_index >= safe_type_index {
+                continue;
             }
 
-            if addresses.len() <= ADDR_HASH_PREFIX_MATCH_LIMIT
-                && let Some(type_index) = stores.addr_index(addr_type, &max_hash)?
-                && type_index < safe_type_index
-            {
-                let script = addr_readers.script_pubkey(addr_type, type_index);
-                addresses.push(Addr::try_from((&script, addr_type))?);
+            let script = addr_readers.script_pubkey(addr_type, type_index);
+            addresses.push(Addr::try_from((&script, addr_type))?);
+
+            if addresses.len() > ADDR_HASH_PREFIX_MATCH_LIMIT {
+                break;
             }
+        }
+
+        if prefix.upper.is_none()
+            && addresses.len() <= ADDR_HASH_PREFIX_MATCH_LIMIT
+            && let Some(type_index) = stores.addr_index(addr_type, &max_hash)?
+            && type_index < safe_type_index
+        {
+            let script = addr_readers.script_pubkey(addr_type, type_index);
+            addresses.push(Addr::try_from((&script, addr_type))?);
         }
 
         let truncated = addresses.len() > ADDR_HASH_PREFIX_MATCH_LIMIT;

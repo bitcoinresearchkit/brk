@@ -1,10 +1,10 @@
 use bitview_traversable::Traversable;
-use brk_types::{Height, StoredF32, Version};
+use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{DeltaAvg, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
-use crate::{CachedWindowStartVec, NumericValue, Resolutions, Windows};
+use crate::{CachedWindowStartVec, NumericValue, Windows};
 
 use super::LazyRollingAvgFromHeight;
 
@@ -38,22 +38,13 @@ where
         let cum_source = cumulative.read_only_boxed_clone();
 
         Self(cached_starts.map_with_suffix(|suffix, cached_start| {
-            let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
-            let avg = LazyDeltaVec::<Height, T, StoredF32, DeltaAvg>::new(
-                &full_name,
+            LazyRollingAvgFromHeight::new(
+                &format!("{name}_{suffix}"),
                 version,
                 cum_source.clone(),
-                starts_version,
-                move || cached.snapshot(),
-            );
-            let resolutions =
-                Resolutions::from_height_source(&full_name, avg.clone(), version, indexes);
-            LazyRollingAvgFromHeight {
-                height: avg,
-                resolutions: Box::new(resolutions),
-            }
+                cached_start,
+                indexes,
+            )
         }))
     }
 }

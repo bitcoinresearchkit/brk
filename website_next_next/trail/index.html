@@ -38,7 +38,6 @@
         --muted: rgb(var(--muted-rgb));
         --warm-accent-rgb: 245 229 190;
         --interaction-orange: #ffa000;
-        --black: #000000;
         --ui-font-size: 16px;
       }
 
@@ -402,7 +401,7 @@
 
         <div id="date-axis-ui" class="axis-ui date-axis-ui">
           <p id="date-axis-hint" class="axis-hint">
-            Drag highlighted date through time ·
+            Drag date through time ·
             <span class="key-hint" data-key="ArrowUp">↑</span>
             <span class="key-hint" data-key="ArrowDown">↓</span>
             move date
@@ -411,7 +410,7 @@
 
         <div id="price-axis-ui" class="axis-ui price-axis-ui">
           <p id="price-axis-hint" class="axis-hint">
-            Hover to explore price ·
+            Hover or touch to explore price ·
             <span class="key-hint" data-key="ArrowLeft">←</span>
             <span class="key-hint" data-key="ArrowRight">→</span>
             move price
@@ -526,10 +525,10 @@
         </div>
 
         <p id="flat-axis-hint" class="axis-hint flat-axis-hint">
-          Drag highlighted date through time ·
+          Drag date through time ·
           <span class="key-hint" data-key="ArrowUp">↑</span>
           <span class="key-hint" data-key="ArrowDown">↓</span>
-          move date · Hover to explore price ·
+          move date · Hover or touch to explore price ·
           <span class="key-hint" data-key="ArrowLeft">←</span>
           <span class="key-hint" data-key="ArrowRight">→</span>
           move price
@@ -818,6 +817,7 @@
           availableDates: [],
           dateTimes: new Float64Array(0),
           dateLabels: [],
+          comparisonDates: [],
           sceneProfileDates: new Set(),
           selectedIndex: 0,
           viewIndex: 0,
@@ -863,12 +863,13 @@
           settingsTimer: 0,
           loading: 0,
           hoverModel: null,
-          hoverActive: false,
           hoverPriceCoordinate: null,
-          supplyCdfCache: new WeakMap(),
+          metricCdfCache: new WeakMap(),
           timeDragging: false,
           timePointerId: null,
-          timeDragIndexOffset: 0,
+          pricePointerId: null,
+          timeDragOffsetX: 0,
+          timeDragOffsetY: 0,
           timeDragTargetDate: "",
           lastPointerAt: 0,
           terrainChunks: new Map(),
@@ -1349,11 +1350,6 @@
           month: "short",
           timeZone: "UTC",
         });
-        const priceFormatter = new Intl.NumberFormat("en", {
-          style: "currency",
-          currency: "USD",
-          maximumFractionDigits: 0,
-        });
 
         function clamp(value, min, max) {
           return Math.min(max, Math.max(min, value));
@@ -1377,12 +1373,6 @@
             Math.expm1(magnitude * HEIGHT_LOG_RANGE) /
             HEIGHT_LOG_STRENGTH;
           return Math.sign(height) * value;
-        }
-
-        function hasOption(select, value) {
-          return Array.from(select.options).some(
-            (option) => option.value === String(value),
-          );
         }
 
         function selectLabel(select) {
@@ -1437,14 +1427,13 @@
         }
 
         function resolveSetting(key, select, fallback, params, stored) {
-          const fromUrl = params.get(key);
-          if (fromUrl !== null && hasOption(select, fromUrl)) {
-            return fromUrl;
-          }
-          const fromStorage = stored[key];
-          return hasOption(select, fromStorage)
-            ? String(fromStorage)
-              : String(fallback);
+          return resolveChoice(
+            key,
+            Array.from(select.options, (option) => option.value),
+            fallback,
+            params,
+            stored,
+          );
         }
 
         function weeklyDatesSince2018(availableDates) {
@@ -1706,10 +1695,10 @@
 
         function formatPrice(value) {
           if (!(value > 0)) return "—";
-          return priceFormatter.format(value);
+          return currencyFormatter.format(value);
         }
 
-        function displayedPrice(index, profile) {
+        function displayedPrice(profile) {
           return profile?.date === latestAvailableDate() && state.livePrice > 0
             ? state.livePrice
             : Number(profile?.close);
@@ -1726,18 +1715,15 @@
         }
 
         function comparisonDate(index) {
-          return comparisonDateFor(state.dates[index]);
+          return state.comparisonDates[index] ?? "";
         }
 
         function rebuildSceneProfileDates() {
-          state.sceneProfileDates.clear();
-          for (const date of state.dates) {
-            state.sceneProfileDates.add(date);
-            if (state.mode !== "value") {
-              const comparison = comparisonDateFor(date);
-              if (comparison) state.sceneProfileDates.add(comparison);
-            }
-          }
+          state.comparisonDates = state.dates.map(comparisonDateFor);
+          state.sceneProfileDates = new Set([
+            ...state.dates,
+            ...state.comparisonDates.filter(Boolean),
+          ]);
         }
 
         function profileKeyForDate(
@@ -1793,9 +1779,7 @@
         }
 
         function hasRenderReferences(index) {
-          return Boolean(
-            hasRenderableProfile(index) && hasScaleReference(index),
-          );
+          return hasRenderableProfile(index) && hasScaleReference(index);
         }
 
         function loadedHistoryStart(start, end) {
@@ -1996,6 +1980,15 @@
           return hoverQuery.matches && state.width > 560;
         }
 
+        function pointerHitRadius(pointerType, mouseRadius, touchRadius) {
+          return pointerType === "touch"
+            ? touchRadius / Math.max(
+                0.01,
+                Number(app.style.getPropertyValue("--stage-scale")) || 1,
+              )
+            : mouseRadius;
+        }
+
         function scheduleRender() {
           if (state.progressRenderTimer) {
             clearTimeout(state.progressRenderTimer);
@@ -2132,23 +2125,15 @@
         }
 
         function sampleProfile(profile, comparisonProfile = null) {
-          const comparisonDate = comparisonProfile?.date ?? "";
+          const comparisonSource = metricSource(comparisonProfile);
           if (
             profile.sampleVersion === state.sampleVersion &&
-            profile.sampleComparisonDate === comparisonDate
+            profile.sampleComparisonSource === comparisonSource
           ) {
             return profile.sampledRaw;
           }
 
           const values = new Float32Array(state.binCount);
-          if (state.mode !== "value" && !comparisonProfile) {
-            profile.sampleVersion = state.sampleVersion;
-            profile.sampleComparisonDate = comparisonDate;
-            profile.sampleRevision = (profile.sampleRevision ?? 0) + 1;
-            profile.sampledRaw = values;
-            profile.sampledRawPeak = 0;
-            return values;
-          }
           const addProfile = (sourceProfile, multiplier) => {
             const source = metricSource(sourceProfile);
             if (!source) return;
@@ -2177,9 +2162,9 @@
             }
           };
 
-          addProfile(profile, 1);
-          if (state.mode !== "value") {
-            addProfile(comparisonProfile, -1);
+          if (state.mode === "value" || comparisonProfile) {
+            addProfile(profile, 1);
+            if (state.mode !== "value") addProfile(comparisonProfile, -1);
           }
 
           let peak = 0;
@@ -2188,7 +2173,7 @@
           }
 
           profile.sampleVersion = state.sampleVersion;
-          profile.sampleComparisonDate = comparisonDate;
+          profile.sampleComparisonSource = comparisonSource;
           profile.sampleRevision = (profile.sampleRevision ?? 0) + 1;
           profile.sampledRaw = values;
           profile.sampledRawPeak = peak;
@@ -2376,8 +2361,6 @@
             const gutters = flatProjectionGutters();
             return {
               top: baseY - heightScale,
-              available,
-              depthX: 0,
               depthY: 0,
               timeSpan: Math.max(1, state.halfWindow),
               left: gutters.left,
@@ -2385,7 +2368,6 @@
                 120,
                 state.width - gutters.left - gutters.right,
               ),
-              priceRise: 0,
               priceY: 0,
               timeX: 0,
               baseY,
@@ -2437,13 +2419,10 @@
 
           return {
             top,
-            available,
-            depthX,
             depthY,
             timeSpan,
             left,
             width: priceWidth,
-            priceRise,
             priceY: -priceRise,
             timeX: depthX,
             baseY:
@@ -2468,16 +2447,8 @@
           ].join(":");
           let cached = state.projectionCache;
           if (!cached || cached.key !== key) {
-            const priceX = new Float32Array(state.binCount);
-            const priceY = new Float32Array(state.binCount);
             const priceEdgeX = new Float32Array(state.binCount + 1);
             const priceEdgeY = new Float32Array(state.binCount + 1);
-            for (let index = 0; index < state.binCount; index++) {
-              const coordinate = state.priceCoordinates[index];
-              priceX[index] = layout.left + coordinate * layout.width;
-              priceY[index] =
-                layout.baseY + coordinate * layout.priceY;
-            }
             for (let index = 0; index <= state.binCount; index++) {
               const coordinate = priceEdgeCoordinate(index);
               priceEdgeX[index] =
@@ -2487,15 +2458,11 @@
             }
             cached = {
               key,
-              priceX,
-              priceY,
               priceEdgeX,
               priceEdgeY,
             };
             state.projectionCache = cached;
           }
-          layout.priceX = cached.priceX;
-          layout.priceYBase = cached.priceY;
           layout.priceEdgeX = cached.priceEdgeX;
           layout.priceEdgeYBase = cached.priceEdgeY;
           layout.timeXStep = layout.timeX / layout.timeSpan;
@@ -2658,7 +2625,7 @@
         function priceAxisMaximum(index) {
           const profile = getScaleProfile(index);
           if (!profile) return state.maxPrice;
-          const close = displayedPrice(index, profile);
+          const close = displayedPrice(profile);
           const historicalMax = Math.max(
             Number(profile.maxPrice) || 0,
             close + PRICE_BUCKET_WIDTH,
@@ -2700,31 +2667,51 @@
           return row[nearestPriceIndex(coordinate)];
         }
 
-        function cumulativeSupplyPercent(profile, coordinate) {
+        function cumulativeMetricPercent(profile, coordinate) {
           const prices = profile?.prices;
-          const supplies = profile?.supplies;
+          const source = metricSource(profile);
           const length = Math.min(
             prices?.length ?? 0,
-            supplies?.length ?? 0,
+            source?.length ?? 0,
           );
           if (!length) return null;
 
-          let cache = state.supplyCdfCache.get(profile);
+          let metricCaches = state.metricCdfCache.get(profile);
+          if (!metricCaches) {
+            metricCaches = new Map();
+            state.metricCdfCache.set(profile, metricCaches);
+          }
+          let cache = metricCaches.get(state.metric);
           if (!cache) {
             const cumulative = new Float64Array(length);
+            const cumulativeLoss = state.metric === "unrealized_pnl"
+              ? new Float64Array(length)
+              : null;
             let total = 0;
+            let totalLoss = 0;
             for (let index = 0; index < length; index++) {
               const price = Number(prices[index]);
-              const supply = Math.max(0, Number(supplies[index]) || 0);
-              if (price >= 0) total += supply;
+              const rawValue = Number(source[index]) || 0;
+              if (price >= 0) {
+                total += Math.max(0, rawValue);
+                if (cumulativeLoss) totalLoss += Math.max(0, -rawValue);
+              }
               cumulative[index] = total;
+              if (cumulativeLoss) cumulativeLoss[index] = totalLoss;
             }
-            cache = { cumulative, total };
-            state.supplyCdfCache.set(profile, cache);
+            cache = { cumulative, total, cumulativeLoss, totalLoss };
+            metricCaches.set(state.metric, cache);
           }
-          if (!(cache.total > 0)) return null;
 
           const targetPrice = priceAtTerrainCoordinate(coordinate);
+          if (
+            cache.cumulativeLoss &&
+            targetPrice === priceAtTerrainCoordinate(priceCoordinate(profile.close))
+          ) return 0;
+          const lossSide = cache.cumulativeLoss && targetPrice > profile.close;
+          const cumulative = lossSide ? cache.cumulativeLoss : cache.cumulative;
+          const total = lossSide ? cache.totalLoss : cache.total;
+          if (!(total > 0)) return null;
           let lower = 0;
           let upper = length;
           while (lower < upper) {
@@ -2733,8 +2720,13 @@
             else upper = middle;
           }
           const index = lower - 1;
+          if (cache.cumulativeLoss && !lossSide) {
+            // Accumulate profit outward from spot, including the hovered bucket.
+            const below = index > 0 ? cumulative[index - 1] : 0;
+            return ((total - below) / total) * 100;
+          }
           if (index < 0) return 0;
-          return (cache.cumulative[index] / cache.total) * 100;
+          return (cumulative[index] / total) * 100;
         }
 
         function pricePillLabel(
@@ -2743,15 +2735,16 @@
           priceLabel = formatAxisPrice(
             priceAtTerrainCoordinate(coordinate),
           ),
+          atMarketPrice = false,
         ) {
-          const supplyPercent = cumulativeSupplyPercent(
-            profile,
-            coordinate,
-          );
+          const percent =
+            atMarketPrice && state.metric === "unrealized_pnl"
+              ? 0
+              : cumulativeMetricPercent(profile, coordinate);
           return `${priceLabel}\n${
-            supplyPercent === null
+            percent === null
               ? "—"
-              : `${Math.round(supplyPercent)}%`
+              : `${Math.round(percent)}%`
           }`;
         }
 
@@ -2888,10 +2881,6 @@
             ),
           );
           return gradient;
-        }
-
-        function clearCanvas() {
-          context.clearRect(0, 0, state.width, state.height);
         }
 
         function formatAxisPrice(value) {
@@ -3294,28 +3283,17 @@
             valueLabelAxis,
             valueLabelDown,
             priceOut,
-            priceGapOut,
             timeOut,
             gap,
           } = axes;
-          const floorAxisGap = 0;
-          const floorAxisInset = gap - floorAxisGap;
-          const floorTickLength = 4 + floorAxisInset;
-          const floorHandleLength = 5 + floorAxisInset;
-          const floorLabelOffset = 11 + floorAxisInset;
-          const frontMin = offsetPoint(
-            projectAtPriceAxis(layout, axisDateIndex, 0),
-            priceGapOut,
-            floorAxisGap,
-          );
-          const frontMax = offsetPoint(
-            projectAtPriceAxis(
-              layout,
-              axisDateIndex,
-              axisMaxCoordinate,
-            ),
-            priceGapOut,
-            floorAxisGap,
+          const floorTickLength = 4 + gap;
+          const floorHandleLength = 5 + gap;
+          const floorLabelOffset = 11 + gap;
+          const frontMin = projectAtPriceAxis(layout, axisDateIndex, 0);
+          const frontMax = projectAtPriceAxis(
+            layout,
+            axisDateIndex,
+            axisMaxCoordinate,
           );
           const valueTop = projectAtPrice(
             layout,
@@ -3329,16 +3307,8 @@
             axisMaxCoordinate,
             state.mode === "value" ? 0 : -1,
           );
-          const pastMin = offsetPoint(
-            projectAtTimeAxis(layout, start, start, end),
-            timeOut,
-            floorAxisGap,
-          );
-          const nowMin = offsetPoint(
-            projectAtTimeAxis(layout, end, start, end),
-            timeOut,
-            floorAxisGap,
-          );
+          const pastMin = projectAtTimeAxis(layout, start, start, end);
+          const nowMin = projectAtTimeAxis(layout, end, start, end);
           const drawFloorLabel = (
             text,
             x,
@@ -3418,14 +3388,10 @@
           ) {
             const coordinate = priceCoordinate(price);
             if (coordinate === null) continue;
-            const point = offsetPoint(
-              projectAtPriceAxis(
-                layout,
-                axisDateIndex,
-                coordinate,
-              ),
-              priceGapOut,
-              floorAxisGap,
+            const point = projectAtPriceAxis(
+              layout,
+              axisDateIndex,
+              coordinate,
             );
             context.beginPath();
             context.moveTo(point.x, point.y);
@@ -3443,20 +3409,13 @@
             );
           }
 
-          const selectedClose = displayedPrice(
-            axisEnd,
-            selectedProfile,
-          );
+          const selectedClose = displayedPrice(selectedProfile);
           const selectedPrice = priceCoordinate(selectedClose);
           if (selectedPrice !== null) {
-            const priceHandle = offsetPoint(
-              projectAtPriceAxis(
-                layout,
-                axisDateIndex,
-                selectedPrice,
-              ),
-              priceGapOut,
-              floorAxisGap,
+            const priceHandle = projectAtPriceAxis(
+              layout,
+              axisDateIndex,
+              selectedPrice,
             );
             context.beginPath();
             context.moveTo(priceHandle.x, priceHandle.y);
@@ -3471,6 +3430,7 @@
                 selectedProfile,
                 selectedPrice,
                 formatPrice(selectedClose),
+                true,
               ),
               priceHandle.x,
               priceHandle.y,
@@ -3495,15 +3455,11 @@
               start,
               end,
             );
-            const point = offsetPoint(
-              projectAtTimeAxis(
-                layout,
-                dateIndex,
-                start,
-                end,
-              ),
-              timeOut,
-              floorAxisGap,
+            const point = projectAtTimeAxis(
+              layout,
+              dateIndex,
+              start,
+              end,
             );
             context.beginPath();
             context.moveTo(point.x, point.y);
@@ -3590,7 +3546,6 @@
           profile,
         ) {
           if (
-            !state.hoverActive ||
             state.hoverPriceCoordinate === null ||
             !row ||
             !profile
@@ -4339,7 +4294,7 @@
             dateTimeAtIndex(sceneEnd) - sceneStartTime,
           );
           const timeStep = Math.hypot(
-            layout.depthX / layout.timeSpan,
+            layout.timeX / layout.timeSpan,
             layout.depthY / layout.timeSpan,
           );
           const overlapDates = clamp(
@@ -4414,7 +4369,8 @@
               secondProfile?.date,
             ].join(":");
             let surfacePaths =
-              firstProfile?.surfacePathCache?.key === surfacePathKey
+              firstProfile?.surfacePathCache?.key === surfacePathKey &&
+              firstProfile.surfacePathCache.secondRow === second
                 ? firstProfile.surfacePathCache.paths
                 : null;
             if (!surfacePaths) {
@@ -4432,46 +4388,30 @@
                 ) {
                   continue;
                 }
-                const firstLeftHeight = firstHeight;
-                const firstRightHeight = firstHeight;
-                const secondLeftHeight = secondHeight;
-                const secondRightHeight = secondHeight;
                 const firstLeftX =
                   layout.priceEdgeX[binIndex] + firstOffsetX;
-                const firstCenterX =
-                  layout.priceX[binIndex] + firstOffsetX;
                 const firstRightX =
                   layout.priceEdgeX[binIndex + 1] + firstOffsetX;
                 const secondRightX =
                   layout.priceEdgeX[binIndex + 1] + secondOffsetX;
-                const secondCenterX =
-                  layout.priceX[binIndex] + secondOffsetX;
                 const secondLeftX =
                   layout.priceEdgeX[binIndex] + secondOffsetX;
                 const firstLeftY =
                   layout.priceEdgeYBase[binIndex] +
                   firstOffsetY -
-                  firstLeftHeight * layout.heightScale;
-                const firstCenterY =
-                  layout.priceYBase[binIndex] +
-                  firstOffsetY -
                   firstHeight * layout.heightScale;
                 const firstRightY =
                   layout.priceEdgeYBase[binIndex + 1] +
                   firstOffsetY -
-                  firstRightHeight * layout.heightScale;
+                  firstHeight * layout.heightScale;
                 const secondRightY =
                   layout.priceEdgeYBase[binIndex + 1] +
-                  secondOffsetY -
-                  secondRightHeight * layout.heightScale;
-                const secondCenterY =
-                  layout.priceYBase[binIndex] +
                   secondOffsetY -
                   secondHeight * layout.heightScale;
                 const secondLeftY =
                   layout.priceEdgeYBase[binIndex] +
                   secondOffsetY -
-                  secondLeftHeight * layout.heightScale;
+                  secondHeight * layout.heightScale;
                 const appendSurfaceSegment = (
                   startAmount,
                   endAmount,
@@ -4520,18 +4460,6 @@
                   );
                   path.lineTo(
                     lerp(
-                      firstCenterX,
-                      secondCenterX,
-                      startAmount,
-                    ),
-                    lerp(
-                      firstCenterY,
-                      secondCenterY,
-                      startAmount,
-                    ),
-                  );
-                  path.lineTo(
-                    lerp(
                       firstRightX,
                       secondRightX,
                       startAmount,
@@ -4551,18 +4479,6 @@
                     lerp(
                       firstRightY,
                       secondRightY,
-                      endAmount,
-                    ),
-                  );
-                  path.lineTo(
-                    lerp(
-                      firstCenterX,
-                      secondCenterX,
-                      endAmount,
-                    ),
-                    lerp(
-                      firstCenterY,
-                      secondCenterY,
                       endAmount,
                     ),
                   );
@@ -4610,10 +4526,8 @@
                 edgeIndex < state.binCount;
                 edgeIndex++
               ) {
-                const leftBin = edgeIndex - 1;
-                const rightBin = edgeIndex;
-                const nearBin = leftBin;
-                const farBin = rightBin;
+                const nearBin = edgeIndex - 1;
+                const farBin = edgeIndex;
                 const firstNearHeight = first[nearBin];
                 const firstFarHeight = first[farBin];
                 const secondNearHeight = second[nearBin];
@@ -4726,6 +4640,7 @@
               if (firstProfile) {
                 firstProfile.surfacePathCache = {
                   key: surfacePathKey,
+                  secondRow: second,
                   paths: surfacePaths,
                 };
               }
@@ -4964,7 +4879,7 @@
               return;
             }
             if (
-              state.hoverActive &&
+              state.hoverPriceCoordinate !== null &&
               performance.now() - state.lastPointerAt < 120
             ) {
               state.chunkBuildTimer = window.setTimeout(
@@ -5136,7 +5051,7 @@
           profile,
         ) {
           const coordinate = priceCoordinate(
-            displayedPrice(dateIndex, profile),
+            displayedPrice(profile),
           );
           if (coordinate === null) return;
           const surface = priceRibbonPoint(
@@ -5189,7 +5104,7 @@
         function render() {
           if (!state.width || !state.height) return;
           state.lastRenderAt = performance.now();
-          clearCanvas();
+          context.clearRect(0, 0, state.width, state.height);
 
           if (!state.dates.length) {
             setProjectedUiReady(false);
@@ -5549,7 +5464,8 @@
             const worker = async () => {
               while (
                 cursor < pendingRequests.length &&
-                generation === state.loadGeneration
+                generation === state.loadGeneration &&
+                !controller.signal.aborted
               ) {
                 const request = pendingRequests[cursor++];
                 try {
@@ -5589,6 +5505,7 @@
             }
           } catch (error) {
             if (error.name !== "AbortError") {
+              controller.abort();
               console.warn(error);
               scheduleRender();
             }
@@ -5615,6 +5532,9 @@
         }
 
         async function loadDates(cohort, preserveDate) {
+          clearTimeout(state.loadTimer);
+          state.loadTimer = 0;
+          state.loading = 0;
           state.liveDataController?.abort();
           state.loadController?.abort();
           cancelNavigationLoad();
@@ -5630,6 +5550,7 @@
           state.sceneProfileDates.clear();
           state.dateTimes = new Float64Array(0);
           state.dateLabels = [];
+          state.comparisonDates = [];
           state.renderRows.length = 0;
           state.renderProfiles.length = 0;
           state.renderSceneKey = "";
@@ -5736,11 +5657,6 @@
           if (!response.ok) return false;
           const etag = response.headers?.get?.("etag") ?? "";
           if (!etag) return false;
-          if (!cached.etag) {
-            cached.etag = etag;
-            persistSummaryCache();
-            return false;
-          }
           return etag !== cached.etag;
         }
 
@@ -5861,6 +5777,7 @@
               return;
             }
 
+            rebuildSceneProfileDates();
             const latestDate = latestAvailableDate();
             const latestIndex = state.dates.indexOf(latestDate);
             const cohorts = profileCohorts(cohort);
@@ -5935,6 +5852,21 @@
           );
         }
 
+        function resumeUpdates() {
+          if (document.hidden) return;
+          startLiveUpdates();
+          if (!state.dates.length) {
+            if (!state.loadController || state.loadController.signal.aborted) {
+              loadDates(state.cohort, state.preferredDate);
+            }
+            return;
+          }
+          updateSummary();
+          scheduleRender();
+          scheduleTerrainChunkBuild();
+          scheduleWindowLoad(0);
+        }
+
         function createHoverModel(layout, start, end) {
           const corners = [
             projectAtPrice(layout, start, 0, 0),
@@ -6006,7 +5938,7 @@
             x - projectedX,
             y - projectedY,
           );
-          const hitRadius = pointerType === "touch" ? 24 : 18;
+          const hitRadius = pointerHitRadius(pointerType, 18, 24);
           const hitsDatePill =
             requireHit &&
             datePillHitTest(
@@ -6014,7 +5946,7 @@
               start,
               end,
               { x, y },
-              pointerType === "touch" ? 8 : 2,
+              pointerHitRadius(pointerType, 2, 12),
             );
           const missesTrack =
             state.dimension === "2d"
@@ -6046,19 +5978,19 @@
           return date > state.dates[end] ? state.dates[end] : date;
         }
 
-        function priceCoordinateAtPointer(x, y) {
+        function priceCoordinateAtPointer(x, y, dragging = false) {
           const model = state.hoverModel;
-          if (!model || !canHoverTerrain()) return null;
+          if (!model) return null;
           const { layout, start, end, minY, maxY } = model;
           const index = clamp(state.selectedIndex, start, end);
-          if (y < minY - 12 || y > maxY + 24) return null;
+          if (!dragging && (y < minY - 12 || y > maxY + 24)) return null;
           const dateOffset = dateOffsetFromView(index);
           const rawCoordinate =
             (x -
               layout.left -
               dateOffset * layout.timeXStep) /
             layout.width;
-          if (rawCoordinate < 0 || rawCoordinate > 1) return null;
+          if (!dragging && (rawCoordinate < 0 || rawCoordinate > 1)) return null;
           const priceIndex = nearestPriceIndex(
             clamp(rawCoordinate, 0, 1),
           );
@@ -6066,12 +5998,16 @@
         }
 
         function clearHoverState() {
-          const changed =
-            state.hoverActive ||
-            state.hoverPriceCoordinate !== null;
-          state.hoverActive = false;
+          const changed = state.hoverPriceCoordinate !== null;
           state.hoverPriceCoordinate = null;
           return changed;
+        }
+
+        function setHoverPrice(coordinate) {
+          if (state.hoverPriceCoordinate === coordinate) return false;
+          state.hoverPriceCoordinate = coordinate;
+          scheduleRender();
+          return true;
         }
 
         function cancelNavigationPrefetch() {
@@ -6192,7 +6128,10 @@
                 ),
               );
             } catch (error) {
-              if (error.name !== "AbortError") console.warn(error);
+              if (error.name !== "AbortError") {
+                controller.abort();
+                console.warn(error);
+              }
             } finally {
               if (state.navigationPrefetchController === controller) {
                 state.navigationPrefetchController = null;
@@ -6416,7 +6355,7 @@
           const startingCoordinate =
             state.hoverPriceCoordinate ??
             priceCoordinate(
-              displayedPrice(state.selectedIndex, selectedProfile),
+              displayedPrice(selectedProfile),
             );
           if (startingCoordinate === null) return false;
 
@@ -6426,14 +6365,7 @@
             0,
             coordinates.length - 1,
           );
-          const nextCoordinate = coordinates[nextIndex];
-          const changed =
-            !state.hoverActive ||
-            state.hoverPriceCoordinate !== nextCoordinate;
-          state.hoverActive = true;
-          state.hoverPriceCoordinate = nextCoordinate;
-          if (changed) scheduleRender();
-          return changed;
+          return setHoverPrice(coordinates[nextIndex]);
         }
 
         function setTerrainCursor(value) {
@@ -6490,19 +6422,37 @@
         });
 
         canvas.addEventListener("pointerdown", (event) => {
+          if (event.button !== 0 || event.isPrimary === false) return;
+          if (
+            state.timePointerId !== null || state.pricePointerId !== null
+          ) return;
           const date = timeDateAtPointer(
             event.offsetX,
             event.offsetY,
             true,
             event.pointerType,
           );
-          if (!date) return;
+          if (!date) {
+            if (event.pointerType === "mouse") return;
+            const coordinate = priceCoordinateAtPointer(
+              event.offsetX, event.offsetY,
+            );
+            if (coordinate === null) {
+              resetHover();
+              return;
+            }
+            event.preventDefault();
+            state.pricePointerId = event.pointerId;
+            canvas.setPointerCapture?.(event.pointerId);
+            setHoverPrice(coordinate);
+            return;
+          }
           const hitsDatePill = datePillHitTest(
             state.hoverModel.layout,
             state.hoverModel.start,
             state.hoverModel.end,
             { x: event.offsetX, y: event.offsetY },
-            event.pointerType === "touch" ? 8 : 2,
+            pointerHitRadius(event.pointerType, 2, 12),
           );
           event.preventDefault();
           cancelNavigationLoad();
@@ -6521,25 +6471,20 @@
             state.hoverModel.timeOut,
             state.hoverModel.axisGap,
           );
-          const handleRadius = event.pointerType === "touch" ? 36 : 28;
-          state.timeDragIndexOffset =
-            (hitsDatePill ||
-              Math.hypot(
-                event.offsetX - selectedPoint.x,
-                event.offsetY - selectedPoint.y,
-              ) <= handleRadius)
-              ? lowerBound(
-                  state.availableDates,
-                  state.dates[state.selectedIndex],
-                ) - lowerBound(state.availableDates, date)
-              : 0;
+          const handleRadius = pointerHitRadius(event.pointerType, 28, 36);
+          const grabsHandle =
+            hitsDatePill ||
+            Math.hypot(
+              event.offsetX - selectedPoint.x,
+              event.offsetY - selectedPoint.y,
+            ) <= handleRadius;
+          // Preserve the grab point before projecting and clamping to the axis.
+          state.timeDragOffsetX = grabsHandle ? event.offsetX - selectedPoint.x : 0;
+          state.timeDragOffsetY = grabsHandle ? event.offsetY - selectedPoint.y : 0;
           const hoverChanged = clearHoverState();
           canvas.setPointerCapture?.(event.pointerId);
           setTerrainCursor("grabbing");
-          const targetDate = availableDateByOffset(
-            date,
-            state.timeDragIndexOffset,
-          );
+          const targetDate = grabsHandle ? state.dates[state.selectedIndex] : date;
           if (targetDate === state.dates[state.selectedIndex] && hoverChanged) {
             scheduleRender();
           } else {
@@ -6551,28 +6496,37 @@
           "pointermove",
           (event) => {
             state.lastPointerAt = performance.now();
+            if (state.pricePointerId !== null) {
+              if (event.pointerId !== state.pricePointerId) return;
+              event.preventDefault();
+              const coordinate = priceCoordinateAtPointer(
+                event.offsetX, event.offsetY, true,
+              );
+              setHoverPrice(coordinate);
+              return;
+            }
+            if (
+              state.timePointerId !== null && event.pointerId !== state.timePointerId
+            ) return;
             if (
               state.timeDragging &&
               event.pointerId === state.timePointerId
             ) {
               event.preventDefault();
               const date = timeDateAtPointer(
-                event.offsetX,
-                event.offsetY,
+                event.offsetX - state.timeDragOffsetX,
+                event.offsetY - state.timeDragOffsetY,
                 false,
                 event.pointerType,
               );
               if (date) {
-                queueTimeDragDate(
-                  availableDateByOffset(
-                    date,
-                    state.timeDragIndexOffset,
-                  ),
-                );
+                queueTimeDragDate(date);
               }
               setTerrainCursor("grabbing");
               return;
             }
+
+            if (event.pointerType !== "mouse") return;
 
             const timeDate = timeDateAtPointer(
               event.offsetX,
@@ -6586,27 +6540,11 @@
               return;
             }
             setTerrainCursor("");
-
-            const coordinate = priceCoordinateAtPointer(
-              event.offsetX,
-              event.offsetY,
+            setHoverPrice(
+              canHoverTerrain()
+                ? priceCoordinateAtPointer(event.offsetX, event.offsetY)
+                : null,
             );
-            if (coordinate === null) {
-              resetHover();
-              return;
-            }
-            if (
-              state.hoverActive &&
-              state.hoverPriceCoordinate !== null &&
-              Math.abs(
-                coordinate - state.hoverPriceCoordinate,
-              ) < 0.0005
-            ) {
-              return;
-            }
-            state.hoverActive = true;
-            state.hoverPriceCoordinate = coordinate;
-            scheduleRender();
           },
         );
 
@@ -6617,14 +6555,15 @@
           ) {
             return;
           }
-          if (canvas.hasPointerCapture?.(event.pointerId)) {
-            canvas.releasePointerCapture(event.pointerId);
-          }
           const targetDate = state.timeDragTargetDate;
           state.timeDragging = false;
           state.timePointerId = null;
-          state.timeDragIndexOffset = 0;
+          state.timeDragOffsetX = 0;
+          state.timeDragOffsetY = 0;
           state.timeDragTargetDate = "";
+          if (canvas.hasPointerCapture?.(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+          }
           setTerrainCursor("");
           updateSummary(0);
           scheduleSettingsPersistence(0);
@@ -6644,10 +6583,24 @@
           }
         };
 
-        canvas.addEventListener("pointerup", endTimeDrag);
-        canvas.addEventListener("pointercancel", endTimeDrag);
-        canvas.addEventListener("pointerleave", () => {
-          if (state.timeDragging) return;
+        const endPriceDrag = (event) => {
+          if (event.pointerId !== state.pricePointerId) return;
+          state.pricePointerId = null;
+          if (canvas.hasPointerCapture?.(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+          }
+          if (event.type === "pointercancel") resetHover();
+        };
+        for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+          canvas.addEventListener(type, endTimeDrag);
+          canvas.addEventListener(type, endPriceDrag);
+        }
+        canvas.addEventListener("pointerleave", (event) => {
+          if (
+            state.timeDragging ||
+            state.pricePointerId !== null ||
+            event.pointerType !== "mouse"
+          ) return;
           setTerrainCursor("");
           resetHover();
         });
@@ -6731,7 +6684,7 @@
           passive: true,
         });
         portraitStageQuery.addEventListener("change", resize);
-        window.addEventListener("online", startLiveUpdates);
+        window.addEventListener("online", resumeUpdates);
         window.addEventListener("offline", () => {
           stopLiveUpdates();
           cancelNavigationLoad();
@@ -6754,16 +6707,13 @@
               state.chunkBuildTimer = 0;
             }
             state.loadController?.abort();
+            state.loadController = null;
             state.loadGeneration++;
             cancelNavigationLoad();
             state.loading = 0;
             return;
           }
-          startLiveUpdates();
-          updateSummary();
-          scheduleRender();
-          scheduleTerrainChunkBuild();
-          scheduleWindowLoad(0);
+          resumeUpdates();
         });
 
         restoreSummaryCache();

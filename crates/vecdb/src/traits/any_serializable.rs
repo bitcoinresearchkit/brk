@@ -43,8 +43,8 @@ where
             value.fmt_json(buf);
             buf.push(b',');
         });
-        if count > 0 {
-            let _ = buf.pop();
+        if buf.last() == Some(&b',') {
+            buf.pop();
         }
         buf.push(b']');
 

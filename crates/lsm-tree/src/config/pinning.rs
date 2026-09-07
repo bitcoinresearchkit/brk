@@ -15,6 +15,16 @@ impl std::ops::Deref for PinningPolicy {
 }
 
 impl PinningPolicy {
+    /// Uses the last configured value for deeper levels.
+    #[must_use]
+    #[expect(
+        clippy::indexing_slicing,
+        reason = "constructors reject empty policies; the index is clamped"
+    )]
+    pub fn at_level(&self, level: usize) -> bool {
+        self.0[level.min(self.0.len() - 1)]
+    }
+
     /// Uses the same policy in every level.
     #[must_use]
     pub fn all(c: bool) -> Self {

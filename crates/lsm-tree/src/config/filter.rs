@@ -29,6 +29,16 @@ impl std::ops::Deref for FilterPolicy {
 }
 
 impl FilterPolicy {
+    /// Uses the last configured value for deeper levels.
+    #[must_use]
+    #[expect(
+        clippy::indexing_slicing,
+        reason = "constructors reject empty policies; the index is clamped"
+    )]
+    pub fn at_level(&self, level: usize) -> FilterPolicyEntry {
+        self.0[level.min(self.0.len() - 1)]
+    }
+
     /// Disables all filters.
     ///
     /// **Not recommended unless you know what you are doing!**

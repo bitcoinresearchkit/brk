@@ -11,9 +11,8 @@ use tracing::error;
 use vecdb::{AnyVec, WritableVec, likely, unlikely};
 
 use crate::{
-    TransactionCounts, TransactionFeaturesVecs, TxMetadataVecs,
-    constants::DUPLICATE_TXIDS,
-    stores::{IndexerStores as _, TransactionStoresMut},
+    TransactionCounts, TransactionFeaturesVecs, TxMetadataVecs, constants::DUPLICATE_TXIDS,
+    stores::TransactionStoresMut,
 };
 
 pub use computed::ComputedTx;

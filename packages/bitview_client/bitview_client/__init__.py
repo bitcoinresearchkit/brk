@@ -39,6 +39,11 @@ SatsSigned = int
 # bits select an inline layout or a sidecar, whose index occupies the lower 30
 # bits.
 AddrState = int
+# Unsigned basis points: 10,000 represents the ratio 1.
+# Maximum finite ratio: 429,496.7294. u32::MAX represents undefined.
+# Finite input range is a debug-checked precondition, not a saturation policy.
+# Serde preserves raw encoded bits; vector JSON emits null for undefined.
+BasisPoints32 = int
 # Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 Bitcoin = float
 # URL-friendly mining pool identifier
@@ -102,6 +107,13 @@ TxVersionRaw = int
 # Reconstruction is a single pass: for each entry, either copy
 # `prior[idx]` or append the inline body.
 BlockTemplateDiffEntry = Union[int, "Transaction"]
+# A ratio in [0, 1], floored at scale u32::MAX - 1.
+# Zero and one are exact; finite quantization error is less than 1 / SCALE
+# apart from floating-point arithmetic error. u32::MAX represents undefined.
+# Non-finite inputs become undefined. Finite inputs must lie in [0, 1]; this
+# precondition is checked only in debug builds. Keep cumulative state unrounded.
+# Serde preserves raw encoded bits; vector JSON emits null for undefined.
+BoundedRatio = int
 Bytes = int
 # Investor phase from the Capital Sentiment model.
 #
@@ -231,6 +243,14 @@ PartsPerMillion64 = int
 # Use for precise wide-range signed ratios and percentages.
 # `i64::MIN` is reserved as a NaN sentinel.
 PartsPerMillionSigned64 = int
+# Spot price divided by a reference price, encoded in parts per million.
+# Finite values saturate at 4,294.967294; u32::MAX represents undefined.
+# Saturation is deliberately specific to price ratios, across all cohorts.
+# Non-finite inputs become undefined; finite inputs must be nonnegative
+# (a debug-checked precondition). PPM conversion rounds to nearest, matching
+# the existing price ratios.
+# Serde preserves raw encoded bits; vector JSON emits null for undefined.
+PriceRatio = int
 # Fractional satoshis (f64) - for representing USD prices in sats
 #
 # Formula: `sats_fract = usd_value * 100_000_000 / btc_price`
@@ -242,12 +262,6 @@ PartsPerMillionSigned64 = int
 SatsFract = float
 # Series name
 SeriesName = str
-# Version tracking for data schema and computed values.
-#
-# Used to detect when stored data needs to be recomputed due to changes
-# in computation logic or source data versions. Supports validation
-# against persisted versions to ensure compatibility.
-Version = int
 # Comma-separated list of series names
 #
 # Deserialization permits at most 32 normalized names and 2,048 decoded input
@@ -289,6 +303,12 @@ UnknownOutputIndex = TypeIndex
 UrpdAggregation = Literal["raw", "lin200", "lin500", "lin1000", "log10", "log50", "log100", "log200", "log500", "log1000", "log2000"]
 # Weighting applied to a URPD: raw (unweighted), cointime, or coinflow.
 UrpdWeight = Literal["raw", "cointime", "coinflow"]
+# Version tracking for data schema and computed values.
+#
+# Used to detect when stored data needs to be recomputed due to changes
+# in computation logic or source data versions. Supports validation
+# against persisted versions to ensure compatibility.
+Version = int
 Week1 = int
 # Weight in weight units with enough range for cumulative and rolling totals.
 Weight64 = int
@@ -3185,10 +3205,6 @@ class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mCumulativeOverUnderPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mHeightOverUnderPattern3:
-    """Pattern struct for repeated tree structure."""
-    pass
-
 class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mHeightOverUnderPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
     pass
@@ -4263,7 +4279,7 @@ class CentsPpmRatioSatsUsdPattern:
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
-        self.ppm: SeriesPattern1[PartsPerMillion64] = SeriesPattern1(client, _m(acc, 'ratio_ppm'))
+        self.ppm: SeriesPattern1[PriceRatio] = SeriesPattern1(client, _m(acc, 'ratio_ppm'))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'ratio'))
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, _m(acc, 'sats'))
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, acc)
@@ -4301,7 +4317,7 @@ class PhsReboundThsPattern:
         """Create pattern node with accumulated series name."""
         self.phs: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'phs'))
         self.phs_min: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'phs_min'))
-        self.rebound: PercentPpmRatioPattern = PercentPpmRatioPattern(client, _m(acc, 'rebound'))
+        self.rebound: PercentPpmRatioPattern3 = PercentPpmRatioPattern3(client, _m(acc, 'rebound'))
         self.ths: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'ths'))
         self.ths_min: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'ths_min'))
 
@@ -4519,7 +4535,7 @@ class AllCumulativeSthPattern:
     """Pattern struct for repeated tree structure."""
     pass
 
-class AllLthSthPattern5:
+class AllLthSthPattern6:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BitviewClient, acc: str):
@@ -4528,11 +4544,20 @@ class AllLthSthPattern5:
         self.lth: BtcCentsDeltaSatsUsdPattern = BtcCentsDeltaSatsUsdPattern(client, _m(acc, 'lth_supply'))
         self.sth: BtcCentsDeltaSatsUsdPattern = BtcCentsDeltaSatsUsdPattern(client, _m(acc, 'sth_supply'))
 
-class AllLthSthPattern4:
+class AllLthSthPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BitviewClient, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.all: CentsPpmRatioSatsUsdPattern = CentsPpmRatioSatsUsdPattern(client, acc)
+        self.lth: CentsPpmRatioSatsUsdPattern = CentsPpmRatioSatsUsdPattern(client, _p('lth', acc))
+        self.sth: CentsPpmRatioSatsUsdPattern = CentsPpmRatioSatsUsdPattern(client, _p('sth', acc))
+
+class AllLthSthPattern5:
     """Pattern struct for repeated tree structure."""
     pass
 
-class AllLthSthPattern6:
+class AllLthSthPattern7:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BitviewClient, acc: str):
@@ -4541,7 +4566,7 @@ class AllLthSthPattern6:
         self.lth: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _p('lth', acc))
         self.sth: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _p('sth', acc))
 
-class AllLthSthPattern2:
+class AllLthSthPattern3:
     """Pattern struct for repeated tree structure."""
     
     def __init__(self, client: BitviewClient, acc: str):
@@ -4812,6 +4837,14 @@ class BlocksDominancePattern:
         self.blocks_mined: BlockCumulativeSumPattern2 = BlockCumulativeSumPattern2(client, _m(acc, 'blocks_mined'))
         self.dominance: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, 'dominance'))
 
+class BpsRatioPattern:
+    """Pattern struct for repeated tree structure."""
+
+    def __init__(self, client: BitviewClient, acc: str):
+        """Create pattern node with accumulated series name."""
+        self.bps: SeriesPattern1[BasisPoints32] = SeriesPattern1(client, _m(acc, 'bps'))
+        self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
+
 class BtcSatsPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -4976,14 +5009,6 @@ class PpmRatioPattern2:
         self.ppm: SeriesPattern1[PartsPerMillion32] = SeriesPattern1(client, _m(acc, 'ppm'))
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
 
-class PpmRatioPattern3:
-    """Pattern struct for repeated tree structure."""
-    
-    def __init__(self, client: BitviewClient, acc: str):
-        """Create pattern node with accumulated series name."""
-        self.ppm: SeriesPattern1[PartsPerMillion64] = SeriesPattern1(client, _m(acc, 'ppm'))
-        self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
-
 class PpmRatioPattern:
     """Pattern struct for repeated tree structure."""
     
@@ -5028,7 +5053,7 @@ class SharePattern2:
     
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
-        self.share: AllLthSthPattern6 = AllLthSthPattern6(client, acc)
+        self.share: AllLthSthPattern7 = AllLthSthPattern7(client, acc)
 
 class SharePattern3:
     """Pattern struct for repeated tree structure."""
@@ -6644,7 +6669,7 @@ class SeriesTree_Cointime_AgeRange_Activity:
         self.wakefulness: SeriesTree_Cointime_AgeRange_Activity_Wakefulness = SeriesTree_Cointime_AgeRange_Activity_Wakefulness(client)
         self.dormancy: SeriesTree_Cointime_AgeRange_Activity_Dormancy = SeriesTree_Cointime_AgeRange_Activity_Dormancy(client)
         self.wakefulness_to_dormancy: SeriesTree_Cointime_AgeRange_Activity_WakefulnessToDormancy = SeriesTree_Cointime_AgeRange_Activity_WakefulnessToDormancy(client)
-        self.height: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'utxos_age_range_wakefulness')
+        self.height: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'utxos_age_range_wakefulness_bounded_source')
 
 class SeriesTree_Cointime_AgeRange_Supply_Awake:
     """Series tree node."""
@@ -6673,7 +6698,6 @@ class SeriesTree_Cointime_AgeRange_Supply_Awake:
         self._10y_to_12y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_10y_to_12y_old_awake_supply')
         self._12y_to_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_12y_to_15y_old_awake_supply')
         self.over_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_over_15y_old_awake_supply')
-        self.height: SeriesPattern18[Sats] = SeriesPattern18(client, 'utxos_age_range_awake_supply_sats')
 
 class SeriesTree_Cointime_AgeRange_Supply_Dormant:
     """Series tree node."""
@@ -6702,7 +6726,6 @@ class SeriesTree_Cointime_AgeRange_Supply_Dormant:
         self._10y_to_12y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_10y_to_12y_old_dormant_supply')
         self._12y_to_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_12y_to_15y_old_dormant_supply')
         self.over_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_over_15y_old_dormant_supply')
-        self.height: SeriesPattern18[Sats] = SeriesPattern18(client, 'utxos_age_range_dormant_supply_sats')
 
 class SeriesTree_Cointime_AgeRange_Supply:
     """Series tree node."""
@@ -6796,7 +6819,20 @@ class SeriesTree_Cointime_Sources:
         self.dormant_supply: SeriesPattern18[Sats] = SeriesPattern18(client, 'cointime_dormant_supply_sats_by_term')
         self.awake_cap: SeriesPattern18[Cents] = SeriesPattern18(client, 'cointime_awake_cap_cents_by_term')
         self.awake_price: SeriesPattern18[Cents] = SeriesPattern18(client, 'cointime_awake_price_cents_by_aggregate')
-        self.supply_in_loss_share: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'cointime_awake_supply_in_loss_share_by_term')
+        self.supply_in_loss_share: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'cointime_awake_supply_in_loss_share_bounded_by_term')
+
+class SeriesTree_Cointime_Supply_Active_InLoss_Share:
+    """Series tree node."""
+
+    def __init__(self, client: BitviewClient, base_path: str = ''):
+        self.bounded: SeriesPattern1[BoundedRatio] = SeriesPattern1(client, 'cointime_supply_in_loss_share_bounded')
+        self.ratio: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_supply_in_loss_share')
+
+class SeriesTree_Cointime_Supply_Active_InLoss:
+    """Series tree node."""
+
+    def __init__(self, client: BitviewClient, base_path: str = ''):
+        self.share: SeriesTree_Cointime_Supply_Active_InLoss_Share = SeriesTree_Cointime_Supply_Active_InLoss_Share(client)
 
 class SeriesTree_Cointime_Supply_Active:
     """Series tree node."""
@@ -6806,7 +6842,7 @@ class SeriesTree_Cointime_Supply_Active:
         self.sats: SeriesPattern1[Sats] = SeriesPattern1(client, 'active_supply_sats')
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'active_supply_usd')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'active_supply_cents')
-        self.in_loss: SharePattern3 = SharePattern3(client, 'cointime_supply_in_loss_share')
+        self.in_loss: SeriesTree_Cointime_Supply_Active_InLoss = SeriesTree_Cointime_Supply_Active_InLoss(client)
 
 class SeriesTree_Cointime_Supply:
     """Series tree node."""
@@ -6848,7 +6884,7 @@ class SeriesTree_Cointime_Adjusted:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.inflation_rate: PercentPpmRatioPattern = PercentPpmRatioPattern(client, 'cointime_adj_inflation_rate')
+        self.inflation_rate: PercentPpmRatioPattern3 = PercentPpmRatioPattern3(client, 'cointime_adj_inflation_rate')
         self.tx_velocity_native: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_btc')
         self.tx_velocity_fiat: SeriesPattern1[StoredF64] = SeriesPattern1(client, 'cointime_adj_tx_velocity_usd')
 
@@ -6992,7 +7028,6 @@ class SeriesTree_Coinflow_AgeRange_Supply_Mobile:
         self._10y_to_12y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_10y_to_12y_old_mobile_supply')
         self._12y_to_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_12y_to_15y_old_mobile_supply')
         self.over_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_over_15y_old_mobile_supply')
-        self.height: SeriesPattern18[Sats] = SeriesPattern18(client, 'utxos_age_range_mobile_supply_sats')
 
 class SeriesTree_Coinflow_AgeRange_Supply_Immobile:
     """Series tree node."""
@@ -7021,7 +7056,6 @@ class SeriesTree_Coinflow_AgeRange_Supply_Immobile:
         self._10y_to_12y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_10y_to_12y_old_immobile_supply')
         self._12y_to_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_12y_to_15y_old_immobile_supply')
         self.over_15y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, 'utxos_over_15y_old_immobile_supply')
-        self.height: SeriesPattern18[Sats] = SeriesPattern18(client, 'utxos_age_range_immobile_supply_sats')
 
 class SeriesTree_Coinflow_AgeRange_Supply:
     """Series tree node."""
@@ -7118,20 +7152,20 @@ class SeriesTree_Coinflow_AggregateSources_Horizon:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self._8y: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_8y_supply_in_loss_share_by_aggregate')
-        self._4y: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_4y_supply_in_loss_share_by_aggregate')
-        self._2y: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_2y_supply_in_loss_share_by_aggregate')
-        self._1y: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_1y_supply_in_loss_share_by_aggregate')
-        self._6m: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_6m_supply_in_loss_share_by_aggregate')
-        self._3m: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_3m_supply_in_loss_share_by_aggregate')
-        self._1m: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_1m_supply_in_loss_share_by_aggregate')
+        self._8y: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_8y_supply_in_loss_share_bounded_by_aggregate')
+        self._4y: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_4y_supply_in_loss_share_bounded_by_aggregate')
+        self._2y: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_2y_supply_in_loss_share_bounded_by_aggregate')
+        self._1y: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_1y_supply_in_loss_share_bounded_by_aggregate')
+        self._6m: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_6m_supply_in_loss_share_bounded_by_aggregate')
+        self._3m: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_3m_supply_in_loss_share_bounded_by_aggregate')
+        self._1m: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_1m_supply_in_loss_share_bounded_by_aggregate')
 
 class SeriesTree_Coinflow_AggregateSources:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
         self.supply: SeriesTree_Coinflow_AggregateSources_Supply = SeriesTree_Coinflow_AggregateSources_Supply(client)
-        self.supply_in_loss_share: SeriesPattern18[StoredF64] = SeriesPattern18(client, 'coinflow_supply_in_loss_share_by_aggregate')
+        self.supply_in_loss_share: SeriesPattern18[BoundedRatio] = SeriesPattern18(client, 'coinflow_supply_in_loss_share_bounded_by_aggregate')
         self.horizon: SeriesTree_Coinflow_AggregateSources_Horizon = SeriesTree_Coinflow_AggregateSources_Horizon(client)
         self.cap: SeriesPattern18[Cents] = SeriesPattern18(client, 'coinflow_cap_cents_by_term')
         self.price: SeriesPattern18[Cents] = SeriesPattern18(client, 'coinflow_price_cents_by_aggregate')
@@ -7170,11 +7204,19 @@ class SeriesTree_Bedrock_CostBasis:
         self.per_coin: SeriesTree_Bedrock_CostBasis_PerCoin = SeriesTree_Bedrock_CostBasis_PerCoin(client)
         self.per_dollar: SeriesTree_Bedrock_CostBasis_PerDollar = SeriesTree_Bedrock_CostBasis_PerDollar(client)
 
+class SeriesTree_Bedrock_CapitalizedPrice:
+    """Series tree node."""
+
+    def __init__(self, client: BitviewClient, base_path: str = ''):
+        self.awake: AllLthSthPattern = AllLthSthPattern(client, 'awake_capitalized_price')
+        self.coinflow: AllLthSthPattern = AllLthSthPattern(client, 'coinflow_capitalized_price')
+
 class SeriesTree_Bedrock:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
         self.cost_basis: SeriesTree_Bedrock_CostBasis = SeriesTree_Bedrock_CostBasis(client)
+        self.capitalized_price: SeriesTree_Bedrock_CapitalizedPrice = SeriesTree_Bedrock_CapitalizedPrice(client)
         self.raw: FloorLevelLossPattern = FloorLevelLossPattern(client, 'bedrock_raw')
         self.cointime: FloorLevelLossPattern = FloorLevelLossPattern(client, 'bedrock_cointime')
         self.coinflow: FloorLevelLossPattern = FloorLevelLossPattern(client, 'bedrock_coinflow')
@@ -7549,6 +7591,13 @@ class SeriesTree_Mappings:
         self.txout_index: SeriesTree_Mappings_TxoutIndex = SeriesTree_Mappings_TxoutIndex(client)
         self.timestamp: SeriesTree_Mappings_Timestamp = SeriesTree_Mappings_Timestamp(client)
 
+class SeriesTree_Indicators_RhodlRatio:
+    """Series tree node."""
+
+    def __init__(self, client: BitviewClient, base_path: str = ''):
+        self.ppm: SeriesPattern1[PartsPerMillion64] = SeriesPattern1(client, 'rhodl_ratio_ppm')
+        self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'rhodl_ratio')
+
 class SeriesTree_Indicators_Dormancy:
     """Series tree node."""
 
@@ -7560,11 +7609,11 @@ class SeriesTree_Indicators:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.puell_multiple: PpmRatioPattern3 = PpmRatioPattern3(client, 'puell_multiple')
-        self.nvt: PpmRatioPattern3 = PpmRatioPattern3(client, 'nvt')
+        self.puell_multiple: BpsRatioPattern = BpsRatioPattern(client, 'puell_multiple')
+        self.nvt: BpsRatioPattern = BpsRatioPattern(client, 'nvt')
         self.gini: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, 'gini')
-        self.rhodl_ratio: PpmRatioPattern3 = PpmRatioPattern3(client, 'rhodl_ratio')
-        self.thermo_cap_multiple: PpmRatioPattern3 = PpmRatioPattern3(client, 'thermo_cap_multiple')
+        self.rhodl_ratio: SeriesTree_Indicators_RhodlRatio = SeriesTree_Indicators_RhodlRatio(client)
+        self.thermo_cap_multiple: BpsRatioPattern = BpsRatioPattern(client, 'thermo_cap_multiple')
         self.coindays_destroyed_supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coindays_destroyed_supply_adj')
         self.coinyears_destroyed_supply_adj: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'coinyears_destroyed_supply_adj')
         self.dormancy: SeriesTree_Indicators_Dormancy = SeriesTree_Indicators_Dormancy(client)
@@ -7775,7 +7824,7 @@ class SeriesTree_Market_MovingAverage_Sma_200d:
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'price_sma_200d')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_sma_200d_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'price_sma_200d_sats')
-        self.ppm: SeriesPattern1[PartsPerMillion64] = SeriesPattern1(client, 'price_sma_200d_ratio_ppm')
+        self.ppm: SeriesPattern1[PriceRatio] = SeriesPattern1(client, 'price_sma_200d_ratio_ppm')
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_sma_200d_ratio')
         self.x2_4: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x2_4')
         self.x0_8: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_200d_x0_8')
@@ -7787,7 +7836,7 @@ class SeriesTree_Market_MovingAverage_Sma_350d:
         self.usd: SeriesPattern1[Dollars] = SeriesPattern1(client, 'price_sma_350d')
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, 'price_sma_350d_cents')
         self.sats: SeriesPattern1[SatsFract] = SeriesPattern1(client, 'price_sma_350d_sats')
-        self.ppm: SeriesPattern1[PartsPerMillion64] = SeriesPattern1(client, 'price_sma_350d_ratio_ppm')
+        self.ppm: SeriesPattern1[PriceRatio] = SeriesPattern1(client, 'price_sma_350d_ratio_ppm')
         self.ratio: SeriesPattern1[StoredF32] = SeriesPattern1(client, 'price_sma_350d_ratio')
         self.x2: CentsSatsUsdPattern = CentsSatsUsdPattern(client, 'price_sma_350d_x2')
 
@@ -9958,8 +10007,8 @@ class SeriesTree_Cohorts_Activity:
         return SeriesTree_Cohorts_Activity_CoinyearsDestroyed(self._client)
 
     @cached_property
-    def dormancy(self) -> AllLthSthPattern2:
-        return AllLthSthPattern2(self._client, 'dormancy')
+    def dormancy(self) -> AllLthSthPattern3:
+        return AllLthSthPattern3(self._client, 'dormancy')
 
 class SeriesTree_Cohorts_Realized_Cap_Age_Range:
     """Series tree node."""
@@ -10146,7 +10195,7 @@ class SeriesTree_Cohorts_Realized_Cap:
         self.type_matrix: SeriesPattern18[Cents] = SeriesPattern18(client, 'realized_cap_cents_by_type')
         self.amount_range_matrix: SeriesPattern18[Cents] = SeriesPattern18(client, 'utxos_realized_cap_cents_by_amount_range')
         self.addr_balance: SeriesTree_Cohorts_Realized_Cap_AddrBalance = SeriesTree_Cohorts_Realized_Cap_AddrBalance(client)
-        self.to_own_mcap: AllLthSthPattern6 = AllLthSthPattern6(client, 'realized_cap_to_own_mcap')
+        self.to_own_mcap: AllLthSthPattern7 = AllLthSthPattern7(client, 'realized_cap_to_own_mcap')
 
 class SeriesTree_Cohorts_Realized_Price_Age_Range:
     """Series tree node."""
@@ -11994,8 +12043,8 @@ class SeriesTree_Cohorts_Realized:
         return SeriesTree_Cohorts_Realized_SoprRatioExtended(self._client)
 
     @cached_property
-    def profit_to_loss_ratio(self) -> AllLthSthPattern2:
-        return AllLthSthPattern2(self._client, 'realized_profit_to_loss_ratio')
+    def profit_to_loss_ratio(self) -> AllLthSthPattern3:
+        return AllLthSthPattern3(self._client, 'realized_profit_to_loss_ratio')
 
     @cached_property
     def mvrv(self) -> SeriesTree_Cohorts_Realized_Mvrv:
@@ -12889,9 +12938,9 @@ class SeriesTree_Cohorts_Relative_Unrealized_Profit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.to_mcap: AllLthSthPattern6 = AllLthSthPattern6(client, 'unrealized_profit_to_mcap')
+        self.to_mcap: AllLthSthPattern7 = AllLthSthPattern7(client, 'unrealized_profit_to_mcap')
         self.to_own_mcap: SeriesTree_Cohorts_Relative_Unrealized_Profit_ToOwnMcap = SeriesTree_Cohorts_Relative_Unrealized_Profit_ToOwnMcap(client)
-        self.to_own_gross_pnl: AllLthSthPattern6 = AllLthSthPattern6(client, 'unrealized_profit_to_own_gross_pnl')
+        self.to_own_gross_pnl: AllLthSthPattern7 = AllLthSthPattern7(client, 'unrealized_profit_to_own_gross_pnl')
 
 class SeriesTree_Cohorts_Relative_Unrealized_Loss_ToOwnMcap:
     """Series tree node."""
@@ -12905,9 +12954,9 @@ class SeriesTree_Cohorts_Relative_Unrealized_Loss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.to_mcap: AllLthSthPattern6 = AllLthSthPattern6(client, 'unrealized_loss_to_mcap')
+        self.to_mcap: AllLthSthPattern7 = AllLthSthPattern7(client, 'unrealized_loss_to_mcap')
         self.to_own_mcap: SeriesTree_Cohorts_Relative_Unrealized_Loss_ToOwnMcap = SeriesTree_Cohorts_Relative_Unrealized_Loss_ToOwnMcap(client)
-        self.to_own_gross_pnl: AllLthSthPattern6 = AllLthSthPattern6(client, 'unrealized_loss_to_own_gross_pnl')
+        self.to_own_gross_pnl: AllLthSthPattern7 = AllLthSthPattern7(client, 'unrealized_loss_to_own_gross_pnl')
 
 class SeriesTree_Cohorts_Relative_Unrealized_NetPnl_ToOwnMcap:
     """Series tree node."""
@@ -12988,64 +13037,64 @@ class SeriesTree_Cohorts_Profitability_Supply_Range:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.over_1000pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_1000pct_in_profit')
-        self._500pct_to_1000pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_500pct_to_1000pct_in_profit')
-        self._300pct_to_500pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_300pct_to_500pct_in_profit')
-        self._200pct_to_300pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_200pct_to_300pct_in_profit')
-        self._100pct_to_200pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_100pct_to_200pct_in_profit')
-        self._90pct_to_100pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_90pct_to_100pct_in_profit')
-        self._80pct_to_90pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_80pct_to_90pct_in_profit')
-        self._70pct_to_80pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_70pct_to_80pct_in_profit')
-        self._60pct_to_70pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_60pct_to_70pct_in_profit')
-        self._50pct_to_60pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_50pct_to_60pct_in_profit')
-        self._40pct_to_50pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_40pct_to_50pct_in_profit')
-        self._30pct_to_40pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_30pct_to_40pct_in_profit')
-        self._20pct_to_30pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_20pct_to_30pct_in_profit')
-        self._10pct_to_20pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_10pct_to_20pct_in_profit')
-        self._0pct_to_10pct_in_profit: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_0pct_to_10pct_in_profit')
-        self._0pct_to_10pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_0pct_to_10pct_in_loss')
-        self._10pct_to_20pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_10pct_to_20pct_in_loss')
-        self._20pct_to_30pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_20pct_to_30pct_in_loss')
-        self._30pct_to_40pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_30pct_to_40pct_in_loss')
-        self._40pct_to_50pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_40pct_to_50pct_in_loss')
-        self._50pct_to_60pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_50pct_to_60pct_in_loss')
-        self._60pct_to_70pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_60pct_to_70pct_in_loss')
-        self._70pct_to_80pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_70pct_to_80pct_in_loss')
-        self._80pct_to_90pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_80pct_to_90pct_in_loss')
-        self._90pct_to_100pct_in_loss: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_90pct_to_100pct_in_loss')
+        self.over_1000pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_1000pct_in_profit')
+        self._500pct_to_1000pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_500pct_to_1000pct_in_profit')
+        self._300pct_to_500pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_300pct_to_500pct_in_profit')
+        self._200pct_to_300pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_200pct_to_300pct_in_profit')
+        self._100pct_to_200pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_100pct_to_200pct_in_profit')
+        self._90pct_to_100pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_profit')
+        self._80pct_to_90pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_profit')
+        self._70pct_to_80pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_profit')
+        self._60pct_to_70pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_profit')
+        self._50pct_to_60pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_profit')
+        self._40pct_to_50pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_profit')
+        self._30pct_to_40pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_profit')
+        self._20pct_to_30pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_profit')
+        self._10pct_to_20pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_profit')
+        self._0pct_to_10pct_in_profit: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_profit')
+        self._0pct_to_10pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_loss')
+        self._10pct_to_20pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_loss')
+        self._20pct_to_30pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_loss')
+        self._30pct_to_40pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_loss')
+        self._40pct_to_50pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_loss')
+        self._50pct_to_60pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_loss')
+        self._60pct_to_70pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_loss')
+        self._70pct_to_80pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_loss')
+        self._80pct_to_90pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_loss')
+        self._90pct_to_100pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_loss')
 
 class SeriesTree_Cohorts_Profitability_Supply_Profit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_in_profit')
-        self._10pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_10pct_in_profit')
-        self._20pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_20pct_in_profit')
-        self._30pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_30pct_in_profit')
-        self._40pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_40pct_in_profit')
-        self._50pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_50pct_in_profit')
-        self._60pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_60pct_in_profit')
-        self._70pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_70pct_in_profit')
-        self._80pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_80pct_in_profit')
-        self._90pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_90pct_in_profit')
-        self._100pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_100pct_in_profit')
-        self._200pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_200pct_in_profit')
-        self._300pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_300pct_in_profit')
-        self._500pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_500pct_in_profit')
+        self.total: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_in_profit')
+        self._10pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_10pct_in_profit')
+        self._20pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_20pct_in_profit')
+        self._30pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_30pct_in_profit')
+        self._40pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_40pct_in_profit')
+        self._50pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_50pct_in_profit')
+        self._60pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_60pct_in_profit')
+        self._70pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_70pct_in_profit')
+        self._80pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_80pct_in_profit')
+        self._90pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_90pct_in_profit')
+        self._100pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_100pct_in_profit')
+        self._200pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_200pct_in_profit')
+        self._300pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_300pct_in_profit')
+        self._500pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_500pct_in_profit')
 
 class SeriesTree_Cohorts_Profitability_Supply_Loss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_in_loss')
-        self._10pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_10pct_in_loss')
-        self._20pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_20pct_in_loss')
-        self._30pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_30pct_in_loss')
-        self._40pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_40pct_in_loss')
-        self._50pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_50pct_in_loss')
-        self._60pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_60pct_in_loss')
-        self._70pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_70pct_in_loss')
-        self._80pct: AllLthSthPattern5 = AllLthSthPattern5(client, 'utxos_over_80pct_in_loss')
+        self.total: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_in_loss')
+        self._10pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_10pct_in_loss')
+        self._20pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_20pct_in_loss')
+        self._30pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_30pct_in_loss')
+        self._40pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_40pct_in_loss')
+        self._50pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_50pct_in_loss')
+        self._60pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_60pct_in_loss')
+        self._70pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_70pct_in_loss')
+        self._80pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_80pct_in_loss')
 
 class SeriesTree_Cohorts_Profitability_Supply:
     """Series tree node."""
@@ -15558,7 +15607,7 @@ class BitviewClient(BitviewClientBase):
     def search_series(self, q: SeriesName, limit: Optional[Limit] = None) -> List[str]:
         """Search series.
 
-        Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos. The decoded q parameter is limited to 1024 UTF-8 bytes.
+        Search series by name or descriptive terms. Results prioritize whole query words in names, then descriptions, then fuzzy names, then fuzzy descriptions. Word order does not matter. Descriptions provide cohort terminology and formulas. The decoded q parameter is limited to 1024 UTF-8 bytes.
 
         Endpoint: `GET /api/series/search`"""
         params = []
@@ -16450,4 +16499,3 @@ class BitviewClient(BitviewClientBase):
 
         Endpoint: `GET /api.json`"""
         return self.get_json('/api.json')
-

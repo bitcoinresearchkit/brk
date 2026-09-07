@@ -5,6 +5,7 @@ use brk_error::Error;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "storage")]
 use vecdb::Formattable;
 
 use crate::AddrBytes;
@@ -86,6 +87,7 @@ impl FromStr for Addr {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for Addr {
     fn write_to(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(self.0.as_bytes());

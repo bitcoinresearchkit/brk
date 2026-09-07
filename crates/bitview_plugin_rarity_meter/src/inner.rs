@@ -49,7 +49,29 @@ pub fn forced_import(
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
 ) -> Result<RarityMeterInner> {
-    RarityMeterInner::forced_import(db, prefix, version, mappings)
+    let version = version + VERSION;
+    let prices = ColumnarPerBlock::<Cents, RarityPercentileId, _>::forced_import(
+        db,
+        &format!("{prefix}_percentiles_cents"),
+        version,
+        |source| {
+            RarityPercentiles::from_fn(|id| {
+                Price::from_columnar_source(
+                    &format!("{prefix}_{}", id.price_suffix()),
+                    version,
+                    source,
+                    id,
+                    mappings,
+                )
+            })
+        },
+    )?;
+
+    Ok(RarityMeterInner {
+        prices,
+        index: PerBlock::forced_import(db, &format!("{prefix}_index"), version, mappings)?,
+        score: PerBlock::forced_import(db, &format!("{prefix}_score"), version, mappings)?,
+    })
 }
 
 pub fn compute(
@@ -60,7 +82,59 @@ pub fn compute(
     indexer: &Indexer,
     exit: &Exit,
 ) -> Result<()> {
-    inner.compute(components, lower_components, spot, indexer, exit)
+    let starting_height = indexer.safe_lengths().height;
+    let dependency_version = components
+        .iter()
+        .map(|component| component::boundary_version(component))
+        .sum::<Version>()
+        + lower_components
+            .iter()
+            .flatten()
+            .map(|band| band.version())
+            .sum::<Version>();
+    let source_end = components
+        .iter()
+        .map(|component| component::boundary_len(component))
+        .chain(lower_components.iter().flatten().map(|band| band.len()))
+        .min()
+        .unwrap_or_default();
+
+    inner.prices.height.compute_batched_to(
+        starting_height,
+        source_end,
+        dependency_version,
+        COMPUTE_BATCH_SIZE,
+        |cents, range| {
+            let component_prices: Vec<_> = components
+                .iter()
+                .map(|component| {
+                    component::collect_boundary_prices(component, range.start, range.end)
+                })
+                .collect();
+            let lower_component_prices: Vec<_> = lower_components
+                .iter()
+                .map(|bands| {
+                    bands
+                        .each_ref()
+                        .map(|band| band.collect_range_at(range.start, range.end))
+                })
+                .collect();
+
+            for offset in 0..range.len() {
+                cents.push(RarityMeterInner::combine_percentiles(
+                    &component_prices,
+                    &lower_component_prices,
+                    offset,
+                ));
+            }
+
+            Ok(())
+        },
+        exit,
+    )?;
+
+    inner.compute_index(spot, indexer, exit)?;
+    inner.compute_score(components, lower_components, spot, indexer, exit)
 }
 
 pub fn compute_combined(
@@ -70,7 +144,48 @@ pub fn compute_combined(
     indexer: &Indexer,
     exit: &Exit,
 ) -> Result<()> {
-    inner.compute_combined(meters, spot, indexer, exit)
+    let starting_height = indexer.safe_lengths().height;
+    let dependency_version = meters
+        .iter()
+        .map(|meter| meter.prices.height.version())
+        .sum();
+    let source_end = meters
+        .iter()
+        .map(|meter| meter.prices.height.len())
+        .min()
+        .unwrap_or_default();
+
+    inner.prices.height.compute_batched_to(
+        starting_height,
+        source_end,
+        dependency_version,
+        COMPUTE_BATCH_SIZE,
+        |cents, range| {
+            let meter_prices: Vec<_> = meters
+                .iter()
+                .map(|meter| {
+                    meter
+                        .prices
+                        .boundary_refs()
+                        .map(|price| price.cents.height.collect_range_at(range.start, range.end))
+                })
+                .collect();
+
+            for offset in 0..range.len() {
+                cents.push(RarityMeterInner::combine_percentiles(
+                    &meter_prices,
+                    &[],
+                    offset,
+                ));
+            }
+
+            Ok(())
+        },
+        exit,
+    )?;
+
+    inner.compute_index(spot, indexer, exit)?;
+    inner.compute_combined_score(meters, indexer, exit)
 }
 
 impl RarityMeterInner {
@@ -96,146 +211,6 @@ impl RarityMeterInner {
             || self.prices.height.len() > starting_height
             || self.index.height.len() > starting_height
             || self.score.height.len() > starting_height
-    }
-
-    fn forced_import(
-        db: &Database,
-        prefix: &str,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
-        let version = version + VERSION;
-        let prices = ColumnarPerBlock::<Cents, RarityPercentileId, _>::forced_import(
-            db,
-            &format!("{prefix}_percentiles_cents"),
-            version,
-            |source| {
-                RarityPercentiles::from_fn(|id| {
-                    Price::from_columnar_source(
-                        &format!("{prefix}_{}", id.price_suffix()),
-                        version,
-                        source,
-                        id,
-                        mappings,
-                    )
-                })
-            },
-        )?;
-
-        Ok(Self {
-            prices,
-            index: PerBlock::forced_import(db, &format!("{prefix}_index"), version, mappings)?,
-            score: PerBlock::forced_import(db, &format!("{prefix}_score"), version, mappings)?,
-        })
-    }
-
-    fn compute(
-        &mut self,
-        components: &[&Component],
-        lower_components: &[[&impl ReadableVec<Height, Option<Cents>>; 5]],
-        spot: &impl ReadableVec<Height, Cents>,
-        indexer: &Indexer,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
-        let dependency_version = components
-            .iter()
-            .map(|component| component::boundary_version(component))
-            .sum::<Version>()
-            + lower_components
-                .iter()
-                .flatten()
-                .map(|band| band.version())
-                .sum::<Version>();
-        let source_end = components
-            .iter()
-            .map(|component| component::boundary_len(component))
-            .chain(lower_components.iter().flatten().map(|band| band.len()))
-            .min()
-            .unwrap_or_default();
-
-        self.prices.height.compute_batched_to(
-            starting_height,
-            source_end,
-            dependency_version,
-            COMPUTE_BATCH_SIZE,
-            |cents, range| {
-                let component_prices: Vec<_> = components
-                    .iter()
-                    .map(|component| {
-                        component::collect_boundary_prices(component, range.start, range.end)
-                    })
-                    .collect();
-                let lower_component_prices: Vec<_> = lower_components
-                    .iter()
-                    .map(|bands| {
-                        bands
-                            .each_ref()
-                            .map(|band| band.collect_range_at(range.start, range.end))
-                    })
-                    .collect();
-
-                for offset in 0..range.len() {
-                    cents.push(Self::combine_percentiles(
-                        &component_prices,
-                        &lower_component_prices,
-                        offset,
-                    ));
-                }
-
-                Ok(())
-            },
-            exit,
-        )?;
-
-        self.compute_index(spot, indexer, exit)?;
-        self.compute_score(components, lower_components, spot, indexer, exit)
-    }
-
-    fn compute_combined(
-        &mut self,
-        meters: &[&RarityMeterInner],
-        spot: &impl ReadableVec<Height, Cents>,
-        indexer: &Indexer,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
-        let dependency_version = meters
-            .iter()
-            .map(|meter| meter.prices.height.version())
-            .sum();
-        let source_end = meters
-            .iter()
-            .map(|meter| meter.prices.height.len())
-            .min()
-            .unwrap_or_default();
-
-        self.prices.height.compute_batched_to(
-            starting_height,
-            source_end,
-            dependency_version,
-            COMPUTE_BATCH_SIZE,
-            |cents, range| {
-                let meter_prices: Vec<_> = meters
-                    .iter()
-                    .map(|meter| {
-                        meter.prices.boundary_refs().map(|price| {
-                            price.cents.height.collect_range_at(range.start, range.end)
-                        })
-                    })
-                    .collect();
-
-                for offset in 0..range.len() {
-                    cents.push(Self::combine_percentiles(&meter_prices, &[], offset));
-                }
-
-                Ok(())
-            },
-            exit,
-        )?;
-
-        self.compute_index(spot, indexer, exit)?;
-        self.compute_combined_score(meters, indexer, exit)
     }
 
     fn compute_index(

@@ -4,6 +4,26 @@ use serde_json::json;
 use super::BRK;
 
 #[test]
+fn cached_height_and_date_keep_chunk_offsets() {
+    let mut source = BRK::new();
+    let price = BRK::value_to_height_ohlc(&json!(12.34)).unwrap();
+    source
+        .height_to_ohlc
+        .insert(Height::new(10_000), vec![price.clone(), price.clone()]);
+    assert_eq!(
+        serde_json::to_value(source.get_from_height(Height::new(10_001)).unwrap()).unwrap(),
+        json!([1234, 1234, 1234, 1234])
+    );
+    let date = brk_types::Date::new(2024, 1, 1);
+    let (key, offset) = BRK::day_chunk(Day1::try_from(date).unwrap());
+    source.day1_to_ohlc.insert(key, vec![price; offset + 1]);
+    assert_eq!(
+        serde_json::to_value(source.get_from_date(date).unwrap()).unwrap(),
+        json!([1234, 1234, 1234, 1234])
+    );
+}
+
+#[test]
 fn current_price_shapes_preserve_units_and_candle_values() {
     let point = BRK::value_to_height_ohlc(&json!(12.34)).unwrap();
     assert_eq!(

@@ -1,9 +1,6 @@
-use crate::internals::*;
-
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlockHash, Height, Timestamp, TxInIndex, TxIndex, TxOutIndex, TxOutspend, TxStatus, Txid, Vin,
-    Vout,
+    BlockHash, Height, Timestamp, TxInIndex, TxOutIndex, TxOutspend, TxStatus, Txid, Vin, Vout,
 };
 use serde_json::to_vec;
 use vecdb::{ReadableVec, VecIndex};
@@ -28,7 +25,10 @@ impl Query {
         if usize::from(vout) >= output_count {
             return Ok(TxOutspend::UNSPENT);
         }
-        let confirmed = self.resolve_outspend(first_txout + vout)?;
+        let confirmed = self
+            .resolve_outspends(first_txout + vout, 1)?
+            .pop()
+            .data()?;
         if confirmed.spent {
             return Ok(confirmed);
         }
@@ -73,66 +73,6 @@ impl Query {
         let bytes = to_vec(&outspends).unwrap();
         let identity = outspends_identity(&outspends, &bytes);
         Ok((bytes, identity))
-    }
-
-    /// Resolve spend status for a single output. Minimal reads.
-    fn resolve_outspend(&self, txout_index: TxOutIndex) -> Result<TxOutspend> {
-        let txin_index = self
-            .plugins()
-            .outputs
-            .spent
-            .txin_index
-            .collect_one(txout_index)
-            .data()?;
-
-        if txin_index == TxInIndex::UNSPENT {
-            return Ok(TxOutspend::UNSPENT);
-        }
-
-        self.build_outspend(txin_index)
-    }
-
-    /// Build a single TxOutspend from a known-spent TxInIndex.
-    fn build_outspend(&self, txin_index: TxInIndex) -> Result<TxOutspend> {
-        let bound = self.safe_lengths();
-        if txin_index >= bound.txin_index {
-            return Ok(TxOutspend::UNSPENT);
-        }
-        let indexer = self.indexer();
-        let spending_tx_index: TxIndex = indexer
-            .vecs()
-            .inputs
-            .tx_index
-            .collect_one(txin_index)
-            .data()?;
-        if spending_tx_index >= bound.tx_index {
-            return Ok(TxOutspend::UNSPENT);
-        }
-        let spending_first_txin: TxInIndex = indexer
-            .vecs()
-            .transactions
-            .first_txin_index
-            .collect_one(spending_tx_index)
-            .data()?;
-        let vin = checked_vin(txin_index, spending_first_txin)?;
-        let spending_txid = indexer
-            .vecs()
-            .transactions
-            .txid
-            .collect_one(spending_tx_index)
-            .data()?;
-        let spending_height = self.confirmed_status_height(spending_tx_index)?;
-        if spending_height >= bound.height {
-            return Err(Error::UnknownTxid);
-        }
-        let (block_hash, block_time) = self.block_hash_and_time(spending_height)?;
-
-        Ok(TxOutspend {
-            spent: true,
-            txid: Some(spending_txid),
-            vin: Some(vin),
-            status: Some(TxStatus::confirmed(spending_height, block_hash, block_time)),
-        })
     }
 
     /// Resolve spend status for a contiguous range of outputs.
@@ -210,7 +150,7 @@ fn checked_vin(input: TxInIndex, first: TxInIndex) -> Result<Vin> {
 fn outspend_identity(outspend: &TxOutspend, bytes: &[u8]) -> RepresentationId {
     confirmed_spending_block(outspend).map_or_else(
         || RepresentationId::content(bytes),
-        |(hash, height)| RepresentationId::Block { hash, height },
+        |(hash, _)| RepresentationId::Block(hash),
     )
 }
 
@@ -245,10 +185,7 @@ fn outspends_identity(outspends: &[TxOutspend], bytes: &[u8]) -> RepresentationI
         }
     }
 
-    newest.map_or_else(content, |(hash, height)| RepresentationId::Block {
-        hash,
-        height,
-    })
+    newest.map_or_else(content, |(hash, _)| RepresentationId::Block(hash))
 }
 
 #[cfg(test)]

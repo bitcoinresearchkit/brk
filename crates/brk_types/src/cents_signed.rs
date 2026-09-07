@@ -1,27 +1,19 @@
 use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
+use crate::CheckedSub;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use vecdb::{CheckedSub, Formattable, Pco};
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 use super::Dollars;
 
 /// Signed cents (i64) - for values that can be negative.
 /// Used for profit/loss calculations, deltas, etc.
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Serialize,
-    Deserialize,
-    Pco,
-    JsonSchema,
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct CentsSigned(i64);
 
 impl CentsSigned {
@@ -250,6 +242,12 @@ impl CheckedSub for CentsSigned {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
+#[cfg(feature = "storage")]
+impl vecdb::CheckedSub for CentsSigned {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        crate::CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl std::fmt::Display for CentsSigned {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -259,6 +257,7 @@ impl std::fmt::Display for CentsSigned {
     }
 }
 
+#[cfg(feature = "storage")]
 impl Formattable for CentsSigned {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {

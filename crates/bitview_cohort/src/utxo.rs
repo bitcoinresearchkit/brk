@@ -1,3 +1,4 @@
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use rayon::prelude::*;
 
@@ -6,9 +7,9 @@ use crate::{
     ENTRY_FILTERS, ENTRY_NAMES, EPOCH_FILTERS, EPOCH_NAMES, EntryId, EpochId, Filter,
     SPENDABLE_TYPE_FILTERS, SPENDABLE_TYPE_NAMES, SpendableType, TERM_FILTERS, TERM_NAMES,
 };
-use vecdb::ColumnId;
 
-#[derive(Default, Clone, Traversable)]
+#[derive(Default, Clone)]
+#[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct UTXOGroups<T> {
     /// Uses all UTXOs.
     pub all: T,
@@ -19,7 +20,7 @@ pub struct UTXOGroups<T> {
     /// Groups UTXOs by their individual output value.
     pub utxo_amount: Amount<T>,
     pub term: ByTerm<T>,
-    #[traversable(rename = "type")]
+    #[cfg_attr(feature = "storage", traversable(rename = "type"))]
     pub type_: SpendableType<T>,
 }
 

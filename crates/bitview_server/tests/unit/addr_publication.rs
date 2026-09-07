@@ -46,7 +46,7 @@ impl Node {
         let result = match request["method"].as_str().unwrap() {
             "getbestblockhash" => {
                 self.best_reads += 1;
-                json!(if self.best_reads % 2 == 0 {
+                json!(if self.best_reads.is_multiple_of(2) {
                     self.final_tip.as_ref().unwrap_or(&self.tip)
                 } else {
                     &self.tip

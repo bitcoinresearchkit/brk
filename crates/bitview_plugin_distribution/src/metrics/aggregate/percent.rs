@@ -4,10 +4,9 @@ use bitview_cohort::{
     CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
 };
 use bitview_traversable::Traversable;
-use brk_exit::Exit;
-use brk_types::{Height, Version};
+use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Database, ReadableVec, Rw, StorageMode, VecValue};
+use vecdb::{Database, Rw, StorageMode};
 
 use bitview_compute::{ColumnarPerBlock, FixedRatio, LazyColumnPercentPerBlock};
 
@@ -47,27 +46,5 @@ impl<B: FixedRatio> AggregatePercentPerBlock<B> {
             },
         )?;
         Ok(Self { values })
-    }
-
-    pub fn compute_columns2<'a, A, C, V1, V2>(
-        &mut self,
-        max_from: Height,
-        source1: impl Fn(UTXOAggregateId) -> &'a V1,
-        source2: impl Fn(UTXOAggregateId) -> &'a V2,
-        transform: impl FnMut(UTXOAggregateId, A, C) -> B,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: VecValue,
-        C: VecValue,
-        V1: ReadableVec<Height, A> + 'a,
-        V2: ReadableVec<Height, C> + 'a,
-    {
-        self.values
-            .compute_columns2(max_from, source1, source2, transform, exit)
-    }
-
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.values.stored_mut()
     }
 }

@@ -2,35 +2,9 @@ use brk_error::Result;
 
 use bitview_plugin_indexer::Indexer;
 use brk_exit::Exit;
-use brk_types::{Bitcoin, Height, StoredF64};
+use brk_types::{Bitcoin, BoundedRatio, StoredF64};
 
 use super::Vecs;
-use bitview_compute::{PerBlock, PerBlockCumulativeRolling};
-
-fn compute_rest(
-    starting_height: Height,
-    created: &PerBlockCumulativeRolling<StoredF64>,
-    consumed: &PerBlockCumulativeRolling<StoredF64>,
-    stored: &mut PerBlockCumulativeRolling<StoredF64>,
-    activity: &mut PerBlock<StoredF64>,
-    exit: &Exit,
-) -> Result<()> {
-    stored.cumulative.height.compute_subtract(
-        starting_height,
-        &created.cumulative.height,
-        &consumed.cumulative.height,
-        exit,
-    )?;
-
-    activity.height.compute_divide(
-        starting_height,
-        &consumed.cumulative.height,
-        &created.cumulative.height,
-        exit,
-    )?;
-
-    Ok(())
-}
 
 pub fn compute(
     vecs: &mut Vecs,
@@ -38,33 +12,35 @@ pub fn compute(
     distribution: &bitview_plugin_distribution::Vecs,
     exit: &Exit,
 ) -> Result<()> {
-    vecs.compute(indexer, distribution, exit)
-}
+    let starting_height = indexer.safe_lengths().height;
+    let circulating_supply = &distribution.cohorts.supply.total.cohorts.all.sats.height;
 
-impl Vecs {
-    fn compute(
-        &mut self,
-        indexer: &Indexer,
-        distribution: &bitview_plugin_distribution::Vecs,
-        exit: &Exit,
-    ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
-        let circulating_supply = &distribution.cohorts.supply.total.cohorts.all.sats.height;
+    vecs.coinblocks_created.compute_cumulative_transformed(
+        starting_height,
+        circulating_supply,
+        |value| StoredF64::from(Bitcoin::from(value)),
+        exit,
+    )?;
 
-        self.coinblocks_created.compute_cumulative_transformed(
-            starting_height,
-            circulating_supply,
-            |value| StoredF64::from(Bitcoin::from(value)),
-            exit,
-        )?;
+    vecs.coinblocks_stored.cumulative.height.compute_subtract(
+        starting_height,
+        &vecs.coinblocks_created.cumulative.height,
+        &distribution.coinblocks_destroyed.cumulative.height,
+        exit,
+    )?;
 
-        compute_rest(
-            starting_height,
-            &self.coinblocks_created,
-            &distribution.coinblocks_destroyed,
-            &mut self.coinblocks_stored,
-            &mut self.derived.liveliness,
-            exit,
-        )
-    }
+    vecs.derived.liveliness_source.height.compute_transform2(
+        starting_height,
+        &distribution.coinblocks_destroyed.cumulative.height,
+        &vecs.coinblocks_created.cumulative.height,
+        |(h, destroyed, created, ..)| {
+            (
+                h,
+                BoundedRatio::from(f64::from(destroyed) / f64::from(created)),
+            )
+        },
+        exit,
+    )?;
+
+    Ok(())
 }

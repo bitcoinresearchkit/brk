@@ -1,5 +1,3 @@
-use crate::internals::*;
-
 use brk_error::Result;
 
 use std::path::Path;
@@ -53,25 +51,8 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub op_return: OpReturnVecs<M>,
 }
 
-pub trait IndexerVecs: Sized {
-    fn forced_import(parent: &Path, version: Version) -> Result<Self>;
-    fn rollback_if_needed(&mut self, starting_lengths: &Lengths) -> Result<()>;
-    fn flush(&mut self, height: Height) -> Result<()>;
-    fn stamped_write(&mut self, height: Height) -> Result<()>;
-    fn sync_bg_tasks(&self) -> Result<()>;
-    fn run_bg(
-        &self,
-        f: impl FnOnce(&Database) -> std::result::Result<(), RawDBError> + Send + 'static,
-    );
-    fn iter_addr_hashes_from(
-        &self,
-        addr_type: OutputType,
-        height: Height,
-    ) -> Result<Box<dyn Iterator<Item = AddrHash> + '_>>;
-}
-
-impl IndexerVecs for Vecs {
-    fn forced_import(parent: &Path, version: Version) -> Result<Self> {
+impl Vecs {
+    pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
         debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
         debug!("Setting min len...");
@@ -115,7 +96,7 @@ impl IndexerVecs for Vecs {
         Ok(this)
     }
 
-    fn rollback_if_needed(&mut self, starting_lengths: &Lengths) -> Result<()> {
+    pub fn rollback_if_needed(&mut self, starting_lengths: &Lengths) -> Result<()> {
         let saved_height = starting_lengths.last_height().unwrap_or_default();
         let stamp = Stamp::from(u64::from(saved_height));
 
@@ -166,41 +147,39 @@ impl IndexerVecs for Vecs {
         Ok(())
     }
 
-    fn flush(&mut self, height: Height) -> Result<()> {
+    pub fn flush(&mut self, height: Height) -> Result<()> {
         self.stamped_write(height)?;
         self.db.flush()?;
         Ok(())
     }
 
-    fn stamped_write(&mut self, height: Height) -> Result<()> {
+    pub fn stamped_write(&mut self, height: Height) -> Result<()> {
         self.blocks.compute_median_times()?;
         self.par_iter_mut_any_stored_vec()
             .try_for_each(|vec| vec.stamped_write(Stamp::from(height)))?;
         Ok(())
     }
 
-    fn sync_bg_tasks(&self) -> Result<()> {
+    pub fn sync_bg_tasks(&self) -> Result<()> {
         self.db.sync_bg_tasks()?;
         Ok(())
     }
 
-    fn run_bg(
+    pub fn run_bg(
         &self,
         f: impl FnOnce(&Database) -> std::result::Result<(), RawDBError> + Send + 'static,
     ) {
         self.db.run_bg(f);
     }
 
-    fn iter_addr_hashes_from(
+    pub fn iter_addr_hashes_from(
         &self,
         addr_type: OutputType,
         height: Height,
     ) -> Result<Box<dyn Iterator<Item = AddrHash> + '_>> {
         self.addrs.iter_hashes_from(addr_type, height)
     }
-}
 
-impl Vecs {
     pub fn next_height(&self) -> Height {
         let min_stamp = self
             .iter_any_stored_vec()

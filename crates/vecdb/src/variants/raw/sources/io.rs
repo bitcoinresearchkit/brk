@@ -70,63 +70,12 @@ where
         self.buffer_len = buffer_len;
         self.buffer_pos = 0;
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use crate::internals::*;
-    use tempfile::tempdir;
-
-    use crate::{AnyStoredVec, BytesVec, Database, ImportableVec, Version, WritableVec};
-
-    use super::RawIoSource;
-
-    #[test]
-    fn read_into_appends_the_requested_range() {
-        let temp = tempdir().unwrap();
-        let db = Database::open(temp.path()).unwrap();
-        let mut vec: BytesVec<usize, u64> =
-            BytesVec::forced_import(&db, "values", Version::ONE).unwrap();
-        let values: Vec<_> = (0..10_000).map(|index| index as u64 * 37).collect();
-        for &value in &values {
-            vec.push(value);
-        }
-        vec.write().unwrap();
-
-        let mut output = vec![u64::MAX];
-        RawIoSource::new(&vec, 117, 9_731).read_into(&mut output);
-        assert_eq!(&output[1..], &values[117..9_731]);
-    }
-}
-pub trait VariantsRawSourcesIoRawIoSourceAITSInternal<'a, I, T, S>: Sized
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(vec: &'a ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self;
-    fn new_from_parts(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self;
-    fn read_window(&mut self) -> Option<(*const u8, usize)>;
-    fn skip_file_bytes(&mut self, bytes: usize);
-    fn read_into(self, output: &mut Vec<T>);
-    fn fold<B, F: FnMut(B, T) -> B>(self, init: B, f: F) -> B;
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        self,
-        init: B,
-        f: F,
-    ) -> std::result::Result<B, E>;
-}
-impl<'a, I, T, S> VariantsRawSourcesIoRawIoSourceAITSInternal<'a, I, T, S>
-    for RawIoSource<'a, I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    S: RawStrategy<T>,
-{
-    fn new(vec: &'a ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
+    pub fn new(vec: &'a ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
         Self::new_from_parts(vec.region(), vec.stored_len(), from, to)
     }
-    fn new_from_parts(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
+
+    pub fn new_from_parts(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {
         let file = region.open_db_read_only_file().expect("open file");
         let region_meta = region.meta();
         let region_start = region_meta.start();
@@ -156,14 +105,16 @@ where
 
         this
     }
-    fn read_window(&mut self) -> Option<(*const u8, usize)> {
+
+    pub fn read_window(&mut self) -> Option<(*const u8, usize)> {
         if self.cant_read_file() {
             return None;
         }
         self.refill_buffer();
         Some((self.buffer.as_ptr(), self.buffer_len))
     }
-    fn skip_file_bytes(&mut self, bytes: usize) {
+
+    pub fn skip_file_bytes(&mut self, bytes: usize) {
         debug_assert!(bytes <= self.remaining_file_bytes());
         self.file
             .seek(SeekFrom::Current(bytes as i64))
@@ -171,8 +122,9 @@ where
         self.file_offset += bytes;
         self.buffer_pos = self.buffer_len;
     }
+
     /// Reads native-layout values directly into the destination allocation.
-    fn read_into(self, output: &mut Vec<T>) {
+    pub fn read_into(self, output: &mut Vec<T>) {
         debug_assert!(S::IS_NATIVE_LAYOUT);
         let bytes = self.remaining_file_bytes();
         debug_assert!(bytes.is_multiple_of(Self::SIZE_OF_T));
@@ -206,9 +158,10 @@ where
 
         unsafe { output.set_len(old_len + values) };
     }
+
     /// Fold all remaining elements — own implementation so LLVM can vectorize the inner loop.
     #[inline(always)]
-    fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
+    pub fn fold<B, F: FnMut(B, T) -> B>(mut self, init: B, mut f: F) -> B {
         let mut accum = init;
         loop {
             let ptr = self.buffer.as_ptr();
@@ -227,9 +180,10 @@ where
         }
         accum
     }
+
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
         mut self,
         init: B,
         mut f: F,
@@ -251,5 +205,31 @@ where
             self.refill_buffer();
         }
         Ok(accum)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+
+    use crate::{AnyStoredVec, BytesVec, Database, ImportableVec, Version, WritableVec};
+
+    use super::RawIoSource;
+
+    #[test]
+    fn read_into_appends_the_requested_range() {
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
+        let mut vec: BytesVec<usize, u64> =
+            BytesVec::forced_import(&db, "values", Version::ONE).unwrap();
+        let values: Vec<_> = (0..10_000).map(|index| index as u64 * 37).collect();
+        for &value in &values {
+            vec.push(value);
+        }
+        vec.write().unwrap();
+
+        let mut output = vec![u64::MAX];
+        RawIoSource::new(&vec, 117, 9_731).read_into(&mut output);
+        assert_eq!(&output[1..], &values[117..9_731]);
     }
 }
