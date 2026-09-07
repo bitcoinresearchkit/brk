@@ -23,7 +23,6 @@ impl Vecs {
         let value = super::value::forced_import(&db, version, mappings)?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             spent,
             count,

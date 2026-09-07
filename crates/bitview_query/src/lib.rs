@@ -10,7 +10,7 @@ use std::{
 };
 
 #[cfg(feature = "indexer")]
-use bitview_plugin::{Plugin, PluginReadGuard};
+use bitview_plugin::PublicationReadGuard;
 
 #[cfg(feature = "bedrock")]
 use bitview_plugin_bedrock::Vecs as Bedrock;
@@ -66,8 +66,6 @@ mod output;
 mod query_plugin_set;
 #[cfg(feature = "indexer")]
 mod query_plugins;
-#[cfg(feature = "tokio")]
-mod read_attempt;
 mod representation_id;
 mod series_output;
 mod vecs;
@@ -103,11 +101,7 @@ pub use vecs::{ResolvedSeriesInfo, Vecs};
 
 #[cfg(feature = "indexer")]
 #[derive(Clone)]
-pub struct Query(
-    Arc<QueryInner<'static>>,
-    Option<Instant>,
-    #[cfg(feature = "tokio")] Option<Arc<read_attempt::ReadAttempt>>,
-);
+pub struct Query(Arc<QueryInner<'static>>, Option<Instant>);
 #[cfg(feature = "indexer")]
 struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
@@ -123,12 +117,7 @@ impl Query {
 
     /// A cheap request-local view; shared data and publication guards are unchanged.
     pub fn with_deadline(&self, deadline: Instant) -> Self {
-        Self(
-            Arc::clone(&self.0),
-            Some(deadline),
-            #[cfg(feature = "tokio")]
-            None,
-        )
+        Self(Arc::clone(&self.0), Some(deadline))
     }
 
     pub fn check_deadline(&self) -> Result<()> {
@@ -145,17 +134,9 @@ impl Query {
         }))
     }
 
-    fn read_plugin(&self, plugin: &impl Plugin) -> Result<PluginReadGuard> {
-        #[cfg(feature = "tokio")]
-        if let Some(attempt) = &self.2 {
-            let changes = plugin.gate().changes();
-            return plugin
-                .gate()
-                .try_read()
-                .ok_or_else(|| attempt.waiting_on(changes));
-        }
-        plugin
-            .gate()
+    fn read_publication(&self) -> Result<PublicationReadGuard> {
+        self.indexer()
+            .publication()
             .read_for(self.read_timeout()?)
             .ok_or(Error::ReadTimeout)
     }
@@ -167,29 +148,8 @@ impl Query {
     }
 
     #[cfg(feature = "chain")]
-    fn try_read_plugin(&self, plugin: &impl Plugin) -> Option<PluginReadGuard> {
-        plugin.gate().try_read()
-    }
-
-    #[cfg(feature = "mappings")]
-    fn read_plugins(&self, plugins: Vec<&dyn Plugin>) -> Result<PluginReadGuard> {
-        #[cfg(feature = "tokio")]
-        if let Some(attempt) = &self.2 {
-            loop {
-                self.check_deadline()?;
-                match PluginReadGuard::try_acquire(&plugins) {
-                    Ok(guards) => return Ok(guards),
-                    Err(blocked) => {
-                        let changes = blocked.gate().changes();
-                        if blocked.gate().try_read().is_some() {
-                            continue;
-                        }
-                        return Err(attempt.waiting_on(changes));
-                    }
-                }
-            }
-        }
-        PluginReadGuard::acquire_for(plugins, self.read_timeout()?).ok_or(Error::ReadTimeout)
+    fn try_read_publication(&self) -> Option<PublicationReadGuard> {
+        self.indexer().publication().try_read()
     }
 
     /// Builds the process-lifetime read-only query view.
@@ -215,8 +175,6 @@ impl Query {
                 #[cfg(feature = "price")]
                 live_oracle: Default::default(),
             }),
-            None,
-            #[cfg(feature = "tokio")]
             None,
         )
     }

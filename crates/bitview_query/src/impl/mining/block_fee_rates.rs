@@ -10,7 +10,7 @@ impl Query {
     /// average height/timestamp and the seven percentile means
     /// (`min, pct10, pct25, median, pct75, pct90, max`).
     pub fn block_fee_rates(&self, time_period: TimePeriod) -> Result<Vec<BlockFeeRatesEntry>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let bw = BlockWindow::new(self, time_period)?;
         let frd = &self
             .plugins()

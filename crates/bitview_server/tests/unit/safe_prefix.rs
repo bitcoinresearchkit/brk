@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use bitview_plugin::Plugin;
 use tokio::time::timeout;
 
 use super::{
@@ -20,8 +19,13 @@ fn body(response: &[u8]) -> &[u8] {
 #[test]
 fn immutable_block_reads_use_published_prefix_during_append() {
     run(|state, address| async move {
-        let (height, hash, gate) =
-            state.sync(|q| (q.height(), q.tip_blockhash(), q.indexer().gate().clone()));
+        let (height, hash, gate) = state.sync(|q| {
+            (
+                q.height(),
+                q.tip_blockhash(),
+                q.indexer().publication().clone(),
+            )
+        });
         let paths = [
             "/api/server/sync".to_owned(),
             "/api/blocks".to_owned(),
@@ -72,7 +76,7 @@ fn immutable_block_reads_use_published_prefix_during_append() {
 }
 
 #[test]
-fn reorg_tail_waits_for_publication_then_distinguishes_absence() {
+fn unpublished_reorg_tail_is_unavailable_then_distinguishes_absence() {
     use super::chain_fixture::{default_first, run_genesis};
     use bitview_plugin::UpdateContext;
     use bitview_plugin_indexer::HasIndexer;
@@ -83,7 +87,7 @@ fn reorg_tail_waits_for_publication_then_distinguishes_absence() {
     run_genesis(default_first(), |mut fixture| async move {
         fixture.publish(1, 1);
         let old_hash = fixture.query.sync(|q| q.tip_blockhash());
-        let gate = fixture.plugins.indexer().gate().clone();
+        let gate = fixture.plugins.indexer().publication().clone();
         gate.begin_update();
         fixture.active.store(2, Ordering::SeqCst);
         fixture
@@ -96,25 +100,19 @@ fn reorg_tail_waits_for_publication_then_distinguishes_absence() {
         );
 
         let address = fixture.address;
-        let mut pending = tokio::spawn(exchange_with_etag(
-            address,
-            "GET",
-            "/api/block-height/1",
-            "\"old\"",
-        ));
-        assert!(
-            timeout(Duration::from_millis(100), &mut pending)
-                .await
-                .is_err()
-        );
+        let unavailable = timeout(
+            Duration::from_secs(1),
+            exchange_with_etag(address, "GET", "/api/block-height/1", "*"),
+        )
+        .await
+        .unwrap();
+        assert!(unavailable.starts_with("HTTP/1.1 503"), "{unavailable}");
+        assert!(!unavailable.contains("\r\netag:"));
         let prefix = exchange_with_etag(address, "GET", "/api/block-height/0", "\"old\"").await;
         assert!(prefix.starts_with("HTTP/1.1 200"), "{prefix}");
         fixture.plugins.commit().unwrap();
         gate.finish_update();
-        let response = timeout(Duration::from_secs(2), pending)
-            .await
-            .unwrap()
-            .unwrap();
+        let response = exchange_with_etag(address, "GET", "/api/block-height/1", "\"old\"").await;
         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
         let new_hash = fixture.query.sync(|q| q.tip_blockhash());
         assert_ne!(old_hash, new_hash);
@@ -252,7 +250,7 @@ fn request_deadline_bounds_gate_waits_and_skips_expired_work() {
             .await;
         assert!(matches!(result, Err(brk_error::Error::ReadTimeout)));
 
-        let gate = state.sync(|q| q.indexer().gate().clone());
+        let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         let started = std::time::Instant::now();
         let query = state

@@ -21,7 +21,6 @@ impl Vecs {
         let hashrate = super::hashrate::forced_import(&db, version, mappings)?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             rewards,
             hashrate,

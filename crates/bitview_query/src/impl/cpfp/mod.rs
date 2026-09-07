@@ -28,8 +28,7 @@ impl Query {
 
     /// Effective SFL chunk rate for live, confirmed, or replaced transactions.
     pub fn effective_fee_rate(&self, txid: &Txid) -> Result<FeeRate> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.transactions])?;
+        let _guard = self.read_publication()?;
         match self.resolve_tx_index_bounded(txid) {
             Ok(index) => {
                 return self

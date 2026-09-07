@@ -5,7 +5,7 @@ use bitview_compute::{
     BasisPointsPerBlock, LazyBasisPointsPerBlock, LazyPerBlock, PerBlock, PercentPerBlock,
     RatioPerBlock,
 };
-use bitview_plugin::{Plugin, PluginGate, PluginStorage};
+use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::{PartsPerMillion32, PartsPerMillion64, StoredF32};
 use vecdb::{Database, Rw, StorageMode};
@@ -15,8 +15,6 @@ use crate::STORAGE;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     /// Puell Multiple: the represented block's derived subsidy value in USD
@@ -76,9 +74,5 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }

@@ -8,6 +8,7 @@ use crate::SafeLengths;
 
 /// One writer publishes complete bounds; only rollback drains pinned readers.
 pub struct State {
+    pub publication: bitview_plugin::Publication,
     lengths: ArcSwap<Lengths>,
     reorg: Arc<RwLock<()>>,
 }
@@ -15,6 +16,7 @@ pub struct State {
 impl State {
     pub fn new() -> Self {
         Self {
+            publication: Default::default(),
             lengths: ArcSwap::from_pointee(Lengths::default()),
             reorg: Arc::new(RwLock::new(())),
         }

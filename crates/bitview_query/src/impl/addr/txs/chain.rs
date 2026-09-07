@@ -32,7 +32,7 @@ impl Query {
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<Vec<Transaction>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let txindices = self.addr_txindices(addr, after_txid, limit)?;
         let guard = self.pin_safe_lengths()?;
         self.transactions_at_indices(&txindices, &guard)
@@ -45,7 +45,7 @@ impl Query {
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<ResolvedAddrChainTxs> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let (output_type, type_index) = self.resolve_addr(addr)?;
         self.resolve_addr_chain_txs_for(output_type, type_index, after_txid, limit)
     }
@@ -55,7 +55,7 @@ impl Query {
         &self,
         resolved: ResolvedAddrChainTxs,
     ) -> Result<Vec<Transaction>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         self.addr_txs_chain_at(resolved)
     }
 
@@ -65,7 +65,7 @@ impl Query {
         after_txid: Option<Txid>,
         limit: usize,
     ) -> Result<Vec<Txid>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let txindices = self.addr_txindices(&addr, after_txid, limit)?;
         let txid_reader = self.indexer().vecs().transactions.txid.reader();
         Ok(txindices

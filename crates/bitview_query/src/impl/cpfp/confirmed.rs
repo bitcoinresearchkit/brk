@@ -192,12 +192,7 @@ impl Query {
     }
 
     pub fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
-        let plugins = self.plugins();
-        let read = self.read_indexer_with(vec![
-            plugins.mappings,
-            plugins.outputs,
-            plugins.transactions,
-        ])?;
+        let read = self.read_indexer()?;
         let (_, seed, height) = read.revalidate_confirmed_tx(transaction)?;
         let info = self.confirmed_cpfp_at(seed, height)?;
         Ok(info)

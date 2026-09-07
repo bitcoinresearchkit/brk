@@ -1,6 +1,5 @@
 use std::{net::SocketAddr, time::Duration};
 
-use bitview_plugin::Plugin;
 use brk_types::{Date, Day1};
 use serde_json::Value;
 use tokio::time::timeout;
@@ -95,13 +94,8 @@ pub async fn check(state: &AppState, address: SocketAddr) {
             }
         }
     }
-    for gate in state.sync(|q| {
-        [
-            q.indexer().gate().clone(),
-            q.mappings().gate().clone(),
-            q.price().gate().clone(),
-        ]
-    }) {
+    {
+        let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         let mut requests = Vec::new();
         for (path, etag) in &valid {
@@ -169,15 +163,11 @@ async fn check_live(state: &AppState, address: SocketAddr) {
         cases[0].1, cases[1].1,
         "price aliases share representation identity"
     );
-    for (index, gate) in state
-        .sync(|q| [q.indexer().gate().clone(), q.price().gate().clone()])
-        .into_iter()
-        .enumerate()
     {
+        let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         let mut requests = cases
             .iter()
-            .filter(|(path, _)| index == 0 || !path.contains("/outputs/"))
             .map(|(path, tag)| {
                 let path = *path;
                 let tag = tag.clone();

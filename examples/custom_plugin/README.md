@@ -29,21 +29,22 @@ http://localhost:3110/api/series/near_full_block_streak/height
 Change the plugin storage ID and schema version, stored vectors, dependency
 struct, and compute method for your metric. Bump the root schema version when a
 change must invalidate the plugin's stored vectors; use narrower component
-versions for isolated changes. Keep the publication gate and pass the indexer's
+versions for isolated changes. Share the composition's publication barrier with
+readers and pass the indexer's
 safe height as the maximum recomputation point so normal updates and reorgs
 follow the same path.
 
 The author contract is deliberately small:
 
-1. Define one `PluginStorage` and return it, plus the plugin gate, from
-   `Plugin`.
+1. Define one `PluginStorage` and return it from `Plugin`.
 2. Accept `ImportContext` in the plugin constructor and open the database
    through that storage descriptor.
 3. Define a typed dependency struct and implement `ComputePlugin`, using
    `UpdateContext` only for shared update control such as `Exit`.
 4. Put the plugin in a derived `PluginSet`, call it in the composition's typed
    compute schedule, and expose a read-only accessor for consumers that need
-   it.
+   it. Delegate `ComputePluginSet::publication` to the default composition so
+   the built-in and custom stages publish together.
 
 `ImportContext` and `UpdateContext` are copyable borrowed handles. They do not
 contain plugin dependencies, so adding a metric cannot silently change its

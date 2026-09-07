@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use bitview_plugin::PluginReadGuard;
+use bitview_plugin::PublicationReadGuard;
 use bitview_plugin_indexer::Lengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{Addr, AddrBytes, BlockHash, Height, TxIndex, TxOutIndex, TxStatus, Utxo, Vout};
@@ -9,7 +9,7 @@ use crate::Query;
 
 /// A bounded UTXO selection retaining publication exclusion until consumed.
 pub struct ResolvedAddrUtxos {
-    guard: PluginReadGuard,
+    guard: PublicationReadGuard,
     lengths: Lengths,
     outpoints: Vec<(TxIndex, Vout)>,
     anchor: BlockHash,
@@ -35,7 +35,7 @@ impl Query {
         max_utxos: usize,
     ) -> Result<Option<ResolvedAddrUtxos>> {
         let addr = AddrBytes::from_str(addr)?;
-        let Some(guard) = self.try_read_plugin(self.indexer()) else {
+        let Some(guard) = self.try_read_publication() else {
             return Ok(None);
         };
         self.resolve_addr_utxos_guarded(&addr, guard, max_utxos)
@@ -44,14 +44,14 @@ impl Query {
 
     pub fn resolve_addr_utxos(&self, addr: &Addr, max_utxos: usize) -> Result<ResolvedAddrUtxos> {
         let addr = AddrBytes::from_str(addr)?;
-        let guard = self.read_plugin(self.indexer())?;
+        let guard = self.read_publication()?;
         self.resolve_addr_utxos_guarded(&addr, guard, max_utxos)
     }
 
     fn resolve_addr_utxos_guarded(
         &self,
         addr: &AddrBytes,
-        guard: PluginReadGuard,
+        guard: PublicationReadGuard,
         max_utxos: usize,
     ) -> Result<ResolvedAddrUtxos> {
         let (output_type, type_index) = self.resolve_addr_bytes(addr)?;

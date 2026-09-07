@@ -10,8 +10,7 @@ use crate::{Query, RepresentationId};
 
 impl Query {
     pub fn outspend(&self, txid: &Txid, vout: Vout) -> Result<TxOutspend> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.outputs])?;
+        let _guard = self.read_publication()?;
         let (_, first_txout, output_count) = match self.resolve_tx_outputs(txid) {
             Ok(outputs) => outputs,
             Err(Error::UnknownTxid) => {
@@ -46,8 +45,7 @@ impl Query {
     }
 
     pub fn outspends(&self, txid: &Txid) -> Result<Vec<TxOutspend>> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.outputs])?;
+        let _guard = self.read_publication()?;
         let (_, first_txout, output_count) = match self.resolve_tx_outputs(txid) {
             Ok(outputs) => outputs,
             Err(Error::UnknownTxid) => {

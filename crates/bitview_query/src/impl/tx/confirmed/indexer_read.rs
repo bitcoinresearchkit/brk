@@ -1,4 +1,4 @@
-use bitview_plugin::{Plugin, PluginReadGuard};
+use bitview_plugin::PublicationReadGuard;
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, Height, TxIndex, Txid};
 use vecdb::ReadableVec;
@@ -8,29 +8,18 @@ use crate::Query;
 
 /// One logical read of this query's published indexer state.
 ///
-/// Only the constructors below can pair a query with a guard. Additional
-/// plugin gates are acquired together, never while holding an indexer guard.
+/// Only the constructor below can pair a query with the shared pipeline guard.
+/// Dependent reads must reuse this view instead of acquiring another guard.
 pub(crate) struct IndexerRead<'a> {
     query: &'a Query,
-    _guard: PluginReadGuard,
+    _guard: PublicationReadGuard,
 }
 
 impl Query {
     pub(crate) fn read_indexer(&self) -> Result<IndexerRead<'_>> {
         Ok(IndexerRead {
             query: self,
-            _guard: self.read_plugin(self.indexer())?,
-        })
-    }
-
-    pub(crate) fn read_indexer_with<'a>(
-        &'a self,
-        mut plugins: Vec<&'a dyn Plugin>,
-    ) -> Result<IndexerRead<'a>> {
-        plugins.push(self.indexer());
-        Ok(IndexerRead {
-            query: self,
-            _guard: self.read_plugins(plugins)?,
+            _guard: self.read_publication()?,
         })
     }
 }

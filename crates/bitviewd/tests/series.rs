@@ -1,8 +1,7 @@
 use std::{sync::mpsc, thread, time::Duration};
 
-use bitview::{ImportContext, PluginSet};
+use bitview::{ComputePluginSet, ImportContext};
 use bitview_default::DefaultPlugins;
-use bitview_plugin::PluginId;
 use bitview_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
@@ -25,27 +24,18 @@ fn check_publication_gates() {
     let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
     let query = Query::build(&plugins, None);
 
-    for (name, index, owner) in [
-        ("txin_index", Index::TxOutIndex, "outputs"),
-        ("txin_index", Index::TxInIndex, "mappings"),
+    for (name, index) in [
+        ("txin_index", Index::TxOutIndex),
+        ("txin_index", Index::TxInIndex),
         (
             "utxos_over_5m_old_transfer_volume_average_1y_cents",
             Index::Day1,
-            "distribution",
         ),
-        ("addr_state", Index::P2AAddrIndex, "distribution"),
-        ("txin_index", Index::TxOutIndex, "indexer"),
-        ("txin_index", Index::TxOutIndex, "mappings"),
+        ("addr_state", Index::P2AAddrIndex),
     ] {
         let name = name.into();
         let expected = query.len(&name, index).unwrap();
-        let mut gate = None;
-        plugins.for_each_plugin(&mut |plugin| {
-            if plugin.id() == PluginId::new(owner) {
-                gate = Some(plugin.gate().clone());
-            }
-        });
-        let gate = gate.unwrap();
+        let gate = plugins.publication().clone();
         gate.begin_update();
         let query = query.clone();
         let (started_tx, started_rx) = mpsc::channel();

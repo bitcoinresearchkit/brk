@@ -12,7 +12,7 @@ use axum::{body::to_bytes, http::header::ETAG};
 #[cfg(feature = "chain")]
 use bitview_default::DefaultPlugins;
 #[cfg(feature = "chain")]
-use bitview_plugin::{ImportContext, Plugin};
+use bitview_plugin::ImportContext;
 #[cfg(all(feature = "chain", feature = "urpd"))]
 use bitview_plugin_distribution::{AgeRangeUrpds, HasDistribution};
 #[cfg(feature = "chain")]
@@ -450,7 +450,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         etag
     );
 
-    // Mutable-source reads release admission while awaiting publication.
+    // Mutable-source reads retain admission while awaiting publication.
     // Immutable prefix routes no longer wait on this gate.
     #[derive(Clone, Copy)]
     enum MutableBlockRead {
@@ -464,7 +464,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         MutableBlockRead::Timestamp,
     ] {
         assert_eq!(state.sync_query.available_permits(), 1);
-        let gate = state.sync(|q| q.indexer().gate().clone());
+        let gate = state.sync(|q| q.indexer().publication().clone());
         let closing = gate.clone();
         spawn_blocking(move || closing.begin_update())
             .await
@@ -489,18 +489,18 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         let request = spawn_request(state.clone());
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert!(!request.is_finished());
-        assert_eq!(state.sync_query.available_permits(), 1);
+        assert_eq!(state.sync_query.available_permits(), 0);
         request.abort();
         assert!(matches!(request.await, Err(error) if error.is_cancelled()));
-        let released = state.sync_query.available_permits() == 1;
+        let retained = state.sync_query.available_permits() == 0;
         let mut following = spawn_request(state.clone());
         let queued = timeout(Duration::from_millis(50), &mut following)
             .await
             .is_err();
         gate.finish_update();
         assert!(
-            released,
-            "cancelled publication wait retained worker admission"
+            retained,
+            "cancelled publication wait released worker admission"
         );
         assert!(queued, "following block request bypassed publication");
         let response = timeout(Duration::from_secs(2), following)
@@ -539,7 +539,7 @@ async fn check_height_block_lists(state: &AppState, address: SocketAddr) {
         assert_eq!(etag, format!("W/\"blocks2-{anchor}\""));
         cases.push((path, etag));
     }
-    let gate = state.sync(|q| q.indexer().gate().clone());
+    let gate = state.sync(|q| q.indexer().publication().clone());
     gate.begin_update();
     let mut pending = Vec::new();
     for (path, etag) in cases {
@@ -833,8 +833,8 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
             let data_admission = server.state.series_bodies.data_query.clone();
             let disk_file = server.state.data_path.join("data");
             let serving = tokio::spawn(server.serve());
-            // Several intentionally unavailable reads now spend their bounded
-            // publication budget instead of failing immediately.
+            // Unavailable snapshot joins fail immediately; lock waits and
+            // queued work still share the bounded publication budget.
             timeout(Duration::from_secs(120), async {
                 for method in ["GET", "HEAD"] {
                     for prefix in ["%2Bf", "-1", "0x1", "fffffffffffffffff", "nope"] {
@@ -846,7 +846,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 for method in ["GET", "HEAD"] {
                     for condition in ["*", "W/\"block-timestamp-v2-forged\""] {
                         let response = exchange_with_etag(address, method, "/api/v1/mining/blocks/timestamp/4294967295", condition).await;
-                        assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                        assert!(response.starts_with("HTTP/1.1 503"), "{response}");
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                         assert!(!response.contains("\r\netag:"));
                     }
@@ -1086,7 +1086,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 }
                 for method in ["GET", "HEAD"] {
                     let response = exchange(address, method, "/health").await;
-                    assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                    assert!(response.starts_with("HTTP/1.1 503"), "{response}");
                     assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     assert!(response.contains("\r\ncdn-cache-control: no-store\r\n"));
                     if method == "HEAD" { assert!(response.ends_with("\r\n\r\n")); }
@@ -1094,7 +1094,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 let response = exchange(address, "GET", "/version").await;
                 assert!(response.starts_with("HTTP/1.1 304"), "{response}");
                 assert!(response.ends_with("\r\n\r\n"));
-                for status in [504, 500] {
+                for status in [503, 500] {
                     let response = exchange(address, "GET", "/api/server/sync").await;
                     assert!(response.starts_with(&format!("HTTP/1.1 {status}")), "{response}");
                     assert!(response.contains("content-type: application/problem+json\r\n"));
@@ -1106,11 +1106,10 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 observed.recv().await.unwrap();
                 assert!(observed.try_recv().is_err());
 
-                // An empty index waits locally under the request deadline;
-                // it must not repeatedly query the node during that wait.
+                // An empty index returns unavailable without replaying the RPC.
                 for _ in 0..4 {
                     let response = exchange(address, "GET", "/api/server/sync").await;
-                    assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                    assert!(response.starts_with("HTTP/1.1 503"), "{response}");
                     observed.recv().await.unwrap();
                     assert!(observed.try_recv().is_err());
                     assert_eq!(admission.available_permits(), 1);
@@ -1124,7 +1123,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 assert!(!response.contains("\r\netag:"));
                 observed.recv().await.unwrap();
                 let response = exchange(address, "GET", "/api/server/sync").await;
-                assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                assert!(response.starts_with("HTTP/1.1 503"), "{response}");
                 observed.recv().await.unwrap();
                 assert!(observed.try_recv().is_err());
                 mock.await.unwrap();

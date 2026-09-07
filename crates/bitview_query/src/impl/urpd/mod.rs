@@ -6,7 +6,6 @@ use std::{
 };
 
 use bitview_cohort::{AgeRangeId, CohortContext, UTXO_ALL_NAME, UTXOAggregateId};
-use bitview_plugin::{Plugin, PluginReadGuard};
 use bitview_plugin_distribution::AgeRangeUrpds;
 use brk_error::{Error, Result};
 use brk_types::{Cents, Cohort, Date, Day1, Urpd, UrpdAggregation, UrpdRaw, UrpdWeight};
@@ -29,16 +28,9 @@ pub struct ResolvedUrpd {
 }
 
 impl Query {
-    fn urpd_read_guard(&self) -> Result<PluginReadGuard> {
-        self.read_plugins(vec![
-            self.plugins().distribution as &dyn Plugin,
-            self.plugins().bedrock as &dyn Plugin,
-        ])
-    }
-
     /// Available cohorts for URPD.
     pub fn urpd_cohorts(&self) -> Result<Vec<Cohort>> {
-        let _guard = self.urpd_read_guard()?;
+        let _guard = self.read_publication()?;
         self.urpd_cohorts_inner()
     }
 
@@ -115,7 +107,7 @@ impl Query {
 
     /// Available dates for a cohort and weighting.
     pub fn urpd_dates_with_weight(&self, cohort: &Cohort, weight: UrpdWeight) -> Result<Vec<Date>> {
-        let _guard = self.urpd_read_guard()?;
+        let _guard = self.read_publication()?;
         self.urpd_dates_with_weight_inner(cohort, weight)
     }
 
@@ -164,7 +156,7 @@ impl Query {
         date: Date,
         weight: UrpdWeight,
     ) -> Result<UrpdRaw> {
-        let _guard = self.urpd_read_guard()?;
+        let _guard = self.read_publication()?;
         self.urpd_raw_with_weight_inner(cohort, date, weight)
     }
 
@@ -279,7 +271,7 @@ impl Query {
         aggregation: UrpdAggregation,
         weight: UrpdWeight,
     ) -> Result<ResolvedUrpd> {
-        let _guard = self.urpd_read_guard()?;
+        let _guard = self.read_publication()?;
         self.resolve_urpd_inner(cohort, date, aggregation, weight)
     }
 
@@ -307,7 +299,7 @@ impl Query {
         aggregation: UrpdAggregation,
         weight: UrpdWeight,
     ) -> Result<ResolvedUrpd> {
-        let _guard = self.urpd_read_guard()?;
+        let _guard = self.read_publication()?;
         let date = if weight == UrpdWeight::Raw {
             latest_date_in_dir(&self.urpd_dir(cohort)?)?
         } else {

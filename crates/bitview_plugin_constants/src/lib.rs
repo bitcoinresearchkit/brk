@@ -3,7 +3,7 @@ mod has;
 pub use has::HasConstants;
 
 use bitview_compute::{ConstantVecs, IndexSources, ReturnF32Tenths, ReturnI8, ReturnU16};
-use bitview_plugin::{Plugin, PluginGate, PluginId, PluginStorage};
+use bitview_plugin::{Plugin, PluginId, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::{StoredF32, StoredI8, StoredU16, Version};
 
@@ -12,8 +12,6 @@ pub const ID: PluginId = STORAGE.id();
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     /// Constant numeric value 0 at every supported index.
     pub _0: ConstantVecs<StoredU16>,
     /// Constant numeric value 1 at every supported index.
@@ -56,7 +54,6 @@ impl Vecs {
     pub fn new(indexes: &IndexSources) -> Self {
         let version = STORAGE.schema_version();
         Self {
-            plugin_gate: PluginGate::new(),
             _0: ConstantVecs::new::<ReturnU16<0>>("constant_0", version, indexes),
             _1: ConstantVecs::new::<ReturnU16<1>>("constant_1", version, indexes),
             _2: ConstantVecs::new::<ReturnU16<2>>("constant_2", version, indexes),
@@ -82,9 +79,5 @@ impl Vecs {
 impl Plugin for Vecs {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }

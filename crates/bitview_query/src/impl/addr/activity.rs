@@ -13,7 +13,7 @@ impl Query {
         addr: &Addr,
         before_txid: Option<&Txid>,
     ) -> Result<Height> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let (output_type, type_index) = self.resolve_addr(addr)?;
         self.addr_last_activity_height_for(output_type, type_index, before_txid)
     }

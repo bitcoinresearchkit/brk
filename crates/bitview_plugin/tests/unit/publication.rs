@@ -2,23 +2,9 @@ use std::{sync::mpsc, thread, time::Duration};
 
 use super::*;
 
-#[cfg(feature = "tokio")]
 #[test]
-fn publication_notification_survives_subscribe_check_wait_race() {
-    let gate = PluginGate::new();
-    gate.begin_update();
-    let mut changes = gate.changes();
-    assert!(gate.try_read().is_none());
-    gate.finish_update();
-    assert!(changes.has_changed().unwrap());
-    changes.borrow_and_update();
-    assert!(gate.try_read().is_some());
-    assert!(!changes.has_changed().unwrap());
-}
-
-#[test]
-fn update_waits_for_readers_and_stays_closed_until_published() {
-    let gate = PluginGate::new();
+fn pipeline_update_waits_for_readers_and_stays_closed_until_published() {
+    let gate = Publication::new();
     let read = gate.try_read().unwrap();
     let writer_gate = gate.clone();
     let (started_tx, started_rx) = mpsc::channel();
@@ -45,25 +31,25 @@ fn update_waits_for_readers_and_stays_closed_until_published() {
 
 #[test]
 fn begin_update_is_idempotent() {
-    let gate = PluginGate::new();
+    let gate = Publication::new();
     let clone = gate.clone();
-    assert_eq!(gate.publication(), 0);
+    assert_eq!(gate.revision(), 0);
     gate.begin_update();
     gate.begin_update();
     assert!(gate.try_read().is_none());
-    assert_eq!(clone.publication(), 0);
+    assert_eq!(clone.revision(), 0);
 
     gate.finish_update();
     assert!(gate.try_read().is_some());
-    assert_eq!(clone.publication(), 1);
+    assert_eq!(clone.revision(), 1);
     clone.begin_update();
     clone.finish_update();
-    assert_eq!(gate.publication(), 2);
+    assert_eq!(gate.revision(), 2);
 }
 
 #[test]
 fn timed_read_stops_waiting_at_its_deadline() {
-    let gate = PluginGate::new();
+    let gate = Publication::new();
     gate.begin_update();
 
     assert!(gate.read_for(Duration::from_millis(10)).is_none());
@@ -74,7 +60,7 @@ fn timed_read_stops_waiting_at_its_deadline() {
 
 #[test]
 fn timed_read_wakes_when_update_finishes() {
-    let gate = PluginGate::new();
+    let gate = Publication::new();
     gate.begin_update();
     let reader_gate = gate.clone();
     let (started_tx, started_rx) = mpsc::channel();

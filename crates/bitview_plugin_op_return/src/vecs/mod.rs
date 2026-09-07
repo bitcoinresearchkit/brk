@@ -4,7 +4,7 @@ mod import;
 
 use brk_error::Result;
 
-use bitview_plugin::{Plugin, PluginGate, PluginStorage};
+use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::{Height, OpReturnKind, OpReturnPolicyId, Version};
 use vecdb::{Database, Rw, StorageMode};
@@ -14,8 +14,6 @@ use crate::STORAGE;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     /// Metrics across every `OP_RETURN` output and every transaction carrying
@@ -38,10 +36,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 

@@ -18,7 +18,7 @@ use rayon::{join, prelude::*};
 
 use bitview_compute::{DailyView, RepeatDay};
 use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
@@ -39,8 +39,6 @@ pub const ID: PluginId = STORAGE.id();
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
 
@@ -78,7 +76,6 @@ impl Vecs {
         let db = STORAGE.open_database(context, 100_000)?;
         let version = STORAGE.schema_version();
         let this = Self {
-            plugin_gate: Default::default(),
             components: components::forced_import(
                 &db,
                 version,
@@ -104,10 +101,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 

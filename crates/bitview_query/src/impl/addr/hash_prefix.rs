@@ -16,7 +16,7 @@ impl Query {
         }
 
         let prefix = AddrHashPrefix::parse(prefix)?;
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let stores = self.indexer().stores();
         let safe_type_index = self.safe_lengths().to_type_index(addr_type);
         let addr_readers = self.indexer().vecs().addrs.addr_readers();

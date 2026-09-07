@@ -10,7 +10,7 @@ mod returns;
 mod technical;
 mod volatility;
 
-use bitview_plugin::{Plugin, PluginGate, PluginId, PluginStorage};
+use bitview_plugin::{Plugin, PluginId, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, Rw, StorageMode};
@@ -29,8 +29,6 @@ const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("market"), Versi
 pub const ID: PluginId = STORAGE.id();
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     pub ath: AthVecs<M>,
@@ -53,9 +51,5 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }

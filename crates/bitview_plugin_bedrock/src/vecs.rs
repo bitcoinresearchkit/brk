@@ -4,7 +4,7 @@ pub mod urpd;
 
 use std::path::PathBuf;
 
-use bitview_plugin::{Plugin, PluginGate, PluginStorage};
+use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::Sats;
 use derive_more::{Deref, DerefMut};
@@ -14,8 +14,6 @@ use super::{CapitalizedPriceVecs, CostBasisVecs, ModeVecs, Modes, STORAGE};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     #[traversable(skip)]
@@ -49,10 +47,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 

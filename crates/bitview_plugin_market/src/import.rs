@@ -40,7 +40,6 @@ impl Vecs {
             super::technical::forced_import(&db, version, mappings, &returns.periods._24h.ratio)?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             ath,
             lookback,

@@ -15,7 +15,7 @@ use axum::{
     response::Response,
     serve as serve_http,
 };
-use bitview_plugin::Plugin;
+
 use brk_types::{Cents, CentsCompact, Cohort, Date, Sats, UrpdAggregation, UrpdRaw, UrpdWeight};
 use serde_json::{Value, from_str, to_vec};
 use tokio::{fs, join, net::TcpListener, spawn, time::timeout};
@@ -419,7 +419,7 @@ async fn check_cancelled_admission(state: &AppState) {
             .await
             .unwrap();
     });
-    let gate = state.sync(|query| query.distribution().gate().clone());
+    let gate = state.sync(|query| query.indexer().publication().clone());
     let admission = state.urpd_query.clone();
     assert_eq!(admission.available_permits(), 2);
     gate.begin_update();
@@ -431,18 +431,19 @@ async fn check_cancelled_admission(state: &AppState) {
     let queued = exchange_with_etag(address, "GET", "/api/urpd/all", "*").await;
     let after_queued = admission.available_permits();
     gate.finish_update();
-    // Publication waits release admission before cancellation.
+    // Cancellation cannot release a still-running blocking worker's admission.
+    // Publishing wakes the workers, which then release their slots.
     let recovered = timeout(Duration::from_secs(2), admission.acquire_many_owned(2)).await;
     serving.abort();
     assert!(first.starts_with("HTTP/1.1 504"), "{first}");
     assert!(second.starts_with("HTTP/1.1 504"), "{second}");
     assert!(second.ends_with("\r\n\r\n"));
     assert_eq!(
-        after_cancel, 2,
-        "publication waits must release worker slots"
+        after_cancel, 0,
+        "cancelled publication waits must retain worker slots"
     );
     assert!(queued.starts_with("HTTP/1.1 504"), "{queued}");
-    assert_eq!(after_queued, 2);
+    assert_eq!(after_queued, 0);
     drop(recovered.unwrap().unwrap());
     assert_eq!(state.urpd_query.available_permits(), 2);
 }

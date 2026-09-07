@@ -1,8 +1,7 @@
 use std::{mem::discriminant, sync::mpsc, thread, time::Duration};
 
-use bitview::{ImportContext, PluginSet};
+use bitview::{ComputePluginSet, ImportContext};
 use bitview_default::DefaultPlugins;
-use bitview_plugin::PluginId;
 use bitview_query::Query;
 use brk_error::Error;
 use brk_mempool::Mempool;
@@ -26,30 +25,14 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
     let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
 
-    let mut distribution_gate = None;
-    let mut indexer_gate = None;
-    let mut mappings_gate = None;
-    plugins.for_each_plugin(&mut |plugin| {
-        if plugin.id() == PluginId::new("distribution") {
-            distribution_gate = Some(plugin.gate().clone());
-        }
-        if plugin.id() == PluginId::new("indexer") {
-            indexer_gate = Some(plugin.gate().clone());
-        }
-        if plugin.id() == PluginId::new("mappings") {
-            mappings_gate = Some(plugin.gate().clone());
-        }
-    });
-    let distribution_gate = distribution_gate.unwrap();
-    let indexer_gate = indexer_gate.unwrap();
-    let mappings_gate = mappings_gate.unwrap();
+    let gate = plugins.publication().clone();
     let query = Query::build(&plugins, None);
 
     assert!(matches!(
         query.local_sync_status(),
         Err(Error::StateUpdating)
     ));
-    indexer_gate.begin_update();
+    gate.begin_update();
     thread::scope(|scope| {
         let (started_tx, started_rx) = mpsc::channel();
         let (result_tx, result_rx) = mpsc::channel();
@@ -60,14 +43,14 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         });
         started_rx.recv().unwrap();
         assert!(result_rx.recv_timeout(Duration::from_millis(10)).is_err());
-        indexer_gate.finish_update();
+        gate.finish_update();
         assert!(matches!(
             result_rx.recv_timeout(Duration::from_secs(1)).unwrap(),
             Err(Error::StateUpdating)
         ));
     });
 
-    mappings_gate.begin_update();
+    gate.begin_update();
     thread::scope(|scope| {
         let (started_tx, started_rx) = mpsc::channel();
         let (result_tx, result_rx) = mpsc::channel();
@@ -81,7 +64,7 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
 
         started_rx.recv().unwrap();
         assert!(result_rx.recv_timeout(Duration::from_millis(10)).is_err());
-        mappings_gate.finish_update();
+        gate.finish_update();
         assert!(
             !result_rx
                 .recv_timeout(Duration::from_secs(1))
@@ -183,7 +166,7 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         Err(Error::InvalidAddr)
     ));
 
-    indexer_gate.begin_update();
+    gate.begin_update();
     assert!(matches!(
         query.addr_utxos_preflight(&unknown_addr, 1000),
         Ok(None)
@@ -192,9 +175,9 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         query.addr_utxos_preflight(&invalid_addr, 1000),
         Err(Error::InvalidAddr)
     ));
-    indexer_gate.finish_update();
+    gate.finish_update();
 
-    distribution_gate.begin_update();
+    gate.begin_update();
     let addr = Addr::from("17jGLFhcnPYqG17qN2ouxbScrcnroHqRP".to_owned());
     assert!(matches!(query.addr_stats_preflight(&addr), Ok(None)));
     assert!(matches!(
@@ -206,7 +189,7 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         Err(brk_error::Error::InvalidAddr)
     ));
 
-    distribution_gate.finish_update();
+    gate.finish_update();
     assert!(matches!(
         query.addr_stats_preflight(&addr),
         Err(brk_error::Error::UnknownAddr)

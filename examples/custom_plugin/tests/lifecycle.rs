@@ -2,7 +2,7 @@ use std::{path::Path, time::Duration};
 
 use bitview::update;
 use bitview_custom_plugin_example::near_full_blocks::{Dependencies, ID, Vecs as NearFullBlocks};
-use bitview_plugin::{ComputePlugin, ImportContext, Plugin, UpdateContext};
+use bitview_plugin::{ComputePlugin, ImportContext, UpdateContext};
 use bitview_query::Vecs as QueryVecs;
 use bitview_runtime::{ComputePluginSet, PluginSet};
 use bitview_traversable::Traversable;
@@ -13,6 +13,9 @@ use vecdb::{AnyStoredVec, Database, ImportableVec, PAGE_SIZE, PcoVec, WritableVe
 
 #[derive(PluginSet, Traversable)]
 struct TestPlugins {
+    #[traversable(skip)]
+    #[plugin_set(skip)]
+    publication: bitview_plugin::Publication,
     #[traversable(skip)]
     #[plugin_set(skip)]
     safe_height: Height,
@@ -35,6 +38,7 @@ impl TestPlugins {
         let block_weights = PcoVec::forced_import(&source_db, "block_weight", Version::ONE)?;
 
         Ok(Self {
+            publication: Default::default(),
             safe_height: Height::ZERO,
             _source_db: source_db,
             block_weights,
@@ -60,9 +64,8 @@ impl TestPlugins {
             .expect("custom series should be queryable at height");
 
         assert_eq!(entry.plugin().id(), ID);
-        let _read = entry
-            .plugin()
-            .gate()
+        let _read = self
+            .publication()
             .read_for(Duration::from_secs(1))
             .ok_or(Error::StateUpdating)?;
         let mut json = Vec::new();
@@ -72,8 +75,12 @@ impl TestPlugins {
 }
 
 impl ComputePluginSet for TestPlugins {
+    fn publication(&self) -> &bitview_plugin::Publication {
+        &self.publication
+    }
+
     fn compute(&mut self, context: UpdateContext<'_>) -> Result<()> {
-        self.computed_while_closed = self.near_full_blocks.gate().try_read().is_none();
+        self.computed_while_closed = self.publication().try_read().is_none();
         self.near_full_blocks.compute(
             Dependencies {
                 safe_height: self.safe_height,
@@ -98,7 +105,7 @@ fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
     update(&mut plugins, update_context)?;
 
     assert!(plugins.computed_while_closed);
-    assert!(plugins.near_full_blocks.gate().try_read().is_some());
+    assert!(plugins.publication().try_read().is_some());
     assert_eq!(plugins.queried_streak()?, b"[1,2,0,1,2]");
 
     drop(plugins);
@@ -109,7 +116,7 @@ fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
     update(&mut plugins, update_context)?;
 
     assert!(plugins.computed_while_closed);
-    assert!(plugins.near_full_blocks.gate().try_read().is_some());
+    assert!(plugins.publication().try_read().is_some());
     assert_eq!(plugins.queried_streak()?, b"[1,2,0,1,0]");
     Ok(())
 }

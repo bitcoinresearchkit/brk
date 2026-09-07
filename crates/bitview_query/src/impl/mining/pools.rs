@@ -34,7 +34,7 @@ impl Query {
     /// timestamp-based lookback vecs (`_24h`, `_3d`, ...) rather than
     /// block-count math; `TimePeriod::All` walks from genesis.
     pub fn mining_pools(&self, time_period: TimePeriod) -> Result<PoolsSummary> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let plugins = self.plugins();
         let current_height = self.height();
 
@@ -128,7 +128,7 @@ impl Query {
     /// major pool's reward vec this errors rather than silently reporting
     /// `None`.
     pub fn pool_detail(&self, slug: PoolSlug) -> Result<PoolDetail> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let plugins = self.plugins();
         let current_height = self.height();
         let end = current_height.to_usize();
@@ -216,7 +216,7 @@ impl Query {
     /// where the share is the pool's last-7-days block count divided by the
     /// network's last-7-days block count.
     pub fn pool_hashrate(&self, slug: PoolSlug) -> Result<Vec<PoolHashrateEntry>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let pool_name = pools().get(slug).name;
         let shared = self.hashrate_shared_data(0)?;
         let pool_cum = self.pool_daily_cumulative(slug, shared.start_day, shared.end_day)?;
@@ -233,7 +233,7 @@ impl Query {
         &self,
         time_period: Option<TimePeriod>,
     ) -> Result<Vec<PoolHashrateEntry>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let start_height = match time_period {
             Some(tp) => start_height(self, tp)?.to_usize(),
             None => 0,

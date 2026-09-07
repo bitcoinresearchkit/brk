@@ -8,7 +8,7 @@ impl Query {
     /// Whether the first block after `day` is beyond the supported reorg window.
     pub fn day_is_deeply_confirmed(&self, day: Day1) -> Result<bool> {
         let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings])?;
+        let _guard = self.read_publication()?;
         let tip = self.height();
 
         Ok(plugins

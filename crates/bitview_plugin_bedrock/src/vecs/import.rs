@@ -83,7 +83,6 @@ impl Vecs {
         let capitalized_price =
             CapitalizedPriceVecs::forced_import(&db, version, indexes, &mappings, spot)?;
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             states_path,
             cost_basis,

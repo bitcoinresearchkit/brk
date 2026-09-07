@@ -15,7 +15,7 @@ impl Query {
     /// Point requests select the latest nonempty close at or before the timestamp.
     pub fn historical_price(&self, timestamp: Option<Timestamp>) -> Result<HistoricalPrice> {
         let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.price])?;
+        let _guard = self.read_publication()?;
         let source_len = usize::from(self.safe_lengths().height);
         let prices = &plugins.price.spot.cents.height;
         if prices.len() < source_len || plugins.mappings.timestamp.monotonic.len() < source_len {

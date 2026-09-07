@@ -78,7 +78,6 @@ fn batched_outspends_preserve_output_order_and_reorg_visibility() {
 
 #[test]
 fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
-    use bitview_plugin::Plugin;
     use bitview_plugin_indexer::HasIndexer;
     use brk_error::Error;
 
@@ -100,7 +99,7 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
 
         // Resolved tokens retain no guard. Every consumer must reacquire one,
         // including consumers that acquire several plugin gates together.
-        let gate = fixture.plugins.indexer().gate().clone();
+        let gate = fixture.plugins.indexer().publication().clone();
         gate.begin_update();
         let (resolve, proof, cpfp) = tokio::join!(
             query.run(move |q| q.resolve_confirmed_tx(&txid)),
@@ -113,7 +112,7 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
         gate.finish_update();
 
         // Multi-plugin views must also wait for the non-indexer participants.
-        let gate = query.sync(|q| q.transactions().gate().clone());
+        let gate = query.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         assert!(matches!(
             query
@@ -198,7 +197,7 @@ impl TransactionPublication {
                     let tag = tag.to_owned();
                     requests.spawn(async move {
                         let response = exchange_with_etag(address, method, &path, &tag).await;
-                        assert!(response.starts_with("HTTP/1.1 504"), "{path}: {response}");
+                        assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     });

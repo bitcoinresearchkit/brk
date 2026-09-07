@@ -19,7 +19,7 @@ impl Query {
                 return FxHashMap::default();
             }
             let indexer = query.indexer();
-            let Ok(_guard) = query.read_plugin(indexer) else {
+            let Ok(_guard) = query.read_publication() else {
                 return FxHashMap::default();
             };
             let safe = indexer.safe_lengths();

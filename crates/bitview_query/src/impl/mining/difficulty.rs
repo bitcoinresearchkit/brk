@@ -17,7 +17,7 @@ impl Query {
     /// vs previous epoch first-block difficulty), and the time offset from a
     /// 600s/block schedule. Output time fields are in milliseconds.
     pub fn difficulty_adjustment(&self) -> Result<DifficultyAdjustment> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let indexer = self.indexer();
         let plugins = self.plugins();
         let current_height = self.height();

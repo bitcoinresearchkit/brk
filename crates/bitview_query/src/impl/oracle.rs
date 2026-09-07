@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use bitview_plugin::{Plugin, PluginReadGuard};
 use bitview_plugin_indexer::Lengths;
 use bitview_plugin_price::Vecs as PricesVecs;
 use brk_error::{Error, OptionData, Result};
@@ -26,7 +25,7 @@ impl Query {
     /// reconstructed by replaying the window ending at `height`. EMA values are
     /// seed-independent, so the result is exact.
     pub fn confirmed_payment_histogram(&self, height: usize) -> Result<HistogramEmaCompact> {
-        let _guard = self.histogram_guard()?;
+        let _guard = self.read_publication()?;
         let safe = self.check_histogram_height(height)?;
         Ok(self.ema_oracle_at(height, &safe)?.ema().to_compact())
     }
@@ -37,7 +36,7 @@ impl Query {
     /// sequentially. Averaging keeps the result an intensive per-block rate rather
     /// than letting a busy day dominate.
     pub fn confirmed_payment_histogram_day(&self, day: Day1) -> Result<HistogramEmaCompact> {
-        let _guard = self.histogram_guard()?;
+        let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
         Ok(self
@@ -77,7 +76,7 @@ impl Query {
     /// mempool output binned by value, with none of the round-dollar payment
     /// filters applied. Zeros when no mempool is configured.
     pub fn live_output_histogram(&self) -> Result<HistogramRaw> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         Ok(match self.mempool() {
             Some(mempool) => mempool.live_raw_histogram(&self.tip_blockhash())?,
             None => HistogramRaw::zeros(),
@@ -87,7 +86,7 @@ impl Query {
     /// Unfiltered per-bin output counts for a confirmed `height`: every output
     /// in the block binned by value, with no payment filtering.
     pub fn confirmed_output_histogram(&self, height: usize) -> Result<HistogramRaw> {
-        let _guard = self.histogram_guard()?;
+        let _guard = self.read_publication()?;
         let safe = self.check_histogram_height(height)?;
         self.output_histogram_for_blocks(height..height + 1, &safe)
     }
@@ -96,22 +95,16 @@ impl Query {
     /// histogram summed bin-by-bin. Raw counts are additive, so the day total is
     /// just the sum across its confirmed blocks.
     pub fn confirmed_output_histogram_day(&self, day: Day1) -> Result<HistogramRaw> {
-        let _guard = self.histogram_guard()?;
+        let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
         self.output_histogram_for_blocks(range, &safe)
     }
 
-    fn histogram_guard(&self) -> Result<PluginReadGuard> {
-        let plugins = self.plugins();
-        self.read_plugins(vec![plugins.indexer, plugins.mappings, plugins.price])
-    }
-
     /// The live tip oracle: the committed base, with the published pool's
     /// mempool outputs blended in as a final slot when a mempool is configured.
     fn live_oracle(&self) -> Result<Oracle> {
-        let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.price])?;
+        let _guard = self.read_publication()?;
         // Capture the completed mempool publication while the confirmed anchor
         // is held stable, before doing potentially expensive window work.
         let live = self
@@ -126,10 +119,7 @@ impl Query {
         let seed_bin = self.seed_bin_at(last)?;
         let mut oracle = self.0.live_oracle.get_or_try_init(
             self.tip_blockhash(),
-            [
-                plugins.indexer.gate().publication(),
-                plugins.price.gate().publication(),
-            ],
+            self.indexer().publication().revision(),
             || self.warm_oracle(seed_bin, height, &safe),
         )?;
         if let Some(histogram) = live {

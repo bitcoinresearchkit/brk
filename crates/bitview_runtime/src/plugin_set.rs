@@ -28,6 +28,9 @@ pub trait PluginSet: Send + Sync {
 
 /// Writable plugin composition that participates in Bitview's update loop.
 pub trait ComputePluginSet: PluginSet {
+    /// Shared barrier for the complete pipeline's query-visible mutable state.
+    fn publication(&self) -> &bitview_plugin::Publication;
+
     /// Performs the complete initial computation before reads are published.
     fn bootstrap_compute(&mut self, context: UpdateContext<'_>) -> Result<BootstrapAction> {
         self.compute(context)?;
@@ -47,7 +50,7 @@ pub trait ComputePluginSet: PluginSet {
 mod tests {
     use std::cell::Cell;
 
-    use bitview_plugin::{Plugin, PluginGate, PluginId, PluginStorage};
+    use bitview_plugin::{Plugin, PluginId, PluginStorage};
     use bitview_traversable::Traversable;
     use brk_types::Version;
 
@@ -74,15 +77,12 @@ mod tests {
     struct TestPlugin {
         #[traversable(skip)]
         storage: PluginStorage,
-        #[traversable(skip)]
-        gate: PluginGate,
     }
 
     impl TestPlugin {
         fn new(id: &'static str) -> Self {
             Self {
                 storage: PluginStorage::new(PluginId::new(id), Version::ONE),
-                gate: PluginGate::new(),
             }
         }
     }
@@ -90,10 +90,6 @@ mod tests {
     impl Plugin for TestPlugin {
         fn storage(&self) -> PluginStorage {
             self.storage
-        }
-
-        fn gate(&self) -> &PluginGate {
-            &self.gate
         }
     }
 

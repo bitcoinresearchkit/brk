@@ -1,4 +1,4 @@
-use bitview_plugin::PluginReadGuard;
+use bitview_plugin::PublicationReadGuard;
 use brk_error::{Error, Result};
 use brk_types::Lengths;
 use vecdb::{AnyExportableVec, BoundedVec, ReadBounds};
@@ -7,19 +7,19 @@ use crate::{Query, vecs::SeriesEntry};
 
 /// Selected series and their published read protection.
 ///
-/// Column readers borrow this view, so they cannot outlive its plugin guards.
+/// Column readers borrow this view, so they cannot outlive its pipeline guard.
 /// The underlying unbounded vectors and bounds are deliberately private.
 pub struct SeriesRead {
     vecs: Vec<&'static dyn AnyExportableVec>,
     bounds: ReadBounds,
     safe: Lengths,
     is_mutable: bool,
-    _guard: PluginReadGuard,
+    _guard: PublicationReadGuard,
 }
 
 impl SeriesRead {
     pub(super) fn new(query: &Query, entries: Vec<SeriesEntry<'static>>) -> Result<Self> {
-        let guard = query.series_guard(&entries)?;
+        let guard = query.read_publication()?;
         let safe = query.safe_lengths();
         let bounds = query.read_bounds(safe);
         let is_mutable = entries.iter().any(|entry| entry.is_mutable());

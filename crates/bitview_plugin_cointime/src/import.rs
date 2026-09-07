@@ -54,7 +54,6 @@ impl Vecs {
         let reserve_risk = super::reserve_risk::forced_import(&db, v1, mappings, &spot_price)?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             activity,
             age_range,

@@ -4,7 +4,8 @@ The generic synchronous lifecycle for statically composed Bitview plugins.
 
 `PluginSet` can be derived from composition fields. Use
 `#[plugin_set(flatten)]` for a nested composition and `#[plugin_set(skip)]` for
-non-plugin runtime state. The update lifecycle closes every plugin gate,
+non-plugin runtime state. `ComputePluginSet::publication` exposes the single
+barrier shared with readers. The update lifecycle closes that barrier,
 computes the complete composition, commits its pipeline-wide publication
 cursor, and only then reopens reads. Bootstrap uses each plugin's storage
 identity to create active roots, reject duplicate IDs, and remove roots that no

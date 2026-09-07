@@ -21,7 +21,6 @@ use tokio::{
     spawn,
     sync::oneshot,
     task::{AbortHandle, JoinSet, spawn_blocking},
-    time::sleep,
 };
 
 use super::{
@@ -195,7 +194,7 @@ impl AddrPublication {
         fixture.tick(false).await;
         fixture.check_unavailable(true).await;
 
-        // Address-dependent reads wait through unresolved inputs; statistics
+        // Address-dependent reads reject unresolved inputs; statistics
         // continue serving the last complete membership observation.
         let mempool = fixture.mempool.clone();
         let resolver = fixture.query.sync(|q| q.indexer_prevout_resolver());
@@ -231,20 +230,17 @@ impl AddrPublication {
                 let address = fixture.address;
                 requests.spawn(async move {
                     let response = exchange_with_etag(address, method, &path, "*").await;
-                    assert!(response.starts_with("HTTP/1.1 304"), "{path}: {response}");
+                    assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
+                    assert!(!response.contains("\r\netag:"));
+                    assert!(response.contains("\r\ncache-control: no-store\r\n"));
                 });
             }
         }
-        sleep(Duration::from_millis(150)).await;
-        assert!(
-            requests.try_join_next().is_none(),
-            "reads must wait for publication"
-        );
-        release.send(()).unwrap();
-        filling.await.unwrap();
         while let Some(result) = requests.join_next().await {
             result.unwrap();
         }
+        release.send(()).unwrap();
+        filling.await.unwrap();
         fixture.check_available().await;
         fixture
             .check_revalidation_without_chain_body(&directory.join("blocks/blk00000.dat"))
@@ -441,7 +437,7 @@ impl AddrPublication {
                     let tag = tag.to_owned();
                     requests.spawn(async move {
                         let response = exchange_with_etag(address, method, &path, &tag).await;
-                        assert!(response.starts_with("HTTP/1.1 504"), "{path}: {response}");
+                        assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     });

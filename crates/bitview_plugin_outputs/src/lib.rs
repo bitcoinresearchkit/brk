@@ -9,7 +9,7 @@ mod value;
 mod compute;
 mod import;
 
-use bitview_plugin::{Plugin, PluginGate, PluginId, PluginStorage};
+use bitview_plugin::{Plugin, PluginId, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, Rw, StorageMode};
@@ -30,8 +30,6 @@ pub const ID: PluginId = STORAGE.id();
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
-    plugin_gate: PluginGate,
-    #[traversable(skip)]
     db: Database,
 
     pub spent: SpentVecs<M>,
@@ -49,9 +47,5 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }

@@ -71,8 +71,8 @@ impl AppState {
         &self,
         headers: HeaderMap,
         content_type: &'static str,
-        select: impl FnOnce(&Query) -> Result<(S, CacheParams)> + Clone + Send + 'static,
-        build: impl FnOnce(&Query, S) -> Result<Bytes> + Clone + Send + 'static,
+        select: impl FnOnce(&Query) -> Result<(S, CacheParams)> + Send + 'static,
+        build: impl FnOnce(&Query, S) -> Result<Bytes> + Send + 'static,
     ) -> Response<Body> {
         match self
             .read_admitted(move |q| {
@@ -94,7 +94,7 @@ impl AppState {
 
     pub async fn read_admitted<T: Send + 'static>(
         &self,
-        f: impl FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
+        f: impl FnOnce(&Query) -> Result<T> + Send + 'static,
     ) -> Result<T> {
         self.query
             .read_with_admission(Some(&self.sync_query), f)
@@ -104,7 +104,7 @@ impl AppState {
     pub async fn read_with_admission<T: Send + 'static>(
         &self,
         admission: &Arc<Semaphore>,
-        f: impl FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
+        f: impl FnOnce(&Query) -> Result<T> + Send + 'static,
     ) -> Result<T> {
         self.query.read_with_admission(Some(admission), f).await
     }
@@ -169,7 +169,7 @@ impl AppState {
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&Query) -> Result<Bytes> + Clone + Send + 'static,
+        F: FnOnce(&Query) -> Result<Bytes> + Send + 'static,
     {
         Self::respond_with_future(headers, params, async {
             Ok((self.read_admitted(f).await?, apply_content_headers))
@@ -265,7 +265,7 @@ impl AppState {
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&Query) -> Result<(Vec<u8>, RepresentationId)> + Clone + Send + 'static,
+        F: FnOnce(&Query) -> Result<(Vec<u8>, RepresentationId)> + Send + 'static,
     {
         let outcome = self
             .read_admitted(move |query| {
@@ -300,7 +300,7 @@ impl AppState {
     pub async fn respond_json_content<T, F>(&self, headers: &HeaderMap, f: F) -> Response<Body>
     where
         T: Serialize + Send + 'static,
-        F: FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
+        F: FnOnce(&Query) -> Result<T> + Send + 'static,
     {
         let bytes = self
             .read_admitted(move |query| {

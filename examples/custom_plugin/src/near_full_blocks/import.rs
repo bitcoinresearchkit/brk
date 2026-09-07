@@ -10,11 +10,7 @@ impl Vecs {
         let streak =
             EagerVec::forced_import(&db, "near_full_block_streak", STORAGE.schema_version())?;
 
-        let this = Self {
-            gate: Default::default(),
-            db,
-            streak,
-        };
+        let this = Self { db, streak };
         STORAGE.finalize_database(&this.db)?;
         Ok(this)
     }

@@ -43,7 +43,7 @@ urpd = [
     "distribution",
     "price",
 ]
-tokio = ["indexer", "dep:tokio", "brk_error/tokio", "bitview_plugin/tokio", "brk_mempool/tokio"]
+tokio = ["indexer", "dep:tokio", "brk_error/tokio"]
 
 [dependencies]
 bitcoin = { workspace = true }
@@ -79,7 +79,7 @@ quickmatch = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 smallvec = { workspace = true }
-tokio = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true, features = ["sync", "time", "rt"] }
 serde_json = { workspace = true }
 vecdb = { workspace = true }
 

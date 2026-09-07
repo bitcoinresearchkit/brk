@@ -119,7 +119,6 @@ impl Vecs {
         let seller_exhaustion = PerBlock::forced_import(&db, "seller_exhaustion", v, mappings)?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             puell_multiple,
             nvt,

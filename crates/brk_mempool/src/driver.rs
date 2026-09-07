@@ -108,12 +108,7 @@ impl Mempool {
         };
         // Fetch failures leave the previous publication intact. The applier
         // closes publication before the first mutation, not before RPC work.
-        let result = self.tick_once(resolver);
-        #[cfg(feature = "tokio")]
-        if result.is_ok() {
-            self.0.changed.send_replace(());
-        }
-        result
+        self.tick_once(resolver)
     }
 
     fn tick_once<F>(&self, resolver: F) -> Result<Cycle>

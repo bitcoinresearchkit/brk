@@ -97,7 +97,6 @@ impl Vecs {
         );
 
         let this = Self {
-            plugin_gate: Default::default(),
             db,
             circulating,
             burned,

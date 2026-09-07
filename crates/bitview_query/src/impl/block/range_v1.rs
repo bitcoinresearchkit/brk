@@ -1,4 +1,4 @@
-use bitview_plugin::PluginReadGuard;
+use bitview_plugin::PublicationReadGuard;
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, BlockInfoV1, Dollars, Height};
 use vecdb::{ReadableVec, VecIndex};
@@ -8,7 +8,7 @@ use crate::Query;
 
 /// Blocks and their published prices held in one stable chain view.
 pub struct ResolvedBlocksV1 {
-    _publication: PluginReadGuard,
+    _publication: PublicationReadGuard,
     blocks: ResolvedBlocks,
     prices: Vec<Dollars>,
 }
@@ -17,7 +17,7 @@ impl ResolvedBlocksV1 {
     fn new(
         blocks: ResolvedBlocks,
         prices: Vec<Dollars>,
-        publication: PluginReadGuard,
+        publication: PublicationReadGuard,
     ) -> Result<Self> {
         let (begin, end, _) = blocks.range();
         if prices.len() != end - begin {
@@ -56,7 +56,7 @@ impl Query {
         start_height: Option<Height>,
         count: u32,
     ) -> Result<Option<ResolvedBlocksV1>> {
-        let Some(publication) = self.try_read_plugin(self.indexer()) else {
+        let Some(publication) = self.try_read_publication() else {
             return Ok(None);
         };
         let Some(blocks) = self.try_resolve_blocks(start_height, count)? else {
@@ -71,7 +71,7 @@ impl Query {
         hash: &BlockHash,
         height_hint: Height,
     ) -> Result<Option<ResolvedBlocksV1>> {
-        let Some(publication) = self.try_read_plugin(self.indexer()) else {
+        let Some(publication) = self.try_read_publication() else {
             return Ok(None);
         };
         let Some(blocks) = self.try_resolve_block_snapshot(hash, height_hint)? else {
@@ -83,7 +83,7 @@ impl Query {
     fn try_block_prices(
         &self,
         blocks: ResolvedBlocks,
-        publication: PluginReadGuard,
+        publication: PublicationReadGuard,
     ) -> Result<Option<ResolvedBlocksV1>> {
         let (begin, end, _) = blocks.range();
         let prices = if begin == end {
@@ -109,14 +109,14 @@ impl Query {
         start_height: Option<Height>,
         count: u32,
     ) -> Result<ResolvedBlocksV1> {
-        let publication = self.read_plugin(self.indexer())?;
+        let publication = self.read_publication()?;
         let blocks = self.resolve_blocks(start_height, count)?;
         self.block_prices(blocks, publication)
     }
 
     /// Resolve the exact canonical hash on a worker under one publication guard.
     pub fn resolve_block_v1(&self, hash: &BlockHash) -> Result<ResolvedBlocksV1> {
-        let publication = self.read_plugin(self.indexer())?;
+        let publication = self.read_publication()?;
         let blocks = self.resolve_block_snapshot(hash)?;
         self.block_prices(blocks, publication)
     }
@@ -124,7 +124,7 @@ impl Query {
     fn block_prices(
         &self,
         blocks: ResolvedBlocks,
-        publication: PluginReadGuard,
+        publication: PublicationReadGuard,
     ) -> Result<ResolvedBlocksV1> {
         let (begin, end, _) = blocks.range();
         let mut prices = Vec::with_capacity(end - begin);

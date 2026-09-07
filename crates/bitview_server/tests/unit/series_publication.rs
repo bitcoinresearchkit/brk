@@ -1,6 +1,5 @@
 use std::{net::SocketAddr, time::Duration};
 
-use bitview_plugin::Plugin;
 use brk_types::{Index, Timestamp};
 use serde_json::Value;
 use tokio::time::timeout;
@@ -84,7 +83,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
                 .to_owned();
             cases.push((path, etag));
         }
-        let gate = state.sync(|q| q.mappings().gate().clone());
+        let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         let mut requests = Vec::new();
         for (path, etag) in cases {

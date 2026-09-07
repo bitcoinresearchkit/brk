@@ -59,7 +59,7 @@ impl Query {
     /// one guarded indexer/mappings snapshot.
     pub fn txid_and_height_by_index(&self, index: TxIndex) -> Result<(Txid, Height)> {
         let plugins = self.plugins();
-        let _guard = self.read_plugins(vec![plugins.indexer, plugins.mappings])?;
+        let _guard = self.read_publication()?;
         if index >= self.safe_lengths().tx_index {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
@@ -113,7 +113,7 @@ impl Query {
         f: impl Fn(&Transaction) -> R,
         indexed: impl FnOnce(TxIndex) -> Result<R>,
     ) -> Result<R> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         match self.resolve_tx_index_bounded(txid) {
             Ok(idx) => indexed(idx),
             Err(Error::UnknownTxid) => self

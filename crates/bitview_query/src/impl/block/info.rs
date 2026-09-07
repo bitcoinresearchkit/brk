@@ -70,7 +70,7 @@ impl Query {
     /// V1 block by height. The safe ceiling covers every plugin series read by
     /// `blocks_v1_range`, including pools, fees, and supply state.
     pub fn block_by_height_v1(&self, height: Height) -> Result<BlockInfoV1> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         if height >= safe.height {
             return Err(Error::OutOfRange("Block height out of range".into()));
@@ -137,7 +137,7 @@ impl Query {
     /// V1 most recent `count` blocks with extras ending at `start_height`
     /// (default tip), returned in descending-height order.
     pub fn blocks_v1(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfoV1>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         let (begin, end) = Self::resolve_block_range(start_height, count, safe.height);
         self.blocks_v1_range(begin, end, safe)

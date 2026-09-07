@@ -14,7 +14,7 @@ impl Query {
     /// corresponding metric. Single bucket-pass: built via `.map(...).unzip()`
     /// to avoid re-walking buckets.
     pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let blocks = &self.indexer().vecs().blocks;
         let bw = BlockWindow::new(self, time_period)?;
 

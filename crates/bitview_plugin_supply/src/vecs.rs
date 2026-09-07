@@ -1,4 +1,4 @@
-use bitview_plugin::{Plugin, PluginGate, PluginStorage};
+use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64};
 use vecdb::{Database, Rw, StorageMode};
@@ -12,8 +12,6 @@ use bitview_compute::{
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
 
@@ -57,10 +55,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 mod compute;

@@ -3,7 +3,7 @@ use brk_error::Result;
 use std::collections::BTreeMap;
 
 use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
@@ -35,8 +35,6 @@ pub const ID: PluginId = STORAGE.id();
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
-    plugin_gate: PluginGate,
-    #[traversable(skip)]
     db: Database,
     pools: M::WriteOnly<&'static Pools>,
 
@@ -57,10 +55,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 
@@ -110,7 +104,6 @@ impl Vecs {
         }
 
         let this = Self {
-            plugin_gate: Default::default(),
             pool,
             heights: pool_heights,
             major: major_map,

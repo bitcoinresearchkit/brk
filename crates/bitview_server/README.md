@@ -96,9 +96,10 @@ and cannot undo a transaction already received by the node.
 ## Read availability
 
 Ordinary GET/HEAD reads share one five-second deadline across admission,
-publication waits, read attempts, and body preparation. Publication notifications
-and response-capacity availability wake waiting reads without polling or holding
-worker slots. The HTTP handler itself is never replayed. Exhaustion returns a non-cacheable
+publication waits, reads, and body preparation. Publication waits run on blocking
+workers and retain their admission until the worker finishes; response-capacity
+waits are asynchronous. Chain/mempool mismatches return a non-cacheable 503
+immediately. The HTTP handler itself is never replayed. Exhaustion returns a non-cacheable
 504 with code `timeout`. Invalid input, genuine missing resources, disabled
 services, and storage failures retain their own errors. Actions are never replayed.
 

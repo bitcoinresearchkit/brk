@@ -1,4 +1,3 @@
-use bitview_plugin::Plugin;
 use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, Result};
 use brk_types::{BlockHash, BlockHashPrefix, Height};
@@ -22,7 +21,7 @@ impl Query {
     // A missing row in a temporarily shortened prefix is not yet a 404.
     // Never wait here: callers can hold a prefix pin needed by the writer.
     fn block_unavailable(&self, missing: Error) -> Error {
-        if self.indexer().gate().try_read().is_none() {
+        if self.indexer().publication().try_read().is_none() {
             Error::StateUpdating
         } else {
             missing

@@ -12,7 +12,7 @@ use crate::Query;
 impl Query {
     pub fn addr(&self, addr: Addr) -> Result<AddrStats> {
         let bytes = AddrBytes::from_str(&addr)?;
-        let _guard = self.read_plugin(self.plugins().distribution)?;
+        let _guard = self.read_publication()?;
         let (output_type, type_index) = self.resolve_addr_bytes(&bytes)?;
         self.addr_stats(addr, bytes, output_type, type_index)
     }
@@ -21,7 +21,7 @@ impl Query {
     /// distribution update. `None` asks the caller to use the blocking path.
     pub fn addr_stats_preflight(&self, addr: &Addr) -> Result<Option<AddrStats>> {
         let bytes = AddrBytes::from_str(addr)?;
-        let Some(_guard) = self.try_read_plugin(self.plugins().distribution) else {
+        let Some(_guard) = self.try_read_publication() else {
             return Ok(None);
         };
         let (output_type, type_index) = self.resolve_addr_bytes(&bytes)?;

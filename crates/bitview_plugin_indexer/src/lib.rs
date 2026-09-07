@@ -11,7 +11,7 @@ use std::{
 };
 
 use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_traversable::{Traversable, TreeNode};
 use brk_error::{Error, Result};
@@ -58,7 +58,6 @@ pub struct Indexer<M: StorageMode = Rw> {
     stores: Stores,
     buffers: M::WriteOnly<BlockBuffers>,
     state: Arc<State>,
-    plugin_gate: PluginGate,
 }
 
 enum ImportValidation {
@@ -136,6 +135,10 @@ fn recreate_plugin_dir(path: &Path, source_xor: XORBytes) -> Result<bool> {
 }
 
 impl<M: StorageMode> Indexer<M> {
+    /// Publication barrier shared by the complete pipeline and its readers.
+    pub fn publication(&self) -> &bitview_plugin::Publication {
+        &self.state.publication
+    }
     /// Tip block hash at the pipeline-safe ceiling.
     ///
     /// Reads the on-disk blockhash vec at `safe_lengths.height - 1` so
@@ -249,14 +252,14 @@ impl Indexer {
     }
 
     pub fn begin_update(&self) {
-        self.plugin_gate.begin_update();
+        self.state.publication.begin_update();
     }
 
     /// Publish disk state as the new safe-lengths snapshot. Drains pending
     /// bg ingest first so stores are queryable at the new bound.
     pub fn finish_update(&mut self) -> Result<()> {
         self.commit()?;
-        self.plugin_gate.finish_update();
+        self.state.publication.finish_update();
         Ok(())
     }
 
@@ -280,7 +283,6 @@ impl Indexer {
                 stores,
                 buffers: BlockBuffers::default(),
                 state: Arc::new(State::new()),
-                plugin_gate: PluginGate::new(),
             })
         };
 
@@ -628,7 +630,6 @@ impl ReadOnlyClone for Indexer {
             stores: self.stores.clone(),
             buffers: (),
             state: self.state.clone(),
-            plugin_gate: self.plugin_gate.clone(),
         }
     }
 }
@@ -639,10 +640,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 

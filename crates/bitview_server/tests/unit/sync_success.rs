@@ -12,7 +12,7 @@ use bitcoin::{
     consensus::{encode::serialize_hex, serialize},
     hashes::Hash,
 };
-use bitview_plugin::{Plugin, UpdateContext};
+use bitview_plugin::UpdateContext;
 use bitview_plugin_indexer::HasIndexer;
 #[cfg(feature = "series")]
 use bitview_query::Output;
@@ -674,7 +674,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         let utxo_snapshot = query
             .sync(|q| q.resolve_addr_utxos(&utxo_addr, 1000))
             .unwrap();
-        let gate = plugins.indexer().gate().clone();
+        let gate = plugins.indexer().publication().clone();
         let mut closing = spawn_blocking(move || gate.begin_update());
         #[cfg(feature = "series")]
         {
@@ -1003,15 +1003,8 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         };
         let after_reorg_blocks =
             async move { exchange_with_etag(address, "GET", "/api/blocks", &blocks_etag).await };
-        // Publication waits no longer occupy the sync worker. The unchanged
-        // published prefix can still answer while the mutable gate is closed.
-        let current_sync = timeout(
-            Duration::from_secs(2),
-            exchange_with_etag(address, "GET", "/api/server/sync", &etag),
-        )
-        .await
-        .unwrap();
-        assert!(current_sync.starts_with("HTTP/1.1 304"), "{current_sync}");
+        // Publication waits retain worker admission. Check the sync endpoint
+        // after publishing, once the queued mutable readers can finish.
         let after_reorg_sync =
             async move { exchange_with_etag(address, "GET", "/api/server/sync", &etag).await };
         #[cfg(feature = "series")]

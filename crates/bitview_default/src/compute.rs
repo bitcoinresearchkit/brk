@@ -318,6 +318,10 @@ impl DefaultPlugins {
 }
 
 impl ComputePluginSet for DefaultPlugins {
+    fn publication(&self) -> &bitview_plugin::Publication {
+        self.indexer.publication()
+    }
+
     fn bootstrap_compute(&mut self, context: UpdateContext<'_>) -> Result<BootstrapAction> {
         let blocks_behind = if cfg!(debug_assertions) {
             0

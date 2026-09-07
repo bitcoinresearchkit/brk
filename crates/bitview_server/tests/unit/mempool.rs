@@ -170,8 +170,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                     let address = server.listener.local_addr().unwrap();
                     let admission = server.state.sync_query.clone();
                     let serving = tokio::spawn(server.serve());
-                    // Each deliberately unpublished read gets the production
-                    // wait budget before returning its safe unavailable result.
+                    // Unpublished snapshots return immediately without a validator.
                     timeout(Duration::from_secs(120), async {
                         let path = "/api/v1/mempool/block-template";
                         for route in [
@@ -193,7 +192,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                                 let response =
                                     exchange_with_etag(address, method, route, "*").await;
                                 assert!(
-                                    response.starts_with("HTTP/1.1 504"),
+                                    response.starts_with("HTTP/1.1 503"),
                                     "{route}: {response}"
                                 );
                                 assert!(!response.contains("\r\netag:"));
@@ -212,7 +211,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                             "{error}"
                         );
                         let response = exchange_with_etag(address, "GET", path, "*").await;
-                        assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                        assert!(response.starts_with("HTTP/1.1 503"), "{response}");
                         spawn_blocking(move || {
                             let cycle = mempool.tick_with(|_| Default::default()).unwrap();
                             assert_eq!(

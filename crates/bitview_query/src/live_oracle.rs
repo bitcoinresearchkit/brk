@@ -11,30 +11,30 @@ pub struct LiveOracle {
 
 struct Entry {
     tip: BlockHash,
-    publications: [u64; 2],
+    revision: u64,
     oracle: Oracle,
 }
 
 impl LiveOracle {
-    /// Call under both source publication guards. Holding the cache lock during
+    /// Call under the pipeline publication guard. Holding the cache lock during
     /// the rebuild prevents concurrent requests replaying the same window.
     pub fn get_or_try_init(
         &self,
         tip: BlockHash,
-        publications: [u64; 2],
+        revision: u64,
         rebuild: impl FnOnce() -> Result<Oracle>,
     ) -> Result<Oracle> {
         let mut current = self.current.lock();
         if let Some(entry) = current.as_ref()
             && entry.tip == tip
-            && entry.publications == publications
+            && entry.revision == revision
         {
             return Ok(entry.oracle.clone());
         }
         let oracle = rebuild()?;
         *current = Some(Entry {
             tip,
-            publications,
+            revision,
             oracle: oracle.clone(),
         });
         Ok(oracle)

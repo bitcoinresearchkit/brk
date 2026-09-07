@@ -17,7 +17,7 @@ use crate::{CacheParams, CacheStrategy};
 #[test]
 fn response_capacity_wait_releases_snapshot_and_resolves_again() {
     use crate::raw_body::RawBodyPermit;
-    use bitview_plugin::Plugin;
+
     use std::sync::atomic::{AtomicUsize, Ordering};
     run(|state, _| async move {
         let bodies = state.raw_block_bodies.clone();
@@ -34,7 +34,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
             reader
                 .read_body(&reader.sync_query, &bodies, move |q, permit| {
                     let _snapshot = q.resolve_blocks_v1(None, 10)?;
-                    let revision = q.indexer().gate().publication();
+                    let revision = q.indexer().publication().revision();
                     count.fetch_add(1, Ordering::SeqCst);
                     let Some(permit) = permit.or_else(|| RawBodyPermit::try_acquire(&budget))
                     else {
@@ -56,7 +56,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
         })
         .await
         .unwrap();
-        let gate = state.sync(|q| q.indexer().gate().clone());
+        let gate = state.sync(|q| q.indexer().publication().clone());
         let writer = gate.clone();
         timeout(
             Duration::from_secs(2),
@@ -66,7 +66,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
         .unwrap()
         .unwrap();
         gate.finish_update();
-        let revision = gate.publication();
+        let revision = gate.revision();
         assert!(!pending.is_finished());
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         drop(held);
@@ -83,11 +83,10 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
 }
 
 #[test]
-fn publication_wait_is_not_polled_and_releases_worker_admission() {
-    use bitview_plugin::Plugin;
+fn publication_wait_runs_once_and_retains_worker_admission() {
     use std::sync::atomic::{AtomicUsize, Ordering};
     run(|state, _| async move {
-        let gate = state.sync(|q| q.indexer().gate().clone());
+        let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
         let calls = Arc::new(AtomicUsize::new(0));
         let count = calls.clone();
@@ -101,7 +100,7 @@ fn publication_wait_is_not_polled_and_releases_worker_admission() {
                 .await
         });
         timeout(Duration::from_secs(2), async {
-            while calls.load(Ordering::SeqCst) == 0 || state.sync_query.available_permits() != 1 {
+            while calls.load(Ordering::SeqCst) == 0 || state.sync_query.available_permits() != 0 {
                 tokio::task::yield_now().await;
             }
         })
@@ -110,7 +109,9 @@ fn publication_wait_is_not_polled_and_releases_worker_admission() {
         tokio::time::sleep(Duration::from_millis(150)).await;
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert!(!pending.is_finished());
-        assert_eq!(state.read_admitted(|_| Ok(42)).await.unwrap(), 42);
+        let next_state = state.clone();
+        let mut next = spawn(async move { next_state.read_admitted(|_| Ok(42)).await });
+        assert!(timeout(Duration::from_millis(50), &mut next).await.is_err());
         gate.finish_update();
         assert!(
             !timeout(Duration::from_secs(2), pending)
@@ -120,7 +121,8 @@ fn publication_wait_is_not_polled_and_releases_worker_admission() {
                 .unwrap()
                 .is_empty()
         );
-        assert_eq!(calls.load(Ordering::SeqCst), 2);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(next.await.unwrap().unwrap(), 42);
         assert_eq!(state.sync_query.available_permits(), 1);
     });
 }
@@ -184,7 +186,7 @@ fn bound_responses_preserve_body_identity_and_validate_before_revalidation() {
                         Err(brk_error::Error::StateUpdating)
                     })
                     .await;
-                assert_eq!(error.status(), StatusCode::GATEWAY_TIMEOUT);
+                assert_eq!(error.status(), StatusCode::SERVICE_UNAVAILABLE);
                 assert!(!error.headers().contains_key("etag"));
                 assert_eq!(error.headers()["cache-control"], "no-store");
             }

@@ -59,7 +59,7 @@ let stats = query.addr(address)?;
 ```rust,ignore
 let async_query = AsyncQuery::build(&plugins, mempool);
 
-// Run a read, awaiting publication notifications when needed.
+// Run a read with deadline-bounded publication protection.
 let result = async_query.read(move |q| q.block_by_height(height)).await;
 
 // Access inner Query
@@ -72,22 +72,22 @@ expired blocking jobs return `ReadTimeout` before invoking their closure. The
 server supplies one HTTP deadline; standalone async reads have a four-second
 total budget. Synchronous reads retain a four-second per-wait limit.
 
-`read` and `read_with_admission` retry the query closure after a publication
-notification, releasing all guards and worker admission before waiting. Clone
-only request arguments into these closures; resolve snapshots inside each
-attempt. Do not capture guarded or previously resolved data. `run` executes once
-and remains appropriate for actions and already-prepared immutable work. Running
-work keeps its guards and admission until it finishes; cancellation does not
-make concurrent mutation safe. The optional `tokio` feature supplies publication
-notifications without adding an async runtime requirement to synchronous users.
+`read` and `read_with_admission` execute the query closure once on a blocking
+worker. Mutable reads wait for the shared pipeline publication guard within the
+remaining deadline; incompatible chain/mempool snapshots return `StateUpdating`
+immediately. Resolve snapshots inside the closure. `run` remains appropriate for
+actions and already-prepared immutable work. Running work keeps its guards and
+admission until it finishes, even after HTTP cancellation. No publication
+notifications or async runtime are required by the synchronous data layer.
 
 ## Confirmed transaction reads
 
 Public transaction methods acquire their own publication protection. Internally,
 confirmed-position resolution and handoff revalidation are methods on an
-`IndexerRead` view that owns the query's indexer guard. Reads that also need other
-plugins acquire the complete guard set together. Keep the view alive through all
-dependent reads; do not reacquire a guard inside that scope.
+`IndexerRead` view that owns the query's shared pipeline guard. Keep the view alive
+through all dependent reads; do not reacquire a guard inside that scope. Proven
+immutable-prefix reads instead retain the separate rollback pin and can continue
+during an append-only update.
 
 `resolve_confirmed_tx_guarded`, `resolve_confirmed_position`, and
 `revalidate_confirmed_tx` are no longer public `Query` methods. Use

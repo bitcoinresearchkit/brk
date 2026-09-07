@@ -1,6 +1,6 @@
 mod import;
 
-use bitview_plugin::{ComputePlugin, Plugin, PluginGate, PluginStorage, UpdateContext};
+use bitview_plugin::{ComputePlugin, Plugin, PluginStorage, UpdateContext};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Sats};
@@ -11,8 +11,6 @@ use bitview_compute::LazyPreviousDeltaVec;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     cached_dca_sats: CachedDcaSats,
     /// Satoshis purchased by investing 100 USD at each UTC daily close newly
@@ -27,10 +25,6 @@ pub struct Vecs {
 impl Plugin for Vecs {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 

@@ -198,7 +198,6 @@ impl Vecs {
             })?;
 
         Ok(Self {
-            plugin_gate: Default::default(),
             cached_dca_sats,
             sats_per_day,
             period: PeriodVecs {

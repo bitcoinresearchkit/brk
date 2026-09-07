@@ -29,12 +29,13 @@ fn run<P, T>(
 where
     P: ComputePluginSet,
 {
-    plugins.for_each_plugin(&mut |plugin| plugin.gate().begin_update());
+    let publication = plugins.publication().clone();
+    publication.begin_update();
 
     let start = Instant::now();
     let output = compute(plugins, context)?;
     plugins.commit()?;
-    plugins.for_each_plugin(&mut |plugin| plugin.gate().finish_update());
+    publication.finish_update();
     info!("Update completed in {:.2?}", start.elapsed());
     Ok(output)
 }

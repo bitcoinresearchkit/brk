@@ -1,7 +1,6 @@
 use std::fmt::Write;
 
 use bitview_catalog::TreeNode;
-use bitview_plugin::PluginReadGuard;
 use bitview_types::{
     DetailedSeriesCount, Format, IndexInfo, Limit, PaginatedSeries, Pagination, SearchQuery,
     SeriesInfo, SeriesName, SeriesSelection,
@@ -287,18 +286,6 @@ impl Query {
             hash_prefix,
             stable_count,
         })
-    }
-
-    fn series_guard(&self, entries: &[SeriesEntry<'_>]) -> Result<PluginReadGuard> {
-        let mut plugins = entries
-            .iter()
-            .map(|entry| entry.plugin())
-            .collect::<Vec<_>>();
-        // Bounds and lazy resolution mappings are dependencies even when the
-        // caller supplies integer offsets rather than date/timestamp bounds.
-        plugins.push(self.indexer());
-        plugins.push(self.plugins().mappings);
-        self.read_plugins(plugins)
     }
 
     /// Count of leading entries provably immutable across a 6-block reorg.

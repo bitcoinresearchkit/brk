@@ -1,6 +1,6 @@
 use std::{str::FromStr, sync::Arc};
 
-use bitview_plugin::PluginReadGuard;
+use bitview_plugin::PublicationReadGuard;
 use brk_error::{Error, Result};
 use brk_types::{Addr, AddrBytes, BlockHash, Transaction};
 
@@ -9,7 +9,7 @@ use crate::Query;
 
 /// One address page with frozen mempool bodies and a guarded confirmed selection.
 pub struct ResolvedAddrTxs {
-    guard: PluginReadGuard,
+    guard: PublicationReadGuard,
     mempool: Vec<Arc<Transaction>>,
     chain: Option<ResolvedAddrChainTxs>,
 }
@@ -38,7 +38,7 @@ impl Query {
         total_target: usize,
     ) -> Result<ResolvedAddrTxs> {
         let addr = AddrBytes::from_str(addr)?;
-        let guard = self.read_plugin(self.indexer())?;
+        let guard = self.read_publication()?;
         let chain_addr = self.find_addr_bytes(&addr)?;
         let mempool = self
             .mempool()

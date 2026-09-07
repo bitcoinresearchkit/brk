@@ -1,4 +1,4 @@
-use crate::{PluginData, PluginGate, PluginId, PluginStorage};
+use crate::{PluginData, PluginId, PluginStorage};
 
 /// The compatibility contract shared by Bitview's built-in and external plugins.
 pub trait Plugin: PluginData + Send + Sync {
@@ -9,7 +9,4 @@ pub trait Plugin: PluginData + Send + Sync {
     fn id(&self) -> PluginId {
         self.storage().id()
     }
-
-    /// Publication gate for query-visible mutable state.
-    fn gate(&self) -> &PluginGate;
 }

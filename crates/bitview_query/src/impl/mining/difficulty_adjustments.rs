@@ -16,7 +16,7 @@ impl Query {
         &self,
         time_period: Option<TimePeriod>,
     ) -> Result<Vec<DifficultyAdjustmentEntry>> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let end = self.height().to_usize();
         let start = match time_period {
             Some(tp) => start_height(self, tp)?.to_usize(),

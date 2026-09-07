@@ -14,7 +14,7 @@ use bitview_compute::{
     LazyPerBlock, OhlcCentsToDollars, OhlcCentsToHighCents, OhlcCentsToLowCents,
     OhlcCentsToOpenCents, OhlcCentsToSats, Resolutions,
 };
-use bitview_plugin::{ImportContext, Plugin, PluginGate, PluginId, PluginStorage};
+use bitview_plugin::{ImportContext, Plugin, PluginId, PluginStorage};
 use bitview_traversable::Traversable;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::Version;
@@ -31,8 +31,6 @@ pub const ID: PluginId = STORAGE.id();
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
 
@@ -60,10 +58,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 
@@ -217,7 +211,6 @@ impl Vecs {
         };
 
         Ok(Self {
-            plugin_gate: Default::default(),
             db: db.clone(),
             split,
             ohlc,

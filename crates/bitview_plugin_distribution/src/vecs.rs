@@ -3,9 +3,7 @@ use brk_error::Result;
 use std::{mem, path::PathBuf};
 
 use bitview_cohort::{AddrTypeId, AgeRange, AgeRangeId, CohortContext, EntryPrice};
-use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginGate, PluginStorage, UpdateContext,
-};
+use bitview_plugin::{ComputePlugin, ImportContext, Plugin, PluginStorage, UpdateContext};
 use bitview_traversable::Traversable;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::{Cents, Height, StoredF64, SupplyState, Version};
@@ -39,8 +37,6 @@ const COINDAYS_CREATED_VERSION: Version = Version::ONE;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     inner: M::WriteOnly<Inner>,
@@ -82,10 +78,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 
@@ -181,7 +173,6 @@ impl Vecs {
         )?;
 
         let this = Self {
-            plugin_gate: Default::default(),
             supply_state: BytesVec::forced_import_with(
                 ImportOptions::new(&db, "supply_state", version)
                     .with_saved_stamped_changes(SAVED_STAMPED_CHANGES),

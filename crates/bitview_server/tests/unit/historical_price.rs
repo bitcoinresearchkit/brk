@@ -5,7 +5,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use bitview_plugin::Plugin;
+
 use brk_types::{HOUR4_INTERVAL, INDEX_EPOCH, Timestamp};
 use serde_json::Value;
 use tokio::{task::JoinHandle, time::timeout};
@@ -114,7 +114,8 @@ impl HistoricalPriceChecks {
 
         // Neither a current full-history validator nor wildcard HEAD may skip
         // mappings/price publication merely because the indexer tip is unchanged.
-        for gate in state.sync(|q| [q.mappings().gate().clone(), q.price().gate().clone()]) {
+        {
+            let gate = state.sync(|q| q.indexer().publication().clone());
             gate.begin_update();
             let mut tasks = Vec::new();
             for method in ["GET", "HEAD"] {

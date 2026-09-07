@@ -325,7 +325,6 @@ impl Vecs {
         );
 
         let this = Self {
-            plugin_gate: Default::default(),
             db: database,
             age_range: AgeRangeVecs {
                 spending_rate,

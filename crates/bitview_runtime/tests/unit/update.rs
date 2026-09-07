@@ -1,9 +1,6 @@
-use std::{
-    sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
-};
+use std::time::Duration;
 
-use bitview_plugin::{Plugin, PluginGate, PluginId, PluginReadGuard, PluginStorage};
+use bitview_plugin::{Plugin, PluginId, PluginStorage, Publication};
 use bitview_traversable::Traversable;
 use brk_error::Error;
 use brk_exit::Exit;
@@ -11,43 +8,61 @@ use brk_types::Version;
 
 use super::*;
 
-#[derive(bitview_traversable::Traversable)]
-struct TestPlugin {
-    #[traversable(skip)]
-    gate: PluginGate,
-}
+#[derive(Traversable)]
+struct TestPlugin {}
 
 impl Plugin for TestPlugin {
     fn storage(&self) -> PluginStorage {
         PluginStorage::new(PluginId::new("test"), Version::ONE)
     }
-
-    fn gate(&self) -> &PluginGate {
-        &self.gate
-    }
 }
 
 #[derive(crate::PluginSet)]
 struct TestPlugins {
-    plugin: TestPlugin,
+    first: TestPlugin,
+    second: TestPlugin,
     #[plugin_set(skip)]
-    computed_while_closed: AtomicBool,
+    publication: Publication,
     #[plugin_set(skip)]
-    committed_while_closed: AtomicBool,
+    computed_while_closed: bool,
+    #[plugin_set(skip)]
+    committed_while_closed: bool,
+    #[plugin_set(skip)]
+    fail_compute: bool,
     #[plugin_set(skip)]
     fail_commit: bool,
 }
 
+impl TestPlugins {
+    fn new() -> Self {
+        Self {
+            first: TestPlugin {},
+            second: TestPlugin {},
+            publication: Publication::new(),
+            computed_while_closed: false,
+            committed_while_closed: false,
+            fail_compute: false,
+            fail_commit: false,
+        }
+    }
+}
+
 impl ComputePluginSet for TestPlugins {
+    fn publication(&self) -> &Publication {
+        &self.publication
+    }
+
     fn compute(&mut self, _context: UpdateContext<'_>) -> Result<()> {
-        self.computed_while_closed
-            .store(self.plugin.gate().try_read().is_none(), Ordering::Relaxed);
-        Ok(())
+        self.computed_while_closed = self.publication().try_read().is_none();
+        if self.fail_compute {
+            Err(Error::Internal("test compute failure"))
+        } else {
+            Ok(())
+        }
     }
 
     fn commit(&mut self) -> Result<()> {
-        self.committed_while_closed
-            .store(self.plugin.gate().try_read().is_none(), Ordering::Relaxed);
+        self.committed_while_closed = self.publication().try_read().is_none();
         if self.fail_commit {
             Err(Error::Internal("test commit failure"))
         } else {
@@ -57,46 +72,33 @@ impl ComputePluginSet for TestPlugins {
 }
 
 #[test]
-fn publishes_only_after_compute_and_commit_complete() -> Result<()> {
-    let mut plugins = TestPlugins {
-        plugin: TestPlugin {
-            gate: PluginGate::new(),
-        },
-        computed_while_closed: AtomicBool::new(false),
-        committed_while_closed: AtomicBool::new(false),
-        fail_commit: false,
-    };
-
+fn publishes_once_only_after_complete_compute_and_commit() -> Result<()> {
+    let mut plugins = TestPlugins::new();
+    let reader = plugins.publication().clone();
     let exit = Exit::new();
     update(&mut plugins, UpdateContext::new(&exit))?;
-
-    assert!(plugins.computed_while_closed.load(Ordering::Relaxed));
-    assert!(plugins.committed_while_closed.load(Ordering::Relaxed));
-    assert!(plugins.plugin.gate().try_read().is_some());
+    assert!(plugins.computed_while_closed);
+    assert!(plugins.committed_while_closed);
+    assert!(reader.try_read().is_some());
+    assert_eq!(reader.revision(), 1);
+    update(&mut plugins, UpdateContext::new(&exit))?;
+    assert_eq!(reader.revision(), 2);
     Ok(())
 }
 
 #[test]
-fn commit_failure_keeps_plugin_closed() {
-    let mut plugins = TestPlugins {
-        plugin: TestPlugin {
-            gate: PluginGate::new(),
-        },
-        computed_while_closed: AtomicBool::new(false),
-        committed_while_closed: AtomicBool::new(false),
-        fail_commit: true,
-    };
-
-    let exit = Exit::new();
-    assert!(update(&mut plugins, UpdateContext::new(&exit)).is_err());
-    assert!(plugins.computed_while_closed.load(Ordering::Relaxed));
-    assert!(plugins.committed_while_closed.load(Ordering::Relaxed));
-    assert!(plugins.plugin.gate().try_read().is_none());
-    assert!(
-        PluginReadGuard::acquire_for(
-            vec![&plugins.plugin as &dyn Plugin],
-            Duration::from_millis(10),
-        )
-        .is_none()
-    );
+fn failures_keep_the_whole_pipeline_closed() {
+    for fail_compute in [false, true] {
+        let mut plugins = TestPlugins::new();
+        plugins.fail_compute = fail_compute;
+        plugins.fail_commit = !fail_compute;
+        let reader = plugins.publication().clone();
+        let exit = Exit::new();
+        assert!(update(&mut plugins, UpdateContext::new(&exit)).is_err());
+        assert!(plugins.computed_while_closed);
+        assert_eq!(plugins.committed_while_closed, !fail_compute);
+        assert!(reader.try_read().is_none());
+        assert!(reader.read_for(Duration::from_millis(10)).is_none());
+        assert_eq!(reader.revision(), 0);
+    }
 }

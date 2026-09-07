@@ -42,6 +42,10 @@ impl<M: StorageMode> HasIndexer<M> for Plugins<M> {
 }
 
 impl ComputePluginSet for Plugins {
+    fn publication(&self) -> &bitview_plugin::Publication {
+        self.indexer.publication()
+    }
+
     fn compute(&mut self, context: UpdateContext<'_>) -> Result<()> {
         self.indexer.compute((), context)
     }

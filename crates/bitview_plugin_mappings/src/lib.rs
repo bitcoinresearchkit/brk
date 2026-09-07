@@ -18,7 +18,7 @@ use std::ops::Deref;
 
 use bitview_compute::{IndexSources, LazyCumulativeIndexVec, PerResolution};
 use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginGate, PluginId, PluginStorage, UpdateContext,
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
@@ -49,8 +49,6 @@ pub const ID: PluginId = STORAGE.id();
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
-    #[traversable(skip)]
-    plugin_gate: PluginGate,
     #[traversable(skip)]
     db: Database,
     chain_counts: M::WriteOnly<CachedChainCounts>,
@@ -95,10 +93,6 @@ where
 {
     fn storage(&self) -> PluginStorage {
         STORAGE
-    }
-
-    fn gate(&self) -> &PluginGate {
-        &self.plugin_gate
     }
 }
 
@@ -251,7 +245,6 @@ impl Vecs {
         };
 
         let this = Self {
-            plugin_gate: Default::default(),
             chain_counts,
             sources,
             tx_heights: TxHeights::init(indexer),

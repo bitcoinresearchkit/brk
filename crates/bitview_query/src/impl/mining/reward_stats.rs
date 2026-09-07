@@ -14,7 +14,7 @@ impl Query {
             return Err(Error::OutOfRange("block_count must be >= 1".into()));
         }
 
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
 
         let plugins = self.plugins();
         let current_height = self.height();

@@ -56,6 +56,10 @@ impl QueryPluginSet for Plugins<Ro> {
 }
 
 impl ComputePluginSet for Plugins {
+    fn publication(&self) -> &bitview_plugin::Publication {
+        self.defaults.publication()
+    }
+
     fn bootstrap_compute(&mut self, context: UpdateContext<'_>) -> Result<BootstrapAction> {
         self.defaults
             .bootstrap_compute(context)?

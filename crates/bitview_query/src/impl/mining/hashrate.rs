@@ -18,7 +18,7 @@ impl Query {
         time_period: Option<TimePeriod>,
         max_points: usize,
     ) -> Result<HashrateSummary> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let indexer = self.indexer();
         let plugins = self.plugins();
         let current_height = self.height();

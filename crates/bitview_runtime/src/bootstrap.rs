@@ -92,6 +92,8 @@ mod tests {
     #[derive(crate::PluginSet)]
     struct TestPlugins {
         #[plugin_set(skip)]
+        publication: bitview_plugin::Publication,
+        #[plugin_set(skip)]
         import: usize,
         #[plugin_set(skip)]
         computes: Arc<AtomicUsize>,
@@ -100,6 +102,9 @@ mod tests {
     }
 
     impl ComputePluginSet for TestPlugins {
+        fn publication(&self) -> &bitview_plugin::Publication {
+            &self.publication
+        }
         fn bootstrap_compute(&mut self, _context: UpdateContext<'_>) -> Result<BootstrapAction> {
             self.computes.fetch_add(1, Ordering::Relaxed);
             Ok(if self.reimport_first && self.import == 1 {
@@ -125,6 +130,7 @@ mod tests {
             import_context,
             |_context| {
                 Ok(TestPlugins {
+                    publication: Default::default(),
                     import: imports.fetch_add(1, Ordering::Relaxed) + 1,
                     computes: computes.clone(),
                     reimport_first: true,
@@ -150,6 +156,7 @@ mod tests {
             import_context,
             |_context| {
                 Ok(TestPlugins {
+                    publication: Default::default(),
                     import: imports.fetch_add(1, Ordering::Relaxed) + 1,
                     computes: computes.clone(),
                     reimport_first: false,

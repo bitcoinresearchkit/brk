@@ -30,7 +30,7 @@ impl ResolvedRbf {
 impl Query {
     /// Resolve the exact owned replacement tree once under the mempool lock.
     pub fn resolve_rbf(&self, txid: &Txid) -> Result<ResolvedRbf> {
-        let _guard = self.read_plugin(self.indexer())?;
+        let _guard = self.read_publication()?;
         let tip = self.tip_blockhash();
         Ok(ResolvedRbf {
             source: self.require_mempool()?.rbf_for_tx(txid, &tip)?,
@@ -46,8 +46,7 @@ impl Query {
 
     /// Enrich an already resolved tree without repeating its mempool lookup.
     pub fn tx_rbf_resolved(&self, rbf: ResolvedRbf) -> Result<RbfResponse> {
-        let plugins = self.plugins();
-        let read = self.read_indexer_with(vec![plugins.transactions])?;
+        let read = self.read_indexer()?;
         if self.tip_blockhash() != rbf.tip {
             return Err(Error::StateUpdating);
         }
@@ -73,8 +72,7 @@ impl Query {
     /// Most-recent first, capped at 25. `full_rbf_only` keeps only
     /// trees with at least one non-signaling predecessor.
     pub fn recent_replacements(&self, full_rbf_only: bool) -> Result<Vec<ReplacementNode>> {
-        let plugins = self.plugins();
-        let read = self.read_indexer_with(vec![plugins.transactions])?;
+        let read = self.read_indexer()?;
         let trees = self.require_mempool()?.recent_rbf_trees(
             full_rbf_only,
             RECENT_REPLACEMENTS_LIMIT,

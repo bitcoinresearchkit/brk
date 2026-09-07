@@ -46,7 +46,7 @@ impl MempoolPublication {
                     let tag = tag.to_owned();
                     requests.spawn(async move {
                         let response = exchange_with_etag(address, method, &path, &tag).await;
-                        assert!(response.starts_with("HTTP/1.1 504"), "{path}: {response}");
+                        assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     });

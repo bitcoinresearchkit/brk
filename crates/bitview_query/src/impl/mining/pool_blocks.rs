@@ -1,4 +1,4 @@
-use bitview_plugin::PluginReadGuard;
+use bitview_plugin::PublicationReadGuard;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{BlockHash, BlockInfoV1, Dollars, Height, PoolSlug};
 use vecdb::ReadableVec;
@@ -7,7 +7,7 @@ use crate::{Query, ResolvedBlocks};
 
 /// A pool-block page resolved against one exact published chain view.
 pub struct ResolvedPoolBlocks {
-    _publication: PluginReadGuard,
+    _publication: PublicationReadGuard,
     chain: ResolvedBlocks,
     heights: Vec<Height>,
     prices: Vec<Dollars>,
@@ -38,7 +38,7 @@ impl Query {
         before_height: Option<Height>,
         limit: usize,
     ) -> Result<ResolvedPoolBlocks> {
-        let publication = self.read_plugin(self.indexer())?;
+        let publication = self.read_publication()?;
         let chain = self.resolve_blocks(None, 0)?;
         let tip = chain.last_height().ok_or(Error::StateUpdating)?;
         let through_height = before_height.unwrap_or(tip).min(tip);
