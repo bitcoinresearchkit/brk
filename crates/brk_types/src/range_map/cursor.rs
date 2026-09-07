@@ -8,7 +8,10 @@ pub struct RangeMapCursor<'a, I, V> {
 
 impl<'a, I, V> RangeMapCursor<'a, I, V> {
     pub(super) fn new(source: &'a RangeMap<I, V>) -> Self {
-        Self { source, position: None }
+        Self {
+            source,
+            position: None,
+        }
     }
 }
 
@@ -22,7 +25,9 @@ impl<I: Ord + Copy, V: From<usize>> RangeMapCursor<'_, I, V> {
         {
             return Some(V::from(position));
         }
-        self.position = starts.partition_point(|&start| start <= index).checked_sub(1);
+        self.position = starts
+            .partition_point(|&start| start <= index)
+            .checked_sub(1);
         self.position.map(V::from)
     }
 }

@@ -133,8 +133,42 @@ where
             self.vec.read_sorted_into_at(indices, out);
             return;
         }
-
+        let indices = &indices[..indices.partition_point(|&i| i < self.vec.len())];
+        let (Some(&first), Some(&last)) = (indices.first(), indices.last()) else {
+            return;
+        };
         out.reserve(indices.len());
+        if last - first < indices.len() && indices.len() > 1 {
+            // Merge dense requests with mutations. Sparse requests retain
+            // tree lookups rather than walking mutations across large gaps.
+            let mut holes = self.current_holes().range(first..=last).peekable();
+            let mut updates = self.current_updated().range(first..=last).peekable();
+            let reader = self.vec.reader();
+            let stored_len = self.vec.stored_len();
+            let pushed = self.vec.pushed();
+            for &index in indices {
+                while holes.peek().is_some_and(|&&hole| hole < index) {
+                    holes.next();
+                }
+                if holes.peek() == Some(&&index) {
+                    continue;
+                }
+                while updates.peek().is_some_and(|&(&key, _)| key < index) {
+                    updates.next();
+                }
+                let value = if let Some(&(&key, value)) = updates.peek()
+                    && key == index
+                {
+                    value.clone()
+                } else if index < stored_len {
+                    V::read_stored(&reader, index)
+                } else {
+                    pushed[index - stored_len].clone()
+                };
+                out.push(value);
+            }
+            return;
+        }
         for &index in indices {
             if let Some(value) = self.collect_one_at(index) {
                 out.push(value);

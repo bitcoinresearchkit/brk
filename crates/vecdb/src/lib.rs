@@ -81,3 +81,6 @@ const ONE_KIB: usize = 1024;
 const BUFFER_SIZE: usize = 512 * ONE_KIB;
 
 const SIZE_OF_U64: usize = std::mem::size_of::<u64>();
+/// Opt-in, calling-thread counters for diagnostic fixtures; absent from default builds.
+#[cfg(feature = "diagnostics")]
+pub mod diagnostics;

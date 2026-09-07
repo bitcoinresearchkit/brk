@@ -192,15 +192,16 @@ impl Query {
     // === Helper methods ===
 
     fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
+        let guard = self.pin_safe_lengths()?;
         Ok(self
-            .transactions_at_indices(&[tx_index])?
+            .transactions_at_indices(&[tx_index], &guard)?
             .into_iter()
             .next()
             .expect("transactions_by_indices returns one tx per input index"))
     }
 
     fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
-        indexed_transaction::read_at(self, tx_index).map(|(bytes, _)| bytes)
+        indexed_transaction::read_at(self, tx_index, self.safe_lengths()).map(|(bytes, _)| bytes)
     }
 
     fn transaction_hex_by_index(&self, tx_index: TxIndex) -> Result<String> {
@@ -230,8 +231,9 @@ impl Query {
     }
 
     fn merkleblock_proof_at(&self, txid: Txid, height: Height) -> Result<String> {
-        let header = self.read_block_header(height)?;
-        let txids = self.block_txids_by_height(height, self.safe_lengths())?;
+        let guard = self.pin_safe_lengths()?;
+        let header = self.read_block_header_at(height, &guard)?;
+        let txids = self.block_txids_by_height(height, &guard)?;
 
         let target: BitcoinTxid = (&txid).into();
         let mb = MerkleBlock::from_header_txids_with_predicate(
@@ -256,6 +258,7 @@ impl Query {
     }
 
     fn merkle_proof_at(&self, tx_index: TxIndex, height: Height) -> Result<MerkleProof> {
+        let guard = self.pin_safe_lengths()?;
         let first_tx = self
             .indexer()
             .vecs()
@@ -267,7 +270,7 @@ impl Query {
             .to_usize()
             .checked_sub(first_tx.to_usize())
             .ok_or(Error::Internal("Transaction precedes its block"))?;
-        let txids = self.block_txids_by_height(height, self.safe_lengths())?;
+        let txids = self.block_txids_by_height(height, &guard)?;
         if pos >= txids.len() {
             return Err(Error::Internal("Transaction exceeds its block"));
         }
@@ -316,7 +319,14 @@ impl Query {
     /// never dereference slots a concurrent writer might be populating.
     #[inline]
     pub fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
-        let bound = self.safe_lengths();
+        self.confirmed_status_height_bounded(tx_index, self.safe_lengths())
+    }
+
+    pub(crate) fn confirmed_status_height_bounded(
+        &self,
+        tx_index: TxIndex,
+        bound: brk_types::Lengths,
+    ) -> Result<Height> {
         if tx_index >= bound.tx_index {
             return Err(Error::UnknownTxid);
         }
@@ -329,13 +339,22 @@ impl Query {
     /// Full confirmed TxStatus from a known height.
     #[inline]
     pub fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
+        let status = self.confirmed_status_at_bounded(height, self.safe_lengths())?;
         if height >= self.safe_lengths().height {
+            return Err(Error::UnknownTxid);
+        }
+        Ok(status)
+    }
+
+    pub(crate) fn confirmed_status_at_bounded(
+        &self,
+        height: Height,
+        bound: brk_types::Lengths,
+    ) -> Result<TxStatus> {
+        if height >= bound.height {
             return Err(Error::UnknownTxid);
         }
         let (block_hash, block_time) = self.block_hash_and_time(height)?;
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
         Ok(TxStatus::confirmed(height, block_hash, block_time))
     }
 }

@@ -1,9 +1,10 @@
 use bitcoin::{ScriptBuf, Transaction as BitcoinTransaction};
+use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlkPosition, BlockHash, BlockTxIndex, Height, Lengths, OutPoint, OutputType, RawLockTime, Sats,
-    SigOps, StoredU32, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex,
-    Vout, Weight,
+    BlkPosition, BlockHash, BlockTxIndex, Height, OutPoint, OutputType, RawLockTime, Sats, SigOps,
+    StoredU32, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout,
+    Weight,
 };
 use rustc_hash::FxHashMap;
 use vecdb::{ReadableVec, VecIndex};
@@ -17,8 +18,8 @@ impl Query {
     /// Unpaginated by design.
     pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
         let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
-        self.block_txids_by_height(height, guard.lengths())
+        let height = self.height_by_hash_at(hash, &guard)?;
+        self.block_txids_by_height(height, &guard)
     }
 
     /// Up to `count` transactions from the block, starting at the in-block
@@ -31,8 +32,8 @@ impl Query {
         count: u32,
     ) -> Result<Vec<Transaction>> {
         let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
-        self.block_txs_at_height(height, start_index, count, guard.lengths())
+        let height = self.height_by_hash_at(hash, &guard)?;
+        self.block_txs_at_height(height, start_index, count, &guard)
     }
 
     /// Txid at an in-block offset (`index` is the position within the block,
@@ -41,8 +42,8 @@ impl Query {
     /// the block.
     pub fn block_txid_at_index(&self, hash: &BlockHash, index: BlockTxIndex) -> Result<Txid> {
         let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
-        self.block_txid_at_index_by_height(height, index.into(), guard.lengths())
+        let height = self.height_by_hash_at(hash, &guard)?;
+        self.block_txid_at_index_by_height(height, index.into(), &guard)
     }
 
     // === Helper methods ===
@@ -60,19 +61,35 @@ impl Query {
     /// The final `unwrap` is provably safe: `order` is a permutation of
     /// `0..len`, Phase 1 produces exactly one `DecodedTx` per position, and
     /// Phase 3 assigns each `txs[pos]` once before the collect.
+    ///
+    /// Unprotected helpers are not part of the public API:
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::{Height, Lengths};
+    /// fn unpinned(query: &Query, height: Height, lengths: Lengths) {
+    ///     query.block_txids_by_height(height, lengths).unwrap();
+    /// }
+    /// ```
+    /// ```compile_fail
+    /// use bitview_query::Query;
+    /// use brk_types::TxIndex;
+    /// fn unpinned(query: &Query, indices: &[TxIndex]) {
+    ///     query.transactions_at_indices(indices).unwrap();
+    /// }
+    /// ```
     pub fn transactions_by_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
-        let _guard = self.pin_safe_lengths()?;
-        self.transactions_at_indices(indices)
+        let guard = self.pin_safe_lengths()?;
+        self.transactions_at_indices(indices, &guard)
     }
 
-    pub fn block_txs_at_height(
+    pub(crate) fn block_txs_at_height(
         &self,
         height: Height,
         start_index: BlockTxIndex,
         count: u32,
-        safe: Lengths,
+        guard: &SafeLengths,
     ) -> Result<Vec<Transaction>> {
-        let (first, tx_count) = self.block_tx_range(height, safe)?;
+        let (first, tx_count) = self.block_tx_range(height, guard)?;
         let start: usize = start_index.into();
         if start >= tx_count {
             return Err(Error::OutOfRange(
@@ -83,15 +100,19 @@ impl Query {
         let indices: Vec<TxIndex> = (first + start..first + start + count)
             .map(TxIndex::from)
             .collect();
-        self.transactions_at_indices(&indices)
+        self.transactions_at_indices(&indices, guard)
     }
     /// All txids in the block at `height`, canonical order. `OutOfRange`
     /// when `height` is past the indexed tip; `Internal` if any read hits
     /// the stamp-before-data race or short-returns. Used by both the
     /// hash-keyed and height-keyed entry points so they share bounds
     /// semantics.
-    pub fn block_txids_by_height(&self, height: Height, safe: Lengths) -> Result<Vec<Txid>> {
-        let (first, tx_count) = self.block_tx_range(height, safe)?;
+    pub(crate) fn block_txids_by_height(
+        &self,
+        height: Height,
+        guard: &SafeLengths,
+    ) -> Result<Vec<Txid>> {
+        let (first, tx_count) = self.block_tx_range(height, guard)?;
         let txids = self
             .indexer()
             .vecs()
@@ -106,13 +127,13 @@ impl Query {
     /// Single txid at an in-block offset. `OutOfRange` when `index` is past
     /// the last tx in the block. `Internal` if the underlying read finds
     /// the stamp-before-data race (`first_tx_index` flushed ahead of `txid`).
-    pub fn block_txid_at_index_by_height(
+    pub(crate) fn block_txid_at_index_by_height(
         &self,
         height: Height,
         index: usize,
-        safe: Lengths,
+        guard: &SafeLengths,
     ) -> Result<Txid> {
-        let (first, tx_count) = self.block_tx_range(height, safe)?;
+        let (first, tx_count) = self.block_tx_range(height, guard)?;
         if index >= tx_count {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
@@ -126,11 +147,15 @@ impl Query {
             ))
     }
     /// Internal batch read; caller holds publication exclusion from selection.
-    pub fn transactions_at_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
+    pub(crate) fn transactions_at_indices(
+        &self,
+        indices: &[TxIndex],
+        guard: &SafeLengths,
+    ) -> Result<Vec<Transaction>> {
         if indices.is_empty() {
             return Ok(Vec::new());
         }
-        let safe = self.safe_lengths();
+        let safe = guard.lengths();
         if indices.iter().any(|index| *index >= safe.tx_index) {
             return Err(Error::UnknownTxid);
         }
@@ -180,13 +205,13 @@ impl Query {
             let first_txin_index: TxInIndex = first_txin_cursor.get(idx).data()?;
             let position: BlkPosition = position_cursor.get(idx).data()?;
 
-            let height = self.confirmed_status_height(tx_index)?;
+            let height = self.confirmed_status_height_bounded(tx_index, safe)?;
             let status = if let Some((h, ref s)) = cached_status
                 && h == height
             {
                 s.clone()
             } else {
-                let s = self.confirmed_status_at(height)?;
+                let s = self.confirmed_status_at_bounded(height, safe)?;
                 cached_status = Some((height, s.clone()));
                 s
             };
@@ -271,7 +296,7 @@ impl Query {
                     .as_ref()
                     .is_none_or(|(index, _)| *index != op.tx_index())
                 {
-                    let (_, parent) = indexed_transaction::read_at(self, op.tx_index())?;
+                    let (_, parent) = indexed_transaction::read_at(self, op.tx_index(), safe)?;
                     raw_parent = Some((op.tx_index(), parent));
                 }
                 let output = raw_parent
@@ -363,7 +388,12 @@ impl Query {
     /// stamp-before-data race. The tip-of-safe block falls back to
     /// `safe.tx_index` (not live `txid.len()`, which can be ahead of the
     /// writer's stamped boundary mid-block).
-    pub fn block_tx_range(&self, height: Height, safe: Lengths) -> Result<(usize, usize)> {
+    pub(crate) fn block_tx_range(
+        &self,
+        height: Height,
+        guard: &SafeLengths,
+    ) -> Result<(usize, usize)> {
+        let safe = guard.lengths();
         if height >= safe.height {
             return Err(Error::OutOfRange("Block height out of range".into()));
         }

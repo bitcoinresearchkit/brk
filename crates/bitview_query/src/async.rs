@@ -18,8 +18,9 @@ impl AsyncQuery {
             .1
             .unwrap_or_else(|| Instant::now() + Query::UPDATE_WAIT_TIMEOUT)
     }
-    /// Retry only the read operation, with no guards or worker admission held
-    /// while awaiting a resource notification. Actions must use `run` instead.
+    /// Retry only the read operation, releasing guards and worker admission
+    /// before awaiting a resource notification. Indexer prefix locks wait on
+    /// the blocking worker, bounded by the read deadline. Actions use `run`.
     pub async fn read<F, T>(&self, f: F) -> Result<T>
     where
         F: FnOnce(&Query) -> Result<T> + Clone + Send + 'static,

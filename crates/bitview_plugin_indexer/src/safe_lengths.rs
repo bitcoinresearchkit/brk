@@ -1,29 +1,25 @@
 use brk_types::Lengths;
 use parking_lot::{ArcRwLockReadGuard, RawRwLock};
 
-use crate::state::State;
-
 /// Pins a published immutable index prefix without waiting for append/compute.
 /// Rollback must lower the shared lengths before changing that prefix, so it
 /// waits for this guard. Mutable aggregates are not protected by these bounds.
-pub struct SafeLengths(ArcRwLockReadGuard<RawRwLock, Lengths>);
-
-impl SafeLengths {
-    pub fn lengths(&self) -> Lengths {
-        *self.0
-    }
+pub struct SafeLengths {
+    _guard: ArcRwLockReadGuard<RawRwLock, ()>,
+    lengths: Lengths,
 }
 
-impl State {
-    pub fn pin_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
-        self.0.try_read_arc_for(timeout).map(SafeLengths)
+impl SafeLengths {
+    pub(crate) fn new(guard: ArcRwLockReadGuard<RawRwLock, ()>, lengths: Lengths) -> Self {
+        Self {
+            _guard: guard,
+            lengths,
+        }
     }
 
-    pub fn pin(&self) -> SafeLengths {
-        SafeLengths(self.0.read_arc())
-    }
-
-    pub fn try_pin(&self) -> Option<SafeLengths> {
-        self.0.try_read_arc().map(SafeLengths)
+    /// Copy the bounds, not their protection. Retain this guard until every
+    /// read authorized by these lengths has completed.
+    pub fn lengths(&self) -> Lengths {
+        self.lengths
     }
 }

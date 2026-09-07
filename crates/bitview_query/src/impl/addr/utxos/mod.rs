@@ -57,7 +57,7 @@ impl Query {
         let (output_type, type_index) = self.resolve_addr_bytes(addr)?;
         let lengths = self.safe_lengths();
         let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
-        let anchor = self.block_hash_by_height(height)?;
+        let anchor = self.resolve_block_hash(height)?;
         let outpoints: Vec<(TxIndex, Vout)> = self
             .indexer()
             .stores()

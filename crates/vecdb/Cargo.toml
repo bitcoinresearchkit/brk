@@ -11,6 +11,7 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
+diagnostics = []
 derive = ["vecdb_derive"]
 lz4 = ["dep:lz4_flex"]
 pco = ["dep:pco"]

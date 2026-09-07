@@ -8,6 +8,7 @@ use bitcoin::{
     hex::DisplayHex,
     io::FromStd,
 };
+use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
     BlockExtras, BlockHash, BlockHeader, BlockInfo, BlockInfoV1, BlockPool, Dollars, FeeRate,
@@ -43,8 +44,8 @@ impl Query {
     /// Block by hash. Unknown hash → 404 via `height_by_hash`.
     pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
         let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
-        self.block_at_height(height, guard.lengths())
+        let height = self.height_by_hash_at(hash, &guard)?;
+        self.block_at_height(height, &guard)
     }
 
     /// Block by height. Height past tip (or pre-genesis) → `OutOfRange`.
@@ -56,12 +57,12 @@ impl Query {
                 self.block_unavailable(Error::OutOfRange("Block height out of range".into()))
             );
         }
-        self.block_at_height(height, safe)
+        self.block_at_height(height, &guard)
     }
 
-    fn block_at_height(&self, height: Height, safe: Lengths) -> Result<BlockInfo> {
+    fn block_at_height(&self, height: Height, guard: &SafeLengths) -> Result<BlockInfo> {
         let h = height.to_usize();
-        self.blocks_range_at(h, h + 1, safe)?
+        self.blocks_range_at(h, h + 1, guard)?
             .pop()
             .ok_or_else(|| Error::NotFound("Block not found".into()))
     }
@@ -86,31 +87,31 @@ impl Query {
 
     /// The original 80 header bytes as hex, verified against the requested hash.
     pub fn block_header_hex(&self, hash: &BlockHash) -> Result<String> {
-        let _guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
-        self.block_header_hex_at_height(height, hash)
+        let guard = self.pin_safe_lengths()?;
+        let height = self.height_by_hash_at(hash, &guard)?;
+        self.block_header_hex_at_height(height, hash, &guard)
     }
 
     /// Resolve a height against one published chain view.
     pub fn resolve_block_hash(&self, height: Height) -> Result<BlockHash> {
-        let _guard = self.pin_safe_lengths()?;
-        self.block_hash_by_height(height)
+        let guard = self.pin_safe_lengths()?;
+        self.block_hash_by_height(height, &guard)
     }
 
     /// Bounded byte-vector read, or `None` when publication requires waiting.
     pub fn try_resolve_block_hash(&self, height: Height) -> Result<Option<BlockHash>> {
-        let Some(_guard) = self.indexer().try_pin_safe_lengths() else {
+        let Some(guard) = self.indexer().try_pin_safe_lengths() else {
             return Ok(None);
         };
-        self.block_hash_by_height(height).map(Some)
+        self.block_hash_by_height(height, &guard).map(Some)
     }
 
-    /// Block hash by height. Caller holds publication exclusion when needed.
+    /// Block hash by height within the retained published prefix.
     /// Bounded typed-index read with a semantic
     /// bounds gate (`OutOfRange` for past-tip, `Internal` if the data
     /// is unexpectedly missing inside the gate).
-    pub fn block_hash_by_height(&self, height: Height) -> Result<BlockHash> {
-        if height >= self.safe_lengths().height {
+    fn block_hash_by_height(&self, height: Height, guard: &SafeLengths) -> Result<BlockHash> {
+        if height >= guard.lengths().height {
             return Err(
                 self.block_unavailable(Error::OutOfRange("Block height out of range".into()))
             );
@@ -130,7 +131,7 @@ impl Query {
         let guard = self.pin_safe_lengths()?;
         let safe = guard.lengths();
         let (begin, end) = Self::resolve_block_range(start_height, count, safe.height);
-        self.blocks_range_at(begin, end, safe)
+        self.blocks_range_at(begin, end, &guard)
     }
 
     /// V1 most recent `count` blocks with extras ending at `start_height`
@@ -155,10 +156,23 @@ impl Query {
     // === Helper methods ===
 
     /// Read the on-disk 80-byte header at `height` and decode it.
-    /// Caller must bounds-check `height` (no `OutOfRange` mapping here).
     /// Returns `BitcoinHeader` because callers feed it into
     /// upstream consensus-encoding APIs (`serialize_hex`, `MerkleBlock`).
     pub fn read_block_header(&self, height: Height) -> Result<BitcoinHeader> {
+        let guard = self.pin_safe_lengths()?;
+        self.read_block_header_at(height, &guard)
+    }
+
+    pub(crate) fn read_block_header_at(
+        &self,
+        height: Height,
+        guard: &SafeLengths,
+    ) -> Result<BitcoinHeader> {
+        if height >= guard.lengths().height {
+            return Err(
+                self.block_unavailable(Error::OutOfRange("Block height out of range".into()))
+            );
+        }
         let position = self
             .indexer()
             .vecs()
@@ -294,7 +308,15 @@ impl Query {
         })
     }
 
-    pub fn block_header_hex_at_height(&self, height: Height, hash: &BlockHash) -> Result<String> {
+    pub(super) fn block_header_hex_at_height(
+        &self,
+        height: Height,
+        hash: &BlockHash,
+        guard: &SafeLengths,
+    ) -> Result<String> {
+        if height >= guard.lengths().height {
+            return Err(self.block_unavailable(Error::NotFound("Block not found".into())));
+        }
         let position = self
             .indexer()
             .vecs()
@@ -307,12 +329,13 @@ impl Query {
         Ok(bytes.to_lower_hex_string())
     }
     /// Build descending-height rows within the caller's protected safe bounds.
-    pub fn blocks_range_at(
+    pub(super) fn blocks_range_at(
         &self,
         begin: usize,
         end: usize,
-        safe: Lengths,
+        guard: &SafeLengths,
     ) -> Result<Vec<BlockInfo>> {
+        let safe = guard.lengths();
         let height_len = safe.height.to_usize();
         let end = end.min(height_len);
         if begin >= end {
@@ -400,7 +423,7 @@ impl Query {
         Ok(blocks)
     }
     /// Reuse captured prices under the caller's publication guard.
-    pub fn blocks_v1_range_with_prices(
+    pub(super) fn blocks_v1_range_with_prices(
         &self,
         begin: usize,
         end: usize,

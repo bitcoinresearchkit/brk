@@ -1,54 +1,77 @@
 use std::sync::Arc;
 
+use arc_swap::ArcSwap;
 use brk_types::Lengths;
 use parking_lot::RwLock;
 
-#[derive(Clone)]
-pub struct State(
-    pub Arc<RwLock<Lengths>>,
-    #[cfg(feature = "tokio")] tokio::sync::watch::Sender<()>,
-);
+use crate::SafeLengths;
+
+/// One writer publishes complete bounds; only rollback drains pinned readers.
+pub struct State {
+    lengths: ArcSwap<Lengths>,
+    reorg: Arc<RwLock<()>>,
+}
 
 impl State {
     pub fn new() -> Self {
-        Self(
-            Arc::new(RwLock::new(Lengths::default())),
-            #[cfg(feature = "tokio")]
-            tokio::sync::watch::channel(()).0,
-        )
+        Self {
+            lengths: ArcSwap::from_pointee(Lengths::default()),
+            reorg: Arc::new(RwLock::new(())),
+        }
     }
 
     pub fn lengths(&self) -> Lengths {
-        // Helpers may load bounds while their caller pins the prefix. Do not
-        // deadlock behind a writer waiting for that caller's read guard.
-        *self.0.read_recursive()
+        **self.lengths.load()
+    }
+
+    pub fn pin_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
+        self.reorg
+            .try_read_arc_for(timeout)
+            .map(|guard| SafeLengths::new(guard, self.lengths()))
+    }
+
+    pub fn pin(&self) -> SafeLengths {
+        SafeLengths::new(self.reorg.read_arc(), self.lengths())
+    }
+
+    pub fn try_pin(&self) -> Option<SafeLengths> {
+        self.reorg
+            .try_read_arc()
+            .map(|guard| SafeLengths::new(guard, self.lengths()))
+    }
+
+    pub fn pin_recursive(&self) -> SafeLengths {
+        SafeLengths::new(self.reorg.read_arc_recursive(), self.lengths())
     }
 
     pub fn finish_update(&self, next: Lengths) {
-        let mut lengths = self.0.write();
+        let current = self.lengths();
+        if current == next {
+            return;
+        }
         debug_assert!(
             {
                 let mut clamped = next;
-                clamped.clamp_to(&lengths);
-                clamped == *lengths
+                clamped.clamp_to(&current);
+                clamped == current
             },
             "length regression"
         );
-        *lengths = next;
-        drop(lengths);
-        #[cfg(feature = "tokio")]
-        self.1.send_replace(());
+        self.lengths.store(Arc::new(next));
     }
 
     pub fn lower_before(&self, starting: &Lengths) {
-        self.0.write().clamp_to(starting);
-        #[cfg(feature = "tokio")]
-        self.1.send_replace(());
-    }
-
-    #[cfg(feature = "tokio")]
-    pub fn changes(&self) -> tokio::sync::watch::Receiver<()> {
-        self.1.subscribe()
+        let current = self.lengths();
+        let mut lowered = current;
+        lowered.clamp_to(starting);
+        if lowered == current {
+            return;
+        }
+        // Acquire exclusion before publishing the smaller prefix. Once old
+        // readers drain, new readers can use the unaffected prefix during undo.
+        let guard = self.reorg.write();
+        self.lengths.store(Arc::new(lowered));
+        drop(guard);
     }
 }
 
@@ -60,26 +83,69 @@ mod tests {
 
     use super::*;
 
-    #[cfg(feature = "tokio")]
     #[test]
-    fn prefix_changes_notify_after_both_lowering_and_publication() {
-        let state = State::new();
-        let mut changes = state.changes();
-        state.finish_update(Lengths {
+    fn publication_advances_without_draining_or_changing_old_pins() {
+        let state = Arc::new(State::new());
+        let old = Lengths {
+            height: Height::new(2),
+            tx_index: brk_types::TxIndex::from(3usize),
+            ..Default::default()
+        };
+        let next = Lengths {
+            height: Height::new(3),
+            tx_index: brk_types::TxIndex::from(5usize),
+            ..old
+        };
+        state.finish_update(old);
+        let pin = state.pin();
+        let writer = state.clone();
+        let (finished, done) = mpsc::channel();
+        let task = thread::spawn(move || {
+            writer.finish_update(next);
+            finished.send(()).unwrap();
+        });
+        let result = done.recv_timeout(Duration::from_secs(2));
+        let retained = pin.lengths();
+        let published = state.try_pin().map(|pin| pin.lengths());
+        drop(pin);
+        task.join().unwrap();
+        result.expect("publication waited for an old pin");
+        assert_eq!(retained, old);
+        assert_eq!(published, Some(next));
+    }
+
+    #[test]
+    fn unchanged_bounds_do_not_wait_for_pinned_readers() {
+        let state = Arc::new(State::new());
+        let lengths = Lengths {
             height: Height::new(2),
             ..Default::default()
+        };
+        state.finish_update(lengths);
+        let prefix = state.pin();
+        let writer = state.clone();
+        let (finished, done) = mpsc::channel();
+        let task = thread::spawn(move || {
+            writer.lower_before(&lengths);
+            writer.lower_before(&Lengths {
+                height: Height::new(3),
+                ..lengths
+            });
+            writer.finish_update(lengths);
+            finished.send(()).unwrap();
         });
-        assert!(changes.has_changed().unwrap());
-        changes.borrow_and_update();
-        assert_eq!(state.try_pin().unwrap().lengths().height, Height::new(2));
-        state.lower_before(&Lengths::default());
-        assert!(changes.has_changed().unwrap());
-        assert_eq!(state.try_pin().unwrap().lengths().height, Height::ZERO);
+        let result = done.recv_timeout(Duration::from_secs(2));
+        let readable = state.try_pin().is_some();
+        drop(prefix);
+        task.join().unwrap();
+        result.expect("unchanged bounds waited for a pinned reader");
+        assert!(readable);
+        assert_eq!(state.lengths(), lengths);
     }
 
     #[test]
     fn pinned_prefix_blocks_rollback_and_allows_nested_bound_reads() {
-        let state = State::new();
+        let state = Arc::new(State::new());
         state.finish_update(Lengths {
             height: Height::new(2),
             ..Default::default()
@@ -106,6 +172,35 @@ mod tests {
         done.recv_timeout(Duration::from_secs(2)).unwrap();
         task.join().unwrap();
         assert_eq!(state.lengths().height, Height::ZERO);
+    }
+
+    #[test]
+    fn pins_wait_for_writer_release_without_notifications() {
+        let state = Arc::new(State::new());
+        let guard = state.reorg.write();
+        assert!(state.pin_for(Duration::from_millis(10)).is_none());
+        let reader = state.clone();
+        let (finished, done) = mpsc::channel();
+        let task = thread::spawn(move || {
+            finished
+                .send(
+                    reader
+                        .pin_for(Duration::from_secs(2))
+                        .map(|pin| pin.lengths()),
+                )
+                .unwrap();
+        });
+        let waiting = done.recv_timeout(Duration::from_millis(50));
+        let next = Lengths {
+            height: Height::new(2),
+            ..Default::default()
+        };
+        state.lengths.store(Arc::new(next));
+        drop(guard);
+        let result = done.recv_timeout(Duration::from_secs(2));
+        task.join().unwrap();
+        assert!(waiting.is_err(), "reader passed a held write lock");
+        assert_eq!(result.unwrap(), Some(next));
     }
 
     #[test]

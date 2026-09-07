@@ -720,6 +720,7 @@ dependencies = [
 name = "bitview_plugin_indexer"
 version = "0.12.2"
 dependencies = [
+ "arc-swap",
  "bitcoin",
  "bitview_cohort",
  "bitview_plugin",
@@ -740,7 +741,6 @@ dependencies = [
  "schemars",
  "serde",
  "tempfile",
- "tokio",
  "tracing",
  "vecdb",
 ]
@@ -1085,6 +1085,7 @@ dependencies = [
  "axum",
  "bitcoin",
  "bitview_catalog",
+ "bitview_compute",
  "bitview_default",
  "bitview_plugin",
  "bitview_plugin_distribution",

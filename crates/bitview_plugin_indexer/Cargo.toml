@@ -8,11 +8,8 @@ homepage = "https://bitview.dev"
 repository.workspace = true
 readme = "README.md"
 
-[features]
-tokio = ["dep:tokio", "bitview_plugin/tokio"]
-
 [dependencies]
-tokio = { workspace = true, optional = true, features = ["sync"] }
+arc-swap = "1.9.2"
 bitcoin = { workspace = true }
 bitview_plugin = { workspace = true }
 bitview_cohort = { workspace = true, features = ["storage"] }

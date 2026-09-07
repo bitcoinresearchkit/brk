@@ -161,14 +161,6 @@ impl Query {
     }
 
     fn pin_safe_lengths(&self) -> Result<bitview_plugin_indexer::SafeLengths> {
-        #[cfg(feature = "tokio")]
-        if let Some(attempt) = &self.2 {
-            let changes = self.indexer().prefix_changes();
-            return self
-                .indexer()
-                .try_pin_safe_lengths()
-                .ok_or_else(|| attempt.waiting_on(changes));
-        }
         self.indexer()
             .pin_safe_lengths_for(self.read_timeout()?)
             .ok_or(Error::ReadTimeout)

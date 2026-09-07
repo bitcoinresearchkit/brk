@@ -1,14 +1,14 @@
 use bitcoin::{Transaction, Weight as BitcoinWeight, consensus::deserialize};
 use brk_error::{Error, OptionData, Result};
 use brk_reader::Reader;
-use brk_types::{BlkPosition, TxIndex, Txid};
+use brk_types::{BlkPosition, Lengths, TxIndex, Txid};
 use vecdb::ReadableVec;
 
 use crate::Query;
 
 /// Caller retains publication exclusion across metadata selection and reading.
-pub fn read_at(query: &Query, index: TxIndex) -> Result<(Vec<u8>, Transaction)> {
-    if index >= query.safe_lengths().tx_index {
+pub fn read_at(query: &Query, index: TxIndex, safe: Lengths) -> Result<(Vec<u8>, Transaction)> {
+    if index >= safe.tx_index {
         return Err(Error::UnknownTxid);
     }
     let transactions = &query.indexer().vecs().transactions;

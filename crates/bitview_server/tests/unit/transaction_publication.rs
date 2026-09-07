@@ -21,6 +21,62 @@ const SUFFIXES: [&str; 10] = [
 ];
 
 #[test]
+fn batched_outspends_preserve_output_order_and_reorg_visibility() {
+    use super::chain_fixture::{raw_fixture_block, run_genesis};
+    use brk_types::{Height, Vin};
+    use serde_json::{Value, from_str, to_value};
+
+    let mut first = raw_fixture_block();
+    first.txdata[1].input.rotate_right(1);
+    // The descendant must reference the reordered spending transaction.
+    first.txdata[2].input[0].previous_output.txid = first.txdata[1].compute_txid();
+    first.header.merkle_root = first.compute_merkle_root().unwrap();
+    let txid = Txid::from(first.txdata[0].compute_txid());
+    let spending_txid = Txid::from(first.txdata[1].compute_txid());
+    run_genesis(first, move |mut fixture| async move {
+        fixture.publish(1, 1);
+        let expected = fixture.query.sync(|q| {
+            let values = q.outspends(&txid).unwrap();
+            assert_eq!(values.len(), 5);
+            for (index, value) in values.iter().enumerate() {
+                assert_eq!(
+                    to_value(value).unwrap(),
+                    to_value(q.outspend(&txid, Vout::from(index)).unwrap()).unwrap()
+                );
+                if index < 2 {
+                    assert!(!value.spent);
+                } else {
+                    assert!(value.spent);
+                    assert_eq!(value.txid, Some(spending_txid));
+                    assert_eq!(value.vin, Some(Vin::from((index - 1) % 3)));
+                    assert_eq!(
+                        value.status.as_ref().unwrap().block_height,
+                        Some(Height::new(1))
+                    );
+                }
+            }
+            to_value(values).unwrap()
+        });
+        let path = format!("/api/tx/{txid}/outspends");
+        let response = exchange_with_etag(fixture.address, "GET", &path, "\"old\"").await;
+        assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+        let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(body, expected);
+        let etag = response
+            .lines()
+            .find_map(|line| line.strip_prefix("etag: "))
+            .unwrap()
+            .to_owned();
+        let unchanged = exchange_with_etag(fixture.address, "GET", &path, &etag).await;
+        assert!(unchanged.starts_with("HTTP/1.1 304"), "{unchanged}");
+        fixture.publish(2, 1);
+        assert!(fixture.query.sync(|q| q.outspends(&txid)).is_err());
+        let replaced = exchange_with_etag(fixture.address, "GET", &path, &etag).await;
+        assert!(replaced.starts_with("HTTP/1.1 404"), "{replaced}");
+    });
+}
+
+#[test]
 fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
     use bitview_plugin::Plugin;
     use bitview_plugin_indexer::HasIndexer;

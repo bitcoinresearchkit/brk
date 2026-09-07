@@ -49,6 +49,8 @@ where
         expected_len: usize,
         dst: &mut Vec<T>,
     ) -> crate::Result<()> {
+        #[cfg(feature = "diagnostics")]
+        crate::diagnostics::page();
         if page.is_raw() {
             S::bytes_to_values_into(body, expected_len, dst)
         } else {
@@ -64,6 +66,8 @@ where
         expected_len: usize,
         dst: &mut Vec<T>,
     ) -> crate::Result<()> {
+        #[cfg(feature = "diagnostics")]
+        crate::diagnostics::page();
         if page.is_raw() {
             let mut values = Vec::with_capacity(expected_len);
             S::bytes_to_values_into(body, expected_len, &mut values)?;

@@ -6,6 +6,8 @@ mod admission;
 mod broadcast;
 #[cfg(feature = "chain")]
 mod cdn_mode;
+#[cfg(all(feature = "chain", feature = "series"))]
+mod cache_reorg;
 #[cfg(feature = "chain")]
 mod chain_fixture;
 #[cfg(any(feature = "chain", feature = "price"))]

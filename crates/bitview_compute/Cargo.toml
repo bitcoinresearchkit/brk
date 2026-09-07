@@ -7,6 +7,9 @@ license.workspace = true
 homepage = "https://bitview.dev"
 repository.workspace = true
 
+[features]
+diagnostics = ["vecdb/diagnostics"]
+
 [dependencies]
 brk_exit = { workspace = true }
 bitview_cohort = { workspace = true, features = ["storage"] }

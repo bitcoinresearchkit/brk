@@ -141,7 +141,25 @@ where
             self.vec.read_sorted_into_at(indices, out);
             return;
         }
-
+        let indices = &indices[..indices.partition_point(|&i| i < self.vec.len())];
+        let (Some(&first), Some(&last)) = (indices.first(), indices.last()) else {
+            return;
+        };
+        if last - first < indices.len() && indices.len() > 1 {
+            let mut holes = holes.range(first..=last).peekable();
+            let requested: Vec<_> = indices
+                .iter()
+                .copied()
+                .filter(|&index| {
+                    while holes.peek().is_some_and(|&&hole| hole < index) {
+                        holes.next();
+                    }
+                    holes.peek() != Some(&&index)
+                })
+                .collect();
+            self.vec.read_sorted_into_at(&requested, out);
+            return;
+        }
         out.reserve(indices.len());
         for &index in indices {
             if !holes.contains(&index)

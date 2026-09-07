@@ -5,6 +5,7 @@ use std::{
     fs,
     io::ErrorKind,
     path::Path,
+    sync::Arc,
     thread,
     time::{Duration, Instant},
 };
@@ -56,7 +57,7 @@ pub struct Indexer<M: StorageMode = Rw> {
     vecs: Vecs<M>,
     stores: Stores,
     buffers: M::WriteOnly<BlockBuffers>,
-    state: State,
+    state: Arc<State>,
     plugin_gate: PluginGate,
 }
 
@@ -146,20 +147,23 @@ impl<M: StorageMode> Indexer<M> {
     /// cause cache etags to invalidate before the data they cover is
     /// actually queryable.
     pub fn tip_blockhash(&self) -> BlockHash {
-        match self.safe_lengths().last_height() {
+        // Retain protection through the row read. Recursive acquisition also
+        // permits callers already pinning the prefix while a writer queues.
+        let guard = self.state.pin_recursive();
+        match guard.lengths().last_height() {
             Some(h) => self
                 .vecs
                 .blocks
                 .blockhash
+                .inner
                 .collect_one(h)
                 .unwrap_or_default(),
             None => BlockHash::default(),
         }
     }
 
-    /// Pipeline-safe `Lengths` snapshot shared with `Query`. Writers
-    /// advance and lower this internally; readers clamp non-series
-    /// answers against this loaded snapshot.
+    /// Copy the pipeline-safe bounds. This does not pin the backing data;
+    /// retain [`Self::pin_safe_lengths`] protection across dependent reads.
     pub fn safe_lengths(&self) -> Lengths {
         self.state.lengths()
     }
@@ -172,11 +176,6 @@ impl<M: StorageMode> Indexer<M> {
 
     pub fn try_pin_safe_lengths(&self) -> Option<SafeLengths> {
         self.state.try_pin()
-    }
-
-    #[cfg(feature = "tokio")]
-    pub fn prefix_changes(&self) -> tokio::sync::watch::Receiver<()> {
-        self.state.changes()
     }
 
     pub fn pin_safe_lengths_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
@@ -280,7 +279,7 @@ impl Indexer {
                 vecs,
                 stores,
                 buffers: BlockBuffers::default(),
-                state: State::new(),
+                state: Arc::new(State::new()),
                 plugin_gate: PluginGate::new(),
             })
         };

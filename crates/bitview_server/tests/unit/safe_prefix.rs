@@ -130,6 +130,120 @@ fn reorg_tail_waits_for_publication_then_distinguishes_absence() {
 }
 
 #[test]
+fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
+    use super::chain_fixture::{default_first, run_genesis};
+    use brk_types::Height;
+    use std::{sync::mpsc, thread};
+
+    run_genesis(default_first(), |mut fixture| async move {
+        fixture.publish(1, 1);
+        let query = fixture.query.clone();
+        let old_hash = query.sync(|q| q.tip_blockhash());
+        let expected_ids = query.sync(|q| q.block_txids(&old_hash).unwrap());
+        thread::scope(|scope| {
+            let rows = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let txids = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let (finished, done) = mpsc::channel();
+            let fixture = &mut fixture;
+            let writer = thread::Builder::new()
+                .stack_size(8 * 1024 * 1024)
+                .spawn_scoped(scope, move || {
+                    fixture.publish(4, 2);
+                    finished.send(()).unwrap();
+                })
+                .unwrap();
+            let result = done.recv_timeout(Duration::from_secs(30));
+            // Consume/drop all old pins before joining even if publication
+            // timed out, so a regression fails rather than hanging cleanup.
+            let retained_rows = query.sync(|q| rows.build(q).unwrap());
+            let retained_ids = query.sync(|q| txids.anchor_txids(q).unwrap());
+            writer.join().unwrap();
+            result.expect("append publication waited for retained snapshots");
+            assert_eq!(retained_rows[0].id, old_hash);
+            assert_eq!(retained_ids, expected_ids);
+            assert_eq!(query.sync(|q| q.height()), Height::new(2));
+            assert_ne!(query.sync(|q| q.tip_blockhash()), old_hash);
+        });
+    });
+}
+
+#[test]
+fn retained_block_snapshots_survive_a_queued_real_reorg() {
+    use super::chain_fixture::{default_first, run_genesis};
+    use bitcoin::consensus::serialize;
+    use bitview_plugin::UpdateContext;
+    use bitview_runtime::update;
+    use brk_exit::Exit;
+    use brk_types::BlockTxIndex;
+    use std::{sync::atomic::Ordering, thread, time::Instant};
+
+    run_genesis(default_first(), |mut fixture| async move {
+        fixture.publish(1, 1);
+        let query = fixture.query.clone();
+        let old_hash = query.sync(|q| q.tip_blockhash());
+        let expected_raw = serialize(&fixture.chain[1]);
+        fixture.active.store(2, Ordering::SeqCst);
+
+        thread::scope(|scope| {
+            // Keep this inside the scope closure so an assertion failure drops
+            // the pin before scope cleanup joins the writer.
+            let pin = query.sync(|q| q.indexer().pin_safe_lengths());
+            let rows = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let txids = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let txs = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let header = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let raw = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let plugins = &mut fixture.plugins;
+            let writer = thread::Builder::new()
+                .stack_size(8 * 1024 * 1024)
+                .spawn_scoped(scope, move || {
+                    update(plugins, UpdateContext::new(&Exit::default()))
+                })
+                .unwrap();
+
+            let deadline = Instant::now() + Duration::from_secs(5);
+            while query.sync(|q| q.indexer().try_pin_safe_lengths().is_some()) {
+                assert!(
+                    Instant::now() < deadline,
+                    "reorg never queued its prefix write"
+                );
+                thread::sleep(Duration::from_millis(1));
+            }
+            assert!(!writer.is_finished());
+            // Tip reads may nest beneath a retained pin, including when a
+            // writer is queued. Snapshot consumers must borrow, not reacquire.
+            assert_eq!(query.sync(|q| q.tip_blockhash()), old_hash);
+            assert_eq!(query.sync(|q| rows.build(q).unwrap())[0].id, old_hash);
+            let ids = query.sync(|q| txids.anchor_txids(q).unwrap());
+            let transactions =
+                query.sync(|q| txs.anchor_txs(q, BlockTxIndex::default(), 25).unwrap());
+            assert_eq!(
+                transactions.iter().map(|tx| tx.txid).collect::<Vec<_>>(),
+                ids
+            );
+            assert_eq!(
+                query.sync(|q| header.anchor_header_hex(q).unwrap()).len(),
+                160
+            );
+            assert_eq!(query.sync(|q| raw.anchor_raw(q).unwrap()), expected_raw);
+            assert_eq!(query.sync(|q| q.tip_blockhash()), old_hash);
+            drop(pin);
+            writer.join().unwrap().unwrap();
+        });
+
+        assert_ne!(query.sync(|q| q.tip_blockhash()), old_hash);
+        let response = exchange_with_etag(
+            fixture.address,
+            "GET",
+            &format!("/api/block/{old_hash}"),
+            "*",
+        )
+        .await;
+        assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+    });
+}
+
+#[test]
 fn request_deadline_bounds_gate_waits_and_skips_expired_work() {
     run(|state, _| async move {
         let query = state.query.with_deadline(std::time::Instant::now());

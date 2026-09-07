@@ -1,6 +1,7 @@
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlockHash, Height, Timestamp, TxInIndex, TxOutIndex, TxOutspend, TxStatus, Txid, Vin, Vout,
+    BlockHash, Height, Timestamp, TxInIndex, TxIndex, TxOutIndex, TxOutspend, TxStatus, Txid, Vin,
+    Vout,
 };
 use serde_json::to_vec;
 use vecdb::{ReadableVec, VecIndex};
@@ -76,7 +77,7 @@ impl Query {
     }
 
     /// Resolve spend status for a contiguous range of outputs.
-    /// Readers/cursors created once, reused for all outputs.
+    /// Resolve compressed inputs in sorted batches, retaining output order.
     fn resolve_outspends(
         &self,
         first_txout: TxOutIndex,
@@ -86,57 +87,112 @@ impl Query {
         let txin_index_reader = self.plugins().outputs.spent.txin_index.reader();
         let txid_reader = indexer.vecs().transactions.txid.reader();
 
-        let tx_heights = &self.plugins().mappings.tx_heights;
-        let mut input_tx_cursor = indexer.vecs().inputs.tx_index.cursor();
-        let mut first_txin_cursor = indexer.vecs().transactions.first_txin_index.cursor();
-
+        let tx_heights = self.plugins().mappings.tx_heights.read();
+        let mut tx_heights = tx_heights.cursor();
         let bound = self.safe_lengths();
-
-        let mut cached_status: Option<(Height, BlockHash, Timestamp)> = None;
-        let mut outspends = Vec::with_capacity(output_count);
+        let mut requested = Vec::new();
+        let mut ordered = true;
         for index in 0..output_count {
             let txin_index = txin_index_reader
                 .try_get(first_txout + Vout::from(index))
                 .data()?;
 
             if txin_index == TxInIndex::UNSPENT || txin_index >= bound.txin_index {
-                outspends.push(TxOutspend::UNSPENT);
                 continue;
             }
-
-            let spending_tx_index = input_tx_cursor.get(usize::from(txin_index)).data()?;
-            if spending_tx_index >= bound.tx_index {
-                outspends.push(TxOutspend::UNSPENT);
-                continue;
-            }
-            let spending_first_txin = first_txin_cursor.get(spending_tx_index.to_usize()).data()?;
-            let vin = checked_vin(txin_index, spending_first_txin)?;
-            let spending_txid = txid_reader.try_get(spending_tx_index).data()?;
-            let spending_height: Height = tx_heights.get_shared(spending_tx_index).data()?;
-            if spending_height >= bound.height {
-                return Err(Error::UnknownTxid);
-            }
-
-            let (block_hash, block_time) = if let Some((height, hash, time)) = cached_status
-                && height == spending_height
-            {
-                (hash, time)
-            } else {
-                let (hash, time) = self.block_hash_and_time(spending_height)?;
-                cached_status = Some((spending_height, hash, time));
-                (hash, time)
-            };
-
-            outspends.push(TxOutspend {
-                spent: true,
-                txid: Some(spending_txid),
-                vin: Some(vin),
-                status: Some(TxStatus::confirmed(spending_height, block_hash, block_time)),
-            });
+            ordered &= requested
+                .last()
+                .is_none_or(|&(previous, _)| previous <= txin_index);
+            requested.push((txin_index, index));
         }
+        let mut cached_status: Option<(Height, BlockHash, Timestamp)> = None;
+        let mut outspends = vec![TxOutspend::UNSPENT; output_count];
+        visit_spending_positions(
+            &indexer.vecs().inputs.tx_index,
+            &indexer.vecs().transactions.first_txin_index,
+            &mut requested,
+            bound.tx_index,
+            ordered,
+            |index, spending_tx_index, vin| {
+                let spending_txid = txid_reader.try_get(spending_tx_index).data()?;
+                let spending_height: Height = tx_heights.get(spending_tx_index).data()?;
+                if spending_height >= bound.height {
+                    return Err(Error::UnknownTxid);
+                }
+
+                let (block_hash, block_time) = if let Some((height, hash, time)) = cached_status
+                    && height == spending_height
+                {
+                    (hash, time)
+                } else {
+                    let (hash, time) = self.block_hash_and_time(spending_height)?;
+                    cached_status = Some((spending_height, hash, time));
+                    (hash, time)
+                };
+
+                outspends[index] = TxOutspend {
+                    spent: true,
+                    txid: Some(spending_txid),
+                    vin: Some(vin),
+                    status: Some(TxStatus::confirmed(spending_height, block_hash, block_time)),
+                };
+                Ok(())
+            },
+        )?;
 
         Ok(outspends)
     }
+}
+
+fn visit_spending_positions(
+    input_txs: &impl ReadableVec<TxInIndex, TxIndex>,
+    first_inputs: &impl ReadableVec<TxIndex, TxInIndex>,
+    requested: &mut [(TxInIndex, usize)],
+    tx_bound: TxIndex,
+    ordered: bool,
+    mut visit: impl FnMut(usize, TxIndex, Vin) -> Result<()>,
+) -> Result<()> {
+    if requested.is_empty() {
+        return Ok(());
+    }
+    if ordered {
+        // Already ordered reads do not revisit pages. Keep the low-allocation
+        // cursor path for small transactions and sequential spending inputs.
+        let mut inputs = input_txs.cursor();
+        let mut firsts = first_inputs.cursor();
+        for &(input, output) in requested.iter() {
+            let tx = inputs.get(input.to_usize()).data()?;
+            if tx < tx_bound {
+                let first = firsts.get(tx.to_usize()).data()?;
+                visit(output, tx, checked_vin(input, first)?)?;
+            }
+        }
+        return Ok(());
+    }
+    requested.sort_unstable_by_key(|&(input, _)| input);
+    let mut inputs: Vec<_> = requested
+        .iter()
+        .map(|&(input, _)| input.to_usize())
+        .collect();
+    let txs = input_txs.read_sorted_at(&inputs);
+    if txs.len() != requested.len() {
+        return Err(Error::Internal("Missing spending transaction index"));
+    }
+    // Input-to-transaction mapping is monotonic. Keep repeated transactions:
+    // native sorted reads already share each decoded page across duplicates.
+    let valid = txs.partition_point(|&tx| tx < tx_bound);
+    inputs.truncate(valid);
+    for (index, tx) in inputs.iter_mut().zip(&txs) {
+        *index = tx.to_usize();
+    }
+    let firsts = first_inputs.read_sorted_at(&inputs);
+    if firsts.len() != valid {
+        return Err(Error::Internal("Missing spending first input index"));
+    }
+    for ((&(input, output), &tx), first) in requested[..valid].iter().zip(&txs).zip(firsts) {
+        visit(output, tx, checked_vin(input, first)?)?;
+    }
+    Ok(())
 }
 
 fn checked_vin(input: TxInIndex, first: TxInIndex) -> Result<Vin> {

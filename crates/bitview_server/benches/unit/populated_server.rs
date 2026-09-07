@@ -21,6 +21,59 @@ use super::chain_fixture::{
 use super::urpd;
 use crate::{AppState, CacheParams, CacheStrategy};
 
+#[test]
+#[ignore = "complete outspends query; synthetic single-block fixture, excludes HTTP"]
+fn benchmark_complete_outspends() {
+    for shuffled in [false, true] {
+        let mut first = raw_fixture_block();
+        first.txdata.truncate(2);
+        let output = first.txdata[0].output[2].clone();
+        first.txdata[0].output = vec![output; 4096];
+        let txid = first.txdata[0].compute_txid();
+        let template = first.txdata[1].input[0].clone();
+        first.txdata[1].input = (0..4096)
+            .map(|i| {
+                let mut input = template.clone();
+                let vout = if shuffled { (i * 2053) % 4096 } else { i };
+                input.previous_output = bitcoin::OutPoint::new(txid, vout);
+                input
+            })
+            .collect();
+        first.header.merkle_root = first.compute_merkle_root().unwrap();
+        run_fixture_with_first(first, move |state, _| async move {
+            state.sync(|query| {
+                let txid = txid.into();
+                let expected = query.outspends(&txid).unwrap();
+                assert_eq!(expected.len(), 4096);
+                assert!(expected.iter().all(|o| o.spent));
+                for (output, spend) in expected.iter().enumerate() {
+                    let vin = usize::from(spend.vin.unwrap());
+                    assert_eq!(if shuffled { (vin * 2053) % 4096 } else { vin }, output);
+                }
+                let mut samples = Vec::new();
+                for round in 0..15 {
+                    let started = Instant::now();
+                    for _ in 0..100 {
+                        black_box(query.outspends(black_box(&txid)).unwrap());
+                    }
+                    if round > 2 {
+                        samples.push(started.elapsed() / 100);
+                    }
+                }
+                samples.sort();
+                assert_eq!(
+                    to_value(query.outspends(&txid).unwrap()).unwrap(),
+                    to_value(expected).unwrap()
+                );
+                eprintln!(
+                    "complete_outspends shuffled={shuffled} count=4096 median={:?}",
+                    samples[6]
+                );
+            });
+        });
+    }
+}
+
 #[cfg(feature = "series")]
 #[test]
 #[ignore = "raw HEAD versus full payload preparation; synthetic block, excludes HTTP and cold storage"]

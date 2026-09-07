@@ -64,6 +64,8 @@ where
         let _guard = self.gate.read();
         let len = self.visible_rows.get();
         let indices = &indices[..indices.partition_point(|&i| i < len)];
+        #[cfg(feature = "diagnostics")]
+        crate::diagnostics::column();
         self.columns[column.index()].read_sorted_into_at(indices, out);
     }
 
@@ -80,6 +82,8 @@ where
         let mut values = Vec::with_capacity(indices.len());
         for &column in columns {
             values.clear();
+            #[cfg(feature = "diagnostics")]
+            crate::diagnostics::column();
             self.columns[column.index()].read_sorted_into_at(indices, &mut values);
             f(column, &values);
         }

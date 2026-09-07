@@ -34,7 +34,8 @@ impl Query {
     ) -> Result<Vec<Transaction>> {
         let _guard = self.read_plugin(self.indexer())?;
         let txindices = self.addr_txindices(addr, after_txid, limit)?;
-        self.transactions_at_indices(&txindices)
+        let guard = self.pin_safe_lengths()?;
+        self.transactions_at_indices(&txindices, &guard)
     }
 
     /// Resolve an address page once before body loading.
@@ -118,7 +119,7 @@ impl Query {
             .first()
             .map(|txindex| -> Result<_> {
                 let height = self.confirmed_status_height(*txindex)?;
-                let hash = self.block_hash_by_height(height)?;
+                let hash = self.resolve_block_hash(height)?;
                 Ok((height, hash))
             })
             .transpose()?;
@@ -135,10 +136,11 @@ impl Query {
 
     /// Caller holds publication exclusion across any source selection and read.
     pub fn addr_txs_chain_at(&self, resolved: ResolvedAddrChainTxs) -> Result<Vec<Transaction>> {
+        let guard = self.pin_safe_lengths()?;
         if let Some(height) = resolved.anchor_height {
-            self.validate_block_at_height(&resolved.activity_anchor, height)?;
+            self.validate_block_at_height(&resolved.activity_anchor, height, &guard)?;
         }
-        self.transactions_at_indices(&resolved.txindices)
+        self.transactions_at_indices(&resolved.txindices, &guard)
     }
 }
 

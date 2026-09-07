@@ -84,7 +84,7 @@ impl Query {
                                     OutputType::P2MS | OutputType::Unknown | OutputType::OpReturn
                                 ) {
                                     let parent = decoded.get_or_init(|| {
-                                        indexed_transaction::read_at(&query, prev_tx_index)
+                                        indexed_transaction::read_at(&query, prev_tx_index, safe)
                                             .ok()
                                             .map(|(_, parent)| parent)
                                     });

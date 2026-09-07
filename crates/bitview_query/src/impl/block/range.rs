@@ -24,7 +24,7 @@ impl ResolvedBlocks {
     }
 
     pub fn build(self, query: &Query) -> Result<Vec<BlockInfo>> {
-        query.blocks_range_at(self.begin, self.end, self.guard.lengths())
+        query.blocks_range_at(self.begin, self.end, &self.guard)
     }
 
     fn anchor_height(&self) -> Result<Height> {
@@ -40,7 +40,7 @@ impl ResolvedBlocks {
 
     /// Validate an in-block offset before HTTP conditional short-circuiting.
     pub fn validate_tx_index(&self, query: &Query, index: BlockTxIndex) -> Result<()> {
-        let (_, count) = query.block_tx_range(self.anchor_height()?, self.guard.lengths())?;
+        let (_, count) = query.block_tx_range(self.anchor_height()?, &self.guard)?;
         if usize::from(index) >= count {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
@@ -48,15 +48,11 @@ impl ResolvedBlocks {
     }
 
     pub fn anchor_txids(self, query: &Query) -> Result<Vec<Txid>> {
-        query.block_txids_by_height(self.anchor_height()?, self.guard.lengths())
+        query.block_txids_by_height(self.anchor_height()?, &self.guard)
     }
 
     pub fn anchor_txid(self, query: &Query, index: BlockTxIndex) -> Result<Txid> {
-        query.block_txid_at_index_by_height(
-            self.anchor_height()?,
-            index.into(),
-            self.guard.lengths(),
-        )
+        query.block_txid_at_index_by_height(self.anchor_height()?, index.into(), &self.guard)
     }
 
     pub fn anchor_txs(
@@ -65,14 +61,14 @@ impl ResolvedBlocks {
         start: BlockTxIndex,
         count: u32,
     ) -> Result<Vec<Transaction>> {
-        query.block_txs_at_height(self.anchor_height()?, start, count, self.guard.lengths())
+        query.block_txs_at_height(self.anchor_height()?, start, count, &self.guard)
     }
 
     /// Read the anchor's verified header while retaining publication exclusion.
     /// Exact-hash callers resolve a single-row snapshot before using this.
     pub fn anchor_header_hex(self, query: &Query) -> Result<String> {
         let (height, hash) = self.anchor_pair()?;
-        query.block_header_hex_at_height(height, &hash)
+        query.block_header_hex_at_height(height, &hash, &self.guard)
     }
 
     /// Read the anchor's raw block while retaining publication exclusion.
@@ -114,7 +110,7 @@ impl Query {
     /// the selected row is consumed. The prefix-store lookup may perform I/O.
     pub fn resolve_block_snapshot(&self, hash: &BlockHash) -> Result<ResolvedBlocks> {
         let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash(hash)?;
+        let height = self.height_by_hash_at(hash, &guard)?;
         self.blocks_snapshot(Some(height), 1, guard)
     }
 

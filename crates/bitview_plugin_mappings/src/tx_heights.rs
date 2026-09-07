@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bitview_plugin_indexer::Indexer;
 use brk_types::{Height, RangeMap, TxIndex};
-use parking_lot::RwLock;
+use parking_lot::{RwLock, RwLockReadGuard};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 /// Reverse mapping from `TxIndex` → `Height` via binary search on block boundaries.
@@ -17,6 +17,11 @@ use vecdb::{AnyVec, ReadableVec, VecIndex};
 pub struct TxHeights(Arc<RwLock<RangeMap<TxIndex, Height>>>);
 
 impl TxHeights {
+    /// Hold a stable mapping for a batch of lookups, with one read lock.
+    pub fn read(&self) -> RwLockReadGuard<'_, RangeMap<TxIndex, Height>> {
+        self.0.read()
+    }
+
     /// Build from the full `first_tx_index` vec at startup.
     pub fn init(indexer: &Indexer) -> Self {
         let entries = indexer.vecs().transactions.first_tx_index.collect();
