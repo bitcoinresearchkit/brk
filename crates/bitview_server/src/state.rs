@@ -55,6 +55,60 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// A cheap optimistic read may defer to the admitted read path, but must
+    /// never turn temporary publication loss into an HTTP error.
+    pub fn preflight<T>(&self, f: impl FnOnce(&Query) -> Result<Option<T>>) -> Result<Option<T>> {
+        match self.sync(f) {
+            Err(BrkError::StateUpdating) => Ok(None),
+            result => result,
+        }
+    }
+
+    /// Selection, validator, and body belong to one retryable read operation.
+    /// Only request arguments are retained between attempts, never a stale
+    /// resolved token or a guard-bearing snapshot.
+    pub async fn respond_read<S: 'static>(
+        &self,
+        headers: HeaderMap,
+        content_type: &'static str,
+        select: impl FnOnce(&Query) -> Result<(S, CacheParams)> + Clone + Send + 'static,
+        build: impl FnOnce(&Query, S) -> Result<Bytes> + Clone + Send + 'static,
+    ) -> Response<Body> {
+        match self
+            .read_admitted(move |q| {
+                let (source, params) = select(q)?;
+                if params.matches_etag(&headers) {
+                    return Ok(ResponseExtended::new_not_modified(&params));
+                }
+                let bytes = build(q, source)?;
+                Ok(Self::assemble_response(params, bytes, |h| {
+                    h.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
+                }))
+            })
+            .await
+        {
+            Ok(response) => response,
+            Err(error) => Error::from(error).into_response(),
+        }
+    }
+
+    pub async fn read_admitted<T: Send + 'static>(
+        &self,
+        f: impl FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
+    ) -> Result<T> {
+        self.query
+            .read_with_admission(Some(&self.sync_query), f)
+            .await
+    }
+
+    pub async fn read_with_admission<T: Send + 'static>(
+        &self,
+        admission: &Arc<Semaphore>,
+        f: impl FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
+    ) -> Result<T> {
+        self.query.read_with_admission(Some(admission), f).await
+    }
+
     /// Keep blocking admission with the job, including after request cancellation.
     pub async fn run_admitted<T: Send + 'static>(
         &self,
@@ -105,9 +159,8 @@ impl AppState {
     }
 
     /// Shared response pipeline: ETag short-circuit, body computation on the
-    /// query thread, and header assembly. Used by [`AppState::respond`]
-    /// (strategy-driven) and series endpoints, which build [`CacheParams`]
-    /// directly from query resolution.
+    /// query thread, and header assembly. For representations whose cache
+    /// parameters are already known; mutable selections use `respond_read`.
     pub async fn respond_with_params<F>(
         &self,
         headers: &HeaderMap,
@@ -116,10 +169,10 @@ impl AppState {
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&Query) -> Result<Bytes> + Send + 'static,
+        F: FnOnce(&Query) -> Result<Bytes> + Clone + Send + 'static,
     {
         Self::respond_with_future(headers, params, async {
-            Ok((self.run_admitted(f).await?, apply_content_headers))
+            Ok((self.read_admitted(f).await?, apply_content_headers))
         })
         .await
     }
@@ -140,29 +193,6 @@ impl AppState {
             }
             Err(error) => Error::from(error).into_response(),
         }
-    }
-
-    /// Strategy-driven cached response.
-    async fn respond<F>(
-        &self,
-        headers: &HeaderMap,
-        strategy: CacheStrategy,
-        content_type: &'static str,
-        f: F,
-    ) -> Response<Body>
-    where
-        F: FnOnce(&Query) -> Result<Bytes> + Send + 'static,
-    {
-        let params = CacheParams::resolve(&strategy, self.cdn_cache_mode);
-        self.respond_with_params(
-            headers,
-            params,
-            |h| {
-                h.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
-            },
-            f,
-        )
-        .await
     }
 
     fn respond_immediate(
@@ -226,40 +256,6 @@ impl AppState {
         self.respond_json_content_bytes(headers, bytes)
     }
 
-    /// JSON response with HTTP cache validation.
-    pub async fn respond_json<T, F>(
-        &self,
-        headers: &HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> Response<Body>
-    where
-        T: Serialize + Send + 'static,
-        F: FnOnce(&Query) -> Result<T> + Send + 'static,
-    {
-        self.respond(headers, strategy, "application/json", move |q| {
-            let value = f(q)?;
-            Ok(Bytes::from(to_vec(&value).unwrap()))
-        })
-        .await
-    }
-
-    /// Pre-serialized JSON response with HTTP cache validation.
-    pub async fn respond_json_bytes<F>(
-        &self,
-        headers: &HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> Response<Body>
-    where
-        F: FnOnce(&Query) -> Result<Vec<u8>> + Send + 'static,
-    {
-        self.respond(headers, strategy, "application/json", move |q| {
-            f(q).map(Bytes::from)
-        })
-        .await
-    }
-
     /// JSON response whose representation identity is produced with its bytes.
     #[cfg(feature = "chain")]
     pub async fn respond_json_bound<F>(
@@ -269,10 +265,10 @@ impl AppState {
         f: F,
     ) -> Response<Body>
     where
-        F: FnOnce(&Query) -> Result<(Vec<u8>, RepresentationId)> + Send + 'static,
+        F: FnOnce(&Query) -> Result<(Vec<u8>, RepresentationId)> + Clone + Send + 'static,
     {
         let outcome = self
-            .run_admitted(move |query| {
+            .read_admitted(move |query| {
                 let initial_tip = query.tip_hash_prefix();
                 let (bytes, identity) = f(query)?;
                 let current_tip = query.tip_hash_prefix();
@@ -304,10 +300,10 @@ impl AppState {
     pub async fn respond_json_content<T, F>(&self, headers: &HeaderMap, f: F) -> Response<Body>
     where
         T: Serialize + Send + 'static,
-        F: FnOnce(&Query) -> Result<T> + Send + 'static,
+        F: FnOnce(&Query) -> Result<T> + Clone + Send + 'static,
     {
         let bytes = self
-            .run_admitted(move |query| {
+            .read_admitted(move |query| {
                 let value = f(query)?;
                 Ok(Bytes::from(to_vec(&value)?))
             })
@@ -326,41 +322,6 @@ impl AppState {
             "application/json",
             || bytes,
         )
-    }
-
-    /// Text response with HTTP cache validation.
-    pub async fn respond_text<F>(
-        &self,
-        headers: &HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> Response<Body>
-    where
-        F: FnOnce(&Query) -> Result<String> + Send + 'static,
-    {
-        self.respond(headers, strategy, "text/plain", move |q| {
-            let value = f(q)?;
-            Ok(Bytes::from(value))
-        })
-        .await
-    }
-
-    /// Binary response with HTTP cache validation.
-    pub async fn respond_bytes<T, F>(
-        &self,
-        headers: &HeaderMap,
-        strategy: CacheStrategy,
-        f: F,
-    ) -> Response<Body>
-    where
-        T: Into<Vec<u8>> + Send + 'static,
-        F: FnOnce(&Query) -> Result<T> + Send + 'static,
-    {
-        self.respond(headers, strategy, "application/octet-stream", move |q| {
-            let value = f(q)?;
-            Ok(Bytes::from(value.into()))
-        })
-        .await
     }
 }
 

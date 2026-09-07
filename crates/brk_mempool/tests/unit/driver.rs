@@ -15,6 +15,24 @@ fn concurrent_cycles_are_rejected_before_rpc_or_mutation() {
 }
 
 #[test]
+fn fetch_failure_preserves_the_previous_publication() {
+    use brk_rpc::{Auth, Client};
+    use std::{net::TcpListener, sync::Arc, time::Duration};
+
+    // An unused local port fails immediately with retries disabled.
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    drop(listener);
+    let mut mempool = Mempool::for_test();
+    Arc::get_mut(&mut mempool.0).unwrap().client =
+        Client::new_with(&format!("http://{address}"), Auth::None, 0, Duration::ZERO).unwrap();
+    let tip = Default::default();
+    mempool.0.state.write().published_tip = Some(tip);
+    assert!(mempool.tick_with(|_| FxHashMap::default()).is_err());
+    assert_eq!(mempool.0.state.read().published_tip, Some(tip));
+}
+
+#[test]
 #[should_panic(expected = "Mempool::start_with already running on this instance")]
 fn double_start_panics_with_documented_message() {
     let mempool = Mempool::for_test();

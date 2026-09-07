@@ -28,6 +28,7 @@ fn fresh_pulled(addition: TxAddition) -> TxsPulled {
 #[test]
 fn publish_one_inserts_into_all_stores() {
     let lock = RwLock::new(State::default());
+    lock.write().published_tip = Some(Default::default());
     let snapshot = Snapshot::default();
     let mut diff = CycleDiff::default();
     let (addition, txid) = fresh_addition(0xC0, 200, 100);
@@ -35,6 +36,10 @@ fn publish_one_inserts_into_all_stores() {
     apply(&lock, &snapshot, fresh_pulled(addition), &mut diff);
 
     let state = lock.read();
+    assert!(
+        state.published_tip.is_none(),
+        "mutation closes the old publication"
+    );
     assert!(state.txs.contains(&txid));
     assert_eq!(diff.added.len(), 1);
     assert_eq!(diff.added[0].txid, txid);

@@ -116,6 +116,9 @@ pub enum Error {
     #[error("State is updating")]
     StateUpdating,
 
+    #[error("Read timed out waiting for published data")]
+    ReadTimeout,
+
     #[error("Address not found in the blockchain (no transaction history)")]
     UnknownAddr,
 

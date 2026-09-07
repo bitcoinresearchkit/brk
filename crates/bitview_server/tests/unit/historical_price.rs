@@ -88,13 +88,9 @@ impl HistoricalPriceChecks {
         assert_eq!(first.status(), StatusCode::OK);
         assert_eq!(second.status(), StatusCode::OK);
         assert_eq!(state.historical_price_bodies.available_permits(), 0);
-        let busy = router
-            .clone()
-            .oneshot(request("GET", "\"old\""))
-            .await
-            .unwrap();
-        assert_eq!(busy.status(), StatusCode::SERVICE_UNAVAILABLE);
-        assert!(!busy.headers().contains_key("etag"));
+        let pending = tokio::spawn(router.clone().oneshot(request("GET", "\"old\"")));
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert!(!pending.is_finished());
         for method in ["GET", "HEAD"] {
             for tag in [cases[0].2.as_str(), "*"] {
                 assert_eq!(
@@ -109,6 +105,9 @@ impl HistoricalPriceChecks {
             }
         }
         drop(first);
+        let admitted = pending.await.unwrap().unwrap();
+        assert_eq!(admitted.status(), StatusCode::OK);
+        drop(admitted);
         assert_eq!(state.historical_price_bodies.available_permits(), 1);
         drop(second);
         assert_eq!(state.historical_price_bodies.available_permits(), 2);
@@ -175,8 +174,8 @@ impl HistoricalPriceChecks {
                 .await
                 .unwrap()
                 .unwrap();
-            if response.starts_with("HTTP/1.1 503") {
-                assert!(response.contains("\r\nretry-after: 1\r\n"));
+            if response.starts_with("HTTP/1.1 504") {
+                assert!(!response.contains("\r\nretry-after:"));
                 assert!(response.contains("\r\ncache-control: no-store\r\n"));
                 assert!(!response.contains("\r\netag:"));
                 response = exchange_with_etag(address, "GET", &path, &etag).await;

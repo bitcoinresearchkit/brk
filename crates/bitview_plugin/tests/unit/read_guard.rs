@@ -46,6 +46,25 @@ fn multi_read_deduplicates_and_releases_every_gate() {
 }
 
 #[test]
+fn immediate_multi_read_deduplicates_and_releases_partial_guards() {
+    let first = TestPlugin::new();
+    let second = TestPlugin::new();
+    let plugins: [&dyn Plugin; 4] = [&second, &first, &second, &first];
+    let read = PluginReadGuard::try_acquire(&plugins).ok().unwrap();
+    assert!(matches!(&read._guards, Guards::Multiple { _guards } if _guards.len() == 2));
+    drop(read);
+
+    // Close the last gate in acquisition order, forcing a partial acquisition.
+    let sorted = PluginReadGuard::sorted_plugins(plugins.to_vec());
+    sorted[1].gate().begin_update();
+    let blocked = PluginReadGuard::try_acquire(&plugins).err().unwrap();
+    assert!(std::ptr::addr_eq(blocked, sorted[1]));
+    assert!(sorted[0].gate().0.gate.try_write().is_some());
+    sorted[1].gate().finish_update();
+    assert!(PluginReadGuard::try_acquire(&plugins).is_ok());
+}
+
+#[test]
 fn multi_read_releases_partial_set_while_waiting() {
     let first = TestPlugin::new();
     let second = TestPlugin::new();

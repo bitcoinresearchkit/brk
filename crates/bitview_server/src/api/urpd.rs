@@ -1,16 +1,16 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, Query},
     http::HeaderMap,
-    response::{IntoResponse, Response},
+    response::Response,
 };
-use brk_error::Error;
 use brk_types::{Cohort, Date, Urpd};
 use serde_json::to_vec;
 
 use super::AppState;
 use crate::{
-    CacheParams, CacheStrategy, CdnCacheMode, Error as ServerError,
+    CacheParams, CacheStrategy, CdnCacheMode,
     error::Result,
     extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
     params::{Empty, UrpdCohortParam, UrpdParams, UrpdQuery, UrpdWeightQuery},
@@ -31,17 +31,9 @@ async fn serve_snapshot(
     date: Option<Date>,
     query: UrpdQuery,
 ) -> Result<Response> {
-    let permit = state
-        .urpd_query
-        .clone()
-        .acquire_owned()
-        .await
-        .map_err(|_| Error::Internal("URPD admission closed"))?;
     let bodies = state.urpd_bodies.clone();
     let response = state
-        .run(move |q| {
-            // Ownership keeps work bounded even if HTTP times out.
-            let _permit = permit;
+        .read_body(&state.urpd_query, &state.urpd_bodies, move |q, permit| {
             let input = match date {
                 Some(date) => q.resolve_urpd_at(&cohort, date, query.aggregation, query.weight)?,
                 None => q.resolve_urpd_latest(&cohort, query.aggregation, query.weight)?,
@@ -53,19 +45,17 @@ async fn serve_snapshot(
             );
             if params.matches_etag(&headers) {
                 input.validate()?;
-                return Ok(Response::new_not_modified(&params));
+                return Ok(Some(Response::new_not_modified(&params)));
             }
-            let Some(permit) = RawBodyPermit::try_acquire(&bodies) else {
-                return Ok(
-                    ServerError::overloaded("URPD response capacity exhausted").into_response()
-                );
+            let Some(permit) = permit.or_else(|| RawBodyPermit::try_acquire(&bodies)) else {
+                return Ok(None);
             };
             let bytes = to_vec(&input.build()?)?.into();
-            Ok(permit.response(
+            Ok(Some(permit.response(
                 params,
                 bytes,
                 HeaderMapExtended::insert_content_type_application_json,
-            ))
+            )))
         })
         .await?;
     Ok(response)
@@ -80,7 +70,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/urpd",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     serve_cohorts(state, headers).await
                 },
                 |op| {
@@ -102,7 +92,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(params): Path<UrpdCohortParam>,
                        Query(query): Query<UrpdWeightQuery>,
-                       State(state): State<AppState>| {
+                       RequestState(state): RequestState| {
                     state
                         .respond_json_content(&headers, move |q| {
                             q.urpd_dates_with_weight(&params.cohort, query.weight)
@@ -130,7 +120,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(params): Path<UrpdCohortParam>,
                        Query(query): Query<UrpdQuery>,
-                       State(state): State<AppState>|
+                       RequestState(state): RequestState|
                        -> Result<Response> {
                     serve_snapshot(state, headers, params.cohort, None, query).await
                 },
@@ -159,7 +149,7 @@ impl ApiUrpdRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(params): Path<UrpdParams>,
                        Query(query): Query<UrpdQuery>,
-                       State(state): State<AppState>|
+                       RequestState(state): RequestState|
                        -> Result<Response> {
                     serve_snapshot(state, headers, params.cohort, Some(params.date), query).await
                 },

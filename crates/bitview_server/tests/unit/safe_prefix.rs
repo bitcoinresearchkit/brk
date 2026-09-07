@@ -23,6 +23,7 @@ fn immutable_block_reads_use_published_prefix_during_append() {
         let (height, hash, gate) =
             state.sync(|q| (q.height(), q.tip_blockhash(), q.indexer().gate().clone()));
         let paths = [
+            "/api/server/sync".to_owned(),
             "/api/blocks".to_owned(),
             format!("/api/block-height/{height}"),
             format!("/api/block/{hash}"),
@@ -67,5 +68,85 @@ fn immutable_block_reads_use_published_prefix_during_append() {
             }
         }
         gate.finish_update();
+    });
+}
+
+#[test]
+fn reorg_tail_waits_for_publication_then_distinguishes_absence() {
+    use super::chain_fixture::{default_first, run_genesis};
+    use bitview_plugin::UpdateContext;
+    use bitview_plugin_indexer::HasIndexer;
+    use bitview_runtime::ComputePluginSet;
+    use brk_exit::Exit;
+    use std::sync::atomic::Ordering;
+
+    run_genesis(default_first(), |mut fixture| async move {
+        fixture.publish(1, 1);
+        let old_hash = fixture.query.sync(|q| q.tip_blockhash());
+        let gate = fixture.plugins.indexer().gate().clone();
+        gate.begin_update();
+        fixture.active.store(2, Ordering::SeqCst);
+        fixture
+            .plugins
+            .compute(UpdateContext::new(&Exit::default()))
+            .unwrap();
+        assert_eq!(
+            fixture.query.sync(|q| q.indexer().safe_lengths().height),
+            brk_types::Height::new(1)
+        );
+
+        let address = fixture.address;
+        let mut pending = tokio::spawn(exchange_with_etag(
+            address,
+            "GET",
+            "/api/block-height/1",
+            "\"old\"",
+        ));
+        assert!(
+            timeout(Duration::from_millis(100), &mut pending)
+                .await
+                .is_err()
+        );
+        let prefix = exchange_with_etag(address, "GET", "/api/block-height/0", "\"old\"").await;
+        assert!(prefix.starts_with("HTTP/1.1 200"), "{prefix}");
+        fixture.plugins.commit().unwrap();
+        gate.finish_update();
+        let response = timeout(Duration::from_secs(2), pending)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+        let new_hash = fixture.query.sync(|q| q.tip_blockhash());
+        assert_ne!(old_hash, new_hash);
+        assert!(response.ends_with(&new_hash.to_string()), "{response}");
+        for path in [
+            format!("/api/block/{old_hash}"),
+            "/api/block-height/2".to_owned(),
+        ] {
+            let response = exchange_with_etag(address, "GET", &path, "*").await;
+            assert!(response.starts_with("HTTP/1.1 404"), "{response}");
+        }
+    });
+}
+
+#[test]
+fn request_deadline_bounds_gate_waits_and_skips_expired_work() {
+    run(|state, _| async move {
+        let query = state.query.with_deadline(std::time::Instant::now());
+        let result = query
+            .run(|_| -> brk_error::Result<()> { panic!("expired work ran") })
+            .await;
+        assert!(matches!(result, Err(brk_error::Error::ReadTimeout)));
+
+        let gate = state.sync(|q| q.indexer().gate().clone());
+        gate.begin_update();
+        let started = std::time::Instant::now();
+        let query = state
+            .query
+            .with_deadline(started + Duration::from_millis(50));
+        let result = query.run(|q| q.blocks_v1(None, 1)).await;
+        gate.finish_update();
+        assert!(matches!(result, Err(brk_error::Error::ReadTimeout)));
+        assert!(started.elapsed() < Duration::from_secs(1));
     });
 }

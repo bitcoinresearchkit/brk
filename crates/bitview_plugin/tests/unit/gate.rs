@@ -2,6 +2,20 @@ use std::{sync::mpsc, thread, time::Duration};
 
 use super::*;
 
+#[cfg(feature = "tokio")]
+#[test]
+fn publication_notification_survives_subscribe_check_wait_race() {
+    let gate = PluginGate::new();
+    gate.begin_update();
+    let mut changes = gate.changes();
+    assert!(gate.try_read().is_none());
+    gate.finish_update();
+    assert!(changes.has_changed().unwrap());
+    changes.borrow_and_update();
+    assert!(gate.try_read().is_some());
+    assert!(!changes.has_changed().unwrap());
+}
+
 #[test]
 fn update_waits_for_readers_and_stays_closed_until_published() {
     let gate = PluginGate::new();

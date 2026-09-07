@@ -32,6 +32,17 @@ impl RawBodyPermit {
         })
     }
 
+    pub async fn acquire(budget: &Arc<Semaphore>) -> brk_error::Result<Self> {
+        let permit = budget
+            .clone()
+            .acquire_owned()
+            .await
+            .map_err(|_| brk_error::Error::Internal("response admission closed"))?;
+        Ok(Self {
+            _permit: Arc::new(permit),
+        })
+    }
+
     pub fn bytes(&self, bytes: Bytes) -> Bytes {
         Bytes::from_owner(RetainedBytes {
             bytes,

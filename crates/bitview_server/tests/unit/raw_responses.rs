@@ -99,11 +99,11 @@ fn raw_head_preserves_get_metadata_with_negotiated_compression() {
         }
         assert_eq!(state.raw_block_bodies.available_permits(), 0);
         let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
-        assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+        assert!(response.starts_with("HTTP/1.1 504"), "{response}");
         assert!(response.contains("\r\ncache-control: no-store\r\n"));
-        assert!(response.contains("\r\nretry-after: 1\r\n"));
+        assert!(!response.contains("\r\nretry-after:"));
         assert!(!response.contains("\r\netag:"));
-        assert!(response.contains("\"code\":\"overloaded\""));
+        assert!(response.contains("\"code\":\"timeout\""));
         for (method, etag, status) in [
             ("GET", "*", 304),
             ("HEAD", "\"old\"", 200),

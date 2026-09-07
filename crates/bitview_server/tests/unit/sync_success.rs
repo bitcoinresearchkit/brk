@@ -1003,15 +1003,17 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         };
         let after_reorg_blocks =
             async move { exchange_with_etag(address, "GET", "/api/blocks", &blocks_etag).await };
-        let mut pending =
-            spawn(
-                async move { exchange_with_etag(address, "GET", "/api/server/sync", &etag).await },
-            );
-        assert!(
-            timeout(Duration::from_millis(100), &mut pending)
-                .await
-                .is_err()
-        );
+        // Publication waits no longer occupy the sync worker. The unchanged
+        // published prefix can still answer while the mutable gate is closed.
+        let current_sync = timeout(
+            Duration::from_secs(2),
+            exchange_with_etag(address, "GET", "/api/server/sync", &etag),
+        )
+        .await
+        .unwrap();
+        assert!(current_sync.starts_with("HTTP/1.1 304"), "{current_sync}");
+        let after_reorg_sync =
+            async move { exchange_with_etag(address, "GET", "/api/server/sync", &etag).await };
         #[cfg(feature = "series")]
         let mut pending_data = spawn(async move {
             exchange_with_etag(
@@ -1385,9 +1387,8 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 .unwrap(),
             format!("W/\"blocks2-{}\"", chain[2].block_hash())
         );
-        let response = timeout(Duration::from_secs(5), pending)
+        let response = timeout(Duration::from_secs(5), after_reorg_sync)
             .await
-            .unwrap()
             .unwrap();
         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
         let after: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();

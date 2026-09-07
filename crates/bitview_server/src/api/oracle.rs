@@ -1,9 +1,6 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{
-    extract::{Path, State},
-    http::HeaderMap,
-    response::Response,
-};
+use axum::{extract::Path, http::HeaderMap, response::Response};
 use brk_oracle::{HistogramEmaCompact, HistogramRaw};
 use brk_types::{Day1, Dollars};
 
@@ -17,7 +14,7 @@ use crate::{
 pub async fn serve_live_price(
     headers: HeaderMap,
     _: Empty,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
 ) -> Response {
     state
         .respond_json_content(&headers, |query| query.live_price())
@@ -50,7 +47,7 @@ impl OracleRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/oracle/histogram/payments/live",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state
                         .respond_json_content(&headers, |query| query.live_payment_histogram())
                         .await
@@ -78,7 +75,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(path): Path<HeightOrDateParam>,
                        _: Empty,
-                       State(state): State<AppState>|
+                       RequestState(state): RequestState|
                        -> Result<Response> {
                     let point = path.resolve()?;
                     Ok(state
@@ -114,7 +111,7 @@ impl OracleRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/oracle/histogram/outputs/live",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state
                         .respond_json_content(&headers, |query| query.live_output_histogram())
                         .await
@@ -141,7 +138,7 @@ impl OracleRoutes for ApiRouter<AppState> {
                 async |headers: HeaderMap,
                        Path(path): Path<HeightOrDateParam>,
                        _: Empty,
-                       State(state): State<AppState>|
+                       RequestState(state): RequestState|
                        -> Result<Response> {
                     let point = path.resolve()?;
                     Ok(state

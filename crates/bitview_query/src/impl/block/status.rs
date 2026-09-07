@@ -6,7 +6,7 @@ use crate::Query;
 
 impl Query {
     pub fn block_status(&self, hash: &BlockHash) -> Result<BlockStatus> {
-        let _guard = self.indexer().pin_safe_lengths();
+        let _guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_status_at_height(height)
     }

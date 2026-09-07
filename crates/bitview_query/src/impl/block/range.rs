@@ -113,7 +113,7 @@ impl Query {
     /// Resolve an exact canonical hash and retain publication exclusion until
     /// the selected row is consumed. The prefix-store lookup may perform I/O.
     pub fn resolve_block_snapshot(&self, hash: &BlockHash) -> Result<ResolvedBlocks> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.blocks_snapshot(Some(height), 1, guard)
     }
@@ -135,7 +135,7 @@ impl Query {
         start_height: Option<Height>,
         count: u32,
     ) -> Result<ResolvedBlocks> {
-        self.blocks_snapshot(start_height, count, self.indexer().pin_safe_lengths())
+        self.blocks_snapshot(start_height, count, self.pin_safe_lengths()?)
     }
 
     fn blocks_snapshot(

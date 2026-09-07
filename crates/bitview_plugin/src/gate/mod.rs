@@ -22,6 +22,8 @@ struct Inner {
     gate: Arc<RwLock<()>>,
     writer: Mutex<Option<ArcRwLockWriteGuard<RawRwLock, ()>>>,
     publication: AtomicU64,
+    #[cfg(feature = "tokio")]
+    changed: tokio::sync::watch::Sender<()>,
 }
 
 impl PluginGate {
@@ -54,6 +56,14 @@ impl PluginGate {
             .expect("plugin update is not running");
         self.0.publication.fetch_add(1, Ordering::Release);
         drop(writer);
+        #[cfg(feature = "tokio")]
+        self.0.changed.send_replace(());
+    }
+
+    /// Subscribe before checking readiness so publication cannot be missed.
+    #[cfg(feature = "tokio")]
+    pub fn changes(&self) -> tokio::sync::watch::Receiver<()> {
+        self.0.changed.subscribe()
     }
 
     /// Process-local revision of completed publications, shared by gate clones.

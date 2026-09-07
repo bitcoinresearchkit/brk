@@ -93,6 +93,25 @@ admission returns 503. Submission is not automatically replayed after a lost
 response. A timeout or cancellation after dispatch can leave the outcome unknown
 and cannot undo a transaction already received by the node.
 
+## Read availability
+
+Ordinary GET/HEAD reads share one five-second deadline across admission,
+publication waits, read attempts, and body preparation. Publication notifications
+and response-capacity availability wake waiting reads without polling or holding
+worker slots. The HTTP handler itself is never replayed. Exhaustion returns a non-cacheable
+504 with code `timeout`. Invalid input, genuine missing resources, disabled
+services, and storage failures retain their own errors. Actions are never replayed.
+
+Response-capacity waits release snapshots first, then resolve and validate again
+before building the body. Matching validators still return 304 before reserving
+body capacity or serializing data, after required validity and consistency checks.
+
+Immutable block reads pin the published prefix, so append-only processing does
+not hide existing blocks. During rollback, the unaffected prefix stays readable;
+reads in the replaced tail wait for publication before deciding whether the
+block exists. This does not retain a second copy of the old chain. Mutable and
+cross-plugin reads retain their publication guards, including before a 304.
+
 ## Configuration
 
 Binds exactly to `0.0.0.0:3110` by default. Set `ServerConfig::bind` and

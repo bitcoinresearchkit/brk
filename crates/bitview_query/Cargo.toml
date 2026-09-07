@@ -43,7 +43,7 @@ urpd = [
     "distribution",
     "price",
 ]
-tokio = ["indexer", "dep:tokio", "brk_error/tokio"]
+tokio = ["indexer", "dep:tokio", "brk_error/tokio", "bitview_plugin/tokio", "bitview_plugin_indexer/tokio", "brk_mempool/tokio"]
 
 [dependencies]
 bitcoin = { workspace = true }

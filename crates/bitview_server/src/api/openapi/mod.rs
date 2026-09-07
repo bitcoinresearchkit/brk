@@ -58,7 +58,7 @@ All errors return structured JSON with a consistent format:
 }
 ```
 
-- **`type`**: Error category — `invalid_request` (400), `forbidden` (403), `not_found` (404), `unavailable` (503), or `internal` (500)
+- **`type`**: Error category — `invalid_request` (400), `forbidden` (403), `not_found` (404), `unavailable` (503), `timeout` (504), or `internal` (500)
 - **`code`**: Machine-readable error code (e.g. `invalid_address`, `series_not_found`, `weight_exceeded`)
 - **`message`**: Human-readable description
 - **`doc_url`**: Link to API documentation

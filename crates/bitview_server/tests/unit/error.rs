@@ -47,6 +47,7 @@ async fn shared_error_mapping_preserves_status_code_body_and_cache_policy() {
         ),
         (BrkError::MempoolNotAvailable, 503, "mempool_not_available"),
         (BrkError::StateUpdating, 503, "state_updating"),
+        (BrkError::ReadTimeout, 504, "timeout"),
         (BrkError::AuthFailed, 403, "auth_failed"),
         (BrkError::Internal("test"), 500, "internal_error"),
     ];
@@ -68,10 +69,6 @@ async fn shared_error_mapping_preserves_status_code_body_and_cache_policy() {
         assert_cache_control(&response, policy);
         assert_eq!(
             response.headers().contains_key(header::RETRY_AFTER),
-            code == "state_updating"
-        );
-        assert_eq!(
-            response.extensions().get::<ReadAvailability>().is_some(),
             code == "state_updating"
         );
         let bytes = axum::body::to_bytes(response.into_body(), 4096)
@@ -114,7 +111,7 @@ fn invalid_address_is_immutable_without_a_validator() {
 fn state_updating_is_a_retryable_service_unavailable_response() {
     let error = Error::from(BrkError::StateUpdating);
     assert_eq!(error.status, StatusCode::SERVICE_UNAVAILABLE);
-    assert_eq!(error.code, "state_updating");
+    assert_eq!(error.code.as_str(), "state_updating");
 
     let response = error.into_response();
     assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);

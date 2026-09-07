@@ -16,6 +16,7 @@ pub struct HeightOrDateParam {
 }
 
 /// A resolved [`HeightOrDateParam`]: a confirmed block height or a calendar day.
+#[derive(Clone, Copy)]
 pub enum HeightOrDate {
     Height(Height),
     Date(Date),

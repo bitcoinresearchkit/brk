@@ -1,10 +1,10 @@
+use crate::request_state::RequestState;
 use std::borrow::Cow;
 
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     Json,
     body::Bytes,
-    extract::State,
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
@@ -14,11 +14,10 @@ use jiff::Timestamp;
 
 use super::AppState;
 use crate::{
-    CacheStrategy, Error, VERSION,
+    CacheStrategy, VERSION,
     error::Result,
     extended::{HeaderMapExtended, ResponseExtended, TransformResponseExtended},
     params::Empty,
-    read_availability::ReadAvailability,
 };
 
 mod disk;
@@ -32,8 +31,8 @@ impl ServerRoutes for ApiRouter<AppState> {
         self.api_route(
             "/health",
             get_with(
-                async |_: Empty, State(state): State<AppState>| -> Result<Response> {
-                    let sync = state.run(|q| q.local_sync_status()).await?;
+                async |_: Empty, RequestState(state): RequestState| -> Result<Response> {
+                    let sync = state.read(|q| q.local_sync_status()).await?;
                     let uptime = state.started_instant.elapsed();
                     let timestamp = Timestamp::now().to_string();
                     let mut response = Json(Health {
@@ -56,7 +55,7 @@ impl ServerRoutes for ApiRouter<AppState> {
                         .server_tag()
                         .mcp_ignore()
                         .summary("Health check")
-                        .description("Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.")
+                        .description("Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Reads the published prefix during processing; an empty index waits until the request deadline, then returns 504. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.")
                         .json_response::<Health>()
                         .bad_request()
                         .server_errors()
@@ -82,30 +81,9 @@ impl ServerRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/server/sync",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| -> Result<Response> {
-                    let permit = state.sync_query.clone().acquire_owned().await
-                        .map_err(|_| Error::internal("sync query admission closed"))?;
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| -> Result<Response> {
                     let tip_height = state.node.get_last_height().await?;
-                    let sync = state
-                        .run(move |q| {
-                            // Keep admission until the blocking work ends, even
-                            // if the HTTP future is cancelled while it runs.
-                            let _permit = permit;
-                            q.sync_status(tip_height)
-                        })
-                        .await;
-                    let sync = match sync {
-                        Ok(sync) => sync,
-                        Err(error) => {
-                            // sync_status already waits up to four seconds for
-                            // local publication. An empty index or exhausted
-                            // wait is unavailable, not a reason to repeat the
-                            // node RPC and discard its captured tip observation.
-                            let mut response = Error::from(error).into_response();
-                            response.extensions_mut().remove::<ReadAvailability>();
-                            return Ok(response);
-                        }
-                    };
+                    let sync = state.read_admitted(move |q| q.sync_status(tip_height)).await?;
                     // computed_height and blocks_behind derive from these heights;
                     // last_indexed_at derives from the Unix timestamp.
                     let strategy = CacheStrategy::Live(format!(

@@ -8,7 +8,11 @@ homepage = "https://bitview.dev"
 repository.workspace = true
 readme = "README.md"
 
+[features]
+tokio = ["dep:tokio"]
+
 [dependencies]
+tokio = { workspace = true, optional = true, features = ["sync"] }
 brk_exit = { workspace = true }
 bitview_traversable = { workspace = true }
 brk_error = { workspace = true }

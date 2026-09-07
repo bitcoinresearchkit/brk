@@ -11,7 +11,7 @@ use aide::{axum::ApiRouter, openapi::OpenApi};
 use axum::{
     Extension, Router, ServiceExt,
     body::Body,
-    http::{Request, StatusCode},
+    http::Request,
     middleware::from_fn,
     response::{IntoResponse, Redirect},
     routing::get,
@@ -29,16 +29,18 @@ use tower_http::{
     },
     cors::CorsLayer,
     normalize_path::NormalizePathLayer,
-    timeout::TimeoutLayer,
 };
 use tower_layer::Layer;
 use tracing::info;
 
 mod api;
+#[cfg(any(feature = "chain", feature = "series", feature = "urpd"))]
+mod body_response;
 mod cache;
 mod config;
 mod error;
 mod error_body;
+mod error_code;
 mod etag;
 mod extended;
 mod json_error;
@@ -47,7 +49,8 @@ mod params;
 mod prepared_json;
 #[cfg(any(feature = "chain", feature = "urpd", feature = "series"))]
 mod raw_body;
-mod read_availability;
+mod request_deadline;
+mod request_state;
 mod response_size_above;
 mod response_time;
 #[cfg(feature = "series")]
@@ -64,7 +67,7 @@ pub use cache::CdnCacheMode;
 use cache::{CacheParams, CacheStrategy};
 pub use config::{DEFAULT_BIND, DEFAULT_MAX_UTXOS, DEFAULT_MAX_WEIGHT, ServerConfig};
 use error::Error;
-#[cfg(any(feature = "chain", feature = "urpd", feature = "series"))]
+#[cfg(feature = "chain")]
 use raw_body::RawBodyPermit;
 use response_size_above::ResponseSizeAbove;
 #[cfg(feature = "series")]
@@ -159,11 +162,7 @@ impl Server {
         let website_router = bitview_website::router(state.website.clone());
         let mut router = ApiRouter::new()
             .add_api_routes()
-            .layer(from_fn(read_availability::wait))
-            .layer(TimeoutLayer::with_status_code(
-                StatusCode::GATEWAY_TIMEOUT,
-                REQUEST_TIMEOUT,
-            ));
+            .layer(from_fn(request_deadline::apply));
         if !state.website.is_enabled() {
             router = router.route("/", get(Redirect::temporary("/api")));
         }

@@ -16,7 +16,7 @@ impl Query {
     /// prefix), `OutOfRange` if the resolved height is past the indexed tip.
     /// Unpaginated by design.
     pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_txids_by_height(height, guard.lengths())
     }
@@ -30,7 +30,7 @@ impl Query {
         start_index: BlockTxIndex,
         count: u32,
     ) -> Result<Vec<Transaction>> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_txs_at_height(height, start_index, count, guard.lengths())
     }
@@ -40,7 +40,7 @@ impl Query {
     /// the 8-byte prefix; `OutOfRange` if `index` is past the last tx in
     /// the block.
     pub fn block_txid_at_index(&self, hash: &BlockHash, index: BlockTxIndex) -> Result<Txid> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_txid_at_index_by_height(height, index.into(), guard.lengths())
     }
@@ -61,7 +61,7 @@ impl Query {
     /// `0..len`, Phase 1 produces exactly one `DecodedTx` per position, and
     /// Phase 3 assigns each `txs[pos]` once before the collect.
     pub fn transactions_by_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
-        let _guard = self.indexer().pin_safe_lengths();
+        let _guard = self.pin_safe_lengths()?;
         self.transactions_at_indices(indices)
     }
 

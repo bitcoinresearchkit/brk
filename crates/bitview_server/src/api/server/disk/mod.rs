@@ -1,6 +1,6 @@
-use super::AppState;
+use crate::request_state::RequestState;
 use crate::{CacheStrategy, Error, error::Result, params::Empty};
-use axum::{extract::State, http::HeaderMap, response::Response};
+use axum::{http::HeaderMap, response::Response};
 use brk_types::DiskUsage;
 use rayon::join;
 
@@ -9,7 +9,11 @@ mod walk;
 
 use cancellation::Cancellation;
 
-pub async fn get(headers: HeaderMap, _: Empty, State(state): State<AppState>) -> Result<Response> {
+pub async fn get(
+    headers: HeaderMap,
+    _: Empty,
+    RequestState(state): RequestState,
+) -> Result<Response> {
     let permit = state
         .disk_query
         .clone()

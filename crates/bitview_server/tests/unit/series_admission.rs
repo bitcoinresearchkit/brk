@@ -9,7 +9,7 @@ use axum::{
 use tokio::{spawn, time::sleep};
 use tower::ServiceExt;
 
-use crate::{AppState, api::ApiRoutes, read_availability};
+use crate::{AppState, api::ApiRoutes, request_deadline};
 
 pub async fn check(state: &AppState) {
     check_format_shapes(state);
@@ -48,13 +48,6 @@ pub async fn check(state: &AppState) {
                 .unwrap();
             assert_eq!(second.status(), StatusCode::OK);
             assert_eq!(budget.available_permits(), 0);
-            let busy = router
-                .clone()
-                .oneshot(request("GET", &path, "\"old\""))
-                .await
-                .unwrap();
-            assert_eq!(busy.status(), StatusCode::SERVICE_UNAVAILABLE);
-            assert!(!busy.headers().contains_key("etag"));
             for method in ["GET", "HEAD"] {
                 for condition in [tag.as_str(), "*"] {
                     let response = router
@@ -65,7 +58,7 @@ pub async fn check(state: &AppState) {
                     assert_eq!(response.status(), StatusCode::NOT_MODIFIED);
                 }
             }
-            let waiting_router = router.clone().layer(from_fn(read_availability::wait));
+            let waiting_router = router.clone().layer(from_fn(request_deadline::apply));
             let pending = spawn(waiting_router.oneshot(request("GET", &path, "\"old\"")));
             sleep(Duration::from_millis(50)).await;
             assert!(

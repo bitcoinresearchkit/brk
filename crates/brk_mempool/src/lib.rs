@@ -96,6 +96,8 @@ struct Inner {
     rebuilder: Rebuilder,
     started: AtomicBool,
     cycle: Mutex<()>,
+    #[cfg(feature = "tokio")]
+    changed: tokio::sync::watch::Sender<()>,
 }
 
 impl Mempool {
@@ -106,11 +108,18 @@ impl Mempool {
             rebuilder: Rebuilder::default(),
             started: AtomicBool::new(false),
             cycle: Mutex::new(()),
+            #[cfg(feature = "tokio")]
+            changed: tokio::sync::watch::channel(()).0,
         }))
     }
 
     pub fn snapshot(&self) -> Arc<Snapshot> {
         self.0.rebuilder.snapshot()
+    }
+
+    #[cfg(feature = "tokio")]
+    pub fn changes(&self) -> tokio::sync::watch::Receiver<()> {
+        self.0.changed.subscribe()
     }
 
     /// One-shot diagnostic counters captured under a single read guard.

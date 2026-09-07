@@ -4,11 +4,18 @@ use brk_types::Lengths;
 use parking_lot::RwLock;
 
 #[derive(Clone)]
-pub struct State(pub Arc<RwLock<Lengths>>);
+pub struct State(
+    pub Arc<RwLock<Lengths>>,
+    #[cfg(feature = "tokio")] tokio::sync::watch::Sender<()>,
+);
 
 impl State {
     pub fn new() -> Self {
-        Self(Arc::new(RwLock::new(Lengths::default())))
+        Self(
+            Arc::new(RwLock::new(Lengths::default())),
+            #[cfg(feature = "tokio")]
+            tokio::sync::watch::channel(()).0,
+        )
     }
 
     pub fn lengths(&self) -> Lengths {
@@ -28,10 +35,20 @@ impl State {
             "length regression"
         );
         *lengths = next;
+        drop(lengths);
+        #[cfg(feature = "tokio")]
+        self.1.send_replace(());
     }
 
     pub fn lower_before(&self, starting: &Lengths) {
         self.0.write().clamp_to(starting);
+        #[cfg(feature = "tokio")]
+        self.1.send_replace(());
+    }
+
+    #[cfg(feature = "tokio")]
+    pub fn changes(&self) -> tokio::sync::watch::Receiver<()> {
+        self.1.subscribe()
     }
 }
 
@@ -42,6 +59,23 @@ mod tests {
     use brk_types::Height;
 
     use super::*;
+
+    #[cfg(feature = "tokio")]
+    #[test]
+    fn prefix_changes_notify_after_both_lowering_and_publication() {
+        let state = State::new();
+        let mut changes = state.changes();
+        state.finish_update(Lengths {
+            height: Height::new(2),
+            ..Default::default()
+        });
+        assert!(changes.has_changed().unwrap());
+        changes.borrow_and_update();
+        assert_eq!(state.try_pin().unwrap().lengths().height, Height::new(2));
+        state.lower_before(&Lengths::default());
+        assert!(changes.has_changed().unwrap());
+        assert_eq!(state.try_pin().unwrap().lengths().height, Height::ZERO);
+    }
 
     #[test]
     fn pinned_prefix_blocks_rollback_and_allows_nested_bound_reads() {
@@ -67,6 +101,7 @@ mod tests {
         );
         assert_eq!(prefix.lengths().height, Height::new(2));
         assert_eq!(state.lengths().height, Height::new(2));
+        assert!(state.pin_for(Duration::from_millis(10)).is_none());
         drop(prefix);
         done.recv_timeout(Duration::from_secs(2)).unwrap();
         task.join().unwrap();

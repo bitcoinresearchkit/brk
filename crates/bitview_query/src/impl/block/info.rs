@@ -42,17 +42,19 @@ struct Coinbase {
 impl Query {
     /// Block by hash. Unknown hash → 404 via `height_by_hash`.
     pub fn block(&self, hash: &BlockHash) -> Result<BlockInfo> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_at_height(height, guard.lengths())
     }
 
     /// Block by height. Height past tip (or pre-genesis) → `OutOfRange`.
     pub fn block_by_height(&self, height: Height) -> Result<BlockInfo> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let safe = guard.lengths();
         if height >= safe.height {
-            return Err(Error::OutOfRange("Block height out of range".into()));
+            return Err(
+                self.block_unavailable(Error::OutOfRange("Block height out of range".into()))
+            );
         }
         self.block_at_height(height, safe)
     }
@@ -84,14 +86,14 @@ impl Query {
 
     /// The original 80 header bytes as hex, verified against the requested hash.
     pub fn block_header_hex(&self, hash: &BlockHash) -> Result<String> {
-        let _guard = self.indexer().pin_safe_lengths();
+        let _guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_header_hex_at_height(height, hash)
     }
 
     /// Resolve a height against one published chain view.
     pub fn resolve_block_hash(&self, height: Height) -> Result<BlockHash> {
-        let _guard = self.indexer().pin_safe_lengths();
+        let _guard = self.pin_safe_lengths()?;
         self.block_hash_by_height(height)
     }
 
@@ -109,7 +111,9 @@ impl Query {
     /// is unexpectedly missing inside the gate).
     pub fn block_hash_by_height(&self, height: Height) -> Result<BlockHash> {
         if height >= self.safe_lengths().height {
-            return Err(Error::OutOfRange("Block height out of range".into()));
+            return Err(
+                self.block_unavailable(Error::OutOfRange("Block height out of range".into()))
+            );
         }
         self.indexer()
             .vecs()
@@ -123,7 +127,7 @@ impl Query {
     /// Most recent `count` blocks ending at `start_height` (default tip),
     /// returned in descending-height order.
     pub fn blocks(&self, start_height: Option<Height>, count: u32) -> Result<Vec<BlockInfo>> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let safe = guard.lengths();
         let (begin, end) = Self::resolve_block_range(start_height, count, safe.height);
         self.blocks_range_at(begin, end, safe)

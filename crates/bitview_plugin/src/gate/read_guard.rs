@@ -43,32 +43,43 @@ impl PluginGate {
 }
 
 impl PluginReadGuard {
+    /// Acquire a complete set immediately, or report the gate to wait on.
+    /// No partial guard set escapes a failed attempt.
+    pub fn try_acquire<'a>(plugins: &[&'a dyn Plugin]) -> Result<Self, &'a dyn Plugin> {
+        Self::try_acquire_sorted(&Self::sorted_plugins(plugins.to_vec()))
+    }
+
+    fn sorted_plugins(mut plugins: Vec<&dyn Plugin>) -> Vec<&dyn Plugin> {
+        plugins.sort_unstable_by_key(|plugin| (*plugin as *const dyn Plugin).cast::<()>() as usize);
+        plugins.dedup_by(|a, b| std::ptr::addr_eq(*a, *b));
+        plugins
+    }
+
+    fn try_acquire_sorted<'a>(plugins: &[&'a dyn Plugin]) -> Result<Self, &'a dyn Plugin> {
+        let mut guards = Vec::with_capacity(plugins.len());
+        for &plugin in plugins {
+            let Some(guard) = plugin.gate().0.gate.try_read_arc() else {
+                return Err(plugin);
+            };
+            guards.push(guard);
+        }
+        Ok(Self {
+            _guards: Guards::Multiple { _guards: guards },
+        })
+    }
+
     /// Waits up to `timeout` to acquire multiple plugin gates without
     /// retaining a partial set while an update is running.
-    pub fn acquire_for(mut plugins: Vec<&dyn Plugin>, timeout: Duration) -> Option<Self> {
-        plugins.sort_unstable_by_key(|plugin| {
-            let ptr = *plugin as *const dyn Plugin;
-            ptr.cast::<()>() as usize
-        });
-        plugins.dedup_by(|a, b| std::ptr::addr_eq(*a, *b));
+    pub fn acquire_for(plugins: Vec<&dyn Plugin>, timeout: Duration) -> Option<Self> {
+        let plugins = Self::sorted_plugins(plugins);
         let started = Instant::now();
 
         loop {
-            let mut guards = Vec::with_capacity(plugins.len());
-            let blocked = plugins.iter().find(|plugin| {
-                let Some(guard) = plugin.gate().0.gate.try_read_arc() else {
-                    return true;
-                };
-                guards.push(guard);
-                false
-            });
-            let Some(blocked) = blocked else {
-                return Some(Self {
-                    _guards: Guards::Multiple { _guards: guards },
-                });
+            let blocked = match Self::try_acquire_sorted(&plugins) {
+                Ok(guards) => return Some(guards),
+                Err(blocked) => blocked,
             };
 
-            drop(guards);
             let remaining = timeout.saturating_sub(started.elapsed());
             if remaining.is_zero() {
                 return None;

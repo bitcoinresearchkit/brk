@@ -41,7 +41,7 @@ impl Query {
     /// }
     /// ```
     pub fn block_raw(&self, hash: &BlockHash) -> Result<Vec<u8>> {
-        let guard = self.indexer().pin_safe_lengths();
+        let guard = self.pin_safe_lengths()?;
         let height = self.height_by_hash(hash)?;
         self.block_raw_at_height(height, hash, &guard)
     }

@@ -1,8 +1,6 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{
-    extract::{Query, State},
-    http::HeaderMap,
-};
+use axum::{extract::Query, http::HeaderMap};
 use brk_types::{DifficultyAdjustment, HistoricalPrice, Prices, Timestamp};
 
 use super::historical_price;
@@ -21,7 +19,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/v1/difficulty-adjustment",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state
                         .respond_json_content(&headers, |q| {
                             q.difficulty_adjustment()
@@ -42,7 +40,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/prices",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state
                         .respond_json_content(&headers, |q| {
                             Ok(Prices {
@@ -68,7 +66,7 @@ impl GeneralRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap,
                        Query(params): Query<OptionalTimestampParam>,
-                       State(state): State<AppState>| {
+                       RequestState(state): RequestState| {
                     historical_price::serve(state, headers, params.timestamp).await
                 },
                 |op| {

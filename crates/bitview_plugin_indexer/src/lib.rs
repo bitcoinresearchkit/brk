@@ -174,6 +174,15 @@ impl<M: StorageMode> Indexer<M> {
         self.state.try_pin()
     }
 
+    #[cfg(feature = "tokio")]
+    pub fn prefix_changes(&self) -> tokio::sync::watch::Receiver<()> {
+        self.state.changes()
+    }
+
+    pub fn pin_safe_lengths_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
+        self.state.pin_for(timeout)
+    }
+
     /// Latest safely published indexed height.
     pub fn indexed_height(&self) -> Height {
         self.safe_lengths().last_height().unwrap_or_default()

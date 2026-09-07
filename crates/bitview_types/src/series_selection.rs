@@ -7,7 +7,7 @@ use crate::{DataRangeFormat, SeriesList, SeriesName};
 
 with_range_format! {
     /// Selection of series to query
-    #[derive(Debug, Deserialize, JsonSchema)]
+    #[derive(Clone, Debug, Deserialize, JsonSchema)]
     #[serde(deny_unknown_fields)]
     pub struct SeriesSelection {
         /// Requested series

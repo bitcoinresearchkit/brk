@@ -384,13 +384,10 @@ async fn check_response_admission(state: &AppState, path: &str, current: &str) {
     assert_eq!(second.status(), StatusCode::OK);
     assert_eq!(state.urpd_bodies.available_permits(), 0);
     assert_eq!(state.urpd_query.available_permits(), 2);
-    let busy = router
-        .clone()
-        .oneshot(request("GET", "\"old\""))
-        .await
-        .unwrap();
-    assert_eq!(busy.status(), StatusCode::SERVICE_UNAVAILABLE);
-    assert!(!busy.headers().contains_key("etag"));
+    let pending = spawn(router.clone().oneshot(request("GET", "\"old\"")));
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    assert!(!pending.is_finished());
+    assert_eq!(state.urpd_query.available_permits(), 2);
     for method in ["GET", "HEAD"] {
         for tag in [current, "*"] {
             let response = router.clone().oneshot(request(method, tag)).await.unwrap();
@@ -399,6 +396,9 @@ async fn check_response_admission(state: &AppState, path: &str, current: &str) {
     }
     assert_eq!(state.urpd_bodies.available_permits(), 0);
     drop(first);
+    let admitted = pending.await.unwrap().unwrap();
+    assert_eq!(admitted.status(), StatusCode::OK);
+    drop(admitted);
     assert_eq!(state.urpd_bodies.available_permits(), 1);
     drop(second);
     assert_eq!(state.urpd_bodies.available_permits(), 2);
@@ -431,18 +431,18 @@ async fn check_cancelled_admission(state: &AppState) {
     let queued = exchange_with_etag(address, "GET", "/api/urpd/all", "*").await;
     let after_queued = admission.available_permits();
     gate.finish_update();
-    // Waiting for both permits also waits for the detached blocking jobs to exit.
+    // Publication waits release admission before cancellation.
     let recovered = timeout(Duration::from_secs(2), admission.acquire_many_owned(2)).await;
     serving.abort();
     assert!(first.starts_with("HTTP/1.1 504"), "{first}");
     assert!(second.starts_with("HTTP/1.1 504"), "{second}");
     assert!(second.ends_with("\r\n\r\n"));
     assert_eq!(
-        after_cancel, 0,
-        "cancelled requests must not release running jobs' slots"
+        after_cancel, 2,
+        "publication waits must release worker slots"
     );
     assert!(queued.starts_with("HTTP/1.1 504"), "{queued}");
-    assert_eq!(after_queued, 0);
+    assert_eq!(after_queued, 2);
     drop(recovered.unwrap().unwrap());
     assert_eq!(state.urpd_query.available_permits(), 2);
 }

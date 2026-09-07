@@ -3,12 +3,13 @@
 //! Holds the shared `serve` helper used by every series endpoint that returns
 //! a formatted body (single, raw, and bulk).
 
+use crate::request_state::RequestState;
 use std::result::Result as StdResult;
 
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     body::Bytes,
-    extract::{Path, Query, State},
+    extract::{Path, Query},
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
@@ -105,7 +106,7 @@ pub async fn serve_series_info(
     }
 
     let error = state
-        .run_with_admission(&state.series_bodies.search_query, move |q| {
+        .read_with_admission(&state.series_bodies.search_query, move |q| {
             Ok(q.missing_series_error(&series))
         })
         .await?;
@@ -129,7 +130,7 @@ pub async fn serve_latest(
 ) -> Result<Response> {
     validate_name(&series)?;
     let bytes = state
-        .run_with_admission(&state.series_bodies.data_query, move |q| {
+        .read_with_admission(&state.series_bodies.data_query, move |q| {
             Ok(Bytes::from(q.latest_json(&series, index)?))
         })
         .await?;
@@ -144,7 +145,7 @@ pub async fn serve_len(
 ) -> Result<Response> {
     validate_name(&series)?;
     let length = state
-        .run_with_admission(&state.series_bodies.data_query, move |q| {
+        .read_with_admission(&state.series_bodies.data_query, move |q| {
             q.len(&series, index)
         })
         .await?;
@@ -165,7 +166,7 @@ pub async fn serve_version(
         return Ok(state.respond_json_value(&headers, strategy, version));
     }
     let error = state
-        .run_with_admission(&state.series_bodies.search_query, move |q| {
+        .read_with_admission(&state.series_bodies.search_query, move |q| {
             Ok(q.missing_series_error(&series))
         })
         .await?;
@@ -180,44 +181,53 @@ pub async fn serve(
     state: AppState,
     headers: HeaderMap,
     params: SeriesSelection,
-    to_bytes: impl FnOnce(&BrkQuery, ResolvedQuery) -> StdResult<Bytes, BrkError> + Send + 'static,
+    to_bytes: impl FnOnce(&BrkQuery, ResolvedQuery) -> StdResult<Bytes, BrkError>
+    + Clone
+    + Send
+    + 'static,
 ) -> Result<Response> {
     params.series.iter().try_for_each(validate_name)?;
     let max_weight = state.max_weight;
     let cdn_cache_mode = state.cdn_cache_mode;
     let bodies = state.series_bodies.response_bodies.clone();
     state
-        .run_with_admission(&state.series_bodies.data_query, move |q| {
-            let resolved = q.resolve(params, max_weight)?;
-            let cache_params = CacheParams::series(
-                resolved.version,
-                resolved.start,
-                resolved.end,
-                resolved.stable_count,
-                resolved.hash_prefix,
-                cdn_cache_mode,
-            );
-            if cache_params.matches_etag(&headers) {
-                return Ok(Response::new_not_modified(&cache_params));
-            }
-            let Some(permit) = RawBodyPermit::try_acquire(&bodies) else {
-                return Ok(Error::overloaded("Series response capacity exhausted").into_response());
-            };
-            let csv_filename = match resolved.format {
-                Format::CSV => Some(resolved.csv_filename()),
-                Format::JSON => None,
-            };
-            let bytes = to_bytes(q, resolved)?;
-            Ok(
-                permit.response(cache_params, bytes, move |h| match csv_filename {
-                    Some(filename) => {
-                        h.insert_content_disposition_attachment(&filename);
-                        h.insert_content_type_text_csv();
-                    }
-                    None => h.insert_content_type_application_json(),
-                }),
-            )
-        })
+        .read_body(
+            &state.series_bodies.data_query,
+            &state.series_bodies.response_bodies,
+            move |q, permit| {
+                let resolved = q.resolve(params, max_weight)?;
+                let cache_params = CacheParams::series(
+                    resolved.version,
+                    resolved.start,
+                    resolved.end,
+                    resolved.stable_count,
+                    resolved.hash_prefix,
+                    cdn_cache_mode,
+                );
+                if cache_params.matches_etag(&headers) {
+                    return Ok(Some(Response::new_not_modified(&cache_params)));
+                }
+                let Some(permit) = permit.or_else(|| RawBodyPermit::try_acquire(&bodies)) else {
+                    return Ok(None);
+                };
+                let csv_filename = match resolved.format {
+                    Format::CSV => Some(resolved.csv_filename()),
+                    Format::JSON => None,
+                };
+                let bytes = to_bytes(q, resolved)?;
+                Ok(Some(permit.response(
+                    cache_params,
+                    bytes,
+                    move |h| match csv_filename {
+                        Some(filename) => {
+                            h.insert_content_disposition_attachment(&filename);
+                            h.insert_content_type_text_csv();
+                        }
+                        None => h.insert_content_type_application_json(),
+                    },
+                )))
+            },
+        )
         .await
         .map_err(Into::into)
 }
@@ -232,7 +242,7 @@ fn output_to_bytes(out: SeriesOutput) -> Bytes {
 async fn data_handler(
     headers: HeaderMap,
     Query(params): Query<SeriesSelection>,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
 ) -> Result<Response> {
     serve(state, headers, params, |q, r| {
         q.format(r).map(output_to_bytes)
@@ -243,7 +253,7 @@ async fn data_handler(
 async fn data_bulk_handler(
     headers: HeaderMap,
     Query(params): Query<SeriesSelection>,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
 ) -> Result<Response> {
     serve(state, headers, params, |q, r| {
         q.format_bulk(r).map(output_to_bytes)
@@ -254,7 +264,7 @@ async fn data_bulk_handler(
 async fn data_raw_handler(
     headers: HeaderMap,
     Query(params): Query<SeriesSelection>,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
 ) -> Result<Response> {
     serve(state, headers, params, |q, r| {
         q.format_raw(r).map(output_to_bytes)
@@ -271,7 +281,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/series",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     serve_catalog(state, headers)
                 },
                 |op| op
@@ -294,7 +304,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     _: Empty,
-                    State(state): State<AppState>
+                    RequestState(state): RequestState
                 | {
                     serve_count(state, headers)
                 },
@@ -314,7 +324,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     _: Empty,
-                    State(state): State<AppState>
+                    RequestState(state): RequestState
                 | {
                     serve_indexes(state, headers)
                 },
@@ -335,7 +345,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    State(state): State<AppState>,
+                    RequestState(state): RequestState,
                     Query(pagination): Query<Pagination>
                 | {
                     serve_list(state, headers, pagination).await
@@ -357,7 +367,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |
                     headers: HeaderMap,
-                    State(state): State<AppState>,
+                    RequestState(state): RequestState,
                     Query(query): Query<SearchQuery>
                 | {
                     serve_search(state, headers, query).await
@@ -381,7 +391,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
                 async |
                     headers: HeaderMap,
                     _: Empty,
-                    State(state): State<AppState>,
+                    RequestState(state): RequestState,
                     Path(path): Path<SeriesParam>
                 | -> Result<Response> {
                     serve_series_info(state, headers, path.series).await
@@ -404,7 +414,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             "/api/series/{series}/{index}",
             get_with(
                 async |headers: HeaderMap,
-                       state: State<AppState>,
+                       state: RequestState,
                        Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
@@ -436,7 +446,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             "/api/series/{series}/{index}/data",
             get_with(
                 async |headers: HeaderMap,
-                       state: State<AppState>,
+                       state: RequestState,
                        Path(path): Path<SeriesNameWithIndex>,
                        Query(range): Query<DataRangeFormat>|
                        -> Response {
@@ -471,7 +481,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap,
                        _: Empty,
-                       State(state): State<AppState>,
+                       RequestState(state): RequestState,
                        Path(path): Path<SeriesNameWithIndex>| {
                     serve_latest(state, headers, path.series, path.index).await
                 },
@@ -494,7 +504,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap,
                        _: Empty,
-                       State(state): State<AppState>,
+                       RequestState(state): RequestState,
                        Path(path): Path<SeriesNameWithIndex>| {
                     serve_len(state, headers, path.series, path.index).await
                 },
@@ -515,7 +525,7 @@ impl ApiSeriesRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap,
                        _: Empty,
-                       State(state): State<AppState>,
+                       RequestState(state): RequestState,
                        Path(path): Path<SeriesNameWithIndex>|
                        -> Result<Response> {
                     serve_version(state, headers, path.series, path.index).await

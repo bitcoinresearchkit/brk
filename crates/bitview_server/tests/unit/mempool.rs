@@ -193,7 +193,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                                 let response =
                                     exchange_with_etag(address, method, route, "*").await;
                                 assert!(
-                                    response.starts_with("HTTP/1.1 503"),
+                                    response.starts_with("HTTP/1.1 504"),
                                     "{route}: {response}"
                                 );
                                 assert!(!response.contains("\r\netag:"));
@@ -212,7 +212,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                             "{error}"
                         );
                         let response = exchange_with_etag(address, "GET", path, "*").await;
-                        assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+                        assert!(response.starts_with("HTTP/1.1 504"), "{response}");
                         spawn_blocking(move || {
                             let cycle = mempool.tick_with(|_| Default::default()).unwrap();
                             assert_eq!(

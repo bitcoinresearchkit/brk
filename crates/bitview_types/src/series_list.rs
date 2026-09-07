@@ -11,7 +11,7 @@ use super::SeriesName;
 ///
 /// Deserialization permits at most 32 normalized names and 2,048 decoded input
 /// string bytes. For arrays, the byte budget is shared by their string values.
-#[derive(Debug, Deref, JsonSchema)]
+#[derive(Clone, Debug, Deref, JsonSchema)]
 #[schemars(
     with = "String",
     example = &"date,price_close",

@@ -1,10 +1,8 @@
 //! Bounded submission admission before buffering the request body.
 
+use crate::request_state::RequestState;
 use aide::OperationInput;
-use axum::{
-    extract::{FromRequestParts, State},
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use bitcoin::Weight as BitcoinWeight;
 use tokio::sync::OwnedSemaphorePermit;
 
@@ -52,7 +50,7 @@ fn validate_hex(body: &str) -> Result<&str> {
 pub async fn serve(
     permit: BroadcastPermit,
     _: Empty,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
     body: String,
 ) -> Result<String> {
     let hex = validate_hex(&body)?;

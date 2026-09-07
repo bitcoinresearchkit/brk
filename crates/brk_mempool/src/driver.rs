@@ -106,9 +106,12 @@ impl Mempool {
         let Some(_cycle) = self.0.cycle.try_lock() else {
             return Err(Error::StateUpdating);
         };
+        // Fetch failures leave the previous publication intact. The applier
+        // closes publication before the first mutation, not before RPC work.
         let result = self.tick_once(resolver);
-        if result.is_err() {
-            self.0.state.write().published_tip = None;
+        #[cfg(feature = "tokio")]
+        if result.is_ok() {
+            self.0.changed.send_replace(());
         }
         result
     }

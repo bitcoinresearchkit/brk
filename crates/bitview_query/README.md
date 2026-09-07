@@ -59,12 +59,27 @@ let stats = query.addr(address)?;
 ```rust,ignore
 let async_query = AsyncQuery::build(&plugins, mempool);
 
-// Run blocking queries in thread pool
-let result = async_query.run(|q| q.block_by_height(height)).await;
+// Run a read, awaiting publication notifications when needed.
+let result = async_query.read(move |q| q.block_by_height(height)).await;
 
 // Access inner Query
 let height = async_query.inner().height();
 ```
+
+`with_deadline(Instant)` creates a cheap request-local query view sharing the
+same data. Publication and prefix-lock waits use its remaining budget, and
+expired blocking jobs return `ReadTimeout` before invoking their closure. The
+server supplies one HTTP deadline; standalone async reads have a four-second
+total budget. Synchronous reads retain a four-second per-wait limit.
+
+`read` and `read_with_admission` retry the query closure after a publication
+notification, releasing all guards and worker admission before waiting. Clone
+only request arguments into these closures; resolve snapshots inside each
+attempt. Do not capture guarded or previously resolved data. `run` executes once
+and remains appropriate for actions and already-prepared immutable work. Running
+work keeps its guards and admission until it finishes; cancellation does not
+make concurrent mutation safe. The optional `tokio` feature supplies publication
+notifications without adding an async runtime requirement to synchronous users.
 
 ## Confirmed transaction reads
 

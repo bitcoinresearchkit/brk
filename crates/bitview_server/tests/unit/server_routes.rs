@@ -16,8 +16,6 @@ use bitview_plugin::{ImportContext, Plugin};
 #[cfg(all(feature = "chain", feature = "urpd"))]
 use bitview_plugin_distribution::{AgeRangeUrpds, HasDistribution};
 #[cfg(feature = "chain")]
-use bitview_plugin_indexer::HasIndexer;
-#[cfg(feature = "chain")]
 use bitview_query::AsyncQuery;
 #[cfg(all(feature = "chain", feature = "series"))]
 use bitview_types::{Limit, Pagination, SearchQuery};
@@ -452,7 +450,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         etag
     );
 
-    // Mutable-source jobs retain admission while awaiting publication.
+    // Mutable-source reads release admission while awaiting publication.
     // Immutable prefix routes no longer wait on this gate.
     #[derive(Clone, Copy)]
     enum MutableBlockRead {
@@ -489,29 +487,22 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
             })
         };
         let request = spawn_request(state.clone());
-        timeout(Duration::from_secs(1), async {
-            while state.sync_query.available_permits() != 0 {
-                yield_now().await;
-            }
-        })
-        .await
-        .unwrap();
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert!(!request.is_finished());
+        assert_eq!(state.sync_query.available_permits(), 1);
         request.abort();
         assert!(matches!(request.await, Err(error) if error.is_cancelled()));
-        let retained = state.sync_query.available_permits() == 0;
+        let released = state.sync_query.available_permits() == 1;
         let mut following = spawn_request(state.clone());
         let queued = timeout(Duration::from_millis(50), &mut following)
             .await
             .is_err();
         gate.finish_update();
         assert!(
-            retained,
-            "cancelled block request released running-work admission"
+            released,
+            "cancelled publication wait retained worker admission"
         );
-        assert!(
-            queued,
-            "following block request bypassed running-work admission"
-        );
+        assert!(queued, "following block request bypassed publication");
         let response = timeout(Duration::from_secs(2), following)
             .await
             .unwrap()
@@ -783,7 +774,6 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
         let client = Client::new(&format!("http://{}", node.local_addr().unwrap()), Auth::None).unwrap();
         let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
         let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
-        let indexer_gate = plugins.indexer().gate().clone();
         #[cfg(feature = "urpd")]
         let states_path = plugins.distribution().states_path.clone();
         let query = AsyncQuery::build(&plugins, None);
@@ -856,7 +846,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 for method in ["GET", "HEAD"] {
                     for condition in ["*", "W/\"block-timestamp-v2-forged\""] {
                         let response = exchange_with_etag(address, method, "/api/v1/mining/blocks/timestamp/4294967295", condition).await;
-                        assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+                        assert!(response.starts_with("HTTP/1.1 504"), "{response}");
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                         assert!(!response.contains("\r\netag:"));
                     }
@@ -1096,7 +1086,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 }
                 for method in ["GET", "HEAD"] {
                     let response = exchange(address, method, "/health").await;
-                    assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+                    assert!(response.starts_with("HTTP/1.1 504"), "{response}");
                     assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     assert!(response.contains("\r\ncdn-cache-control: no-store\r\n"));
                     if method == "HEAD" { assert!(response.ends_with("\r\n\r\n")); }
@@ -1104,7 +1094,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 let response = exchange(address, "GET", "/version").await;
                 assert!(response.starts_with("HTTP/1.1 304"), "{response}");
                 assert!(response.ends_with("\r\n\r\n"));
-                for status in [503, 500] {
+                for status in [504, 500] {
                     let response = exchange(address, "GET", "/api/server/sync").await;
                     assert!(response.starts_with(&format!("HTTP/1.1 {status}")), "{response}");
                     assert!(response.contains("content-type: application/problem+json\r\n"));
@@ -1116,36 +1106,15 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 observed.recv().await.unwrap();
                 assert!(observed.try_recv().is_err());
 
-                indexer_gate.begin_update();
-                let mut first = tokio::spawn(exchange(address, "GET", "/api/server/sync"));
-                observed.recv().await.unwrap();
-                let mut second = tokio::spawn(exchange(address, "GET", "/api/server/sync"));
-                assert!(timeout(Duration::from_millis(50), &mut first).await.is_err());
-                assert!(timeout(Duration::from_millis(50), &mut second).await.is_err());
-                assert!(observed.try_recv().is_err(), "queued request must not issue another RPC");
-                indexer_gate.finish_update();
-                assert!(first.await.unwrap().starts_with("HTTP/1.1 503"));
-                assert!(second.await.unwrap().starts_with("HTTP/1.1 503"));
-                observed.recv().await.unwrap();
-                assert!(observed.try_recv().is_err());
-
-                indexer_gate.begin_update();
-                let mut disconnected = tokio::spawn(exchange(address, "GET", "/api/server/sync"));
-                observed.recv().await.unwrap();
-                assert!(timeout(Duration::from_millis(50), &mut disconnected).await.is_err());
-                // Dropping the client socket must not release admission while
-                // the already-dispatched local query is waiting for publication.
-                disconnected.abort();
-                assert!(disconnected.await.unwrap_err().is_cancelled());
-                let mut following = tokio::spawn(exchange(address, "GET", "/api/server/sync"));
-                assert!(timeout(Duration::from_millis(100), &mut following).await.is_err());
-                assert_eq!(admission.available_permits(), 0);
-                assert!(observed.try_recv().is_err(), "disconnect must not admit overlapping sync work");
-                indexer_gate.finish_update();
-                assert!(following.await.unwrap().starts_with("HTTP/1.1 503"));
-                observed.recv().await.unwrap();
-                assert_eq!(admission.available_permits(), 1);
-                assert!(observed.try_recv().is_err());
+                // An empty index waits locally under the request deadline;
+                // it must not repeatedly query the node during that wait.
+                for _ in 0..4 {
+                    let response = exchange(address, "GET", "/api/server/sync").await;
+                    assert!(response.starts_with("HTTP/1.1 504"), "{response}");
+                    observed.recv().await.unwrap();
+                    assert!(observed.try_recv().is_err());
+                    assert_eq!(admission.available_permits(), 1);
+                }
 
                 let response = exchange(address, "GET", "/api/server/sync").await;
                 assert!(response.starts_with("HTTP/1.1 504"), "{response}");
@@ -1155,7 +1124,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 assert!(!response.contains("\r\netag:"));
                 observed.recv().await.unwrap();
                 let response = exchange(address, "GET", "/api/server/sync").await;
-                assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+                assert!(response.starts_with("HTTP/1.1 504"), "{response}");
                 observed.recv().await.unwrap();
                 assert!(observed.try_recv().is_err());
                 mock.await.unwrap();

@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 
-use crate::error::Error;
+use crate::{error::Error, error_code::ErrorCode};
 
 /// Maximum upstream error body buffered when constructing a JSON error.
 const MAX_ERROR_BODY_BYTES: usize = 4096;
@@ -42,7 +42,7 @@ pub(crate) async fn respond(request: Request<Body>, next: Next) -> Response<Body
     let msg = String::from_utf8_lossy(&bytes);
     let (code, msg) = match parts.status {
         StatusCode::NOT_FOUND => (
-            "not_found",
+            ErrorCode::NotFound,
             if msg.is_empty() {
                 "Not found".into()
             } else {
@@ -50,16 +50,16 @@ pub(crate) async fn respond(request: Request<Body>, next: Next) -> Response<Body
             },
         ),
         StatusCode::METHOD_NOT_ALLOWED => (
-            "method_not_allowed",
+            ErrorCode::MethodNotAllowed,
             "Method not allowed for this endpoint".into(),
         ),
         StatusCode::GATEWAY_TIMEOUT if action => (
-            "timeout",
+            ErrorCode::Timeout,
             "Request timed out; submission outcome may be unknown".into(),
         ),
-        StatusCode::GATEWAY_TIMEOUT => ("timeout", "Request timed out".into()),
+        StatusCode::GATEWAY_TIMEOUT => (ErrorCode::Timeout, "Request timed out".into()),
         s if s.is_client_error() => (
-            "bad_request",
+            ErrorCode::BadRequest,
             if msg.is_empty() {
                 "Bad request".into()
             } else {
@@ -67,7 +67,7 @@ pub(crate) async fn respond(request: Request<Body>, next: Next) -> Response<Body
             },
         ),
         _ => (
-            "internal_error",
+            ErrorCode::InternalError,
             if msg.is_empty() {
                 "Internal server error".into()
             } else {

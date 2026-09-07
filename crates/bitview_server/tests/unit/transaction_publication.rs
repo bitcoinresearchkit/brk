@@ -51,9 +51,9 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
             query.run(move |q| q.merkle_proof_resolved(confirmed)),
             query.run(move |q| q.confirmed_cpfp_resolved(confirmed)),
         );
-        assert!(matches!(resolve, Err(Error::StateUpdating)));
-        assert!(matches!(proof, Err(Error::StateUpdating)));
-        assert!(matches!(cpfp, Err(Error::StateUpdating)));
+        assert!(matches!(resolve, Err(Error::ReadTimeout)));
+        assert!(matches!(proof, Err(Error::ReadTimeout)));
+        assert!(matches!(cpfp, Err(Error::ReadTimeout)));
         gate.finish_update();
 
         // Multi-plugin views must also wait for the non-indexer participants.
@@ -63,7 +63,7 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
             query
                 .run(move |q| q.confirmed_cpfp_resolved(confirmed))
                 .await,
-            Err(Error::StateUpdating),
+            Err(Error::ReadTimeout),
         ));
         gate.finish_update();
         query.sync(|q| q.confirmed_cpfp_resolved(confirmed).unwrap());
@@ -142,7 +142,7 @@ impl TransactionPublication {
                     let tag = tag.to_owned();
                     requests.spawn(async move {
                         let response = exchange_with_etag(address, method, &path, &tag).await;
-                        assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
+                        assert!(response.starts_with("HTTP/1.1 504"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     });

@@ -11,7 +11,7 @@ use serde_json::to_vec;
 use crate::{
     cache::{CacheParams, ErrorCachePolicy},
     error_body::ErrorBody,
-    read_availability::ReadAvailability,
+    error_code::ErrorCode,
 };
 
 const DOC_URL: &str = "/api";
@@ -24,46 +24,51 @@ fn error_type(status: StatusCode) -> &'static str {
         StatusCode::FORBIDDEN => "forbidden",
         StatusCode::NOT_FOUND => "not_found",
         StatusCode::SERVICE_UNAVAILABLE => "unavailable",
+        StatusCode::GATEWAY_TIMEOUT => "timeout",
         _ => "internal",
     }
 }
 
-fn error_details(error: &BrkError) -> (StatusCode, &'static str) {
+fn error_details(error: &BrkError) -> (StatusCode, ErrorCode) {
     match error {
-        BrkError::InvalidAddr => (StatusCode::BAD_REQUEST, "invalid_addr"),
-        BrkError::InvalidTxid => (StatusCode::BAD_REQUEST, "invalid_txid"),
-        BrkError::InvalidNetwork => (StatusCode::BAD_REQUEST, "invalid_network"),
-        BrkError::UnsupportedType(_) => (StatusCode::BAD_REQUEST, "unsupported_type"),
-        BrkError::Parse(_) => (StatusCode::BAD_REQUEST, "parse_error"),
-        BrkError::NoSeries => (StatusCode::BAD_REQUEST, "no_series"),
+        BrkError::InvalidAddr => (StatusCode::BAD_REQUEST, ErrorCode::InvalidAddr),
+        BrkError::InvalidTxid => (StatusCode::BAD_REQUEST, ErrorCode::InvalidTxid),
+        BrkError::InvalidNetwork => (StatusCode::BAD_REQUEST, ErrorCode::InvalidNetwork),
+        BrkError::UnsupportedType(_) => (StatusCode::BAD_REQUEST, ErrorCode::UnsupportedType),
+        BrkError::Parse(_) => (StatusCode::BAD_REQUEST, ErrorCode::ParseError),
+        BrkError::NoSeries => (StatusCode::BAD_REQUEST, ErrorCode::NoSeries),
         BrkError::SeriesUnsupportedIndex { .. } => {
-            (StatusCode::BAD_REQUEST, "series_unsupported_index")
+            (StatusCode::BAD_REQUEST, ErrorCode::SeriesUnsupportedIndex)
         }
-        BrkError::WeightExceeded { .. } => (StatusCode::BAD_REQUEST, "weight_exceeded"),
-        BrkError::TooManyUtxos => (StatusCode::BAD_REQUEST, "too_many_utxos"),
-        BrkError::UnknownAddr => (StatusCode::NOT_FOUND, "unknown_addr"),
-        BrkError::UnknownTxid => (StatusCode::NOT_FOUND, "unknown_txid"),
-        BrkError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found"),
-        BrkError::OutOfRange(_) => (StatusCode::NOT_FOUND, "out_of_range"),
-        BrkError::UnindexableDate => (StatusCode::NOT_FOUND, "unindexable_date"),
-        BrkError::NoData => (StatusCode::NOT_FOUND, "no_data"),
-        BrkError::SeriesNotFound(_) => (StatusCode::NOT_FOUND, "series_not_found"),
-        BrkError::MempoolNotAvailable => (StatusCode::SERVICE_UNAVAILABLE, "mempool_not_available"),
-        BrkError::StateUpdating => (StatusCode::SERVICE_UNAVAILABLE, "state_updating"),
-        BrkError::AuthFailed => (StatusCode::FORBIDDEN, "auth_failed"),
-        _ => (StatusCode::INTERNAL_SERVER_ERROR, "internal_error"),
+        BrkError::WeightExceeded { .. } => (StatusCode::BAD_REQUEST, ErrorCode::WeightExceeded),
+        BrkError::TooManyUtxos => (StatusCode::BAD_REQUEST, ErrorCode::TooManyUtxos),
+        BrkError::UnknownAddr => (StatusCode::NOT_FOUND, ErrorCode::UnknownAddr),
+        BrkError::UnknownTxid => (StatusCode::NOT_FOUND, ErrorCode::UnknownTxid),
+        BrkError::NotFound(_) => (StatusCode::NOT_FOUND, ErrorCode::NotFound),
+        BrkError::OutOfRange(_) => (StatusCode::NOT_FOUND, ErrorCode::OutOfRange),
+        BrkError::UnindexableDate => (StatusCode::NOT_FOUND, ErrorCode::UnindexableDate),
+        BrkError::NoData => (StatusCode::NOT_FOUND, ErrorCode::NoData),
+        BrkError::SeriesNotFound(_) => (StatusCode::NOT_FOUND, ErrorCode::SeriesNotFound),
+        BrkError::MempoolNotAvailable => (
+            StatusCode::SERVICE_UNAVAILABLE,
+            ErrorCode::MempoolNotAvailable,
+        ),
+        BrkError::ReadTimeout => (StatusCode::GATEWAY_TIMEOUT, ErrorCode::Timeout),
+        BrkError::StateUpdating => (StatusCode::SERVICE_UNAVAILABLE, ErrorCode::StateUpdating),
+        BrkError::AuthFailed => (StatusCode::FORBIDDEN, ErrorCode::AuthFailed),
+        _ => (StatusCode::INTERNAL_SERVER_ERROR, ErrorCode::InternalError),
     }
 }
 
 /// Server error type that maps to HTTP status codes and structured JSON.
 pub struct Error {
     status: StatusCode,
-    code: &'static str,
+    code: ErrorCode,
     message: String,
 }
 
 impl Error {
-    pub fn new(status: StatusCode, code: &'static str, msg: impl Into<String>) -> Self {
+    pub fn new(status: StatusCode, code: ErrorCode, msg: impl Into<String>) -> Self {
         Self {
             status,
             code,
@@ -71,26 +76,44 @@ impl Error {
         }
     }
 
+    pub fn timeout(action: bool) -> Self {
+        Self::new(
+            StatusCode::GATEWAY_TIMEOUT,
+            ErrorCode::Timeout,
+            if action {
+                "Request timed out; submission outcome may be unknown"
+            } else {
+                "Request timed out waiting for available data or capacity"
+            },
+        )
+    }
+
     pub fn bad_request(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::BAD_REQUEST, "bad_request", msg)
+        Self::new(StatusCode::BAD_REQUEST, ErrorCode::BadRequest, msg)
     }
 
     pub fn not_found(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::NOT_FOUND, "not_found", msg)
+        Self::new(StatusCode::NOT_FOUND, ErrorCode::NotFound, msg)
     }
 
     pub fn internal(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal_error", msg)
+        Self::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ErrorCode::InternalError,
+            msg,
+        )
     }
 
-    #[cfg(any(feature = "chain", feature = "series", feature = "urpd", test))]
+    #[cfg(any(feature = "chain", test))]
     pub fn overloaded(msg: impl Into<String>) -> Self {
-        Self::new(StatusCode::SERVICE_UNAVAILABLE, "overloaded", msg)
+        Self::new(StatusCode::SERVICE_UNAVAILABLE, ErrorCode::Overloaded, msg)
     }
 
     fn cache_policy(&self) -> ErrorCachePolicy {
         match self.code {
-            "invalid_addr" | "invalid_network" | "invalid_txid" => ErrorCachePolicy::Immutable,
+            ErrorCode::InvalidAddr | ErrorCode::InvalidNetwork | ErrorCode::InvalidTxid => {
+                ErrorCachePolicy::Immutable
+            }
             _ => match self.status {
                 StatusCode::BAD_REQUEST | StatusCode::NOT_FOUND => ErrorCachePolicy::Revalidate,
                 _ => ErrorCachePolicy::NoStore,
@@ -119,7 +142,7 @@ impl IntoResponse for Error {
         let policy = self.cache_policy();
         let body = to_vec(&ErrorBody::new(
             error_type(self.status),
-            self.code,
+            self.code.as_str(),
             self.message,
             DOC_URL,
         ))
@@ -130,16 +153,10 @@ impl IntoResponse for Error {
             body,
         )
             .into_response();
-        let availability = match self.code {
-            "state_updating" => Some(ReadAvailability::Publication),
-            "overloaded" => Some(ReadAvailability::Capacity),
-            _ => None,
-        };
-        if let Some(availability) = availability {
+        if self.code.is_transient() {
             response
                 .headers_mut()
                 .insert(header::RETRY_AFTER, HeaderValue::from_static("1"));
-            response.extensions_mut().insert(availability);
         }
         CacheParams::apply_error_cache_control(response.headers_mut(), policy);
         response

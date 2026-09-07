@@ -8,7 +8,11 @@ homepage.workspace = true
 repository.workspace = true
 exclude = ["examples/"]
 
+[features]
+tokio = ["dep:tokio"]
+
 [dependencies]
+tokio = { workspace = true, optional = true, features = ["sync"] }
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 brk_oracle = { workspace = true }

@@ -1,10 +1,6 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{
-    body::Bytes,
-    extract::{Path, State},
-    http::HeaderMap,
-    response::Response,
-};
+use axum::{body::Bytes, extract::Path, http::HeaderMap, response::Response};
 use bitcoin::hashes::{Hash, HashEngine, sha256};
 use brk_types::{
     BlockFeeRatesEntry, BlockFeesEntry, BlockHash, BlockInfoV1, BlockRewardsEntry,
@@ -17,7 +13,7 @@ use super::blocks;
 use crate::{
     AppState, CacheParams, CacheStrategy, CdnCacheMode,
     error::Result,
-    extended::{HeaderMapExtended, TransformResponseExtended},
+    extended::TransformResponseExtended,
     params::{BlockCountParam, Empty, PoolSlugAndHeightParam, PoolSlugParam, TimePeriodParam},
 };
 
@@ -50,19 +46,19 @@ async fn serve_pool_blocks(
     slug: PoolSlug,
     before_height: Option<Height>,
 ) -> Result<Response> {
-    let blocks = state
-        .run_admitted(move |q| q.resolve_pool_blocks(slug, before_height, POOL_BLOCKS_LIMIT))
-        .await?;
-    let params = pool_blocks_params(blocks.activity_anchor(), blocks.heights(), blocks.prices());
-    Ok(AppState::respond_with_future(&headers, params, async {
-        let bytes = state
-            .run_admitted(move |query| {
-                Ok(Bytes::from(to_vec(&query.pool_blocks_resolved(blocks)?)?))
-            })
-            .await?;
-        Ok((bytes, HeaderMap::insert_content_type_application_json))
-    })
-    .await)
+    Ok(state
+        .respond_read(
+            headers,
+            "application/json",
+            move |q| {
+                let blocks = q.resolve_pool_blocks(slug, before_height, POOL_BLOCKS_LIMIT)?;
+                let params =
+                    pool_blocks_params(blocks.activity_anchor(), blocks.heights(), blocks.prices());
+                Ok((blocks, params))
+            },
+            |q, blocks| Ok(Bytes::from(to_vec(&q.pool_blocks_resolved(blocks)?)?)),
+        )
+        .await)
 }
 
 pub trait MiningRoutes {
@@ -78,7 +74,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         self.api_route(
             "/api/v1/mining/pools",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state.mining_pools_body.respond(&headers)
                 },
                 |op| {
@@ -94,7 +90,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/pools/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = path.time_period;
                     state.respond_json_content(&headers, move |q| q.mining_pools(time_period)).await
                 },
@@ -113,7 +109,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/pool/{slug}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, RequestState(state): RequestState| {
                     state.respond_json_content(&headers, move |q| q.pool_detail(path.slug)).await
                 },
                 |op| {
@@ -131,7 +127,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/hashrate/pools",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state.respond_json_content(&headers, |q| q.pools_hashrate(None)).await
                 },
                 |op| {
@@ -148,7 +144,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/hashrate/pools/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.pools_hashrate(time_period)).await
                 },
@@ -167,7 +163,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/pool/{slug}/hashrate",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, RequestState(state): RequestState| {
                     let slug = path.slug;
                     state.respond_json_content(&headers, move |q| q.pool_hashrate(slug)).await
                 },
@@ -186,7 +182,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/pool/{slug}/blocks",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, State(state): State<AppState>| -> Result<Response> {
+                async |headers: HeaderMap, Path(path): Path<PoolSlugParam>, _: Empty, RequestState(state): RequestState| -> Result<Response> {
                     serve_pool_blocks(state, headers, path.slug, None).await
                 },
                 |op| {
@@ -204,7 +200,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/pool/{slug}/blocks/{height}",
             get_with(
-                async |headers: HeaderMap, Path(PoolSlugAndHeightParam {slug, height}): Path<PoolSlugAndHeightParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(PoolSlugAndHeightParam {slug, height}): Path<PoolSlugAndHeightParam>, _: Empty, RequestState(state): RequestState| {
                     serve_pool_blocks(state, headers, slug, Some(height)).await
                 },
                 |op| {
@@ -222,7 +218,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/hashrate",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state.respond_json_content(&headers, |q| q.hashrate(None, HASHRATE_MAX_POINTS)).await
                 },
                 |op| {
@@ -239,7 +235,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/hashrate/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.hashrate(time_period, HASHRATE_MAX_POINTS)).await
                 },
@@ -258,7 +254,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/difficulty-adjustments",
             get_with(
-                async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                     state.respond_json_content(&headers, |q| q.difficulty_adjustments(None)).await
                 },
                 |op| {
@@ -275,7 +271,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/difficulty-adjustments/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = Some(path.time_period);
                     state.respond_json_content(&headers, move |q| q.difficulty_adjustments(time_period)).await
                 },
@@ -294,7 +290,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/reward-stats/{block_count}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<BlockCountParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<BlockCountParam>, _: Empty, RequestState(state): RequestState| {
                     state.respond_json_content(&headers, move |q| q.reward_stats(path.block_count)).await
                 },
                 |op| {
@@ -312,7 +308,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/fees/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = path.time_period;
                     state.respond_json_content(&headers, move |q| q.block_fees(time_period)).await
                 },
@@ -331,7 +327,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/rewards/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = path.time_period;
                     state.respond_json_content(&headers, move |q| q.block_rewards(time_period)).await
                 },
@@ -350,7 +346,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/fee-rates/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = path.time_period;
                     state.respond_json_content(&headers, move |q| q.block_fee_rates(time_period)).await
                 },
@@ -369,7 +365,7 @@ impl MiningRoutes for ApiRouter<AppState> {
         .api_route(
             "/api/v1/mining/blocks/sizes-weights/{time_period}",
             get_with(
-                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, State(state): State<AppState>| {
+                async |headers: HeaderMap, Path(path): Path<TimePeriodParam>, _: Empty, RequestState(state): RequestState| {
                     let time_period = path.time_period;
                     state.respond_json_content(&headers, move |q| q.block_sizes_weights(time_period)).await
                 },

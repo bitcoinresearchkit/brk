@@ -3,7 +3,11 @@
 #![allow(clippy::type_complexity)]
 
 #[cfg(feature = "indexer")]
-use std::{path::Path, sync::Arc, time::Duration};
+use std::{
+    path::Path,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 #[cfg(feature = "indexer")]
 use bitview_plugin::{Plugin, PluginReadGuard};
@@ -62,6 +66,8 @@ mod output;
 mod query_plugin_set;
 #[cfg(feature = "indexer")]
 mod query_plugins;
+#[cfg(feature = "tokio")]
+mod read_attempt;
 mod representation_id;
 mod series_output;
 mod vecs;
@@ -97,7 +103,11 @@ pub use vecs::{ResolvedSeriesInfo, Vecs};
 
 #[cfg(feature = "indexer")]
 #[derive(Clone)]
-pub struct Query(Arc<QueryInner<'static>>);
+pub struct Query(
+    Arc<QueryInner<'static>>,
+    Option<Instant>,
+    #[cfg(feature = "tokio")] Option<Arc<read_attempt::ReadAttempt>>,
+);
 #[cfg(feature = "indexer")]
 struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
@@ -111,11 +121,57 @@ struct QueryInner<'a> {
 impl Query {
     const UPDATE_WAIT_TIMEOUT: Duration = Duration::from_secs(4);
 
+    /// A cheap request-local view; shared data and publication guards are unchanged.
+    pub fn with_deadline(&self, deadline: Instant) -> Self {
+        Self(
+            Arc::clone(&self.0),
+            Some(deadline),
+            #[cfg(feature = "tokio")]
+            None,
+        )
+    }
+
+    pub fn check_deadline(&self) -> Result<()> {
+        if self.1.is_some_and(|deadline| Instant::now() >= deadline) {
+            return Err(Error::ReadTimeout);
+        }
+        Ok(())
+    }
+
+    fn read_timeout(&self) -> Result<Duration> {
+        self.check_deadline()?;
+        Ok(self.1.map_or(Self::UPDATE_WAIT_TIMEOUT, |deadline| {
+            deadline.saturating_duration_since(Instant::now())
+        }))
+    }
+
     fn read_plugin(&self, plugin: &impl Plugin) -> Result<PluginReadGuard> {
+        #[cfg(feature = "tokio")]
+        if let Some(attempt) = &self.2 {
+            let changes = plugin.gate().changes();
+            return plugin
+                .gate()
+                .try_read()
+                .ok_or_else(|| attempt.waiting_on(changes));
+        }
         plugin
             .gate()
-            .read_for(Self::UPDATE_WAIT_TIMEOUT)
-            .ok_or(Error::StateUpdating)
+            .read_for(self.read_timeout()?)
+            .ok_or(Error::ReadTimeout)
+    }
+
+    fn pin_safe_lengths(&self) -> Result<bitview_plugin_indexer::SafeLengths> {
+        #[cfg(feature = "tokio")]
+        if let Some(attempt) = &self.2 {
+            let changes = self.indexer().prefix_changes();
+            return self
+                .indexer()
+                .try_pin_safe_lengths()
+                .ok_or_else(|| attempt.waiting_on(changes));
+        }
+        self.indexer()
+            .pin_safe_lengths_for(self.read_timeout()?)
+            .ok_or(Error::ReadTimeout)
     }
 
     #[cfg(feature = "chain")]
@@ -125,7 +181,23 @@ impl Query {
 
     #[cfg(feature = "mappings")]
     fn read_plugins(&self, plugins: Vec<&dyn Plugin>) -> Result<PluginReadGuard> {
-        PluginReadGuard::acquire_for(plugins, Self::UPDATE_WAIT_TIMEOUT).ok_or(Error::StateUpdating)
+        #[cfg(feature = "tokio")]
+        if let Some(attempt) = &self.2 {
+            loop {
+                self.check_deadline()?;
+                match PluginReadGuard::try_acquire(&plugins) {
+                    Ok(guards) => return Ok(guards),
+                    Err(blocked) => {
+                        let changes = blocked.gate().changes();
+                        if blocked.gate().try_read().is_some() {
+                            continue;
+                        }
+                        return Err(attempt.waiting_on(changes));
+                    }
+                }
+            }
+        }
+        PluginReadGuard::acquire_for(plugins, self.read_timeout()?).ok_or(Error::ReadTimeout)
     }
 
     /// Builds the process-lifetime read-only query view.
@@ -143,13 +215,18 @@ impl Query {
         let vecs = Box::leak(Box::new(Vecs::build(plugin_set)));
         let plugins = QueryPlugins::new(plugin_set);
 
-        Self(Arc::new(QueryInner {
-            vecs,
-            plugins,
-            mempool,
-            #[cfg(feature = "price")]
-            live_oracle: Default::default(),
-        }))
+        Self(
+            Arc::new(QueryInner {
+                vecs,
+                plugins,
+                mempool,
+                #[cfg(feature = "price")]
+                live_oracle: Default::default(),
+            }),
+            None,
+            #[cfg(feature = "tokio")]
+            None,
+        )
     }
 
     /// Pipeline-safe ceiling: the highest height for which the complete
@@ -253,11 +330,8 @@ impl Query {
     }
 
     fn sync_status_from(&self, tip_height: Option<Height>) -> Result<SyncStatus> {
-        let guard = self.read_plugin(self.indexer())?;
-        let indexed_height = self
-            .safe_lengths()
-            .last_height()
-            .ok_or(Error::StateUpdating)?;
+        let guard = self.pin_safe_lengths()?;
+        let indexed_height = guard.lengths().last_height().ok_or(Error::StateUpdating)?;
         let tip_height = tip_height.unwrap_or(indexed_height);
         let blocks_behind = Height::from(tip_height.saturating_sub(*indexed_height));
         let last_indexed_at_unix = self

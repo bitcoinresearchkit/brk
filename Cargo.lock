@@ -573,6 +573,7 @@ dependencies = [
  "brk_types",
  "parking_lot",
  "tempfile",
+ "tokio",
  "vecdb",
 ]
 
@@ -739,6 +740,7 @@ dependencies = [
  "schemars",
  "serde",
  "tempfile",
+ "tokio",
  "tracing",
  "vecdb",
 ]
@@ -1399,6 +1401,7 @@ dependencies = [
  "rustc-hash",
  "serde_json",
  "smallvec",
+ "tokio",
  "tracing",
 ]
 

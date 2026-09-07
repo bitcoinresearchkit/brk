@@ -15,6 +15,10 @@ impl SafeLengths {
 }
 
 impl State {
+    pub fn pin_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
+        self.0.try_read_arc_for(timeout).map(SafeLengths)
+    }
+
     pub fn pin(&self) -> SafeLengths {
         SafeLengths(self.0.read_arc())
     }

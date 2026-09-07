@@ -14,6 +14,8 @@ impl Mempool {
             rebuilder: Rebuilder::default(),
             started: AtomicBool::new(false),
             cycle: Mutex::new(()),
+            #[cfg(feature = "tokio")]
+            changed: tokio::sync::watch::channel(()).0,
         }))
     }
 

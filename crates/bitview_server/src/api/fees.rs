@@ -1,5 +1,6 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
-use axum::{extract::State, http::HeaderMap, response::Response};
+use axum::{http::HeaderMap, response::Response};
 use brk_types::{MempoolBlock, RecommendedFees};
 
 use crate::{AppState, error::Result, extended::TransformResponseExtended, params::Empty};
@@ -7,9 +8,9 @@ use crate::{AppState, error::Result, extended::TransformResponseExtended, params
 async fn serve_recommended_fees(
     headers: HeaderMap,
     _: Empty,
-    State(state): State<AppState>,
+    RequestState(state): RequestState,
 ) -> Result<Response> {
-    let fees = state.sync(|q| q.recommended_fees())?;
+    let fees = state.read(|q| q.recommended_fees()).await?;
     Ok(state.respond_json_content_value(&headers, fees))
 }
 
@@ -24,9 +25,9 @@ impl FeesRoutes for ApiRouter<AppState> {
             get_with(
                 async |headers: HeaderMap,
                        _: Empty,
-                       State(state): State<AppState>|
+                       RequestState(state): RequestState|
                        -> Result<Response> {
-                    let blocks = state.sync(|q| q.mempool_blocks())?;
+                    let blocks = state.read(|q| q.mempool_blocks()).await?;
                     Ok(state.respond_json_content_value(&headers, blocks))
                 },
                 |op| {

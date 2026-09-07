@@ -1,9 +1,10 @@
+use crate::request_state::RequestState;
 use aide::axum::{ApiRouter, routing::get_with};
 use axum::{
     body::Bytes,
-    extract::{Path, State},
+    extract::Path,
     http::{HeaderMap, HeaderValue, Method, header},
-    response::{IntoResponse, Response},
+    response::Response,
 };
 use bitcoin::hashes::{Hash, HashEngine, sha256};
 use bitview_query::{Query, ResolvedBlocks, ResolvedBlocksV1};
@@ -117,7 +118,7 @@ fn block_json_response(params: CacheParams, value: &impl Serialize) -> QueryResu
 
 impl AppState {
     async fn respond_block_tip(&self, headers: HeaderMap, hash: bool) -> Result<Response, Error> {
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let snapshot = q.resolve_blocks(None, 1)?;
             let value = if hash {
                 snapshot
@@ -153,40 +154,52 @@ impl AppState {
         hash: BlockHash,
         method: Method,
     ) -> Result<Response, Error> {
+        if let Some(height) = block_height_hint(&headers, RAW_SCHEMA)
+            && let Some(snapshot) =
+                self.preflight(|q| q.try_resolve_block_snapshot(&hash, height))?
+        {
+            let params = block_params(&snapshot, RAW_SCHEMA)?;
+            if params.matches_etag(&headers) {
+                return Ok(ResponseExtended::new_not_modified(&params));
+            }
+        }
         let budget = self.raw_block_bodies.clone();
-        self.respond_exact_block(
-            headers,
-            hash,
-            RAW_SCHEMA,
-            None,
-            move |q, snapshot, params| {
-                let content_headers = |headers: &mut HeaderMap| {
-                    headers.insert(
-                        header::CONTENT_TYPE,
-                        HeaderValue::from_static("application/octet-stream"),
-                    );
-                };
-                if method == Method::HEAD {
-                    let length = snapshot.anchor_raw_size(q)?;
-                    return Ok(AppState::assemble_response(
-                        params,
-                        Bytes::new(),
-                        |headers| {
-                            content_headers(headers);
-                            headers.insert(header::CONTENT_LENGTH, length.into());
-                        },
-                    ));
-                }
-                let Some(permit) = RawBodyPermit::try_acquire(&budget) else {
-                    return Ok(
-                        Error::overloaded("Raw block response capacity exhausted").into_response()
-                    );
-                };
-                let bytes = Bytes::from(snapshot.anchor_raw(q)?);
-                Ok(permit.response(params, bytes, content_headers))
-            },
-        )
-        .await
+        Ok(self
+            .read_body(
+                &self.sync_query,
+                &self.raw_block_bodies,
+                move |q, permit| {
+                    let snapshot = q.resolve_block_snapshot(&hash)?;
+                    let params = block_params(&snapshot, RAW_SCHEMA)?;
+                    if params.matches_etag(&headers) {
+                        return Ok(Some(ResponseExtended::new_not_modified(&params)));
+                    }
+                    let content_headers = |headers: &mut HeaderMap| {
+                        headers.insert(
+                            header::CONTENT_TYPE,
+                            HeaderValue::from_static("application/octet-stream"),
+                        );
+                    };
+                    if method == Method::HEAD {
+                        let length = snapshot.anchor_raw_size(q)?;
+                        return Ok(Some(AppState::assemble_response(
+                            params,
+                            Bytes::new(),
+                            |headers| {
+                                content_headers(headers);
+                                headers.insert(header::CONTENT_LENGTH, length.into());
+                            },
+                        )));
+                    }
+                    let Some(permit) = permit.or_else(|| RawBodyPermit::try_acquire(&budget))
+                    else {
+                        return Ok(None);
+                    };
+                    let bytes = Bytes::from(snapshot.anchor_raw(q)?);
+                    Ok(Some(permit.response(params, bytes, content_headers)))
+                },
+            )
+            .await?)
     }
 
     /// Exact former responder for worker-path comparisons; not in release builds.
@@ -196,7 +209,7 @@ impl AppState {
         headers: HeaderMap,
         timestamp: Timestamp,
     ) -> Result<Response, Error> {
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let block = q.block_by_timestamp(timestamp)?;
             let params =
                 CacheParams::revalidate(format!("block-timestamp-v2-{}", block.hash).into());
@@ -213,7 +226,7 @@ impl AppState {
         headers: HeaderMap,
         timestamp: Timestamp,
     ) -> Result<Response, Error> {
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let block = q.resolve_block_by_timestamp(timestamp)?;
             let params =
                 CacheParams::revalidate(format!("block-timestamp-v2-{}", block.hash()).into());
@@ -246,10 +259,10 @@ impl AppState {
                 },
             ))
         };
-        if let Some(hash) = self.sync(|q| q.try_resolve_block_hash(height))? {
+        if let Some(hash) = self.preflight(|q| q.try_resolve_block_hash(height))? {
             return Ok(respond(hash)?);
         }
-        self.run_block_response(move |q| respond(q.resolve_block_hash(height)?))
+        self.read_block_response(move |q| respond(q.resolve_block_hash(height)?))
             .await
     }
 
@@ -297,11 +310,13 @@ impl AppState {
         schema: &'static str,
         tx_index: Option<BlockTxIndex>,
         build: impl FnOnce(&Query, ResolvedBlocks, CacheParams) -> QueryResult<Response>
+        + Clone
         + Send
         + 'static,
     ) -> Result<Response, Error> {
         if let Some(height) = block_height_hint(&headers, schema)
-            && let Some(snapshot) = self.sync(|q| q.try_resolve_block_snapshot(&hash, height))?
+            && let Some(snapshot) =
+                self.preflight(|q| q.try_resolve_block_snapshot(&hash, height))?
         {
             if let Some(index) = tx_index {
                 self.sync(|q| snapshot.validate_tx_index(q, index))?;
@@ -312,7 +327,7 @@ impl AppState {
             }
         }
 
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let snapshot = q.resolve_block_snapshot(&hash)?;
             if let Some(index) = tx_index {
                 snapshot.validate_tx_index(q, index)?;
@@ -332,7 +347,7 @@ impl AppState {
         hash: BlockHash,
     ) -> Result<Response, Error> {
         if let Some(height) = block_height_hint(&headers, V1_BLOCK_SCHEMA)
-            && let Some(snapshot) = self.sync(|q| q.try_resolve_block_v1(&hash, height))?
+            && let Some(snapshot) = self.preflight(|q| q.try_resolve_block_v1(&hash, height))?
         {
             let params = block_v1_params(&snapshot)?;
             if params.matches_etag(&headers) {
@@ -340,7 +355,7 @@ impl AppState {
             }
         }
 
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let snapshot = q.resolve_block_v1(&hash)?;
             let params = block_v1_params(&snapshot)?;
             if params.matches_etag(&headers) {
@@ -355,13 +370,14 @@ impl AppState {
         .await
     }
 
-    /// The job owns admission even if its request is cancelled. Callers must
-    /// resolve their publication snapshot inside `build`, never before queuing.
-    async fn run_block_response(
+    /// Retry only the read, releasing guards and worker admission while waiting
+    /// for publication. Resolve snapshots inside `build` on every attempt.
+    /// Actual running work retains admission even after request cancellation.
+    async fn read_block_response(
         &self,
-        build: impl FnOnce(&Query) -> QueryResult<Response> + Send + 'static,
+        build: impl FnOnce(&Query) -> QueryResult<Response> + Clone + Send + 'static,
     ) -> Result<Response, Error> {
-        Ok(self.run_admitted(build).await?)
+        Ok(self.read_admitted(build).await?)
     }
 
     pub async fn respond_blocks_v1(
@@ -370,7 +386,7 @@ impl AppState {
         start_height: Option<Height>,
     ) -> Result<Response, Error> {
         if headers.contains_key(header::IF_NONE_MATCH)
-            && let Some(snapshot) = self.sync(|q| q.try_resolve_blocks_v1(start_height, 15))?
+            && let Some(snapshot) = self.preflight(|q| q.try_resolve_blocks_v1(start_height, 15))?
         {
             let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
             if params.matches_etag(&headers) {
@@ -379,7 +395,7 @@ impl AppState {
         }
 
         // The optimistic snapshot has been dropped before admission.
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let snapshot = q.resolve_blocks_v1(start_height, 15)?;
             let params = blocks_v1_params(snapshot.anchor(), snapshot.prices());
             if params.matches_etag(&headers) {
@@ -396,7 +412,7 @@ impl AppState {
         start_height: Option<Height>,
     ) -> Result<Response, Error> {
         if headers.contains_key(header::IF_NONE_MATCH)
-            && let Some(snapshot) = self.sync(|q| q.try_resolve_blocks(start_height, 10))?
+            && let Some(snapshot) = self.preflight(|q| q.try_resolve_blocks(start_height, 10))?
         {
             let params = recent_blocks_params(snapshot.anchor());
             if params.matches_etag(&headers) {
@@ -406,7 +422,7 @@ impl AppState {
 
         // Do not retain a publication guard while queued for admission. Re-resolve
         // after admission so a concurrent update cannot attach an old tag to new rows.
-        self.run_block_response(move |q| {
+        self.read_block_response(move |q| {
             let snapshot = q.resolve_blocks(start_height, 10)?;
             let params = recent_blocks_params(snapshot.anchor());
             if params.matches_etag(&headers) {
@@ -434,7 +450,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_block(headers, path.hash).await
                     },
@@ -459,7 +475,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_block_v1(headers, path.hash).await
                     },
@@ -482,7 +498,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_block_header(headers, path.hash).await
                     },
@@ -504,7 +520,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
-                           _: Empty, State(state): State<AppState>| {
+                           _: Empty, RequestState(state): RequestState| {
                         state.respond_block_height(headers, path.height).await
                     },
                     |op| {
@@ -527,7 +543,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap,
                            Path(path): Path<TimestampParam>,
-                           _: Empty, State(state): State<AppState>| {
+                           _: Empty, RequestState(state): RequestState| {
                         state.respond_block_timestamp(headers, path.timestamp).await
                     },
                     |op| {
@@ -550,7 +566,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                            headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_block_raw(headers, path.hash, method).await
                     },
@@ -576,9 +592,9 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
-                        let status = state.run_admitted(move |q| q.block_status(&path.hash)).await?;
+                        let status = state.read_admitted(move |q| q.block_status(&path.hash)).await?;
                         Ok(state.respond_json_content_value(&headers, status))
                     },
                     |op| {
@@ -599,7 +615,7 @@ impl BlockRoutes for ApiRouter<AppState> {
             .api_route(
                 "/api/blocks/tip/height",
                 get_with(
-                    async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                         state.respond_block_tip(headers, false).await
                     },
                     |op| {
@@ -616,7 +632,7 @@ impl BlockRoutes for ApiRouter<AppState> {
             .api_route(
                 "/api/blocks/tip/hash",
                 get_with(
-                    async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                         state.respond_block_tip(headers, true).await
                     },
                     |op| {
@@ -636,7 +652,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashTxIndex>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_exact_block(headers, path.hash, "txid-v2", Some(path.index), move |q, snapshot, params| {
                             let bytes = Bytes::from(snapshot.anchor_txid(q, path.index)?.to_string());
@@ -666,7 +682,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_exact_block(headers, path.hash, "txids-v2", None, |q, snapshot, params| {
                             block_json_response(params, &snapshot.anchor_txids(q)?)
@@ -694,7 +710,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashParam>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_exact_block(headers, path.hash, "txs-v2", Some(BlockTxIndex::default()), |q, snapshot, params| {
                             block_json_response(params, &snapshot.anchor_txs(q, BlockTxIndex::default(), BLOCK_TXS_PAGE_SIZE)?)
@@ -723,7 +739,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                     async |headers: HeaderMap,
                            Path(path): Path<BlockHashStartIndex>,
                            _: Empty,
-                           State(state): State<AppState>|
+                           RequestState(state): RequestState|
                            -> Result<Response, Error> {
                         state.respond_exact_block(headers, path.hash, "txs-v2", Some(path.start_index), move |q, snapshot, params| {
                             block_json_response(params, &snapshot.anchor_txs(q, path.start_index, BLOCK_TXS_PAGE_SIZE)?)
@@ -748,7 +764,7 @@ impl BlockRoutes for ApiRouter<AppState> {
             .api_route(
                 "/api/blocks",
                 get_with(
-                    async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                         state.respond_blocks(headers, None).await
                     },
                     |op| {
@@ -768,7 +784,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
-                           _: Empty, State(state): State<AppState>| {
+                           _: Empty, RequestState(state): RequestState| {
                         state.respond_blocks(headers, Some(path.height)).await
                     },
                     |op| {
@@ -788,7 +804,7 @@ impl BlockRoutes for ApiRouter<AppState> {
             .api_route(
                 "/api/v1/blocks",
                 get_with(
-                    async |headers: HeaderMap, _: Empty, State(state): State<AppState>| {
+                    async |headers: HeaderMap, _: Empty, RequestState(state): RequestState| {
                         state.respond_blocks_v1(headers, None).await
                     },
                     |op| {
@@ -808,7 +824,7 @@ impl BlockRoutes for ApiRouter<AppState> {
                 get_with(
                     async |headers: HeaderMap,
                            Path(path): Path<HeightParam>,
-                           _: Empty, State(state): State<AppState>| {
+                           _: Empty, RequestState(state): RequestState| {
                         state.respond_blocks_v1(headers, Some(path.height)).await
                     },
                     |op| {

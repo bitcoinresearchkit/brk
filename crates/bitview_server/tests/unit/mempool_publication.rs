@@ -42,7 +42,7 @@ impl MempoolPublication {
                     let tag = tag.to_owned();
                     requests.spawn(async move {
                         let response = exchange_with_etag(address, method, &path, &tag).await;
-                        assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
+                        assert!(response.starts_with("HTTP/1.1 504"), "{path}: {response}");
                         assert!(!response.contains("\r\netag:"));
                         assert!(response.contains("\r\ncache-control: no-store\r\n"));
                     });
@@ -111,13 +111,9 @@ impl MempoolPublication {
         assert_eq!(first.status(), StatusCode::OK);
         assert_eq!(second.status(), StatusCode::OK);
         assert_eq!(self.state.mempool_txid_bodies.available_permits(), 0);
-        let busy = router
-            .clone()
-            .oneshot(request("GET", "\"old\""))
-            .await
-            .unwrap();
-        assert_eq!(busy.status(), StatusCode::SERVICE_UNAVAILABLE);
-        assert!(!busy.headers().contains_key("etag"));
+        let pending = tokio::spawn(router.clone().oneshot(request("GET", "\"old\"")));
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        assert!(!pending.is_finished());
         for method in ["GET", "HEAD"] {
             for tag in [self.tags[2].as_str(), "*"] {
                 let response = router.clone().oneshot(request(method, tag)).await.unwrap();
@@ -125,6 +121,9 @@ impl MempoolPublication {
             }
         }
         drop(first);
+        let admitted = pending.await.unwrap().unwrap();
+        assert_eq!(admitted.status(), StatusCode::OK);
+        drop(admitted);
         assert_eq!(self.state.mempool_txid_bodies.available_permits(), 1);
         drop(second);
         assert_eq!(self.state.mempool_txid_bodies.available_permits(), 2);
