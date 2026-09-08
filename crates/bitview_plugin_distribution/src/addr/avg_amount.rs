@@ -36,8 +36,8 @@ impl AvgAmountVecs {
         mappings: &bitview_plugin_mappings::Vecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
         all_chain: &AllChainSources,
-        utxo_count: &(impl ReadableCloneableVec<Height, StoredU64> + 'static),
-        funded_addr_count: &(impl ReadableCloneableVec<Height, StoredU64> + 'static),
+        utxo_count: &impl ReadableCloneableVec<Height, StoredU64>,
+        funded_addr_count: &impl ReadableCloneableVec<Height, StoredU64>,
     ) -> Result<Self> {
         let avg_utxo = all_chain.with_supply(
             "avg_utxo_amount_sats_source",
@@ -61,7 +61,7 @@ impl AvgAmountVecs {
             all: LazySpotValuePerBlock::from_sats_source(
                 "avg_utxo_amount",
                 version,
-                avg_utxo,
+                &avg_utxo,
                 mappings,
                 spot_price,
             ),
@@ -80,7 +80,7 @@ impl AvgAmountVecs {
             all: LazySpotValuePerBlock::from_sats_source(
                 "avg_addr_amount",
                 version,
-                avg_addr,
+                &avg_addr,
                 mappings,
                 spot_price,
             ),

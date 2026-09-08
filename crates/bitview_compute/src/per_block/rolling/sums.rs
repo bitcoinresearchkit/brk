@@ -4,7 +4,7 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::ReadableCloneableVec;
 
-use crate::{CachedWindowStartVec, NumericValue, Windows};
+use crate::{IndexSources, NumericValue, Windows};
 
 use super::LazyRollingSumFromHeight;
 
@@ -35,18 +35,18 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        cumulative: &impl ReadableCloneableVec<Height, T>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let cum_source = cumulative.read_only_boxed_clone();
 
-        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
+        Self(window_starts.map_with_suffix(|suffix, window_start| {
             LazyRollingSumFromHeight::new(
                 &format!("{name}_{suffix}"),
                 version,
                 cum_source.clone(),
-                cached_start,
+                *window_start,
                 indexes,
             )
         }))
@@ -57,10 +57,10 @@ where
     pub fn from_compact_cumulative(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        cumulative: &impl ReadableCloneableVec<Height, T>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
-        Self::new(name, version, cumulative, cached_starts, indexes)
+        Self::new(name, version, cumulative, window_starts, indexes)
     }
 }

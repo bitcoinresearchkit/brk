@@ -164,7 +164,7 @@ fn benchmark_daily_view() {
             "repeat",
             Version::ONE,
             source.clone(),
-            mapping.clone(),
+            &mapping,
         );
         for from in [N - 1024, 0] {
             let expected: Vec<_> = (from..N)
@@ -220,7 +220,7 @@ fn benchmark_daily_view() {
             "last",
             Version::ONE,
             source.clone(),
-            mapping.clone(),
+            &mapping,
         );
         for from in [240, 0] {
             let to = if from == 0 { 512 } else { 260 };

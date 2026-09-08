@@ -10,8 +10,11 @@ use crate::Query;
 /// "all-time" case from a transient stamp-lag dropout that would
 /// otherwise silently widen a windowed query to the full chain.
 pub fn start_height(query: &Query, period: TimePeriod) -> Result<Height> {
+    start_height_at(query, period, query.height())
+}
+
+pub fn start_height_at(query: &Query, period: TimePeriod, tip: Height) -> Result<Height> {
     let lookback = &query.plugins().blocks.lookback;
-    let tip = query.height();
     let start = match period {
         TimePeriod::Day => lookback._24h.collect_one(tip).data()?,
         TimePeriod::ThreeDays => lookback._3d.collect_one(tip).data()?,

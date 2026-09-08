@@ -1,9 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CachedWindowStartVec, FiatType, Identity, LazyFiatBlock, LazyFiatPerBlock, LazyPerBlock,
+    FiatType, Identity, IndexSources, LazyFiatBlock, LazyFiatPerBlock, LazyPerBlock,
     LazyRollingSumsFiatFromHeight, Windows,
 };
 
@@ -19,14 +19,14 @@ pub struct LazyFiatPerBlockCumulativeWithSums<C: FiatType> {
 }
 
 impl<C: FiatType> LazyFiatPerBlockCumulativeWithSums<C> {
-    pub fn from_boxed_cumulative_cents_source(
+    pub fn from_cumulative_cents_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, C>,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        source: &(impl ReadableCloneableVec<Height, C> + ?Sized),
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let source = LazyPerBlock::from_boxed_height_source::<Identity<C>>(
+        let source = LazyPerBlock::from_height_source::<Identity<C>>(
             &format!("{name}_cumulative_cents"),
             version,
             source,
@@ -39,7 +39,7 @@ impl<C: FiatType> LazyFiatPerBlockCumulativeWithSums<C> {
             &format!("{name}_sum"),
             version,
             &source.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         Self {

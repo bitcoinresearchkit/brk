@@ -4,9 +4,7 @@ use std::sync::{
 };
 
 use parking_lot::Mutex;
-use vecdb::{
-    CachedVec, CachedVecBudget, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue,
-};
+use vecdb::{BudgetedCachedVec, CachedVecBudget, TypedVec};
 
 const MAX_BYTES: usize = 2 * 1024 * 1024 * 1024;
 
@@ -42,33 +40,24 @@ impl CacheBudget {
     }
 
     /// Wraps a source vec in this budget and registers it for eviction.
-    pub fn wrap<V>(&'static self, source: V) -> CachedVec<V>
+    pub fn wrap<V>(&'static self, source: V) -> BudgetedCachedVec<V>
     where
-        V: TypedVec + ReadableVec<V::I, V::T> + Clone + 'static,
+        V: TypedVec,
     {
         let last_access = Arc::new(AtomicU64::new(0));
         let resident_bytes = Arc::new(AtomicUsize::new(0));
-        let cached =
-            CachedVec::wrap_budgeted(source, self, last_access.clone(), resident_bytes.clone());
+        let cached = BudgetedCachedVec::wrap_budgeted(
+            source,
+            self,
+            last_access.clone(),
+            resident_bytes.clone(),
+        );
         self.caches.lock().push(CacheEntry {
             last_access,
             resident_bytes,
             invalidate: Arc::new(cached.weak_invalidator()),
         });
         cached
-    }
-
-    /// Adds this budget's cache unless the type-erased source is already cached.
-    pub fn wrap_boxed<I, T>(&'static self, source: ReadableBoxedVec<I, T>) -> ReadableBoxedVec<I, T>
-    where
-        I: VecIndex,
-        T: VecValue,
-    {
-        if source.has_cache_layer() {
-            source
-        } else {
-            ReadableBoxedVec::new(self.wrap(source))
-        }
     }
 
     /// Invalidates every registered vec.

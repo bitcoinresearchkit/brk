@@ -1,7 +1,6 @@
 use bitview_traversable::Traversable;
 use brk_types::{StoredF32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::ReadableCloneableVec;
 
 use crate::{
     LazyPerBlock, LazyRollingSumFromHeight, LazyRollingSumsFromHeight, PerSecond, Windows,
@@ -28,12 +27,7 @@ impl LazyPerSecondWindows {
             version: Version,
             source: &LazyRollingSumFromHeight<StoredU64>,
         ) -> LazyPerBlock<StoredF32, StoredU64> {
-            LazyPerBlock::from_resolutions::<PerSecond<SECONDS>>(
-                name,
-                version,
-                source.height.read_only_boxed_clone(),
-                &source.resolutions,
-            )
+            LazyPerBlock::from_resolutions::<PerSecond<SECONDS>>(name, version, &source.resolutions)
         }
 
         Self(Windows {

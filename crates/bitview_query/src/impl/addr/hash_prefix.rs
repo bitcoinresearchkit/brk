@@ -16,9 +16,9 @@ impl Query {
         }
 
         let prefix = AddrHashPrefix::parse(prefix)?;
-        let _guard = self.read_publication()?;
+        let pin = self.pin_safe_lengths()?;
         let stores = self.indexer().stores();
-        let safe_type_index = self.safe_lengths().to_type_index(addr_type);
+        let safe_type_index = pin.lengths().to_type_index(addr_type);
         let addr_readers = self.indexer().vecs().addrs.addr_readers();
         let mut addresses = Vec::new();
         let max_hash = AddrHash::new(u64::MAX);

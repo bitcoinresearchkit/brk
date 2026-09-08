@@ -4,27 +4,30 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, EagerVec, ImportableVec, PcoVec, Rw, StorageMode};
+use vecdb::{
+    Budgeted, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, Rw,
+    StorageMode,
+};
 
-use crate::{CachedWindowStartVec, LazyRollingAvgsFromHeight, NumericValue, Windows};
+use crate::{CachePolicy, IndexSources, LazyRollingAvgsFromHeight, NumericValue, Windows};
 
 /// Stored-block fallback for values whose cumulative delta is not exact, such as floats.
 #[derive(Traversable)]
-pub struct PerBlockRollingAverage<T, C = T, M: StorageMode = Rw>
+pub struct PerBlockRollingAverage<T, C = T, M: StorageMode = Rw, P: CachePolicy = Budgeted>
 where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
 {
     /// Value for the represented block. At time-period indexes, the value is
     /// taken from the period's final block.
-    pub block: M::Stored<EagerVec<PcoVec<Height, T>>>,
+    pub block: CachedVec<M::Stored<EagerVec<PcoVec<Height, T>>>, P>,
     #[traversable(hidden)]
-    cumulative: M::Stored<EagerVec<PcoVec<Height, C>>>,
+    cumulative: CachedVec<M::Stored<EagerVec<PcoVec<Height, C>>>, P>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
 }
 
-impl<T, C> PerBlockRollingAverage<T, C>
+impl<T, C, P: CachePolicy> PerBlockRollingAverage<T, C, Rw, P>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
@@ -33,17 +36,22 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
-        let block: EagerVec<PcoVec<Height, T>> = EagerVec::forced_import(db, name, version)?;
-        let cumulative: EagerVec<PcoVec<Height, C>> =
-            EagerVec::forced_import(db, &format!("{name}_cumulative"), version + Version::TWO)?;
+        let block = P::wrap(EagerVec::<PcoVec<Height, T>>::forced_import(
+            db, name, version,
+        )?);
+        let cumulative = P::wrap(EagerVec::<PcoVec<Height, C>>::forced_import(
+            db,
+            &format!("{name}_cumulative"),
+            version + Version::TWO,
+        )?);
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version + Version::TWO,
-            &cumulative,
-            cached_starts,
+            &cumulative.read_only_boxed_clone(),
+            window_starts,
             indexes,
         );
 

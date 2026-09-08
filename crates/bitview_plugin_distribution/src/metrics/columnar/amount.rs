@@ -8,8 +8,8 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
     AnyStoredVec, AnyVec, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableColumnarVec, ReadableVec, Rw, StorageMode, WritableVec,
+    ReadOnlyClone, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec, ReadableVec, Rw,
+    StorageMode, WritableVec,
 };
 
 use bitview_compute::CACHE_BUDGET;
@@ -39,7 +39,7 @@ where
         context: CohortContext,
         metric: &str,
         version: Version,
-        mut build: impl FnMut(&str, ReadableBoxedVec<Height, T>) -> S,
+        mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> Result<Self> {
         let matrix = EagerVec::forced_import(db, matrix_name, version)?;
         let source: ReadOnlyColumnarVec<PcoVec<Height, T>, AmountRangeId> =
@@ -47,15 +47,20 @@ where
 
         let series = Amount::new(|filter, cohort_name| {
             let name = context.metric_name(&filter, cohort_name, metric);
-            let source = match AmountRangeId::matching(&filter) {
-                Some(column) => source
-                    .column(&name, version, column)
-                    .read_only_boxed_clone(),
-                None => CACHE_BUDGET
-                    .wrap(source.sum_columns(&name, version, AmountRangeId::included_by(&filter)))
-                    .read_only_boxed_clone(),
-            };
-            build(&name, source)
+            match AmountRangeId::matching(&filter) {
+                Some(column) => build(
+                    &name,
+                    &CACHE_BUDGET.wrap(source.column(&name, version, column)),
+                ),
+                None => build(
+                    &name,
+                    &CACHE_BUDGET.wrap(source.sum_columns(
+                        &name,
+                        version,
+                        AmountRangeId::included_by(&filter),
+                    )),
+                ),
+            }
         });
 
         Ok(Self {

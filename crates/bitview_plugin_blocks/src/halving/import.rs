@@ -1,10 +1,10 @@
-use bitview_compute::{BlocksToDaysF32, CACHE_BUDGET, Identity, LazyPerBlock};
+use bitview_compute::{BlocksToDaysF32, Identity, LazyPerBlock};
 use brk_types::{Halving, Height, StoredU32, Version};
-use vecdb::{LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::{IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
-fn blocks_left_to_halving(height: Height, _: Halving) -> StoredU32 {
+fn blocks_left_to_halving(height: Height) -> StoredU32 {
     StoredU32::from(height.left_before_next_halving())
 }
 
@@ -12,24 +12,28 @@ impl Vecs {
     pub fn new(version: Version, mappings: &bitview_plugin_mappings::Vecs) -> Self {
         let v2 = Version::TWO;
 
-        let epoch_source = CACHE_BUDGET.wrap(mappings.height.halving.read_only_clone());
+        let epoch_source = IndexVec::new(
+            "halving_epoch_source",
+            Version::ZERO,
+            mappings.height.halving.read_only_clone(),
+            Halving::from,
+        );
         let epoch = LazyPerBlock::from_height_source::<Identity<Halving>>(
             "halving_epoch",
             version,
-            epoch_source,
+            &epoch_source,
             mappings,
         );
-        let blocks_to_halving_source = LazyVec::init(
+        let blocks_to_halving_source = IndexVec::new(
             "blocks_to_halving_source",
             version + v2,
-            mappings.height.halving.read_only_boxed_clone(),
+            mappings.height.halving.read_only_clone(),
             blocks_left_to_halving,
         );
-        let blocks_to_halving_source = CACHE_BUDGET.wrap(blocks_to_halving_source);
         let blocks_to_halving = LazyPerBlock::from_height_source::<Identity<StoredU32>>(
             "blocks_to_halving",
             version + v2,
-            blocks_to_halving_source,
+            &blocks_to_halving_source,
             mappings,
         );
 
@@ -66,10 +70,7 @@ mod tests {
         ] {
             let height = Height::from(height);
             assert_eq!(Halving::from(height), Halving::new(epoch));
-            assert_eq!(
-                blocks_left_to_halving(height, Halving::new(epoch)),
-                StoredU32::new(remaining)
-            );
+            assert_eq!(blocks_left_to_halving(height), StoredU32::new(remaining));
         }
 
         let days = BlocksToDaysF32::apply(StoredU32::new(210_000));

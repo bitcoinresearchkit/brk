@@ -34,10 +34,10 @@ impl CoindaysDestroyedByCohort {
                 .matrices
                 .additive_source(&filter, &format!("{name}_cumulative"), version)
                 .expect("supported coindays-destroyed cohort");
-            LazyPerBlockCumulativeRolling::from_boxed_cumulative_source(
+            LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,
                 version,
-                source,
+                &source,
                 cached_starts,
                 mappings,
             )

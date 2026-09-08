@@ -1,8 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
-use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
+use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadableCloneableVec, VecValue};
 
-use crate::{CachedWindowStartVec, FiatType, FixedRatio, LazyPerBlock, Windows};
+use crate::{FiatType, FixedRatio, IndexSources, LazyPerBlock, Windows};
 
 use super::{LazyDeltaFiatFromHeight, LazyDeltaFromHeight, LazyDeltaPercentFromHeight};
 
@@ -31,15 +31,15 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        source: &impl ReadableCloneableVec<Height, S>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let source = source.read_only_boxed_clone();
-        let (absolute, rate) = cached_starts
-            .map_with_suffix(|suffix, cached_start| {
+        let (absolute, rate) = window_starts
+            .map_with_suffix(|suffix, window_start| {
                 let name = format!("{name}_{suffix}");
-                let cached = cached_start.read_only_clone();
+                let cached = window_start.read_only_boxed_clone();
                 let starts_version = cached.version();
 
                 let cents_name = format!("{name}_cents");
@@ -57,7 +57,6 @@ where
                 let usd = LazyPerBlock::from_resolutions::<C::ToDollars>(
                     &name,
                     version,
-                    cents.height.read_only_boxed_clone(),
                     &cents.resolutions,
                 );
                 let absolute = LazyDeltaFiatFromHeight { usd, cents };

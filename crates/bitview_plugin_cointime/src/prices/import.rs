@@ -13,7 +13,7 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
     all_chain: &AllChainSources,
-    cointime_cap: &(impl ReadableCloneableVec<Height, Cents> + 'static),
+    cointime_cap: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Vecs> {
     macro_rules! import {
         ($name:expr) => {
@@ -35,7 +35,7 @@ pub fn forced_import(
         cointime: LazyPriceWithRatioPerBlock::from_height_source(
             "cointime_price",
             version,
-            cointime_source,
+            &cointime_source,
             mappings,
             spot_price,
         ),

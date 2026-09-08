@@ -1,7 +1,7 @@
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{CachedBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec, VecValue};
+use vecdb::{CachedBoxedVec, ReadableCloneableVec, VecValue};
 
-use bitview_compute::{CACHE_BUDGET, LazyIndexedVec};
+use bitview_compute::LazyIndexedVec;
 
 /// Shared handles to the pinned all-chain inputs.
 ///
@@ -23,48 +23,34 @@ impl AllChainSources {
         }
     }
 
-    /// Combines one ordinary source with pinned all supply, caching the result
-    /// when it becomes hot.
+    /// Derive from shared inputs. The caller owns the ordinary source's cache.
     pub fn with_supply<S, T>(
         &self,
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
+        source: &impl ReadableCloneableVec<Height, S>,
         compute: impl Fn(Height, S, Sats) -> T + Send + Sync + 'static,
-    ) -> impl TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static
+    ) -> LazyIndexedVec<Height, S, Sats, T>
     where
         S: VecValue,
         T: VecValue,
     {
-        CACHE_BUDGET.wrap(LazyIndexedVec::new(
-            name,
-            version,
-            source.read_only_boxed_clone(),
-            self.supply.clone(),
-            compute,
-        ))
+        LazyIndexedVec::new(name, version, source, &self.supply, compute)
     }
 
-    /// Combines one ordinary source with market cap, caching only the final
-    /// result when it becomes hot.
+    /// Derive from shared inputs without caching another full-height result.
     pub fn with_market_cap<S, T>(
         &self,
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
+        source: &impl ReadableCloneableVec<Height, S>,
         compute: impl Fn(Height, S, Cents) -> T + Send + Sync + 'static,
-    ) -> impl TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static
+    ) -> LazyIndexedVec<Height, S, Cents, T>
     where
         S: VecValue,
         T: VecValue,
     {
-        CACHE_BUDGET.wrap(LazyIndexedVec::new(
-            name,
-            version,
-            source.read_only_boxed_clone(),
-            self.market_cap.clone(),
-            compute,
-        ))
+        LazyIndexedVec::new(name, version, source, &self.market_cap, compute)
     }
 }
 
@@ -72,7 +58,7 @@ impl AllChainSources {
 mod tests {
     use vecdb::{
         AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadOnlyClone, ReadableVec, WritableVec,
+        ReadOnlyClone, WritableVec,
     };
 
     use super::*;

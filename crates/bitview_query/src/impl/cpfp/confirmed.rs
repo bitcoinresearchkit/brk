@@ -26,7 +26,10 @@ struct Member {
 }
 
 impl Query {
-    fn confirmed_cpfp_at(&self, seed: TxIndex, height: Height) -> Result<CpfpInfo> {
+    pub fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
+        let publication = self.read_publication()?;
+        let read = self.read_indexer()?;
+        let (_, seed, height) = read.revalidate_confirmed_tx(transaction)?;
         let walk = self.walk_same_block_cluster(seed, height)?;
         let members = self.resolve_members(&walk.members)?;
         let ancestors = self.resolve_entries(&walk.ancestors)?;
@@ -38,6 +41,8 @@ impl Query {
             .total_sigop_cost
             .collect_one(seed)
             .data()?;
+        drop(read);
+        drop(publication);
 
         Ok(build_cpfp_info(
             &members,
@@ -189,13 +194,6 @@ impl Query {
             ancestors,
             descendants,
         })
-    }
-
-    pub fn confirmed_cpfp_resolved(&self, transaction: ResolvedConfirmedTx) -> Result<CpfpInfo> {
-        let read = self.read_indexer()?;
-        let (_, seed, height) = read.revalidate_confirmed_tx(transaction)?;
-        let info = self.confirmed_cpfp_at(seed, height)?;
-        Ok(info)
     }
 }
 

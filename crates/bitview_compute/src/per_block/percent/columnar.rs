@@ -1,9 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec};
 
-use crate::{FixedRatio, LazyColumnPerBlock, LazyPerBlock, Percent};
+use crate::{FixedRatio, IndexSources, LazyColumnPerBlock, LazyPerBlock, Percent};
 
 /// Fixed-point column projection with lazy ratio and percentage views.
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -18,7 +18,7 @@ impl<B: FixedRatio, C: ColumnId> LazyColumnPercentPerBlock<B, C> {
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, B>, C>,
         column: C,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
         let ppm = LazyColumnPerBlock::new(
             &format!("{name}_{}", B::SUFFIX),
@@ -30,15 +30,10 @@ impl<B: FixedRatio, C: ColumnId> LazyColumnPercentPerBlock<B, C> {
         let ratio = LazyPerBlock::from_resolutions::<B::ToRatio>(
             &format!("{name}_ratio"),
             version,
-            ppm.height.read_only_boxed_clone(),
             &ppm.resolutions,
         );
-        let percent = LazyPerBlock::from_resolutions::<B::ToPercent>(
-            name,
-            version,
-            ppm.height.read_only_boxed_clone(),
-            &ppm.resolutions,
-        );
+        let percent =
+            LazyPerBlock::from_resolutions::<B::ToPercent>(name, version, &ppm.resolutions);
 
         Self(Percent {
             ppm,

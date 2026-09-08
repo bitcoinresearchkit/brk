@@ -1,21 +1,23 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use brk_error::Result;
 
 use brk_error::Error;
 use brk_types::{Dollars, Height, PartsPerMillionSigned64, Version};
-use vecdb::{BinaryTransform, CachedBoxedVec, Database, ReadableCloneableVec};
+use vecdb::{BinaryTransform, Database, ReadableCloneableVec};
 
 use super::Vecs;
 use bitview_compute::{
-    ByDcaCagr, ByDcaPeriod, ByLookbackPeriod, CACHE_BUDGET, LazyPercentPerBlock, LazyWindowVec,
-    RatioDiffDollars, StdDevPerBlock, Windows,
+    ByDcaCagr, ByDcaPeriod, ByLookbackPeriod, LazyPercentPerBlock, LazyWindowVec, RatioDiffDollars,
+    StdDevPerBlock, Windows,
 };
 
 pub fn forced_import(
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
-    cached_starts: &ByLookbackPeriod<CachedBoxedVec<Height, Height>>,
-    prices: &bitview_plugin_price::Vecs,
+    mappings: &MappingsVecs,
+    cached_starts: &ByLookbackPeriod<&impl ReadableCloneableVec<Height, Height>>,
+    prices: &PriceVecs,
 ) -> Result<Vecs> {
     let periods =
         ByLookbackPeriod::try_from_period(cached_starts, |name, _days, window_starts| {
@@ -24,17 +26,16 @@ pub fn forced_import(
                 &format!("{metric_name}_ppm_source"),
                 version,
                 prices.spot.usd.height.read_only_boxed_clone(),
-                window_starts.clone(),
+                window_starts.read_only_boxed_clone(),
                 false,
                 |current, past, _| {
                     RatioDiffDollars::<PartsPerMillionSigned64>::apply(current, past)
                 },
             );
-            let source = CACHE_BUDGET.wrap(source);
             Ok::<_, Error>(LazyPercentPerBlock::from_height_source(
                 &metric_name,
                 version,
-                source,
+                &source,
                 mappings,
             ))
         })?;

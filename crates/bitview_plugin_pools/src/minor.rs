@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, PoolSlug, StoredU64};
 use vecdb::{LazyVec, ReadableCloneableVec, Version};
@@ -28,7 +29,7 @@ impl Vecs {
         slug: PoolSlug,
         pool_heights: PoolHeights,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let suffix = |s: &str| format!("{}_{s}", slug);
@@ -52,7 +53,7 @@ impl Vecs {
         let dominance = LazyPercentPerBlock::from_height_source(
             &dominance_name,
             version,
-            dominance_source,
+            &dominance_source,
             mappings,
         );
 

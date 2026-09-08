@@ -1,0 +1,1511 @@
+{
+  "mempool_commit": "8158a230ce44265b14a44d13a785a0ac092ec478",
+  "esplora_commit": "1f7a21b97b013de0403ce80fb211c5370eae7a63",
+  "endpoints": [
+    {
+      "id": "get-difficulty-adjustment",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/difficulty-adjustment",
+      "path": "/api/v1/difficulty-adjustment",
+      "mode": "shape"
+    },
+    {
+      "id": "get-price",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/prices",
+      "path": "/api/v1/prices",
+      "mode": "shape"
+    },
+    {
+      "id": "get-historical-price",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/historical-price?currency=EUR&timestamp=1500000000",
+      "path": "/api/v1/historical-price?currency=EUR&timestamp=1500000000",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/address/:address",
+      "path": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address-transactions",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/address/:address/txs",
+      "path": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address-transactions-chain",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/address/:address/txs/chain",
+      "path": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs/chain",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address-transactions-mempool",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/address/:address/txs/mempool",
+      "path": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs/mempool",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address-utxo",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/address/:address/utxo",
+      "path": "/api/address/1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY/utxo",
+      "mode": "shape"
+    },
+    {
+      "id": "get-address-validate",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/validate-address/:address",
+      "path": "/api/v1/validate-address/1KFHE7w8BhaENAswwryaoccDb6qcT6DbYY",
+      "mode": "exact"
+    },
+    {
+      "id": "get-asset-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/asset/:asset_id",
+      "path": "/api/asset/%{1}",
+      "mode": "shape",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-asset-transactions-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/asset/:asset_id/txs[/mempool|/chain]",
+      "path": "/api/asset/%{1}/txs",
+      "mode": "shape",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-asset-supply-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/asset/:asset_id/supply[/decimal]",
+      "path": "/api/asset/%{1}/supply",
+      "mode": "shape",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-asset-icons-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/assets/icons",
+      "path": "/api/v1/assets/icons",
+      "mode": "shape",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-asset-icon-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/asset/:asset_id/icon",
+      "path": "/api/v1/asset/%{1}/icon",
+      "mode": "shape",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-block",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash",
+      "path": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-v1",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/block/:hash",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-header",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/header",
+      "path": "/api/block/0000000000000000000065bda8f8a88f2e1e00d9a6887a43d640e52a4c7660f2/header",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-height",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block-height/:height",
+      "path": "/api/block-height/615615",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-timestamp",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/timestamp/:timestamp",
+      "path": "/api/v1/mining/blocks/timestamp/1672531200",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-raw",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/raw",
+      "path": "/api/block/0000000000000000000065bda8f8a88f2e1e00d9a6887a43d640e52a4c7660f2/raw",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-status",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/status",
+      "path": "/api/block/0000000000000000000065bda8f8a88f2e1e00d9a6887a43d640e52a4c7660f2/status",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-tip-height",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/blocks/tip/height",
+      "path": "/api/blocks/tip/height",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-tip-hash",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/blocks/tip/hash",
+      "path": "/api/blocks/tip/hash",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-transaction-id",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/txid/:index",
+      "path": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txid/218",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-transaction-ids",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/txids",
+      "path": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txids",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-transactions",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/block/:hash/txs[/:start_index]",
+      "path": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txs",
+      "mode": "exact"
+    },
+    {
+      "id": "get-blocks",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/blocks[/:startHeight]",
+      "path": "/api/blocks/730000",
+      "mode": "exact"
+    },
+    {
+      "id": "get-blocks-v1",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/blocks[/:startHeight]",
+      "path": "/api/v1/blocks/730000",
+      "mode": "exact"
+    },
+    {
+      "id": "get-blocks-bulk",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/blocks-bulk/:minHeight[/:maxHeight]",
+      "path": "/api/v1/blocks-bulk/100000/100000",
+      "mode": "exact"
+    },
+    {
+      "id": "get-blocks-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/blocks[/:startHeight]",
+      "path": "/api/blocks/%{1}",
+      "mode": "exact",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-blocks-v1-liquid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/blocks[/:startHeight]",
+      "path": "/api/v1/blocks/%{1}",
+      "mode": "exact",
+      "exclude": "Liquid/Elements network, outside Bitcoin mainnet"
+    },
+    {
+      "id": "get-mining-pools",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/pools[/:timePeriod]",
+      "path": "/api/v1/mining/pools/1w",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mining-pool",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/pool/:slug",
+      "path": "/api/v1/mining/pool/slushpool",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mining-pool-hashrates",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/hashrate/pools/[:timePeriod]",
+      "path": "/api/v1/mining/hashrate/pools/1m",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mining-pool-hashrate",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/pool/:slug/hashrate",
+      "path": "/api/v1/mining/pool/foundryusa/hashrate",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mining-pool-blocks",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/pool/:slug/blocks/[:blockHeight]",
+      "path": "/api/v1/mining/pool/luxor/blocks/730000",
+      "mode": "exact"
+    },
+    {
+      "id": "get-hashrate",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/hashrate/[:timePeriod]",
+      "path": "/api/v1/mining/hashrate/3d",
+      "mode": "shape"
+    },
+    {
+      "id": "get-difficulty-adjustments",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/difficulty-adjustments/[:interval]",
+      "path": "/api/v1/mining/difficulty-adjustments/1m",
+      "mode": "shape"
+    },
+    {
+      "id": "get-reward-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/reward-stats/:blockCount",
+      "path": "/api/v1/mining/reward-stats/100",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-fees",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/fees/:timePeriod",
+      "path": "/api/v1/mining/blocks/fees/1w",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-rewards",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/rewards/:timePeriod",
+      "path": "/api/v1/mining/blocks/rewards/24h",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-feerates",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/fee-rates/:timePeriod",
+      "path": "/api/v1/mining/blocks/fee-rates/1m",
+      "mode": "shape"
+    },
+    {
+      "id": "get-sizes-weights",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/sizes-weights/:timePeriod",
+      "path": "/api/v1/mining/blocks/sizes-weights/3y",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-predictions",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/predictions/:timePeriod",
+      "path": "/api/v1/mining/blocks/predictions/3y",
+      "mode": "shape"
+    },
+    {
+      "id": "get-block-audit-score",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/audit/score/:blockHash",
+      "path": "/api/v1/mining/blocks/audit/score/000000000000000000032535698c5b0c48283b792cf86c1c6e36ff84464de785",
+      "mode": "exact"
+    },
+    {
+      "id": "get-blocks-audit-scores",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/mining/blocks/audit/scores/:startHeight",
+      "path": "/api/v1/mining/blocks/audit/scores/820000",
+      "mode": "exact"
+    },
+    {
+      "id": "get-block-audit-summary",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/block/:blockHash/audit-summary",
+      "path": "/api/v1/block/00000000000000000000f218ceda7a5d9c289040b9c3f05ef9f7c2f4930e0123/audit-summary",
+      "mode": "exact"
+    },
+    {
+      "id": "get-mempool-blocks-fees",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/fees/mempool-blocks",
+      "path": "/api/v1/fees/mempool-blocks",
+      "mode": "shape"
+    },
+    {
+      "id": "get-recommended-fees",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/fees/recommended",
+      "path": "/api/v1/fees/recommended",
+      "mode": "shape"
+    },
+    {
+      "id": "get-recommended-fees-precise",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/fees/precise",
+      "path": "/api/v1/fees/precise",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mempool",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/mempool",
+      "path": "/api/mempool",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mempool-transaction-ids",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/mempool/txids",
+      "path": "/api/mempool/txids",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mempool-recent",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/mempool/recent",
+      "path": "/api/mempool/recent",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mempool-rbf",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/replacements",
+      "path": "/api/v1/replacements",
+      "mode": "shape"
+    },
+    {
+      "id": "get-mempool-fullrbf",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/fullrbf/replacements",
+      "path": "/api/v1/fullrbf/replacements",
+      "mode": "shape"
+    },
+    {
+      "id": "get-cpfp",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/cpfp",
+      "path": "/api/v1/cpfp/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521",
+      "mode": "shape"
+    },
+    {
+      "id": "get-transaction",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-hex",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/hex",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/hex",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-merkleblock-proof",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/merkleblock-proof",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/merkleblock-proof",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-merkle-proof",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/merkle-proof",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/merkle-proof",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-outspend",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/outspend/:vout",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/outspend/3",
+      "mode": "shape"
+    },
+    {
+      "id": "get-transaction-outspends",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/outspends",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/outspends",
+      "mode": "shape"
+    },
+    {
+      "id": "get-transaction-raw",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/raw",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/raw",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-rbf-timeline",
+      "source": "mempool",
+      "method": "GET",
+      "route": "v1/tx/:txId/rbf",
+      "path": "/api/v1/tx/2e95ff9094df9f3650e3f2abc189250760162be89a88f9f2f23301c7cb14b8b4/rbf",
+      "mode": "shape"
+    },
+    {
+      "id": "get-transaction-status",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/tx/:txid/status",
+      "path": "/api/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/status",
+      "mode": "exact"
+    },
+    {
+      "id": "get-transaction-times",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/transaction-times",
+      "path": "/api/v1/transaction-times?txId[]=51545ef0ec7f09196e60693b59369a134870985c8a90e5d42655b191de06285e&txId[]=6086089bd1c56a9c42a39d470cdfa7c12d4b52bf209608b390dfc4943f2d3851",
+      "mode": "shape"
+    },
+    {
+      "id": "post-transaction",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/tx",
+      "path": "/api/tx",
+      "mode": "broadcast"
+    },
+    {
+      "id": "get-lightning-network-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/statistics/:interval",
+      "path": "/api/v1/lightning/statistics/latest",
+      "mode": "shape"
+    },
+    {
+      "id": "get-lightning-nodes-channels",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/search?searchText=:query",
+      "path": "/api/v1/lightning/search?searchText=ACINQ",
+      "mode": "shape"
+    },
+    {
+      "id": "get-lightning-nodes-country",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/country/:country",
+      "path": "/api/v1/lightning/nodes/country/ch",
+      "mode": "shape"
+    },
+    {
+      "id": "get-country-node-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/countries",
+      "path": "/api/v1/lightning/nodes/countries",
+      "mode": "shape"
+    },
+    {
+      "id": "get-isp-nodes",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/isp/:isp",
+      "path": "/api/v1/lightning/nodes/isp/16509",
+      "mode": "shape"
+    },
+    {
+      "id": "get-isp-node-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/isp-ranking",
+      "path": "/api/v1/lightning/nodes/isp-ranking",
+      "mode": "shape"
+    },
+    {
+      "id": "get-top-100-nodes",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/rankings",
+      "path": "/api/v1/lightning/nodes/rankings",
+      "mode": "shape"
+    },
+    {
+      "id": "get-top-100-nodes-liquidity",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/rankings/liquidity",
+      "path": "/api/v1/lightning/nodes/rankings/liquidity",
+      "mode": "shape"
+    },
+    {
+      "id": "get-top-100-nodes-connectivity",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/rankings/connectivity",
+      "path": "/api/v1/lightning/nodes/rankings/connectivity",
+      "mode": "shape"
+    },
+    {
+      "id": "get-top-100-oldest-nodes",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/rankings/age",
+      "path": "/api/v1/lightning/nodes/rankings/age",
+      "mode": "shape"
+    },
+    {
+      "id": "get-node-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/:pubKey",
+      "path": "/api/v1/lightning/nodes/033ac2f9f7ff643c235cc247c521663924aff73b26b38118a6c6821460afcde1b3",
+      "mode": "shape"
+    },
+    {
+      "id": "get-historical-node-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/nodes/:pubKey/statistics",
+      "path": "/api/v1/lightning/nodes/033ac2f9f7ff643c235cc247c521663924aff73b26b38118a6c6821460afcde1b3/statistics",
+      "mode": "shape"
+    },
+    {
+      "id": "get-channel",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/channels/:channelId",
+      "path": "/api/v1/lightning/channels/768457472831193088",
+      "mode": "shape"
+    },
+    {
+      "id": "get-channels-from-txid",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/channels/txids?txId[]=:txid",
+      "path": "/api/v1/lightning/channels/txids?txId[]=c3173549f502ede6440d5c48ea74af5607d88484c7a912bbef73d430049f8af4&txId[]=d78f0b41a263af3df91fa4171cc2f60c40196aaf8f4bde5d1c8ff4474cfe753b",
+      "mode": "shape"
+    },
+    {
+      "id": "get-channels-from-pubkey",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/channels?public_key=:pubKey&status=:channelStatus",
+      "path": "/api/v1/lightning/channels?public_key=026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2&status=open",
+      "mode": "shape"
+    },
+    {
+      "id": "get-channel-geodata",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/channels-geo",
+      "path": "/api/v1/lightning/channels-geo",
+      "mode": "shape"
+    },
+    {
+      "id": "get-channel-geodata-node",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/lightning/channels-geo/:pubKey",
+      "path": "/api/v1/lightning/channels-geo/03d607f3e69fd032524a867b288216bfab263b6eaee4e07783799a6fe69bb84fac",
+      "mode": "shape"
+    },
+    {
+      "id": "accelerator-estimate",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/estimate",
+      "path": "txid=ee13ebb99632377c15c94980357f674d285ac413452050031ea6dcd3e9b2dc29\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/estimate",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-get-invoice",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/invoice",
+      "path": "txid=ee13ebb99632377c15c94980357f674d285ac413452050031ea6dcd3e9b2dc29&maxBidBoost=12500\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/invoice",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-pending",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/accelerations",
+      "path": "/api/v1/services/accelerator/accelerations",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-public-history",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/accelerations/history",
+      "path": "/api/v1/services/accelerator/accelerations/history?blockHash=00000000000000000000482f0746d62141694b9210a813b97eb8445780a32003",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-public-stats",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/accelerations/stats",
+      "path": "/api/v1/services/accelerator/accelerations/stats?blockHash=000000000000000000002c55e353486c1013ce8bd6d637fd5be7798f44b731dc",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-top-up",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/top-up",
+      "path": "amount=1234567\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/top-up",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-top-up-history",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/top-up-history",
+      "path": "/api/v1/services/accelerator/top-up-history",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-balance",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/balance",
+      "path": "/api/v1/services/accelerator/balance",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-accelerate",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/accelerate",
+      "path": "txid=ee13ebb99632377c15c94980357f674d285ac413452050031ea6dcd3e9b2dc29&maxBidBoost=21000000\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/accelerate",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-cancel",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/cancel",
+      "path": "id=42\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/cancel",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-auto-accelerate",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/auto-accelerate",
+      "path": "txid=ee13ebb99632377c15c94980357f674d285ac413452050031ea6dcd3e9b2dc29&type=time_delay&value=0.5\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/auto-accelerate",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-auto-accelerate-history",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/auto-accelerate/history",
+      "path": "/api/v1/services/accelerator/auto-accelerate/history",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-auto-accelerate-cancel",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/v1/services/accelerator/auto-accelerate/cancel",
+      "path": "txid=178b5b9b310f0d667d7ea563a2cdcc17bc8cd15261b58b1653860a724ca83458&type=time_delay\" \"[[hostname]][[baseNetworkUrl]]/api/v1/services/accelerator/auto-accelerate/cancel",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "accelerator-history",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/v1/services/accelerator/history?status=:status&details=:details",
+      "path": "/api/v1/services/accelerator/history?status=all&details=true",
+      "mode": "shape",
+      "exclude": "Hosted accelerator/account service, outside Bitcoin node API"
+    },
+    {
+      "id": "blocks-recent",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/blocks",
+      "path": "/api/blocks",
+      "mode": "shape"
+    },
+    {
+      "id": "blocks-v1-recent",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/blocks",
+      "path": "/api/v1/blocks",
+      "mode": "shape"
+    },
+    {
+      "id": "block-txs-page",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txs/25",
+      "path": "/api/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txs/25",
+      "mode": "exact"
+    },
+    {
+      "id": "address-chain-page",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs/chain/{cursor}",
+      "path": "/api/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs/chain/{cursor}",
+      "mode": "address-page"
+    },
+    {
+      "id": "mining-pools-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/pools",
+      "path": "/api/v1/mining/pools",
+      "mode": "shape"
+    },
+    {
+      "id": "pool-blocks-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/pool/luxor/blocks",
+      "path": "/api/v1/mining/pool/luxor/blocks",
+      "mode": "shape"
+    },
+    {
+      "id": "hashrate-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/hashrate",
+      "path": "/api/v1/mining/hashrate",
+      "mode": "shape"
+    },
+    {
+      "id": "pool-hashrates-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/hashrate/pools",
+      "path": "/api/v1/mining/hashrate/pools",
+      "mode": "shape"
+    },
+    {
+      "id": "difficulty-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/difficulty-adjustments",
+      "path": "/api/v1/mining/difficulty-adjustments",
+      "mode": "shape"
+    },
+    {
+      "id": "blocks-bulk-default",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/blocks-bulk/100000",
+      "path": "/api/v1/blocks-bulk/{tip_height}",
+      "mode": "shape"
+    },
+    {
+      "id": "scripthash",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}",
+      "path": "/api/scripthash/{scripthash}",
+      "mode": "shape"
+    },
+    {
+      "id": "scripthash-txs",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}/txs",
+      "path": "/api/scripthash/{scripthash}/txs",
+      "mode": "shape"
+    },
+    {
+      "id": "scripthash-txs-chain",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}/txs/chain",
+      "path": "/api/scripthash/{scripthash}/txs/chain",
+      "mode": "shape"
+    },
+    {
+      "id": "scripthash-txs-chain-{cursor}",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}/txs/chain/{cursor}",
+      "path": "/api/scripthash/{scripthash}/txs/chain/{cursor}",
+      "mode": "address-page"
+    },
+    {
+      "id": "scripthash-txs-mempool",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}/txs/mempool",
+      "path": "/api/scripthash/{scripthash}/txs/mempool",
+      "mode": "shape"
+    },
+    {
+      "id": "scripthash-utxo",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/scripthash/{scripthash}/utxo",
+      "path": "/api/scripthash/{scripthash}/utxo",
+      "mode": "shape"
+    },
+    {
+      "id": "address-prefix",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/address-prefix/1wiz",
+      "path": "/api/address-prefix/1wiz",
+      "mode": "shape"
+    },
+    {
+      "id": "fee-estimates",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/fee-estimates",
+      "path": "/api/fee-estimates",
+      "mode": "shape"
+    },
+    {
+      "id": "block-template",
+      "source": "esplora",
+      "method": "GET",
+      "route": "/api/block-template",
+      "path": "/api/block-template",
+      "mode": "shape"
+    },
+    {
+      "id": "transaction-package",
+      "source": "esplora",
+      "method": "POST",
+      "route": "/api/txs/package",
+      "path": "/api/txs/package",
+      "mode": "package"
+    },
+    {
+      "id": "backend-fee-estimates",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/fee-estimates",
+      "path": "/api/v1/fee-estimates",
+      "mode": "shape",
+      "success_statuses": [
+        200,
+        203
+      ]
+    },
+    {
+      "id": "backend-backend-info",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/backend-info",
+      "path": "/api/v1/backend-info",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-init-data",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/init-data",
+      "path": "/api/v1/init-data",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx-txId-cached",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId/cached",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/cached",
+      "mode": "shape",
+      "success_statuses": [
+        200,
+        204
+      ]
+    },
+    {
+      "id": "backend-tx-push",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/tx/push",
+      "path": "/api/v1/tx/push",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-block-hash-summary",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/summary",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/summary",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-tx-txid-summary",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/tx/:txid/summary",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/tx/{block_txid}/summary",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-tx-txid-audit",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/tx/:txid/audit",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/tx/{block_txid}/audit",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-blocks-tip-height",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/blocks/tip/height",
+      "path": "/api/v1/blocks/tip/height",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-psbt-addparents",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/psbt/addparents",
+      "path": "/api/v1/psbt/addparents",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-chain-tips",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/chain-tips",
+      "path": "/api/v1/chain-tips",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-stale-tips",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/stale-tips",
+      "path": "/api/v1/stale-tips",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-stale-tips-height",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/stale-tips/:height",
+      "path": "/api/v1/stale-tips/730000",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-prevouts",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/prevouts",
+      "path": "/api/v1/prevouts",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-cpfp",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/cpfp",
+      "path": "/api/v1/cpfp",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-txs-package",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/txs/package",
+      "path": "/api/v1/txs/package",
+      "mode": "package"
+    },
+    {
+      "id": "backend-goggles-interval",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/goggles/:interval/",
+      "path": "/api/v1/goggles/24h/",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-goggles-interval-bucketSize",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/goggles/:interval/:bucketSize",
+      "path": "/api/v1/goggles/24h/1",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-goggles-interval-bucketSize-op-mask",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/goggles/:interval/:bucketSize/:op/:mask",
+      "path": "/api/v1/goggles/24h/1/and/1",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-mempool",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mempool",
+      "path": "/api/v1/mempool",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-mempool-txids",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mempool/txids",
+      "path": "/api/v1/mempool/txids",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-mempool-recent",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mempool/recent",
+      "path": "/api/v1/mempool/recent",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx-txId",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/tx",
+      "path": "/api/v1/tx",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-txs-test",
+      "source": "mempool",
+      "method": "POST",
+      "route": "/api/v1/txs/test",
+      "path": "/api/v1/txs/test",
+      "mode": "broadcast"
+    },
+    {
+      "id": "backend-tx-txId-hex",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId/hex",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/hex",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx-txId-status",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId/status",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/status",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx-txId-outspends",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId/outspends",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/outspends",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-tx-txId-merkle-proof",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/tx/:txId/merkle-proof",
+      "path": "/api/v1/tx/15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521/merkle-proof",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-txs-outspends",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/txs/outspends",
+      "path": "/api/v1/txs/outspends?txids=15e10745f15593a899cef391191bdd3d7c12412cc4696b7bcb669d0feadc8521",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-header",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/header",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/header",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-blocks-tip-hash",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/blocks/tip/hash",
+      "path": "/api/v1/blocks/tip/hash",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-raw",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/raw",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/raw",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-txids",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/txids",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txids",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-txs",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/txs",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txs",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-hash-txs-index",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block/:hash/txs/:index",
+      "path": "/api/v1/block/000000000000000015dc777b3ff2611091336355d3f0ee9766a2cf3be8e4b1ce/txs/0",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-block-height-height",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/block-height/:height",
+      "path": "/api/v1/block-height/730000",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-address-address",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/address/:address",
+      "path": "/api/v1/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-address-address-txs",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/address/:address/txs",
+      "path": "/api/v1/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-address-address-txs-summary",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/address/:address/txs/summary",
+      "path": "/api/v1/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/txs/summary",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-address-address-utxo",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/address/:address/utxo",
+      "path": "/api/v1/address/1wiz18xYmhRX6xStj2b9t1rwWX4GKUgpv/utxo",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-scripthash-scripthash",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/scripthash/:scripthash",
+      "path": "/api/v1/scripthash/{scripthash}",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-scripthash-scripthash-txs",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/scripthash/:scripthash/txs",
+      "path": "/api/v1/scripthash/{scripthash}/txs",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-scripthash-scripthash-txs-summary",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/scripthash/:scripthash/txs/summary",
+      "path": "/api/v1/scripthash/{scripthash}/txs/summary",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-scripthash-scripthash-utxo",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/scripthash/:scripthash/utxo",
+      "path": "/api/v1/scripthash/{scripthash}/utxo",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-address-prefix-prefix",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/address-prefix/:prefix",
+      "path": "/api/v1/address-prefix/1wiz",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-mining-blocks-fees",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/blocks/fees",
+      "path": "/api/v1/mining/blocks/fees?from=1500000000&to=1500086400",
+      "mode": "exact"
+    },
+    {
+      "id": "backend-mining-blocks-audit-scores",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/mining/blocks/audit/scores",
+      "path": "/api/v1/mining/blocks/audit/scores",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-2h",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/2h",
+      "path": "/api/v1/statistics/2h",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-24h",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/24h",
+      "path": "/api/v1/statistics/24h",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-1w",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/1w",
+      "path": "/api/v1/statistics/1w",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-1m",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/1m",
+      "path": "/api/v1/statistics/1m",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-3m",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/3m",
+      "path": "/api/v1/statistics/3m",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-6m",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/6m",
+      "path": "/api/v1/statistics/6m",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-1y",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/1y",
+      "path": "/api/v1/statistics/1y",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-2y",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/2y",
+      "path": "/api/v1/statistics/2y",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-3y",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/3y",
+      "path": "/api/v1/statistics/3y",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-4y",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/4y",
+      "path": "/api/v1/statistics/4y",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-statistics-all",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/statistics/all",
+      "path": "/api/v1/statistics/all",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-nodes-world",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/nodes/world",
+      "path": "/api/v1/lightning/nodes/world",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-nodes-search-search",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/nodes/search/:search",
+      "path": "/api/v1/lightning/nodes/search/ACINQ",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-nodes-public-key-fees-histogram",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/nodes/:public_key/fees/histogram",
+      "path": "/api/v1/lightning/nodes/033ac2f9f7ff643c235cc247c521663924aff73b26b38118a6c6821460afcde1b3/fees/histogram",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-nodes-group-name",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/nodes/group/:name",
+      "path": "/api/v1/lightning/nodes/group/acinq",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-channels-search-search",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/channels/search/:search",
+      "path": "/api/v1/lightning/channels/search/ACINQ",
+      "mode": "shape"
+    },
+    {
+      "id": "backend-lightning-penalties",
+      "source": "mempool",
+      "method": "GET",
+      "route": "/api/v1/lightning/penalties",
+      "path": "/api/v1/lightning/penalties",
+      "mode": "shape"
+    }
+  ],
+  "route_sources": {
+    "bitcoin/bitcoin.routes.ts": "cbcc24989c32bb0c19f71c831dd6a2945f4d07917b900e634bb70d9d42329814",
+    "mining/mining-routes.ts": "87e5e3df6a149fb1b6706e10495e10fd6b11e9368fccd77757a4198ded2b0a2a",
+    "prices/prices.routes.ts": "3e810e95727e5231ba8307b3135b972dfcd9c9daed5a7463c8adee898dcba93e",
+    "statistics/statistics.routes.ts": "5b513dd85df7084dc0a0295539c660c21560d1926da0058cc6483f2145be3cda",
+    "bitcoin/bitcoin-core.routes.ts": "65558997318828ac57600546b3f61df23dc5eee11b573c620d2cfa37460c815c",
+    "explorer/general.routes.ts": "5bff6cb23c05fadacba6bacc9f00906fea78543aadfc19bd9825eae5cbdfaac1",
+    "explorer/nodes.routes.ts": "4105e6bd3ad3b840c522edccab06d6807d85635a596301232180951ff3000d55",
+    "explorer/channels.routes.ts": "84d16225baf368c5863b5eee2abfc3ed88143faee5fd6235c70df968f7a3b3ae",
+    "about.routes.ts": "ee24215b1a0ec14fc82666117aa7b83b13b558b6ca4d931ecb4e3fa605a6ac38"
+  },
+  "esplora_api_sha256": "146f21525d10b5b344a045006319a16b9d7758d6198f3918f07d64601a26b913"
+}

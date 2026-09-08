@@ -3,7 +3,7 @@ use brk_types::{Height, TimePeriod, Timestamp};
 use rustc_hash::FxHashMap;
 use vecdb::{ReadableVec, VecIndex, VecValue};
 
-use super::{block_bucket::BlockBucket, start_height};
+use super::{block_bucket::BlockBucket, period_start::start_height_at};
 use crate::Query;
 
 /// Time-bucket divisor in seconds: blocks are grouped by `timestamp / div`.
@@ -53,8 +53,12 @@ impl BlockWindow {
     /// reuse the same `[start, end)` so each bucket's offsets index directly
     /// into the value vec without a second walk.
     pub fn new(query: &Query, period: TimePeriod) -> Result<Self> {
-        let start = start_height(query, period)?;
-        let end = query.height() + 1usize;
+        Self::new_at(query, period, query.height())
+    }
+
+    pub fn new_at(query: &Query, period: TimePeriod, tip: Height) -> Result<Self> {
+        let start = start_height_at(query, period, tip)?;
+        let end = tip + 1usize;
         let timestamps: Vec<Timestamp> = query
             .indexer()
             .vecs()

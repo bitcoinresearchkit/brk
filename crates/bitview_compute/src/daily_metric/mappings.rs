@@ -1,3 +1,4 @@
+use crate::IndexSources;
 use brk_types::{
     Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     Month3, Month6, Timestamp, Version, Week1, Year1, Year10,
@@ -24,7 +25,7 @@ pub struct DailyMappings {
 }
 
 impl DailyMappings {
-    pub fn new(indexes: &crate::IndexSources) -> Self {
+    pub fn new(indexes: &IndexSources) -> Self {
         let height = LazyVec::init(
             "day1",
             Version::ZERO,

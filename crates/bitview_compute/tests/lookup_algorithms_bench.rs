@@ -130,10 +130,14 @@ fn benchmark_lookup_algorithms() {
             "repeat",
             Version::ONE,
             daily.clone(),
-            repeat_mapping,
+            &repeat_mapping,
         );
-        let last =
-            DailyView::<Height, StoredU64, LastDay>::new("last", Version::ONE, daily, last_mapping);
+        let last = DailyView::<Height, StoredU64, LastDay>::new(
+            "last",
+            Version::ONE,
+            daily,
+            &last_mapping,
+        );
         let mapping = Arc::new(
             (0..16_384usize)
                 .map(|i| Height::from(i * 16))

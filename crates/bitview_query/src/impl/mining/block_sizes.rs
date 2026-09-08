@@ -14,12 +14,17 @@ impl Query {
     /// corresponding metric. Single bucket-pass: built via `.map(...).unzip()`
     /// to avoid re-walking buckets.
     pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
-        let _guard = self.read_publication()?;
+        let pin = self.pin_safe_lengths()?;
         let blocks = &self.indexer().vecs().blocks;
-        let bw = BlockWindow::new(self, time_period)?;
+        let tip = pin
+            .lengths()
+            .last_height()
+            .ok_or(brk_error::Error::StateUpdating)?;
+        let bw = BlockWindow::new_at(self, time_period, tip)?;
 
         let block_sizes: Vec<StoredU64> = bw.read(&blocks.total)?;
         let block_weights: Vec<Weight> = bw.read(&blocks.weight)?;
+        drop(pin);
 
         let (sizes, weights) = bw
             .buckets

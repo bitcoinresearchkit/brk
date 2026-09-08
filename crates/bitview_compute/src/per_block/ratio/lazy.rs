@@ -1,22 +1,16 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, PriceRatio, StoredF32, Version};
 use schemars::JsonSchema;
-use vecdb::{CachedBoxedVec, ReadableBoxedVec, ReadableVec, TypedVec, UnaryTransform};
+use vecdb::{ReadableCloneableVec, UnaryTransform};
 
-use crate::{ComputedVecValue, FixedRatio, Identity, LazyPerBlock, NumericValue};
+use crate::{
+    ComputedVecValue, FixedRatio, Identity, IndexSources, LazyIndexedVec, LazyPerBlock,
+    NumericValue,
+};
 
-impl LazyRatioPerBlock<PriceRatio> {
-    /// Reuse the standard spot/reference-price ratio policy for a price source.
-    pub fn from_price_source(
-        name: &str,
-        version: Version,
-        price: ReadableBoxedVec<Height, Cents>,
-        spot: &CachedBoxedVec<Height, Cents>,
-        indexes: &crate::IndexSources,
-    ) -> Self {
-        super::price::cached_price_ratio(name, version, price, spot, indexes)
-    }
-}
+use super::price::price_ratio;
+
+const PRICE_RATIO_VERSION: Version = Version::new(5);
 
 /// Fully lazy variant of `RatioPerBlock` derived from one per-block source.
 #[derive(Clone, Traversable)]
@@ -29,6 +23,27 @@ where
     pub ppm: LazyPerBlock<R, S>,
     /// Unitless decimal ratio derived as parts per million divided by 1,000,000.
     pub ratio: LazyPerBlock<StoredF32, R>,
+}
+
+impl LazyRatioPerBlock<PriceRatio> {
+    /// Reuse the standard spot/reference-price ratio policy for a price source.
+    pub fn from_price_source(
+        name: &str,
+        version: Version,
+        price: &impl ReadableCloneableVec<Height, Cents>,
+        spot: &impl ReadableCloneableVec<Height, Cents>,
+        indexes: &IndexSources,
+    ) -> Self {
+        let version = version + PRICE_RATIO_VERSION;
+        let source = LazyIndexedVec::new(
+            &format!("{name}_ratio_ppm_source"),
+            version,
+            price,
+            spot,
+            |_, price, spot| price_ratio(spot, price),
+        );
+        Self::from_height_source(&format!("{name}_ratio"), version, &source, indexes)
+    }
 }
 
 impl<R, S> LazyRatioPerBlock<R, S>
@@ -60,11 +75,11 @@ where
     pub fn from_height_source<V>(
         name: &str,
         version: Version,
-        source: V,
-        indexes: &crate::IndexSources,
+        source: &V,
+        indexes: &IndexSources,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = R> + ReadableVec<Height, R> + Clone + 'static,
+        V: ReadableCloneableVec<Height, R> + ?Sized,
     {
         let ppm = LazyPerBlock::from_height_source::<Identity<R>>(
             &format!("{name}_{}", R::SUFFIX),

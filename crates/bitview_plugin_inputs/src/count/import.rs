@@ -17,7 +17,7 @@ impl Vecs {
             db,
             "input_count",
             version,
-            mappings.input_count_source(),
+            &mappings.input_count_source(),
             mappings,
             cached_starts,
         )?))

@@ -1,8 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{StoredU64, Weight};
-use vecdb::{Rw, StorageMode};
+use vecdb::{Pinned, Rw, StorageMode};
 
-use bitview_compute::{CachedPerBlockRolling, PerBlockFull};
+use bitview_compute::{PerBlockFull, PerBlockRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -11,5 +11,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub vbytes: PerBlockFull<StoredU64, Weight, M>,
     /// Total serialized block size in bytes, including the header,
     /// transaction-count CompactSize, and witness data.
-    pub size: CachedPerBlockRolling<StoredU64, M>,
+    pub size: PerBlockRolling<StoredU64, M, Pinned>,
 }

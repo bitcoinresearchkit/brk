@@ -77,7 +77,7 @@ fn batched_outspends_preserve_output_order_and_reorg_visibility() {
 }
 
 #[test]
-fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
+fn confirmed_handoffs_pin_the_prefix_and_revalidate_replaced_blocks() {
     use bitview_plugin_indexer::HasIndexer;
     use brk_error::Error;
 
@@ -97,8 +97,8 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
             q.confirmed_cpfp_resolved(confirmed).unwrap();
         });
 
-        // Resolved tokens retain no guard. Every consumer must reacquire one,
-        // including consumers that acquire several plugin gates together.
+        // Immutable consumers reacquire rollback protection without waiting for
+        // ordinary appends. Derived CPFP data still needs publication exclusion.
         let gate = fixture.plugins.indexer().publication().clone();
         gate.begin_update();
         let (resolve, proof, cpfp) = tokio::join!(
@@ -106,8 +106,8 @@ fn confirmed_handoffs_require_publication_and_revalidate_replaced_blocks() {
             query.run(move |q| q.merkle_proof_resolved(confirmed)),
             query.run(move |q| q.confirmed_cpfp_resolved(confirmed)),
         );
-        assert!(matches!(resolve, Err(Error::ReadTimeout)));
-        assert!(matches!(proof, Err(Error::ReadTimeout)));
+        assert!(resolve.is_ok());
+        assert!(proof.is_ok());
         assert!(matches!(cpfp, Err(Error::ReadTimeout)));
         gate.finish_update();
 

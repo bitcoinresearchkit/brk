@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use brk_types::{Cents, Height, StoredU64, Version};
 use vecdb::{
-    AnyVec, CachedBoxedVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex,
-    short_type_name,
+    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
 };
 
 mod prefix_sum;
@@ -15,7 +14,7 @@ pub struct LazySmaVec {
     name: Arc<str>,
     version: Version,
     window_starts: ReadableBoxedVec<Height, Height>,
-    prefix_sum: CachedBoxedVec<Height, StoredU64>,
+    prefix_sum: ReadableBoxedVec<Height, StoredU64>,
 }
 
 impl LazySmaVec {
@@ -23,13 +22,13 @@ impl LazySmaVec {
         name: &str,
         version: Version,
         window_starts: ReadableBoxedVec<Height, Height>,
-        prefix_sum: CachedBoxedVec<Height, StoredU64>,
+        prefix_sum: impl ReadableVec<Height, StoredU64> + Clone + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
             window_starts,
-            prefix_sum,
+            prefix_sum: ReadableBoxedVec::new(prefix_sum),
         }
     }
 

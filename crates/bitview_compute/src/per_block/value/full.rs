@@ -4,24 +4,24 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    BinaryTransform, CachedBoxedVec, Database, ReadOnlyClone, ReadableVec, Rw, StorageMode,
-    VecIndex, VecValue,
+    BinaryTransform, Budgeted, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode, VecIndex, VecValue,
 };
 
 use crate::{
-    CachedValuePerBlock, CachedWindowStartVec, LazyRollingAvgsAmountFromHeight,
-    LazyRollingSumsAmountFromHeight, LazyValueBlock, RollingDistributionValuePerBlock, SatsToCents,
-    WindowStarts, Windows,
+    CachePolicy, IndexSources, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
+    LazyValueBlock, RollingDistributionValuePerBlock, SatsToCents, ValuePerBlock, WindowStarts,
+    Windows,
 };
 
 #[derive(Traversable)]
-pub struct CachedValuePerBlockFull<M: StorageMode = Rw> {
+pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachePolicy = Budgeted> {
     /// Value for the represented block. At time-period indexes, the value is
     /// taken from the period's final block.
     pub block: LazyValueBlock,
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: CachedValuePerBlock<M>,
+    pub cumulative: ValuePerBlock<M, S>,
     pub sum: LazyRollingSumsAmountFromHeight,
     pub average: LazyRollingAvgsAmountFromHeight,
     #[traversable(flatten)]
@@ -30,22 +30,24 @@ pub struct CachedValuePerBlockFull<M: StorageMode = Rw> {
 
 const VERSION: Version = Version::TWO;
 
-impl CachedValuePerBlockFull {
-    pub fn cached_cumulative_sats(&self) -> CachedBoxedVec<Height, Sats> {
-        self.cumulative.sats.height.read_only_cached_boxed_clone()
+impl<S: CachePolicy> ValuePerBlockFull<Rw, S> {
+    pub fn cumulative_sats_source(
+        &self,
+    ) -> &(impl ReadableVec<Height, Sats> + Clone + 'static + use<S>) {
+        self.cumulative.sats.resolutions.height_source()
     }
 
     pub fn forced_import(
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let full_version = version + VERSION;
         let rolling_version = full_version + Version::TWO;
         let cumulative_version = rolling_version + Version::ONE;
-        let cumulative = CachedValuePerBlock::forced_import(
+        let cumulative = ValuePerBlock::forced_import(
             db,
             &format!("{name}_cumulative"),
             cumulative_version,
@@ -63,7 +65,7 @@ impl CachedValuePerBlockFull {
             rolling_version,
             &cumulative_sats,
             &cumulative.cents.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let average = LazyRollingAvgsAmountFromHeight::new(
@@ -71,7 +73,7 @@ impl CachedValuePerBlockFull {
             rolling_version,
             &cumulative_sats,
             &cumulative.cents.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let distribution =

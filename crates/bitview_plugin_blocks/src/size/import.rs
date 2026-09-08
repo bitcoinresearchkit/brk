@@ -1,6 +1,6 @@
 use brk_error::Result;
 
-use bitview_compute::{CachedPerBlockRolling, CachedWindowStartVec, PerBlockFull, Windows};
+use bitview_compute::{CachedWindowStartVec, PerBlockFull, PerBlockRolling, Windows};
 use bitview_plugin_indexer::Indexer;
 use brk_types::{Height, StoredU64, Version, Weight};
 use vecdb::Database;
@@ -29,7 +29,7 @@ impl Vecs {
                 mappings,
                 cached_starts,
             )?,
-            size: CachedPerBlockRolling::forced_import(
+            size: PerBlockRolling::forced_import(
                 db,
                 "block_size",
                 version,

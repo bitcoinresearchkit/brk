@@ -4,7 +4,7 @@ use std::{hint::black_box, time::Instant};
 
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_compute::{
-    CACHE_BUDGET, ColumnarPerBlock, LazyIndexedVec, WeightedCohortState, lazy_weighted_supply,
+    CACHE_BUDGET, ColumnarPerBlock, LazyIndexedVec, LazySpotValuePerBlock, WeightedCohortState,
 };
 use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
 use tempfile::tempdir;
@@ -71,19 +71,19 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
             .column("supply", Version::ONE, id)
             .read_only_boxed_clone();
         let weight = weight_cache.cached_column(id).cached_boxed_clone();
-        let weighted = lazy_weighted_supply::<false>(
+        let weighted = LazySpotValuePerBlock::from_weighted_supply::<false>(
             "awake_supply",
             Version::ONE,
-            raw.clone(),
-            weight.clone(),
+            &raw,
+            &weight,
             &indexes,
             &spot,
         );
-        let complement = lazy_weighted_supply::<true>(
+        let complement = LazySpotValuePerBlock::from_weighted_supply::<true>(
             "dormant_supply",
             Version::ONE,
-            raw,
-            weight,
+            &raw,
+            &weight,
             &indexes,
             &spot,
         );
@@ -207,11 +207,11 @@ fn benchmark_shared_age_inputs() {
     let lazy: Vec<_> = AgeRangeId::ALL
         .iter()
         .map(|&id| {
-            lazy_weighted_supply::<false>(
+            LazySpotValuePerBlock::from_weighted_supply::<false>(
                 "weighted",
                 Version::ONE,
-                supplies.cached_column(id).read_only_boxed_clone(),
-                weights.cached_column(id).cached_boxed_clone(),
+                &supplies.cached_column(id).read_only_boxed_clone(),
+                &weights.cached_column(id).cached_boxed_clone(),
                 &indexes,
                 &spot,
             )
@@ -287,8 +287,8 @@ fn benchmark_shared_age_inputs() {
             LazyIndexedVec::new(
                 "diagnostic",
                 Version::ONE,
-                supplies.cached_column(id).read_only_boxed_clone(),
-                weights.cached_column(id).cached_boxed_clone(),
+                supplies.cached_column(id),
+                weights.cached_column(id),
                 |_: Height, s, w| WeightedCohortState::split_supply(s, w).0,
             )
         })

@@ -1,12 +1,12 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
-use super::{super::lazy_cumulative_rolling::lazy_parts, LazyColumnPerBlock};
+use super::LazyColumnPerBlock;
 use crate::{
-    CachedWindowStartVec, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight,
-    LazyRollingSumsFromHeight, NumericValue, Windows,
+    IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight,
+    NumericValue, Windows,
 };
 
 #[derive(Clone, Traversable)]
@@ -35,8 +35,8 @@ where
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, C>,
         column: C,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
         let cumulative = LazyColumnPerBlock::new(
             &format!("{name}_cumulative"),
@@ -45,8 +45,22 @@ where
             column,
             indexes,
         );
-        let (block, sum, average) =
-            lazy_parts(name, version, &cumulative.height, cached_starts, indexes);
+        let source = cumulative.resolutions.height_source();
+        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let sum = LazyRollingSumsFromHeight::new(
+            &format!("{name}_sum"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
 
         Self {
             block,

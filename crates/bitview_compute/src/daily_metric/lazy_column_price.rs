@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Day1, Dollars, Height, PriceRatio, SatsFract, StoredF32, Version};
-use vecdb::{CachedBoxedVec, ColumnId, LazyVec, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{ColumnId, LazyVec, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
 use crate::{
     CentsUnsignedToDollars, DailyMappings, DollarsToSatsFract, IndexSources, LazyColumnDailyMetric,
@@ -32,7 +32,7 @@ impl<C: ColumnId> LazyColumnDailyPriceWithRatio<C> {
         column: C,
         indexes: &IndexSources,
         mappings: &DailyMappings,
-        spot: &CachedBoxedVec<Height, Cents>,
+        spot: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let cents =
             LazyColumnDailyMetric::new(&format!("{name}_cents"), version, source, column, mappings);
@@ -54,13 +54,7 @@ impl<C: ColumnId> LazyColumnDailyPriceWithRatio<C> {
             cents.views.height.read_only_boxed_clone(),
             |_, value| value.unwrap_or(Cents::NAN),
         );
-        let ratio = LazyRatioPerBlock::from_price_source(
-            name,
-            version,
-            reference.read_only_boxed_clone(),
-            spot,
-            indexes,
-        );
+        let ratio = LazyRatioPerBlock::from_price_source(name, version, &reference, spot, indexes);
         Self {
             usd,
             cents,

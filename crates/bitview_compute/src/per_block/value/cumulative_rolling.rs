@@ -1,12 +1,12 @@
 use brk_error::Result;
 
 use bitview_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
-    CachedWindowStartVec, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
+    IndexSources, LazyRollingAvgsAmountFromHeight, LazyRollingSumsAmountFromHeight,
     ValuePerBlockCumulative, Windows,
 };
 
@@ -27,8 +27,8 @@ impl ValuePerBlockCumulativeRolling {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let v = version + VERSION;
 
@@ -36,17 +36,17 @@ impl ValuePerBlockCumulativeRolling {
         let sum = LazyRollingSumsAmountFromHeight::new(
             &format!("{name}_sum"),
             v,
-            &inner.cumulative.sats.height,
-            &inner.cumulative.cents.height,
-            cached_starts,
+            inner.cumulative.sats.resolutions.height_source(),
+            inner.cumulative.cents.resolutions.height_source(),
+            window_starts,
             indexes,
         );
         let average = LazyRollingAvgsAmountFromHeight::new(
             &format!("{name}_average"),
             v,
-            &inner.cumulative.sats.height,
-            &inner.cumulative.cents.height,
-            cached_starts,
+            inner.cumulative.sats.resolutions.height_source(),
+            inner.cumulative.cents.resolutions.height_source(),
+            window_starts,
             indexes,
         );
 

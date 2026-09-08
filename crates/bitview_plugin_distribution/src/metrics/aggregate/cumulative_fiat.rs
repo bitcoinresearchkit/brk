@@ -7,7 +7,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
+use vecdb::{AnyVec, CachedReadableVec, Database, ReadableColumnarVec, Rw, StorageMode};
 
 use bitview_compute::{
     CACHE_BUDGET, CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, FiatType,
@@ -53,18 +53,26 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
                                 version,
                                 TermId::ALL.iter().copied(),
                             ))
-                            .read_only_boxed_clone(),
-                        UTXOAggregateId::Sth => source
-                            .column(&format!("{name}_cumulative_cents"), version, TermId::Short)
-                            .read_only_boxed_clone(),
-                        UTXOAggregateId::Lth => source
-                            .column(&format!("{name}_cumulative_cents"), version, TermId::Long)
-                            .read_only_boxed_clone(),
+                            .cached_boxed_clone(),
+                        UTXOAggregateId::Sth => CACHE_BUDGET
+                            .wrap(source.column(
+                                &format!("{name}_cumulative_cents"),
+                                version,
+                                TermId::Short,
+                            ))
+                            .cached_boxed_clone(),
+                        UTXOAggregateId::Lth => CACHE_BUDGET
+                            .wrap(source.column(
+                                &format!("{name}_cumulative_cents"),
+                                version,
+                                TermId::Long,
+                            ))
+                            .cached_boxed_clone(),
                     };
-                    LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+                    LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                         &name,
                         version,
-                        cumulative,
+                        &cumulative,
                         mappings,
                         cached_starts,
                     )

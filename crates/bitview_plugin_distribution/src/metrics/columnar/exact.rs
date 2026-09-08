@@ -1,3 +1,4 @@
+use bitview_compute::CACHE_BUDGET;
 use brk_error::Result;
 
 use std::ops::AddAssign;
@@ -9,8 +10,8 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec, Rw,
+    AnyStoredVec, AnyVec, CachedBoxedVec, CachedReadableVec, ColumnId, ColumnarVec, Database,
+    EagerVec, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadableColumnarVec, Rw,
     StorageMode, WritableVec,
 };
 
@@ -83,7 +84,7 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         if let Some(source) = self.direct.direct_source(filter, name, version) {
             return Some(source);
         }
@@ -127,14 +128,13 @@ where
         name: &str,
         version: Version,
         column: C,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         C: ColumnId,
     {
-        matrix
-            .read_only_clone()
-            .column(name, version, column)
-            .read_only_boxed_clone()
+        CACHE_BUDGET
+            .wrap(matrix.read_only_clone().column(name, version, column))
+            .cached_boxed_clone()
     }
 
     #[inline(always)]

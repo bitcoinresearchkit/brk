@@ -1,6 +1,6 @@
 mod common;
 
-use bitview_compute::{BoundedToF64, DailyMappings, LazyDailyMetric, LazyPerBlock};
+use bitview_compute::{BoundedToF64, CACHE_BUDGET, DailyMappings, LazyDailyMetric, LazyPerBlock};
 use brk_types::{BoundedRatio, Day1, Height, Version};
 use vecdb::{AnySerializableVec, Database, ReadableCloneableVec, ReadableVec};
 
@@ -12,11 +12,11 @@ fn bounded_sources_keep_decimal_block_and_daily_views() {
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     let values = [BoundedRatio::ZERO, BoundedRatio::ONE, BoundedRatio::NAN];
-    let blocks = stored::<Height, _>(&db, "loss_share_bounded", values);
-    let block_view = LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
+    let blocks = CACHE_BUDGET.wrap(stored::<Height, _>(&db, "loss_share_bounded", values));
+    let block_view = LazyPerBlock::from_height_source::<BoundedToF64>(
         "loss_share",
         Version::ONE,
-        blocks.read_only_boxed_clone(),
+        &blocks,
         &indexes,
     );
     let mut json = Vec::new();

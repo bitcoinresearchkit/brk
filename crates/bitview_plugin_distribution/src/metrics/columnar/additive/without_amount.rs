@@ -8,8 +8,8 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadableBoxedVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, CachedBoxedVec, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
+    PcoVecValue, ReadOnlyClone, Rw, StorageMode, WritableVec,
 };
 
 use super::super::UTXORows;
@@ -61,7 +61,7 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         self.direct_source(filter, name, version).or_else(|| {
             UTXOColumnarMetricWithoutAmountOrType::aggregate_source_from(
                 &self.age_range_matrix.read_only_clone(),
@@ -72,12 +72,12 @@ where
         })
     }
 
-    pub fn direct_source(
+    fn direct_source(
         &self,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         match filter {
             Filter::Type(output_type) => {
                 SpendableTypeId::from_output_type(*output_type).map(|id| {

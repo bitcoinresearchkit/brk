@@ -27,6 +27,7 @@ impl Query {
         let pct75 = bw.read(&frd.pct75.height)?;
         let pct90 = bw.read(&frd.pct90.height)?;
         let max = bw.read(&frd.max.height)?;
+        drop(_guard);
 
         Ok(bw
             .buckets

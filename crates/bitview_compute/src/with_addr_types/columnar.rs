@@ -2,15 +2,14 @@ use bitview_cohort::{ADDR_TYPE_IDS, AddrTypeId};
 use brk_types::{Cents, Height, Sats, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    CachedBoxedVec, CachedVec, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableColumnarVec,
-    UnaryTransform,
+    PcoVec, PcoVecValue, PinnedCachedVec, ReadOnlyColumnarVec, ReadableCloneableVec,
+    ReadableColumnarVec, UnaryTransform,
 };
 
 use crate::{
-    CACHE_BUDGET, CachedWindowStartVec, Identity, LazyColumnPerBlock,
-    LazyColumnPerBlockCumulativeRolling, LazyColumnSpotValuePerBlock, LazyPerBlock,
-    LazyPerBlockCumulativeAverage, LazyPerBlockCumulativeRolling, LazySpotValuePerBlock,
-    NumericValue, Windows,
+    CACHE_BUDGET, Identity, IndexSources, LazyColumnPerBlock, LazyColumnPerBlockCumulativeRolling,
+    LazyColumnSpotValuePerBlock, LazyPerBlock, LazyPerBlockCumulativeAverage,
+    LazyPerBlockCumulativeRolling, LazySpotValuePerBlock, NumericValue, Windows,
 };
 
 use super::WithAddrTypes;
@@ -23,11 +22,11 @@ where
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, AddrTypeId>,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
         let all_source = CACHE_BUDGET.wrap(source.sum_columns(name, version, ADDR_TYPE_IDS));
         let all =
-            LazyPerBlock::from_height_source::<Identity<T>>(name, version, all_source, indexes);
+            LazyPerBlock::from_height_source::<Identity<T>>(name, version, &all_source, indexes);
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnPerBlock::new(
                 &format!("{type_name}_{name}"),
@@ -47,12 +46,16 @@ impl WithAddrTypes<LazyColumnSpotValuePerBlock<AddrTypeId>, LazySpotValuePerBloc
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Sats>, AddrTypeId>,
-        indexes: &crate::IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        indexes: &IndexSources,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
-        let sats =
-            CachedVec::wrap(source.sum_columns(&format!("{name}_sats"), version, ADDR_TYPE_IDS));
-        let all = LazySpotValuePerBlock::from_sats_source(name, version, sats, indexes, spot_price);
+        let sats = PinnedCachedVec::wrap(source.sum_columns(
+            &format!("{name}_sats"),
+            version,
+            ADDR_TYPE_IDS,
+        ));
+        let all =
+            LazySpotValuePerBlock::from_sats_source(name, version, &sats, indexes, spot_price);
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnSpotValuePerBlock::new(
                 &format!("{type_name}_{name}"),
@@ -80,10 +83,10 @@ where
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, AddrTypeId>,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let cumulative = CachedVec::wrap(source.sum_columns(
+        let cumulative = PinnedCachedVec::wrap(source.sum_columns(
             &format!("{name}_cumulative"),
             version,
             ADDR_TYPE_IDS,
@@ -91,8 +94,8 @@ where
         let all = LazyPerBlockCumulativeRolling::from_cumulative_source(
             name,
             version,
-            cumulative,
-            cached_starts,
+            &cumulative,
+            window_starts,
             indexes,
         );
         let by_addr_type = AddrTypeId::series(|column, type_name| {
@@ -102,7 +105,7 @@ where
                 source,
                 column,
                 indexes,
-                cached_starts,
+                window_starts,
             )
         });
 
@@ -120,17 +123,19 @@ where
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, C>, AddrTypeId>,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
         let cumulative_name = format!("{name}_cumulative");
-        let cumulative = source.sum_columns(&cumulative_name, version, ADDR_TYPE_IDS);
+        let cumulative =
+            CACHE_BUDGET.wrap(source.sum_columns(&cumulative_name, version, ADDR_TYPE_IDS));
         let all =
-            LazyPerBlockCumulativeAverage::new(name, version, &cumulative, indexes, cached_starts);
+            LazyPerBlockCumulativeAverage::new(name, version, &cumulative, indexes, window_starts);
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             let name = format!("{type_name}_{name}");
-            let cumulative = source.column(&format!("{name}_cumulative"), version, column);
-            LazyPerBlockCumulativeAverage::new(&name, version, &cumulative, indexes, cached_starts)
+            let cumulative =
+                CACHE_BUDGET.wrap(source.column(&format!("{name}_cumulative"), version, column));
+            LazyPerBlockCumulativeAverage::new(&name, version, &cumulative, indexes, window_starts)
         });
 
         Self { all, by_addr_type }

@@ -1,17 +1,19 @@
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use std::ops::AddAssign;
 
 use bitview_cohort::{AgeRangeId, CohortContext, TermId, UTXOAggregateId};
 use bitview_compute::{
     BoundedToF64, CACHE_BUDGET, ColumnarPerBlock, LazyColumnPerBlock, LazyFiatPerBlock,
-    LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, lazy_weighted_supply,
+    LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
 };
 use bitview_plugin::ImportContext;
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, StoredF64, Version};
 use vecdb::{
     CachedBoxedVec, CachedColumnarVec, CachedReadableVec, Database, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableColumnarVec,
+    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec,
 };
 
 use super::Vecs;
@@ -25,7 +27,7 @@ impl SpendingExposureSeries {
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF64>, AgeRangeId>,
         mobility_source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Self {
         let age_range = AgeRangeId::series(CohortContext::Utxo, |column, name| {
             LazyColumnPerBlock::new(
@@ -43,7 +45,7 @@ impl SpendingExposureSeries {
             LazyPerBlock::from_height_source::<BoundedToF64>(
                 &format!("{name}_mobility"),
                 version,
-                cached_mobility.cached_column(column).clone(),
+                cached_mobility.cached_column(column),
                 mappings,
             )
         });
@@ -91,15 +93,17 @@ impl AggregateSources {
         name: &str,
         version: Version,
         aggregate: UTXOAggregateId,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         T: PcoVecValue + AddAssign,
     {
         match aggregate.term() {
-            Some(term) => source.column(name, version, term).read_only_boxed_clone(),
+            Some(term) => CACHE_BUDGET
+                .wrap(source.column(name, version, term))
+                .cached_boxed_clone(),
             None => CACHE_BUDGET
                 .wrap(source.sum_columns(name, version, TermId::ALL.iter().copied()))
-                .read_only_boxed_clone(),
+                .cached_boxed_clone(),
         }
     }
 
@@ -108,13 +112,13 @@ impl AggregateSources {
         name: &str,
         version: Version,
         aggregate: UTXOAggregateId,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         T: PcoVecValue,
     {
-        source
-            .column(name, version, aggregate)
-            .read_only_boxed_clone()
+        CACHE_BUDGET
+            .wrap(source.column(name, version, aggregate))
+            .cached_boxed_clone()
     }
 }
 
@@ -123,15 +127,15 @@ impl AggregateVecs {
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &AggregateSources,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
         let supply = Mobility {
-            mobile: LazySpotValuePerBlock::from_boxed_sats_source(
+            mobile: LazySpotValuePerBlock::from_sats_source(
                 &metric_name("mobile_supply"),
                 version,
-                AggregateSources::additive_source(
+                &AggregateSources::additive_source(
                     &sources.supply.mobile.read_only_clone(),
                     &metric_name("mobile_supply_sats"),
                     version,
@@ -140,10 +144,10 @@ impl AggregateVecs {
                 mappings,
                 spot_price,
             ),
-            immobile: LazySpotValuePerBlock::from_boxed_sats_source(
+            immobile: LazySpotValuePerBlock::from_sats_source(
                 &metric_name("immobile_supply"),
                 version,
-                AggregateSources::additive_source(
+                &AggregateSources::additive_source(
                     &sources.supply.immobile.read_only_clone(),
                     &metric_name("immobile_supply_sats"),
                     version,
@@ -153,10 +157,10 @@ impl AggregateVecs {
                 spot_price,
             ),
         };
-        let supply_in_loss_share = LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
+        let supply_in_loss_share = LazyPerBlock::from_height_source::<BoundedToF64>(
             &metric_name("coinflow_supply_in_loss_share"),
             version,
-            AggregateSources::exact_source(
+            &AggregateSources::exact_source(
                 &sources.supply_in_loss_share.read_only_clone(),
                 &metric_name("coinflow_supply_in_loss_share"),
                 version,
@@ -167,10 +171,10 @@ impl AggregateVecs {
         let horizon = HorizonId::from_fn(|horizon| {
             let name = metric_name(&format!("coinflow_{}_supply_in_loss_share", horizon.name()));
             HorizonVecs {
-                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
+                supply_in_loss_share: LazyPerBlock::from_height_source::<BoundedToF64>(
                     &name,
                     version,
-                    AggregateSources::exact_source(
+                    &AggregateSources::exact_source(
                         &horizon.select(&sources.horizon).read_only_clone(),
                         &name,
                         version,
@@ -180,10 +184,10 @@ impl AggregateVecs {
                 ),
             }
         });
-        let cap = LazyFiatPerBlock::from_boxed_cents_source(
+        let cap = LazyFiatPerBlock::from_cents_source(
             &metric_name("coinflow_cap"),
             version,
-            AggregateSources::additive_source(
+            &AggregateSources::additive_source(
                 &sources.cap.read_only_clone(),
                 &metric_name("coinflow_cap_cents"),
                 version,
@@ -191,10 +195,10 @@ impl AggregateVecs {
             ),
             mappings,
         );
-        let price = LazyPriceWithRatioPerBlock::from_boxed_height_source(
+        let price = LazyPriceWithRatioPerBlock::from_height_source(
             &metric_name("coinflow_price"),
             version,
-            AggregateSources::exact_source(
+            &AggregateSources::exact_source(
                 &sources.price.read_only_clone(),
                 &metric_name("coinflow_price_cents"),
                 version,
@@ -217,9 +221,9 @@ impl AggregateVecs {
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
-        prices: &bitview_plugin_price::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
+        mappings: &MappingsVecs,
+        prices: &PriceVecs,
+        distribution: &DistributionVecs,
     ) -> Result<Self> {
         let database = STORAGE.open_database(context, 250_000)?;
         let db = &database;
@@ -269,14 +273,10 @@ impl Vecs {
                     .supply
                     .total
                     .age_ranges
-                    .cached_column(column)
-                    .read_only_boxed_clone();
-                let weight = spending_exposure
-                    .cached_mobility
-                    .cached_column(column)
-                    .cached_boxed_clone();
+                    .cached_column(column);
+                let weight = spending_exposure.cached_mobility.cached_column(column);
                 if side == "immobile" {
-                    lazy_weighted_supply::<true>(
+                    LazySpotValuePerBlock::from_weighted_supply::<true>(
                         &name,
                         version,
                         supply,
@@ -285,7 +285,7 @@ impl Vecs {
                         &spot_price,
                     )
                 } else {
-                    lazy_weighted_supply::<false>(
+                    LazySpotValuePerBlock::from_weighted_supply::<false>(
                         &name,
                         version,
                         supply,

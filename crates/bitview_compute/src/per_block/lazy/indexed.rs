@@ -4,7 +4,7 @@ use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec,
+    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec,
     ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
@@ -48,7 +48,7 @@ where
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<I, S>,
-    metadata: CachedBoxedVec<I, M>,
+    metadata: ReadableBoxedVec<I, M>,
     compute: Arc<dyn IndexedTransform<I, S, M, T>>,
 }
 
@@ -62,15 +62,15 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<I, S>,
-        metadata: CachedBoxedVec<I, M>,
+        source: &impl ReadableCloneableVec<I, S>,
+        metadata: &impl ReadableCloneableVec<I, M>,
         compute: impl Fn(I, S, M) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
-            metadata,
+            source: source.read_only_boxed_clone(),
+            metadata: metadata.read_only_boxed_clone(),
             compute: Arc::new(compute),
         }
     }
@@ -290,8 +290,8 @@ mod tests {
     use brk_types::{Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
-        ReadableVec, VecIndex, WritableVec,
+        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, VecIndex,
+        WritableVec,
     };
 
     use super::LazyIndexedVec;
@@ -318,8 +318,8 @@ mod tests {
         let indexed = LazyIndexedVec::new(
             "indexed",
             Version::ONE,
-            source.read_only_boxed_clone(),
-            metadata.read_only_cached_boxed_clone(),
+            &source,
+            &metadata,
             |height, source, metadata| {
                 StoredU64::from(height.to_usize() as u64 + *source + *metadata)
             },

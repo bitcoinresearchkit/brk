@@ -1,14 +1,14 @@
 use bitview_traversable::Traversable;
-use brk_types::Version;
+use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{ReadableCloneableVec, UnaryTransform};
 
 use crate::{
-    CachedWindowStartVec, ComputedVecValue, LazyPerBlock, LazyRollingComplete, NumericValue,
-    PerBlock, RollingComplete, Windows,
+    ComputedVecValue, IndexSources, LazyPerBlock, LazyRollingComplete, NumericValue, PerBlock,
+    RollingComplete, Windows,
 };
 
-/// Lazy analog of `CachedPerBlockRolling<T>`: lazy cumulative + lazy rolling complete.
+/// Lazy analog of `PerBlockRolling<T>`: lazy cumulative + lazy rolling complete.
 /// Derived by transforming another metric's cumulative and rolling parts.
 /// Zero stored vecs.
 #[derive(Clone, Traversable)]
@@ -34,13 +34,12 @@ where
         version: Version,
         source_cumulative: &PerBlock<S1T>,
         source_rolling: &RollingComplete<S1T>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
-        let cumulative = LazyPerBlock::from_computed::<F>(
+        let cumulative = LazyPerBlock::from_resolutions::<F>(
             &format!("{name}_cumulative"),
             version,
-            source_cumulative.height.read_only_boxed_clone(),
             source_cumulative,
         );
 
@@ -49,7 +48,7 @@ where
             version,
             &cumulative.height,
             source_rolling,
-            cached_starts,
+            window_starts,
             indexes,
         );
 

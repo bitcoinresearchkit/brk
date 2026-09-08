@@ -2,6 +2,9 @@ use bitview_compute::{
     ByDcaCagr, ByDcaPeriod, LazyIndexedVec, LazyPercentPerBlock, LazyPreviousDeltaVec,
     LazySinceDayVec, LazyWindowVec, Price, RatioDiffCents,
 };
+use bitview_plugin_blocks::Vecs as BlocksVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use brk_error::{Error, Result};
 use brk_types::{Cents, Date, Day1, Height, PartsPerMillionSigned64, Sats};
 use vecdb::{BinaryTransform, CheckedSub, ReadableCloneableVec, VecIndex};
@@ -14,9 +17,9 @@ use crate::{
 
 impl Vecs {
     pub fn import(
-        mappings: &bitview_plugin_mappings::Vecs,
-        blocks: &bitview_plugin_blocks::Vecs,
-        prices: &bitview_plugin_price::Vecs,
+        mappings: &MappingsVecs,
+        blocks: &BlocksVecs,
+        prices: &PriceVecs,
     ) -> Result<Self> {
         let version = STORAGE.schema_version();
 
@@ -30,14 +33,9 @@ impl Vecs {
             LazyPreviousDeltaVec::new("dca_sats_per_day", version, sats_cumulative.clone());
 
         let cached_starts = ByDcaPeriod::try_new(|_, days| {
-            Ok::<_, Error>(
-                blocks
-                    .lookback
-                    .cached_start_vec(days as usize)
-                    .read_only_cached_boxed_clone(),
-            )
+            Ok::<_, Error>(blocks.lookback.cached_start_vec(days as usize))
         })?;
-        let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
+        let spot_price = prices.spot.cents.resolutions.height_source();
 
         let dca_stack =
             ByDcaPeriod::try_from_period(&cached_starts, |name, _days, window_starts| {
@@ -46,11 +44,11 @@ impl Vecs {
                     &format!("{metric_name}_sats_source"),
                     version,
                     sats_cumulative.clone(),
-                    window_starts.clone(),
+                    (**window_starts).clone(),
                     true,
                     |current, before, _| current.checked_sub(before).unwrap_or_default(),
                 );
-                DcaStack::from_source(&metric_name, version, mappings, source, &spot_price)
+                DcaStack::from_source(&metric_name, version, mappings, &source, spot_price)
             })?;
 
         let first_price_day = Day1::try_from(Date::new(2010, 7, 12)).unwrap();
@@ -59,8 +57,8 @@ impl Vecs {
             let source = LazyIndexedVec::new(
                 &format!("{metric_name}_cents_source"),
                 version,
-                stack.sats.height.read_only_boxed_clone(),
-                cached_days.clone(),
+                &stack.sats.height,
+                &cached_days,
                 move |_, stack_sats, day| {
                     if day <= first_price_day {
                         return Cents::ZERO;
@@ -73,7 +71,7 @@ impl Vecs {
             Ok::<_, Error>(Price::from_height_source(
                 &metric_name,
                 version,
-                source,
+                &source,
                 mappings,
             ))
         })?;
@@ -84,8 +82,8 @@ impl Vecs {
                 let source = LazyIndexedVec::new(
                     &format!("{metric_name}_ppm_source"),
                     version,
-                    cost_basis.cents.height.read_only_boxed_clone(),
-                    spot_price.clone(),
+                    &cost_basis.cents.height,
+                    spot_price,
                     |_, cost_basis, spot| {
                         RatioDiffCents::<PartsPerMillionSigned64>::apply(spot, cost_basis)
                     },
@@ -93,7 +91,7 @@ impl Vecs {
                 Ok::<_, Error>(LazyPercentPerBlock::from_height_source(
                     &metric_name,
                     version,
-                    source,
+                    &source,
                     mappings,
                 ))
             })?;
@@ -114,7 +112,7 @@ impl Vecs {
                     days,
                     version,
                     mappings,
-                    window_starts,
+                    *window_starts,
                     prices,
                 )
             })?;
@@ -126,7 +124,7 @@ impl Vecs {
                     &format!("{metric_name}_ppm_source"),
                     version,
                     prices.spot.cents.height.read_only_boxed_clone(),
-                    window_starts.clone(),
+                    (**window_starts).clone(),
                     false,
                     |current, past, _| {
                         RatioDiffCents::<PartsPerMillionSigned64>::apply(current, past)
@@ -135,7 +133,7 @@ impl Vecs {
                 Ok::<_, Error>(LazyPercentPerBlock::from_height_source(
                     &metric_name,
                     version,
-                    source,
+                    &source,
                     mappings,
                 ))
             })?;
@@ -150,7 +148,7 @@ impl Vecs {
                 day,
                 |current, before| current.checked_sub(before).unwrap_or_default(),
             );
-            DcaStack::from_source(&metric_name, version, mappings, source, &spot_price)
+            DcaStack::from_source(&metric_name, version, mappings, &source, spot_price)
         })?;
 
         let class_cost_basis =
@@ -159,8 +157,8 @@ impl Vecs {
                 let source = LazyIndexedVec::new(
                     &format!("{metric_name}_cents_source"),
                     version,
-                    stack.sats.height.read_only_boxed_clone(),
-                    cached_days.clone(),
+                    &stack.sats.height,
+                    &cached_days,
                     move |_, stack_sats, day| {
                         if day < from {
                             return Cents::ZERO;
@@ -172,7 +170,7 @@ impl Vecs {
                 Ok::<_, Error>(Price::from_height_source(
                     &metric_name,
                     version,
-                    source,
+                    &source,
                     mappings,
                 ))
             })?;
@@ -183,8 +181,8 @@ impl Vecs {
                 let source = LazyIndexedVec::new(
                     &format!("{metric_name}_ppm_source"),
                     version,
-                    cost_basis.cents.height.read_only_boxed_clone(),
-                    spot_price.clone(),
+                    &cost_basis.cents.height,
+                    spot_price,
                     |_, cost_basis, spot| {
                         RatioDiffCents::<PartsPerMillionSigned64>::apply(spot, cost_basis)
                     },
@@ -192,7 +190,7 @@ impl Vecs {
                 Ok::<_, Error>(LazyPercentPerBlock::from_height_source(
                     &metric_name,
                     version,
-                    source,
+                    &source,
                     mappings,
                 ))
             })?;

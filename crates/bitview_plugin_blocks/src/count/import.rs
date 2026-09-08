@@ -1,14 +1,14 @@
 use bitview_compute::{
-    BlockCountTarget1m, BlockCountTarget1w, BlockCountTarget1y, BlockCountTarget24h, CACHE_BUDGET,
+    BlockCountTarget1m, BlockCountTarget1w, BlockCountTarget1y, BlockCountTarget24h,
     CachedWindowStartVec, ConstantVecs, LazyPerBlockCumulativeRolling, Windows,
 };
 use bitview_plugin_indexer::Indexer;
-use brk_types::{Height, StoredU64, Version, Weight};
-use vecdb::{LazyVec, ReadableCloneableVec};
+use brk_types::{Height, StoredU64, Version};
+use vecdb::{IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
-fn cumulative_block_count(height: Height, _: Weight) -> StoredU64 {
+fn cumulative_block_count(height: Height) -> StoredU64 {
     StoredU64::from(u64::from(height) + 1)
 }
 
@@ -19,13 +19,12 @@ impl Vecs {
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
-        let total_source = LazyVec::init(
+        let total_source = IndexVec::new(
             "block_count_cumulative_source",
             version + Version::ONE,
-            indexer.vecs().blocks.weight.read_only_boxed_clone(),
+            indexer.vecs().blocks.weight.read_only_clone(),
             cumulative_block_count,
         );
-        let total_source = CACHE_BUDGET.wrap(total_source);
 
         Self {
             target: Windows {
@@ -53,7 +52,7 @@ impl Vecs {
             total: LazyPerBlockCumulativeRolling::from_cumulative_source(
                 "block_count",
                 version + Version::ONE,
-                total_source,
+                &total_source,
                 cached_starts,
                 mappings,
             ),

@@ -19,7 +19,10 @@ impl ResolvedCpfp {
 impl Query {
     /// Resolve CPFP JSON once before an async response handoff.
     pub fn resolve_cpfp(&self, txid: &Txid) -> Result<ResolvedCpfp> {
-        let source = match self.resolve_cpfp_source(txid)? {
+        let source = match self
+            .resolve_cpfp_source(txid)
+            .map_err(|error| self.transaction_error(error))?
+        {
             CpfpSource::Memory(info) => ResolvedTxBody::memory(to_vec(&info).unwrap()),
             CpfpSource::Chain(transaction) => ResolvedTxBody::Chain(transaction),
         };

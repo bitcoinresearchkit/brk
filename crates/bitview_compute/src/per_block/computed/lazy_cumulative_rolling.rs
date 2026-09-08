@@ -3,45 +3,12 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{ColumnId, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec};
+use vecdb::{ColumnId, ReadableCloneableVec};
 
 use crate::{
-    CachedWindowStartVec, Identity, LazyColumnPerBlock, LazyPerBlock, LazyPreviousDeltaVec,
+    Identity, IndexSources, LazyColumnPerBlock, LazyPerBlock, LazyPreviousDeltaVec,
     LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, NumericValue, Windows,
 };
-
-pub fn lazy_parts<T>(
-    name: &str,
-    version: Version,
-    cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-    cached_starts: &Windows<&CachedWindowStartVec>,
-    indexes: &crate::IndexSources,
-) -> (
-    LazyPreviousDeltaVec<Height, T>,
-    LazyRollingSumsFromHeight<T>,
-    LazyRollingAvgsFromHeight<T>,
-)
-where
-    T: NumericValue + JsonSchema,
-{
-    (
-        LazyPreviousDeltaVec::new(name, version, cumulative.read_only_boxed_clone()),
-        LazyRollingSumsFromHeight::new(
-            &format!("{name}_sum"),
-            version,
-            cumulative,
-            cached_starts,
-            indexes,
-        ),
-        LazyRollingAvgsFromHeight::new(
-            &format!("{name}_average"),
-            version,
-            cumulative,
-            cached_starts,
-            indexes,
-        ),
-    )
-}
 
 #[derive(Clone, Traversable)]
 pub struct LazyPerBlockCumulativeRolling<T>
@@ -66,11 +33,25 @@ where
         name: &str,
         version: Version,
         cumulative: LazyPerBlock<T>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
-        let (block, sum, average) =
-            lazy_parts(name, version, &cumulative.height, cached_starts, indexes);
+        let source = &cumulative.height;
+        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let sum = LazyRollingSumsFromHeight::new(
+            &format!("{name}_sum"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
 
         Self {
             block,
@@ -83,12 +64,12 @@ where
     pub fn from_cumulative_source<V>(
         name: &str,
         version: Version,
-        source: V,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        source: &V,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static,
+        V: ReadableCloneableVec<Height, T> + ?Sized,
     {
         let cumulative = LazyPerBlock::from_height_source::<Identity<T>>(
             &format!("{name}_cumulative"),
@@ -97,32 +78,15 @@ where
             indexes,
         );
 
-        Self::from_cumulative(name, version, cumulative, cached_starts, indexes)
-    }
-
-    pub fn from_boxed_cumulative_source(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<Height, T>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
-    ) -> Self {
-        let cumulative = LazyPerBlock::from_boxed_height_source::<Identity<T>>(
-            &format!("{name}_cumulative"),
-            version,
-            source,
-            indexes,
-        );
-
-        Self::from_cumulative(name, version, cumulative, cached_starts, indexes)
+        Self::from_cumulative(name, version, cumulative, window_starts, indexes)
     }
 
     pub fn from_lazy_source(
         name: &str,
         version: Version,
         source: &LazyPerBlock<T>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let cumulative = LazyPerBlock::from_lazy::<Identity<T>, T>(
             &format!("{name}_cumulative"),
@@ -130,23 +94,22 @@ where
             source,
         );
 
-        Self::from_cumulative(name, version, cumulative, cached_starts, indexes)
+        Self::from_cumulative(name, version, cumulative, window_starts, indexes)
     }
 
     pub fn from_column_source<C: ColumnId>(
         name: &str,
         version: Version,
         source: &LazyColumnPerBlock<T, C>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let cumulative = LazyPerBlock::from_resolutions::<Identity<T>>(
             &format!("{name}_cumulative"),
             version,
-            source.height.read_only_boxed_clone(),
             &source.resolutions,
         );
 
-        Self::from_cumulative(name, version, cumulative, cached_starts, indexes)
+        Self::from_cumulative(name, version, cumulative, window_starts, indexes)
     }
 }

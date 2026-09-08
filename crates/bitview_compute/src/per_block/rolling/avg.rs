@@ -1,9 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
 use schemars::JsonSchema;
-use vecdb::{DeltaAvg, LazyDeltaVec, ReadOnlyClone, ReadableBoxedVec};
+use vecdb::{DeltaAvg, LazyDeltaVec, ReadableBoxedVec, ReadableCloneableVec};
 
-use crate::{CachedWindowStartVec, IndexSources, NumericValue, Resolutions};
+use crate::{IndexSources, NumericValue, Resolutions};
 
 /// A single lazy rolling-average slot from height: the lazy delta vec + its resolution views.
 /// Output is always StoredF32 regardless of input type T.
@@ -23,14 +23,14 @@ impl<T: NumericValue + JsonSchema> LazyRollingAvgFromHeight<T> {
         name: &str,
         version: Version,
         cumulative: ReadableBoxedVec<Height, T>,
-        cached_start: &CachedWindowStartVec,
+        window_start: &impl ReadableCloneableVec<Height, Height>,
         indexes: &IndexSources,
     ) -> Self {
-        let cached = cached_start.read_only_clone();
+        let cached = window_start.read_only_boxed_clone();
         let height = LazyDeltaVec::new(name, version, cumulative, cached.version(), move || {
             cached.snapshot()
         });
-        let resolutions = Resolutions::from_height_source(name, height.clone(), version, indexes);
+        let resolutions = Resolutions::from_source(name, &height, version, indexes);
         Self {
             height,
             resolutions: Box::new(resolutions),

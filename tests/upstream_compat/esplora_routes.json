@@ -1,0 +1,207 @@
+[
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid",
+    "endpoint": "get-transaction"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/status",
+    "endpoint": "get-transaction-status"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/hex",
+    "endpoint": "get-transaction-hex"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/raw",
+    "endpoint": "get-transaction-raw"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/merkleblock-proof",
+    "endpoint": "get-transaction-merkleblock-proof"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/merkle-proof",
+    "endpoint": "get-transaction-merkle-proof"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/outspend/:vout",
+    "endpoint": "get-transaction-outspend"
+  },
+  {
+    "method": "GET",
+    "route": "/api/tx/:txid/outspends",
+    "endpoint": "get-transaction-outspends"
+  },
+  {
+    "method": "POST",
+    "route": "/api/tx",
+    "endpoint": "post-transaction"
+  },
+  {
+    "method": "POST",
+    "route": "/api/txs/package",
+    "endpoint": "transaction-package"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address",
+    "endpoint": "get-address"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash",
+    "endpoint": "scripthash"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address/txs",
+    "endpoint": "get-address-transactions"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash/txs",
+    "endpoint": "scripthash-txs"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address/txs/chain",
+    "endpoint": "get-address-transactions-chain"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address/txs/chain/:last_seen_txid",
+    "endpoint": "address-chain-page"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash/txs/chain",
+    "endpoint": "scripthash-txs-chain"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash/txs/chain/:last_seen_txid",
+    "endpoint": "scripthash-txs-chain-{cursor}"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address/txs/mempool",
+    "endpoint": "get-address-transactions-mempool"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash/txs/mempool",
+    "endpoint": "scripthash-txs-mempool"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address/:address/utxo",
+    "endpoint": "get-address-utxo"
+  },
+  {
+    "method": "GET",
+    "route": "/api/scripthash/:hash/utxo",
+    "endpoint": "scripthash-utxo"
+  },
+  {
+    "method": "GET",
+    "route": "/api/address-prefix/:prefix",
+    "endpoint": "address-prefix"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash",
+    "endpoint": "get-block"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/header",
+    "endpoint": "get-block-header"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/status",
+    "endpoint": "get-block-status"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/txs",
+    "endpoint": "get-block-transactions"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/txs/:start_index",
+    "endpoint": "block-txs-page"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/txids",
+    "endpoint": "get-block-transaction-ids"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/txid/:index",
+    "endpoint": "get-block-transaction-id"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block/:hash/raw",
+    "endpoint": "get-block-raw"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block-height/:height",
+    "endpoint": "get-block-height"
+  },
+  {
+    "method": "GET",
+    "route": "/api/blocks",
+    "endpoint": "blocks-recent"
+  },
+  {
+    "method": "GET",
+    "route": "/api/blocks/:start_height",
+    "endpoint": "get-blocks"
+  },
+  {
+    "method": "GET",
+    "route": "/api/blocks/tip/height",
+    "endpoint": "get-block-tip-height"
+  },
+  {
+    "method": "GET",
+    "route": "/api/blocks/tip/hash",
+    "endpoint": "get-block-tip-hash"
+  },
+  {
+    "method": "GET",
+    "route": "/api/mempool",
+    "endpoint": "get-mempool"
+  },
+  {
+    "method": "GET",
+    "route": "/api/mempool/txids",
+    "endpoint": "get-mempool-transaction-ids"
+  },
+  {
+    "method": "GET",
+    "route": "/api/mempool/recent",
+    "endpoint": "get-mempool-recent"
+  },
+  {
+    "method": "GET",
+    "route": "/api/fee-estimates",
+    "endpoint": "fee-estimates"
+  },
+  {
+    "method": "GET",
+    "route": "/api/block-template",
+    "endpoint": "block-template"
+  }
+]

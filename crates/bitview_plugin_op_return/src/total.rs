@@ -1,20 +1,23 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_traversable::Traversable;
 use brk_types::{Bytes, Height, PartsPerMillion32, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyVec, CachedBoxedVec, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{
+    AnyVec, Database, Pinned, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+};
 
 use super::breakdown::BlockMetrics;
 use bitview_compute::{
-    CachedPerBlockCumulativeRolling, CachedWindowStartVec, LazyPercentCumulativeRolling,
-    LazyPercentPerBlock, PerBlockCumulativeRolling, RatioBytes, RatioSats, Windows,
+    CachedWindowStartVec, LazyPercentCumulativeRolling, LazyPercentPerBlock,
+    PerBlockCumulativeRolling, RatioBytes, RatioSats, Windows,
 };
 
 #[derive(Traversable)]
 pub struct Total<M: StorageMode = Rw> {
     /// Number of script bytes following the `OP_RETURN` opcode across all
     /// `OP_RETURN` outputs.
-    pub data_bytes: CachedPerBlockCumulativeRolling<Bytes, M>,
+    pub data_bytes: PerBlockCumulativeRolling<Bytes, M, Pinned>,
     /// Number of transactions containing at least one `OP_RETURN` output; each
     /// transaction is counted once regardless of how many such outputs it has.
     pub tx_count: PerBlockCumulativeRolling<StoredU64, M>,
@@ -37,12 +40,12 @@ impl Total {
         db: &Database,
         prefix: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        block_size: &CachedBoxedVec<Height, StoredU64>,
-        chain_fees: &CachedBoxedVec<Height, Sats>,
+        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+        chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
-        let data_bytes = CachedPerBlockCumulativeRolling::forced_import(
+        let data_bytes = PerBlockCumulativeRolling::forced_import(
             db,
             &format!("{prefix}_data_bytes"),
             version,
@@ -72,18 +75,12 @@ impl Total {
         )?;
 
         Ok(Self {
-            chain_share: Self::lazy_chain_share(
-                prefix,
-                version,
-                &data_bytes,
-                block_size.clone(),
-                mappings,
-            ),
+            chain_share: Self::lazy_chain_share(prefix, version, &data_bytes, block_size, mappings),
             fee_share: Self::lazy_fee_share(
                 prefix,
                 version,
                 &fees,
-                chain_fees.clone(),
+                chain_fees,
                 cached_starts,
                 mappings,
             ),
@@ -97,12 +94,12 @@ impl Total {
     fn lazy_chain_share(
         prefix: &str,
         version: Version,
-        data_bytes: &CachedPerBlockCumulativeRolling<Bytes>,
-        block_size: CachedBoxedVec<Height, StoredU64>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        data_bytes: &PerBlockCumulativeRolling<Bytes, Rw, Pinned>,
+        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+        mappings: &MappingsVecs,
     ) -> LazyPercentPerBlock<PartsPerMillion32> {
         let data_bytes = data_bytes.cumulative.height.read_only_clone();
-        LazyPercentPerBlock::from_cached_ratio::<Bytes, StoredU64, RatioBytes<PartsPerMillion32>>(
+        LazyPercentPerBlock::from_ratio::<Bytes, StoredU64, RatioBytes<PartsPerMillion32>>(
             &format!("{prefix}_chain_share"),
             version,
             &data_bytes,
@@ -115,9 +112,9 @@ impl Total {
         prefix: &str,
         version: Version,
         fees: &PerBlockCumulativeRolling<Sats>,
-        chain_fees: CachedBoxedVec<Height, Sats>,
+        chain_fees: &impl ReadableCloneableVec<Height, Sats>,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> LazyPercentCumulativeRolling<PartsPerMillion32> {
         LazyPercentCumulativeRolling::from_cumulative_ratio::<
             Sats,
@@ -133,8 +130,10 @@ impl Total {
         )
     }
 
-    pub fn cached_data_bytes(&self) -> CachedBoxedVec<Height, Bytes> {
-        self.data_bytes.cached_cumulative()
+    pub fn data_bytes_source(
+        &self,
+    ) -> &(impl ReadableVec<Height, Bytes> + Clone + 'static + use<>) {
+        self.data_bytes.cumulative_source()
     }
 
     pub fn len(&self) -> usize {

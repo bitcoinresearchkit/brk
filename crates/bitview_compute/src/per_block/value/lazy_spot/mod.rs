@@ -1,17 +1,11 @@
-mod pinned;
-
 use bitview_traversable::Traversable;
-use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{
-    BinaryTransform, CachedBoxedVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
-};
+use brk_types::{Bitcoin, BoundedRatio, Cents, Dollars, Height, Sats, Version};
+use vecdb::{BinaryTransform, ReadableBoxedVec, ReadableCloneableVec};
 
 use crate::{
-    CentsUnsignedToDollars, DerivedResolutions, Identity, LazyIndexedVec, LazyPerBlock,
-    ReadableResolutions, SatsToBitcoin, SatsToCents,
+    CentsUnsignedToDollars, DerivedResolutions, Identity, IndexSources, LazyIndexedVec,
+    LazyPerBlock, ReadableResolutions, SatsToBitcoin, SatsToCents, WeightedCohortState,
 };
-
-pub use pinned::PinnedSpotValuePerBlock;
 
 /// Fully lazy point-in-time value backed by one sats source.
 #[derive(Clone, Traversable)]
@@ -70,6 +64,29 @@ impl SpotValueSource for LazySpotValuePerBlock {
 }
 
 impl LazySpotValuePerBlock {
+    /// A lazy weighted stock from shared age-cohort inputs. Retains the historical
+    /// independent flooring of the weighted and complementary sides.
+    pub fn from_weighted_supply<const COMPLEMENT: bool>(
+        name: &str,
+        version: Version,
+        supply: &impl ReadableCloneableVec<Height, Sats>,
+        weight: &impl ReadableCloneableVec<Height, BoundedRatio>,
+        indexes: &IndexSources,
+        spot: &impl ReadableCloneableVec<Height, Cents>,
+    ) -> Self {
+        let source = LazyIndexedVec::new(
+            &format!("{name}_sats"),
+            version,
+            supply,
+            weight,
+            |_, supply, weight| {
+                let (weighted, complement) = WeightedCohortState::split_supply(supply, weight);
+                if COMPLEMENT { complement } else { weighted }
+            },
+        );
+        Self::from_sats_source(name, version, &source, indexes, spot)
+    }
+
     pub fn identity(name: &str, version: Version, source: &Self) -> Self {
         let sats = LazyPerBlock::from_lazy::<Identity<Sats>, Sats>(
             &format!("{name}_sats"),
@@ -99,30 +116,14 @@ impl LazySpotValuePerBlock {
     pub fn from_sats_source<V>(
         name: &str,
         version: Version,
-        source: V,
-        indexes: &crate::IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        source: &V,
+        indexes: &IndexSources,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = Sats> + ReadableVec<Height, Sats> + Clone + 'static,
+        V: ReadableCloneableVec<Height, Sats> + ?Sized,
     {
         let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
-            &format!("{name}_sats"),
-            version,
-            source,
-            indexes,
-        );
-        Self::from_sats(name, version, sats, indexes, spot_price)
-    }
-
-    pub fn from_boxed_sats_source(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<Height, Sats>,
-        indexes: &crate::IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
-    ) -> Self {
-        let sats = LazyPerBlock::from_boxed_height_source::<Identity<Sats>>(
             &format!("{name}_sats"),
             version,
             source,
@@ -135,20 +136,20 @@ impl LazySpotValuePerBlock {
         name: &str,
         version: Version,
         sats: LazyPerBlock<Sats>,
-        indexes: &crate::IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        indexes: &IndexSources,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let cents_source = LazyIndexedVec::new(
             &format!("{name}_cents_source"),
             version,
-            sats.height.read_only_boxed_clone(),
-            spot_price.clone(),
+            &sats.height,
+            spot_price,
             |_, sats, spot| SatsToCents::apply(sats, spot),
         );
         let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
             &format!("{name}_cents"),
             version,
-            cents_source,
+            &cents_source,
             indexes,
         );
         Self::from_sats_and_cents(name, version, sats, cents)

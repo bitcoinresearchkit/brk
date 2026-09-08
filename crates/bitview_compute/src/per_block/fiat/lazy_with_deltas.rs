@@ -2,10 +2,10 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CachedWindowStartVec, FiatType, FixedRatio, Identity, LazyFiatPerBlock, LazyPerBlock,
+    FiatType, FixedRatio, Identity, IndexSources, LazyFiatPerBlock, LazyPerBlock,
     LazyRollingDeltasFiatFromHeight, Windows,
 };
 
@@ -29,15 +29,15 @@ where
     CS: FiatType + From<f64>,
     B: FixedRatio + From<f64>,
 {
-    pub fn from_boxed_cents_source(
+    pub fn from_cents_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, C>,
+        source: &(impl ReadableCloneableVec<Height, C> + ?Sized),
         delta_version_offset: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let source = LazyPerBlock::from_boxed_height_source::<Identity<C>>(
+        let source = LazyPerBlock::from_height_source::<Identity<C>>(
             &format!("{name}_cents"),
             version,
             source,
@@ -48,7 +48,7 @@ where
             &format!("{name}_delta"),
             version + delta_version_offset,
             &source.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         Self { inner, delta }

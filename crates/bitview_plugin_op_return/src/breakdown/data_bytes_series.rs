@@ -1,7 +1,8 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_types::{Bytes, Height, PartsPerMillion32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CachedBoxedVec, ColumnId};
+use vecdb::{ColumnId, ReadableCloneableVec};
 
 use bitview_compute::{LazyColumnPerBlockCumulativeRolling, LazyPercentPerBlock, RatioBytes};
 
@@ -24,26 +25,24 @@ impl<C: ColumnId> DataBytesSeries<C> {
         prefix: &str,
         version: Version,
         data_bytes: LazyColumnPerBlockCumulativeRolling<Bytes, C>,
-        total_data: CachedBoxedVec<Height, Bytes>,
-        block_size: CachedBoxedVec<Height, StoredU64>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        total_data: &impl ReadableCloneableVec<Height, Bytes>,
+        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+        mappings: &MappingsVecs,
     ) -> Self {
-        let data_share =
-            LazyPercentPerBlock::from_cached_ratio::<Bytes, _, RatioBytes<PartsPerMillion32>>(
-                &format!("{prefix}_data_share"),
-                version,
-                &data_bytes.cumulative.height,
-                total_data,
-                mappings,
-            );
-        let chain_share =
-            LazyPercentPerBlock::from_cached_ratio::<Bytes, _, RatioBytes<PartsPerMillion32>>(
-                &format!("{prefix}_chain_share"),
-                version,
-                &data_bytes.cumulative.height,
-                block_size,
-                mappings,
-            );
+        let data_share = LazyPercentPerBlock::from_ratio::<Bytes, _, RatioBytes<PartsPerMillion32>>(
+            &format!("{prefix}_data_share"),
+            version,
+            data_bytes.cumulative.resolutions.height_source(),
+            total_data,
+            mappings,
+        );
+        let chain_share = LazyPercentPerBlock::from_ratio::<Bytes, _, RatioBytes<PartsPerMillion32>>(
+            &format!("{prefix}_chain_share"),
+            version,
+            data_bytes.cumulative.resolutions.height_source(),
+            block_size,
+            mappings,
+        );
 
         Self {
             data_bytes,

@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    CachedWindowStartVec, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, NumericValue,
+    IndexSources, LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, NumericValue,
     RollingDistribution, WindowStarts, Windows,
 };
 
@@ -33,22 +33,22 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        cumulative: &impl ReadableCloneableVec<Height, T>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let sum = LazyRollingSumsFromHeight::new(
             &format!("{name}_sum"),
             version,
             cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version,
             cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let distribution = RollingDistribution::forced_import(db, name, version, indexes)?;

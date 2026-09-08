@@ -1,6 +1,6 @@
-use std::ops::AddAssign;
+use std::{ops::AddAssign, sync::Arc};
 
-use crate::{AnyVec, ReadableBoxedVec, VecIndex, VecValue, cursor::Cursor};
+use crate::{AnyVec, ReadableBoxedVec, VecIndex, VecValue, Version, cursor::Cursor};
 
 /// Default chunk size for chunked iteration (matches PcoVec page size).
 pub const READ_CHUNK_SIZE: usize = 4096;
@@ -51,13 +51,20 @@ pub const READ_CHUNK_SIZE: usize = 4096;
 /// For maximum throughput on stored vecs, prefer `fold_range` / `for_each_range`
 /// with static dispatch (`&impl ReadableVec` or concrete type).
 pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
-    /// Whether this vec itself is a materialization-cache layer.
-    ///
-    /// This does not report whether a snapshot is currently resident. Consumers
-    /// use it to avoid stacking cache wrappers around the same vec.
+    /// Materialize a stable read snapshot. Sources with shared storage can
+    /// return that storage directly; ordinary readers collect on demand.
+    fn snapshot(&self) -> Arc<Vec<T>> {
+        let len = self.len();
+        let mut values = Vec::with_capacity(len);
+        self.read_into_at(0, len, &mut values);
+        Arc::new(values)
+    }
+
+    /// Version used to validate snapshots shared with read-only clones.
+    /// Computation wrappers may expose a different public dependency version.
     #[inline]
-    fn has_cache_layer(&self) -> bool {
-        false
+    fn snapshot_version(&self) -> Version {
+        self.version()
     }
 
     // ── Required ─────────────────────────────────────────────────────
@@ -505,7 +512,10 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
     }
 }
 
-/// Trait for readable vectors that can be cloned as trait objects.
+/// A reader that can produce an owned, read-only trait object.
+///
+/// The returned reader is `'static`; the source need not be. Borrowed consumers
+/// can use this trait without requiring `Clone` or `'static` on the source.
 pub trait ReadableCloneableVec<I: VecIndex, T: VecValue>: ReadableVec<I, T> {
     fn read_only_boxed_clone(&self) -> ReadableBoxedVec<I, T>;
 }

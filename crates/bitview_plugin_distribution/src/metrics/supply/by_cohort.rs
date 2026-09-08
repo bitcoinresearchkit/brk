@@ -31,9 +31,7 @@ impl SupplyByCohort {
             let source = matrices
                 .additive_source(&filter, &format!("{name}_sats"), version)
                 .expect("supported supply cohort");
-            LazySpotValuePerBlock::from_boxed_sats_source(
-                &name, version, source, mappings, spot_price,
-            )
+            LazySpotValuePerBlock::from_sats_source(&name, version, &source, mappings, spot_price)
         });
 
         Ok(Self { cohorts, matrices })

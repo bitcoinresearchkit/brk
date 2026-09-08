@@ -9,8 +9,8 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
+    AnyStoredVec, AnyVec, CachedBoxedVec, CachedReadableVec, ColumnId, ColumnarVec, Database,
+    EagerVec, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec,
     ReadableColumnarVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
@@ -59,17 +59,17 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         self.direct_source(filter, name, version)
             .or_else(|| self.aggregate_source(filter, name, version))
     }
 
-    pub fn direct_source(
+    fn direct_source(
         &self,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         Self::direct_source_from(
             &self.age_range_matrix.read_only_clone(),
             &self.epoch_matrix.read_only_clone(),
@@ -81,7 +81,7 @@ where
         )
     }
 
-    pub fn direct_source_from(
+    pub(crate) fn direct_source_from(
         age_range_matrix: &ReadOnlyColumnarVec<PcoVec<Height, T>, AgeRangeId>,
         epoch_matrix: &ReadOnlyColumnarVec<PcoVec<Height, T>, EpochId>,
         class_matrix: &ReadOnlyColumnarVec<PcoVec<Height, T>, ClassId>,
@@ -89,7 +89,7 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         match filter {
             Filter::Time(_) => AgeRangeId::matching(filter)
                 .map(|id| Self::column(age_range_matrix, name, version, id)),
@@ -112,12 +112,12 @@ where
         }
     }
 
-    pub fn aggregate_source(
+    pub(crate) fn aggregate_source(
         &self,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         Self::aggregate_source_from(
             &self.age_range_matrix.read_only_clone(),
             filter,
@@ -126,40 +126,42 @@ where
         )
     }
 
-    pub fn aggregate_source_from(
+    pub(crate) fn aggregate_source_from(
         age_range_matrix: &ReadOnlyColumnarVec<PcoVec<Height, T>, AgeRangeId>,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         let columns = AgeRangeId::aggregate_columns(filter)?;
         Some(Self::sum(age_range_matrix, name, version, columns))
     }
 
-    pub fn column<C>(
+    pub(crate) fn column<C>(
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, C>,
         name: &str,
         version: Version,
         column: C,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         C: ColumnId,
     {
-        source.column(name, version, column).read_only_boxed_clone()
+        CACHE_BUDGET
+            .wrap(source.column(name, version, column))
+            .cached_boxed_clone()
     }
 
-    pub fn sum<C>(
+    pub(crate) fn sum<C>(
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, C>,
         name: &str,
         version: Version,
         columns: impl IntoIterator<Item = C>,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         C: ColumnId,
     {
         CACHE_BUDGET
             .wrap(source.sum_columns(name, version, columns))
-            .read_only_boxed_clone()
+            .cached_boxed_clone()
     }
 
     pub fn min_len(&self) -> usize {

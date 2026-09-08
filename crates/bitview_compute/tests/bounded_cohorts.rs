@@ -3,7 +3,7 @@ mod common;
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_compute::{BoundedToF64, ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock};
 use brk_types::{BoundedRatio, Version};
-use vecdb::{ColumnId, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec};
+use vecdb::{Database, ReadOnlyClone, ReadableVec};
 
 use common::indexes;
 
@@ -32,17 +32,16 @@ fn bounded_age_columns_preserve_endpoints_views_and_reopen() {
     source.write().unwrap();
     let columns = source.height.read_only_clone();
     for &id in AgeRangeId::ALL {
-        let column = LazyColumnPerBlock::new("bounded", Version::ONE, &columns, id, &indexes);
+        let column =
+            LazyColumnPerBlock::<_, _>::new("bounded", Version::ONE, &columns, id, &indexes);
         let view = LazyPerBlock::from_resolutions::<BoundedToF64>(
             "weight",
             Version::ONE,
-            column.height.read_only_boxed_clone(),
             &column.resolutions,
         );
         let complement = LazyPerBlock::from_resolutions::<BoundedToF64<true>>(
             "complement",
             Version::ONE,
-            column.height.read_only_boxed_clone(),
             &column.resolutions,
         );
         let raw = *id.select(&values);

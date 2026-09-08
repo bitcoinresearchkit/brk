@@ -9,8 +9,8 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadableBoxedVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, CachedBoxedVec, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
+    PcoVecValue, ReadOnlyClone, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::super::UTXORows;
@@ -70,7 +70,7 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         self.direct_source(filter, name, version)
             .or_else(|| self.aggregate_amount_source(filter, name, version))
             .or_else(|| {
@@ -83,12 +83,12 @@ where
             })
     }
 
-    pub fn direct_source(
+    pub(crate) fn direct_source(
         &self,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         match filter {
             Filter::Amount(_) => AmountRangeId::matching(filter).map(|id| {
                 UTXOColumnarMetricWithoutAmountOrType::column(
@@ -125,7 +125,7 @@ where
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<ReadableBoxedVec<Height, T>> {
+    ) -> Option<CachedBoxedVec<Height, T>> {
         let matrix = self.amount_range_matrix.read_only_clone();
         match filter {
             Filter::Amount(_) => UNDER_AMOUNT_FILTERS

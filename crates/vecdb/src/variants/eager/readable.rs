@@ -7,6 +7,11 @@ where
     V: StoredVec,
 {
     #[inline(always)]
+    fn snapshot_version(&self) -> crate::Version {
+        self.0.snapshot_version()
+    }
+
+    #[inline(always)]
     fn cursor_chunk_size(&self) -> usize {
         self.0.cursor_chunk_size()
     }

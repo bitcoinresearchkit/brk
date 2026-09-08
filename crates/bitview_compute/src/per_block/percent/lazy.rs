@@ -1,13 +1,10 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillionSigned64, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    BinaryTransform, CachedBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec, UnaryTransform,
-    VecValue,
-};
+use vecdb::{BinaryTransform, ReadableCloneableVec, UnaryTransform, VecValue};
 
 use crate::{
-    CACHE_BUDGET, Cagr, FixedRatio, Identity, LazyIndexedVec, LazyLookbackVec, LazyPerBlock,
+    Cagr, FixedRatio, Identity, IndexSources, LazyIndexedVec, LazyLookbackVec, LazyPerBlock,
     NumericValue, Percent,
 };
 
@@ -22,12 +19,13 @@ pub struct LazyPercentPerBlock<B: FixedRatio>(
 );
 
 impl<B: FixedRatio> LazyPercentPerBlock<B> {
-    pub fn from_cached_ratio<S, D, F>(
+    /// Inputs own their caches; the ratio and converted views retain no history.
+    pub fn from_ratio<S, D, F>(
         name: &str,
         version: Version,
-        numerator: &(impl ReadableCloneableVec<Height, S> + 'static),
-        denominator: CachedBoxedVec<Height, D>,
-        indexes: &crate::IndexSources,
+        numerator: &impl ReadableCloneableVec<Height, S>,
+        denominator: &impl ReadableCloneableVec<Height, D>,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: NumericValue,
@@ -37,20 +35,19 @@ impl<B: FixedRatio> LazyPercentPerBlock<B> {
         let source = LazyIndexedVec::new(
             &format!("{name}_{}_source", B::SUFFIX),
             version,
-            numerator.read_only_boxed_clone(),
+            numerator,
             denominator,
             |_, numerator, denominator| F::apply(numerator, denominator),
         );
-        let source = CACHE_BUDGET.wrap(source);
-        Self::from_height_source(name, version, source, indexes)
+        Self::from_height_source(name, version, &source, indexes)
     }
 
-    pub fn from_ratio_with_cached_numerator<S, D, F>(
+    pub fn from_ratio_with_numerator<S, D, F>(
         name: &str,
         version: Version,
-        numerator: CachedBoxedVec<Height, S>,
-        denominator: &(impl ReadableCloneableVec<Height, D> + 'static),
-        indexes: &crate::IndexSources,
+        numerator: &impl ReadableCloneableVec<Height, S>,
+        denominator: &impl ReadableCloneableVec<Height, D>,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: NumericValue,
@@ -60,22 +57,21 @@ impl<B: FixedRatio> LazyPercentPerBlock<B> {
         let source = LazyIndexedVec::new(
             &format!("{name}_{}_source", B::SUFFIX),
             version,
-            denominator.read_only_boxed_clone(),
+            denominator,
             numerator,
             |_, denominator, numerator| F::apply(numerator, denominator),
         );
-        let source = CACHE_BUDGET.wrap(source);
-        Self::from_height_source(name, version, source, indexes)
+        Self::from_height_source(name, version, &source, indexes)
     }
 
     pub fn from_height_source<V>(
         name: &str,
         version: Version,
-        source: V,
-        indexes: &crate::IndexSources,
+        source: &V,
+        indexes: &IndexSources,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = B> + ReadableVec<Height, B> + Clone + 'static,
+        V: ReadableCloneableVec<Height, B> + ?Sized,
     {
         let ppm_name = format!("{name}_{}", B::SUFFIX);
         let ppm =
@@ -87,10 +83,10 @@ impl<B: FixedRatio> LazyPercentPerBlock<B> {
     pub fn from_lookback_source<S>(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
+        source: &impl ReadableCloneableVec<Height, S>,
         lookback: usize,
         compute: fn(S, Option<S>) -> B,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: VecValue,
@@ -103,9 +99,8 @@ impl<B: FixedRatio> LazyPercentPerBlock<B> {
             lookback,
             compute,
         );
-        let source = CACHE_BUDGET.wrap(source);
         let ppm =
-            LazyPerBlock::from_height_source::<Identity<B>>(&ppm_name, version, source, indexes);
+            LazyPerBlock::from_height_source::<Identity<B>>(&ppm_name, version, &source, indexes);
 
         Self::from_ppm(name, version, ppm)
     }

@@ -1,15 +1,19 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{AgeRangeId, AmountRange, CohortContext, Filter, UTXOGroups};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyClone,
-    ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, Budgeted, CachedBoxedVec, CachedColumnarVec, CachedReadableVec,
+    Database, PcoVec, PinnedCachedVec, ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec, Rw,
+    StorageMode,
 };
 
 use crate::metrics::{ColumnarAmount, UTXOColumnarMetric, UTXORows};
-use bitview_compute::{CACHE_BUDGET, LazySpotValuePerBlock, PinnedSpotValuePerBlock};
+use bitview_compute::{
+    CACHE_BUDGET, Identity, LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock, SatsToCents,
+};
 
 #[derive(Traversable)]
 pub struct SupplyTotal<M: StorageMode = Rw> {
@@ -20,18 +24,23 @@ pub struct SupplyTotal<M: StorageMode = Rw> {
     /// Groups funded addresses by their balance at the represented block.
     pub addr_balance: ColumnarAmount<Sats, LazySpotValuePerBlock, M>,
     #[traversable(skip)]
-    all: PinnedSpotValuePerBlock,
+    all_supply: CachedBoxedVec<Height, Sats>,
+    #[traversable(skip)]
+    all_market_cap: CachedBoxedVec<Height, Cents>,
     /// Shared decoded age inputs for raw sums and weighted consumers.
     #[traversable(skip)]
-    pub age_ranges:
-        CachedColumnarVec<ReadOnlyColumnarVec<PcoVec<Height, Sats>, AgeRangeId>, AgeRangeId>,
+    pub age_ranges: CachedColumnarVec<
+        ReadOnlyColumnarVec<PcoVec<Height, Sats>, AgeRangeId>,
+        AgeRangeId,
+        Budgeted,
+    >,
 }
 
 impl SupplyTotal {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let matrices = UTXOColumnarMetric::forced_import(db, "supply_sats", version)?;
@@ -41,36 +50,68 @@ impl SupplyTotal {
             |column| CACHE_BUDGET.wrap(column),
         );
         let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
-        let all = PinnedSpotValuePerBlock::from_sats_source(
+        // These two frequently reused roots are pinned. The public series and
+        // all downstream consumers share them; no second series owner is kept.
+        let all_sats = PinnedCachedVec::wrap(age_ranges.sum_columns(
+            &format!("{all_name}_sats"),
+            version,
+            AgeRangeId::ALL.iter().copied(),
+        ));
+        let all_supply = all_sats.cached_boxed_clone();
+        let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
+            &format!("{all_name}_sats"),
+            version,
+            &all_sats,
+            mappings,
+        );
+        let all_cents = PinnedCachedVec::wrap(LazyIndexedVec::new(
+            &format!("{all_name}_cents_source"),
+            version,
+            &sats.height,
+            spot_price,
+            |_, sats, spot| SatsToCents::apply(sats, spot),
+        ));
+        let all_market_cap = all_cents.cached_boxed_clone();
+        let all = LazySpotValuePerBlock::from_sats_and_cents(
             &all_name,
             version,
-            age_ranges.sum_columns(
-                &format!("{all_name}_sats"),
+            sats,
+            LazyPerBlock::from_height_source::<Identity<Cents>>(
+                &format!("{all_name}_cents"),
                 version,
-                AgeRangeId::ALL.iter().copied(),
+                &all_cents,
+                mappings,
             ),
-            mappings,
-            spot_price,
         );
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "supply");
             if matches!(filter, Filter::All) {
-                all.series.clone()
+                all.clone()
             } else {
                 let source_name = format!("{name}_sats");
                 let source = if let Some(column) = AgeRangeId::matching(&filter) {
-                    age_ranges.cached_column(column).read_only_boxed_clone()
+                    return LazySpotValuePerBlock::from_sats_source(
+                        &name,
+                        version,
+                        age_ranges.cached_column(column),
+                        mappings,
+                        spot_price,
+                    );
                 } else if let Some(columns) = AgeRangeId::aggregate_columns(&filter) {
-                    CACHE_BUDGET
-                        .wrap(age_ranges.sum_columns(&source_name, version, columns))
-                        .read_only_boxed_clone()
+                    return LazySpotValuePerBlock::from_sats_source(
+                        &name,
+                        version,
+                        &age_ranges.sum_columns(&source_name, version, columns),
+                        mappings,
+                        spot_price,
+                    );
                 } else {
                     matrices
                         .additive_source(&filter, &source_name, version)
                         .expect("total-supply cohort source")
                 };
-                LazySpotValuePerBlock::from_boxed_sats_source(
-                    &name, version, source, mappings, spot_price,
+                LazySpotValuePerBlock::from_sats_source(
+                    &name, version, &source, mappings, spot_price,
                 )
             }
         });
@@ -81,7 +122,7 @@ impl SupplyTotal {
             "supply",
             version + Version::ONE,
             |name, source| {
-                LazySpotValuePerBlock::from_boxed_sats_source(
+                LazySpotValuePerBlock::from_sats_source(
                     name,
                     version + Version::ONE,
                     source,
@@ -95,7 +136,8 @@ impl SupplyTotal {
             cohorts,
             matrices,
             addr_balance,
-            all,
+            all_supply,
+            all_market_cap,
             age_ranges,
         })
     }
@@ -109,11 +151,11 @@ impl SupplyTotal {
     }
 
     pub fn all_supply(&self) -> &CachedBoxedVec<Height, Sats> {
-        &self.all.sats
+        &self.all_supply
     }
 
     pub fn all_market_cap(&self) -> &CachedBoxedVec<Height, Cents> {
-        &self.all.cents
+        &self.all_market_cap
     }
 
     #[inline(always)]

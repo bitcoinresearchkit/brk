@@ -31,13 +31,13 @@ impl Vecs {
             native: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
                 "velocity_btc",
                 version,
-                native_source,
+                &native_source,
                 mappings,
             ),
             fiat: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
                 "velocity_usd",
                 version,
-                fiat_source,
+                &fiat_source,
                 mappings,
             ),
         })

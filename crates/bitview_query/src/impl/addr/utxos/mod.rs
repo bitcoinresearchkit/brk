@@ -1,16 +1,15 @@
 use std::str::FromStr;
 
 use bitview_plugin::PublicationReadGuard;
-use bitview_plugin_indexer::Lengths;
+use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{Addr, AddrBytes, BlockHash, Height, TxIndex, TxOutIndex, TxStatus, Utxo, Vout};
 
 use crate::Query;
 
-/// A bounded UTXO selection retaining publication exclusion until consumed.
+/// An owned UTXO selection retaining only rollback protection until consumed.
 pub struct ResolvedAddrUtxos {
-    guard: PublicationReadGuard,
-    lengths: Lengths,
+    pin: SafeLengths,
     outpoints: Vec<(TxIndex, Vout)>,
     anchor: BlockHash,
 }
@@ -55,9 +54,11 @@ impl Query {
         max_utxos: usize,
     ) -> Result<ResolvedAddrUtxos> {
         let (output_type, type_index) = self.resolve_addr_bytes(addr)?;
-        let lengths = self.safe_lengths();
-        let height = self.addr_last_activity_height_for(output_type, type_index, None)?;
-        let anchor = self.resolve_block_hash(height)?;
+        let pin = self.pin_safe_lengths()?;
+        let lengths = pin.lengths();
+        let height =
+            self.addr_last_activity_height_bounded(output_type, type_index, None, lengths)?;
+        let anchor = self.block_hash_by_height(height, &pin)?;
         let outpoints: Vec<(TxIndex, Vout)> = self
             .indexer()
             .stores()
@@ -69,26 +70,26 @@ impl Query {
         if outpoints.len() > max_utxos {
             return Err(Error::TooManyUtxos);
         }
+        drop(guard);
         Ok(ResolvedAddrUtxos {
-            guard,
-            lengths,
+            pin,
             outpoints,
             anchor,
         })
     }
 
-    /// Load the captured selection while retaining its publication guard.
+    /// Load the captured selection from its pinned immutable prefix.
     pub fn addr_utxos_resolved(
         &self,
         resolved: ResolvedAddrUtxos,
         max_utxos: usize,
     ) -> Result<(Vec<Utxo>, BlockHash)> {
         let ResolvedAddrUtxos {
-            guard: _guard,
-            lengths,
+            pin,
             outpoints,
             anchor: block_hash,
         } = resolved;
+        let lengths = pin.lengths();
         let indexer = self.indexer();
         let vecs = indexer.vecs();
         if outpoints.len() > max_utxos {
@@ -121,13 +122,13 @@ impl Query {
             }
             let value = value_reader.try_get(TxOutIndex::from(output)).data()?;
 
-            let height = self.confirmed_status_height(tx_index)?;
+            let height = self.confirmed_status_height_bounded(tx_index, lengths)?;
             let status = if let Some((h, ref s)) = cached_status
                 && h == height
             {
                 s.clone()
             } else {
-                let s = self.confirmed_status_at(height)?;
+                let s = self.confirmed_status_at_bounded(height, lengths)?;
                 cached_status = Some((height, s.clone()));
                 s
             };

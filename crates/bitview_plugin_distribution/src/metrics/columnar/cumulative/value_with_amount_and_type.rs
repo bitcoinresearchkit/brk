@@ -1,4 +1,5 @@
 use brk_error::Result;
+use brk_types::StoredU64;
 
 use bitview_cohort::{
     AgeRangeId, AmountRangeId, ClassId, EntryId, EpochId, Filter, OVER_AMOUNT_FILTERS,
@@ -6,7 +7,7 @@ use bitview_cohort::{
 };
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{AnyStoredVec, ColumnId, Database, ReadableBoxedVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, ColumnId, Database, LazyVec, Rw, StorageMode};
 
 use bitview_compute::ColumnarValuePerBlockCumulativeRolling;
 
@@ -66,8 +67,8 @@ impl CumulativeUTXOValueColumnarMetric {
         name: &str,
         version: Version,
     ) -> Option<(
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         self.direct_sources(filter, name, version)
             .or_else(|| self.amount_aggregate_sources(filter, name, version))
@@ -80,8 +81,8 @@ impl CumulativeUTXOValueColumnarMetric {
         name: &str,
         version: Version,
     ) -> Option<(
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         match filter {
             Filter::Amount(_) => AmountRangeId::matching(filter)
@@ -109,8 +110,8 @@ impl CumulativeUTXOValueColumnarMetric {
         name: &str,
         version: Version,
     ) -> Option<(
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         let filter = UNDER_AMOUNT_FILTERS
             .iter()
@@ -130,8 +131,8 @@ impl CumulativeUTXOValueColumnarMetric {
         name: &str,
         version: Version,
     ) -> Option<(
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         let columns = AgeRangeId::aggregate_columns(filter)?;
         Some(Self::matrix_sources(
@@ -148,8 +149,8 @@ impl CumulativeUTXOValueColumnarMetric {
         version: Version,
         columns: impl IntoIterator<Item = C>,
     ) -> (
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     )
     where
         C: ColumnId,

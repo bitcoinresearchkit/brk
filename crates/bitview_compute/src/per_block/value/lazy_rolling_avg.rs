@@ -4,8 +4,8 @@ use derive_more::{Deref, DerefMut};
 use vecdb::ReadableCloneableVec;
 
 use crate::{
-    AvgCentsToUsd, AvgSatsToBtc, CachedWindowStartVec, LazyPerBlock,
-    LazyRollingAvgAmountFromHeight, LazyRollingAvgFromHeight, Windows,
+    AvgCentsToUsd, AvgSatsToBtc, IndexSources, LazyPerBlock, LazyRollingAvgAmountFromHeight,
+    LazyRollingAvgFromHeight, Windows,
 };
 
 /// Lazy rolling averages for all 4 windows, with StoredF32 sats/cents and BTC/USD views.
@@ -22,15 +22,15 @@ impl LazyRollingAvgsAmountFromHeight {
     pub fn new(
         name: &str,
         version: Version,
-        cumulative_sats: &(impl ReadableCloneableVec<Height, Sats> + 'static),
-        cumulative_cents: &(impl ReadableCloneableVec<Height, Cents> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        cumulative_sats: &impl ReadableCloneableVec<Height, Sats>,
+        cumulative_cents: &impl ReadableCloneableVec<Height, Cents>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let cum_sats = cumulative_sats.read_only_boxed_clone();
         let cum_cents = cumulative_cents.read_only_boxed_clone();
 
-        let make_slot = |suffix: &str, cached_start: &&CachedWindowStartVec| {
+        Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
 
             // Sats rolling average, stored as a float.
@@ -38,7 +38,7 @@ impl LazyRollingAvgsAmountFromHeight {
                 &format!("{full_name}_sats"),
                 version,
                 cum_sats.clone(),
-                cached_start,
+                *window_start,
                 indexes,
             );
 
@@ -46,7 +46,6 @@ impl LazyRollingAvgsAmountFromHeight {
             let btc = LazyPerBlock::from_resolutions::<AvgSatsToBtc>(
                 &full_name,
                 version,
-                sats.height.read_only_boxed_clone(),
                 &sats.resolutions,
             );
 
@@ -55,7 +54,7 @@ impl LazyRollingAvgsAmountFromHeight {
                 &format!("{full_name}_cents"),
                 version,
                 cum_cents.clone(),
-                cached_start,
+                *window_start,
                 indexes,
             );
 
@@ -63,7 +62,6 @@ impl LazyRollingAvgsAmountFromHeight {
             let usd = LazyPerBlock::from_resolutions::<AvgCentsToUsd>(
                 &format!("{full_name}_usd"),
                 version,
-                cents.height.read_only_boxed_clone(),
                 &cents.resolutions,
             );
 
@@ -73,8 +71,6 @@ impl LazyRollingAvgsAmountFromHeight {
                 usd,
                 cents,
             }
-        };
-
-        Self(cached_starts.map_with_suffix(make_slot))
+        }))
     }
 }

@@ -13,11 +13,7 @@ impl DayStrategy for RepeatDay {
     }
 
     fn source_index(mapping: &[Day1], index: usize, source_len: usize) -> Option<usize> {
-        repeated_source_index(mapping, index, source_len)
+        let day = mapping[index].to_usize();
+        (day < source_len).then_some(day)
     }
-}
-
-pub fn repeated_source_index(mapping: &[Day1], index: usize, source_len: usize) -> Option<usize> {
-    let day = mapping[index].to_usize();
-    (day < source_len).then_some(day)
 }

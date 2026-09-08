@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{
@@ -6,9 +7,9 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
+use vecdb::{AnyVec, Database, ReadableColumnarVec, Rw, StorageMode};
 
-use bitview_compute::{ColumnarPerBlock, FiatType, LazyFiatPerBlock};
+use bitview_compute::{CACHE_BUDGET, ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AggregateFiatPerBlock<C: FiatType, M: StorageMode = Rw> {
@@ -23,7 +24,7 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
         db: &Database,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let values = ColumnarPerBlock::forced_import(
             db,
@@ -36,12 +37,10 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
                         id.select(&UTXO_AGGREGATE_NAMES).id,
                         metric,
                     );
-                    LazyFiatPerBlock::from_boxed_cents_source(
+                    LazyFiatPerBlock::from_cents_source(
                         &name,
                         version,
-                        source
-                            .column(&format!("{name}_cents"), version, id)
-                            .read_only_boxed_clone(),
+                        &CACHE_BUDGET.wrap(source.column(&format!("{name}_cents"), version, id)),
                         mappings,
                     )
                 })

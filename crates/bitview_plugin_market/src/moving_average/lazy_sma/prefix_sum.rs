@@ -1,21 +1,25 @@
 use std::sync::Arc;
 
 use brk_types::{Cents, Height, StoredU64, Version};
-use vecdb::{AnyVec, CachedBoxedVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
+use vecdb::{AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, short_type_name};
 
 #[derive(Clone)]
 pub struct SmaPrefixSumVec {
     name: Arc<str>,
     version: Version,
-    spot_price: CachedBoxedVec<Height, Cents>,
+    spot_price: ReadableBoxedVec<Height, Cents>,
 }
 
 impl SmaPrefixSumVec {
-    pub fn new(name: &str, version: Version, spot_price: CachedBoxedVec<Height, Cents>) -> Self {
+    pub fn new(
+        name: &str,
+        version: Version,
+        spot_price: impl ReadableVec<Height, Cents> + Clone + 'static,
+    ) -> Self {
         Self {
             name: Arc::from(name),
             version,
-            spot_price,
+            spot_price: ReadableBoxedVec::new(spot_price),
         }
     }
 

@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{BoundedRatio, StoredF64, Version};
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{BoundedToF64, IndexSources, LazyPerBlock, PerBlock};
 
@@ -22,12 +22,7 @@ impl BoundedRatioPerBlock {
         indexes: &IndexSources,
     ) -> Result<Self> {
         let bounded = PerBlock::forced_import(db, &format!("{name}_bounded"), version, indexes)?;
-        let ratio = LazyPerBlock::from_computed::<BoundedToF64>(
-            name,
-            version,
-            bounded.height.read_only_boxed_clone(),
-            &bounded,
-        );
+        let ratio = LazyPerBlock::from_resolutions::<BoundedToF64>(name, version, &bounded);
         Ok(Self { bounded, ratio })
     }
 }

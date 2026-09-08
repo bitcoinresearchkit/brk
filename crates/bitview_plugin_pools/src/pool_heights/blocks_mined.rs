@@ -34,7 +34,7 @@ impl BlocksMined {
         let cumulative = LazyPerBlock::from_height_source::<Identity<StoredU64>>(
             &cumulative_name,
             version,
-            cumulative_source,
+            &cumulative_source,
             mappings,
         );
         let block =

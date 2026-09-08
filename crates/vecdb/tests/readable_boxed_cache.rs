@@ -1,44 +1,14 @@
-#[cfg(feature = "pco")]
+#![cfg(feature = "pco")]
+
 use std::sync::Arc;
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BytesVec, CachedVec, Database, EagerVec, ImportableVec, LazyVec,
-    ReadableBoxedVec, ReadableVec, StoredVec, Version, WritableVec,
+    AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, ReadableVec, Version, WritableVec,
 };
-#[cfg(feature = "pco")]
 use vecdb::{PcoVec, ReadOnlyClone, Stamp};
 
 #[test]
-fn boxed_vec_detects_only_actual_cache_layers() {
-    let dir = tempdir().unwrap();
-    let db = Database::open(dir.path()).unwrap();
-    let mut values: EagerVec<BytesVec<usize, u64>> =
-        EagerVec::import(&db, "values", Version::ONE).unwrap();
-
-    for value in 0..8 {
-        values.push(value);
-    }
-    values.write().unwrap();
-
-    let read_only = StoredVec::read_only_clone(&values);
-    let uncached = ReadableBoxedVec::new(read_only.clone());
-    assert!(!uncached.has_cache_layer());
-
-    let cached = ReadableBoxedVec::new(CachedVec::wrap(read_only));
-    assert!(cached.has_cache_layer());
-    assert!(cached.clone().has_cache_layer());
-    assert_eq!(cached.read_sorted_at(&[0, 2, 7]), [0, 2, 7]);
-
-    let lazy =
-        LazyVec::<usize, u64, usize, u64>::init("lazy_values", Version::ONE, cached, |_, value| {
-            value
-        });
-    assert!(!lazy.has_cache_layer());
-}
-
-#[test]
-#[cfg(feature = "pco")]
 fn truncation_invalidates_same_length_replacement_for_read_only_consumers() {
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();

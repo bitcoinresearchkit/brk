@@ -7,6 +7,7 @@ use bitview_compute::{
     LazyColumnPerBlockCumulativeRolling, LazyPerBlockCumulativeRolling,
     LazyPercentCumulativeRolling, RatioU64, Windows,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use vecdb::{
@@ -32,7 +33,7 @@ impl<V> WithInputTypes<V> {
         version: Version,
         (all_source, all_transform): (S, fn(Height, StoredU64) -> StoredU64),
         by_type: SpendableType<V>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self
     where
@@ -51,7 +52,7 @@ impl<V> WithInputTypes<V> {
         let all = LazyPerBlockCumulativeRolling::from_cumulative_source(
             all_name,
             version,
-            source,
+            &source,
             cached_starts,
             mappings,
         );
@@ -67,9 +68,9 @@ impl<V> WithInputTypes<V> {
         &self,
         name: &str,
         version: Version,
-        numerator: &(impl ReadableCloneableVec<Height, StoredU64> + 'static),
+        numerator: &impl ReadableCloneableVec<Height, StoredU64>,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> LazyPercentCumulativeRolling<PartsPerMillion32> {
         LazyPercentCumulativeRolling::from_cumulative_ratio::<
             StoredU64,
@@ -79,7 +80,7 @@ impl<V> WithInputTypes<V> {
             name,
             version,
             numerator,
-            self.cached_all.clone(),
+            &self.cached_all,
             cached_starts,
             mappings,
         )
@@ -93,7 +94,7 @@ impl WithInputTypes<LazyColumnCountPerBlockCumulativeRolling> {
         version: Version,
         all: (S, fn(Height, StoredU64) -> StoredU64),
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU16>, SpendableTypeId>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self
     where
@@ -125,7 +126,7 @@ impl WithInputTypes<LazyColumnCountPerBlockCumulativeRolling> {
         version: Version,
         name: impl Fn(&str) -> String,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> SpendableType<LazyPercentCumulativeRolling<PartsPerMillion32>> {
         SpendableType::new(|filter, type_name| {
             let Filter::Type(output_type) = filter else {
@@ -163,7 +164,7 @@ impl WithInputTypes<LazyColumnPerBlockCumulativeRolling<StoredU64, SpendableType
         version: Version,
         all: (S, fn(Height, StoredU64) -> StoredU64),
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU64>, SpendableTypeId>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self
     where
@@ -195,7 +196,7 @@ impl WithInputTypes<LazyColumnPerBlockCumulativeRolling<StoredU64, SpendableType
         version: Version,
         name: impl Fn(&str) -> String,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> SpendableType<LazyPercentCumulativeRolling<PartsPerMillion32>> {
         SpendableType::new(|filter, type_name| {
             let Filter::Type(output_type) = filter else {
@@ -204,7 +205,11 @@ impl WithInputTypes<LazyColumnPerBlockCumulativeRolling<StoredU64, SpendableType
             self.lazy_share(
                 &name(type_name),
                 version,
-                &self.by_type.get(output_type).cumulative.height,
+                self.by_type
+                    .get(output_type)
+                    .cumulative
+                    .resolutions
+                    .height_source(),
                 cached_starts,
                 mappings,
             )

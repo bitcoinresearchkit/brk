@@ -7,7 +7,7 @@ use bitview_traversable::{Traversable, TreeNode};
 use brk_types::{BasisPoints32, Dollars, Height, Version};
 use vecdb::{
     AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, CachedVec, Database, ReadableVec,
-    StoredVec, WritableVec,
+    WritableVec,
 };
 
 use common::{indexes, stored};
@@ -37,7 +37,7 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
     let lazy = LazyBasisPointsPerBlock::from_height_source(
         "nvt",
         Version::ONE,
-        stored.bps.height.read_only_clone(),
+        &stored.bps.height,
         &indexes,
     );
     macro_rules! check {

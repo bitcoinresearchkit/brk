@@ -6,12 +6,21 @@ use brk_types::{Addr, AddrBytes, AddrHash, OutputType, TypeIndex};
 use crate::Query;
 
 impl Query {
+    pub(crate) fn missing_addr(&self) -> Error {
+        if self.indexer().publication().try_read().is_none() {
+            Error::StateUpdating
+        } else {
+            Error::UnknownAddr
+        }
+    }
+
     pub fn resolve_addr(&self, addr: &Addr) -> Result<(OutputType, TypeIndex)> {
         let bytes = AddrBytes::from_str(addr)?;
         self.resolve_addr_bytes(&bytes)
     }
     pub fn resolve_addr_bytes(&self, bytes: &AddrBytes) -> Result<(OutputType, TypeIndex)> {
-        self.find_addr_bytes(bytes)?.ok_or(Error::UnknownAddr)
+        self.find_addr_bytes(bytes)?
+            .ok_or_else(|| self.missing_addr())
     }
     pub fn find_addr_bytes(&self, bytes: &AddrBytes) -> Result<Option<(OutputType, TypeIndex)>> {
         let output_type = OutputType::from(bytes);

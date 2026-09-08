@@ -3,13 +3,10 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    LazyVec, PcoVecValue, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform,
-    VecValue,
+    LazyVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue,
 };
 
-use crate::{
-    CachedPerBlock, ComputedVecValue, DerivedResolutions, NumericValue, PerBlock, Resolutions,
-};
+use crate::{ComputedVecValue, DerivedResolutions, IndexSources, Resolutions};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
@@ -30,14 +27,18 @@ where
     T: VecValue + PartialOrd + JsonSchema + 'static,
     S1T: VecValue + PartialOrd + JsonSchema,
 {
+    /// Reuse the resolutions' source and cache for the height view as well.
     pub fn from_resolutions<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
         resolutions: &Resolutions<S1T>,
     ) -> Self {
         Self {
-            height: LazyVec::transformed::<F>(name, version, height_source),
+            height: LazyVec::transformed::<F>(
+                name,
+                version,
+                resolutions.height_source().read_only_boxed_clone(),
+            ),
             resolutions: Box::new(DerivedResolutions::from_derived_computed::<F>(
                 name,
                 version,
@@ -46,59 +47,15 @@ where
         }
     }
 
-    pub fn from_computed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
-        source: &PerBlock<S1T>,
-    ) -> Self
-    where
-        S1T: PcoVecValue,
-    {
-        Self::from_resolutions::<F>(name, version, height_source, &source.resolutions)
-    }
-
-    pub fn from_cached_computed<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
-        source: &CachedPerBlock<S1T>,
-    ) -> Self
-    where
-        S1T: NumericValue,
-    {
-        Self::from_resolutions::<F>(name, version, height_source, &source.resolutions)
-    }
-
+    /// Build uncached views. Cache ownership belongs to the source, not its views.
     pub fn from_height_source<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        height_source: impl ReadableCloneableVec<Height, S1T> + 'static,
-        indexes: &crate::IndexSources,
+        height_source: &(impl ReadableCloneableVec<Height, S1T> + ?Sized),
+        indexes: &IndexSources,
     ) -> Self {
-        Self::from_boxed_height_source::<F>(
-            name,
-            version,
-            ReadableBoxedVec::new(height_source),
-            indexes,
-        )
-    }
-
-    pub fn from_boxed_height_source<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
-        indexes: &crate::IndexSources,
-    ) -> Self {
-        Self {
-            height: LazyVec::transformed::<F>(name, version, height_source.clone()),
-            resolutions: Box::new(DerivedResolutions::from_height_source::<F>(
-                name,
-                version,
-                height_source,
-                indexes,
-            )),
-        }
+        let resolutions = Resolutions::from_source(name, height_source, version, indexes);
+        Self::from_resolutions::<F>(name, version, &resolutions)
     }
 
     /// Create by unary-transforming a LazyPerBlock source (chaining lazy vecs).
@@ -108,7 +65,11 @@ where
         S2T: ComputedVecValue + JsonSchema,
     {
         Self {
-            height: LazyVec::transformed::<F>(name, version, source.height.read_only_boxed_clone()),
+            height: LazyVec::transformed::<F>(
+                name,
+                version,
+                ReadableBoxedVec::new(source.height.clone()),
+            ),
             resolutions: Box::new(DerivedResolutions::from_lazy::<F, S2T>(
                 name,
                 version,

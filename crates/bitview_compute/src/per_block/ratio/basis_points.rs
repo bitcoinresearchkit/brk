@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{BasisPoints32, StoredF32, Version};
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{Database, Rw, StorageMode};
 
 use crate::{FixedToRatio, IndexSources, LazyPerBlock, PerBlock};
 
@@ -23,12 +23,7 @@ impl BasisPointsPerBlock {
         indexes: &IndexSources,
     ) -> Result<Self> {
         let bps = PerBlock::forced_import(db, &format!("{name}_bps"), version, indexes)?;
-        let ratio = LazyPerBlock::from_computed::<FixedToRatio>(
-            name,
-            version,
-            bps.height.read_only_boxed_clone(),
-            &bps,
-        );
+        let ratio = LazyPerBlock::from_resolutions::<FixedToRatio>(name, version, &bps);
         Ok(Self { bps, ratio })
     }
 }

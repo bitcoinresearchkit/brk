@@ -69,8 +69,8 @@ where
         version: Version,
         columns: impl IntoIterator<Item = C>,
     ) -> (
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     ) {
         Self::sources_from(
             &self.sats.cumulative.read_only_clone(),
@@ -88,8 +88,8 @@ where
         version: Version,
         columns: impl IntoIterator<Item = C>,
     ) -> (
-        ReadableBoxedVec<Height, Sats>,
-        ReadableBoxedVec<Height, Cents>,
+        LazyVec<Height, Sats, Height, StoredU64>,
+        LazyVec<Height, Cents, Height, StoredU64>,
     ) {
         let columns: Box<[_]> = columns.into_iter().collect();
         let sats = Self::typed_source::<StoredU64ToSats, Sats>(
@@ -112,7 +112,7 @@ where
         name: &str,
         version: Version,
         columns: &[C],
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> LazyVec<Height, T, Height, StoredU64>
     where
         F: UnaryTransform<StoredU64, T>,
         T: VecValue,
@@ -126,12 +126,8 @@ where
                 .sum_columns(name, version, columns.iter().copied())
                 .read_only_boxed_clone()
         };
-        let source = LazyVec::transformed::<F>(name, version, raw);
-        if columns.len() > 1 {
-            CACHE_BUDGET.wrap(source).read_only_boxed_clone()
-        } else {
-            source.read_only_boxed_clone()
-        }
+        // Cache one stored column or aggregate before the unit conversion.
+        LazyVec::transformed::<F>(name, version, ReadableBoxedVec::new(CACHE_BUDGET.wrap(raw)))
     }
 
     #[inline(always)]
@@ -159,7 +155,7 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Cents, Sats, Version};
-    use vecdb::{AnyVec, ColumnId, Database, VecValue};
+    use vecdb::{AnyVec, ColumnId, Database, ReadableVec, VecValue};
 
     use super::ColumnarValuePerBlockCumulativeRolling;
 

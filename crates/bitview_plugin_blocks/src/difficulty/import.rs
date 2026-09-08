@@ -3,14 +3,15 @@ use bitview_compute::{
     LazyPercentPerBlock, Resolutions,
 };
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_types::{
     BLOCKS_PER_DIFF_EPOCHS, Epoch, Height, PartsPerMillionSigned32, StoredF64, StoredU32, Version,
 };
-use vecdb::{LazyVec, ReadOnlyClone, ReadableCloneableVec};
+use vecdb::{IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
-fn blocks_left_to_retarget(height: Height, _: Epoch) -> StoredU32 {
+fn blocks_left_to_retarget(height: Height) -> StoredU32 {
     StoredU32::from(height.left_before_next_diff_adj())
 }
 
@@ -27,11 +28,7 @@ fn difficulty_adjustment(
 }
 
 impl Vecs {
-    pub fn new(
-        version: Version,
-        indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Self {
+    pub fn new(version: Version, indexer: &Indexer, mappings: &MappingsVecs) -> Self {
         let v2 = Version::TWO;
 
         let difficulty_source =
@@ -39,28 +36,32 @@ impl Vecs {
         let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
             "difficulty_hashrate",
             version,
-            difficulty_source.clone(),
+            &difficulty_source,
             mappings,
         );
 
-        let epoch_source = CACHE_BUDGET.wrap(mappings.height.epoch.read_only_clone());
+        let epoch_source = IndexVec::new(
+            "difficulty_epoch_source",
+            Version::ZERO,
+            mappings.height.epoch.read_only_clone(),
+            Epoch::from,
+        );
         let epoch = LazyPerBlock::from_height_source::<Identity<Epoch>>(
             "difficulty_epoch",
             version,
-            epoch_source,
+            &epoch_source,
             mappings,
         );
-        let blocks_to_retarget_source = LazyVec::init(
+        let blocks_to_retarget_source = IndexVec::new(
             "blocks_to_retarget_source",
             version + v2,
-            mappings.height.epoch.read_only_boxed_clone(),
+            mappings.height.epoch.read_only_clone(),
             blocks_left_to_retarget,
         );
-        let blocks_to_retarget_source = CACHE_BUDGET.wrap(blocks_to_retarget_source);
         let blocks_to_retarget = LazyPerBlock::from_height_source::<Identity<StoredU32>>(
             "blocks_to_retarget",
             version + v2,
-            blocks_to_retarget_source,
+            &blocks_to_retarget_source,
             mappings,
         );
 
@@ -71,17 +72,12 @@ impl Vecs {
         );
 
         Self {
-            value: Resolutions::from_height_source(
-                "difficulty",
-                difficulty_source,
-                version,
-                mappings,
-            ),
+            value: Resolutions::from_source("difficulty", &difficulty_source, version, mappings),
             hashrate,
             adjustment: LazyPercentPerBlock::from_lookback_source(
                 "difficulty_adjustment",
                 version + Version::ONE,
-                &indexer.vecs().blocks.difficulty,
+                &difficulty_source,
                 BLOCKS_PER_DIFF_EPOCHS as usize,
                 difficulty_adjustment,
                 mappings,
@@ -105,7 +101,7 @@ mod tests {
     fn formulas_match_public_difficulty_series_contracts() {
         for (height, expected) in [(0_u32, 2_016_u32), (1, 2_015), (2_015, 1), (2_016, 2_016)] {
             assert_eq!(
-                blocks_left_to_retarget(Height::from(height), Default::default()),
+                blocks_left_to_retarget(Height::from(height)),
                 StoredU32::new(expected)
             );
         }

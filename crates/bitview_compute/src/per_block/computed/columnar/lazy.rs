@@ -4,27 +4,27 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    ColumnId, Formattable, LazyColumnVec, PcoVec, PcoVecValue, ReadOnlyColumnarVec,
-    ReadableColumnarVec,
+    Budgeted, CachedVec, ColumnId, Formattable, LazyColumnVec, PcoVec, PcoVecValue,
+    ReadOnlyColumnarVec, ReadableColumnarVec,
 };
 
-use crate::Resolutions;
+use crate::{CachePolicy, IndexSources, Resolutions};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(merge)]
-pub struct LazyColumnPerBlock<T, C>
+pub struct LazyColumnPerBlock<T, C, S: CachePolicy = Budgeted>
 where
     T: PcoVecValue + Formattable + PartialOrd + Serialize + JsonSchema,
     C: ColumnId,
 {
-    pub height: LazyColumnVec<ReadOnlyColumnarVec<PcoVec<Height, T>, C>, C>,
+    pub height: CachedVec<LazyColumnVec<ReadOnlyColumnarVec<PcoVec<Height, T>, C>, C>, S>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
     pub resolutions: Box<Resolutions<T>>,
 }
 
-impl<T, C> LazyColumnPerBlock<T, C>
+impl<T, C, S: CachePolicy> LazyColumnPerBlock<T, C, S>
 where
     T: PcoVecValue + Formattable + PartialOrd + Serialize + JsonSchema + 'static,
     C: ColumnId,
@@ -34,10 +34,10 @@ where
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, C>,
         column: C,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
-        let height = source.column(name, version, column);
-        let resolutions = Resolutions::from_height_source(name, height.clone(), version, indexes);
+        let height = S::wrap(source.column(name, version, column));
+        let resolutions = Resolutions::from_source(name, &height, version, indexes);
 
         Self {
             height,

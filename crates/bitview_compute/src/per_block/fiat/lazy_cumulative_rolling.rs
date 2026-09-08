@@ -1,12 +1,12 @@
 use bitview_traversable::Traversable;
 use derive_more::{Deref, DerefMut};
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use brk_types::{Height, Version};
 
 use crate::{
-    CachedWindowStartVec, FiatType, LazyFiatPerBlockCumulativeWithSums,
-    LazyRollingAvgFiatFromHeight, Windows,
+    FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums, LazyRollingAvgFiatFromHeight,
+    Windows,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -19,26 +19,26 @@ pub struct LazyFiatPerBlockCumulativeRolling<C: FiatType> {
 }
 
 impl<C: FiatType> LazyFiatPerBlockCumulativeRolling<C> {
-    pub fn from_boxed_cumulative_cents_source(
+    pub fn from_cumulative_cents_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, C>,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        source: &(impl ReadableCloneableVec<Height, C> + ?Sized),
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let inner = LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+        let inner = LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
             name,
             version,
             source,
             indexes,
-            cached_starts,
+            window_starts,
         );
-        let average = cached_starts.map_with_suffix(|suffix, cached_start| {
+        let average = window_starts.map_with_suffix(|suffix, window_start| {
             LazyRollingAvgFiatFromHeight::new(
                 &format!("{name}_average_{suffix}"),
                 version,
                 &inner.cumulative.cents.height,
-                cached_start,
+                *window_start,
                 indexes,
             )
         });

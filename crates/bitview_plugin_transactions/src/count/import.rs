@@ -17,7 +17,7 @@ pub fn forced_import(
             db,
             "tx_count",
             version,
-            mappings.transaction_count_source(),
+            &mappings.transaction_count_source(),
             mappings,
             cached_starts,
         )?,

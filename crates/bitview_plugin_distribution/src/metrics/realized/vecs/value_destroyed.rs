@@ -35,10 +35,10 @@ impl CumulativeValueDestroyedByCohort {
                 .matrices
                 .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported value-destroyed cohort");
-            LazyFiatPerBlockCumulativeRolling::from_boxed_cumulative_cents_source(
+            LazyFiatPerBlockCumulativeRolling::from_cumulative_cents_source(
                 &name,
                 version,
-                source,
+                &source,
                 mappings,
                 cached_starts,
             )

@@ -1,8 +1,9 @@
+use crate::IndexSources;
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use serde::Serialize;
-use vecdb::{Formattable, LazyVec, UnaryTransform, VecValue};
+use vecdb::{Formattable, IndexVec, ReadableBoxedVec, UnaryTransform, VecValue};
 
 macro_rules! define_constant_vecs {
     (
@@ -17,29 +18,27 @@ macro_rules! define_constant_vecs {
         where
             T: VecValue + Formattable + Serialize + JsonSchema,
         {
-            pub height: LazyVec<Height, T, Height, Minute10>,
-            $(pub $field: LazyVec<$index, T, $index, Height>,)*
-            $(pub $epoch: LazyVec<$epoch_index, T, $epoch_index, Height>,)*
+            pub height: IndexVec<Height, T, ReadableBoxedVec<Height, Minute10>>,
+            $(pub $field: IndexVec<$index, T, ReadableBoxedVec<$index, Height>>,)*
+            $(pub $epoch: IndexVec<$epoch_index, T, ReadableBoxedVec<$epoch_index, Height>>,)*
         }
 
         impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {
-            pub fn new<F>(name: &str, version: Version, indexes: &crate::IndexSources) -> Self
+            pub fn new<F>(name: &str, version: Version, indexes: &IndexSources) -> Self
             where
                 F: UnaryTransform<Height, T>
                     $(+ UnaryTransform<$index, T>)*
                     $(+ UnaryTransform<$epoch_index, T>)*,
             {
                 Self {
-                    height: LazyVec::init(name, version, indexes.height_minute10.clone(), |idx, _| {
-                        F::apply(idx)
-                    }),
-                    $($field: LazyVec::init(
+                    height: IndexVec::new(name, version, indexes.height_minute10.clone(), F::apply),
+                    $($field: IndexVec::new(
                         name, version, indexes.first_height.$field.clone(),
-                        |idx, _: Height| F::apply(idx),
+                        F::apply,
                     ),)*
-                    $($epoch: LazyVec::init(
+                    $($epoch: IndexVec::new(
                         name, version, indexes.first_height.$epoch.clone(),
-                        |idx, _: Height| F::apply(idx),
+                        F::apply,
                     ),)*
                 }
             }

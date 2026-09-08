@@ -12,6 +12,7 @@ function section(start, end) {
 function fixture(timeAxis = null) {
   const listeners = new Map(), captured = new Set();
   const state = {
+    valueMaxByConfig: {}, valueDrag: null, valueSlider: null,
     width: 1920, selectedIndex: 0, timeDragging: false,
     timePointerId: null, pricePointerId: null,
     hoverPriceCoordinate: null,
@@ -46,6 +47,15 @@ function fixture(timeAxis = null) {
     const dateOffsetFromView = () => 0;
     const nearestPriceIndex = coordinate => Math.round(coordinate * 4);
     function scheduleRender() {}
+    function invalidateTerrainChunks() {}
+    const relativeValueFromHeight = value => value;
+    const heightFromRelativeValue = value => value;
+    const pillContainsPoint = (context, text, anchor, baseline, down, options, point) =>
+      Math.abs(point.x - anchor.x) < 20 && Math.abs(point.y - anchor.y) < 20;
+    const context = {};
+    ${section("        function terrainConfigKey()", "        function updateValueScale(")}
+    ${section("        function valueSliderHit(", '        canvas.addEventListener("pointerdown"')}
+
     function cancelNavigationLoad() {}
     function invalidateSummaryForMovement() {}
     function updateSummary() {}
@@ -78,9 +88,13 @@ function fixture(timeAxis = null) {
     const event = {
       type, pointerId: 1, pointerType: "touch", isPrimary: true,
       button: 0, offsetX: 500, offsetY: 300,
-      preventDefault() { this.defaultPrevented = true; }, ...overrides,
+      preventDefault() { this.defaultPrevented = true; },
+      stopImmediatePropagation() { this.stopped = true; }, ...overrides,
     };
-    for (const listener of listeners.get(type) ?? []) listener(event);
+    for (const listener of listeners.get(type) ?? []) {
+      listener(event);
+      if (event.stopped) break;
+    }
     return event;
   }
   return { state, captured, send, ...api };
@@ -169,3 +183,68 @@ for (const axis of [{ x: 0, y: 400 }, { x: 300, y: -200 }]) {
     }
   }
 }
+
+test("value slider captures its handle, clamps the maximum, and releases capture", () => {
+  const { state, send, captured } = fixture();
+  state.valueSlider = {
+    bottom: { x: 900, y: 500 }, top: { x: 900, y: 100 },
+    anchor: { x: 900, y: 100 }, text: "MAX", options: {},
+  };
+  assert.ok(send("pointerdown", { offsetX: 900, offsetY: 110 }).defaultPrevented);
+  assert.ok(captured.has(1));
+  send("pointermove", { offsetX: 900, offsetY: 310 });
+  assert.equal(Object.values(state.valueMaxByConfig)[0], 0.5);
+  send("pointermove", { pointerId: 2, offsetY: 500 });
+  assert.equal(Object.values(state.valueMaxByConfig)[0], 0.5);
+  send("pointermove", { offsetY: 900 });
+  assert.equal(Object.values(state.valueMaxByConfig)[0], 0.01);
+  send("pointermove", { offsetY: 0 });
+  assert.equal(Object.values(state.valueMaxByConfig)[0], 1);
+  send("pointerup");
+  assert.equal(state.valueDrag, null);
+  assert.equal(captured.size, 0);
+});
+
+test("value maximum defaults to full range and persists independently per terrain config", () => {
+  const state = {
+    cohort: "all", metric: "supply", mode: "value", weight: "raw",
+    dimension: "3d", dates: [], valueMaxByConfig: {},
+  };
+  let saved;
+  const api = new Function("state", "localStorage", `
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const SETTINGS_KEY = "trail";
+    const isIsoDate = () => false;
+    ${section("        function terrainConfigKey()", "        function updateValueScale(")}
+    ${section("        function persistSettings()", "        function scheduleSettingsPersistence(")}
+    return { terrainConfigKey, valueMaxRatio, persistSettings };
+  `)(state, { setItem(key, value) { saved = JSON.parse(value); } });
+  assert.equal(api.valueMaxRatio(), 1);
+  state.valueMaxByConfig[api.terrainConfigKey()] = 0.25;
+  for (const key of ["cohort", "metric", "mode", "weight"]) {
+    const previous = state[key];
+    state[key] = "other";
+    assert.equal(api.valueMaxRatio(), 1);
+    state[key] = previous;
+    assert.equal(api.valueMaxRatio(), 0.25);
+  }
+  api.persistSettings();
+  state.valueMaxByConfig = saved.valueMaxByConfig;
+  assert.equal(api.valueMaxRatio(), 0.25);
+  state.valueMaxByConfig[api.terrainConfigKey()] = "invalid";
+  assert.equal(api.valueMaxRatio(), 1);
+});
+
+test("dragging an existing maximum preserves it on grab and can restore the full range", () => {
+  const { state, send } = fixture();
+  state.valueMaxByConfig[":::"] = 0.25;
+  state.valueSlider = {
+    bottom: { x: 900, y: 500 }, top: { x: 900, y: 100 },
+    anchor: { x: 900, y: 100 }, text: "MAX", options: {},
+  };
+  send("pointerdown", { offsetX: 900, offsetY: 110 });
+  send("pointermove", { offsetX: 900, offsetY: 110 });
+  assert.equal(state.valueMaxByConfig[":::"], 0.25);
+  send("pointermove", { offsetY: -190 });
+  assert.equal(state.valueMaxByConfig[":::"], 1);
+});

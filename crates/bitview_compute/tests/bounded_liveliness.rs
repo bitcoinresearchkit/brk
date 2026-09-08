@@ -3,7 +3,7 @@ mod common;
 use bitview_compute::{BoundedOddsF64, BoundedToF64, LazyPerBlock, PerBlock};
 use brk_exit::Exit;
 use brk_types::{BoundedRatio, Height, StoredF64, Version};
-use vecdb::{AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableVec};
+use vecdb::{AnyStoredVec, AnyVec, Database, ReadableVec};
 
 use common::{indexes, stored};
 
@@ -40,22 +40,13 @@ fn bounded_liveliness_storage_and_complement_views() {
         )
         .unwrap();
     source.height.write().unwrap();
-    let liveliness = LazyPerBlock::from_computed::<BoundedToF64>(
-        "liveliness",
-        Version::ONE,
-        source.height.read_only_boxed_clone(),
-        &source,
-    );
-    let vaultedness = LazyPerBlock::from_computed::<BoundedToF64<true>>(
-        "vaultedness",
-        Version::ONE,
-        source.height.read_only_boxed_clone(),
-        &source,
-    );
-    let odds = LazyPerBlock::from_computed::<BoundedOddsF64>(
+    let liveliness =
+        LazyPerBlock::from_resolutions::<BoundedToF64>("liveliness", Version::ONE, &source);
+    let vaultedness =
+        LazyPerBlock::from_resolutions::<BoundedToF64<true>>("vaultedness", Version::ONE, &source);
+    let odds = LazyPerBlock::from_resolutions::<BoundedOddsF64>(
         "activity_to_vaultedness",
         Version::ONE,
-        source.height.read_only_boxed_clone(),
         &source,
     );
     assert_eq!(liveliness.height.name(), "liveliness");

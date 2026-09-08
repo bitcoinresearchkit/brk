@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
@@ -36,11 +37,7 @@ pub struct GrossPnlComposition<M: StorageMode = Rw> {
 }
 
 impl GrossPnlComposition {
-    pub fn forced_import(
-        db: &Database,
-        version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
+    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = ColumnarPerBlock::forced_import(
             db,

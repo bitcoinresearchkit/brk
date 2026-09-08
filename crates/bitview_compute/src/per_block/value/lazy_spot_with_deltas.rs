@@ -1,9 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, PartsPerMillionSigned64, Sats, SatsSigned, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CachedBoxedVec, ReadableBoxedVec};
+use vecdb::ReadableCloneableVec;
 
-use crate::{CachedWindowStartVec, LazyRollingDeltasAmountFromHeight, Windows};
+use crate::{IndexSources, LazyRollingDeltasAmountFromHeight, Windows};
 
 use super::LazySpotValuePerBlock;
 
@@ -17,22 +17,21 @@ pub struct LazySpotValuePerBlockWithDeltas {
 }
 
 impl LazySpotValuePerBlockWithDeltas {
-    pub fn from_boxed_sats_source(
+    pub fn from_sats_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, Sats>,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        source: &(impl ReadableCloneableVec<Height, Sats> + ?Sized),
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
-        let inner = LazySpotValuePerBlock::from_boxed_sats_source(
-            name, version, source, indexes, spot_price,
-        );
+        let inner =
+            LazySpotValuePerBlock::from_sats_source(name, version, source, indexes, spot_price);
         let delta = LazyRollingDeltasAmountFromHeight::new(
             &format!("{name}_delta"),
             version + Version::TWO,
             &inner.sats.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         Self { inner, delta }

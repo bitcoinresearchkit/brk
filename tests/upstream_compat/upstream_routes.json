@@ -1,0 +1,1031 @@
+[
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 38,
+    "method": "GET",
+    "route": "/api/v1/transaction-times",
+    "endpoint": "get-transaction-times"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 39,
+    "method": "GET",
+    "route": "/api/v1/cpfp/:txId",
+    "endpoint": "get-cpfp"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 40,
+    "method": "GET",
+    "route": "/api/v1/difficulty-adjustment",
+    "endpoint": "get-difficulty-adjustment"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 41,
+    "method": "GET",
+    "route": "/api/v1/fees/recommended",
+    "endpoint": "get-recommended-fees"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 42,
+    "method": "GET",
+    "route": "/api/v1/fees/precise",
+    "endpoint": "get-recommended-fees-precise"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 43,
+    "method": "GET",
+    "route": "/api/v1/fee-estimates",
+    "endpoint": "backend-fee-estimates"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 44,
+    "method": "GET",
+    "route": "/api/v1/fees/mempool-blocks",
+    "endpoint": "get-mempool-blocks-fees"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 45,
+    "method": "GET",
+    "route": "/api/v1/backend-info",
+    "endpoint": "backend-backend-info"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 46,
+    "method": "GET",
+    "route": "/api/v1/init-data",
+    "endpoint": "backend-init-data"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 47,
+    "method": "GET",
+    "route": "/api/v1/validate-address/:address",
+    "endpoint": "get-address-validate"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 48,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/rbf",
+    "endpoint": "get-transaction-rbf-timeline"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 49,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/cached",
+    "endpoint": "backend-tx-txId-cached"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 50,
+    "method": "GET",
+    "route": "/api/v1/replacements",
+    "endpoint": "get-mempool-rbf"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 51,
+    "method": "GET",
+    "route": "/api/v1/fullrbf/replacements",
+    "endpoint": "get-mempool-fullrbf"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 52,
+    "method": "POST",
+    "route": "/api/v1/tx/push",
+    "endpoint": "backend-tx-push"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 53,
+    "method": "GET",
+    "route": "/api/v1/blocks",
+    "endpoint": "blocks-v1-recent"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 54,
+    "method": "GET",
+    "route": "/api/v1/blocks/:height",
+    "endpoint": "get-blocks-v1"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 55,
+    "method": "GET",
+    "route": "/api/v1/block/:hash",
+    "endpoint": "get-block-v1"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 56,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/summary",
+    "endpoint": "backend-block-hash-summary"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 57,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/tx/:txid/summary",
+    "endpoint": "backend-block-hash-tx-txid-summary"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 58,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/audit-summary",
+    "endpoint": "get-block-audit-summary"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 59,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/tx/:txid/audit",
+    "endpoint": "backend-block-hash-tx-txid-audit"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 60,
+    "method": "GET",
+    "route": "/api/v1/blocks/tip/height",
+    "endpoint": "backend-blocks-tip-height"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 61,
+    "method": "POST",
+    "route": "/api/v1/psbt/addparents",
+    "endpoint": "backend-psbt-addparents"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 62,
+    "method": "GET",
+    "route": "/api/v1/blocks-bulk/:from",
+    "endpoint": "blocks-bulk-default"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 63,
+    "method": "GET",
+    "route": "/api/v1/blocks-bulk/:from/:to",
+    "endpoint": "get-blocks-bulk"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 64,
+    "method": "GET",
+    "route": "/api/v1/chain-tips",
+    "endpoint": "backend-chain-tips"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 65,
+    "method": "GET",
+    "route": "/api/v1/stale-tips",
+    "endpoint": "backend-stale-tips"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 66,
+    "method": "GET",
+    "route": "/api/v1/stale-tips/:height",
+    "endpoint": "backend-stale-tips-height"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 67,
+    "method": "POST",
+    "route": "/api/v1/prevouts",
+    "endpoint": "backend-prevouts"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 68,
+    "method": "POST",
+    "route": "/api/v1/cpfp",
+    "endpoint": "backend-cpfp"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 70,
+    "method": "POST",
+    "route": "/api/v1/txs/package",
+    "endpoint": "backend-txs-package"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 72,
+    "method": "GET",
+    "route": "/api/v1/internal/blocks/definition/list",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 73,
+    "method": "GET",
+    "route": "/api/v1/internal/blocks/definition/current",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 74,
+    "method": "GET",
+    "route": "/api/v1/internal/blocks/:definitionHash",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 76,
+    "method": "GET",
+    "route": "/api/v1/goggles/:interval/",
+    "endpoint": "backend-goggles-interval"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 77,
+    "method": "GET",
+    "route": "/api/v1/goggles/:interval/:bucketSize",
+    "endpoint": "backend-goggles-interval-bucketSize"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 78,
+    "method": "GET",
+    "route": "/api/v1/goggles/:interval/:bucketSize/:op/:mask",
+    "endpoint": "backend-goggles-interval-bucketSize-op-mask"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 83,
+    "method": "GET",
+    "route": "/api/v1/mempool",
+    "endpoint": "backend-mempool"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 84,
+    "method": "GET",
+    "route": "/api/v1/mempool/txids",
+    "endpoint": "backend-mempool-txids"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 85,
+    "method": "GET",
+    "route": "/api/v1/mempool/recent",
+    "endpoint": "backend-mempool-recent"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 86,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId",
+    "endpoint": "backend-tx-txId"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 87,
+    "method": "POST",
+    "route": "/api/v1/tx",
+    "endpoint": "backend-tx"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 88,
+    "method": "POST",
+    "route": "/api/v1/txs/test",
+    "endpoint": "backend-txs-test"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 89,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/hex",
+    "endpoint": "backend-tx-txId-hex"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 90,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/status",
+    "endpoint": "backend-tx-txId-status"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 91,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/outspends",
+    "endpoint": "backend-tx-txId-outspends"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 92,
+    "method": "GET",
+    "route": "/api/v1/tx/:txId/merkle-proof",
+    "endpoint": "backend-tx-txId-merkle-proof"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 93,
+    "method": "GET",
+    "route": "/api/v1/txs/outspends",
+    "endpoint": "backend-txs-outspends"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 94,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/header",
+    "endpoint": "backend-block-hash-header"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 95,
+    "method": "GET",
+    "route": "/api/v1/blocks/tip/hash",
+    "endpoint": "backend-blocks-tip-hash"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 96,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/raw",
+    "endpoint": "backend-block-hash-raw"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 97,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/txids",
+    "endpoint": "backend-block-hash-txids"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 98,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/txs",
+    "endpoint": "backend-block-hash-txs"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 99,
+    "method": "GET",
+    "route": "/api/v1/block/:hash/txs/:index",
+    "endpoint": "backend-block-hash-txs-index"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 100,
+    "method": "GET",
+    "route": "/api/v1/block-height/:height",
+    "endpoint": "backend-block-height-height"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 101,
+    "method": "GET",
+    "route": "/api/v1/address/:address",
+    "endpoint": "backend-address-address"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 102,
+    "method": "GET",
+    "route": "/api/v1/address/:address/txs",
+    "endpoint": "backend-address-address-txs"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 103,
+    "method": "GET",
+    "route": "/api/v1/address/:address/txs/summary",
+    "endpoint": "backend-address-address-txs-summary"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 104,
+    "method": "GET",
+    "route": "/api/v1/address/:address/utxo",
+    "endpoint": "backend-address-address-utxo"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 105,
+    "method": "GET",
+    "route": "/api/v1/scripthash/:scripthash",
+    "endpoint": "backend-scripthash-scripthash"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 106,
+    "method": "GET",
+    "route": "/api/v1/scripthash/:scripthash/txs",
+    "endpoint": "backend-scripthash-scripthash-txs"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 107,
+    "method": "GET",
+    "route": "/api/v1/scripthash/:scripthash/txs/summary",
+    "endpoint": "backend-scripthash-scripthash-txs-summary"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 108,
+    "method": "GET",
+    "route": "/api/v1/scripthash/:scripthash/utxo",
+    "endpoint": "backend-scripthash-scripthash-utxo"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin.routes.ts",
+    "line": 109,
+    "method": "GET",
+    "route": "/api/v1/address-prefix/:prefix",
+    "endpoint": "backend-address-prefix-prefix"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 18,
+    "method": "GET",
+    "route": "/api/v1/mining/pools",
+    "endpoint": "mining-pools-default"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 19,
+    "method": "GET",
+    "route": "/api/v1/mining/pools/:interval",
+    "endpoint": "get-mining-pools"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 20,
+    "method": "GET",
+    "route": "/api/v1/mining/pool/:slug/hashrate",
+    "endpoint": "get-mining-pool-hashrate"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 21,
+    "method": "GET",
+    "route": "/api/v1/mining/pool/:slug/blocks",
+    "endpoint": "pool-blocks-default"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 22,
+    "method": "GET",
+    "route": "/api/v1/mining/pool/:slug/blocks/:height",
+    "endpoint": "get-mining-pool-blocks"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 23,
+    "method": "GET",
+    "route": "/api/v1/mining/pool/:slug",
+    "endpoint": "get-mining-pool"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 24,
+    "method": "GET",
+    "route": "/api/v1/mining/hashrate/pools/:interval",
+    "endpoint": "get-mining-pool-hashrates"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 25,
+    "method": "GET",
+    "route": "/api/v1/mining/hashrate/:interval",
+    "endpoint": "get-hashrate"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 26,
+    "method": "GET",
+    "route": "/api/v1/mining/difficulty-adjustments",
+    "endpoint": "difficulty-default"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 27,
+    "method": "GET",
+    "route": "/api/v1/mining/reward-stats/:blockCount",
+    "endpoint": "get-reward-stats"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 28,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/fees/:interval",
+    "endpoint": "get-block-fees"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 29,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/fees",
+    "endpoint": "backend-mining-blocks-fees"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 30,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/rewards/:interval",
+    "endpoint": "get-block-rewards"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 31,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/fee-rates/:interval",
+    "endpoint": "get-block-feerates"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 32,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/sizes-weights/:interval",
+    "endpoint": "get-sizes-weights"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 33,
+    "method": "GET",
+    "route": "/api/v1/mining/difficulty-adjustments/:interval",
+    "endpoint": "get-difficulty-adjustments"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 34,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/predictions/:interval",
+    "endpoint": "get-block-predictions"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 35,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/audit/scores",
+    "endpoint": "backend-mining-blocks-audit-scores"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 36,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/audit/scores/:height",
+    "endpoint": "get-blocks-audit-scores"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 37,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/audit/score/:hash",
+    "endpoint": "get-block-audit-score"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 38,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/audit/:hash",
+    "endpoint": "backend-mining-blocks-audit-scores"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 39,
+    "method": "GET",
+    "route": "/api/v1/mining/blocks/timestamp/:timestamp",
+    "endpoint": "get-block-timestamp"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 40,
+    "method": "GET",
+    "route": "/api/v1/historical-price",
+    "endpoint": "get-historical-price"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 42,
+    "method": "GET",
+    "route": "/api/v1/accelerations/pool/:slug",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 43,
+    "method": "GET",
+    "route": "/api/v1/accelerations/block/:height",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 44,
+    "method": "GET",
+    "route": "/api/v1/accelerations/recent/:interval",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 45,
+    "method": "GET",
+    "route": "/api/v1/accelerations/total",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 46,
+    "method": "GET",
+    "route": "/api/v1/accelerations",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/mining/mining-routes.ts",
+    "line": 47,
+    "method": "POST",
+    "route": "/api/v1/acceleration/request/:txid",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/prices/prices.routes.ts",
+    "line": 8,
+    "method": "GET",
+    "route": "/api/v1/prices",
+    "endpoint": "get-price"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 8,
+    "method": "GET",
+    "route": "/api/v1/statistics/2h",
+    "endpoint": "backend-statistics-2h"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 9,
+    "method": "GET",
+    "route": "/api/v1/statistics/24h",
+    "endpoint": "backend-statistics-24h"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 10,
+    "method": "GET",
+    "route": "/api/v1/statistics/1w",
+    "endpoint": "backend-statistics-1w"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 11,
+    "method": "GET",
+    "route": "/api/v1/statistics/1m",
+    "endpoint": "backend-statistics-1m"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 12,
+    "method": "GET",
+    "route": "/api/v1/statistics/3m",
+    "endpoint": "backend-statistics-3m"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 13,
+    "method": "GET",
+    "route": "/api/v1/statistics/6m",
+    "endpoint": "backend-statistics-6m"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 14,
+    "method": "GET",
+    "route": "/api/v1/statistics/1y",
+    "endpoint": "backend-statistics-1y"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 15,
+    "method": "GET",
+    "route": "/api/v1/statistics/2y",
+    "endpoint": "backend-statistics-2y"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 16,
+    "method": "GET",
+    "route": "/api/v1/statistics/3y",
+    "endpoint": "backend-statistics-3y"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 17,
+    "method": "GET",
+    "route": "/api/v1/statistics/4y",
+    "endpoint": "backend-statistics-4y"
+  },
+  {
+    "source": "backend/src/api/statistics/statistics.routes.ts",
+    "line": 18,
+    "method": "GET",
+    "route": "/api/v1/statistics/all",
+    "endpoint": "backend-statistics-all"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 19,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-mempool-entry",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 20,
+    "method": "POST",
+    "route": "/api/v1/internal/bitcoin-core/decode-raw-transaction",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 21,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-raw-transaction",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 22,
+    "method": "POST",
+    "route": "/api/v1/internal/bitcoin-core/send-raw-transaction",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 23,
+    "method": "POST",
+    "route": "/api/v1/internal/bitcoin-core/test-mempool-accept",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 24,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-mempool-ancestors",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 25,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-block",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 26,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-block-hash",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/bitcoin/bitcoin-core.routes.ts",
+    "line": 27,
+    "method": "GET",
+    "route": "/api/v1/internal/bitcoin-core/get-block-count",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/explorer/general.routes.ts",
+    "line": 13,
+    "method": "GET",
+    "route": "/api/v1/lightning/search",
+    "endpoint": "get-lightning-nodes-channels"
+  },
+  {
+    "source": "backend/src/api/explorer/general.routes.ts",
+    "line": 14,
+    "method": "GET",
+    "route": "/api/v1/lightning/statistics/latest",
+    "endpoint": "get-lightning-network-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/general.routes.ts",
+    "line": 15,
+    "method": "GET",
+    "route": "/api/v1/lightning/statistics/:interval",
+    "endpoint": "get-lightning-network-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 13,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/world",
+    "endpoint": "backend-lightning-nodes-world"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 14,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/country/:country",
+    "endpoint": "get-lightning-nodes-country"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 15,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/search/:search",
+    "endpoint": "backend-lightning-nodes-search-search"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 16,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/isp-ranking",
+    "endpoint": "get-isp-node-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 17,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/isp/:isp",
+    "endpoint": "get-isp-nodes"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 18,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/countries",
+    "endpoint": "get-country-node-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 19,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/rankings",
+    "endpoint": "get-top-100-nodes"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 20,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/rankings/liquidity",
+    "endpoint": "get-top-100-nodes-liquidity"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 21,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/rankings/connectivity",
+    "endpoint": "get-top-100-nodes-connectivity"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 22,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/rankings/age",
+    "endpoint": "get-top-100-oldest-nodes"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 23,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/:public_key/statistics",
+    "endpoint": "get-historical-node-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 24,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/:public_key/fees/histogram",
+    "endpoint": "backend-lightning-nodes-public-key-fees-histogram"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 25,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/:public_key",
+    "endpoint": "get-country-node-stats"
+  },
+  {
+    "source": "backend/src/api/explorer/nodes.routes.ts",
+    "line": 26,
+    "method": "GET",
+    "route": "/api/v1/lightning/nodes/group/:name",
+    "endpoint": "backend-lightning-nodes-group-name"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 13,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels/txids",
+    "endpoint": "get-channels-from-txid"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 14,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels/search/:search",
+    "endpoint": "backend-lightning-channels-search-search"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 15,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels/:short_id",
+    "endpoint": "get-channel"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 16,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels",
+    "endpoint": "get-channels-from-pubkey"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 17,
+    "method": "GET",
+    "route": "/api/v1/lightning/penalties",
+    "endpoint": "backend-lightning-penalties"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 18,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels-geo",
+    "endpoint": "get-channel-geodata"
+  },
+  {
+    "source": "backend/src/api/explorer/channels.routes.ts",
+    "line": 19,
+    "method": "GET",
+    "route": "/api/v1/lightning/channels-geo/:publicKey",
+    "endpoint": "get-channel-geodata-node"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 11,
+    "method": "GET",
+    "route": "/api/v1/donations",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 19,
+    "method": "GET",
+    "route": "/api/v1/donations/images/:id",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 34,
+    "method": "GET",
+    "route": "/api/v1/contributors",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 42,
+    "method": "GET",
+    "route": "/api/v1/contributors/images/:id",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 57,
+    "method": "GET",
+    "route": "/api/v1/translators",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 65,
+    "method": "GET",
+    "route": "/api/v1/translators/images/:id",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 80,
+    "method": "GET",
+    "route": "/api/v1/services/sponsors",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  },
+  {
+    "source": "backend/src/api/about.routes.ts",
+    "line": 90,
+    "method": "GET",
+    "route": "/api/v1/services/account/images/:username/:md5",
+    "exclude": "Internal or hosted service endpoint outside Bitcoin explorer compatibility"
+  }
+]

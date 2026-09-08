@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{AddrTypeId, ByAddrType};
@@ -113,7 +114,7 @@ impl AddrEventsVecs {
     fn event_shares(
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         all: LazyPercentCumulativeRolling<PartsPerMillion32>,
         numerators: &ByAddrType<LazyColumnPerBlockCumulativeRolling<StoredU64, AddrTypeId>>,
@@ -123,7 +124,11 @@ impl AddrEventsVecs {
             LazyPercentCumulativeRolling::from_cached_block_count(
                 &format!("{type_name}_{name}"),
                 version,
-                &column.select(numerators).cumulative.height,
+                column
+                    .select(numerators)
+                    .cumulative
+                    .resolutions
+                    .height_source(),
                 column.select(denominators).clone(),
                 cached_starts,
                 mappings,
@@ -135,7 +140,7 @@ impl AddrEventsVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         outputs_by_type: &bitview_plugin_outputs::ByTypeVecs,
         inputs_by_type: &bitview_plugin_inputs::ByTypeVecs,
@@ -185,7 +190,7 @@ impl AddrEventsVecs {
                 &spendable_share_name,
                 version,
                 &output_to_reused_addr_count.all.cumulative.height,
-                outputs_by_type.spendable_output_count.cached_cumulative(),
+                outputs_by_type.spendable_output_count.cumulative_source(),
                 cached_starts,
                 mappings,
             );

@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachedVec, ColumnId, ColumnarVec,
-    CompressionStrategy, DeltaOp, EagerVec, Formattable, LazyAggVec, LazyColumnSumVec,
+    CompressionStrategy, DeltaOp, EagerVec, Formattable, IndexVec, LazyAggVec, LazyColumnSumVec,
     LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec, MutableVec, OverflowVec,
     OverflowVecValue, RawStrategy, ReadOnlyColumnarVec, ReadOnlyCompressedVec, ReadOnlyMutableVec,
     ReadOnlyOverflowVec, ReadOnlyRawVec, ReadableColumnarVec, ReadableVec, StoredVec, TypedVec,
@@ -301,6 +301,21 @@ where
     }
 }
 
+impl<I, T, S> Traversable for IndexVec<I, T, S>
+where
+    I: VecIndex,
+    T: VecValue + Formattable + Serialize + JsonSchema,
+    S: TypedVec<I = I>,
+{
+    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
+        std::iter::once(self as &dyn AnyExportableVec)
+    }
+
+    fn to_tree_node(&self) -> TreeNode {
+        make_leaf::<I, T, _>(self)
+    }
+}
+
 impl<I, T, S1I, S1T> Traversable for LazyVec<I, T, S1I, S1T>
 where
     I: VecIndex,
@@ -381,17 +396,17 @@ where
     }
 }
 
-impl<V: TypedVec + Traversable> Traversable for CachedVec<V> {
+impl<V, S: vecdb::CachedVecStrategy> Traversable for CachedVec<V, S>
+where
+    V: TypedVec + Traversable + ReadableVec<V::I, V::T>,
+    V::T: Formattable + Serialize + JsonSchema,
+{
     fn to_tree_node(&self) -> TreeNode {
         self.inner.to_tree_node()
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.inner.iter_any_exportable()
-    }
-
-    fn iter_any_visible(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        self.inner.iter_any_visible()
+        std::iter::once(self as &dyn AnyExportableVec)
     }
 
     fn collect_series_descriptions<'a>(

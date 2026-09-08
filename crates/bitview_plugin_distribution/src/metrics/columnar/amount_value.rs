@@ -1,10 +1,11 @@
 use brk_error::Result;
+use brk_types::StoredU64;
 
 use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, Database, ReadableBoxedVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, Database, LazyVec, Rw, StorageMode};
 
 use bitview_compute::ColumnarValuePerBlockCumulativeRolling;
 
@@ -28,8 +29,8 @@ impl<S: Clone> ColumnarAmountValue<S> {
         version: Version,
         mut build: impl FnMut(
             &str,
-            ReadableBoxedVec<Height, Sats>,
-            ReadableBoxedVec<Height, Cents>,
+            LazyVec<Height, Sats, Height, StoredU64>,
+            LazyVec<Height, Cents, Height, StoredU64>,
         ) -> S,
     ) -> Result<Self> {
         let values = ColumnarValuePerBlockCumulativeRolling::forced_import(

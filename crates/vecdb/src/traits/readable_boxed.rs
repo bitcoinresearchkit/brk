@@ -104,9 +104,13 @@ where
     I: VecIndex,
     T: VecValue,
 {
+    fn snapshot(&self) -> std::sync::Arc<Vec<T>> {
+        self.0.snapshot()
+    }
+
     #[inline(always)]
-    fn has_cache_layer(&self) -> bool {
-        self.0.has_cache_layer()
+    fn snapshot_version(&self) -> Version {
+        self.0.snapshot_version()
     }
 
     #[inline(always)]

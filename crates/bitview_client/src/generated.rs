@@ -6668,38 +6668,6 @@ impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog> FromCat
     }
 }
 
-/// Catalog projection of bitview_compute::per_block::computed::cached_cumulative_rolling::CachedPerBlockCumulativeRolling.
-pub struct CatalogCachedPerBlockCumulativeRolling<T0, T1, T2, T3> {
-    pub block: LazyNode<T0>,
-    pub cumulative: LazyNode<T1>,
-    pub sum: LazyNode<T2>,
-    pub average: LazyNode<T3>,
-}
-
-impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog> FromCatalog
-    for CatalogCachedPerBlockCumulativeRolling<T0, T1, T2, T3>
-{
-    fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self {
-        let CatalogBinding::Branch(children) = &CATALOG_BINDINGS[binding] else {
-            unreachable!("expected catalog branch")
-        };
-        Self {
-            block: lazy_node((client.clone(), children[0]), |(client, binding)| {
-                T0::from_catalog(client, binding)
-            }),
-            cumulative: lazy_node((client.clone(), children[1]), |(client, binding)| {
-                T1::from_catalog(client, binding)
-            }),
-            sum: lazy_node((client.clone(), children[2]), |(client, binding)| {
-                T2::from_catalog(client, binding)
-            }),
-            average: lazy_node((client.clone(), children[3]), |(client, binding)| {
-                T3::from_catalog(client, binding)
-            }),
-        }
-    }
-}
-
 /// Catalog projection of bitview_plugin_op_return::total::Total.
 pub struct CatalogTotal<T0, T1, T2, T3, T4, T5> {
     pub data_bytes: LazyNode<T0>,
@@ -7069,38 +7037,6 @@ impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog, T4: Fro
             }),
             dominance: lazy_node((client.clone(), children[4]), |(client, binding)| {
                 T4::from_catalog(client, binding)
-            }),
-        }
-    }
-}
-
-/// Catalog projection of bitview_compute::per_block::value::cached::CachedValuePerBlock.
-pub struct CatalogCachedValuePerBlock<T0, T1, T2, T3> {
-    pub btc: LazyNode<T0>,
-    pub sats: LazyNode<T1>,
-    pub usd: LazyNode<T2>,
-    pub cents: LazyNode<T3>,
-}
-
-impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog> FromCatalog
-    for CatalogCachedValuePerBlock<T0, T1, T2, T3>
-{
-    fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self {
-        let CatalogBinding::Branch(children) = &CATALOG_BINDINGS[binding] else {
-            unreachable!("expected catalog branch")
-        };
-        Self {
-            btc: lazy_node((client.clone(), children[0]), |(client, binding)| {
-                T0::from_catalog(client, binding)
-            }),
-            sats: lazy_node((client.clone(), children[1]), |(client, binding)| {
-                T1::from_catalog(client, binding)
-            }),
-            usd: lazy_node((client.clone(), children[2]), |(client, binding)| {
-                T2::from_catalog(client, binding)
-            }),
-            cents: lazy_node((client.clone(), children[3]), |(client, binding)| {
-                T3::from_catalog(client, binding)
             }),
         }
     }
@@ -20667,7 +20603,7 @@ type _CatalogType222 =
 type _CatalogType223 = SeriesPattern18<Bytes>;
 type _CatalogType224 = SeriesPattern1<Bytes>;
 type _CatalogType225 = CatalogWindows<_CatalogType224>;
-type _CatalogType226 = CatalogCachedPerBlockCumulativeRolling<
+type _CatalogType226 = CatalogPerBlockCumulativeRolling<
     _CatalogType223,
     _CatalogType224,
     _CatalogType225,
@@ -20740,406 +20676,405 @@ type _CatalogType254 =
     CatalogOpReturn<_CatalogType222, _CatalogType232, _CatalogType244, _CatalogType253>;
 type _CatalogType255 =
     CatalogSubsidy<_CatalogType78, _CatalogType82, _CatalogType84, _CatalogType86, _CatalogType105>;
-type _CatalogType256 =
-    CatalogCachedValuePerBlock<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81>;
-type _CatalogType257 = CatalogWindows<_CatalogType82>;
-type _CatalogType258 = SeriesPattern1<PartsPerMillion64>;
-type _CatalogType259 = CatalogPercent<_CatalogType258, _CatalogType4, _CatalogType4>;
-type _CatalogType260 = CatalogWindows<_CatalogType259>;
-type _CatalogType261 = CatalogFees<
+type _CatalogType256 = CatalogWindows<_CatalogType82>;
+type _CatalogType257 = SeriesPattern1<PartsPerMillion64>;
+type _CatalogType258 = CatalogPercent<_CatalogType257, _CatalogType4, _CatalogType4>;
+type _CatalogType259 = CatalogWindows<_CatalogType258>;
+type _CatalogType260 = CatalogFees<
     _CatalogType78,
-    _CatalogType256,
+    _CatalogType82,
     _CatalogType84,
     _CatalogType86,
-    _CatalogType257,
+    _CatalogType256,
     _CatalogType105,
-    _CatalogType260,
+    _CatalogType259,
 >;
-type _CatalogType262 = CatalogBitviewPluginMiningRewardsVecsVecs<
+type _CatalogType261 = CatalogBitviewPluginMiningRewardsVecsVecs<
     _CatalogType87,
     _CatalogType255,
-    _CatalogType261,
+    _CatalogType260,
     _CatalogType75,
     _CatalogType127,
 >;
-type _CatalogType263 = CatalogHashRateSmaVecs<_CatalogType2>;
-type _CatalogType264 = CatalogRateVecs<_CatalogType2, _CatalogType263, _CatalogType5>;
-type _CatalogType265 = CatalogHashPriceValueVecs<_CatalogType4, _CatalogType4, _CatalogType5>;
-type _CatalogType266 = CatalogBitviewPluginMiningHashrateVecsVecs<_CatalogType264, _CatalogType265>;
-type _CatalogType267 = CatalogBitviewPluginMiningVecs<_CatalogType262, _CatalogType266>;
-type _CatalogType268 = SeriesPattern18<StoredF64>;
-type _CatalogType269 = CatalogWindows<_CatalogType2>;
-type _CatalogType270 = CatalogPerBlockCumulativeRolling<
-    _CatalogType268,
+type _CatalogType262 = CatalogHashRateSmaVecs<_CatalogType2>;
+type _CatalogType263 = CatalogRateVecs<_CatalogType2, _CatalogType262, _CatalogType5>;
+type _CatalogType264 = CatalogHashPriceValueVecs<_CatalogType4, _CatalogType4, _CatalogType5>;
+type _CatalogType265 = CatalogBitviewPluginMiningHashrateVecsVecs<_CatalogType263, _CatalogType264>;
+type _CatalogType266 = CatalogBitviewPluginMiningVecs<_CatalogType261, _CatalogType265>;
+type _CatalogType267 = SeriesPattern18<StoredF64>;
+type _CatalogType268 = CatalogWindows<_CatalogType2>;
+type _CatalogType269 = CatalogPerBlockCumulativeRolling<
+    _CatalogType267,
     _CatalogType2,
-    _CatalogType269,
+    _CatalogType268,
     _CatalogType14,
 >;
-type _CatalogType271 = CatalogActivity<_CatalogType270, _CatalogType2, _CatalogType270>;
-type _CatalogType272 = CatalogLazyColumnPerBlockCumulativeRolling<
-    _CatalogType268,
+type _CatalogType270 = CatalogActivity<_CatalogType269, _CatalogType2, _CatalogType269>;
+type _CatalogType271 = CatalogLazyColumnPerBlockCumulativeRolling<
+    _CatalogType267,
     _CatalogType2,
-    _CatalogType269,
+    _CatalogType268,
     _CatalogType14,
 >;
-type _CatalogType273 = SeriesPattern18<AgeRange<StoredF64>>;
-type _CatalogType274 = CatalogColumnarPerBlockCumulativeRolling_6<_CatalogType272, _CatalogType273>;
-type _CatalogType275 = CatalogAgeRange<_CatalogType2>;
-type _CatalogType276 = SeriesPattern18<AgeRange<BoundedRatio>>;
-type _CatalogType277 = CatalogColumnarPerBlock_4<_CatalogType275, _CatalogType276>;
-type _CatalogType278 = CatalogAgeRange<_CatalogType191>;
-type _CatalogType279 = CatalogBitviewPluginCointimeAgeRangeVecsSupplySupplyVecs<_CatalogType278>;
-type _CatalogType280 = CatalogBitviewPluginCointimeAgeRangeVecsCollectionVecs<
-    _CatalogType274,
-    _CatalogType277,
-    _CatalogType279,
+type _CatalogType272 = SeriesPattern18<AgeRange<StoredF64>>;
+type _CatalogType273 = CatalogColumnarPerBlockCumulativeRolling_6<_CatalogType271, _CatalogType272>;
+type _CatalogType274 = CatalogAgeRange<_CatalogType2>;
+type _CatalogType275 = SeriesPattern18<AgeRange<BoundedRatio>>;
+type _CatalogType276 = CatalogColumnarPerBlock_4<_CatalogType274, _CatalogType275>;
+type _CatalogType277 = CatalogAgeRange<_CatalogType191>;
+type _CatalogType278 = CatalogBitviewPluginCointimeAgeRangeVecsSupplySupplyVecs<_CatalogType277>;
+type _CatalogType279 = CatalogBitviewPluginCointimeAgeRangeVecsCollectionVecs<
+    _CatalogType273,
+    _CatalogType276,
+    _CatalogType278,
 >;
-type _CatalogType281 = CatalogCatalogRootCointimeAwakeSupplyInLoss<_CatalogType2>;
-type _CatalogType282 = CatalogCatalogRootCointimeAwakeSupply<
+type _CatalogType280 = CatalogCatalogRootCointimeAwakeSupplyInLoss<_CatalogType2>;
+type _CatalogType281 = CatalogCatalogRootCointimeAwakeSupply<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
-    _CatalogType281,
->;
-type _CatalogType283 = CatalogLazyFiatPerBlock<_CatalogType80, _CatalogType81>;
-type _CatalogType284 = SeriesPattern1<SatsFract>;
-type _CatalogType285 = SeriesPattern1<PriceRatio>;
-type _CatalogType286 = CatalogLazyPriceWithRatioPerBlock<
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType284,
-    _CatalogType285,
-    _CatalogType4,
->;
-type _CatalogType287 = CatalogAwakeVecs<_CatalogType282, _CatalogType283, _CatalogType286>;
-type _CatalogType288 = CatalogDormantVecs<_CatalogType191>;
-type _CatalogType289 = CatalogCatalogRootCointimeSthAwakeSupplyInLoss<_CatalogType2>;
-type _CatalogType290 = CatalogCatalogRootCointimeSthAwakeSupply<
-    _CatalogType79,
-    _CatalogType59,
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType289,
->;
-type _CatalogType291 = CatalogAwakeVecs<_CatalogType290, _CatalogType283, _CatalogType286>;
-type _CatalogType292 = CatalogCohortVecs<_CatalogType291, _CatalogType288>;
-type _CatalogType293 = CatalogCatalogRootCointimeLthAwakeSupplyInLoss<_CatalogType2>;
-type _CatalogType294 = CatalogCatalogRootCointimeLthAwakeSupply<
-    _CatalogType79,
-    _CatalogType59,
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType293,
->;
-type _CatalogType295 = CatalogAwakeVecs<_CatalogType294, _CatalogType283, _CatalogType286>;
-type _CatalogType296 = CatalogCohortVecs<_CatalogType295, _CatalogType288>;
-type _CatalogType297 = SeriesPattern18<ByTerm<Sats>>;
-type _CatalogType298 = SeriesPattern18<ByTerm<Cents>>;
-type _CatalogType299 = SeriesPattern18<UTXOAggregate<Cents>>;
-type _CatalogType300 = SeriesPattern18<ByTerm<BoundedRatio>>;
-type _CatalogType301 =
-    CatalogSources<_CatalogType297, _CatalogType298, _CatalogType299, _CatalogType300>;
-type _CatalogType302 = SeriesPattern1<BoundedRatio>;
-type _CatalogType303 = CatalogBoundedRatioPerBlock<_CatalogType302, _CatalogType2>;
-type _CatalogType304 = CatalogCatalogRootCointimeSupplyActiveInLoss<_CatalogType303>;
-type _CatalogType305 =
-    CatalogActive<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81, _CatalogType304>;
-type _CatalogType306 =
-    CatalogBitviewPluginCointimeSupplyVecsCollectionVecs<_CatalogType191, _CatalogType305>;
-type _CatalogType307 = CatalogBitviewPluginCointimeValueVecsVecs<_CatalogType270>;
-type _CatalogType308 = CatalogFiatPerBlock<_CatalogType80, _CatalogType81>;
-type _CatalogType309 = CatalogRatioPerBlock<_CatalogType103, _CatalogType4>;
-type _CatalogType310 =
-    CatalogBitviewPluginCointimeCapVecsVecs<_CatalogType283, _CatalogType308, _CatalogType309>;
-type _CatalogType311 = CatalogPriceWithRatioPerBlock<
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType284,
-    _CatalogType285,
-    _CatalogType4,
->;
-type _CatalogType312 = CatalogBitviewPluginCointimePricesVecsVecs<_CatalogType311, _CatalogType286>;
-type _CatalogType313 = CatalogBitviewPluginCointimeAdjustedVecsVecs<_CatalogType5, _CatalogType2>;
-type _CatalogType314 =
-    CatalogBitviewPluginCointimeReserveRiskVecsVecs<_CatalogType2, _CatalogType268>;
-type _CatalogType315 = CatalogCatalogRootCointime<
-    _CatalogType271,
     _CatalogType280,
-    _CatalogType287,
+>;
+type _CatalogType282 = CatalogLazyFiatPerBlock<_CatalogType80, _CatalogType81>;
+type _CatalogType283 = SeriesPattern1<SatsFract>;
+type _CatalogType284 = SeriesPattern1<PriceRatio>;
+type _CatalogType285 = CatalogLazyPriceWithRatioPerBlock<
+    _CatalogType80,
+    _CatalogType81,
+    _CatalogType283,
+    _CatalogType284,
+    _CatalogType4,
+>;
+type _CatalogType286 = CatalogAwakeVecs<_CatalogType281, _CatalogType282, _CatalogType285>;
+type _CatalogType287 = CatalogDormantVecs<_CatalogType191>;
+type _CatalogType288 = CatalogCatalogRootCointimeSthAwakeSupplyInLoss<_CatalogType2>;
+type _CatalogType289 = CatalogCatalogRootCointimeSthAwakeSupply<
+    _CatalogType79,
+    _CatalogType59,
+    _CatalogType80,
+    _CatalogType81,
     _CatalogType288,
+>;
+type _CatalogType290 = CatalogAwakeVecs<_CatalogType289, _CatalogType282, _CatalogType285>;
+type _CatalogType291 = CatalogCohortVecs<_CatalogType290, _CatalogType287>;
+type _CatalogType292 = CatalogCatalogRootCointimeLthAwakeSupplyInLoss<_CatalogType2>;
+type _CatalogType293 = CatalogCatalogRootCointimeLthAwakeSupply<
+    _CatalogType79,
+    _CatalogType59,
+    _CatalogType80,
+    _CatalogType81,
     _CatalogType292,
-    _CatalogType296,
-    _CatalogType301,
+>;
+type _CatalogType294 = CatalogAwakeVecs<_CatalogType293, _CatalogType282, _CatalogType285>;
+type _CatalogType295 = CatalogCohortVecs<_CatalogType294, _CatalogType287>;
+type _CatalogType296 = SeriesPattern18<ByTerm<Sats>>;
+type _CatalogType297 = SeriesPattern18<ByTerm<Cents>>;
+type _CatalogType298 = SeriesPattern18<UTXOAggregate<Cents>>;
+type _CatalogType299 = SeriesPattern18<ByTerm<BoundedRatio>>;
+type _CatalogType300 =
+    CatalogSources<_CatalogType296, _CatalogType297, _CatalogType298, _CatalogType299>;
+type _CatalogType301 = SeriesPattern1<BoundedRatio>;
+type _CatalogType302 = CatalogBoundedRatioPerBlock<_CatalogType301, _CatalogType2>;
+type _CatalogType303 = CatalogCatalogRootCointimeSupplyActiveInLoss<_CatalogType302>;
+type _CatalogType304 =
+    CatalogActive<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81, _CatalogType303>;
+type _CatalogType305 =
+    CatalogBitviewPluginCointimeSupplyVecsCollectionVecs<_CatalogType191, _CatalogType304>;
+type _CatalogType306 = CatalogBitviewPluginCointimeValueVecsVecs<_CatalogType269>;
+type _CatalogType307 = CatalogFiatPerBlock<_CatalogType80, _CatalogType81>;
+type _CatalogType308 = CatalogRatioPerBlock<_CatalogType103, _CatalogType4>;
+type _CatalogType309 =
+    CatalogBitviewPluginCointimeCapVecsVecs<_CatalogType282, _CatalogType307, _CatalogType308>;
+type _CatalogType310 = CatalogPriceWithRatioPerBlock<
+    _CatalogType80,
+    _CatalogType81,
+    _CatalogType283,
+    _CatalogType284,
+    _CatalogType4,
+>;
+type _CatalogType311 = CatalogBitviewPluginCointimePricesVecsVecs<_CatalogType310, _CatalogType285>;
+type _CatalogType312 = CatalogBitviewPluginCointimeAdjustedVecsVecs<_CatalogType5, _CatalogType2>;
+type _CatalogType313 =
+    CatalogBitviewPluginCointimeReserveRiskVecsVecs<_CatalogType2, _CatalogType267>;
+type _CatalogType314 = CatalogCatalogRootCointime<
+    _CatalogType270,
+    _CatalogType279,
+    _CatalogType286,
+    _CatalogType287,
+    _CatalogType291,
+    _CatalogType295,
+    _CatalogType300,
+    _CatalogType305,
     _CatalogType306,
-    _CatalogType307,
-    _CatalogType310,
+    _CatalogType309,
+    _CatalogType311,
     _CatalogType312,
     _CatalogType313,
-    _CatalogType314,
 >;
-type _CatalogType316 = CatalogColumnarPerBlock_5<_CatalogType2, _CatalogType273>;
-type _CatalogType317 = CatalogColumnarPerBlock_6<_CatalogType2, _CatalogType275, _CatalogType273>;
-type _CatalogType318 = CatalogMobility<_CatalogType278>;
-type _CatalogType319 = CatalogAgeRangeVecs<_CatalogType316, _CatalogType317, _CatalogType318>;
-type _CatalogType320 = CatalogCatalogRootCoinflowSupplyMobileInLoss<_CatalogType2>;
-type _CatalogType321 = CatalogCatalogRootCoinflowSupplyMobile<
+type _CatalogType315 = CatalogColumnarPerBlock_5<_CatalogType2, _CatalogType272>;
+type _CatalogType316 = CatalogColumnarPerBlock_6<_CatalogType2, _CatalogType274, _CatalogType272>;
+type _CatalogType317 = CatalogMobility<_CatalogType277>;
+type _CatalogType318 = CatalogAgeRangeVecs<_CatalogType315, _CatalogType316, _CatalogType317>;
+type _CatalogType319 = CatalogCatalogRootCoinflowSupplyMobileInLoss<_CatalogType2>;
+type _CatalogType320 = CatalogCatalogRootCoinflowSupplyMobile<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
-    _CatalogType320,
+    _CatalogType319,
 >;
-type _CatalogType322 = CatalogCatalogRootCoinflowSupply<_CatalogType321, _CatalogType191>;
-type _CatalogType323 = CatalogCatalogRootCoinflowHorizon8ySupplyInLoss<_CatalogType2>;
-type _CatalogType324 = CatalogCatalogRootCoinflowHorizon8ySupply<_CatalogType323>;
-type _CatalogType325 = CatalogHorizonVecs<_CatalogType324>;
-type _CatalogType326 = CatalogCatalogRootCoinflowHorizon4ySupplyInLoss<_CatalogType2>;
-type _CatalogType327 = CatalogCatalogRootCoinflowHorizon4ySupply<_CatalogType326>;
-type _CatalogType328 = CatalogHorizonVecs<_CatalogType327>;
-type _CatalogType329 = CatalogCatalogRootCoinflowHorizon2ySupplyInLoss<_CatalogType2>;
-type _CatalogType330 = CatalogCatalogRootCoinflowHorizon2ySupply<_CatalogType329>;
-type _CatalogType331 = CatalogHorizonVecs<_CatalogType330>;
-type _CatalogType332 = CatalogCatalogRootCoinflowHorizon1ySupplyInLoss<_CatalogType2>;
-type _CatalogType333 = CatalogCatalogRootCoinflowHorizon1ySupply<_CatalogType332>;
-type _CatalogType334 = CatalogHorizonVecs<_CatalogType333>;
-type _CatalogType335 = CatalogCatalogRootCoinflowHorizon6mSupplyInLoss<_CatalogType2>;
-type _CatalogType336 = CatalogCatalogRootCoinflowHorizon6mSupply<_CatalogType335>;
-type _CatalogType337 = CatalogHorizonVecs<_CatalogType336>;
-type _CatalogType338 = CatalogCatalogRootCoinflowHorizon3mSupplyInLoss<_CatalogType2>;
-type _CatalogType339 = CatalogCatalogRootCoinflowHorizon3mSupply<_CatalogType338>;
-type _CatalogType340 = CatalogHorizonVecs<_CatalogType339>;
-type _CatalogType341 = CatalogCatalogRootCoinflowHorizon1mSupplyInLoss<_CatalogType2>;
-type _CatalogType342 = CatalogCatalogRootCoinflowHorizon1mSupply<_CatalogType341>;
-type _CatalogType343 = CatalogHorizonVecs<_CatalogType342>;
-type _CatalogType344 = CatalogHorizons<
-    _CatalogType325,
-    _CatalogType328,
-    _CatalogType331,
-    _CatalogType334,
-    _CatalogType337,
-    _CatalogType340,
-    _CatalogType343,
+type _CatalogType321 = CatalogCatalogRootCoinflowSupply<_CatalogType320, _CatalogType191>;
+type _CatalogType322 = CatalogCatalogRootCoinflowHorizon8ySupplyInLoss<_CatalogType2>;
+type _CatalogType323 = CatalogCatalogRootCoinflowHorizon8ySupply<_CatalogType322>;
+type _CatalogType324 = CatalogHorizonVecs<_CatalogType323>;
+type _CatalogType325 = CatalogCatalogRootCoinflowHorizon4ySupplyInLoss<_CatalogType2>;
+type _CatalogType326 = CatalogCatalogRootCoinflowHorizon4ySupply<_CatalogType325>;
+type _CatalogType327 = CatalogHorizonVecs<_CatalogType326>;
+type _CatalogType328 = CatalogCatalogRootCoinflowHorizon2ySupplyInLoss<_CatalogType2>;
+type _CatalogType329 = CatalogCatalogRootCoinflowHorizon2ySupply<_CatalogType328>;
+type _CatalogType330 = CatalogHorizonVecs<_CatalogType329>;
+type _CatalogType331 = CatalogCatalogRootCoinflowHorizon1ySupplyInLoss<_CatalogType2>;
+type _CatalogType332 = CatalogCatalogRootCoinflowHorizon1ySupply<_CatalogType331>;
+type _CatalogType333 = CatalogHorizonVecs<_CatalogType332>;
+type _CatalogType334 = CatalogCatalogRootCoinflowHorizon6mSupplyInLoss<_CatalogType2>;
+type _CatalogType335 = CatalogCatalogRootCoinflowHorizon6mSupply<_CatalogType334>;
+type _CatalogType336 = CatalogHorizonVecs<_CatalogType335>;
+type _CatalogType337 = CatalogCatalogRootCoinflowHorizon3mSupplyInLoss<_CatalogType2>;
+type _CatalogType338 = CatalogCatalogRootCoinflowHorizon3mSupply<_CatalogType337>;
+type _CatalogType339 = CatalogHorizonVecs<_CatalogType338>;
+type _CatalogType340 = CatalogCatalogRootCoinflowHorizon1mSupplyInLoss<_CatalogType2>;
+type _CatalogType341 = CatalogCatalogRootCoinflowHorizon1mSupply<_CatalogType340>;
+type _CatalogType342 = CatalogHorizonVecs<_CatalogType341>;
+type _CatalogType343 = CatalogHorizons<
+    _CatalogType324,
+    _CatalogType327,
+    _CatalogType330,
+    _CatalogType333,
+    _CatalogType336,
+    _CatalogType339,
+    _CatalogType342,
 >;
-type _CatalogType345 = CatalogCatalogRootCoinflowSthSupplyMobileInLoss<_CatalogType2>;
-type _CatalogType346 = CatalogCatalogRootCoinflowSthSupplyMobile<
+type _CatalogType344 = CatalogCatalogRootCoinflowSthSupplyMobileInLoss<_CatalogType2>;
+type _CatalogType345 = CatalogCatalogRootCoinflowSthSupplyMobile<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
-    _CatalogType345,
+    _CatalogType344,
 >;
-type _CatalogType347 = CatalogCatalogRootCoinflowSthSupply<_CatalogType346, _CatalogType191>;
-type _CatalogType348 = CatalogCatalogRootCoinflowSthHorizon8ySupplyInLoss<_CatalogType2>;
-type _CatalogType349 = CatalogCatalogRootCoinflowSthHorizon8ySupply<_CatalogType348>;
-type _CatalogType350 = CatalogHorizonVecs<_CatalogType349>;
-type _CatalogType351 = CatalogCatalogRootCoinflowSthHorizon4ySupplyInLoss<_CatalogType2>;
-type _CatalogType352 = CatalogCatalogRootCoinflowSthHorizon4ySupply<_CatalogType351>;
-type _CatalogType353 = CatalogHorizonVecs<_CatalogType352>;
-type _CatalogType354 = CatalogCatalogRootCoinflowSthHorizon2ySupplyInLoss<_CatalogType2>;
-type _CatalogType355 = CatalogCatalogRootCoinflowSthHorizon2ySupply<_CatalogType354>;
-type _CatalogType356 = CatalogHorizonVecs<_CatalogType355>;
-type _CatalogType357 = CatalogCatalogRootCoinflowSthHorizon1ySupplyInLoss<_CatalogType2>;
-type _CatalogType358 = CatalogCatalogRootCoinflowSthHorizon1ySupply<_CatalogType357>;
-type _CatalogType359 = CatalogHorizonVecs<_CatalogType358>;
-type _CatalogType360 = CatalogCatalogRootCoinflowSthHorizon6mSupplyInLoss<_CatalogType2>;
-type _CatalogType361 = CatalogCatalogRootCoinflowSthHorizon6mSupply<_CatalogType360>;
-type _CatalogType362 = CatalogHorizonVecs<_CatalogType361>;
-type _CatalogType363 = CatalogCatalogRootCoinflowSthHorizon3mSupplyInLoss<_CatalogType2>;
-type _CatalogType364 = CatalogCatalogRootCoinflowSthHorizon3mSupply<_CatalogType363>;
-type _CatalogType365 = CatalogHorizonVecs<_CatalogType364>;
-type _CatalogType366 = CatalogCatalogRootCoinflowSthHorizon1mSupplyInLoss<_CatalogType2>;
-type _CatalogType367 = CatalogCatalogRootCoinflowSthHorizon1mSupply<_CatalogType366>;
-type _CatalogType368 = CatalogHorizonVecs<_CatalogType367>;
-type _CatalogType369 = CatalogHorizons<
-    _CatalogType350,
-    _CatalogType353,
-    _CatalogType356,
-    _CatalogType359,
-    _CatalogType362,
-    _CatalogType365,
-    _CatalogType368,
+type _CatalogType346 = CatalogCatalogRootCoinflowSthSupply<_CatalogType345, _CatalogType191>;
+type _CatalogType347 = CatalogCatalogRootCoinflowSthHorizon8ySupplyInLoss<_CatalogType2>;
+type _CatalogType348 = CatalogCatalogRootCoinflowSthHorizon8ySupply<_CatalogType347>;
+type _CatalogType349 = CatalogHorizonVecs<_CatalogType348>;
+type _CatalogType350 = CatalogCatalogRootCoinflowSthHorizon4ySupplyInLoss<_CatalogType2>;
+type _CatalogType351 = CatalogCatalogRootCoinflowSthHorizon4ySupply<_CatalogType350>;
+type _CatalogType352 = CatalogHorizonVecs<_CatalogType351>;
+type _CatalogType353 = CatalogCatalogRootCoinflowSthHorizon2ySupplyInLoss<_CatalogType2>;
+type _CatalogType354 = CatalogCatalogRootCoinflowSthHorizon2ySupply<_CatalogType353>;
+type _CatalogType355 = CatalogHorizonVecs<_CatalogType354>;
+type _CatalogType356 = CatalogCatalogRootCoinflowSthHorizon1ySupplyInLoss<_CatalogType2>;
+type _CatalogType357 = CatalogCatalogRootCoinflowSthHorizon1ySupply<_CatalogType356>;
+type _CatalogType358 = CatalogHorizonVecs<_CatalogType357>;
+type _CatalogType359 = CatalogCatalogRootCoinflowSthHorizon6mSupplyInLoss<_CatalogType2>;
+type _CatalogType360 = CatalogCatalogRootCoinflowSthHorizon6mSupply<_CatalogType359>;
+type _CatalogType361 = CatalogHorizonVecs<_CatalogType360>;
+type _CatalogType362 = CatalogCatalogRootCoinflowSthHorizon3mSupplyInLoss<_CatalogType2>;
+type _CatalogType363 = CatalogCatalogRootCoinflowSthHorizon3mSupply<_CatalogType362>;
+type _CatalogType364 = CatalogHorizonVecs<_CatalogType363>;
+type _CatalogType365 = CatalogCatalogRootCoinflowSthHorizon1mSupplyInLoss<_CatalogType2>;
+type _CatalogType366 = CatalogCatalogRootCoinflowSthHorizon1mSupply<_CatalogType365>;
+type _CatalogType367 = CatalogHorizonVecs<_CatalogType366>;
+type _CatalogType368 = CatalogHorizons<
+    _CatalogType349,
+    _CatalogType352,
+    _CatalogType355,
+    _CatalogType358,
+    _CatalogType361,
+    _CatalogType364,
+    _CatalogType367,
 >;
-type _CatalogType370 =
-    CatalogAggregateVecs<_CatalogType347, _CatalogType369, _CatalogType283, _CatalogType286>;
-type _CatalogType371 = CatalogCatalogRootCoinflowLthSupplyMobileInLoss<_CatalogType2>;
-type _CatalogType372 = CatalogCatalogRootCoinflowLthSupplyMobile<
+type _CatalogType369 =
+    CatalogAggregateVecs<_CatalogType346, _CatalogType368, _CatalogType282, _CatalogType285>;
+type _CatalogType370 = CatalogCatalogRootCoinflowLthSupplyMobileInLoss<_CatalogType2>;
+type _CatalogType371 = CatalogCatalogRootCoinflowLthSupplyMobile<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
-    _CatalogType371,
+    _CatalogType370,
 >;
-type _CatalogType373 = CatalogCatalogRootCoinflowLthSupply<_CatalogType372, _CatalogType191>;
-type _CatalogType374 = CatalogCatalogRootCoinflowLthHorizon8ySupplyInLoss<_CatalogType2>;
-type _CatalogType375 = CatalogCatalogRootCoinflowLthHorizon8ySupply<_CatalogType374>;
-type _CatalogType376 = CatalogHorizonVecs<_CatalogType375>;
-type _CatalogType377 = CatalogCatalogRootCoinflowLthHorizon4ySupplyInLoss<_CatalogType2>;
-type _CatalogType378 = CatalogCatalogRootCoinflowLthHorizon4ySupply<_CatalogType377>;
-type _CatalogType379 = CatalogHorizonVecs<_CatalogType378>;
-type _CatalogType380 = CatalogCatalogRootCoinflowLthHorizon2ySupplyInLoss<_CatalogType2>;
-type _CatalogType381 = CatalogCatalogRootCoinflowLthHorizon2ySupply<_CatalogType380>;
-type _CatalogType382 = CatalogHorizonVecs<_CatalogType381>;
-type _CatalogType383 = CatalogCatalogRootCoinflowLthHorizon1ySupplyInLoss<_CatalogType2>;
-type _CatalogType384 = CatalogCatalogRootCoinflowLthHorizon1ySupply<_CatalogType383>;
-type _CatalogType385 = CatalogHorizonVecs<_CatalogType384>;
-type _CatalogType386 = CatalogCatalogRootCoinflowLthHorizon6mSupplyInLoss<_CatalogType2>;
-type _CatalogType387 = CatalogCatalogRootCoinflowLthHorizon6mSupply<_CatalogType386>;
-type _CatalogType388 = CatalogHorizonVecs<_CatalogType387>;
-type _CatalogType389 = CatalogCatalogRootCoinflowLthHorizon3mSupplyInLoss<_CatalogType2>;
-type _CatalogType390 = CatalogCatalogRootCoinflowLthHorizon3mSupply<_CatalogType389>;
-type _CatalogType391 = CatalogHorizonVecs<_CatalogType390>;
-type _CatalogType392 = CatalogCatalogRootCoinflowLthHorizon1mSupplyInLoss<_CatalogType2>;
-type _CatalogType393 = CatalogCatalogRootCoinflowLthHorizon1mSupply<_CatalogType392>;
-type _CatalogType394 = CatalogHorizonVecs<_CatalogType393>;
-type _CatalogType395 = CatalogHorizons<
-    _CatalogType376,
-    _CatalogType379,
-    _CatalogType382,
-    _CatalogType385,
-    _CatalogType388,
-    _CatalogType391,
-    _CatalogType394,
+type _CatalogType372 = CatalogCatalogRootCoinflowLthSupply<_CatalogType371, _CatalogType191>;
+type _CatalogType373 = CatalogCatalogRootCoinflowLthHorizon8ySupplyInLoss<_CatalogType2>;
+type _CatalogType374 = CatalogCatalogRootCoinflowLthHorizon8ySupply<_CatalogType373>;
+type _CatalogType375 = CatalogHorizonVecs<_CatalogType374>;
+type _CatalogType376 = CatalogCatalogRootCoinflowLthHorizon4ySupplyInLoss<_CatalogType2>;
+type _CatalogType377 = CatalogCatalogRootCoinflowLthHorizon4ySupply<_CatalogType376>;
+type _CatalogType378 = CatalogHorizonVecs<_CatalogType377>;
+type _CatalogType379 = CatalogCatalogRootCoinflowLthHorizon2ySupplyInLoss<_CatalogType2>;
+type _CatalogType380 = CatalogCatalogRootCoinflowLthHorizon2ySupply<_CatalogType379>;
+type _CatalogType381 = CatalogHorizonVecs<_CatalogType380>;
+type _CatalogType382 = CatalogCatalogRootCoinflowLthHorizon1ySupplyInLoss<_CatalogType2>;
+type _CatalogType383 = CatalogCatalogRootCoinflowLthHorizon1ySupply<_CatalogType382>;
+type _CatalogType384 = CatalogHorizonVecs<_CatalogType383>;
+type _CatalogType385 = CatalogCatalogRootCoinflowLthHorizon6mSupplyInLoss<_CatalogType2>;
+type _CatalogType386 = CatalogCatalogRootCoinflowLthHorizon6mSupply<_CatalogType385>;
+type _CatalogType387 = CatalogHorizonVecs<_CatalogType386>;
+type _CatalogType388 = CatalogCatalogRootCoinflowLthHorizon3mSupplyInLoss<_CatalogType2>;
+type _CatalogType389 = CatalogCatalogRootCoinflowLthHorizon3mSupply<_CatalogType388>;
+type _CatalogType390 = CatalogHorizonVecs<_CatalogType389>;
+type _CatalogType391 = CatalogCatalogRootCoinflowLthHorizon1mSupplyInLoss<_CatalogType2>;
+type _CatalogType392 = CatalogCatalogRootCoinflowLthHorizon1mSupply<_CatalogType391>;
+type _CatalogType393 = CatalogHorizonVecs<_CatalogType392>;
+type _CatalogType394 = CatalogHorizons<
+    _CatalogType375,
+    _CatalogType378,
+    _CatalogType381,
+    _CatalogType384,
+    _CatalogType387,
+    _CatalogType390,
+    _CatalogType393,
 >;
-type _CatalogType396 =
-    CatalogAggregateVecs<_CatalogType373, _CatalogType395, _CatalogType283, _CatalogType286>;
-type _CatalogType397 = CatalogMobility<_CatalogType297>;
-type _CatalogType398 = SeriesPattern18<UTXOAggregate<BoundedRatio>>;
-type _CatalogType399 = CatalogHorizons_2<_CatalogType398>;
-type _CatalogType400 = CatalogAggregateSources<
+type _CatalogType395 =
+    CatalogAggregateVecs<_CatalogType372, _CatalogType394, _CatalogType282, _CatalogType285>;
+type _CatalogType396 = CatalogMobility<_CatalogType296>;
+type _CatalogType397 = SeriesPattern18<UTXOAggregate<BoundedRatio>>;
+type _CatalogType398 = CatalogHorizons_2<_CatalogType397>;
+type _CatalogType399 = CatalogAggregateSources<
+    _CatalogType396,
     _CatalogType397,
     _CatalogType398,
-    _CatalogType399,
+    _CatalogType297,
     _CatalogType298,
-    _CatalogType299,
 >;
-type _CatalogType401 = CatalogBitviewPluginCoinflowVecsCollectionVecs<
-    _CatalogType319,
-    _CatalogType322,
-    _CatalogType344,
-    _CatalogType283,
-    _CatalogType286,
-    _CatalogType370,
-    _CatalogType396,
-    _CatalogType400,
+type _CatalogType400 = CatalogBitviewPluginCoinflowVecsCollectionVecs<
+    _CatalogType318,
+    _CatalogType321,
+    _CatalogType343,
+    _CatalogType282,
+    _CatalogType285,
+    _CatalogType369,
+    _CatalogType395,
+    _CatalogType399,
 >;
-type _CatalogType402 = CatalogLazyColumnPrice<_CatalogType80, _CatalogType81, _CatalogType284>;
-type _CatalogType403 = CatalogDailyPercentilesVecs<_CatalogType402>;
-type _CatalogType404 = CatalogWeightedPair<_CatalogType403>;
-type _CatalogType405 = CatalogBitviewPluginBedrockCostBasisVecsCostBasisVecs<_CatalogType404>;
-type _CatalogType406 = CatalogLazyColumnDailyPriceWithRatio<
+type _CatalogType401 = CatalogLazyColumnPrice<_CatalogType80, _CatalogType81, _CatalogType283>;
+type _CatalogType402 = CatalogDailyPercentilesVecs<_CatalogType401>;
+type _CatalogType403 = CatalogWeightedPair<_CatalogType402>;
+type _CatalogType404 = CatalogBitviewPluginBedrockCostBasisVecsCostBasisVecs<_CatalogType403>;
+type _CatalogType405 = CatalogLazyColumnDailyPriceWithRatio<
     _CatalogType80,
     _CatalogType81,
+    _CatalogType283,
     _CatalogType284,
-    _CatalogType285,
     _CatalogType4,
 >;
-type _CatalogType407 = CatalogColumnarDailyMetric<_CatalogType406>;
-type _CatalogType408 = CatalogCapitalizedPriceVecs<_CatalogType407>;
-type _CatalogType409 = CatalogColumnarDailyMetric_2<_CatalogType2>;
-type _CatalogType410 = CatalogPercentiles<_CatalogType402>;
-type _CatalogType411 = CatalogLevels<_CatalogType402>;
-type _CatalogType412 = CatalogModeVecs<_CatalogType409, _CatalogType410, _CatalogType411>;
-type _CatalogType413 = CatalogBitviewPluginBedrockVecsVecs<
-    _CatalogType405,
-    _CatalogType408,
-    _CatalogType412,
-    _CatalogType412,
+type _CatalogType406 = CatalogColumnarDailyMetric<_CatalogType405>;
+type _CatalogType407 = CatalogCapitalizedPriceVecs<_CatalogType406>;
+type _CatalogType408 = CatalogColumnarDailyMetric_2<_CatalogType2>;
+type _CatalogType409 = CatalogPercentiles<_CatalogType401>;
+type _CatalogType410 = CatalogLevels<_CatalogType401>;
+type _CatalogType411 = CatalogModeVecs<_CatalogType408, _CatalogType409, _CatalogType410>;
+type _CatalogType412 = CatalogBitviewPluginBedrockVecsVecs<
+    _CatalogType404,
+    _CatalogType407,
+    _CatalogType411,
+    _CatalogType411,
 >;
-type _CatalogType414 = SeriesPattern1<StoredBool>;
-type _CatalogType415 = SeriesPattern1<CapitalSentimentPhase>;
-type _CatalogType416 = SeriesPattern1<StoredI8>;
-type _CatalogType417 = CatalogBitviewPluginCapitalSentimentVecsVecs<
-    _CatalogType414,
+type _CatalogType413 = SeriesPattern1<StoredBool>;
+type _CatalogType414 = SeriesPattern1<CapitalSentimentPhase>;
+type _CatalogType415 = SeriesPattern1<StoredI8>;
+type _CatalogType416 = CatalogBitviewPluginCapitalSentimentVecsVecs<
+    _CatalogType413,
+    _CatalogType413,
     _CatalogType414,
     _CatalogType415,
-    _CatalogType416,
 >;
-type _CatalogType418 = CatalogPrice<_CatalogType80, _CatalogType81, _CatalogType284>;
-type _CatalogType419 = CatalogBand<_CatalogType103, _CatalogType4, _CatalogType418>;
-type _CatalogType420 = SeriesPattern18<[PartsPerMillion32; 19]>;
-type _CatalogType421 = CatalogComponent<_CatalogType419, _CatalogType420>;
-type _CatalogType422 = CatalogComponents<_CatalogType421>;
-type _CatalogType423 = SeriesPattern18<[Bitcoin; 3]>;
-type _CatalogType424 = SeriesPattern1<StoredU8>;
-type _CatalogType425 =
-    CatalogExtreme<_CatalogType79, _CatalogType423, _CatalogType104, _CatalogType424>;
-type _CatalogType426 = SeriesPattern18<[Dollars; 3]>;
-type _CatalogType427 =
-    CatalogExtreme<_CatalogType80, _CatalogType426, _CatalogType104, _CatalogType424>;
-type _CatalogType428 = SeriesPattern18<[StoredF32; 3]>;
-type _CatalogType429 =
-    CatalogExtreme<_CatalogType4, _CatalogType428, _CatalogType104, _CatalogType424>;
-type _CatalogType430 = CatalogExtremes<_CatalogType425, _CatalogType427, _CatalogType429>;
-type _CatalogType431 = SeriesPattern18<[Cents; 19]>;
-type _CatalogType432 = CatalogRarityMeterInner<_CatalogType418, _CatalogType431, _CatalogType416>;
-type _CatalogType433 =
-    CatalogBitviewPluginRarityMeterVecs<_CatalogType422, _CatalogType430, _CatalogType432>;
-type _CatalogType434 = SeriesPattern1<StoredU16>;
-type _CatalogType435 =
-    CatalogBitviewPluginConstantsVecs<_CatalogType434, _CatalogType4, _CatalogType416>;
-type _CatalogType436 = SeriesPattern26<P2PK33AddrIndex>;
-type _CatalogType437 = SeriesPattern26<Addr>;
-type _CatalogType438 = CatalogAddressVecs<_CatalogType436, _CatalogType437>;
-type _CatalogType439 = SeriesPattern27<P2PK65AddrIndex>;
-type _CatalogType440 = SeriesPattern27<Addr>;
-type _CatalogType441 = CatalogAddressVecs<_CatalogType439, _CatalogType440>;
-type _CatalogType442 = SeriesPattern28<P2PKHAddrIndex>;
-type _CatalogType443 = SeriesPattern28<Addr>;
-type _CatalogType444 = CatalogAddressVecs<_CatalogType442, _CatalogType443>;
-type _CatalogType445 = SeriesPattern29<P2SHAddrIndex>;
-type _CatalogType446 = SeriesPattern29<Addr>;
-type _CatalogType447 = CatalogAddressVecs<_CatalogType445, _CatalogType446>;
-type _CatalogType448 = SeriesPattern30<P2TRAddrIndex>;
-type _CatalogType449 = SeriesPattern30<Addr>;
-type _CatalogType450 = CatalogAddressVecs<_CatalogType448, _CatalogType449>;
-type _CatalogType451 = SeriesPattern31<P2WPKHAddrIndex>;
-type _CatalogType452 = SeriesPattern31<Addr>;
-type _CatalogType453 = CatalogAddressVecs<_CatalogType451, _CatalogType452>;
-type _CatalogType454 = SeriesPattern32<P2WSHAddrIndex>;
-type _CatalogType455 = SeriesPattern32<Addr>;
-type _CatalogType456 = CatalogAddressVecs<_CatalogType454, _CatalogType455>;
-type _CatalogType457 = SeriesPattern24<P2AAddrIndex>;
-type _CatalogType458 = SeriesPattern24<Addr>;
-type _CatalogType459 = CatalogAddressVecs<_CatalogType457, _CatalogType458>;
-type _CatalogType460 = SeriesPattern25<P2MSOutputIndex>;
-type _CatalogType461 = CatalogIdentityVecs<_CatalogType460>;
-type _CatalogType462 = SeriesPattern22<EmptyOutputIndex>;
-type _CatalogType463 = CatalogIdentityVecs<_CatalogType462>;
-type _CatalogType464 = SeriesPattern33<UnknownOutputIndex>;
-type _CatalogType465 = CatalogIdentityVecs<_CatalogType464>;
-type _CatalogType466 = SeriesPattern23<OpReturnIndex>;
-type _CatalogType467 = CatalogIdentityVecs<_CatalogType466>;
-type _CatalogType468 = CatalogBitviewPluginMappingsAddrVecs<
-    _CatalogType438,
-    _CatalogType441,
-    _CatalogType444,
-    _CatalogType447,
-    _CatalogType450,
-    _CatalogType453,
-    _CatalogType456,
-    _CatalogType459,
-    _CatalogType461,
-    _CatalogType463,
-    _CatalogType465,
-    _CatalogType467,
+type _CatalogType417 = CatalogPrice<_CatalogType80, _CatalogType81, _CatalogType283>;
+type _CatalogType418 = CatalogBand<_CatalogType103, _CatalogType4, _CatalogType417>;
+type _CatalogType419 = SeriesPattern18<[PartsPerMillion32; 19]>;
+type _CatalogType420 = CatalogComponent<_CatalogType418, _CatalogType419>;
+type _CatalogType421 = CatalogComponents<_CatalogType420>;
+type _CatalogType422 = SeriesPattern18<[Bitcoin; 3]>;
+type _CatalogType423 = SeriesPattern1<StoredU8>;
+type _CatalogType424 =
+    CatalogExtreme<_CatalogType79, _CatalogType422, _CatalogType104, _CatalogType423>;
+type _CatalogType425 = SeriesPattern18<[Dollars; 3]>;
+type _CatalogType426 =
+    CatalogExtreme<_CatalogType80, _CatalogType425, _CatalogType104, _CatalogType423>;
+type _CatalogType427 = SeriesPattern18<[StoredF32; 3]>;
+type _CatalogType428 =
+    CatalogExtreme<_CatalogType4, _CatalogType427, _CatalogType104, _CatalogType423>;
+type _CatalogType429 = CatalogExtremes<_CatalogType424, _CatalogType426, _CatalogType428>;
+type _CatalogType430 = SeriesPattern18<[Cents; 19]>;
+type _CatalogType431 = CatalogRarityMeterInner<_CatalogType417, _CatalogType430, _CatalogType415>;
+type _CatalogType432 =
+    CatalogBitviewPluginRarityMeterVecs<_CatalogType421, _CatalogType429, _CatalogType431>;
+type _CatalogType433 = SeriesPattern1<StoredU16>;
+type _CatalogType434 =
+    CatalogBitviewPluginConstantsVecs<_CatalogType433, _CatalogType4, _CatalogType415>;
+type _CatalogType435 = SeriesPattern26<P2PK33AddrIndex>;
+type _CatalogType436 = SeriesPattern26<Addr>;
+type _CatalogType437 = CatalogAddressVecs<_CatalogType435, _CatalogType436>;
+type _CatalogType438 = SeriesPattern27<P2PK65AddrIndex>;
+type _CatalogType439 = SeriesPattern27<Addr>;
+type _CatalogType440 = CatalogAddressVecs<_CatalogType438, _CatalogType439>;
+type _CatalogType441 = SeriesPattern28<P2PKHAddrIndex>;
+type _CatalogType442 = SeriesPattern28<Addr>;
+type _CatalogType443 = CatalogAddressVecs<_CatalogType441, _CatalogType442>;
+type _CatalogType444 = SeriesPattern29<P2SHAddrIndex>;
+type _CatalogType445 = SeriesPattern29<Addr>;
+type _CatalogType446 = CatalogAddressVecs<_CatalogType444, _CatalogType445>;
+type _CatalogType447 = SeriesPattern30<P2TRAddrIndex>;
+type _CatalogType448 = SeriesPattern30<Addr>;
+type _CatalogType449 = CatalogAddressVecs<_CatalogType447, _CatalogType448>;
+type _CatalogType450 = SeriesPattern31<P2WPKHAddrIndex>;
+type _CatalogType451 = SeriesPattern31<Addr>;
+type _CatalogType452 = CatalogAddressVecs<_CatalogType450, _CatalogType451>;
+type _CatalogType453 = SeriesPattern32<P2WSHAddrIndex>;
+type _CatalogType454 = SeriesPattern32<Addr>;
+type _CatalogType455 = CatalogAddressVecs<_CatalogType453, _CatalogType454>;
+type _CatalogType456 = SeriesPattern24<P2AAddrIndex>;
+type _CatalogType457 = SeriesPattern24<Addr>;
+type _CatalogType458 = CatalogAddressVecs<_CatalogType456, _CatalogType457>;
+type _CatalogType459 = SeriesPattern25<P2MSOutputIndex>;
+type _CatalogType460 = CatalogIdentityVecs<_CatalogType459>;
+type _CatalogType461 = SeriesPattern22<EmptyOutputIndex>;
+type _CatalogType462 = CatalogIdentityVecs<_CatalogType461>;
+type _CatalogType463 = SeriesPattern33<UnknownOutputIndex>;
+type _CatalogType464 = CatalogIdentityVecs<_CatalogType463>;
+type _CatalogType465 = SeriesPattern23<OpReturnIndex>;
+type _CatalogType466 = CatalogIdentityVecs<_CatalogType465>;
+type _CatalogType467 = CatalogBitviewPluginMappingsAddrVecs<
+    _CatalogType437,
+    _CatalogType440,
+    _CatalogType443,
+    _CatalogType446,
+    _CatalogType449,
+    _CatalogType452,
+    _CatalogType455,
+    _CatalogType458,
+    _CatalogType460,
+    _CatalogType462,
+    _CatalogType464,
+    _CatalogType466,
 >;
-type _CatalogType469 = SeriesPattern18<Minute10>;
-type _CatalogType470 = SeriesPattern18<Minute30>;
-type _CatalogType471 = SeriesPattern18<Hour1>;
-type _CatalogType472 = SeriesPattern18<Hour4>;
-type _CatalogType473 = SeriesPattern18<Hour12>;
-type _CatalogType474 = SeriesPattern18<Day1>;
-type _CatalogType475 = SeriesPattern18<Day3>;
-type _CatalogType476 = SeriesPattern18<Epoch>;
-type _CatalogType477 = SeriesPattern18<Halving>;
-type _CatalogType478 = SeriesPattern18<Week1>;
-type _CatalogType479 = SeriesPattern18<Month1>;
-type _CatalogType480 = SeriesPattern18<Month3>;
-type _CatalogType481 = SeriesPattern18<Month6>;
-type _CatalogType482 = SeriesPattern18<Year1>;
-type _CatalogType483 = SeriesPattern18<Year10>;
-type _CatalogType484 = CatalogBitviewPluginMappingsHeightVecs<
+type _CatalogType468 = SeriesPattern18<Minute10>;
+type _CatalogType469 = SeriesPattern18<Minute30>;
+type _CatalogType470 = SeriesPattern18<Hour1>;
+type _CatalogType471 = SeriesPattern18<Hour4>;
+type _CatalogType472 = SeriesPattern18<Hour12>;
+type _CatalogType473 = SeriesPattern18<Day1>;
+type _CatalogType474 = SeriesPattern18<Day3>;
+type _CatalogType475 = SeriesPattern18<Epoch>;
+type _CatalogType476 = SeriesPattern18<Halving>;
+type _CatalogType477 = SeriesPattern18<Week1>;
+type _CatalogType478 = SeriesPattern18<Month1>;
+type _CatalogType479 = SeriesPattern18<Month3>;
+type _CatalogType480 = SeriesPattern18<Month6>;
+type _CatalogType481 = SeriesPattern18<Year1>;
+type _CatalogType482 = SeriesPattern18<Year10>;
+type _CatalogType483 = CatalogBitviewPluginMappingsHeightVecs<
+    _CatalogType468,
     _CatalogType469,
     _CatalogType470,
     _CatalogType471,
@@ -21154,444 +21089,444 @@ type _CatalogType484 = CatalogBitviewPluginMappingsHeightVecs<
     _CatalogType480,
     _CatalogType481,
     _CatalogType482,
-    _CatalogType483,
     _CatalogType11,
 >;
-type _CatalogType485 = SeriesPattern17<Height>;
-type _CatalogType486 = CatalogResolutionVecs<_CatalogType485>;
-type _CatalogType487 = SeriesPattern16<Height>;
-type _CatalogType488 = CatalogResolutionVecs<_CatalogType487>;
-type _CatalogType489 = SeriesPattern3<Height>;
-type _CatalogType490 = CatalogResolutionVecs<_CatalogType489>;
-type _CatalogType491 = SeriesPattern4<Height>;
-type _CatalogType492 = CatalogResolutionVecs<_CatalogType491>;
-type _CatalogType493 = SeriesPattern5<Height>;
-type _CatalogType494 = CatalogResolutionVecs<_CatalogType493>;
-type _CatalogType495 = SeriesPattern6<Height>;
-type _CatalogType496 = CatalogResolutionVecs<_CatalogType495>;
-type _CatalogType497 = SeriesPattern7<Height>;
-type _CatalogType498 = CatalogResolutionVecs<_CatalogType497>;
-type _CatalogType499 = SeriesPattern8<Date>;
-type _CatalogType500 = SeriesPattern8<Height>;
-type _CatalogType501 = CatalogDatedResolutionVecs<_CatalogType499, _CatalogType500>;
-type _CatalogType502 = SeriesPattern9<Date>;
-type _CatalogType503 = SeriesPattern9<Height>;
-type _CatalogType504 = CatalogDatedResolutionVecs<_CatalogType502, _CatalogType503>;
-type _CatalogType505 = SeriesPattern10<Date>;
-type _CatalogType506 = SeriesPattern10<Height>;
-type _CatalogType507 = CatalogDatedResolutionVecs<_CatalogType505, _CatalogType506>;
-type _CatalogType508 = SeriesPattern11<Date>;
-type _CatalogType509 = SeriesPattern11<Height>;
-type _CatalogType510 = CatalogDatedResolutionVecs<_CatalogType508, _CatalogType509>;
-type _CatalogType511 = SeriesPattern12<Date>;
-type _CatalogType512 = SeriesPattern12<Height>;
-type _CatalogType513 = CatalogDatedResolutionVecs<_CatalogType511, _CatalogType512>;
-type _CatalogType514 = SeriesPattern13<Date>;
-type _CatalogType515 = SeriesPattern13<Height>;
-type _CatalogType516 = CatalogDatedResolutionVecs<_CatalogType514, _CatalogType515>;
-type _CatalogType517 = SeriesPattern14<Date>;
-type _CatalogType518 = SeriesPattern14<Height>;
-type _CatalogType519 = CatalogDatedResolutionVecs<_CatalogType517, _CatalogType518>;
-type _CatalogType520 = SeriesPattern15<Date>;
-type _CatalogType521 = SeriesPattern15<Height>;
-type _CatalogType522 = CatalogDatedResolutionVecs<_CatalogType520, _CatalogType521>;
-type _CatalogType523 = SeriesPattern19<TxIndex>;
-type _CatalogType524 = SeriesPattern19<StoredU64>;
-type _CatalogType525 =
-    CatalogBitviewPluginMappingsTxIndexVecs<_CatalogType523, _CatalogType524, _CatalogType524>;
-type _CatalogType526 = SeriesPattern20<TxInIndex>;
-type _CatalogType527 = CatalogBitviewPluginMappingsTxinIndexVecs<_CatalogType526>;
-type _CatalogType528 = SeriesPattern21<TxOutIndex>;
-type _CatalogType529 = CatalogBitviewPluginMappingsTxoutIndexVecs<_CatalogType528>;
-type _CatalogType530 = SeriesPattern2<Timestamp>;
-type _CatalogType531 = CatalogTimestamps<_CatalogType9, _CatalogType530>;
-type _CatalogType532 = CatalogBitviewPluginMappingsVecs<
-    _CatalogType468,
-    _CatalogType484,
-    _CatalogType486,
-    _CatalogType488,
-    _CatalogType490,
-    _CatalogType492,
-    _CatalogType494,
-    _CatalogType496,
-    _CatalogType498,
-    _CatalogType501,
-    _CatalogType504,
-    _CatalogType507,
-    _CatalogType510,
-    _CatalogType513,
-    _CatalogType516,
-    _CatalogType519,
-    _CatalogType522,
-    _CatalogType525,
-    _CatalogType527,
-    _CatalogType529,
-    _CatalogType531,
+type _CatalogType484 = SeriesPattern17<Height>;
+type _CatalogType485 = CatalogResolutionVecs<_CatalogType484>;
+type _CatalogType486 = SeriesPattern16<Height>;
+type _CatalogType487 = CatalogResolutionVecs<_CatalogType486>;
+type _CatalogType488 = SeriesPattern3<Height>;
+type _CatalogType489 = CatalogResolutionVecs<_CatalogType488>;
+type _CatalogType490 = SeriesPattern4<Height>;
+type _CatalogType491 = CatalogResolutionVecs<_CatalogType490>;
+type _CatalogType492 = SeriesPattern5<Height>;
+type _CatalogType493 = CatalogResolutionVecs<_CatalogType492>;
+type _CatalogType494 = SeriesPattern6<Height>;
+type _CatalogType495 = CatalogResolutionVecs<_CatalogType494>;
+type _CatalogType496 = SeriesPattern7<Height>;
+type _CatalogType497 = CatalogResolutionVecs<_CatalogType496>;
+type _CatalogType498 = SeriesPattern8<Date>;
+type _CatalogType499 = SeriesPattern8<Height>;
+type _CatalogType500 = CatalogDatedResolutionVecs<_CatalogType498, _CatalogType499>;
+type _CatalogType501 = SeriesPattern9<Date>;
+type _CatalogType502 = SeriesPattern9<Height>;
+type _CatalogType503 = CatalogDatedResolutionVecs<_CatalogType501, _CatalogType502>;
+type _CatalogType504 = SeriesPattern10<Date>;
+type _CatalogType505 = SeriesPattern10<Height>;
+type _CatalogType506 = CatalogDatedResolutionVecs<_CatalogType504, _CatalogType505>;
+type _CatalogType507 = SeriesPattern11<Date>;
+type _CatalogType508 = SeriesPattern11<Height>;
+type _CatalogType509 = CatalogDatedResolutionVecs<_CatalogType507, _CatalogType508>;
+type _CatalogType510 = SeriesPattern12<Date>;
+type _CatalogType511 = SeriesPattern12<Height>;
+type _CatalogType512 = CatalogDatedResolutionVecs<_CatalogType510, _CatalogType511>;
+type _CatalogType513 = SeriesPattern13<Date>;
+type _CatalogType514 = SeriesPattern13<Height>;
+type _CatalogType515 = CatalogDatedResolutionVecs<_CatalogType513, _CatalogType514>;
+type _CatalogType516 = SeriesPattern14<Date>;
+type _CatalogType517 = SeriesPattern14<Height>;
+type _CatalogType518 = CatalogDatedResolutionVecs<_CatalogType516, _CatalogType517>;
+type _CatalogType519 = SeriesPattern15<Date>;
+type _CatalogType520 = SeriesPattern15<Height>;
+type _CatalogType521 = CatalogDatedResolutionVecs<_CatalogType519, _CatalogType520>;
+type _CatalogType522 = SeriesPattern19<TxIndex>;
+type _CatalogType523 = SeriesPattern19<StoredU64>;
+type _CatalogType524 =
+    CatalogBitviewPluginMappingsTxIndexVecs<_CatalogType522, _CatalogType523, _CatalogType523>;
+type _CatalogType525 = SeriesPattern20<TxInIndex>;
+type _CatalogType526 = CatalogBitviewPluginMappingsTxinIndexVecs<_CatalogType525>;
+type _CatalogType527 = SeriesPattern21<TxOutIndex>;
+type _CatalogType528 = CatalogBitviewPluginMappingsTxoutIndexVecs<_CatalogType527>;
+type _CatalogType529 = SeriesPattern2<Timestamp>;
+type _CatalogType530 = CatalogTimestamps<_CatalogType9, _CatalogType529>;
+type _CatalogType531 = CatalogBitviewPluginMappingsVecs<
+    _CatalogType467,
+    _CatalogType483,
+    _CatalogType485,
+    _CatalogType487,
+    _CatalogType489,
+    _CatalogType491,
+    _CatalogType493,
+    _CatalogType495,
+    _CatalogType497,
+    _CatalogType500,
+    _CatalogType503,
+    _CatalogType506,
+    _CatalogType509,
+    _CatalogType512,
+    _CatalogType515,
+    _CatalogType518,
+    _CatalogType521,
+    _CatalogType524,
+    _CatalogType526,
+    _CatalogType528,
+    _CatalogType530,
 >;
-type _CatalogType533 = SeriesPattern1<BasisPoints32>;
-type _CatalogType534 = CatalogBasisPointsPerBlock<_CatalogType533, _CatalogType4>;
-type _CatalogType535 = CatalogLazyBasisPointsPerBlock<_CatalogType533, _CatalogType4>;
-type _CatalogType536 = CatalogRatioPerBlock<_CatalogType258, _CatalogType4>;
-type _CatalogType537 = CatalogDormancyVecs<_CatalogType4>;
-type _CatalogType538 = CatalogBitviewPluginIndicatorsVecsVecs<
+type _CatalogType532 = SeriesPattern1<BasisPoints32>;
+type _CatalogType533 = CatalogBasisPointsPerBlock<_CatalogType532, _CatalogType4>;
+type _CatalogType534 = CatalogLazyBasisPointsPerBlock<_CatalogType532, _CatalogType4>;
+type _CatalogType535 = CatalogRatioPerBlock<_CatalogType257, _CatalogType4>;
+type _CatalogType536 = CatalogDormancyVecs<_CatalogType4>;
+type _CatalogType537 = CatalogBitviewPluginIndicatorsVecsVecs<
+    _CatalogType533,
     _CatalogType534,
-    _CatalogType535,
     _CatalogType104,
+    _CatalogType535,
+    _CatalogType4,
     _CatalogType536,
     _CatalogType4,
-    _CatalogType537,
-    _CatalogType4,
 >;
-type _CatalogType539 =
+type _CatalogType538 =
     CatalogDcaStack<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81>;
-type _CatalogType540 = CatalogByDcaPeriod<_CatalogType539>;
-type _CatalogType541 = CatalogByDcaPeriod<_CatalogType418>;
-type _CatalogType542 = CatalogByDcaPeriod<_CatalogType170>;
-type _CatalogType543 = CatalogByDcaCagr<_CatalogType170>;
-type _CatalogType544 =
+type _CatalogType539 = CatalogByDcaPeriod<_CatalogType538>;
+type _CatalogType540 = CatalogByDcaPeriod<_CatalogType417>;
+type _CatalogType541 = CatalogByDcaPeriod<_CatalogType170>;
+type _CatalogType542 = CatalogByDcaCagr<_CatalogType170>;
+type _CatalogType543 =
     CatalogLumpSumStack<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81>;
-type _CatalogType545 = CatalogByDcaPeriod<_CatalogType544>;
-type _CatalogType546 = CatalogPeriodVecs<
+type _CatalogType544 = CatalogByDcaPeriod<_CatalogType543>;
+type _CatalogType545 = CatalogPeriodVecs<
+    _CatalogType539,
     _CatalogType540,
     _CatalogType541,
     _CatalogType542,
-    _CatalogType543,
-    _CatalogType545,
+    _CatalogType544,
 >;
-type _CatalogType547 = CatalogByDcaClass<_CatalogType539>;
-type _CatalogType548 = CatalogByDcaClass<_CatalogType418>;
-type _CatalogType549 = CatalogByDcaClass<_CatalogType170>;
-type _CatalogType550 = CatalogClassVecs<_CatalogType547, _CatalogType548, _CatalogType549>;
-type _CatalogType551 =
-    CatalogBitviewPluginInvestingVecsVecs<_CatalogType75, _CatalogType546, _CatalogType550>;
-type _CatalogType552 = CatalogBitviewPluginMarketAthVecsVecs<
-    _CatalogType418,
+type _CatalogType546 = CatalogByDcaClass<_CatalogType538>;
+type _CatalogType547 = CatalogByDcaClass<_CatalogType417>;
+type _CatalogType548 = CatalogByDcaClass<_CatalogType170>;
+type _CatalogType549 = CatalogClassVecs<_CatalogType546, _CatalogType547, _CatalogType548>;
+type _CatalogType550 =
+    CatalogBitviewPluginInvestingVecsVecs<_CatalogType75, _CatalogType545, _CatalogType549>;
+type _CatalogType551 = CatalogBitviewPluginMarketAthVecsVecs<
+    _CatalogType417,
     _CatalogType5,
     _CatalogType4,
     _CatalogType4,
 >;
-type _CatalogType553 = CatalogBitviewPluginMarketLookbackVecsVecs<_CatalogType418>;
-type _CatalogType554 = CatalogByLookbackPeriod<_CatalogType170>;
-type _CatalogType555 = CatalogStdDevPerBlock<_CatalogType4>;
-type _CatalogType556 = CatalogWindows<_CatalogType555>;
-type _CatalogType557 =
-    CatalogBitviewPluginMarketReturnsVecsVecs<_CatalogType554, _CatalogType543, _CatalogType556>;
-type _CatalogType558 = CatalogPriceMinMaxVecs<_CatalogType418>;
-type _CatalogType559 = CatalogBitviewPluginMarketRangeVecsVecs<
-    _CatalogType558,
-    _CatalogType4,
-    _CatalogType4,
-    _CatalogType104,
->;
-type _CatalogType560 = Catalog200d<
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType284,
-    _CatalogType285,
-    _CatalogType4,
-    _CatalogType418,
-    _CatalogType418,
->;
-type _CatalogType561 = Catalog350d<
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType284,
-    _CatalogType285,
-    _CatalogType4,
-    _CatalogType418,
->;
-type _CatalogType562 = CatalogSmaVecs<_CatalogType286, _CatalogType560, _CatalogType561>;
-type _CatalogType563 = CatalogLazyColumnPriceWithRatioPerBlock<
-    _CatalogType80,
-    _CatalogType81,
-    _CatalogType284,
-    _CatalogType285,
-    _CatalogType4,
->;
-type _CatalogType564 = SeriesPattern18<[Cents; 16]>;
-type _CatalogType565 = CatalogColumnarPerBlock_7<_CatalogType563, _CatalogType564>;
-type _CatalogType566 =
-    CatalogBitviewPluginMarketMovingAverageVecsVecs<_CatalogType562, _CatalogType565>;
-type _CatalogType567 = CatalogRsiChain<_CatalogType104>;
-type _CatalogType568 = CatalogWindowsTo1m<_CatalogType567>;
-type _CatalogType569 = CatalogMacdChain<_CatalogType4>;
-type _CatalogType570 = CatalogWindowsTo1m<_CatalogType569>;
-type _CatalogType571 =
-    CatalogBitviewPluginMarketTechnicalVecsVecs<_CatalogType568, _CatalogType309, _CatalogType570>;
-type _CatalogType572 = CatalogBitviewPluginMarketVecs<
-    _CatalogType552,
-    _CatalogType553,
+type _CatalogType552 = CatalogBitviewPluginMarketLookbackVecsVecs<_CatalogType417>;
+type _CatalogType553 = CatalogByLookbackPeriod<_CatalogType170>;
+type _CatalogType554 = CatalogStdDevPerBlock<_CatalogType4>;
+type _CatalogType555 = CatalogWindows<_CatalogType554>;
+type _CatalogType556 =
+    CatalogBitviewPluginMarketReturnsVecsVecs<_CatalogType553, _CatalogType542, _CatalogType555>;
+type _CatalogType557 = CatalogPriceMinMaxVecs<_CatalogType417>;
+type _CatalogType558 = CatalogBitviewPluginMarketRangeVecsVecs<
     _CatalogType557,
+    _CatalogType4,
+    _CatalogType4,
+    _CatalogType104,
+>;
+type _CatalogType559 = Catalog200d<
+    _CatalogType80,
+    _CatalogType81,
+    _CatalogType283,
+    _CatalogType284,
+    _CatalogType4,
+    _CatalogType417,
+    _CatalogType417,
+>;
+type _CatalogType560 = Catalog350d<
+    _CatalogType80,
+    _CatalogType81,
+    _CatalogType283,
+    _CatalogType284,
+    _CatalogType4,
+    _CatalogType417,
+>;
+type _CatalogType561 = CatalogSmaVecs<_CatalogType285, _CatalogType559, _CatalogType560>;
+type _CatalogType562 = CatalogLazyColumnPriceWithRatioPerBlock<
+    _CatalogType80,
+    _CatalogType81,
+    _CatalogType283,
+    _CatalogType284,
+    _CatalogType4,
+>;
+type _CatalogType563 = SeriesPattern18<[Cents; 16]>;
+type _CatalogType564 = CatalogColumnarPerBlock_7<_CatalogType562, _CatalogType563>;
+type _CatalogType565 =
+    CatalogBitviewPluginMarketMovingAverageVecsVecs<_CatalogType561, _CatalogType564>;
+type _CatalogType566 = CatalogRsiChain<_CatalogType104>;
+type _CatalogType567 = CatalogWindowsTo1m<_CatalogType566>;
+type _CatalogType568 = CatalogMacdChain<_CatalogType4>;
+type _CatalogType569 = CatalogWindowsTo1m<_CatalogType568>;
+type _CatalogType570 =
+    CatalogBitviewPluginMarketTechnicalVecsVecs<_CatalogType567, _CatalogType308, _CatalogType569>;
+type _CatalogType571 = CatalogBitviewPluginMarketVecs<
+    _CatalogType551,
+    _CatalogType552,
+    _CatalogType556,
     _CatalogType14,
-    _CatalogType559,
-    _CatalogType566,
-    _CatalogType571,
+    _CatalogType558,
+    _CatalogType565,
+    _CatalogType570,
 >;
-type _CatalogType573 = SeriesPattern18<PoolSlug>;
-type _CatalogType574 = CatalogBlocksMined<_CatalogType11, _CatalogType12, _CatalogType13>;
-type _CatalogType575 = CatalogCatalogRootPoolsMajorUnknownDominance<
+type _CatalogType572 = SeriesPattern18<PoolSlug>;
+type _CatalogType573 = CatalogBlocksMined<_CatalogType11, _CatalogType12, _CatalogType13>;
+type _CatalogType574 = CatalogCatalogRootPoolsMajorUnknownDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType576 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType575, _CatalogType87>;
-type _CatalogType577 = CatalogCatalogRootPoolsMajorLuxorDominance<
+type _CatalogType575 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType574, _CatalogType87>;
+type _CatalogType576 = CatalogCatalogRootPoolsMajorLuxorDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType578 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType577, _CatalogType87>;
-type _CatalogType579 = CatalogCatalogRootPoolsMajorBtccomDominance<
+type _CatalogType577 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType576, _CatalogType87>;
+type _CatalogType578 = CatalogCatalogRootPoolsMajorBtccomDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType580 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType579, _CatalogType87>;
-type _CatalogType581 = CatalogCatalogRootPoolsMajorBtctopDominance<
+type _CatalogType579 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType578, _CatalogType87>;
+type _CatalogType580 = CatalogCatalogRootPoolsMajorBtctopDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType582 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType581, _CatalogType87>;
-type _CatalogType583 = CatalogCatalogRootPoolsMajorBtcguildDominance<
+type _CatalogType581 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType580, _CatalogType87>;
+type _CatalogType582 = CatalogCatalogRootPoolsMajorBtcguildDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType584 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType583, _CatalogType87>;
-type _CatalogType585 = CatalogCatalogRootPoolsMajorEligiusDominance<
+type _CatalogType583 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType582, _CatalogType87>;
+type _CatalogType584 = CatalogCatalogRootPoolsMajorEligiusDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType586 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType585, _CatalogType87>;
-type _CatalogType587 = CatalogCatalogRootPoolsMajorF2poolDominance<
+type _CatalogType585 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType584, _CatalogType87>;
+type _CatalogType586 = CatalogCatalogRootPoolsMajorF2poolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType588 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType587, _CatalogType87>;
-type _CatalogType589 = CatalogCatalogRootPoolsMajorBraiinspoolDominance<
+type _CatalogType587 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType586, _CatalogType87>;
+type _CatalogType588 = CatalogCatalogRootPoolsMajorBraiinspoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType590 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType589, _CatalogType87>;
-type _CatalogType591 = CatalogCatalogRootPoolsMajorAntpoolDominance<
+type _CatalogType589 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType588, _CatalogType87>;
+type _CatalogType590 = CatalogCatalogRootPoolsMajorAntpoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType592 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType591, _CatalogType87>;
-type _CatalogType593 = CatalogCatalogRootPoolsMajorBtccDominance<
+type _CatalogType591 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType590, _CatalogType87>;
+type _CatalogType592 = CatalogCatalogRootPoolsMajorBtccDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType594 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType593, _CatalogType87>;
-type _CatalogType595 = CatalogCatalogRootPoolsMajorBwpoolDominance<
+type _CatalogType593 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType592, _CatalogType87>;
+type _CatalogType594 = CatalogCatalogRootPoolsMajorBwpoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType596 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType595, _CatalogType87>;
-type _CatalogType597 = CatalogCatalogRootPoolsMajorBitfuryDominance<
+type _CatalogType595 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType594, _CatalogType87>;
+type _CatalogType596 = CatalogCatalogRootPoolsMajorBitfuryDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType598 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType597, _CatalogType87>;
-type _CatalogType599 = CatalogCatalogRootPoolsMajorViabtcDominance<
+type _CatalogType597 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType596, _CatalogType87>;
+type _CatalogType598 = CatalogCatalogRootPoolsMajorViabtcDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType600 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType599, _CatalogType87>;
-type _CatalogType601 = CatalogCatalogRootPoolsMajorPoolinDominance<
+type _CatalogType599 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType598, _CatalogType87>;
+type _CatalogType600 = CatalogCatalogRootPoolsMajorPoolinDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType602 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType601, _CatalogType87>;
-type _CatalogType603 = CatalogCatalogRootPoolsMajorSpiderpoolDominance<
+type _CatalogType601 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType600, _CatalogType87>;
+type _CatalogType602 = CatalogCatalogRootPoolsMajorSpiderpoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType604 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType603, _CatalogType87>;
-type _CatalogType605 = CatalogCatalogRootPoolsMajorBinancepoolDominance<
+type _CatalogType603 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType602, _CatalogType87>;
+type _CatalogType604 = CatalogCatalogRootPoolsMajorBinancepoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType606 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType605, _CatalogType87>;
-type _CatalogType607 = CatalogCatalogRootPoolsMajorFoundryusaDominance<
+type _CatalogType605 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType604, _CatalogType87>;
+type _CatalogType606 = CatalogCatalogRootPoolsMajorFoundryusaDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType608 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType607, _CatalogType87>;
-type _CatalogType609 = CatalogCatalogRootPoolsMajorSbicryptoDominance<
+type _CatalogType607 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType606, _CatalogType87>;
+type _CatalogType608 = CatalogCatalogRootPoolsMajorSbicryptoDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType610 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType609, _CatalogType87>;
-type _CatalogType611 = CatalogCatalogRootPoolsMajorMarapoolDominance<
+type _CatalogType609 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType608, _CatalogType87>;
+type _CatalogType610 = CatalogCatalogRootPoolsMajorMarapoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType612 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType611, _CatalogType87>;
-type _CatalogType613 = CatalogCatalogRootPoolsMajorSecpoolDominance<
+type _CatalogType611 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType610, _CatalogType87>;
+type _CatalogType612 = CatalogCatalogRootPoolsMajorSecpoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType614 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType613, _CatalogType87>;
-type _CatalogType615 = CatalogCatalogRootPoolsMajorOceanDominance<
+type _CatalogType613 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType612, _CatalogType87>;
+type _CatalogType614 = CatalogCatalogRootPoolsMajorOceanDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType616 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType615, _CatalogType87>;
-type _CatalogType617 = CatalogCatalogRootPoolsMajorWhitepoolDominance<
+type _CatalogType615 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType614, _CatalogType87>;
+type _CatalogType616 = CatalogCatalogRootPoolsMajorWhitepoolDominance<
     _CatalogType103,
     _CatalogType4,
     _CatalogType4,
     _CatalogType104,
 >;
-type _CatalogType618 =
-    CatalogBitviewPluginPoolsMajorVecs<_CatalogType574, _CatalogType617, _CatalogType87>;
-type _CatalogType619 = CatalogBTreeMap<
-    _CatalogType576,
-    _CatalogType578,
-    _CatalogType580,
-    _CatalogType582,
-    _CatalogType584,
-    _CatalogType586,
-    _CatalogType588,
-    _CatalogType590,
-    _CatalogType592,
-    _CatalogType594,
-    _CatalogType596,
-    _CatalogType598,
-    _CatalogType600,
-    _CatalogType602,
-    _CatalogType604,
-    _CatalogType606,
-    _CatalogType608,
-    _CatalogType610,
-    _CatalogType612,
-    _CatalogType614,
-    _CatalogType616,
-    _CatalogType618,
+type _CatalogType617 =
+    CatalogBitviewPluginPoolsMajorVecs<_CatalogType573, _CatalogType616, _CatalogType87>;
+type _CatalogType618 = CatalogBTreeMap<
+    _CatalogType575,
+    _CatalogType577,
+    _CatalogType579,
+    _CatalogType581,
+    _CatalogType583,
+    _CatalogType585,
+    _CatalogType587,
+    _CatalogType589,
+    _CatalogType591,
+    _CatalogType593,
+    _CatalogType595,
+    _CatalogType597,
+    _CatalogType599,
+    _CatalogType601,
+    _CatalogType603,
+    _CatalogType605,
+    _CatalogType607,
+    _CatalogType609,
+    _CatalogType611,
+    _CatalogType613,
+    _CatalogType615,
+    _CatalogType617,
 >;
-type _CatalogType620 = CatalogBitviewPluginPoolsMinorVecs<_CatalogType574, _CatalogType104>;
-type _CatalogType621 = CatalogBTreeMap_2<_CatalogType620>;
-type _CatalogType622 =
-    CatalogBitviewPluginPoolsVecs<_CatalogType573, _CatalogType619, _CatalogType621>;
-type _CatalogType623 = SeriesPattern2<Dollars>;
-type _CatalogType624 = SeriesPattern2<Cents>;
-type _CatalogType625 = SeriesPattern2<Sats>;
-type _CatalogType626 = CatalogSplitIndexesByUnit<_CatalogType623, _CatalogType624, _CatalogType625>;
-type _CatalogType627 = CatalogSplitCloseByUnit<_CatalogType623, _CatalogType624, _CatalogType625>;
-type _CatalogType628 = CatalogSplitByUnit<_CatalogType626, _CatalogType627>;
-type _CatalogType629 = SeriesPattern2<OHLCDollars>;
-type _CatalogType630 = SeriesPattern2<OHLCCents>;
-type _CatalogType631 = SeriesPattern2<OHLCSats>;
-type _CatalogType632 = CatalogOhlcByUnit<_CatalogType629, _CatalogType630, _CatalogType631>;
-type _CatalogType633 = CatalogPriceByUnit<_CatalogType80, _CatalogType81, _CatalogType59>;
-type _CatalogType634 =
-    CatalogBitviewPluginPriceVecs<_CatalogType628, _CatalogType632, _CatalogType633>;
-type _CatalogType635 = SeriesPattern18<SupplyState>;
-type _CatalogType636 =
+type _CatalogType619 = CatalogBitviewPluginPoolsMinorVecs<_CatalogType573, _CatalogType104>;
+type _CatalogType620 = CatalogBTreeMap_2<_CatalogType619>;
+type _CatalogType621 =
+    CatalogBitviewPluginPoolsVecs<_CatalogType572, _CatalogType618, _CatalogType620>;
+type _CatalogType622 = SeriesPattern2<Dollars>;
+type _CatalogType623 = SeriesPattern2<Cents>;
+type _CatalogType624 = SeriesPattern2<Sats>;
+type _CatalogType625 = CatalogSplitIndexesByUnit<_CatalogType622, _CatalogType623, _CatalogType624>;
+type _CatalogType626 = CatalogSplitCloseByUnit<_CatalogType622, _CatalogType623, _CatalogType624>;
+type _CatalogType627 = CatalogSplitByUnit<_CatalogType625, _CatalogType626>;
+type _CatalogType628 = SeriesPattern2<OHLCDollars>;
+type _CatalogType629 = SeriesPattern2<OHLCCents>;
+type _CatalogType630 = SeriesPattern2<OHLCSats>;
+type _CatalogType631 = CatalogOhlcByUnit<_CatalogType628, _CatalogType629, _CatalogType630>;
+type _CatalogType632 = CatalogPriceByUnit<_CatalogType80, _CatalogType81, _CatalogType59>;
+type _CatalogType633 =
+    CatalogBitviewPluginPriceVecs<_CatalogType627, _CatalogType631, _CatalogType632>;
+type _CatalogType634 = SeriesPattern18<SupplyState>;
+type _CatalogType635 =
     CatalogLazyValuePerBlock<_CatalogType79, _CatalogType59, _CatalogType80, _CatalogType81>;
-type _CatalogType637 = CatalogBitviewPluginSupplyVelocityVecsVecs<_CatalogType2>;
-type _CatalogType638 = SeriesPattern1<CentsSigned>;
-type _CatalogType639 = CatalogLazyDeltaFiatFromHeight<_CatalogType80, _CatalogType638>;
-type _CatalogType640 = CatalogWindows<_CatalogType639>;
-type _CatalogType641 = CatalogLazyRollingDeltasFiatFromHeight<_CatalogType640, _CatalogType171>;
-type _CatalogType642 = CatalogMarketCap<_CatalogType80, _CatalogType81, _CatalogType641>;
-type _CatalogType643 = CatalogWindows<_CatalogType169>;
-type _CatalogType644 = CatalogCatalogRootSupply<
+type _CatalogType636 = CatalogBitviewPluginSupplyVelocityVecsVecs<_CatalogType2>;
+type _CatalogType637 = SeriesPattern1<CentsSigned>;
+type _CatalogType638 = CatalogLazyDeltaFiatFromHeight<_CatalogType80, _CatalogType637>;
+type _CatalogType639 = CatalogWindows<_CatalogType638>;
+type _CatalogType640 = CatalogLazyRollingDeltasFiatFromHeight<_CatalogType639, _CatalogType171>;
+type _CatalogType641 = CatalogMarketCap<_CatalogType80, _CatalogType81, _CatalogType640>;
+type _CatalogType642 = CatalogWindows<_CatalogType169>;
+type _CatalogType643 = CatalogCatalogRootSupply<
+    _CatalogType634,
     _CatalogType635,
-    _CatalogType636,
     _CatalogType127,
     _CatalogType170,
-    _CatalogType637,
+    _CatalogType636,
+    _CatalogType641,
     _CatalogType642,
-    _CatalogType643,
     _CatalogType191,
 >;
-type _CatalogType645 = CatalogUnderAge<_CatalogType191>;
-type _CatalogType646 = CatalogOverAge<_CatalogType191>;
-type _CatalogType647 = CatalogByAge<_CatalogType278, _CatalogType645, _CatalogType646>;
-type _CatalogType648 = CatalogByEpoch<_CatalogType191>;
-type _CatalogType649 = CatalogClass<_CatalogType191>;
-type _CatalogType650 = CatalogByEntry<_CatalogType191>;
-type _CatalogType651 = CatalogAmountRange<_CatalogType191>;
-type _CatalogType652 = CatalogUnderAmount<_CatalogType191>;
-type _CatalogType653 = CatalogOverAmount<_CatalogType191>;
-type _CatalogType654 = CatalogAmount<_CatalogType651, _CatalogType652, _CatalogType653>;
-type _CatalogType655 = CatalogByTerm<_CatalogType191>;
-type _CatalogType656 = CatalogSpendableType<_CatalogType191>;
-type _CatalogType657 = SeriesPattern18<AgeRange<Sats>>;
-type _CatalogType658 = SeriesPattern18<ByEpoch<Sats>>;
-type _CatalogType659 = SeriesPattern18<Class<Sats>>;
-type _CatalogType660 = SeriesPattern18<ByEntry<Sats>>;
-type _CatalogType661 = SeriesPattern18<SpendableType<Sats>>;
-type _CatalogType662 = SeriesPattern18<AmountRange<Sats>>;
-type _CatalogType663 =
-    CatalogColumnarAmount<_CatalogType651, _CatalogType652, _CatalogType653, _CatalogType662>;
-type _CatalogType664 = CatalogSupplyTotal<
+type _CatalogType644 = CatalogUnderAge<_CatalogType191>;
+type _CatalogType645 = CatalogOverAge<_CatalogType191>;
+type _CatalogType646 = CatalogByAge<_CatalogType277, _CatalogType644, _CatalogType645>;
+type _CatalogType647 = CatalogByEpoch<_CatalogType191>;
+type _CatalogType648 = CatalogClass<_CatalogType191>;
+type _CatalogType649 = CatalogByEntry<_CatalogType191>;
+type _CatalogType650 = CatalogAmountRange<_CatalogType191>;
+type _CatalogType651 = CatalogUnderAmount<_CatalogType191>;
+type _CatalogType652 = CatalogOverAmount<_CatalogType191>;
+type _CatalogType653 = CatalogAmount<_CatalogType650, _CatalogType651, _CatalogType652>;
+type _CatalogType654 = CatalogByTerm<_CatalogType191>;
+type _CatalogType655 = CatalogSpendableType<_CatalogType191>;
+type _CatalogType656 = SeriesPattern18<AgeRange<Sats>>;
+type _CatalogType657 = SeriesPattern18<ByEpoch<Sats>>;
+type _CatalogType658 = SeriesPattern18<Class<Sats>>;
+type _CatalogType659 = SeriesPattern18<ByEntry<Sats>>;
+type _CatalogType660 = SeriesPattern18<SpendableType<Sats>>;
+type _CatalogType661 = SeriesPattern18<AmountRange<Sats>>;
+type _CatalogType662 =
+    CatalogColumnarAmount<_CatalogType650, _CatalogType651, _CatalogType652, _CatalogType661>;
+type _CatalogType663 = CatalogSupplyTotal<
     _CatalogType191,
+    _CatalogType646,
     _CatalogType647,
     _CatalogType648,
     _CatalogType649,
-    _CatalogType650,
+    _CatalogType653,
     _CatalogType654,
     _CatalogType655,
     _CatalogType656,
@@ -21601,307 +21536,307 @@ type _CatalogType664 = CatalogSupplyTotal<
     _CatalogType660,
     _CatalogType661,
     _CatalogType662,
-    _CatalogType663,
 >;
-type _CatalogType665 = CatalogLazyCumulativeValuePerBlock<
+type _CatalogType664 = CatalogLazyCumulativeValuePerBlock<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
 >;
-type _CatalogType666 = CatalogLazyValuePerBlockCumulativeRolling<
+type _CatalogType665 = CatalogLazyValuePerBlockCumulativeRolling<
     _CatalogType78,
-    _CatalogType665,
+    _CatalogType664,
     _CatalogType84,
     _CatalogType86,
 >;
-type _CatalogType667 = SeriesPattern18<AgeRange<StoredU64>>;
-type _CatalogType668 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType667>;
-type _CatalogType669 =
-    CatalogColumnarValuePerBlockCumulativeRolling<_CatalogType666, _CatalogType668>;
-type _CatalogType670 = CatalogAgeRange<_CatalogType636>;
-type _CatalogType671 = CatalogUnderAge<_CatalogType636>;
-type _CatalogType672 = CatalogOverAge<_CatalogType636>;
-type _CatalogType673 = CatalogByAge<_CatalogType670, _CatalogType671, _CatalogType672>;
-type _CatalogType674 = CatalogByEpoch<_CatalogType636>;
-type _CatalogType675 = CatalogClass<_CatalogType636>;
-type _CatalogType676 = CatalogByEntry<_CatalogType636>;
-type _CatalogType677 = CatalogByTerm<_CatalogType636>;
-type _CatalogType678 = CatalogSpendableType<_CatalogType636>;
-type _CatalogType679 = CatalogUTXOGroupsWithoutAmount<
-    _CatalogType636,
+type _CatalogType666 = SeriesPattern18<AgeRange<StoredU64>>;
+type _CatalogType667 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType666>;
+type _CatalogType668 =
+    CatalogColumnarValuePerBlockCumulativeRolling<_CatalogType665, _CatalogType667>;
+type _CatalogType669 = CatalogAgeRange<_CatalogType635>;
+type _CatalogType670 = CatalogUnderAge<_CatalogType635>;
+type _CatalogType671 = CatalogOverAge<_CatalogType635>;
+type _CatalogType672 = CatalogByAge<_CatalogType669, _CatalogType670, _CatalogType671>;
+type _CatalogType673 = CatalogByEpoch<_CatalogType635>;
+type _CatalogType674 = CatalogClass<_CatalogType635>;
+type _CatalogType675 = CatalogByEntry<_CatalogType635>;
+type _CatalogType676 = CatalogByTerm<_CatalogType635>;
+type _CatalogType677 = CatalogSpendableType<_CatalogType635>;
+type _CatalogType678 = CatalogUTXOGroupsWithoutAmount<
+    _CatalogType635,
+    _CatalogType672,
     _CatalogType673,
     _CatalogType674,
     _CatalogType675,
     _CatalogType676,
     _CatalogType677,
-    _CatalogType678,
 >;
-type _CatalogType680 = CatalogSupplyByCohort<
+type _CatalogType679 = CatalogSupplyByCohort<
     _CatalogType191,
+    _CatalogType646,
     _CatalogType647,
     _CatalogType648,
     _CatalogType649,
-    _CatalogType650,
+    _CatalogType654,
     _CatalogType655,
     _CatalogType656,
     _CatalogType657,
     _CatalogType658,
     _CatalogType659,
     _CatalogType660,
-    _CatalogType661,
 >;
-type _CatalogType681 = SeriesPattern1<SatsSigned>;
-type _CatalogType682 = CatalogLazyDeltaAmountFromHeight<_CatalogType79, _CatalogType681>;
-type _CatalogType683 = CatalogWindows<_CatalogType682>;
-type _CatalogType684 = CatalogLazyRollingDeltasAmountFromHeight<_CatalogType683, _CatalogType171>;
-type _CatalogType685 = CatalogAgeRange<_CatalogType684>;
-type _CatalogType686 = CatalogUnderAge<_CatalogType684>;
-type _CatalogType687 = CatalogOverAge<_CatalogType684>;
-type _CatalogType688 = CatalogByAge<_CatalogType685, _CatalogType686, _CatalogType687>;
-type _CatalogType689 = CatalogByEpoch<_CatalogType684>;
-type _CatalogType690 = CatalogClass<_CatalogType684>;
-type _CatalogType691 = CatalogByEntry<_CatalogType684>;
-type _CatalogType692 = CatalogAmountRange<_CatalogType684>;
-type _CatalogType693 = CatalogUnderAmount<_CatalogType684>;
-type _CatalogType694 = CatalogOverAmount<_CatalogType684>;
-type _CatalogType695 = CatalogAmount<_CatalogType692, _CatalogType693, _CatalogType694>;
-type _CatalogType696 = CatalogByTerm<_CatalogType684>;
-type _CatalogType697 = CatalogSpendableType<_CatalogType684>;
-type _CatalogType698 = CatalogDelta<
-    _CatalogType684,
+type _CatalogType680 = SeriesPattern1<SatsSigned>;
+type _CatalogType681 = CatalogLazyDeltaAmountFromHeight<_CatalogType79, _CatalogType680>;
+type _CatalogType682 = CatalogWindows<_CatalogType681>;
+type _CatalogType683 = CatalogLazyRollingDeltasAmountFromHeight<_CatalogType682, _CatalogType171>;
+type _CatalogType684 = CatalogAgeRange<_CatalogType683>;
+type _CatalogType685 = CatalogUnderAge<_CatalogType683>;
+type _CatalogType686 = CatalogOverAge<_CatalogType683>;
+type _CatalogType687 = CatalogByAge<_CatalogType684, _CatalogType685, _CatalogType686>;
+type _CatalogType688 = CatalogByEpoch<_CatalogType683>;
+type _CatalogType689 = CatalogClass<_CatalogType683>;
+type _CatalogType690 = CatalogByEntry<_CatalogType683>;
+type _CatalogType691 = CatalogAmountRange<_CatalogType683>;
+type _CatalogType692 = CatalogUnderAmount<_CatalogType683>;
+type _CatalogType693 = CatalogOverAmount<_CatalogType683>;
+type _CatalogType694 = CatalogAmount<_CatalogType691, _CatalogType692, _CatalogType693>;
+type _CatalogType695 = CatalogByTerm<_CatalogType683>;
+type _CatalogType696 = CatalogSpendableType<_CatalogType683>;
+type _CatalogType697 = CatalogDelta<
+    _CatalogType683,
+    _CatalogType687,
     _CatalogType688,
     _CatalogType689,
     _CatalogType690,
-    _CatalogType691,
+    _CatalogType694,
     _CatalogType695,
     _CatalogType696,
-    _CatalogType697,
-    _CatalogType695,
+    _CatalogType694,
 >;
-type _CatalogType699 = CatalogAgeRange<_CatalogType104>;
-type _CatalogType700 = CatalogUnderAge<_CatalogType104>;
-type _CatalogType701 = CatalogOverAge<_CatalogType104>;
-type _CatalogType702 = CatalogByAge<_CatalogType699, _CatalogType700, _CatalogType701>;
-type _CatalogType703 = CatalogByEpoch<_CatalogType104>;
-type _CatalogType704 = CatalogClass<_CatalogType104>;
-type _CatalogType705 = CatalogByEntry<_CatalogType104>;
-type _CatalogType706 = CatalogAmountRange<_CatalogType104>;
-type _CatalogType707 = CatalogUnderAmount<_CatalogType104>;
-type _CatalogType708 = CatalogOverAmount<_CatalogType104>;
-type _CatalogType709 = CatalogAmount<_CatalogType706, _CatalogType707, _CatalogType708>;
-type _CatalogType710 = CatalogByTerm<_CatalogType104>;
-type _CatalogType711 = CatalogSpendableType<_CatalogType104>;
-type _CatalogType712 = CatalogCatalogRootCohortsSupplyDominance<
+type _CatalogType698 = CatalogAgeRange<_CatalogType104>;
+type _CatalogType699 = CatalogUnderAge<_CatalogType104>;
+type _CatalogType700 = CatalogOverAge<_CatalogType104>;
+type _CatalogType701 = CatalogByAge<_CatalogType698, _CatalogType699, _CatalogType700>;
+type _CatalogType702 = CatalogByEpoch<_CatalogType104>;
+type _CatalogType703 = CatalogClass<_CatalogType104>;
+type _CatalogType704 = CatalogByEntry<_CatalogType104>;
+type _CatalogType705 = CatalogAmountRange<_CatalogType104>;
+type _CatalogType706 = CatalogUnderAmount<_CatalogType104>;
+type _CatalogType707 = CatalogOverAmount<_CatalogType104>;
+type _CatalogType708 = CatalogAmount<_CatalogType705, _CatalogType706, _CatalogType707>;
+type _CatalogType709 = CatalogByTerm<_CatalogType104>;
+type _CatalogType710 = CatalogSpendableType<_CatalogType104>;
+type _CatalogType711 = CatalogCatalogRootCohortsSupplyDominance<
     _CatalogType104,
+    _CatalogType701,
     _CatalogType702,
     _CatalogType703,
     _CatalogType704,
-    _CatalogType705,
+    _CatalogType708,
     _CatalogType709,
     _CatalogType710,
-    _CatalogType711,
-    _CatalogType709,
+    _CatalogType708,
 >;
-type _CatalogType713 = CatalogBitviewPluginDistributionMetricsSupplyVecsSupplyVecs<
-    _CatalogType664,
-    _CatalogType669,
+type _CatalogType712 = CatalogBitviewPluginDistributionMetricsSupplyVecsSupplyVecs<
+    _CatalogType663,
+    _CatalogType668,
+    _CatalogType678,
     _CatalogType679,
-    _CatalogType680,
-    _CatalogType698,
-    _CatalogType712,
+    _CatalogType697,
+    _CatalogType711,
 >;
-type _CatalogType714 = CatalogAgeRange<_CatalogType173>;
-type _CatalogType715 = CatalogUnderAge<_CatalogType173>;
-type _CatalogType716 = CatalogOverAge<_CatalogType173>;
-type _CatalogType717 = CatalogByAge<_CatalogType714, _CatalogType715, _CatalogType716>;
-type _CatalogType718 = CatalogByEpoch<_CatalogType173>;
-type _CatalogType719 = CatalogClass<_CatalogType173>;
-type _CatalogType720 = CatalogByEntry<_CatalogType173>;
-type _CatalogType721 = CatalogAmount<_CatalogType174, _CatalogType175, _CatalogType176>;
-type _CatalogType722 = CatalogByTerm<_CatalogType173>;
-type _CatalogType723 = CatalogSpendableType<_CatalogType173>;
-type _CatalogType724 = SeriesPattern18<ByEpoch<StoredU64>>;
-type _CatalogType725 = SeriesPattern18<Class<StoredU64>>;
-type _CatalogType726 = SeriesPattern18<ByEntry<StoredU64>>;
-type _CatalogType727 = CatalogUnspentOutputCount<
+type _CatalogType713 = CatalogAgeRange<_CatalogType173>;
+type _CatalogType714 = CatalogUnderAge<_CatalogType173>;
+type _CatalogType715 = CatalogOverAge<_CatalogType173>;
+type _CatalogType716 = CatalogByAge<_CatalogType713, _CatalogType714, _CatalogType715>;
+type _CatalogType717 = CatalogByEpoch<_CatalogType173>;
+type _CatalogType718 = CatalogClass<_CatalogType173>;
+type _CatalogType719 = CatalogByEntry<_CatalogType173>;
+type _CatalogType720 = CatalogAmount<_CatalogType174, _CatalogType175, _CatalogType176>;
+type _CatalogType721 = CatalogByTerm<_CatalogType173>;
+type _CatalogType722 = CatalogSpendableType<_CatalogType173>;
+type _CatalogType723 = SeriesPattern18<ByEpoch<StoredU64>>;
+type _CatalogType724 = SeriesPattern18<Class<StoredU64>>;
+type _CatalogType725 = SeriesPattern18<ByEntry<StoredU64>>;
+type _CatalogType726 = CatalogUnspentOutputCount<
     _CatalogType173,
+    _CatalogType716,
     _CatalogType717,
     _CatalogType718,
     _CatalogType719,
     _CatalogType720,
     _CatalogType721,
     _CatalogType722,
+    _CatalogType666,
     _CatalogType723,
-    _CatalogType667,
     _CatalogType724,
     _CatalogType725,
-    _CatalogType726,
     _CatalogType107,
     _CatalogType177,
     _CatalogType178,
 >;
-type _CatalogType728 = CatalogAgeRange<_CatalogType21>;
-type _CatalogType729 = CatalogUnderAge<_CatalogType21>;
-type _CatalogType730 = CatalogOverAge<_CatalogType21>;
-type _CatalogType731 = CatalogByAge<_CatalogType728, _CatalogType729, _CatalogType730>;
-type _CatalogType732 = CatalogByEpoch<_CatalogType21>;
-type _CatalogType733 = CatalogClass<_CatalogType21>;
-type _CatalogType734 = CatalogByEntry<_CatalogType21>;
-type _CatalogType735 = CatalogAmountRange<_CatalogType21>;
-type _CatalogType736 = CatalogUnderAmount<_CatalogType21>;
-type _CatalogType737 = CatalogOverAmount<_CatalogType21>;
-type _CatalogType738 = CatalogAmount<_CatalogType735, _CatalogType736, _CatalogType737>;
-type _CatalogType739 = CatalogByTerm<_CatalogType21>;
-type _CatalogType740 = CatalogSpendableType<_CatalogType21>;
-type _CatalogType741 = CatalogSpentOutputCount<
+type _CatalogType727 = CatalogAgeRange<_CatalogType21>;
+type _CatalogType728 = CatalogUnderAge<_CatalogType21>;
+type _CatalogType729 = CatalogOverAge<_CatalogType21>;
+type _CatalogType730 = CatalogByAge<_CatalogType727, _CatalogType728, _CatalogType729>;
+type _CatalogType731 = CatalogByEpoch<_CatalogType21>;
+type _CatalogType732 = CatalogClass<_CatalogType21>;
+type _CatalogType733 = CatalogByEntry<_CatalogType21>;
+type _CatalogType734 = CatalogAmountRange<_CatalogType21>;
+type _CatalogType735 = CatalogUnderAmount<_CatalogType21>;
+type _CatalogType736 = CatalogOverAmount<_CatalogType21>;
+type _CatalogType737 = CatalogAmount<_CatalogType734, _CatalogType735, _CatalogType736>;
+type _CatalogType738 = CatalogByTerm<_CatalogType21>;
+type _CatalogType739 = CatalogSpendableType<_CatalogType21>;
+type _CatalogType740 = CatalogSpentOutputCount<
     _CatalogType21,
+    _CatalogType730,
     _CatalogType731,
     _CatalogType732,
     _CatalogType733,
-    _CatalogType734,
+    _CatalogType737,
     _CatalogType738,
     _CatalogType739,
-    _CatalogType740,
-    _CatalogType667,
+    _CatalogType666,
+    _CatalogType723,
     _CatalogType724,
     _CatalogType725,
-    _CatalogType726,
     _CatalogType107,
     _CatalogType177,
 >;
-type _CatalogType742 = CatalogBitviewPluginDistributionMetricsOutputsVecsCollectionOutputsVecs<
-    _CatalogType727,
-    _CatalogType741,
+type _CatalogType741 = CatalogBitviewPluginDistributionMetricsOutputsVecsCollectionOutputsVecs<
+    _CatalogType726,
+    _CatalogType740,
 >;
-type _CatalogType743 = CatalogAgeRange<_CatalogType666>;
-type _CatalogType744 = CatalogUnderAge<_CatalogType666>;
-type _CatalogType745 = CatalogOverAge<_CatalogType666>;
-type _CatalogType746 = CatalogByAge<_CatalogType743, _CatalogType744, _CatalogType745>;
-type _CatalogType747 = CatalogByEpoch<_CatalogType666>;
-type _CatalogType748 = CatalogClass<_CatalogType666>;
-type _CatalogType749 = CatalogByEntry<_CatalogType666>;
-type _CatalogType750 = CatalogAmountRange<_CatalogType666>;
-type _CatalogType751 = CatalogUnderAmount<_CatalogType666>;
-type _CatalogType752 = CatalogOverAmount<_CatalogType666>;
-type _CatalogType753 = CatalogAmount<_CatalogType750, _CatalogType751, _CatalogType752>;
-type _CatalogType754 = CatalogByTerm<_CatalogType666>;
-type _CatalogType755 = CatalogSpendableType<_CatalogType666>;
-type _CatalogType756 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType668>;
-type _CatalogType757 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType724>;
-type _CatalogType758 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType757>;
-type _CatalogType759 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType725>;
-type _CatalogType760 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType759>;
-type _CatalogType761 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType726>;
-type _CatalogType762 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType761>;
-type _CatalogType763 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType177>;
-type _CatalogType764 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType763>;
-type _CatalogType765 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType107>;
-type _CatalogType766 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType765>;
-type _CatalogType767 = CatalogCumulativeUTXOValueColumnarMetric<
-    _CatalogType756,
-    _CatalogType758,
-    _CatalogType760,
-    _CatalogType762,
-    _CatalogType764,
-    _CatalogType766,
+type _CatalogType742 = CatalogAgeRange<_CatalogType665>;
+type _CatalogType743 = CatalogUnderAge<_CatalogType665>;
+type _CatalogType744 = CatalogOverAge<_CatalogType665>;
+type _CatalogType745 = CatalogByAge<_CatalogType742, _CatalogType743, _CatalogType744>;
+type _CatalogType746 = CatalogByEpoch<_CatalogType665>;
+type _CatalogType747 = CatalogClass<_CatalogType665>;
+type _CatalogType748 = CatalogByEntry<_CatalogType665>;
+type _CatalogType749 = CatalogAmountRange<_CatalogType665>;
+type _CatalogType750 = CatalogUnderAmount<_CatalogType665>;
+type _CatalogType751 = CatalogOverAmount<_CatalogType665>;
+type _CatalogType752 = CatalogAmount<_CatalogType749, _CatalogType750, _CatalogType751>;
+type _CatalogType753 = CatalogByTerm<_CatalogType665>;
+type _CatalogType754 = CatalogSpendableType<_CatalogType665>;
+type _CatalogType755 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType667>;
+type _CatalogType756 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType723>;
+type _CatalogType757 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType756>;
+type _CatalogType758 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType724>;
+type _CatalogType759 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType758>;
+type _CatalogType760 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType725>;
+type _CatalogType761 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType760>;
+type _CatalogType762 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType177>;
+type _CatalogType763 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType762>;
+type _CatalogType764 = CatalogColumnarPerBlockCumulativeRolling_7<_CatalogType107>;
+type _CatalogType765 = CatalogColumnarValuePerBlockCumulativeRolling_2<_CatalogType764>;
+type _CatalogType766 = CatalogCumulativeUTXOValueColumnarMetric<
+    _CatalogType755,
+    _CatalogType757,
+    _CatalogType759,
+    _CatalogType761,
+    _CatalogType763,
+    _CatalogType765,
 >;
-type _CatalogType768 =
-    CatalogColumnarAmountValue<_CatalogType750, _CatalogType751, _CatalogType752, _CatalogType764>;
-type _CatalogType769 = CatalogCumulativeUTXOValueColumnarMetricWithoutAmountOrType<
-    _CatalogType756,
-    _CatalogType758,
-    _CatalogType760,
-    _CatalogType762,
+type _CatalogType767 =
+    CatalogColumnarAmountValue<_CatalogType749, _CatalogType750, _CatalogType751, _CatalogType763>;
+type _CatalogType768 = CatalogCumulativeUTXOValueColumnarMetricWithoutAmountOrType<
+    _CatalogType755,
+    _CatalogType757,
+    _CatalogType759,
+    _CatalogType761,
 >;
-type _CatalogType770 = CatalogCoreCumulativeValueByCohort<
-    _CatalogType666,
+type _CatalogType769 = CatalogCoreCumulativeValueByCohort<
+    _CatalogType665,
+    _CatalogType745,
     _CatalogType746,
     _CatalogType747,
     _CatalogType748,
-    _CatalogType749,
-    _CatalogType754,
-    _CatalogType769,
+    _CatalogType753,
+    _CatalogType768,
 >;
-type _CatalogType771 = CatalogTransferVolume<
-    _CatalogType666,
+type _CatalogType770 = CatalogTransferVolume<
+    _CatalogType665,
+    _CatalogType745,
     _CatalogType746,
     _CatalogType747,
     _CatalogType748,
-    _CatalogType749,
+    _CatalogType752,
     _CatalogType753,
     _CatalogType754,
-    _CatalogType755,
+    _CatalogType766,
     _CatalogType767,
-    _CatalogType768,
-    _CatalogType770,
-    _CatalogType770,
+    _CatalogType769,
+    _CatalogType769,
 >;
-type _CatalogType772 = CatalogLazyPerBlockCumulativeRolling<
-    _CatalogType268,
+type _CatalogType771 = CatalogLazyPerBlockCumulativeRolling<
+    _CatalogType267,
     _CatalogType2,
-    _CatalogType269,
+    _CatalogType268,
     _CatalogType14,
 >;
-type _CatalogType773 = CatalogAgeRange<_CatalogType772>;
-type _CatalogType774 = CatalogUnderAge<_CatalogType772>;
-type _CatalogType775 = CatalogOverAge<_CatalogType772>;
-type _CatalogType776 = CatalogByAge<_CatalogType773, _CatalogType774, _CatalogType775>;
-type _CatalogType777 = CatalogByEpoch<_CatalogType772>;
-type _CatalogType778 = CatalogClass<_CatalogType772>;
-type _CatalogType779 = CatalogByEntry<_CatalogType772>;
-type _CatalogType780 = CatalogByTerm<_CatalogType772>;
-type _CatalogType781 = SeriesPattern18<ByEpoch<StoredF64>>;
-type _CatalogType782 = SeriesPattern18<Class<StoredF64>>;
-type _CatalogType783 = SeriesPattern18<ByEntry<StoredF64>>;
-type _CatalogType784 = CatalogCoindaysDestroyedByCohort<
-    _CatalogType772,
+type _CatalogType772 = CatalogAgeRange<_CatalogType771>;
+type _CatalogType773 = CatalogUnderAge<_CatalogType771>;
+type _CatalogType774 = CatalogOverAge<_CatalogType771>;
+type _CatalogType775 = CatalogByAge<_CatalogType772, _CatalogType773, _CatalogType774>;
+type _CatalogType776 = CatalogByEpoch<_CatalogType771>;
+type _CatalogType777 = CatalogClass<_CatalogType771>;
+type _CatalogType778 = CatalogByEntry<_CatalogType771>;
+type _CatalogType779 = CatalogByTerm<_CatalogType771>;
+type _CatalogType780 = SeriesPattern18<ByEpoch<StoredF64>>;
+type _CatalogType781 = SeriesPattern18<Class<StoredF64>>;
+type _CatalogType782 = SeriesPattern18<ByEntry<StoredF64>>;
+type _CatalogType783 = CatalogCoindaysDestroyedByCohort<
+    _CatalogType771,
+    _CatalogType775,
     _CatalogType776,
     _CatalogType777,
     _CatalogType778,
     _CatalogType779,
+    _CatalogType272,
     _CatalogType780,
-    _CatalogType273,
     _CatalogType781,
     _CatalogType782,
-    _CatalogType783,
 >;
-type _CatalogType785 = CatalogUTXOAggregate<_CatalogType2>;
-type _CatalogType786 = SeriesPattern18<[StoredF32; 4]>;
-type _CatalogType787 = CatalogColumnarPerBlock_8<_CatalogType4, _CatalogType786>;
-type _CatalogType788 = CatalogUTXOAggregate<_CatalogType787>;
+type _CatalogType784 = CatalogUTXOAggregate<_CatalogType2>;
+type _CatalogType785 = SeriesPattern18<[StoredF32; 4]>;
+type _CatalogType786 = CatalogColumnarPerBlock_8<_CatalogType4, _CatalogType785>;
+type _CatalogType787 = CatalogUTXOAggregate<_CatalogType786>;
+type _CatalogType788 =
+    CatalogActivityVecs<_CatalogType770, _CatalogType783, _CatalogType784, _CatalogType787>;
 type _CatalogType789 =
-    CatalogActivityVecs<_CatalogType771, _CatalogType784, _CatalogType785, _CatalogType788>;
-type _CatalogType790 =
-    CatalogLazyFiatPerBlockWithDeltas<_CatalogType80, _CatalogType81, _CatalogType641>;
-type _CatalogType791 = CatalogAgeRange<_CatalogType790>;
-type _CatalogType792 = CatalogUnderAge<_CatalogType790>;
-type _CatalogType793 = CatalogOverAge<_CatalogType790>;
-type _CatalogType794 = CatalogByAge<_CatalogType791, _CatalogType792, _CatalogType793>;
-type _CatalogType795 = CatalogByEpoch<_CatalogType790>;
-type _CatalogType796 = CatalogClass<_CatalogType790>;
-type _CatalogType797 = CatalogByEntry<_CatalogType790>;
-type _CatalogType798 = CatalogAmountRange<_CatalogType790>;
-type _CatalogType799 = CatalogUnderAmount<_CatalogType790>;
-type _CatalogType800 = CatalogOverAmount<_CatalogType790>;
-type _CatalogType801 = CatalogAmount<_CatalogType798, _CatalogType799, _CatalogType800>;
-type _CatalogType802 = CatalogByTerm<_CatalogType790>;
-type _CatalogType803 = CatalogSpendableType<_CatalogType790>;
-type _CatalogType804 = SeriesPattern18<AgeRange<Cents>>;
-type _CatalogType805 = SeriesPattern18<ByEpoch<Cents>>;
-type _CatalogType806 = SeriesPattern18<Class<Cents>>;
-type _CatalogType807 = SeriesPattern18<ByEntry<Cents>>;
-type _CatalogType808 = SeriesPattern18<SpendableType<Cents>>;
-type _CatalogType809 = SeriesPattern18<AmountRange<Cents>>;
-type _CatalogType810 =
-    CatalogColumnarAmount<_CatalogType798, _CatalogType799, _CatalogType800, _CatalogType809>;
-type _CatalogType811 = CatalogUTXOAggregate<_CatalogType104>;
-type _CatalogType812 = CatalogCap<
-    _CatalogType790,
+    CatalogLazyFiatPerBlockWithDeltas<_CatalogType80, _CatalogType81, _CatalogType640>;
+type _CatalogType790 = CatalogAgeRange<_CatalogType789>;
+type _CatalogType791 = CatalogUnderAge<_CatalogType789>;
+type _CatalogType792 = CatalogOverAge<_CatalogType789>;
+type _CatalogType793 = CatalogByAge<_CatalogType790, _CatalogType791, _CatalogType792>;
+type _CatalogType794 = CatalogByEpoch<_CatalogType789>;
+type _CatalogType795 = CatalogClass<_CatalogType789>;
+type _CatalogType796 = CatalogByEntry<_CatalogType789>;
+type _CatalogType797 = CatalogAmountRange<_CatalogType789>;
+type _CatalogType798 = CatalogUnderAmount<_CatalogType789>;
+type _CatalogType799 = CatalogOverAmount<_CatalogType789>;
+type _CatalogType800 = CatalogAmount<_CatalogType797, _CatalogType798, _CatalogType799>;
+type _CatalogType801 = CatalogByTerm<_CatalogType789>;
+type _CatalogType802 = CatalogSpendableType<_CatalogType789>;
+type _CatalogType803 = SeriesPattern18<AgeRange<Cents>>;
+type _CatalogType804 = SeriesPattern18<ByEpoch<Cents>>;
+type _CatalogType805 = SeriesPattern18<Class<Cents>>;
+type _CatalogType806 = SeriesPattern18<ByEntry<Cents>>;
+type _CatalogType807 = SeriesPattern18<SpendableType<Cents>>;
+type _CatalogType808 = SeriesPattern18<AmountRange<Cents>>;
+type _CatalogType809 =
+    CatalogColumnarAmount<_CatalogType797, _CatalogType798, _CatalogType799, _CatalogType808>;
+type _CatalogType810 = CatalogUTXOAggregate<_CatalogType104>;
+type _CatalogType811 = CatalogCap<
+    _CatalogType789,
+    _CatalogType793,
     _CatalogType794,
     _CatalogType795,
     _CatalogType796,
-    _CatalogType797,
+    _CatalogType800,
     _CatalogType801,
     _CatalogType802,
     _CatalogType803,
@@ -21912,146 +21847,146 @@ type _CatalogType812 = CatalogCap<
     _CatalogType808,
     _CatalogType809,
     _CatalogType810,
-    _CatalogType811,
 >;
-type _CatalogType813 = CatalogAgeRange<_CatalogType286>;
-type _CatalogType814 = CatalogUnderAge<_CatalogType286>;
-type _CatalogType815 = CatalogOverAge<_CatalogType286>;
-type _CatalogType816 = CatalogByAge<_CatalogType813, _CatalogType814, _CatalogType815>;
-type _CatalogType817 = CatalogByEpoch<_CatalogType286>;
-type _CatalogType818 = CatalogClass<_CatalogType286>;
-type _CatalogType819 = CatalogByEntry<_CatalogType286>;
-type _CatalogType820 = CatalogAmountRange<_CatalogType286>;
-type _CatalogType821 = CatalogUnderAmount<_CatalogType286>;
-type _CatalogType822 = CatalogOverAmount<_CatalogType286>;
-type _CatalogType823 = CatalogAmount<_CatalogType820, _CatalogType821, _CatalogType822>;
-type _CatalogType824 = CatalogByTerm<_CatalogType286>;
-type _CatalogType825 = CatalogSpendableType<_CatalogType286>;
-type _CatalogType826 = SeriesPattern18<UnderAge<Cents>>;
-type _CatalogType827 = SeriesPattern18<OverAge<Cents>>;
-type _CatalogType828 = SeriesPattern18<UnderAmount<Cents>>;
-type _CatalogType829 = SeriesPattern18<OverAmount<Cents>>;
-type _CatalogType830 = CatalogRealizedPriceByCohort<
-    _CatalogType286,
+type _CatalogType812 = CatalogAgeRange<_CatalogType285>;
+type _CatalogType813 = CatalogUnderAge<_CatalogType285>;
+type _CatalogType814 = CatalogOverAge<_CatalogType285>;
+type _CatalogType815 = CatalogByAge<_CatalogType812, _CatalogType813, _CatalogType814>;
+type _CatalogType816 = CatalogByEpoch<_CatalogType285>;
+type _CatalogType817 = CatalogClass<_CatalogType285>;
+type _CatalogType818 = CatalogByEntry<_CatalogType285>;
+type _CatalogType819 = CatalogAmountRange<_CatalogType285>;
+type _CatalogType820 = CatalogUnderAmount<_CatalogType285>;
+type _CatalogType821 = CatalogOverAmount<_CatalogType285>;
+type _CatalogType822 = CatalogAmount<_CatalogType819, _CatalogType820, _CatalogType821>;
+type _CatalogType823 = CatalogByTerm<_CatalogType285>;
+type _CatalogType824 = CatalogSpendableType<_CatalogType285>;
+type _CatalogType825 = SeriesPattern18<UnderAge<Cents>>;
+type _CatalogType826 = SeriesPattern18<OverAge<Cents>>;
+type _CatalogType827 = SeriesPattern18<UnderAmount<Cents>>;
+type _CatalogType828 = SeriesPattern18<OverAmount<Cents>>;
+type _CatalogType829 = CatalogRealizedPriceByCohort<
+    _CatalogType285,
+    _CatalogType815,
     _CatalogType816,
     _CatalogType817,
     _CatalogType818,
-    _CatalogType819,
+    _CatalogType822,
     _CatalogType823,
     _CatalogType824,
-    _CatalogType825,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
     _CatalogType807,
     _CatalogType808,
-    _CatalogType809,
-    _CatalogType299,
+    _CatalogType298,
+    _CatalogType825,
     _CatalogType826,
     _CatalogType827,
     _CatalogType828,
-    _CatalogType829,
 >;
-type _CatalogType831 = CatalogLazyFiatBlock<_CatalogType76, _CatalogType77>;
-type _CatalogType832 = CatalogLazyRollingSumFiatFromHeight<_CatalogType80, _CatalogType81>;
-type _CatalogType833 = CatalogWindows<_CatalogType832>;
-type _CatalogType834 =
-    CatalogLazyFiatPerBlockCumulativeWithSums<_CatalogType831, _CatalogType283, _CatalogType833>;
-type _CatalogType835 = CatalogAgeRange<_CatalogType834>;
-type _CatalogType836 = CatalogUnderAge<_CatalogType834>;
-type _CatalogType837 = CatalogOverAge<_CatalogType834>;
-type _CatalogType838 = CatalogByAge<_CatalogType835, _CatalogType836, _CatalogType837>;
-type _CatalogType839 = CatalogByEpoch<_CatalogType834>;
-type _CatalogType840 = CatalogClass<_CatalogType834>;
-type _CatalogType841 = CatalogByEntry<_CatalogType834>;
-type _CatalogType842 = CatalogAmountRange<_CatalogType834>;
-type _CatalogType843 = CatalogUnderAmount<_CatalogType834>;
-type _CatalogType844 = CatalogOverAmount<_CatalogType834>;
-type _CatalogType845 = CatalogAmount<_CatalogType842, _CatalogType843, _CatalogType844>;
-type _CatalogType846 = CatalogByTerm<_CatalogType834>;
-type _CatalogType847 = CatalogSpendableType<_CatalogType834>;
-type _CatalogType848 =
-    CatalogColumnarAmount<_CatalogType842, _CatalogType843, _CatalogType844, _CatalogType809>;
-type _CatalogType849 = CatalogCatalogRootCohortsRealizedProfit<
-    _CatalogType834,
+type _CatalogType830 = CatalogLazyFiatBlock<_CatalogType76, _CatalogType77>;
+type _CatalogType831 = CatalogLazyRollingSumFiatFromHeight<_CatalogType80, _CatalogType81>;
+type _CatalogType832 = CatalogWindows<_CatalogType831>;
+type _CatalogType833 =
+    CatalogLazyFiatPerBlockCumulativeWithSums<_CatalogType830, _CatalogType282, _CatalogType832>;
+type _CatalogType834 = CatalogAgeRange<_CatalogType833>;
+type _CatalogType835 = CatalogUnderAge<_CatalogType833>;
+type _CatalogType836 = CatalogOverAge<_CatalogType833>;
+type _CatalogType837 = CatalogByAge<_CatalogType834, _CatalogType835, _CatalogType836>;
+type _CatalogType838 = CatalogByEpoch<_CatalogType833>;
+type _CatalogType839 = CatalogClass<_CatalogType833>;
+type _CatalogType840 = CatalogByEntry<_CatalogType833>;
+type _CatalogType841 = CatalogAmountRange<_CatalogType833>;
+type _CatalogType842 = CatalogUnderAmount<_CatalogType833>;
+type _CatalogType843 = CatalogOverAmount<_CatalogType833>;
+type _CatalogType844 = CatalogAmount<_CatalogType841, _CatalogType842, _CatalogType843>;
+type _CatalogType845 = CatalogByTerm<_CatalogType833>;
+type _CatalogType846 = CatalogSpendableType<_CatalogType833>;
+type _CatalogType847 =
+    CatalogColumnarAmount<_CatalogType841, _CatalogType842, _CatalogType843, _CatalogType808>;
+type _CatalogType848 = CatalogCatalogRootCohortsRealizedProfit<
+    _CatalogType833,
+    _CatalogType837,
     _CatalogType838,
     _CatalogType839,
     _CatalogType840,
-    _CatalogType841,
+    _CatalogType844,
     _CatalogType845,
     _CatalogType846,
-    _CatalogType847,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
     _CatalogType807,
     _CatalogType808,
-    _CatalogType809,
-    _CatalogType848,
+    _CatalogType847,
 >;
-type _CatalogType850 = CatalogWindows<_CatalogType80>;
-type _CatalogType851 = CatalogNegRealizedLoss<_CatalogType76, _CatalogType850>;
-type _CatalogType852 = CatalogAgeRange<_CatalogType851>;
-type _CatalogType853 = CatalogUnderAge<_CatalogType851>;
-type _CatalogType854 = CatalogOverAge<_CatalogType851>;
-type _CatalogType855 = CatalogByAge<_CatalogType852, _CatalogType853, _CatalogType854>;
-type _CatalogType856 = CatalogByEpoch<_CatalogType851>;
-type _CatalogType857 = CatalogClass<_CatalogType851>;
-type _CatalogType858 = CatalogByEntry<_CatalogType851>;
-type _CatalogType859 = CatalogByTerm<_CatalogType851>;
-type _CatalogType860 = CatalogUTXOGroupsWithoutAmountOrType<
-    _CatalogType851,
+type _CatalogType849 = CatalogWindows<_CatalogType80>;
+type _CatalogType850 = CatalogNegRealizedLoss<_CatalogType76, _CatalogType849>;
+type _CatalogType851 = CatalogAgeRange<_CatalogType850>;
+type _CatalogType852 = CatalogUnderAge<_CatalogType850>;
+type _CatalogType853 = CatalogOverAge<_CatalogType850>;
+type _CatalogType854 = CatalogByAge<_CatalogType851, _CatalogType852, _CatalogType853>;
+type _CatalogType855 = CatalogByEpoch<_CatalogType850>;
+type _CatalogType856 = CatalogClass<_CatalogType850>;
+type _CatalogType857 = CatalogByEntry<_CatalogType850>;
+type _CatalogType858 = CatalogByTerm<_CatalogType850>;
+type _CatalogType859 = CatalogUTXOGroupsWithoutAmountOrType<
+    _CatalogType850,
+    _CatalogType854,
     _CatalogType855,
     _CatalogType856,
     _CatalogType857,
     _CatalogType858,
-    _CatalogType859,
 >;
-type _CatalogType861 = CatalogCatalogRootCohortsRealizedLoss<
-    _CatalogType834,
+type _CatalogType860 = CatalogCatalogRootCohortsRealizedLoss<
+    _CatalogType833,
+    _CatalogType837,
     _CatalogType838,
     _CatalogType839,
     _CatalogType840,
-    _CatalogType841,
+    _CatalogType844,
     _CatalogType845,
     _CatalogType846,
-    _CatalogType847,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
     _CatalogType807,
     _CatalogType808,
-    _CatalogType809,
-    _CatalogType848,
-    _CatalogType860,
+    _CatalogType847,
+    _CatalogType859,
 >;
-type _CatalogType862 = SeriesPattern18<CentsSigned>;
-type _CatalogType863 = CatalogLazyFiatBlock<_CatalogType76, _CatalogType862>;
-type _CatalogType864 = CatalogLazyFiatPerBlock<_CatalogType80, _CatalogType638>;
-type _CatalogType865 = CatalogLazyRollingSumFiatFromHeight<_CatalogType80, _CatalogType638>;
-type _CatalogType866 = CatalogWindows<_CatalogType865>;
-type _CatalogType867 = CatalogLazyFiatPerBlockCumulativeWithSumsAndDeltas<
+type _CatalogType861 = SeriesPattern18<CentsSigned>;
+type _CatalogType862 = CatalogLazyFiatBlock<_CatalogType76, _CatalogType861>;
+type _CatalogType863 = CatalogLazyFiatPerBlock<_CatalogType80, _CatalogType637>;
+type _CatalogType864 = CatalogLazyRollingSumFiatFromHeight<_CatalogType80, _CatalogType637>;
+type _CatalogType865 = CatalogWindows<_CatalogType864>;
+type _CatalogType866 = CatalogLazyFiatPerBlockCumulativeWithSumsAndDeltas<
+    _CatalogType862,
     _CatalogType863,
-    _CatalogType864,
-    _CatalogType866,
-    _CatalogType641,
+    _CatalogType865,
+    _CatalogType640,
 >;
-type _CatalogType868 = CatalogAgeRange<_CatalogType867>;
-type _CatalogType869 = CatalogUnderAge<_CatalogType867>;
-type _CatalogType870 = CatalogOverAge<_CatalogType867>;
-type _CatalogType871 = CatalogByAge<_CatalogType868, _CatalogType869, _CatalogType870>;
-type _CatalogType872 = CatalogByEpoch<_CatalogType867>;
-type _CatalogType873 = CatalogClass<_CatalogType867>;
-type _CatalogType874 = CatalogByEntry<_CatalogType867>;
-type _CatalogType875 = CatalogByTerm<_CatalogType867>;
-type _CatalogType876 = SeriesPattern18<AgeRange<CentsSigned>>;
-type _CatalogType877 = SeriesPattern18<ByEpoch<CentsSigned>>;
-type _CatalogType878 = SeriesPattern18<Class<CentsSigned>>;
-type _CatalogType879 = SeriesPattern18<ByEntry<CentsSigned>>;
-type _CatalogType880 = CatalogUTXOAggregate<_CatalogType170>;
-type _CatalogType881 = CatalogChange1m<_CatalogType880>;
-type _CatalogType882 = CatalogCatalogRootCohortsRealizedNetPnl<
-    _CatalogType867,
+type _CatalogType867 = CatalogAgeRange<_CatalogType866>;
+type _CatalogType868 = CatalogUnderAge<_CatalogType866>;
+type _CatalogType869 = CatalogOverAge<_CatalogType866>;
+type _CatalogType870 = CatalogByAge<_CatalogType867, _CatalogType868, _CatalogType869>;
+type _CatalogType871 = CatalogByEpoch<_CatalogType866>;
+type _CatalogType872 = CatalogClass<_CatalogType866>;
+type _CatalogType873 = CatalogByEntry<_CatalogType866>;
+type _CatalogType874 = CatalogByTerm<_CatalogType866>;
+type _CatalogType875 = SeriesPattern18<AgeRange<CentsSigned>>;
+type _CatalogType876 = SeriesPattern18<ByEpoch<CentsSigned>>;
+type _CatalogType877 = SeriesPattern18<Class<CentsSigned>>;
+type _CatalogType878 = SeriesPattern18<ByEntry<CentsSigned>>;
+type _CatalogType879 = CatalogUTXOAggregate<_CatalogType170>;
+type _CatalogType880 = CatalogChange1m<_CatalogType879>;
+type _CatalogType881 = CatalogCatalogRootCohortsRealizedNetPnl<
+    _CatalogType866,
+    _CatalogType870,
     _CatalogType871,
     _CatalogType872,
     _CatalogType873,
@@ -22060,335 +21995,334 @@ type _CatalogType882 = CatalogCatalogRootCohortsRealizedNetPnl<
     _CatalogType876,
     _CatalogType877,
     _CatalogType878,
-    _CatalogType879,
-    _CatalogType881,
+    _CatalogType880,
 >;
-type _CatalogType883 = CatalogLazyRollingAvgFiatFromHeight<_CatalogType80, _CatalogType4>;
-type _CatalogType884 = CatalogWindows<_CatalogType883>;
-type _CatalogType885 = CatalogLazyFiatPerBlockCumulativeRolling<
-    _CatalogType831,
-    _CatalogType283,
-    _CatalogType833,
+type _CatalogType882 = CatalogLazyRollingAvgFiatFromHeight<_CatalogType80, _CatalogType4>;
+type _CatalogType883 = CatalogWindows<_CatalogType882>;
+type _CatalogType884 = CatalogLazyFiatPerBlockCumulativeRolling<
+    _CatalogType830,
+    _CatalogType282,
+    _CatalogType832,
+    _CatalogType883,
+>;
+type _CatalogType885 = CatalogAgeRange<_CatalogType884>;
+type _CatalogType886 = CatalogUnderAge<_CatalogType884>;
+type _CatalogType887 = CatalogOverAge<_CatalogType884>;
+type _CatalogType888 = CatalogByAge<_CatalogType885, _CatalogType886, _CatalogType887>;
+type _CatalogType889 = CatalogByEpoch<_CatalogType884>;
+type _CatalogType890 = CatalogClass<_CatalogType884>;
+type _CatalogType891 = CatalogByEntry<_CatalogType884>;
+type _CatalogType892 = CatalogByTerm<_CatalogType884>;
+type _CatalogType893 = CatalogCumulativeValueDestroyedByCohort<
     _CatalogType884,
->;
-type _CatalogType886 = CatalogAgeRange<_CatalogType885>;
-type _CatalogType887 = CatalogUnderAge<_CatalogType885>;
-type _CatalogType888 = CatalogOverAge<_CatalogType885>;
-type _CatalogType889 = CatalogByAge<_CatalogType886, _CatalogType887, _CatalogType888>;
-type _CatalogType890 = CatalogByEpoch<_CatalogType885>;
-type _CatalogType891 = CatalogClass<_CatalogType885>;
-type _CatalogType892 = CatalogByEntry<_CatalogType885>;
-type _CatalogType893 = CatalogByTerm<_CatalogType885>;
-type _CatalogType894 = CatalogCumulativeValueDestroyedByCohort<
-    _CatalogType885,
+    _CatalogType888,
     _CatalogType889,
     _CatalogType890,
     _CatalogType891,
     _CatalogType892,
-    _CatalogType893,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
-    _CatalogType807,
 >;
-type _CatalogType895 = CatalogAgeRange<_CatalogType4>;
-type _CatalogType896 = CatalogUnderAge<_CatalogType4>;
-type _CatalogType897 = CatalogOverAge<_CatalogType4>;
-type _CatalogType898 = CatalogByAge<_CatalogType895, _CatalogType896, _CatalogType897>;
-type _CatalogType899 = CatalogByEpoch<_CatalogType4>;
-type _CatalogType900 = CatalogClass<_CatalogType4>;
-type _CatalogType901 = CatalogByEntry<_CatalogType4>;
-type _CatalogType902 = CatalogByTerm<_CatalogType4>;
-type _CatalogType903 = SeriesPattern18<UTXOAggregate<StoredF32>>;
-type _CatalogType904 = CatalogColumnarPerBlock_9<_CatalogType4, _CatalogType903>;
-type _CatalogType905 = SeriesPattern18<AgeRange<StoredF32>>;
-type _CatalogType906 = CatalogColumnarPerBlock_5<_CatalogType4, _CatalogType905>;
-type _CatalogType907 = SeriesPattern18<UnderAge<StoredF32>>;
-type _CatalogType908 = CatalogColumnarPerBlock_10<_CatalogType4, _CatalogType907>;
-type _CatalogType909 = SeriesPattern18<OverAge<StoredF32>>;
-type _CatalogType910 = CatalogColumnarPerBlock_11<_CatalogType4, _CatalogType909>;
-type _CatalogType911 = SeriesPattern18<ByEpoch<StoredF32>>;
-type _CatalogType912 = CatalogColumnarPerBlock_12<_CatalogType4, _CatalogType911>;
-type _CatalogType913 = SeriesPattern18<Class<StoredF32>>;
-type _CatalogType914 = CatalogColumnarPerBlock_13<_CatalogType4, _CatalogType913>;
-type _CatalogType915 = SeriesPattern18<ByEntry<StoredF32>>;
-type _CatalogType916 = CatalogColumnarPerBlock_14<_CatalogType4, _CatalogType915>;
-type _CatalogType917 = CatalogSopr<
-    _CatalogType894,
+type _CatalogType894 = CatalogAgeRange<_CatalogType4>;
+type _CatalogType895 = CatalogUnderAge<_CatalogType4>;
+type _CatalogType896 = CatalogOverAge<_CatalogType4>;
+type _CatalogType897 = CatalogByAge<_CatalogType894, _CatalogType895, _CatalogType896>;
+type _CatalogType898 = CatalogByEpoch<_CatalogType4>;
+type _CatalogType899 = CatalogClass<_CatalogType4>;
+type _CatalogType900 = CatalogByEntry<_CatalogType4>;
+type _CatalogType901 = CatalogByTerm<_CatalogType4>;
+type _CatalogType902 = SeriesPattern18<UTXOAggregate<StoredF32>>;
+type _CatalogType903 = CatalogColumnarPerBlock_9<_CatalogType4, _CatalogType902>;
+type _CatalogType904 = SeriesPattern18<AgeRange<StoredF32>>;
+type _CatalogType905 = CatalogColumnarPerBlock_5<_CatalogType4, _CatalogType904>;
+type _CatalogType906 = SeriesPattern18<UnderAge<StoredF32>>;
+type _CatalogType907 = CatalogColumnarPerBlock_10<_CatalogType4, _CatalogType906>;
+type _CatalogType908 = SeriesPattern18<OverAge<StoredF32>>;
+type _CatalogType909 = CatalogColumnarPerBlock_11<_CatalogType4, _CatalogType908>;
+type _CatalogType910 = SeriesPattern18<ByEpoch<StoredF32>>;
+type _CatalogType911 = CatalogColumnarPerBlock_12<_CatalogType4, _CatalogType910>;
+type _CatalogType912 = SeriesPattern18<Class<StoredF32>>;
+type _CatalogType913 = CatalogColumnarPerBlock_13<_CatalogType4, _CatalogType912>;
+type _CatalogType914 = SeriesPattern18<ByEntry<StoredF32>>;
+type _CatalogType915 = CatalogColumnarPerBlock_14<_CatalogType4, _CatalogType914>;
+type _CatalogType916 = CatalogSopr<
+    _CatalogType893,
     _CatalogType4,
+    _CatalogType897,
     _CatalogType898,
     _CatalogType899,
     _CatalogType900,
     _CatalogType901,
-    _CatalogType902,
-    _CatalogType904,
-    _CatalogType906,
-    _CatalogType908,
-    _CatalogType910,
-    _CatalogType912,
-    _CatalogType914,
-    _CatalogType916,
+    _CatalogType903,
+    _CatalogType905,
+    _CatalogType907,
+    _CatalogType909,
+    _CatalogType911,
+    _CatalogType913,
+    _CatalogType915,
 >;
-type _CatalogType918 = CatalogUTXOAllAndSth<_CatalogType787>;
-type _CatalogType919 = CatalogWindows<_CatalogType81>;
-type _CatalogType920 = CatalogLazyColumnPerBlockCumulativeRolling<
+type _CatalogType917 = CatalogUTXOAllAndSth<_CatalogType786>;
+type _CatalogType918 = CatalogWindows<_CatalogType81>;
+type _CatalogType919 = CatalogLazyColumnPerBlockCumulativeRolling<
     _CatalogType77,
     _CatalogType81,
-    _CatalogType919,
+    _CatalogType918,
     _CatalogType14,
 >;
-type _CatalogType921 = SeriesPattern18<UTXOAllAndSth<Cents>>;
-type _CatalogType922 = CatalogColumnarPerBlockCumulativeRolling_8<_CatalogType920, _CatalogType921>;
-type _CatalogType923 = CatalogAdjustedSoprVecs<_CatalogType918, _CatalogType922>;
-type _CatalogType924 =
-    CatalogAdditiveAggregateFiatPerBlockCumulativeWithSums<_CatalogType834, _CatalogType298>;
-type _CatalogType925 = CatalogAggregatePriceWithRatioPerBlock<_CatalogType563, _CatalogType299>;
-type _CatalogType926 = SeriesPattern18<ByTerm<CentsSats>>;
-type _CatalogType927 = CatalogAdditiveUTXORawVec<_CatalogType926>;
-type _CatalogType928 = SeriesPattern18<ByTerm<CentsSquaredSats>>;
-type _CatalogType929 = CatalogAdditiveUTXORawVec<_CatalogType928>;
-type _CatalogType930 = SeriesPattern18<UTXOAggregate<PartsPerMillionSigned64>>;
-type _CatalogType931 = CatalogAggregatePercentPerBlock<_CatalogType170, _CatalogType930>;
-type _CatalogType932 = SeriesPattern18<[PartsPerMillion32; 4]>;
-type _CatalogType933 = CatalogColumnarPerBlock_8<_CatalogType104, _CatalogType932>;
-type _CatalogType934 = CatalogUTXOAggregate<_CatalogType933>;
-type _CatalogType935 = CatalogColumnarPerBlock_15<_CatalogType4, _CatalogType428>;
-type _CatalogType936 = CatalogUTXOAggregate<_CatalogType935>;
-type _CatalogType937 = CatalogAmountRange<_CatalogType4>;
-type _CatalogType938 = CatalogUnderAmount<_CatalogType4>;
-type _CatalogType939 = CatalogOverAmount<_CatalogType4>;
-type _CatalogType940 = CatalogAmount<_CatalogType937, _CatalogType938, _CatalogType939>;
-type _CatalogType941 = CatalogSpendableType<_CatalogType4>;
-type _CatalogType942 = CatalogUTXOGroups<
+type _CatalogType920 = SeriesPattern18<UTXOAllAndSth<Cents>>;
+type _CatalogType921 = CatalogColumnarPerBlockCumulativeRolling_8<_CatalogType919, _CatalogType920>;
+type _CatalogType922 = CatalogAdjustedSoprVecs<_CatalogType917, _CatalogType921>;
+type _CatalogType923 =
+    CatalogAdditiveAggregateFiatPerBlockCumulativeWithSums<_CatalogType833, _CatalogType297>;
+type _CatalogType924 = CatalogAggregatePriceWithRatioPerBlock<_CatalogType562, _CatalogType298>;
+type _CatalogType925 = SeriesPattern18<ByTerm<CentsSats>>;
+type _CatalogType926 = CatalogAdditiveUTXORawVec<_CatalogType925>;
+type _CatalogType927 = SeriesPattern18<ByTerm<CentsSquaredSats>>;
+type _CatalogType928 = CatalogAdditiveUTXORawVec<_CatalogType927>;
+type _CatalogType929 = SeriesPattern18<UTXOAggregate<PartsPerMillionSigned64>>;
+type _CatalogType930 = CatalogAggregatePercentPerBlock<_CatalogType170, _CatalogType929>;
+type _CatalogType931 = SeriesPattern18<[PartsPerMillion32; 4]>;
+type _CatalogType932 = CatalogColumnarPerBlock_8<_CatalogType104, _CatalogType931>;
+type _CatalogType933 = CatalogUTXOAggregate<_CatalogType932>;
+type _CatalogType934 = CatalogColumnarPerBlock_15<_CatalogType4, _CatalogType427>;
+type _CatalogType935 = CatalogUTXOAggregate<_CatalogType934>;
+type _CatalogType936 = CatalogAmountRange<_CatalogType4>;
+type _CatalogType937 = CatalogUnderAmount<_CatalogType4>;
+type _CatalogType938 = CatalogOverAmount<_CatalogType4>;
+type _CatalogType939 = CatalogAmount<_CatalogType936, _CatalogType937, _CatalogType938>;
+type _CatalogType940 = CatalogSpendableType<_CatalogType4>;
+type _CatalogType941 = CatalogUTXOGroups<
     _CatalogType4,
+    _CatalogType897,
     _CatalogType898,
     _CatalogType899,
     _CatalogType900,
+    _CatalogType939,
     _CatalogType901,
     _CatalogType940,
-    _CatalogType902,
-    _CatalogType941,
 >;
-type _CatalogType943 = CatalogRealizedVecs<
-    _CatalogType812,
-    _CatalogType830,
-    _CatalogType849,
-    _CatalogType861,
-    _CatalogType882,
-    _CatalogType917,
+type _CatalogType942 = CatalogRealizedVecs<
+    _CatalogType811,
+    _CatalogType829,
+    _CatalogType848,
+    _CatalogType860,
+    _CatalogType881,
+    _CatalogType916,
+    _CatalogType922,
     _CatalogType923,
     _CatalogType924,
-    _CatalogType925,
-    _CatalogType927,
-    _CatalogType929,
-    _CatalogType931,
-    _CatalogType934,
-    _CatalogType936,
-    _CatalogType788,
-    _CatalogType942,
+    _CatalogType926,
+    _CatalogType928,
+    _CatalogType930,
+    _CatalogType933,
+    _CatalogType935,
+    _CatalogType787,
+    _CatalogType941,
 >;
-type _CatalogType944 = CatalogAgeRange<_CatalogType283>;
-type _CatalogType945 = CatalogUnderAge<_CatalogType283>;
-type _CatalogType946 = CatalogOverAge<_CatalogType283>;
-type _CatalogType947 = CatalogByAge<_CatalogType944, _CatalogType945, _CatalogType946>;
-type _CatalogType948 = CatalogByEpoch<_CatalogType283>;
-type _CatalogType949 = CatalogClass<_CatalogType283>;
-type _CatalogType950 = CatalogByEntry<_CatalogType283>;
-type _CatalogType951 = CatalogByTerm<_CatalogType283>;
-type _CatalogType952 = CatalogSpendableType<_CatalogType283>;
-type _CatalogType953 = CatalogUnrealizedByCohort<
-    _CatalogType283,
+type _CatalogType943 = CatalogAgeRange<_CatalogType282>;
+type _CatalogType944 = CatalogUnderAge<_CatalogType282>;
+type _CatalogType945 = CatalogOverAge<_CatalogType282>;
+type _CatalogType946 = CatalogByAge<_CatalogType943, _CatalogType944, _CatalogType945>;
+type _CatalogType947 = CatalogByEpoch<_CatalogType282>;
+type _CatalogType948 = CatalogClass<_CatalogType282>;
+type _CatalogType949 = CatalogByEntry<_CatalogType282>;
+type _CatalogType950 = CatalogByTerm<_CatalogType282>;
+type _CatalogType951 = CatalogSpendableType<_CatalogType282>;
+type _CatalogType952 = CatalogUnrealizedByCohort<
+    _CatalogType282,
+    _CatalogType946,
     _CatalogType947,
     _CatalogType948,
     _CatalogType949,
     _CatalogType950,
     _CatalogType951,
-    _CatalogType952,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
     _CatalogType807,
-    _CatalogType808,
 >;
-type _CatalogType954 = CatalogAgeRange<_CatalogType80>;
-type _CatalogType955 = CatalogUnderAge<_CatalogType80>;
-type _CatalogType956 = CatalogOverAge<_CatalogType80>;
-type _CatalogType957 = CatalogByAge<_CatalogType954, _CatalogType955, _CatalogType956>;
-type _CatalogType958 = CatalogByEpoch<_CatalogType80>;
-type _CatalogType959 = CatalogClass<_CatalogType80>;
-type _CatalogType960 = CatalogByEntry<_CatalogType80>;
-type _CatalogType961 = CatalogByTerm<_CatalogType80>;
-type _CatalogType962 = CatalogSpendableType<_CatalogType80>;
-type _CatalogType963 = CatalogUTXOGroupsWithoutAmount<
+type _CatalogType953 = CatalogAgeRange<_CatalogType80>;
+type _CatalogType954 = CatalogUnderAge<_CatalogType80>;
+type _CatalogType955 = CatalogOverAge<_CatalogType80>;
+type _CatalogType956 = CatalogByAge<_CatalogType953, _CatalogType954, _CatalogType955>;
+type _CatalogType957 = CatalogByEpoch<_CatalogType80>;
+type _CatalogType958 = CatalogClass<_CatalogType80>;
+type _CatalogType959 = CatalogByEntry<_CatalogType80>;
+type _CatalogType960 = CatalogByTerm<_CatalogType80>;
+type _CatalogType961 = CatalogSpendableType<_CatalogType80>;
+type _CatalogType962 = CatalogUTXOGroupsWithoutAmount<
     _CatalogType80,
+    _CatalogType956,
     _CatalogType957,
     _CatalogType958,
     _CatalogType959,
     _CatalogType960,
     _CatalogType961,
-    _CatalogType962,
 >;
-type _CatalogType964 = CatalogCatalogRootCohortsUnrealizedLoss<
-    _CatalogType283,
+type _CatalogType963 = CatalogCatalogRootCohortsUnrealizedLoss<
+    _CatalogType282,
+    _CatalogType946,
     _CatalogType947,
     _CatalogType948,
     _CatalogType949,
     _CatalogType950,
     _CatalogType951,
-    _CatalogType952,
+    _CatalogType803,
     _CatalogType804,
     _CatalogType805,
     _CatalogType806,
     _CatalogType807,
-    _CatalogType808,
-    _CatalogType963,
+    _CatalogType962,
 >;
-type _CatalogType965 = CatalogAgeRange<_CatalogType864>;
-type _CatalogType966 = CatalogUnderAge<_CatalogType864>;
-type _CatalogType967 = CatalogOverAge<_CatalogType864>;
-type _CatalogType968 = CatalogByAge<_CatalogType965, _CatalogType966, _CatalogType967>;
-type _CatalogType969 = CatalogByEpoch<_CatalogType864>;
-type _CatalogType970 = CatalogClass<_CatalogType864>;
-type _CatalogType971 = CatalogByEntry<_CatalogType864>;
-type _CatalogType972 = CatalogByTerm<_CatalogType864>;
-type _CatalogType973 = CatalogNetUnrealizedByCohort<
-    _CatalogType864,
+type _CatalogType964 = CatalogAgeRange<_CatalogType863>;
+type _CatalogType965 = CatalogUnderAge<_CatalogType863>;
+type _CatalogType966 = CatalogOverAge<_CatalogType863>;
+type _CatalogType967 = CatalogByAge<_CatalogType964, _CatalogType965, _CatalogType966>;
+type _CatalogType968 = CatalogByEpoch<_CatalogType863>;
+type _CatalogType969 = CatalogClass<_CatalogType863>;
+type _CatalogType970 = CatalogByEntry<_CatalogType863>;
+type _CatalogType971 = CatalogByTerm<_CatalogType863>;
+type _CatalogType972 = CatalogNetUnrealizedByCohort<
+    _CatalogType863,
+    _CatalogType967,
     _CatalogType968,
     _CatalogType969,
     _CatalogType970,
     _CatalogType971,
-    _CatalogType972,
+    _CatalogType875,
     _CatalogType876,
     _CatalogType877,
     _CatalogType878,
-    _CatalogType879,
 >;
-type _CatalogType974 = CatalogAdditiveAggregateFiatPerBlock<_CatalogType283, _CatalogType298>;
-type _CatalogType975 = CatalogAggregateFiatPerBlock<_CatalogType283, _CatalogType299>;
-type _CatalogType976 = SeriesPattern18<UTXOAggregate<CentsSigned>>;
-type _CatalogType977 = CatalogAggregateFiatPerBlock<_CatalogType864, _CatalogType976>;
-type _CatalogType978 = CatalogLazyRatioPerBlock<_CatalogType3, _CatalogType4>;
-type _CatalogType979 = CatalogAgeRange<_CatalogType978>;
-type _CatalogType980 = CatalogUnderAge<_CatalogType978>;
-type _CatalogType981 = CatalogOverAge<_CatalogType978>;
-type _CatalogType982 = CatalogByAge<_CatalogType979, _CatalogType980, _CatalogType981>;
-type _CatalogType983 = CatalogByEpoch<_CatalogType978>;
-type _CatalogType984 = CatalogClass<_CatalogType978>;
-type _CatalogType985 = CatalogByEntry<_CatalogType978>;
-type _CatalogType986 = CatalogAmountRange<_CatalogType978>;
-type _CatalogType987 = CatalogUnderAmount<_CatalogType978>;
-type _CatalogType988 = CatalogOverAmount<_CatalogType978>;
-type _CatalogType989 = CatalogAmount<_CatalogType986, _CatalogType987, _CatalogType988>;
-type _CatalogType990 = CatalogByTerm<_CatalogType978>;
-type _CatalogType991 = CatalogSpendableType<_CatalogType978>;
-type _CatalogType992 = CatalogUTXOGroups<
-    _CatalogType978,
+type _CatalogType973 = CatalogAdditiveAggregateFiatPerBlock<_CatalogType282, _CatalogType297>;
+type _CatalogType974 = CatalogAggregateFiatPerBlock<_CatalogType282, _CatalogType298>;
+type _CatalogType975 = SeriesPattern18<UTXOAggregate<CentsSigned>>;
+type _CatalogType976 = CatalogAggregateFiatPerBlock<_CatalogType863, _CatalogType975>;
+type _CatalogType977 = CatalogLazyRatioPerBlock<_CatalogType3, _CatalogType4>;
+type _CatalogType978 = CatalogAgeRange<_CatalogType977>;
+type _CatalogType979 = CatalogUnderAge<_CatalogType977>;
+type _CatalogType980 = CatalogOverAge<_CatalogType977>;
+type _CatalogType981 = CatalogByAge<_CatalogType978, _CatalogType979, _CatalogType980>;
+type _CatalogType982 = CatalogByEpoch<_CatalogType977>;
+type _CatalogType983 = CatalogClass<_CatalogType977>;
+type _CatalogType984 = CatalogByEntry<_CatalogType977>;
+type _CatalogType985 = CatalogAmountRange<_CatalogType977>;
+type _CatalogType986 = CatalogUnderAmount<_CatalogType977>;
+type _CatalogType987 = CatalogOverAmount<_CatalogType977>;
+type _CatalogType988 = CatalogAmount<_CatalogType985, _CatalogType986, _CatalogType987>;
+type _CatalogType989 = CatalogByTerm<_CatalogType977>;
+type _CatalogType990 = CatalogSpendableType<_CatalogType977>;
+type _CatalogType991 = CatalogUTXOGroups<
+    _CatalogType977,
+    _CatalogType981,
     _CatalogType982,
     _CatalogType983,
     _CatalogType984,
-    _CatalogType985,
+    _CatalogType988,
     _CatalogType989,
     _CatalogType990,
+>;
+type _CatalogType992 = CatalogUnrealizedVecs<
+    _CatalogType952,
+    _CatalogType963,
+    _CatalogType972,
+    _CatalogType973,
+    _CatalogType928,
+    _CatalogType974,
+    _CatalogType976,
     _CatalogType991,
 >;
-type _CatalogType993 = CatalogUnrealizedVecs<
-    _CatalogType953,
-    _CatalogType964,
-    _CatalogType973,
-    _CatalogType974,
-    _CatalogType929,
-    _CatalogType975,
-    _CatalogType977,
-    _CatalogType992,
->;
-type _CatalogType994 = CatalogCostBasisSide<_CatalogType418>;
-type _CatalogType995 = CatalogPercentilePrices<_CatalogType418>;
+type _CatalogType993 = CatalogCostBasisSide<_CatalogType417>;
+type _CatalogType994 = CatalogPercentilePrices<_CatalogType417>;
+type _CatalogType995 =
+    CatalogCostBasis<_CatalogType993, _CatalogType417, _CatalogType994, _CatalogType104>;
 type _CatalogType996 =
-    CatalogCostBasis<_CatalogType994, _CatalogType418, _CatalogType995, _CatalogType104>;
-type _CatalogType997 =
-    CatalogBitviewPluginDistributionMetricsCostBasisVecsCostBasisVecs<_CatalogType996>;
-type _CatalogType998 = CatalogCatalogRootCohortsRelativeSupplyInProfit<_CatalogType811>;
-type _CatalogType999 = CatalogCatalogRootCohortsRelativeSupplyInLoss<_CatalogType811>;
-type _CatalogType1000 = CatalogCatalogRootCohortsRelativeSupply<_CatalogType998, _CatalogType999>;
-type _CatalogType1001 = SeriesPattern18<ByTerm<PartsPerMillion32>>;
-type _CatalogType1002 = CatalogColumnarPerBlock_16<_CatalogType104, _CatalogType1001>;
-type _CatalogType1003 = CatalogCatalogRootCohortsRelativeUnrealizedProfit<
-    _CatalogType811,
-    _CatalogType1002,
-    _CatalogType811,
+    CatalogBitviewPluginDistributionMetricsCostBasisVecsCostBasisVecs<_CatalogType995>;
+type _CatalogType997 = CatalogCatalogRootCohortsRelativeSupplyInProfit<_CatalogType810>;
+type _CatalogType998 = CatalogCatalogRootCohortsRelativeSupplyInLoss<_CatalogType810>;
+type _CatalogType999 = CatalogCatalogRootCohortsRelativeSupply<_CatalogType997, _CatalogType998>;
+type _CatalogType1000 = SeriesPattern18<ByTerm<PartsPerMillion32>>;
+type _CatalogType1001 = CatalogColumnarPerBlock_16<_CatalogType104, _CatalogType1000>;
+type _CatalogType1002 = CatalogCatalogRootCohortsRelativeUnrealizedProfit<
+    _CatalogType810,
+    _CatalogType1001,
+    _CatalogType810,
 >;
-type _CatalogType1004 = CatalogCatalogRootCohortsRelativeUnrealizedLoss<
-    _CatalogType811,
-    _CatalogType1002,
-    _CatalogType811,
+type _CatalogType1003 = CatalogCatalogRootCohortsRelativeUnrealizedLoss<
+    _CatalogType810,
+    _CatalogType1001,
+    _CatalogType810,
 >;
-type _CatalogType1005 = CatalogByTerm<_CatalogType5>;
-type _CatalogType1006 = CatalogUTXOAggregate<_CatalogType5>;
-type _CatalogType1007 =
-    CatalogCatalogRootCohortsRelativeUnrealizedNetPnl<_CatalogType1005, _CatalogType1006>;
-type _CatalogType1008 = CatalogUnrealized<_CatalogType1003, _CatalogType1004, _CatalogType1007>;
-type _CatalogType1009 = SeriesPattern18<UTXOAggregate<PartsPerMillion32>>;
-type _CatalogType1010 = CatalogAggregatePercentPerBlock<_CatalogType104, _CatalogType1009>;
-type _CatalogType1011 = CatalogCatalogRootCohortsRelativeInvestedCapitalInProfit<_CatalogType1010>;
-type _CatalogType1012 = CatalogCatalogRootCohortsRelativeInvestedCapitalInLoss<_CatalogType1010>;
-type _CatalogType1013 = CatalogInvestedCapital<_CatalogType1011, _CatalogType1012>;
-type _CatalogType1014 = CatalogRelativeVecs<_CatalogType1000, _CatalogType1008, _CatalogType1013>;
-type _CatalogType1015 = CatalogLazySpotValuePerBlockWithDeltas<
+type _CatalogType1004 = CatalogByTerm<_CatalogType5>;
+type _CatalogType1005 = CatalogUTXOAggregate<_CatalogType5>;
+type _CatalogType1006 =
+    CatalogCatalogRootCohortsRelativeUnrealizedNetPnl<_CatalogType1004, _CatalogType1005>;
+type _CatalogType1007 = CatalogUnrealized<_CatalogType1002, _CatalogType1003, _CatalogType1006>;
+type _CatalogType1008 = SeriesPattern18<UTXOAggregate<PartsPerMillion32>>;
+type _CatalogType1009 = CatalogAggregatePercentPerBlock<_CatalogType104, _CatalogType1008>;
+type _CatalogType1010 = CatalogCatalogRootCohortsRelativeInvestedCapitalInProfit<_CatalogType1009>;
+type _CatalogType1011 = CatalogCatalogRootCohortsRelativeInvestedCapitalInLoss<_CatalogType1009>;
+type _CatalogType1012 = CatalogInvestedCapital<_CatalogType1010, _CatalogType1011>;
+type _CatalogType1013 = CatalogRelativeVecs<_CatalogType999, _CatalogType1007, _CatalogType1012>;
+type _CatalogType1014 = CatalogLazySpotValuePerBlockWithDeltas<
     _CatalogType79,
     _CatalogType59,
     _CatalogType80,
     _CatalogType81,
-    _CatalogType684,
+    _CatalogType683,
 >;
-type _CatalogType1016 = CatalogUTXOAggregate<_CatalogType1015>;
-type _CatalogType1017 = CatalogProfitabilityRange<_CatalogType1016>;
-type _CatalogType1018 = CatalogProfit<_CatalogType1016>;
-type _CatalogType1019 = CatalogLoss<_CatalogType1016>;
-type _CatalogType1020 = SeriesPattern18<ByTerm<ProfitabilityRange<Sats>>>;
-type _CatalogType1021 = CatalogColumnarPerBlock_17<
+type _CatalogType1015 = CatalogUTXOAggregate<_CatalogType1014>;
+type _CatalogType1016 = CatalogProfitabilityRange<_CatalogType1015>;
+type _CatalogType1017 = CatalogProfit<_CatalogType1015>;
+type _CatalogType1018 = CatalogLoss<_CatalogType1015>;
+type _CatalogType1019 = SeriesPattern18<ByTerm<ProfitabilityRange<Sats>>>;
+type _CatalogType1020 = CatalogColumnarPerBlock_17<
+    _CatalogType1016,
     _CatalogType1017,
     _CatalogType1018,
     _CatalogType1019,
-    _CatalogType1020,
 >;
-type _CatalogType1022 = CatalogUTXOAggregate<_CatalogType283>;
-type _CatalogType1023 = CatalogProfitabilityRange<_CatalogType1022>;
-type _CatalogType1024 = CatalogProfit<_CatalogType1022>;
-type _CatalogType1025 = CatalogLoss<_CatalogType1022>;
-type _CatalogType1026 = SeriesPattern18<ByTerm<ProfitabilityRange<Cents>>>;
-type _CatalogType1027 = CatalogColumnarPerBlock_17<
+type _CatalogType1021 = CatalogUTXOAggregate<_CatalogType282>;
+type _CatalogType1022 = CatalogProfitabilityRange<_CatalogType1021>;
+type _CatalogType1023 = CatalogProfit<_CatalogType1021>;
+type _CatalogType1024 = CatalogLoss<_CatalogType1021>;
+type _CatalogType1025 = SeriesPattern18<ByTerm<ProfitabilityRange<Cents>>>;
+type _CatalogType1026 = CatalogColumnarPerBlock_17<
+    _CatalogType1022,
     _CatalogType1023,
     _CatalogType1024,
     _CatalogType1025,
-    _CatalogType1026,
 >;
-type _CatalogType1028 = CatalogLazyColumnRatioPerBlock<_CatalogType3, _CatalogType4>;
-type _CatalogType1029 = CatalogProfitabilityRange<_CatalogType1028>;
-type _CatalogType1030 = CatalogProfit<_CatalogType1028>;
-type _CatalogType1031 = CatalogLoss<_CatalogType1028>;
-type _CatalogType1032 = SeriesPattern18<ProfitabilityRow<PartsPerMillionSigned32>>;
-type _CatalogType1033 = CatalogColumnarPerBlock_17<
+type _CatalogType1027 = CatalogLazyColumnRatioPerBlock<_CatalogType3, _CatalogType4>;
+type _CatalogType1028 = CatalogProfitabilityRange<_CatalogType1027>;
+type _CatalogType1029 = CatalogProfit<_CatalogType1027>;
+type _CatalogType1030 = CatalogLoss<_CatalogType1027>;
+type _CatalogType1031 = SeriesPattern18<ProfitabilityRow<PartsPerMillionSigned32>>;
+type _CatalogType1032 = CatalogColumnarPerBlock_17<
+    _CatalogType1028,
     _CatalogType1029,
     _CatalogType1030,
     _CatalogType1031,
-    _CatalogType1032,
 >;
-type _CatalogType1034 =
-    CatalogProfitabilityVecs<_CatalogType1021, _CatalogType1027, _CatalogType1033>;
-type _CatalogType1035 = CatalogCohortMetrics<
-    _CatalogType713,
-    _CatalogType742,
-    _CatalogType789,
-    _CatalogType943,
-    _CatalogType993,
-    _CatalogType997,
-    _CatalogType1014,
-    _CatalogType1034,
+type _CatalogType1033 =
+    CatalogProfitabilityVecs<_CatalogType1020, _CatalogType1026, _CatalogType1032>;
+type _CatalogType1034 = CatalogCohortMetrics<
+    _CatalogType712,
+    _CatalogType741,
+    _CatalogType788,
+    _CatalogType942,
+    _CatalogType992,
+    _CatalogType996,
+    _CatalogType1013,
+    _CatalogType1033,
 >;
-type _CatalogType1036 = CatalogAgeRange_2<_CatalogType274>;
-type _CatalogType1037 = CatalogCatalogRootFrameworksCointime<_CatalogType1036>;
-type _CatalogType1038 = CatalogFrameworks<_CatalogType1037>;
-type _CatalogType1039 = CatalogDefaultPlugins<
+type _CatalogType1035 = CatalogAgeRange_2<_CatalogType273>;
+type _CatalogType1036 = CatalogCatalogRootFrameworksCointime<_CatalogType1035>;
+type _CatalogType1037 = CatalogFrameworks<_CatalogType1036>;
+type _CatalogType1038 = CatalogDefaultPlugins<
     _CatalogType32,
     _CatalogType89,
     _CatalogType110,
@@ -22396,24 +22330,24 @@ type _CatalogType1039 = CatalogDefaultPlugins<
     _CatalogType204,
     _CatalogType217,
     _CatalogType254,
-    _CatalogType267,
-    _CatalogType315,
-    _CatalogType401,
-    _CatalogType413,
-    _CatalogType417,
-    _CatalogType433,
-    _CatalogType435,
-    _CatalogType532,
-    _CatalogType538,
-    _CatalogType551,
-    _CatalogType572,
-    _CatalogType622,
-    _CatalogType634,
-    _CatalogType644,
-    _CatalogType1035,
-    _CatalogType1038,
+    _CatalogType266,
+    _CatalogType314,
+    _CatalogType400,
+    _CatalogType412,
+    _CatalogType416,
+    _CatalogType432,
+    _CatalogType434,
+    _CatalogType531,
+    _CatalogType537,
+    _CatalogType550,
+    _CatalogType571,
+    _CatalogType621,
+    _CatalogType633,
+    _CatalogType643,
+    _CatalogType1034,
+    _CatalogType1037,
 >;
-pub type SeriesTree = _CatalogType1039;
+pub type SeriesTree = _CatalogType1038;
 fn create_series_tree(client: Arc<BitviewClientBase>) -> SeriesTree {
     FromCatalog::from_catalog(client, 88706)
 }
@@ -112093,7 +112027,7 @@ impl BitviewClient {
 
     /// Health check
     ///
-    /// Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
+    /// Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Reads the published prefix during processing; an empty index waits until the request deadline, then returns 504. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
     ///
     /// Endpoint: `GET /health`
     pub fn get_health(&self) -> Result<Health> {

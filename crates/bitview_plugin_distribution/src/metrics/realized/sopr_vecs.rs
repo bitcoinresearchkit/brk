@@ -10,8 +10,7 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, ColumnId, Database, PcoVec, ReadOnlyColumnarVec,
-    ReadableCloneableVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, ColumnId, Database, PcoVec, ReadOnlyColumnarVec, Rw, StorageMode,
 };
 
 use bitview_compute::{ColumnarPerBlock, Identity, LazyColumnPerBlock, LazyPerBlock, SoprRatio};
@@ -127,26 +126,19 @@ impl Sopr24hVecs {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "sopr_24h");
             let version = Self::cohort_version(version, &filter);
             match &filter {
-                Filter::All => {
-                    Self::logical_source(&aggregate_matrix.series.all, &name, version, mappings)
-                }
+                Filter::All => Self::logical_source(&aggregate_matrix.series.all, &name, version),
                 Filter::Term(Term::Sth) => {
-                    Self::logical_source(&aggregate_matrix.series.sth, &name, version, mappings)
+                    Self::logical_source(&aggregate_matrix.series.sth, &name, version)
                 }
                 Filter::Term(Term::Lth) => {
-                    Self::logical_source(&aggregate_matrix.series.lth, &name, version, mappings)
+                    Self::logical_source(&aggregate_matrix.series.lth, &name, version)
                 }
                 Filter::Time(_) => AgeRangeId::ALL
                     .iter()
                     .copied()
                     .find(|id| id.select(&AGE_RANGE_FILTERS) == &filter)
                     .map(|id| {
-                        Self::logical_source(
-                            id.select(&age_range_matrix.series),
-                            &name,
-                            version,
-                            mappings,
-                        )
+                        Self::logical_source(id.select(&age_range_matrix.series), &name, version)
                     })
                     .or_else(|| {
                         UnderAgeId::ALL
@@ -158,7 +150,6 @@ impl Sopr24hVecs {
                                     id.select(&under_age_matrix.series),
                                     &name,
                                     version,
-                                    mappings,
                                 )
                             })
                     })
@@ -172,7 +163,6 @@ impl Sopr24hVecs {
                                     id.select(&over_age_matrix.series),
                                     &name,
                                     version,
-                                    mappings,
                                 )
                             })
                     })
@@ -181,40 +171,19 @@ impl Sopr24hVecs {
                     .iter()
                     .copied()
                     .find(|id| id.select(&EPOCH_FILTERS) == &filter)
-                    .map(|id| {
-                        Self::logical_source(
-                            id.select(&epoch_matrix.series),
-                            &name,
-                            version,
-                            mappings,
-                        )
-                    })
+                    .map(|id| Self::logical_source(id.select(&epoch_matrix.series), &name, version))
                     .expect("supported SOPR epoch cohort"),
                 Filter::Class(_) => ClassId::ALL
                     .iter()
                     .copied()
                     .find(|id| id.select(&CLASS_FILTERS) == &filter)
-                    .map(|id| {
-                        Self::logical_source(
-                            id.select(&class_matrix.series),
-                            &name,
-                            version,
-                            mappings,
-                        )
-                    })
+                    .map(|id| Self::logical_source(id.select(&class_matrix.series), &name, version))
                     .expect("supported SOPR class cohort"),
                 Filter::Entry(_) => EntryId::ALL
                     .iter()
                     .copied()
                     .find(|id| id.select(&ENTRY_FILTERS) == &filter)
-                    .map(|id| {
-                        Self::logical_source(
-                            id.select(&entry_matrix.series),
-                            &name,
-                            version,
-                            mappings,
-                        )
-                    })
+                    .map(|id| Self::logical_source(id.select(&entry_matrix.series), &name, version))
                     .expect("supported SOPR entry cohort"),
                 Filter::Amount(_) | Filter::Type(_) => unreachable!("unsupported SOPR cohort"),
             }
@@ -261,14 +230,8 @@ impl Sopr24hVecs {
         source: &LazyColumnPerBlock<StoredF32, C>,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
     ) -> LazyPerBlock<StoredF32> {
-        LazyPerBlock::from_boxed_height_source::<Identity<StoredF32>>(
-            name,
-            version,
-            source.height.read_only_boxed_clone(),
-            mappings,
-        )
+        LazyPerBlock::from_resolutions::<Identity<StoredF32>>(name, version, &source.resolutions)
     }
 
     fn cohort_version(base: Version, filter: &Filter) -> Version {

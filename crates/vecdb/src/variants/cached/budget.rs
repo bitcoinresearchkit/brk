@@ -33,21 +33,3 @@ impl CachedVecBudget for AtomicUsize {
         self.fetch_add(bytes, Relaxed);
     }
 }
-
-/// Budget that always allows materialization (used by [`super::CachedVec::wrap`]).
-pub struct NoBudget;
-
-impl CachedVecBudget for NoBudget {
-    #[inline]
-    fn admit(&self, _: bool) -> bool {
-        true
-    }
-
-    #[inline]
-    fn try_reserve(&self, _: usize) -> bool {
-        true
-    }
-
-    #[inline]
-    fn release(&self, _: usize) {}
-}

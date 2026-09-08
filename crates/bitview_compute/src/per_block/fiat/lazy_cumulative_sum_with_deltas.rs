@@ -1,10 +1,10 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CachedWindowStartVec, FiatType, FixedRatio, LazyFiatPerBlockCumulativeWithSums,
+    FiatType, FixedRatio, IndexSources, LazyFiatPerBlockCumulativeWithSums,
     LazyRollingDeltasFiatFromHeight, Windows,
 };
 
@@ -28,26 +28,26 @@ where
     CS: FiatType + From<f64>,
     B: FixedRatio + From<f64>,
 {
-    pub fn from_boxed_cumulative_cents_source(
+    pub fn from_cumulative_cents_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, C>,
+        source: &(impl ReadableCloneableVec<Height, C> + ?Sized),
         delta_version_offset: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let inner = LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+        let inner = LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
             name,
             version,
             source,
             indexes,
-            cached_starts,
+            window_starts,
         );
         let delta = LazyRollingDeltasFiatFromHeight::new(
             &format!("{name}_delta"),
             version + delta_version_offset,
             &inner.cumulative.cents.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         Self { inner, delta }

@@ -12,7 +12,7 @@ use vecdb::{
     VecIndex, VecValue, Version, WritableVec,
 };
 
-use crate::{ComputedVecValue, DistributionStats, NumericValue, PerBlock};
+use crate::{ComputedVecValue, DistributionStats, IndexSources, NumericValue, PerBlock};
 
 fn effective_range(first: usize, count: usize, skip_count: usize) -> std::ops::Range<usize> {
     let start = first + skip_count.min(count);
@@ -65,7 +65,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|suffix| {
             PerBlock::forced_import(db, &format!("{name}_{suffix}"), version, indexes)

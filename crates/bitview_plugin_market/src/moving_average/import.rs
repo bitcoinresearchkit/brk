@@ -1,7 +1,9 @@
+use bitview_plugin_blocks::Vecs as BlocksVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use brk_types::{Cents, Height, Version};
-use vecdb::{CachedBoxedVec, Database};
+use vecdb::{Database, ReadableCloneableVec};
 
 use super::{Vecs, sma::SmaVecs, vecs::EmaPeriodId};
 use bitview_compute::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
@@ -11,11 +13,11 @@ const EMA_VERSION: Version = Version::ONE;
 pub fn forced_import(
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
-    blocks: &bitview_plugin_blocks::Vecs,
-    spot_price: &CachedBoxedVec<Height, Cents>,
+    mappings: &MappingsVecs,
+    blocks: &BlocksVecs,
+    spot_price: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Vecs> {
-    let sma = SmaVecs::new(version, mappings, &blocks.lookback, spot_price.clone());
+    let sma = SmaVecs::new(version, mappings, &blocks.lookback, spot_price);
     let ema_version = version + EMA_VERSION;
     let ema = ColumnarPerBlock::forced_import(db, "price_ema_cents", ema_version, |source| {
         EmaPeriodId::series(|period| {

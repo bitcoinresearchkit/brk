@@ -1,10 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, PriceRatio, SatsFract, StoredF32, Version};
-use vecdb::{CachedBoxedVec, ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
-use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock, Price};
-
-use super::price::cached_price_ratio;
+use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock, LazyRatioPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct LazyColumnPriceWithRatioPerBlock<C>
@@ -35,13 +33,13 @@ where
         source: &ReadOnlyColumnarVec<PcoVec<Height, Cents>, C>,
         column: C,
         indexes: &IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let price = Price::from_columnar_source(name, version, source, column, indexes);
-        let ratio = cached_price_ratio(
+        let ratio = LazyRatioPerBlock::from_price_source(
             name,
             version,
-            price.cents.height.read_only_boxed_clone(),
+            price.cents.resolutions.height_source(),
             spot_price,
             indexes,
         );

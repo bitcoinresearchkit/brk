@@ -8,7 +8,7 @@ use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{Database, LazyVec, ReadableCloneableVec, Rw, StorageMode, VecValue};
 
-use crate::{CachedWindowStartVec, NumericValue, PerBlock, RollingComplete, WindowStarts, Windows};
+use crate::{IndexSources, NumericValue, PerBlock, RollingComplete, WindowStarts, Windows};
 
 #[derive(Traversable)]
 pub struct PerBlockFull<T, S, M: StorageMode = Rw>
@@ -35,10 +35,10 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
+        source: &impl ReadableCloneableVec<Height, S>,
         compute_block: fn(Height, S) -> T,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let block = LazyVec::init(name, version, source.read_only_boxed_clone(), compute_block);
         let cumulative =
@@ -48,8 +48,8 @@ where
             name,
             version,
             indexes,
-            &cumulative.height,
-            cached_starts,
+            cumulative.resolutions.height_source(),
+            window_starts,
         )?;
 
         Ok(Self {

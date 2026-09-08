@@ -3,9 +3,7 @@ use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{Ident, ReadableCloneableVec, UnaryTransform};
 
-use crate::{
-    CachedWindowStartVec, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, NumericValue, Windows,
-};
+use crate::{IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, NumericValue, Windows};
 
 /// Lazy exact per-block values and rolling averages backed by one cumulative source.
 #[derive(Traversable)]
@@ -45,10 +43,11 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, C> + 'static),
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        cumulative: &impl ReadableCloneableVec<Height, C>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
+        let cumulative = cumulative.read_only_boxed_clone();
         Self {
             block: LazyPreviousDeltaVec::transformed(
                 name,
@@ -58,8 +57,8 @@ where
             average: LazyRollingAvgsFromHeight::new(
                 &format!("{name}_average"),
                 version + Version::TWO,
-                cumulative,
-                cached_starts,
+                &cumulative,
+                window_starts,
                 indexes,
             ),
         }

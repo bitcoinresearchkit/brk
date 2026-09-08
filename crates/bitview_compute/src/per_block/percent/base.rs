@@ -4,12 +4,9 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    BinaryTransform, Database, EagerVec, PcoVec, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, VecValue,
-};
+use vecdb::{BinaryTransform, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode, VecValue};
 
-use crate::{FixedRatio, Percent, algo::ComputeDrawdown};
+use crate::{FixedRatio, IndexSources, Percent, algo::ComputeDrawdown};
 
 use crate::{LazyPerBlock, PerBlock};
 
@@ -25,19 +22,14 @@ impl<B: FixedRatio> PercentPerBlock<B> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let ppm = PerBlock::forced_import(db, &format!("{name}_{}", B::SUFFIX), version, indexes)?;
-        let ppm_clone = ppm.height.read_only_boxed_clone();
 
-        let ratio = LazyPerBlock::from_computed::<B::ToRatio>(
-            &format!("{name}_ratio"),
-            version,
-            ppm_clone.clone(),
-            &ppm,
-        );
+        let ratio =
+            LazyPerBlock::from_resolutions::<B::ToRatio>(&format!("{name}_ratio"), version, &ppm);
 
-        let percent = LazyPerBlock::from_computed::<B::ToPercent>(name, version, ppm_clone, &ppm);
+        let percent = LazyPerBlock::from_resolutions::<B::ToPercent>(name, version, &ppm);
 
         Ok(Self(Percent {
             ppm,

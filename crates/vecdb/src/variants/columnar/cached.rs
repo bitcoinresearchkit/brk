@@ -1,22 +1,24 @@
 use std::sync::Arc;
 
-use crate::{AnyVec, CachedVec, ReadOnlyClone, ReadableVec, TypedVec, Version};
+use crate::{
+    AnyVec, CachedVec, CachedVecStrategy, Pinned, ReadOnlyClone, ReadableVec, TypedVec, Version,
+};
 
 use super::{ColumnId, LazyColumnVec, ReadableColumnarVec, read};
 
 /// Shared scalar-column caches. Sums and projections reuse these caches without
 /// caching another row matrix. Admission and eviction belong to each column's
 /// cache budget; this is not a chunk cache.
-pub struct CachedColumnarVec<S, C>
+pub struct CachedColumnarVec<S, C, P: CachedVecStrategy = Pinned>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
 {
     source: S,
-    columns: Arc<[CachedVec<LazyColumnVec<S, C>>]>,
+    columns: Arc<[CachedVec<LazyColumnVec<S, C>, P>]>,
 }
 
-impl<S, C> Clone for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> Clone for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -29,7 +31,7 @@ where
     }
 }
 
-impl<S, C> CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -37,7 +39,7 @@ where
     pub fn new(
         source: S,
         version: Version,
-        mut wrap: impl FnMut(LazyColumnVec<S, C>) -> CachedVec<LazyColumnVec<S, C>>,
+        mut wrap: impl FnMut(LazyColumnVec<S, C>) -> CachedVec<LazyColumnVec<S, C>, P>,
     ) -> Self {
         let columns = C::ALL
             .iter()
@@ -58,13 +60,13 @@ where
         }
     }
 
-    pub fn cached_column(&self, column: C) -> &CachedVec<LazyColumnVec<S, C>> {
+    pub fn cached_column(&self, column: C) -> &CachedVec<LazyColumnVec<S, C>, P> {
         super::schema::validate_column(column);
         &self.columns[column.index()]
     }
 }
 
-impl<S, C> AnyVec for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> AnyVec for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -92,7 +94,7 @@ where
     }
 }
 
-impl<S, C> TypedVec for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> TypedVec for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -101,7 +103,7 @@ where
     type T = C::Row<S::T>;
 }
 
-impl<S, C> ReadableColumnarVec<C> for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> ReadableColumnarVec<C> for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -128,7 +130,7 @@ where
     }
 }
 
-impl<S, C> ReadableVec<S::I, C::Row<S::T>> for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> ReadableVec<S::I, C::Row<S::T>> for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
@@ -162,7 +164,7 @@ where
     }
 }
 
-impl<S, C> ReadOnlyClone for CachedColumnarVec<S, C>
+impl<S, C, P: CachedVecStrategy> ReadOnlyClone for CachedColumnarVec<S, C, P>
 where
     C: ColumnId,
     S: ReadableColumnarVec<C>,

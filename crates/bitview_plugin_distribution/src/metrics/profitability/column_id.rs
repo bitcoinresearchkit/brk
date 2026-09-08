@@ -3,7 +3,7 @@ use std::ops::AddAssign;
 use bitview_cohort::{ByTerm, ProfitabilityRange, ProfitabilityRangeId, TermId, UTXOAggregateId};
 use brk_types::{Height, Version};
 use vecdb::{
-    ColumnId, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
+    CachedBoxedVec, CachedReadableVec, ColumnId, PcoVec, PcoVecValue, ReadOnlyColumnarVec,
     ReadableColumnarVec, VecValue,
 };
 
@@ -46,21 +46,21 @@ impl TermProfitabilityRangeId {
         version: Version,
         aggregate: UTXOAggregateId,
         ranges: &[ProfitabilityRangeId],
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         T: PcoVecValue + AddAssign,
     {
         if let (Some(term), [range]) = (aggregate.term(), ranges) {
-            return source
-                .column(
+            return CACHE_BUDGET
+                .wrap(source.column(
                     name,
                     version,
                     Self {
                         term,
                         range: *range,
                     },
-                )
-                .read_only_boxed_clone();
+                ))
+                .cached_boxed_clone();
         }
 
         let selected_term = aggregate.term();
@@ -81,7 +81,7 @@ impl TermProfitabilityRangeId {
                         }),
                 ),
             )
-            .read_only_boxed_clone()
+            .cached_boxed_clone()
     }
 }
 

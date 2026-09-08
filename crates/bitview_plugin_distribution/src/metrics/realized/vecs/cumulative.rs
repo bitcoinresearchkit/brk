@@ -35,10 +35,10 @@ impl CumulativeRealizedByCohort {
                 .matrices
                 .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported cumulative realized cohort");
-            LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+            LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                 &name,
                 version,
-                source,
+                &source,
                 mappings,
                 cached_starts,
             )

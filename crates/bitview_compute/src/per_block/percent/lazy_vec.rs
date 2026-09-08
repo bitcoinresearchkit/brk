@@ -16,7 +16,7 @@ impl<B: FixedRatio, S: VecValue> LazyPercentVec<B, S> {
     pub fn from_indexed_source(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
+        source: &impl ReadableCloneableVec<Height, S>,
         compute: fn(Height, S) -> B,
     ) -> Self {
         let ppm = LazyVec::init(

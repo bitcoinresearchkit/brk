@@ -27,7 +27,13 @@ impl Query {
     pub fn confirmed_payment_histogram(&self, height: usize) -> Result<HistogramEmaCompact> {
         let _guard = self.read_publication()?;
         let safe = self.check_histogram_height(height)?;
-        Ok(self.ema_oracle_at(height, &safe)?.ema().to_compact())
+        let seed = self.seed_bin_at(height)?;
+        let _pin = self.pin_safe_lengths()?;
+        drop(_guard);
+        Ok(self
+            .warm_oracle(seed, height + 1, &safe)?
+            .ema()
+            .to_compact())
     }
 
     /// Smoothed payment output histogram for a calendar `day`: the bin-by-bin average of
@@ -39,21 +45,26 @@ impl Query {
         let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
+        let segments = Config::segments_for_range(range)
+            .map(|segment| self.seed_bin_at(segment.start).map(|seed| (segment, seed)))
+            .collect::<Result<Vec<_>>>()?;
+        let _pin = self.pin_safe_lengths()?;
+        drop(_guard);
         Ok(self
-            .average_payment_histogram_range(range, &safe)?
+            .average_payment_histogram_range(segments, &safe)?
             .to_compact())
     }
 
     fn average_payment_histogram_range(
         &self,
-        range: Range<usize>,
+        segments: Vec<(Range<usize>, f64)>,
         safe: &Lengths,
     ) -> Result<HistogramEma> {
-        let count = range.len();
+        let count: usize = segments.iter().map(|(range, _)| range.len()).sum();
         let mut acc = HistogramEma::zeros();
 
-        for segment in Config::segments_for_range(range) {
-            let mut oracle = self.ema_oracle_at(segment.start, safe)?;
+        for (segment, seed) in segments {
+            let mut oracle = self.warm_oracle(seed, segment.start + 1, safe)?;
             acc.add_from(oracle.ema());
 
             let feed_start = segment.start + 1;
@@ -76,7 +87,7 @@ impl Query {
     /// mempool output binned by value, with none of the round-dollar payment
     /// filters applied. Zeros when no mempool is configured.
     pub fn live_output_histogram(&self) -> Result<HistogramRaw> {
-        let _guard = self.read_publication()?;
+        let _pin = self.pin_safe_lengths()?;
         Ok(match self.mempool() {
             Some(mempool) => mempool.live_raw_histogram(&self.tip_blockhash())?,
             None => HistogramRaw::zeros(),
@@ -88,6 +99,8 @@ impl Query {
     pub fn confirmed_output_histogram(&self, height: usize) -> Result<HistogramRaw> {
         let _guard = self.read_publication()?;
         let safe = self.check_histogram_height(height)?;
+        let _pin = self.pin_safe_lengths()?;
+        drop(_guard);
         self.output_histogram_for_blocks(height..height + 1, &safe)
     }
 
@@ -98,6 +111,8 @@ impl Query {
         let _guard = self.read_publication()?;
         let safe = self.safe_lengths();
         let range = self.day_block_range(day, &safe)?;
+        let _pin = self.pin_safe_lengths()?;
+        drop(_guard);
         self.output_histogram_for_blocks(range, &safe)
     }
 
@@ -117,23 +132,18 @@ impl Query {
             .checked_sub(1)
             .ok_or_else(|| Error::NotFound("oracle prices not yet computed".to_owned()))?;
         let seed_bin = self.seed_bin_at(last)?;
-        let mut oracle = self.0.live_oracle.get_or_try_init(
-            self.tip_blockhash(),
-            self.indexer().publication().revision(),
-            || self.warm_oracle(seed_bin, height, &safe),
-        )?;
+        let tip = self.tip_blockhash();
+        let revision = self.indexer().publication().revision();
+        let _pin = self.pin_safe_lengths()?;
+        drop(_guard);
+        let mut oracle = self
+            .0
+            .live_oracle
+            .get_or_try_init(tip, revision, || self.warm_oracle(seed_bin, height, &safe))?;
         if let Some(histogram) = live {
             oracle.process_histogram(&histogram);
         }
         Ok(oracle)
-    }
-
-    /// Oracle warmed to just after `height`, ready for its per-block EMA. Seeds
-    /// from the stored spot price at `height`, though the EMA is seed-independent
-    /// so the seed only sets the price read-out, not the window contents.
-    fn ema_oracle_at(&self, height: usize, safe: &Lengths) -> Result<Oracle> {
-        let seed_bin = self.seed_bin_at(height)?;
-        self.warm_oracle(seed_bin, height + 1, safe)
     }
 
     /// An oracle seeded at `seed_bin` and warmed by replaying the `window_size`

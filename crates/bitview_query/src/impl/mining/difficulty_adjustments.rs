@@ -24,6 +24,7 @@ impl Query {
         };
 
         let mut entries = iter_difficulty_epochs(self.plugins(), start, end)?;
+        drop(_guard);
         entries.reverse();
         Ok(entries)
     }

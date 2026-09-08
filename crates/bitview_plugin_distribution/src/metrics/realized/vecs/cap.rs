@@ -27,10 +27,10 @@ impl RealizedCapByCohort {
         let matrices = UTXOColumnarMetric::forced_import(db, "realized_cap_cents", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_cap");
-            LazyFiatPerBlockWithDeltas::from_boxed_cents_source(
+            LazyFiatPerBlockWithDeltas::from_cents_source(
                 &name,
                 version,
-                matrices
+                &matrices
                     .additive_source(&filter, &format!("{name}_cents"), version)
                     .expect("realized-cap cohort source"),
                 Version::TWO,

@@ -456,13 +456,8 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     enum MutableBlockRead {
         List,
         Single,
-        Timestamp,
     }
-    for mode in [
-        MutableBlockRead::List,
-        MutableBlockRead::Single,
-        MutableBlockRead::Timestamp,
-    ] {
+    for mode in [MutableBlockRead::List, MutableBlockRead::Single] {
         assert_eq!(state.sync_query.available_permits(), 1);
         let gate = state.sync(|q| q.indexer().publication().clone());
         let closing = gate.clone();
@@ -477,11 +472,6 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
                     }
                     MutableBlockRead::Single => {
                         owned.respond_block_v1(Default::default(), hash).await
-                    }
-                    MutableBlockRead::Timestamp => {
-                        owned
-                            .respond_block_timestamp(Default::default(), u32::MAX.into())
-                            .await
                     }
                 }
             })

@@ -2,12 +2,12 @@ use bitview_compute::DailyMappings;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{CostBasisPercentilePrices, Version};
-use vecdb::{AnyStoredVec, Database, Rw};
+use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
 
 use crate::{DailyPercentilesVecs, WeightedPair};
 
 #[derive(Traversable)]
-pub struct CostBasisVecs<M: vecdb::StorageMode = Rw> {
+pub struct CostBasisVecs<M: StorageMode = Rw> {
     pub per_coin: WeightedPair<DailyPercentilesVecs<M>>,
     pub per_dollar: WeightedPair<DailyPercentilesVecs<M>>,
 }

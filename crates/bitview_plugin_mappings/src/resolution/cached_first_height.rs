@@ -74,6 +74,10 @@ impl<I: VecIndex> TypedVec for CachedFirstHeightVec<I> {
 }
 
 impl<I: VecIndex> ReadableVec<I, Height> for CachedFirstHeightVec<I> {
+    fn snapshot(&self) -> Arc<Vec<Height>> {
+        self.0.snapshot()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Height>) {
         self.0.read_into_at(from, to, buf);
     }

@@ -10,12 +10,11 @@ use bitview_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, SatsFract, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    ColumnId, Database, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableVec, TypedVec,
-    UnaryTransform,
+    ColumnId, Database, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec, UnaryTransform,
 };
 
 use super::{LazyColumnPerBlock, LazyPerBlock, PerBlock};
-use crate::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, Identity};
+use crate::{CentsUnsignedToDollars, ComputedVecValue, DollarsToSatsFract, Identity, IndexSources};
 
 /// Generic price metric with cents, USD, and sats representations.
 #[derive(Clone, Traversable)]
@@ -34,15 +33,10 @@ impl Price<PerBlock<Cents>> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
-        let usd = LazyPerBlock::from_computed::<CentsUnsignedToDollars>(
-            name,
-            version,
-            cents.height.read_only_boxed_clone(),
-            &cents,
-        );
+        let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(name, version, &cents);
         let sats = LazyPerBlock::from_lazy::<DollarsToSatsFract, Cents>(
             &format!("{name}_sats"),
             version,
@@ -61,14 +55,13 @@ where
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Cents>, C>,
         column: C,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
         let cents =
             LazyColumnPerBlock::new(&format!("{name}_cents"), version, source, column, indexes);
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
             name,
             version,
-            cents.height.read_only_boxed_clone(),
             &cents.resolutions,
         );
         let sats = LazyPerBlock::from_lazy::<DollarsToSatsFract, Cents>(
@@ -106,11 +99,11 @@ impl Price<LazyPerBlock<Cents>> {
     pub fn from_height_source<V>(
         name: &str,
         version: Version,
-        source: V,
-        indexes: &crate::IndexSources,
+        source: &V,
+        indexes: &IndexSources,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = Cents> + ReadableVec<Height, Cents> + Clone + 'static,
+        V: ReadableCloneableVec<Height, Cents> + ?Sized,
     {
         let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
             &format!("{name}_cents"),

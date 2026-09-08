@@ -1,8 +1,9 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_traversable::Traversable;
 use brk_types::{Bytes, Height, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyVec, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, Rw, StorageMode};
 
 use super::{BlockMetrics, BreakdownAxis, DataBytesSeries, FeesSeries};
 use bitview_compute::{
@@ -50,11 +51,11 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
         source_prefix: &str,
         series_prefix: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        total_data: &CachedBoxedVec<Height, Bytes>,
-        block_size: &CachedBoxedVec<Height, StoredU64>,
-        chain_fees: &CachedBoxedVec<Height, Sats>,
+        total_data: &impl ReadableCloneableVec<Height, Bytes>,
+        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+        chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let output_count = ColumnarPerBlockCumulativeRolling::forced_import(
             db,
@@ -89,12 +90,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                         cached_starts,
                     );
                     DataBytesSeries::new(
-                        &prefix,
-                        version,
-                        data_bytes,
-                        total_data.clone(),
-                        block_size.clone(),
-                        mappings,
+                        &prefix, version, data_bytes, total_data, block_size, mappings,
                     )
                 })
             },
@@ -148,14 +144,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                         mappings,
                         cached_starts,
                     );
-                    FeesSeries::new(
-                        &prefix,
-                        version,
-                        fees,
-                        chain_fees.clone(),
-                        cached_starts,
-                        mappings,
-                    )
+                    FeesSeries::new(&prefix, version, fees, chain_fees, cached_starts, mappings)
                 })
             },
         )?;

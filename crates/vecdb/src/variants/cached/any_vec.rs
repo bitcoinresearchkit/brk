@@ -1,8 +1,8 @@
 use crate::{AnyVec, TypedVec, Version, short_type_name};
 
-use super::CachedVec;
+use super::{CachedVec, CachedVecStrategy};
 
-impl<V: TypedVec> AnyVec for CachedVec<V> {
+impl<V: TypedVec, S: CachedVecStrategy> AnyVec for CachedVec<V, S> {
     #[inline(always)]
     fn version(&self) -> Version {
         self.inner.version()

@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use schemars::JsonSchema;
 use vecdb::{Database, Rw, StorageMode, Version};
 
-use crate::{ComputedVecValue, NumericValue, PerBlockDistribution};
+use crate::{ComputedVecValue, IndexSources, NumericValue, PerBlockDistribution};
 
 #[derive(Traversable)]
 pub struct BlockRollingDistribution<T, M: StorageMode = Rw>
@@ -23,7 +23,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self {
             _6b: PerBlockDistribution::forced_import(db, &format!("{name}_6b"), version, indexes)?,

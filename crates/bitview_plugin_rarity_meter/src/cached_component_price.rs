@@ -1,9 +1,7 @@
 use brk_types::{Cents, CentsCompact, Height, PartsPerMillion32, Version};
-use vecdb::{
-    AnyVec, BinaryTransform, CachedReadableVec, CachedVec, LazyVec, ReadableCloneableVec, VecIndex,
-};
+use vecdb::{AnyVec, BinaryTransform, CachedVec, LazyVec, ReadableCloneableVec, VecIndex};
 
-use bitview_compute::{LazyIndexedVec, LazyPerBlock, Price, PriceTimesRatio};
+use bitview_compute::{IndexSources, LazyIndexedVec, LazyPerBlock, Price, PriceTimesRatio};
 
 #[derive(Clone)]
 pub struct CachedComponentPrice {
@@ -14,7 +12,7 @@ impl CachedComponentPrice {
     pub fn new(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, Cents> + 'static),
+        source: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let compact = LazyVec::init(
             &format!("{name}_cached_price"),
@@ -32,20 +30,20 @@ impl CachedComponentPrice {
         &self,
         name: &str,
         version: Version,
-        ratio: &(impl ReadableCloneableVec<Height, PartsPerMillion32> + 'static),
-        mappings: &bitview_plugin_mappings::Vecs,
+        ratio: &impl ReadableCloneableVec<Height, PartsPerMillion32>,
+        mappings: &IndexSources,
     ) -> Price<LazyPerBlock<Cents>> {
         let source = LazyIndexedVec::new(
             &format!("{name}_cents_source"),
             version,
-            ratio.read_only_boxed_clone(),
-            self.cache.cached_boxed_clone(),
+            ratio,
+            &self.cache,
             |_, ratio, price| {
                 PriceTimesRatio::<PartsPerMillion32>::apply(Cents::from(price), ratio)
             },
         );
 
-        Price::from_height_source(name, version, source, mappings)
+        Price::from_height_source(name, version, &source, mappings)
     }
 
     pub fn clear_if_recomputed_from(&self, height: Height) {

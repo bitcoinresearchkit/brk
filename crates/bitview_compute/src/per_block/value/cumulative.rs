@@ -8,7 +8,7 @@ use vecdb::{
     VecValue, WritableVec,
 };
 
-use crate::{LazyValueBlock, SatsToCents, ValuePerBlock};
+use crate::{IndexSources, LazyValueBlock, SatsToCents, ValuePerBlock};
 
 #[derive(Traversable)]
 pub struct ValuePerBlockCumulative<M: StorageMode = Rw> {
@@ -27,7 +27,7 @@ impl ValuePerBlockCumulative {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let v = version + VERSION;
         let cumulative =
@@ -186,7 +186,7 @@ impl ValuePerBlockCumulative {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn compute_sats_height_from_indexes<A, B>(
+pub(crate) fn compute_sats_height_from_indexes<A, B>(
     target: &mut EagerVec<PcoVec<Height, Sats>>,
     max_from: Height,
     first_indexes: &impl ReadableVec<Height, A>,

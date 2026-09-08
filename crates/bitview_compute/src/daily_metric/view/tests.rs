@@ -4,30 +4,30 @@ use vecdb::{
     WritableVec,
 };
 
-use super::{DailyView, RepeatDay, last::last_source_index, repeat::repeated_source_index};
+use super::{DailyView, DayStrategy, LastDay, RepeatDay};
 
 #[test]
 fn repeat_uses_the_same_daily_value_throughout_the_day() {
     let mapping = [Day1::from(0), Day1::from(0), Day1::from(1)];
 
-    assert_eq!(repeated_source_index(&mapping, 0, 2), Some(0));
-    assert_eq!(repeated_source_index(&mapping, 1, 2), Some(0));
-    assert_eq!(repeated_source_index(&mapping, 2, 2), Some(1));
-    assert_eq!(repeated_source_index(&mapping, 2, 1), None);
+    assert_eq!(RepeatDay::source_index(&mapping, 0, 2), Some(0));
+    assert_eq!(RepeatDay::source_index(&mapping, 1, 2), Some(0));
+    assert_eq!(RepeatDay::source_index(&mapping, 2, 2), Some(1));
+    assert_eq!(RepeatDay::source_index(&mapping, 2, 1), None);
 }
 
 #[test]
 fn coarser_period_uses_its_last_available_day() {
     let mapping = [Day1::from(0), Day1::from(3), Day1::from(6)];
 
-    assert_eq!(last_source_index(&mapping, 0, 8), Some(2));
-    assert_eq!(last_source_index(&mapping, 1, 8), Some(5));
-    assert_eq!(last_source_index(&mapping, 2, 8), Some(7));
-    assert_eq!(last_source_index(&mapping, 1, 5), Some(4));
-    assert_eq!(last_source_index(&mapping, 2, 5), None);
-    assert_eq!(last_source_index(&mapping, 0, 0), None);
+    assert_eq!(LastDay::source_index(&mapping, 0, 8), Some(2));
+    assert_eq!(LastDay::source_index(&mapping, 1, 8), Some(5));
+    assert_eq!(LastDay::source_index(&mapping, 2, 8), Some(7));
+    assert_eq!(LastDay::source_index(&mapping, 1, 5), Some(4));
+    assert_eq!(LastDay::source_index(&mapping, 2, 5), None);
+    assert_eq!(LastDay::source_index(&mapping, 0, 0), None);
     assert_eq!(
-        last_source_index(&[Day1::from(0), Day1::from(0)], 0, 8),
+        LastDay::source_index(&[Day1::from(0), Day1::from(0)], 0, 8),
         None
     );
 }
@@ -54,7 +54,7 @@ fn repeated_view_maps_ranges_and_preserves_missing_days() {
         "test",
         Version::ONE,
         source.read_only_boxed_clone(),
-        mapping.read_only_boxed_clone(),
+        &mapping,
     );
 
     assert_eq!(
@@ -90,7 +90,7 @@ fn repeated_view_supports_stored_booleans() {
         "test",
         Version::ONE,
         source.read_only_boxed_clone(),
-        mapping.read_only_boxed_clone(),
+        &mapping,
     );
 
     assert_eq!(

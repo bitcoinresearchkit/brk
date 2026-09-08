@@ -1,13 +1,13 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredU16, StoredU64, Version};
 use vecdb::{
-    CachedReadableVec, CachedVec, ColumnId, LazyVec, PcoVec, ReadOnlyColumnarVec,
-    ReadableCloneableVec, ReadableColumnarVec,
+    CachedBoxedVec, CachedReadableVec, ColumnId, LazyVec, PcoVec, PinnedCachedVec,
+    ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
 };
 
 use crate::{
-    CachedBlockCountReader, CachedWindowStartVec, Identity, LazyPerBlock,
-    LazyRollingAvgsFromHeight, LazyRollingSumsFromHeight, StoredU16ToStoredU64, Windows,
+    CachedBlockCountReader, Identity, IndexSources, LazyPerBlock, LazyRollingAvgsFromHeight,
+    LazyRollingSumsFromHeight, StoredU16ToStoredU64, Windows,
 };
 
 #[derive(Clone, Traversable)]
@@ -22,6 +22,8 @@ pub struct LazyColumnCountPerBlockCumulativeRolling {
     pub average: LazyRollingAvgsFromHeight<StoredU64>,
     #[traversable(skip)]
     cached_cumulative: CachedBlockCountReader,
+    #[traversable(skip)]
+    cached_block: CachedBoxedVec<Height, StoredU16>,
 }
 
 impl LazyColumnCountPerBlockCumulativeRolling {
@@ -30,13 +32,13 @@ impl LazyColumnCountPerBlockCumulativeRolling {
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU16>, C>,
         column: C,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self
     where
         C: ColumnId,
     {
-        let column = CachedVec::wrap(source.column(name, version, column));
+        let column = PinnedCachedVec::wrap(source.column(name, version, column));
         let cached_cumulative = CachedBlockCountReader::new(column.cached_boxed_clone());
         let block = LazyVec::transformed::<StoredU16ToStoredU64>(
             name,
@@ -46,21 +48,21 @@ impl LazyColumnCountPerBlockCumulativeRolling {
         let cumulative = LazyPerBlock::from_height_source::<Identity<StoredU64>>(
             &format!("{name}_cumulative"),
             version,
-            cached_cumulative.clone(),
+            &cached_cumulative,
             indexes,
         );
         let sum = LazyRollingSumsFromHeight::from_compact_cumulative(
             &format!("{name}_sum"),
             version,
             &cached_cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version,
             &cached_cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
 
@@ -70,6 +72,7 @@ impl LazyColumnCountPerBlockCumulativeRolling {
             sum,
             average,
             cached_cumulative,
+            cached_block: column.cached_boxed_clone(),
         }
     }
 
@@ -79,6 +82,6 @@ impl LazyColumnCountPerBlockCumulativeRolling {
     }
 
     pub fn invalidate(&self) {
-        self.cached_cumulative.invalidate();
+        self.cached_block.invalidate();
     }
 }

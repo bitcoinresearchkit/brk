@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{ReadableCloneableVec, UnaryTransform};
+use vecdb::UnaryTransform;
 
 use crate::{
     ComputedVecValue, DistributionStats, LazyPerBlock, NumericValue, RollingDistribution, Windows,
@@ -33,10 +33,9 @@ where
             ($field:ident, $suffix:expr) => {{
                 let src = &s.$field;
                 src.0.map_with_suffix(|window, source| {
-                    LazyPerBlock::from_computed::<F>(
+                    LazyPerBlock::from_resolutions::<F>(
                         &format!("{name}_{}_{window}", $suffix),
                         version,
-                        source.height.read_only_boxed_clone(),
                         source,
                     )
                 })

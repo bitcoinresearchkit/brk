@@ -15,6 +15,7 @@ impl Query {
         let bw = BlockWindow::new(self, time_period)?;
         let rewards: Vec<Sats> = bw.read(&self.plugins().mining.rewards.coinbase.block.sats)?;
         let prices: Vec<Cents> = bw.read(&self.plugins().price.spot.cents.height)?;
+        drop(_guard);
 
         Ok(bw
             .buckets

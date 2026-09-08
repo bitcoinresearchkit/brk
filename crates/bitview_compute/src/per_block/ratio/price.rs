@@ -2,15 +2,9 @@ use brk_error::Result;
 
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, PriceRatio, SatsFract, StoredF32, Version};
-use vecdb::{
-    CachedBoxedVec, Database, ReadableBoxedVec, ReadableCloneableVec, Rw, StorageMode, unlikely,
-};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, unlikely};
 
-use crate::{
-    CACHE_BUDGET, IndexSources, LazyIndexedVec, LazyPerBlock, LazyRatioPerBlock, PerBlock, Price,
-};
-
-pub(super) const PRICE_RATIO_VERSION: Version = Version::new(5);
+use crate::{IndexSources, LazyPerBlock, LazyRatioPerBlock, PerBlock, Price};
 
 #[derive(Traversable)]
 pub struct PriceWithRatioPerBlock<M: StorageMode = Rw> {
@@ -34,13 +28,13 @@ impl PriceWithRatioPerBlock {
         name: &str,
         version: Version,
         indexes: &IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Result<Self> {
         let price = Price::forced_import(db, name, version, indexes)?;
-        let ratio = cached_price_ratio(
+        let ratio = LazyRatioPerBlock::from_price_source(
             name,
             version,
-            price.cents.height.read_only_boxed_clone(),
+            price.cents.resolutions.height_source(),
             spot_price,
             indexes,
         );
@@ -52,24 +46,6 @@ impl PriceWithRatioPerBlock {
             ratio: ratio.ratio,
         })
     }
-}
-
-pub(super) fn cached_price_ratio(
-    name: &str,
-    version: Version,
-    price: ReadableBoxedVec<Height, Cents>,
-    spot_price: &CachedBoxedVec<Height, Cents>,
-    indexes: &IndexSources,
-) -> LazyRatioPerBlock<PriceRatio> {
-    let version = version + PRICE_RATIO_VERSION;
-    let source = CACHE_BUDGET.wrap(LazyIndexedVec::new(
-        &format!("{name}_ratio_ppm_source"),
-        version,
-        price,
-        spot_price.clone(),
-        |_, price, spot| price_ratio(spot, price),
-    ));
-    LazyRatioPerBlock::from_height_source(&format!("{name}_ratio"), version, source, indexes)
 }
 
 #[inline]

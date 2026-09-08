@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{
@@ -60,7 +61,7 @@ impl SupplyVecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
@@ -139,11 +140,11 @@ impl SupplyVecs {
                             matured_version,
                             [column],
                         );
-                    LazyValuePerBlockCumulativeRolling::from_boxed_cumulative_sources(
+                    LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                         &name,
                         matured_version,
-                        sats,
-                        cents,
+                        &sats,
+                        &cents,
                         mappings,
                         cached_starts,
                     )

@@ -1,3 +1,6 @@
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use brk_error::Result;
 
 use brk_types::{Cents, Version};
@@ -11,12 +14,12 @@ use super::{STORAGE, Vecs};
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        prices: &bitview_plugin_price::Vecs,
+        prices: &PriceVecs,
         subsidy_cents: &PerBlock<Cents>,
         all_chain: &AllChainSources,
-        distribution: &bitview_plugin_distribution::Vecs,
+        distribution: &DistributionVecs,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 250_000)?;
         let version = STORAGE.schema_version();
@@ -48,7 +51,7 @@ impl Vecs {
             mappings,
             &spot_price,
             all_chain,
-            &cap.cointime.cents.height,
+            cap.cointime.cents.resolutions.height_source(),
         )?;
         let adjusted = super::adjusted::forced_import(&db, version, mappings)?;
         let reserve_risk = super::reserve_risk::forced_import(&db, v1, mappings, &spot_price)?;

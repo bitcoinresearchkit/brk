@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::OutputTypeId;
@@ -16,7 +17,7 @@ fn identity(_: Height, value: StoredU64) -> StoredU64 {
 pub fn forced_import(
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
     let columnar_version = version + Version::ONE;

@@ -22,16 +22,16 @@ impl LazyValueBlock {
         Self::from_cumulative_sources(
             name,
             version,
-            &cumulative.sats.height,
-            &cumulative.cents.height,
+            cumulative.sats.resolutions.height_source(),
+            cumulative.cents.resolutions.height_source(),
         )
     }
 
     pub fn from_cumulative_sources(
         name: &str,
         version: Version,
-        cumulative_sats: &(impl ReadableCloneableVec<Height, Sats> + 'static),
-        cumulative_cents: &(impl ReadableCloneableVec<Height, Cents> + 'static),
+        cumulative_sats: &impl ReadableCloneableVec<Height, Sats>,
+        cumulative_cents: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let sats = LazyPreviousDeltaVec::new(
             &format!("{name}_sats"),

@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use std::ops::AddAssign;
@@ -5,8 +6,8 @@ use std::ops::AddAssign;
 use bitview_cohort::{TERM_NAMES, TermId, UTXOAggregateId};
 use brk_types::{BoundedRatio, Cents, Height, Version};
 use vecdb::{
-    CachedBoxedVec, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
-    ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec,
+    CachedBoxedVec, CachedReadableVec, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
+    ReadOnlyColumnarVec, ReadableColumnarVec,
 };
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
@@ -18,24 +19,24 @@ use bitview_compute::{
 pub fn forced_import(
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
     all_supply_in_loss_share: &PerBlock<BoundedRatio>,
 ) -> Result<Vecs> {
     let version = version + Version::ONE;
     let sources = Sources::forced_import(db, version)?;
-    let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
+    let all_loss_share = all_supply_in_loss_share
+        .height
+        .read_only_cached_boxed_clone();
     let term_loss_share = |term: TermId| {
         let name = term.select(&TERM_NAMES).id;
-        sources
-            .supply_in_loss_share
-            .read_only_clone()
-            .column(
+        CACHE_BUDGET
+            .wrap(sources.supply_in_loss_share.read_only_clone().column(
                 &format!("{name}_awake_supply_in_loss_share"),
                 version + Version::ONE,
                 term,
-            )
-            .read_only_boxed_clone()
+            ))
+            .cached_boxed_clone()
     };
     let all = CohortVecs::new(
         UTXOAggregateId::All,
@@ -106,15 +107,17 @@ impl Sources {
         name: &str,
         version: Version,
         aggregate: UTXOAggregateId,
-    ) -> ReadableBoxedVec<Height, T>
+    ) -> CachedBoxedVec<Height, T>
     where
         T: PcoVecValue + AddAssign,
     {
         match aggregate.term() {
-            Some(term) => source.column(name, version, term).read_only_boxed_clone(),
+            Some(term) => CACHE_BUDGET
+                .wrap(source.column(name, version, term))
+                .cached_boxed_clone(),
             None => CACHE_BUDGET
                 .wrap(source.sum_columns(name, version, TermId::ALL.iter().copied()))
-                .read_only_boxed_clone(),
+                .cached_boxed_clone(),
         }
     }
 }
@@ -124,8 +127,8 @@ impl CohortVecs {
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &Sources,
-        supply_in_loss_share: ReadableBoxedVec<Height, BoundedRatio>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        supply_in_loss_share: CachedBoxedVec<Height, BoundedRatio>,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
@@ -147,46 +150,46 @@ impl CohortVecs {
             version,
             aggregate,
         );
-        let awake_price = sources
-            .awake_price
-            .read_only_clone()
-            .column(&metric_name("awake_price_cents"), version, aggregate)
-            .read_only_boxed_clone();
+        let awake_price = CACHE_BUDGET.wrap(sources.awake_price.read_only_clone().column(
+            &metric_name("awake_price_cents"),
+            version,
+            aggregate,
+        ));
 
         Self {
             awake: AwakeVecs {
-                supply: LazySpotValuePerBlock::from_boxed_sats_source(
+                supply: LazySpotValuePerBlock::from_sats_source(
                     &metric_name("awake_supply"),
                     version,
-                    awake_supply,
+                    &awake_supply,
                     mappings,
                     spot_price,
                 ),
-                supply_in_loss_share: LazyPerBlock::from_boxed_height_source::<BoundedToF64>(
+                supply_in_loss_share: LazyPerBlock::from_height_source::<BoundedToF64>(
                     &metric_name("awake_supply_in_loss_share"),
                     version,
-                    supply_in_loss_share,
+                    &supply_in_loss_share,
                     mappings,
                 ),
-                cap: LazyFiatPerBlock::from_boxed_cents_source(
+                cap: LazyFiatPerBlock::from_cents_source(
                     &metric_name("awake_cap"),
                     version,
-                    awake_cap,
+                    &awake_cap,
                     mappings,
                 ),
-                price: LazyPriceWithRatioPerBlock::from_boxed_height_source(
+                price: LazyPriceWithRatioPerBlock::from_height_source(
                     &metric_name("awake_price"),
                     version,
-                    awake_price,
+                    &awake_price,
                     mappings,
                     spot_price,
                 ),
             },
             dormant: DormantVecs {
-                supply: LazySpotValuePerBlock::from_boxed_sats_source(
+                supply: LazySpotValuePerBlock::from_sats_source(
                     &metric_name("dormant_supply"),
                     version,
-                    dormant_supply,
+                    &dormant_supply,
                     mappings,
                     spot_price,
                 ),

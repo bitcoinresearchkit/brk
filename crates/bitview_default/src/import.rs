@@ -110,19 +110,23 @@ impl DefaultPlugins {
                 })?;
 
                 let mining = mining_handle.join().unwrap()?;
-                let block_size = blocks.size.size.cached_cumulative();
-                let chain_fees = mining.rewards.fees.cached_cumulative_sats();
-                let op_return_handle = big_thread().spawn_scoped(scope, || -> Result<_> {
-                    timed(Phase::Import, OP_RETURN_ID, || {
-                        Ok(Box::new(OpReturn::import(
-                            context,
-                            &mappings,
-                            &cached_starts,
-                            block_size,
-                            chain_fees,
-                        )?))
+                let block_size = blocks.size.size.cumulative_source();
+                let chain_fees = mining.rewards.fees.cumulative_sats_source().clone();
+                let op_return_handle = {
+                    let mappings = &mappings;
+                    let cached_starts = &cached_starts;
+                    big_thread().spawn_scoped(scope, move || -> Result<_> {
+                        timed(Phase::Import, OP_RETURN_ID, || {
+                            Ok(Box::new(OpReturn::import(
+                                context,
+                                mappings,
+                                cached_starts,
+                                block_size,
+                                &chain_fees,
+                            )?))
+                        })
                     })
-                })?;
+                }?;
                 let inputs = inputs_handle.join().unwrap()?;
                 let outputs = outputs_handle.join().unwrap()?;
                 let transactions = transactions_handle.join().unwrap()?;

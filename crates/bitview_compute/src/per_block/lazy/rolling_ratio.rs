@@ -1,22 +1,19 @@
+use brk_types::Height;
 use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
-use brk_types::Height;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, BinaryTransform, CachedBoxedVec, CheckedSub, Formattable,
-    PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue,
-    Version, short_type_name,
+    AnyExportableVec, AnyVec, BinaryTransform, CheckedSub, Formattable, PrintableIndex,
+    READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue, Version,
+    short_type_name,
 };
 
 use super::{SparseRead, rolling_inputs::for_each_rolling_input};
 
-/// Rolling transform derived from one cumulative source and one cached
-/// cumulative operand.
-///
-/// Only `source` may read from disk. The cached operand and window starts are
-/// pinned in-memory snapshots shared with their authoritative sources.
+/// Rolling transform from a cumulative source, an aligned operand, and window starts.
+/// Snapshots belong to the input readers; this view retains no full-height result.
 pub struct LazyRollingRatioVec<S, C, T, F>
 where
     S: VecValue,
@@ -26,9 +23,9 @@ where
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<Height, S>,
-    cached: CachedBoxedVec<Height, C>,
-    cached_transform: fn(Height, C) -> C,
-    window_starts: CachedBoxedVec<Height, Height>,
+    operand: ReadableBoxedVec<Height, C>,
+    operand_transform: fn(Height, C) -> C,
+    window_starts: ReadableBoxedVec<Height, Height>,
     _marker: PhantomData<(T, F)>,
 }
 
@@ -40,7 +37,7 @@ where
     F: BinaryTransform<S, C, T>,
 {
     #[inline(always)]
-    fn identity_cached(_: Height, value: C) -> C {
+    fn identity_operand(_: Height, value: C) -> C {
         value
     }
 
@@ -48,34 +45,34 @@ where
         name: &str,
         version: Version,
         source: ReadableBoxedVec<Height, S>,
-        cached: CachedBoxedVec<Height, C>,
-        window_starts: CachedBoxedVec<Height, Height>,
+        operand: impl ReadableVec<Height, C> + Clone + 'static,
+        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
     ) -> Self {
-        Self::with_cached_transform(
+        Self::with_operand_transform(
             name,
             version,
             source,
-            cached,
+            operand,
             window_starts,
-            Self::identity_cached,
+            Self::identity_operand,
         )
     }
 
-    pub fn with_cached_transform(
+    pub fn with_operand_transform(
         name: &str,
         version: Version,
         source: ReadableBoxedVec<Height, S>,
-        cached: CachedBoxedVec<Height, C>,
-        window_starts: CachedBoxedVec<Height, Height>,
-        cached_transform: fn(Height, C) -> C,
+        operand: impl ReadableVec<Height, C> + Clone + 'static,
+        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
+        operand_transform: fn(Height, C) -> C,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
             source,
-            cached,
-            cached_transform,
-            window_starts,
+            operand: ReadableBoxedVec::new(operand),
+            operand_transform,
+            window_starts: ReadableBoxedVec::new(window_starts),
             _marker: PhantomData,
         }
     }
@@ -92,17 +89,19 @@ where
         previous: Option<usize>,
         source_current: S,
         source_previous: S,
-        cached_current: C,
-        cached_previous: C,
+        operand_current: C,
+        operand_previous: C,
     ) -> T {
         F::apply(
             source_current
                 .checked_sub(source_previous)
                 .unwrap_or_default(),
-            (self.cached_transform)(Height::from(index), cached_current)
+            (self.operand_transform)(Height::from(index), operand_current)
                 .checked_sub(
                     previous
-                        .map(|index| (self.cached_transform)(Height::from(index), cached_previous))
+                        .map(|index| {
+                            (self.operand_transform)(Height::from(index), operand_previous)
+                        })
                         .unwrap_or_default(),
                 )
                 .unwrap_or_default(),
@@ -117,9 +116,9 @@ where
         mut fold: impl FnMut(B, T) -> Result<B, E>,
     ) -> Result<B, E> {
         let mut accumulator = Some(Ok(init));
-        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
+        self.for_each_input(from, to, |at, current, base, previous, operand, starts| {
             accumulator = Some(accumulator.take().unwrap().and_then(|accumulator| {
-                self.transformed_values(at, current, base, previous, cached, starts)
+                self.transformed_values(at, current, base, previous, operand, starts)
                     .try_fold(accumulator, &mut fold)
             }));
         });
@@ -132,11 +131,11 @@ where
         to: usize,
         mut visit: impl FnMut(usize, &[S], usize, &[S], &[C], &[Height]),
     ) {
-        let cached = self.cached.snapshot();
+        let operand = self.operand.snapshot();
         let starts = self.window_starts.snapshot();
         let to = to
             .min(self.source.len())
-            .min(cached.len())
+            .min(operand.len())
             .min(starts.len());
         if from >= to {
             return;
@@ -152,7 +151,7 @@ where
                     current,
                     base,
                     previous,
-                    &cached,
+                    &operand,
                     &starts[at..at + current.len()],
                 );
             },
@@ -165,7 +164,7 @@ where
         current: &'a [S],
         base: usize,
         previous: &'a [S],
-        cached: &'a [C],
+        operand: &'a [C],
         starts: &'a [Height],
     ) -> impl Iterator<Item = T> + 'a {
         current
@@ -182,8 +181,8 @@ where
                     prior
                         .map(|i| previous[i - base].clone())
                         .unwrap_or_default(),
-                    cached[index].clone(),
-                    prior.map(|i| cached[i].clone()).unwrap_or_default(),
+                    operand[index].clone(),
+                    prior.map(|i| operand[i].clone()).unwrap_or_default(),
                 )
             })
     }
@@ -200,8 +199,8 @@ where
             name: Arc::clone(&self.name),
             base_version: self.base_version,
             source: self.source.clone(),
-            cached: self.cached.clone(),
-            cached_transform: self.cached_transform,
+            operand: self.operand.clone(),
+            operand_transform: self.operand_transform,
             window_starts: self.window_starts.clone(),
             _marker: PhantomData,
         }
@@ -218,7 +217,7 @@ where
     fn version(&self) -> Version {
         self.base_version
             + self.source.version()
-            + self.cached.version()
+            + self.operand.version()
             + self.window_starts.version()
     }
 
@@ -229,7 +228,7 @@ where
     fn len(&self) -> usize {
         self.source
             .len()
-            .min(self.cached.len())
+            .min(self.operand.len())
             .min(self.window_starts.len())
     }
 
@@ -270,8 +269,8 @@ where
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
         buf.reserve(to.min(self.len()).saturating_sub(from));
-        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
-            buf.extend(self.transformed_values(at, current, base, previous, cached, starts));
+        self.for_each_input(from, to, |at, current, base, previous, operand, starts| {
+            buf.extend(self.transformed_values(at, current, base, previous, operand, starts));
         });
     }
 
@@ -282,7 +281,7 @@ where
     fn for_each_chunk_at(&self, from: usize, to: usize, each: &mut dyn FnMut(usize, &[T])) {
         let size = self.cursor_chunk_size().clamp(1, READ_CHUNK_SIZE);
         let mut output = Vec::new();
-        self.for_each_input(from, to, |at, current, base, previous, cached, starts| {
+        self.for_each_input(from, to, |at, current, base, previous, operand, starts| {
             for (chunk, current) in current.chunks(size).enumerate() {
                 let offset = chunk * size;
                 output.clear();
@@ -291,7 +290,7 @@ where
                     current,
                     base,
                     previous,
-                    cached,
+                    operand,
                     &starts[offset..offset + current.len()],
                 ));
                 each(at + offset, &output);
@@ -333,7 +332,7 @@ where
             return None;
         }
 
-        let cached = self.cached.snapshot();
+        let operand = self.operand.snapshot();
         let window_starts = self.window_starts.snapshot();
         let previous = Self::previous_index(window_starts[index]);
         Some(
@@ -344,9 +343,9 @@ where
                 previous
                     .and_then(|index| self.source.collect_one_at(index))
                     .unwrap_or_default(),
-                cached[index].clone(),
+                operand[index].clone(),
                 previous
-                    .map(|index| cached[index].clone())
+                    .map(|index| operand[index].clone())
                     .unwrap_or_default(),
             ),
         )
@@ -369,7 +368,7 @@ where
             return;
         }
 
-        let cached = self.cached.snapshot();
+        let operand = self.operand.snapshot();
         let window_starts = self.window_starts.snapshot();
         let source = SparseRead::new(&*self.source, indices, |index| {
             Self::previous_index(window_starts[index])
@@ -384,9 +383,9 @@ where
                     previous,
                     source.current(output),
                     source.previous(output).unwrap_or_default(),
-                    cached[index].clone(),
+                    operand[index].clone(),
                     previous
-                        .map(|index| cached[index].clone())
+                        .map(|index| operand[index].clone())
                         .unwrap_or_default(),
                 ),
             );
@@ -412,7 +411,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use brk_types::{PartsPerMillion32, Sats};
+    use brk_types::{Height, PartsPerMillion32, Sats};
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
         ReadableVec, WritableVec,
@@ -496,7 +495,7 @@ mod tests {
             Sats,
             PartsPerMillion32,
             RatioSats<PartsPerMillion32>,
-        >::with_cached_transform(
+        >::with_operand_transform(
             "transformed",
             Version::ONE,
             source.read_only_boxed_clone(),

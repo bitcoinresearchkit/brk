@@ -1,5 +1,5 @@
 use bitview_traversable::Traversable;
-use brk_types::{Height, Version};
+use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
@@ -86,19 +86,3 @@ macro_rules! define_derived_resolutions {
 }
 
 crate::with_resolution_fields!(define_derived_resolutions);
-
-impl<T, S1T> DerivedResolutions<T, S1T>
-where
-    T: VecValue + PartialOrd + JsonSchema + 'static,
-    S1T: VecValue + PartialOrd + JsonSchema,
-{
-    pub fn from_height_source<F: UnaryTransform<S1T, T>>(
-        name: &str,
-        version: Version,
-        height_source: ReadableBoxedVec<Height, S1T>,
-        indexes: &crate::IndexSources,
-    ) -> Self {
-        let derived = Resolutions::from_boxed_height_source(name, height_source, version, indexes);
-        Self::from_derived_computed::<F>(name, version, &derived)
-    }
-}

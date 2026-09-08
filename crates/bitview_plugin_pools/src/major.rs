@@ -1,3 +1,6 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_mining::Vecs as MiningVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use brk_error::Result;
 
 use bitview_plugin_indexer::Indexer;
@@ -38,7 +41,7 @@ impl Vecs {
         slug: PoolSlug,
         pool_heights: super::PoolHeights,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
@@ -71,8 +74,8 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        prices: &bitview_plugin_price::Vecs,
-        mining: &bitview_plugin_mining::Vecs,
+        prices: &PriceVecs,
+        mining: &MiningVecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;

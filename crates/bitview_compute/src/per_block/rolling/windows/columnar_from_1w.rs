@@ -6,7 +6,9 @@ use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{Database, Rw, StorageMode};
 
-use crate::{ColumnarPerBlock, LazyColumnPerBlock, NumericValue, WindowFrom1wId, WindowsFrom1w};
+use crate::{
+    ColumnarPerBlock, IndexSources, LazyColumnPerBlock, NumericValue, WindowFrom1wId, WindowsFrom1w,
+};
 
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -24,7 +26,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(ColumnarPerBlock::forced_import(
             db,

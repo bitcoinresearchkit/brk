@@ -8,7 +8,7 @@ use bitview_traversable::{Traversable, TreeNode};
 use brk_types::{Cents, Height, PriceRatio, Version};
 use vecdb::{
     AnySerializableVec, AnyStoredVec, AnyVec, CachedBoxedVec, CachedVec, ColumnId, Database,
-    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, StoredVec, WritableVec,
+    ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, WritableVec,
 };
 
 use common::{indexes, stored};
@@ -24,8 +24,8 @@ fn original_ratio(
     let source = LazyIndexedVec::new(
         &format!("{name}_ratio_ppm_source"),
         version,
-        price,
-        spot.clone(),
+        &price,
+        spot,
         |_, price, spot| {
             if price == Cents::ZERO {
                 PriceRatio::NAN
@@ -37,7 +37,7 @@ fn original_ratio(
     LazyRatioPerBlock::from_height_source(
         &format!("{name}_ratio"),
         version,
-        CACHE_BUDGET.wrap(source),
+        &CACHE_BUDGET.wrap(source),
         indexes,
     )
 }
@@ -74,17 +74,17 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         imported.cents.height.push(price);
     }
     imported.cents.height.write().unwrap();
-    let lazy = LazyPriceWithRatioPerBlock::from_boxed_height_source(
+    let lazy = LazyPriceWithRatioPerBlock::from_height_source(
         "lazy",
         version,
-        imported.cents.height.read_only_boxed_clone(),
+        &imported.cents.height,
         &indexes,
         &spot,
     );
     let direct = LazyPriceWithRatioPerBlock::from_height_source(
         "direct",
         version,
-        imported.cents.height.read_only_clone(),
+        &imported.cents.height,
         &indexes,
         &spot,
     );

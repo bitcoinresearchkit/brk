@@ -10,30 +10,30 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, ReadableVec, Rw, StorageMode, VecIndex, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    VecIndex, VecValue, WritableVec,
 };
 
-use super::lazy_cumulative_rolling::lazy_parts;
 use crate::{
-    CachedWindowStartVec, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight,
+    CachePolicy, IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight,
     LazyRollingSumsFromHeight, NumericValue, PerBlock, Windows,
 };
 
 #[derive(Traversable)]
-pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw>
+pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachePolicy = Budgeted>
 where
     T: NumericValue + JsonSchema,
 {
     pub block: LazyPreviousDeltaVec<Height, T>,
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: PerBlock<T, M>,
+    pub cumulative: PerBlock<T, M, P>,
     pub sum: LazyRollingSumsFromHeight<T>,
     pub average: LazyRollingAvgsFromHeight<T>,
     last_cumulative: M::WriteOnly<Option<(usize, T)>>,
 }
 
-impl<T> PerBlockCumulativeRolling<T>
+impl<T, P: CachePolicy> PerBlockCumulativeRolling<T, Rw, P>
 where
     T: NumericValue + JsonSchema,
 {
@@ -41,13 +41,27 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative =
             PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
-        let (block, sum, average) =
-            lazy_parts(name, version, &cumulative.height, cached_starts, indexes);
+        let source = cumulative.resolutions.height_source();
+        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let sum = LazyRollingSumsFromHeight::new(
+            &format!("{name}_sum"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
+        let average = LazyRollingAvgsFromHeight::new(
+            &format!("{name}_average"),
+            version,
+            source,
+            window_starts,
+            indexes,
+        );
         let last_cumulative = cumulative
             .height
             .collect_last()
@@ -60,6 +74,12 @@ where
             average,
             last_cumulative,
         })
+    }
+
+    pub fn cumulative_source(
+        &self,
+    ) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T, P>) {
+        self.cumulative.resolutions.height_source()
     }
 
     #[inline(always)]

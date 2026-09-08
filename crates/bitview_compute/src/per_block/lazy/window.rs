@@ -4,8 +4,8 @@ use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec,
-    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec,
+    TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::SparseRead;
@@ -71,7 +71,7 @@ where
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<I, S>,
-    window_starts: CachedBoxedVec<I, I>,
+    window_starts: ReadableBoxedVec<I, I>,
     inclusive: bool,
     compute: Arc<dyn WindowTransform<I, S, T>>,
 }
@@ -86,7 +86,7 @@ where
         name: &str,
         version: Version,
         source: ReadableBoxedVec<I, S>,
-        window_starts: CachedBoxedVec<I, I>,
+        window_starts: impl ReadableVec<I, I> + Clone + 'static,
         inclusive: bool,
         compute: impl Fn(S, S, usize) -> T + Send + Sync + 'static,
     ) -> Self {
@@ -94,7 +94,7 @@ where
             name: Arc::from(name),
             base_version: version,
             source,
-            window_starts,
+            window_starts: ReadableBoxedVec::new(window_starts),
             inclusive,
             compute: Arc::new(compute),
         }

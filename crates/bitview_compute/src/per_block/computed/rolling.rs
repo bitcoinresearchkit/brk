@@ -1,7 +1,4 @@
-//! CachedPerBlockRolling - cached cumulative + lazy views + RollingComplete.
-//!
-//! For metrics derived from indexer sources (no stored height vec).
-//! Cumulative gets its own CachedPerBlock so it has LazyAggVec index views too.
+//! Stored cumulative source and rolling statistics for externally supplied block values.
 
 use brk_error::Result;
 
@@ -9,25 +6,27 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{CachedBoxedVec, Database, ReadOnlyClone, ReadableVec, Rw, StorageMode};
+use vecdb::{
+    Budgeted, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+};
 
 use crate::{
-    CachedPerBlock, CachedWindowStartVec, NumericValue, RollingComplete, WindowStarts, Windows,
+    CachePolicy, IndexSources, NumericValue, PerBlock, RollingComplete, WindowStarts, Windows,
 };
 
 #[derive(Traversable)]
-pub struct CachedPerBlockRolling<T, M: StorageMode = Rw>
+pub struct PerBlockRolling<T, M: StorageMode = Rw, S: CachePolicy = Budgeted>
 where
     T: NumericValue + JsonSchema,
 {
     /// Cumulative value through the represented block. At time-period indexes,
     /// the value is taken at the period's final block.
-    pub cumulative: CachedPerBlock<T, M>,
+    pub cumulative: PerBlock<T, M, S>,
     #[traversable(flatten)]
     pub rolling: RollingComplete<T, M>,
 }
 
-impl<T> CachedPerBlockRolling<T>
+impl<T, S: CachePolicy> PerBlockRolling<T, Rw, S>
 where
     T: NumericValue + JsonSchema,
 {
@@ -35,11 +34,11 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative =
-            CachedPerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
+            PerBlock::forced_import(db, &format!("{name}_cumulative"), version, indexes)?;
         let cumulative_source = cumulative.height.read_only_clone();
         let rolling = RollingComplete::forced_import(
             db,
@@ -47,7 +46,7 @@ where
             version,
             indexes,
             &cumulative_source,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self {
@@ -56,8 +55,10 @@ where
         })
     }
 
-    pub fn cached_cumulative(&self) -> CachedBoxedVec<Height, T> {
-        self.cumulative.height.read_only_cached_boxed_clone()
+    pub fn cumulative_source(
+        &self,
+    ) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T, S>) {
+        self.cumulative.resolutions.height_source()
     }
 
     pub fn compute(
@@ -73,7 +74,6 @@ where
     {
         self.cumulative
             .height
-            .inner
             .compute_cumulative(max_from, height_source, exit)?;
         self.rolling
             .compute(max_from, windows, height_source, exit)?;

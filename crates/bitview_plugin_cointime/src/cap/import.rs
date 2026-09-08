@@ -1,7 +1,7 @@
 use brk_error::Result;
 
 use brk_types::{Cents, Version};
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::Database;
 
 use super::Vecs;
 use bitview_compute::{
@@ -15,10 +15,9 @@ pub fn forced_import(
     mappings: &bitview_plugin_mappings::Vecs,
     subsidy_cents: &PerBlock<Cents>,
 ) -> Result<Vecs> {
-    let thermo_cents = LazyPerBlock::from_computed::<Identity<Cents>>(
+    let thermo_cents = LazyPerBlock::from_resolutions::<Identity<Cents>>(
         "thermo_cap_cents",
         version,
-        subsidy_cents.height.read_only_boxed_clone(),
         subsidy_cents,
     );
     let thermo_usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(

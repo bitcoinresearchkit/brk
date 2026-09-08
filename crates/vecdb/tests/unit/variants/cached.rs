@@ -1,6 +1,6 @@
 use std::sync::{
     Arc, Barrier,
-    atomic::{AtomicBool, AtomicUsize, Ordering::SeqCst},
+    atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering::SeqCst},
 };
 
 use crate::{AnyVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};

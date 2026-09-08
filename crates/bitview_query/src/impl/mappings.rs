@@ -8,8 +8,10 @@ impl Query {
     /// Whether the first block after `day` is beyond the supported reorg window.
     pub fn day_is_deeply_confirmed(&self, day: Day1) -> Result<bool> {
         let plugins = self.plugins();
-        let _guard = self.read_publication()?;
-        let tip = self.height();
+        let pin = self.pin_safe_lengths()?;
+        let Some(tip) = pin.lengths().last_height() else {
+            return Ok(false);
+        };
 
         Ok(plugins
             .mappings

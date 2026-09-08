@@ -1,6 +1,7 @@
 use bitview_traversable::Traversable;
-use brk_types::{BasisPoints32, Height, StoredF32, Version};
-use vecdb::{ReadableVec, TypedVec};
+use brk_types::Height;
+use brk_types::{BasisPoints32, StoredF32, Version};
+use vecdb::ReadableCloneableVec;
 
 use crate::{FixedToRatio, Identity, IndexSources, LazyPerBlock};
 
@@ -18,14 +19,11 @@ impl LazyBasisPointsPerBlock {
     pub fn from_height_source<V>(
         name: &str,
         version: Version,
-        source: V,
+        source: &V,
         indexes: &IndexSources,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = BasisPoints32>
-            + ReadableVec<Height, BasisPoints32>
-            + Clone
-            + 'static,
+        V: ReadableCloneableVec<Height, BasisPoints32> + ?Sized,
     {
         let bps = LazyPerBlock::from_height_source::<Identity<BasisPoints32>>(
             &format!("{name}_bps"),

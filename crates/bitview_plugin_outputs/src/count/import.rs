@@ -17,7 +17,7 @@ pub fn forced_import(
             db,
             "output_count",
             version,
-            mappings.output_count_source(),
+            &mappings.output_count_source(),
             mappings,
             cached_starts,
         )?,

@@ -10,9 +10,9 @@ mod ohlcs;
 use brk_error::Result;
 
 use bitview_compute::{
-    CACHE_BUDGET, CachedPerBlock, CentsUnsignedToDollars, CentsUnsignedToSats, LazyIndexes,
-    LazyPerBlock, OhlcCentsToDollars, OhlcCentsToHighCents, OhlcCentsToLowCents,
-    OhlcCentsToOpenCents, OhlcCentsToSats, Resolutions,
+    CentsUnsignedToDollars, CentsUnsignedToSats, LazyIndexes, LazyPerBlock, OhlcCentsToDollars,
+    OhlcCentsToHighCents, OhlcCentsToLowCents, OhlcCentsToOpenCents, OhlcCentsToSats, PerBlock,
+    Resolutions,
 };
 use bitview_plugin::{ImportContext, Plugin, PluginId, PluginStorage};
 use bitview_traversable::Traversable;
@@ -77,13 +77,9 @@ impl Vecs {
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
     ) -> Result<Self> {
-        let price_cents = CachedPerBlock::forced_import(db, "price_cents", version, mappings)?;
-        let close_cents = Resolutions::from_boxed_height_source(
-            "price_close_cents",
-            price_cents.height.read_only_boxed_clone(),
-            version,
-            mappings,
-        );
+        let price_cents = PerBlock::forced_import(db, "price_cents", version, mappings)?;
+        let close_cents =
+            Resolutions::from_source("price_close_cents", &price_cents.height, version, mappings);
 
         let ohlc_cents = LazyOhlcCentsVecs::new(
             "price_ohlc_cents",
@@ -108,10 +104,9 @@ impl Vecs {
             &ohlc_cents,
         );
 
-        let price_usd = LazyPerBlock::from_cached_computed::<CentsUnsignedToDollars>(
+        let price_usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
             "price",
             version,
-            price_cents.height.read_only_boxed_clone(),
             &price_cents,
         );
 
@@ -131,8 +126,8 @@ impl Vecs {
             &low_cents,
         );
 
-        let source = CACHE_BUDGET.wrap(price_usd.height.clone());
-        let close_usd = Resolutions::from_height_source("price_close", source, version, mappings);
+        let close_usd =
+            Resolutions::from_source("price_close", &price_usd.height, version, mappings);
 
         let ohlc_usd = LazyOhlcVecs::from_ohlc_indexes::<OhlcCentsToDollars>(
             "price_ohlc",
@@ -140,10 +135,9 @@ impl Vecs {
             &ohlc_cents,
         );
 
-        let price_sats = LazyPerBlock::from_cached_computed::<CentsUnsignedToSats>(
+        let price_sats = LazyPerBlock::from_resolutions::<CentsUnsignedToSats>(
             "price_sats",
             version,
-            price_cents.height.read_only_boxed_clone(),
             &price_cents,
         );
 
@@ -164,9 +158,8 @@ impl Vecs {
             &high_cents,
         );
 
-        let source = CACHE_BUDGET.wrap(price_sats.height.clone());
         let close_sats =
-            Resolutions::from_height_source("price_close_sats", source, version, mappings);
+            Resolutions::from_source("price_close_sats", &price_sats.height, version, mappings);
 
         // OhlcCentsToSats handles the high↔low swap internally
         let ohlc_sats = LazyOhlcVecs::from_ohlc_indexes::<OhlcCentsToSats>(

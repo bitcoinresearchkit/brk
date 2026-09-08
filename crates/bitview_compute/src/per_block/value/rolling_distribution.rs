@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    DistributionStats, ValuePerBlock, WindowStarts, Windows,
+    DistributionStats, IndexSources, ValuePerBlock, WindowStarts, Windows,
     algo::compute_rolling_distribution_from_starts,
 };
 
@@ -26,7 +26,7 @@ impl RollingDistributionValuePerBlock {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|stat_suffix| {
             Windows::try_from_fn(|window_suffix| {

@@ -5,8 +5,8 @@ use brk_types::{Day1, Height};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, Formattable, PrintableIndex, READ_CHUNK_SIZE,
-    ReadableBoxedVec, ReadableVec, TypedVec, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Formattable, PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecValue, Version, short_type_name,
 };
 
 trait SinceDayTransform<S, T>: Send + Sync {
@@ -37,7 +37,7 @@ where
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<Height, S>,
-    days: CachedBoxedVec<Height, Day1>,
+    days: ReadableBoxedVec<Height, Day1>,
     start_day: Day1,
     compute: Arc<dyn SinceDayTransform<S, T>>,
 }
@@ -51,7 +51,7 @@ where
         name: &str,
         version: Version,
         source: ReadableBoxedVec<Height, S>,
-        days: CachedBoxedVec<Height, Day1>,
+        days: impl ReadableVec<Height, Day1> + Clone + 'static,
         start_day: Day1,
         compute: impl Fn(S, S) -> T + Send + Sync + 'static,
     ) -> Self {
@@ -59,7 +59,7 @@ where
             name: Arc::from(name),
             base_version: version,
             source,
-            days,
+            days: ReadableBoxedVec::new(days),
             start_day,
             compute: Arc::new(compute),
         }

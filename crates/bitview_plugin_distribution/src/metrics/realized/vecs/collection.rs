@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{
@@ -24,7 +25,7 @@ use crate::{
     },
 };
 use bitview_compute::{
-    CACHE_BUDGET, CachedWindowStartVec, ColumnarPercentRollingWindows, ColumnarRollingWindows,
+    CachedWindowStartVec, ColumnarPercentRollingWindows, ColumnarRollingWindows,
     ColumnarRollingWindowsFrom1w, Identity, LazyFiatPerBlockCumulativeWithSums,
     LazyFiatPerBlockWithDeltas, LazyPerBlock, LazyPercentPerBlock, NegCentsUnsignedToDollars,
     RatioCents, RatioCentsF32, RatioCentsSignedCents, SoprRatio, Windows,
@@ -168,7 +169,7 @@ impl RealizedVecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
         all_chain: &AllChainSources,
@@ -262,7 +263,7 @@ impl RealizedVecs {
             "realized_cap",
             addr_version,
             |name, source| {
-                LazyFiatPerBlockWithDeltas::from_boxed_cents_source(
+                LazyFiatPerBlockWithDeltas::from_cents_source(
                     name,
                     addr_version,
                     source,
@@ -279,7 +280,7 @@ impl RealizedVecs {
             "realized_profit",
             addr_version + Version::ONE,
             |name, source| {
-                LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+                LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                     name,
                     addr_version + Version::ONE,
                     source,
@@ -295,7 +296,7 @@ impl RealizedVecs {
             "realized_loss",
             addr_version + Version::ONE,
             |name, source| {
-                LazyFiatPerBlockCumulativeWithSums::from_boxed_cumulative_cents_source(
+                LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                     name,
                     addr_version + Version::ONE,
                     source,
@@ -322,11 +323,11 @@ impl RealizedVecs {
                 loss.block.cents.read_only_boxed_clone(),
             );
             let sum = loss.sum.0.map_with_suffix(|suffix, slot| {
-                let source = CACHE_BUDGET.wrap(slot.cents.height.clone());
+                let source = slot.cents.height.clone();
                 LazyPerBlock::from_height_source::<NegCentsUnsignedToDollars>(
                     &format!("{name}_sum_{suffix}"),
                     version,
-                    source,
+                    &source,
                     mappings,
                 )
             });
@@ -351,11 +352,10 @@ impl RealizedVecs {
                     .read_only_boxed_clone(),
                 Self::mvrv_to_realized_cap_ratio,
             );
-            let source = CACHE_BUDGET.wrap(source);
             LazyPercentPerBlock::from_height_source(
                 &name,
                 Self::cohort_version(version, filter) + Version::TWO,
-                source,
+                &source,
                 mappings,
             )
         });
@@ -380,7 +380,7 @@ impl RealizedVecs {
                     .height,
                 |_, net_pnl, market_cap| Self::net_pnl_to_market_cap(net_pnl, market_cap),
             );
-            LazyPercentPerBlock::from_height_source(&name, Version::new(5), source, mappings)
+            LazyPercentPerBlock::from_height_source(&name, Version::new(5), &source, mappings)
         });
 
         Ok(Self {

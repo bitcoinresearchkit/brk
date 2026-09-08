@@ -7,6 +7,7 @@ mod by_dca_cagr;
 mod by_dca_period;
 mod by_lookback_period;
 mod cache_budget;
+mod cache_policy;
 mod containers;
 mod daily_metric;
 pub mod db_utils;
@@ -28,6 +29,7 @@ pub use by_dca_cagr::*;
 pub use by_dca_period::*;
 pub use by_lookback_period::*;
 pub use cache_budget::*;
+pub use cache_policy::*;
 pub use containers::*;
 pub use daily_metric::*;
 pub use index_sources::*;
@@ -38,9 +40,7 @@ pub use percentile_prices::*;
 pub use traits::*;
 pub use transform::*;
 pub use value::*;
-pub use weighted::{
-    WeightedCohortContribution, WeightedCohortState, WeightedRatio, lazy_weighted_supply,
-};
+pub use weighted::{WeightedCohortContribution, WeightedCohortState, WeightedRatio};
 pub use with_addr_types::*;
 
 pub const TARGET_BLOCKS_PER_DAY_F64: f64 = 144.0;

@@ -91,7 +91,7 @@ impl Query {
             prices,
             ..
         } = resolved;
-        chain.build_v1_heights(self, &heights, &prices)
+        chain.build_v1_heights(self, &heights, &prices, _publication)
     }
 
     /// Page of blocks mined by `slug`, in descending height order, capped at

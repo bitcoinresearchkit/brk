@@ -6,7 +6,7 @@ use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{BinaryTransform, CachedBoxedVec};
+use vecdb::{BinaryTransform, ReadableCloneableVec};
 
 use crate::DCA_AMOUNT;
 
@@ -28,7 +28,7 @@ impl LumpSumStack {
         days: u32,
         version: Version,
         mappings: &MappingVecs,
-        window_starts: &CachedBoxedVec<Height, Height>,
+        window_starts: &impl ReadableCloneableVec<Height, Height>,
         prices: &PriceVecs,
     ) -> Result<Self> {
         let total_invested = DCA_AMOUNT * days as usize;
@@ -37,14 +37,14 @@ impl LumpSumStack {
             &format!("{name}_sats_source"),
             version,
             prices.spot.cents.height.read_only_boxed_clone(),
-            window_starts.clone(),
+            window_starts.read_only_boxed_clone(),
             false,
             move |_, past, _| Self::sats_at_price(total_invested, past),
         );
         let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
             &format!("{name}_sats"),
             version,
-            sats_source,
+            &sats_source,
             mappings,
         );
         let btc = LazyPerBlock::from_lazy::<SatsToBitcoin, Sats>(name, version, &sats);
@@ -53,7 +53,7 @@ impl LumpSumStack {
             &format!("{name}_cents_source"),
             version,
             prices.spot.cents.height.read_only_boxed_clone(),
-            window_starts.clone(),
+            window_starts.read_only_boxed_clone(),
             false,
             move |current, past, _| {
                 SatsToCents::apply(Self::sats_at_price(total_invested, past), current)
@@ -62,7 +62,7 @@ impl LumpSumStack {
         let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
             &format!("{name}_cents"),
             version,
-            cents_source,
+            &cents_source,
             mappings,
         );
         let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(

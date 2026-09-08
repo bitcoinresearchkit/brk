@@ -1,10 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Dollars, Height, PriceRatio, SatsFract, StoredF32, Version};
-use vecdb::{CachedBoxedVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec};
+use vecdb::ReadableCloneableVec;
 
-use crate::{Identity, IndexSources, LazyIndexedVec, LazyPerBlock, LazyRatioPerBlock, Price};
-
-use super::price::{PRICE_RATIO_VERSION, cached_price_ratio, price_ratio};
+use crate::{IndexSources, LazyPerBlock, LazyRatioPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct LazyPriceWithRatioPerBlock {
@@ -23,60 +21,22 @@ pub struct LazyPriceWithRatioPerBlock {
 }
 
 impl LazyPriceWithRatioPerBlock {
-    pub fn from_boxed_height_source(
-        name: &str,
-        version: Version,
-        source: ReadableBoxedVec<Height, Cents>,
-        indexes: &IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
-    ) -> Self {
-        let source = LazyPerBlock::from_boxed_height_source::<Identity<Cents>>(
-            &format!("{name}_cents"),
-            version,
-            source,
-            indexes,
-        );
-        let price = Price::from_lazy_cents_source::<Identity<Cents>, Cents>(name, version, &source);
-        let ratio = cached_price_ratio(
-            name,
-            version,
-            price.cents.height.read_only_boxed_clone(),
-            spot_price,
-            indexes,
-        );
-
-        Self {
-            usd: price.usd,
-            cents: price.cents,
-            sats: price.sats,
-            ppm: ratio.ppm,
-            ratio: ratio.ratio,
-        }
-    }
-
     pub fn from_height_source<V>(
         name: &str,
         version: Version,
-        source: V,
+        source: &V,
         indexes: &IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self
     where
-        V: TypedVec<I = Height, T = Cents> + ReadableVec<Height, Cents> + Clone + 'static,
+        V: ReadableCloneableVec<Height, Cents> + ?Sized,
     {
         let price = Price::from_height_source(name, version, source, indexes);
-        let ratio_version = version + PRICE_RATIO_VERSION;
-        let ppm_source = LazyIndexedVec::new(
-            &format!("{name}_ratio_ppm_source"),
-            ratio_version,
-            price.cents.height.read_only_boxed_clone(),
-            spot_price.clone(),
-            |_, price, spot| price_ratio(spot, price),
-        );
-        let ratio = LazyRatioPerBlock::from_height_source(
-            &format!("{name}_ratio"),
-            ratio_version,
-            ppm_source,
+        let ratio = LazyRatioPerBlock::from_price_source(
+            name,
+            version,
+            &price.cents.height,
+            spot_price,
             indexes,
         );
 

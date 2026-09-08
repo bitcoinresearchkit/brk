@@ -2,9 +2,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyAggVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, VecValue};
+use vecdb::{LazyAggVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, VecValue};
 
-use crate::{CACHE_BUDGET, PerResolution};
+use crate::{IndexSources, PerResolution};
 
 use super::CoarserIndex;
 
@@ -30,13 +30,14 @@ macro_rules! define_resolutions {
         where
             T: VecValue + PartialOrd + JsonSchema + 'static,
         {
-            pub fn from_boxed_height_source(
+            /// Build uncached views sharing the reader supplied by the source owner.
+            pub fn from_source(
                 name: &str,
-                height_source: ReadableBoxedVec<Height, T>,
+                height_source: &(impl ReadableCloneableVec<Height, T> + ?Sized),
                 version: Version,
-                indexes: &crate::IndexSources,
+                indexes: &IndexSources,
             ) -> Self {
-                let height_source = CACHE_BUDGET.wrap_boxed(height_source);
+                let height_source = height_source.read_only_boxed_clone();
 
                 macro_rules! res {
                     ($mapping:expr) => {{
@@ -78,12 +79,8 @@ impl<T> Resolutions<T>
 where
     T: VecValue + PartialOrd + JsonSchema + 'static,
 {
-    pub fn from_height_source(
-        name: &str,
-        height_source: impl ReadableCloneableVec<Height, T> + 'static,
-        version: Version,
-        indexes: &crate::IndexSources,
-    ) -> Self {
-        Self::from_boxed_height_source(name, ReadableBoxedVec::new(height_source), version, indexes)
+    /// Reuse the same height source (and cache) as every resolution.
+    pub fn height_source(&self) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T>) {
+        self.day1.source()
     }
 }

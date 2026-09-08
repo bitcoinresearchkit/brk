@@ -2,11 +2,11 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CachedWindowStartVec, FixedRatio, Identity, LazyPerBlock, LazyRollingDeltasFromHeight,
-    NumericValue, Windows,
+    FixedRatio, Identity, IndexSources, LazyPerBlock, LazyRollingDeltasFromHeight, NumericValue,
+    Windows,
 };
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
@@ -28,21 +28,20 @@ where
     C: NumericValue + JsonSchema + From<f64>,
     B: FixedRatio + From<f64>,
 {
-    pub fn from_boxed_height_source(
+    pub fn from_height_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, S>,
+        source: &(impl ReadableCloneableVec<Height, S> + ?Sized),
         delta_version_offset: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let base =
-            LazyPerBlock::from_boxed_height_source::<Identity<S>>(name, version, source, indexes);
+        let base = LazyPerBlock::from_height_source::<Identity<S>>(name, version, source, indexes);
         let delta = LazyRollingDeltasFromHeight::new(
             &format!("{name}_delta"),
             version + delta_version_offset,
             &base.height,
-            cached_starts,
+            window_starts,
             indexes,
         );
         Self { base, delta }

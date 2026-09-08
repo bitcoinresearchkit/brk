@@ -3,23 +3,24 @@ use brk_error::Result;
 use bitview_traversable::Traversable;
 use brk_types::{Day1, Version};
 use vecdb::{
-    Database, EagerVec, ImportableVec, PcoVec, PcoVecValue, ReadableCloneableVec, Rw, StorageMode,
+    Budgeted, CachedVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue, Rw, StorageMode,
 };
 
 use super::{DailyMappings, DailyValue, DailyViews};
+use crate::CachePolicy;
 
 #[derive(Traversable)]
 #[traversable(merge)]
-pub struct DailyMetric<T, M: StorageMode = Rw>
+pub struct DailyMetric<T, M: StorageMode = Rw, S: CachePolicy = Budgeted>
 where
     T: DailyValue + PcoVecValue,
 {
-    pub day1: <M as StorageMode>::Stored<EagerVec<PcoVec<Day1, T>>>,
+    pub day1: CachedVec<M::Stored<EagerVec<PcoVec<Day1, T>>>, S>,
     #[traversable(flatten)]
     pub views: Box<DailyViews<T>>,
 }
 
-impl<T> DailyMetric<T>
+impl<T, S: CachePolicy> DailyMetric<T, Rw, S>
 where
     T: DailyValue + PcoVecValue,
 {
@@ -29,7 +30,9 @@ where
         version: Version,
         mappings: &DailyMappings,
     ) -> Result<Self> {
-        let day1 = EagerVec::forced_import(db, name, version)?;
+        let day1 = S::wrap(EagerVec::<PcoVec<Day1, T>>::forced_import(
+            db, name, version,
+        )?);
         let source = day1.read_only_boxed_clone();
         let views = Box::new(DailyViews::new(name, source, version, mappings));
 

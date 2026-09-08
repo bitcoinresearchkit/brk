@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use vecdb::{ReadableCloneableVec, UnaryTransform};
 
 use crate::{
-    CachedWindowStartVec, ComputedVecValue, LazyRollingAvgsFromHeight, LazyRollingDistribution,
+    ComputedVecValue, IndexSources, LazyRollingAvgsFromHeight, LazyRollingDistribution,
     LazyRollingSumsFromHeight, NumericValue, RollingComplete, Windows,
 };
 
@@ -30,23 +30,23 @@ where
     pub fn from_rolling_complete<F: UnaryTransform<S1T, T>>(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
+        cumulative: &impl ReadableCloneableVec<Height, T>,
         source: &RollingComplete<S1T>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let sum = LazyRollingSumsFromHeight::new(
             &format!("{name}_sum"),
             version,
             cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             version,
             cumulative,
-            cached_starts,
+            window_starts,
             indexes,
         );
         let distribution = LazyRollingDistribution::from_rolling_distribution::<F>(

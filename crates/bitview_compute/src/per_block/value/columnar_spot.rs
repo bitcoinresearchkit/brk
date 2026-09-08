@@ -1,11 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{
-    BinaryTransform, CachedBoxedVec, ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec,
-};
+use vecdb::{BinaryTransform, ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
 use crate::{
-    CACHE_BUDGET, CentsUnsignedToDollars, Identity, LazyColumnPerBlock, LazyIndexedVec,
+    CentsUnsignedToDollars, Identity, IndexSources, LazyColumnPerBlock, LazyIndexedVec,
     LazyPerBlock, SatsToBitcoin, SatsToCents,
 };
 
@@ -33,29 +31,23 @@ where
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Sats>, C>,
         column: C,
-        indexes: &crate::IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        indexes: &IndexSources,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let sats =
             LazyColumnPerBlock::new(&format!("{name}_sats"), version, source, column, indexes);
-        let btc = LazyPerBlock::from_resolutions::<SatsToBitcoin>(
-            name,
-            version,
-            sats.height.read_only_boxed_clone(),
-            &sats.resolutions,
-        );
+        let btc = LazyPerBlock::from_resolutions::<SatsToBitcoin>(name, version, &sats.resolutions);
         let cents_source = LazyIndexedVec::new(
             &format!("{name}_cents_source"),
             version,
-            sats.height.read_only_boxed_clone(),
-            spot_price.clone(),
+            sats.resolutions.height_source(),
+            spot_price,
             |_, sats, spot| SatsToCents::apply(sats, spot),
         );
-        let cents_source = CACHE_BUDGET.wrap(cents_source);
         let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
             &format!("{name}_cents"),
             version,
-            cents_source,
+            &cents_source,
             indexes,
         );
         let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(

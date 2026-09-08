@@ -17,7 +17,7 @@ fn body(response: &[u8]) -> &[u8] {
 }
 
 #[test]
-fn immutable_block_reads_use_published_prefix_during_append() {
+fn immutable_reads_use_published_prefix_during_append() {
     run(|state, address| async move {
         let (height, hash, gate) = state.sync(|q| {
             (
@@ -26,7 +26,12 @@ fn immutable_block_reads_use_published_prefix_during_append() {
                 q.indexer().publication().clone(),
             )
         });
-        let paths = [
+        let txid = state.sync(|q| q.block_txids(&hash).unwrap()[0]);
+        let addr = state.sync(|q| {
+            brk_types::Addr::try_from(&q.transaction(&txid).unwrap().output[0].script_pubkey)
+                .unwrap()
+        });
+        let mut paths = vec![
             "/api/server/sync".to_owned(),
             "/api/blocks".to_owned(),
             format!("/api/block-height/{height}"),
@@ -36,7 +41,23 @@ fn immutable_block_reads_use_published_prefix_during_append() {
             format!("/api/block/{hash}/txid/0"),
             format!("/api/block/{hash}/txs/0"),
             format!("/api/block/{hash}/raw"),
+            format!("/api/tx/{txid}"),
+            format!("/api/tx/{txid}/status"),
+            format!("/api/tx/{txid}/raw"),
+            format!("/api/tx/{txid}/hex"),
+            format!("/api/tx/{txid}/merkle-proof"),
+            format!("/api/tx/{txid}/merkleblock-proof"),
+            "/api/v1/mining/blocks/sizes-weights/24h".to_owned(),
+            "/api/v1/mining/blocks/timestamp/4294967295".to_owned(),
+            format!("/api/address/{addr}/txs/chain"),
+            format!("/api/address/{addr}/txs"),
         ];
+        #[cfg(feature = "series")]
+        paths.extend([
+            "/api/series/timestamp/height?start=0&end=2".to_owned(),
+            "/api/series/timestamp/height/latest".to_owned(),
+            "/api/series/timestamp/height/len".to_owned(),
+        ]);
         let mut expected = Vec::new();
         for path in &paths {
             expected.push(exchange_bytes(address, "GET", path, "\"old\"", 4_100_000).await);
@@ -44,6 +65,7 @@ fn immutable_block_reads_use_published_prefix_during_append() {
         // Closing append/compute publication must not hide the old immutable
         // prefix. Rollback is independently excluded by the pinned lengths.
         gate.begin_update();
+        state.sync(|q| q.difficulty_adjustment().unwrap());
         for (path, expected) in paths.into_iter().zip(expected) {
             let response = timeout(
                 Duration::from_secs(1),
@@ -87,6 +109,7 @@ fn unpublished_reorg_tail_is_unavailable_then_distinguishes_absence() {
     run_genesis(default_first(), |mut fixture| async move {
         fixture.publish(1, 1);
         let old_hash = fixture.query.sync(|q| q.tip_blockhash());
+        let old_txid = fixture.chain[1].txdata[0].compute_txid();
         let gate = fixture.plugins.indexer().publication().clone();
         gate.begin_update();
         fixture.active.store(2, Ordering::SeqCst);
@@ -108,6 +131,21 @@ fn unpublished_reorg_tail_is_unavailable_then_distinguishes_absence() {
         .unwrap();
         assert!(unavailable.starts_with("HTTP/1.1 503"), "{unavailable}");
         assert!(!unavailable.contains("\r\netag:"));
+        // A temporary reorg tail must not publish cacheable absence for txs.
+        for suffix in [
+            "",
+            "/raw",
+            "/hex",
+            "/status",
+            "/merkle-proof",
+            "/merkleblock-proof",
+        ] {
+            let response =
+                exchange_with_etag(address, "GET", &format!("/api/tx/{old_txid}{suffix}"), "*")
+                    .await;
+            assert!(response.starts_with("HTTP/1.1 503"), "{response}");
+            assert!(response.contains("\r\ncache-control: no-store\r\n"));
+        }
         let prefix = exchange_with_etag(address, "GET", "/api/block-height/0", "\"old\"").await;
         assert!(prefix.starts_with("HTTP/1.1 200"), "{prefix}");
         fixture.plugins.commit().unwrap();
@@ -119,6 +157,7 @@ fn unpublished_reorg_tail_is_unavailable_then_distinguishes_absence() {
         assert!(response.ends_with(&new_hash.to_string()), "{response}");
         for path in [
             format!("/api/block/{old_hash}"),
+            format!("/api/tx/{old_txid}"),
             "/api/block-height/2".to_owned(),
         ] {
             let response = exchange_with_etag(address, "GET", &path, "*").await;
@@ -138,9 +177,14 @@ fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
         let query = fixture.query.clone();
         let old_hash = query.sync(|q| q.tip_blockhash());
         let expected_ids = query.sync(|q| q.block_txids(&old_hash).unwrap());
+        let addr =
+            brk_types::Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
+        let expected_utxos = query.sync(|q| q.addr_utxos(addr.clone(), 1000).unwrap());
         thread::scope(|scope| {
             let rows = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
             let txids = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let mixed = query.sync(|q| q.resolve_addr_txs(&addr, 50, 25, 50).unwrap());
+            let utxos = query.sync(|q| q.resolve_addr_utxos(&addr, 1000).unwrap());
             let (finished, done) = mpsc::channel();
             let fixture = &mut fixture;
             let writer = thread::Builder::new()
@@ -155,10 +199,21 @@ fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
             // timed out, so a regression fails rather than hanging cleanup.
             let retained_rows = query.sync(|q| rows.build(q).unwrap());
             let retained_ids = query.sync(|q| txids.anchor_txids(q).unwrap());
+            let retained_mixed = query.sync(|q| q.addr_txs_resolved(mixed).unwrap());
+            let retained_utxos = query.sync(|q| q.addr_utxos_resolved(utxos, 1000).unwrap().0);
             writer.join().unwrap();
             result.expect("append publication waited for retained snapshots");
             assert_eq!(retained_rows[0].id, old_hash);
             assert_eq!(retained_ids, expected_ids);
+            assert!(
+                retained_mixed
+                    .iter()
+                    .any(|tx| expected_ids.contains(&tx.txid))
+            );
+            assert_eq!(
+                serde_json::to_value(retained_utxos).unwrap(),
+                serde_json::to_value(expected_utxos).unwrap()
+            );
             assert_eq!(query.sync(|q| q.height()), Height::new(2));
             assert_ne!(query.sync(|q| q.tip_blockhash()), old_hash);
         });
@@ -180,6 +235,8 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
         let query = fixture.query.clone();
         let old_hash = query.sync(|q| q.tip_blockhash());
         let expected_raw = serialize(&fixture.chain[1]);
+        let addr =
+            brk_types::Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
         fixture.active.store(2, Ordering::SeqCst);
 
         thread::scope(|scope| {
@@ -191,6 +248,8 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
             let txs = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
             let header = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
             let raw = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
+            let mixed = query.sync(|q| q.resolve_addr_txs(&addr, 50, 25, 50).unwrap());
+            let utxos = query.sync(|q| q.resolve_addr_utxos(&addr, 1000).unwrap());
             let plugins = &mut fixture.plugins;
             let writer = thread::Builder::new()
                 .stack_size(8 * 1024 * 1024)
@@ -224,6 +283,16 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
                 160
             );
             assert_eq!(query.sync(|q| raw.anchor_raw(q).unwrap()), expected_raw);
+            assert!(
+                !query
+                    .sync(|q| q.addr_txs_resolved(mixed).unwrap())
+                    .is_empty()
+            );
+            assert!(
+                !query
+                    .sync(|q| q.addr_utxos_resolved(utxos, 1000).unwrap().0)
+                    .is_empty()
+            );
             assert_eq!(query.sync(|q| q.tip_blockhash()), old_hash);
             drop(pin);
             writer.join().unwrap().unwrap();

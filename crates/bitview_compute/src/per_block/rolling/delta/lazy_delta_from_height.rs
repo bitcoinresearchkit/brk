@@ -3,7 +3,7 @@ use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{DeltaOp, LazyDeltaVec, VecValue};
 
-use crate::{NumericValue, Resolutions};
+use crate::{IndexSources, NumericValue, Resolutions};
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
@@ -27,9 +27,9 @@ where
         name: &str,
         version: Version,
         height: LazyDeltaVec<Height, S, T, Op>,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
-        let resolutions = Resolutions::from_height_source(name, height.clone(), version, indexes);
+        let resolutions = Resolutions::from_source(name, &height, version, indexes);
 
         Self {
             height,

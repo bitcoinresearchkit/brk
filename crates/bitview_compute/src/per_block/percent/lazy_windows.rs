@@ -4,14 +4,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{
-    BinaryTransform, CachedBoxedVec, DeltaAvg, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec,
-    UnaryTransform,
-};
+use vecdb::{BinaryTransform, DeltaAvg, LazyDeltaVec, ReadableCloneableVec, UnaryTransform};
 
-use crate::{
-    CACHE_BUDGET, CachedWindowStartVec, FixedRatio, LazyRollingRatioVec, NumericValue, Windows,
-};
+use crate::{FixedRatio, IndexSources, LazyRollingRatioVec, NumericValue, Windows};
 
 use super::LazyPercentPerBlock;
 
@@ -22,8 +17,8 @@ where
     F: BinaryTransform<D, S, T>,
 {
     #[inline]
-    fn apply(source: S, cached: D) -> T {
-        F::apply(cached, source)
+    fn apply(source: S, operand: D) -> T {
+        F::apply(operand, source)
     }
 }
 
@@ -39,10 +34,10 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
     pub fn from_cumulative_ratio<S, D, F>(
         name: &str,
         version: Version,
-        numerator: &(impl ReadableCloneableVec<Height, S> + 'static),
-        denominator: CachedBoxedVec<Height, D>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        numerator: &impl ReadableCloneableVec<Height, S>,
+        denominator: &impl ReadableCloneableVec<Height, D>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: NumericValue,
@@ -54,18 +49,18 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
             version,
             numerator,
             denominator,
-            cached_starts,
+            window_starts,
             indexes,
         )
     }
 
-    pub fn from_cumulative_ratio_with_cached_numerator<S, D, F>(
+    pub fn from_cumulative_ratio_with_numerator<S, D, F>(
         name: &str,
         version: Version,
-        numerator: CachedBoxedVec<Height, S>,
-        denominator: &(impl ReadableCloneableVec<Height, D> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        numerator: &impl ReadableCloneableVec<Height, S>,
+        denominator: &impl ReadableCloneableVec<Height, D>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: NumericValue,
@@ -77,7 +72,7 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
             version,
             denominator,
             numerator,
-            cached_starts,
+            window_starts,
             indexes,
         )
     }
@@ -85,10 +80,10 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
     fn from_cumulative_operands<S, D, F>(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
-        cached: CachedBoxedVec<Height, D>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        source: &impl ReadableCloneableVec<Height, S>,
+        operand: &impl ReadableCloneableVec<Height, D>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self
     where
         S: NumericValue,
@@ -97,17 +92,16 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
     {
         let source = source.read_only_boxed_clone();
 
-        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
+        Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
             let ratio = LazyRollingRatioVec::<S, D, B, F>::new(
                 &format!("{full_name}_{}_source", B::SUFFIX),
                 version,
                 source.clone(),
-                cached.clone(),
-                cached_start.read_only_cached_boxed_clone(),
+                operand.read_only_boxed_clone(),
+                window_start.read_only_boxed_clone(),
             );
-            let ratio = CACHE_BUDGET.wrap(ratio);
-            LazyPercentPerBlock::from_height_source(&full_name, version, ratio, indexes)
+            LazyPercentPerBlock::from_height_source(&full_name, version, &ratio, indexes)
         }))
     }
 
@@ -116,28 +110,28 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
     pub fn from_compact_cumulative_average<T>(
         name: &str,
         version: Version,
-        cumulative: &(impl ReadableCloneableVec<Height, T> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        cumulative: &impl ReadableCloneableVec<Height, T>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self
     where
         T: NumericValue + JsonSchema,
     {
         let cumulative_source = cumulative.read_only_boxed_clone();
 
-        Self(cached_starts.map_with_suffix(|suffix, cached_start| {
+        Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
-            let cached = cached_start.read_only_clone();
-            let starts_version = cached.version();
+            let operand = window_start.read_only_boxed_clone();
+            let starts_version = operand.version();
             let average = LazyDeltaVec::<Height, T, B, DeltaAvg>::new(
                 &format!("{full_name}_{}_source", B::SUFFIX),
                 version,
                 cumulative_source.clone(),
                 starts_version,
-                move || cached.snapshot(),
+                move || operand.snapshot(),
             );
 
-            LazyPercentPerBlock::from_height_source(&full_name, version, average, indexes)
+            LazyPercentPerBlock::from_height_source(&full_name, version, &average, indexes)
         }))
     }
 

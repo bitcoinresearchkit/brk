@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{AmountRange, CohortContext};
@@ -27,7 +28,7 @@ impl FundedAddrCountsVecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
@@ -39,7 +40,7 @@ impl FundedAddrCountsVecs {
                 "addr_count",
                 version + Version::ONE,
                 |name, source| {
-                    LazyPerBlockWithDeltas::from_boxed_height_source(
+                    LazyPerBlockWithDeltas::from_height_source(
                         name,
                         version + Version::ONE,
                         source,

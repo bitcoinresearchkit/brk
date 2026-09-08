@@ -1,8 +1,9 @@
 use bitview_traversable::Traversable;
-use brk_types::{Dollars, Height, Version};
-use vecdb::ReadableBoxedVec;
+use brk_types::Height;
+use brk_types::{Dollars, Version};
+use vecdb::ReadableCloneableVec;
 
-use crate::{FiatType, Identity, LazyPerBlock, NumericValue};
+use crate::{FiatType, Identity, IndexSources, LazyPerBlock, NumericValue};
 
 /// Lazy fiat: both cents and usd are lazy views of a stored source.
 /// Zero extra stored vecs.
@@ -25,16 +26,16 @@ impl<C: FiatType> LazyFiatPerBlock<C> {
         Self { usd, cents }
     }
 
-    pub fn from_boxed_cents_source(
+    pub fn from_cents_source(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, C>,
-        indexes: &crate::IndexSources,
+        source: &(impl ReadableCloneableVec<Height, C> + ?Sized),
+        indexes: &IndexSources,
     ) -> Self
     where
         C: NumericValue,
     {
-        let source = LazyPerBlock::from_boxed_height_source::<Identity<C>>(
+        let source = LazyPerBlock::from_height_source::<Identity<C>>(
             &format!("{name}_cents"),
             version,
             source,

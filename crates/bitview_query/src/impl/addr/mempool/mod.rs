@@ -11,7 +11,7 @@ impl Query {
     pub fn addr_mempool_txs(&self, addr: &Addr, limit: usize) -> Result<Vec<Arc<Transaction>>> {
         let bytes = AddrBytes::from_str(addr)?;
         let mempool = self.mempool().ok_or(Error::MempoolNotAvailable)?;
-        let _guard = self.read_publication()?;
-        mempool.addr_txs(&bytes, limit, &self.tip_blockhash())
+        let pin = self.pin_safe_lengths()?;
+        mempool.addr_txs(&bytes, limit, &self.tip_blockhash_at(&pin)?)
     }
 }

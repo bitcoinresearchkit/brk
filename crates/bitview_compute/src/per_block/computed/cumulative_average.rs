@@ -5,18 +5,24 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, EagerVec, Ident, ImportableVec, PcoVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, UnaryTransform, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, CachedVec, Database, EagerVec, Ident, ImportableVec, PcoVec,
+    ReadableCloneableVec, ReadableVec, Rw, StorageMode, UnaryTransform, VecValue, WritableVec,
 };
 
 use crate::{
-    CachedWindowStartVec, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, NumericValue, Windows,
+    CachePolicy, IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight, NumericValue,
+    Windows,
 };
 
 /// Cumulative source of truth with lazy exact per-block values and rolling averages.
 #[derive(Traversable)]
-pub struct PerBlockCumulativeAverage<T, C = T, M: StorageMode = Rw, F = Ident>
-where
+pub struct PerBlockCumulativeAverage<
+    T,
+    C = T,
+    M: StorageMode = Rw,
+    F = Ident,
+    P: CachePolicy = Budgeted,
+> where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
     F: UnaryTransform<C, T>,
@@ -25,13 +31,13 @@ where
     /// taken from the period's final block.
     pub block: LazyPreviousDeltaVec<Height, C, T, F>,
     #[traversable(hidden)]
-    cumulative: M::Stored<EagerVec<PcoVec<Height, C>>>,
+    cumulative: CachedVec<M::Stored<EagerVec<PcoVec<Height, C>>>, P>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
     last_cumulative: M::WriteOnly<Option<(usize, C)>>,
 }
 
-impl<T, C, F> PerBlockCumulativeAverage<T, C, Rw, F>
+impl<T, C, F, P: CachePolicy> PerBlockCumulativeAverage<T, C, Rw, F, P>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
@@ -41,22 +47,25 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
-        let cumulative: EagerVec<PcoVec<Height, C>> =
-            EagerVec::forced_import(db, &format!("{name}_cumulative"), cumulative_version)?;
+        let cumulative = P::wrap(EagerVec::<PcoVec<Height, C>>::forced_import(
+            db,
+            &format!("{name}_cumulative"),
+            cumulative_version,
+        )?);
         let last_cumulative = cumulative
             .collect_last()
             .map(|value| (cumulative.len(), value));
-        let block =
-            LazyPreviousDeltaVec::transformed(name, version, cumulative.read_only_boxed_clone());
+        let source = cumulative.read_only_boxed_clone();
+        let block = LazyPreviousDeltaVec::transformed(name, version, source.clone());
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             cumulative_version,
-            &cumulative,
-            cached_starts,
+            &source,
+            window_starts,
             indexes,
         );
 

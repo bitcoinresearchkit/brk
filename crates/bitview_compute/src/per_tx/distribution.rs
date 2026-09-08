@@ -11,7 +11,7 @@ use brk_types::{Height, Lengths, TxIndex, VSize};
 use schemars::JsonSchema;
 use vecdb::{Database, EagerVec, ImportableVec, PcoVec, ReadableVec, Rw, StorageMode, Version};
 
-use crate::{ComputedVecValue, NumericValue, TxDerivedDistribution};
+use crate::{ComputedVecValue, IndexSources, NumericValue, TxDerivedDistribution};
 
 #[derive(Traversable)]
 pub struct PerTxDistribution<T, M: StorageMode = Rw>
@@ -31,7 +31,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let tx_index = EagerVec::forced_import(db, name, version)?;
         let distribution = TxDerivedDistribution::forced_import(db, name, version, indexes)?;
@@ -43,7 +43,7 @@ where
 
     pub fn derive_from_with_skip(
         &mut self,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         starting_lengths: &Lengths,
         first_tx_index: &impl ReadableVec<Height, TxIndex>,
         exit: &Exit,
@@ -65,7 +65,7 @@ where
 
     pub fn derive_from_with_skip_weighted(
         &mut self,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         starting_lengths: &Lengths,
         first_tx_index: &impl ReadableVec<Height, TxIndex>,
         vsize_source: &impl ReadableVec<TxIndex, VSize>,

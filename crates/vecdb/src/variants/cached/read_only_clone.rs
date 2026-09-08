@@ -1,9 +1,9 @@
 use crate::{ReadOnlyClone, StoredVec};
 
-use super::CachedVec;
+use super::{CachedVec, CachedVecStrategy};
 
-impl<V: StoredVec> ReadOnlyClone for CachedVec<V> {
-    type ReadOnly = CachedVec<V::ReadOnly>;
+impl<V: StoredVec, S: CachedVecStrategy> ReadOnlyClone for CachedVec<V, S> {
+    type ReadOnly = CachedVec<V::ReadOnly, S>;
 
     #[inline]
     fn read_only_clone(&self) -> Self::ReadOnly {
@@ -11,9 +11,7 @@ impl<V: StoredVec> ReadOnlyClone for CachedVec<V> {
             inner: self.inner.read_only_clone(),
             cache: self.cache.clone(),
             materialize: self.materialize.clone(),
-            budget: self.budget,
-            last_access: self.last_access.clone(),
-            resident_bytes: self.resident_bytes.clone(),
+            strategy: self.strategy.clone(),
         }
     }
 }

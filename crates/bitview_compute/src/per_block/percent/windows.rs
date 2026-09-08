@@ -5,7 +5,9 @@ use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Rw, StorageMode};
 
-use crate::{ColumnarPerBlock, FixedRatio, LazyColumnPercentPerBlock, WindowId, Windows};
+use crate::{
+    ColumnarPerBlock, FixedRatio, IndexSources, LazyColumnPercentPerBlock, WindowId, Windows,
+};
 
 /// Four named fixed-point percentage views backed by one columnar source.
 #[derive(Deref, DerefMut, Traversable)]
@@ -19,7 +21,7 @@ impl<B: FixedRatio> ColumnarPercentRollingWindows<B> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(ColumnarPerBlock::forced_import(
             db,

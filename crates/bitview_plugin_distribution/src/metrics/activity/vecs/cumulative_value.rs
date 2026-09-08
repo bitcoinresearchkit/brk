@@ -36,11 +36,11 @@ impl CumulativeValueByCohort {
             let (sats, cents) = cumulative
                 .sources(&filter, &name, version)
                 .expect("supported cumulative value cohort");
-            LazyValuePerBlockCumulativeRolling::from_boxed_cumulative_sources(
+            LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,
                 version,
-                sats,
-                cents,
+                &sats,
+                &cents,
                 mappings,
                 cached_starts,
             )
@@ -53,11 +53,11 @@ impl CumulativeValueByCohort {
             metric,
             addr_version,
             |name, sats, cents| {
-                LazyValuePerBlockCumulativeRolling::from_boxed_cumulative_sources(
+                LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                     name,
                     addr_version,
-                    sats,
-                    cents,
+                    &sats,
+                    &cents,
                     mappings,
                     cached_starts,
                 )

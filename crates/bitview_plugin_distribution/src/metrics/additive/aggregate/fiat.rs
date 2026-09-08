@@ -7,7 +7,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
+use vecdb::{AnyVec, CachedReadableVec, Database, ReadableColumnarVec, Rw, StorageMode};
 
 use bitview_compute::{CACHE_BUDGET, ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 
@@ -44,15 +44,15 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
                                 version,
                                 TermId::ALL.iter().copied(),
                             ))
-                            .read_only_boxed_clone(),
-                        UTXOAggregateId::Sth => source
-                            .column(&format!("{name}_cents"), version, TermId::Short)
-                            .read_only_boxed_clone(),
-                        UTXOAggregateId::Lth => source
-                            .column(&format!("{name}_cents"), version, TermId::Long)
-                            .read_only_boxed_clone(),
+                            .cached_boxed_clone(),
+                        UTXOAggregateId::Sth => CACHE_BUDGET
+                            .wrap(source.column(&format!("{name}_cents"), version, TermId::Short))
+                            .cached_boxed_clone(),
+                        UTXOAggregateId::Lth => CACHE_BUDGET
+                            .wrap(source.column(&format!("{name}_cents"), version, TermId::Long))
+                            .cached_boxed_clone(),
                     };
-                    LazyFiatPerBlock::from_boxed_cents_source(&name, version, cents, mappings)
+                    LazyFiatPerBlock::from_cents_source(&name, version, &cents, mappings)
                 })
             },
         )?;

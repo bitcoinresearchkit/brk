@@ -1,8 +1,8 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
-use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec};
 
-use crate::{FixedRatio, LazyColumnPerBlock, LazyPerBlock};
+use crate::{FixedRatio, IndexSources, LazyColumnPerBlock, LazyPerBlock};
 
 #[derive(Clone, Traversable)]
 pub struct LazyColumnRatioPerBlock<R, C>
@@ -26,7 +26,7 @@ where
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, R>, C>,
         column: C,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Self {
         let ppm = LazyColumnPerBlock::new(
             &format!("{name}_{}", R::SUFFIX),
@@ -35,12 +35,7 @@ where
             column,
             indexes,
         );
-        let ratio = LazyPerBlock::from_resolutions::<R::ToRatio>(
-            name,
-            version,
-            ppm.height.read_only_boxed_clone(),
-            &ppm.resolutions,
-        );
+        let ratio = LazyPerBlock::from_resolutions::<R::ToRatio>(name, version, &ppm.resolutions);
 
         Self { ppm, ratio }
     }

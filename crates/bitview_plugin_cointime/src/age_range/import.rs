@@ -1,17 +1,16 @@
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{AgeRangeId, CohortContext};
 use brk_types::{BoundedRatio, Cents, Height, Version};
-use vecdb::{
-    CachedBoxedVec, CachedColumnarVec, CachedReadableVec, Database, PcoVec, ReadOnlyColumnarVec,
-    ReadableCloneableVec,
-};
+use vecdb::{CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyColumnarVec};
 
 use super::{ActivitySeries, SupplyVecs, Vecs};
 use bitview_compute::{
     BoundedOddsF64, BoundedToF64, CACHE_BUDGET, CachedWindowStartVec, ColumnarPerBlock,
-    ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling, LazyPerBlock, Windows,
-    lazy_weighted_supply,
+    ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling, LazyPerBlock,
+    LazySpotValuePerBlock, Windows,
 };
 
 const VERSION: Version = Version::new(3);
@@ -19,10 +18,10 @@ const VERSION: Version = Version::new(3);
 pub fn forced_import(
     db: &Database,
     parent_version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
     spot_price: &CachedBoxedVec<Height, Cents>,
-    distribution: &bitview_plugin_distribution::Vecs,
+    distribution: &DistributionVecs,
 ) -> Result<Vecs> {
     let version = parent_version + VERSION;
     let coindays_consumed = ColumnarPerBlockCumulativeRolling::forced_import(
@@ -73,13 +72,16 @@ pub fn forced_import(
                 .supply
                 .total
                 .age_ranges
-                .cached_column(column)
-                .read_only_boxed_clone();
-            let weight = activity.cached.cached_column(column).cached_boxed_clone();
+                .cached_column(column);
+            let weight = activity.cached.cached_column(column);
             if complement {
-                lazy_weighted_supply::<true>(&name, version, supply, weight, mappings, spot_price)
+                LazySpotValuePerBlock::from_weighted_supply::<true>(
+                    &name, version, supply, weight, mappings, spot_price,
+                )
             } else {
-                lazy_weighted_supply::<false>(&name, version, supply, weight, mappings, spot_price)
+                LazySpotValuePerBlock::from_weighted_supply::<false>(
+                    &name, version, supply, weight, mappings, spot_price,
+                )
             }
         })
     };
@@ -100,7 +102,7 @@ impl ActivitySeries {
     fn new(
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Self {
         let cached =
             CachedColumnarVec::new(source.clone(), version, |column| CACHE_BUDGET.wrap(column));
@@ -108,7 +110,7 @@ impl ActivitySeries {
             LazyPerBlock::from_height_source::<BoundedToF64>(
                 &format!("{name}_wakefulness"),
                 version,
-                cached.cached_column(column).clone(),
+                cached.cached_column(column),
                 mappings,
             )
         });
@@ -116,7 +118,7 @@ impl ActivitySeries {
             LazyPerBlock::from_height_source::<BoundedToF64<true>>(
                 &format!("{name}_dormancy"),
                 version,
-                cached.cached_column(column).clone(),
+                cached.cached_column(column),
                 mappings,
             )
         });
@@ -124,7 +126,7 @@ impl ActivitySeries {
             LazyPerBlock::from_height_source::<BoundedOddsF64>(
                 &format!("{name}_wakefulness_to_dormancy"),
                 version + Version::ONE,
-                cached.cached_column(column).clone(),
+                cached.cached_column(column),
                 mappings,
             )
         });

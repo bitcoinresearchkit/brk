@@ -53,14 +53,14 @@ impl LazyBaseVecs {
             vaulted: LazySpotValuePerBlock::from_sats_source(
                 "vaulted_supply",
                 version,
-                vaulted,
+                &vaulted,
                 mappings,
                 spot_price,
             ),
             active: LazySpotValuePerBlock::from_sats_source(
                 "active_supply",
                 version,
-                active,
+                &active,
                 mappings,
                 spot_price,
             ),

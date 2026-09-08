@@ -1,17 +1,15 @@
 use crate::TypedVec;
 
-use super::CachedVec;
+use super::{CachedVec, CachedVecStrategy};
 
-impl<V: TypedVec + Clone> Clone for CachedVec<V> {
+impl<V: TypedVec + Clone, S: CachedVecStrategy> Clone for CachedVec<V, S> {
     #[inline(always)]
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
             cache: self.cache.clone(),
             materialize: self.materialize.clone(),
-            budget: self.budget,
-            last_access: self.last_access.clone(),
-            resident_bytes: self.resident_bytes.clone(),
+            strategy: self.strategy.clone(),
         }
     }
 }

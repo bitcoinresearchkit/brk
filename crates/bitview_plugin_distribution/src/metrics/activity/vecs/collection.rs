@@ -11,7 +11,7 @@ use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode, UnaryTrans
 
 use crate::metrics::UTXORows;
 use bitview_compute::{
-    CACHE_BUDGET, CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock, SatsToCents, Windows,
+    CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock, SatsToCents, Windows,
 };
 
 use super::{
@@ -100,11 +100,10 @@ impl ActivityVecs {
                 ._1y
                 .height
                 .clone();
-            let source = CACHE_BUDGET.wrap(source);
             LazyPerBlock::from_height_source::<CoinDaysToCoinYears>(
                 &name,
                 Self::aggregate_version(aggregate_version, id) + COINYEARS_DESTROYED_VERSION,
-                source,
+                &source,
                 mappings,
             )
         });

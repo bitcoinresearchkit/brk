@@ -14,7 +14,7 @@ pub(crate) use indexer_read::IndexerRead;
 /// after an async handoff.
 ///
 /// Revalidation alone is not exposed on `Query`: the internal read view must
-/// retain publication exclusion through the subsequent dependent reads.
+/// retain rollback protection through the subsequent dependent reads.
 ///
 /// ```compile_fail
 /// use bitview_query::{Query, ResolvedConfirmedTx};
@@ -51,6 +51,8 @@ impl Query {
     /// }
     /// ```
     pub fn resolve_confirmed_tx(&self, txid: &Txid) -> Result<ResolvedConfirmedTx> {
-        self.read_indexer()?.resolve_confirmed_tx(txid)
+        self.read_indexer()?
+            .resolve_confirmed_tx(txid)
+            .map_err(|error| self.transaction_error(error))
     }
 }

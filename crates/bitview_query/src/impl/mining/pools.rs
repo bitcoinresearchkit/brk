@@ -83,6 +83,13 @@ impl Query {
             }
         }
 
+        let last_estimated_hashrate = self.hashrate_at(current_height)?;
+        let last_estimated_hashrate3d =
+            self.hashrate_at(lookback._3d.collect_one(current_height).data()?)?;
+        let last_estimated_hashrate1w =
+            self.hashrate_at(lookback._1w.collect_one(current_height).data()?)?;
+        drop(_guard);
+
         pool_data.sort_by_key(|p| Reverse(p.1));
 
         let total_blocks: u64 = pool_data.iter().map(|(_, count)| count).sum();
@@ -99,12 +106,6 @@ impl Query {
                 PoolStats::new(pool, block_count, (idx + 1) as u32, share)
             })
             .collect();
-
-        let last_estimated_hashrate = self.hashrate_at(current_height)?;
-        let last_estimated_hashrate3d =
-            self.hashrate_at(lookback._3d.collect_one(current_height).data()?)?;
-        let last_estimated_hashrate1w =
-            self.hashrate_at(lookback._1w.collect_one(current_height).data()?)?;
 
         Ok(PoolsSummary {
             pools: pool_stats,
@@ -220,6 +221,7 @@ impl Query {
         let pool_name = pools().get(slug).name;
         let shared = self.hashrate_shared_data(0)?;
         let pool_cum = self.pool_daily_cumulative(slug, shared.start_day, shared.end_day)?;
+        drop(_guard);
         Ok(Self::hashrate_entries(&shared, &pool_cum, pool_name).collect())
     }
 

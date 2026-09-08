@@ -1,7 +1,7 @@
 use brk_error::Result;
 
 use brk_types::Version;
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::Database;
 
 use super::{DerivedVecs, Vecs};
 use bitview_compute::{
@@ -27,22 +27,19 @@ impl DerivedVecs {
         let version = version + Version::ONE;
         let liveliness_source =
             PerBlock::forced_import(db, &name("liveliness_bounded_source"), version, mappings)?;
-        let liveliness = LazyPerBlock::from_computed::<BoundedToF64>(
+        let liveliness = LazyPerBlock::from_resolutions::<BoundedToF64>(
             &liveliness_name,
             version,
-            liveliness_source.height.read_only_boxed_clone(),
             &liveliness_source,
         );
-        let vaultedness = LazyPerBlock::from_computed::<BoundedToF64<true>>(
+        let vaultedness = LazyPerBlock::from_resolutions::<BoundedToF64<true>>(
             &name("vaultedness"),
             version,
-            liveliness_source.height.read_only_boxed_clone(),
             &liveliness_source,
         );
-        let ratio = LazyPerBlock::from_computed::<BoundedOddsF64>(
+        let ratio = LazyPerBlock::from_resolutions::<BoundedOddsF64>(
             &name("activity_to_vaultedness"),
             version + Version::ONE,
-            liveliness_source.height.read_only_boxed_clone(),
             &liveliness_source,
         );
 

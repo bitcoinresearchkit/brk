@@ -1,9 +1,9 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
+use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadableCloneableVec, VecValue};
 
-use crate::{CachedWindowStartVec, FixedRatio, NumericValue, Windows};
+use crate::{FixedRatio, IndexSources, NumericValue, Windows};
 
 use super::{LazyDeltaFromHeight, LazyDeltaPercentFromHeight};
 
@@ -32,15 +32,15 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: &(impl ReadableCloneableVec<Height, S> + 'static),
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        indexes: &crate::IndexSources,
+        source: &impl ReadableCloneableVec<Height, S>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        indexes: &IndexSources,
     ) -> Self {
         let source = source.read_only_boxed_clone();
-        let (absolute, rate) = cached_starts
-            .map_with_suffix(|suffix, cached_start| {
+        let (absolute, rate) = window_starts
+            .map_with_suffix(|suffix, window_start| {
                 let name = format!("{name}_{suffix}");
-                let cached = cached_start.read_only_clone();
+                let cached = window_start.read_only_boxed_clone();
                 let starts_version = cached.version();
 
                 let height = LazyDeltaVec::<Height, S, C, DeltaChange>::new(

@@ -3,7 +3,7 @@ mod common;
 use bitview_compute::{DerivedResolutions, Identity, Resolutions};
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredU64, Version};
-use vecdb::{CachedVec, Database, ReadableVec};
+use vecdb::{CachedVec, Database, ReadOnlyClone, ReadableVec};
 
 #[test]
 fn resolution_families_preserve_order_empty_buckets_and_both_derived_constructors() {
@@ -25,7 +25,12 @@ fn resolution_families_preserve_order_empty_buckets_and_both_derived_constructor
     }
     bitview_compute::with_resolution_fields!(initialize_mappings);
     let source = common::stored::<Height, _>(&db, "source", [10, 20, 30].map(StoredU64::new));
-    let resolutions = Resolutions::from_height_source("metric", source, Version::ONE, &indexes);
+    let resolutions = Resolutions::from_source(
+        "metric",
+        &CachedVec::wrap(source.read_only_clone()),
+        Version::ONE,
+        &indexes,
+    );
     let direct = DerivedResolutions::from_derived_computed::<Identity<StoredU64>>(
         "metric",
         Version::ONE,

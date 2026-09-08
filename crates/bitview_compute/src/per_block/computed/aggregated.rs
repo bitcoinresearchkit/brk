@@ -1,14 +1,14 @@
 use brk_error::Result;
+use brk_types::Height;
 
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
-use brk_types::Height;
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, TypedVec, Version};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, Version};
 
 use crate::{
-    CachedWindowStartVec, Identity, LazyPerBlock, LazyPreviousDeltaVec, NumericValue,
-    RollingComplete, WindowStarts, Windows,
+    Identity, IndexSources, LazyPerBlock, LazyPreviousDeltaVec, NumericValue, RollingComplete,
+    WindowStarts, Windows,
 };
 
 #[derive(Traversable)]
@@ -33,12 +33,12 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        cumulative_source: V,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        cumulative_source: &V,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self>
     where
-        V: TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static,
+        V: ReadableCloneableVec<Height, T> + ?Sized,
     {
         let sum = LazyPreviousDeltaVec::new(
             &format!("{name}_sum"),
@@ -57,7 +57,7 @@ where
             version,
             indexes,
             &cumulative.height,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self {

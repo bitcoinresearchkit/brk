@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[cfg(feature = "indexer")]
+#[cfg(any(feature = "chain", feature = "series", feature = "price"))]
 use bitview_plugin::PublicationReadGuard;
 
 #[cfg(feature = "bedrock")]
@@ -134,6 +134,7 @@ impl Query {
         }))
     }
 
+    #[cfg(any(feature = "chain", feature = "series", feature = "price"))]
     fn read_publication(&self) -> Result<PublicationReadGuard> {
         self.indexer()
             .publication()
@@ -200,7 +201,7 @@ impl Query {
     }
 
     #[cfg(feature = "series")]
-    fn read_bounds(&self, safe: Lengths) -> ReadBounds {
+    fn index_read_bounds(safe: Lengths) -> ReadBounds {
         let mut bounds = ReadBounds::new();
 
         bounds.set(Index::Height.name(), safe.height.into());
@@ -238,7 +239,13 @@ impl Query {
                 .unwrap_or(0),
         );
 
-        let timestamp = tip.and_then(|height| {
+        bounds
+    }
+
+    #[cfg(feature = "series")]
+    fn read_bounds(&self, safe: Lengths) -> ReadBounds {
+        let mut bounds = Self::index_read_bounds(safe);
+        let timestamp = safe.last_height().and_then(|height| {
             self.plugins()
                 .mappings
                 .timestamp

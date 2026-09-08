@@ -3,32 +3,30 @@ use std::sync::Arc;
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Open, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
+    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
 };
 
-use bitview_plugin_mappings::CachedFirstHeightVec;
-
-/// OHLC candles derived directly from pinned spot prices and period boundaries.
+/// OHLC candles derived directly from spot prices and period boundaries.
 #[derive(Clone)]
 pub struct LazyOhlcVec<I: VecIndex> {
     name: Arc<str>,
     base_version: Version,
-    prices: CachedBoxedVec<Height, Cents>,
-    first_heights: CachedFirstHeightVec<I>,
+    prices: ReadableBoxedVec<Height, Cents>,
+    first_heights: ReadableBoxedVec<I, Height>,
 }
 
 impl<I: VecIndex> LazyOhlcVec<I> {
     pub fn new(
         name: &str,
         version: Version,
-        prices: CachedBoxedVec<Height, Cents>,
-        first_heights: CachedFirstHeightVec<I>,
+        prices: impl ReadableVec<Height, Cents> + Clone + 'static,
+        first_heights: impl ReadableVec<I, Height> + Clone + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            prices,
-            first_heights,
+            prices: ReadableBoxedVec::new(prices),
+            first_heights: ReadableBoxedVec::new(first_heights),
         }
     }
 
@@ -225,6 +223,7 @@ impl CandleBuilder {
 
 #[cfg(test)]
 mod tests {
+    use bitview_plugin_mappings::CachedFirstHeightVec;
     use brk_types::Day1;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
@@ -263,6 +262,7 @@ mod tests {
 
         let prices = CachedVec::wrap(prices);
         let first_heights = CachedFirstHeightVec::new(periods.read_only_boxed_clone());
+        let boundaries = first_heights.snapshot();
         let ohlc = LazyOhlcVec::new(
             "ohlc",
             Version::ONE,
@@ -270,6 +270,8 @@ mod tests {
             first_heights,
         );
 
+        assert!(Arc::ptr_eq(&boundaries, &ohlc.first_heights.snapshot()));
+        assert!(Arc::ptr_eq(&prices.snapshot(), &ohlc.prices.snapshot()));
         let candles = ohlc.collect();
         assert_eq!(candles.len(), 5);
         assert_eq!(

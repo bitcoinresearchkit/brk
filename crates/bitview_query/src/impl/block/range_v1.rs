@@ -45,7 +45,10 @@ impl ResolvedBlocksV1 {
 
     pub fn build(self, query: &Query) -> Result<Vec<BlockInfoV1>> {
         let (begin, end, lengths) = self.blocks.range();
-        query.blocks_v1_range_with_prices(begin, end, lengths, Some(self.prices))
+        let build = query.capture_blocks_v1_range(begin, end, lengths, Some(self.prices))?;
+        drop(self._publication);
+        drop(self.blocks);
+        build()
     }
 }
 
@@ -139,13 +142,14 @@ impl Query {
 }
 
 impl ResolvedBlocks {
-    /// Build sparse descending V1 rows under this snapshot's existing guard.
+    /// Capture sparse descending V1 rows, then build them without read guards.
     /// Adjacent heights share a bulk read; supplied prices are never re-read.
-    pub fn build_v1_heights(
+    pub(crate) fn build_v1_heights(
         self,
         query: &Query,
         heights: &[Height],
         prices: &[Dollars],
+        publication: PublicationReadGuard,
     ) -> Result<Vec<BlockInfoV1>> {
         let (_, _, lengths) = self.range();
         if heights.len() != prices.len()
@@ -154,7 +158,7 @@ impl ResolvedBlocks {
         {
             return Err(Error::Internal("Invalid sparse block selection"));
         }
-        let mut blocks = Vec::with_capacity(heights.len());
+        let mut builders = Vec::new();
         let mut begin = 0;
         while begin < heights.len() {
             let mut end = begin + 1;
@@ -163,13 +167,19 @@ impl ResolvedBlocks {
                 end += 1;
             }
             let ascending_prices = prices[begin..end].iter().rev().copied().collect();
-            blocks.extend(query.blocks_v1_range_with_prices(
+            builders.push(query.capture_blocks_v1_range(
                 heights[end - 1].to_usize(),
                 heights[begin].to_usize() + 1,
                 lengths,
                 Some(ascending_prices),
             )?);
             begin = end;
+        }
+        drop(publication);
+        drop(self);
+        let mut blocks = Vec::with_capacity(heights.len());
+        for build in builders {
+            blocks.extend(build()?);
         }
         Ok(blocks)
     }

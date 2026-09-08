@@ -1,18 +1,17 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{Database, ReadableCloneableVec};
 
 use super::{Vecs, price_min_max_vecs::PriceMinMaxVecs};
-use bitview_compute::{
-    CACHE_BUDGET, Identity, LazyLookbackVec, LazyPerBlock, PerBlock, PercentPerBlock, Price,
-};
+use bitview_compute::{Identity, LazyLookbackVec, LazyPerBlock, PerBlock, PercentPerBlock, Price};
 
 pub fn forced_import(
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
-    spot_price: &(impl ReadableCloneableVec<Height, Cents> + 'static),
+    mappings: &MappingsVecs,
+    spot_price: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Vecs> {
     let v1 = Version::ONE;
     let v = version + v1;
@@ -43,7 +42,7 @@ pub fn forced_import(
         true_range: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
             "price_true_range",
             v,
-            CACHE_BUDGET.wrap(true_range_source),
+            &true_range_source,
             mappings,
         ),
         true_range_sum_2w: PerBlock::forced_import(

@@ -6,7 +6,7 @@ pub use brk_types::{PERCENTILES, PERCENTILES_LEN, PercentileId};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Database, Rw, StorageMode};
 
-use crate::{ColumnarPerBlock, LazyColumnPerBlock, PercentilePrices, Price};
+use crate::{ColumnarPerBlock, IndexSources, LazyColumnPerBlock, PercentilePrices, Price};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct PercentilesVecs<M: StorageMode = Rw> {
@@ -28,7 +28,7 @@ impl PercentilesVecs {
         db: &Database,
         prefix: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let version = version + VERSION;
         let prices = ColumnarPerBlock::<Cents, PercentileId, _>::forced_import(

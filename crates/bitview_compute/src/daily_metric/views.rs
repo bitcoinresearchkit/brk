@@ -3,9 +3,9 @@ use brk_types::{
     Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
     Month6, Version, Week1, Year1, Year10,
 };
-use vecdb::{ReadableBoxedVec, ReadableCloneableVec, VecIndex, VecValue};
+use vecdb::ReadableBoxedVec;
 
-use super::{DailyMappings, DailyValue, DailyView, LastDay, RepeatDay, view::DayStrategy};
+use super::{DailyMappings, DailyValue, DailyView, LastDay, RepeatDay};
 
 #[derive(Clone, Traversable)]
 #[traversable(merge)]
@@ -41,36 +41,21 @@ where
         mappings: &DailyMappings,
     ) -> Self {
         Self {
-            height: view(name, source.clone(), version, &mappings.height),
-            minute10: view(name, source.clone(), version, &mappings.minute10),
-            minute30: view(name, source.clone(), version, &mappings.minute30),
-            hour1: view(name, source.clone(), version, &mappings.hour1),
-            hour4: view(name, source.clone(), version, &mappings.hour4),
-            hour12: view(name, source.clone(), version, &mappings.hour12),
-            day3: view(name, source.clone(), version, &mappings.day3),
-            week1: view(name, source.clone(), version, &mappings.week1),
-            month1: view(name, source.clone(), version, &mappings.month1),
-            month3: view(name, source.clone(), version, &mappings.month3),
-            month6: view(name, source.clone(), version, &mappings.month6),
-            year1: view(name, source.clone(), version, &mappings.year1),
-            year10: view(name, source.clone(), version, &mappings.year10),
-            halving: view(name, source.clone(), version, &mappings.halving),
-            epoch: view(name, source, version, &mappings.epoch),
+            height: DailyView::new(name, version, source.clone(), &mappings.height),
+            minute10: DailyView::new(name, version, source.clone(), &mappings.minute10),
+            minute30: DailyView::new(name, version, source.clone(), &mappings.minute30),
+            hour1: DailyView::new(name, version, source.clone(), &mappings.hour1),
+            hour4: DailyView::new(name, version, source.clone(), &mappings.hour4),
+            hour12: DailyView::new(name, version, source.clone(), &mappings.hour12),
+            day3: DailyView::new(name, version, source.clone(), &mappings.day3),
+            week1: DailyView::new(name, version, source.clone(), &mappings.week1),
+            month1: DailyView::new(name, version, source.clone(), &mappings.month1),
+            month3: DailyView::new(name, version, source.clone(), &mappings.month3),
+            month6: DailyView::new(name, version, source.clone(), &mappings.month6),
+            year1: DailyView::new(name, version, source.clone(), &mappings.year1),
+            year10: DailyView::new(name, version, source.clone(), &mappings.year10),
+            halving: DailyView::new(name, version, source.clone(), &mappings.halving),
+            epoch: DailyView::new(name, version, source, &mappings.epoch),
         }
     }
-}
-
-fn view<I, T, V, S>(
-    name: &str,
-    source: ReadableBoxedVec<Day1, T>,
-    version: Version,
-    mapping: &V,
-) -> DailyView<I, T, S>
-where
-    I: VecIndex,
-    T: VecValue,
-    V: ReadableCloneableVec<I, Day1> + ?Sized,
-    S: DayStrategy,
-{
-    DailyView::new(name, version, source, mapping.read_only_boxed_clone())
 }

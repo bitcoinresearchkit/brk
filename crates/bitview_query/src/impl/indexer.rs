@@ -19,10 +19,10 @@ impl Query {
                 return FxHashMap::default();
             }
             let indexer = query.indexer();
-            let Ok(_guard) = query.read_publication() else {
+            let Ok(pin) = query.pin_safe_lengths() else {
                 return FxHashMap::default();
             };
-            let safe = indexer.safe_lengths();
+            let safe = pin.lengths();
             let txid_reader = indexer.vecs().transactions.txid.reader();
             let first_txout_reader = indexer.vecs().transactions.first_txout_index.reader();
             let output_type_reader = indexer.vecs().outputs.output_type.reader();

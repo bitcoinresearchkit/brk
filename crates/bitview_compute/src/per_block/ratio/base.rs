@@ -3,9 +3,9 @@ use brk_error::Result;
 use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Lengths, StoredF32, Version};
-use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
-use crate::{FixedRatio, LazyPerBlock, PerBlock};
+use crate::{FixedRatio, IndexSources, LazyPerBlock, PerBlock};
 
 #[derive(Traversable)]
 pub struct RatioPerBlock<R: FixedRatio, M: StorageMode = Rw> {
@@ -22,7 +22,7 @@ impl<R: FixedRatio> RatioPerBlock<R> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Self::forced_import_ppm(db, &format!("{name}_ratio"), version, indexes)
     }
@@ -31,18 +31,13 @@ impl<R: FixedRatio> RatioPerBlock<R> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let v = version + VERSION;
 
         let ppm = PerBlock::forced_import(db, &format!("{name}_{}", R::SUFFIX), v, indexes)?;
 
-        let ratio = LazyPerBlock::from_computed::<R::ToRatio>(
-            name,
-            v,
-            ppm.height.read_only_boxed_clone(),
-            &ppm,
-        );
+        let ratio = LazyPerBlock::from_resolutions::<R::ToRatio>(name, v, &ppm);
 
         Ok(Self { ppm, ratio })
     }

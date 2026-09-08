@@ -2,20 +2,18 @@ use std::sync::Arc;
 
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
-use vecdb::{
-    AnyVec, CachedBoxedVec, CachedReadableVec, CachedVec, ReadOnlyClone, ReadableVec, TypedVec,
-};
+use vecdb::{AnyVec, PinnedCachedVec, ReadOnlyClone, ReadableVec, TypedVec};
 
 use super::LazyWindowStartVec;
 
 /// A pinned, process-lifetime cache for a heavily reused window-start vector.
 #[derive(Clone, Traversable)]
 #[traversable(transparent)]
-pub struct CachedWindowStartVec(CachedVec<LazyWindowStartVec>);
+pub struct CachedWindowStartVec(PinnedCachedVec<LazyWindowStartVec>);
 
 impl CachedWindowStartVec {
     pub fn new(inner: LazyWindowStartVec) -> Self {
-        Self(CachedVec::wrap(inner))
+        Self(PinnedCachedVec::wrap(inner))
     }
 
     pub fn lazy(&self) -> &LazyWindowStartVec {
@@ -24,10 +22,6 @@ impl CachedWindowStartVec {
 
     pub fn version(&self) -> Version {
         self.0.version()
-    }
-
-    pub fn read_only_cached_boxed_clone(&self) -> CachedBoxedVec<Height, Height> {
-        self.0.cached_boxed_clone()
     }
 
     pub fn snapshot(&self) -> Arc<Vec<Height>> {
@@ -75,6 +69,10 @@ impl TypedVec for CachedWindowStartVec {
 }
 
 impl ReadableVec<Height, Height> for CachedWindowStartVec {
+    fn snapshot(&self) -> Arc<Vec<Height>> {
+        self.0.snapshot()
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Height>) {
         self.0.read_into_at(from, to, buf);
     }

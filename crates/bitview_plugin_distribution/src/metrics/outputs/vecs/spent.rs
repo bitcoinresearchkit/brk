@@ -31,10 +31,10 @@ impl SpentOutputCount {
         )?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "spent_utxo_count");
-            LazyPerBlockCumulativeRolling::from_boxed_cumulative_source(
+            LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,
                 version,
-                cumulative
+                &cumulative
                     .matrices
                     .additive_source(&filter, &format!("{name}_cumulative"), version)
                     .expect("spent-output cohort source"),

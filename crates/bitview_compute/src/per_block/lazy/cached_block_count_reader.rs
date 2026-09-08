@@ -3,14 +3,14 @@ use std::{convert::Infallible, sync::Arc};
 use brk_types::{Height, StoredU16, StoredU64};
 use parking_lot::RwLock;
 use vecdb::{
-    AnyVec, CachedBoxedVec, PrintableIndex, ReadableVec, TypedVec, VecIndex, Version,
+    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, Version,
     short_type_name,
 };
 
 const CHECKPOINT_INTERVAL: usize = 256;
 
 pub struct CachedBlockCountReader {
-    block: CachedBoxedVec<Height, StoredU16>,
+    block: ReadableBoxedVec<Height, StoredU16>,
     checkpoints: Arc<RwLock<Checkpoints>>,
 }
 
@@ -20,18 +20,14 @@ struct Checkpoints {
 }
 
 impl CachedBlockCountReader {
-    pub fn new(block: CachedBoxedVec<Height, StoredU16>) -> Self {
+    pub fn new(block: impl ReadableVec<Height, StoredU16> + Clone + 'static) -> Self {
         Self {
-            block,
+            block: ReadableBoxedVec::new(block),
             checkpoints: Arc::new(RwLock::new(Checkpoints {
                 block: Arc::new(Vec::new()),
                 cumulative: Arc::new(vec![0]),
             })),
         }
-    }
-
-    pub fn invalidate(&self) {
-        self.block.invalidate();
     }
 
     pub fn cumulative_at(&self, index: usize) -> Option<StoredU64> {
@@ -229,7 +225,7 @@ impl CachedBlockCountReader {
 impl Clone for CachedBlockCountReader {
     fn clone(&self) -> Self {
         Self {
-            block: self.block.cached_boxed_clone(),
+            block: self.block.clone(),
             checkpoints: self.checkpoints.clone(),
         }
     }
@@ -353,7 +349,7 @@ mod tests {
                     block.push(StoredU16::new(19));
                 }
                 block.write().unwrap();
-                count.invalidate();
+                cached.invalidate();
             }
             let values = block.collect_range_at(0, 4300);
             let mut sum = 0u64;

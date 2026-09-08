@@ -5,7 +5,7 @@ use bitview_plugin_mappings::Vecs as MappingVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{BinaryTransform, CachedBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec};
+use vecdb::{BinaryTransform, ReadableCloneableVec};
 
 use crate::DCA_DOLLARS_PER_DAY;
 
@@ -28,11 +28,11 @@ impl DcaStack {
         name: &str,
         version: Version,
         mappings: &MappingVecs,
-        source: V,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        source: &V,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Result<Self>
     where
-        V: TypedVec<I = Height, T = Sats> + ReadableVec<Height, Sats> + Clone + 'static,
+        V: ReadableCloneableVec<Height, Sats> + ?Sized,
     {
         let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
             &format!("{name}_sats"),
@@ -44,14 +44,14 @@ impl DcaStack {
         let cents_source = LazyIndexedVec::new(
             &format!("{name}_cents_source"),
             version,
-            sats.height.read_only_boxed_clone(),
-            spot_price.clone(),
+            &sats.height,
+            spot_price,
             |_, sats, spot| SatsToCents::apply(sats, spot),
         );
         let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
             &format!("{name}_cents"),
             version,
-            cents_source,
+            &cents_source,
             mappings,
         );
         let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(

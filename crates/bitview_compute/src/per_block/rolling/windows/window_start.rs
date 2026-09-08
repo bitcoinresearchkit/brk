@@ -3,8 +3,8 @@ use std::{convert::Infallible, sync::Arc};
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Timestamp, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, PrintableIndex, ReadOnlyClone, ReadableVec, TypedVec,
-    short_type_name,
+    AnyExportableVec, AnyVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec,
+    TypedVec, short_type_name,
 };
 
 const HOUR_SECONDS: u64 = 60 * 60;
@@ -20,7 +20,7 @@ pub struct LazyWindowStartVec {
     name: Arc<str>,
     version: Version,
     duration_seconds: u64,
-    timestamps: CachedBoxedVec<Height, Timestamp>,
+    timestamps: ReadableBoxedVec<Height, Timestamp>,
 }
 
 impl LazyWindowStartVec {
@@ -28,7 +28,7 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         hours: u64,
-        timestamps: CachedBoxedVec<Height, Timestamp>,
+        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
     ) -> Self {
         Self::new(name, version, hours * HOUR_SECONDS, timestamps)
     }
@@ -37,7 +37,7 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         days: u64,
-        timestamps: CachedBoxedVec<Height, Timestamp>,
+        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
     ) -> Self {
         Self::new(name, version, days * DAY_SECONDS, timestamps)
     }
@@ -46,13 +46,13 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         duration_seconds: u64,
-        timestamps: CachedBoxedVec<Height, Timestamp>,
+        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
             duration_seconds,
-            timestamps,
+            timestamps: ReadableBoxedVec::new(timestamps),
         }
     }
 

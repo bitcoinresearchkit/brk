@@ -1,10 +1,10 @@
 mod base;
-mod cached;
-mod cached_full;
 mod columnar_cumulative_rolling;
 mod columnar_spot;
+mod compute;
 mod cumulative;
 mod cumulative_rolling;
+mod full;
 mod lazy;
 mod lazy_block;
 mod lazy_cumulative;
@@ -19,12 +19,11 @@ mod lazy_spot_with_deltas;
 mod rolling_distribution;
 
 pub use base::*;
-pub use cached::*;
-pub use cached_full::*;
 pub use columnar_cumulative_rolling::*;
 pub use columnar_spot::*;
 pub use cumulative::ValuePerBlockCumulative;
 pub use cumulative_rolling::*;
+pub use full::*;
 pub use lazy::*;
 pub use lazy_block::*;
 pub use lazy_cumulative::*;

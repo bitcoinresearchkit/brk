@@ -28,10 +28,10 @@ impl RealizedPriceByCohort {
         let matrices = ExactUTXOColumnarMetric::forced_import(db, "realized_price_cents", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_price");
-            LazyPriceWithRatioPerBlock::from_boxed_height_source(
+            LazyPriceWithRatioPerBlock::from_height_source(
                 &name,
                 version,
-                matrices
+                &matrices
                     .source(&filter, &format!("{name}_cents"), version)
                     .expect("realized-price cohort source"),
                 mappings,

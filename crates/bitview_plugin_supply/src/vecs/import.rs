@@ -1,13 +1,17 @@
 use bitview_compute::{
-    CACHE_BUDGET, CachedWindowStartVec, Identity, LazyFiatPerBlock, LazyPerBlock,
-    LazyPercentPerBlock, LazyRollingDeltasFiatFromHeight, LazySpotValuePerBlock, LazyValuePerBlock,
-    LazyWindowVec, Windows,
+    CachedWindowStartVec, Identity, LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock,
+    LazyRollingDeltasFiatFromHeight, LazySpotValuePerBlock, LazyValuePerBlock, LazyWindowVec,
+    Windows,
 };
 use bitview_plugin::ImportContext;
+use bitview_plugin_cointime::Vecs as CointimeVecs;
 use bitview_plugin_distribution::AllChainSources;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use brk_error::Result;
 use brk_types::{Cents, Height, PartsPerMillionSigned64, Sats, Version};
-use vecdb::{CachedBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec};
+use vecdb::{ReadableCloneableVec, ReadableVec};
 
 use super::Vecs;
 use crate::{STORAGE, burned, velocity};
@@ -16,12 +20,12 @@ impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        distribution: &bitview_plugin_distribution::Vecs,
-        cointime: &bitview_plugin_cointime::Vecs,
+        distribution: &DistributionVecs,
+        cointime: &CointimeVecs,
         all_chain: &AllChainSources,
-        transactions: &bitview_plugin_transactions::Vecs,
+        transactions: &TransactionsVecs,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
@@ -37,7 +41,7 @@ impl Vecs {
             "inflation_rate_ppm_source",
             inflation_version,
             supply_metrics.sats.height.read_only_boxed_clone(),
-            cached_starts._1y.read_only_cached_boxed_clone(),
+            (*cached_starts._1y).clone(),
             false,
             |current, previous, _| {
                 if previous <= Sats::FIFTY_BTC {
@@ -47,11 +51,10 @@ impl Vecs {
                 }
             },
         );
-        let inflation_source = CACHE_BUDGET.wrap(inflation_source);
         let inflation_rate = LazyPercentPerBlock::from_height_source(
             "inflation_rate",
             inflation_version,
-            inflation_source,
+            &inflation_source,
             mappings,
         );
 
@@ -80,12 +83,12 @@ impl Vecs {
                     &format!("{name}_source"),
                     growth_version,
                     realized_cap,
-                    starts.read_only_cached_boxed_clone(),
+                    starts.read_only_boxed_clone(),
                 );
                 LazyPerBlock::from_height_source::<Identity<PartsPerMillionSigned64>>(
                     &name,
                     growth_version,
-                    source,
+                    &source,
                     mappings,
                 )
             });
@@ -115,12 +118,9 @@ impl Vecs {
         all_chain: &AllChainSources,
         name: &str,
         version: Version,
-        realized_cap: &(impl ReadableCloneableVec<Height, Cents> + 'static),
-        window_starts: CachedBoxedVec<Height, Height>,
-    ) -> impl TypedVec<I = Height, T = PartsPerMillionSigned64>
-    + ReadableVec<Height, PartsPerMillionSigned64>
-    + Clone
-    + 'static {
+        realized_cap: &impl ReadableCloneableVec<Height, Cents>,
+        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
+    ) -> LazyWindowVec<Height, (Cents, Cents), PartsPerMillionSigned64> {
         let caps = all_chain.with_market_cap(
             &format!("{name}_caps"),
             Version::ZERO,

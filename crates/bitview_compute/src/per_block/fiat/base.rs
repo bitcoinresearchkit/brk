@@ -3,9 +3,12 @@ use brk_error::Result;
 use bitview_traversable::Traversable;
 use brk_types::{Cents, CentsSigned, Dollars, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode, UnaryTransform};
+use vecdb::{Database, Rw, StorageMode, UnaryTransform};
 
-use crate::{CentsSignedToDollars, CentsUnsignedToDollars, LazyPerBlock, NumericValue, PerBlock};
+use crate::{
+    CentsSignedToDollars, CentsUnsignedToDollars, IndexSources, LazyPerBlock, NumericValue,
+    PerBlock,
+};
 
 /// Trait that associates a cents type with its transform to Dollars.
 pub trait FiatType: NumericValue + JsonSchema {
@@ -35,15 +38,10 @@ impl<C: FiatType> FiatPerBlock<C> {
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let cents = PerBlock::forced_import(db, &format!("{name}_cents"), version, indexes)?;
-        let usd = LazyPerBlock::from_computed::<C::ToDollars>(
-            name,
-            version,
-            cents.height.read_only_boxed_clone(),
-            &cents,
-        );
+        let usd = LazyPerBlock::from_resolutions::<C::ToDollars>(name, version, &cents);
         Ok(Self { usd, cents })
     }
 }

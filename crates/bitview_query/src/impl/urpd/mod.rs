@@ -157,16 +157,8 @@ impl Query {
         weight: UrpdWeight,
     ) -> Result<UrpdRaw> {
         let _guard = self.read_publication()?;
-        self.urpd_raw_with_weight_inner(cohort, date, weight)
-    }
-
-    fn urpd_raw_with_weight_inner(
-        &self,
-        cohort: &Cohort,
-        date: Date,
-        weight: UrpdWeight,
-    ) -> Result<UrpdRaw> {
         let (input, scalar) = self.urpd_input_inner(cohort, date, weight)?;
+        drop(_guard);
         Ok(input.decode()?.apply_weight(scalar))
     }
 

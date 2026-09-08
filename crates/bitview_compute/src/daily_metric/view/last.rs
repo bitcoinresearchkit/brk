@@ -13,16 +13,12 @@ impl DayStrategy for LastDay {
     }
 
     fn source_index(mapping: &[Day1], index: usize, source_len: usize) -> Option<usize> {
-        last_source_index(mapping, index, source_len)
+        let first = mapping[index].to_usize();
+        let next_first = mapping
+            .get(index + 1)
+            .map(|day| day.to_usize())
+            .unwrap_or(source_len)
+            .min(source_len);
+        (first < next_first).then(|| next_first - 1)
     }
-}
-
-pub fn last_source_index(mapping: &[Day1], index: usize, source_len: usize) -> Option<usize> {
-    let first = mapping[index].to_usize();
-    let next_first = mapping
-        .get(index + 1)
-        .map(|day| day.to_usize())
-        .unwrap_or(source_len)
-        .min(source_len);
-    (first < next_first).then(|| next_first - 1)
 }

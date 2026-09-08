@@ -4,11 +4,11 @@ use bitview_traversable::Traversable;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableCloneableVec, ReadableVec, Rw, StorageMode, TypedVec};
+use vecdb::{Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{
-    CachedWindowStartVec, Identity, LazyPerBlock, LazyPreviousDeltaVec, NumericValue,
-    RollingComplete, WindowStarts, Windows,
+    Identity, IndexSources, LazyPerBlock, LazyPreviousDeltaVec, NumericValue, RollingComplete,
+    WindowStarts, Windows,
 };
 
 /// Per-block and rolling views backed by one canonical cumulative source.
@@ -35,12 +35,12 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        cumulative_source: V,
-        indexes: &crate::IndexSources,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        cumulative_source: &V,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self>
     where
-        V: TypedVec<I = Height, T = T> + ReadableVec<Height, T> + Clone + 'static,
+        V: ReadableCloneableVec<Height, T> + ?Sized,
     {
         let block =
             LazyPreviousDeltaVec::new(name, version, cumulative_source.read_only_boxed_clone());
@@ -56,7 +56,7 @@ where
             version,
             indexes,
             &cumulative.height,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self {

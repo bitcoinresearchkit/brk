@@ -6,10 +6,10 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use vecdb::{Database, ReadableVec, Rw, StorageMode};
+use vecdb::{Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{
-    ComputedVecValue, DistributionStats, NumericValue, RollingWindows, WindowStarts,
+    ComputedVecValue, DistributionStats, IndexSources, NumericValue, RollingWindows, WindowStarts,
     algo::compute_rolling_distribution_from_starts,
 };
 
@@ -27,7 +27,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(DistributionStats::try_from_fn(|suffix| {
             RollingWindows::forced_import(db, &format!("{name}_{suffix}"), version, indexes)
@@ -64,7 +64,7 @@ where
 
         macro_rules! window {
             ($w:ident) => {
-                DistributionStats {
+                DistributionStats::<&mut EagerVec<PcoVec<Height, T>>> {
                     min: &mut min.$w.height,
                     max: &mut max.$w.height,
                     pct10: &mut pct10.$w.height,

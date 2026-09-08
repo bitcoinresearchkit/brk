@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_cohort::{AddrTypeId, ByAddrType};
@@ -33,16 +34,16 @@ impl AddrSupplyShareVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         supply: &AddrSupplyVecs,
         all_supply: &CachedBoxedVec<Height, Sats>,
     ) -> Result<Self> {
         let name = format!("{name}_addr_supply_share");
-        let all = LazyPercentPerBlock::from_cached_ratio::<Sats, Sats, RatioSats<PartsPerMillion32>>(
+        let all = LazyPercentPerBlock::from_ratio::<Sats, Sats, RatioSats<PartsPerMillion32>>(
             &name,
             version,
             &supply.all.sats.height,
-            all_supply.clone(),
+            all_supply,
             mappings,
         );
         let ppm =

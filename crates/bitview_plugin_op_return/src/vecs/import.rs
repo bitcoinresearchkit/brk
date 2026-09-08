@@ -3,7 +3,7 @@ use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_types::{Height, Sats, StoredU64, Version};
-use vecdb::CachedBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use super::Vecs;
 use crate::{STORAGE, breakdown::BreakdownVecs, total::Total};
@@ -13,8 +13,8 @@ impl Vecs {
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        block_size: CachedBoxedVec<Height, StoredU64>,
-        chain_fees: CachedBoxedVec<Height, Sats>,
+        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+        chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
@@ -24,11 +24,11 @@ impl Vecs {
             version,
             mappings,
             cached_starts,
-            &block_size,
-            &chain_fees,
+            block_size,
+            chain_fees,
         )?;
         let columnar_version = version + Version::ONE;
-        let total_data = total.cached_data_bytes();
+        let total_data = total.data_bytes_source();
         let by_kind = BreakdownVecs::forced_import(
             &db,
             "op_return_cumulative_by_kind",
@@ -36,9 +36,9 @@ impl Vecs {
             columnar_version,
             mappings,
             cached_starts,
-            &total_data,
-            &block_size,
-            &chain_fees,
+            total_data,
+            block_size,
+            chain_fees,
         )?;
         let policy = BreakdownVecs::forced_import(
             &db,
@@ -47,9 +47,9 @@ impl Vecs {
             columnar_version,
             mappings,
             cached_starts,
-            &total_data,
-            &block_size,
-            &chain_fees,
+            total_data,
+            block_size,
+            chain_fees,
         )?;
 
         let this = Self {

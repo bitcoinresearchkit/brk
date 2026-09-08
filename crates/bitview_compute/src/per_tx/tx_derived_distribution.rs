@@ -6,7 +6,9 @@ use brk_types::{Height, Lengths, TxIndex, VSize};
 use schemars::JsonSchema;
 use vecdb::{Database, ReadableVec, Rw, StorageMode, Version};
 
-use crate::{BlockRollingDistribution, ComputedVecValue, NumericValue, PerBlockDistribution};
+use crate::{
+    BlockRollingDistribution, ComputedVecValue, IndexSources, NumericValue, PerBlockDistribution,
+};
 
 #[derive(Traversable)]
 pub struct TxDerivedDistribution<T, M: StorageMode = Rw>
@@ -26,7 +28,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let block = PerBlockDistribution::forced_import(db, name, version, indexes)?;
         let distribution = BlockRollingDistribution::forced_import(db, name, version, indexes)?;
@@ -39,7 +41,7 @@ where
 
     pub fn derive_from(
         &mut self,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         starting_lengths: &Lengths,
         first_tx_index: &impl ReadableVec<Height, TxIndex>,
         tx_index_source: &impl ReadableVec<TxIndex, T>,
@@ -61,7 +63,7 @@ where
 
     pub fn derive_from_with_skip(
         &mut self,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         starting_lengths: &Lengths,
         first_tx_index: &impl ReadableVec<Height, TxIndex>,
         tx_index_source: &impl ReadableVec<TxIndex, T>,
@@ -99,7 +101,7 @@ where
     #[allow(clippy::too_many_arguments)]
     pub fn derive_from_with_skip_weighted(
         &mut self,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         starting_lengths: &Lengths,
         first_tx_index: &impl ReadableVec<Height, TxIndex>,
         tx_index_source: &impl ReadableVec<TxIndex, T>,

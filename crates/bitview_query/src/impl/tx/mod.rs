@@ -1,3 +1,4 @@
+use bitview_plugin_indexer::SafeLengths;
 use std::sync::Arc;
 
 use bitcoin::{
@@ -34,6 +35,18 @@ enum TransactionSource {
 }
 
 impl Query {
+    /// A missing transaction in a temporarily shortened prefix is not a final 404.
+    /// Apply only after live-source fallback; absence from the confirmed prefix
+    /// alone must not hide an available mempool transaction.
+    pub(crate) fn transaction_error(&self, error: Error) -> Error {
+        if matches!(error, Error::UnknownTxid) && self.indexer().publication().try_read().is_none()
+        {
+            Error::StateUpdating
+        } else {
+            error
+        }
+    }
+
     /// Resolve one exact live, confirmed, or recently vanished transaction.
     fn resolve_transaction_source(&self, txid: &Txid) -> Result<TransactionSource> {
         let read = self.read_indexer()?;
@@ -42,7 +55,7 @@ impl Query {
             Err(Error::UnknownTxid) => self
                 .mempool()
                 .ok_or(Error::UnknownTxid)?
-                .transaction(txid, &self.tip_blockhash())?
+                .transaction(txid, &self.tip_blockhash_at(read.pin())?)?
                 .map(TransactionSource::Memory)
                 .ok_or(Error::UnknownTxid),
             Err(error) => Err(error),
@@ -59,8 +72,8 @@ impl Query {
     /// one guarded indexer/mappings snapshot.
     pub fn txid_and_height_by_index(&self, index: TxIndex) -> Result<(Txid, Height)> {
         let plugins = self.plugins();
-        let _guard = self.read_publication()?;
-        if index >= self.safe_lengths().tx_index {
+        let pin = self.pin_safe_lengths()?;
+        if index >= pin.lengths().tx_index {
             return Err(Error::OutOfRange("Transaction index out of range".into()));
         }
         let txid = self
@@ -86,7 +99,9 @@ impl Query {
     /// }
     /// ```
     pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        self.read_indexer()?.resolve_confirmed_position(txid)
+        self.read_indexer()?
+            .resolve_confirmed_position(txid)
+            .map_err(|error| self.transaction_error(error))
     }
 
     // ── TxStatus construction (single source of truth) ─────────────
@@ -111,15 +126,15 @@ impl Query {
         &self,
         txid: &Txid,
         f: impl Fn(&Transaction) -> R,
-        indexed: impl FnOnce(TxIndex) -> Result<R>,
+        indexed: impl FnOnce(TxIndex, &SafeLengths) -> Result<R>,
     ) -> Result<R> {
-        let _guard = self.read_publication()?;
-        match self.resolve_tx_index_bounded(txid) {
-            Ok(idx) => indexed(idx),
+        let read = self.read_indexer()?;
+        match read.resolve_confirmed_position(txid) {
+            Ok((idx, _)) => indexed(idx, read.pin()),
             Err(Error::UnknownTxid) => self
                 .mempool()
                 .ok_or(Error::UnknownTxid)?
-                .transaction(txid, &self.tip_blockhash())?
+                .transaction(txid, &self.tip_blockhash_at(read.pin())?)?
                 .as_deref()
                 .map(f)
                 .ok_or(Error::UnknownTxid),
@@ -128,37 +143,36 @@ impl Query {
     }
 
     pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        self.lookup_tx(txid, Transaction::clone, |idx| {
-            self.transaction_by_index(idx)
+        self.lookup_tx(txid, Transaction::clone, |idx, pin| {
+            self.transaction_by_index(idx, pin)
         })
+        .map_err(|error| self.transaction_error(error))
     }
 
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
         let read = self.read_indexer()?;
         match read.resolve_confirmed_position(txid) {
-            Ok((_, height)) => self.confirmed_status_at(height),
+            Ok((_, height)) => self.confirmed_status_at_bounded(height, read.pin().lengths()),
             Err(Error::UnknownTxid) => self
                 .mempool()
-                .ok_or(Error::UnknownTxid)?
-                .contains_txid(txid, &self.tip_blockhash())?
+                .ok_or_else(|| self.transaction_error(Error::UnknownTxid))?
+                .contains_txid(txid, &self.tip_blockhash_at(read.pin())?)?
                 .then_some(TxStatus::UNCONFIRMED)
-                .ok_or(Error::UnknownTxid),
+                .ok_or_else(|| self.transaction_error(Error::UnknownTxid)),
             Err(error) => Err(error),
         }
     }
 
     pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
-        self.lookup_tx(txid, Transaction::encode_bytes, |idx| {
-            self.transaction_raw_by_index(idx)
+        self.lookup_tx(txid, Transaction::encode_bytes, |idx, pin| {
+            self.transaction_raw_by_index(idx, pin)
         })
+        .map_err(|error| self.transaction_error(error))
     }
 
     pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
-        self.lookup_tx(
-            txid,
-            |tx| tx.encode_bytes().to_lower_hex_string(),
-            |idx| self.transaction_hex_by_index(idx),
-        )
+        self.transaction_raw(txid)
+            .map(|bytes| bytes.to_lower_hex_string())
     }
 
     /// Resolve txid to (tx_index, first_txout_index, output_count).
@@ -191,23 +205,16 @@ impl Query {
 
     // === Helper methods ===
 
-    fn transaction_by_index(&self, tx_index: TxIndex) -> Result<Transaction> {
-        let guard = self.pin_safe_lengths()?;
+    fn transaction_by_index(&self, tx_index: TxIndex, guard: &SafeLengths) -> Result<Transaction> {
         Ok(self
-            .transactions_at_indices(&[tx_index], &guard)?
+            .transactions_at_indices(&[tx_index], guard)?
             .into_iter()
             .next()
             .expect("transactions_by_indices returns one tx per input index"))
     }
 
-    fn transaction_raw_by_index(&self, tx_index: TxIndex) -> Result<Vec<u8>> {
-        indexed_transaction::read_at(self, tx_index, self.safe_lengths()).map(|(bytes, _)| bytes)
-    }
-
-    fn transaction_hex_by_index(&self, tx_index: TxIndex) -> Result<String> {
-        Ok(self
-            .transaction_raw_by_index(tx_index)?
-            .to_lower_hex_string())
+    fn transaction_raw_by_index(&self, tx_index: TxIndex, pin: &SafeLengths) -> Result<Vec<u8>> {
+        indexed_transaction::read_at(self, tx_index, pin.lengths()).map(|(bytes, _)| bytes)
     }
 
     /// Blocking submission with a bounded deadline and no ambiguous replay.
@@ -219,21 +226,30 @@ impl Query {
 
     pub fn merkleblock_proof(&self, txid: &Txid) -> Result<String> {
         let read = self.read_indexer()?;
-        let (_, height) = read.resolve_confirmed_position(txid)?;
-        self.merkleblock_proof_at(*txid, height)
+        let (_, height) = read
+            .resolve_confirmed_position(txid)
+            .map_err(|error| self.transaction_error(error))?;
+        self.merkleblock_proof_at(*txid, height, read)
     }
 
     /// Build a merkleblock proof from a pre-resolved confirmed transaction.
     pub fn merkleblock_proof_resolved(&self, tx: ResolvedConfirmedTx) -> Result<String> {
         let read = self.read_indexer()?;
-        let (txid, _, height) = read.revalidate_confirmed_tx(tx)?;
-        self.merkleblock_proof_at(txid, height)
+        let (txid, _, height) = read
+            .revalidate_confirmed_tx(tx)
+            .map_err(|error| self.transaction_error(error))?;
+        self.merkleblock_proof_at(txid, height, read)
     }
 
-    fn merkleblock_proof_at(&self, txid: Txid, height: Height) -> Result<String> {
-        let guard = self.pin_safe_lengths()?;
-        let header = self.read_block_header_at(height, &guard)?;
-        let txids = self.block_txids_by_height(height, &guard)?;
+    fn merkleblock_proof_at(
+        &self,
+        txid: Txid,
+        height: Height,
+        read: confirmed::IndexerRead<'_>,
+    ) -> Result<String> {
+        let header = self.read_block_header_at(height, read.pin())?;
+        let txids = self.block_txids_by_height(height, read.pin())?;
+        drop(read);
 
         let target: BitcoinTxid = (&txid).into();
         let mb = MerkleBlock::from_header_txids_with_predicate(
@@ -246,19 +262,27 @@ impl Query {
 
     pub fn merkle_proof(&self, txid: &Txid) -> Result<MerkleProof> {
         let read = self.read_indexer()?;
-        let (tx_index, height) = read.resolve_confirmed_position(txid)?;
-        self.merkle_proof_at(tx_index, height)
+        let (tx_index, height) = read
+            .resolve_confirmed_position(txid)
+            .map_err(|error| self.transaction_error(error))?;
+        self.merkle_proof_at(tx_index, height, read)
     }
 
     /// Build a merkle proof from a pre-resolved confirmed transaction.
     pub fn merkle_proof_resolved(&self, tx: ResolvedConfirmedTx) -> Result<MerkleProof> {
         let read = self.read_indexer()?;
-        let (_, tx_index, height) = read.revalidate_confirmed_tx(tx)?;
-        self.merkle_proof_at(tx_index, height)
+        let (_, tx_index, height) = read
+            .revalidate_confirmed_tx(tx)
+            .map_err(|error| self.transaction_error(error))?;
+        self.merkle_proof_at(tx_index, height, read)
     }
 
-    fn merkle_proof_at(&self, tx_index: TxIndex, height: Height) -> Result<MerkleProof> {
-        let guard = self.pin_safe_lengths()?;
+    fn merkle_proof_at(
+        &self,
+        tx_index: TxIndex,
+        height: Height,
+        read: confirmed::IndexerRead<'_>,
+    ) -> Result<MerkleProof> {
         let first_tx = self
             .indexer()
             .vecs()
@@ -270,7 +294,8 @@ impl Query {
             .to_usize()
             .checked_sub(first_tx.to_usize())
             .ok_or(Error::Internal("Transaction precedes its block"))?;
-        let txids = self.block_txids_by_height(height, &guard)?;
+        let txids = self.block_txids_by_height(height, read.pin())?;
+        drop(read);
         if pos >= txids.len() {
             return Err(Error::Internal("Transaction exceeds its block"));
         }

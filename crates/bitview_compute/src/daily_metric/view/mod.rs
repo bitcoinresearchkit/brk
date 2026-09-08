@@ -12,8 +12,8 @@ use brk_types::{Day1, Version};
 use schemars::SchemaGenerator;
 use serde_json::to_value;
 use vecdb::{
-    AnyExportableVec, AnyVec, Cursor, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecIndex, VecValue, short_type_name,
+    AnyExportableVec, AnyVec, Cursor, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, short_type_name,
 };
 
 use super::DailyValue;
@@ -60,13 +60,13 @@ where
         name: &str,
         version: Version,
         source: ReadableBoxedVec<Day1, T>,
-        mapping: ReadableBoxedVec<I, Day1>,
+        mapping: &(impl ReadableCloneableVec<I, Day1> + ?Sized),
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
             source,
-            mapping,
+            mapping: mapping.read_only_boxed_clone(),
             _phantom: PhantomData,
         }
     }

@@ -41,7 +41,7 @@ where
             let source = matrices
                 .additive_source(&filter, &format!("{name}_cents"), version)
                 .expect("supported unrealized cohort");
-            LazyFiatPerBlock::from_boxed_cents_source(&name, version, source, mappings)
+            LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
         });
         Ok(Self { cohorts, matrices })
     }

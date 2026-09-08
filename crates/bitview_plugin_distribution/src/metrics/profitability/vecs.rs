@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use std::ops::{Add, AddAssign};
@@ -10,7 +11,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Cents, CentsSats, Height, PartsPerMillionSigned32, Sats, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, CachedBoxedVec, ColumnId, Database, PcoVec, PcoVecValue,
-    ReadOnlyColumnarVec, ReadableBoxedVec, Rw, StorageMode,
+    ReadOnlyColumnarVec, ReadableCloneableVec, Rw, StorageMode,
 };
 
 use bitview_compute::{
@@ -77,7 +78,7 @@ impl ProfitabilityVecs {
     pub fn forced_import(
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
@@ -88,7 +89,7 @@ impl ProfitabilityVecs {
             version,
             |source| {
                 Self::series(source, "supply", version, |name, source| {
-                    LazySpotValuePerBlockWithDeltas::from_boxed_sats_source(
+                    LazySpotValuePerBlockWithDeltas::from_sats_source(
                         name,
                         version,
                         source,
@@ -105,7 +106,7 @@ impl ProfitabilityVecs {
             version,
             |source| {
                 Self::series(source, "realized_cap", version, |name, source| {
-                    LazyFiatPerBlock::from_boxed_cents_source(name, version, source, mappings)
+                    LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
         )?;
@@ -115,7 +116,7 @@ impl ProfitabilityVecs {
             version,
             |source| {
                 Self::series(source, "unrealized_pnl", version, |name, source| {
-                    LazyFiatPerBlock::from_boxed_cents_source(name, version, source, mappings)
+                    LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
         )?;
@@ -144,7 +145,7 @@ impl ProfitabilityVecs {
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermProfitabilityRangeId>,
         metric: &str,
         version: Version,
-        mut build: impl FnMut(&str, ReadableBoxedVec<Height, T>) -> S,
+        mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> ProfitabilityRow<UTXOAggregate<S>>
     where
         T: PcoVecValue + AddAssign,
@@ -159,7 +160,7 @@ impl ProfitabilityVecs {
                     aggregate,
                     column.ranges(),
                 );
-                build(&name, source)
+                build(&name, &source)
             })
         })
     }

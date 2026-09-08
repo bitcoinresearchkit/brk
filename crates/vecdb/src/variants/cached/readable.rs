@@ -2,25 +2,31 @@ use std::sync::Arc;
 
 use crate::{ReadableVec, TypedVec};
 
-use super::CachedVec;
+use super::{CachedVec, CachedVecStrategy};
 
-impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
+impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S> {
     /// Return a current snapshot without waiting for its cache lock or filling it.
     /// Writers must still provide publication exclusion for multi-source reads.
     pub fn cached_snapshot(&self) -> Option<Arc<Vec<V::T>>> {
         let data = self
             .cache
             .try_read()?
-            .matching_data(self.inner.len(), self.inner.version())?;
+            .matching_data(self.inner.len(), self.inner.snapshot_version())?;
         self.record_cache_access();
         Some(data)
     }
 }
 
-impl<V: TypedVec + ReadableVec<V::I, V::T>> ReadableVec<V::I, V::T> for CachedVec<V> {
+impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> ReadableVec<V::I, V::T>
+    for CachedVec<V, S>
+{
+    fn snapshot(&self) -> Arc<Vec<V::T>> {
+        CachedVec::snapshot(self)
+    }
+
     #[inline(always)]
-    fn has_cache_layer(&self) -> bool {
-        true
+    fn snapshot_version(&self) -> crate::Version {
+        self.inner.snapshot_version()
     }
 
     #[inline]
@@ -142,7 +148,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>> ReadableVec<V::I, V::T> for CachedVe
     }
 }
 
-impl<V: TypedVec + ReadableVec<V::I, V::T>> CachedVec<V> {
+impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S> {
     #[inline]
     fn range_touches_every_chunk(&self, from: usize, to: usize) -> bool {
         let len = self.inner.len();

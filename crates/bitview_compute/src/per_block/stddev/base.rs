@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_types::{Height, Lengths, StoredF32, Version};
 use vecdb::{Database, ReadableVec, Rw, StorageMode};
 
-use crate::{Lookback, PerBlock};
+use crate::{IndexSources, Lookback, PerBlock};
 
 use super::period_suffix;
 
@@ -26,7 +26,7 @@ impl StdDevPerBlock {
         period: &str,
         days: usize,
         parent_version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let version = parent_version + Version::TWO;
         let p = period_suffix(period);

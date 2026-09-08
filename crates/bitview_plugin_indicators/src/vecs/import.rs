@@ -4,6 +4,10 @@ use bitview_compute::{
 };
 use bitview_plugin::ImportContext;
 use bitview_plugin_distribution::AllChainSources;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_mining::Vecs as MiningVecs;
+use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use brk_error::Result;
 use brk_types::{BasisPoints32, Bitcoin, Cents, Sats, StoredF32, Version};
 use vecdb::unlikely;
@@ -16,11 +20,11 @@ const COINYEARS_DESTROYED_SUPPLY_ADJ_VERSION: Version = Version::ONE;
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         all_chain: &AllChainSources,
-        mining: &bitview_plugin_mining::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        transactions: &bitview_plugin_transactions::Vecs,
+        mining: &MiningVecs,
+        distribution: &DistributionVecs,
+        transactions: &TransactionsVecs,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let v = STORAGE.schema_version();
@@ -35,19 +39,25 @@ impl Vecs {
             |_, volume, market_cap| Self::market_ratio(market_cap, volume),
         );
         let nvt =
-            LazyBasisPointsPerBlock::from_height_source("nvt", bps_version, nvt_source, mappings);
+            LazyBasisPointsPerBlock::from_height_source("nvt", bps_version, &nvt_source, mappings);
         let gini = PercentPerBlock::forced_import(&db, "gini", v, mappings)?;
         let rhodl_ratio = RatioPerBlock::forced_import_ppm(&db, "rhodl_ratio", v, mappings)?;
         let thermo_source = all_chain.with_market_cap(
             "thermo_cap_multiple_bps_source",
             bps_version,
-            &mining.rewards.subsidy.cumulative.cents.height,
+            mining
+                .rewards
+                .subsidy
+                .cumulative
+                .cents
+                .resolutions
+                .height_source(),
             |_, thermo_cap, market_cap| Self::market_ratio(market_cap, thermo_cap),
         );
         let thermo_cap_multiple = LazyBasisPointsPerBlock::from_height_source(
             "thermo_cap_multiple",
             bps_version,
-            thermo_source,
+            &thermo_source,
             mappings,
         );
 
@@ -61,7 +71,7 @@ impl Vecs {
         let coindays_destroyed_supply_adj = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
             "coindays_destroyed_supply_adj",
             v,
-            cdd_source,
+            &cdd_source,
             mappings,
         );
         let cyd_version = v + COINYEARS_DESTROYED_SUPPLY_ADJ_VERSION;
@@ -74,10 +84,10 @@ impl Vecs {
         let coinyears_destroyed_supply_adj = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
             "coinyears_destroyed_supply_adj",
             cyd_version,
-            cyd_source,
+            &cyd_source,
             mappings,
         );
-        let dormancy_24h = &activity.dormancy.all._24h.height;
+        let dormancy_24h = activity.dormancy.all._24h.resolutions.height_source();
         let dormancy_supply_source = all_chain.with_supply(
             "dormancy_supply_adj_source",
             v,
@@ -94,13 +104,13 @@ impl Vecs {
             supply_adj: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
                 "dormancy_supply_adj",
                 v,
-                dormancy_supply_source,
+                &dormancy_supply_source,
                 mappings,
             ),
             flow: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
                 "dormancy_flow",
                 v,
-                dormancy_flow_source,
+                &dormancy_flow_source,
                 mappings,
             ),
         };
@@ -113,7 +123,7 @@ impl Vecs {
         let stock_to_flow = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
             "stock_to_flow",
             v,
-            stock_source,
+            &stock_source,
             mappings,
         );
         let seller_exhaustion = PerBlock::forced_import(&db, "seller_exhaustion", v, mappings)?;

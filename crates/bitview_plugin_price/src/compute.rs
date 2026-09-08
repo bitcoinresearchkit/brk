@@ -32,7 +32,6 @@ impl Vecs {
         self.spot
             .cents
             .height
-            .inner
             .validate_computed_version_or_reset(source_version)?;
 
         let total_heights = indexer.vecs().blocks.timestamp.len();
@@ -46,7 +45,7 @@ impl Vecs {
         let seed_len = total_heights.min(START_HEIGHT_SLOW);
         let seed_start = self.spot.cents.height.len();
         for cents in pre_oracle_prices_from(seed_start).take(seed_len.saturating_sub(seed_start)) {
-            self.spot.cents.height.inner.push(cents);
+            self.spot.cents.height.push(cents);
         }
 
         if self.spot.cents.height.len() >= total_heights {
@@ -87,7 +86,6 @@ impl Vecs {
                 self.spot
                     .cents
                     .height
-                    .inner
                     .push(Cents::new(bin_to_cents(ref_bin)));
 
                 processed += 1;
@@ -307,7 +305,7 @@ impl ComputePlugin for Vecs {
         self.compute_prices(indexer)?;
         {
             let _lock = exit.lock();
-            self.spot.cents.height.inner.write()?;
+            self.spot.cents.height.write()?;
         }
 
         context.compact_database(&self.db);

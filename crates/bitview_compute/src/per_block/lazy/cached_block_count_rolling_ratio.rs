@@ -2,8 +2,8 @@ use std::{convert::Infallible, marker::PhantomData, sync::Arc};
 
 use brk_types::{Height, StoredU64};
 use vecdb::{
-    AnyVec, BinaryTransform, CachedBoxedVec, CheckedSub, PrintableIndex, READ_CHUNK_SIZE,
-    ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
+    AnyVec, BinaryTransform, CheckedSub, PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::SparseRead;
@@ -17,7 +17,7 @@ where
     base_version: Version,
     numerator: ReadableBoxedVec<Height, StoredU64>,
     denominator: CachedBlockCountReader,
-    window_starts: CachedBoxedVec<Height, Height>,
+    window_starts: ReadableBoxedVec<Height, Height>,
     _output: PhantomData<(T, F)>,
 }
 
@@ -30,14 +30,14 @@ where
         version: Version,
         numerator: ReadableBoxedVec<Height, StoredU64>,
         denominator: CachedBlockCountReader,
-        window_starts: CachedBoxedVec<Height, Height>,
+        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
             numerator,
             denominator,
-            window_starts,
+            window_starts: ReadableBoxedVec::new(window_starts),
             _output: PhantomData,
         }
     }

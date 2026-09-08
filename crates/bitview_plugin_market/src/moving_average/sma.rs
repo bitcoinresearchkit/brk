@@ -1,6 +1,8 @@
+use bitview_plugin_blocks::LookbackVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CachedBoxedVec, CachedReadableVec, CachedVec, ReadableCloneableVec};
+use vecdb::{CachedVec, ReadableCloneableVec};
 
 use bitview_compute::{CentsTimesTenths, LazyPerBlock, LazyPriceWithRatioPerBlock, Price};
 
@@ -58,15 +60,15 @@ const VERSION: Version = Version::ONE;
 impl SmaVecs {
     pub fn new(
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
-        lookback: &bitview_plugin_blocks::LookbackVecs,
-        spot_price: CachedBoxedVec<Height, Cents>,
+        mappings: &MappingsVecs,
+        lookback: &LookbackVecs,
+        spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let version = version + VERSION;
         let prefix_sum = CachedVec::wrap(SmaPrefixSumVec::new(
             "price_sma_prefix_sum",
             version,
-            spot_price.clone(),
+            spot_price.read_only_boxed_clone(),
         ));
 
         macro_rules! sma {
@@ -74,14 +76,14 @@ impl SmaVecs {
                 LazyPriceWithRatioPerBlock::from_height_source(
                     concat!("price_sma_", $name),
                     version,
-                    LazySmaVec::new(
+                    &LazySmaVec::new(
                         concat!("price_sma_", $name, "_cents_source"),
                         version,
                         lookback.start_vec($days).read_only_boxed_clone(),
-                        prefix_sum.cached_boxed_clone(),
+                        prefix_sum.clone(),
                     ),
                     mappings,
-                    &spot_price,
+                    spot_price,
                 )
             };
         }

@@ -45,8 +45,8 @@ impl Query {
     pub fn resolve_block_by_timestamp(&self, target: Timestamp) -> Result<ResolvedBlockTimestamp> {
         let indexer = self.indexer();
         let mappings = self.plugins().mappings;
-        let _guard = self.read_publication()?;
-        let len = usize::from(self.safe_lengths().height);
+        let pin = self.pin_safe_lengths()?;
+        let len = usize::from(pin.lengths().height);
         let monotonic = &mappings.timestamp.monotonic;
         let timestamps = &indexer.vecs().blocks.timestamp;
         // Reuse existing snapshots without filling or retaining whole histories.

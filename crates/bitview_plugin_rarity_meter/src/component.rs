@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 
 use bitview_plugin_indexer::Lengths;
@@ -53,8 +54,8 @@ pub fn forced_import(
     db: &Database,
     name: &str,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
-    price_source: &(impl ReadableCloneableVec<Height, Cents> + 'static),
+    mappings: &MappingsVecs,
+    price_source: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Component> {
     let version = version + VERSION;
     let cached_price = CachedComponentPrice::new(name, version, price_source);
@@ -74,7 +75,7 @@ pub fn forced_import(
         let price = cached_price.price_for_ratio(
             &format!("{name}_{suffix}"),
             version,
-            &ratio.ppm.height,
+            ratio.ppm.resolutions.height_source(),
             mappings,
         );
         Band { ratio, price }

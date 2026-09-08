@@ -42,6 +42,11 @@ where
     S2T: VecValue,
     S1T: VecValue,
 {
+    /// The shared source read by this aggregation view.
+    pub fn source(&self) -> &ReadableBoxedVec<S1I, S1T> {
+        &self.source
+    }
+
     pub fn new(
         name: &str,
         version: Version,

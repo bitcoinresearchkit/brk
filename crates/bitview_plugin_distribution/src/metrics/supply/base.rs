@@ -1,10 +1,11 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version};
 use vecdb::{BinaryTransform, CachedBoxedVec, LazyVec, ReadableCloneableVec};
 
 use bitview_compute::{
-    CACHE_BUDGET, CachedWindowStartVec, LazyIndexedVec, LazyPercentPerBlock,
-    LazyRollingDeltasAmountFromHeight, LazySpotValuePerBlock, RatioSats, Windows,
+    CachedWindowStartVec, LazyIndexedVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
+    LazySpotValuePerBlock, RatioSats, Windows,
 };
 
 #[derive(Clone, Traversable)]
@@ -21,20 +22,19 @@ impl SupplyBase {
         version: Version,
         total: LazySpotValuePerBlock,
         all_supply: &CachedBoxedVec<Height, Sats>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let dominance_name = Self::metric_name(cohort_name, "supply_dominance");
         let source = LazyIndexedVec::new(
             &format!("{dominance_name}_ppm_source"),
             version,
-            total.sats.height.read_only_boxed_clone(),
-            all_supply.clone(),
+            &total.sats.height,
+            all_supply,
             |_, supply, all_supply| RatioSats::<PartsPerMillion32>::apply(supply, all_supply),
         );
-        let source = CACHE_BUDGET.wrap(source);
         let dominance =
-            LazyPercentPerBlock::from_height_source(&dominance_name, version, source, mappings);
+            LazyPercentPerBlock::from_height_source(&dominance_name, version, &source, mappings);
 
         Self::new(
             cohort_name,
@@ -50,7 +50,7 @@ impl SupplyBase {
         cohort_name: &str,
         version: Version,
         total: LazySpotValuePerBlock,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let dominance_name = Self::metric_name(cohort_name, "supply_dominance");
@@ -60,9 +60,8 @@ impl SupplyBase {
             total.sats.height.read_only_boxed_clone(),
             Self::all_dominance,
         );
-        let source = CACHE_BUDGET.wrap(source);
         let dominance =
-            LazyPercentPerBlock::from_height_source(&dominance_name, version, source, mappings);
+            LazyPercentPerBlock::from_height_source(&dominance_name, version, &source, mappings);
 
         Self::new(
             cohort_name,
@@ -79,7 +78,7 @@ impl SupplyBase {
         version: Version,
         total: LazySpotValuePerBlock,
         dominance: LazyPercentPerBlock<PartsPerMillion32>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let delta = LazyRollingDeltasAmountFromHeight::new(

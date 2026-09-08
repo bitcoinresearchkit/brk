@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{LazyVec, ReadableCloneableVec, UnaryTransform, VecIndex};
+use vecdb::{LazyVec, UnaryTransform, VecIndex};
 
 use crate::{ComputedVecValue, DistributionStats, PerBlockDistribution};
 
