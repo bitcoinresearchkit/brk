@@ -1,7 +1,7 @@
 use bitview_cohort::{UTXOCoreRows, UTXORows};
 use bitview_vecs::{
-    CumulativeUTXOColumnarMetric, CumulativeUTXOColumnarMetricWithoutAmountOrType,
-    UTXOColumnarMetric, UTXOColumnarMetricWithoutAmount, UTXOColumnarMetricWithoutAmountOrType,
+    CumulativeUTXOColumns, CumulativeUTXOCoreColumns, UTXOColumns, UTXOCoreColumns,
+    UTXOTypedColumns,
 };
 use brk_types::{StoredU64, Version};
 use vecdb::{AnyVec, Database, ReadOnlyClone, ReadableVec, Ro};
@@ -17,20 +17,12 @@ fn cohort_extensions_preserve_core_storage_identity_and_order() {
         .each_ref()
         .map(|dir| Database::open(dir.path()).unwrap());
     let version = Version::new(17);
-    let mut core = UTXOColumnarMetricWithoutAmountOrType::<StoredU64>::forced_import(
-        &databases[0],
-        "metric",
-        version,
-    )
-    .unwrap();
-    let mut typed = UTXOColumnarMetricWithoutAmount::<StoredU64>::forced_import(
-        &databases[1],
-        "metric",
-        version,
-    )
-    .unwrap();
+    let mut core =
+        UTXOCoreColumns::<StoredU64>::forced_import(&databases[0], "metric", version).unwrap();
+    let mut typed =
+        UTXOTypedColumns::<StoredU64>::forced_import(&databases[1], "metric", version).unwrap();
     let mut full =
-        UTXOColumnarMetric::<StoredU64>::forced_import(&databases[2], "metric", version).unwrap();
+        UTXOColumns::<StoredU64>::forced_import(&databases[2], "metric", version).unwrap();
     let core_identity: Vec<_> = core
         .collect_vecs_mut()
         .iter()
@@ -67,26 +59,21 @@ fn cohort_extensions_preserve_core_storage_identity_and_order() {
 #[test]
 fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axes() {
     assert_eq!(
-        size_of::<CumulativeUTXOColumnarMetric<StoredU64, Ro>>(),
-        size_of::<UTXOColumnarMetric<StoredU64, Ro>>()
+        size_of::<CumulativeUTXOColumns<StoredU64, Ro>>(),
+        size_of::<UTXOColumns<StoredU64, Ro>>()
     );
     assert_eq!(
-        size_of::<CumulativeUTXOColumnarMetricWithoutAmountOrType<StoredU64, Ro>>(),
-        size_of::<UTXOColumnarMetricWithoutAmountOrType<StoredU64, Ro>>()
+        size_of::<CumulativeUTXOCoreColumns<StoredU64, Ro>>(),
+        size_of::<UTXOCoreColumns<StoredU64, Ro>>()
     );
     assert!(size_of::<UTXOCoreRows<StoredU64>>() < size_of::<UTXORows<StoredU64>>());
 
     let dir = tempfile::tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut full =
-        CumulativeUTXOColumnarMetric::<StoredU64>::forced_import(&db, "full", Version::ONE)
-            .unwrap();
-    let mut core = CumulativeUTXOColumnarMetricWithoutAmountOrType::<StoredU64>::forced_import(
-        &db,
-        "core",
-        Version::ONE,
-    )
-    .unwrap();
+        CumulativeUTXOColumns::<StoredU64>::forced_import(&db, "full", Version::ONE).unwrap();
+    let mut core =
+        CumulativeUTXOCoreColumns::<StoredU64>::forced_import(&db, "core", Version::ONE).unwrap();
     for delta in [1_u64, 2, 4] {
         let rows = UTXORows::default().map(|_: &StoredU64| StoredU64::from(delta));
         core.push_block(rows.core.clone());
@@ -100,9 +87,9 @@ fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axe
         v.write().unwrap();
     }
     let reader = full.read_only_clone();
-    assert_eq!(reader.matrices.age_range_matrix.len(), 3);
+    assert_eq!(reader.columns.age_range.height.len(), 3);
     assert_eq!(
-        full.matrices
+        full.columns
             .collect_last()
             .unwrap()
             .age_range
@@ -132,7 +119,7 @@ fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axe
         v.write().unwrap();
     }
     assert_eq!(
-        full.matrices
+        full.columns
             .collect_last()
             .unwrap()
             .age_range
@@ -142,7 +129,7 @@ fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axe
         Some(StoredU64::from(13_u64))
     );
     assert_eq!(
-        core.matrices
+        core.columns
             .collect_last()
             .unwrap()
             .age_range
@@ -153,8 +140,9 @@ fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axe
     );
     assert_eq!(
         reader
-            .matrices
-            .age_range_matrix
+            .columns
+            .age_range
+            .height
             .collect_last()
             .unwrap()
             .iter()
@@ -167,12 +155,12 @@ fn reader_projection_omits_cumulative_rows_and_reduced_writers_use_only_core_axe
 #[test]
 fn exact_aggregates_remain_stored_values_not_additive_reconstructions() {
     use bitview_cohort::{Filter, UTXOAggregateRows};
-    use bitview_vecs::ExactUTXOColumnarMetric;
+    use bitview_vecs::ExactUTXOColumns;
     static CACHE: vecdb::CacheBudget = vecdb::CacheBudget::new(1024 * 1024);
     let dir = tempfile::tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut metric =
-        ExactUTXOColumnarMetric::<StoredU64>::forced_import(&db, "exact", Version::ONE).unwrap();
+        ExactUTXOColumns::<StoredU64>::forced_import(&db, "exact", Version::ONE).unwrap();
     let rows = UTXORows::default().map(|_: &StoredU64| StoredU64::from(1_u64));
     let aggregates = UTXOAggregateRows::default().map(|_: &StoredU64| StoredU64::from(999_u64));
     metric.push(rows, aggregates);

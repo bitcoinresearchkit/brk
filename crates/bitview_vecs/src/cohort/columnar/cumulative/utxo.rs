@@ -6,44 +6,44 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::{AnyStoredVec, Database, PcoVecValue, Rw, StorageMode};
 
-use super::super::UTXOColumnarMetric;
+use super::super::UTXOColumns;
 
 #[derive(Traversable)]
-pub struct CumulativeUTXOColumnarMetric<T, M: StorageMode = Rw>
+pub struct CumulativeUTXOColumns<T, M: StorageMode = Rw>
 where
     T: PcoVecValue,
 {
     #[traversable(flatten)]
-    pub matrices: UTXOColumnarMetric<T, M>,
-    last: M::WriteOnly<super::state::CumulativeState<UTXORows<T>>>,
+    pub columns: UTXOColumns<T, M>,
+    last: M::WriteOnly<super::super::state::CumulativeState<UTXORows<T>>>,
 }
 
-impl<T> CumulativeUTXOColumnarMetric<T>
+impl<T> CumulativeUTXOColumns<T>
 where
     T: PcoVecValue + AddAssign + Copy + Default,
 {
     pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            matrices: UTXOColumnarMetric::forced_import(db, name, version)?,
+            columns: UTXOColumns::forced_import(db, name, version)?,
             last: Default::default(),
         })
     }
 
     #[inline(always)]
     pub fn push_block(&mut self, rows: UTXORows<T>) {
-        let len = self.matrices.min_len();
-        let cumulative = self
-            .last
-            .accumulate(len, || self.matrices.collect_last(), rows);
-        self.matrices.push(cumulative);
+        let len = self.columns.min_len();
+        let cumulative =
+            self.last
+                .accumulate(len, || self.columns.collect_last(), |row| *row += rows);
+        self.columns.push(cumulative);
     }
 
     pub fn min_len(&self) -> usize {
-        self.matrices.min_len()
+        self.columns.min_len()
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         self.last = Default::default();
-        self.matrices.collect_vecs_mut()
+        self.columns.collect_vecs_mut()
     }
 }

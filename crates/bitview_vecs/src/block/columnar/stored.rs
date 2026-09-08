@@ -1,3 +1,5 @@
+use std::ops::AddAssign;
+
 use brk_error::Result;
 
 use bitview_traversable::Traversable;
@@ -5,9 +7,9 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableVec, Rw, StorageMode, VecValue,
-    WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, CachedReadableVec, ColumnId, ColumnarVec,
+    Database, EagerVec, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec,
+    ReadableColumnarVec, ReadableVec, Rw, StorageMode, VecValue, WritableVec,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -20,8 +22,7 @@ where
     #[deref_mut]
     #[traversable(flatten)]
     pub series: S,
-    /// Height-indexed matrix whose rows contain one value for every member of
-    /// the matrix's column type.
+    /// One typed row per block, with one value for each column.
     pub height: M::Stored<EagerVec<ColumnarVec<PcoVec<Height, T>, C>>>,
 }
 
@@ -71,7 +72,46 @@ where
         &mut self.height
     }
 
-    /// Computes one stored matrix from two scalar sources per column.
+    pub fn len(&self) -> usize {
+        self.height.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.height.is_empty()
+    }
+
+    pub fn cached_column(
+        &self,
+        cache: &'static CacheBudget,
+        name: &str,
+        version: Version,
+        column: C,
+    ) -> CachedBoxedVec<Height, T> {
+        cache
+            .wrap(self.height.read_only_clone().column(name, version, column))
+            .cached_boxed_clone()
+    }
+
+    pub fn cached_sum(
+        &self,
+        cache: &'static CacheBudget,
+        name: &str,
+        version: Version,
+        columns: impl IntoIterator<Item = C>,
+    ) -> CachedBoxedVec<Height, T>
+    where
+        T: AddAssign,
+    {
+        cache
+            .wrap(
+                self.height
+                    .read_only_clone()
+                    .sum_columns(name, version, columns),
+            )
+            .cached_boxed_clone()
+    }
+
+    /// Computes each column from two scalar sources.
     pub fn compute_columns2<'a, A, B, V1, V2>(
         &mut self,
         max_from: Height,
@@ -131,8 +171,8 @@ where
         Ok(())
     }
 
-    /// Computes one stored matrix from a matrix source and one scalar source per column.
-    pub fn compute_matrix_columns2<'a, A, B, V1, V2>(
+    /// Computes each column from a typed row source and a scalar source.
+    pub fn compute_row_columns2<'a, A, B, V1, V2>(
         &mut self,
         max_from: Height,
         source1: &V1,
@@ -249,7 +289,7 @@ mod tests {
     }
 
     #[test]
-    fn computes_from_scalar_columns_and_matrix_rows() {
+    fn computes_from_scalar_columns_and_typed_rows() {
         let directory = tempfile::tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
 
@@ -330,7 +370,7 @@ mod tests {
         )
         .unwrap();
         products
-            .compute_matrix_columns2(
+            .compute_row_columns2(
                 Height::ZERO,
                 &sums,
                 |column| match column {

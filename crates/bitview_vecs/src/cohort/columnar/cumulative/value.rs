@@ -9,27 +9,26 @@ use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{AnyStoredVec, CacheBudget, ColumnId, Database, LazyVec, Rw, StorageMode};
 
-use super::CumulativeUTXOValueColumnarMetricWithoutAmountOrType;
+use super::CumulativeUTXOCoreValueColumns;
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct CumulativeUTXOValueColumnarMetric<M: StorageMode = Rw> {
+pub struct CumulativeUTXOValueColumns<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub core: CumulativeUTXOValueColumnarMetricWithoutAmountOrType<M>,
-    /// Height-indexed matrices with one column per exact UTXO value range,
+    pub core: CumulativeUTXOCoreValueColumns<M>,
+    /// Height-indexed columns with one column per exact UTXO value range,
     /// ordered from smallest to largest.
     pub amount_range: ColumnarValuePerBlockCumulativeRolling<AmountRangeId, (), M>,
     #[traversable(rename = "type")]
-    /// Height-indexed matrices with one column per spendable BRK output type, in
+    /// Height-indexed columns with one column per spendable BRK output type, in
     /// canonical `SpendableTypeId` order.
     pub type_: ColumnarValuePerBlockCumulativeRolling<SpendableTypeId, (), M>,
 }
 
-impl CumulativeUTXOValueColumnarMetric {
+impl CumulativeUTXOValueColumns {
     pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
-        let core =
-            CumulativeUTXOValueColumnarMetricWithoutAmountOrType::forced_import(db, name, version)?;
+        let core = CumulativeUTXOCoreValueColumns::forced_import(db, name, version)?;
         let version = version + Version::ONE;
         Ok(Self {
             core,
@@ -76,13 +75,27 @@ impl CumulativeUTXOValueColumnarMetric {
     )> {
         match filter {
             Filter::Amount(_) => AmountRangeId::matching(filter).map(|column| {
-                Self::matrix_sources(cache, &self.amount_range, name, version, [column])
+                CumulativeUTXOCoreValueColumns::column_sources(
+                    cache,
+                    &self.amount_range,
+                    name,
+                    version,
+                    [column],
+                )
             }),
             Filter::Type(_) => SpendableTypeId::ALL
                 .iter()
                 .copied()
                 .find(|column| column.select(&SPENDABLE_TYPE_FILTERS) == filter)
-                .map(|column| Self::matrix_sources(cache, &self.type_, name, version, [column])),
+                .map(|column| {
+                    CumulativeUTXOCoreValueColumns::column_sources(
+                        cache,
+                        &self.type_,
+                        name,
+                        version,
+                        [column],
+                    )
+                }),
             _ => self.core.direct_sources(cache, filter, name, version),
         }
     }
@@ -101,31 +114,13 @@ impl CumulativeUTXOValueColumnarMetric {
             .iter()
             .chain(OVER_AMOUNT_FILTERS.iter())
             .find(|candidate| *candidate == filter)?;
-        Some(Self::matrix_sources(
+        Some(CumulativeUTXOCoreValueColumns::column_sources(
             cache,
             &self.amount_range,
             name,
             version,
             AmountRangeId::included_by(filter),
         ))
-    }
-
-    fn matrix_sources<C>(
-        cache: &'static CacheBudget,
-        matrix: &ColumnarValuePerBlockCumulativeRolling<C, ()>,
-        name: &str,
-        version: Version,
-        columns: impl IntoIterator<Item = C>,
-    ) -> (
-        LazyVec<Height, Sats, Height, StoredU64>,
-        LazyVec<Height, Cents, Height, StoredU64>,
-    )
-    where
-        C: ColumnId,
-    {
-        CumulativeUTXOValueColumnarMetricWithoutAmountOrType::matrix_sources(
-            cache, matrix, name, version, columns,
-        )
     }
 
     #[inline(always)]

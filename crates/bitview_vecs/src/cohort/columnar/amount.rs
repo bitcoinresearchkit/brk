@@ -6,98 +6,82 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
+    AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableCloneableVec, ReadableColumnarVec,
     ReadableVec, Rw, StorageMode, WritableVec,
 };
 
+use super::state::CumulativeState;
+use crate::ColumnarPerBlock;
+
+/// Exact amount columns and their range/under/over views.
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ColumnarAmount<T, S: Clone, M: StorageMode = Rw>
-where
-    T: PcoVecValue,
-{
+pub struct ColumnarAmount<T: PcoVecValue, S: Clone, M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub series: Amount<S>,
-    /// Height-indexed matrix with one column per exact value range, ordered from
-    /// smallest to largest.
-    pub matrix: M::Stored<EagerVec<ColumnarVec<PcoVec<Height, T>, AmountRangeId>>>,
-    last: M::WriteOnly<Option<(usize, AmountRange<T>)>>,
+    pub per_block: ColumnarPerBlock<T, AmountRangeId, Amount<S>, M>,
+    last: M::WriteOnly<CumulativeState<AmountRange<T>>>,
 }
 
-impl<T, S: Clone> ColumnarAmount<T, S>
-where
-    T: PcoVecValue + AddAssign,
-{
+impl<T: PcoVecValue + AddAssign, S: Clone> ColumnarAmount<T, S> {
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,
-        matrix_name: &str,
+        storage_name: &str,
         context: CohortContext,
         metric: &str,
         version: Version,
         mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> Result<Self> {
-        let matrix = EagerVec::forced_import(db, matrix_name, version)?;
-        let source: ReadOnlyColumnarVec<PcoVec<Height, T>, AmountRangeId> =
-            matrix.read_only_clone();
-
-        let series = Amount::new(|filter, cohort_name| {
-            let name = context.metric_name(&filter, cohort_name, metric);
-            match AmountRangeId::matching(&filter) {
-                Some(column) => build(&name, &cache.wrap(source.column(&name, version, column))),
-                None => build(
-                    &name,
-                    &cache.wrap(source.sum_columns(
+        let per_block = ColumnarPerBlock::forced_import(db, storage_name, version, |source| {
+            Amount::new(|filter, cohort_name| {
+                let name = context.metric_name(&filter, cohort_name, metric);
+                match AmountRangeId::matching(&filter) {
+                    Some(column) => {
+                        build(&name, &cache.wrap(source.column(&name, version, column)))
+                    }
+                    None => build(
                         &name,
-                        version,
-                        AmountRangeId::included_by(&filter),
-                    )),
-                ),
-            }
-        });
-
+                        &cache.wrap(source.sum_columns(
+                            &name,
+                            version,
+                            AmountRangeId::included_by(&filter),
+                        )),
+                    ),
+                }
+            })
+        })?;
         Ok(Self {
-            series,
-            matrix,
-            last: None,
+            per_block,
+            last: Default::default(),
         })
-    }
-
-    #[inline(always)]
-    pub fn push(&mut self, row: AmountRange<T>) {
-        self.matrix.push(row);
     }
 
     #[inline(always)]
     pub fn push_cumulative(&mut self, delta: &AmountRange<T>)
     where
-        T: AddAssign + Default,
+        T: Default,
     {
-        let len = self.matrix.len();
-        let mut cumulative = match self.last.take() {
-            Some((cached_len, values)) if cached_len == len => values,
-            _ => self.matrix.collect_last().unwrap_or_default(),
-        };
-        for (value, &delta) in cumulative.iter_mut().zip(delta.iter()) {
-            *value += delta;
-        }
-        self.matrix.push(cumulative.clone());
-        self.last = Some((len + 1, cumulative));
-    }
-
-    pub fn len(&self) -> usize {
-        self.matrix.len()
+        let len = self.per_block.len();
+        let row = self.last.accumulate(
+            len,
+            || self.per_block.height.collect_last(),
+            |row| {
+                for (value, &delta) in row.iter_mut().zip(delta.iter()) {
+                    *value += delta;
+                }
+            },
+        );
+        self.per_block.push(row);
     }
 
     pub fn reset(&mut self) -> Result<()> {
-        self.last = None;
-        self.matrix.reset().map_err(Into::into)
+        self.last = Default::default();
+        self.per_block.height.reset().map_err(Into::into)
     }
 
     pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.last = None;
-        &mut self.matrix
+        self.last = Default::default();
+        self.per_block.stored_mut()
     }
 }

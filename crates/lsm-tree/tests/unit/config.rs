@@ -1,6 +1,7 @@
 use super::*;
 
 #[test]
+#[allow(clippy::float_cmp)] // Lookup returns stored values without arithmetic.
 fn policies_repeat_the_final_value_without_changing_slice_lookup() {
     macro_rules! check {
         ($policy:ident, $first:expr, $last:expr) => {{

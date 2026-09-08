@@ -8,6 +8,7 @@ use crate::{DailyMappings, IndexSources, LazyColumnDailyPrice, LazyRatioPerBlock
 pub type LazyColumnDailyPriceWithRatio<C> = crate::PriceWithRatio<LazyColumnDailyPrice<C>>;
 
 impl<C: ColumnId> LazyColumnDailyPriceWithRatio<C> {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cache: &'static CacheBudget,
         name: &str,

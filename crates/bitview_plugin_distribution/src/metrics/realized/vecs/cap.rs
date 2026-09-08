@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
+use crate::metrics::{ColumnarAmount, UTXOColumns};
 
 #[derive(Traversable)]
 pub struct RealizedCapByCohort<M: StorageMode = Rw> {
@@ -19,8 +19,7 @@ pub struct RealizedCapByCohort<M: StorageMode = Rw> {
             M,
         >,
     >,
-    #[traversable(flatten)]
-    pub matrices: UTXOColumnarMetric<Cents, M>,
+    pub stored: UTXOColumns<Cents, M>,
 }
 
 impl RealizedCapByCohort {
@@ -31,13 +30,13 @@ impl RealizedCapByCohort {
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let matrices = UTXOColumnarMetric::forced_import(db, "realized_cap_cents", version)?;
+        let stored = UTXOColumns::forced_import(db, "realized_cap_cents", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_cap");
             LazyFiatPerBlockWithDeltas::from_cents_source(
                 &name,
                 version,
-                &matrices
+                &stored
                     .additive_source(cache, &filter, &format!("{name}_cents"), version)
                     .expect("realized-cap cohort source"),
                 Version::TWO,
@@ -69,7 +68,7 @@ impl RealizedCapByCohort {
                 utxo: cohorts,
                 addr_balance,
             },
-            matrices,
+            stored,
         })
     }
 }

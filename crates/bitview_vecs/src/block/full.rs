@@ -32,6 +32,7 @@ where
     T: NumericValue + JsonSchema,
     S: VecValue,
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,

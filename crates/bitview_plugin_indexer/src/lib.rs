@@ -661,6 +661,8 @@ impl ComputePlugin for Indexer {
 
 #[cfg(test)]
 mod import_tests {
+    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+
     use std::path::PathBuf;
 
     use brk_rpc::{Auth, Client};
@@ -872,6 +874,3 @@ mod import_tests {
         Ok(())
     }
 }
-
-#[cfg(test)]
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

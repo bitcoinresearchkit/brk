@@ -1,7 +1,7 @@
-mod with_amount_and_type;
-mod without_amount;
-mod without_amount_or_type;
+mod core;
+mod typed;
+mod utxo;
 
-pub use with_amount_and_type::UTXOColumnarMetric;
-pub use without_amount::UTXOColumnarMetricWithoutAmount;
-pub use without_amount_or_type::UTXOColumnarMetricWithoutAmountOrType;
+pub use core::UTXOCoreColumns;
+pub use typed::UTXOTypedColumns;
+pub use utxo::UTXOColumns;

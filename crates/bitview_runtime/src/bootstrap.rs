@@ -79,6 +79,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -208,6 +210,3 @@ mod tests {
         Ok(())
     }
 }
-
-#[cfg(test)]
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

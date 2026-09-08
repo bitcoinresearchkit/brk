@@ -44,9 +44,11 @@ mod tests {
     fn projection_does_not_copy_distribution_history() {
         let directory = tempfile::tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut inner = Inner::default();
-        inner.prices = vec![Cents::new(10), Cents::new(20)];
-        inner.timestamps = vec![Timestamp::default(); 2];
+        let mut inner = Inner {
+            prices: vec![Cents::new(10), Cents::new(20)],
+            timestamps: vec![Timestamp::default(); 2],
+            ..Default::default()
+        };
         inner.tx_index_to_height.push(TxIndex::default());
         inner.price_range_max.extend(&inner.prices);
         inner.chain_state.push(BlockState {

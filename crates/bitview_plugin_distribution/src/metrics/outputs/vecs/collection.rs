@@ -44,8 +44,8 @@ impl OutputsVecs {
 
     #[inline(always)]
     pub fn push(&mut self, unspent_count: UTXORows<StoredU64>, spent_count: UTXORows<StoredU64>) {
-        self.unspent_count.matrices.push(unspent_count);
-        self.spent_count.cumulative.push_block(spent_count);
+        self.unspent_count.stored.push(unspent_count);
+        self.spent_count.stored.push_block(spent_count);
     }
 
     #[inline(always)]
@@ -55,16 +55,16 @@ impl OutputsVecs {
 
     pub fn min_resume_len(&self) -> usize {
         self.unspent_count
-            .matrices
+            .stored
             .min_len()
             .min(self.unspent_count.cohorts.addr_balance.len())
-            .min(self.spent_count.cumulative.min_len())
+            .min(self.spent_count.stored.min_len())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.unspent_count.matrices.collect_vecs_mut();
+        let mut vecs = self.unspent_count.stored.collect_vecs_mut();
         vecs.push(self.unspent_count.cohorts.addr_balance.stored_mut());
-        vecs.extend(self.spent_count.cumulative.collect_vecs_mut());
+        vecs.extend(self.spent_count.stored.collect_vecs_mut());
         vecs
     }
 }

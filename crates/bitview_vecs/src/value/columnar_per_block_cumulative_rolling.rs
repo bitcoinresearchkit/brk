@@ -212,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn stores_units_in_separate_cohort_matrices() {
+    fn stores_units_in_separate_cohort_columns() {
         static SOURCE_CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
         let cache = &SOURCE_CACHE_BUDGET;
         let directory = tempfile::tempdir().unwrap();

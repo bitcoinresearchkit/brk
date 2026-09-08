@@ -81,7 +81,7 @@ impl AddrSupplyShareVecs {
         type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.ppm.compute_matrix_columns2(
+        self.ppm.compute_row_columns2(
             max_from,
             &supply.height,
             |column| *column.select(type_supply_sats),

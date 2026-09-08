@@ -65,9 +65,8 @@ fn larger_graphs_and_shared_ancestors_preserve_results() {
             let parents: Vec<Vec<_>> = (0..n)
                 .map(|child| {
                     (0..child)
-                        .filter_map(|parent| {
-                            (next() % 5 == 0).then(|| CpfpClusterTxIndex::from(parent as u32))
-                        })
+                        .filter(|_| next() % 5 == 0)
+                        .map(|parent| CpfpClusterTxIndex::from(parent as u32))
                         .collect()
                 })
                 .collect();

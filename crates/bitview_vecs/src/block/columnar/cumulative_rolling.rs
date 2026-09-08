@@ -92,7 +92,7 @@ where
         self.cumulative.write().map(|_| ()).map_err(Into::into)
     }
 
-    /// Computes one cumulative matrix from one scalar per-block source per column.
+    /// Accumulates one scalar per-block source into each column.
     pub fn compute_columns<'a, V, U>(
         &mut self,
         max_from: Height,
@@ -151,7 +151,7 @@ where
         Ok(())
     }
 
-    /// Computes one cumulative matrix from two scalar sources per column.
+    /// Accumulates a function of two scalar sources into each column.
     pub fn compute_columns2<'a, A, B, V1, V2>(
         &mut self,
         max_from: Height,

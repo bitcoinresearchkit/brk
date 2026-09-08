@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_types::{Cents, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmount, CumulativeUTXOColumnarMetric};
+use crate::metrics::{ColumnarAmount, CumulativeUTXOColumns};
 
 #[derive(Traversable)]
 pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
@@ -16,8 +16,7 @@ pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
         LazyFiatPerBlockCumulativeWithSums<Cents>,
         ColumnarAmount<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
     >,
-    #[traversable(flatten)]
-    pub cumulative: CumulativeUTXOColumnarMetric<Cents, M>,
+    pub stored: CumulativeUTXOColumns<Cents, M>,
 }
 
 impl CumulativeRealizedByCohort {
@@ -29,17 +28,17 @@ impl CumulativeRealizedByCohort {
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let cumulative = CumulativeUTXOColumnarMetric::forced_import(
+        let stored = CumulativeUTXOColumns::forced_import(
             db,
             &format!("{metric}_cumulative_cents"),
             version,
         )?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let source = cumulative
-                .matrices
+            let source = stored
+                .columns
                 .additive_source(cache, &filter, &format!("{name}_cumulative_cents"), version)
-                .expect("supported cumulative realized cohort");
+                .expect("supported stored realized cohort");
             LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                 &name,
                 version,
@@ -71,7 +70,7 @@ impl CumulativeRealizedByCohort {
                 utxo: cohorts,
                 addr_balance,
             },
-            cumulative,
+            stored,
         })
     }
 }

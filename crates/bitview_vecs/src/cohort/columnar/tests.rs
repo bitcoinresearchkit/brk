@@ -5,10 +5,7 @@ use bitview_cohort::{
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{Database, ReadableVec};
 
-use super::{
-    CumulativeUTXOValueColumnarMetric, CumulativeUTXOValueColumnarMetricWithoutAmountOrType,
-    UTXOColumnarMetricWithoutAmountOrType,
-};
+use super::{CumulativeUTXOCoreValueColumns, CumulativeUTXOValueColumns, UTXOCoreColumns};
 
 #[test]
 fn additive_and_cumulative_sources_share_exact_aggregate_selection() {
@@ -17,16 +14,10 @@ fn additive_and_cumulative_sources_share_exact_aggregate_selection() {
     let directory = tempfile::tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut additive =
-        UTXOColumnarMetricWithoutAmountOrType::<Sats>::forced_import(&db, "additive", Version::ONE)
-            .unwrap();
-    let mut cumulative = CumulativeUTXOValueColumnarMetricWithoutAmountOrType::forced_import(
-        &db,
-        "cumulative",
-        Version::ONE,
-    )
-    .unwrap();
-    let mut full =
-        CumulativeUTXOValueColumnarMetric::forced_import(&db, "full", Version::ONE).unwrap();
+        UTXOCoreColumns::<Sats>::forced_import(&db, "additive", Version::ONE).unwrap();
+    let mut cumulative =
+        CumulativeUTXOCoreValueColumns::forced_import(&db, "cumulative", Version::ONE).unwrap();
+    let mut full = CumulativeUTXOValueColumns::forced_import(&db, "full", Version::ONE).unwrap();
     let sats = UTXORows {
         core: bitview_cohort::UTXOCoreRows {
             age_range: AgeRange::from_fn(|id| Sats::from(id.index() as u64 + 1)),

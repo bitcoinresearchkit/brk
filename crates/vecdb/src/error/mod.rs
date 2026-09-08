@@ -116,6 +116,13 @@ impl Error {
     }
 }
 
+fn is_io_data_error(io_err: &io::Error) -> bool {
+    matches!(
+        io_err.kind(),
+        io::ErrorKind::IsADirectory | io::ErrorKind::NotADirectory
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,11 +134,4 @@ mod tests {
         assert!(error.is_lock_error());
         assert!(!error.is_data_error());
     }
-}
-
-fn is_io_data_error(io_err: &io::Error) -> bool {
-    matches!(
-        io_err.kind(),
-        io::ErrorKind::IsADirectory | io::ErrorKind::NotADirectory
-    )
 }

@@ -27,6 +27,7 @@ pub struct AvgAmountVecs<M: StorageMode = Rw> {
 }
 
 impl AvgAmountVecs {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,

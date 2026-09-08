@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AggregatePriceWithRatioPerBlock<M: StorageMode = Rw> {
@@ -42,9 +42,5 @@ impl AggregatePriceWithRatioPerBlock {
             },
         )?;
         Ok(Self { values })
-    }
-
-    pub fn len(&self) -> usize {
-        self.values.height.len()
     }
 }

@@ -4,9 +4,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    AnyVec, CacheBudget, CachedReadableVec, Database, ReadableColumnarVec, Rw, StorageMode,
-};
+use vecdb::{CacheBudget, CachedReadableVec, Database, ReadableColumnarVec, Rw, StorageMode};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AdditiveAggregateFiatPerBlock<C: FiatType, M: StorageMode = Rw> {
@@ -56,9 +54,5 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
             short: row.sth,
             long: row.lth,
         });
-    }
-
-    pub fn len(&self) -> usize {
-        self.values.height.len()
     }
 }

@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmountValue, CumulativeUTXOValueColumnarMetric};
+use crate::metrics::{ColumnarAmountValue, CumulativeUTXOValueColumns};
 
 #[derive(Traversable)]
 pub struct CumulativeValueByCohort<M: StorageMode = Rw> {
@@ -17,7 +17,7 @@ pub struct CumulativeValueByCohort<M: StorageMode = Rw> {
         LazyValuePerBlockCumulativeRolling,
         ColumnarAmountValue<LazyValuePerBlockCumulativeRolling, M>,
     >,
-    pub cumulative: CumulativeUTXOValueColumnarMetric<M>,
+    pub stored: CumulativeUTXOValueColumns<M>,
 }
 
 impl CumulativeValueByCohort {
@@ -29,16 +29,16 @@ impl CumulativeValueByCohort {
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let cumulative = CumulativeUTXOValueColumnarMetric::forced_import(
+        let stored = CumulativeUTXOValueColumns::forced_import(
             db,
             &format!("{metric}_cumulative"),
             version,
         )?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let (sats, cents) = cumulative
+            let (sats, cents) = stored
                 .sources(cache, &filter, &name, version)
-                .expect("supported cumulative value cohort");
+                .expect("supported stored value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,
                 version,
@@ -72,13 +72,13 @@ impl CumulativeValueByCohort {
                 utxo: cohorts,
                 addr_balance,
             },
-            cumulative,
+            stored,
         })
     }
 
     #[inline(always)]
     pub fn push_block(&mut self, sats: UTXORows<Sats>, cents: UTXORows<Cents>) {
-        self.cumulative.push_block(sats, cents);
+        self.stored.push_block(sats, cents);
     }
 
     #[inline(always)]
@@ -87,13 +87,11 @@ impl CumulativeValueByCohort {
     }
 
     pub fn min_len(&self) -> usize {
-        self.cumulative
-            .min_len()
-            .min(self.cohorts.addr_balance.len())
+        self.stored.min_len().min(self.cohorts.addr_balance.len())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.cumulative.collect_vecs_mut();
+        let mut vecs = self.stored.collect_vecs_mut();
         vecs.extend(self.cohorts.addr_balance.collect_vecs_mut());
         vecs
     }

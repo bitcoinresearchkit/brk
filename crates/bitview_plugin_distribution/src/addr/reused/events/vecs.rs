@@ -139,6 +139,7 @@ impl AddrEventsVecs {
         });
         WithAddrTypes { all, by_addr_type }
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,

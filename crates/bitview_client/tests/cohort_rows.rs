@@ -47,7 +47,7 @@ fn structured_series_rows_deserialize_without_erasing_their_wrapper() {
 }
 
 #[test]
-fn generated_matrix_path_fetches_a_structured_row() {
+fn generated_storage_path_fetches_a_structured_row() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let client =
         bitview_client::BitviewClient::new(format!("http://{}", listener.local_addr().unwrap()));
@@ -79,7 +79,7 @@ fn generated_matrix_path_fetches_a_structured_row() {
         .to_string();
         socket.get_mut().write_all(format!("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}", body.len()).as_bytes()).unwrap();
     });
-    let endpoint = &client.series().cohorts.supply.total.epoch_matrix;
+    let endpoint = &client.series().cohorts.supply.total.stored.epoch.height;
     assert_eq!(endpoint.name(), "supply_sats_by_epoch");
     let response: bitview_client::SeriesData<ByEpoch<Sats>> = endpoint.by.height().fetch().unwrap();
     assert_eq!(response.data.len(), 1);

@@ -1,10 +1,9 @@
-mod value_with_amount_and_type;
-mod value_without_amount_or_type;
-mod with_amount_and_type;
-mod without_amount_or_type;
+mod core;
+mod utxo;
+mod value;
+mod value_core;
 
-pub use value_with_amount_and_type::CumulativeUTXOValueColumnarMetric;
-pub use value_without_amount_or_type::CumulativeUTXOValueColumnarMetricWithoutAmountOrType;
-pub use with_amount_and_type::CumulativeUTXOColumnarMetric;
-pub use without_amount_or_type::CumulativeUTXOColumnarMetricWithoutAmountOrType;
-mod state;
+pub use core::CumulativeUTXOCoreColumns;
+pub use utxo::CumulativeUTXOColumns;
+pub use value::CumulativeUTXOValueColumns;
+pub use value_core::CumulativeUTXOCoreValueColumns;

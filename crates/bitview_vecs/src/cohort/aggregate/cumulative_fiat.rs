@@ -75,4 +75,8 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
     pub fn len(&self) -> usize {
         self.values.cumulative.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.values.cumulative.is_empty()
+    }
 }

@@ -54,7 +54,7 @@ impl AddrStates {
             .total
             .cohorts
             .addr_balance
-            .matrix
+            .height
             .collect_one(previous_height)
         else {
             return Ok(false);
@@ -64,12 +64,12 @@ impl AddrStates {
             .unspent_count
             .cohorts
             .addr_balance
-            .matrix
+            .height
             .collect_one(previous_height)
         else {
             return Ok(false);
         };
-        let Some(addr_count) = funded.balance.matrix.collect_one(previous_height) else {
+        let Some(addr_count) = funded.balance.height.collect_one(previous_height) else {
             return Ok(false);
         };
 

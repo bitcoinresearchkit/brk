@@ -6,22 +6,22 @@ use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use vecdb::{AnyStoredVec, CacheBudget, ColumnId, Database, LazyVec, Rw, StorageMode};
 
 #[derive(Traversable)]
-pub struct CumulativeUTXOValueColumnarMetricWithoutAmountOrType<M: StorageMode = Rw> {
-    /// Height-indexed matrices with one column per exact UTXO age range,
+pub struct CumulativeUTXOCoreValueColumns<M: StorageMode = Rw> {
+    /// Height-indexed columns with one column per exact UTXO age range,
     /// ordered from youngest to oldest.
     pub age_range: ColumnarValuePerBlockCumulativeRolling<AgeRangeId, (), M>,
-    /// Height-indexed matrices with one column per subsidy-halving epoch,
+    /// Height-indexed columns with one column per subsidy-halving epoch,
     /// ordered from earliest to latest.
     pub epoch: ColumnarValuePerBlockCumulativeRolling<EpochId, (), M>,
-    /// Height-indexed matrices with one column per output-creation year, in
+    /// Height-indexed columns with one column per output-creation year, in
     /// chronological order.
     pub class: ColumnarValuePerBlockCumulativeRolling<ClassId, (), M>,
-    /// Height-indexed matrices with discount-entry followed by premium-entry
+    /// Height-indexed columns with discount-entry followed by premium-entry
     /// UTXOs.
     pub entry: ColumnarValuePerBlockCumulativeRolling<EntryId, (), M>,
 }
 
-impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
+impl CumulativeUTXOCoreValueColumns {
     pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         let version = version + Version::ONE;
         Ok(Self {
@@ -69,14 +69,14 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
     )> {
         match filter {
             Filter::Time(_) => AgeRangeId::matching(filter).map(|column| {
-                Self::matrix_sources(cache, &self.age_range, name, version, [column])
+                Self::column_sources(cache, &self.age_range, name, version, [column])
             }),
             Filter::Epoch(_) => EpochId::matching(filter)
-                .map(|column| Self::matrix_sources(cache, &self.epoch, name, version, [column])),
+                .map(|column| Self::column_sources(cache, &self.epoch, name, version, [column])),
             Filter::Class(_) => ClassId::matching(filter)
-                .map(|column| Self::matrix_sources(cache, &self.class, name, version, [column])),
+                .map(|column| Self::column_sources(cache, &self.class, name, version, [column])),
             Filter::Entry(_) => EntryId::matching(filter)
-                .map(|column| Self::matrix_sources(cache, &self.entry, name, version, [column])),
+                .map(|column| Self::column_sources(cache, &self.entry, name, version, [column])),
             Filter::All | Filter::Term(_) | Filter::Amount(_) | Filter::Type(_) => None,
         }
     }
@@ -92,7 +92,7 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
         LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         let columns = AgeRangeId::aggregate_columns(filter)?;
-        Some(Self::matrix_sources(
+        Some(Self::column_sources(
             cache,
             &self.age_range,
             name,
@@ -101,9 +101,9 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
         ))
     }
 
-    pub fn matrix_sources<C>(
+    pub fn column_sources<C>(
         cache: &'static CacheBudget,
-        matrix: &ColumnarValuePerBlockCumulativeRolling<C, ()>,
+        source: &ColumnarValuePerBlockCumulativeRolling<C, ()>,
         name: &str,
         version: Version,
         columns: impl IntoIterator<Item = C>,
@@ -114,7 +114,7 @@ impl CumulativeUTXOValueColumnarMetricWithoutAmountOrType {
     where
         C: ColumnId,
     {
-        matrix.sources(cache, &format!("{name}_cumulative"), version, columns)
+        source.sources(cache, &format!("{name}_cumulative"), version, columns)
     }
 
     #[inline(always)]

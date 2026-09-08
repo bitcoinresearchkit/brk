@@ -174,17 +174,18 @@ async fn queued_timeout_does_not_dispatch_later() {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let url = format!("http://{}", listener.local_addr().unwrap());
     let submission = Arc::new(Submission::new());
-    let held = submission.agent.lock();
     let queued = spawn_blocking({
         let submission = submission.clone();
         let url = url.clone();
-        move || submission.send_with_timeout(&url, &Auth::None, "aa", Duration::from_millis(30))
+        move || {
+            let _held = submission.agent.lock();
+            submission.send_with_timeout(&url, &Auth::None, "aa", Duration::from_millis(30))
+        }
     });
     assert!(matches!(
         queued.await.unwrap(),
         Err(Error::Internal("node submission queue timed out"))
     ));
-    drop(held);
     let next = spawn_blocking(move || {
         submission.send_with_timeout(&url, &Auth::None, "bb", Duration::from_secs(2))
     });

@@ -53,6 +53,8 @@ impl PluginStorage {
 
 #[cfg(test)]
 mod tests {
+    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+
     use std::path::Path;
 
     use brk_types::Version;
@@ -76,6 +78,3 @@ mod tests {
         );
     }
 }
-
-#[cfg(test)]
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

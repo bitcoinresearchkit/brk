@@ -27,7 +27,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// Long-term-holder Coinflow aggregates use UTXO age ranges at least 150
     /// days old and weight them by estimated future spending probability.
     pub lth: AggregateVecs,
-    /// Height-indexed source matrices for all, short-term-holder, and
+    /// Height-indexed source stored for all, short-term-holder, and
     /// long-term-holder Coinflow aggregates.
     pub aggregate_sources: AggregateSources<M>,
 }

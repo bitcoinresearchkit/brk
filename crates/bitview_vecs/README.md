@@ -15,7 +15,7 @@ and reader primitives; `bitview_compute` supplies stateful/range algorithms;
 - `block`, `daily`, `tx`: metric families organized by their source index.
 - `rolling`: rolling and delta compositions.
 - `value`, `fiat`, `percent`, `ratio`: unit-specific compositions.
-- `cohort`: vector-backed cohort matrices, aggregates, and typed count breakdowns.
+- `cohort`: cohort columns, aggregates, and typed count breakdowns.
 
 Modules are private; the crate root exposes the supported types. Files are
 named relative to their parent module (for example, `daily/metric.rs`, not
@@ -36,10 +36,18 @@ policy. `SpotPrice`, `OhlcPrice`, and `SplitPrice` own reusable price constructi
 plugins retain provider policy. Investment-specific stacks retain the existing
 `LazySpotValuePerBlock` instead of redeclaring its four unit fields.
 
-Cohort matrix families extend a common four-axis core with type and amount
-matrices. Logical membership and row shapes remain in `bitview_cohort`.
-Exact aggregates stay separately stored; additive aggregates sum their canonical
-source columns. Neither policy is substituted for the other.
+`UTXOCoreColumns` owns the four disjoint age/epoch/class/entry axes.
+`UTXOTypedColumns` composes that core with output types; `UTXOColumns` adds
+output amounts. Each axis uses `ColumnarPerBlock`, with one varying cohort axis
+and one metric per stored vector. Logical membership and rows remain in
+`bitview_cohort`. Plugins keep these backing columns under `stored`, separate
+from their public cohort views.
+
+`ExactUTXOColumns` composes direct columns with `UTXOOverlappingColumns` for
+independently calculated all/STH/LTH and threshold results. Additive metrics
+sum canonical source columns instead; neither policy substitutes for the other.
+Cumulative scalar and sats/cents families retain this composition and share
+writer-checkpoint handling. Amount views compose the same block families.
 
 `TypeCounts` composes a typed breakdown with `CountTotal`. Plugins select the
 total's adjustment and retention, including coinbase exclusion; vector assembly
@@ -66,7 +74,7 @@ operands, including on a cold budgeted cache. The owning count column
 invalidates its block cache after changes.
 
 Writer-only cumulative checkpoints use `StorageMode::WriteOnly`, so read-only
-handles contain no unused row payload. Exposing mutable matrices invalidates
+handles contain no unused row payload. Exposing mutable storage invalidates
 their writer checkpoint. Count-total owners must also invalidate transformed
 denominators when their sources are rewritten without changing length.
 

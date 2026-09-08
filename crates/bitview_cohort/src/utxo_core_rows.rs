@@ -2,7 +2,7 @@ use std::ops::AddAssign;
 
 use crate::{AgeRange, ByEntry, ByEpoch, Class, UTXORows};
 
-/// Disjoint rows shared by every UTXO matrix family, without unused amount/type axes.
+/// Disjoint rows shared by UTXO column families, without unused amount/type axes.
 #[derive(Clone, Default)]
 pub struct UTXOCoreRows<T> {
     pub age_range: AgeRange<T>,

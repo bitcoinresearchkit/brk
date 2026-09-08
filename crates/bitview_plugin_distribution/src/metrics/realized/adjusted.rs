@@ -98,7 +98,7 @@ impl AdjustedSoprVecs {
     fn import_cumulative(
         cache: &'static CacheBudget,
         db: &Database,
-        matrix_name: &str,
+        storage_name: &str,
         metric: &str,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -112,7 +112,7 @@ impl AdjustedSoprVecs {
     > {
         ColumnarPerBlockCumulativeRolling::forced_import(
             db,
-            matrix_name,
+            storage_name,
             version + Version::ONE,
             |source| UTXOAllAndSth {
                 all: LazyColumnPerBlockCumulativeRolling::new(

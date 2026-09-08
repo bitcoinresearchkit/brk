@@ -2,6 +2,7 @@ use bitview_plugin_distribution::EncodedAgeRangeUrpds;
 use brk_error::{Error, Result};
 use brk_types::{CentsCompact, Sats, Urpd, UrpdRaw};
 
+#[allow(clippy::large_enum_variant)] // One captured request input; keep aggregate sections inline.
 pub enum UrpdInput {
     Raw(Vec<u8>),
     Aggregate(EncodedAgeRangeUrpds),

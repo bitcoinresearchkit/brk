@@ -542,7 +542,7 @@ fn push_cohort_states(
     utxo_states.apply_pending();
     addr_states.push(cohorts, funded_addr_counts, height, height_price);
 
-    // Phase 2: push the typed supply matrices, then aggregate age-range states.
+    // Phase 2: push the typed supply stored, then aggregate age-range states.
     let unrealized_states = cohorts.push_supply_and_unrealized(utxo_states, height_price);
     cohorts.push_outputs(utxo_states);
     cohorts.push_activity(utxo_states, height_price);

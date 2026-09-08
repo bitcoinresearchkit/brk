@@ -232,6 +232,8 @@ fn verify_output_pairs(
     Ok(())
 }
 
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+
 #[cfg(test)]
 mod tests {
     use serde_json::{Value, from_slice};
@@ -299,5 +301,3 @@ mod tests {
         assert_eq!(manifest["remotes"][0]["url"], "https://mcp.bitview.space/");
     }
 }
-
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

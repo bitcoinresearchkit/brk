@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
+use crate::metrics::{ColumnarAmount, UTXOColumns};
 
 #[derive(Traversable)]
 pub struct UnspentOutputCount<M: StorageMode = Rw> {
@@ -20,8 +20,7 @@ pub struct UnspentOutputCount<M: StorageMode = Rw> {
             M,
         >,
     >,
-    #[traversable(flatten)]
-    pub matrices: UTXOColumnarMetric<StoredU64, M>,
+    pub stored: UTXOColumns<StoredU64, M>,
 }
 
 impl UnspentOutputCount {
@@ -32,13 +31,13 @@ impl UnspentOutputCount {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let matrices = UTXOColumnarMetric::forced_import(db, "utxo_count", version)?;
+        let stored = UTXOColumns::forced_import(db, "utxo_count", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "utxo_count");
             LazyPerBlockWithDeltas::from_height_source(
                 &name,
                 version,
-                &matrices
+                &stored
                     .additive_source(cache, &filter, &name, version)
                     .expect("unspent-output cohort source"),
                 Version::TWO,
@@ -69,7 +68,7 @@ impl UnspentOutputCount {
                 utxo: cohorts,
                 addr_balance,
             },
-            matrices,
+            stored,
         })
     }
 

@@ -160,7 +160,7 @@ impl ActivityVecs {
         self.transfer_volume
             .push_block(transfer_volume, transfer_value);
         self.coindays_destroyed
-            .cumulative
+            .stored
             .push_block(coindays_destroyed);
         self.transfer_volume_in_profit
             .push_block(transfer_volume_in_profit, profit_value);
@@ -181,14 +181,14 @@ impl ActivityVecs {
     pub fn min_resume_len(&self) -> usize {
         self.transfer_volume
             .min_len()
-            .min(self.coindays_destroyed.cumulative.min_len())
+            .min(self.coindays_destroyed.stored.min_len())
             .min(self.transfer_volume_in_profit.min_len())
             .min(self.transfer_volume_in_loss.min_len())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.transfer_volume.collect_vecs_mut();
-        vecs.extend(self.coindays_destroyed.cumulative.collect_vecs_mut());
+        vecs.extend(self.coindays_destroyed.stored.collect_vecs_mut());
         vecs.extend(self.transfer_volume_in_profit.collect_vecs_mut());
         vecs.extend(self.transfer_volume_in_loss.collect_vecs_mut());
         vecs.extend(self.dormancy.iter_mut().map(|value| value.stored_mut()));

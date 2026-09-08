@@ -6,14 +6,13 @@ use brk_error::Result;
 use brk_types::{StoredF64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOColumnarMetricWithoutAmountOrType;
+use crate::metrics::CumulativeUTXOCoreColumns;
 
 #[derive(Traversable)]
 pub struct CoindaysDestroyedByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmountOrType<LazyPerBlockCumulativeRolling<StoredF64>>,
-    #[traversable(flatten)]
-    pub cumulative: CumulativeUTXOColumnarMetricWithoutAmountOrType<StoredF64, M>,
+    pub stored: CumulativeUTXOCoreColumns<StoredF64, M>,
 }
 
 impl CoindaysDestroyedByCohort {
@@ -24,15 +23,12 @@ impl CoindaysDestroyedByCohort {
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let cumulative = CumulativeUTXOColumnarMetricWithoutAmountOrType::forced_import(
-            db,
-            "coindays_destroyed_cumulative",
-            version,
-        )?;
+        let stored =
+            CumulativeUTXOCoreColumns::forced_import(db, "coindays_destroyed_cumulative", version)?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "coindays_destroyed");
-            let source = cumulative
-                .matrices
+            let source = stored
+                .columns
                 .additive_source(cache, &filter, &format!("{name}_cumulative"), version)
                 .expect("supported coindays-destroyed cohort");
             LazyPerBlockCumulativeRolling::from_cumulative_source(
@@ -43,9 +39,6 @@ impl CoindaysDestroyedByCohort {
                 mappings,
             )
         });
-        Ok(Self {
-            cohorts,
-            cumulative,
-        })
+        Ok(Self { cohorts, stored })
     }
 }

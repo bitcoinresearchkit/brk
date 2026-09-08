@@ -470,8 +470,10 @@ impl<T: Traversable> Traversable for Option<T> {
 
 impl<K: Display, V: Traversable> Traversable for BTreeMap<K, V> {
     fn to_tree_node(&self) -> TreeNode {
-        let mut branch = TreeBranch::default();
-        branch.source = Some("std::collections::BTreeMap");
+        let mut branch = TreeBranch {
+            source: Some("std::collections::BTreeMap"),
+            ..Default::default()
+        };
         for (key, value) in self {
             branch
                 .merge_field(

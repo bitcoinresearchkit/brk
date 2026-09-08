@@ -38,6 +38,7 @@ pub struct Total<M: StorageMode = Rw> {
 }
 
 impl Total {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,

@@ -35,9 +35,8 @@ use super::{
 use crate::{
     AllChainSources,
     metrics::{
-        AdditiveAggregateFiatPerBlockCumulativeWithSums, AdditiveUTXORawVec,
-        AggregatePercentPerBlock, AggregatePriceWithRatioPerBlock, RealizedBlockData,
-        RealizedTotals,
+        AdditiveAggregateFiatPerBlockCumulativeWithSums, AggregatePercentPerBlock,
+        AggregatePriceWithRatioPerBlock, RealizedBlockData, RealizedTotals, UTXOTermColumns,
     },
 };
 
@@ -91,13 +90,13 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// it to realized capitalization in cents; dividing by unspent satoshis
     /// gives realized price in cents per BTC. It is an intermediate product,
     /// not itself a capitalization or price.
-    pub cap_raw: AdditiveUTXORawVec<CentsSats, M>,
+    pub cap_raw: UTXOTermColumns<CentsSats, M>,
     /// Raw sum of squared creation price in cents per BTC multiplied by unspent
     /// satoshis for an aggregate UTXO cohort. Dividing it by the cohort's raw
     /// creation-price-times-satoshis sum gives capitalized price in cents per
     /// BTC. It is an intermediate product, not itself a capitalization or
     /// price.
-    pub capitalized_cap_raw: AdditiveUTXORawVec<CentsSquaredSats, M>,
+    pub capitalized_cap_raw: UTXOTermColumns<CentsSquaredSats, M>,
     /// Value forgone relative to each spent output's highest Bitcoin spot price
     /// from its creation block through its spending block, inclusive: that peak
     /// minus the spending price, multiplied by the output's BTC value.
@@ -175,9 +174,9 @@ impl RealizedVecs {
             mappings,
             spot_price,
         )?;
-        let cap_raw = AdditiveUTXORawVec::forced_import(db, "cap_raw", version)?;
+        let cap_raw = UTXOTermColumns::forced_import(db, "cap_raw", version)?;
         let capitalized_cap_raw =
-            AdditiveUTXORawVec::forced_import(db, "capitalized_cap_raw", version)?;
+            UTXOTermColumns::forced_import(db, "capitalized_cap_raw", version)?;
         let peak_regret = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
             cache,
             db,
@@ -547,21 +546,19 @@ impl RealizedVecs {
             .aggregate()
             .map(RealizedTotals::price);
 
-        self.cap.matrices.push(rows.map(|values| values.cap));
+        self.cap.stored.push(rows.map(|values| values.cap));
         self.price
-            .matrices
+            .stored
             .push(rows.map(|values| values.price), aggregate_price);
         self.profit
-            .cumulative
+            .stored
             .push_block(rows.map(|values| values.profit));
-        self.loss
-            .cumulative
-            .push_block(rows.map(|values| values.loss));
+        self.loss.stored.push_block(rows.map(|values| values.loss));
         self.net_pnl
-            .cumulative
+            .stored
             .push_block(rows.map(|values| values.net_pnl));
         self.value_destroyed
-            .cumulative
+            .stored
             .push_block(rows.map(|values| values.value_destroyed));
     }
 
@@ -581,13 +578,13 @@ impl RealizedVecs {
     /// other ratios are rebuilt afterward from these stored sources.
     pub fn min_resume_len(&self) -> usize {
         self.cap
-            .matrices
+            .stored
             .min_len()
-            .min(self.price.matrices.min_len())
-            .min(self.profit.cumulative.min_len())
-            .min(self.loss.cumulative.min_len())
-            .min(self.net_pnl.cumulative.min_len())
-            .min(self.value_destroyed.cumulative.min_len())
+            .min(self.price.stored.min_len())
+            .min(self.profit.stored.min_len())
+            .min(self.loss.stored.min_len())
+            .min(self.net_pnl.stored.min_len())
+            .min(self.value_destroyed.stored.min_len())
             .min(self.cap.cohorts.addr_balance.len())
             .min(self.profit.cohorts.addr_balance.len())
             .min(self.loss.cohorts.addr_balance.len())
@@ -599,15 +596,15 @@ impl RealizedVecs {
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.cap.matrices.collect_vecs_mut();
+        let mut vecs = self.cap.stored.collect_vecs_mut();
         vecs.push(self.cap.cohorts.addr_balance.stored_mut());
-        vecs.extend(self.price.matrices.collect_vecs_mut());
-        vecs.extend(self.profit.cumulative.collect_vecs_mut());
+        vecs.extend(self.price.stored.collect_vecs_mut());
+        vecs.extend(self.profit.stored.collect_vecs_mut());
         vecs.push(self.profit.cohorts.addr_balance.stored_mut());
-        vecs.extend(self.loss.cumulative.collect_vecs_mut());
+        vecs.extend(self.loss.stored.collect_vecs_mut());
         vecs.push(self.loss.cohorts.addr_balance.stored_mut());
-        vecs.extend(self.net_pnl.cumulative.collect_vecs_mut());
-        vecs.extend(self.value_destroyed.cumulative.collect_vecs_mut());
+        vecs.extend(self.net_pnl.stored.collect_vecs_mut());
+        vecs.extend(self.value_destroyed.stored.collect_vecs_mut());
         vecs.extend(self.sopr.collect_vecs_mut());
         vecs.extend(self.adjusted_sopr.collect_vecs_mut());
         vecs.extend([

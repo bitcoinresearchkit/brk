@@ -1,6 +1,6 @@
 use rawdb::Database;
 use tempfile::TempDir;
-use vecdb::{AnyStoredVec, BytesVec, ImportableVec, MutableVec, Version, WritableVec};
+use vecdb::{AnyStoredVec, BytesVec, ImportableVec, Version, WritableVec};
 
 #[test]
 fn raw_reader_cursor_reads_persisted_values() -> vecdb::Result<()> {

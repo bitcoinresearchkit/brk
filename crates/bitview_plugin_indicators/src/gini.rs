@@ -13,18 +13,14 @@ pub fn compute(
 ) -> Result<()> {
     gini.ppm.height.compute_transform2(
         starting_height,
-        &distribution
-            .cohorts
-            .supply
-            .total
-            .matrices
-            .amount_range_matrix,
+        &distribution.cohorts.supply.total.stored.amount_range.height,
         &distribution
             .cohorts
             .outputs
             .unspent_count
-            .matrices
-            .amount_range_matrix,
+            .stored
+            .amount_range
+            .height,
         |(height, supply, count, ..)| (height, gini_from_lorenz(&count, &supply)),
         exit,
     )?;

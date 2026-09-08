@@ -13,15 +13,14 @@ use vecdb::{
     ReadOnlyColumnarVec, ReadableColumnarVec, Rw, StorageMode,
 };
 
-use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
+use crate::metrics::{ColumnarAmount, UTXOColumns};
 
 #[derive(Traversable)]
 pub struct SupplyTotal<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts:
         UTXOAndAddrGroups<LazySpotValuePerBlock, ColumnarAmount<Sats, LazySpotValuePerBlock, M>>,
-    #[traversable(flatten)]
-    pub matrices: UTXOColumnarMetric<Sats, M>,
+    pub stored: UTXOColumns<Sats, M>,
     #[traversable(skip)]
     all_supply: CachedBoxedVec<Height, Sats>,
     #[traversable(skip)]
@@ -43,9 +42,9 @@ impl SupplyTotal {
         mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let matrices = UTXOColumnarMetric::forced_import(db, "supply_sats", version)?;
+        let stored = UTXOColumns::forced_import(db, "supply_sats", version)?;
         let age_ranges = CachedColumnarVec::new(
-            matrices.age_range_matrix.read_only_clone(),
+            stored.age_range.height.read_only_clone(),
             version,
             |column| cache.wrap(column),
         );
@@ -106,7 +105,7 @@ impl SupplyTotal {
                         spot_price,
                     );
                 } else {
-                    matrices
+                    stored
                         .additive_source(cache, &filter, &source_name, version)
                         .expect("total-supply cohort source")
                 };
@@ -138,7 +137,7 @@ impl SupplyTotal {
                 utxo: cohorts,
                 addr_balance,
             },
-            matrices,
+            stored,
             all_supply,
             all_market_cap,
             age_ranges,
@@ -146,7 +145,7 @@ impl SupplyTotal {
     }
 
     pub fn min_len(&self) -> usize {
-        self.matrices.min_len().min(self.cohorts.addr_balance.len())
+        self.stored.min_len().min(self.cohorts.addr_balance.len())
     }
 
     pub fn get(&self, filter: &Filter) -> Option<&LazySpotValuePerBlock> {
@@ -163,7 +162,7 @@ impl SupplyTotal {
 
     #[inline(always)]
     pub fn push(&mut self, rows: UTXORows<Sats>) {
-        self.matrices.push(rows);
+        self.stored.push(rows);
     }
 
     #[inline(always)]
@@ -172,7 +171,7 @@ impl SupplyTotal {
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.matrices.collect_vecs_mut();
+        let mut vecs = self.stored.collect_vecs_mut();
         vecs.push(self.cohorts.addr_balance.stored_mut());
         vecs
     }

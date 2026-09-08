@@ -12,7 +12,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub sth: CohortVecs,
     /// Uses long-term-holder UTXO age ranges at least 150 days old.
     pub lth: CohortVecs,
-    /// Height-indexed source matrices for all, short-term-holder, and
+    /// Height-indexed source stored for all, short-term-holder, and
     /// long-term-holder cointime aggregates.
     pub sources: Sources<M>,
 }

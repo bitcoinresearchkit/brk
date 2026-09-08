@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_types::{CentsSigned, PartsPerMillionSigned64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOColumnarMetricWithoutAmountOrType;
+use crate::metrics::CumulativeUTXOCoreColumns;
 
 #[derive(Traversable)]
 pub struct CumulativeNetRealizedByCohort<M: StorageMode = Rw> {
@@ -18,8 +18,7 @@ pub struct CumulativeNetRealizedByCohort<M: StorageMode = Rw> {
             PartsPerMillionSigned64,
         >,
     >,
-    #[traversable(flatten)]
-    pub cumulative: CumulativeUTXOColumnarMetricWithoutAmountOrType<CentsSigned, M>,
+    pub stored: CumulativeUTXOCoreColumns<CentsSigned, M>,
 }
 
 impl CumulativeNetRealizedByCohort {
@@ -31,15 +30,15 @@ impl CumulativeNetRealizedByCohort {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let cumulative = CumulativeUTXOColumnarMetricWithoutAmountOrType::forced_import(
+        let stored = CumulativeUTXOCoreColumns::forced_import(
             db,
             "net_realized_pnl_cumulative_cents",
             version,
         )?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "net_realized_pnl");
-            let source = cumulative
-                .matrices
+            let source = stored
+                .columns
                 .additive_source(cache, &filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported net realized cohort");
             LazyFiatPerBlockCumulativeWithSumsAndDeltas::from_cumulative_cents_source(
@@ -51,9 +50,6 @@ impl CumulativeNetRealizedByCohort {
                 cached_starts,
             )
         });
-        Ok(Self {
-            cohorts,
-            cumulative,
-        })
+        Ok(Self { cohorts, stored })
     }
 }

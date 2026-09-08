@@ -15,7 +15,7 @@ use super::{
     super::UnrealizedAggregateSources, NetUnrealizedByCohort, UnrealizedByCohort, UnrealizedSources,
 };
 use crate::{
-    metrics::{AdditiveAggregateFiatPerBlock, AdditiveUTXORawVec, AggregateFiatPerBlock},
+    metrics::{AdditiveAggregateFiatPerBlock, AggregateFiatPerBlock, UTXOTermColumns},
     state::UnrealizedState,
 };
 
@@ -46,11 +46,11 @@ pub struct UnrealizedVecs<M: StorageMode = Rw> {
     /// outputs whose creation price is less than or equal to the represented
     /// block's spot price. This raw numerator underlies the profit-side
     /// capitalized price.
-    pub capitalized_cap_in_profit_raw: AdditiveUTXORawVec<CentsSquaredSats, M>,
+    pub capitalized_cap_in_profit_raw: UTXOTermColumns<CentsSquaredSats, M>,
     /// Sum of creation price squared times unspent sats for a UTXO cohort's
     /// outputs whose creation price is greater than the represented block's
     /// spot price. This raw numerator underlies the loss-side capitalized price.
-    pub capitalized_cap_in_loss_raw: AdditiveUTXORawVec<CentsSquaredSats, M>,
+    pub capitalized_cap_in_loss_raw: UTXOTermColumns<CentsSquaredSats, M>,
     /// Pain index of an aggregate UTXO cohort: the capital-weighted creation
     /// price of its unspent supply in loss minus the represented block's spot
     /// price. Larger values mean the loss-side capital is further underwater;
@@ -125,9 +125,9 @@ impl UnrealizedVecs {
             mappings,
         )?;
         let capitalized_cap_in_profit_raw =
-            AdditiveUTXORawVec::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
+            UTXOTermColumns::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
         let capitalized_cap_in_loss_raw =
-            AdditiveUTXORawVec::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
+            UTXOTermColumns::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
         let pain_index = AggregateFiatPerBlock::forced_import(
             cache,
             db,
@@ -216,13 +216,11 @@ impl UnrealizedVecs {
         spot: Cents,
         aggregate: &UTXOAggregate<UnrealizedState>,
     ) {
-        self.profit
-            .matrices
-            .push(rows.map(|state| state.unrealized_profit));
-        self.loss
-            .matrices
-            .push(rows.map(|state| state.unrealized_loss));
-        self.net_pnl.matrices.push(rows.map(|state| {
+        let profit = rows.map(|state| state.unrealized_profit);
+        self.profit.stored.push(profit.core, profit.type_);
+        let loss = rows.map(|state| state.unrealized_loss);
+        self.loss.stored.push(loss.core, loss.type_);
+        self.net_pnl.stored.push(rows.map(|state| {
             CentsSigned::new(
                 state.unrealized_profit.inner() as i64 - state.unrealized_loss.inner() as i64,
             )
@@ -244,10 +242,10 @@ impl UnrealizedVecs {
 
     pub fn min_resume_len(&self) -> usize {
         self.profit
-            .matrices
+            .stored
             .min_len()
-            .min(self.loss.matrices.min_len())
-            .min(self.net_pnl.matrices.min_len())
+            .min(self.loss.stored.min_len())
+            .min(self.net_pnl.stored.min_len())
             .min(self.gross_pnl.len())
             .min(self.invested_capital_in_profit.len())
             .min(self.invested_capital_in_loss.len())
@@ -259,9 +257,9 @@ impl UnrealizedVecs {
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = self.profit.matrices.collect_vecs_mut();
-        vecs.extend(self.loss.matrices.collect_vecs_mut());
-        vecs.extend(self.net_pnl.matrices.collect_vecs_mut());
+        let mut vecs = self.profit.stored.collect_vecs_mut();
+        vecs.extend(self.loss.stored.collect_vecs_mut());
+        vecs.extend(self.net_pnl.stored.collect_vecs_mut());
         vecs.extend([
             self.gross_pnl.stored_mut(),
             self.invested_capital_in_profit.stored_mut(),

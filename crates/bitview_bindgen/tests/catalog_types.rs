@@ -14,8 +14,10 @@ fn leaf(name: &str, kind: &str, index: Index) -> TreeNode {
 }
 
 fn family(names: [&str; 2], kind: &str, index: Index) -> TreeNode {
-    let mut branch = TreeBranch::default();
-    branch.source = Some("fixture::Stats");
+    let mut branch = TreeBranch {
+        source: Some("fixture::Stats"),
+        ..Default::default()
+    };
     for (field, name) in ["min", "max"].into_iter().zip(names) {
         branch
             .merge_field(

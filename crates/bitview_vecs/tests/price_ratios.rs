@@ -98,7 +98,7 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         &spot,
     );
     let mut columns =
-        ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(&db, "matrix", version, |_| ())
+        ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(&db, "columns", version, |_| ())
             .unwrap();
     for price in prices {
         columns.push(WindowId::from_fn(|column| {

@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregateId};
 use brk_types::{CentsCompact, Date, Sats, UrpdRaw};
-use vecdb::ColumnId;
 
 use super::AgeRangeUrpds;
 
