@@ -1,12 +1,11 @@
-use brk_error::Result;
-
 use bitview_cohort::{CohortContext, UTXOGroups};
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyPriceWithRatioPerBlock;
+use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
 use crate::metrics::ExactUTXOColumnarMetric;
-use bitview_compute::LazyPriceWithRatioPerBlock;
 
 #[derive(Traversable)]
 pub struct RealizedPriceByCohort<M: StorageMode = Rw> {
@@ -19,6 +18,7 @@ pub struct RealizedPriceByCohort<M: StorageMode = Rw> {
 
 impl RealizedPriceByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -32,7 +32,7 @@ impl RealizedPriceByCohort {
                 &name,
                 version,
                 &matrices
-                    .source(&filter, &format!("{name}_cents"), version)
+                    .source(cache, &filter, &format!("{name}_cents"), version)
                     .expect("realized-price cohort source"),
                 mappings,
                 spot_price,

@@ -1,24 +1,31 @@
-use brk_error::Result;
-
-use bitview_cohort::{CohortContext, UTXOGroups};
+use bitview_cohort::{CohortContext, UTXOAndAddrGroups, UTXOGroups};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockWithDeltas};
+use brk_error::Result;
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::UTXOColumnarMetric;
-use bitview_compute::{CachedWindowStartVec, LazyFiatPerBlockWithDeltas, Windows};
+use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
 
 #[derive(Traversable)]
 pub struct RealizedCapByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub cohorts:
-        UTXOGroups<LazyFiatPerBlockWithDeltas<Cents, CentsSigned, PartsPerMillionSigned64>>,
+    pub cohorts: UTXOAndAddrGroups<
+        LazyFiatPerBlockWithDeltas<Cents, CentsSigned, PartsPerMillionSigned64>,
+        ColumnarAmount<
+            Cents,
+            LazyFiatPerBlockWithDeltas<Cents, CentsSigned, PartsPerMillionSigned64>,
+            M,
+        >,
+    >,
     #[traversable(flatten)]
     pub matrices: UTXOColumnarMetric<Cents, M>,
 }
 
 impl RealizedCapByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -31,13 +38,38 @@ impl RealizedCapByCohort {
                 &name,
                 version,
                 &matrices
-                    .additive_source(&filter, &format!("{name}_cents"), version)
+                    .additive_source(cache, &filter, &format!("{name}_cents"), version)
                     .expect("realized-cap cohort source"),
                 Version::TWO,
                 mappings,
                 cached_starts,
             )
         });
-        Ok(Self { cohorts, matrices })
+        let addr_version = version + Version::ONE;
+        let addr_balance = ColumnarAmount::forced_import(
+            cache,
+            db,
+            "addrs_realized_cap_cents_by_balance_range",
+            CohortContext::Addr,
+            "realized_cap",
+            addr_version,
+            |name, source| {
+                LazyFiatPerBlockWithDeltas::from_cents_source(
+                    name,
+                    addr_version,
+                    source,
+                    Version::TWO,
+                    mappings,
+                    cached_starts,
+                )
+            },
+        )?;
+        Ok(Self {
+            cohorts: UTXOAndAddrGroups {
+                utxo: cohorts,
+                addr_balance,
+            },
+            matrices,
+        })
     }
 }

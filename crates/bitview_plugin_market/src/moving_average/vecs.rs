@@ -3,7 +3,7 @@ use brk_types::{Cents, Version};
 use vecdb::{ColumnId, Rw, StorageMode, VecValue};
 
 use super::ema_vecs::EmaVecs;
-use bitview_compute::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
 
 const EMA_PERIOD_COUNT: usize = 16;
 

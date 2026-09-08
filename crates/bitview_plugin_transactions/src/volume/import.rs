@@ -1,15 +1,16 @@
-use brk_error::Result;
-
-use bitview_compute::{
+use bitview_collections::Windows;
+use bitview_vecs::{
     CachedWindowStartVec, LazyPerSecondWindows, LazyRollingSumsFromHeight,
-    ValuePerBlockCumulativeRolling, Windows,
+    ValuePerBlockCumulativeRolling,
 };
+use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::Database;
+use vecdb::{CacheBudget, Database};
 
 use super::Vecs;
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -19,6 +20,7 @@ pub fn forced_import(
     let v = version + Version::TWO;
     Ok(Vecs {
         transfer_volume: ValuePerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "transfer_volume_bis",
             version,

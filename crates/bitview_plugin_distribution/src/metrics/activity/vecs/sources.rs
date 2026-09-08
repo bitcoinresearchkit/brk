@@ -1,4 +1,4 @@
-use bitview_compute::LazyValuePerBlockCumulativeRolling;
+use bitview_vecs::LazyValuePerBlockCumulativeRolling;
 
 #[derive(Clone)]
 pub struct ActivitySources {

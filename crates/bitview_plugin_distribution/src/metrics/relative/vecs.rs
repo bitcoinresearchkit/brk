@@ -1,21 +1,18 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{
     ByTerm, CohortContext, TERM_FILTERS, TERM_NAMES, TermId, UTXO_AGGREGATE_FILTERS,
     UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::{RatioCents, RatioDollars};
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode};
-
-use crate::{AllChainSources, metrics::AggregatePercentPerBlock};
-use bitview_compute::{
-    ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock, RatioCents, RatioDollars,
-};
+use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
 
 use super::{GrossPnlComposition, RelativeSource, SupplyProfitabilityShares};
+use crate::{AllChainSources, metrics::AggregatePercentPerBlock};
 
 #[derive(Traversable)]
 pub struct RelativeVecs<M: StorageMode = Rw> {
@@ -83,6 +80,7 @@ pub struct RelativeVecs<M: StorageMode = Rw> {
 
 impl RelativeVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -91,28 +89,32 @@ impl RelativeVecs {
     ) -> Result<Self> {
         let aggregate_version = version + Version::ONE;
         let supply_profitability_shares =
-            SupplyProfitabilityShares::forced_import(db, aggregate_version, mappings)?;
+            SupplyProfitabilityShares::forced_import(cache, db, aggregate_version, mappings)?;
         let unrealized_profit_to_own_mcap = Self::import_term_percent(
+            cache,
             db,
             "unrealized_profit_to_own_mcap",
             aggregate_version,
             mappings,
         )?;
         let unrealized_loss_to_own_mcap = Self::import_term_percent(
+            cache,
             db,
             "unrealized_loss_to_own_mcap",
             aggregate_version,
             mappings,
         )?;
         let gross_pnl_composition =
-            GrossPnlComposition::forced_import(db, aggregate_version, mappings)?;
+            GrossPnlComposition::forced_import(cache, db, aggregate_version, mappings)?;
         let invested_capital_in_profit_share = AggregatePercentPerBlock::forced_import(
+            cache,
             db,
             "invested_capital_in_profit_share",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_loss_share = AggregatePercentPerBlock::forced_import(
+            cache,
             db,
             "invested_capital_in_loss_share",
             aggregate_version,
@@ -169,6 +171,7 @@ impl RelativeVecs {
     }
 
     fn import_term_percent(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -187,7 +190,7 @@ impl RelativeVecs {
                     id.select(&TERM_NAMES).id,
                     metric,
                 );
-                LazyColumnPercentPerBlock::new(&name, version, source, id, mappings)
+                LazyColumnPercentPerBlock::new(cache, &name, version, source, id, mappings)
             })
         })
     }

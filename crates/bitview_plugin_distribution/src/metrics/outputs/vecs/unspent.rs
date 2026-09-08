@@ -1,30 +1,32 @@
+use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups};
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
-use bitview_cohort::{AmountRange, CohortContext, UTXOGroups};
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
+use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
-use bitview_compute::{CachedWindowStartVec, LazyPerBlockWithDeltas, Windows};
 
 #[derive(Traversable)]
 pub struct UnspentOutputCount<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub cohorts: UTXOGroups<LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>>,
+    pub cohorts: UTXOAndAddrGroups<
+        LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
+        ColumnarAmount<
+            StoredU64,
+            LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
+            M,
+        >,
+    >,
     #[traversable(flatten)]
     pub matrices: UTXOColumnarMetric<StoredU64, M>,
-    /// Groups funded addresses by their balance at the represented block.
-    pub addr_balance: ColumnarAmount<
-        StoredU64,
-        LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
-        M,
-    >,
 }
 
 impl UnspentOutputCount {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -37,7 +39,7 @@ impl UnspentOutputCount {
                 &name,
                 version,
                 &matrices
-                    .additive_source(&filter, &name, version)
+                    .additive_source(cache, &filter, &name, version)
                     .expect("unspent-output cohort source"),
                 Version::TWO,
                 mappings,
@@ -45,6 +47,7 @@ impl UnspentOutputCount {
             )
         });
         let addr_balance = ColumnarAmount::forced_import(
+            cache,
             db,
             "addrs_utxo_count_by_balance_range",
             CohortContext::Addr,
@@ -62,14 +65,16 @@ impl UnspentOutputCount {
             },
         )?;
         Ok(Self {
-            cohorts,
+            cohorts: UTXOAndAddrGroups {
+                utxo: cohorts,
+                addr_balance,
+            },
             matrices,
-            addr_balance,
         })
     }
 
     #[inline(always)]
     pub fn push_addr_balance(&mut self, row: AmountRange<StoredU64>) {
-        self.addr_balance.push(row);
+        self.cohorts.addr_balance.push(row);
     }
 }

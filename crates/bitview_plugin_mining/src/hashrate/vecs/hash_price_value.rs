@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{PartsPerMillionSigned32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{LazyPerBlock, PerBlock, PercentPerBlock};
+use bitview_vecs::{LazyPerBlock, PerBlock, PercentPerBlock};
 
 #[derive(Traversable)]
 pub struct HashPriceValueVecs<M: StorageMode = Rw> {

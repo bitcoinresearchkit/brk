@@ -1,12 +1,11 @@
-use brk_error::Result;
-
-use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount};
+use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount, UTXORows};
 use bitview_traversable::Traversable;
+use bitview_vecs::LazySpotValuePerBlock;
+use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{AnyStoredVec, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
-use crate::metrics::{UTXOColumnarMetricWithoutAmount, UTXORows};
-use bitview_compute::LazySpotValuePerBlock;
+use crate::metrics::UTXOColumnarMetricWithoutAmount;
 
 #[derive(Traversable)]
 pub struct SupplyByCohort<M: StorageMode = Rw> {
@@ -18,6 +17,7 @@ pub struct SupplyByCohort<M: StorageMode = Rw> {
 
 impl SupplyByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -29,7 +29,7 @@ impl SupplyByCohort {
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = matrices
-                .additive_source(&filter, &format!("{name}_sats"), version)
+                .additive_source(cache, &filter, &format!("{name}_sats"), version)
                 .expect("supported supply cohort");
             LazySpotValuePerBlock::from_sats_source(&name, version, &source, mappings, spot_price)
         });

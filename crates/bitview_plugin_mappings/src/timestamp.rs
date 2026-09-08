@@ -1,8 +1,8 @@
 mod boundary;
 
-use brk_error::Result;
-
+use bitview_collections::PerResolution;
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
     BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4,
@@ -13,8 +13,6 @@ use vecdb::{
     AnyVec, CachedVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadableBoxedVec,
     ReadableVec, Rw, StorageMode, Version,
 };
-
-use bitview_compute::PerResolution;
 
 pub use boundary::BoundaryTimestampVec;
 

@@ -1,8 +1,8 @@
 use std::{ops::Deref, sync::Arc};
 
+use super::{CachedVec, CachedVecStrategy};
 use crate::{AnyVec, ReadOnlyClone, ReadableVec, StoredVec, TypedVec, VecIndex, VecValue, Version};
 
-use super::{CachedVec, CachedVecStrategy};
 pub trait CachedReadableVec<I, T>: ReadableVec<I, T>
 where
     I: VecIndex,

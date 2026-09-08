@@ -1,0 +1,31 @@
+use bitview_transforms::BoundedToF64;
+use bitview_traversable::Traversable;
+use brk_error::Result;
+use brk_types::{BoundedRatio, StoredF64, Version};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
+
+use crate::{IndexSources, LazyPerBlock, PerBlock};
+
+/// Bounded fixed-point storage with a lazy decimal view.
+#[derive(Traversable)]
+pub struct BoundedRatioPerBlock<M: StorageMode = Rw> {
+    /// Encoded share in [0, 4,294,967,294]; u32::MAX means undefined.
+    pub bounded: PerBlock<BoundedRatio, M>,
+    /// Unitless decimal share derived from the bounded values.
+    pub ratio: LazyPerBlock<StoredF64, BoundedRatio>,
+}
+
+impl BoundedRatioPerBlock {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &IndexSources,
+    ) -> Result<Self> {
+        let bounded =
+            PerBlock::forced_import(cache, db, &format!("{name}_bounded"), version, indexes)?;
+        let ratio = LazyPerBlock::from_resolutions::<BoundedToF64>(name, version, &bounded);
+        Ok(Self { bounded, ratio })
+    }
+}

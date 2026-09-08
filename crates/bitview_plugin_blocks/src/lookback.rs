@@ -1,8 +1,8 @@
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyWindowStartVec, Lookback, WindowStarts};
 use brk_types::{Height, Timestamp, Version};
 use vecdb::CachedBoxedVec;
-
-use bitview_compute::{CachedWindowStartVec, LazyWindowStartVec, Lookback, WindowStarts, Windows};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

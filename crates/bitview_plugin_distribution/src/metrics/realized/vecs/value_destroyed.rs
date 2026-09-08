@@ -1,12 +1,12 @@
-use brk_error::Result;
-
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockCumulativeRolling};
+use brk_error::Result;
 use brk_types::{Cents, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOColumnarMetricWithoutAmountOrType;
-use bitview_compute::{CachedWindowStartVec, LazyFiatPerBlockCumulativeRolling, Windows};
 
 #[derive(Traversable)]
 pub struct CumulativeValueDestroyedByCohort<M: StorageMode = Rw> {
@@ -18,6 +18,7 @@ pub struct CumulativeValueDestroyedByCohort<M: StorageMode = Rw> {
 
 impl CumulativeValueDestroyedByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -33,7 +34,7 @@ impl CumulativeValueDestroyedByCohort {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = cumulative
                 .matrices
-                .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
+                .additive_source(cache, &filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported value-destroyed cohort");
             LazyFiatPerBlockCumulativeRolling::from_cumulative_cents_source(
                 &name,

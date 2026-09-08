@@ -1,16 +1,15 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{AmountRange, CohortContext};
+use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
+use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
-
-use crate::metrics::ColumnarAmount;
-use bitview_compute::{CachedWindowStartVec, LazyPerBlockWithDeltas, Windows};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{AddrCountsVecs, AddrTypeToAddrCount};
+use crate::metrics::ColumnarAmount;
 
 #[derive(Traversable)]
 pub struct FundedAddrCountsVecs<M: StorageMode = Rw> {
@@ -26,14 +25,16 @@ pub struct FundedAddrCountsVecs<M: StorageMode = Rw> {
 
 impl FundedAddrCountsVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
-            counts: AddrCountsVecs::forced_import(db, "addr_count", version, mappings)?,
+            counts: AddrCountsVecs::forced_import(cache, db, "addr_count", version, mappings)?,
             balance: ColumnarAmount::forced_import(
+                cache,
                 db,
                 "addrs_addr_count_by_balance_range",
                 CohortContext::Addr,

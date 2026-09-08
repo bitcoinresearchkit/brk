@@ -1,10 +1,9 @@
-use brk_error::Result;
-
 use std::{env, path::Path, time::Instant};
 
 use bitview::ImportContext;
 use bitview_default::DefaultPlugins;
 use bitview_plugin_distribution::HasDistribution;
+use brk_error::Result;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use vecdb::{AnySerializableVec, AnyVec};
@@ -20,7 +19,7 @@ pub fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir);
+    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
 
     let plugins = DefaultPlugins::import(context, &reader)?;
     let distribution = plugins.distribution();
@@ -63,3 +62,5 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

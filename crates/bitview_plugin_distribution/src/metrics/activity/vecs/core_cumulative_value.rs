@@ -1,12 +1,12 @@
-use brk_error::Result;
-
-use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
+use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType, UTXORows};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling};
+use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{CumulativeUTXOValueColumnarMetricWithoutAmountOrType, UTXORows};
-use bitview_compute::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling, Windows};
+use crate::metrics::CumulativeUTXOValueColumnarMetricWithoutAmountOrType;
 
 #[derive(Traversable)]
 pub struct CoreCumulativeValueByCohort<M: StorageMode = Rw> {
@@ -17,6 +17,7 @@ pub struct CoreCumulativeValueByCohort<M: StorageMode = Rw> {
 
 impl CoreCumulativeValueByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -31,7 +32,7 @@ impl CoreCumulativeValueByCohort {
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let (sats, cents) = cumulative
-                .sources(&filter, &name, version)
+                .sources(cache, &filter, &name, version)
                 .expect("supported core cumulative value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,

@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{BoundedRatio, Height, StoredF64};
 use vecdb::{Budgeted, CachedColumnarVec, PcoVec, ReadOnlyColumnarVec};
 
-use bitview_compute::LazyPerBlock;
+use bitview_vecs::LazyPerBlock;
 
 #[derive(Clone, Traversable)]
 pub struct ActivitySeries {

@@ -1,12 +1,12 @@
-use brk_error::Result;
-
 use bitview_cohort::{CohortContext, UTXOGroups};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlockCumulativeRolling};
+use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use crate::metrics::CumulativeUTXOColumnarMetric;
-use bitview_compute::{CachedWindowStartVec, LazyPerBlockCumulativeRolling, Windows};
 
 #[derive(Traversable)]
 pub struct SpentOutputCount<M: StorageMode = Rw> {
@@ -18,6 +18,7 @@ pub struct SpentOutputCount<M: StorageMode = Rw> {
 
 impl SpentOutputCount {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -36,7 +37,7 @@ impl SpentOutputCount {
                 version,
                 &cumulative
                     .matrices
-                    .additive_source(&filter, &format!("{name}_cumulative"), version)
+                    .additive_source(cache, &filter, &format!("{name}_cumulative"), version)
                     .expect("spent-output cohort source"),
                 cached_starts,
                 mappings,

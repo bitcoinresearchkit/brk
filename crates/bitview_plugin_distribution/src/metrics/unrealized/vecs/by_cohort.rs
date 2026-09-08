@@ -1,14 +1,13 @@
-use brk_error::Result;
-
 use std::ops::AddAssign;
 
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmount};
 use bitview_traversable::Traversable;
+use bitview_vecs::{FiatType, LazyFiatPerBlock};
+use brk_error::Result;
 use brk_types::Version;
-use vecdb::{Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, PcoVecValue, Rw, StorageMode};
 
 use crate::metrics::UTXOColumnarMetricWithoutAmount;
-use bitview_compute::{FiatType, LazyFiatPerBlock};
 
 #[derive(Traversable)]
 pub struct UnrealizedByCohort<C, M: StorageMode = Rw>
@@ -26,6 +25,7 @@ where
     C: FiatType + PcoVecValue + AddAssign,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -39,7 +39,7 @@ where
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = matrices
-                .additive_source(&filter, &format!("{name}_cents"), version)
+                .additive_source(cache, &filter, &format!("{name}_cents"), version)
                 .expect("supported unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
         });

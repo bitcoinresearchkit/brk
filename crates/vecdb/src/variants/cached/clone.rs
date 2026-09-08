@@ -1,6 +1,5 @@
-use crate::TypedVec;
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::TypedVec;
 
 impl<V: TypedVec + Clone, S: CachedVecStrategy> Clone for CachedVec<V, S> {
     #[inline(always)]

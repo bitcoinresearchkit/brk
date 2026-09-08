@@ -1,21 +1,24 @@
+use bitview_cohort::{AgeRangeId, CohortContext};
+use bitview_collections::Windows;
 use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::{BoundedOddsF64, BoundedToF64};
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlock, ColumnarPerBlockCumulativeRolling,
+    LazyColumnPerBlockCumulativeRolling, LazyPerBlock, LazySpotValuePerBlock,
+};
 use brk_error::Result;
-
-use bitview_cohort::{AgeRangeId, CohortContext};
 use brk_types::{BoundedRatio, Cents, Height, Version};
-use vecdb::{CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyColumnarVec};
+use vecdb::{
+    CacheBudget, CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyColumnarVec,
+};
 
 use super::{ActivitySeries, SupplyVecs, Vecs};
-use bitview_compute::{
-    BoundedOddsF64, BoundedToF64, CACHE_BUDGET, CachedWindowStartVec, ColumnarPerBlock,
-    ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling, LazyPerBlock,
-    LazySpotValuePerBlock, Windows,
-};
 
 const VERSION: Version = Version::new(3);
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     parent_version: Version,
     mappings: &MappingsVecs,
@@ -31,6 +34,7 @@ pub fn forced_import(
         |source| {
             AgeRangeId::series(CohortContext::Utxo, |column, name| {
                 LazyColumnPerBlockCumulativeRolling::new(
+                    cache,
                     &format!("{name}_coindays_consumed"),
                     version,
                     source,
@@ -48,6 +52,7 @@ pub fn forced_import(
         |source| {
             AgeRangeId::series(CohortContext::Utxo, |column, name| {
                 LazyColumnPerBlockCumulativeRolling::new(
+                    cache,
                     &format!("{name}_coindays_stored"),
                     version,
                     source,
@@ -62,7 +67,7 @@ pub fn forced_import(
         db,
         &CohortContext::Utxo.prefixed("age_range_wakefulness_bounded_source"),
         version + Version::ONE,
-        |source| ActivitySeries::new(version + Version::ONE, source, mappings),
+        |source| ActivitySeries::new(cache, version + Version::ONE, source, mappings),
     )?;
     let import_supply = |side: &str, complement: bool| {
         AgeRangeId::series(CohortContext::Utxo, |column, name| {
@@ -100,12 +105,12 @@ pub fn forced_import(
 
 impl ActivitySeries {
     fn new(
+        cache: &'static CacheBudget,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
         mappings: &MappingsVecs,
     ) -> Self {
-        let cached =
-            CachedColumnarVec::new(source.clone(), version, |column| CACHE_BUDGET.wrap(column));
+        let cached = CachedColumnarVec::new(source.clone(), version, |column| cache.wrap(column));
         let wakefulness = AgeRangeId::series(CohortContext::Utxo, |column, name| {
             LazyPerBlock::from_height_source::<BoundedToF64>(
                 &format!("{name}_wakefulness"),

@@ -3,8 +3,9 @@ use brk_types::{BoundedRatio, Cents, StoredF64};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
-use super::{LossPercentileId, Percentiles, PriceBandId, PriceBands, price::LazyColumnPrice};
-use bitview_compute::{ColumnarDailyMetric, LazyDailyMetric};
+use super::{LossPercentileId, Percentiles, PriceBandId, PriceBands};
+use bitview_vecs::LazyColumnDailyPrice;
+use bitview_vecs::{ColumnarDailyMetric, LazyDailyMetric};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ModeVecs<M: StorageMode = Rw> {
@@ -28,5 +29,5 @@ pub struct ModeVecs<M: StorageMode = Rw> {
     /// estimate lower price bands. A UTXO's creation price is Bitcoin's spot
     /// price when that output was created.
     pub prices:
-        ColumnarDailyMetric<Cents, PriceBandId, PriceBands<LazyColumnPrice<PriceBandId>>, M>,
+        ColumnarDailyMetric<Cents, PriceBandId, PriceBands<LazyColumnDailyPrice<PriceBandId>>, M>,
 }

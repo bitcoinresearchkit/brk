@@ -1,13 +1,13 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
+};
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{ColumnId, ReadableCloneableVec};
-
-use bitview_compute::{
-    CachedWindowStartVec, LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
-    RatioSats, Windows,
-};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct FeesSeries<C: ColumnId> {

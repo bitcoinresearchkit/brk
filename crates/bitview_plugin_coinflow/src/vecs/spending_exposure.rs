@@ -4,7 +4,7 @@ use brk_types::{BoundedRatio, Height, StoredF64};
 use derive_more::{Deref, DerefMut};
 use vecdb::{Budgeted, CachedColumnarVec, PcoVec, ReadOnlyColumnarVec};
 
-use bitview_compute::{LazyColumnPerBlock, LazyPerBlock};
+use bitview_vecs::{LazyColumnPerBlock, LazyPerBlock};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct SpendingExposureSeries {

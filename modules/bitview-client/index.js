@@ -23269,7 +23269,7 @@ class BitviewClient extends BitviewClientBase {
   /**
    * Health check
    *
-   * Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
+   * Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Reads the published prefix during processing; an empty index waits until the request deadline, then returns 504. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
    *
    * Endpoint: `GET /health`
    * @param {{ signal?: AbortSignal, onValue?: (value: Health) => void, cache?: boolean, memCache?: boolean }} [options]

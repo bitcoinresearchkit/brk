@@ -1,19 +1,16 @@
-use brk_error::Result;
-
-use bitview_cohort::{AddrTypeId, ByAddrType};
+use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CachedBoxedVec, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode, WritableVec,
+    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use crate::AllChainSources;
-use bitview_compute::{
-    ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock, WithAddrTypes,
-};
 
 #[derive(Traversable)]
 pub struct AvgAmountVecs<M: StorageMode = Rw> {
@@ -31,6 +28,7 @@ pub struct AvgAmountVecs<M: StorageMode = Rw> {
 
 impl AvgAmountVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -67,6 +65,7 @@ impl AvgAmountVecs {
             ),
             by_addr_type: AddrTypeId::series(|column, type_name| {
                 LazyColumnSpotValuePerBlock::new(
+                    cache,
                     &format!("{type_name}_avg_utxo_amount"),
                     version,
                     &utxo_columns,
@@ -86,6 +85,7 @@ impl AvgAmountVecs {
             ),
             by_addr_type: AddrTypeId::series(|column, type_name| {
                 LazyColumnSpotValuePerBlock::new(
+                    cache,
                     &format!("{type_name}_avg_addr_amount"),
                     version,
                     &addr_columns,

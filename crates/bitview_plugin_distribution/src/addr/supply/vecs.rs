@@ -1,14 +1,12 @@
-use brk_error::Result;
-
-use bitview_cohort::AddrTypeId;
+use bitview_cohort::{AddrTypeId, WithAddrTypes};
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock};
+use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, CachedBoxedVec, Database, Rw, StorageMode, WritableVec};
-
-use bitview_compute::{
-    ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock, WithAddrTypes,
+use vecdb::{
+    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode, WritableVec,
 };
 
 use super::AddrTypeToSupply;
@@ -30,6 +28,7 @@ pub struct AddrSupplyVecs<M: StorageMode = Rw>(
 
 impl AddrSupplyVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -42,8 +41,8 @@ impl AddrSupplyVecs {
             &format!("{name}_sats_by_type"),
             version,
             |source| {
-                WithAddrTypes::from_columnar_spot_value_source(
-                    &name, version, source, mappings, spot_price,
+                bitview_vecs::LazyColumnSpotValuePerBlock::with_addr_types(
+                    cache, &name, version, source, mappings, spot_price,
                 )
             },
         )?))

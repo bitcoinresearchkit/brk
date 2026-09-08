@@ -1,14 +1,11 @@
-mod cached_date;
-mod cached_first_height;
 mod dated;
 
 use bitview_traversable::Traversable;
 use brk_types::Height;
 use vecdb::{ReadableCloneableVec, VecIndex};
 
-pub use self::cached_date::CachedDateVec;
-pub use self::cached_first_height::CachedFirstHeightVec;
 pub use self::dated::DatedResolutionVecs;
+pub use bitview_vecs::{CachedDateVec, CachedFirstHeightVec};
 
 /// Resolution with a pinned, storage-free first-height lookup.
 #[derive(Clone, Traversable)]

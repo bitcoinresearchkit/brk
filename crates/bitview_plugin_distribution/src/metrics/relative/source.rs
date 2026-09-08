@@ -3,7 +3,7 @@ use brk_types::{PartsPerMillionSigned32, PriceRatio};
 use crate::metrics::{
     RealizedSources, SupplySources, UnrealizedAggregateSources, UnrealizedSources,
 };
-use bitview_compute::LazyRatioPerBlock;
+use bitview_vecs::LazyRatioPerBlock;
 
 pub struct RelativeSource<'a> {
     pub supply: SupplySources,

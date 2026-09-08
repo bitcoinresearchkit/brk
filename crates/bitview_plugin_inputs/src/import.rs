@@ -1,7 +1,7 @@
-use brk_error::Result;
-
-use bitview_compute::{CachedWindowStartVec, LazyPerSecondWindows, Windows};
+use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
+use bitview_vecs::{CachedWindowStartVec, LazyPerSecondWindows};
+use brk_error::Result;
 use vecdb::{ImportableVec, PcoVec};
 
 use super::{ByTypeVecs, CountVecs, STORAGE, Vecs};
@@ -16,9 +16,21 @@ impl Vecs {
         let version = STORAGE.schema_version();
 
         let value = PcoVec::forced_import(&db, "value", version)?;
-        let count = CountVecs::forced_import(&db, version, mappings, cached_starts)?;
+        let count = CountVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            cached_starts,
+        )?;
         let per_sec = LazyPerSecondWindows::new("inputs_per_sec", version, &count.rolling.sum);
-        let by_type = ByTypeVecs::forced_import(&db, version, mappings, cached_starts)?;
+        let by_type = ByTypeVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            cached_starts,
+        )?;
 
         let this = Self {
             db,

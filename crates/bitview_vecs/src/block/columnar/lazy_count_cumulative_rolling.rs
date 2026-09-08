@@ -1,0 +1,76 @@
+use crate::RollingTotals;
+use bitview_collections::Windows;
+use bitview_transforms::StoredU16ToStoredU64;
+use bitview_traversable::Traversable;
+use brk_types::{Height, StoredU16, StoredU64, Version};
+use derive_more::{Deref, DerefMut};
+use vecdb::{
+    CachedBoxedVec, CachedReadableVec, ColumnId, Ident, LazyVec, PcoVec, PinnedCachedVec,
+    ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
+};
+
+use crate::{CumulativeCountVec, IndexSources, LazyPerBlock};
+
+#[derive(Clone, Deref, DerefMut, Traversable)]
+pub struct LazyColumnCountPerBlockCumulativeRolling {
+    /// Value for the represented block. At time-period indexes, the value is
+    /// taken from the period's final block.
+    pub block: LazyVec<Height, StoredU64, Height, StoredU16>,
+    /// Cumulative value through the represented block. At time-period indexes,
+    /// the value is taken at the period's final block.
+    pub cumulative: LazyPerBlock<StoredU64>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub rolling: RollingTotals<StoredU64>,
+    #[traversable(skip)]
+    cumulative_source: CumulativeCountVec,
+    #[traversable(skip)]
+    cached_block: CachedBoxedVec<Height, StoredU16>,
+}
+
+impl LazyColumnCountPerBlockCumulativeRolling {
+    pub fn new<C>(
+        name: &str,
+        version: Version,
+        source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU16>, C>,
+        column: C,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+    ) -> Self
+    where
+        C: ColumnId,
+    {
+        let column = PinnedCachedVec::wrap(source.column(name, version, column));
+        let cumulative_source = CumulativeCountVec::new(column.cached_boxed_clone());
+        let block = LazyVec::transformed::<StoredU16ToStoredU64>(
+            name,
+            version,
+            column.read_only_boxed_clone(),
+        );
+        let cumulative = LazyPerBlock::from_height_source::<Ident>(
+            &format!("{name}_cumulative"),
+            version,
+            &cumulative_source,
+            indexes,
+        );
+        let rolling = RollingTotals::new(name, version, &cumulative_source, window_starts, indexes);
+
+        Self {
+            block,
+            cumulative,
+            rolling,
+            cumulative_source,
+            cached_block: column.cached_boxed_clone(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn cumulative_source(&self) -> CumulativeCountVec {
+        self.cumulative_source.clone()
+    }
+
+    pub fn invalidate(&self) {
+        self.cached_block.invalidate();
+    }
+}

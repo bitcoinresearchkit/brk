@@ -19,7 +19,15 @@ pub fn compute(
     let starting_height = indexer.safe_lengths().height;
     let coinblocks_destroyed = &distribution.coinblocks_destroyed;
     let coindays_destroyed = &distribution.cohorts.activity.coindays_destroyed.cohorts.all;
-    let circulating_supply = &distribution.cohorts.supply.total.cohorts.all.btc.height;
+    let circulating_supply = &distribution
+        .cohorts
+        .supply
+        .total
+        .cohorts
+        .utxo
+        .all
+        .btc
+        .height;
 
     for (target, source) in [
         (

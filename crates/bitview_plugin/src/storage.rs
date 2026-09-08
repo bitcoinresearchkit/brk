@@ -61,7 +61,7 @@ mod tests {
 
     #[test]
     fn identity_version_and_paths_share_one_descriptor() {
-        let context = ImportContext::new(Path::new("data"));
+        let context = ImportContext::new(Path::new("data"), &CACHE_BUDGET);
         let storage = PluginStorage::new(PluginId::new("example"), Version::new(3));
 
         assert_eq!(storage.id(), PluginId::new("example"));
@@ -76,3 +76,6 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

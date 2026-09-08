@@ -9,6 +9,7 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+vecdb = { workspace = true }
 brk_exit = { workspace = true }
 bitview = { workspace = true }
 bitview_default = { workspace = true }

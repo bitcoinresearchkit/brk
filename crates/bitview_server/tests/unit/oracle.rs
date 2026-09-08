@@ -166,8 +166,23 @@ async fn check_live(state: &AppState, address: SocketAddr) {
     {
         let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
+        // Raw mempool outputs only pin the safe prefix; unlike the price and
+        // payment oracle, they do not consume mutable confirmed oracle state.
+        // Check this before waiting requests occupy worker admission.
+        let (path, tag) = cases
+            .iter()
+            .find(|(path, _)| *path == "/api/oracle/histogram/outputs/live")
+            .unwrap();
+        let response = timeout(
+            Duration::from_secs(5),
+            exchange_with_etag(address, "GET", path, tag),
+        )
+        .await
+        .unwrap();
+        assert!(response.starts_with("HTTP/1.1 304"), "{response}");
         let mut requests = cases
             .iter()
+            .filter(|(path, _)| *path != "/api/oracle/histogram/outputs/live")
             .map(|(path, tag)| {
                 let path = *path;
                 let tag = tag.clone();

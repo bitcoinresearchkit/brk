@@ -23,10 +23,23 @@ impl Vecs {
         );
         let cached_starts = lookback.cached_window_starts();
         let count = CountVecs::new(version, indexer, mappings, &cached_starts);
-        let interval = IntervalVecs::forced_import(&db, version, mappings, &cached_starts)?;
-        let size = SizeVecs::forced_import(&db, version, indexer, mappings, &cached_starts)?;
+        let interval = IntervalVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            &cached_starts,
+        )?;
+        let size = SizeVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            indexer,
+            mappings,
+            &cached_starts,
+        )?;
         let weight = WeightVecs::new(version, indexer, mappings, &cached_starts, &size);
-        let difficulty = DifficultyVecs::new(version, indexer, mappings);
+        let difficulty = DifficultyVecs::new(context.cache_budget(), version, indexer, mappings);
         let halving = HalvingVecs::new(version, mappings);
 
         let this = Self {

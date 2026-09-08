@@ -1,6 +1,7 @@
-use bitview_compute::{CachedWindowStartVec, Windows};
+use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
 use brk_types::{Height, Sats, StoredU64, Version};
 use vecdb::ReadableCloneableVec;
@@ -19,6 +20,7 @@ impl Vecs {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
         let total = Total::forced_import(
+            context.cache_budget(),
             &db,
             "op_return",
             version,
@@ -30,6 +32,7 @@ impl Vecs {
         let columnar_version = version + Version::ONE;
         let total_data = total.data_bytes_source();
         let by_kind = BreakdownVecs::forced_import(
+            context.cache_budget(),
             &db,
             "op_return_cumulative_by_kind",
             "op_return",
@@ -41,6 +44,7 @@ impl Vecs {
             chain_fees,
         )?;
         let policy = BreakdownVecs::forced_import(
+            context.cache_budget(),
             &db,
             "op_return_cumulative_policy",
             "op_return_policy",

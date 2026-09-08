@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 
-use bitview_compute::LazySpotValuePerBlock;
+use bitview_vecs::LazySpotValuePerBlock;
 
 #[derive(Clone, Traversable)]
 pub struct DormantVecs {

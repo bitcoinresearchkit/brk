@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use crate::{ReadableVec, TypedVec};
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::{ReadableVec, TypedVec};
 
 impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S> {
     /// Return a current snapshot without waiting for its cache lock or filling it.

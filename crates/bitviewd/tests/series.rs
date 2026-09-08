@@ -21,7 +21,9 @@ fn check_publication_gates() {
     let directory = tempfile::tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-    let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+    let plugins =
+        DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader)
+            .unwrap();
     let query = Query::build(&plugins, None);
 
     for (name, index) in [
@@ -59,3 +61,5 @@ fn check_publication_gates() {
         reader.join().unwrap();
     }
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

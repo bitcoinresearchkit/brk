@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{VSize, Weight};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{LazyPerTxDistributionTransformed, TxDerivedDistribution};
+use bitview_vecs::{LazyPerTxDistributionTransformed, TxDerivedDistribution};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

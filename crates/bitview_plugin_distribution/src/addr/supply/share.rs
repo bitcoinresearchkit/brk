@@ -1,17 +1,14 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{AddrTypeId, ByAddrType};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CachedBoxedVec, Database, ReadOnlyClone, ReadableVec, Rw,
-    StorageMode, WritableVec,
-};
-
-use bitview_compute::{
-    ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock, RatioSats,
+    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone,
+    ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::vecs::AddrSupplyVecs;
@@ -31,6 +28,7 @@ pub struct AddrSupplyShareVecs<M: StorageMode = Rw> {
 
 impl AddrSupplyShareVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -51,6 +49,7 @@ impl AddrSupplyShareVecs {
         let source = ppm.height.read_only_clone();
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnPercentPerBlock::new(
+                cache,
                 &format!("{type_name}_{name}"),
                 version,
                 &source,

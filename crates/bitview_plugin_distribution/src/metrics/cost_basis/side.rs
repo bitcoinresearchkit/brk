@@ -2,7 +2,7 @@ use bitview_cohort::UTXOAggregateId;
 use bitview_traversable::Traversable;
 use brk_types::Cents;
 
-use bitview_compute::{LazyColumnPerBlock, Price};
+use bitview_vecs::{LazyColumnPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct CostBasisSide {

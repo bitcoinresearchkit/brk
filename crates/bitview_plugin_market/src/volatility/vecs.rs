@@ -1,8 +1,8 @@
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyPerBlock;
 use brk_types::StoredF32;
 use derive_more::Deref;
-
-use bitview_compute::{LazyPerBlock, Windows};
 
 #[derive(Clone, Deref, Traversable)]
 pub struct Vecs(

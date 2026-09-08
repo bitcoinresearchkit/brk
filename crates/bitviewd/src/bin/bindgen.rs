@@ -107,7 +107,7 @@ fn generate(check: bool, scope: OutputScope) -> Result<()> {
 
     let client = Client::new("http://127.0.0.1:1", Auth::None)?;
     let reader = Reader::new_without_rlimit(tmp.join("blocks"), &client);
-    let context = ImportContext::new(tmp);
+    let context = ImportContext::new(tmp, &CACHE_BUDGET);
     let plugins = DefaultPlugins::import(context, &reader)?;
     let vecs = Vecs::build(&plugins);
 
@@ -299,3 +299,5 @@ mod tests {
         assert_eq!(manifest["remotes"][0]["url"], "https://mcp.bitview.space/");
     }
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

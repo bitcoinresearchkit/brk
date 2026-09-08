@@ -1,23 +1,23 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
+use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyColumnRatioPerBlock;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
     Cents, Height, PartsPerMillion32, RARITY_PERCENTILES, RARITY_PERCENTILES_LEN,
     RarityPercentileId, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec,
+    PcoVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::{
     Band, BlockDecayPercentiles, COMPUTE_BATCH_SIZE, START_HEIGHT,
-    cached_component_price::CachedComponentPrice, percentiles::RarityPercentiles,
+    cached_component_price::CachedComponentPrice,
 };
-use bitview_compute::LazyColumnRatioPerBlock;
 
 #[derive(Traversable)]
 pub struct Component<M: StorageMode = Rw> {
@@ -51,6 +51,7 @@ pub struct Component<M: StorageMode = Rw> {
 const VERSION: Version = Version::new(11);
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     name: &str,
     version: Version,
@@ -66,6 +67,7 @@ pub fn forced_import(
     let bands = RarityPercentiles::from_fn(|id| {
         let suffix = id.suffix();
         let ratio = LazyColumnRatioPerBlock::new(
+            cache,
             &format!("{name}_ratio_{suffix}"),
             version,
             &source,

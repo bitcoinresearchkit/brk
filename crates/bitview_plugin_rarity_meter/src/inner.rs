@@ -1,14 +1,13 @@
-use brk_error::Result;
-
+use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, Price};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, RARITY_PERCENTILES_LEN, RarityPercentileId, StoredI8, Version};
-use vecdb::{AnyVec, ColumnId, Database, ReadableVec, Rw, StorageMode, WritableVec};
+use vecdb::{AnyVec, CacheBudget, ColumnId, Database, ReadableVec, Rw, StorageMode, WritableVec};
 
-use bitview_compute::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, Price};
-
-use super::{COMPUTE_BATCH_SIZE, Component, component, percentiles::RarityPercentiles};
+use super::{COMPUTE_BATCH_SIZE, Component, component};
 
 #[derive(Traversable)]
 pub struct RarityMeterInner<M: StorageMode = Rw> {
@@ -44,6 +43,7 @@ pub struct RarityMeterInner<M: StorageMode = Rw> {
 const VERSION: Version = Version::ONE;
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     prefix: &str,
     version: Version,
@@ -57,6 +57,7 @@ pub fn forced_import(
         |source| {
             RarityPercentiles::from_fn(|id| {
                 Price::from_columnar_source(
+                    cache,
                     &format!("{prefix}_{}", id.price_suffix()),
                     version,
                     source,
@@ -69,8 +70,8 @@ pub fn forced_import(
 
     Ok(RarityMeterInner {
         prices,
-        index: PerBlock::forced_import(db, &format!("{prefix}_index"), version, mappings)?,
-        score: PerBlock::forced_import(db, &format!("{prefix}_score"), version, mappings)?,
+        index: PerBlock::forced_import(cache, db, &format!("{prefix}_index"), version, mappings)?,
+        score: PerBlock::forced_import(cache, db, &format!("{prefix}_score"), version, mappings)?,
     })
 }
 

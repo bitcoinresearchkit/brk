@@ -1,18 +1,16 @@
+use bitview_collections::{ByDcaCagr, ByDcaPeriod, ByLookbackPeriod, Windows};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
-use brk_error::Result;
-
-use brk_error::Error;
+use bitview_transforms::RatioDiffDollars;
+use bitview_vecs::{LazyPercentPerBlock, LazyWindowVec, StdDevPerBlock};
+use brk_error::{Error, Result};
 use brk_types::{Dollars, Height, PartsPerMillionSigned64, Version};
-use vecdb::{BinaryTransform, Database, ReadableCloneableVec};
+use vecdb::{BinaryTransform, CacheBudget, Database, ReadableCloneableVec};
 
 use super::Vecs;
-use bitview_compute::{
-    ByDcaCagr, ByDcaPeriod, ByLookbackPeriod, LazyPercentPerBlock, LazyWindowVec, RatioDiffDollars,
-    StdDevPerBlock, Windows,
-};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -54,6 +52,7 @@ pub fn forced_import(
     let sd_24h = Windows::try_from_fn(|suffix| {
         let days = *days_iter.next().unwrap();
         StdDevPerBlock::forced_import(
+            cache,
             db,
             "price_return_24h",
             suffix,

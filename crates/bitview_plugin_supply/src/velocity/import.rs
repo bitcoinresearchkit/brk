@@ -1,10 +1,10 @@
+use bitview_plugin_distribution::AllChainSources;
+use bitview_vecs::LazyPerBlock;
 use brk_error::Result;
-
 use brk_types::{Cents, StoredF64, Version};
+use vecdb::Ident;
 
 use super::Vecs;
-use bitview_compute::{Identity, LazyPerBlock};
-use bitview_plugin_distribution::AllChainSources;
 
 impl Vecs {
     pub fn forced_import(
@@ -13,7 +13,7 @@ impl Vecs {
         all_chain: &AllChainSources,
         transactions: &bitview_plugin_transactions::Vecs,
     ) -> Result<Self> {
-        let volume = &transactions.volume.transfer_volume.sum._1y;
+        let volume = &transactions.volume.transfer_volume.rolling.sum._1y;
         let native_source = all_chain.with_supply(
             "velocity_btc_source",
             version,
@@ -28,13 +28,13 @@ impl Vecs {
         );
 
         Ok(Self {
-            native: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
+            native: LazyPerBlock::from_height_source::<Ident>(
                 "velocity_btc",
                 version,
                 &native_source,
                 mappings,
             ),
-            fiat: LazyPerBlock::from_height_source::<Identity<StoredF64>>(
+            fiat: LazyPerBlock::from_height_source::<Ident>(
                 "velocity_usd",
                 version,
                 &fiat_source,

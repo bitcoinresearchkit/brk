@@ -1,0 +1,17 @@
+[package]
+name = "bitview_collections"
+description = "Typed collection shapes shared by Bitview"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage = "https://bitview.dev"
+repository.workspace = true
+
+[features]
+default = []
+storage = ["dep:bitview_traversable", "dep:vecdb", "brk_types/storage"]
+
+[dependencies]
+bitview_traversable = { workspace = true, optional = true }
+brk_types = { workspace = true }
+vecdb = { workspace = true, optional = true }

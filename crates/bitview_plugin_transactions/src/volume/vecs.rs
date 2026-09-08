@@ -1,7 +1,6 @@
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPerSecondWindows, ValuePerBlockCumulativeRolling};
 use vecdb::{Rw, StorageMode};
-
-use bitview_compute::{LazyPerSecondWindows, ValuePerBlockCumulativeRolling};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -18,7 +17,7 @@ mod tests {
     use brk_types::StoredU64;
     use vecdb::UnaryTransform;
 
-    use bitview_compute::PerSecond;
+    use bitview_transforms::PerSecond;
 
     #[test]
     fn transactions_per_second_uses_the_full_fixed_window() {

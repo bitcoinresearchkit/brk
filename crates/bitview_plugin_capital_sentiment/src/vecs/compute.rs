@@ -1,6 +1,5 @@
 use brk_error::Result;
 
-use bitview_compute::db_utils::validate_any_computed_version_or_reset;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::Indexer;
 use brk_types::{CapitalSentimentPhase, Cents, Day1, Height, StoredBool, StoredU8, Version};
@@ -69,8 +68,12 @@ impl ComputePlugin for Vecs {
         ]
         .into_iter()
         .sum();
-        validate_any_computed_version_or_reset(&mut self.phase_code.day1, source_version)?;
-        validate_any_computed_version_or_reset(&mut self.is_long.day1, source_version)?;
+        self.phase_code
+            .day1
+            .any_validate_computed_version_or_reset(source_version)?;
+        self.is_long
+            .day1
+            .any_validate_computed_version_or_reset(source_version)?;
 
         let height_end = [spot.len(), sma.len(), all.len(), sth.len(), lth.len()]
             .into_iter()

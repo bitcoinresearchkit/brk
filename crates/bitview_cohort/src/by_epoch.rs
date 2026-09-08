@@ -112,3 +112,11 @@ impl<T> ByEpoch<T> {
         }
     }
 }
+impl EpochId {
+    pub fn matching(filter: &Filter) -> Option<Self> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|id| id.select(&EPOCH_FILTERS) == filter)
+    }
+}

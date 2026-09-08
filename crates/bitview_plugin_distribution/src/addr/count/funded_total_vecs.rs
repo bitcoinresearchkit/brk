@@ -1,9 +1,8 @@
-use brk_error::Result;
-
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_types::Version;
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{AddrCountsVecs, AddrTypeToAddrCount};
 
@@ -23,6 +22,7 @@ pub struct AddrCountFundedTotalVecs<M: StorageMode = Rw> {
 
 impl AddrCountFundedTotalVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -30,12 +30,14 @@ impl AddrCountFundedTotalVecs {
     ) -> Result<Self> {
         Ok(Self {
             funded: AddrCountsVecs::forced_import(
+                cache,
                 db,
                 &format!("{name}_addr_count"),
                 version,
                 mappings,
             )?,
             total: AddrCountsVecs::forced_import(
+                cache,
                 db,
                 &format!("total_{name}_addr_count"),
                 version,

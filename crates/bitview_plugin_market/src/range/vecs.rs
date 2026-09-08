@@ -3,7 +3,7 @@ use brk_types::{PartsPerMillion32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
 use super::price_min_max_vecs::PriceMinMaxVecs;
-use bitview_compute::{LazyPerBlock, PerBlock, PercentPerBlock};
+use bitview_vecs::{LazyPerBlock, PerBlock, PercentPerBlock};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

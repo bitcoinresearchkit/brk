@@ -1,10 +1,9 @@
+use bitview_cohort::WithAddrTypes;
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlockCumulativeRolling};
 use brk_types::{StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-
-use bitview_compute::{
-    CachedWindowStartVec, LazyPerBlockCumulativeRolling, Windows, WithAddrTypes,
-};
 
 use super::TotalAddrCountVecs;
 

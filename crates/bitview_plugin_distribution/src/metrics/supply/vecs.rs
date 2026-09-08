@@ -1,23 +1,25 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{
-    AgeRange, AgeRangeId, Amount, CohortContext, Filter, UTXOGroups, UTXOGroupsWithoutAmount,
+    AgeRange, AgeRangeId, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroupsWithoutAmount,
+    UTXORows,
 };
+use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::{HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, SatsToCents};
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarValuePerBlockCumulativeRolling, LazyPercentPerBlock,
+    LazyRollingDeltasAmountFromHeight, LazyValuePerBlock, LazyValuePerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_types::{
     Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version,
 };
-use vecdb::{AnyStoredVec, BinaryTransform, CachedBoxedVec, Database, Rw, StorageMode};
-
-use crate::{metrics::UTXORows, state::UnrealizedState};
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarValuePerBlockCumulativeRolling, HalveCents, HalveDollars,
-    HalveSats, HalveSatsToBitcoin, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
-    LazyValuePerBlock, LazyValuePerBlockCumulativeRolling, SatsToCents, Windows,
+use vecdb::{
+    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode,
 };
 
 use super::{SupplyBase, SupplyByCohort, SupplySources, SupplyTotal};
+use crate::state::UnrealizedState;
 
 const MATURED_VERSION: Version = Version::new(5);
 
@@ -40,38 +42,43 @@ pub struct SupplyVecs<M: StorageMode = Rw> {
     /// Unspent supply in loss: UTXO cohort outputs whose creation price is
     /// greater than the represented block's spot price.
     pub in_loss: SupplyByCohort<M>,
-    /// Change in a UTXO cohort's unspent supply over a trailing window, with
+    /// Change in a UTXO or address-balance cohort's unspent supply over a trailing window, with
     /// the relative change measured against the window's starting value.
-    pub delta:
-        UTXOGroups<LazyRollingDeltasAmountFromHeight<Sats, SatsSigned, PartsPerMillionSigned64>>,
-    #[traversable(wrap = "delta", rename = "addr_balance")]
-    /// Change in unspent supply controlled by an address-balance cohort over a
-    /// trailing window, with the relative change measured against the window's
-    /// starting value.
-    pub addr_balance_delta:
-        Amount<LazyRollingDeltasAmountFromHeight<Sats, SatsSigned, PartsPerMillionSigned64>>,
-    /// Share of all unspent supply held by a UTXO cohort.
-    pub dominance: UTXOGroups<LazyPercentPerBlock<PartsPerMillion32>>,
-    #[traversable(wrap = "dominance", rename = "addr_balance")]
-    /// Share of all unspent supply controlled by an address-balance cohort.
-    pub addr_balance_dominance: Amount<LazyPercentPerBlock<PartsPerMillion32>>,
+    pub delta: UTXOAndAddrGroups<
+        LazyRollingDeltasAmountFromHeight<Sats, SatsSigned, PartsPerMillionSigned64>,
+    >,
+    /// Share of all unspent supply held by a UTXO or address-balance cohort.
+    pub dominance: UTXOAndAddrGroups<LazyPercentPerBlock<PartsPerMillion32>>,
 }
 
 impl SupplyVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let total = SupplyTotal::forced_import(db, version, mappings, spot_price)?;
+        let total = SupplyTotal::forced_import(cache, db, version, mappings, spot_price)?;
         let all_supply = total.all_supply();
-        let in_profit =
-            SupplyByCohort::forced_import(db, "supply_in_profit", version, mappings, spot_price)?;
-        let in_loss =
-            SupplyByCohort::forced_import(db, "supply_in_loss", version, mappings, spot_price)?;
-        let bases = total.cohorts.map_named(|filter, cohort_name, total| {
+        let in_profit = SupplyByCohort::forced_import(
+            cache,
+            db,
+            "supply_in_profit",
+            version,
+            mappings,
+            spot_price,
+        )?;
+        let in_loss = SupplyByCohort::forced_import(
+            cache,
+            db,
+            "supply_in_loss",
+            version,
+            mappings,
+            spot_price,
+        )?;
+        let utxo = total.cohorts.utxo.map_named(|filter, cohort_name, total| {
             let full_name = CohortContext::Utxo.full_name(filter, cohort_name);
             if matches!(filter, Filter::All) {
                 SupplyBase::from_all_total(
@@ -92,22 +99,24 @@ impl SupplyVecs {
                 )
             }
         });
-        let delta = bases.map_named(|_, _, base| base.delta.clone());
-        let dominance = bases.map_named(|_, _, base| base.dominance.clone());
-        let addr_balance_bases = total.addr_balance.series.map_named(|filter, name, total| {
-            let full_name = CohortContext::Addr.full_name(filter, name);
-            SupplyBase::from_total(
-                &full_name,
-                version + Version::ONE,
-                total.clone(),
-                all_supply,
-                mappings,
-                cached_starts,
-            )
-        });
-        let addr_balance_delta = addr_balance_bases.map_named(|_, _, base| base.delta.clone());
-        let addr_balance_dominance =
-            addr_balance_bases.map_named(|_, _, base| base.dominance.clone());
+        let addr_balance = total
+            .cohorts
+            .addr_balance
+            .series
+            .map_named(|filter, name, total| {
+                let full_name = CohortContext::Addr.full_name(filter, name);
+                SupplyBase::from_total(
+                    &full_name,
+                    version + Version::ONE,
+                    total.clone(),
+                    all_supply,
+                    mappings,
+                    cached_starts,
+                )
+            });
+        let bases = UTXOAndAddrGroups { utxo, addr_balance };
+        let delta = bases.map_named(|_, _, _, base| base.delta.clone());
+        let dominance = bases.map_named(|_, _, _, base| base.dominance.clone());
         let half = in_profit.cohorts.map_named(|filter, cohort_name, _| {
             let full_name = CohortContext::Utxo.full_name(filter, cohort_name);
             LazyValuePerBlock::from_spot_block_source::<
@@ -134,6 +143,7 @@ impl SupplyVecs {
                     let name = format!("{name}_matured_supply");
                     let (sats, cents) =
                         ColumnarValuePerBlockCumulativeRolling::<AgeRangeId, ()>::sources_from(
+                            cache,
                             sats,
                             cents,
                             &format!("{name}_cumulative"),
@@ -159,9 +169,7 @@ impl SupplyVecs {
             in_profit,
             in_loss,
             delta,
-            addr_balance_delta,
             dominance,
-            addr_balance_dominance,
         })
     }
 

@@ -1,13 +1,11 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyPercentPerBlock};
 use brk_types::{Height, PartsPerMillion32, PoolSlug, StoredU64};
 use vecdb::{LazyVec, ReadableCloneableVec, Version};
 
-use super::pool_heights::BlocksMined;
-
-use bitview_compute::{CachedWindowStartVec, LazyPercentPerBlock, Windows};
-
-use super::PoolHeights;
+use super::{PoolHeights, pool_heights::BlocksMined};
 
 fn pool_dominance(height: Height, blocks_mined: StoredU64) -> PartsPerMillion32 {
     PartsPerMillion32::from(u64::from(blocks_mined) as f64 / (u64::from(height) + 1) as f64)

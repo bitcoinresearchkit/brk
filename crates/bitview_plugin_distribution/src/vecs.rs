@@ -1,10 +1,14 @@
-use brk_error::Result;
-
 use std::{mem, path::PathBuf};
 
 use bitview_cohort::{AddrTypeId, AgeRange, AgeRangeId, CohortContext, EntryPrice};
+use bitview_collections::Windows;
 use bitview_plugin::{ComputePlugin, ImportContext, Plugin, PluginStorage, UpdateContext};
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
+    PerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::{Cents, Height, StoredF64, SupplyState, Version};
 use tracing::{debug, info, warn};
@@ -13,23 +17,18 @@ use vecdb::{
     WritableVec,
 };
 
-use crate::{
-    Dependencies, STORAGE,
-    compute::{StartMode, determine_start_mode, process_blocks},
-    state::{AddrStates, BlockState},
-};
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    PerBlockCumulativeRolling, Windows,
-};
-
-use super::inner::Inner;
 use super::{
     AddrStateVecs, AllChainSources, CohortMetrics, UTXOStates,
     addr::{
         AddrActivityVecs, AddrCountsVecs, AddrVecs, AvgAmountVecs, DeltaVecs, ExposedAddrVecs,
         FundedAddrCountsVecs, NewAddrCountVecs, ReusedAddrVecs, TotalAddrCountVecs,
     },
+    inner::Inner,
+};
+use crate::{
+    Dependencies, STORAGE,
+    compute::{StartMode, determine_start_mode, process_blocks},
+    state::{AddrStates, BlockState},
 };
 
 const COMPUTE_VERSION: Version = Version::new(30 + ORACLE_VERSION);
@@ -103,19 +102,42 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
 
-        let cohorts =
-            CohortMetrics::forced_import(&db, version, mappings, cached_starts, &spot_price)?;
+        let cohorts = CohortMetrics::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            cached_starts,
+            &spot_price,
+        )?;
 
         let addr_state = AddrStateVecs::forced_import(&db, version)?;
 
-        let funded_addr_count =
-            FundedAddrCountsVecs::forced_import(&db, version, mappings, cached_starts)?;
-        let empty_addr_count =
-            AddrCountsVecs::forced_import(&db, "empty_addr_count", version, mappings)?;
-        let addr_activity = AddrActivityVecs::forced_import(&db, version, mappings, cached_starts)?;
+        let funded_addr_count = FundedAddrCountsVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            cached_starts,
+        )?;
+        let empty_addr_count = AddrCountsVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            "empty_addr_count",
+            version,
+            mappings,
+        )?;
+        let addr_activity = AddrActivityVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            mappings,
+            cached_starts,
+        )?;
 
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived mappings)
-        let total_addr_count = TotalAddrCountVecs::forced_import(&db, version, mappings)?;
+        let total_addr_count =
+            TotalAddrCountVecs::forced_import(context.cache_budget(), &db, version, mappings)?;
 
         // Per-block delta of total (global + per-type)
         let new_addr_count =
@@ -126,6 +148,7 @@ impl Vecs {
         // industry standard). `respent_*` uses the spend-side counterpart
         // (spent_txo_count > 1, strictly more restrictive).
         let reused_addr_count = ReusedAddrVecs::forced_import(
+            context.cache_budget(),
             &db,
             "reused",
             version,
@@ -137,6 +160,7 @@ impl Vecs {
             cohorts.all_supply(),
         )?;
         let respent_addr_count = ReusedAddrVecs::forced_import(
+            context.cache_budget(),
             &db,
             "respent",
             version,
@@ -150,6 +174,7 @@ impl Vecs {
 
         // Exposed address tracking (counts + supply) - quantum / pubkey-exposure sense
         let exposed_addr_vecs = ExposedAddrVecs::forced_import(
+            context.cache_budget(),
             &db,
             version,
             mappings,
@@ -163,12 +188,13 @@ impl Vecs {
         // Average amount (supply / utxo_count, supply / funded_addr_count) for `all` and per addr type.
         let all_chain = AllChainSources::new(cohorts.all_supply(), cohorts.all_market_cap());
         let avg_amount = AvgAmountVecs::forced_import(
+            context.cache_budget(),
             &db,
             version,
             mappings,
             &spot_price,
             &all_chain,
-            &cohorts.outputs.unspent_count.cohorts.all.height,
+            &cohorts.outputs.unspent_count.cohorts.utxo.all.height,
             &funded_addr_count.counts.all.height,
         )?;
 
@@ -200,6 +226,7 @@ impl Vecs {
                 |source| {
                     AgeRangeId::series(CohortContext::Utxo, |column, name| {
                         LazyColumnPerBlockCumulativeRolling::new(
+                            context.cache_budget(),
                             &format!("{name}_coindays_created"),
                             version,
                             source,
@@ -212,6 +239,7 @@ impl Vecs {
             )?,
 
             coinblocks_destroyed: PerBlockCumulativeRolling::forced_import(
+                context.cache_budget(),
                 &db,
                 "coinblocks_destroyed",
                 version + Version::TWO,
@@ -536,8 +564,8 @@ impl ComputePlugin for Vecs {
         self.cohorts.compute_rest_part1(&starting_lengths, exit)?;
 
         // 6b. Compute address metrics derived from stored per-type sources.
-        let type_supply = &self.cohorts.supply.total.cohorts.type_;
-        let type_outputs = &self.cohorts.outputs.unspent_count.cohorts.type_;
+        let type_supply = &self.cohorts.supply.total.cohorts.utxo.type_;
+        let type_outputs = &self.cohorts.outputs.unspent_count.cohorts.utxo.type_;
         let type_supply_sats =
             AddrTypeId::series(|column, _| &type_supply.get(column.output_type()).sats.height);
         let type_utxo_counts =

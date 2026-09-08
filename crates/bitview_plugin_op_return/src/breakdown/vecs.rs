@@ -1,15 +1,14 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_types::{Bytes, Height, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyVec, Database, ReadableCloneableVec, Rw, StorageMode};
+use vecdb::{AnyVec, CacheBudget, Database, ReadableCloneableVec, Rw, StorageMode};
 
 use super::{BlockMetrics, BreakdownAxis, DataBytesSeries, FeesSeries};
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    Windows,
-};
 
 #[derive(Traversable)]
 pub struct BreakdownVecs<C: BreakdownAxis, M: StorageMode = Rw> {
@@ -47,6 +46,7 @@ pub struct BreakdownVecs<C: BreakdownAxis, M: StorageMode = Rw> {
 impl<C: BreakdownAxis> BreakdownVecs<C> {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         source_prefix: &str,
         series_prefix: &str,
@@ -64,6 +64,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
+                        cache,
                         &format!("{series_prefix}_{name}_output_count"),
                         version,
                         source,
@@ -82,6 +83,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                 C::series(|column, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let data_bytes = LazyColumnPerBlockCumulativeRolling::new(
+                        cache,
                         &format!("{prefix}_data_bytes"),
                         version,
                         source,
@@ -102,6 +104,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
+                        cache,
                         &format!("{series_prefix}_{name}_tx_count"),
                         version,
                         source,
@@ -119,6 +122,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
+                        cache,
                         &format!("{series_prefix}_{name}_tx_vsize"),
                         version,
                         source,
@@ -137,6 +141,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                 C::series(|column, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let fees = LazyColumnPerBlockCumulativeRolling::new(
+                        cache,
                         &format!("{prefix}_fees"),
                         version,
                         source,

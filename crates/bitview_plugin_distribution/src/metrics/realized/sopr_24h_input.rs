@@ -1,7 +1,7 @@
 use brk_types::{Cents, Height};
 use vecdb::{DeltaSub, LazyDeltaVec};
 
-use bitview_compute::{LazyFiatPerBlockCumulativeRolling, LazyValuePerBlockCumulativeRolling};
+use bitview_vecs::{LazyFiatPerBlockCumulativeRolling, LazyValuePerBlockCumulativeRolling};
 
 #[derive(Clone)]
 pub struct Sopr24hInput {

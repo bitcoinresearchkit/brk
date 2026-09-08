@@ -38,7 +38,7 @@ fn main() -> brk_error::Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir);
+    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
     let indexer = Indexer::import(context, &reader)?;
     println!("Indexer loaded.\n");
 
@@ -110,3 +110,5 @@ fn main() -> brk_error::Result<()> {
     println!();
     Ok(())
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

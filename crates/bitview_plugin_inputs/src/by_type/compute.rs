@@ -26,6 +26,7 @@ impl Vecs {
         self.input_count.invalidate();
         self.tx_count
             .validate_and_truncate(dep_version, starting_lengths.height)?;
+        self.tx_count.total.invalidate();
 
         let skip = self
             .input_count

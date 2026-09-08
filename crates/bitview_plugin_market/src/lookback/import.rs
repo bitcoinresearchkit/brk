@@ -1,14 +1,12 @@
+use bitview_collections::ByLookbackPeriod;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
-use brk_error::Result;
+use bitview_vecs::{LazyWindowVec, Price};
+use brk_error::{Error, Result};
+use brk_types::{Cents, Height, Version};
 use vecdb::ReadableCloneableVec;
 
-use brk_error::Error;
-use brk_types::Version;
-use brk_types::{Cents, Height};
-
 use super::Vecs;
-use bitview_compute::{ByLookbackPeriod, LazyWindowVec, Price};
 
 pub fn forced_import(
     version: Version,

@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Cents, PartsPerMillionSigned32, StoredF32};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{LazyPerBlock, LazyPercentPerBlock, PerBlock, Price};
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, PerBlock, Price};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

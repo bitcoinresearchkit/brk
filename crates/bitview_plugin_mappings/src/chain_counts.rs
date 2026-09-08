@@ -2,7 +2,7 @@ use bitview_plugin_indexer::Indexer;
 use brk_types::{Height, StoredU64, TxInIndex, TxIndex, TxOutIndex, Version};
 use vecdb::{CachedBoxedVec, CachedReadableVec, CachedVec, ReadableCloneableVec};
 
-use bitview_compute::LazyCumulativeIndexVec;
+use bitview_vecs::LazyCumulativeIndexVec;
 
 /// Pinned canonical cumulative counts derived from the indexer's first-index
 /// boundaries.

@@ -1,13 +1,11 @@
-use brk_error::Result;
-
-use bitview_cohort::AddrTypeId;
+use bitview_cohort::{AddrTypeId, WithAddrTypes};
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock};
+use brk_error::Result;
 use brk_types::{StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode, WritableVec};
-
-use bitview_compute::{ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock, WithAddrTypes};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::AddrTypeToAddrCount;
 
@@ -27,6 +25,7 @@ pub struct AddrCountsVecs<M: StorageMode = Rw>(
 
 impl AddrCountsVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -36,7 +35,11 @@ impl AddrCountsVecs {
             db,
             &format!("{name}_by_type"),
             version,
-            |source| WithAddrTypes::from_columnar_source(name, version, source, mappings),
+            |source| {
+                bitview_vecs::LazyColumnPerBlock::with_addr_types(
+                    cache, name, version, source, mappings,
+                )
+            },
         )?))
     }
 

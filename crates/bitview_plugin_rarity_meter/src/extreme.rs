@@ -1,24 +1,20 @@
-use brk_error::Result;
-
 use std::{collections::VecDeque, iter::repeat_n};
 
+use bitview_compute::{ExactOrderStats, FenwickTree, NumericValue};
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, PercentPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, StoredU8, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, Database, ReadableVec, Rw, StorageMode, VecIndex, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, Database, ReadableVec, Rw, StorageMode, VecIndex,
+    WritableVec,
 };
 
 use crate::threshold_vecs::{ExtremeThresholdId, ThresholdVecs};
-
-use bitview_compute::{
-    ColumnarPerBlock, LazyColumnPerBlock, NumericValue, PerBlock, PercentPerBlock,
-    algo::{ExactOrderStats, FenwickTree},
-    db_utils::validate_any_computed_version_or_reset,
-};
 
 const MIN_HISTORY_BLOCKS: usize = 210_000;
 const WRITE_INTERVAL: usize = 10_000;
@@ -105,6 +101,7 @@ where
     T: NumericValue + JsonSchema,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -121,15 +118,28 @@ where
                         ExtremeThresholdId::Pct0_05 => format!("{name}_threshold_pct0_05"),
                         ExtremeThresholdId::Pct0_025 => format!("{name}_threshold"),
                     };
-                    LazyColumnPerBlock::new(&series_name, version, source, threshold, mappings)
+                    LazyColumnPerBlock::new(
+                        cache,
+                        &series_name,
+                        version,
+                        source,
+                        threshold,
+                        mappings,
+                    )
                 })
             },
         )?;
 
         Ok(Self {
             thresholds,
-            tail: PercentPerBlock::forced_import(db, &format!("{name}_tail"), version, mappings)?,
-            rank: PerBlock::forced_import(db, &format!("{name}_rank"), version, mappings)?,
+            tail: PercentPerBlock::forced_import(
+                cache,
+                db,
+                &format!("{name}_tail"),
+                version,
+                mappings,
+            )?,
+            rank: PerBlock::forced_import(cache, db, &format!("{name}_rank"), version, mappings)?,
             history: LiveHistory::new(),
         })
     }
@@ -174,7 +184,7 @@ where
             &mut self.tail.ppm.height,
             &mut self.rank.height,
         ] {
-            validate_any_computed_version_or_reset(output, dependency_version)?;
+            output.any_validate_computed_version_or_reset(dependency_version)?;
         }
 
         let source_end = source.len();

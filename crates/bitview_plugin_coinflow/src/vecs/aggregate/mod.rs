@@ -5,7 +5,7 @@ mod sources;
 
 pub use sources::AggregateSources;
 
-use bitview_compute::{
+use bitview_vecs::{
     LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
 };
 

@@ -3,11 +3,9 @@ use std::ops::AddAssign;
 use bitview_cohort::{ByTerm, ProfitabilityRange, ProfitabilityRangeId, TermId, UTXOAggregateId};
 use brk_types::{Height, Version};
 use vecdb::{
-    CachedBoxedVec, CachedReadableVec, ColumnId, PcoVec, PcoVecValue, ReadOnlyColumnarVec,
-    ReadableColumnarVec, VecValue,
+    CacheBudget, CachedBoxedVec, CachedReadableVec, ColumnId, PcoVec, PcoVecValue,
+    ReadOnlyColumnarVec, ReadableColumnarVec, VecValue,
 };
-
-use bitview_compute::CACHE_BUDGET;
 
 const RANGE_COUNT: usize = ProfitabilityRangeId::ALL.len();
 const COLUMN_COUNT: usize = TermId::ALL.len() * RANGE_COUNT;
@@ -41,6 +39,7 @@ pub struct TermProfitabilityRangeId {
 
 impl TermProfitabilityRangeId {
     pub fn source<T>(
+        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, Self>,
         name: &str,
         version: Version,
@@ -51,7 +50,7 @@ impl TermProfitabilityRangeId {
         T: PcoVecValue + AddAssign,
     {
         if let (Some(term), [range]) = (aggregate.term(), ranges) {
-            return CACHE_BUDGET
+            return cache
                 .wrap(source.column(
                     name,
                     version,
@@ -64,7 +63,7 @@ impl TermProfitabilityRangeId {
         }
 
         let selected_term = aggregate.term();
-        CACHE_BUDGET
+        cache
             .wrap(
                 source.sum_columns(
                     name,

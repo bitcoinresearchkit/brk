@@ -1,8 +1,8 @@
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyPerBlock;
 use brk_types::{Cents, Dollars, Height};
 use vecdb::LazyVec;
-
-use bitview_compute::{LazyPerBlock, Windows};
 
 #[derive(Clone, Traversable)]
 pub struct NegRealizedLoss {

@@ -1,13 +1,13 @@
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_vecs::{LazyLookbackVec, LazyPerBlock, PerBlock, PercentPerBlock, Price};
 use brk_error::Result;
-
 use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{Database, ReadableCloneableVec};
+use vecdb::{CacheBudget, Database, Ident, ReadableCloneableVec};
 
 use super::{Vecs, price_min_max_vecs::PriceMinMaxVecs};
-use bitview_compute::{Identity, LazyLookbackVec, LazyPerBlock, PerBlock, PercentPerBlock, Price};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -28,30 +28,32 @@ pub fn forced_import(
 
     Ok(Vecs {
         min: PriceMinMaxVecs {
-            _1w: Price::forced_import(db, "price_min_1w", version + v1, mappings)?,
-            _2w: Price::forced_import(db, "price_min_2w", version + v1, mappings)?,
-            _1m: Price::forced_import(db, "price_min_1m", version + v1, mappings)?,
-            _1y: Price::forced_import(db, "price_min_1y", version + v1, mappings)?,
+            _1w: Price::forced_import(cache, db, "price_min_1w", version + v1, mappings)?,
+            _2w: Price::forced_import(cache, db, "price_min_2w", version + v1, mappings)?,
+            _1m: Price::forced_import(cache, db, "price_min_1m", version + v1, mappings)?,
+            _1y: Price::forced_import(cache, db, "price_min_1y", version + v1, mappings)?,
         },
         max: PriceMinMaxVecs {
-            _1w: Price::forced_import(db, "price_max_1w", version + v1, mappings)?,
-            _2w: Price::forced_import(db, "price_max_2w", version + v1, mappings)?,
-            _1m: Price::forced_import(db, "price_max_1m", version + v1, mappings)?,
-            _1y: Price::forced_import(db, "price_max_1y", version + v1, mappings)?,
+            _1w: Price::forced_import(cache, db, "price_max_1w", version + v1, mappings)?,
+            _2w: Price::forced_import(cache, db, "price_max_2w", version + v1, mappings)?,
+            _1m: Price::forced_import(cache, db, "price_max_1m", version + v1, mappings)?,
+            _1y: Price::forced_import(cache, db, "price_max_1y", version + v1, mappings)?,
         },
-        true_range: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
+        true_range: LazyPerBlock::from_height_source::<Ident>(
             "price_true_range",
             v,
             &true_range_source,
             mappings,
         ),
         true_range_sum_2w: PerBlock::forced_import(
+            cache,
             db,
             "price_true_range_sum_2w",
             version + v1,
             mappings,
         )?,
         choppiness_index_2w: PercentPerBlock::forced_import(
+            cache,
             db,
             "price_choppiness_index_2w",
             version + v1,

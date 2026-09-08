@@ -3219,7 +3219,7 @@ class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mOverUnderPattern:
 
 class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mOverUnderPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self._10y_to_12y: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(_m(acc, '10y_to_12y_old_transfer_volume'), disc))
@@ -3264,7 +3264,7 @@ class _10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mOverUnderPattern7(Generic[T]
 
 class HeightIndexPct0Pct1Pct10Pct2Pct20Pct30Pct40Pct5Pct50Pct60Pct70Pct80Pct90Pct95Pct98Pct99ScorePattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.height: SeriesPattern18[List[Cents]] = SeriesPattern18(client, _m(acc, 'percentiles_cents'))
@@ -3300,7 +3300,7 @@ class _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern:
 
 class _10y12y15y18m1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self._10y: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(_m(acc, '10y_old_transfer_volume'), disc))
@@ -3326,7 +3326,7 @@ class _10y12y15y18m1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern2:
 
 class _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self._10y: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(_m(acc, '10y_old_transfer_volume'), disc))
@@ -3376,7 +3376,7 @@ class _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern14:
 
 class Pct0Pct1Pct10Pct2Pct20Pct30Pct40Pct5Pct50Pct60Pct70Pct80Pct90Pct95Pct98Pct99RatiosPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct0_1: PpmPriceRatioPattern = PpmPriceRatioPattern(client, acc, 'pct0_1')
@@ -3410,7 +3410,7 @@ class _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern7(Generic[T]):
 
 class Pct05Pct10Pct15Pct20Pct25Pct30Pct35Pct40Pct45Pct50Pct55Pct60Pct65Pct70Pct75Pct80Pct85Pct90Pct95Pattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct05: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct05'))
@@ -3439,7 +3439,7 @@ class _200920102011201220132014201520162017201820192020202120222023202420252026P
 
 class _200920102011201220132014201520162017201820192020202120222023202420252026Pattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self._2009: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(_m(acc, '2009_transfer_volume'), disc))
@@ -3479,7 +3479,7 @@ class _200920102011201220132014201520162017201820192020202120222023202420252026P
 
 class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern8:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._0sats: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, '0sats_supply_delta'))
@@ -3500,7 +3500,7 @@ class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern8:
 
 class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._0sats: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, '0sats_transfer_volume'))
@@ -3529,7 +3529,7 @@ class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern5:
 
 class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern10:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._0sats: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '0sats_supply'))
@@ -3550,7 +3550,7 @@ class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern10:
 
 class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._0sats: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, '0sats_realized_cap'))
@@ -3571,7 +3571,7 @@ class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern4:
 
 class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern9:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._0sats: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '0sats_supply_dominance'))
@@ -3596,7 +3596,7 @@ class _100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctTota
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern8:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, '100btc_supply_delta'))
@@ -3615,7 +3615,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern8:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: AbsoluteRatePattern2 = AbsoluteRatePattern2(client, _m(acc, '100btc_supply_delta'))
@@ -3634,7 +3634,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, '100btc_transfer_volume'))
@@ -3653,7 +3653,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern2:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(acc, '100btc_transfer_volume'))
@@ -3688,7 +3688,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern5:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern10:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '100btc_supply'))
@@ -3707,7 +3707,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern10:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern10:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '100btc_supply'))
@@ -3726,7 +3726,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern10:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, '100btc_realized_cap'))
@@ -3745,7 +3745,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern4:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: CentsDeltaUsdPattern = CentsDeltaUsdPattern(client, _m(acc, '100btc_realized_cap'))
@@ -3764,7 +3764,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern4:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern9:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '100btc_supply_dominance'))
@@ -3783,7 +3783,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1mPattern9:
 
 class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern9:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._100btc: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '100btc_supply_dominance'))
@@ -3802,7 +3802,7 @@ class _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern9:
 
 class _10y1m1w1y2y3m3y4y5y6m6y8yPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '10y'))
@@ -3820,7 +3820,7 @@ class _10y1m1w1y2y3m3y4y5y6m6y8yPattern3:
 
 class _10y1m1w1y2y3m3y4y5y6m6y8yPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: PercentPpmRatioPattern = PercentPpmRatioPattern(client, _m(acc, '10y'))
@@ -3842,7 +3842,7 @@ class AgeAllClassEntryEpochTermTypePattern2:
 
 class EmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: _1m1w1y24hPercentPpmRatioPattern = _1m1w1y24hPercentPpmRatioPattern(client, _m(acc, 'empty_outputs_output'))
@@ -3864,7 +3864,7 @@ class AllHeightP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern:
 
 class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'average'))
@@ -3881,7 +3881,7 @@ class AverageBlockCumulativeMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
 
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern5:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, _p('empty_outputs', acc))
@@ -3898,7 +3898,7 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern5:
 
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern10:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _p('empty_outputs', acc))
@@ -3915,7 +3915,7 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern10:
 
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern11:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: CentsUsdPattern = CentsUsdPattern(client, _p('empty_outputs', acc))
@@ -3932,7 +3932,7 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern11:
 
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern13:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: _1m1w1y24hPercentPpmRatioPattern = _1m1w1y24hPercentPpmRatioPattern(client, _m(acc, 'empty_outputs_prevout'))
@@ -3949,7 +3949,7 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern13:
 
 class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern6(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.empty: SeriesPattern1[T] = SeriesPattern1(client, _p('empty_outputs', acc))
@@ -3978,7 +3978,7 @@ class _10pct20pct30pct40pct50pct60pct70pct80pctTotalPattern2:
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
@@ -3993,7 +3993,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern2:
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, acc)
@@ -4008,7 +4008,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4:
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: _1m1w1y24hBlockPattern = _1m1w1y24hBlockPattern(client, acc)
@@ -4023,7 +4023,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern:
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: _1m1w1y24hPercentPpmRatioPattern = _1m1w1y24hPercentPpmRatioPattern(client, acc)
@@ -4038,7 +4038,7 @@ class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern6:
 
 class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'average'))
@@ -4053,7 +4053,7 @@ class AverageMaxMedianMinPct10Pct25Pct75Pct90SumPattern:
 
 class Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct10: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct10'))
@@ -4068,7 +4068,7 @@ class Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern:
 
 class _10y2y3y4y5y6y8yPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._10y: PercentPpmRatioPattern = PercentPpmRatioPattern(client, _m(acc, '10y'))
@@ -4081,7 +4081,7 @@ class _10y2y3y4y5y6y8yPattern:
 
 class _1m1w1y24hPercentPpmRatioPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '1m'))
@@ -4094,7 +4094,7 @@ class _1m1w1y24hPercentPpmRatioPattern:
 
 class _1m1y2y3m4y6m8yPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SupplyPattern = SupplyPattern(client, _m(acc, '1m_supply_in_loss_share'))
@@ -4115,7 +4115,7 @@ class AgeAllClassCumulativeEntryEpochTermPattern:
 
 class InMaxMinPerSupplyPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: PerPattern2 = PerPattern2(client, _m(acc, 'cost_basis_in_loss_per'))
@@ -4128,7 +4128,7 @@ class InMaxMinPerSupplyPattern:
 
 class MaxMedianMinPct10Pct25Pct75Pct90Pattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.max: SeriesPattern18[VSize] = SeriesPattern18(client, _m(acc, 'max'))
@@ -4141,7 +4141,7 @@ class MaxMedianMinPct10Pct25Pct75Pct90Pattern2:
 
 class MaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.max: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, 'max'))
@@ -4154,7 +4154,7 @@ class MaxMedianMinPct10Pct25Pct75Pct90Pattern(Generic[T]):
 
 class AverageBlockChainCumulativeDataSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'data_bytes_average'))
@@ -4166,7 +4166,7 @@ class AverageBlockChainCumulativeDataSumPattern:
 
 class HeightRankTailThresholdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.height: SeriesPattern18[List[Dollars]] = SeriesPattern18(client, _m(acc, 'thresholds'))
@@ -4182,7 +4182,7 @@ class _01234Pattern:
 
 class _01234Pattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self._0: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _m(_m(acc, '0_transfer_volume'), disc))
@@ -4205,7 +4205,7 @@ class _01234Pattern14:
 
 class _1m1w1y24hHeightPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '1m'))
@@ -4216,7 +4216,7 @@ class _1m1w1y24hHeightPattern2:
 
 class _1m1w1y24hBlockPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1m'))
@@ -4227,7 +4227,7 @@ class _1m1w1y24hBlockPattern2:
 
 class _1m1w1y24hBlockPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'average_1m'))
@@ -4238,7 +4238,7 @@ class _1m1w1y24hBlockPattern:
 
 class _1m1w1y24hHeightPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, '1m'))
@@ -4249,7 +4249,7 @@ class _1m1w1y24hHeightPattern:
 
 class AverageBlockCumulativeFeeSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[StoredF32] = _1m1w1y24hPattern(client, _m(acc, 'fees_average'))
@@ -4260,7 +4260,7 @@ class AverageBlockCumulativeFeeSumPattern:
 
 class BtcCentsDeltaSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
@@ -4275,7 +4275,7 @@ class BtcCentsInSatsUsdPattern:
 
 class CentsPpmRatioSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4290,7 +4290,7 @@ class EmaHistogramLineSignalPattern:
 
 class Pct95Pct98Pct99Pattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct95: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'pct95'))
@@ -4301,7 +4301,7 @@ class Pct95Pct98Pct99Pattern:
 
 class Pct95Pct98Pct99Pattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.pct95: SeriesPattern1[StoredF64] = SeriesPattern1(client, _m(acc, 'pct95'))
@@ -4312,7 +4312,7 @@ class Pct95Pct98Pct99Pattern2:
 
 class PhsReboundThsPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.phs: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'phs'))
@@ -4331,7 +4331,7 @@ class CumulativeMultipleOversizedPrePattern3(Generic[T]):
 
 class _1m1w1y24hPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _m(acc, '1m'))
@@ -4341,7 +4341,7 @@ class _1m1w1y24hPattern4:
 
 class _1m1w1y24hPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcCentsSatsUsdPattern2 = BtcCentsSatsUsdPattern2(client, _m(acc, '1m'))
@@ -4351,7 +4351,7 @@ class _1m1w1y24hPattern3:
 
 class _1m1w1y24hPattern5:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: BtcSatsPattern = BtcSatsPattern(client, _m(acc, '1m'))
@@ -4361,7 +4361,7 @@ class _1m1w1y24hPattern5:
 
 class _1m1w1y2wPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, '1m'))
@@ -4371,7 +4371,7 @@ class _1m1w1y2wPattern:
 
 class _1m1w1y24hPattern7:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsUsdPattern = CentsUsdPattern(client, _m(acc, '1m'))
@@ -4381,7 +4381,7 @@ class _1m1w1y24hPattern7:
 
 class _1m1w1y24hPattern6:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsUsdPattern2 = CentsUsdPattern2(client, _m(acc, '1m'))
@@ -4391,7 +4391,7 @@ class _1m1w1y24hPattern6:
 
 class _1m1w1y24hPattern8:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: CentsUsdPattern5 = CentsUsdPattern5(client, _m(acc, '1m'))
@@ -4401,7 +4401,7 @@ class _1m1w1y24hPattern8:
 
 class _1m1w1y24hPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: PercentPpmRatioPattern = PercentPpmRatioPattern(client, _m(acc, '1m_rate'))
@@ -4411,7 +4411,7 @@ class _1m1w1y24hPattern2:
 
 class _1m1w1yHeightPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, '1m'))
@@ -4433,7 +4433,7 @@ class AllHeightLthSthPattern4:
 
 class AverageBlockCumulativeSumPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern3 = _1m1w1y24hPattern3(client, _m(acc, 'average'))
@@ -4443,7 +4443,7 @@ class AverageBlockCumulativeSumPattern2:
 
 class AverageBlockCumulativeSumPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern8 = _1m1w1y24hPattern8(client, _m(acc, 'average'))
@@ -4453,7 +4453,7 @@ class AverageBlockCumulativeSumPattern3:
 
 class BlockCumulativeDeltaSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern4 = CentsUsdPattern4(client, acc)
@@ -4463,7 +4463,7 @@ class BlockCumulativeDeltaSumPattern:
 
 class BtcCentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
@@ -4473,7 +4473,7 @@ class BtcCentsSatsUsdPattern:
 
 class BtcCentsSatsUsdPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
@@ -4483,7 +4483,7 @@ class BtcCentsSatsUsdPattern2:
 
 class BtcCentsSatsUsdPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern18[Bitcoin] = SeriesPattern18(client, acc)
@@ -4509,7 +4509,7 @@ class MatrixOverRangeUnderPattern:
 
 class _1m1w1y24hPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._1m: SeriesPattern1[T] = SeriesPattern1(client, _m(acc, '1m'))
@@ -4523,7 +4523,7 @@ class AllHeightLthSthPattern5(Generic[T]):
 
 class AverageBlockCumulativeSumPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.average: _1m1w1y24hPattern[T] = _1m1w1y24hPattern(client, _m(acc, 'average'))
@@ -4537,7 +4537,7 @@ class AllCumulativeSthPattern:
 
 class AllLthSthPattern6:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: BtcCentsDeltaSatsUsdPattern = BtcCentsDeltaSatsUsdPattern(client, _m(acc, 'supply'))
@@ -4559,7 +4559,7 @@ class AllLthSthPattern5:
 
 class AllLthSthPattern7:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, acc)
@@ -4568,7 +4568,7 @@ class AllLthSthPattern7:
 
 class AllLthSthPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.all: _1m1w1y24hHeightPattern = _1m1w1y24hHeightPattern(client, acc)
@@ -4577,7 +4577,7 @@ class AllLthSthPattern3:
 
 class BlockCumulativeSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: CentsUsdPattern3 = CentsUsdPattern3(client, acc)
@@ -4586,7 +4586,7 @@ class BlockCumulativeSumPattern:
 
 class BlockCumulativeSumPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: SeriesPattern18[StoredU64] = SeriesPattern18(client, acc)
@@ -4595,7 +4595,7 @@ class BlockCumulativeSumPattern2:
 
 class BlocksDominanceRewardsPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.blocks_mined: BlockCumulativeSumPattern2 = BlockCumulativeSumPattern2(client, _m(acc, 'blocks_mined'))
@@ -4608,7 +4608,7 @@ class CapPriceSupplyPattern:
 
 class CentsSatsUsdPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern2[Cents] = SeriesPattern2(client, _m(acc, 'cents'))
@@ -4617,7 +4617,7 @@ class CentsSatsUsdPattern3:
 
 class CentsDeltaUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4626,7 +4626,7 @@ class CentsDeltaUsdPattern:
 
 class CentsSatsUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4639,7 +4639,7 @@ class CountEventsSupplyPattern:
 
 class CumulativeRollingSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cumulative: SeriesPattern1[StoredU64] = SeriesPattern1(client, _m(acc, 'cumulative'))
@@ -4648,7 +4648,7 @@ class CumulativeRollingSumPattern:
 
 class FloorLevelLossPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.floor: Pct95Pct98Pct99Pattern = Pct95Pct98Pct99Pattern(client, _m(acc, 'floor'))
@@ -4665,7 +4665,7 @@ class OverRangeUnderPattern11:
 
 class OverRangeUnderPattern18:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.over: _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8 = _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8(client, _m(acc, 'over'))
@@ -4674,7 +4674,7 @@ class OverRangeUnderPattern18:
 
 class OverRangeUnderPattern20:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.over: _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern9 = _100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern9(client, _m(acc, 'over'))
@@ -4695,7 +4695,7 @@ class OverRangeUnderPattern24:
 
 class OverRangeUnderPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.over: _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern2 = _10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern2(client, _m(acc, 'over'), '')
@@ -4712,7 +4712,7 @@ class OverRangeUnderPattern12:
 
 class PercentPpmRatioPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -4721,7 +4721,7 @@ class PercentPpmRatioPattern2:
 
 class PercentPpmRatioPattern5:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -4730,7 +4730,7 @@ class PercentPpmRatioPattern5:
 
 class PercentPpmRatioPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -4739,7 +4739,7 @@ class PercentPpmRatioPattern3:
 
 class PercentPpmRatioPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.percent: SeriesPattern1[StoredF32] = SeriesPattern1(client, acc)
@@ -4748,7 +4748,7 @@ class PercentPpmRatioPattern:
 
 class PpmPriceRatioPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.ppm: SeriesPattern1[PartsPerMillion32] = SeriesPattern1(client, _m(acc, f'ratio_{disc}_ppm'))
@@ -4757,7 +4757,7 @@ class PpmPriceRatioPattern:
 
 class RsiStochPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str, disc: str):
         """Create pattern node with accumulated series name."""
         self.rsi: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, disc))
@@ -4770,7 +4770,7 @@ class ToPattern2:
 
 class _6bBlockTxPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self._6b: MaxMedianMinPct10Pct25Pct75Pct90Pattern[T] = MaxMedianMinPct10Pct25Pct75Pct90Pattern(client, _m(acc, '6b'))
@@ -4779,7 +4779,7 @@ class _6bBlockTxPattern(Generic[T]):
 
 class AbsoluteRatePattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern[StoredI64] = _1m1w1y24hPattern(client, acc)
@@ -4787,7 +4787,7 @@ class AbsoluteRatePattern:
 
 class AbsoluteRatePattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern5 = _1m1w1y24hPattern5(client, acc)
@@ -4795,7 +4795,7 @@ class AbsoluteRatePattern2:
 
 class AbsoluteRatePattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.absolute: _1m1w1y24hPattern6 = _1m1w1y24hPattern6(client, acc)
@@ -4807,7 +4807,7 @@ class AwakeDormantPattern2:
 
 class BaseSumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.base: SeriesPattern18[Dollars] = SeriesPattern18(client, acc)
@@ -4815,7 +4815,7 @@ class BaseSumPattern:
 
 class BaseDeltaPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.base: SeriesPattern1[StoredU64] = SeriesPattern1(client, acc)
@@ -4823,7 +4823,7 @@ class BaseDeltaPattern:
 
 class BlockCumulativePattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.block: BtcCentsSatsUsdPattern3 = BtcCentsSatsUsdPattern3(client, acc)
@@ -4831,7 +4831,7 @@ class BlockCumulativePattern:
 
 class BlocksDominancePattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.blocks_mined: BlockCumulativeSumPattern2 = BlockCumulativeSumPattern2(client, _m(acc, 'blocks_mined'))
@@ -4847,7 +4847,7 @@ class BpsRatioPattern:
 
 class BtcSatsPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.btc: SeriesPattern1[Bitcoin] = SeriesPattern1(client, acc)
@@ -4855,7 +4855,7 @@ class BtcSatsPattern:
 
 class CentsUsdPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[Cents] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4863,7 +4863,7 @@ class CentsUsdPattern:
 
 class CentsUsdPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern18[Cents] = SeriesPattern18(client, _m(acc, 'cents'))
@@ -4871,7 +4871,7 @@ class CentsUsdPattern3:
 
 class CentsUsdPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[CentsSigned] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4879,7 +4879,7 @@ class CentsUsdPattern2:
 
 class CentsUsdPattern4:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern18[CentsSigned] = SeriesPattern18(client, _m(acc, 'cents'))
@@ -4887,7 +4887,7 @@ class CentsUsdPattern4:
 
 class CentsSatsPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: CumulativePattern[StoredU64] = CumulativePattern(client, _m(acc, 'cents'))
@@ -4895,7 +4895,7 @@ class CentsSatsPattern:
 
 class CentsUsdPattern5:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cents: SeriesPattern1[StoredF32] = SeriesPattern1(client, _m(acc, 'cents'))
@@ -4907,7 +4907,7 @@ class CoinflowCointimePattern:
 
 class DiscountPremiumPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, _p('veteran', acc))
@@ -4915,7 +4915,7 @@ class DiscountPremiumPattern:
 
 class DiscountPremiumPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _p('veteran', acc))
@@ -4923,7 +4923,7 @@ class DiscountPremiumPattern2:
 
 class DiscountPremiumPattern5:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, _p('veteran', acc))
@@ -4931,7 +4931,7 @@ class DiscountPremiumPattern5:
 
 class DiscountPremiumPattern13:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _p('veteran', acc))
@@ -4939,7 +4939,7 @@ class DiscountPremiumPattern13:
 
 class DiscountPremiumPattern14:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: CentsUsdPattern = CentsUsdPattern(client, _p('veteran', acc))
@@ -4955,7 +4955,7 @@ class ImmobileMobilePattern3:
 
 class LongShortPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: AverageBlockCumulativeSumPattern[StoredF64] = AverageBlockCumulativeSumPattern(client, _p('lth', acc))
@@ -4963,7 +4963,7 @@ class LongShortPattern:
 
 class LongShortPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: AverageBlockCumulativeSumPattern2 = AverageBlockCumulativeSumPattern2(client, _p('lth', acc))
@@ -4971,7 +4971,7 @@ class LongShortPattern2:
 
 class LongShortPattern6:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: BlockCumulativeSumPattern = BlockCumulativeSumPattern(client, _p('lth', acc))
@@ -4979,7 +4979,7 @@ class LongShortPattern6:
 
 class LongShortPattern14:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, _p('lth', acc))
@@ -4987,7 +4987,7 @@ class LongShortPattern14:
 
 class LongShortPattern15:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: CentsUsdPattern = CentsUsdPattern(client, _p('lth', acc))
@@ -4995,7 +4995,7 @@ class LongShortPattern15:
 
 class PerPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.per_coin: CentsSatsUsdPattern = CentsSatsUsdPattern(client, _m(acc, 'coin'))
@@ -5003,7 +5003,7 @@ class PerPattern2:
 
 class PpmRatioPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.ppm: SeriesPattern1[PartsPerMillion32] = SeriesPattern1(client, _m(acc, 'ppm'))
@@ -5011,7 +5011,7 @@ class PpmRatioPattern2:
 
 class PpmRatioPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.ppm: SeriesPattern1[PartsPerMillionSigned32] = SeriesPattern1(client, _m(acc, 'ppm'))
@@ -5023,7 +5023,7 @@ class SdSmaPattern:
 
 class DiscountPremiumPattern7(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.discount: SeriesPattern1[T] = SeriesPattern1(client, _p('veteran', acc))
@@ -5031,7 +5031,7 @@ class DiscountPremiumPattern7(Generic[T]):
 
 class LongShortPattern7(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.long: SeriesPattern1[T] = SeriesPattern1(client, _p('lth', acc))
@@ -5039,7 +5039,7 @@ class LongShortPattern7(Generic[T]):
 
 class InPattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.in_loss: SharePattern3 = SharePattern3(client, acc)
@@ -5050,42 +5050,42 @@ class SharePattern:
 
 class SharePattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.share: AllLthSthPattern7 = AllLthSthPattern7(client, acc)
 
 class SharePattern3:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.share: SeriesPattern1[StoredF64] = SeriesPattern1(client, acc)
 
 class SupplyPattern2:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.supply: BtcCentsSatsUsdPattern = BtcCentsSatsUsdPattern(client, acc)
 
 class SupplyPattern:
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.supply: InPattern3 = InPattern3(client, acc)
 
 class CumulativePattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.cumulative: SeriesPattern18[T] = SeriesPattern18(client, acc)
 
 class MatrixPattern(Generic[T]):
     """Pattern struct for repeated tree structure."""
-    
+
     def __init__(self, client: BitviewClient, acc: str):
         """Create pattern node with accumulated series name."""
         self.matrix: SeriesPattern18[T] = SeriesPattern18(client, acc)
@@ -15538,7 +15538,7 @@ class BitviewClient(BitviewClientBase):
     def get_health(self) -> Health:
         """Health check.
 
-        Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Waits for ongoing publication; an empty index or publication timeout returns 503. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
+        Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Reads the published prefix during processing; an empty index waits until the request deadline, then returns 504. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
 
         Endpoint: `GET /health`"""
         return self.get_json('/health')

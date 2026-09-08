@@ -1,12 +1,11 @@
-use brk_error::Result;
-
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyFiatPerBlock;
+use brk_error::Result;
 use brk_types::{CentsSigned, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use crate::metrics::UTXOColumnarMetricWithoutAmountOrType;
-use bitview_compute::LazyFiatPerBlock;
 
 #[derive(Traversable)]
 pub struct NetUnrealizedByCohort<M: StorageMode = Rw> {
@@ -18,6 +17,7 @@ pub struct NetUnrealizedByCohort<M: StorageMode = Rw> {
 
 impl NetUnrealizedByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -31,7 +31,7 @@ impl NetUnrealizedByCohort {
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = matrices
-                .additive_source(&filter, &format!("{name}_cents"), version)
+                .additive_source(cache, &filter, &format!("{name}_cents"), version)
                 .expect("supported net unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
         });

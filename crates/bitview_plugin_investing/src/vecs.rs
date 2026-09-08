@@ -7,7 +7,7 @@ use brk_types::{Height, Sats};
 
 use super::cached_dca_sats::CachedDcaSats;
 use super::{STORAGE, class_vecs::ClassVecs, period_vecs::PeriodVecs};
-use bitview_compute::LazyPreviousDeltaVec;
+use bitview_vecs::LazyPreviousDeltaVec;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

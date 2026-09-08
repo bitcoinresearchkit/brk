@@ -1,11 +1,11 @@
-use brk_error::Result;
-
 use bitview_cohort::SpendableTypeId;
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, Windows,
+use bitview_collections::Windows;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, CountTotal,
 };
+use brk_error::Result;
 use brk_types::{Height, StoredU16, StoredU64, Version};
-use vecdb::Database;
+use vecdb::{CacheBudget, Database};
 
 use super::{Vecs, WithInputTypes};
 
@@ -19,6 +19,7 @@ fn without_coinbase(height: Height, total: StoredU64) -> StoredU64 {
 
 impl Vecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -32,10 +33,16 @@ impl Vecs {
             columnar_version,
             |source| {
                 WithInputTypes::from_columnar_count_source(
-                    "input_count_bis",
+                    CountTotal::from_transformed_source(
+                        "input_count_bis",
+                        columnar_version,
+                        &all_input_count,
+                        identity,
+                        mappings,
+                        cached_starts,
+                    ),
                     |t| format!("{t}_prevout_count"),
                     columnar_version,
-                    (all_input_count, identity),
                     source,
                     mappings,
                     cached_starts,
@@ -56,10 +63,17 @@ impl Vecs {
                 columnar_version,
                 |source| {
                     WithInputTypes::from_columnar_source(
-                        "non_coinbase_tx_count",
+                        cache,
+                        CountTotal::from_transformed_source(
+                            "non_coinbase_tx_count",
+                            columnar_version,
+                            &transaction_count_source,
+                            without_coinbase,
+                            mappings,
+                            cached_starts,
+                        ),
                         |t| format!("tx_count_with_{t}_prevout"),
                         columnar_version,
-                        (transaction_count_source, without_coinbase),
                         source,
                         mappings,
                         cached_starts,

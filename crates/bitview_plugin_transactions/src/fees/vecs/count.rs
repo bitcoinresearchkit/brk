@@ -4,7 +4,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
 use super::CpfpRoleId;
-use bitview_compute::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
+use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct CountVecs<M: StorageMode = Rw> {

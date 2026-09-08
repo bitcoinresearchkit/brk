@@ -259,6 +259,7 @@ impl DefaultPlugins {
         info!("Imported all plugins in {:.2?}", import_start.elapsed());
 
         Ok(Self {
+            cache_budget: context.cache_budget(),
             indexer: Box::new(indexer),
             blocks,
             mining,

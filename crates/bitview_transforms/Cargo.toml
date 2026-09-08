@@ -1,0 +1,12 @@
+[package]
+name = "bitview_transforms"
+description = "Stateless value transforms for Bitview"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage = "https://bitview.dev"
+repository.workspace = true
+
+[dependencies]
+brk_types = { workspace = true }
+vecdb = { workspace = true }

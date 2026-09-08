@@ -1,6 +1,6 @@
 use brk_types::StoredF32;
 
-use bitview_compute::algo::FenwickTree;
+use bitview_compute::FenwickTree;
 
 pub const START_HEIGHT: usize = 210_000;
 const HALF_LIFE_BLOCKS: usize = 210_000;

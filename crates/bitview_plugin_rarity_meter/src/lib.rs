@@ -10,17 +10,16 @@ mod extreme;
 mod extremes;
 mod has;
 mod inner;
-mod percentiles;
 mod threshold_vecs;
 
 use brk_error::Result;
 use rayon::{join, prelude::*};
 
-use bitview_compute::{DailyView, RepeatDay};
 use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_traversable::Traversable;
+use bitview_vecs::{DailyView, RepeatDay};
 use brk_types::{Cents, Height, Version};
 use vecdb::{Database, Rw, StorageMode};
 
@@ -77,6 +76,7 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let this = Self {
             components: components::forced_import(
+                context.cache_budget(),
                 &db,
                 version,
                 mappings,
@@ -84,10 +84,28 @@ impl Vecs {
                 cointime,
                 coinflow,
             )?,
-            extremes: extremes::forced_import(&db, version, mappings)?,
-            full: inner::forced_import(&db, "rarity_meter", version, mappings)?,
-            local: inner::forced_import(&db, "local_rarity_meter", version, mappings)?,
-            cycle: inner::forced_import(&db, "cycle_rarity_meter", version, mappings)?,
+            extremes: extremes::forced_import(context.cache_budget(), &db, version, mappings)?,
+            full: inner::forced_import(
+                context.cache_budget(),
+                &db,
+                "rarity_meter",
+                version,
+                mappings,
+            )?,
+            local: inner::forced_import(
+                context.cache_budget(),
+                &db,
+                "local_rarity_meter",
+                version,
+                mappings,
+            )?,
+            cycle: inner::forced_import(
+                context.cache_budget(),
+                &db,
+                "cycle_rarity_meter",
+                version,
+                mappings,
+            )?,
             db,
         };
         STORAGE.finalize_database(&this.db)?;

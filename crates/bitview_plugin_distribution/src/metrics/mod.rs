@@ -1,8 +1,5 @@
 mod activity;
-mod additive;
-mod aggregate;
 mod cohorts;
-mod columnar;
 
 mod cost_basis;
 mod outputs;
@@ -14,20 +11,20 @@ mod supply;
 mod unrealized;
 
 pub use activity::{ActivitySources, ActivityVecs};
-pub use additive::AdditiveAggregateFiatPerBlock;
-pub use additive::AdditiveUTXORawVec;
-pub use aggregate::{
+pub use bitview_vecs::AdditiveAggregateFiatPerBlock;
+pub use bitview_vecs::AdditiveUTXORawVec;
+pub use bitview_vecs::{
     AdditiveAggregateFiatPerBlockCumulativeWithSums, AggregateFiatPerBlock,
     AggregatePercentPerBlock, AggregatePriceWithRatioPerBlock,
 };
-pub use cohorts::CohortMetrics;
-pub use columnar::{ColumnarAmount, ColumnarAmountValue};
-pub use columnar::{
+pub use bitview_vecs::{ColumnarAmount, ColumnarAmountValue};
+pub use bitview_vecs::{
     CumulativeUTXOColumnarMetric, CumulativeUTXOColumnarMetricWithoutAmountOrType,
     CumulativeUTXOValueColumnarMetric, CumulativeUTXOValueColumnarMetricWithoutAmountOrType,
     ExactUTXOColumnarMetric, UTXOColumnarMetric, UTXOColumnarMetricWithoutAmount,
-    UTXOColumnarMetricWithoutAmountOrType, UTXORows,
+    UTXOColumnarMetricWithoutAmountOrType,
 };
+pub use cohorts::CohortMetrics;
 pub use cost_basis::CostBasisBlockData;
 pub use cost_basis::CostBasisVecs;
 pub use outputs::OutputsVecs;

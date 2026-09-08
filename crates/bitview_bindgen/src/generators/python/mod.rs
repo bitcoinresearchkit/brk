@@ -66,5 +66,7 @@ pub fn generate_python_client(
     tree::generate_tree_classes(&mut output, &metadata.catalog, metadata);
     api::generate_main_client(&mut output, endpoints);
 
+    output.truncate(output.trim_end().len());
+    output.push('\n');
     write_if_changed(output_path, &output)
 }

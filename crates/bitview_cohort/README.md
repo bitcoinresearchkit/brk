@@ -1,10 +1,24 @@
 # bitview_cohort
 
-UTXO and address cohort filtering for on-chain analytics.
+UTXO and address cohort definitions, filtering, and typed groups for on-chain
+analytics, including `WithAddrTypes`. Generic window, percentile, and resolution
+groups live in `bitview_collections`. Vector constructors live in `bitview_vecs`.
 
 Row types, filters, and column identifiers work without the storage engine.
 Enable the `storage` feature for traversal, vecdb column/formatting traits, and
 storage-enabled BRK types. The Rust client leaves this feature disabled.
+
+`UTXOGroupCore` supplies the common logical group fields; amount and type
+extensions retain it by composition. `UTXOCoreRows` contains the four shared
+disjoint axes, and `UTXORows` adds amount/type rows. Overlapping public groups
+and disjoint source rows remain distinct representations.
+
+`UTXOAndAddrGroups<T>` adds address-balance groups to `UTXOGroups<T>` as one
+composed shape. It keeps output-value and controlling-address-balance cohorts
+distinct, and exposes the existing UTXO paths plus `addr_balance`. Its optional
+second type parameter lets the address axis own its columnar storage. Use the
+UTXO-only or reduced shapes for metrics that do not support address balances;
+address predicates such as reused or exposed remain separate populations.
 
 ## What It Enables
 

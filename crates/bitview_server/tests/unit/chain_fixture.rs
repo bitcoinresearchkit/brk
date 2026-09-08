@@ -133,13 +133,15 @@ impl ChainFixture {
             }
         });
         let reader = Reader::new_without_rlimit(blocks.clone(), &client);
-        let mut indexer = Indexer::import(ImportContext::new(directory.path()), &reader).unwrap();
+        let mut indexer =
+            Indexer::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader).unwrap();
         indexer.index(&Exit::default()).unwrap();
         indexer.finish_update().unwrap();
         assert!(indexer.safe_lengths().last_height().is_some());
         drop(indexer);
         let plugins =
-            DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+            DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader)
+                .unwrap();
         assert!(plugins.indexer().safe_lengths().last_height().is_some());
         let query = AsyncQuery::build(&plugins, None);
         let server = Server::bind(
@@ -266,3 +268,5 @@ pub fn run_genesis<F: Future<Output = ()>>(
         .join()
         .unwrap();
 }
+
+pub(super) static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

@@ -1,11 +1,11 @@
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
-use bitview_compute::{
+use bitview_traversable::Traversable;
+use bitview_vecs::{
     ColumnarDailyMetric, DailyMappings, IndexSources, LazyColumnDailyPriceWithRatio,
 };
-use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{AnyStoredVec, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
 use crate::WeightedPair;
 
@@ -32,6 +32,7 @@ pub struct CapitalizedPriceVecs<M: StorageMode = Rw> {
 
 impl CapitalizedPriceVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         indexes: &IndexSources,
@@ -46,6 +47,7 @@ impl CapitalizedPriceVecs {
                 |source| {
                     let cohort = |cohort: UTXOAggregateId| {
                         LazyColumnDailyPriceWithRatio::new(
+                            cache,
                             &cohort.metric_name(&format!("{weight}_capitalized_price")),
                             version + Version::ONE,
                             source,

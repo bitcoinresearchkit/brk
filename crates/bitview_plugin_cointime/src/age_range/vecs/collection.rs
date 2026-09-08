@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{BoundedRatio, StoredF64};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{
+use bitview_vecs::{
     ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
     LazySpotValuePerBlock,
 };

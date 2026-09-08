@@ -63,7 +63,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use bitview_compute::{
+    use brk_types::{
         TARGET_BLOCKS_PER_DAY, TARGET_BLOCKS_PER_MONTH, TARGET_BLOCKS_PER_WEEK,
         TARGET_BLOCKS_PER_YEAR,
     };

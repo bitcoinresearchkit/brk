@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, PartsPerMillion64, Sats};
 use vecdb::{EagerVec, PcoVec, Pinned, Rw, StorageMode};
 
-use bitview_compute::{
+use bitview_vecs::{
     LazyPercentCumulativeRolling, LazyPercentRollingWindows, ValuePerBlockCumulative,
     ValuePerBlockCumulativeRolling, ValuePerBlockFull,
 };

@@ -1,11 +1,10 @@
-use brk_error::Result;
-
 use bitview_cohort::AddrTypeId;
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{CacheBudget, ColumnId, Database, ReadOnlyClone, Rw, StorageMode};
 
 use super::AddrCountsVecs;
 
@@ -15,11 +14,13 @@ pub struct TotalAddrCountVecs<M: StorageMode = Rw>(#[traversable(flatten)] pub A
 
 impl TotalAddrCountVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
     ) -> Result<Self> {
         Ok(Self(AddrCountsVecs::forced_import(
+            cache,
             db,
             "total_addr_count",
             version,

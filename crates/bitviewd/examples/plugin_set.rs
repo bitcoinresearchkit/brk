@@ -31,7 +31,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
-    let import_context = ImportContext::new(&outputs_dir);
+    let import_context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
     let update_context = UpdateContext::new(&exit);
 
     let mut plugins = bootstrap(
@@ -47,3 +47,5 @@ pub fn main() -> color_eyre::Result<()> {
         sleep(Duration::from_secs(10));
     }
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

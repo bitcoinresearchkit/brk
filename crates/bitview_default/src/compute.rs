@@ -1,6 +1,5 @@
 use std::{thread, time::Duration};
 
-use bitview_compute::CACHE_BUDGET;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_bedrock::{Dependencies as BedrockDependencies, ID as BEDROCK_ID};
 use bitview_plugin_blocks::{Dependencies as BlocksDependencies, ID as BLOCKS_ID};
@@ -56,7 +55,7 @@ impl DefaultPlugins {
     }
 
     fn compute_dependents(&mut self, context: UpdateContext<'_>) -> Result<()> {
-        CACHE_BUDGET.invalidate();
+        self.cache_budget.invalidate();
 
         let indexer = self.indexer.as_ref();
 

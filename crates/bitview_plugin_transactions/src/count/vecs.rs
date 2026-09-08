@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::StoredU64;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::PerBlockFullFromCumulative;
+use bitview_vecs::PerBlockFullFromCumulative;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

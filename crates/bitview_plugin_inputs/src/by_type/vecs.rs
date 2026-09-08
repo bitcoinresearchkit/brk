@@ -4,7 +4,7 @@ use brk_types::{PartsPerMillion32, StoredU16, StoredU64};
 use vecdb::{Rw, StorageMode};
 
 use super::WithInputTypes;
-use bitview_compute::{
+use bitview_vecs::{
     ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnCountPerBlockCumulativeRolling,
     LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
 };

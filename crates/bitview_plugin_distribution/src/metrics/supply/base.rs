@@ -1,12 +1,13 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, LazyIndexedVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
+    LazySpotValuePerBlock,
+};
 use brk_types::{Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version};
 use vecdb::{BinaryTransform, CachedBoxedVec, LazyVec, ReadableCloneableVec};
-
-use bitview_compute::{
-    CachedWindowStartVec, LazyIndexedVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
-    LazySpotValuePerBlock, RatioSats, Windows,
-};
 
 #[derive(Clone, Traversable)]
 pub struct SupplyBase {

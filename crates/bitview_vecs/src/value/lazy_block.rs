@@ -1,0 +1,66 @@
+use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin};
+use bitview_traversable::Traversable;
+use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
+use vecdb::{CachedVecStrategy, LazyVec, ReadableCloneableVec};
+
+use crate::{LazyPreviousDeltaVec, ValuePerBlock};
+
+/// Per-block amount data derived from stored cumulative sats and cents.
+#[derive(Clone, Traversable)]
+pub struct LazyValueBlock {
+    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
+    pub btc: LazyVec<Height, Bitcoin, Height, Sats>,
+    /// Reported in satoshis.
+    pub sats: LazyPreviousDeltaVec<Height, Sats>,
+    /// Reported in US dollars.
+    pub usd: LazyVec<Height, Dollars, Height, Cents>,
+    /// Reported in US cents; 100 cents equal one US dollar.
+    pub cents: LazyPreviousDeltaVec<Height, Cents>,
+}
+
+impl LazyValueBlock {
+    pub fn from_cumulative<P: CachedVecStrategy>(
+        name: &str,
+        version: Version,
+        cumulative: &ValuePerBlock<vecdb::Rw, P>,
+    ) -> Self {
+        Self::from_cumulative_sources(
+            name,
+            version,
+            cumulative.sats.resolutions.height_source(),
+            cumulative.cents.resolutions.height_source(),
+        )
+    }
+
+    pub fn from_cumulative_sources(
+        name: &str,
+        version: Version,
+        cumulative_sats: &impl ReadableCloneableVec<Height, Sats>,
+        cumulative_cents: &impl ReadableCloneableVec<Height, Cents>,
+    ) -> Self {
+        let sats = LazyPreviousDeltaVec::new(
+            &format!("{name}_sats"),
+            version,
+            cumulative_sats.read_only_boxed_clone(),
+        );
+        let btc =
+            LazyVec::transformed::<SatsToBitcoin>(name, version, sats.read_only_boxed_clone());
+        let cents = LazyPreviousDeltaVec::new(
+            &format!("{name}_cents"),
+            version,
+            cumulative_cents.read_only_boxed_clone(),
+        );
+        let usd = LazyVec::transformed::<CentsUnsignedToDollars>(
+            &format!("{name}_usd"),
+            version,
+            cents.read_only_boxed_clone(),
+        );
+
+        Self {
+            btc,
+            sats,
+            usd,
+            cents,
+        }
+    }
+}

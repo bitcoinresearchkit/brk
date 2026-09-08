@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed},
 };
 
-use super::{CachedVec, CachedVecBudget, CachedVecStrategy};
+use super::{CacheBudget, CachedVec, CachedVecBudget, CachedVecStrategy};
 use crate::TypedVec;
 
 /// Admission and eviction accounting for one cache in a shared budget.
@@ -80,6 +80,10 @@ impl CachedVecBudget for Budgeted {
 }
 
 impl CachedVecStrategy for Budgeted {
+    fn wrap<V: TypedVec>(source: V, budget: &'static CacheBudget) -> CachedVec<V, Self> {
+        budget.wrap(source)
+    }
+
     #[inline]
     fn set_resident_bytes(&self, bytes: usize) {
         self.resident_bytes.store(bytes, Relaxed);

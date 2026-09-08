@@ -7,9 +7,8 @@ use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
 use vecdb::{AnyStoredVec, AnyVec, ColumnId, EagerVec, PcoVec, ReadableVec, WritableVec};
 
 use super::{Sources, Vecs};
-use bitview_compute::{
-    PerBlock, WeightedCohortState, db_utils::validate_any_computed_version_or_reset,
-};
+use bitview_compute::WeightedCohortState;
+use bitview_vecs::PerBlock;
 
 const WRITE_INTERVAL: usize = 10_000;
 
@@ -23,7 +22,7 @@ pub fn compute(
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;
     let supplies = AgeRange::from_fn(|id| {
-        &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
+        &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age.range)
             .sats
             .height
     });
@@ -33,7 +32,7 @@ pub fn compute(
             .height
     });
     let realized_caps = AgeRange::from_fn(|id| {
-        &id.select(&distribution.cohorts.realized.cap.cohorts.age.range)
+        &id.select(&distribution.cohorts.realized.cap.cohorts.utxo.age.range)
             .cents
             .height
     });
@@ -78,9 +77,9 @@ impl Sources {
         );
 
         for vec in self.primary_vecs_mut() {
-            validate_any_computed_version_or_reset(vec, source_version)?;
+            vec.any_validate_computed_version_or_reset(source_version)?;
         }
-        validate_any_computed_version_or_reset(all_supply_in_loss_share, source_version)?;
+        all_supply_in_loss_share.any_validate_computed_version_or_reset(source_version)?;
 
         let start = self
             .primary_vecs_mut()
@@ -193,7 +192,7 @@ impl Sources {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bitview_compute::ColumnarPerBlock;
+    use bitview_vecs::ColumnarPerBlock;
     use vecdb::{Database, ImportableVec};
 
     #[test]

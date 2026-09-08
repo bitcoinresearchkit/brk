@@ -12,37 +12,38 @@ mod tx_index;
 mod txin_index;
 mod txout_index;
 
-use brk_error::Result;
-
 use std::ops::Deref;
 
-use bitview_compute::{IndexSources, LazyCumulativeIndexVec, PerResolution};
+use addr::Vecs as AddrVecs;
+use bitview_collections::PerResolution;
 use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use bitview_vecs::{IndexSources, LazyCumulativeIndexVec};
+use brk_error::Result;
 use brk_types::{
     Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
     Month6, StoredU64, TxInIndex, TxIndex, TxOutIndex, Version, Week1, Year1, Year10,
 };
-use vecdb::{
-    AnyVec, CachedBoxedVec, CachedVec, Database, ReadableBoxedVec, ReadableCloneableVec, Rw,
-    StorageMode, VecIndex,
-};
-
-use addr::Vecs as AddrVecs;
 use chain_counts::CachedChainCounts;
-pub use dependencies::Dependencies;
-pub use has::HasMappings;
 use height::Vecs as HeightVecs;
-pub use resolution::CachedFirstHeightVec;
 use resolution::{DatedResolutionVecs, ResolutionVecs};
 use timestamp::Timestamps;
 use tx_heights::TxHeights;
 use tx_index::Vecs as TxIndexVecs;
 use txin_index::Vecs as TxInIndexVecs;
 use txout_index::Vecs as TxOutIndexVecs;
+use vecdb::{
+    AnyVec, CachedBoxedVec, CachedVec, Database, ReadableBoxedVec, ReadableCloneableVec, Rw,
+    StorageMode, VecIndex,
+};
+
+pub use dependencies::Dependencies;
+pub use has::HasMappings;
+
+pub use resolution::CachedFirstHeightVec;
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("mappings"), Version::new(9));
 pub const ID: PluginId = STORAGE.id();
@@ -197,23 +198,6 @@ impl Vecs {
                 year10: year10.first_height.read_only_boxed_clone(),
                 halving: halving.first_height.read_only_boxed_clone(),
                 epoch: epoch.first_height.read_only_boxed_clone(),
-            },
-            cached_first_height: PerResolution {
-                minute10: minute10.first_height.read_only_cached_boxed_clone(),
-                minute30: minute30.first_height.read_only_cached_boxed_clone(),
-                hour1: hour1.first_height.read_only_cached_boxed_clone(),
-                hour4: hour4.first_height.read_only_cached_boxed_clone(),
-                hour12: hour12.first_height.read_only_cached_boxed_clone(),
-                day1: day1.first_height.read_only_cached_boxed_clone(),
-                day3: day3.first_height.read_only_cached_boxed_clone(),
-                week1: week1.first_height.read_only_cached_boxed_clone(),
-                month1: month1.first_height.read_only_cached_boxed_clone(),
-                month3: month3.first_height.read_only_cached_boxed_clone(),
-                month6: month6.first_height.read_only_cached_boxed_clone(),
-                year1: year1.first_height.read_only_cached_boxed_clone(),
-                year10: year10.first_height.read_only_cached_boxed_clone(),
-                halving: halving.first_height.read_only_cached_boxed_clone(),
-                epoch: epoch.first_height.read_only_cached_boxed_clone(),
             },
             timestamp: PerResolution {
                 minute10: timestamp.minute10.read_only_boxed_clone(),

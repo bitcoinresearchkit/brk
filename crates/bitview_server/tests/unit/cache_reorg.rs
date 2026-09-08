@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering::Relaxed},
 };
 
-use bitview_compute::CACHE_BUDGET;
+use super::chain_fixture::CACHE_BUDGET;
 use serde_json::Value;
 
 use super::{

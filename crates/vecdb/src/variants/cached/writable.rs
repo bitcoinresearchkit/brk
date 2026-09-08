@@ -1,6 +1,5 @@
-use crate::{Result, Stamp, TypedVec, VecIndex, WritableVec};
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::{Result, Stamp, TypedVec, VecIndex, WritableVec};
 
 impl<V: crate::StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for CachedVec<V, S> {
     #[inline]

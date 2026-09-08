@@ -102,3 +102,11 @@ impl<T> ByEntry<T> {
         }
     }
 }
+impl EntryId {
+    pub fn matching(filter: &Filter) -> Option<Self> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|id| id.select(&ENTRY_FILTERS) == filter)
+    }
+}

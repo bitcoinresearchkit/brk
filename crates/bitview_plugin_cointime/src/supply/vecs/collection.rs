@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::BoundedRatioPerBlock;
+use bitview_vecs::BoundedRatioPerBlock;
 
 use super::LazyBaseVecs;
 

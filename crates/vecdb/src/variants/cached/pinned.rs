@@ -1,4 +1,4 @@
-use super::{CachedVec, CachedVecBudget, CachedVecStrategy};
+use super::{CacheBudget, CachedVec, CachedVecBudget, CachedVecStrategy};
 use crate::TypedVec;
 
 /// Retains snapshots without a memory budget or eviction accounting.
@@ -29,6 +29,10 @@ impl CachedVecBudget for Pinned {
 }
 
 impl CachedVecStrategy for Pinned {
+    fn wrap<V: TypedVec>(source: V, _budget: &'static CacheBudget) -> CachedVec<V, Self> {
+        CachedVec::wrap(source)
+    }
+
     #[inline]
     fn set_resident_bytes(&self, _: usize) {}
 

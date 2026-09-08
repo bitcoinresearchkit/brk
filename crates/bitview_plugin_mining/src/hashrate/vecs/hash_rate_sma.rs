@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::StoredF64;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::PerBlock;
+use bitview_vecs::PerBlock;
 
 #[derive(Traversable)]
 pub struct HashRateSmaVecs<M: StorageMode = Rw> {

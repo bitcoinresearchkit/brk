@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use brk_types::Timestamp;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::PerBlockCumulativeAverage;
+use bitview_vecs::PerBlockCumulativeAverage;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw>(

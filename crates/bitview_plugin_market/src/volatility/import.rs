@@ -1,10 +1,10 @@
+use bitview_collections::Windows;
+use bitview_transforms::TimesSqrt;
+use bitview_vecs::LazyPerBlock;
 use brk_error::Result;
-
 use brk_types::Version;
 
-use super::super::returns;
-use super::Vecs;
-use bitview_compute::{LazyPerBlock, TimesSqrt, Windows};
+use super::{super::returns, Vecs};
 
 pub fn forced_import(version: Version, returns: &returns::Vecs) -> Result<Vecs> {
     let v2 = Version::TWO;

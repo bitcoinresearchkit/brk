@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::{BoundedRatio, Cents, StoredF64};
 
-use bitview_compute::{
+use bitview_vecs::{
     LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
 };
 

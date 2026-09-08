@@ -1,7 +1,7 @@
 use brk_types::{Cents, PartsPerMillion32};
 
 use crate::state::PercentileResult;
-use bitview_compute::PERCENTILES_LEN;
+use brk_types::PERCENTILES_LEN;
 
 #[derive(Clone)]
 pub struct CostBasisBlockData {

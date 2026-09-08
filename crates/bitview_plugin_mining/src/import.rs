@@ -1,8 +1,8 @@
-use brk_error::Result;
-
-use bitview_compute::{CachedWindowStartVec, Windows};
+use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
+use bitview_vecs::CachedWindowStartVec;
+use brk_error::Result;
 
 use super::{STORAGE, Vecs};
 
@@ -16,9 +16,16 @@ impl Vecs {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
 
-        let rewards =
-            super::rewards::forced_import(&db, version, indexer, mappings, cached_starts)?;
-        let hashrate = super::hashrate::forced_import(&db, version, mappings)?;
+        let rewards = super::rewards::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            indexer,
+            mappings,
+            cached_starts,
+        )?;
+        let hashrate =
+            super::hashrate::forced_import(context.cache_budget(), &db, version, mappings)?;
 
         let this = Self {
             db,

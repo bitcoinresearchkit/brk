@@ -1,24 +1,22 @@
-use brk_error::Result;
-
-use bitview_cohort::{CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount};
+use bitview_cohort::{
+    CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXORows,
+};
+use bitview_transforms::{MvrvToNupl, NegCentsUnsignedToDollars};
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, LazyRatioPerBlock};
+use brk_error::Result;
 use brk_types::{
     Cents, CentsSigned, CentsSquaredSats, Dollars, PartsPerMillionSigned32, PriceRatio, Sats,
     Version,
 };
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
-
-use crate::{
-    metrics::{AdditiveAggregateFiatPerBlock, AdditiveUTXORawVec, AggregateFiatPerBlock, UTXORows},
-    state::UnrealizedState,
-};
-use bitview_compute::{
-    LazyPerBlock, LazyPriceWithRatioPerBlock, LazyRatioPerBlock, NegCentsUnsignedToDollars,
-};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{
-    super::{MvrvToNupl, UnrealizedAggregateSources},
-    NetUnrealizedByCohort, UnrealizedByCohort, UnrealizedSources,
+    super::UnrealizedAggregateSources, NetUnrealizedByCohort, UnrealizedByCohort, UnrealizedSources,
+};
+use crate::{
+    metrics::{AdditiveAggregateFiatPerBlock, AdditiveUTXORawVec, AggregateFiatPerBlock},
+    state::UnrealizedState,
 };
 
 #[derive(Traversable)]
@@ -83,38 +81,44 @@ pub struct UnrealizedVecs<M: StorageMode = Rw> {
 
 impl UnrealizedVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
         realized_price: &UTXOGroups<LazyPriceWithRatioPerBlock>,
     ) -> Result<Self> {
         let profit = UnrealizedByCohort::forced_import(
+            cache,
             db,
             "unrealized_profit",
             version + Version::ONE,
             mappings,
         )?;
         let loss = UnrealizedByCohort::forced_import(
+            cache,
             db,
             "unrealized_loss",
             version + Version::ONE,
             mappings,
         )?;
-        let net_pnl = NetUnrealizedByCohort::forced_import(db, version, mappings)?;
+        let net_pnl = NetUnrealizedByCohort::forced_import(cache, db, version, mappings)?;
         let aggregate_version = version + Version::ONE;
         let gross_pnl = AdditiveAggregateFiatPerBlock::forced_import(
+            cache,
             db,
             "unrealized_gross_pnl",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_profit = AdditiveAggregateFiatPerBlock::forced_import(
+            cache,
             db,
             "invested_capital_in_profit",
             aggregate_version,
             mappings,
         )?;
         let invested_capital_in_loss = AdditiveAggregateFiatPerBlock::forced_import(
+            cache,
             db,
             "invested_capital_in_loss",
             aggregate_version,
@@ -124,17 +128,32 @@ impl UnrealizedVecs {
             AdditiveUTXORawVec::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
         let capitalized_cap_in_loss_raw =
             AdditiveUTXORawVec::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
-        let pain_index =
-            AggregateFiatPerBlock::forced_import(db, "pain_index", aggregate_version, mappings)?;
-        let greed_index =
-            AggregateFiatPerBlock::forced_import(db, "greed_index", aggregate_version, mappings)?;
-        let net_sentiment =
-            AggregateFiatPerBlock::forced_import(db, "net_sentiment", aggregate_version, mappings)?;
+        let pain_index = AggregateFiatPerBlock::forced_import(
+            cache,
+            db,
+            "pain_index",
+            aggregate_version,
+            mappings,
+        )?;
+        let greed_index = AggregateFiatPerBlock::forced_import(
+            cache,
+            db,
+            "greed_index",
+            aggregate_version,
+            mappings,
+        )?;
+        let net_sentiment = AggregateFiatPerBlock::forced_import(
+            cache,
+            db,
+            "net_sentiment",
+            aggregate_version,
+            mappings,
+        )?;
         let nupl = realized_price.map_named(|filter, cohort_name, price| {
             LazyRatioPerBlock::from_lazy_source::<MvrvToNupl, PriceRatio>(
                 &CohortContext::Utxo.metric_name(filter, cohort_name, "nupl"),
                 Self::cohort_version(version, filter) + Version::new(5),
-                &price.ppm,
+                &price.relative.ppm,
             )
         });
         let negative_loss = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {

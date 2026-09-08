@@ -25,6 +25,7 @@ pub fn compute(
                 .activity
                 .transfer_volume
                 .cohorts
+                .utxo
                 .age
                 .range,
         )

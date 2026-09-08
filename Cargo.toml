@@ -38,26 +38,27 @@ aide = { version = "0.16.0-alpha.4", features = ["axum-json", "axum-query"] }
 axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 bitcoin = { version = "0.32.102", features = ["serde"] }
 bitview = { version = "0.12.2", path = "crates/bitview", default-features = false }
-bitviewd = { version = "0.12.2", path = "crates/bitviewd", default-features = false }
 bitview_bindgen = { version = "0.12.2", path = "crates/bitview_bindgen" }
+bitview_catalog = { version = "0.12.2", path = "crates/bitview_catalog" }
 bitview_cli = { version = "0.12.2", path = "crates/bitview_cli" }
 bitview_client = { version = "0.12.2", path = "crates/bitview_client" }
 bitview_cohort = { version = "0.12.2", path = "crates/bitview_cohort" }
+bitview_collections = { version = "0.12.2", path = "crates/bitview_collections" }
 bitview_compute = { version = "0.12.2", path = "crates/bitview_compute" }
 bitview_default = { version = "0.12.2", path = "crates/bitview_default" }
 bitview_plugin = { version = "0.12.2", path = "crates/bitview_plugin" }
 bitview_plugin_bedrock = { version = "0.12.2", path = "crates/bitview_plugin_bedrock" }
 bitview_plugin_blocks = { version = "0.12.2", path = "crates/bitview_plugin_blocks" }
 bitview_plugin_capital_sentiment = { version = "0.12.2", path = "crates/bitview_plugin_capital_sentiment" }
-bitview_plugin_cointime = { version = "0.12.2", path = "crates/bitview_plugin_cointime" }
 bitview_plugin_coinflow = { version = "0.12.2", path = "crates/bitview_plugin_coinflow" }
+bitview_plugin_cointime = { version = "0.12.2", path = "crates/bitview_plugin_cointime" }
 bitview_plugin_constants = { version = "0.12.2", path = "crates/bitview_plugin_constants" }
 bitview_plugin_distribution = { version = "0.12.2", path = "crates/bitview_plugin_distribution" }
-bitview_plugin_indicators = { version = "0.12.2", path = "crates/bitview_plugin_indicators" }
 bitview_plugin_indexer = { version = "0.12.2", path = "crates/bitview_plugin_indexer" }
-bitview_plugin_mappings = { version = "0.12.2", path = "crates/bitview_plugin_mappings" }
-bitview_plugin_investing = { version = "0.12.2", path = "crates/bitview_plugin_investing" }
+bitview_plugin_indicators = { version = "0.12.2", path = "crates/bitview_plugin_indicators" }
 bitview_plugin_inputs = { version = "0.12.2", path = "crates/bitview_plugin_inputs" }
+bitview_plugin_investing = { version = "0.12.2", path = "crates/bitview_plugin_investing" }
+bitview_plugin_mappings = { version = "0.12.2", path = "crates/bitview_plugin_mappings" }
 bitview_plugin_market = { version = "0.12.2", path = "crates/bitview_plugin_market" }
 bitview_plugin_mining = { version = "0.12.2", path = "crates/bitview_plugin_mining" }
 bitview_plugin_op_return = { version = "0.12.2", path = "crates/bitview_plugin_op_return" }
@@ -71,11 +72,13 @@ bitview_query = { version = "0.12.2", path = "crates/bitview_query", default-fea
 bitview_runtime = { version = "0.12.2", path = "crates/bitview_runtime" }
 bitview_runtime_derive = { version = "0.12.2", path = "crates/bitview_runtime_derive" }
 bitview_server = { version = "0.12.2", path = "crates/bitview_server", default-features = false }
+bitview_transforms = { version = "0.12.2", path = "crates/bitview_transforms" }
 bitview_traversable = { version = "0.12.2", path = "crates/bitview_traversable", features = ["pco", "derive"] }
 bitview_traversable_derive = { version = "0.12.2", path = "crates/bitview_traversable_derive" }
 bitview_types = { version = "0.12.2", path = "crates/bitview_types" }
-bitview_catalog = { version = "0.12.2", path = "crates/bitview_catalog" }
+bitview_vecs = { version = "0.12.2", path = "crates/bitview_vecs" }
 bitview_website = { version = "0.12.2", path = "crates/bitview_website" }
+bitviewd = { version = "0.12.2", path = "crates/bitviewd", default-features = false }
 brk_alloc = { version = "0.12.2", path = "crates/brk_alloc" }
 brk_error = { version = "0.12.2", path = "crates/brk_error" }
 brk_exit = { version = "0.12.2", path = "crates/brk_exit" }

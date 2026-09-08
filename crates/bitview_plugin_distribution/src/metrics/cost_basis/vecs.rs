@@ -1,18 +1,16 @@
-use brk_error::Result;
-
 use bitview_cohort::{
     CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
 };
 use bitview_traversable::Traversable;
-use brk_types::{Cents, PartsPerMillion32, Sats, Version};
-use vecdb::{AnyStoredVec, AnyVec, Database, Rw, StorageMode};
-
-use crate::state::UnrealizedState;
-use bitview_compute::{
+use bitview_vecs::{
     ColumnarPerBlock, LazyColumnPerBlock, LazyColumnPercentPerBlock, PercentilesVecs, Price,
 };
+use brk_error::Result;
+use brk_types::{Cents, PartsPerMillion32, Sats, Version};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{CostBasis, CostBasisBlockData, CostBasisSide};
+use crate::state::UnrealizedState;
 
 #[derive(Traversable)]
 pub struct CostBasisVecs<M: StorageMode = Rw> {
@@ -78,41 +76,48 @@ pub struct CostBasisVecs<M: StorageMode = Rw> {
 
 impl CostBasisVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
     ) -> Result<Self> {
         let aggregate_version = version + Version::ONE;
         let in_profit_per_coin_source = Self::import_prices(
+            cache,
             db,
             "cost_basis_in_profit_per_coin",
             aggregate_version,
             mappings,
         )?;
         let in_profit_per_dollar_source = Self::import_prices(
+            cache,
             db,
             "cost_basis_in_profit_per_dollar",
             aggregate_version,
             mappings,
         )?;
         let in_loss_per_coin_source = Self::import_prices(
+            cache,
             db,
             "cost_basis_in_loss_per_coin",
             aggregate_version,
             mappings,
         )?;
         let in_loss_per_dollar_source = Self::import_prices(
+            cache,
             db,
             "cost_basis_in_loss_per_dollar",
             aggregate_version,
             mappings,
         )?;
-        let min_source = Self::import_prices(db, "cost_basis_min", aggregate_version, mappings)?;
-        let max_source = Self::import_prices(db, "cost_basis_max", aggregate_version, mappings)?;
+        let min_source =
+            Self::import_prices(cache, db, "cost_basis_min", aggregate_version, mappings)?;
+        let max_source =
+            Self::import_prices(cache, db, "cost_basis_max", aggregate_version, mappings)?;
         let per_coin_sources =
-            Self::import_percentiles(db, "cost_basis_per_coin", version, mappings)?;
+            Self::import_percentiles(cache, db, "cost_basis_per_coin", version, mappings)?;
         let per_dollar_sources =
-            Self::import_percentiles(db, "cost_basis_per_dollar", version, mappings)?;
+            Self::import_percentiles(cache, db, "cost_basis_per_dollar", version, mappings)?;
         let supply_density_source = ColumnarPerBlock::forced_import(
             db,
             "supply_density_by_aggregate",
@@ -120,6 +125,7 @@ impl CostBasisVecs {
             |source| {
                 UTXOAggregate::from_fn(|id| {
                     LazyColumnPercentPerBlock::new(
+                        cache,
                         &Self::cohort_metric_name(id, "supply_density"),
                         aggregate_version,
                         source,
@@ -160,6 +166,7 @@ impl CostBasisVecs {
     }
 
     fn import_prices(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -178,6 +185,7 @@ impl CostBasisVecs {
             |source| {
                 UTXOAggregate::from_fn(|id| {
                     Price::from_columnar_source(
+                        cache,
                         &Self::cohort_metric_name(id, metric),
                         version,
                         source,
@@ -190,6 +198,7 @@ impl CostBasisVecs {
     }
 
     fn import_percentiles(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         base_version: Version,
@@ -202,6 +211,7 @@ impl CostBasisVecs {
                 base_version
             };
             PercentilesVecs::forced_import(
+                cache,
                 db,
                 &Self::cohort_metric_name(id, metric),
                 version,

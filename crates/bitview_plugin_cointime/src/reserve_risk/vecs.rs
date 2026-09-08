@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF64};
 use vecdb::{BudgetedCachedVec, EagerVec, PcoVec, Rw, StorageMode};
 
-use bitview_compute::LazyPerBlock;
+use bitview_vecs::LazyPerBlock;
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

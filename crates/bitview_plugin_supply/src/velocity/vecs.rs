@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::StoredF64;
 
-use bitview_compute::LazyPerBlock;
+use bitview_vecs::LazyPerBlock;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

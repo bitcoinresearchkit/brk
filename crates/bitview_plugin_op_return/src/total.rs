@@ -1,17 +1,19 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
+use bitview_transforms::{RatioBytes, RatioSats};
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, LazyPercentCumulativeRolling, LazyPercentPerBlock,
+    PerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_types::{Bytes, Height, PartsPerMillion32, Sats, StoredU64, VSize, Version};
 use vecdb::{
-    AnyVec, Database, Pinned, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyVec, CacheBudget, Database, Pinned, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode,
 };
 
 use super::breakdown::BlockMetrics;
-use bitview_compute::{
-    CachedWindowStartVec, LazyPercentCumulativeRolling, LazyPercentPerBlock,
-    PerBlockCumulativeRolling, RatioBytes, RatioSats, Windows,
-};
 
 #[derive(Traversable)]
 pub struct Total<M: StorageMode = Rw> {
@@ -37,6 +39,7 @@ pub struct Total<M: StorageMode = Rw> {
 
 impl Total {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         prefix: &str,
         version: Version,
@@ -46,6 +49,7 @@ impl Total {
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let data_bytes = PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{prefix}_data_bytes"),
             version,
@@ -53,6 +57,7 @@ impl Total {
             cached_starts,
         )?;
         let tx_count = PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{prefix}_tx_count"),
             version,
@@ -60,6 +65,7 @@ impl Total {
             cached_starts,
         )?;
         let tx_vsize = PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{prefix}_tx_vsize"),
             version,
@@ -67,6 +73,7 @@ impl Total {
             cached_starts,
         )?;
         let fees = PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{prefix}_fees"),
             version,

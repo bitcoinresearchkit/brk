@@ -12,9 +12,7 @@ use pco::{ChunkConfig, standalone::simple_compress};
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{
-    Cents, CentsCompact, CostBasisPercentilePrices, Date, PERCENTILES, PERCENTILES_LEN, Sats,
-};
+use crate::{Cents, CentsCompact, CostBasisByPercentile, Date, PERCENTILES, PERCENTILES_LEN, Sats};
 
 /// Raw on-disk URPD: a map of price (cents) to supply (sats).
 /// Processed into [`crate::Urpd`] for API responses.
@@ -45,7 +43,7 @@ impl UrpdRaw {
     }
 
     /// Return sat- and acquisition-value-weighted percentiles using shared passes.
-    pub fn cost_basis_percentile_prices(&self) -> CostBasisPercentilePrices {
+    pub fn cost_basis_percentile_prices(&self) -> CostBasisByPercentile {
         Self::cost_basis_percentile_prices_from_entries(
             self.map.iter().map(|(&price, &sats)| (price, sats)),
         )
@@ -53,7 +51,7 @@ impl UrpdRaw {
 
     fn cost_basis_percentile_prices_from_entries(
         entries: impl Iterator<Item = (CentsCompact, Sats)> + Clone,
-    ) -> CostBasisPercentilePrices {
+    ) -> CostBasisByPercentile {
         let (total_sats, total_value) = entries.clone().fold(
             (0_u128, 0_u128),
             |(total_sats, total_value), (price, sats)| {
@@ -63,7 +61,7 @@ impl UrpdRaw {
         );
         let per_coin_targets = Self::percentile_targets(total_sats);
         let per_dollar_targets = Self::percentile_targets(total_value);
-        let mut prices = CostBasisPercentilePrices::default();
+        let mut prices = CostBasisByPercentile::default();
         let mut per_coin_index = if total_sats == 0 { PERCENTILES_LEN } else { 0 };
         let mut per_dollar_index = if total_value == 0 { PERCENTILES_LEN } else { 0 };
         let mut cumulative_sats = 0_u128;
@@ -138,7 +136,7 @@ impl UrpdRaw {
         states_path: &Path,
         name: &str,
         date: Date,
-    ) -> Result<CostBasisPercentilePrices> {
+    ) -> Result<CostBasisByPercentile> {
         let bytes = Self::read_bytes(states_path, name, date)?;
         let entries = Self::deserialize_entries(&bytes)?;
         Ok(Self::cost_basis_percentile_prices_from_entries(

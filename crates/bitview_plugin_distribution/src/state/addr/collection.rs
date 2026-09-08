@@ -52,6 +52,7 @@ impl AddrStates {
         let Some(supply) = metrics
             .supply
             .total
+            .cohorts
             .addr_balance
             .matrix
             .collect_one(previous_height)
@@ -61,6 +62,7 @@ impl AddrStates {
         let Some(output_count) = metrics
             .outputs
             .unspent_count
+            .cohorts
             .addr_balance
             .matrix
             .collect_one(previous_height)

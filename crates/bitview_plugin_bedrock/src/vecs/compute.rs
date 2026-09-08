@@ -1,14 +1,12 @@
 use brk_error::Result;
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregate};
-use bitview_compute::{AgeBand, db_utils::validate_any_computed_version_or_reset};
+use bitview_compute::AgeBand;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_coinflow::HorizonId;
 use bitview_plugin_indexer::Indexer;
 use brk_exit::Exit;
-use brk_types::{
-    Cents, CostBasisPercentilePrices, Day1, PERCENTILES_LEN, Sats, StoredF64, Version,
-};
+use brk_types::{Cents, CostBasisByPercentile, Day1, PERCENTILES_LEN, Sats, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, ColumnId, ReadableVec, VecValue};
 
 use super::Vecs;
@@ -58,7 +56,7 @@ impl ComputePlugin for Vecs {
         let cointime_wakefulness =
             AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1.0);
         let age_supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
+            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age.range)
                 .sats
                 .day1
                 .0
@@ -126,13 +124,13 @@ impl ComputePlugin for Vecs {
         );
 
         for vec in self.model_stored_vecs_mut() {
-            validate_any_computed_version_or_reset(vec, source_version)?;
+            vec.any_validate_computed_version_or_reset(source_version)?;
         }
         for vec in self.cost_basis.stored_vecs_mut() {
-            validate_any_computed_version_or_reset(vec, weighted_urpd_source_version)?;
+            vec.any_validate_computed_version_or_reset(weighted_urpd_source_version)?;
         }
         for vec in self.capitalized_price.stored_vecs_mut() {
-            validate_any_computed_version_or_reset(vec, weighted_urpd_source_version)?;
+            vec.any_validate_computed_version_or_reset(weighted_urpd_source_version)?;
         }
 
         let source_end = std::iter::once(mappings.day1.date.len())
@@ -366,8 +364,8 @@ impl Vecs {
         Ok(())
     }
 
-    fn missing_cost_basis_prices() -> WeightedPair<CostBasisPercentilePrices> {
-        WeightedPair::from_fn(|_| CostBasisPercentilePrices {
+    fn missing_cost_basis_prices() -> WeightedPair<CostBasisByPercentile> {
+        WeightedPair::from_fn(|_| CostBasisByPercentile {
             per_coin: [Cents::NAN; PERCENTILES_LEN],
             per_dollar: [Cents::NAN; PERCENTILES_LEN],
         })

@@ -228,3 +228,11 @@ impl<T> Class<T> {
         }
     }
 }
+impl ClassId {
+    pub fn matching(filter: &Filter) -> Option<Self> {
+        Self::ALL
+            .iter()
+            .copied()
+            .find(|id| id.select(&CLASS_FILTERS) == filter)
+    }
+}

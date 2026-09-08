@@ -1,8 +1,9 @@
+use bitview_collections::{ByDcaCagr, ByDcaPeriod};
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Price};
 use brk_types::{Cents, PartsPerMillionSigned64};
 
 use super::{dca_stack::DcaStack, lump_sum_stack::LumpSumStack};
-use bitview_compute::{ByDcaCagr, ByDcaPeriod, LazyPerBlock, LazyPercentPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct PeriodVecs {

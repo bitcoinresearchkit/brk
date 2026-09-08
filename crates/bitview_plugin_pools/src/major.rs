@@ -1,19 +1,18 @@
+use bitview_collections::Windows;
+use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_mining::Vecs as MiningVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
-use brk_error::Result;
-
-use bitview_plugin_indexer::Indexer;
+use bitview_transforms::MaskSats;
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, LazyPercentRollingWindows, ValuePerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{PartsPerMillion32, PoolSlug};
 use derive_more::{Deref, DerefMut};
-use vecdb::{BinaryTransform, Database, Rw, StorageMode, Version};
-
-use bitview_compute::{
-    CachedWindowStartVec, LazyPercentRollingWindows, MaskSats, ValuePerBlockCumulativeRolling,
-    Windows,
-};
+use vecdb::{BinaryTransform, CacheBudget, Database, Rw, StorageMode, Version};
 
 use super::minor;
 
@@ -37,6 +36,7 @@ pub struct Vecs<M: StorageMode = Rw> {
 
 impl Vecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         slug: PoolSlug,
         pool_heights: super::PoolHeights,
@@ -49,6 +49,7 @@ impl Vecs {
         let base = minor::Vecs::forced_import(slug, pool_heights, version, mappings, cached_starts);
 
         let rewards = ValuePerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &suffix("rewards"),
             version,
@@ -56,7 +57,7 @@ impl Vecs {
             cached_starts,
         )?;
 
-        let dominance_rolling = LazyPercentRollingWindows::from_compact_cumulative_average(
+        let dominance_rolling = LazyPercentRollingWindows::from_cumulative_average(
             &suffix("dominance"),
             version,
             &base.blocks_mined.cumulative.height,

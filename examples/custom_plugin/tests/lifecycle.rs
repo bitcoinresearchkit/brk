@@ -42,7 +42,10 @@ impl TestPlugins {
             safe_height: Height::ZERO,
             _source_db: source_db,
             block_weights,
-            near_full_blocks: NearFullBlocks::import(ImportContext::new(outputs_path))?,
+            near_full_blocks: NearFullBlocks::import(ImportContext::new(
+                outputs_path,
+                &CACHE_BUDGET,
+            ))?,
             computed_while_closed: false,
         })
     }
@@ -120,3 +123,5 @@ fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
     assert_eq!(plugins.queried_streak()?, b"[1,2,0,1,0]");
     Ok(())
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

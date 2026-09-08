@@ -74,7 +74,6 @@ tower-http = { workspace = true, features = ["limit"] }
 tower-layer = { workspace = true }
 
 [dev-dependencies]
-bitview_compute = { workspace = true }
 brk_mempool = { workspace = true }
 tower = { workspace = true }
 brk_exit = { workspace = true }

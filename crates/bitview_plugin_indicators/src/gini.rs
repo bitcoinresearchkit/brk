@@ -1,6 +1,6 @@
 use bitview_cohort::AmountRange;
-use bitview_compute::PercentPerBlock;
 use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_vecs::PercentPerBlock;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, StoredU64};

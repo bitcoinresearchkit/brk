@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
+use bitview_transforms::{FixedToPercent, FixedToRatio};
 use brk_types::{
     BasisPoints32, PartsPerMillion32, PartsPerMillion64, PartsPerMillionSigned32,
     PartsPerMillionSigned64, PriceRatio, StoredF32,
@@ -7,8 +8,6 @@ use brk_types::{
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{CheckedSub, Formattable, PcoVecValue, UnaryTransform};
-
-use crate::{FixedToPercent, FixedToRatio};
 
 pub trait ComputedVecValue
 where

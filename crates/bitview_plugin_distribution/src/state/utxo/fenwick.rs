@@ -8,10 +8,8 @@ use brk_types::{Cents, CentsCompact, PartsPerMillion32, Sats};
 use vecdb::ColumnId;
 
 use crate::state::PendingDelta;
-use bitview_compute::{
-    PERCENTILES, PERCENTILES_LEN,
-    algo::{FenwickNode, FenwickTree},
-};
+use bitview_compute::{FenwickNode, FenwickTree};
+use brk_types::{PERCENTILES, PERCENTILES_LEN};
 
 use super::{COST_BASIS_PRICE_DIGITS, PercentileResult, ProfitabilityRangeResult};
 

@@ -1,23 +1,28 @@
-use brk_error::Result;
-
-use bitview_cohort::{CohortContext, UTXOGroups};
+use bitview_cohort::{CohortContext, UTXOAndAddrGroups, UTXOGroups};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockCumulativeWithSums};
+use brk_error::Result;
 use brk_types::{Cents, Version};
-use vecdb::{Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOColumnarMetric;
-use bitview_compute::{CachedWindowStartVec, LazyFiatPerBlockCumulativeWithSums, Windows};
+use crate::metrics::{ColumnarAmount, CumulativeUTXOColumnarMetric};
 
 #[derive(Traversable)]
 pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub cohorts: UTXOGroups<LazyFiatPerBlockCumulativeWithSums<Cents>>,
+    /// Includes spends grouped by the address's pre-spend balance.
+    pub cohorts: UTXOAndAddrGroups<
+        LazyFiatPerBlockCumulativeWithSums<Cents>,
+        ColumnarAmount<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
+    >,
     #[traversable(flatten)]
     pub cumulative: CumulativeUTXOColumnarMetric<Cents, M>,
 }
 
 impl CumulativeRealizedByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -33,7 +38,7 @@ impl CumulativeRealizedByCohort {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = cumulative
                 .matrices
-                .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
+                .additive_source(cache, &filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported cumulative realized cohort");
             LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                 &name,
@@ -43,8 +48,29 @@ impl CumulativeRealizedByCohort {
                 cached_starts,
             )
         });
+        let addr_version = version + Version::ONE;
+        let addr_balance = ColumnarAmount::forced_import(
+            cache,
+            db,
+            &format!("addrs_{metric}_cumulative_cents_by_balance_range"),
+            CohortContext::Addr,
+            metric,
+            addr_version,
+            |name, source| {
+                LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
+                    name,
+                    addr_version,
+                    source,
+                    mappings,
+                    cached_starts,
+                )
+            },
+        )?;
         Ok(Self {
-            cohorts,
+            cohorts: UTXOAndAddrGroups {
+                utxo: cohorts,
+                addr_balance,
+            },
             cumulative,
         })
     }

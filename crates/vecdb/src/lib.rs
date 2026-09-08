@@ -35,7 +35,9 @@ pub use error::{Error, Result};
 
 pub use iterators::ValueWriter;
 
-pub use ops::{BinaryTransform, CheckedSub, Divide, Minus, Plus, SaturatingAdd, Times};
+pub use ops::{
+    BinaryTransform, CheckedSub, Divide, Minus, Plus, ReverseOperands, SaturatingAdd, Times,
+};
 
 pub use read_bounds::{BoundedVec, BoundedWriter, ReadBounds};
 pub use sparse_read::SparseRead;
@@ -53,10 +55,10 @@ pub use traits::{
 
 pub use variants::{
     AggFold, Budgeted, BudgetedCachedVec, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue,
-    CachedBoxedVec, CachedColumnarVec, CachedReadableVec, CachedVec, CachedVecBudget,
+    CacheBudget, CachedBoxedVec, CachedColumnarVec, CachedReadableVec, CachedVec, CachedVecBudget,
     CachedVecStrategy, ColumnId, ColumnarVec, CompressedRangeCursor, CompressionStrategy, DeltaAvg,
     DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec,
-    LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec,
+    LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec, MapOption,
     MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor,
     OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
     ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,

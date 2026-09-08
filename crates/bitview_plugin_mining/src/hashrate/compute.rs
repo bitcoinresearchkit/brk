@@ -1,13 +1,15 @@
-use brk_error::Result;
-
-use bitview_compute::{RatioDiffF32, TARGET_BLOCKS_PER_DAY_F64};
 use bitview_plugin_blocks::ONE_TERA_HASH;
 use bitview_plugin_indexer::Indexer;
+use bitview_transforms::RatioDiffF32;
+use brk_error::Result;
 use brk_exit::Exit;
-use brk_types::{Dollars, Height, PartsPerMillionSigned32, Sats, StoredF32, StoredF64};
+use brk_types::{
+    Dollars, Height, PartsPerMillionSigned32, Sats, StoredF32, StoredF64, TARGET_BLOCKS_PER_DAY_F64,
+};
 use vecdb::ReadableVec;
 
 use super::Vecs;
+
 #[inline]
 fn estimated_network_hash_rate(block_count_24h: f64, difficulty_hash_rate: f64) -> f64 {
     (block_count_24h / TARGET_BLOCKS_PER_DAY_F64) * difficulty_hash_rate
@@ -124,7 +126,7 @@ mod tests {
     use vecdb::{BinaryTransform, UnaryTransform};
 
     use super::{estimated_network_hash_rate, reward_per_ths};
-    use bitview_compute::{RatioDiffF32, ThsToPhsF32};
+    use bitview_transforms::{RatioDiffF32, ThsToPhsF32};
 
     #[test]
     fn network_hash_rate_scales_with_trailing_block_count() {

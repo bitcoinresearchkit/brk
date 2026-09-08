@@ -1,9 +1,9 @@
-use brk_error::Result;
-
-use bitview_compute::{CachedWindowStartVec, PerBlockFull, PerBlockRolling, Windows};
+use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_vecs::{CachedWindowStartVec, PerBlockFull, PerBlockRolling};
+use brk_error::Result;
 use brk_types::{Height, StoredU64, Version, Weight};
-use vecdb::Database;
+use vecdb::{CacheBudget, Database};
 
 use super::Vecs;
 
@@ -13,6 +13,7 @@ fn block_vbytes(_: Height, weight: Weight) -> StoredU64 {
 
 impl Vecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         indexer: &Indexer,
@@ -21,6 +22,7 @@ impl Vecs {
     ) -> Result<Self> {
         Ok(Self {
             vbytes: PerBlockFull::forced_import(
+                cache,
                 db,
                 "block_vbytes",
                 version,
@@ -30,6 +32,7 @@ impl Vecs {
                 cached_starts,
             )?,
             size: PerBlockRolling::forced_import(
+                cache,
                 db,
                 "block_size",
                 version,

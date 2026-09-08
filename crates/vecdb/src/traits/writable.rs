@@ -215,13 +215,7 @@ where
     /// Validates the computed version against the stored version, resetting if they don't match.
     /// Automatically includes the vec's own version - only pass dependency versions.
     fn validate_computed_version_or_reset(&mut self, dep_version: Version) -> crate::Result<()> {
-        let version = self.header().vec_version() + dep_version;
-        if version != self.header().computed_version() {
-            self.mut_header().update_computed_version(version);
-            if !self.is_empty() {
-                self.reset()?;
-            }
-        }
+        self.any_validate_computed_version_or_reset(dep_version)?;
 
         if self.is_empty() {
             debug!(

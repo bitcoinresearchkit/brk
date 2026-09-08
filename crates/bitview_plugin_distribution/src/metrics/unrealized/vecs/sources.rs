@@ -1,6 +1,6 @@
 use brk_types::Cents;
 
-use bitview_compute::LazyFiatPerBlock;
+use bitview_vecs::LazyFiatPerBlock;
 
 #[derive(Clone)]
 pub struct UnrealizedSources {

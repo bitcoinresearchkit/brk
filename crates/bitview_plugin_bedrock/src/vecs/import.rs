@@ -1,17 +1,18 @@
-use bitview_compute::{BoundedToF64, ColumnarDailyMetric, DailyMappings, LazyDailyMetric};
 use bitview_plugin::ImportContext;
+use bitview_transforms::BoundedToF64;
+use bitview_vecs::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPrice, LazyDailyMetric};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CachedBoxedVec, Database, ReadableCloneableVec, ReadableColumnarVec};
+use vecdb::{CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableColumnarVec};
 
 use super::Vecs;
 use crate::{
     CapitalizedPriceVecs, CostBasisVecs, LossPercentileId, ModeVecs, Modes, PriceBandId, STORAGE,
-    price::LazyColumnPrice,
 };
 
 impl ModeVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -45,7 +46,8 @@ impl ModeVecs {
             version,
             |source| {
                 PriceBandId::series(|band| {
-                    LazyColumnPrice::new(
+                    LazyColumnDailyPrice::new(
+                        cache,
                         &format!("{name}_{}", band.suffix()),
                         version,
                         source,
@@ -77,11 +79,24 @@ impl Vecs {
 
         let modes = Modes::try_from_fn(|mode| {
             let name = mode.name();
-            ModeVecs::forced_import(&db, &format!("bedrock_{name}"), version, &mappings)
+            ModeVecs::forced_import(
+                context.cache_budget(),
+                &db,
+                &format!("bedrock_{name}"),
+                version,
+                &mappings,
+            )
         })?;
-        let cost_basis = CostBasisVecs::forced_import(&db, version, &mappings)?;
-        let capitalized_price =
-            CapitalizedPriceVecs::forced_import(&db, version, indexes, &mappings, spot)?;
+        let cost_basis =
+            CostBasisVecs::forced_import(context.cache_budget(), &db, version, &mappings)?;
+        let capitalized_price = CapitalizedPriceVecs::forced_import(
+            context.cache_budget(),
+            &db,
+            version,
+            indexes,
+            &mappings,
+            spot,
+        )?;
         let this = Self {
             db,
             states_path,

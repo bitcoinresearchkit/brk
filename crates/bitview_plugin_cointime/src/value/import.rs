@@ -1,12 +1,13 @@
+use bitview_collections::Windows;
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
-
 use brk_types::Version;
-use vecdb::Database;
+use vecdb::{CacheBudget, Database};
 
 use super::Vecs;
-use bitview_compute::{CachedWindowStartVec, PerBlockCumulativeRolling, Windows};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -14,6 +15,7 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     Ok(Vecs {
         destroyed: PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "cointime_value_destroyed",
             version,
@@ -21,6 +23,7 @@ pub fn forced_import(
             cached_starts,
         )?,
         created: PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "cointime_value_created",
             version,
@@ -28,6 +31,7 @@ pub fn forced_import(
             cached_starts,
         )?,
         stored: PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "cointime_value_stored",
             version,
@@ -35,6 +39,7 @@ pub fn forced_import(
             cached_starts,
         )?,
         vocdd: PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "vocdd",
             version + Version::ONE,

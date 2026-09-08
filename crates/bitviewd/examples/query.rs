@@ -29,7 +29,7 @@ pub fn main() -> Result<()> {
     exit.set_ctrlc_handler();
 
     let reader = Reader::new(blocks_dir, &client);
-    let context = ImportContext::new(&outputs_dir);
+    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
 
     let plugins = DefaultPlugins::import(context, &reader)?;
 
@@ -69,3 +69,5 @@ pub fn main() -> Result<()> {
 
     Ok(())
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

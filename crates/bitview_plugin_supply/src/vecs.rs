@@ -1,14 +1,15 @@
+use bitview_collections::Windows;
 use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock, LazyRollingDeltasFiatFromHeight,
+    LazySpotValuePerBlock, LazyValuePerBlock,
+};
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64};
 use vecdb::{Database, Rw, StorageMode};
 
 use super::{burned, velocity};
 use crate::STORAGE;
-use bitview_compute::{
-    LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock, LazyRollingDeltasFiatFromHeight,
-    LazySpotValuePerBlock, LazyValuePerBlock, Windows,
-};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

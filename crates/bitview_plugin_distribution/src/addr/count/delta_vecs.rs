@@ -1,8 +1,9 @@
+use bitview_cohort::WithAddrTypes;
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyRollingDeltasFromHeight};
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-
-use bitview_compute::{CachedWindowStartVec, LazyRollingDeltasFromHeight, Windows, WithAddrTypes};
 
 use super::AddrCountsVecs;
 

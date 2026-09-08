@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Cents, PartsPerMillionSigned64};
 
 use super::{ByDcaClass, dca_stack::DcaStack};
-use bitview_compute::{LazyPerBlock, LazyPercentPerBlock, Price};
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct ClassVecs {

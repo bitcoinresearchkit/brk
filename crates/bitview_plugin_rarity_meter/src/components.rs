@@ -1,13 +1,13 @@
-use brk_error::Result;
-use rayon::prelude::*;
-
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::Version;
-use vecdb::{Database, Rw, StorageMode};
+use rayon::prelude::*;
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use super::{Component, component};
+
 #[derive(Traversable)]
 pub struct Components<M: StorageMode = Rw> {
     /// Rarity Meter component using the all-chain realized price—the
@@ -67,6 +67,7 @@ pub struct Components<M: StorageMode = Rw> {
 }
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -80,7 +81,7 @@ pub fn forced_import(
 
     macro_rules! import {
         ($name:expr, $source:expr) => {
-            component::forced_import(db, $name, version, mappings, &$source.cents.height)?
+            component::forced_import(cache, db, $name, version, mappings, &$source.cents.height)?
         };
     }
 
@@ -119,63 +120,63 @@ pub fn compute(
     let jobs = [
         (
             &mut components.realized_price,
-            &realized_price.all.ratio.height,
+            &realized_price.all.relative.ratio.height,
         ),
         (
             &mut components.capitalized_price,
-            &capitalized_price.all.ratio.height,
+            &capitalized_price.all.relative.ratio.height,
         ),
         (
             &mut components.sth_realized_price,
-            &realized_price.term.short.ratio.height,
+            &realized_price.term.short.relative.ratio.height,
         ),
         (
             &mut components.sth_capitalized_price,
-            &capitalized_price.sth.ratio.height,
+            &capitalized_price.sth.relative.ratio.height,
         ),
         (
             &mut components.lth_realized_price,
-            &realized_price.term.long.ratio.height,
+            &realized_price.term.long.relative.ratio.height,
         ),
         (
             &mut components.lth_capitalized_price,
-            &capitalized_price.lth.ratio.height,
+            &capitalized_price.lth.relative.ratio.height,
         ),
         (
             &mut components.over_6m_realized_price,
-            &realized_price.age.over._6m.ratio.height,
+            &realized_price.age.over._6m.relative.ratio.height,
         ),
         (
             &mut components.over_4m_realized_price,
-            &realized_price.age.over._4m.ratio.height,
+            &realized_price.age.over._4m.relative.ratio.height,
         ),
         (
             &mut components.under_4m_realized_price,
-            &realized_price.age.under._4m.ratio.height,
+            &realized_price.age.under._4m.relative.ratio.height,
         ),
         (
             &mut components.under_6m_realized_price,
-            &realized_price.age.under._6m.ratio.height,
+            &realized_price.age.under._6m.relative.ratio.height,
         ),
         (
             &mut components.vaulted_price,
-            &cointime.prices.vaulted.ratio.height,
+            &cointime.prices.vaulted.relative.ratio.height,
         ),
         (
             &mut components.active_price,
-            &cointime.prices.active.ratio.height,
+            &cointime.prices.active.relative.ratio.height,
         ),
         (
             &mut components.true_market_mean_price,
-            &cointime.prices.true_market_mean.ratio.height,
+            &cointime.prices.true_market_mean.relative.ratio.height,
         ),
         (
             &mut components.cointime_price,
-            &cointime.prices.cointime.ratio.height,
+            &cointime.prices.cointime.relative.ratio.height,
         ),
         (
             &mut components.coinflow_price,
-            &coinflow.all.price.ratio.height,
+            &coinflow.all.price.relative.ratio.height,
         ),
     ];
     let has_work = jobs

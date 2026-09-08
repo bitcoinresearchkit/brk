@@ -1,4 +1,4 @@
-use std::{mem::discriminant, sync::mpsc, thread, time::Duration};
+use std::{mem::discriminant, thread};
 
 use bitview::{ComputePluginSet, ImportContext};
 use bitview_default::DefaultPlugins;
@@ -10,20 +10,22 @@ use brk_rpc::{Auth, Client};
 use brk_types::{Addr, BlockHash, Day1, NextBlockHash, Txid};
 
 #[test]
-fn query_preflights_preserve_resolution_errors_and_defer_during_updates() {
+fn query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
-        .spawn(assert_query_preflights_preserve_resolution_errors_and_defer_during_updates)
+        .spawn(assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates)
         .unwrap()
         .join()
         .unwrap();
 }
 
-fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates() {
+fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
     let directory = tempfile::tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-    let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+    let plugins =
+        DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader)
+            .unwrap();
 
     let gate = plugins.publication().clone();
     let query = Query::build(&plugins, None);
@@ -32,46 +34,15 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         query.local_sync_status(),
         Err(Error::StateUpdating)
     ));
+    // Immutable preflights use the retained safe prefix without waiting for
+    // append-only publication. This empty fixture still has no published tip.
     gate.begin_update();
-    thread::scope(|scope| {
-        let (started_tx, started_rx) = mpsc::channel();
-        let (result_tx, result_rx) = mpsc::channel();
-        let query = &query;
-        scope.spawn(move || {
-            started_tx.send(()).unwrap();
-            result_tx.send(query.local_sync_status()).unwrap();
-        });
-        started_rx.recv().unwrap();
-        assert!(result_rx.recv_timeout(Duration::from_millis(10)).is_err());
-        gate.finish_update();
-        assert!(matches!(
-            result_rx.recv_timeout(Duration::from_secs(1)).unwrap(),
-            Err(Error::StateUpdating)
-        ));
-    });
-
-    gate.begin_update();
-    thread::scope(|scope| {
-        let (started_tx, started_rx) = mpsc::channel();
-        let (result_tx, result_rx) = mpsc::channel();
-        let query = &query;
-        scope.spawn(move || {
-            started_tx.send(()).unwrap();
-            result_tx
-                .send(query.day_is_deeply_confirmed(Day1::default()))
-                .unwrap();
-        });
-
-        started_rx.recv().unwrap();
-        assert!(result_rx.recv_timeout(Duration::from_millis(10)).is_err());
-        gate.finish_update();
-        assert!(
-            !result_rx
-                .recv_timeout(Duration::from_secs(1))
-                .unwrap()
-                .unwrap()
-        );
-    });
+    assert!(matches!(
+        query.local_sync_status(),
+        Err(Error::StateUpdating)
+    ));
+    assert!(!query.day_is_deeply_confirmed(Day1::default()).unwrap());
+    gate.finish_update();
 
     let unknown_block = BlockHash::default();
     assert!(matches!(
@@ -195,3 +166,5 @@ fn assert_query_preflights_preserve_resolution_errors_and_defer_during_updates()
         Err(brk_error::Error::UnknownAddr)
     ));
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

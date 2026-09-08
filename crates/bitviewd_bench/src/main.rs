@@ -1,3 +1,4 @@
+use benchmark::Benchmark;
 use bitview::{Config as RunnerConfig, ImportContext, UpdateContext, bootstrap};
 use bitview_default::DefaultPlugins;
 use bitviewd::Config;
@@ -7,8 +8,6 @@ use brk_reader::Reader;
 use tracing::info;
 
 mod benchmark;
-
-use benchmark::Benchmark;
 
 fn main() -> Result<()> {
     let RunnerConfig {
@@ -33,7 +32,7 @@ fn main() -> Result<()> {
 
     benchmark.measure(|| {
         bootstrap(
-            ImportContext::new(&data_path),
+            ImportContext::new(&data_path, &CACHE_BUDGET),
             |context| DefaultPlugins::import(context, &reader),
             UpdateContext::new(&exit),
         )
@@ -41,3 +40,5 @@ fn main() -> Result<()> {
     info!("Benchmark saved to {}", benchmark.path().display());
     Ok(())
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

@@ -3,7 +3,7 @@ use brk_types::StoredF64;
 use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::PerBlockCumulativeRolling;
+use bitview_vecs::PerBlockCumulativeRolling;
 
 use super::DerivedVecs;
 

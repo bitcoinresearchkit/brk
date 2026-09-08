@@ -24,7 +24,7 @@ impl Query {
         let mut bounds = ReadBounds::new();
         bounds.set(Index::Height.name(), source_len);
         bounds.scope(|| {
-            let first_heights = &plugins.mappings.cached_first_height.hour4;
+            let first_heights = &plugins.mappings.first_height.hour4;
             if first_heights.len() > MAX_BUCKETS {
                 return Err(Error::Internal(
                     "Historical price mapping exceeds timestamp range",

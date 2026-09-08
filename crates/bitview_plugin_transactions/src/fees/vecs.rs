@@ -3,7 +3,7 @@ use brk_types::{FeeRate, Sats, StoredBool, TxIndex};
 use derive_more::{Deref, DerefMut};
 use vecdb::{ColumnarVec, EagerVec, LazyColumnVec, PcoVec, ReadOnlyColumnarVec, Rw, StorageMode};
 
-use bitview_compute::PerTxDistribution;
+use bitview_vecs::PerTxDistribution;
 
 mod count;
 mod cpfp_flags;

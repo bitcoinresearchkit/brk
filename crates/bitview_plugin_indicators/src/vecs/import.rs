@@ -1,16 +1,15 @@
-use bitview_compute::{
-    BasisPointsPerBlock, Identity, LazyBasisPointsPerBlock, LazyPerBlock, PerBlock,
-    PercentPerBlock, RatioPerBlock,
-};
 use bitview_plugin::ImportContext;
-use bitview_plugin_distribution::AllChainSources;
-use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_distribution::{AllChainSources, Vecs as DistributionVecs};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_mining::Vecs as MiningVecs;
 use bitview_plugin_transactions::Vecs as TransactionsVecs;
+use bitview_vecs::{
+    BasisPointsPerBlock, LazyBasisPointsPerBlock, LazyPerBlock, PerBlock, PercentPerBlock,
+    RatioPerBlock,
+};
 use brk_error::Result;
 use brk_types::{BasisPoints32, Bitcoin, Cents, Sats, StoredF32, Version};
-use vecdb::unlikely;
+use vecdb::{Ident, unlikely};
 
 use super::Vecs;
 use crate::{STORAGE, dormancy_vecs::DormancyVecs};
@@ -30,18 +29,37 @@ impl Vecs {
         let v = STORAGE.schema_version();
 
         let bps_version = v + Version::ONE;
-        let puell_multiple =
-            BasisPointsPerBlock::forced_import(&db, "puell_multiple", bps_version, mappings)?;
+        let puell_multiple = BasisPointsPerBlock::forced_import(
+            context.cache_budget(),
+            &db,
+            "puell_multiple",
+            bps_version,
+            mappings,
+        )?;
         let nvt_source = all_chain.with_market_cap(
             "nvt_bps_source",
             bps_version,
-            &transactions.volume.transfer_volume.sum._24h.cents.height,
+            &transactions
+                .volume
+                .transfer_volume
+                .rolling
+                .sum
+                ._24h
+                .cents
+                .height,
             |_, volume, market_cap| Self::market_ratio(market_cap, volume),
         );
         let nvt =
             LazyBasisPointsPerBlock::from_height_source("nvt", bps_version, &nvt_source, mappings);
-        let gini = PercentPerBlock::forced_import(&db, "gini", v, mappings)?;
-        let rhodl_ratio = RatioPerBlock::forced_import_ppm(&db, "rhodl_ratio", v, mappings)?;
+        let gini =
+            PercentPerBlock::forced_import(context.cache_budget(), &db, "gini", v, mappings)?;
+        let rhodl_ratio = RatioPerBlock::forced_import_ppm(
+            context.cache_budget(),
+            &db,
+            "rhodl_ratio",
+            v,
+            mappings,
+        )?;
         let thermo_source = all_chain.with_market_cap(
             "thermo_cap_multiple_bps_source",
             bps_version,
@@ -68,7 +86,7 @@ impl Vecs {
             &activity.coindays_destroyed.cohorts.all.sum._24h.height,
             |_, cdd, supply| Self::supply_adjusted(f64::from(cdd), supply),
         );
-        let coindays_destroyed_supply_adj = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
+        let coindays_destroyed_supply_adj = LazyPerBlock::from_height_source::<Ident>(
             "coindays_destroyed_supply_adj",
             v,
             &cdd_source,
@@ -81,7 +99,7 @@ impl Vecs {
             &activity.coinyears_destroyed.all.height,
             |_, cyd, supply| Self::supply_adjusted(f64::from(cyd), supply),
         );
-        let coinyears_destroyed_supply_adj = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
+        let coinyears_destroyed_supply_adj = LazyPerBlock::from_height_source::<Ident>(
             "coinyears_destroyed_supply_adj",
             cyd_version,
             &cyd_source,
@@ -101,13 +119,13 @@ impl Vecs {
             |_, dormancy, supply| Self::dormancy_flow(dormancy, supply),
         );
         let dormancy = DormancyVecs {
-            supply_adj: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
+            supply_adj: LazyPerBlock::from_height_source::<Ident>(
                 "dormancy_supply_adj",
                 v,
                 &dormancy_supply_source,
                 mappings,
             ),
-            flow: LazyPerBlock::from_height_source::<Identity<StoredF32>>(
+            flow: LazyPerBlock::from_height_source::<Ident>(
                 "dormancy_flow",
                 v,
                 &dormancy_flow_source,
@@ -120,13 +138,15 @@ impl Vecs {
             &mining.rewards.subsidy.block.sats,
             |_, subsidy, supply| Self::stock_to_flow(supply, subsidy),
         );
-        let stock_to_flow = LazyPerBlock::from_height_source::<Identity<StoredF32>>(
-            "stock_to_flow",
+        let stock_to_flow =
+            LazyPerBlock::from_height_source::<Ident>("stock_to_flow", v, &stock_source, mappings);
+        let seller_exhaustion = PerBlock::forced_import(
+            context.cache_budget(),
+            &db,
+            "seller_exhaustion",
             v,
-            &stock_source,
             mappings,
-        );
-        let seller_exhaustion = PerBlock::forced_import(&db, "seller_exhaustion", v, mappings)?;
+        )?;
 
         let this = Self {
             db,

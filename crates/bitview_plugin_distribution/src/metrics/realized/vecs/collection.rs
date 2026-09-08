@@ -1,34 +1,27 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{
     AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
     UTXOAggregate, UTXOAggregateId, UTXOAllAndSth, UTXOGroups, UTXOGroupsWithoutAmountOrType,
+    UTXORows,
+};
+use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::{
+    NegCentsUnsignedToDollars, RatioCents, RatioCentsF32, RatioCentsSignedCents, SoprRatio,
 };
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPercentRollingWindows, ColumnarRollingWindows,
+    ColumnarRollingWindowsFrom1w, LazyPerBlock, LazyPercentPerBlock,
+};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
     Cents, CentsSats, CentsSigned, CentsSquaredSats, Height, PartsPerMillion32,
     PartsPerMillionSigned64, PriceRatio, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CachedBoxedVec, Database, LazyVec, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode,
-};
-
-use crate::{
-    AllChainSources,
-    metrics::{
-        AdditiveAggregateFiatPerBlockCumulativeWithSums, AdditiveUTXORawVec,
-        AggregatePercentPerBlock, AggregatePriceWithRatioPerBlock, ColumnarAmount,
-        RealizedBlockData, RealizedTotals, UTXORows,
-    },
-};
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPercentRollingWindows, ColumnarRollingWindows,
-    ColumnarRollingWindowsFrom1w, Identity, LazyFiatPerBlockCumulativeWithSums,
-    LazyFiatPerBlockWithDeltas, LazyPerBlock, LazyPercentPerBlock, NegCentsUnsignedToDollars,
-    RatioCents, RatioCentsF32, RatioCentsSignedCents, SoprRatio, Windows,
+    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, LazyVec,
+    ReadableCloneableVec, ReadableVec, Rw, StorageMode,
 };
 
 use super::{
@@ -39,10 +32,18 @@ use super::{
     CumulativeNetRealizedByCohort, CumulativeRealizedByCohort, CumulativeValueDestroyedByCohort,
     RealizedCapByCohort, RealizedPriceByCohort, RealizedSources,
 };
+use crate::{
+    AllChainSources,
+    metrics::{
+        AdditiveAggregateFiatPerBlockCumulativeWithSums, AdditiveUTXORawVec,
+        AggregatePercentPerBlock, AggregatePriceWithRatioPerBlock, RealizedBlockData,
+        RealizedTotals,
+    },
+};
 
 #[derive(Traversable)]
 pub struct RealizedVecs<M: StorageMode = Rw> {
-    /// Creation-date value of a UTXO cohort's unspent outputs: the sum of each
+    /// Creation-date value of a UTXO or address-balance cohort's unspent outputs: the sum of each
     /// output's BTC value multiplied by Bitcoin's spot price when that output
     /// was created.
     pub cap: RealizedCapByCohort<M>,
@@ -52,22 +53,12 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// aggregate on-chain cost basis. Returns zero when the cohort has no
     /// unspent supply.
     pub price: RealizedPriceByCohort<M>,
-    /// Profit realized by outputs from a UTXO cohort when spent: spending
+    /// Profit realized by outputs from a UTXO or pre-spend address-balance cohort: spending
     /// value minus creation-date value, counted only for profitable spends.
     pub profit: CumulativeRealizedByCohort<M>,
-    #[traversable(wrap = "profit", rename = "addr_balance")]
-    /// Profit realized by addresses in a pre-spend balance range:
-    /// spending value minus creation-date value, counted only for profitable
-    /// spends.
-    pub addr_balance_profit: ColumnarAmount<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
-    /// Loss realized by outputs from a UTXO cohort when spent:
+    /// Loss realized by outputs from a UTXO or pre-spend address-balance cohort:
     /// creation-date value minus spending value, counted only for losing spends.
     pub loss: CumulativeRealizedByCohort<M>,
-    #[traversable(wrap = "loss", rename = "addr_balance")]
-    /// Loss realized by addresses in a pre-spend balance range:
-    /// creation-date value minus spending value, counted only for losing
-    /// spends.
-    pub addr_balance_loss: ColumnarAmount<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
     /// Net realized profit and loss of outputs from a UTXO cohort when
     /// spent: realized profit minus realized loss.
     pub net_pnl: CumulativeNetRealizedByCohort<M>,
@@ -85,14 +76,6 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// all-chain and short-term-holder cohorts after excluding outputs younger
     /// than one hour.
     pub adjusted_sopr: AdjustedSoprVecs<M>,
-    #[traversable(wrap = "cap", rename = "addr_balance")]
-    /// Creation-date value of unspent outputs controlled by funded addresses in
-    /// an address-balance range at the represented block.
-    pub addr_balance_cap: ColumnarAmount<
-        Cents,
-        LazyFiatPerBlockWithDeltas<Cents, CentsSigned, PartsPerMillionSigned64>,
-        M,
-    >,
     /// Gross realized profit and loss of an aggregate UTXO cohort:
     /// realized profit plus realized loss.
     pub gross_pnl: AdditiveAggregateFiatPerBlockCumulativeWithSums<Cents, M>,
@@ -167,6 +150,7 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
 
 impl RealizedVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -176,6 +160,7 @@ impl RealizedVecs {
     ) -> Result<Self> {
         let aggregate_version = version + Version::ONE;
         let gross_pnl = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
+            cache,
             db,
             "realized_gross_pnl",
             aggregate_version,
@@ -183,6 +168,7 @@ impl RealizedVecs {
             cached_starts,
         )?;
         let capitalized_price = AggregatePriceWithRatioPerBlock::forced_import(
+            cache,
             db,
             "capitalized_price",
             aggregate_version,
@@ -193,6 +179,7 @@ impl RealizedVecs {
         let capitalized_cap_raw =
             AdditiveUTXORawVec::forced_import(db, "capitalized_cap_raw", version)?;
         let peak_regret = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
+            cache,
             db,
             "realized_peak_regret",
             aggregate_version,
@@ -200,6 +187,7 @@ impl RealizedVecs {
             cached_starts,
         )?;
         let net_pnl_change_1m_to_rcap = AggregatePercentPerBlock::forced_import(
+            cache,
             db,
             "net_pnl_change_1m_to_rcap",
             aggregate_version,
@@ -207,6 +195,7 @@ impl RealizedVecs {
         )?;
         let sell_side_risk_ratio = UTXOAggregate::try_from_fn(|id| {
             ColumnarPercentRollingWindows::forced_import(
+                cache,
                 db,
                 &Self::aggregate_metric_name(id, "sell_side_risk_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
@@ -215,6 +204,7 @@ impl RealizedVecs {
         })?;
         let sopr_ratio_extended = UTXOAggregate::try_from_fn(|id| {
             ColumnarRollingWindowsFrom1w::forced_import(
+                cache,
                 db,
                 &Self::aggregate_metric_name(id, "sopr"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
@@ -223,15 +213,17 @@ impl RealizedVecs {
         })?;
         let profit_to_loss_ratio = UTXOAggregate::try_from_fn(|id| {
             ColumnarRollingWindows::forced_import(
+                cache,
                 db,
                 &Self::aggregate_metric_name(id, "realized_profit_to_loss_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
                 mappings,
             )
         })?;
-        let cap = RealizedCapByCohort::forced_import(db, version, mappings, cached_starts)?;
-        let price = RealizedPriceByCohort::forced_import(db, version, mappings, spot_price)?;
+        let cap = RealizedCapByCohort::forced_import(cache, db, version, mappings, cached_starts)?;
+        let price = RealizedPriceByCohort::forced_import(cache, db, version, mappings, spot_price)?;
         let profit = CumulativeRealizedByCohort::forced_import(
+            cache,
             db,
             "realized_profit",
             version + Version::ONE,
@@ -239,82 +231,43 @@ impl RealizedVecs {
             cached_starts,
         )?;
         let loss = CumulativeRealizedByCohort::forced_import(
+            cache,
             db,
             "realized_loss",
             version + Version::ONE,
             mappings,
             cached_starts,
         )?;
-        let net_pnl =
-            CumulativeNetRealizedByCohort::forced_import(db, version, mappings, cached_starts)?;
+        let net_pnl = CumulativeNetRealizedByCohort::forced_import(
+            cache,
+            db,
+            version,
+            mappings,
+            cached_starts,
+        )?;
         let value_destroyed = CumulativeValueDestroyedByCohort::forced_import(
+            cache,
             db,
             version + Version::ONE,
             mappings,
             cached_starts,
         )?;
-        let sopr = Sopr24hVecs::forced_import(db, version, mappings)?;
-        let adjusted_sopr = AdjustedSoprVecs::forced_import(db, version, mappings, cached_starts)?;
-        let addr_version = version + Version::ONE;
-        let addr_balance_cap = ColumnarAmount::forced_import(
-            db,
-            "addrs_realized_cap_cents_by_balance_range",
-            CohortContext::Addr,
-            "realized_cap",
-            addr_version,
-            |name, source| {
-                LazyFiatPerBlockWithDeltas::from_cents_source(
-                    name,
-                    addr_version,
-                    source,
-                    Version::TWO,
-                    mappings,
-                    cached_starts,
-                )
-            },
-        )?;
-        let addr_balance_profit = ColumnarAmount::forced_import(
-            db,
-            "addrs_realized_profit_cumulative_cents_by_balance_range",
-            CohortContext::Addr,
-            "realized_profit",
-            addr_version + Version::ONE,
-            |name, source| {
-                LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
-                    name,
-                    addr_version + Version::ONE,
-                    source,
-                    mappings,
-                    cached_starts,
-                )
-            },
-        )?;
-        let addr_balance_loss = ColumnarAmount::forced_import(
-            db,
-            "addrs_realized_loss_cumulative_cents_by_balance_range",
-            CohortContext::Addr,
-            "realized_loss",
-            addr_version + Version::ONE,
-            |name, source| {
-                LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
-                    name,
-                    addr_version + Version::ONE,
-                    source,
-                    mappings,
-                    cached_starts,
-                )
-            },
-        )?;
-
+        let sopr = Sopr24hVecs::forced_import(cache, db, version, mappings)?;
+        let adjusted_sopr =
+            AdjustedSoprVecs::forced_import(cache, db, version, mappings, cached_starts)?;
         let mvrv = price.cohorts.map_named(|filter, cohort_name, price| {
-            LazyPerBlock::from_lazy::<Identity<StoredF32>, PriceRatio>(
+            LazyPerBlock::from_lazy::<Ident, PriceRatio>(
                 &CohortContext::Utxo.metric_name(filter, cohort_name, "mvrv"),
                 Self::cohort_version(version, filter),
-                &price.ratio,
+                &price.relative.ratio,
             )
         });
         let negative_loss = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let loss = loss.cohorts.get(&filter).expect("realized-loss cohort");
+            let loss = loss
+                .cohorts
+                .utxo
+                .get(&filter)
+                .expect("realized-loss cohort");
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_loss_neg");
             let version = Self::cohort_version(version, &filter) + Version::ONE;
             let base = LazyVec::transformed::<NegCentsUnsignedToDollars>(
@@ -347,6 +300,7 @@ impl RealizedVecs {
                     .cohorts
                     .get(filter)
                     .expect("realized-price cohort")
+                    .relative
                     .ppm
                     .height
                     .read_only_boxed_clone(),
@@ -387,14 +341,11 @@ impl RealizedVecs {
             cap,
             price,
             profit,
-            addr_balance_profit,
             loss,
-            addr_balance_loss,
             net_pnl,
             value_destroyed,
             sopr,
             adjusted_sopr,
-            addr_balance_cap,
             gross_pnl,
             capitalized_price,
             cap_raw,
@@ -454,9 +405,9 @@ impl RealizedVecs {
 
     pub fn sources(&self, filter: &Filter) -> Option<RealizedSources> {
         Some(RealizedSources {
-            cap: self.cap.cohorts.get(filter)?.clone(),
-            profit: self.profit.cohorts.get(filter)?.clone(),
-            loss: self.loss.cohorts.get(filter)?.clone(),
+            cap: self.cap.cohorts.utxo.get(filter)?.clone(),
+            profit: self.profit.cohorts.utxo.get(filter)?.clone(),
+            loss: self.loss.cohorts.utxo.get(filter)?.clone(),
             net_pnl: self.net_pnl.cohorts.get(filter)?.clone(),
             value_destroyed: self.value_destroyed.cohorts.get(filter)?.clone(),
         })
@@ -621,9 +572,9 @@ impl RealizedVecs {
         profit: &AmountRange<Cents>,
         loss: &AmountRange<Cents>,
     ) {
-        self.addr_balance_cap.push(cap);
-        self.addr_balance_profit.push_cumulative(profit);
-        self.addr_balance_loss.push_cumulative(loss);
+        self.cap.cohorts.addr_balance.push(cap);
+        self.profit.cohorts.addr_balance.push_cumulative(profit);
+        self.loss.cohorts.addr_balance.push_cumulative(loss);
     }
 
     /// Only values pushed during block processing belong here. SOPR and the
@@ -637,9 +588,9 @@ impl RealizedVecs {
             .min(self.loss.cumulative.min_len())
             .min(self.net_pnl.cumulative.min_len())
             .min(self.value_destroyed.cumulative.min_len())
-            .min(self.addr_balance_cap.len())
-            .min(self.addr_balance_profit.len())
-            .min(self.addr_balance_loss.len())
+            .min(self.cap.cohorts.addr_balance.len())
+            .min(self.profit.cohorts.addr_balance.len())
+            .min(self.loss.cohorts.addr_balance.len())
             .min(self.gross_pnl.len())
             .min(self.capitalized_price.len())
             .min(self.peak_regret.len())
@@ -649,12 +600,12 @@ impl RealizedVecs {
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.cap.matrices.collect_vecs_mut();
-        vecs.push(self.addr_balance_cap.stored_mut());
+        vecs.push(self.cap.cohorts.addr_balance.stored_mut());
         vecs.extend(self.price.matrices.collect_vecs_mut());
         vecs.extend(self.profit.cumulative.collect_vecs_mut());
-        vecs.push(self.addr_balance_profit.stored_mut());
+        vecs.push(self.profit.cohorts.addr_balance.stored_mut());
         vecs.extend(self.loss.cumulative.collect_vecs_mut());
-        vecs.push(self.addr_balance_loss.stored_mut());
+        vecs.push(self.loss.cohorts.addr_balance.stored_mut());
         vecs.extend(self.net_pnl.cumulative.collect_vecs_mut());
         vecs.extend(self.value_destroyed.cumulative.collect_vecs_mut());
         vecs.extend(self.sopr.collect_vecs_mut());

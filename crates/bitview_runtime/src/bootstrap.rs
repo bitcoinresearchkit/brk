@@ -124,7 +124,7 @@ mod tests {
         let directory = tempfile::tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
-        let import_context = ImportContext::new(directory.path());
+        let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let exit = Exit::new();
         let plugins = bootstrap(
             import_context,
@@ -150,7 +150,7 @@ mod tests {
         let directory = tempfile::tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
-        let import_context = ImportContext::new(directory.path());
+        let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let exit = Exit::new();
         let plugins = bootstrap(
             import_context,
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn cleanup_retains_only_claimed_plugin_data() -> Result<()> {
         let directory = tempfile::tempdir()?;
-        let context = ImportContext::new(directory.path());
+        let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let plugins = PluginStorage::plugins_path(context);
         let blocks = plugins.join("blocks");
         let stale = plugins.join("stale");
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn duplicate_plugin_ids_are_rejected_before_sync() -> Result<()> {
         let directory = tempfile::tempdir()?;
-        let context = ImportContext::new(directory.path());
+        let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let plugins = PluginStorage::plugins_path(context);
         let blocks = PluginId::new("blocks");
 
@@ -208,3 +208,6 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(test)]
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

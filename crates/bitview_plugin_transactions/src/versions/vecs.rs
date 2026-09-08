@@ -3,7 +3,7 @@ use brk_types::{StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{ColumnId, Rw, StorageMode, VecValue};
 
-use bitview_compute::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
+use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
 
 const VERSION_COUNT: usize = 4;
 

@@ -1,20 +1,17 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::OutputTypeId;
-use brk_types::{Height, StoredU16, StoredU64, Version};
-use vecdb::Database;
+use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, CountTotal,
+};
+use brk_error::Result;
+use brk_types::{StoredU16, StoredU64, Version};
+use vecdb::{CacheBudget, CachedReadableVec, Database};
 
 use super::{CachedSpendableOutputCount, Vecs, WithOutputTypes};
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, Windows,
-};
-
-fn identity(_: Height, value: StoredU64) -> StoredU64 {
-    value
-}
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -28,10 +25,15 @@ pub fn forced_import(
         columnar_version,
         |source| {
             WithOutputTypes::from_columnar_count_source(
-                "output_count_bis",
+                CountTotal::from_source(
+                    "output_count_bis",
+                    columnar_version,
+                    all_output_count.cached_boxed_clone(),
+                    mappings,
+                    cached_starts,
+                ),
                 |t| format!("{t}_output_count"),
                 columnar_version,
-                (all_output_count, identity),
                 source,
                 mappings,
                 cached_starts,
@@ -51,10 +53,16 @@ pub fn forced_import(
         columnar_version,
         |source| {
             WithOutputTypes::from_columnar_source(
-                "tx_count_bis",
+                cache,
+                CountTotal::from_source(
+                    "tx_count_bis",
+                    columnar_version,
+                    all_tx_count.cached_boxed_clone(),
+                    mappings,
+                    cached_starts,
+                ),
                 |t| format!("tx_count_with_{t}_output"),
                 columnar_version,
-                (all_tx_count, identity),
                 source,
                 mappings,
                 cached_starts,
@@ -72,7 +80,7 @@ pub fn forced_import(
         .by_type
         .unspendable
         .op_return
-        .cached_cumulative();
+        .cumulative_source();
     let spendable_output_count =
         CachedSpendableOutputCount::new(version, &op_return_count, mappings, cached_starts);
 

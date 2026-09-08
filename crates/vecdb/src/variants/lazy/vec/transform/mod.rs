@@ -1,9 +1,11 @@
 pub mod halve;
 pub mod ident;
+mod map_option;
 pub mod negate;
 
 pub use halve::Halve;
 pub use ident::Ident;
+pub use map_option::MapOption;
 pub use negate::Negate;
 
 use crate::{READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, VecIndex, VecValue};

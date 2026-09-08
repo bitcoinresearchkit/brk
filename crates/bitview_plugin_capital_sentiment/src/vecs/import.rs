@@ -5,8 +5,8 @@ use vecdb::{ReadableCloneableVec, UnaryTransform};
 
 use super::Vecs;
 use crate::STORAGE;
-use bitview_compute::{DailyMappings, DailyMetric, LazyDailyMetric};
 use bitview_plugin::ImportContext;
+use bitview_vecs::{DailyMappings, DailyMetric, LazyDailyMetric};
 
 struct CodeToPhase;
 
@@ -51,9 +51,15 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let mappings = DailyMappings::new(mappings);
 
-        let phase_code =
-            DailyMetric::forced_import(&db, "capital_sentiment_phase_code", version, &mappings)?;
+        let phase_code = DailyMetric::forced_import(
+            context.cache_budget(),
+            &db,
+            "capital_sentiment_phase_code",
+            version,
+            &mappings,
+        )?;
         let is_long = DailyMetric::<StoredBool>::forced_import(
+            context.cache_budget(),
             &db,
             "capital_sentiment_is_long",
             version,

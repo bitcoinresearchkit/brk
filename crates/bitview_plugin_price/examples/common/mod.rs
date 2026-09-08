@@ -13,6 +13,8 @@ pub fn import_indexer(data_dir: &Path) -> Indexer {
     )
     .expect("Failed to connect to Bitcoin Core");
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(data_dir);
+    let context = ImportContext::new(data_dir, &CACHE_BUDGET);
     Indexer::import(context, &reader).expect("Failed to import indexer")
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

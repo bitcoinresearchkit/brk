@@ -1,6 +1,7 @@
-use bitview_compute::{BlocksToDaysF32, Identity, LazyPerBlock};
+use bitview_transforms::BlocksToDaysF32;
+use bitview_vecs::LazyPerBlock;
 use brk_types::{Halving, Height, StoredU32, Version};
-use vecdb::{IndexVec, ReadOnlyClone};
+use vecdb::{Ident, IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
@@ -18,7 +19,7 @@ impl Vecs {
             mappings.height.halving.read_only_clone(),
             Halving::from,
         );
-        let epoch = LazyPerBlock::from_height_source::<Identity<Halving>>(
+        let epoch = LazyPerBlock::from_height_source::<Ident>(
             "halving_epoch",
             version,
             &epoch_source,
@@ -30,7 +31,7 @@ impl Vecs {
             mappings.height.halving.read_only_clone(),
             blocks_left_to_halving,
         );
-        let blocks_to_halving = LazyPerBlock::from_height_source::<Identity<StoredU32>>(
+        let blocks_to_halving = LazyPerBlock::from_height_source::<Ident>(
             "blocks_to_halving",
             version + v2,
             &blocks_to_halving_source,
@@ -57,7 +58,7 @@ mod tests {
     use vecdb::UnaryTransform;
 
     use super::blocks_left_to_halving;
-    use bitview_compute::BlocksToDaysF32;
+    use bitview_transforms::BlocksToDaysF32;
 
     #[test]
     fn formulas_match_public_halving_series_contracts() {

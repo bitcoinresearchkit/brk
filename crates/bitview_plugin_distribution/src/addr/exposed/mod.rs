@@ -33,15 +33,14 @@
 //! on the address data. They're maintained via delta detection in
 //! `process_received` and `process_sent`.
 
-use brk_error::Result;
-
 use bitview_cohort::ByAddrType;
 use bitview_plugin_indexer::Lengths;
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
 
 use super::{
     count::AddrCountFundedTotalVecs,
@@ -70,16 +69,19 @@ pub struct ExposedAddrVecs<M: StorageMode = Rw> {
 
 impl ExposedAddrVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
         all_supply: &CachedBoxedVec<Height, Sats>,
     ) -> Result<Self> {
-        let count = AddrCountFundedTotalVecs::forced_import(db, "exposed", version, mappings)?;
-        let supply = AddrSupplyVecs::forced_import(db, "exposed", version, mappings, spot_price)?;
+        let count =
+            AddrCountFundedTotalVecs::forced_import(cache, db, "exposed", version, mappings)?;
+        let supply =
+            AddrSupplyVecs::forced_import(cache, db, "exposed", version, mappings, spot_price)?;
         let supply_share = AddrSupplyShareVecs::forced_import(
-            db, "exposed", version, mappings, &supply, all_supply,
+            cache, db, "exposed", version, mappings, &supply, all_supply,
         )?;
 
         Ok(Self {

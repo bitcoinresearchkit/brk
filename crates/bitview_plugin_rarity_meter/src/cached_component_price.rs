@@ -1,7 +1,7 @@
+use bitview_transforms::PriceTimesRatio;
+use bitview_vecs::{IndexSources, LazyIndexedVec, LazyPerBlock, Price};
 use brk_types::{Cents, CentsCompact, Height, PartsPerMillion32, Version};
 use vecdb::{AnyVec, BinaryTransform, CachedVec, LazyVec, ReadableCloneableVec, VecIndex};
-
-use bitview_compute::{IndexSources, LazyIndexedVec, LazyPerBlock, Price, PriceTimesRatio};
 
 #[derive(Clone)]
 pub struct CachedComponentPrice {

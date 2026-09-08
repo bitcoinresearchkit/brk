@@ -23,6 +23,7 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
     vecs.output_count.invalidate();
     vecs.tx_count
         .validate_and_truncate(dep_version, starting_lengths.height)?;
+    vecs.tx_count.total.invalidate();
 
     let skip = vecs
         .output_count

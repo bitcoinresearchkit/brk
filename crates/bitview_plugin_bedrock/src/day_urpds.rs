@@ -12,7 +12,7 @@ use bitview_cohort::{
 };
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_types::{
-    Cents, CentsCompact, CostBasisPercentilePrices, Date, Sats, UrpdRaw, UrpdWeight, Version,
+    Cents, CentsCompact, CostBasisByPercentile, Date, Sats, UrpdRaw, UrpdWeight, Version,
 };
 
 use super::{ModeId, ModeWeights, WeightedModeId, WeightedModes, WeightedPair, WeightedUrpdNames};
@@ -128,7 +128,7 @@ impl DayUrpds {
         }
     }
 
-    pub fn all_cost_basis_percentile_prices(&self) -> WeightedPair<CostBasisPercentilePrices> {
+    pub fn all_cost_basis_percentile_prices(&self) -> WeightedPair<CostBasisByPercentile> {
         Self::cost_basis_percentile_prices(self.mode(ModeId::Cointime), self.mode(ModeId::Coinflow))
     }
 
@@ -136,7 +136,7 @@ impl DayUrpds {
         states_path: &Path,
         names: &WeightedUrpdNames,
         date: Date,
-    ) -> Result<Option<WeightedPair<CostBasisPercentilePrices>>> {
+    ) -> Result<Option<WeightedPair<CostBasisByPercentile>>> {
         let cointime_path = UrpdRaw::path(states_path, &names.all.cointime, date);
         let coinflow_path = UrpdRaw::path(states_path, &names.all.coinflow, date);
         match (cointime_path.try_exists()?, coinflow_path.try_exists()?) {
@@ -343,7 +343,7 @@ impl DayUrpds {
     fn cost_basis_percentile_prices(
         cointime: &UrpdRaw,
         coinflow: &UrpdRaw,
-    ) -> WeightedPair<CostBasisPercentilePrices> {
+    ) -> WeightedPair<CostBasisByPercentile> {
         WeightedPair {
             cointime: cointime.cost_basis_percentile_prices(),
             coinflow: coinflow.cost_basis_percentile_prices(),

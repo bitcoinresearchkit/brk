@@ -18,11 +18,22 @@ use brk_error::{Error, Result};
 use brk_exit::Exit;
 use brk_reader::{Reader, XOR_LEN, XORBytes};
 use brk_types::{BlkPosition, BlockHash, Height};
+use constants::*;
+use lengths::IndexerLengths as _;
+use processor::{BlockBuffers, BlockProcessor};
+use readers::Readers;
+use state::State;
+use stores::Stores;
 use tracing::{debug, error, info, warn};
 use vecdb::{
     AnyExportableVec, AnyVec, RawDBError, ReadOnlyClone, ReadableVec, Ro, Rw, StorageMode,
     WritableVec, unlikely,
 };
+use vecs::{
+    AddrsVecs, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs, TransactionCounts,
+    TransactionFeaturesVecs, TxFeatureFlags, TxMetadataVecs, Vecs,
+};
+
 mod constants;
 mod has;
 mod lengths;
@@ -34,18 +45,10 @@ mod stores;
 mod vecs;
 
 pub use brk_types::Lengths;
-use constants::*;
+
 pub use has::HasIndexer;
-use lengths::IndexerLengths as _;
-use processor::{BlockBuffers, BlockProcessor};
-use readers::Readers;
+
 pub use safe_lengths::SafeLengths;
-use state::State;
-use stores::Stores;
-use vecs::{
-    AddrsVecs, InputsVecs, OpReturnVecs, OutputsVecs, ScriptsVecs, TransactionCounts,
-    TransactionFeaturesVecs, TxFeatureFlags, TxMetadataVecs, Vecs,
-};
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("indexer"), VERSION);
 const EXPORT_HEIGHT_INTERVAL: usize = 100;
@@ -666,7 +669,7 @@ mod import_tests {
     use super::*;
 
     fn plugin_data_path(outputs_dir: &Path) -> PathBuf {
-        STORAGE.path(ImportContext::new(outputs_dir))
+        STORAGE.path(ImportContext::new(outputs_dir, &CACHE_BUDGET))
     }
 
     fn empty_reader(path: &Path) -> Reader {
@@ -722,7 +725,10 @@ mod import_tests {
         let dir = tempfile::tempdir()?;
         let reader = empty_reader(dir.path());
 
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
 
         assert!(matches!(
             read_xor_marker(&plugin_data_path(dir.path()))?,
@@ -736,11 +742,17 @@ mod import_tests {
         let dir = tempfile::tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
         fs::write(plugin.join("xor.dat"), [0_u8; 3])?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
 
         assert!(!plugin.join("stale").exists());
         assert!(matches!(
@@ -755,13 +767,16 @@ mod import_tests {
         let dir = tempfile::tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
         fs::write(plugin.join("stale"), b"stale")?;
         fs::create_dir_all(dir.path().join("blocks"))?;
         fs::write(dir.path().join("blocks/xor.dat"), [0_u8; 3])?;
         let reader = empty_reader(dir.path());
 
-        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
@@ -772,12 +787,15 @@ mod import_tests {
         let plugin = plugin_data_path(dir.path());
         let marker = plugin.join("xor.dat");
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
         fs::remove_file(&marker)?;
         fs::create_dir(&marker)?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
@@ -788,12 +806,15 @@ mod import_tests {
         let plugin = plugin_data_path(dir.path());
         let checkpoint = plugin.join("stores/height");
         let reader = empty_reader(dir.path());
-        drop(Indexer::import(ImportContext::new(dir.path()), &reader)?);
+        drop(Indexer::import(
+            ImportContext::new(dir.path(), &CACHE_BUDGET),
+            &reader,
+        )?);
         fs::remove_file(&checkpoint)?;
         fs::create_dir(&checkpoint)?;
         fs::write(plugin.join("stale"), b"stale")?;
 
-        assert!(Indexer::import(ImportContext::new(dir.path()), &reader).is_err());
+        assert!(Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader).is_err());
         assert!(plugin.join("stale").exists());
         Ok(())
     }
@@ -832,7 +853,8 @@ mod import_tests {
         let reader = empty_reader(dir.path());
 
         {
-            let mut indexer = Indexer::import(ImportContext::new(dir.path()), &reader)?;
+            let mut indexer =
+                Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader)?;
             indexer
                 .stores
                 .insert_block_height(BlockHashPrefix::from(1_u64), Height::ZERO);
@@ -842,7 +864,7 @@ mod import_tests {
         }
         fs::write(plugin.join("stale"), b"stale")?;
 
-        let indexer = Indexer::import(ImportContext::new(dir.path()), &reader)?;
+        let indexer = Indexer::import(ImportContext::new(dir.path(), &CACHE_BUDGET), &reader)?;
 
         assert!(!plugin.join("stale").exists());
         assert_eq!(indexer.vecs().next_height(), Height::ZERO);
@@ -850,3 +872,6 @@ mod import_tests {
         Ok(())
     }
 }
+
+#[cfg(test)]
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

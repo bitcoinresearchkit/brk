@@ -1,12 +1,12 @@
 use bitview_plugin_blocks::LookbackVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::CentsTimesTenths;
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, Price};
 use brk_types::{Cents, Height, Version};
 use vecdb::{CachedVec, ReadableCloneableVec};
 
-use bitview_compute::{CentsTimesTenths, LazyPerBlock, LazyPriceWithRatioPerBlock, Price};
-
-use super::lazy_sma::{LazySmaVec, SmaPrefixSumVec};
+use bitview_vecs::{LazySmaVec, SmaPrefixSumVec};
 
 #[derive(Clone, Traversable)]
 pub struct SmaVecs {

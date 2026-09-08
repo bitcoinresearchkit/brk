@@ -125,6 +125,9 @@ fn repeated_generic_mixed_and_nested_catalogs_generate_deterministically() {
                 fs::read(dir.path().join(format!("second.{extension}"))).unwrap()
             );
         }
+        let python = fs::read_to_string(dir.path().join("first.py")).unwrap();
+        assert!(python.ends_with('\n') && !python.ends_with("\n\n"));
+        assert!(python.lines().all(|line| line == line.trim_end()));
     }
 }
 

@@ -1,22 +1,21 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use std::ops::{Add, AddAssign};
 
 use bitview_cohort::{
     ByTerm, ProfitabilityId, ProfitabilityRange, ProfitabilityRangeId, ProfitabilityRow,
     UTXOAggregate, UTXOAggregateId,
 };
+use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlock, LazyColumnRatioPerBlock, LazyFiatPerBlock,
+    LazySpotValuePerBlockWithDeltas,
+};
+use brk_error::Result;
 use brk_types::{Cents, CentsSats, Height, PartsPerMillionSigned32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, CachedBoxedVec, ColumnId, Database, PcoVec, PcoVecValue,
+    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, ColumnId, Database, PcoVec, PcoVecValue,
     ReadOnlyColumnarVec, ReadableCloneableVec, Rw, StorageMode,
-};
-
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlock, LazyColumnRatioPerBlock, LazyFiatPerBlock,
-    LazySpotValuePerBlockWithDeltas, Windows,
 };
 
 use super::TermProfitabilityRangeId;
@@ -76,6 +75,7 @@ impl<M: StorageMode> ProfitabilityVecs<M> {
 
 impl ProfitabilityVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -88,7 +88,7 @@ impl ProfitabilityVecs {
             "profitability_supply_sats_by_term_and_range",
             version,
             |source| {
-                Self::series(source, "supply", version, |name, source| {
+                Self::series(cache, source, "supply", version, |name, source| {
                     LazySpotValuePerBlockWithDeltas::from_sats_source(
                         name,
                         version,
@@ -105,7 +105,7 @@ impl ProfitabilityVecs {
             "profitability_realized_cap_by_term_and_range",
             version,
             |source| {
-                Self::series(source, "realized_cap", version, |name, source| {
+                Self::series(cache, source, "realized_cap", version, |name, source| {
                     LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
@@ -115,7 +115,7 @@ impl ProfitabilityVecs {
             "profitability_unrealized_pnl_by_term_and_range",
             version,
             |source| {
-                Self::series(source, "unrealized_pnl", version, |name, source| {
+                Self::series(cache, source, "unrealized_pnl", version, |name, source| {
                     LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
@@ -124,6 +124,7 @@ impl ProfitabilityVecs {
             ColumnarPerBlock::forced_import(db, "profitability_nupl_ppm", version, |source| {
                 ProfitabilityId::series(|column, name| {
                     LazyColumnRatioPerBlock::new(
+                        cache,
                         &format!("{name}_nupl"),
                         version,
                         source,
@@ -142,6 +143,7 @@ impl ProfitabilityVecs {
     }
 
     fn series<T, S>(
+        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermProfitabilityRangeId>,
         metric: &str,
         version: Version,
@@ -154,6 +156,7 @@ impl ProfitabilityVecs {
             UTXOAggregate::from_fn(|aggregate| {
                 let name = Self::metric_name(cohort_name, aggregate, metric);
                 let source = TermProfitabilityRangeId::source(
+                    cache,
                     source,
                     &format!("{name}_source"),
                     version,

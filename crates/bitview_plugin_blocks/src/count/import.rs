@@ -1,8 +1,7 @@
-use bitview_compute::{
-    BlockCountTarget1m, BlockCountTarget1w, BlockCountTarget1y, BlockCountTarget24h,
-    CachedWindowStartVec, ConstantVecs, LazyPerBlockCumulativeRolling, Windows,
-};
+use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_transforms::BlockCountTarget;
+use bitview_vecs::{CachedWindowStartVec, ConstantVecs, LazyPerBlockCumulativeRolling};
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{IndexVec, ReadOnlyClone};
 
@@ -28,22 +27,22 @@ impl Vecs {
 
         Self {
             target: Windows {
-                _24h: ConstantVecs::new::<BlockCountTarget24h>(
+                _24h: ConstantVecs::new::<BlockCountTarget<1>>(
                     "block_count_target_24h",
                     version,
                     mappings,
                 ),
-                _1w: ConstantVecs::new::<BlockCountTarget1w>(
+                _1w: ConstantVecs::new::<BlockCountTarget<7>>(
                     "block_count_target_1w",
                     version,
                     mappings,
                 ),
-                _1m: ConstantVecs::new::<BlockCountTarget1m>(
+                _1m: ConstantVecs::new::<BlockCountTarget<30>>(
                     "block_count_target_1m",
                     version,
                     mappings,
                 ),
-                _1y: ConstantVecs::new::<BlockCountTarget1y>(
+                _1y: ConstantVecs::new::<BlockCountTarget<365>>(
                     "block_count_target_1y",
                     version,
                     mappings,

@@ -1,0 +1,56 @@
+mod bounded_odds_f64;
+pub use bounded_odds_f64::BoundedOddsF64;
+mod bounded_to_f64;
+pub use bounded_to_f64::BoundedToF64;
+mod cagr;
+pub use cagr::Cagr;
+mod fixed_to_ratio;
+pub use fixed_to_ratio::FixedToRatio;
+mod fixed_to_percent;
+pub use fixed_to_percent::FixedToPercent;
+mod price;
+pub use price::price_ratio;
+mod price_times;
+pub use price_times::PriceTimesRatio;
+mod cents_f32;
+pub use cents_f32::RatioCentsF32;
+mod sopr;
+pub use sopr::SoprRatio;
+mod nupl;
+pub use nupl::MvrvToNupl;
+mod u64;
+pub use u64::RatioU64;
+mod bytes;
+pub use bytes::RatioBytes;
+mod sats;
+pub use sats::RatioSats;
+mod cents;
+pub use cents::RatioCents;
+mod dollars;
+pub use dollars::RatioDollars;
+mod cents_signed_cents;
+pub use cents_signed_cents::RatioCentsSignedCents;
+mod diff_f32;
+pub use diff_f32::RatioDiffF32;
+mod diff_dollars;
+pub use diff_dollars::RatioDiffDollars;
+mod diff_cents;
+pub use diff_cents::RatioDiffCents;
+
+#[cfg(test)]
+mod tests {
+    use brk_types::{Cents, CentsSigned, PartsPerMillion32};
+    use vecdb::BinaryTransform;
+
+    use super::*;
+
+    #[test]
+    fn cents_ratios_propagate_nan() {
+        assert!(RatioCents::<PartsPerMillion32>::apply(Cents::NAN, Cents::new(100)).is_nan());
+        assert!(RatioCents::<PartsPerMillion32>::apply(Cents::new(100), Cents::NAN).is_nan());
+        assert!(
+            RatioCentsSignedCents::<PartsPerMillion32>::apply(CentsSigned::new(100), Cents::NAN,)
+                .is_nan()
+        );
+    }
+}

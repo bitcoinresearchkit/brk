@@ -14,7 +14,7 @@ use bitview_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{Database, Rw, StorageMode};
 
-use bitview_compute::LazyPerSecondWindows;
+use bitview_vecs::LazyPerSecondWindows;
 
 pub use by_type::Vecs as ByTypeVecs;
 use count::Vecs as CountVecs;

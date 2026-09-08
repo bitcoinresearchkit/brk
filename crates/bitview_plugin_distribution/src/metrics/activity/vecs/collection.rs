@@ -1,18 +1,15 @@
-use brk_error::Result;
-
 use bitview_cohort::{
     AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
-    UTXOAggregate, UTXOAggregateId,
+    UTXOAggregate, UTXOAggregateId, UTXORows,
 };
+use bitview_collections::Windows;
+use bitview_transforms::{DaysToYears, SatsToCents};
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredF32, StoredF64, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, Database, Rw, StorageMode, UnaryTransform};
-
-use crate::metrics::UTXORows;
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock, SatsToCents, Windows,
-};
+use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
 
 use super::{
     ActivitySources, CoindaysDestroyedByCohort, CoreCumulativeValueByCohort,
@@ -20,15 +17,6 @@ use super::{
 };
 
 const COINYEARS_DESTROYED_VERSION: Version = Version::ONE;
-
-struct CoinDaysToCoinYears;
-
-impl UnaryTransform<StoredF64, StoredF64> for CoinDaysToCoinYears {
-    #[inline(always)]
-    fn apply(coin_days: StoredF64) -> StoredF64 {
-        StoredF64::from(*coin_days / 365.0)
-    }
-}
 
 #[derive(Traversable)]
 pub struct ActivityVecs<M: StorageMode = Rw> {
@@ -59,6 +47,7 @@ pub struct ActivityVecs<M: StorageMode = Rw> {
 
 impl ActivityVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -67,6 +56,7 @@ impl ActivityVecs {
         let aggregate_version = version;
         let version = version + Version::ONE;
         let transfer_volume = Box::new(CumulativeValueByCohort::forced_import(
+            cache,
             db,
             "transfer_volume",
             version,
@@ -74,8 +64,9 @@ impl ActivityVecs {
             cached_starts,
         )?);
         let coindays_destroyed =
-            CoindaysDestroyedByCohort::forced_import(db, version, mappings, cached_starts)?;
+            CoindaysDestroyedByCohort::forced_import(cache, db, version, mappings, cached_starts)?;
         let transfer_volume_in_profit = Box::new(CoreCumulativeValueByCohort::forced_import(
+            cache,
             db,
             "transfer_volume_in_profit",
             version,
@@ -83,6 +74,7 @@ impl ActivityVecs {
             cached_starts,
         )?);
         let transfer_volume_in_loss = Box::new(CoreCumulativeValueByCohort::forced_import(
+            cache,
             db,
             "transfer_volume_in_loss",
             version,
@@ -100,7 +92,7 @@ impl ActivityVecs {
                 ._1y
                 .height
                 .clone();
-            LazyPerBlock::from_height_source::<CoinDaysToCoinYears>(
+            LazyPerBlock::from_height_source::<DaysToYears>(
                 &name,
                 Self::aggregate_version(aggregate_version, id) + COINYEARS_DESTROYED_VERSION,
                 &source,
@@ -109,6 +101,7 @@ impl ActivityVecs {
         });
         let dormancy = UTXOAggregate::try_from_fn(|id| {
             ColumnarRollingWindows::forced_import(
+                cache,
                 db,
                 &Self::aggregate_metric_name(id, "dormancy"),
                 Self::aggregate_version(aggregate_version, id),
@@ -145,7 +138,7 @@ impl ActivityVecs {
 
     pub fn sources(&self, filter: &Filter) -> Option<ActivitySources> {
         Some(ActivitySources {
-            transfer_volume: self.transfer_volume.cohorts.get(filter)?.clone(),
+            transfer_volume: self.transfer_volume.cohorts.utxo.get(filter)?.clone(),
         })
     }
 
@@ -214,6 +207,7 @@ impl ActivityVecs {
             let transfer_volume = &self
                 .transfer_volume
                 .cohorts
+                .utxo
                 .get(filter)
                 .expect("aggregate transfer-volume cohort")
                 .sum
@@ -234,23 +228,5 @@ impl ActivityVecs {
             )?;
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn converts_trailing_coin_days_to_coin_years() {
-        assert_eq!(
-            CoinDaysToCoinYears::apply(StoredF64::from(365.0)),
-            StoredF64::from(1.0),
-        );
-        assert_eq!(
-            CoinDaysToCoinYears::apply(StoredF64::from(182.5)),
-            StoredF64::from(0.5),
-        );
-        assert!(CoinDaysToCoinYears::apply(StoredF64::NAN).is_nan());
     }
 }

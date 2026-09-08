@@ -1,12 +1,10 @@
+use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyIndexedVec, LazyPerBlockCumulativeRolling};
 use brk_types::{Height, StoredU64, Version};
 use derive_more::Deref;
 use vecdb::{CachedVec, ReadableCloneableVec, ReadableVec};
-
-use bitview_compute::{
-    CachedWindowStartVec, LazyIndexedVec, LazyPerBlockCumulativeRolling, Windows,
-};
 
 #[derive(Clone, Deref, Traversable)]
 pub struct CachedSpendableOutputCount {

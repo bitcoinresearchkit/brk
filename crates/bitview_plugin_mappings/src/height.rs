@@ -5,7 +5,7 @@ use brk_types::{
 };
 use vecdb::{CachedBoxedVec, CachedReadableVec, CachedVec, LazyVec, ReadableBoxedVec, VecValue};
 
-use bitview_compute::LazyPreviousDeltaVec;
+use bitview_vecs::LazyPreviousDeltaVec;
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

@@ -2,9 +2,10 @@ mod has;
 
 pub use has::HasConstants;
 
-use bitview_compute::{ConstantVecs, IndexSources, ReturnF32Tenths, ReturnI8, ReturnU16};
 use bitview_plugin::{Plugin, PluginId, PluginStorage};
+use bitview_transforms::{ReturnF32Tenths, ReturnI8, ReturnU16};
 use bitview_traversable::Traversable;
+use bitview_vecs::{ConstantVecs, IndexSources};
 use brk_types::{StoredF32, StoredI8, StoredU16, Version};
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("constants"), Version::new(9));

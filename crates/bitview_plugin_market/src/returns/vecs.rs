@@ -1,8 +1,8 @@
+use bitview_collections::{ByDcaCagr, ByLookbackPeriod, Windows};
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPercentPerBlock, StdDevPerBlock};
 use brk_types::PartsPerMillionSigned64;
 use vecdb::{Rw, StorageMode};
-
-use bitview_compute::{ByDcaCagr, ByLookbackPeriod, LazyPercentPerBlock, StdDevPerBlock, Windows};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

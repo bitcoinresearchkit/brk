@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
+use super::{ColumnId, LazyColumnVec, ReadableColumnarVec, read};
 use crate::{
     AnyVec, CachedVec, CachedVecStrategy, Pinned, ReadOnlyClone, ReadableVec, TypedVec, Version,
 };
-
-use super::{ColumnId, LazyColumnVec, ReadableColumnarVec, read};
 
 /// Shared scalar-column caches. Sums and projections reuse these caches without
 /// caching another row matrix. Admission and eviction belong to each column's

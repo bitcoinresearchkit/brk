@@ -16,8 +16,24 @@ pub fn compute(
     exit: &Exit,
 ) -> Result<()> {
     let starting_lengths = indexer.safe_lengths();
-    let realized_cap_cents = &distribution.cohorts.realized.cap.cohorts.all.cents.height;
-    let circulating_supply = &distribution.cohorts.supply.total.cohorts.all.btc.height;
+    let realized_cap_cents = &distribution
+        .cohorts
+        .realized
+        .cap
+        .cohorts
+        .utxo
+        .all
+        .cents
+        .height;
+    let circulating_supply = &distribution
+        .cohorts
+        .supply
+        .total
+        .cohorts
+        .utxo
+        .all
+        .btc
+        .height;
 
     vecs.investor.cents.height.compute_subtract(
         starting_lengths.height,

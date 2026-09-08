@@ -1,18 +1,20 @@
-use bitview_compute::{
-    ByDcaCagr, ByDcaPeriod, LazyIndexedVec, LazyPercentPerBlock, LazyPreviousDeltaVec,
-    LazySinceDayVec, LazyWindowVec, Price, RatioDiffCents,
-};
+use bitview_collections::{ByDcaCagr, ByDcaPeriod};
 use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
+use bitview_transforms::RatioDiffCents;
+use bitview_vecs::{
+    LazyIndexedVec, LazyPercentPerBlock, LazyPreviousDeltaVec, LazySinceDayVec, LazyWindowVec,
+    Price,
+};
 use brk_error::{Error, Result};
 use brk_types::{Cents, Date, Day1, Height, PartsPerMillionSigned64, Sats};
 use vecdb::{BinaryTransform, CheckedSub, ReadableCloneableVec, VecIndex};
 
 use super::Vecs;
 use crate::{
-    STORAGE, by_class, cached_dca_sats::CachedDcaSats, class_vecs::ClassVecs, dca_stack::DcaStack,
-    lump_sum_stack::LumpSumStack, period_vecs::PeriodVecs,
+    ByDcaClass, STORAGE, cached_dca_sats::CachedDcaSats, class_vecs::ClassVecs,
+    dca_stack::DcaStack, lump_sum_stack::LumpSumStack, period_vecs::PeriodVecs,
 };
 
 impl Vecs {
@@ -138,7 +140,7 @@ impl Vecs {
                 ))
             })?;
 
-        let class_stack = by_class::try_new(|name, _year, day| {
+        let class_stack = ByDcaClass::try_new(|name, _year, day| {
             let metric_name = format!("dca_stack_{name}");
             let source = LazySinceDayVec::new(
                 &format!("{metric_name}_sats_source"),
@@ -152,7 +154,7 @@ impl Vecs {
         })?;
 
         let class_cost_basis =
-            by_class::try_from_class(&class_stack, |name, _year, from, stack| {
+            ByDcaClass::try_from_class(&class_stack, |name, _year, from, stack| {
                 let metric_name = format!("dca_cost_basis_{name}");
                 let source = LazyIndexedVec::new(
                     &format!("{metric_name}_cents_source"),
@@ -176,7 +178,7 @@ impl Vecs {
             })?;
 
         let class_return =
-            by_class::try_from_class(&class_cost_basis, |name, _year, _from, cost_basis| {
+            ByDcaClass::try_from_class(&class_cost_basis, |name, _year, _from, cost_basis| {
                 let metric_name = format!("dca_return_{name}");
                 let source = LazyIndexedVec::new(
                     &format!("{metric_name}_ppm_source"),

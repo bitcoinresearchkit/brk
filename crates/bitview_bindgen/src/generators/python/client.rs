@@ -862,7 +862,7 @@ pub fn generate_structural_patterns(
             continue;
         }
 
-        writeln!(output, "    ").unwrap();
+        writeln!(output).unwrap();
         if pattern.is_templated() {
             writeln!(
                 output,

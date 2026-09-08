@@ -1,19 +1,20 @@
-use bitview_plugin_distribution::Vecs as DistributionVecs;
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_plugin_price::Vecs as PriceVecs;
 use std::ops::AddAssign;
 
 use bitview_cohort::{AgeRangeId, CohortContext, TermId, UTXOAggregateId};
-use bitview_compute::{
-    BoundedToF64, CACHE_BUDGET, ColumnarPerBlock, LazyColumnPerBlock, LazyFiatPerBlock,
-    LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
-};
 use bitview_plugin::ImportContext;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
+use bitview_transforms::BoundedToF64;
+use bitview_vecs::{
+    ColumnarPerBlock, LazyColumnPerBlock, LazyFiatPerBlock, LazyPerBlock,
+    LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
+};
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, StoredF64, Version};
 use vecdb::{
-    CachedBoxedVec, CachedColumnarVec, CachedReadableVec, Database, ImportableVec, PcoVec,
-    PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec,
+    CacheBudget, CachedBoxedVec, CachedColumnarVec, CachedReadableVec, Database, ImportableVec,
+    PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec,
 };
 
 use super::Vecs;
@@ -24,6 +25,7 @@ use crate::{
 
 impl SpendingExposureSeries {
     fn new(
+        cache: &'static CacheBudget,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF64>, AgeRangeId>,
         mobility_source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
@@ -31,6 +33,7 @@ impl SpendingExposureSeries {
     ) -> Self {
         let age_range = AgeRangeId::series(CohortContext::Utxo, |column, name| {
             LazyColumnPerBlock::new(
+                cache,
                 &format!("{name}_spending_exposure"),
                 version,
                 source,
@@ -39,7 +42,7 @@ impl SpendingExposureSeries {
             )
         });
         let cached_mobility = CachedColumnarVec::new(mobility_source.clone(), version, |column| {
-            CACHE_BUDGET.wrap(column)
+            cache.wrap(column)
         });
         let mobility = AgeRangeId::series(CohortContext::Utxo, |column, name| {
             LazyPerBlock::from_height_source::<BoundedToF64>(
@@ -89,6 +92,7 @@ impl AggregateSources {
     }
 
     fn additive_source<T>(
+        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermId>,
         name: &str,
         version: Version,
@@ -98,16 +102,17 @@ impl AggregateSources {
         T: PcoVecValue + AddAssign,
     {
         match aggregate.term() {
-            Some(term) => CACHE_BUDGET
+            Some(term) => cache
                 .wrap(source.column(name, version, term))
                 .cached_boxed_clone(),
-            None => CACHE_BUDGET
+            None => cache
                 .wrap(source.sum_columns(name, version, TermId::ALL.iter().copied()))
                 .cached_boxed_clone(),
         }
     }
 
     fn exact_source<T>(
+        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, UTXOAggregateId>,
         name: &str,
         version: Version,
@@ -116,7 +121,7 @@ impl AggregateSources {
     where
         T: PcoVecValue,
     {
-        CACHE_BUDGET
+        cache
             .wrap(source.column(name, version, aggregate))
             .cached_boxed_clone()
     }
@@ -124,6 +129,7 @@ impl AggregateSources {
 
 impl AggregateVecs {
     fn new(
+        cache: &'static CacheBudget,
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &AggregateSources,
@@ -136,6 +142,7 @@ impl AggregateVecs {
                 &metric_name("mobile_supply"),
                 version,
                 &AggregateSources::additive_source(
+                    cache,
                     &sources.supply.mobile.read_only_clone(),
                     &metric_name("mobile_supply_sats"),
                     version,
@@ -148,6 +155,7 @@ impl AggregateVecs {
                 &metric_name("immobile_supply"),
                 version,
                 &AggregateSources::additive_source(
+                    cache,
                     &sources.supply.immobile.read_only_clone(),
                     &metric_name("immobile_supply_sats"),
                     version,
@@ -161,6 +169,7 @@ impl AggregateVecs {
             &metric_name("coinflow_supply_in_loss_share"),
             version,
             &AggregateSources::exact_source(
+                cache,
                 &sources.supply_in_loss_share.read_only_clone(),
                 &metric_name("coinflow_supply_in_loss_share"),
                 version,
@@ -175,6 +184,7 @@ impl AggregateVecs {
                     &name,
                     version,
                     &AggregateSources::exact_source(
+                        cache,
                         &horizon.select(&sources.horizon).read_only_clone(),
                         &name,
                         version,
@@ -188,6 +198,7 @@ impl AggregateVecs {
             &metric_name("coinflow_cap"),
             version,
             &AggregateSources::additive_source(
+                cache,
                 &sources.cap.read_only_clone(),
                 &metric_name("coinflow_cap_cents"),
                 version,
@@ -199,6 +210,7 @@ impl AggregateVecs {
             &metric_name("coinflow_price"),
             version,
             &AggregateSources::exact_source(
+                cache,
                 &sources.price.read_only_clone(),
                 &metric_name("coinflow_price_cents"),
                 version,
@@ -236,6 +248,7 @@ impl Vecs {
             |source| {
                 AgeRangeId::series(CohortContext::Utxo, |column, name| {
                     LazyColumnPerBlock::new(
+                        context.cache_budget(),
                         &format!("{name}_spending_rate"),
                         version,
                         source,
@@ -257,6 +270,7 @@ impl Vecs {
             version,
             |source| {
                 SpendingExposureSeries::new(
+                    context.cache_budget(),
                     version,
                     source,
                     &mobility_source.height.read_only_clone(),
@@ -303,6 +317,7 @@ impl Vecs {
 
         let aggregate_sources = AggregateSources::forced_import(db, version)?;
         let all = AggregateVecs::new(
+            context.cache_budget(),
             UTXOAggregateId::All,
             version,
             &aggregate_sources,
@@ -310,6 +325,7 @@ impl Vecs {
             &spot_price,
         );
         let sth = AggregateVecs::new(
+            context.cache_budget(),
             UTXOAggregateId::Sth,
             version,
             &aggregate_sources,
@@ -317,6 +333,7 @@ impl Vecs {
             &spot_price,
         );
         let lth = AggregateVecs::new(
+            context.cache_budget(),
             UTXOAggregateId::Lth,
             version,
             &aggregate_sources,

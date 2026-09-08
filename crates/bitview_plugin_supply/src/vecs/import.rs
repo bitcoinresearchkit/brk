@@ -1,17 +1,16 @@
-use bitview_compute::{
-    CachedWindowStartVec, Identity, LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock,
-    LazyRollingDeltasFiatFromHeight, LazySpotValuePerBlock, LazyValuePerBlock, LazyWindowVec,
-    Windows,
-};
+use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_cointime::Vecs as CointimeVecs;
-use bitview_plugin_distribution::AllChainSources;
-use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_distribution::{AllChainSources, Vecs as DistributionVecs};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_transactions::Vecs as TransactionsVecs;
+use bitview_vecs::{
+    CachedWindowStartVec, LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock,
+    LazyRollingDeltasFiatFromHeight, LazySpotValuePerBlock, LazyValuePerBlock, LazyWindowVec,
+};
 use brk_error::Result;
 use brk_types::{Cents, Height, PartsPerMillionSigned64, Sats, Version};
-use vecdb::{ReadableCloneableVec, ReadableVec};
+use vecdb::{Ident, ReadableCloneableVec, ReadableVec};
 
 use super::Vecs;
 use crate::{STORAGE, burned, velocity};
@@ -29,12 +28,12 @@ impl Vecs {
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
-        let supply_metrics = &distribution.cohorts.supply.total.cohorts.all;
+        let supply_metrics = &distribution.cohorts.supply.total.cohorts.utxo.all;
 
         let circulating =
             LazyValuePerBlock::spot_identity("circulating_supply", supply_metrics, version);
 
-        let burned = burned::Vecs::forced_import(&db, version, mappings)?;
+        let burned = burned::Vecs::forced_import(context.cache_budget(), &db, version, mappings)?;
 
         let inflation_version = version + Version::TWO;
         let inflation_source = LazyWindowVec::<Height, Sats, PartsPerMillionSigned64>::new(
@@ -74,7 +73,15 @@ impl Vecs {
         );
 
         let growth_version = version + Version::new(3);
-        let realized_cap = &distribution.cohorts.realized.cap.cohorts.all.cents.height;
+        let realized_cap = &distribution
+            .cohorts
+            .realized
+            .cap
+            .cohorts
+            .utxo
+            .all
+            .cents
+            .height;
         let market_minus_realized_cap_growth_rate =
             cached_starts.map_with_suffix(|suffix, starts| {
                 let name = format!("market_minus_realized_cap_growth_rate_{suffix}");
@@ -85,12 +92,7 @@ impl Vecs {
                     realized_cap,
                     starts.read_only_boxed_clone(),
                 );
-                LazyPerBlock::from_height_source::<Identity<PartsPerMillionSigned64>>(
-                    &name,
-                    growth_version,
-                    &source,
-                    mappings,
-                )
+                LazyPerBlock::from_height_source::<Ident>(&name, growth_version, &source, mappings)
             });
 
         let hodled_or_lost = LazySpotValuePerBlock::identity(

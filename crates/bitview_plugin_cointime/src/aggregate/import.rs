@@ -1,22 +1,22 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use std::ops::AddAssign;
 
 use bitview_cohort::{TERM_NAMES, TermId, UTXOAggregateId};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::BoundedToF64;
+use bitview_vecs::{
+    LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, PerBlock,
+};
+use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, Version};
 use vecdb::{
-    CachedBoxedVec, CachedReadableVec, Database, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone,
-    ReadOnlyColumnarVec, ReadableColumnarVec,
+    CacheBudget, CachedBoxedVec, CachedReadableVec, Database, ImportableVec, PcoVec, PcoVecValue,
+    ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec,
 };
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
-use bitview_compute::{
-    BoundedToF64, CACHE_BUDGET, LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock,
-    LazySpotValuePerBlock, PerBlock,
-};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
@@ -30,7 +30,7 @@ pub fn forced_import(
         .read_only_cached_boxed_clone();
     let term_loss_share = |term: TermId| {
         let name = term.select(&TERM_NAMES).id;
-        CACHE_BUDGET
+        cache
             .wrap(sources.supply_in_loss_share.read_only_clone().column(
                 &format!("{name}_awake_supply_in_loss_share"),
                 version + Version::ONE,
@@ -39,6 +39,7 @@ pub fn forced_import(
             .cached_boxed_clone()
     };
     let all = CohortVecs::new(
+        cache,
         UTXOAggregateId::All,
         version,
         &sources,
@@ -47,6 +48,7 @@ pub fn forced_import(
         spot_price,
     );
     let sth = CohortVecs::new(
+        cache,
         UTXOAggregateId::Sth,
         version,
         &sources,
@@ -55,6 +57,7 @@ pub fn forced_import(
         spot_price,
     );
     let lth = CohortVecs::new(
+        cache,
         UTXOAggregateId::Lth,
         version,
         &sources,
@@ -103,6 +106,7 @@ impl Sources {
     }
 
     fn additive_source<T>(
+        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermId>,
         name: &str,
         version: Version,
@@ -112,10 +116,10 @@ impl Sources {
         T: PcoVecValue + AddAssign,
     {
         match aggregate.term() {
-            Some(term) => CACHE_BUDGET
+            Some(term) => cache
                 .wrap(source.column(name, version, term))
                 .cached_boxed_clone(),
-            None => CACHE_BUDGET
+            None => cache
                 .wrap(source.sum_columns(name, version, TermId::ALL.iter().copied()))
                 .cached_boxed_clone(),
         }
@@ -124,6 +128,7 @@ impl Sources {
 
 impl CohortVecs {
     fn new(
+        cache: &'static CacheBudget,
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &Sources,
@@ -133,24 +138,27 @@ impl CohortVecs {
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
         let awake_supply = Sources::additive_source(
+            cache,
             &sources.awake_supply.read_only_clone(),
             &metric_name("awake_supply_sats"),
             version,
             aggregate,
         );
         let dormant_supply = Sources::additive_source(
+            cache,
             &sources.dormant_supply.read_only_clone(),
             &metric_name("dormant_supply_sats"),
             version,
             aggregate,
         );
         let awake_cap = Sources::additive_source(
+            cache,
             &sources.awake_cap.read_only_clone(),
             &metric_name("awake_cap_cents"),
             version,
             aggregate,
         );
-        let awake_price = CACHE_BUDGET.wrap(sources.awake_price.read_only_clone().column(
+        let awake_price = cache.wrap(sources.awake_price.read_only_clone().column(
             &metric_name("awake_price_cents"),
             version,
             aggregate,

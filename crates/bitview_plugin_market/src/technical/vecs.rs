@@ -1,9 +1,10 @@
+use bitview_collections::WindowsTo1m;
 use bitview_traversable::Traversable;
+use bitview_vecs::RatioPerBlock;
 use brk_types::PartsPerMillion32;
 use vecdb::{Rw, StorageMode};
 
 use super::{MacdChain, RsiChain};
-use bitview_compute::{RatioPerBlock, WindowsTo1m};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

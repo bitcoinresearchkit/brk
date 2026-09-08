@@ -144,8 +144,11 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
             )
             .unwrap();
             let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-            let plugins =
-                DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+            let plugins = DefaultPlugins::import(
+                ImportContext::new(directory.path(), &CACHE_BUDGET),
+                &reader,
+            )
+            .unwrap();
             let mempool = Mempool::new(&client);
             let query = AsyncQuery::build(&plugins, Some(mempool.clone()));
             Builder::new_current_thread()
@@ -299,3 +302,5 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
         .join()
         .unwrap();
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

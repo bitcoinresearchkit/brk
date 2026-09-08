@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use parking_lot::{Mutex, RwLock};
 
+use crate::{ReadOnlyClone, ReadableVec, StoredVec, TypedVec, VecIndex, Version};
+
 mod any_stored_vec;
 pub mod any_vec;
 pub mod budget;
@@ -13,6 +15,7 @@ pub mod pinned;
 pub mod read_only_clone;
 pub mod readable;
 mod readable_cloneable;
+mod shared_budget;
 pub mod strategy;
 pub mod typed;
 pub mod writable;
@@ -22,9 +25,8 @@ pub use budgeted::{Budgeted, BudgetedCachedVec};
 pub use cloneable::{CachedBoxedVec, CachedReadableVec};
 pub use pinned::Pinned as NoBudget;
 pub use pinned::{Pinned, PinnedCachedVec};
+pub use shared_budget::CacheBudget;
 pub use strategy::CachedVecStrategy;
-
-use crate::{ReadOnlyClone, ReadableVec, StoredVec, TypedVec, VecIndex, Version};
 
 struct CacheState<T> {
     len: usize,

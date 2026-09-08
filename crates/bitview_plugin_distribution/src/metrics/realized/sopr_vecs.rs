@@ -1,19 +1,19 @@
-use brk_error::Result;
-
 use bitview_cohort::{
     AGE_RANGE_FILTERS, AgeRange, AgeRangeId, ByEntry, ByEpoch, CLASS_FILTERS, Class, ClassId,
     CohortContext, ENTRY_FILTERS, EPOCH_FILTERS, EntryId, EpochId, Filter, OVER_AGE_FILTERS,
     OverAge, OverAgeId, Term, UNDER_AGE_FILTERS, UTXOAggregate, UTXOAggregateId,
     UTXOGroupsWithoutAmountOrType, UnderAge, UnderAgeId,
 };
+use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, ColumnId, Database, PcoVec, ReadOnlyColumnarVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, CacheBudget, ColumnId, Database, Ident, PcoVec,
+    ReadOnlyColumnarVec, Rw, StorageMode,
 };
-
-use bitview_compute::{ColumnarPerBlock, Identity, LazyColumnPerBlock, LazyPerBlock, SoprRatio};
 
 use super::Sopr24hInput;
 
@@ -57,6 +57,7 @@ pub struct Sopr24hVecs<M: StorageMode = Rw> {
 
 impl Sopr24hVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -68,9 +69,30 @@ impl Sopr24hVecs {
             "sopr_24h_by_aggregate",
             matrix_version,
             |name, source| UTXOAggregate {
-                all: Self::column(name, matrix_version, source, UTXOAggregateId::All, mappings),
-                sth: Self::column(name, matrix_version, source, UTXOAggregateId::Sth, mappings),
-                lth: Self::column(name, matrix_version, source, UTXOAggregateId::Lth, mappings),
+                all: Self::column(
+                    cache,
+                    name,
+                    matrix_version,
+                    source,
+                    UTXOAggregateId::All,
+                    mappings,
+                ),
+                sth: Self::column(
+                    cache,
+                    name,
+                    matrix_version,
+                    source,
+                    UTXOAggregateId::Sth,
+                    mappings,
+                ),
+                lth: Self::column(
+                    cache,
+                    name,
+                    matrix_version,
+                    source,
+                    UTXOAggregateId::Lth,
+                    mappings,
+                ),
             },
         )?;
         let age_range_matrix = Self::import_matrix(
@@ -79,7 +101,7 @@ impl Sopr24hVecs {
             matrix_version,
             |name, source| {
                 AgeRange::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             },
         )?;
@@ -89,7 +111,7 @@ impl Sopr24hVecs {
             matrix_version,
             |name, source| {
                 UnderAge::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             },
         )?;
@@ -99,26 +121,26 @@ impl Sopr24hVecs {
             matrix_version,
             |name, source| {
                 OverAge::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             },
         )?;
         let epoch_matrix =
             Self::import_matrix(db, "sopr_24h_by_epoch", matrix_version, |name, source| {
                 ByEpoch::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             })?;
         let class_matrix =
             Self::import_matrix(db, "sopr_24h_by_class", matrix_version, |name, source| {
                 Class::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             })?;
         let entry_matrix =
             Self::import_matrix(db, "sopr_24h_by_entry", matrix_version, |name, source| {
                 ByEntry::from_fn(|column| {
-                    Self::column(name, matrix_version, source, column, mappings)
+                    Self::column(cache, name, matrix_version, source, column, mappings)
                 })
             })?;
 
@@ -211,6 +233,7 @@ impl Sopr24hVecs {
     }
 
     fn column<C: ColumnId>(
+        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF32>, C>,
@@ -218,6 +241,7 @@ impl Sopr24hVecs {
         mappings: &bitview_plugin_mappings::Vecs,
     ) -> LazyColumnPerBlock<StoredF32, C> {
         LazyColumnPerBlock::new(
+            cache,
             &format!("{name}_column_{}", column.index()),
             version,
             source,
@@ -231,7 +255,7 @@ impl Sopr24hVecs {
         name: &str,
         version: Version,
     ) -> LazyPerBlock<StoredF32> {
-        LazyPerBlock::from_resolutions::<Identity<StoredF32>>(name, version, &source.resolutions)
+        LazyPerBlock::from_resolutions::<Ident>(name, version, &source.resolutions)
     }
 
     fn cohort_version(base: Version, filter: &Filter) -> Version {

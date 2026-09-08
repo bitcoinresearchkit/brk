@@ -1,13 +1,11 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyPercentPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{AnyStoredVec, Database, ReadOnlyClone, Rw, StorageMode};
-
-use bitview_compute::{ColumnarPerBlock, LazyPercentPerBlock};
+use vecdb::{AnyStoredVec, CacheBudget, Database, ReadOnlyClone, Rw, StorageMode};
 
 use super::{RelativeSource, share_views};
 
@@ -37,7 +35,12 @@ pub struct GrossPnlComposition<M: StorageMode = Rw> {
 }
 
 impl GrossPnlComposition {
-    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+        mappings: &MappingsVecs,
+    ) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = ColumnarPerBlock::forced_import(
             db,
@@ -47,6 +50,7 @@ impl GrossPnlComposition {
         )?;
         let source = profit_share_source.height.read_only_clone();
         let unrealized_profit_to_own_gross_pnl = share_views(
+            cache,
             &source,
             "unrealized_profit_to_own_gross_pnl",
             version,
@@ -54,6 +58,7 @@ impl GrossPnlComposition {
             mappings,
         );
         let unrealized_loss_to_own_gross_pnl = share_views(
+            cache,
             &source,
             "unrealized_loss_to_own_gross_pnl",
             version,
@@ -61,6 +66,7 @@ impl GrossPnlComposition {
             mappings,
         );
         let net_unrealized_pnl_to_own_gross_pnl = share_views(
+            cache,
             &source,
             "net_unrealized_pnl_to_own_gross_pnl",
             version,

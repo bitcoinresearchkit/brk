@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
+use bitview_vecs::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

@@ -3,7 +3,7 @@ use brk_types::{PartsPerMillionSigned32, StoredF64};
 use vecdb::{Rw, StorageMode};
 
 use super::HashRateSmaVecs;
-use bitview_compute::{PerBlock, PercentPerBlock};
+use bitview_vecs::{PerBlock, PercentPerBlock};
 
 #[derive(Traversable)]
 pub struct RateVecs<M: StorageMode = Rw> {

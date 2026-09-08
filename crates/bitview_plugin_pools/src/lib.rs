@@ -1,14 +1,16 @@
-use brk_error::Result;
-
 use std::collections::BTreeMap;
 
+use bitview_collections::Windows;
 use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use bitview_vecs::CachedWindowStartVec;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, POOL_ATTRIBUTION_VERSION, PoolSlug, Pools, TxOutIndex, pools};
+use pool_heights::PoolHeights;
 use rayon::prelude::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
@@ -25,9 +27,6 @@ mod pool_heights;
 
 pub use dependencies::Dependencies;
 pub use has::HasPools;
-use pool_heights::PoolHeights;
-
-use bitview_compute::{CachedWindowStartVec, Windows};
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("pools"), Version::new(13));
 pub const ID: PluginId = STORAGE.id();
@@ -81,6 +80,7 @@ impl Vecs {
                 major_map.insert(
                     pool.slug,
                     major::Vecs::forced_import(
+                        context.cache_budget(),
                         &db,
                         pool.slug,
                         pool_heights.clone(),

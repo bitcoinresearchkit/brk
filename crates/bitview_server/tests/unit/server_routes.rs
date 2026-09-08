@@ -763,7 +763,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
         node.set_nonblocking(true).unwrap();
         let client = Client::new(&format!("http://{}", node.local_addr().unwrap()), Auth::None).unwrap();
         let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-        let plugins = DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+        let plugins = DefaultPlugins::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader).unwrap();
         #[cfg(feature = "urpd")]
         let states_path = plugins.distribution().states_path.clone();
         let query = AsyncQuery::build(&plugins, None);
@@ -1375,8 +1375,11 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
             let directory = tempfile::tempdir().unwrap();
             let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
             let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
-            let plugins =
-                DefaultPlugins::import(ImportContext::new(directory.path()), &reader).unwrap();
+            let plugins = DefaultPlugins::import(
+                ImportContext::new(directory.path(), &CACHE_BUDGET),
+                &reader,
+            )
+            .unwrap();
             let query = AsyncQuery::build(&plugins, None);
             Builder::new_current_thread()
                 .enable_all()
@@ -1440,3 +1443,6 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
         .join()
         .unwrap();
 }
+
+#[cfg(feature = "chain")]
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);

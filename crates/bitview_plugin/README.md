@@ -11,7 +11,10 @@ empty for an in-memory plugin. Component versions remain local and additive
 when they describe a narrower stored or computed dependency.
 
 Plugin import constructors receive a copyable `ImportContext`, which provides
-the composition data root to `PluginStorage`. Computing plugins declare their
+the composition data root to `PluginStorage` and an explicitly supplied vecdb
+`CacheBudget` to source-owning vector constructors. Application composition
+chooses the budget limit and invalidates it before recomputing dependent data.
+Computing plugins declare their
 typed dependencies and output through `ComputePlugin`; its copyable
 `UpdateContext` provides shared update control such as cancellation. Plugin
 dependencies stay explicit and typed instead of being hidden in either

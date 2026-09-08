@@ -1,6 +1,6 @@
 [package]
 name = "bitview_compute"
-description = "Shared computation machinery for Bitview plugins"
+description = "Calculation algorithms for Bitview plugins"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,17 +11,14 @@ repository.workspace = true
 diagnostics = ["vecdb/diagnostics"]
 
 [dependencies]
+bitview_transforms = { workspace = true }
+bitview_collections = { workspace = true }
 brk_exit = { workspace = true }
-bitview_cohort = { workspace = true, features = ["storage"] }
+bitview_cohort = { workspace = true }
 brk_error = { workspace = true, features = ["vecdb"] }
-bitview_traversable = { workspace = true }
 brk_types = { workspace = true, features = ["storage"] }
-derive_more = { workspace = true }
-parking_lot = { workspace = true }
-rayon = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
 vecdb = { workspace = true }
 
 [dev-dependencies]

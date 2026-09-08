@@ -13,7 +13,7 @@ use brk_types::Version;
 use brk_types::{Sats, TxInIndex};
 use vecdb::{Database, PcoVec, Rw, StorageMode};
 
-use bitview_compute::LazyPerSecondWindows;
+use bitview_vecs::LazyPerSecondWindows;
 
 pub use by_type::Vecs as ByTypeVecs;
 pub use count::Vecs as CountVecs;

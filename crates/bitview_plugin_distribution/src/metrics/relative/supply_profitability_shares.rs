@@ -1,13 +1,12 @@
-use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyPercentPerBlock};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, Database, ReadOnlyClone, Rw, StorageMode};
-
-use bitview_compute::{ColumnarPerBlock, LazyPercentPerBlock, RatioSats};
+use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadOnlyClone, Rw, StorageMode};
 
 use super::{RelativeSource, share_views};
 
@@ -31,7 +30,12 @@ pub struct SupplyProfitabilityShares<M: StorageMode = Rw> {
 }
 
 impl SupplyProfitabilityShares {
-    pub fn forced_import(db: &Database, version: Version, mappings: &MappingsVecs) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+        mappings: &MappingsVecs,
+    ) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = ColumnarPerBlock::forced_import(
             db,
@@ -41,6 +45,7 @@ impl SupplyProfitabilityShares {
         )?;
         let source = profit_share_source.height.read_only_clone();
         let supply_in_profit_share = share_views(
+            cache,
             &source,
             "supply_in_profit_share",
             version,
@@ -48,6 +53,7 @@ impl SupplyProfitabilityShares {
             mappings,
         );
         let supply_in_loss_share = share_views(
+            cache,
             &source,
             "supply_in_loss_share",
             version,

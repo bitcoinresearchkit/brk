@@ -7,7 +7,7 @@ use brk_types::{CapitalSentimentPhase, StoredBool, StoredI8, StoredU8};
 use vecdb::{Database, Rw, StorageMode};
 
 use crate::STORAGE;
-use bitview_compute::{DailyMetric, LazyDailyMetric};
+use bitview_vecs::{DailyMetric, LazyDailyMetric};
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {

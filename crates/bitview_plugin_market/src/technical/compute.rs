@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_transforms::RatioDollars;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Dollars, PartsPerMillion32};
 use rayon::{
@@ -9,7 +9,6 @@ use rayon::{
 };
 
 use super::{super::moving_average, Vecs, macd, rsi_chain};
-use bitview_compute::RatioDollars;
 
 pub fn compute(
     vecs: &mut Vecs,

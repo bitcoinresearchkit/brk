@@ -1,8 +1,8 @@
-use bitview_compute::DailyMappings;
 use bitview_traversable::Traversable;
+use bitview_vecs::DailyMappings;
 use brk_error::Result;
-use brk_types::{CostBasisPercentilePrices, Version};
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
+use brk_types::{CostBasisByPercentile, Version};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use crate::{DailyPercentilesVecs, WeightedPair};
 
@@ -14,6 +14,7 @@ pub struct CostBasisVecs<M: StorageMode = Rw> {
 
 impl CostBasisVecs {
     fn import_weighting(
+        cache: &'static CacheBudget,
         db: &Database,
         weighting: &str,
         version: Version,
@@ -21,6 +22,7 @@ impl CostBasisVecs {
     ) -> Result<WeightedPair<DailyPercentilesVecs>> {
         WeightedPair::try_from_fn(|weight| {
             DailyPercentilesVecs::forced_import(
+                cache,
                 db,
                 &format!("bedrock_{}_cost_basis_{weighting}", weight.as_str()),
                 version,
@@ -30,17 +32,18 @@ impl CostBasisVecs {
     }
 
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &DailyMappings,
     ) -> Result<Self> {
         Ok(Self {
-            per_coin: Self::import_weighting(db, "per_coin", version, mappings)?,
-            per_dollar: Self::import_weighting(db, "per_dollar", version, mappings)?,
+            per_coin: Self::import_weighting(cache, db, "per_coin", version, mappings)?,
+            per_dollar: Self::import_weighting(cache, db, "per_dollar", version, mappings)?,
         })
     }
 
-    pub fn push(&mut self, prices: &WeightedPair<CostBasisPercentilePrices>) {
+    pub fn push(&mut self, prices: &WeightedPair<CostBasisByPercentile>) {
         self.per_coin.cointime.push(&prices.cointime.per_coin);
         self.per_coin.coinflow.push(&prices.coinflow.per_coin);
         self.per_dollar.cointime.push(&prices.cointime.per_dollar);

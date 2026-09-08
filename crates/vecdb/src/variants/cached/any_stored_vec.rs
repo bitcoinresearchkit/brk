@@ -2,9 +2,8 @@ use std::path::PathBuf;
 
 use rawdb::{Database, Region};
 
-use crate::{AnyStoredVec, Header, Stamp, StoredVec, WritableVec};
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::{AnyStoredVec, Header, Stamp, StoredVec, WritableVec};
 
 impl<V, S: CachedVecStrategy> AnyStoredVec for CachedVec<V, S>
 where

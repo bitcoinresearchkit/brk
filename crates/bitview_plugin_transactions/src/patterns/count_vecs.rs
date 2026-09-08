@@ -4,7 +4,7 @@ use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
 use super::PatternId;
-use bitview_compute::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
+use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
 
 /// Transaction counts by detected structural pattern.
 ///

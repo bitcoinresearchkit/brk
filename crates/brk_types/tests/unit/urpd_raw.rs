@@ -161,6 +161,6 @@ fn cost_basis_percentiles_match_distribution_nearest_rank() {
 fn empty_cost_basis_percentiles_match_distribution_default() {
     assert_eq!(
         UrpdRaw::default().cost_basis_percentile_prices(),
-        CostBasisPercentilePrices::default()
+        CostBasisByPercentile::default()
     );
 }

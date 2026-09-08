@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use rawdb::{Database, Region};
 
-use crate::{AnyVec, Header, Stamp};
+use crate::{AnyVec, Header, Stamp, Version};
 
 /// Trait for stored vectors that persist data to disk (as opposed to lazy computed vectors).
 pub trait AnyStoredVec: AnyVec {
@@ -92,4 +92,19 @@ pub trait AnyStoredVec: AnyVec {
 
     /// Resets the vector state, clearing all data.
     fn any_reset(&mut self) -> crate::Result<()>;
+
+    /// Includes this vector's version and clears data when dependencies change.
+    fn any_validate_computed_version_or_reset(
+        &mut self,
+        dependency_version: Version,
+    ) -> crate::Result<()> {
+        let version = self.header().vec_version() + dependency_version;
+        if version != self.header().computed_version() {
+            self.mut_header().update_computed_version(version);
+            if !self.is_empty() {
+                self.any_reset()?;
+            }
+        }
+        Ok(())
+    }
 }

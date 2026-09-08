@@ -1,25 +1,16 @@
-use bitview_compute::{
-    CentsUnsignedToDollars, Identity, LazyIndexedVec, LazyPerBlock, SatsToBitcoin, SatsToCents,
-};
 use bitview_plugin_mappings::Vecs as MappingVecs;
+
 use bitview_traversable::Traversable;
+use bitview_vecs::LazySpotValuePerBlock;
 use brk_error::Result;
-use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{BinaryTransform, ReadableCloneableVec};
+use brk_types::{Cents, Height, Sats, Version};
+use vecdb::ReadableCloneableVec;
 
 use crate::DCA_DOLLARS_PER_DAY;
 
-#[derive(Clone, Traversable)]
-pub struct DcaStack {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
-    /// Reported in satoshis.
-    pub sats: LazyPerBlock<Sats>,
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, Cents>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPerBlock<Cents>,
-}
+#[derive(Clone, derive_more::Deref, derive_more::DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct DcaStack(pub LazySpotValuePerBlock);
 
 impl DcaStack {
     const COST_BASIS_NUMERATOR: f64 = DCA_DOLLARS_PER_DAY * 100.0 * Sats::ONE_BTC_U64 as f64;
@@ -34,37 +25,9 @@ impl DcaStack {
     where
         V: ReadableCloneableVec<Height, Sats> + ?Sized,
     {
-        let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
-            &format!("{name}_sats"),
-            version,
-            source,
-            mappings,
-        );
-        let btc = LazyPerBlock::from_lazy::<SatsToBitcoin, Sats>(name, version, &sats);
-        let cents_source = LazyIndexedVec::new(
-            &format!("{name}_cents_source"),
-            version,
-            &sats.height,
-            spot_price,
-            |_, sats, spot| SatsToCents::apply(sats, spot),
-        );
-        let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
-            &format!("{name}_cents"),
-            version,
-            &cents_source,
-            mappings,
-        );
-        let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(
-            &format!("{name}_usd"),
-            version,
-            &cents,
-        );
-        Ok(Self {
-            btc,
-            sats,
-            usd,
-            cents,
-        })
+        Ok(Self(LazySpotValuePerBlock::from_sats_source(
+            name, version, source, mappings, spot_price,
+        )))
     }
 
     #[inline(always)]
@@ -86,6 +49,7 @@ impl DcaStack {
 mod tests {
     use super::*;
     use crate::DCA_AMOUNT;
+    use brk_types::Bitcoin;
 
     #[test]
     fn cost_basis_cents_matches_typed_formula() {

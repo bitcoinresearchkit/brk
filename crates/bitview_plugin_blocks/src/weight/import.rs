@@ -1,7 +1,7 @@
-use bitview_compute::{
-    CachedWindowStartVec, LazyPerBlockRolling, LazyPercentVec, VBytesToWeight, Windows,
-};
+use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_transforms::VBytesToWeight;
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlockRolling, LazyPercentVec};
 use brk_types::{Height, PartsPerMillion32, Version, Weight};
 
 use super::Vecs;

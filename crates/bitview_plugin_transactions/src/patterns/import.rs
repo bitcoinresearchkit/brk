@@ -1,17 +1,18 @@
-use brk_error::Result;
-
-use bitview_compute::{
+use bitview_collections::Windows;
+use bitview_vecs::{
     CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    Windows,
 };
+use brk_error::Result;
 use brk_types::{StoredBool, TxIndex, Version};
 use vecdb::{
-    ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableColumnarVec,
+    CacheBudget, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
+    ReadableColumnarVec,
 };
 
 use super::{CountVecs, Flags, PatternId, Vecs};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -26,6 +27,7 @@ pub fn forced_import(
     let counts = count_source.cumulative.read_only_clone();
     let count = CountVecs {
         coinjoin: LazyColumnPerBlockCumulativeRolling::new(
+            cache,
             "coinjoin_count",
             version,
             &counts,
@@ -34,6 +36,7 @@ pub fn forced_import(
             cached_starts,
         ),
         consolidation: LazyColumnPerBlockCumulativeRolling::new(
+            cache,
             "consolidation_count",
             version,
             &counts,
@@ -42,6 +45,7 @@ pub fn forced_import(
             cached_starts,
         ),
         batch_payout: LazyColumnPerBlockCumulativeRolling::new(
+            cache,
             "batch_payout_count",
             version,
             &counts,

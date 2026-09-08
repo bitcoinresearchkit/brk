@@ -1,11 +1,10 @@
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
-use brk_types::{Height, PoolSlug, StoredU64};
-use vecdb::{ReadableCloneableVec, Version};
-
-use bitview_compute::{
-    CachedWindowStartVec, Identity, LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight,
-    Windows,
+use bitview_vecs::{
+    CachedWindowStartVec, LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight,
 };
+use brk_types::{Height, PoolSlug, StoredU64};
+use vecdb::{Ident, ReadableCloneableVec, Version};
 
 use super::{PoolCumulativeVec, PoolHeights};
 
@@ -31,7 +30,7 @@ impl BlocksMined {
     ) -> Self {
         let cumulative_name = format!("{name}_cumulative");
         let cumulative_source = PoolCumulativeVec::new(&cumulative_name, slug, pool_heights);
-        let cumulative = LazyPerBlock::from_height_source::<Identity<StoredU64>>(
+        let cumulative = LazyPerBlock::from_height_source::<Ident>(
             &cumulative_name,
             version,
             &cumulative_source,
@@ -39,7 +38,7 @@ impl BlocksMined {
         );
         let block =
             LazyPreviousDeltaVec::new(name, version, cumulative.height.read_only_boxed_clone());
-        let sum = LazyRollingSumsFromHeight::from_compact_cumulative(
+        let sum = LazyRollingSumsFromHeight::new(
             &format!("{name}_sum"),
             version,
             &cumulative.height,

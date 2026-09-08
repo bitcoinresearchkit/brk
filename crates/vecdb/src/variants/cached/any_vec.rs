@@ -1,6 +1,5 @@
-use crate::{AnyVec, TypedVec, Version, short_type_name};
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::{AnyVec, TypedVec, Version, short_type_name};
 
 impl<V: TypedVec, S: CachedVecStrategy> AnyVec for CachedVec<V, S> {
     #[inline(always)]

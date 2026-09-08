@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::{Epoch, PartsPerMillionSigned32, StoredF32, StoredF64, StoredU32};
 
-use bitview_compute::{LazyPerBlock, LazyPercentPerBlock, Resolutions};
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Resolutions};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {

@@ -3,7 +3,6 @@ use brk_error::Result;
 use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregate};
 use bitview_compute::{
     AgeBand, MINIMUM_DURATION_DAYS, WeightedCohortContribution, WeightedCohortState, WeightedRatio,
-    db_utils::validate_any_computed_version_or_reset,
 };
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::Lengths;
@@ -51,6 +50,7 @@ impl ComputePlugin for Vecs {
                     .activity
                     .transfer_volume
                     .cohorts
+                    .utxo
                     .age
                     .range,
             )
@@ -59,7 +59,7 @@ impl ComputePlugin for Vecs {
             .height
         });
         let supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.age.range)
+            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age.range)
                 .sats
                 .height
         });
@@ -69,7 +69,7 @@ impl ComputePlugin for Vecs {
                 .height
         });
         let realized_caps = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.realized.cap.cohorts.age.range)
+            &id.select(&distribution.cohorts.realized.cap.cohorts.utxo.age.range)
                 .cents
                 .height
         });
@@ -286,7 +286,7 @@ impl Vecs {
         );
 
         for vec in self.primary_vecs_mut() {
-            validate_any_computed_version_or_reset(vec, source_version)?;
+            vec.any_validate_computed_version_or_reset(source_version)?;
         }
 
         let start = self

@@ -1,12 +1,10 @@
-use brk_error::Result;
-
-use bitview_cohort::AmountRange;
+use bitview_cohort::{AmountRange, UTXORows};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::CachedWindowStartVec;
+use brk_error::Result;
 use brk_types::{StoredU64, Version};
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
-
-use crate::metrics::UTXORows;
-use bitview_compute::{CachedWindowStartVec, Windows};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{SpentOutputCount, UnspentOutputCount};
 
@@ -20,14 +18,27 @@ pub struct OutputsVecs<M: StorageMode = Rw> {
 
 impl OutputsVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
-            unspent_count: UnspentOutputCount::forced_import(db, version, mappings, cached_starts)?,
-            spent_count: SpentOutputCount::forced_import(db, version, mappings, cached_starts)?,
+            unspent_count: UnspentOutputCount::forced_import(
+                cache,
+                db,
+                version,
+                mappings,
+                cached_starts,
+            )?,
+            spent_count: SpentOutputCount::forced_import(
+                cache,
+                db,
+                version,
+                mappings,
+                cached_starts,
+            )?,
         })
     }
 
@@ -46,13 +57,13 @@ impl OutputsVecs {
         self.unspent_count
             .matrices
             .min_len()
-            .min(self.unspent_count.addr_balance.len())
+            .min(self.unspent_count.cohorts.addr_balance.len())
             .min(self.spent_count.cumulative.min_len())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.unspent_count.matrices.collect_vecs_mut();
-        vecs.push(self.unspent_count.addr_balance.stored_mut());
+        vecs.push(self.unspent_count.cohorts.addr_balance.stored_mut());
         vecs.extend(self.spent_count.cumulative.collect_vecs_mut());
         vecs
     }

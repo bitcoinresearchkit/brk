@@ -1,12 +1,13 @@
-use brk_error::Result;
-
-use bitview_compute::{
+use bitview_collections::Windows;
+use bitview_vecs::{
     CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    PerTxDistribution, Windows,
+    PerTxDistribution,
 };
+use brk_error::Result;
 use brk_types::{StoredBool, TxIndex, Version};
 use vecdb::{
-    ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableColumnarVec,
+    CacheBudget, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
+    ReadableColumnarVec,
 };
 
 use super::{CountVecs, CpfpFlags, CpfpRoleId, Vecs};
@@ -15,6 +16,7 @@ use super::{CountVecs, CpfpFlags, CpfpRoleId, Vecs};
 const VERSION: Version = Version::new(5);
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -30,6 +32,7 @@ pub fn forced_import(
     let counts = count_source.cumulative.read_only_clone();
     let count = CountVecs {
         cpfp_parent: LazyColumnPerBlockCumulativeRolling::new(
+            cache,
             "cpfp_parent_count",
             version,
             &counts,
@@ -38,6 +41,7 @@ pub fn forced_import(
             cached_starts,
         ),
         cpfp_child: LazyColumnPerBlockCumulativeRolling::new(
+            cache,
             "cpfp_child_count",
             version,
             &counts,
@@ -60,9 +64,10 @@ pub fn forced_import(
         count,
         input_value: EagerVec::forced_import(db, "input_value", version)?,
         output_value: EagerVec::forced_import(db, "output_value", version)?,
-        fee: PerTxDistribution::forced_import(db, "fee", v, mappings)?,
+        fee: PerTxDistribution::forced_import(cache, db, "fee", v, mappings)?,
         fee_rate: EagerVec::forced_import(db, "fee_rate", v)?,
         effective_fee_rate: PerTxDistribution::forced_import(
+            cache,
             db,
             "effective_fee_rate",
             v,

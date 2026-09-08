@@ -1,6 +1,6 @@
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64};
 
-use bitview_compute::{
+use bitview_vecs::{
     LazyFiatPerBlockCumulativeRolling, LazyFiatPerBlockCumulativeWithSums,
     LazyFiatPerBlockCumulativeWithSumsAndDeltas, LazyFiatPerBlockWithDeltas,
 };

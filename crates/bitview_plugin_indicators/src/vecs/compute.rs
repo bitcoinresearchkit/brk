@@ -1,7 +1,6 @@
-use brk_error::Result;
-
-use bitview_compute::RatioDollars;
 use bitview_plugin::{ComputePlugin, UpdateContext};
+use bitview_transforms::RatioDollars;
+use brk_error::Result;
 use brk_types::{BasisPoints32, Dollars, PartsPerMillion64, StoredF32};
 use rayon::join;
 
@@ -36,9 +35,9 @@ impl ComputePlugin for Vecs {
             ..
         } = self;
         let subsidy = &mining.rewards.subsidy;
-        let realized_cap = &distribution.cohorts.realized.cap.cohorts.age.range;
+        let realized_cap = &distribution.cohorts.realized.cap.cohorts.utxo.age.range;
         let supply = &distribution.cohorts.supply;
-        let supply_total_sats = &supply.total.cohorts.all.sats.height;
+        let supply_total_sats = &supply.total.cohorts.utxo.all.sats.height;
 
         let compute_puell = || {
             puell_multiple
@@ -46,7 +45,7 @@ impl ComputePlugin for Vecs {
                 .compute_binary::<Dollars, Dollars, RatioDollars<BasisPoints32>>(
                     starting_height,
                     &subsidy.block.usd,
-                    &subsidy.average._1y.usd.height,
+                    &subsidy.rolling.average._1y.usd.height,
                     exit,
                 )
         };

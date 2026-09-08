@@ -1,6 +1,5 @@
-use crate::{ReadOnlyClone, StoredVec};
-
 use super::{CachedVec, CachedVecStrategy};
+use crate::{ReadOnlyClone, StoredVec};
 
 impl<V: StoredVec, S: CachedVecStrategy> ReadOnlyClone for CachedVec<V, S> {
     type ReadOnly = CachedVec<V::ReadOnly, S>;

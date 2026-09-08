@@ -1,28 +1,27 @@
+use bitview_cohort::{
+    AgeRangeId, AmountRange, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroups, UTXORows,
+};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use brk_error::Result;
-
-use bitview_cohort::{AgeRangeId, AmountRange, CohortContext, Filter, UTXOGroups};
+use bitview_transforms::SatsToCents;
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock};
+use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, Budgeted, CachedBoxedVec, CachedColumnarVec, CachedReadableVec,
-    Database, PcoVec, PinnedCachedVec, ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec, Rw,
-    StorageMode,
+    AnyStoredVec, BinaryTransform, Budgeted, CacheBudget, CachedBoxedVec, CachedColumnarVec,
+    CachedReadableVec, Database, Ident, PcoVec, PinnedCachedVec, ReadOnlyClone,
+    ReadOnlyColumnarVec, ReadableColumnarVec, Rw, StorageMode,
 };
 
-use crate::metrics::{ColumnarAmount, UTXOColumnarMetric, UTXORows};
-use bitview_compute::{
-    CACHE_BUDGET, Identity, LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock, SatsToCents,
-};
+use crate::metrics::{ColumnarAmount, UTXOColumnarMetric};
 
 #[derive(Traversable)]
 pub struct SupplyTotal<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub cohorts: UTXOGroups<LazySpotValuePerBlock>,
+    pub cohorts:
+        UTXOAndAddrGroups<LazySpotValuePerBlock, ColumnarAmount<Sats, LazySpotValuePerBlock, M>>,
     #[traversable(flatten)]
     pub matrices: UTXOColumnarMetric<Sats, M>,
-    /// Groups funded addresses by their balance at the represented block.
-    pub addr_balance: ColumnarAmount<Sats, LazySpotValuePerBlock, M>,
     #[traversable(skip)]
     all_supply: CachedBoxedVec<Height, Sats>,
     #[traversable(skip)]
@@ -38,6 +37,7 @@ pub struct SupplyTotal<M: StorageMode = Rw> {
 
 impl SupplyTotal {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
@@ -47,7 +47,7 @@ impl SupplyTotal {
         let age_ranges = CachedColumnarVec::new(
             matrices.age_range_matrix.read_only_clone(),
             version,
-            |column| CACHE_BUDGET.wrap(column),
+            |column| cache.wrap(column),
         );
         let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
         // These two frequently reused roots are pinned. The public series and
@@ -58,7 +58,7 @@ impl SupplyTotal {
             AgeRangeId::ALL.iter().copied(),
         ));
         let all_supply = all_sats.cached_boxed_clone();
-        let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
+        let sats = LazyPerBlock::from_height_source::<Ident>(
             &format!("{all_name}_sats"),
             version,
             &all_sats,
@@ -76,7 +76,7 @@ impl SupplyTotal {
             &all_name,
             version,
             sats,
-            LazyPerBlock::from_height_source::<Identity<Cents>>(
+            LazyPerBlock::from_height_source::<Ident>(
                 &format!("{all_name}_cents"),
                 version,
                 &all_cents,
@@ -107,7 +107,7 @@ impl SupplyTotal {
                     );
                 } else {
                     matrices
-                        .additive_source(&filter, &source_name, version)
+                        .additive_source(cache, &filter, &source_name, version)
                         .expect("total-supply cohort source")
                 };
                 LazySpotValuePerBlock::from_sats_source(
@@ -116,6 +116,7 @@ impl SupplyTotal {
             }
         });
         let addr_balance = ColumnarAmount::forced_import(
+            cache,
             db,
             "addrs_supply_sats_by_balance_range",
             CohortContext::Addr,
@@ -133,9 +134,11 @@ impl SupplyTotal {
         )?;
 
         Ok(Self {
-            cohorts,
+            cohorts: UTXOAndAddrGroups {
+                utxo: cohorts,
+                addr_balance,
+            },
             matrices,
-            addr_balance,
             all_supply,
             all_market_cap,
             age_ranges,
@@ -143,11 +146,11 @@ impl SupplyTotal {
     }
 
     pub fn min_len(&self) -> usize {
-        self.matrices.min_len().min(self.addr_balance.len())
+        self.matrices.min_len().min(self.cohorts.addr_balance.len())
     }
 
     pub fn get(&self, filter: &Filter) -> Option<&LazySpotValuePerBlock> {
-        self.cohorts.get(filter)
+        self.cohorts.utxo.get(filter)
     }
 
     pub fn all_supply(&self) -> &CachedBoxedVec<Height, Sats> {
@@ -165,12 +168,12 @@ impl SupplyTotal {
 
     #[inline(always)]
     pub fn push_addr_balance(&mut self, row: AmountRange<Sats>) {
-        self.addr_balance.push(row);
+        self.cohorts.addr_balance.push(row);
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.matrices.collect_vecs_mut();
-        vecs.push(self.addr_balance.stored_mut());
+        vecs.push(self.cohorts.addr_balance.stored_mut());
         vecs
     }
 }

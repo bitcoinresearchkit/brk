@@ -1,0 +1,45 @@
+use bitview_compute::FixedRatio;
+use bitview_traversable::Traversable;
+use brk_types::{Height, StoredF32, Version};
+use vecdb::{CacheBudget, ColumnId, PcoVec, ReadOnlyColumnarVec};
+
+use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock};
+
+#[derive(Clone, Traversable)]
+pub struct LazyColumnRatioPerBlock<R, C>
+where
+    R: FixedRatio,
+    C: ColumnId,
+{
+    /// Unitless ratio in parts per million; 1,000,000 represents 1.0.
+    pub ppm: LazyColumnPerBlock<R, C>,
+    /// Unitless decimal ratio derived as parts per million divided by 1,000,000.
+    pub ratio: LazyPerBlock<StoredF32, R>,
+}
+
+impl<R, C> LazyColumnRatioPerBlock<R, C>
+where
+    R: FixedRatio,
+    C: ColumnId,
+{
+    pub fn new(
+        cache: &'static CacheBudget,
+        name: &str,
+        version: Version,
+        source: &ReadOnlyColumnarVec<PcoVec<Height, R>, C>,
+        column: C,
+        indexes: &IndexSources,
+    ) -> Self {
+        let ppm = LazyColumnPerBlock::new(
+            cache,
+            &format!("{name}_{}", R::SUFFIX),
+            version,
+            source,
+            column,
+            indexes,
+        );
+        let ratio = LazyPerBlock::from_resolutions::<R::ToRatio>(name, version, &ppm.resolutions);
+
+        Self { ppm, ratio }
+    }
+}

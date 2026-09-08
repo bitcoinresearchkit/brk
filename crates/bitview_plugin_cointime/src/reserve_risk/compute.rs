@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_types::StoredF64;
 
 use super::{super::value, Vecs};
-use bitview_compute::algo::ComputeRollingMedianFromStarts;
+use bitview_compute::ComputeRollingMedianFromStarts;
 
 pub fn compute(
     vecs: &mut Vecs,

@@ -1,4 +1,4 @@
-use bitview_compute::LazySpotValuePerBlock;
+use bitview_vecs::LazySpotValuePerBlock;
 
 #[derive(Clone)]
 pub struct SupplySources {

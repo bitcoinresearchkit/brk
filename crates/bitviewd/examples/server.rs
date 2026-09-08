@@ -23,7 +23,7 @@ pub fn main() -> Result<()> {
     )?;
 
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
-    let context = ImportContext::new(&outputs_dir);
+    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
     let plugins = DefaultPlugins::import(context, &reader)?;
 
     let mempool = Mempool::new(&client);
@@ -72,3 +72,5 @@ pub fn main() -> Result<()> {
         Ok(()) as Result<()>
     })
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

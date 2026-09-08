@@ -1,7 +1,7 @@
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{CachedBoxedVec, ReadableCloneableVec, VecValue};
 
-use bitview_compute::LazyIndexedVec;
+use bitview_vecs::LazyIndexedVec;
 
 /// Shared handles to the pinned all-chain inputs.
 ///
@@ -58,7 +58,7 @@ impl AllChainSources {
 mod tests {
     use vecdb::{
         AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadOnlyClone, WritableVec,
+        ReadOnlyClone, ReadableVec, WritableVec,
     };
 
     use super::*;

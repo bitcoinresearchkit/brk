@@ -7,10 +7,6 @@ use std::{
 };
 
 use bitview_query::AsyncQuery;
-pub use bitview_query::QueryPluginSet;
-pub use bitview_runtime::{
-    BootstrapAction, ComputePluginSet, ImportContext, PluginSet, UpdateContext, bootstrap, update,
-};
 use bitview_server::{Server, ServerConfig};
 use brk_error::{Error, Result};
 use brk_exit::Exit;
@@ -23,6 +19,11 @@ use tokio::{
 };
 use tracing::info;
 use vecdb::ReadOnlyClone;
+
+pub use bitview_query::QueryPluginSet;
+pub use bitview_runtime::{
+    BootstrapAction, ComputePluginSet, ImportContext, PluginSet, UpdateContext, bootstrap, update,
+};
 
 /// The Bitview project website.
 pub const HOMEPAGE: &str = "https://bitview.dev";
@@ -61,7 +62,8 @@ where
     } = config;
     let reader = Reader::new(blocks_path, &client);
     let outputs_path = server.data_path.clone();
-    let import_context = ImportContext::new(&outputs_path);
+    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+    let import_context = ImportContext::new(&outputs_path, &CACHE_BUDGET);
     let update_context = UpdateContext::new(&exit);
 
     client.wait_for_synced_node()?;

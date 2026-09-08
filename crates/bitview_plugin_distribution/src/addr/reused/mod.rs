@@ -20,21 +20,21 @@ mod events;
 
 pub use events::{AddrEventsVecs, AddrTypeToAddrEventCount};
 
-use brk_error::Result;
-
 use bitview_cohort::ByAddrType;
+use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
 use bitview_traversable::Traversable;
+use bitview_vecs::CachedWindowStartVec;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
 
 use super::{
     count::AddrCountFundedTotalVecs,
     supply::{AddrSupplyShareVecs, AddrSupplyVecs},
 };
-use bitview_compute::{CachedWindowStartVec, Windows};
 
 mod state;
 mod type_state;
@@ -61,6 +61,7 @@ pub struct ReusedAddrVecs<M: StorageMode = Rw> {
 impl ReusedAddrVecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -71,8 +72,9 @@ impl ReusedAddrVecs {
         inputs_by_type: &bitview_plugin_inputs::ByTypeVecs,
         all_supply: &CachedBoxedVec<Height, Sats>,
     ) -> Result<Self> {
-        let count = AddrCountFundedTotalVecs::forced_import(db, name, version, mappings)?;
+        let count = AddrCountFundedTotalVecs::forced_import(cache, db, name, version, mappings)?;
         let events = AddrEventsVecs::forced_import(
+            cache,
             db,
             name,
             version,
@@ -81,9 +83,10 @@ impl ReusedAddrVecs {
             outputs_by_type,
             inputs_by_type,
         )?;
-        let supply = AddrSupplyVecs::forced_import(db, name, version, mappings, spot_price)?;
-        let supply_share =
-            AddrSupplyShareVecs::forced_import(db, name, version, mappings, &supply, all_supply)?;
+        let supply = AddrSupplyVecs::forced_import(cache, db, name, version, mappings, spot_price)?;
+        let supply_share = AddrSupplyShareVecs::forced_import(
+            cache, db, name, version, mappings, &supply, all_supply,
+        )?;
 
         Ok(Self {
             count,

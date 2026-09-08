@@ -1,26 +1,17 @@
-use bitview_compute::{
-    CentsUnsignedToDollars, Identity, LazyPerBlock, LazyWindowVec, SatsToBitcoin, SatsToCents,
-};
 use bitview_plugin_mappings::Vecs as MappingVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
+use bitview_transforms::SatsToCents;
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyPerBlock, LazySpotValuePerBlock, LazyWindowVec};
 use brk_error::Result;
-use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{BinaryTransform, ReadableCloneableVec};
+use brk_types::{Cents, Dollars, Height, Sats, Version};
+use vecdb::{BinaryTransform, Ident, ReadableCloneableVec};
 
 use crate::DCA_AMOUNT;
 
-#[derive(Clone, Traversable)]
-pub struct LumpSumStack {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
-    /// Reported in satoshis.
-    pub sats: LazyPerBlock<Sats>,
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, Cents>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPerBlock<Cents>,
-}
+#[derive(Clone, derive_more::Deref, derive_more::DerefMut, Traversable)]
+#[traversable(transparent)]
+pub struct LumpSumStack(pub LazySpotValuePerBlock);
 
 impl LumpSumStack {
     pub fn from_window(
@@ -41,13 +32,12 @@ impl LumpSumStack {
             false,
             move |_, past, _| Self::sats_at_price(total_invested, past),
         );
-        let sats = LazyPerBlock::from_height_source::<Identity<Sats>>(
+        let sats = LazyPerBlock::from_height_source::<Ident>(
             &format!("{name}_sats"),
             version,
             &sats_source,
             mappings,
         );
-        let btc = LazyPerBlock::from_lazy::<SatsToBitcoin, Sats>(name, version, &sats);
 
         let cents_source = LazyWindowVec::<Height, Cents, Cents>::new(
             &format!("{name}_cents_source"),
@@ -59,24 +49,15 @@ impl LumpSumStack {
                 SatsToCents::apply(Self::sats_at_price(total_invested, past), current)
             },
         );
-        let cents = LazyPerBlock::from_height_source::<Identity<Cents>>(
+        let cents = LazyPerBlock::from_height_source::<Ident>(
             &format!("{name}_cents"),
             version,
             &cents_source,
             mappings,
         );
-        let usd = LazyPerBlock::from_lazy::<CentsUnsignedToDollars, Cents>(
-            &format!("{name}_usd"),
-            version,
-            &cents,
-        );
-
-        Ok(Self {
-            btc,
-            sats,
-            usd,
-            cents,
-        })
+        Ok(Self(LazySpotValuePerBlock::from_sats_and_cents(
+            name, version, sats, cents,
+        )))
     }
 
     #[inline(always)]

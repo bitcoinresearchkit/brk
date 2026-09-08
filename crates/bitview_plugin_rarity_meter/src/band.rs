@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::{Cents, PartsPerMillion32, RarityPercentileId};
 
-use bitview_compute::{LazyColumnRatioPerBlock, LazyPerBlock, Price};
+use bitview_vecs::{LazyColumnRatioPerBlock, LazyPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct Band {

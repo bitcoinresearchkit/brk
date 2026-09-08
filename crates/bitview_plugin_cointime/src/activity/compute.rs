@@ -13,7 +13,15 @@ pub fn compute(
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;
-    let circulating_supply = &distribution.cohorts.supply.total.cohorts.all.sats.height;
+    let circulating_supply = &distribution
+        .cohorts
+        .supply
+        .total
+        .cohorts
+        .utxo
+        .all
+        .sats
+        .height;
 
     vecs.coinblocks_created.compute_cumulative_transformed(
         starting_height,

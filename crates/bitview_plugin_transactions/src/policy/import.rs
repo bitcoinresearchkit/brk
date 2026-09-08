@@ -1,12 +1,13 @@
+use bitview_collections::Windows;
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
-
-use bitview_compute::{CachedWindowStartVec, PerBlockCumulativeRolling, Windows};
 use brk_types::Version;
-use vecdb::{Database, EagerVec, ImportableVec};
+use vecdb::{CacheBudget, Database, EagerVec, ImportableVec};
 
 use super::{CountVecs, Vecs};
 
 pub fn forced_import(
+    cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &bitview_plugin_mappings::Vecs,
@@ -15,6 +16,7 @@ pub fn forced_import(
     Ok(Vecs {
         count: CountVecs {
             nonstandard: PerBlockCumulativeRolling::forced_import(
+                cache,
                 db,
                 "nonstandard_count",
                 version,

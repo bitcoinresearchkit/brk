@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use brk_types::Cents;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::{PerBlock, Price};
+use bitview_vecs::{PerBlock, Price};
 
 #[derive(Traversable)]
 pub struct PriceMinMaxVecs<M: StorageMode = Rw> {

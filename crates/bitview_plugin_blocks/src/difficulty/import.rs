@@ -1,13 +1,11 @@
-use bitview_compute::{
-    BlocksToDaysF32, CACHE_BUDGET, DifficultyToHashF64, Identity, LazyPerBlock,
-    LazyPercentPerBlock, Resolutions,
-};
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_transforms::{BlocksToDaysF32, DifficultyToHashF64};
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Resolutions};
 use brk_types::{
     BLOCKS_PER_DIFF_EPOCHS, Epoch, Height, PartsPerMillionSigned32, StoredF64, StoredU32, Version,
 };
-use vecdb::{IndexVec, ReadOnlyClone};
+use vecdb::{CacheBudget, Ident, IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
@@ -28,11 +26,15 @@ fn difficulty_adjustment(
 }
 
 impl Vecs {
-    pub fn new(version: Version, indexer: &Indexer, mappings: &MappingsVecs) -> Self {
+    pub fn new(
+        cache: &'static CacheBudget,
+        version: Version,
+        indexer: &Indexer,
+        mappings: &MappingsVecs,
+    ) -> Self {
         let v2 = Version::TWO;
 
-        let difficulty_source =
-            CACHE_BUDGET.wrap(indexer.vecs().blocks.difficulty.read_only_clone());
+        let difficulty_source = cache.wrap(indexer.vecs().blocks.difficulty.read_only_clone());
         let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
             "difficulty_hashrate",
             version,
@@ -46,7 +48,7 @@ impl Vecs {
             mappings.height.epoch.read_only_clone(),
             Epoch::from,
         );
-        let epoch = LazyPerBlock::from_height_source::<Identity<Epoch>>(
+        let epoch = LazyPerBlock::from_height_source::<Ident>(
             "difficulty_epoch",
             version,
             &epoch_source,
@@ -58,7 +60,7 @@ impl Vecs {
             mappings.height.epoch.read_only_clone(),
             blocks_left_to_retarget,
         );
-        let blocks_to_retarget = LazyPerBlock::from_height_source::<Identity<StoredU32>>(
+        let blocks_to_retarget = LazyPerBlock::from_height_source::<Ident>(
             "blocks_to_retarget",
             version + v2,
             &blocks_to_retarget_source,
@@ -95,7 +97,7 @@ mod tests {
     use vecdb::UnaryTransform;
 
     use super::{blocks_left_to_retarget, difficulty_adjustment};
-    use bitview_compute::{BlocksToDaysF32, DifficultyToHashF64};
+    use bitview_transforms::{BlocksToDaysF32, DifficultyToHashF64};
 
     #[test]
     fn formulas_match_public_difficulty_series_contracts() {

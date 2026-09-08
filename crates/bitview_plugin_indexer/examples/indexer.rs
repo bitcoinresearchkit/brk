@@ -33,7 +33,7 @@ fn main() -> color_eyre::Result<()> {
     let reader = Reader::new(bitcoin_dir.join("blocks"), &client);
     debug!("Reader created.");
 
-    let context = ImportContext::new(&outputs_dir);
+    let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
     let mut indexer = Indexer::import(context, &reader)?;
     debug!("Indexer imported.");
 
@@ -51,3 +51,5 @@ fn main() -> color_eyre::Result<()> {
         sleep(Duration::from_secs(60));
     }
 }
+
+static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);

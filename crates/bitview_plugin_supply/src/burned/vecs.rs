@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use vecdb::{Rw, StorageMode};
 
-use bitview_compute::ValuePerBlockCumulative;
+use bitview_vecs::ValuePerBlockCumulative;
 
 #[derive(Traversable)]
 #[traversable(transparent)]

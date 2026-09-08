@@ -1,17 +1,17 @@
-use brk_error::Result;
-
 use bitview_cohort::{
     CohortContext, Filter, TERM_NAMES, Term, UTXO_ALL_NAME, UTXOAllAndSth, UTXOAllAndSthId,
 };
+use bitview_collections::Windows;
+use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
+use bitview_vecs::{
+    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, ColumnarRollingWindows,
+    LazyColumnPerBlockCumulativeRolling,
+};
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, Database, ReadableVec, Rw, StorageMode};
-
-use bitview_compute::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, ColumnarRollingWindows,
-    LazyColumnPerBlockCumulativeRolling, SoprRatio, Windows,
-};
+use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadableVec, Rw, StorageMode};
 
 use super::AdjustedSoprComputeSource;
 
@@ -45,6 +45,7 @@ pub struct AdjustedSoprVecs<M: StorageMode = Rw> {
 
 impl AdjustedSoprVecs {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
         mappings: &bitview_plugin_mappings::Vecs,
@@ -53,6 +54,7 @@ impl AdjustedSoprVecs {
         let source_version = version + SOURCE_VERSION;
         let ratio_version = source_version + RATIO_VERSION;
         let transfer_volume = Self::import_cumulative(
+            cache,
             db,
             "adjusted_sopr_transfer_volume_cumulative_by_cohort",
             "adj_value_created",
@@ -61,6 +63,7 @@ impl AdjustedSoprVecs {
             cached_starts,
         )?;
         let value_destroyed = Self::import_cumulative(
+            cache,
             db,
             "adjusted_sopr_value_destroyed_cumulative_by_cohort",
             "adj_value_destroyed",
@@ -70,12 +73,14 @@ impl AdjustedSoprVecs {
         )?;
         let ratio = UTXOAllAndSth {
             all: ColumnarRollingWindows::forced_import(
+                cache,
                 db,
                 "asopr",
                 Self::cohort_version(ratio_version, UTXOAllAndSthId::All),
                 mappings,
             )?,
             sth: ColumnarRollingWindows::forced_import(
+                cache,
                 db,
                 &Self::cohort_metric_name(UTXOAllAndSthId::Sth, "asopr"),
                 Self::cohort_version(ratio_version, UTXOAllAndSthId::Sth),
@@ -91,6 +96,7 @@ impl AdjustedSoprVecs {
     }
 
     fn import_cumulative(
+        cache: &'static CacheBudget,
         db: &Database,
         matrix_name: &str,
         metric: &str,
@@ -110,6 +116,7 @@ impl AdjustedSoprVecs {
             version + Version::ONE,
             |source| UTXOAllAndSth {
                 all: LazyColumnPerBlockCumulativeRolling::new(
+                    cache,
                     metric,
                     Self::cohort_version(version, UTXOAllAndSthId::All),
                     source,
@@ -118,6 +125,7 @@ impl AdjustedSoprVecs {
                     cached_starts,
                 ),
                 sth: LazyColumnPerBlockCumulativeRolling::new(
+                    cache,
                     &Self::cohort_metric_name(UTXOAllAndSthId::Sth, metric),
                     Self::cohort_version(version, UTXOAllAndSthId::Sth),
                     source,

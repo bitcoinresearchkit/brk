@@ -1,0 +1,282 @@
+//! PerBlockCumulativeRolling - stored cumulative + lazy block and rolling views.
+//!
+//! The cumulative vector is the sole stored source of truth. Per-block values
+//! and rolling sums/averages are all derived lazily from it.
+
+use crate::RollingTotals;
+use bitview_collections::Windows;
+use bitview_compute::NumericValue;
+use bitview_traversable::Traversable;
+use brk_error::Result;
+use brk_exit::Exit;
+use brk_types::{Height, Version};
+use derive_more::{Deref, DerefMut};
+use schemars::JsonSchema;
+use vecdb::{
+    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableCloneableVec,
+    ReadableVec, Rw, StorageMode, VecIndex, VecValue, WritableVec,
+};
+
+use crate::{IndexSources, LazyPreviousDeltaVec, PerBlock};
+
+#[derive(Deref, DerefMut, Traversable)]
+pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachedVecStrategy = Budgeted>
+where
+    T: NumericValue + JsonSchema,
+{
+    pub block: LazyPreviousDeltaVec<Height, T>,
+    /// Cumulative value through the represented block. At time-period indexes,
+    /// the value is taken at the period's final block.
+    pub cumulative: PerBlock<T, M, P>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub rolling: RollingTotals<T>,
+    last_cumulative: M::WriteOnly<Option<(usize, T)>>,
+}
+
+impl<T, P: CachedVecStrategy> PerBlockCumulativeRolling<T, Rw, P>
+where
+    T: NumericValue + JsonSchema,
+{
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+        indexes: &IndexSources,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+    ) -> Result<Self> {
+        let cumulative =
+            PerBlock::forced_import(cache, db, &format!("{name}_cumulative"), version, indexes)?;
+        let source = cumulative.resolutions.height_source();
+        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let rolling = RollingTotals::new(name, version, source, window_starts, indexes);
+        let last_cumulative = cumulative
+            .height
+            .collect_last()
+            .map(|value| (cumulative.height.len(), value));
+
+        Ok(Self {
+            block,
+            cumulative,
+            rolling,
+            last_cumulative,
+        })
+    }
+
+    pub fn cumulative_source(
+        &self,
+    ) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T, P>) {
+        self.cumulative.resolutions.height_source()
+    }
+
+    #[inline(always)]
+    pub fn push_block(&mut self, value: T)
+    where
+        T: Copy,
+    {
+        let len = self.cumulative.height.len();
+        let mut cumulative = match self.last_cumulative {
+            Some((cached_len, value)) if cached_len == len => value,
+            _ => self.cumulative.height.collect_last().unwrap_or_default(),
+        };
+        cumulative += value;
+        self.cumulative.height.push(cumulative);
+        self.last_cumulative = Some((len + 1, cumulative));
+    }
+
+    pub fn compute_cumulative_transformed<S>(
+        &mut self,
+        max_from: Height,
+        source: &impl ReadableVec<Height, S>,
+        mut transform: impl FnMut(S) -> T,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        S: VecValue,
+        T: Copy,
+    {
+        let mut cumulative = None;
+        Ok(self.cumulative.height.compute_transform(
+            max_from,
+            source,
+            |(height, value, this)| {
+                let cumulative = cumulative.get_or_insert_with(|| {
+                    height
+                        .decremented()
+                        .and_then(|height| this.collect_one(height))
+                        .unwrap_or_default()
+                });
+                *cumulative += transform(value);
+                (height, *cumulative)
+            },
+            exit,
+        )?)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn compute_cumulative_sum_from_indexes<A, B, S>(
+        &mut self,
+        max_from: Height,
+        first_indexes: &impl ReadableVec<Height, A>,
+        indexes_count: &impl ReadableVec<Height, B>,
+        source: &impl ReadableVec<A, S>,
+        mut transform: impl FnMut(S) -> T,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        A: VecIndex + VecValue,
+        B: VecValue,
+        S: VecValue,
+        usize: From<B>,
+        T: Copy,
+    {
+        let target = &mut self.cumulative.height;
+        target.validate_computed_version_or_reset(
+            first_indexes.version() + indexes_count.version() + source.version(),
+        )?;
+        target.truncate_if_needed(max_from)?;
+        target.repeat_until_complete(exit, |target| {
+            let skip = target.len();
+            let end = target
+                .batch_end(indexes_count.len())
+                .min(first_indexes.len());
+            if skip >= end {
+                return Ok(());
+            }
+
+            let source_start = first_indexes.collect_one_at(skip).unwrap().to_usize();
+            let counts = indexes_count
+                .collect_range_at(skip, end)
+                .into_iter()
+                .map(usize::from)
+                .collect::<Vec<_>>();
+            let source_end = source_start + counts.iter().sum::<usize>();
+            let mut cumulative = skip
+                .checked_sub(1)
+                .and_then(|index| target.collect_one_at(index))
+                .unwrap_or_default();
+            let mut group_index = 0;
+
+            while group_index < counts.len() && counts[group_index] == 0 {
+                target.push(cumulative);
+                group_index += 1;
+            }
+
+            if group_index < counts.len() {
+                let mut remaining = counts[group_index];
+                source.fold_range_at(source_start, source_end, T::default(), |sum, value| {
+                    let sum = sum + transform(value);
+                    remaining -= 1;
+                    if remaining == 0 {
+                        cumulative += sum;
+                        target.push(cumulative);
+                        group_index += 1;
+                        while group_index < counts.len() && counts[group_index] == 0 {
+                            target.push(cumulative);
+                            group_index += 1;
+                        }
+                        if group_index < counts.len() {
+                            remaining = counts[group_index];
+                        }
+                        T::default()
+                    } else {
+                        sum
+                    }
+                });
+            }
+
+            Ok(())
+        })?;
+
+        self.last_cumulative = None;
+        Ok(())
+    }
+
+    pub fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
+        self.cumulative
+            .height
+            .validate_computed_version_or_reset(version)?;
+        Ok(())
+    }
+
+    pub fn validate_and_truncate(&mut self, version: Version, height: Height) -> Result<()> {
+        Ok(self
+            .cumulative
+            .height
+            .validate_and_truncate(version, height)?)
+    }
+
+    pub fn truncate_if_needed_at(&mut self, len: usize) -> Result<()> {
+        Ok(self.cumulative.height.truncate_if_needed_at(len)?)
+    }
+
+    pub fn write(&mut self) -> Result<()> {
+        self.cumulative.height.write()?;
+        Ok(())
+    }
+
+    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
+        &mut self.cumulative.height
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use brk_types::{Height, StoredU32, StoredU64, Version};
+    use vecdb::{
+        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
+        WritableVec,
+    };
+
+    use crate::LazyPreviousDeltaVec;
+    use bitview_transforms::StoredU64ToStoredU32;
+
+    #[test]
+    fn lazy_block_is_the_delta_of_cumulative() {
+        let directory = tempfile::tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let mut cumulative: EagerVec<PcoVec<Height, StoredU64>> =
+            EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();
+
+        for value in [1_u64, 3, 6] {
+            cumulative.push(StoredU64::from(value));
+        }
+        cumulative.write().unwrap();
+
+        let block = LazyPreviousDeltaVec::<Height, StoredU64>::new(
+            "block",
+            Version::ONE,
+            cumulative.read_only_boxed_clone(),
+        );
+
+        assert_eq!(
+            block.collect_range_at(0, 3),
+            [1_u64, 2, 3].map(StoredU64::from)
+        );
+        assert_eq!(
+            block.collect_range_at(1, 3),
+            [2_u64, 3].map(StoredU64::from)
+        );
+        assert_eq!(
+            block.read_sorted_at(&[0, 2, 2, 3]),
+            [1_u64, 3, 3].map(StoredU64::from)
+        );
+
+        let transformed =
+            LazyPreviousDeltaVec::<Height, StoredU64, StoredU32, StoredU64ToStoredU32>::transformed(
+                "transformed",
+                Version::ONE,
+                cumulative.read_only_boxed_clone(),
+            );
+        assert_eq!(
+            transformed.collect_range_at(0, 3),
+            [1_u32, 2, 3].map(StoredU32::from)
+        );
+        assert_eq!(
+            transformed.collect_range_at(1, 3),
+            [2_u32, 3].map(StoredU32::from)
+        );
+    }
+}

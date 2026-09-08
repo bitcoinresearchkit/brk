@@ -1,25 +1,28 @@
-use brk_error::Result;
-
-use bitview_cohort::{AmountRange, CohortContext, UTXOGroups};
+use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups, UTXORows};
+use bitview_collections::Windows;
 use bitview_traversable::Traversable;
+use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling};
+use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
-use vecdb::{AnyStoredVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmountValue, CumulativeUTXOValueColumnarMetric, UTXORows};
-use bitview_compute::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling, Windows};
+use crate::metrics::{ColumnarAmountValue, CumulativeUTXOValueColumnarMetric};
 
 #[derive(Traversable)]
 pub struct CumulativeValueByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
-    pub cohorts: UTXOGroups<LazyValuePerBlockCumulativeRolling>,
+    /// UTXO groups and spent output value grouped by the spending address's
+    /// balance immediately before the spend.
+    pub cohorts: UTXOAndAddrGroups<
+        LazyValuePerBlockCumulativeRolling,
+        ColumnarAmountValue<LazyValuePerBlockCumulativeRolling, M>,
+    >,
     pub cumulative: CumulativeUTXOValueColumnarMetric<M>,
-    /// Groups spent output value by the spending address's balance immediately
-    /// before the spend.
-    pub addr_balance: ColumnarAmountValue<LazyValuePerBlockCumulativeRolling, M>,
 }
 
 impl CumulativeValueByCohort {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         metric: &str,
         version: Version,
@@ -34,7 +37,7 @@ impl CumulativeValueByCohort {
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let (sats, cents) = cumulative
-                .sources(&filter, &name, version)
+                .sources(cache, &filter, &name, version)
                 .expect("supported cumulative value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,
@@ -47,6 +50,7 @@ impl CumulativeValueByCohort {
         });
         let addr_version = version + Version::ONE;
         let addr_balance = ColumnarAmountValue::forced_import(
+            cache,
             db,
             &format!("addrs_{metric}_cumulative_by_balance_range"),
             CohortContext::Addr,
@@ -64,9 +68,11 @@ impl CumulativeValueByCohort {
             },
         )?;
         Ok(Self {
-            cohorts,
+            cohorts: UTXOAndAddrGroups {
+                utxo: cohorts,
+                addr_balance,
+            },
             cumulative,
-            addr_balance,
         })
     }
 
@@ -77,16 +83,18 @@ impl CumulativeValueByCohort {
 
     #[inline(always)]
     pub fn push_addr_balance(&mut self, sats: &AmountRange<Sats>, cents: &AmountRange<Cents>) {
-        self.addr_balance.push_cumulative(sats, cents);
+        self.cohorts.addr_balance.push_cumulative(sats, cents);
     }
 
     pub fn min_len(&self) -> usize {
-        self.cumulative.min_len().min(self.addr_balance.len())
+        self.cumulative
+            .min_len()
+            .min(self.cohorts.addr_balance.len())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.cumulative.collect_vecs_mut();
-        vecs.extend(self.addr_balance.collect_vecs_mut());
+        vecs.extend(self.cohorts.addr_balance.collect_vecs_mut());
         vecs
     }
 }
