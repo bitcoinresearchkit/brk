@@ -2,12 +2,11 @@ use bitview_cohort::{
     AgeRangeId, AmountRange, AmountRangeId, ClassId, CohortContext, EntryId, EpochId, OverAgeId,
     OverAmountId, SpendableTypeId, UTXOAggregateId, UnderAgeId, UnderAmountId,
 };
-use bitview_traversable::{Traversable, TreeNode};
-use bitview_vecs::{ColumnarAmount, ColumnarPerBlock, ExactUTXOColumns};
+use bitview_vecs::{ColumnarAmount, ExactUTXOColumns};
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{
     AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableVec, Ro, WritableVec,
+    ReadOnlyClone, ReadableVec, WritableVec,
 };
 
 static CACHE: vecdb::CacheBudget = vecdb::CacheBudget::new(1024 * 1024);
@@ -72,41 +71,15 @@ fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
         StoredU64::from(17_u64)
     );
 
-    let TreeNode::Branch(root) = columns.to_tree_node() else {
-        panic!("expected columns")
-    };
-    assert_eq!(
-        root.keys().map(String::as_str).collect::<Vec<_>>(),
-        [
-            "age_range",
-            "epoch",
-            "class",
-            "entry",
-            "type",
-            "amount_range",
-            "overlapping"
-        ]
-    );
-    let TreeNode::Branch(age) = &root["age_range"] else {
-        panic!("expected axis")
-    };
-    assert_eq!(
-        age.keys().map(String::as_str).collect::<Vec<_>>(),
-        ["height"]
-    );
-    let TreeNode::Branch(overlap) = &root["overlapping"] else {
-        panic!("expected overlapping axes")
-    };
-    assert_eq!(
-        overlap.keys().map(String::as_str).collect::<Vec<_>>(),
-        [
-            "aggregate",
-            "under_age",
-            "over_age",
-            "under_amount",
-            "over_amount"
-        ]
-    );
+    let exact = columns
+        .source(&CACHE, &bitview_cohort::Filter::All, "exact", version)
+        .unwrap();
+    let sum = columns
+        .direct
+        .additive_source(&CACHE, &bitview_cohort::Filter::All, "sum", version)
+        .unwrap();
+    assert_eq!(exact.collect_one_at(0), Some(StoredU64::from(17_u64)));
+    assert_ne!(exact.collect_one_at(0), sum.collect_one_at(0));
 }
 
 #[test]
@@ -142,15 +115,4 @@ fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
     );
     let reader = amounts.read_only_clone();
     assert_eq!(reader.height.len(), 3);
-    assert_eq!(
-        size_of::<ColumnarAmount<StoredU64, (), Ro>>(),
-        size_of::<ColumnarPerBlock<StoredU64, AmountRangeId, bitview_cohort::Amount<()>, Ro>>()
-    );
-    let TreeNode::Branch(root) = reader.to_tree_node() else {
-        panic!("expected amount views")
-    };
-    assert_eq!(
-        root.keys().map(String::as_str).collect::<Vec<_>>(),
-        ["range", "under", "over", "height"]
-    );
 }

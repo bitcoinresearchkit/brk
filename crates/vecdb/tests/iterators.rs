@@ -24,290 +24,37 @@ fn setup_db() -> vecdb::Result<(Database, TempDir)> {
 mod clean_iter {
     use super::*;
 
-    fn run_basic<V>() -> vecdb::Result<()>
+    fn run_ranges<V>() -> vecdb::Result<()>
     where
         V: StoredVec<I = usize, T = i32>,
     {
         let (db, _temp) = setup_db()?;
         let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 100);
-        assert_eq!(collected[0], 0);
-        assert_eq!(collected[99], 99);
-        Ok(())
-    }
-
-    fn run_nth<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // Test point reads at specific indices
-        assert_eq!(vec.collect_first().unwrap(), 0);
-        assert_eq!(vec.collect_one(10).unwrap(), 10);
-        assert_eq!(vec.collect_one(11).unwrap(), 11);
-        Ok(())
-    }
-
-    fn run_skip<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(50, 100);
-        assert_eq!(collected.len(), 50);
-        assert_eq!(collected[0], 50);
-        Ok(())
-    }
-
-    fn run_take<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(0, 25);
-        assert_eq!(collected.len(), 25);
-        assert_eq!(collected[24], 24);
-        Ok(())
-    }
-
-    fn run_set_position<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(50, 52);
-        assert_eq!(collected[0], 50);
-        assert_eq!(collected[1], 51);
-        Ok(())
-    }
-
-    fn run_set_end<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(0, 50);
-        assert_eq!(collected.len(), 50);
-        Ok(())
-    }
-
-    fn run_last<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        assert_eq!(vec.collect_last().unwrap(), 99);
-        Ok(())
-    }
-
-    fn run_last_empty<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        assert_eq!(vec.len(), 0);
         assert!(vec.collect().is_empty());
-        Ok(())
-    }
+        assert_eq!(vec.collect_first(), None);
+        assert_eq!(vec.collect_last(), None);
 
-    fn run_exact_size<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
+        for i in 0..10_000 {
             vec.push(i);
         }
         vec.write()?;
-
-        assert_eq!(vec.len(), 100);
-        assert_eq!(vec.collect_range(0, 100).len(), 100);
-        assert_eq!(vec.collect_range(1, 100).len(), 99);
-        Ok(())
-    }
-
-    fn run_buffer_crossing<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..10000 {
-            vec.push(i);
+        let expected: Vec<i32> = (0..10_000).collect();
+        assert_eq!(vec.collect(), expected);
+        assert_eq!(vec.collect_first(), Some(0));
+        assert_eq!(vec.collect_last(), Some(9_999));
+        for i in [100, 500, 50] {
+            assert_eq!(vec.collect_one(i), Some(i as i32));
         }
-        vec.write()?;
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 10000);
-
-        for (i, &val) in collected.iter().enumerate() {
-            assert_eq!(val, i as i32);
-        }
-        Ok(())
-    }
-
-    fn run_multiple_skip_take<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..1000 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // skip(100).take(200).skip(50).take(100) => collect_range(150, 250)
-        let collected = vec.collect_range(150, 250);
-
-        assert_eq!(collected.len(), 100);
-        assert_eq!(collected[0], 150);
-        assert_eq!(collected[99], 249);
-        Ok(())
-    }
-
-    fn run_set_position_multiple<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..1000 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // Random access reads at various positions
-        assert_eq!(vec.collect_one(100).unwrap(), 100);
-        assert_eq!(vec.collect_one(500).unwrap(), 500);
-        assert_eq!(vec.collect_one(50).unwrap(), 50);
-        Ok(())
-    }
-
-    fn run_nth_beyond_end<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..10 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // Reading beyond end returns empty
-        let collected = vec.collect_range(10, 10);
-        assert!(collected.is_empty());
-        Ok(())
-    }
-
-    fn run_skip_all<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(100, 100);
-        assert!(collected.is_empty());
-        Ok(())
-    }
-
-    fn run_take_zero<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected = vec.collect_range(0, 0);
-        assert_eq!(collected.len(), 0);
-        Ok(())
-    }
-
-    fn run_size_hint_consistency<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // Test that collect_range returns correct sizes for progressive ranges
-        for i in 0..100 {
-            let remaining = vec.collect_range(i, 100);
-            assert_eq!(remaining.len(), 100 - i);
+        for (from, to) in [
+            (0, 0),
+            (0, 25),
+            (50, 52),
+            (150, 250),
+            (1, 10_000),
+            (9_999, 10_000),
+            (10_000, 10_000),
+        ] {
+            assert_eq!(vec.collect_range(from, to), expected[from..to]);
         }
         Ok(())
     }
@@ -322,68 +69,8 @@ mod clean_iter {
         type V = BytesVec<usize, i32>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -394,68 +81,8 @@ mod clean_iter {
         type V = ZeroCopyVec<usize, i32>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -466,68 +93,8 @@ mod clean_iter {
         type V = PcoVec<usize, i32>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -538,68 +105,8 @@ mod clean_iter {
         type V = LZ4Vec<usize, i32>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -610,68 +117,8 @@ mod clean_iter {
         type V = ZstdVec<usize, i32>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -686,68 +133,8 @@ mod clean_iter {
         type V = EagerVec<ZeroCopyVec<usize, i32>>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 
@@ -758,68 +145,8 @@ mod clean_iter {
         type V = EagerVec<PcoVec<usize, i32>>;
 
         #[test]
-        fn basic() -> vecdb::Result<()> {
-            run_basic::<V>()
-        }
-        #[test]
-        fn nth() -> vecdb::Result<()> {
-            run_nth::<V>()
-        }
-        #[test]
-        fn skip() -> vecdb::Result<()> {
-            run_skip::<V>()
-        }
-        #[test]
-        fn take() -> vecdb::Result<()> {
-            run_take::<V>()
-        }
-        #[test]
-        fn set_position() -> vecdb::Result<()> {
-            run_set_position::<V>()
-        }
-        #[test]
-        fn set_end() -> vecdb::Result<()> {
-            run_set_end::<V>()
-        }
-        #[test]
-        fn last() -> vecdb::Result<()> {
-            run_last::<V>()
-        }
-        #[test]
-        fn last_empty() -> vecdb::Result<()> {
-            run_last_empty::<V>()
-        }
-        #[test]
-        fn exact_size() -> vecdb::Result<()> {
-            run_exact_size::<V>()
-        }
-        #[test]
-        fn buffer_crossing() -> vecdb::Result<()> {
-            run_buffer_crossing::<V>()
-        }
-        #[test]
-        fn multiple_skip_take() -> vecdb::Result<()> {
-            run_multiple_skip_take::<V>()
-        }
-        #[test]
-        fn set_position_multiple() -> vecdb::Result<()> {
-            run_set_position_multiple::<V>()
-        }
-        #[test]
-        fn nth_beyond_end() -> vecdb::Result<()> {
-            run_nth_beyond_end::<V>()
-        }
-        #[test]
-        fn skip_all() -> vecdb::Result<()> {
-            run_skip_all::<V>()
-        }
-        #[test]
-        fn take_zero() -> vecdb::Result<()> {
-            run_take_zero::<V>()
-        }
-        #[test]
-        fn size_hint_consistency() -> vecdb::Result<()> {
-            run_size_hint_consistency::<V>()
+        fn ranges() -> vecdb::Result<()> {
+            run_ranges::<V>()
         }
     }
 }
@@ -831,271 +158,44 @@ mod clean_iter {
 mod dirty_iter {
     use super::*;
 
-    fn run_only_stored<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 100);
-        assert_eq!(collected[0], 0);
-        assert_eq!(collected[99], 99);
-        Ok(())
-    }
-
-    fn run_only_pushed<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        // Don't flush
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 50);
-        assert_eq!(collected[0], 0);
-        assert_eq!(collected[49], 49);
-        Ok(())
-    }
-
     fn run_stored_and_pushed<V>() -> vecdb::Result<()>
     where
         V: StoredVec<I = usize, T = i32>,
     {
         let (db, _temp) = setup_db()?;
         let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
+        for (stored, pushed) in [(50, 50), (8_000, 4_000), (10_000, 100)] {
+            vec.reset()?;
+            for i in 0..stored {
+                vec.push(i);
+            }
+            let prefix: Vec<i32> = (0..stored).collect();
+            assert_eq!(vec.collect(), prefix);
+            vec.write()?;
+            assert_eq!(vec.collect(), prefix);
+            assert_eq!(vec.collect_last(), Some(stored - 1));
+            let end = stored + pushed;
+            for i in stored..end {
+                vec.push(i);
+            }
+            let expected: Vec<i32> = (0..end).collect();
+            assert_eq!(vec.len(), end as usize);
+            assert_eq!(vec.collect(), expected);
+            assert_eq!(vec.collect_last(), Some(end - 1));
+            for (from, to) in [
+                (0, end),
+                (1, end),
+                (stored - 1, stored + 1),
+                (stored - 10, stored + 10),
+                (stored, end),
+                (end, end),
+            ] {
+                assert_eq!(
+                    vec.collect_range(from as usize, to as usize),
+                    expected[from as usize..to as usize]
+                );
+            }
         }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 100);
-
-        for (i, &val) in collected.iter().enumerate() {
-            assert_eq!(val, i as i32);
-        }
-        Ok(())
-    }
-
-    fn run_skip_across_boundary<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        let collected = vec.collect_range(40, 100);
-        assert_eq!(collected.len(), 60);
-        assert_eq!(collected[0], 40);
-        assert_eq!(collected[59], 99);
-        Ok(())
-    }
-
-    fn run_take_across_boundary<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        let collected = vec.collect_range(40, 60);
-        assert_eq!(collected.len(), 20);
-        assert_eq!(collected[0], 40);
-        assert_eq!(collected[19], 59);
-        Ok(())
-    }
-
-    fn run_nth_across_boundary<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        // Test reading across stored/pushed boundary
-        let vals = vec.collect_range(45, 52);
-        assert_eq!(vals[0], 45); // In stored
-        assert_eq!(vals[1], 46); // In stored
-        assert_eq!(vals[4], 49); // In stored
-        assert_eq!(vals[5], 50); // In pushed
-        assert_eq!(vals[6], 51); // In pushed
-        Ok(())
-    }
-
-    fn run_set_position_to_pushed<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        let vals = vec.collect_range(75, 77);
-        assert_eq!(vals[0], 75);
-        assert_eq!(vals[1], 76);
-        Ok(())
-    }
-
-    fn run_last_in_pushed<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..100 {
-            vec.push(i);
-        }
-
-        assert_eq!(vec.collect_last().unwrap(), 99);
-        Ok(())
-    }
-
-    fn run_last_in_stored<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..100 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        assert_eq!(vec.collect_last().unwrap(), 99);
-        Ok(())
-    }
-
-    fn run_exact_size_with_pushed<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..50 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 50..75 {
-            vec.push(i);
-        }
-
-        assert_eq!(vec.len(), 75);
-        assert_eq!(vec.collect_range(0, 75).len(), 75);
-        assert_eq!(vec.collect_range(1, 75).len(), 74);
-        assert_eq!(vec.collect_range(51, 75).len(), 24); // Cross boundary
-        Ok(())
-    }
-
-    fn run_large_dataset_boundary<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        // Large stored portion
-        for i in 0..10000 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        // Small pushed portion
-        for i in 10000..10100 {
-            vec.push(i);
-        }
-
-        let collected: Vec<i32> = vec.collect();
-        assert_eq!(collected.len(), 10100);
-
-        for (i, &val) in collected.iter().enumerate() {
-            assert_eq!(val, i as i32);
-        }
-        Ok(())
-    }
-
-    fn run_skip_take_complex<V>() -> vecdb::Result<()>
-    where
-        V: StoredVec<I = usize, T = i32>,
-    {
-        let (db, _temp) = setup_db()?;
-        let mut vec = V::forced_import(&db, "test", Version::ONE)?;
-
-        for i in 0..8000 {
-            vec.push(i);
-        }
-        vec.write()?;
-
-        for i in 8000..12000 {
-            vec.push(i);
-        }
-
-        // skip(7000).take(3000).skip(500).take(1000) => collect_range(7500, 8500)
-        let collected = vec.collect_range(7500, 8500);
-
-        assert_eq!(collected.len(), 1000);
-        assert_eq!(collected[0], 7500);
-        assert_eq!(collected[999], 8499);
         Ok(())
     }
 
@@ -1109,52 +209,8 @@ mod dirty_iter {
         type V = BytesVec<usize, i32>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1165,52 +221,8 @@ mod dirty_iter {
         type V = ZeroCopyVec<usize, i32>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1221,52 +233,8 @@ mod dirty_iter {
         type V = PcoVec<usize, i32>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1277,52 +245,8 @@ mod dirty_iter {
         type V = LZ4Vec<usize, i32>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1333,52 +257,8 @@ mod dirty_iter {
         type V = ZstdVec<usize, i32>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1393,52 +273,8 @@ mod dirty_iter {
         type V = EagerVec<ZeroCopyVec<usize, i32>>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 
@@ -1449,52 +285,8 @@ mod dirty_iter {
         type V = EagerVec<PcoVec<usize, i32>>;
 
         #[test]
-        fn only_stored() -> vecdb::Result<()> {
-            run_only_stored::<V>()
-        }
-        #[test]
-        fn only_pushed() -> vecdb::Result<()> {
-            run_only_pushed::<V>()
-        }
-        #[test]
         fn stored_and_pushed() -> vecdb::Result<()> {
             run_stored_and_pushed::<V>()
-        }
-        #[test]
-        fn skip_across_boundary() -> vecdb::Result<()> {
-            run_skip_across_boundary::<V>()
-        }
-        #[test]
-        fn take_across_boundary() -> vecdb::Result<()> {
-            run_take_across_boundary::<V>()
-        }
-        #[test]
-        fn nth_across_boundary() -> vecdb::Result<()> {
-            run_nth_across_boundary::<V>()
-        }
-        #[test]
-        fn set_position_to_pushed() -> vecdb::Result<()> {
-            run_set_position_to_pushed::<V>()
-        }
-        #[test]
-        fn last_in_pushed() -> vecdb::Result<()> {
-            run_last_in_pushed::<V>()
-        }
-        #[test]
-        fn last_in_stored() -> vecdb::Result<()> {
-            run_last_in_stored::<V>()
-        }
-        #[test]
-        fn exact_size_with_pushed() -> vecdb::Result<()> {
-            run_exact_size_with_pushed::<V>()
-        }
-        #[test]
-        fn large_dataset_boundary() -> vecdb::Result<()> {
-            run_large_dataset_boundary::<V>()
-        }
-        #[test]
-        fn skip_take_complex() -> vecdb::Result<()> {
-            run_skip_take_complex::<V>()
         }
     }
 }

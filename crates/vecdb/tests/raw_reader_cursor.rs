@@ -1,5 +1,7 @@
 use rawdb::Database;
 use tempfile::TempDir;
+#[cfg(debug_assertions)]
+use vecdb::MutableVec;
 use vecdb::{AnyStoredVec, BytesVec, ImportableVec, Version, WritableVec};
 
 #[test]

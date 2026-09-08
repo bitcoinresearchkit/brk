@@ -183,36 +183,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_log_file_accepts_combined() {
+    fn recognizes_only_managed_log_filenames() {
         assert!(is_log_file("2026-05-06.txt"));
-    }
-
-    #[test]
-    fn is_log_file_accepts_each_level() {
         for suffix in LEVEL_SUFFIX {
             assert!(is_log_file(&format!("2026-05-06_{suffix}.txt")));
         }
-    }
-
-    #[test]
-    fn is_log_file_rejects_unknown_level() {
-        assert!(!is_log_file("2026-05-06_notice.txt"));
-    }
-
-    #[test]
-    fn is_log_file_rejects_bad_date() {
-        assert!(!is_log_file("2026-5-06.txt"));
-        assert!(!is_log_file("abcd-ef-gh.txt"));
-        assert!(!is_log_file("2026/05/06.txt"));
-    }
-
-    #[test]
-    fn is_log_file_rejects_user_files() {
-        assert!(!is_log_file("notes.txt"));
-        assert!(!is_log_file("README"));
-        assert!(!is_log_file("2026-05-06.log"));
-        for name in ["🦀🦀🦀.txt", "123456789é.txt", "é_notes_for_today.txt"] {
-            assert!(!is_log_file(name));
+        for name in [
+            "2026-05-06_notice.txt",
+            "2026-5-06.txt",
+            "abcd-ef-gh.txt",
+            "2026/05/06.txt",
+            "notes.txt",
+            "README",
+            "2026-05-06.log",
+            "🦀🦀🦀.txt",
+            "123456789é.txt",
+            "é_notes_for_today.txt",
+        ] {
+            assert!(!is_log_file(name), "{name}");
         }
     }
 }

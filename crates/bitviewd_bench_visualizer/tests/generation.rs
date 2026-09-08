@@ -48,14 +48,3 @@ fn generates_all_combined_and_individual_charts() {
         }
     }
 }
-
-#[test]
-#[ignore = "writes comparison artifacts only to an explicit empty directory"]
-fn emit_comparison_artifacts() {
-    let root = std::env::var_os("VISUALIZER_COMPARISON_DIR").expect("explicit fixture directory");
-    let root = Path::new(&root);
-    assert!(root.is_dir());
-    assert!(fs::read_dir(root).unwrap().next().is_none());
-    fixture(root);
-    Visualizer::new(root).generate().unwrap();
-}

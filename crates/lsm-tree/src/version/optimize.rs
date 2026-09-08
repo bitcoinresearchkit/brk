@@ -145,29 +145,6 @@ mod tests {
         }
     }
 
-    fn interleaved_runs(
-        run_count: usize,
-        tables_per_run: usize,
-        overlapping: bool,
-    ) -> Vec<Run<FakeTable>> {
-        (0..run_count)
-            .map(|run_index| {
-                let tables = (0..tables_per_run)
-                    .map(|table_index| {
-                        let key = if overlapping {
-                            table_index as u32 * 2
-                        } else {
-                            (table_index * run_count + run_index) as u32 * 2
-                        };
-                        numbered(((run_index as u64) << 32) | table_index as u64, key, key)
-                    })
-                    .collect();
-
-                Run::new(tables).unwrap()
-            })
-            .collect()
-    }
-
     #[test]
     fn optimize_runs_empty() {
         let runs = vec![];
@@ -322,46 +299,6 @@ mod tests {
                 optimize_runs_reference(runs.clone()),
                 optimize_runs(runs),
                 "generated case {case}",
-            );
-        }
-    }
-
-    #[test]
-    #[ignore = "manual optimizer microbenchmark"]
-    fn benchmark_optimize_runs() {
-        use std::{hint::black_box, time::Instant};
-
-        fn median(samples: &mut [u128]) -> u128 {
-            samples.sort_unstable();
-            samples[samples.len() / 2]
-        }
-
-        fn measure(
-            layout: &[Run<FakeTable>],
-            optimize: impl Fn(Vec<Run<FakeTable>>) -> Vec<Run<FakeTable>>,
-        ) -> u128 {
-            let mut samples = Vec::with_capacity(31);
-
-            for _ in 0..31 {
-                let input = layout.to_vec();
-                let start = Instant::now();
-                let output = black_box(optimize(black_box(input)));
-                samples.push(start.elapsed().as_nanos());
-                black_box(output);
-            }
-
-            median(&mut samples)
-        }
-
-        for (name, layout) in [
-            ("disjoint-interleaved", interleaved_runs(8, 1_024, false)),
-            ("overlapping-generations", interleaved_runs(8, 1_024, true)),
-        ] {
-            let reference = measure(&layout, optimize_runs_reference);
-            let batched = measure(&layout, optimize_runs);
-            eprintln!(
-                "{name}: reference={reference}ns batched={batched}ns speedup={:.2}x",
-                reference as f64 / batched as f64,
             );
         }
     }

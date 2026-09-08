@@ -50,7 +50,3 @@ impl<'a> SeriesEntry<'a> {
         self.is_mutable
     }
 }
-
-#[cfg(test)]
-#[path = "../../tests/unit/vecs/series_entry.rs"]
-mod tests;

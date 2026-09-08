@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, fs, hint::black_box, time::Instant};
+use std::{collections::BTreeSet, fs};
 
 use bitview_bindgen::{
     ClientMetadata, generate_javascript_client, generate_python_client, generate_rust_client,
@@ -210,64 +210,4 @@ fn python_optional_body_and_csv_keep_parameter_order_and_returns() {
     assert!(signature.find("from_: str").unwrap() < signature.find("limit: Optional").unwrap());
     assert_eq!(output.matches("if format == 'csv':").count(), 1);
     assert!(output.contains("body: Optional[List[int]] = None"));
-}
-
-/// Emit complete before/after artifacts only when explicitly requested.
-#[test]
-#[ignore]
-fn emit_comparison_artifacts() {
-    let endpoints = endpoints();
-    let mut llm_endpoints = endpoints.clone();
-    for endpoint in &mut llm_endpoints {
-        if endpoint.operation_id.is_none() {
-            endpoint.operation_id = Some(endpoint.operation_name());
-        }
-    }
-    let dir =
-        std::env::var_os("BINDGEN_COMPARISON_DIR").expect("set an empty fixture output directory");
-    let dir = std::path::Path::new(&dir);
-    assert!(dir.read_dir().unwrap().next().is_none());
-    for variant in 0..24 {
-        let tree = catalog(variant, 12);
-        let metadata = ClientMetadata::from_catalog(tree.clone());
-        fs::write(
-            dir.join(format!("{variant}.metadata")),
-            format!("{metadata:?}"),
-        )
-        .unwrap();
-        generate_javascript_client(
-            &metadata,
-            &endpoints,
-            &Default::default(),
-            &dir.join(format!("{variant}.js")),
-        )
-        .unwrap();
-        generate_python_client(
-            &metadata,
-            &endpoints,
-            &Default::default(),
-            &dir.join(format!("{variant}.py")),
-        )
-        .unwrap();
-        generate_rust_client(
-            &metadata.catalog,
-            &endpoints,
-            &dir.join(format!("{variant}.rs")),
-        )
-        .unwrap();
-        bitview_bindgen::generate_llm_clients(
-            &metadata.catalog,
-            &spec(),
-            &llm_endpoints,
-            &Default::default(),
-            &[dir.join(format!("{variant}.llm"))],
-            Some(&dir.join(format!("{variant}.manifest.json"))),
-        )
-        .unwrap();
-        let start = Instant::now();
-        for _ in 0..100 {
-            black_box(ClientMetadata::from_catalog(black_box(tree.clone())));
-        }
-        eprintln!("variant={variant} metadata_100={:?}", start.elapsed());
-    }
 }

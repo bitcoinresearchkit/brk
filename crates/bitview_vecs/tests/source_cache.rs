@@ -15,6 +15,58 @@ fn is_budgeted<V: TypedVec>(_: &CachedVec<V, Budgeted>) {}
 fn is_pinned<V: TypedVec>(_: &CachedVec<V, Pinned>) {}
 
 #[test]
+fn compact_ratio_reads_do_not_retain_an_expanded_cumulative_history() {
+    use bitview_transforms::RatioU64;
+    use bitview_vecs::{CumulativeCountVec, LazyPercentPerBlock};
+    use brk_types::{PartsPerMillion32, StoredU16};
+    use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
+    use vecdb::{LazyVec, ReadableCloneableVec};
+
+    let directory = tempfile::tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let indexes = common::indexes(&db);
+    let counts = CachedVec::wrap(common::stored::<Height, _>(
+        &db,
+        "compact_counts",
+        [StoredU16::from(3u16); 16],
+    ));
+    let compact = CumulativeCountVec::new(counts.read_only_cached_boxed_clone());
+    static READS: AtomicUsize = AtomicUsize::new(0);
+    let counted = LazyVec::init(
+        "counted",
+        Version::ONE,
+        compact.read_only_boxed_clone(),
+        |_, value| {
+            READS.fetch_add(1, Relaxed);
+            value
+        },
+    );
+    let denominator = CachedVec::wrap(common::stored::<Height, _>(
+        &db,
+        "denominator",
+        (1..=16).map(|i| StoredU64::from(i * 7u64)),
+    ));
+    let ratio = LazyPercentPerBlock::from_ratio::<_, _, RatioU64<PartsPerMillion32>>(
+        "share",
+        Version::ONE,
+        &counted,
+        &denominator,
+        &indexes,
+    );
+    for _ in 0..2 {
+        READS.store(0, Relaxed);
+        assert_eq!(
+            ratio.ppm.height.collect(),
+            vec![PartsPerMillion32::from(3.0 / 7.0); 16]
+        );
+        assert!(
+            READS.load(Relaxed) > 0,
+            "compact source acquired an expanded cache"
+        );
+    }
+}
+
+#[test]
 fn generic_clones_share_source_snapshots_but_do_not_retain_derived_histories() {
     use crate::common::CACHE_BUDGET;
     use bitview_vecs::Resolutions;

@@ -1,7 +1,8 @@
 mod common;
 
+use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_traversable::{Traversable, TreeNode};
-use bitview_vecs::BoundedRatioPerBlock;
+use bitview_vecs::{BoundedRatioPerBlock, LazyPerBlock};
 use brk_types::{BoundedRatio, Version};
 use vecdb::{AnySerializableVec, AnyStoredVec, AnyVec, Database, ReadableVec, WritableVec};
 
@@ -39,6 +40,26 @@ fn bounded_wrapper_groups_storage_and_decimal_view() {
         .write_json(Some(0), Some(4), &mut json)
         .unwrap();
     assert_eq!(json, b"[0.0,0.5,1.0,null]");
+    let complement = LazyPerBlock::from_resolutions::<BoundedToF64<true>>(
+        "complement",
+        Version::ONE,
+        &view.bounded,
+    );
+    let odds =
+        LazyPerBlock::from_resolutions::<BoundedOddsF64>("odds", Version::ONE, &view.bounded);
+    assert_eq!(
+        complement
+            .height
+            .collect_range_at(0, 3)
+            .into_iter()
+            .map(f64::from)
+            .collect::<Vec<_>>(),
+        [1.0, 0.5, 0.0]
+    );
+    assert_eq!(f64::from(odds.height.collect_one_at(1).unwrap()), 1.0);
+    assert!(f64::from(odds.height.collect_one_at(2).unwrap()).is_infinite());
+    assert!(complement.height.collect_one_at(3).unwrap().is_nan());
+    assert!(odds.height.collect_one_at(3).unwrap().is_nan());
     let TreeNode::Branch(branch) = view.to_tree_node() else {
         panic!("expected wrapper branch")
     };

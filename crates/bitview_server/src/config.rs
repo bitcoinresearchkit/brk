@@ -51,7 +51,3 @@ impl Default for ServerConfig {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "../tests/unit/config.rs"]
-mod tests;

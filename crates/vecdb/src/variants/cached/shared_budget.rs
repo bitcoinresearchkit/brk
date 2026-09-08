@@ -160,64 +160,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "synthetic registry pressure without allocating resident payloads"]
-    fn benchmark_eviction_pressure() {
-        for registrations in [1000, 10000] {
-            for victims in [1, 64, 512] {
-                let mut samples = [Vec::new(), Vec::new()];
-                for round in 0..30 {
-                    let variant = round % 2;
-                    let budget = Arc::new(CacheBudget::new(MAX_BYTES));
-                    for i in 0..registrations {
-                        let resident_bytes = Arc::new(AtomicUsize::new(usize::from(i < 512)));
-                        let resident = resident_bytes.clone();
-                        let weak = Arc::downgrade(&budget);
-                        budget.caches.lock().push(CacheEntry {
-                            last_access: Arc::new(AtomicU64::new(i as u64)),
-                            resident_bytes,
-                            invalidate: Arc::new(move || {
-                                let bytes = resident.swap(0, Relaxed);
-                                weak.upgrade().unwrap().release(bytes);
-                                true
-                            }),
-                        });
-                    }
-                    budget.remaining_bytes.store(0, Relaxed);
-                    let started = std::time::Instant::now();
-                    if variant == 0 {
-                        // Previous implementation, retained only as a benchmark control.
-                        while !budget.remaining_bytes.try_reserve(victims) {
-                            assert!(budget.evict_one());
-                        }
-                    } else {
-                        assert!(budget.try_reserve(victims));
-                    }
-                    samples[variant].push(started.elapsed());
-                    assert_eq!(budget.remaining_bytes.load(Relaxed), 0);
-                    let entries = budget.caches.lock();
-                    assert!(
-                        entries[..victims]
-                            .iter()
-                            .all(|entry| entry.resident_bytes.load(Relaxed) == 0)
-                    );
-                    assert!(
-                        entries[victims..512]
-                            .iter()
-                            .all(|entry| entry.resident_bytes.load(Relaxed) == 1)
-                    );
-                }
-                for times in &mut samples {
-                    times.sort();
-                }
-                eprintln!(
-                    "eviction registrations={registrations} victims={victims} previous={:?} batched={:?}",
-                    samples[0][7], samples[1][7]
-                );
-            }
-        }
-    }
-
-    #[test]
     fn reservation_evicts_oldest_and_keeps_accounting_symmetric() {
         let directory = tempfile::tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();

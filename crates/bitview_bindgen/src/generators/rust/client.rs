@@ -2,10 +2,6 @@
 
 use std::fmt::Write;
 
-#[cfg(test)]
-#[path = "../../../tests/unit/generators/rust/client_endpoint_tests.rs"]
-mod endpoint_tests;
-
 use crate::{IndexSetPattern, index_to_field_name};
 
 /// Generate import statements.

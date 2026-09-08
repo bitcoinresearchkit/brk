@@ -10,9 +10,8 @@ use std::{
 
 use aide::axum::ApiRouter;
 use axum::{
-    body::{Body, Bytes},
-    http::{HeaderMap, HeaderValue, Request, StatusCode},
-    response::Response,
+    body::Body,
+    http::{Request, StatusCode},
     serve as serve_http,
 };
 
@@ -25,12 +24,7 @@ use tower_http::timeout::TimeoutLayer;
 #[cfg(feature = "chain")]
 use super::chain_fixture;
 use super::{server_routes::exchange_with_etag, urpd_sources};
-use crate::{
-    AppState, CacheParams, CacheStrategy, CdnCacheMode,
-    api::ApiRoutes,
-    extended::{HeaderMapExtended, ResponseExtended},
-    urpd_input,
-};
+use crate::{AppState, api::ApiRoutes, urpd_input};
 
 #[cfg(feature = "chain")]
 #[test]
@@ -38,80 +32,6 @@ fn populated_urpd_snapshots() {
     chain_fixture::run(|state, address| async move {
         check_snapshots(&state, address).await;
     });
-}
-
-#[test]
-#[ignore = "URPD conditional response assembly comparison; excludes query, cache and transport"]
-fn benchmark_response_assembly() {
-    let params = CacheParams::resolve(
-        &CacheStrategy::Live("urpd1-benchmark".to_owned().into()),
-        CdnCacheMode::Live,
-    );
-    let body = Bytes::from_static(b"{\"buckets\":[]}");
-    for (name, condition, extra) in [
-        ("unconditional", None, false),
-        ("mismatch", Some("\"old\""), false),
-        ("mismatch-extra", Some("\"old\""), true),
-        ("match", Some("*"), false),
-        ("match-extra", Some("*"), true),
-    ] {
-        let mut headers = HeaderMap::new();
-        if let Some(condition) = condition {
-            headers.insert("if-none-match", HeaderValue::from_static(condition));
-        }
-        if extra {
-            for _ in 0..16 {
-                headers.append(
-                    "x-fixture",
-                    HeaderValue::from_static("extra-request-header"),
-                );
-            }
-        }
-        let assemble = |old: bool| {
-            let params = black_box(&params).clone();
-            let headers = black_box(&headers);
-            if old {
-                let conditions = headers.clone();
-                if params.matches_etag(&conditions) {
-                    Response::new_not_modified(&params)
-                } else {
-                    Response::json_bytes(headers, &params, || body.clone())
-                }
-            } else if params.matches_etag(headers) {
-                Response::new_not_modified(&params)
-            } else {
-                AppState::assemble_response(
-                    params,
-                    body.clone(),
-                    HeaderMapExtended::insert_content_type_application_json,
-                )
-            }
-        };
-        let old = assemble(true);
-        let new = assemble(false);
-        assert_eq!(old.status(), new.status());
-        assert_eq!(old.headers(), new.headers());
-        let mut samples = [Vec::new(), Vec::new()];
-        for round in 0..12 {
-            for candidate in [round % 2, 1 - round % 2] {
-                let start = Instant::now();
-                for _ in 0..10_000 {
-                    black_box(assemble(candidate == 0));
-                }
-                if round >= 2 {
-                    samples[candidate].push(start.elapsed());
-                }
-            }
-        }
-        for sample in &mut samples {
-            sample.sort_unstable();
-        }
-        eprintln!(
-            "{name}: old {:?}, new {:?} per response",
-            samples[0][5] / 10_000,
-            samples[1][5] / 10_000
-        );
-    }
 }
 
 pub async fn check_snapshots(state: &AppState, address: SocketAddr) {

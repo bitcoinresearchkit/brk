@@ -149,79 +149,14 @@ class TestIsDateBased:
         assert height_metric.is_date_based is False
 
 
-# ============ SeriesData (int-indexed) ============
-
-
-class TestSeriesData:
-    def test_keys(self, height_metric):
-        assert height_metric.keys() == [800000, 800001, 800002, 800003, 800004]
-
-    def test_items(self, height_metric):
-        items = height_metric.items()
-        assert items[0] == (800000, 1.5)
-        assert items[-1] == (800004, 5.5)
-
-    def test_to_dict(self, height_metric):
-        d = height_metric.to_dict()
-        assert d[800000] == 1.5
-        assert d[800004] == 5.5
-        assert len(d) == 5
-
-    def test_iter(self, height_metric):
-        result = list(height_metric)
-        assert result == [
-            (800000, 1.5),
-            (800001, 2.5),
-            (800002, 3.5),
-            (800003, 4.5),
-            (800004, 5.5),
-        ]
-
-    def test_len(self, height_metric):
-        assert len(height_metric) == 5
-
-    def test_indexes(self, height_metric):
-        assert height_metric.indexes() == [800000, 800001, 800002, 800003, 800004]
-
-    def test_empty_data(self, empty_metric):
-        assert len(empty_metric) == 0
-        assert empty_metric.keys() == []
-        assert empty_metric.items() == []
-        assert empty_metric.to_dict() == {}
-        assert list(empty_metric) == []
-        assert empty_metric.indexes() == []
-
-
-# ============ DateSeriesData inheritance ============
-
-
-class TestDateSeriesDataInheritance:
-    def test_isinstance(self, day1_metric):
-        assert isinstance(day1_metric, DateSeriesData)
-        assert isinstance(day1_metric, SeriesData)
-
-    def test_int_keys_inherited(self, day1_metric):
-        assert day1_metric.keys() == [0, 1, 2, 3, 4]
-
-    def test_int_items_inherited(self, day1_metric):
-        items = day1_metric.items()
-        assert items[0] == (0, 100)
-        assert items[4] == (4, 500)
-
-    def test_int_iter_inherited(self, day1_metric):
-        result = list(day1_metric)
-        assert result[0] == (0, 100)
-
-    def test_len_inherited(self, day1_metric):
-        assert len(day1_metric) == 5
-
-    def test_indexes_inherited(self, day1_metric):
-        assert day1_metric.indexes() == [0, 1, 2, 3, 4]
-
-    def test_to_dict_inherited(self, day1_metric):
-        d = day1_metric.to_dict()
-        assert d[0] == 100
-        assert isinstance(list(d.keys())[0], int)
+@pytest.mark.parametrize("fixture", ["height_metric", "day1_metric", "empty_metric"])
+def test_integer_mapping_methods(fixture, request):
+    metric = request.getfixturevalue(fixture)
+    expected = list(zip(range(metric.start, metric.end), metric.data))
+    assert metric.keys() == metric.indexes() == [key for key, _ in expected]
+    assert metric.items() == list(metric) == expected
+    assert metric.to_dict() == dict(expected)
+    assert len(metric) == len(expected)
 
 
 # ============ _index_to_date conversions ============

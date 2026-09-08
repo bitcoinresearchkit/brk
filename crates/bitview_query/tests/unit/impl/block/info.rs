@@ -3,7 +3,7 @@ use std::io;
 use bitcoin::{
     Network,
     blockdata::constants::genesis_block,
-    consensus::{Decodable, encode::VarInt, serialize},
+    consensus::{encode::VarInt, serialize},
 };
 
 use super::{BlockHash, Error, Query, TxIndex};
@@ -69,48 +69,6 @@ fn header_fields_must_belong_to_the_indexed_hash() {
             "byte {index}"
         );
     }
-}
-
-#[test]
-#[ignore = "header decode and identity-check cost; no I/O or HTTP"]
-fn benchmark_verified_header() {
-    use std::{hint::black_box, time::Instant};
-
-    let header = genesis_block(Network::Bitcoin).header;
-    let bytes = serialize(&header);
-    let hash = BlockHash::from(header.block_hash());
-    let mut samples = [Vec::new(), Vec::new(), Vec::new()];
-    for round in 0..14 {
-        for offset in 0..3 {
-            let variant = (round + offset) % 3;
-            let started = Instant::now();
-            for _ in 0..10_000 {
-                let bytes = black_box(bytes.as_slice());
-                let decoded = if variant == 0 {
-                    super::BlockHeader::from(
-                        bitcoin::block::Header::consensus_decode(&mut &bytes[..]).unwrap(),
-                    )
-                } else if variant == 1 {
-                    let raw = bitcoin::block::Header::consensus_decode(&mut &bytes[..]).unwrap();
-                    assert_eq!(BlockHash::from(raw.block_hash()), *black_box(&hash));
-                    super::BlockHeader::from(raw)
-                } else {
-                    Query::decode_header(bytes, black_box(&hash)).unwrap()
-                };
-                black_box(decoded);
-            }
-            if round >= 4 {
-                samples[variant].push(started.elapsed() / 10_000);
-            }
-        }
-    }
-    for samples in &mut samples {
-        samples.sort_unstable();
-    }
-    eprintln!(
-        "header decode: previous {:?}, re-encoded verification {:?}, raw verification {:?}",
-        samples[0][5], samples[1][5], samples[2][5]
-    );
 }
 
 #[test]

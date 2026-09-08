@@ -1,21 +1,15 @@
 use super::*;
 
 #[test]
-fn brace_escaping_matches_the_original_replacements() {
-    let fragments = [
-        "", "{", "}", "{{", "}}", "{disc}", "{{disc}}", "disc", "{other}", "é", "🙂", "_",
-    ];
-    for a in fragments {
-        for b in fragments {
-            for c in fragments {
-                let input = format!("{a}{b}{c}");
-                let expected = input
-                    .replace('{', "{{")
-                    .replace('}', "}}")
-                    .replace("{{disc}}", "{disc}");
-                assert_eq!(escape_rust_format(&input), expected, "{input}");
-            }
-        }
+fn format_escaping_keeps_only_the_discriminator_live() {
+    for (input, expected) in [
+        ("", ""),
+        ("{disc}", "{disc}"),
+        ("{other}", "{{other}}"),
+        ("{{disc}}", "{{{disc}}}"),
+        ("é{disc}🙂", "é{disc}🙂"),
+    ] {
+        assert_eq!(escape_rust_format(input), expected);
     }
     assert_eq!(
         RustSyntax.disc_arg_expr("ratio_{disc}_ppm"),

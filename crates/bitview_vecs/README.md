@@ -83,7 +83,8 @@ denominators when their sources are rewritten without changing length.
 ```sh
 cargo test -p bitview_collections -p bitview_transforms -p bitview_compute -p bitview_vecs --features bitview_vecs/diagnostics
 cargo check -p bitviewd -p bitview_vecs --all-targets --features bitview_vecs/diagnostics
-cargo test -p bitview_vecs --test remaining_views_bench --features diagnostics -- --ignored --nocapture --test-threads=1
 ```
 
-The ignored benchmarks are synthetic comparisons, not production indexer timings.
+Tests cover calculation boundaries, storage resume/rewind, cache invalidation,
+and exported values. Historical one-off benchmark results remain in `benches/vecdb`;
+their comparison harnesses are no longer part of the test suite.

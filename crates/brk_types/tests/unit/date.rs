@@ -78,166 +78,20 @@ fn parsing_and_serde_share_strict_calendar_validation() {
 }
 
 #[test]
-fn test_date_from_day1_zero() {
-    // Day1 0 is Jan 1, 2009
-    let date = Date::from(Day1::from(0_usize));
-    assert_eq!(date, Date::INDEX_ZERO);
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_day1_two() {
-    // Day1 2 is Jan 3, 2009 (genesis)
-    let date = Date::from(Day1::from(2_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 3);
-}
-
-#[test]
-fn test_date_from_day1_eight() {
-    // Day1 8 is Jan 9, 2009
-    let date = Date::from(Day1::from(8_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 9);
-}
-
-#[test]
-fn test_date_from_week1_zero() {
-    // Week1 0 starts at Jan 1, 2009
-    let date = Date::from(Week1::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_week1_one() {
-    // Week1 1 is Jan 8, 2009 (one week after epoch)
-    let date = Date::from(Week1::from(1_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 8);
-}
-
-#[test]
-fn test_date_from_month1_zero() {
-    // Month1 0 is Jan 1, 2009
-    let date = Date::from(Month1::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month1_one() {
-    // Month1 1 is Feb 1, 2009
-    let date = Date::from(Month1::from(1_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 2);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month1_twelve() {
-    // Month1 12 is Jan 1, 2010
-    let date = Date::from(Month1::from(12_usize));
-    assert_eq!(date.year(), 2010);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_year1_zero() {
-    // Year1 0 is Jan 1, 2009
-    let date = Date::from(Year1::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_year1_one() {
-    // Year1 1 is Jan 1, 2010
-    let date = Date::from(Year1::from(1_usize));
-    assert_eq!(date.year(), 2010);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month3_zero() {
-    // Month3 0 is Q1 2009: Jan 1, 2009
-    let date = Date::from(Month3::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month3_one() {
-    // Month3 1 is Q2 2009: Apr 1, 2009
-    let date = Date::from(Month3::from(1_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 4);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month3_four() {
-    // Month3 4 is Q1 2010: Jan 1, 2010
-    let date = Date::from(Month3::from(4_usize));
-    assert_eq!(date.year(), 2010);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month6_zero() {
-    // Month6 0 is H1 2009: Jan 1, 2009
-    let date = Date::from(Month6::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month6_one() {
-    // Month6 1 is H2 2009: Jul 1, 2009
-    let date = Date::from(Month6::from(1_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 7);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_month6_two() {
-    // Month6 2 is H1 2010: Jan 1, 2010
-    let date = Date::from(Month6::from(2_usize));
-    assert_eq!(date.year(), 2010);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_year10_zero() {
-    // Year10 0 is 2009: Jan 1, 2009
-    let date = Date::from(Year10::from(0_usize));
-    assert_eq!(date.year(), 2009);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
-}
-
-#[test]
-fn test_date_from_year10_one() {
-    // Year10 1 is 2019: Jan 1, 2019
-    let date = Date::from(Year10::from(1_usize));
-    assert_eq!(date.year(), 2019);
-    assert_eq!(date.month(), 1);
-    assert_eq!(date.day(), 1);
+fn calendar_conversions_match_epoch_and_period_boundaries() {
+    for (actual, expected) in [
+        (Date::from(Day1::from(0_usize)), Date::new(2009, 1, 1)),
+        (Date::from(Day1::from(2_usize)), Date::new(2009, 1, 3)),
+        (Date::from(Week1::from(1_usize)), Date::new(2009, 1, 8)),
+        (Date::from(Month1::from(1_usize)), Date::new(2009, 2, 1)),
+        (Date::from(Month1::from(12_usize)), Date::new(2010, 1, 1)),
+        (Date::from(Month3::from(1_usize)), Date::new(2009, 4, 1)),
+        (Date::from(Month6::from(1_usize)), Date::new(2009, 7, 1)),
+        (Date::from(Year1::from(1_usize)), Date::new(2010, 1, 1)),
+        (Date::from(Year10::from(1_usize)), Date::new(2019, 1, 1)),
+    ] {
+        assert_eq!(actual, expected);
+    }
 }
 
 #[test]

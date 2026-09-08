@@ -255,34 +255,3 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         check_rate!("fiat_delta", id.select(&fiat_delta.rate));
     }
 }
-
-#[test]
-fn compact_and_general_sum_constructors_match() {
-    let directory = tempfile::tempdir().unwrap();
-    let db = Database::open(directory.path()).unwrap();
-    let indexes = indexes(&db);
-    let timestamps = CachedVec::wrap(stored::<Height, _>(
-        &db,
-        "timestamps",
-        (0..16u32).map(|i| Timestamp::from(i * 43_200)),
-    ));
-    let starts = WindowId::series(|id| {
-        CachedWindowStartVec::new(LazyWindowStartVec::days(
-            id.suffix(),
-            Version::ONE,
-            Windows::<()>::DAYS[vecdb::ColumnId::index(id)] as u64,
-            timestamps.read_only_cached_boxed_clone(),
-        ))
-    });
-    let starts = WindowId::series(|id| id.select(&starts));
-    let cumulative = stored::<Height, _>(&db, "counts", (0..16u64).map(brk_types::StoredU64::from));
-    let general =
-        LazyRollingSumsFromHeight::new("counts_sum", Version::ONE, &cumulative, &starts, &indexes);
-    let compact =
-        LazyRollingSumsFromHeight::new("counts_sum", Version::ONE, &cumulative, &starts, &indexes);
-    for (a, b) in general.as_array().into_iter().zip(compact.as_array()) {
-        assert_eq!(a.height.name(), b.height.name());
-        assert_eq!(a.height.version(), b.height.version());
-        assert_eq!(a.height.collect(), b.height.collect());
-    }
-}

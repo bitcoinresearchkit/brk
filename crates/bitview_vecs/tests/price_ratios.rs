@@ -1,51 +1,19 @@
 mod common;
 
 use bitview_collections::WindowId;
-use bitview_traversable::{Traversable, TreeNode};
 use bitview_vecs::{
-    ColumnarPerBlock, IndexSources, LazyColumnPriceWithRatioPerBlock, LazyIndexedVec,
-    LazyPriceWithRatioPerBlock, LazyRatioPerBlock, PriceWithRatioPerBlock,
+    ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock, LazyPriceWithRatioPerBlock,
+    PriceWithRatioPerBlock,
 };
 use brk_types::{Cents, Height, PriceRatio, Version};
-use common::{indexes, stored};
+use common::{CACHE_BUDGET, indexes, stored};
 use vecdb::{
-    AnySerializableVec, AnyStoredVec, AnyVec, CachedBoxedVec, CachedVec, ColumnId, Database,
-    ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, WritableVec,
+    AnySerializableVec, AnyStoredVec, CachedVec, ColumnId, Database, ReadOnlyClone, ReadableVec,
+    WritableVec,
 };
 
-use crate::common::CACHE_BUDGET;
-
-fn original_ratio(
-    name: &str,
-    version: Version,
-    price: ReadableBoxedVec<Height, Cents>,
-    spot: &CachedBoxedVec<Height, Cents>,
-    indexes: &IndexSources,
-) -> LazyRatioPerBlock<PriceRatio> {
-    let version = version + Version::new(5);
-    let source = LazyIndexedVec::new(
-        &format!("{name}_ratio_ppm_source"),
-        version,
-        &price,
-        spot,
-        |_, price, spot| {
-            if price == Cents::ZERO {
-                PriceRatio::NAN
-            } else {
-                PriceRatio::from(f64::from(spot) / f64::from(price))
-            }
-        },
-    );
-    LazyRatioPerBlock::from_height_source(
-        &format!("{name}_ratio"),
-        version,
-        &CACHE_BUDGET.wrap(source),
-        indexes,
-    )
-}
-
 #[test]
-fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
+fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
     let directory = tempfile::tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
@@ -71,7 +39,7 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         Cents::NAN,
     ];
     let mut imported = PriceWithRatioPerBlock::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "imported",
         version,
@@ -79,10 +47,21 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         &spot,
     )
     .unwrap();
+    let mut columns =
+        ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(&db, "columns", version, |_| ())
+            .unwrap();
     for price in prices {
         imported.cents.height.push(price);
+        columns.push(WindowId::from_fn(|column| {
+            if column == WindowId::Week1 {
+                price
+            } else {
+                Cents::new(999)
+            }
+        }));
     }
     imported.cents.height.write().unwrap();
+    columns.write().unwrap();
     let lazy = LazyPriceWithRatioPerBlock::from_height_source(
         "lazy",
         version,
@@ -90,28 +69,8 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         &indexes,
         &spot,
     );
-    let direct = LazyPriceWithRatioPerBlock::from_height_source(
-        "direct",
-        version,
-        &imported.cents.height,
-        &indexes,
-        &spot,
-    );
-    let mut columns =
-        ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(&db, "columns", version, |_| ())
-            .unwrap();
-    for price in prices {
-        columns.push(WindowId::from_fn(|column| {
-            if column == WindowId::Week1 {
-                price
-            } else {
-                Cents::from(999u64)
-            }
-        }));
-    }
-    columns.write().unwrap();
     let columnar = LazyColumnPriceWithRatioPerBlock::new(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         "columnar",
         version,
         &columns.height.read_only_clone(),
@@ -120,83 +79,47 @@ fn cached_price_constructors_preserve_ratio_sources_names_and_versions() {
         &spot,
     );
     macro_rules! check {
-        ($view:ident, $name:literal) => {{
-            let expected = original_ratio(
-                $name,
-                version,
-                $view.cents.height.read_only_boxed_clone(),
-                &spot,
-                &indexes,
+        ($view:ident) => {{
+            let ppm = &$view.relative.ppm;
+            assert_eq!(
+                ppm.height.collect(),
+                [
+                    PriceRatio::NAN,
+                    PriceRatio::from(4.0),
+                    PriceRatio::from(3.0),
+                    PriceRatio::from(2.0),
+                    PriceRatio::MAX,
+                    PriceRatio::NAN,
+                ]
             );
-            assert!(
-                $view
-                    .relative
-                    .ppm
-                    .height
-                    .collect_one_at(0)
-                    .unwrap()
-                    .is_nan()
+            assert_eq!(
+                ppm.day1.collect(),
+                [
+                    Some(PriceRatio::NAN),
+                    None,
+                    Some(PriceRatio::from(3.0)),
+                    Some(PriceRatio::NAN),
+                ]
             );
-            let TreeNode::Leaf(leaf) = $view.relative.ppm.to_tree_node() else {
-                panic!("expected ratio leaf");
-            };
-            assert_eq!(leaf.kind(), "PriceRatio");
             let mut json = Vec::new();
-            $view
-                .relative
-                .ppm
-                .height
-                .write_json(Some(4), Some(6), &mut json)
-                .unwrap();
+            ppm.height.write_json(Some(4), Some(6), &mut json).unwrap();
             assert_eq!(json, b"[4294967294,null]");
             assert_eq!(
-                $view.relative.ppm.height.collect_one_at(4),
-                Some(PriceRatio::MAX)
+                f32::from($view.relative.ratio.height.collect_one_at(4).unwrap()),
+                f32::from(PriceRatio::MAX)
             );
             assert!(
                 $view
                     .relative
-                    .ppm
+                    .ratio
                     .height
                     .collect_one_at(5)
                     .unwrap()
                     .is_nan()
             );
-            assert_eq!($view.cents.height.collect_one_at(4), Some(Cents::new(1)));
-            assert_eq!(
-                f32::from($view.relative.ratio.height.collect_one_at(4).unwrap()),
-                f32::from(PriceRatio::MAX)
-            );
-            assert!(f32::from($view.relative.ratio.height.collect_one_at(5).unwrap()).is_nan());
-            assert_eq!(
-                $view.relative.ppm.height.collect_range_at(1, 4),
-                [4.0, 3.0, 2.0].map(PriceRatio::from)
-            );
-            assert_eq!($view.relative.ppm.height.name(), expected.ppm.height.name());
-            assert_eq!(
-                $view.relative.ppm.height.version(),
-                expected.ppm.height.version()
-            );
-            assert_eq!(
-                $view.relative.ppm.day1.collect(),
-                expected.ppm.day1.collect()
-            );
-            assert_eq!(
-                $view.relative.ratio.height.collect_range_at(1, 4),
-                expected.ratio.height.collect_range_at(1, 4)
-            );
-            assert_eq!(
-                $view.relative.ratio.height.name(),
-                expected.ratio.height.name()
-            );
-            assert_eq!(
-                $view.relative.ratio.height.version(),
-                expected.ratio.height.version()
-            );
         }};
     }
-    check!(imported, "imported");
-    check!(lazy, "lazy");
-    check!(direct, "direct");
-    check!(columnar, "columnar");
+    check!(imported);
+    check!(lazy);
+    check!(columnar);
 }

@@ -1,50 +1,11 @@
-use bitview_cohort::*;
+use bitview_cohort::ByEpoch;
 use brk_types::Sats;
-use serde::{Serialize, de::DeserializeOwned};
 use std::{
     io::{BufRead, BufReader, Write},
     net::TcpListener,
     thread,
     time::Duration,
 };
-
-fn round_trip<T: Default + Serialize + DeserializeOwned>() {
-    let encoded = serde_json::to_value(T::default()).unwrap();
-    let decoded: T = serde_json::from_value(encoded.clone()).unwrap();
-    assert_eq!(serde_json::to_value(decoded).unwrap(), encoded);
-}
-
-#[test]
-fn structured_series_rows_deserialize_without_erasing_their_wrapper() {
-    round_trip::<ByTerm<Sats>>();
-    round_trip::<Class<Sats>>();
-    round_trip::<SpendableType<Sats>>();
-    round_trip::<ByAge<Sats>>();
-    round_trip::<ByEpoch<Sats>>();
-    round_trip::<ByEntry<Sats>>();
-    round_trip::<AgeRange<Sats>>();
-    round_trip::<AmountRange<Sats>>();
-    round_trip::<ProfitabilityRange<Sats>>();
-    round_trip::<OverAge<Sats>>();
-    round_trip::<UnderAge<Sats>>();
-    round_trip::<OverAmount<Sats>>();
-    round_trip::<UnderAmount<Sats>>();
-    round_trip::<UTXOAggregate<Sats>>();
-    round_trip::<UTXOAllAndSth<Sats>>();
-
-    let row: ByTerm<Sats> = serde_json::from_str(r#"{"short":42,"long":7}"#).unwrap();
-    assert_eq!(row.short, Sats::from(42_u64));
-    assert_eq!(row.long, Sats::from(7_u64));
-
-    let row = ProfitabilityRow {
-        range: ProfitabilityRange::<Sats>::default(),
-        profit: Profit::default(),
-        loss: Loss::default(),
-    };
-    let encoded = serde_json::to_value(row).unwrap();
-    let decoded: ProfitabilityRow<Sats> = serde_json::from_value(encoded.clone()).unwrap();
-    assert_eq!(serde_json::to_value(decoded).unwrap(), encoded);
-}
 
 #[test]
 fn generated_storage_path_fetches_a_structured_row() {

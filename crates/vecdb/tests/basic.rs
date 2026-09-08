@@ -125,6 +125,11 @@ where
             vec![10, 11, 12, 13, 14]
         );
 
+        assert_eq!(
+            vec.collect_signed_range(Some(5), Some(10)),
+            vec![5, 6, 7, 8, 9]
+        );
+
         vec.reset()?;
 
         assert_eq!(vec.pushed_len(), 0);
