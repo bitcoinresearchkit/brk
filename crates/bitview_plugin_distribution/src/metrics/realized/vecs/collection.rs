@@ -1,7 +1,7 @@
 use bitview_cohort::{
     AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
     UTXOAggregate, UTXOAggregateId, UTXOAllAndSth, UTXOGroups, UTXOGroupsWithoutAmountOrType,
-    UTXORows,
+    UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
@@ -10,8 +10,8 @@ use bitview_transforms::{
 };
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPercentRollingWindows, ColumnarRollingWindows,
-    ColumnarRollingWindowsFrom1w, LazyPerBlock, LazyPercentPerBlock,
+    CachedWindowStartVec, LazyPerBlock, LazyPercentPerBlock, PercentRollingWindows, RollingWindows,
+    RollingWindowsFrom1w,
 };
 use brk_error::Result;
 use brk_exit::Exit;
@@ -36,7 +36,7 @@ use crate::{
     AllChainSources,
     metrics::{
         AdditiveAggregateFiatPerBlockCumulativeWithSums, AggregatePercentPerBlock,
-        AggregatePriceWithRatioPerBlock, RealizedBlockData, RealizedTotals, UTXOTermColumns,
+        AggregatePriceWithRatioPerBlock, RealizedBlockData, RealizedTotals, UTXOTermSources,
     },
 };
 
@@ -90,13 +90,13 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// it to realized capitalization in cents; dividing by unspent satoshis
     /// gives realized price in cents per BTC. It is an intermediate product,
     /// not itself a capitalization or price.
-    pub cap_raw: UTXOTermColumns<CentsSats, M>,
+    pub cap_raw: UTXOTermSources<CentsSats, M>,
     /// Raw sum of squared creation price in cents per BTC multiplied by unspent
     /// satoshis for an aggregate UTXO cohort. Dividing it by the cohort's raw
     /// creation-price-times-satoshis sum gives capitalized price in cents per
     /// BTC. It is an intermediate product, not itself a capitalization or
     /// price.
-    pub capitalized_cap_raw: UTXOTermColumns<CentsSquaredSats, M>,
+    pub capitalized_cap_raw: UTXOTermSources<CentsSquaredSats, M>,
     /// Value forgone relative to each spent output's highest Bitcoin spot price
     /// from its creation block through its spending block, inclusive: that peak
     /// minus the spending price, multiplied by the output's BTC value.
@@ -111,18 +111,18 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// divided by an aggregate UTXO cohort's realized cap at the represented
     /// block. Larger values mean more capital changed hands far from its
     /// creation price relative to the cohort's invested capital base.
-    pub sell_side_risk_ratio: UTXOAggregate<ColumnarPercentRollingWindows<PartsPerMillion32, M>>,
+    pub sell_side_risk_ratio: UTXOAggregate<PercentRollingWindows<PartsPerMillion32, M>>,
     /// For each supported trailing window, spent output profit ratio: spending
     /// value divided by creation-date value for outputs spent from an aggregate
     /// UTXO cohort. Values above one mean the outputs were spent in aggregate
     /// profit; values below one mean aggregate loss. Returns one when
     /// creation-date value is zero.
-    pub sopr_ratio_extended: UTXOAggregate<ColumnarRollingWindowsFrom1w<StoredF32, M>>,
+    pub sopr_ratio_extended: UTXOAggregate<RollingWindowsFrom1w<StoredF32, M>>,
     /// For each supported trailing window, realized profit divided by realized
     /// loss for an aggregate UTXO cohort. Values above one mean realized profit
     /// exceeded realized loss in the window; values below one mean the reverse.
     /// Returns one when realized loss is zero.
-    pub profit_to_loss_ratio: UTXOAggregate<ColumnarRollingWindows<StoredF32, M>>,
+    pub profit_to_loss_ratio: UTXOAggregate<RollingWindows<StoredF32, M>>,
     /// Market-value-to-realized-value (MVRV) ratio for a UTXO cohort: spot
     /// price divided by its realized price. Values above one place spot above
     /// the cohort's aggregate on-chain cost basis; values below one place it
@@ -156,7 +156,7 @@ impl RealizedVecs {
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
         all_chain: &AllChainSources,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let aggregate_version = version + Version::ONE;
         let gross_pnl = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
             cache,
@@ -174,9 +174,9 @@ impl RealizedVecs {
             mappings,
             spot_price,
         )?;
-        let cap_raw = UTXOTermColumns::forced_import(db, "cap_raw", version)?;
+        let cap_raw = UTXOTermSources::forced_import(db, "cap_raw", version)?;
         let capitalized_cap_raw =
-            UTXOTermColumns::forced_import(db, "capitalized_cap_raw", version)?;
+            UTXOTermSources::forced_import(db, "capitalized_cap_raw", version)?;
         let peak_regret = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
             cache,
             db,
@@ -193,7 +193,7 @@ impl RealizedVecs {
             mappings,
         )?;
         let sell_side_risk_ratio = UTXOAggregate::try_from_fn(|id| {
-            ColumnarPercentRollingWindows::forced_import(
+            PercentRollingWindows::forced_import(
                 cache,
                 db,
                 &Self::aggregate_metric_name(id, "sell_side_risk_ratio"),
@@ -202,7 +202,7 @@ impl RealizedVecs {
             )
         })?;
         let sopr_ratio_extended = UTXOAggregate::try_from_fn(|id| {
-            ColumnarRollingWindowsFrom1w::forced_import(
+            RollingWindowsFrom1w::forced_import(
                 cache,
                 db,
                 &Self::aggregate_metric_name(id, "sopr"),
@@ -211,7 +211,7 @@ impl RealizedVecs {
             )
         })?;
         let profit_to_loss_ratio = UTXOAggregate::try_from_fn(|id| {
-            ColumnarRollingWindows::forced_import(
+            RollingWindows::forced_import(
                 cache,
                 db,
                 &Self::aggregate_metric_name(id, "realized_profit_to_loss_ratio"),
@@ -336,7 +336,7 @@ impl RealizedVecs {
             LazyPercentPerBlock::from_height_source(&name, Version::new(5), &source, mappings)
         });
 
-        Ok(Self {
+        Ok(Box::new(Self {
             cap,
             price,
             profit,
@@ -358,7 +358,7 @@ impl RealizedVecs {
             negative_loss,
             cap_to_own_mcap,
             net_pnl_change_1m_to_mcap,
-        })
+        }))
     }
 
     fn cohort_version(version: Version, filter: &Filter) -> Version {
@@ -413,16 +413,20 @@ impl RealizedVecs {
     }
 
     #[inline(always)]
-    pub fn push_aggregate(&mut self, rows: &UTXOAggregate<RealizedAggregateState>) -> Cents {
-        let prices = rows.map(RealizedAggregateState::capitalized_price);
+    pub fn push_aggregate(
+        &mut self,
+        cohort_values: &UTXOAggregate<RealizedAggregateState>,
+    ) -> Cents {
+        let prices = cohort_values.map(RealizedAggregateState::capitalized_price);
         self.gross_pnl
-            .push_block(rows.map(RealizedAggregateState::gross_pnl));
+            .push_block(cohort_values.map(RealizedAggregateState::gross_pnl));
         self.capitalized_price.push(prices.clone());
         self.peak_regret
-            .push_block(rows.map(RealizedAggregateState::peak_regret));
-        self.cap_raw.push(&rows.map(|row| row.cap_raw));
+            .push_block(cohort_values.map(RealizedAggregateState::peak_regret));
+        self.cap_raw
+            .push(&cohort_values.map(|values| values.cap_raw));
         self.capitalized_cap_raw
-            .push(&rows.map(|row| row.capitalized_cap_raw));
+            .push(&cohort_values.map(|values| values.capitalized_cap_raw));
         prices.all
     }
 
@@ -471,95 +475,102 @@ impl RealizedVecs {
             ..
         } = self;
 
-        net_pnl_change_1m_to_rcap.compute_columns2(
-            max_from,
-            |id| {
-                &id.select(sources)
-                    .realized
-                    .net_pnl
-                    .delta
-                    .absolute
-                    ._1m
-                    .cents
-                    .height
-            },
-            |id| &id.select(sources).realized.cap.cents.height,
-            |_, change, cap| RatioCentsSignedCents::<PartsPerMillionSigned64>::apply(change, cap),
-            exit,
-        )?;
-
         for id in UTXOAggregateId::ALL {
             let source = id.select(sources);
             let realized = &source.realized;
 
-            id.select_mut(sopr_ratio_extended).compute_columns2(
-                max_from,
-                |window| {
-                    &window
-                        .select_full(&source.activity.transfer_volume.sum.0)
-                        .cents
-                        .height
-                },
-                |window| {
-                    &window
-                        .select_full(&realized.value_destroyed.sum)
-                        .cents
-                        .height
-                },
-                |_, value_created, value_destroyed| {
-                    SoprRatio::apply(value_created, value_destroyed)
-                },
-                exit,
-            )?;
+            id.select_mut(&mut net_pnl_change_1m_to_rcap.stored)
+                .compute_transform2(
+                    max_from,
+                    &realized.net_pnl.delta.absolute._1m.cents.height,
+                    &realized.cap.cents.height,
+                    |(height, change, cap, _)| {
+                        (
+                            height,
+                            RatioCentsSignedCents::<PartsPerMillionSigned64>::apply(change, cap),
+                        )
+                    },
+                    exit,
+                )?;
 
-            id.select_mut(sell_side_risk_ratio).compute_columns2(
-                max_from,
-                |window| {
-                    &window
-                        .select(&id.select(&gross_pnl.series).sum)
-                        .cents
-                        .height
-                },
-                |_| &realized.cap.cents.height,
-                |_, realized_value, realized_cap| {
-                    RatioCents::<PartsPerMillion32>::apply(realized_value, realized_cap)
-                },
-                exit,
-            )?;
-
-            id.select_mut(profit_to_loss_ratio).compute_columns2(
-                max_from,
-                |window| &window.select(&realized.profit.sum).cents.height,
-                |window| &window.select(&realized.loss.sum).cents.height,
-                |_, profit, loss| RatioCentsF32::apply(profit, loss),
-                exit,
-            )?;
+            for ((target, created), destroyed) in id
+                .select_mut(sopr_ratio_extended)
+                .as_mut_array()
+                .into_iter()
+                .zip(
+                    source
+                        .activity
+                        .transfer_volume
+                        .sum
+                        .0
+                        .as_array()
+                        .into_iter()
+                        .skip(1),
+                )
+                .zip(realized.value_destroyed.sum.as_array().into_iter().skip(1))
+            {
+                target.compute_binary::<_, _, SoprRatio>(
+                    max_from,
+                    &created.cents.height,
+                    &destroyed.cents.height,
+                    exit,
+                )?;
+            }
+            for (target, pnl) in id
+                .select_mut(sell_side_risk_ratio)
+                .as_mut_array()
+                .into_iter()
+                .zip(id.select(&gross_pnl.series).sum.as_array())
+            {
+                target.compute_binary::<_, _, RatioCents<PartsPerMillion32>>(
+                    max_from,
+                    &pnl.cents.height,
+                    &realized.cap.cents.height,
+                    exit,
+                )?;
+            }
+            for ((target, profit), loss) in id
+                .select_mut(profit_to_loss_ratio)
+                .as_mut_array()
+                .into_iter()
+                .zip(realized.profit.sum.as_array())
+                .zip(realized.loss.sum.as_array())
+            {
+                target.compute_binary::<_, _, RatioCentsF32>(
+                    max_from,
+                    &profit.cents.height,
+                    &loss.cents.height,
+                    exit,
+                )?;
+            }
         }
 
         Ok(())
     }
 
     #[inline(always)]
-    pub fn push(&mut self, rows: &UTXORows<RealizedBlockData>) {
-        let aggregate_price = rows
+    pub fn push(&mut self, cohort_values: &UTXOValues<RealizedBlockData>) {
+        let aggregate_price = cohort_values
             .map(RealizedBlockData::totals)
             .aggregate()
             .map(RealizedTotals::price);
 
-        self.cap.stored.push(rows.map(|values| values.cap));
+        self.cap.stored.push(cohort_values.map(|values| values.cap));
         self.price
             .stored
-            .push(rows.map(|values| values.price), aggregate_price);
+            .push(cohort_values.map(|values| values.price), aggregate_price);
         self.profit
             .stored
-            .push_block(rows.map(|values| values.profit));
-        self.loss.stored.push_block(rows.map(|values| values.loss));
+            .push_block(cohort_values.map(|values| values.profit));
+        self.loss
+            .stored
+            .push_block(cohort_values.map(|values| values.loss));
         self.net_pnl
             .stored
-            .push_block(rows.map(|values| values.net_pnl));
+            .push_block(cohort_values.map(|values| values.net_pnl));
         self.value_destroyed
             .stored
-            .push_block(rows.map(|values| values.value_destroyed));
+            .push_block(cohort_values.map(|values| values.value_destroyed));
     }
 
     #[inline(always)]
@@ -597,38 +608,39 @@ impl RealizedVecs {
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.cap.stored.collect_vecs_mut();
-        vecs.push(self.cap.cohorts.addr_balance.stored_mut());
+        vecs.extend(self.cap.cohorts.addr_balance.collect_vecs_mut());
         vecs.extend(self.price.stored.collect_vecs_mut());
         vecs.extend(self.profit.stored.collect_vecs_mut());
-        vecs.push(self.profit.cohorts.addr_balance.stored_mut());
+        vecs.extend(self.profit.cohorts.addr_balance.collect_vecs_mut());
         vecs.extend(self.loss.stored.collect_vecs_mut());
-        vecs.push(self.loss.cohorts.addr_balance.stored_mut());
+        vecs.extend(self.loss.cohorts.addr_balance.collect_vecs_mut());
         vecs.extend(self.net_pnl.stored.collect_vecs_mut());
         vecs.extend(self.value_destroyed.stored.collect_vecs_mut());
         vecs.extend(self.sopr.collect_vecs_mut());
         vecs.extend(self.adjusted_sopr.collect_vecs_mut());
-        vecs.extend([
-            self.gross_pnl.stored_mut(),
-            self.capitalized_price.stored_mut(),
-            self.peak_regret.stored_mut(),
-            self.net_pnl_change_1m_to_rcap.stored_mut(),
-            self.cap_raw.stored_mut(),
-            self.capitalized_cap_raw.stored_mut(),
-        ]);
+        vecs.extend(self.gross_pnl.collect_vecs_mut());
+        vecs.extend(self.capitalized_price.collect_vecs_mut());
+        vecs.extend(self.peak_regret.collect_vecs_mut());
+        vecs.extend(self.net_pnl_change_1m_to_rcap.collect_vecs_mut());
+        vecs.extend(self.cap_raw.collect_vecs_mut());
+        vecs.extend(self.capitalized_cap_raw.collect_vecs_mut());
         vecs.extend(
             self.sell_side_risk_ratio
                 .iter_mut()
-                .map(|value| value.stored_mut()),
+                .flat_map(|value| value.as_mut_array())
+                .map(|value| &mut value.ppm.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
             self.sopr_ratio_extended
                 .iter_mut()
-                .map(|value| value.stored_mut()),
+                .flat_map(|value| value.as_mut_array())
+                .map(|value| &mut value.height as &mut dyn AnyStoredVec),
         );
         vecs.extend(
             self.profit_to_loss_ratio
                 .iter_mut()
-                .map(|value| value.stored_mut()),
+                .flat_map(|value| value.as_mut_array())
+                .map(|value| &mut value.height as &mut dyn AnyStoredVec),
         );
         vecs
     }

@@ -7,9 +7,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{ColumnId, Ident, ReadableCloneableVec};
+use vecdb::{Ident, ReadableCloneableVec};
 
-use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock, LazyPreviousDeltaVec};
+use crate::{IndexSources, LazyPerBlock, LazyPreviousDeltaVec};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct LazyPerBlockCumulativeRolling<T>
@@ -79,22 +79,6 @@ where
     ) -> Self {
         let cumulative =
             LazyPerBlock::from_lazy::<Ident, T>(&format!("{name}_cumulative"), version, source);
-
-        Self::from_cumulative(name, version, cumulative, window_starts, indexes)
-    }
-
-    pub fn from_column_source<C: ColumnId>(
-        name: &str,
-        version: Version,
-        source: &LazyColumnPerBlock<T, C>,
-        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
-        indexes: &IndexSources,
-    ) -> Self {
-        let cumulative = LazyPerBlock::from_resolutions::<Ident>(
-            &format!("{name}_cumulative"),
-            version,
-            &source.resolutions,
-        );
 
         Self::from_cumulative(name, version, cumulative, window_starts, indexes)
     }

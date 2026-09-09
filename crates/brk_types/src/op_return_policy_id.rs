@@ -1,6 +1,3 @@
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
-
 pub const OP_RETURN_POLICY_COUNT: usize = OpReturnPolicyId::Multiple as usize + 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -19,48 +16,30 @@ pub const OP_RETURN_POLICY_IDS: [OpReturnPolicyId; OP_RETURN_POLICY_COUNT] = [
     OpReturnPolicyId::Multiple,
 ];
 
-#[cfg(feature = "storage")]
-impl ColumnId for OpReturnPolicyId {
-    type Row<T>
-        = [T; OP_RETURN_POLICY_COUNT]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &OP_RETURN_POLICY_IDS;
+impl OpReturnPolicyId {
+    pub const ALL: &'static [Self] = &OP_RETURN_POLICY_IDS;
 
     #[inline]
-    fn index(self) -> usize {
+    pub fn index(self) -> usize {
         self as usize
     }
 
     #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
+    pub fn get<T>(self, values: &[T; OP_RETURN_POLICY_COUNT]) -> &T {
+        &values[self.index()]
     }
 
     #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
+    pub fn get_mut<T>(self, values: &mut [T; OP_RETURN_POLICY_COUNT]) -> &mut T {
+        &mut values[self.index()]
     }
 
     #[inline]
-    fn from_fn<T, F>(f: F) -> Self::Row<T>
+    pub fn from_fn<T, F>(f: F) -> [T; OP_RETURN_POLICY_COUNT]
     where
-        T: VecValue,
         F: FnMut(Self) -> T,
     {
         OP_RETURN_POLICY_IDS.map(f)
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(f)
     }
 }
 
@@ -71,7 +50,7 @@ mod tests {
 
     #[cfg(feature = "storage")]
     #[test]
-    fn column_order_matches_discriminants() {
+    fn iteration_order_matches_discriminants() {
         for (index, policy) in OP_RETURN_POLICY_IDS.into_iter().enumerate() {
             assert_eq!(policy as usize, index);
             assert_eq!(policy.index(), index);

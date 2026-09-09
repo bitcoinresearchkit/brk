@@ -1,10 +1,10 @@
 mod additive;
 mod aggregate;
-mod columnar;
+mod sources;
 
 pub use additive::*;
 pub use aggregate::*;
-pub use columnar::*;
+pub use sources::*;
 mod count_total;
 mod type_counts;
 pub use count_total::CountTotal;

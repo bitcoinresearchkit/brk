@@ -1,7 +1,5 @@
-use bitview_cohort::{AddrTypeId, ByAddrType};
-use brk_types::{StoredU32, StoredU64};
+use bitview_cohort::ByAddrType;
 use derive_more::{Deref, DerefMut};
-use vecdb::ColumnId;
 
 use super::BlockActivityCounts;
 
@@ -16,16 +14,6 @@ impl AddrTypeToActivityCounts {
 
     pub fn active(&self) -> u32 {
         self.0.values().map(BlockActivityCounts::active).sum()
-    }
-
-    #[inline(always)]
-    pub fn row(
-        &self,
-        value: impl Fn(&BlockActivityCounts) -> u32,
-    ) -> <AddrTypeId as ColumnId>::Row<StoredU64> {
-        AddrTypeId::from_fn(|column| {
-            StoredU64::from(StoredU32::from(value(column.select(&self.0))))
-        })
     }
 }
 

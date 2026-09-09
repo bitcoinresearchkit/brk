@@ -6,12 +6,12 @@
 
 # Interface: SharePattern
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7267](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7267)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7210](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7210)
 
 ## Properties
 
 ### share
 
-> **share**: [`AllHeightLthSthPattern4`](AllHeightLthSthPattern4.md)
+> **share**: [`AllLthSthPattern7`](AllLthSthPattern7.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7268](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7268)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7211](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7211)

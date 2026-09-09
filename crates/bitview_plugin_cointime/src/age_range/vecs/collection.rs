@@ -1,12 +1,9 @@
-use bitview_cohort::{AgeRange, AgeRangeId};
+use bitview_cohort::AgeRange;
 use bitview_traversable::Traversable;
-use brk_types::{BoundedRatio, StoredF64};
+use brk_types::{BoundedRatio, Height, StoredF64};
 use vecdb::{Rw, StorageMode};
 
-use bitview_vecs::{
-    ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    LazySpotValuePerBlock,
-};
+use bitview_vecs::{LazySpotValuePerBlock, PerBlockCumulativeRolling, StoredSeries};
 
 use super::{ActivitySeries, SupplyVecs};
 
@@ -17,25 +14,17 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// lower bound remains in that range; each fully traversed younger range
     /// receives spent BTC multiplied by that range's duration. The allocation
     /// preserves total coin days destroyed.
-    pub coindays_consumed: ColumnarPerBlockCumulativeRolling<
-        StoredF64,
-        AgeRangeId,
-        AgeRange<LazyColumnPerBlockCumulativeRolling<StoredF64, AgeRangeId>>,
-        M,
-    >,
+    pub coindays_consumed: AgeRange<PerBlockCumulativeRolling<StoredF64, M>>,
     /// Cumulative coin days created in each age range minus cumulative coin
     /// days consumed from that range.
-    pub coindays_stored: ColumnarPerBlockCumulativeRolling<
-        StoredF64,
-        AgeRangeId,
-        AgeRange<LazyColumnPerBlockCumulativeRolling<StoredF64, AgeRangeId>>,
-        M,
-    >,
+    pub coindays_stored: AgeRange<PerBlockCumulativeRolling<StoredF64, M>>,
     /// Wakefulness for each UTXO age range: cumulative coin days consumed from
     /// the range divided by cumulative coin days created in the range. Higher
     /// values mean more of the holding time accumulated in that range has been
     /// consumed by spending. The source is floored at bounded scale
     /// 4,294,967,294; cumulative coin-day inputs remain full precision.
-    pub activity: ColumnarPerBlock<BoundedRatio, AgeRangeId, ActivitySeries, M>,
+    pub activity: ActivitySeries,
+    #[traversable(hidden)]
+    pub activity_sources: AgeRange<StoredSeries<Height, BoundedRatio, M>>,
     pub supply: SupplyVecs<AgeRange<LazySpotValuePerBlock>>,
 }

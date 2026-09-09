@@ -6,7 +6,7 @@
 
 # Interface: Urpd
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1509](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1509)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1382](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1382)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1509](https://github
 
 > **aggregation**: [`UrpdAggregation`](../type-aliases/UrpdAggregation.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1513](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1513)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1386](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1386)
 
 Aggregation strategy applied to the buckets.
 
@@ -24,7 +24,7 @@ Aggregation strategy applied to the buckets.
 
 > **buckets**: [`UrpdBucket`](UrpdBucket.md)[]
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1516](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1516)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1389](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1389)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1516](https://github
 
 > **close**: `number`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1514](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1514)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1387](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1387)
 
 Close price on `date`, in USD. Anchor for `unrealized_pnl`.
 
@@ -42,7 +42,7 @@ Close price on `date`, in USD. Anchor for `unrealized_pnl`.
 
 > **cohort**: [`Cohort`](../type-aliases/Cohort.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1510](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1510)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1383](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1383)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1510](https://github
 
 > **date**: `string`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1511](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1511)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1384](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1384)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1511](https://github
 
 > **totalSupply**: `number`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1515](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1515)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1388](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1388)
 
 Sum of `supply` across all buckets, in BTC.
 
@@ -68,6 +68,6 @@ Sum of `supply` across all buckets, in BTC.
 
 > **weight**: [`UrpdWeight`](../type-aliases/UrpdWeight.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1512](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1512)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1385](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1385)
 
 Weighting applied to the source supply.

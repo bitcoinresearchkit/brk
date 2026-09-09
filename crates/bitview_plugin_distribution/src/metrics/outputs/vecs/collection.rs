@@ -1,4 +1,4 @@
-use bitview_cohort::{AmountRange, UTXORows};
+use bitview_cohort::{AmountRange, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
@@ -24,8 +24,8 @@ impl OutputsVecs {
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
-        Ok(Self {
+    ) -> Result<Box<Self>> {
+        Ok(Box::new(Self {
             unspent_count: UnspentOutputCount::forced_import(
                 cache,
                 db,
@@ -40,18 +40,22 @@ impl OutputsVecs {
                 mappings,
                 cached_starts,
             )?,
-        })
+        }))
     }
 
     #[inline(always)]
-    pub fn push(&mut self, unspent_count: UTXORows<StoredU64>, spent_count: UTXORows<StoredU64>) {
+    pub fn push(
+        &mut self,
+        unspent_count: UTXOValues<StoredU64>,
+        spent_count: UTXOValues<StoredU64>,
+    ) {
         self.unspent_count.stored.push(unspent_count);
         self.spent_count.stored.push_block(spent_count);
     }
 
     #[inline(always)]
-    pub fn push_addr_balance(&mut self, row: AmountRange<StoredU64>) {
-        self.unspent_count.push_addr_balance(row);
+    pub fn push_addr_balance(&mut self, values: AmountRange<StoredU64>) {
+        self.unspent_count.push_addr_balance(values);
     }
 
     pub fn min_resume_len(&self) -> usize {
@@ -64,7 +68,7 @@ impl OutputsVecs {
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.unspent_count.stored.collect_vecs_mut();
-        vecs.push(self.unspent_count.cohorts.addr_balance.stored_mut());
+        vecs.extend(self.unspent_count.cohorts.addr_balance.collect_vecs_mut());
         vecs.extend(self.spent_count.stored.collect_vecs_mut());
         vecs
     }

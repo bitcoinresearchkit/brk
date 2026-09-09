@@ -301,8 +301,8 @@ pub struct ProfitabilityRange<T> {
     pub _90pct_to_100pct_in_loss: T,
 }
 
-define_column_id!(
-    ProfitabilityRangeId for ProfitabilityRange, version = 1 {
+define_cohort_id!(
+    ProfitabilityRangeId for ProfitabilityRange {
         Over1000PctInProfit => over_1000pct_in_profit,
         From500PctTo1000PctInProfit => _500pct_to_1000pct_in_profit,
         From300PctTo500PctInProfit => _300pct_to_500pct_in_profit,

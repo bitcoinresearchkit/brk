@@ -8,7 +8,7 @@ use brk_error::Result;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database, PcoVecValue, Rw, StorageMode};
 
-use crate::metrics::UTXOTypedColumns;
+use crate::metrics::UTXOTypedSources;
 
 #[derive(Traversable)]
 pub struct UnrealizedByCohort<C, M: StorageMode = Rw>
@@ -17,7 +17,8 @@ where
 {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmount<LazyFiatPerBlock<C>>,
-    pub stored: UTXOTypedColumns<C, M>,
+    #[traversable(hidden)]
+    pub stored: UTXOTypedSources<C, M>,
 }
 
 impl<C> UnrealizedByCohort<C>
@@ -32,13 +33,11 @@ where
         mappings: &MappingsVecs,
     ) -> Result<Self> {
         let stored =
-            UTXOTypedColumns::forced_import(cache, db, &format!("{metric}_cents"), version)?;
+            UTXOTypedSources::forced_import(cache, db, &format!("{metric}_cents"), version)?;
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let source = stored
-                .additive_source(&filter, &format!("{name}_cents"), version)
-                .expect("supported unrealized cohort");
-            LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
+            let source = stored.get(&filter).expect("supported unrealized cohort");
+            LazyFiatPerBlock::from_cents_source(&name, version, source, mappings)
         });
         Ok(Self { cohorts, stored })
     }

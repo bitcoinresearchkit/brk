@@ -3,12 +3,10 @@ use bitview_cohort::{
 };
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    ColumnarPerBlock, LazyColumnPerBlock, LazyColumnPercentPerBlock, PercentilesVecs, Price,
-};
+use bitview_vecs::{AggregatePercentPerBlock, PerBlock, PercentilesVecs, Price};
 use brk_error::Result;
 use brk_types::{Cents, PartsPerMillion32, Sats, Version};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::{CostBasis, CostBasisBlockData, CostBasisSide};
 use crate::state::UnrealizedState;
@@ -21,58 +19,23 @@ pub struct CostBasisVecs<M: StorageMode = Rw> {
     /// price when that output was created.
     pub cohorts: UTXOAggregate<CostBasis>,
     #[traversable(hidden)]
-    pub in_profit_per_coin_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub in_profit_per_coin_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
-    pub in_profit_per_dollar_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub in_profit_per_dollar_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
-    pub in_loss_per_coin_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub in_loss_per_coin_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
-    pub in_loss_per_dollar_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub in_loss_per_dollar_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
-    pub min_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub min_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
-    pub max_source: ColumnarPerBlock<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        M,
-    >,
+    pub max_source: UTXOAggregate<Price<PerBlock<Cents, M>>>,
     #[traversable(hidden)]
     pub per_coin_sources: UTXOAggregate<PercentilesVecs<M>>,
     #[traversable(hidden)]
     pub per_dollar_sources: UTXOAggregate<PercentilesVecs<M>>,
     #[traversable(hidden)]
-    pub supply_density_source: ColumnarPerBlock<
-        PartsPerMillion32,
-        UTXOAggregateId,
-        UTXOAggregate<LazyColumnPercentPerBlock<PartsPerMillion32, UTXOAggregateId>>,
-        M,
-    >,
+    pub supply_density_source: AggregatePercentPerBlock<PartsPerMillion32, M>,
 }
 
 impl CostBasisVecs {
@@ -81,7 +44,7 @@ impl CostBasisVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let aggregate_version = version + Version::ONE;
         let in_profit_per_coin_source = Self::import_prices(
             cache,
@@ -119,40 +82,60 @@ impl CostBasisVecs {
             Self::import_percentiles(cache, db, "cost_basis_per_coin", version, mappings)?;
         let per_dollar_sources =
             Self::import_percentiles(cache, db, "cost_basis_per_dollar", version, mappings)?;
-        let supply_density_source = ColumnarPerBlock::forced_import(
+        let supply_density_source = AggregatePercentPerBlock::forced_import(
             cache,
             db,
-            "supply_density_by_aggregate",
+            "supply_density",
             aggregate_version,
-            |source| {
-                UTXOAggregate::from_fn(|id| {
-                    LazyColumnPercentPerBlock::new(
-                        &Self::cohort_metric_name(id, "supply_density"),
-                        aggregate_version,
-                        source,
-                        id,
-                        mappings,
-                    )
-                })
-            },
+            mappings,
         )?;
         let cohorts = UTXOAggregate::from_fn(|id| CostBasis {
             in_profit: CostBasisSide {
-                per_coin: id.select(&in_profit_per_coin_source.series).clone(),
-                per_dollar: id.select(&in_profit_per_dollar_source.series).clone(),
+                per_coin: Price::from_height_source(
+                    &Self::cohort_metric_name(id, "cost_basis_in_profit_per_coin"),
+                    aggregate_version,
+                    &id.select(&in_profit_per_coin_source).cents.height,
+                    mappings,
+                ),
+                per_dollar: Price::from_height_source(
+                    &Self::cohort_metric_name(id, "cost_basis_in_profit_per_dollar"),
+                    aggregate_version,
+                    &id.select(&in_profit_per_dollar_source).cents.height,
+                    mappings,
+                ),
             },
             in_loss: CostBasisSide {
-                per_coin: id.select(&in_loss_per_coin_source.series).clone(),
-                per_dollar: id.select(&in_loss_per_dollar_source.series).clone(),
+                per_coin: Price::from_height_source(
+                    &Self::cohort_metric_name(id, "cost_basis_in_loss_per_coin"),
+                    aggregate_version,
+                    &id.select(&in_loss_per_coin_source).cents.height,
+                    mappings,
+                ),
+                per_dollar: Price::from_height_source(
+                    &Self::cohort_metric_name(id, "cost_basis_in_loss_per_dollar"),
+                    aggregate_version,
+                    &id.select(&in_loss_per_dollar_source).cents.height,
+                    mappings,
+                ),
             },
-            min: id.select(&min_source.series).clone(),
-            max: id.select(&max_source.series).clone(),
-            per_coin: id.select(&per_coin_sources).prices.series.clone(),
-            per_dollar: id.select(&per_dollar_sources).prices.series.clone(),
+            min: Price::from_height_source(
+                &Self::cohort_metric_name(id, "cost_basis_min"),
+                aggregate_version,
+                &id.select(&min_source).cents.height,
+                mappings,
+            ),
+            max: Price::from_height_source(
+                &Self::cohort_metric_name(id, "cost_basis_max"),
+                aggregate_version,
+                &id.select(&max_source).cents.height,
+                mappings,
+            ),
+            per_coin: id.select(&per_coin_sources).prices.clone(),
+            per_dollar: id.select(&per_dollar_sources).prices.clone(),
             supply_density: id.select(&supply_density_source.series).clone(),
         });
 
-        Ok(Self {
+        Ok(Box::new(Self {
             cohorts,
             in_profit_per_coin_source,
             in_profit_per_dollar_source,
@@ -163,7 +146,7 @@ impl CostBasisVecs {
             per_coin_sources,
             per_dollar_sources,
             supply_density_source,
-        })
+        }))
     }
 
     fn import_prices(
@@ -172,30 +155,16 @@ impl CostBasisVecs {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-    ) -> Result<
-        ColumnarPerBlock<
-            Cents,
-            UTXOAggregateId,
-            UTXOAggregate<Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>>,
-        >,
-    > {
-        ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &format!("{metric}_cents_by_aggregate"),
-            version,
-            |source| {
-                UTXOAggregate::from_fn(|id| {
-                    Price::from_columnar_source(
-                        &Self::cohort_metric_name(id, metric),
-                        version,
-                        source,
-                        id,
-                        mappings,
-                    )
-                })
-            },
-        )
+    ) -> Result<UTXOAggregate<Price<PerBlock<Cents>>>> {
+        UTXOAggregate::try_from_fn(|id| {
+            Price::forced_import(
+                cache,
+                db,
+                &Self::cohort_metric_name(id, metric),
+                version + Version::ONE,
+                mappings,
+            )
+        })
     }
 
     fn import_percentiles(
@@ -231,22 +200,25 @@ impl CostBasisVecs {
 
     #[inline(always)]
     pub fn push_prices(&mut self, spot: Cents, states: &UTXOAggregate<UnrealizedState>) {
-        self.in_profit_per_coin_source
-            .push(UTXOAggregate::from_fn(|id| {
-                Self::per_coin_price(spot, id.select(states), true)
-            }));
-        self.in_loss_per_coin_source
-            .push(UTXOAggregate::from_fn(|id| {
-                Self::per_coin_price(spot, id.select(states), false)
-            }));
-        self.in_profit_per_dollar_source
-            .push(UTXOAggregate::from_fn(|id| {
-                Self::per_dollar_price(spot, id.select(states), true)
-            }));
-        self.in_loss_per_dollar_source
-            .push(UTXOAggregate::from_fn(|id| {
-                Self::per_dollar_price(spot, id.select(states), false)
-            }));
+        for id in UTXOAggregateId::ALL {
+            let state = id.select(states);
+            id.select_mut(&mut self.in_profit_per_coin_source)
+                .cents
+                .height
+                .push(Self::per_coin_price(spot, state, true));
+            id.select_mut(&mut self.in_loss_per_coin_source)
+                .cents
+                .height
+                .push(Self::per_coin_price(spot, state, false));
+            id.select_mut(&mut self.in_profit_per_dollar_source)
+                .cents
+                .height
+                .push(Self::per_dollar_price(spot, state, true));
+            id.select_mut(&mut self.in_loss_per_dollar_source)
+                .cents
+                .height
+                .push(Self::per_dollar_price(spot, state, false));
+        }
     }
 
     #[inline(always)]
@@ -298,19 +270,33 @@ impl CostBasisVecs {
     }
 
     #[inline(always)]
-    pub fn push(&mut self, rows: UTXOAggregate<CostBasisBlockData>) {
-        self.min_source
-            .push(UTXOAggregate::from_fn(|id| id.select(&rows).min));
-        self.max_source
-            .push(UTXOAggregate::from_fn(|id| id.select(&rows).max));
+    pub fn push(&mut self, cohort_values: UTXOAggregate<CostBasisBlockData>) {
+        for id in UTXOAggregateId::ALL {
+            id.select_mut(&mut self.min_source)
+                .cents
+                .height
+                .push(id.select(&cohort_values).min);
+            id.select_mut(&mut self.max_source)
+                .cents
+                .height
+                .push(id.select(&cohort_values).max);
+        }
         self.supply_density_source
-            .push(UTXOAggregate::from_fn(|id| id.select(&rows).supply_density));
-        self.per_coin_sources.all.push(&rows.all.per_coin);
-        self.per_coin_sources.sth.push(&rows.sth.per_coin);
-        self.per_coin_sources.lth.push(&rows.lth.per_coin);
-        self.per_dollar_sources.all.push(&rows.all.per_dollar);
-        self.per_dollar_sources.sth.push(&rows.sth.per_dollar);
-        self.per_dollar_sources.lth.push(&rows.lth.per_dollar);
+            .push(UTXOAggregate::from_fn(|id| {
+                id.select(&cohort_values).supply_density
+            }));
+        self.per_coin_sources.all.push(&cohort_values.all.per_coin);
+        self.per_coin_sources.sth.push(&cohort_values.sth.per_coin);
+        self.per_coin_sources.lth.push(&cohort_values.lth.per_coin);
+        self.per_dollar_sources
+            .all
+            .push(&cohort_values.all.per_dollar);
+        self.per_dollar_sources
+            .sth
+            .push(&cohort_values.sth.per_dollar);
+        self.per_dollar_sources
+            .lth
+            .push(&cohort_values.lth.per_dollar);
     }
 
     pub fn validate_computed_versions(&mut self, version: Version) -> Result<()> {
@@ -325,40 +311,49 @@ impl CostBasisVecs {
     }
 
     pub fn min_resume_len(&self) -> usize {
-        self.in_profit_per_coin_source
-            .height
-            .len()
-            .min(self.in_profit_per_dollar_source.height.len())
-            .min(self.in_loss_per_coin_source.height.len())
-            .min(self.in_loss_per_dollar_source.height.len())
-            .min(self.min_source.height.len())
-            .min(self.max_source.height.len())
-            .min(self.supply_density_source.height.len())
-            .min(
-                self.per_coin_sources
-                    .iter()
-                    .chain(self.per_dollar_sources.iter())
-                    .map(|percentiles| percentiles.prices.height.len())
-                    .min()
-                    .unwrap_or_default(),
-            )
+        [
+            &self.in_profit_per_coin_source,
+            &self.in_profit_per_dollar_source,
+            &self.in_loss_per_coin_source,
+            &self.in_loss_per_dollar_source,
+            &self.min_source,
+            &self.max_source,
+        ]
+        .into_iter()
+        .flat_map(|sources| sources.iter())
+        .map(|price| price.cents.height.len())
+        .min()
+        .unwrap_or_default()
+        .min(self.supply_density_source.len())
+        .min(
+            self.per_coin_sources
+                .iter()
+                .chain(self.per_dollar_sources.iter())
+                .map(PercentilesVecs::min_len)
+                .min()
+                .unwrap_or_default(),
+        )
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = vec![
-            self.in_profit_per_coin_source.stored_mut(),
-            self.in_profit_per_dollar_source.stored_mut(),
-            self.in_loss_per_coin_source.stored_mut(),
-            self.in_loss_per_dollar_source.stored_mut(),
-            self.min_source.stored_mut(),
-            self.max_source.stored_mut(),
-            self.supply_density_source.stored_mut(),
-        ];
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = [
+            &mut self.in_profit_per_coin_source,
+            &mut self.in_profit_per_dollar_source,
+            &mut self.in_loss_per_coin_source,
+            &mut self.in_loss_per_dollar_source,
+            &mut self.min_source,
+            &mut self.max_source,
+        ]
+        .into_iter()
+        .flat_map(|sources| sources.iter_mut())
+        .map(|price| &mut price.cents.height as &mut dyn AnyStoredVec)
+        .collect();
+        vecs.extend(self.supply_density_source.collect_vecs_mut());
         vecs.extend(
             self.per_coin_sources
                 .iter_mut()
                 .chain(self.per_dollar_sources.iter_mut())
-                .map(|percentiles| percentiles.prices.stored_mut()),
+                .flat_map(PercentilesVecs::collect_vecs_mut),
         );
         vecs
     }

@@ -96,6 +96,7 @@ where
         S: VecValue,
         T: Copy,
     {
+        self.last_cumulative = None;
         let mut cumulative = None;
         Ok(self.cumulative.height.compute_transform(
             max_from,
@@ -194,6 +195,7 @@ where
     }
 
     pub fn validate_computed_version_or_reset(&mut self, version: Version) -> Result<()> {
+        self.last_cumulative = None;
         self.cumulative
             .height
             .validate_computed_version_or_reset(version)?;
@@ -201,6 +203,7 @@ where
     }
 
     pub fn validate_and_truncate(&mut self, version: Version, height: Height) -> Result<()> {
+        self.last_cumulative = None;
         Ok(self
             .cumulative
             .height
@@ -208,6 +211,7 @@ where
     }
 
     pub fn truncate_if_needed_at(&mut self, len: usize) -> Result<()> {
+        self.last_cumulative = None;
         Ok(self.cumulative.height.truncate_if_needed_at(len)?)
     }
 
@@ -217,6 +221,7 @@ where
     }
 
     pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
+        self.last_cumulative = None;
         &mut self.cumulative.height
     }
 }

@@ -6,8 +6,6 @@ use brk_types::OutputType;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 use super::{CohortName, Filter};
 
@@ -45,36 +43,36 @@ pub const SPENDABLE_TYPE_IDS: [SpendableTypeId; SPENDABLE_TYPE_COUNT] = [
 
 impl SpendableTypeId {
     #[inline]
-    pub fn select<T>(self, row: &SpendableType<T>) -> &T {
+    pub fn select<T>(self, values: &SpendableType<T>) -> &T {
         match self {
-            Self::P2PK65 => &row.p2pk65,
-            Self::P2PK33 => &row.p2pk33,
-            Self::P2PKH => &row.p2pkh,
-            Self::P2MS => &row.p2ms,
-            Self::P2SH => &row.p2sh,
-            Self::P2WPKH => &row.p2wpkh,
-            Self::P2WSH => &row.p2wsh,
-            Self::P2TR => &row.p2tr,
-            Self::P2A => &row.p2a,
-            Self::Unknown => &row.unknown,
-            Self::Empty => &row.empty,
+            Self::P2PK65 => &values.p2pk65,
+            Self::P2PK33 => &values.p2pk33,
+            Self::P2PKH => &values.p2pkh,
+            Self::P2MS => &values.p2ms,
+            Self::P2SH => &values.p2sh,
+            Self::P2WPKH => &values.p2wpkh,
+            Self::P2WSH => &values.p2wsh,
+            Self::P2TR => &values.p2tr,
+            Self::P2A => &values.p2a,
+            Self::Unknown => &values.unknown,
+            Self::Empty => &values.empty,
         }
     }
 
     #[inline]
-    pub fn select_mut<T>(self, row: &mut SpendableType<T>) -> &mut T {
+    pub fn select_mut<T>(self, values: &mut SpendableType<T>) -> &mut T {
         match self {
-            Self::P2PK65 => &mut row.p2pk65,
-            Self::P2PK33 => &mut row.p2pk33,
-            Self::P2PKH => &mut row.p2pkh,
-            Self::P2MS => &mut row.p2ms,
-            Self::P2SH => &mut row.p2sh,
-            Self::P2WPKH => &mut row.p2wpkh,
-            Self::P2WSH => &mut row.p2wsh,
-            Self::P2TR => &mut row.p2tr,
-            Self::P2A => &mut row.p2a,
-            Self::Unknown => &mut row.unknown,
-            Self::Empty => &mut row.empty,
+            Self::P2PK65 => &mut values.p2pk65,
+            Self::P2PK33 => &mut values.p2pk33,
+            Self::P2PKH => &mut values.p2pkh,
+            Self::P2MS => &mut values.p2ms,
+            Self::P2SH => &mut values.p2sh,
+            Self::P2WPKH => &mut values.p2wpkh,
+            Self::P2WSH => &mut values.p2wsh,
+            Self::P2TR => &mut values.p2tr,
+            Self::P2A => &mut values.p2a,
+            Self::Unknown => &mut values.unknown,
+            Self::Empty => &mut values.empty,
         }
     }
 
@@ -118,56 +116,6 @@ impl SpendableTypeId {
     #[inline]
     pub const fn index(self) -> usize {
         self as usize
-    }
-}
-#[cfg(feature = "storage")]
-impl ColumnId for SpendableTypeId {
-    type Row<T>
-        = SpendableType<T>
-    where
-        T: VecValue;
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = Self::ALL;
-    #[inline]
-    fn index(self) -> usize {
-        Self::index(self)
-    }
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        self.select(row)
-    }
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        self.select_mut(row)
-    }
-    #[inline]
-    fn from_fn<T, F>(mut f: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        SpendableType {
-            p2pk65: f(Self::P2PK65),
-            p2pk33: f(Self::P2PK33),
-            p2pkh: f(Self::P2PKH),
-            p2ms: f(Self::P2MS),
-            p2sh: f(Self::P2SH),
-            p2wpkh: f(Self::P2WPKH),
-            p2wsh: f(Self::P2WSH),
-            p2tr: f(Self::P2TR),
-            p2a: f(Self::P2A),
-            unknown: f(Self::Unknown),
-            empty: f(Self::Empty),
-        }
-    }
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        Self::from_fn(|column| f(column.get(&row).clone()))
     }
 }
 
@@ -261,7 +209,7 @@ impl<T> SpendableType<T> {
     }
 }
 
-impl_column_row_formattable!(SpendableType {
+impl_collection_formattable!(SpendableType {
     p2pk65,
     p2pk33,
     p2pkh,
@@ -495,22 +443,22 @@ mod tests {
 
     #[cfg(feature = "storage")]
     #[test]
-    fn column_ids_match_spendable_type_order() {
+    fn cohort_ids_match_spendable_type_order() {
         let output_types: Vec<_> = SPENDABLE_TYPE_VALUES.iter().copied().collect();
-        let column_output_types: Vec<_> = SpendableTypeId::ALL
+        let selected_output_types: Vec<_> = SpendableTypeId::ALL
             .iter()
-            .map(|column| column.output_type())
+            .map(|id| id.output_type())
             .collect();
 
-        assert_eq!(column_output_types, output_types);
+        assert_eq!(selected_output_types, output_types);
         assert_eq!(
             SpendableTypeId::from_output_type(OutputType::OpReturn),
             None
         );
 
-        let row = SpendableTypeId::from_fn(|column| column.index());
-        for column in SpendableTypeId::ALL {
-            assert_eq!(*column.get(&row), column.index());
+        let values = SpendableType::from_fn(|id| id.index());
+        for id in SpendableTypeId::ALL {
+            assert_eq!(*id.select(&values), id.index());
         }
     }
 }

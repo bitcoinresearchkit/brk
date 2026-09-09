@@ -5,14 +5,11 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, ColumnarRollingWindows,
-    LazyColumnPerBlockCumulativeRolling,
-};
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling, RollingWindows};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadableVec, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableVec, Rw, StorageMode};
 
 use super::AdjustedSoprComputeSource;
 
@@ -25,23 +22,13 @@ pub struct AdjustedSoprVecs<M: StorageMode = Rw> {
     /// spending-date value divided by creation-date value for outputs at least
     /// one hour old. Values above one mean aggregate profit and values below
     /// one mean aggregate loss. Returns one when creation-date value is zero.
-    pub ratio: UTXOAllAndSth<ColumnarRollingWindows<StoredF32, M>>,
+    pub ratio: UTXOAllAndSth<RollingWindows<StoredF32, M>>,
     /// Spending-date USD value of outputs at least one hour old spent from an
     /// all-chain or short-term-holder cohort.
-    pub transfer_volume: ColumnarPerBlockCumulativeRolling<
-        Cents,
-        UTXOAllAndSthId,
-        UTXOAllAndSth<LazyColumnPerBlockCumulativeRolling<Cents, UTXOAllAndSthId>>,
-        M,
-    >,
+    pub transfer_volume: UTXOAllAndSth<PerBlockCumulativeRolling<Cents, M>>,
     /// Creation-date USD value of outputs at least one hour old spent from an
     /// all-chain or short-term-holder cohort.
-    pub value_destroyed: ColumnarPerBlockCumulativeRolling<
-        Cents,
-        UTXOAllAndSthId,
-        UTXOAllAndSth<LazyColumnPerBlockCumulativeRolling<Cents, UTXOAllAndSthId>>,
-        M,
-    >,
+    pub value_destroyed: UTXOAllAndSth<PerBlockCumulativeRolling<Cents, M>>,
 }
 
 impl AdjustedSoprVecs {
@@ -57,7 +44,6 @@ impl AdjustedSoprVecs {
         let transfer_volume = Self::import_cumulative(
             cache,
             db,
-            "adjusted_sopr_transfer_volume_cumulative_by_cohort",
             "adj_value_created",
             source_version,
             mappings,
@@ -66,21 +52,20 @@ impl AdjustedSoprVecs {
         let value_destroyed = Self::import_cumulative(
             cache,
             db,
-            "adjusted_sopr_value_destroyed_cumulative_by_cohort",
             "adj_value_destroyed",
             source_version,
             mappings,
             cached_starts,
         )?;
         let ratio = UTXOAllAndSth {
-            all: ColumnarRollingWindows::forced_import(
+            all: RollingWindows::forced_import(
                 cache,
                 db,
                 "asopr",
                 Self::cohort_version(ratio_version, UTXOAllAndSthId::All),
                 mappings,
             )?,
-            sth: ColumnarRollingWindows::forced_import(
+            sth: RollingWindows::forced_import(
                 cache,
                 db,
                 &Self::cohort_metric_name(UTXOAllAndSthId::Sth, "asopr"),
@@ -99,42 +84,21 @@ impl AdjustedSoprVecs {
     fn import_cumulative(
         cache: &'static CacheBudget,
         db: &Database,
-        storage_name: &str,
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<
-        ColumnarPerBlockCumulativeRolling<
-            Cents,
-            UTXOAllAndSthId,
-            UTXOAllAndSth<LazyColumnPerBlockCumulativeRolling<Cents, UTXOAllAndSthId>>,
-        >,
-    > {
-        ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            storage_name,
-            version + Version::ONE,
-            |source| UTXOAllAndSth {
-                all: LazyColumnPerBlockCumulativeRolling::new(
-                    metric,
-                    Self::cohort_version(version, UTXOAllAndSthId::All),
-                    source,
-                    UTXOAllAndSthId::All,
-                    mappings,
-                    cached_starts,
-                ),
-                sth: LazyColumnPerBlockCumulativeRolling::new(
-                    &Self::cohort_metric_name(UTXOAllAndSthId::Sth, metric),
-                    Self::cohort_version(version, UTXOAllAndSthId::Sth),
-                    source,
-                    UTXOAllAndSthId::Sth,
-                    mappings,
-                    cached_starts,
-                ),
-            },
-        )
+    ) -> Result<UTXOAllAndSth<PerBlockCumulativeRolling<Cents>>> {
+        UTXOAllAndSth::try_from_fn(|id| {
+            PerBlockCumulativeRolling::forced_import(
+                cache,
+                db,
+                &Self::cohort_metric_name(id, metric),
+                Self::cohort_version(version, id) + Version::ONE,
+                mappings,
+                cached_starts,
+            )
+        })
     }
 
     fn cohort_metric_name(id: UTXOAllAndSthId, metric: &str) -> String {
@@ -171,34 +135,29 @@ impl AdjustedSoprVecs {
         V1: ReadableVec<Height, Cents>,
         V2: ReadableVec<Height, Cents>,
     {
-        self.transfer_volume.compute_columns2(
-            max_from,
-            |id| {
-                &id.select(sources)
-                    .activity
-                    .transfer_volume
-                    .cumulative
-                    .cents
-                    .height
-            },
-            |_| under_1h_transfer_volume_cumulative,
-            |_, base, under_1h| base - under_1h,
-            exit,
-        )?;
-        self.value_destroyed.compute_columns2(
-            max_from,
-            |id| {
-                &id.select(sources)
-                    .realized
-                    .value_destroyed
-                    .cumulative
-                    .cents
-                    .height
-            },
-            |_| under_1h_value_destroyed_cumulative,
-            |_, base, under_1h| base - under_1h,
-            exit,
-        )?;
+        for id in UTXOAllAndSthId::ALL {
+            let source = id.select(sources);
+            id.select_mut(&mut self.transfer_volume)
+                .cumulative
+                .height
+                .compute_transform2(
+                    max_from,
+                    &source.activity.transfer_volume.cumulative.cents.height,
+                    under_1h_transfer_volume_cumulative,
+                    |(height, base, under_1h, _)| (height, base - under_1h),
+                    exit,
+                )?;
+            id.select_mut(&mut self.value_destroyed)
+                .cumulative
+                .height
+                .compute_transform2(
+                    max_from,
+                    &source.realized.value_destroyed.cumulative.cents.height,
+                    under_1h_value_destroyed_cumulative,
+                    |(height, base, under_1h, _)| (height, base - under_1h),
+                    exit,
+                )?;
+        }
 
         let Self {
             ratio,
@@ -206,34 +165,38 @@ impl AdjustedSoprVecs {
             value_destroyed,
         } = self;
         for id in UTXOAllAndSthId::ALL {
-            id.select_mut(ratio).compute_columns2(
-                max_from,
-                |window| {
-                    &window
-                        .select(&id.select(&transfer_volume.series).sum)
-                        .height
-                },
-                |window| {
-                    &window
-                        .select(&id.select(&value_destroyed.series).sum)
-                        .height
-                },
-                |_, transfer_volume, value_destroyed| {
-                    SoprRatio::apply(transfer_volume, value_destroyed)
-                },
-                exit,
-            )?;
+            for ((target, transferred), destroyed) in id
+                .select_mut(ratio)
+                .as_mut_array()
+                .into_iter()
+                .zip(id.select(transfer_volume).sum.as_array())
+                .zip(id.select(value_destroyed).sum.as_array())
+            {
+                target.compute_binary::<_, _, SoprRatio>(
+                    max_from,
+                    &transferred.height,
+                    &destroyed.height,
+                    exit,
+                )?;
+            }
         }
 
         Ok(())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        let mut vecs = vec![
-            self.transfer_volume.stored_mut(),
-            self.value_destroyed.stored_mut(),
-        ];
-        vecs.extend(self.ratio.iter_mut().map(|value| value.stored_mut()));
+        let mut vecs: Vec<&mut dyn AnyStoredVec> = self
+            .transfer_volume
+            .iter_mut()
+            .chain(self.value_destroyed.iter_mut())
+            .map(|v| &mut v.cumulative.height as &mut dyn AnyStoredVec)
+            .collect();
+        vecs.extend(
+            self.ratio
+                .iter_mut()
+                .flat_map(|value| value.as_mut_array())
+                .map(|value| &mut value.height as &mut dyn AnyStoredVec),
+        );
         vecs
     }
 }

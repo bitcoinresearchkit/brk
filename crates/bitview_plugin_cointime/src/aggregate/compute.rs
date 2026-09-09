@@ -1,6 +1,6 @@
 use std::iter;
 
-use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregate};
+use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS};
 use bitview_compute::WeightedCohortState;
 use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
@@ -8,9 +8,7 @@ use bitview_vecs::PerBlock;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
-use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, EagerVec, PcoVec, ReadOnlyClone, ReadableVec, WritableVec,
-};
+use vecdb::{AnyStoredVec, AnyVec, EagerVec, PcoVec, ReadableVec, WritableVec};
 
 use super::{super::AgeRangeVecs, Sources, Vecs};
 
@@ -40,14 +38,14 @@ pub fn compute(
             .cents
             .height
     });
-    let weights = &age_range.activity.height.read_only_clone();
+    let weights = AgeRange::from_fn(|id| id.select(&age_range.activity_sources));
 
     vecs.sources.compute_primary(
         starting_height,
         &supplies,
         &loss_supplies,
         &realized_caps,
-        weights,
+        &weights,
         &mut all_supply_in_loss_share.height,
         exit,
     )
@@ -61,7 +59,7 @@ impl Sources {
         supplies: &AgeRange<&S>,
         loss_supplies: &AgeRange<&L>,
         realized_caps: &AgeRange<&C>,
-        weights: &W,
+        weights: &AgeRange<&W>,
         all_supply_in_loss_share: &mut EagerVec<PcoVec<Height, BoundedRatio>>,
         exit: &Exit,
     ) -> Result<()>
@@ -69,7 +67,7 @@ impl Sources {
         S: ReadableVec<Height, Sats>,
         L: ReadableVec<Height, Sats>,
         C: ReadableVec<Height, Cents>,
-        W: ReadableVec<Height, AgeRange<BoundedRatio>>,
+        W: ReadableVec<Height, BoundedRatio>,
     {
         let source_version = Version::combine_all(
             supplies
@@ -77,7 +75,7 @@ impl Sources {
                 .map(|vec| vec.version())
                 .chain(loss_supplies.iter().map(|vec| vec.version()))
                 .chain(realized_caps.iter().map(|vec| vec.version()))
-                .chain(iter::once(weights.version())),
+                .chain(weights.iter().map(|vec| vec.version())),
         );
 
         for vec in self.primary_vecs_mut() {
@@ -103,7 +101,7 @@ impl Sources {
             .map(|vec| vec.len())
             .chain(loss_supplies.iter().map(|vec| vec.len()))
             .chain(realized_caps.iter().map(|vec| vec.len()))
-            .chain(iter::once(weights.len()))
+            .chain(weights.iter().map(|vec| vec.len()))
             .min()
             .unwrap_or_default();
 
@@ -123,9 +121,10 @@ impl Sources {
                 id.select(realized_caps)
                     .collect_range_at(aggregate_start, aggregate_chunk_end)
             });
-            let weight_batch = weights.collect_range_at(chunk_start, chunk_end);
+            let weight_batch =
+                AgeRange::from_fn(|id| id.select(weights).collect_range_at(chunk_start, chunk_end));
 
-            for (offset, weights) in weight_batch.iter().enumerate() {
+            for offset in 0..chunk_end - chunk_start {
                 let mut terms = ByTerm::<WeightedCohortState>::default();
                 for &id in AgeRangeId::ALL {
                     let term = if TERM_FILTERS.short.includes(id.filter()) {
@@ -137,7 +136,7 @@ impl Sources {
                         id.select(&supply_batches)[offset],
                         id.select(&loss_batches)[offset],
                         id.select(&cap_batches)[offset],
-                        *id.get(weights),
+                        id.select(&weight_batch)[offset],
                     );
                 }
                 let all = terms.short.merged(terms.long);
@@ -159,43 +158,56 @@ impl Sources {
     }
 
     fn push(&mut self, terms: ByTerm<WeightedCohortState>, all: WeightedCohortState) {
-        self.awake_supply.push(ByTerm {
-            short: terms.short.weighted_supply,
-            long: terms.long.weighted_supply,
-        });
-        self.dormant_supply.push(ByTerm {
-            short: terms.short.complement_supply,
-            long: terms.long.complement_supply,
-        });
-        self.awake_cap.push(ByTerm {
-            short: terms.short.weighted_cap,
-            long: terms.long.weighted_cap,
-        });
-        self.awake_price.push(UTXOAggregate {
-            all: all.realized_price(),
-            sth: terms.short.realized_price(),
-            lth: terms.long.realized_price(),
-        });
-        self.supply_in_loss_share.push(ByTerm {
-            short: terms.short.supply_in_loss.value(),
-            long: terms.long.supply_in_loss.value(),
-        });
+        for (target, value) in [
+            (&mut self.awake_supply.all, all.weighted_supply),
+            (&mut self.awake_supply.sth, terms.short.weighted_supply),
+            (&mut self.awake_supply.lth, terms.long.weighted_supply),
+            (&mut self.dormant_supply.all, all.complement_supply),
+            (&mut self.dormant_supply.sth, terms.short.complement_supply),
+            (&mut self.dormant_supply.lth, terms.long.complement_supply),
+        ] {
+            target.push(value);
+        }
+        for (target, value) in [
+            (&mut self.awake_cap.all, all.weighted_cap),
+            (&mut self.awake_cap.sth, terms.short.weighted_cap),
+            (&mut self.awake_cap.lth, terms.long.weighted_cap),
+            (&mut self.awake_price.all, all.realized_price()),
+            (&mut self.awake_price.sth, terms.short.realized_price()),
+            (&mut self.awake_price.lth, terms.long.realized_price()),
+        ] {
+            target.push(value);
+        }
+        self.supply_in_loss_share
+            .short
+            .push(terms.short.supply_in_loss.value());
+        self.supply_in_loss_share
+            .long
+            .push(terms.long.supply_in_loss.value());
     }
 
-    fn primary_vecs_mut(&mut self) -> [&mut dyn AnyStoredVec; 5] {
-        [
-            &mut self.awake_supply,
-            &mut self.dormant_supply,
-            &mut self.awake_cap,
-            &mut self.awake_price,
-            &mut self.supply_in_loss_share,
+    fn primary_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        vec![
+            &mut self.awake_supply.all,
+            &mut self.awake_supply.sth,
+            &mut self.awake_supply.lth,
+            &mut self.dormant_supply.all,
+            &mut self.dormant_supply.sth,
+            &mut self.dormant_supply.lth,
+            &mut self.awake_cap.all,
+            &mut self.awake_cap.sth,
+            &mut self.awake_cap.lth,
+            &mut self.awake_price.all,
+            &mut self.awake_price.sth,
+            &mut self.awake_price.lth,
+            &mut self.supply_in_loss_share.short,
+            &mut self.supply_in_loss_share.long,
         ]
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bitview_vecs::ColumnarPerBlock;
     use tempfile::tempdir;
     use vecdb::{CacheBudget, Database, ImportableVec};
 
@@ -213,18 +225,12 @@ mod tests {
             PcoVec::<Height, Sats>::forced_import(&db, "supply", Version::ONE).unwrap();
         let mut loss = PcoVec::<Height, Sats>::forced_import(&db, "loss", Version::ONE).unwrap();
         let mut cap = PcoVec::<Height, Cents>::forced_import(&db, "cap", Version::ONE).unwrap();
-        let mut weights = ColumnarPerBlock::<BoundedRatio, AgeRangeId, ()>::forced_import(
-            cache,
-            &db,
-            "weights",
-            Version::ONE,
-            |_| (),
-        )
-        .unwrap();
+        let mut weights =
+            PcoVec::<Height, BoundedRatio>::forced_import(&db, "weights", Version::ONE).unwrap();
         let length = WRITE_INTERVAL + 3;
         for height in 0..length {
             supply.push(Sats::from(100_u64));
-            weights.push(AgeRange::from_fn(|_| BoundedRatio::from(0.5)));
+            weights.push(BoundedRatio::from(0.5));
             if height < length - 1 {
                 loss.push(Sats::from(20_u64));
                 cap.push(Cents::from(1_000_u64));
@@ -240,7 +246,7 @@ mod tests {
             if rewrite {
                 weights.truncate_if_needed_at(start).unwrap();
                 for _ in start..length {
-                    weights.push(AgeRange::from_fn(|_| BoundedRatio::ONE));
+                    weights.push(BoundedRatio::ONE);
                 }
                 weights.write().unwrap();
             }
@@ -250,7 +256,7 @@ mod tests {
                     &AgeRange::from_fn(|_| &supply),
                     &AgeRange::from_fn(|_| &loss),
                     &AgeRange::from_fn(|_| &cap),
-                    &weights.height,
+                    &AgeRange::from_fn(|_| &weights),
                     &mut loss_share,
                     &Exit::default(),
                 )
@@ -270,9 +276,10 @@ mod tests {
                 };
                 let (awake, _) = WeightedCohortState::split_supply(Sats::from(100_u64), weight);
                 if height < length - 1 {
-                    let terms = sources.awake_supply.collect_one_at(height).unwrap();
+                    let short = sources.awake_supply.sth.collect_one_at(height).unwrap();
+                    let long = sources.awake_supply.lth.collect_one_at(height).unwrap();
                     assert_eq!(
-                        terms.short + terms.long,
+                        short + long,
                         Sats::from(u64::from(awake) * AgeRangeId::ALL.len() as u64)
                     );
                 }

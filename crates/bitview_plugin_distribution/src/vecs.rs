@@ -1,6 +1,6 @@
 use std::{mem, path::PathBuf};
 
-use bitview_cohort::{AddrTypeId, AgeRange, AgeRangeId, CohortContext, EntryPrice};
+use bitview_cohort::{AddrTypeId, AgeRange, CohortContext, EntryPrice};
 use bitview_collections::Windows;
 use bitview_plugin::{ComputePlugin, ImportContext, Plugin, PluginStorage, UpdateContext};
 use bitview_plugin_inputs::ByTypeVecs;
@@ -8,10 +8,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_outputs::ByTypeVecs as OutputsByTypeVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    PerBlockCumulativeRolling,
-};
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::{Cents, Height, StoredF64, SupplyState, Version};
@@ -62,12 +59,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// to the age range in which they accrue. One coin day is one BTC remaining
     /// unspent for one day.
     #[traversable(wrap = "frameworks/cointime/age_range")]
-    pub coindays_created: ColumnarPerBlockCumulativeRolling<
-        StoredF64,
-        AgeRangeId,
-        AgeRange<LazyColumnPerBlockCumulativeRolling<StoredF64, AgeRangeId>>,
-        M,
-    >,
+    pub coindays_created: AgeRange<PerBlockCumulativeRolling<StoredF64, M>>,
     #[traversable(wrap = "cointime/activity")]
     /// Coin blocks destroyed by spent outputs: each spent output's value in
     /// BTC multiplied by its age in blocks, summed over the represented block.
@@ -223,24 +215,19 @@ impl Vecs {
 
             cohorts,
 
-            coindays_created: ColumnarPerBlockCumulativeRolling::forced_import(
-                context.cache_budget(),
-                &db,
-                &CohortContext::Utxo.prefixed("age_range_coindays_created_cumulative"),
-                version + COINDAYS_CREATED_VERSION,
-                |source| {
-                    AgeRangeId::series(CohortContext::Utxo, |column, name| {
-                        LazyColumnPerBlockCumulativeRolling::new(
-                            &format!("{name}_coindays_created"),
-                            version,
-                            source,
-                            column,
-                            mappings,
-                            cached_starts,
-                        )
-                    })
-                },
-            )?,
+            coindays_created: AgeRange::try_from_fn(|id| {
+                PerBlockCumulativeRolling::forced_import(
+                    context.cache_budget(),
+                    &db,
+                    &format!(
+                        "{}_coindays_created",
+                        CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                    ),
+                    version + COINDAYS_CREATED_VERSION + Version::ONE,
+                    mappings,
+                    cached_starts,
+                )
+            })?,
 
             coinblocks_destroyed: PerBlockCumulativeRolling::forced_import(
                 context.cache_budget(),
@@ -285,7 +272,13 @@ impl Vecs {
             .min(Height::from(self.supply_state.len()))
             .min(self.addr_state.min_stamped_len())
             .min(Height::from(self.addrs.min_resume_len()))
-            .min(Height::from(self.coindays_created.cumulative.len()))
+            .min(Height::from(
+                self.coindays_created
+                    .iter()
+                    .map(|v| v.cumulative.height.len())
+                    .min()
+                    .unwrap_or_default(),
+            ))
             .min(Height::from(self.coinblocks_destroyed.block.len()))
     }
 }
@@ -360,9 +353,9 @@ impl ComputePlugin for Vecs {
         self.supply_state
             .validate_computed_version_or_reset(base_version)?;
         self.cohorts.validate_computed_versions(base_version)?;
-        self.coindays_created
-            .cumulative
-            .validate_computed_version_or_reset(base_version)?;
+        for vec in self.coindays_created.iter_mut() {
+            vec.validate_computed_version_or_reset(base_version)?;
+        }
         debug!("computed versions validated");
 
         let starting_lengths = indexer.safe_lengths();
@@ -570,9 +563,9 @@ impl ComputePlugin for Vecs {
         let type_supply = &self.cohorts.supply.total.cohorts.utxo.type_;
         let type_outputs = &self.cohorts.outputs.unspent_count.cohorts.utxo.type_;
         let type_supply_sats =
-            AddrTypeId::series(|column, _| &type_supply.get(column.output_type()).sats.height);
+            AddrTypeId::series(|id, _| &type_supply.get(id.output_type()).sats.height);
         let type_utxo_counts =
-            AddrTypeId::series(|column, _| &type_outputs.get(column.output_type()).height);
+            AddrTypeId::series(|id, _| &type_outputs.get(id.output_type()).height);
         self.addrs
             .reused
             .compute_rest(&starting_lengths, &type_supply_sats, exit)?;
@@ -583,9 +576,8 @@ impl ComputePlugin for Vecs {
             .exposed
             .compute_rest(&starting_lengths, &type_supply_sats, exit)?;
 
-        let type_funded_addr_counts = AddrTypeId::series(|column, _| {
-            &column.select(&self.addrs.funded.counts.by_addr_type).height
-        });
+        let type_funded_addr_counts =
+            AddrTypeId::series(|id, _| &id.select(&self.addrs.funded.counts.by_addr_type).height);
         self.addrs.avg_amount.compute(
             &type_supply_sats,
             &type_utxo_counts,

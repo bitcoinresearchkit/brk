@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Unrealized\_Profit
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13768](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13768)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13235](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13235)
 
 ## Properties
 
@@ -14,15 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13768](https://githu
 
 > **age**: [`SeriesTree_Cohorts_Unrealized_Profit_Age`](SeriesTree_Cohorts_Unrealized_Profit_Age.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13770](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13770)
-
-***
-
-### ageRangeMatrix
-
-> **ageRangeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:13776](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13776)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13237](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13237)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13776](https://githu
 
 > **all**: [`CentsUsdPattern`](CentsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13769](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13769)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13236](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13236)
 
 ***
 
@@ -38,15 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13769](https://githu
 
 > **class**: [`SeriesTree_Cohorts_Unrealized_Profit_Class`](SeriesTree_Cohorts_Unrealized_Profit_Class.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13772](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13772)
-
-***
-
-### classMatrix
-
-> **classMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:13778](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13778)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13239](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13239)
 
 ***
 
@@ -54,15 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13778](https://githu
 
 > **entry**: [`DiscountPremiumPattern14`](DiscountPremiumPattern14.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13773](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13773)
-
-***
-
-### entryMatrix
-
-> **entryMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:13779](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13779)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13240](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13240)
 
 ***
 
@@ -70,23 +46,15 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13779](https://githu
 
 > **epoch**: [`SeriesTree_Cohorts_Unrealized_Profit_Epoch`](SeriesTree_Cohorts_Unrealized_Profit_Epoch.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13771](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13771)
-
-***
-
-### epochMatrix
-
-> **epochMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:13777](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13777)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13238](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13238)
 
 ***
 
 ### term
 
-> **term**: [`LongShortPattern15`](LongShortPattern15.md)
+> **term**: [`LongShortPattern16`](LongShortPattern16.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13774](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13774)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13241](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13241)
 
 ***
 
@@ -94,12 +62,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13774](https://githu
 
 > **type**: [`EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern11`](EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern11.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13775](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13775)
-
-***
-
-### typeMatrix
-
-> **typeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:13780](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13780)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13242](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13242)

@@ -6,23 +6,23 @@
 
 # Interface: SeriesTree\_Cohorts\_Activity\_TransferVolume
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11626](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11626)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11231](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11231)
 
 ## Properties
 
 ### addrBalance
 
-> **addrBalance**: [`SeriesTree_Cohorts_Activity_TransferVolume_AddrBalance`](SeriesTree_Cohorts_Activity_TransferVolume_AddrBalance.md)
+> **addrBalance**: [`OverRangeUnderPattern3`](OverRangeUnderPattern3.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11636](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11636)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11240](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11240)
 
 ***
 
 ### age
 
-> **age**: [`OverRangeUnderPattern2`](OverRangeUnderPattern2.md)
+> **age**: [`SeriesTree_Cohorts_Activity_TransferVolume_Age`](SeriesTree_Cohorts_Activity_TransferVolume_Age.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11628](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11628)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11233](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11233)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11628](https://githu
 
 > **all**: [`AverageBlockCumulativeSumPattern2`](AverageBlockCumulativeSumPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11627](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11627)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11232](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11232)
 
 ***
 
@@ -38,15 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11627](https://githu
 
 > **class**: [`SeriesTree_Cohorts_Activity_TransferVolume_Class`](SeriesTree_Cohorts_Activity_TransferVolume_Class.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11630](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11630)
-
-***
-
-### cumulative
-
-> **cumulative**: [`SeriesTree_Cohorts_Activity_TransferVolume_Cumulative`](SeriesTree_Cohorts_Activity_TransferVolume_Cumulative.md)
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:11635](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11635)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11235](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11235)
 
 ***
 
@@ -54,7 +46,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11635](https://githu
 
 > **entry**: [`DiscountPremiumPattern2`](DiscountPremiumPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11631](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11631)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11236](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11236)
 
 ***
 
@@ -62,7 +54,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11631](https://githu
 
 > **epoch**: [`SeriesTree_Cohorts_Activity_TransferVolume_Epoch`](SeriesTree_Cohorts_Activity_TransferVolume_Epoch.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11629](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11629)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11234](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11234)
 
 ***
 
@@ -70,7 +62,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11629](https://githu
 
 > **inLoss**: [`SeriesTree_Cohorts_Activity_TransferVolume_InLoss`](SeriesTree_Cohorts_Activity_TransferVolume_InLoss.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11638](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11638)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11242](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11242)
 
 ***
 
@@ -78,7 +70,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11638](https://githu
 
 > **inProfit**: [`SeriesTree_Cohorts_Activity_TransferVolume_InProfit`](SeriesTree_Cohorts_Activity_TransferVolume_InProfit.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11637](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11637)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11241](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11241)
 
 ***
 
@@ -86,7 +78,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11637](https://githu
 
 > **term**: [`LongShortPattern2`](LongShortPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11633](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11633)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11238](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11238)
 
 ***
 
@@ -94,12 +86,12 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11633](https://githu
 
 > **type**: [`SeriesTree_Cohorts_Activity_TransferVolume_Type`](SeriesTree_Cohorts_Activity_TransferVolume_Type.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11634](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11634)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11239](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11239)
 
 ***
 
 ### utxoAmount
 
-> **utxoAmount**: [`SeriesTree_Cohorts_Activity_TransferVolume_UtxoAmount`](SeriesTree_Cohorts_Activity_TransferVolume_UtxoAmount.md)
+> **utxoAmount**: [`OverRangeUnderPattern3`](OverRangeUnderPattern3.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11632](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11632)
+Defined in: [Developer/mono/modules/bitview-client/index.js:11237](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L11237)

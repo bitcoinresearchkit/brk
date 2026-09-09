@@ -22,9 +22,9 @@ where
     }
 }
 
-/// Type-erased trait for vecs that can produce a boxed row-by-row [`ValueWriter`].
+/// Type-erased trait for vecs that can produce a boxed value-by-value [`ValueWriter`].
 pub trait AnyVecWithWriter: AnyReadableVec {
-    /// Create a value writer that can be advanced row by row
+    /// Create a value writer that can be advanced value by value
     fn create_writer(&self, from: Option<i64>, to: Option<i64>) -> Box<dyn ValueWriter + '_>;
 }
 

@@ -54,7 +54,7 @@ impl CostBasisVecs {
         self.per_coin
             .iter_mut()
             .chain(self.per_dollar.iter_mut())
-            .map(|percentiles| percentiles.stored_mut())
+            .flat_map(DailyPercentilesVecs::collect_vecs_mut)
     }
 
     pub fn minimum_len(&mut self) -> usize {

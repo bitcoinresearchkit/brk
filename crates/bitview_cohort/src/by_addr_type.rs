@@ -7,13 +7,7 @@ use rayon::prelude::*;
 use super::Filter;
 
 #[cfg(feature = "storage")]
-use std::array;
-
-#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 pub const P2PK65: &str = "p2pk65";
 pub const P2PK33: &str = "p2pk33";
@@ -56,44 +50,6 @@ impl AddrTypeId {
     #[inline]
     pub const fn index(self) -> usize {
         self as usize
-    }
-}
-#[cfg(feature = "storage")]
-impl ColumnId for AddrTypeId {
-    type Row<T>
-        = [T; ADDR_TYPE_COUNT]
-    where
-        T: VecValue;
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = Self::ALL;
-    #[inline]
-    fn index(self) -> usize {
-        Self::index(self)
-    }
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
-    }
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
-    }
-    #[inline]
-    fn from_fn<T, F>(mut create: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        array::from_fn(|index| create(ADDR_TYPE_IDS[index]))
-    }
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(create)
     }
 }
 
@@ -405,25 +361,23 @@ impl<T> ByAddrType<Option<T>> {
 mod tests {
     #[cfg(feature = "storage")]
     #[cfg(feature = "storage")]
-    use vecdb::ColumnId;
-
     use super::{ADDR_TYPE_IDS, AddrTypeId, ByAddrType};
 
     #[test]
-    fn column_order_matches_named_series() {
+    fn cohort_order_matches_named_series() {
         assert_eq!(AddrTypeId::ALL, ADDR_TYPE_IDS);
 
-        let series = AddrTypeId::series(|column, _| column);
+        let series = AddrTypeId::series(|id, _| id);
         assert!(series.values().copied().eq(ADDR_TYPE_IDS));
     }
 
     #[cfg(feature = "storage")]
     #[test]
-    fn row_order_matches_column_indexes() {
-        let row = AddrTypeId::from_fn(|column| column.index());
+    fn iteration_order_matches_cohort_indexes() {
+        let values = ByAddrType::from_fn(|id| id.index());
 
-        for column in ADDR_TYPE_IDS {
-            assert_eq!(*column.get(&row), column.index());
+        for id in ADDR_TYPE_IDS {
+            assert_eq!(*id.select(&values), id.index());
         }
     }
 

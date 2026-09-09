@@ -1,11 +1,10 @@
-use bitview_cohort::AddrTypeId;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, ColumnId, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use super::AddrCountsVecs;
 
@@ -37,20 +36,20 @@ impl TotalAddrCountVecs {
         empty_addr_count: &AddrCountsVecs,
         exit: &Exit,
     ) -> Result<()> {
-        let addr_count = addr_count.height.read_only_clone();
-        let empty_addr_count = empty_addr_count.height.read_only_clone();
-        self.height.compute_transform2(
-            max_from,
-            &addr_count,
-            &empty_addr_count,
-            |(height, addr_count, empty_addr_count, ..)| {
-                let total = AddrTypeId::from_fn(|column| {
-                    *column.get(&addr_count) + *column.get(&empty_addr_count)
-                });
-                (height, total)
-            },
-            exit,
-        )?;
+        for ((target, funded), empty) in self
+            .stored
+            .iter_mut()
+            .zip(addr_count.stored.iter())
+            .zip(empty_addr_count.stored.iter())
+        {
+            target.compute_transform2(
+                max_from,
+                funded,
+                empty,
+                |(height, funded, empty, _)| (height, funded + empty),
+                exit,
+            )?;
+        }
 
         Ok(())
     }

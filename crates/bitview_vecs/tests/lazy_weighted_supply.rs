@@ -3,12 +3,12 @@ mod common;
 use crate::common::CACHE_BUDGET;
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_compute::WeightedCohortState;
-use bitview_vecs::{ColumnarPerBlock, LazySpotValuePerBlock};
+use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
 use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, CachedReadableVec, CachedVec, Database, ImportableVec, PcoVec, ReadOnlyClone,
-    ReadableCloneableVec, ReadableColumnarVec, ReadableVec, WritableVec,
+    ReadableVec, WritableVec,
 };
 
 #[test]
@@ -22,22 +22,24 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
         [0usize, 2, 4].map(Height::from),
     ))
     .read_only_boxed_clone();
-    let mut supply = ColumnarPerBlock::<Sats, AgeRangeId, ()>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "supply",
-        Version::ONE,
-        |_| (),
-    )
-    .unwrap();
-    let mut weights = ColumnarPerBlock::<BoundedRatio, AgeRangeId, ()>::forced_import(
-        &CACHE_BUDGET,
-        &db,
-        "weights",
-        Version::ONE,
-        |_| (),
-    )
-    .unwrap();
+    let mut supply: AgeRange<StoredSeries<Height, Sats>> = AgeRange::from_fn(|id| {
+        import_stored(
+            &CACHE_BUDGET,
+            &db,
+            &format!("supply_{}", id.index()),
+            Version::ONE,
+        )
+        .unwrap()
+    });
+    let mut weights: AgeRange<StoredSeries<Height, BoundedRatio>> = AgeRange::from_fn(|id| {
+        import_stored(
+            &CACHE_BUDGET,
+            &db,
+            &format!("weights_{}", id.index()),
+            Version::ONE,
+        )
+        .unwrap()
+    });
     let mut spot = PcoVec::<Height, Cents>::forced_import(&db, "spot", Version::ONE).unwrap();
     let inputs = [
         (Sats::from(123_456_789_u64), BoundedRatio::from(0.321)),
@@ -47,23 +49,25 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
         (Sats::from(99_u64), BoundedRatio::NAN),
     ];
     for (s, w) in inputs {
-        supply.push(AgeRange::from_fn(|_| s));
-        weights.push(AgeRange::from_fn(|_| w));
+        for v in supply.iter_mut() {
+            v.push(s);
+        }
+        for v in weights.iter_mut() {
+            v.push(w);
+        }
         spot.push(Cents::from(1_000_000_u64));
     }
-    supply.write().unwrap();
-    weights.write().unwrap();
+    for v in supply.iter_mut() {
+        v.write().unwrap();
+    }
+    for v in weights.iter_mut() {
+        v.write().unwrap();
+    }
     spot.write().unwrap();
-    let supply_cache = supply.height.read_only_clone();
-    let weight_cache = weights.height.read_only_clone();
     let spot = CachedVec::wrap(spot.read_only_clone()).cached_boxed_clone();
     for &id in AgeRangeId::ALL {
-        let raw = supply_cache
-            .column("supply", Version::ONE, id)
-            .read_only_boxed_clone();
-        let weight = weight_cache
-            .column("weight", Version::ONE, id)
-            .read_only_boxed_clone();
+        let raw = id.select(&supply).read_only_boxed_clone();
+        let weight = id.select(&weights).read_only_boxed_clone();
         let weighted = LazySpotValuePerBlock::from_weighted_supply::<false>(
             "awake_supply",
             Version::ONE,
@@ -106,12 +110,24 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
                 Some(Some(expected.1))
             );
         }
-        supply.truncate_if_needed_at(4).unwrap();
-        weights.truncate_if_needed_at(4).unwrap();
-        supply.push(AgeRange::from_fn(|_| Sats::from(101_u64)));
-        weights.push(AgeRange::from_fn(|_| BoundedRatio::ONE));
-        supply.write().unwrap();
-        weights.write().unwrap();
+        for v in supply.iter_mut() {
+            v.truncate_if_needed_at(4).unwrap();
+        }
+        for v in weights.iter_mut() {
+            v.truncate_if_needed_at(4).unwrap();
+        }
+        for v in supply.iter_mut() {
+            v.push(Sats::from(101_u64));
+        }
+        for v in weights.iter_mut() {
+            v.push(BoundedRatio::ONE);
+        }
+        for v in supply.iter_mut() {
+            v.write().unwrap();
+        }
+        for v in weights.iter_mut() {
+            v.write().unwrap();
+        }
         assert_eq!(
             weighted.sats.height.collect_one_at(4),
             Some(Sats::from(101_u64))
@@ -125,12 +141,24 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
             complement.sats.day1.collect_one_at(2),
             Some(Some(Sats::ZERO))
         );
-        // Restore before validating the next age column.
-        supply.truncate_if_needed_at(4).unwrap();
-        weights.truncate_if_needed_at(4).unwrap();
-        supply.push(AgeRange::from_fn(|_| inputs[4].0));
-        weights.push(AgeRange::from_fn(|_| inputs[4].1));
-        supply.write().unwrap();
-        weights.write().unwrap();
+        // Restore before validating the next age range.
+        for v in supply.iter_mut() {
+            v.truncate_if_needed_at(4).unwrap();
+        }
+        for v in weights.iter_mut() {
+            v.truncate_if_needed_at(4).unwrap();
+        }
+        for v in supply.iter_mut() {
+            v.push(inputs[4].0);
+        }
+        for v in weights.iter_mut() {
+            v.push(inputs[4].1);
+        }
+        for v in supply.iter_mut() {
+            v.write().unwrap();
+        }
+        for v in weights.iter_mut() {
+            v.write().unwrap();
+        }
     }
 }

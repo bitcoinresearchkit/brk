@@ -9,7 +9,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, CostBasisByPercentile, Day1, PERCENTILES_LEN, Sats, StoredF64, Version};
-use vecdb::{AnyStoredVec, AnyVec, ColumnId, ReadableVec, VecValue};
+use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecValue, WritableVec};
 
 use super::Vecs;
 use crate::{
@@ -21,16 +21,26 @@ const WRITE_INTERVAL_DAYS: usize = 100;
 const WEIGHTED_URPD_VERSION: Version = Version::TWO;
 
 impl ModeVecs {
-    fn stored_vecs_mut(&mut self) -> [&mut dyn AnyStoredVec; 2] {
-        [self.loss_threshold.stored_mut(), self.prices.stored_mut()]
+    fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+        self.loss_threshold_stored
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .chain(
+                self.prices_stored
+                    .iter_mut()
+                    .map(|v| v as &mut dyn AnyStoredVec),
+            )
     }
 
     fn push(&mut self, result: &ModeResult) {
-        self.loss_threshold.push(LossPercentileId::from_fn(|id| {
-            *id.select(&result.loss_threshold)
-        }));
-        self.prices
-            .push(PriceBandId::from_fn(|id| *id.select(&result.prices)));
+        for id in LossPercentileId::ALL {
+            id.select_mut(&mut self.loss_threshold_stored)
+                .push(*id.select(&result.loss_threshold));
+        }
+        for &id in PriceBandId::ALL {
+            id.select_mut(&mut self.prices_stored)
+                .push(*id.select(&result.prices));
+        }
     }
 }
 

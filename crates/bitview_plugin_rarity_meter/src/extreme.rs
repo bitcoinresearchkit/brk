@@ -4,18 +4,18 @@ use bitview_compute::{ExactOrderStats, FenwickTree, NumericValue};
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, PercentPerBlock};
+use bitview_vecs::{PerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, StoredU8, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, ColumnId, Database, ReadableVec, Rw, StorageMode, VecIndex,
+    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableVec, Rw, StorageMode, VecIndex,
     WritableVec,
 };
 
-use crate::threshold_vecs::{ExtremeThresholdId, ThresholdVecs};
+use crate::threshold_vecs::ThresholdVecs;
 
 const MIN_HISTORY_BLOCKS: usize = 210_000;
 const WRITE_INTERVAL: usize = 10_000;
@@ -77,12 +77,7 @@ where
     /// the represented observation. An upper-tail event is extreme at or above
     /// its boundary; a lower-tail event is extreme at or below it. The series'
     /// model determines the history and direction.
-    pub thresholds: ColumnarPerBlock<
-        T,
-        ExtremeThresholdId,
-        ThresholdVecs<LazyColumnPerBlock<T, ExtremeThresholdId>>,
-        M,
-    >,
+    pub thresholds: ThresholdVecs<PerBlock<T, M>>,
     /// Historical tail share: the fraction of accepted observations at least as
     /// extreme as the represented source value in the configured upper or lower
     /// tail. A smaller percentage means a rarer observation. The represented
@@ -108,22 +103,30 @@ where
         version: Version,
         mappings: &MappingsVecs,
     ) -> Result<Self> {
-        let thresholds = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &format!("{name}_thresholds"),
-            version,
-            |source| {
-                ExtremeThresholdId::series(|threshold| {
-                    let series_name = match threshold {
-                        ExtremeThresholdId::Pct0_1 => format!("{name}_threshold_pct0_1"),
-                        ExtremeThresholdId::Pct0_05 => format!("{name}_threshold_pct0_05"),
-                        ExtremeThresholdId::Pct0_025 => format!("{name}_threshold"),
-                    };
-                    LazyColumnPerBlock::new(&series_name, version, source, threshold, mappings)
-                })
-            },
-        )?;
+        let version = version + Version::ONE;
+        let thresholds = ThresholdVecs {
+            threshold_pct0_1: PerBlock::forced_import(
+                cache,
+                db,
+                &format!("{name}_threshold_pct0_1"),
+                version,
+                mappings,
+            )?,
+            threshold_pct0_05: PerBlock::forced_import(
+                cache,
+                db,
+                &format!("{name}_threshold_pct0_05"),
+                version,
+                mappings,
+            )?,
+            threshold_pct0_025: PerBlock::forced_import(
+                cache,
+                db,
+                &format!("{name}_threshold"),
+                version,
+                mappings,
+            )?,
+        };
 
         Ok(Self {
             thresholds,
@@ -175,7 +178,9 @@ where
     ) -> Result<()> {
         let dependency_version = source.version();
         for output in [
-            &mut self.thresholds.height as &mut dyn AnyStoredVec,
+            &mut self.thresholds.threshold_pct0_1.height as &mut dyn AnyStoredVec,
+            &mut self.thresholds.threshold_pct0_05.height,
+            &mut self.thresholds.threshold_pct0_025.height,
             &mut self.tail.ppm.height,
             &mut self.rank.height,
         ] {
@@ -184,7 +189,11 @@ where
 
         let source_end = source.len();
         let start = [
-            self.thresholds.height.len(),
+            self.thresholds
+                .iter()
+                .map(|v| v.height.len())
+                .min()
+                .unwrap_or_default(),
             self.tail.ppm.height.len(),
             self.rank.height.len(),
             indexer.safe_lengths().height.to_usize(),
@@ -194,7 +203,9 @@ where
         .min()
         .unwrap_or_default();
 
-        self.thresholds.height.any_truncate_if_needed_at(start)?;
+        for v in self.thresholds.iter_mut() {
+            v.height.any_truncate_if_needed_at(start)?;
+        }
         self.tail.ppm.height.any_truncate_if_needed_at(start)?;
         self.rank.height.any_truncate_if_needed_at(start)?;
 
@@ -301,11 +312,17 @@ where
 
     fn push_state(&mut self, state: EventState) {
         self.thresholds
-            .push(ExtremeThresholdId::from_fn(|threshold| match threshold {
-                ExtremeThresholdId::Pct0_1 => T::from(state.thresholds.pct0_1),
-                ExtremeThresholdId::Pct0_05 => T::from(state.thresholds.pct0_05),
-                ExtremeThresholdId::Pct0_025 => T::from(state.thresholds.pct0_025),
-            }));
+            .threshold_pct0_1
+            .height
+            .push(T::from(state.thresholds.pct0_1));
+        self.thresholds
+            .threshold_pct0_05
+            .height
+            .push(T::from(state.thresholds.pct0_05));
+        self.thresholds
+            .threshold_pct0_025
+            .height
+            .push(T::from(state.thresholds.pct0_025));
         self.tail
             .ppm
             .height
@@ -321,7 +338,9 @@ where
     ) -> Result<()> {
         if (height_index + 1).is_multiple_of(WRITE_INTERVAL) || height_index + 1 == source_end {
             let _lock = exit.lock();
-            self.thresholds.write()?;
+            for v in self.thresholds.iter_mut() {
+                v.height.write()?;
+            }
             self.tail.ppm.height.write()?;
             self.rank.height.write()?;
         }

@@ -90,7 +90,6 @@ impl Carrier {
 #[cfg(test)]
 mod tests {
     use brk_types::{Bytes, OP_RETURN_KIND_COUNT, OpReturnKind, Sats, VSize};
-    use vecdb::ColumnId;
 
     use super::Carrier;
     use crate::{breakdown::BlockMetrics, policy::Policy};

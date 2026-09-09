@@ -7,9 +7,7 @@ use bitview_vecs::{
 };
 use brk_types::{Height, StoredF32, StoredU64, Timestamp, Version};
 use tempfile::tempdir;
-use vecdb::{
-    AnyStoredVec, CachedVec, ColumnId, Database, ReadableVec, VecIndex, WritableVec, diagnostics,
-};
+use vecdb::{AnyStoredVec, CachedVec, Database, ReadableVec, VecIndex, WritableVec, diagnostics};
 
 use crate::common::CACHE_BUDGET;
 
@@ -87,7 +85,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
             })
             .collect();
         assert_eq!(id.select(&metric.sum).resolutions.day1.collect(), expected);
-        assert_eq!(diagnostics::take().0, if slot == 0 { N / 1024 } else { 0 });
+        assert_eq!(diagnostics::take(), if slot == 0 { N / 1024 } else { 0 });
         let averages: Vec<_> = ends
             .iter()
             .zip(&expected)
@@ -101,7 +99,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
             id.select(&metric.average).resolutions.day1.collect(),
             averages
         );
-        assert_eq!(diagnostics::take().0, 0);
+        assert_eq!(diagnostics::take(), 0);
     }
     assert_eq!(
         metric.cumulative.day1.collect(),
@@ -109,7 +107,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
             .map(|&i| Some(StoredU64::from(truth[i])))
             .collect::<Vec<_>>()
     );
-    assert_eq!(diagnostics::take().0, 0);
+    assert_eq!(diagnostics::take(), 0);
     // The block view uses the same cache too, including across page boundaries.
     assert_eq!(
         metric.block.collect_range_at(1020, 1030),
@@ -117,7 +115,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
             .map(|i| StoredU64::from((i % 17 + 1) as u64))
             .collect::<Vec<_>>()
     );
-    assert_eq!(diagnostics::take().0, 0);
+    assert_eq!(diagnostics::take(), 0);
 
     // A same-length replacement uses the existing publication-time invalidation.
     CACHE_BUDGET.invalidate();
@@ -138,12 +136,12 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         values.last().copied().flatten(),
         Some(StoredU64::from(truth[N - 1] + 123 - truth[start - 1]))
     );
-    assert_eq!(diagnostics::take().0, N / 1024);
+    assert_eq!(diagnostics::take(), N / 1024);
     assert_eq!(
         metric.cumulative.day1.collect().last().copied().flatten(),
         Some(StoredU64::from(truth[N - 1] + 123))
     );
-    assert_eq!(diagnostics::take().0, 0);
+    assert_eq!(diagnostics::take(), 0);
 
     // The lazy cumulative constructor must share its root between its height
     // transform, cumulative resolutions, and rolling views as well.
@@ -157,9 +155,9 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
     CACHE_BUDGET.invalidate();
     diagnostics::take();
     assert_eq!(lazy.sum._24h.resolutions.day1.collect(), values);
-    assert_eq!(diagnostics::take().0, N / 1024);
+    assert_eq!(diagnostics::take(), N / 1024);
     lazy.average._1w.resolutions.day1.collect();
     lazy.cumulative.resolutions.day1.collect();
     lazy.block.collect_range_at(1020, 1030);
-    assert_eq!(diagnostics::take().0, 0);
+    assert_eq!(diagnostics::take(), 0);
 }

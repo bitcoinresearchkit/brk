@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_types::{Cents, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmount, CumulativeUTXOColumns};
+use crate::metrics::{AmountSources, CumulativeUTXOSources};
 
 #[derive(Traversable)]
 pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
@@ -15,9 +15,10 @@ pub struct CumulativeRealizedByCohort<M: StorageMode = Rw> {
     /// Includes spends grouped by the address's pre-spend balance.
     pub cohorts: UTXOAndAddrGroups<
         LazyFiatPerBlockCumulativeWithSums<Cents>,
-        ColumnarAmount<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
+        AmountSources<Cents, LazyFiatPerBlockCumulativeWithSums<Cents>, M>,
     >,
-    pub stored: CumulativeUTXOColumns<Cents, M>,
+    #[traversable(hidden)]
+    pub stored: CumulativeUTXOSources<Cents, M>,
 }
 
 impl CumulativeRealizedByCohort {
@@ -29,7 +30,7 @@ impl CumulativeRealizedByCohort {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored = CumulativeUTXOColumns::forced_import(
+        let stored = CumulativeUTXOSources::forced_import(
             cache,
             db,
             &format!("{metric}_cumulative_cents"),
@@ -38,19 +39,19 @@ impl CumulativeRealizedByCohort {
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .columns
-                .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
+                .stored
+                .get(&filter)
                 .expect("supported stored realized cohort");
             LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                 &name,
                 version,
-                &source,
+                source,
                 mappings,
                 cached_starts,
             )
         });
         let addr_version = version + Version::ONE;
-        let addr_balance = ColumnarAmount::forced_import(
+        let addr_balance = AmountSources::forced_import(
             cache,
             db,
             &format!("addrs_{metric}_cumulative_cents_by_balance_range"),

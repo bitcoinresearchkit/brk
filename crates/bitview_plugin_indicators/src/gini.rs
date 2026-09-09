@@ -3,7 +3,8 @@ use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_vecs::PercentPerBlock;
 use brk_error::Result;
 use brk_exit::Exit;
-use brk_types::{Height, PartsPerMillion32, Sats, StoredU64};
+use brk_types::{Height, PartsPerMillion32, Sats, StoredU64, Version};
+use vecdb::{AnyVec, ReadableVec, WritableVec};
 
 pub fn compute(
     gini: &mut PercentPerBlock<PartsPerMillion32>,
@@ -11,17 +12,46 @@ pub fn compute(
     starting_height: Height,
     exit: &Exit,
 ) -> Result<()> {
-    gini.ppm.height.compute_transform2(
+    let supplies = &distribution.cohorts.supply.total.stored.amount.range;
+    let counts = &distribution
+        .cohorts
+        .outputs
+        .unspent_count
+        .stored
+        .amount
+        .range;
+    let end = supplies
+        .iter()
+        .map(AnyVec::len)
+        .chain(counts.iter().map(AnyVec::len))
+        .min()
+        .unwrap_or_default();
+    let version = Version::combine_all(
+        supplies
+            .iter()
+            .map(AnyVec::version)
+            .chain(counts.iter().map(AnyVec::version)),
+    );
+    let batch_size = 4096;
+    gini.ppm.height.compute_batched_to(
         starting_height,
-        &distribution.cohorts.supply.total.stored.amount_range.height,
-        &distribution
-            .cohorts
-            .outputs
-            .unspent_count
-            .stored
-            .amount_range
-            .height,
-        |(height, supply, count, ..)| (height, gini_from_lorenz(&count, &supply)),
+        end,
+        version,
+        batch_size,
+        |target, range| {
+            let supplies = AmountRange::from_fn(|id| {
+                id.select(supplies).collect_range_at(range.start, range.end)
+            });
+            let counts = AmountRange::from_fn(|id| {
+                id.select(counts).collect_range_at(range.start, range.end)
+            });
+            for offset in 0..range.len() {
+                let supply = AmountRange::from_fn(|id| id.select(&supplies)[offset]);
+                let count = AmountRange::from_fn(|id| id.select(&counts)[offset]);
+                target.push(gini_from_lorenz(&count, &supply));
+            }
+            Ok(())
+        },
         exit,
     )?;
     Ok(())

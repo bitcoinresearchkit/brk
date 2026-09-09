@@ -5,7 +5,6 @@ use std::path::Path;
 use bitview_cohort::{AmountRange, AmountRangeId, CohortContext, Filter};
 use brk_types::{Cents, Height, StoredU64};
 use rayon::prelude::*;
-use vecdb::ReadableVec;
 
 use crate::{addr::FundedAddrCountsVecs, metrics::CohortMetrics};
 
@@ -54,8 +53,7 @@ impl AddrStates {
             .total
             .cohorts
             .addr_balance
-            .height
-            .collect_one(previous_height)
+            .checkpoint(previous_height)
         else {
             return Ok(false);
         };
@@ -64,12 +62,11 @@ impl AddrStates {
             .unspent_count
             .cohorts
             .addr_balance
-            .height
-            .collect_one(previous_height)
+            .checkpoint(previous_height)
         else {
             return Ok(false);
         };
-        let Some(addr_count) = funded.balance.height.collect_one(previous_height) else {
+        let Some(addr_count) = funded.balance.checkpoint(previous_height) else {
             return Ok(false);
         };
 

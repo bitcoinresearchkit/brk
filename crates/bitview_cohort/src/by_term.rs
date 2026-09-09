@@ -33,8 +33,8 @@ pub struct ByTerm<T> {
     pub long: T,
 }
 
-define_column_id!(
-    TermId for ByTerm, version = 1 {
+define_cohort_id!(
+    TermId for ByTerm {
         Short => short,
         Long => long,
     }

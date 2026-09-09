@@ -1,19 +1,12 @@
 use bitview_compute::NumericValue;
-use bitview_traversable::Traversable;
 use brk_types::{Dollars, Height, Version};
 use vecdb::{Ident, ReadableCloneableVec};
 
-use crate::{FiatType, IndexSources, LazyPerBlock};
+use crate::{Fiat, FiatType, IndexSources, LazyPerBlock};
 
 /// Lazy fiat: both cents and usd are lazy views of a stored source.
 /// Zero extra stored vecs.
-#[derive(Clone, Traversable)]
-pub struct LazyFiatPerBlock<C: FiatType> {
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, C>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPerBlock<C, C>,
-}
+pub type LazyFiatPerBlock<C> = Fiat<LazyPerBlock<C>, LazyPerBlock<Dollars, C>>;
 
 impl<C: FiatType> LazyFiatPerBlock<C> {
     pub fn from_lazy(name: &str, version: Version, source: &LazyPerBlock<C>) -> Self

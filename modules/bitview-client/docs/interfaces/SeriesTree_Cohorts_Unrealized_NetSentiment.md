@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Unrealized\_NetSentiment
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14330](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14330)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13778](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13778)
 
 ## Properties
 
@@ -14,15 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14330](https://githu
 
 > **all**: [`CentsUsdPattern2`](CentsUsdPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14331](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14331)
-
-***
-
-### height
-
-> **height**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:14334](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14334)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13779](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13779)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14334](https://githu
 
 > **lth**: [`CentsUsdPattern2`](CentsUsdPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14333](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14333)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13781](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13781)
 
 ***
 
@@ -38,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14333](https://githu
 
 > **sth**: [`CentsUsdPattern2`](CentsUsdPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14332](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14332)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13780](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13780)

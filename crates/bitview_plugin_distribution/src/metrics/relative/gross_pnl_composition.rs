@@ -1,11 +1,11 @@
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, StoredSeries, import_stored};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
-use vecdb::{AnyStoredVec, CacheBudget, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{RelativeSource, share_views};
 
@@ -31,7 +31,7 @@ pub struct GrossPnlComposition<M: StorageMode = Rw> {
     pub net_unrealized_pnl_to_own_gross_pnl:
         UTXOAggregate<LazyPercentPerBlock<PartsPerMillionSigned32>>,
     #[traversable(hidden)]
-    pub profit_share_source: ColumnarPerBlock<PartsPerMillion32, UTXOAggregateId, (), M>,
+    pub profit_share_source: UTXOAggregate<StoredSeries<Height, PartsPerMillion32, M>>,
 }
 
 impl GrossPnlComposition {
@@ -42,30 +42,30 @@ impl GrossPnlComposition {
         mappings: &MappingsVecs,
     ) -> Result<Self> {
         let version = version + VERSION;
-        let profit_share_source = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            "unrealized_profit_to_own_gross_pnl_ppm_by_aggregate",
-            version,
-            |_| (),
-        )?;
-        let source = profit_share_source.height.read_only_clone();
+        let profit_share_source = UTXOAggregate::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &id.metric_name("unrealized_profit_to_own_gross_pnl_ppm"),
+                version + Version::ONE,
+            )
+        })?;
         let unrealized_profit_to_own_gross_pnl = share_views(
-            &source,
+            &profit_share_source,
             "unrealized_profit_to_own_gross_pnl",
             version,
             Self::public_profit_share,
             mappings,
         );
         let unrealized_loss_to_own_gross_pnl = share_views(
-            &source,
+            &profit_share_source,
             "unrealized_loss_to_own_gross_pnl",
             version,
             Self::public_loss_share,
             mappings,
         );
         let net_unrealized_pnl_to_own_gross_pnl = share_views(
-            &source,
+            &profit_share_source,
             "net_unrealized_pnl_to_own_gross_pnl",
             version,
             Self::public_net_share,
@@ -122,17 +122,25 @@ impl GrossPnlComposition {
         sources: &UTXOAggregate<RelativeSource<'_>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.profit_share_source.compute_columns2(
-            max_from,
-            |id| &id.select(sources).unrealized.profit.usd.height,
-            |id| &id.select(sources).unrealized_aggregate.gross_pnl.usd.height,
-            |_, profit, gross| Self::stored_profit_share(profit, gross),
-            exit,
-        )
+        for id in UTXOAggregateId::ALL {
+            let source = id.select(sources);
+            id.select_mut(&mut self.profit_share_source)
+                .compute_transform2(
+                    max_from,
+                    &source.unrealized.profit.usd.height,
+                    &source.unrealized_aggregate.gross_pnl.usd.height,
+                    |(height, profit, total, _)| (height, Self::stored_profit_share(profit, total)),
+                    exit,
+                )?;
+        }
+        Ok(())
     }
 
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.profit_share_source.stored_mut()
+    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        self.profit_share_source
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect()
     }
 }
 

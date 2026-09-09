@@ -110,7 +110,7 @@ fn rolling_outputs_preserve_interpolation_cache_reuse_and_restarts() {
                 pointer,
                 "covered cache was reallocated"
             );
-            for (column, output) in [
+            for (metric, output) in [
                 &outputs.min,
                 &outputs.max,
                 &outputs.pct10,
@@ -124,8 +124,11 @@ fn rolling_outputs_preserve_interpolation_cache_reuse_and_restarts() {
             {
                 assert_eq!(
                     output.collect_range_at(0, output.len()),
-                    expected.iter().map(|row| row[column]).collect::<Vec<_>>(),
-                    "width={width} phase={phase} column={column}"
+                    expected
+                        .iter()
+                        .map(|values| values[metric])
+                        .collect::<Vec<_>>(),
+                    "width={width} phase={phase} metric={metric}"
                 );
             }
         }

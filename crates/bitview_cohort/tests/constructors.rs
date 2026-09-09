@@ -3,16 +3,16 @@ use std::collections::BTreeSet;
 use bitview_cohort::*;
 
 #[test]
-fn row_iteration_and_mutation_follow_column_order() {
+fn iteration_and_mutation_follow_cohort_order() {
     macro_rules! check {
-        ($row:ident, $id:ident) => {{
-            let mut row = $row::from_fn(|id| id.index());
-            assert!(row.iter().copied().eq(0..$id::ALL.len()));
-            for value in row.iter_mut() {
+        ($collection:ident, $id:ident) => {{
+            let mut values = $collection::from_fn(|id| id.index());
+            assert!(values.iter().copied().eq(0..$id::ALL.len()));
+            for value in values.iter_mut() {
                 *value += 1;
             }
             for &id in $id::ALL {
-                assert_eq!(*id.select(&row), id.index() + 1);
+                assert_eq!(*id.select(&values), id.index() + 1);
             }
         }};
     }

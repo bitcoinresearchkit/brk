@@ -4,28 +4,22 @@
 
 [bitview-client](../globals.md) / LongShortPattern7
 
-# Interface: LongShortPattern7\<T\>
+# Interface: LongShortPattern7
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7230](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7230)
-
-## Type Parameters
-
-### T
-
-`T`
+Defined in: [Developer/mono/modules/bitview-client/index.js:6991](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6991)
 
 ## Properties
 
 ### long
 
-> **long**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`T`\>
+> **long**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7231](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7231)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6992](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6992)
 
 ***
 
 ### short
 
-> **short**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`T`\>
+> **short**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7232](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7232)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6993](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6993)

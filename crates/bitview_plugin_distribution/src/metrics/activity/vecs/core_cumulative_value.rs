@@ -1,4 +1,4 @@
-use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType, UTXORows};
+use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
@@ -7,13 +7,14 @@ use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOCoreValueColumns;
+use crate::metrics::CumulativeUTXOCoreValueSources;
 
 #[derive(Traversable)]
 pub struct CoreCumulativeValueByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmountOrType<LazyValuePerBlockCumulativeRolling>,
-    pub stored: CumulativeUTXOCoreValueColumns<M>,
+    #[traversable(hidden)]
+    pub stored: CumulativeUTXOCoreValueSources<M>,
 }
 
 impl CoreCumulativeValueByCohort {
@@ -25,7 +26,7 @@ impl CoreCumulativeValueByCohort {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored = CumulativeUTXOCoreValueColumns::forced_import(
+        let stored = CumulativeUTXOCoreValueSources::forced_import(
             cache,
             db,
             &format!("{metric}_cumulative"),
@@ -49,7 +50,7 @@ impl CoreCumulativeValueByCohort {
     }
 
     #[inline(always)]
-    pub fn push_block(&mut self, sats: UTXORows<Sats>, cents: UTXORows<Cents>) {
+    pub fn push_block(&mut self, sats: UTXOValues<Sats>, cents: UTXOValues<Cents>) {
         self.stored.push_block(sats, cents);
     }
 

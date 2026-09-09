@@ -1,17 +1,17 @@
-use bitview_cohort::{ByAddrType, ByType, Filter, OutputTypeId, SpendableType, SpendableTypeId};
+use bitview_cohort::{ByAddrType, ByType, Filter, SpendableType};
 use bitview_collections::Windows;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::ReadableCloneableVec;
 
 use crate::{
-    CountTotal, CumulativeCountVec, IndexSources, LazyColumnCountPerBlockCumulativeRolling,
-    LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
+    CountTotal, CumulativeCountVec, IndexSources, LazyCountPerBlockCumulativeRolling,
+    LazyPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
 };
 
 /// A shared total plus a typed count breakdown. The group determines membership;
-/// the total component determines the denominator, independently of the columns.
+/// the total component determines the denominator, independently of the per-type sources.
 #[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct TypeCounts<S> {
     #[deref]
@@ -26,15 +26,15 @@ pub type SpendableTypeCounts<V> = TypeCounts<SpendableType<V>>;
 pub type OutputTypeCounts<V> = TypeCounts<ByType<V>>;
 
 // Both typed domains use the same vector assembly, without erasing either
-// group's concrete fields or changing its column order.
+// group's concrete fields or changing its iteration order.
 macro_rules! impl_type_counts {
-    ($group:ident, $column:ident, $column_from_type:expr) => {
-        impl TypeCounts<$group<LazyColumnCountPerBlockCumulativeRolling>> {
-            pub fn from_columnar_count_source(
+    ($group:ident) => {
+        impl TypeCounts<$group<LazyCountPerBlockCumulativeRolling>> {
+            pub fn from_count_sources(
                 total: CountTotal,
                 per_type_name: impl Fn(&str) -> String,
                 version: Version,
-                source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU16>, $column>,
+                sources: &$group<impl ReadableCloneableVec<Height, StoredU16>>,
                 indexes: &IndexSources,
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
             ) -> Self {
@@ -42,11 +42,10 @@ macro_rules! impl_type_counts {
                     let Filter::Type(output_type) = filter else {
                         unreachable!()
                     };
-                    LazyColumnCountPerBlockCumulativeRolling::new(
+                    LazyCountPerBlockCumulativeRolling::from_height_source(
                         &per_type_name(name),
                         version,
-                        source,
-                        ($column_from_type)(output_type),
+                        sources.get(output_type),
                         indexes,
                         windows,
                     )
@@ -85,12 +84,12 @@ macro_rules! impl_type_counts {
             }
         }
 
-        impl TypeCounts<$group<LazyColumnPerBlockCumulativeRolling<StoredU64, $column>>> {
-            pub fn from_columnar_source(
+        impl TypeCounts<$group<LazyPerBlockCumulativeRolling<StoredU64>>> {
+            pub fn from_cumulative_sources(
                 total: CountTotal,
                 per_type_name: impl Fn(&str) -> String,
                 version: Version,
-                source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU64>, $column>,
+                sources: &$group<impl ReadableCloneableVec<Height, StoredU64>>,
                 indexes: &IndexSources,
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
             ) -> Self {
@@ -98,13 +97,12 @@ macro_rules! impl_type_counts {
                     let Filter::Type(output_type) = filter else {
                         unreachable!()
                     };
-                    LazyColumnPerBlockCumulativeRolling::new(
+                    LazyPerBlockCumulativeRolling::from_cumulative_source(
                         &per_type_name(name),
                         version,
-                        source,
-                        ($column_from_type)(output_type),
-                        indexes,
+                        sources.get(output_type),
                         windows,
+                        indexes,
                     )
                 });
                 Self { total, by_type }
@@ -124,11 +122,7 @@ macro_rules! impl_type_counts {
                     self.total.lazy_share(
                         &name(type_name),
                         version,
-                        self.by_type
-                            .get(output_type)
-                            .cumulative
-                            .resolutions
-                            .height_source(),
+                        &self.by_type.get(output_type).cumulative.height,
                         windows,
                         indexes,
                     )
@@ -138,7 +132,5 @@ macro_rules! impl_type_counts {
     };
 }
 
-impl_type_counts!(ByType, OutputTypeId, OutputTypeId::from_output_type);
-impl_type_counts!(SpendableType, SpendableTypeId, |output_type| {
-    SpendableTypeId::from_output_type(output_type).expect("spendable output type column")
-});
+impl_type_counts!(ByType);
+impl_type_counts!(SpendableType);

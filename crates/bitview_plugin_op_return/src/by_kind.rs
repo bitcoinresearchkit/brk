@@ -12,6 +12,13 @@ macro_rules! define_by_kind {
         }
 
         impl<T> ByKind<T> {
+            pub fn try_new<E>(mut create: impl FnMut(OpReturnKind, &'static str) -> Result<T, E>) -> Result<Self, E> {
+                Ok(Self { $($field: create(OpReturnKind::$kind, stringify!($field))?),+ })
+            }
+
+            pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+                [$( &mut self.$field ),+].into_iter()
+            }
             pub fn new(mut create: impl FnMut(OpReturnKind, &'static str) -> T) -> Self {
                 Self {
                     $($field: create(OpReturnKind::$kind, stringify!($field))),+

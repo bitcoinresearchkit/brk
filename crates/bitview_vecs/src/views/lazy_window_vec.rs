@@ -188,8 +188,7 @@ where
             .zip(last)
             .map(|(first, last)| (first, last + 1))
             .unwrap_or((0, 0));
-        // Do not recursively read the source while it lends current chunks;
-        // columnar sources may hold their publication lock in the callback.
+        // Collect prior values before borrowing the current source chunks.
         let previous = self.source.collect_range_dyn(previous_from, previous_to);
         self.source.for_each_chunk_at(from, to, &mut |at, current| {
             each(

@@ -6,8 +6,6 @@ use brk_types::Age;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 use super::{CohortContext, CohortName, Filter, OVER_AGE_FILTERS, TimeFilter, UNDER_AGE_FILTERS};
 
@@ -131,44 +129,6 @@ impl AgeRangeId {
         self as usize
     }
 }
-#[cfg(feature = "storage")]
-impl ColumnId for AgeRangeId {
-    type Row<T>
-        = AgeRange<T>
-    where
-        T: VecValue;
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = Self::ALL;
-    #[inline]
-    fn index(self) -> usize {
-        Self::index(self)
-    }
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        self.select(row)
-    }
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        self.select_mut(row)
-    }
-    #[inline]
-    fn from_fn<T, F>(f: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        AgeRange::from_fn(f)
-    }
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        AgeRange::from_fn(|column| f(column.get(&row).clone()))
-    }
-}
 
 impl AgeRangeId {
     pub fn from_cohort_name(context: CohortContext, name: &str) -> Option<Self> {
@@ -177,21 +137,18 @@ impl AgeRangeId {
     }
 
     pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL
-            .iter()
-            .copied()
-            .find(|column| column.filter() == filter)
+        Self::ALL.iter().copied().find(|id| id.filter() == filter)
     }
 
     pub fn included_by(filter: &Filter) -> impl Iterator<Item = Self> + '_ {
         Self::ALL
             .iter()
             .copied()
-            .filter(|column| filter.includes(column.filter()))
+            .filter(|id| filter.includes(id.filter()))
     }
 
-    /// Columns for a named aggregate, excluding exact ranges and unsupported thresholds.
-    pub fn aggregate_columns(filter: &Filter) -> Option<impl Iterator<Item = Self> + '_> {
+    /// Age ranges for a named aggregate, excluding exact ranges and unsupported thresholds.
+    pub fn aggregate_ranges(filter: &Filter) -> Option<impl Iterator<Item = Self> + '_> {
         let supported = match filter {
             Filter::All | Filter::Term(_) => true,
             Filter::Time(_) => UNDER_AGE_FILTERS
@@ -278,9 +235,9 @@ impl AgeRangeId {
         context: CohortContext,
         mut create: impl FnMut(Self, &str) -> T,
     ) -> AgeRange<T> {
-        AgeRange::from_fn(|column| {
-            let name = context.prefixed(column.name().id);
-            create(column, &name)
+        AgeRange::from_fn(|id| {
+            let name = context.prefixed(id.name().id);
+            create(id, &name)
         })
     }
 }
@@ -465,7 +422,7 @@ pub struct AgeRange<T> {
     pub over_15y: T,
 }
 
-impl_column_row_formattable!(AgeRange {
+impl_collection_formattable!(AgeRange {
     under_1h,
     _1h_to_1d,
     _1d_to_1w,
@@ -715,7 +672,7 @@ mod tests {
 
     #[cfg(feature = "storage")]
     #[test]
-    fn column_ids_match_storage_order_and_term_split() {
+    fn cohort_ids_match_storage_order_and_term_split() {
         assert_eq!(AgeRangeId::ALL, &AGE_RANGE_IDS);
         assert_eq!(
             STH_AGE_RANGE_IDS.len() + LTH_AGE_RANGE_IDS.len(),
@@ -732,32 +689,30 @@ mod tests {
         assert_eq!(STH_AGE_RANGE_IDS.last(), Some(&AgeRangeId::From4MTo5M));
         assert_eq!(LTH_AGE_RANGE_IDS.first(), Some(&AgeRangeId::From5MTo6M));
 
-        let row = AgeRangeId::from_fn(|column| column.index());
-        for (index, &column) in AGE_RANGE_IDS.iter().enumerate() {
-            assert_eq!(column.index(), index);
-            assert_eq!(*column.get(&row), index);
+        let values = AgeRange::from_fn(|id| id.index());
+        for (index, &id) in AGE_RANGE_IDS.iter().enumerate() {
+            assert_eq!(id.index(), index);
+            assert_eq!(*id.select(&values), index);
         }
     }
 
     #[test]
-    fn column_ids_select_named_fields_and_metadata() {
-        let mut named = AgeRange::from_fn(|column| column.index());
-        for &column in &AGE_RANGE_IDS {
-            assert_eq!(*column.select(&named), column.index());
-            *column.select_mut(&mut named) += AGE_RANGE_COUNT;
-            assert_eq!(*column.select(&named), column.index() + AGE_RANGE_COUNT);
-            assert_eq!(column.bounds(), column.select(&AGE_RANGE_BOUNDS));
-            assert_eq!(column.filter(), column.select(&AGE_RANGE_FILTERS));
-            assert_eq!(column.name().id, column.select(&AGE_RANGE_NAMES).id);
+    fn cohort_ids_select_named_fields_and_metadata() {
+        let mut named = AgeRange::from_fn(|id| id.index());
+        for &id in &AGE_RANGE_IDS {
+            assert_eq!(*id.select(&named), id.index());
+            *id.select_mut(&mut named) += AGE_RANGE_COUNT;
+            assert_eq!(*id.select(&named), id.index() + AGE_RANGE_COUNT);
+            assert_eq!(id.bounds(), id.select(&AGE_RANGE_BOUNDS));
+            assert_eq!(id.filter(), id.select(&AGE_RANGE_FILTERS));
+            assert_eq!(id.name().id, id.select(&AGE_RANGE_NAMES).id);
         }
 
-        let series = AgeRangeId::series(CohortContext::Utxo, |column, name| {
-            (column, name.to_owned())
-        });
-        for (((column, name), expected_column), expected_name) in
+        let series = AgeRangeId::series(CohortContext::Utxo, |id, name| (id, name.to_owned()));
+        for (((id, name), expected_id), expected_name) in
             series.iter().zip(AGE_RANGE_IDS).zip(AGE_RANGE_NAMES.iter())
         {
-            assert_eq!(*column, expected_column);
+            assert_eq!(*id, expected_id);
             assert_eq!(name, &CohortContext::Utxo.prefixed(expected_name.id));
         }
     }

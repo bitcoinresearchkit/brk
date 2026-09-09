@@ -1,15 +1,17 @@
-use bitview_cohort::{ByTerm, TermId, UTXOAggregate};
+use bitview_cohort::UTXOAggregate;
 use bitview_collections::Windows;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyVec, CacheBudget, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
+    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode, WritableVec,
 };
 
 use crate::{
-    ColumnarPerBlockCumulativeRolling, FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums,
+    CumulativeState, FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums, StoredSeries,
+    import_stored,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -17,12 +19,10 @@ pub struct AdditiveAggregateFiatPerBlockCumulativeWithSums<C: FiatType, M: Stora
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub values: ColumnarPerBlockCumulativeRolling<
-        C,
-        TermId,
-        UTXOAggregate<LazyFiatPerBlockCumulativeWithSums<C>>,
-        M,
-    >,
+    pub series: UTXOAggregate<LazyFiatPerBlockCumulativeWithSums<C>>,
+    #[traversable(hidden)]
+    pub stored: UTXOAggregate<StoredSeries<Height, C, M>>,
+    last: M::WriteOnly<CumulativeState<UTXOAggregate<C>>>,
 }
 
 impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
@@ -34,52 +34,61 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
         indexes: &IndexSources,
         cached_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
-        let values = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{metric}_cumulative_cents_by_term"),
-            version,
-            |source| {
-                UTXOAggregate::from_fn(|id| {
-                    let name = id.metric_name(metric);
-                    let cumulative = match id.term() {
-                        Some(term) => source
-                            .column(&format!("{name}_cumulative_cents"), version, term)
-                            .read_only_boxed_clone(),
-                        None => source
-                            .sum_columns(
-                                &format!("{name}_cumulative_cents"),
-                                version,
-                                TermId::ALL.iter().copied(),
-                            )
-                            .read_only_boxed_clone(),
-                    };
-                    LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
-                        &name,
-                        version,
-                        &cumulative,
-                        indexes,
-                        cached_starts,
-                    )
-                })
-            },
-        )?;
-        Ok(Self { values })
+        let stored = UTXOAggregate::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{}_cumulative_cents", id.metric_name(metric)),
+                version + Version::ONE,
+            )
+        })?;
+        let series = UTXOAggregate::from_fn(|id| {
+            LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
+                &id.metric_name(metric),
+                version,
+                id.select(&stored),
+                indexes,
+                cached_starts,
+            )
+        });
+        Ok(Self {
+            series,
+            stored,
+            last: Default::default(),
+        })
     }
 
-    #[inline(always)]
-    pub fn push_block(&mut self, row: UTXOAggregate<C>) {
-        self.values.push_block(ByTerm {
-            short: row.sth,
-            long: row.lth,
-        });
+    pub fn push_block(&mut self, mut values: UTXOAggregate<C>) {
+        values.all = values.sth + values.lth;
+        let len = self.len();
+        let cumulative = self.last.accumulate(
+            len,
+            || {
+                UTXOAggregate::try_from_fn(|id| id.select(&self.stored).collect_last().ok_or(()))
+                    .ok()
+            },
+            |last| {
+                for (last, &value) in last.iter_mut().zip(values.iter()) {
+                    *last += value;
+                }
+            },
+        );
+        for (target, &value) in self.stored.iter_mut().zip(cumulative.iter()) {
+            target.push(value);
+        }
     }
 
     pub fn len(&self) -> usize {
-        self.values.cumulative.len()
+        self.stored.iter().map(AnyVec::len).min().unwrap_or(0)
     }
-
     pub fn is_empty(&self) -> bool {
-        self.values.cumulative.is_empty()
+        self.len() == 0
+    }
+    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        self.last = Default::default();
+        self.stored
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect()
     }
 }

@@ -6,28 +6,28 @@
 
 # Interface: ToPattern2
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6616](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6616)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6473](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6473)
 
 ## Properties
 
 ### toMcap
 
-> **toMcap**: [`AllLthSthPattern6`](AllLthSthPattern6.md)
+> **toMcap**: [`AllLthSthPattern7`](AllLthSthPattern7.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6617](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6617)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6474](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6474)
 
 ***
 
 ### toOwnGrossPnl
 
-> **toOwnGrossPnl**: [`AllLthSthPattern6`](AllLthSthPattern6.md)
+> **toOwnGrossPnl**: [`AllLthSthPattern7`](AllLthSthPattern7.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6618](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6618)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6475](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6475)
 
 ***
 
 ### toOwnMcap
 
-> **toOwnMcap**: [`HeightLongShortPattern`](HeightLongShortPattern.md)
+> **toOwnMcap**: [`LongShortPattern12`](LongShortPattern12.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6619](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6619)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6476](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6476)

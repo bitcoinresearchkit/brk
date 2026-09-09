@@ -62,8 +62,8 @@ pub struct Loss<T> {
     pub _80pct: T,
 }
 
-define_column_id!(
-    LossId for Loss, version = 1 {
+define_cohort_id!(
+    LossId for Loss {
         Total => total,
         Over10Pct => _10pct,
         Over20Pct => _20pct,

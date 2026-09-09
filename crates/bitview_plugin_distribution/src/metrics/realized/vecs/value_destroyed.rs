@@ -7,13 +7,14 @@ use brk_error::Result;
 use brk_types::{Cents, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOCoreColumns;
+use crate::metrics::CumulativeUTXOCoreSources;
 
 #[derive(Traversable)]
 pub struct CumulativeValueDestroyedByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmountOrType<LazyFiatPerBlockCumulativeRolling<Cents>>,
-    pub stored: CumulativeUTXOCoreColumns<Cents, M>,
+    #[traversable(hidden)]
+    pub stored: CumulativeUTXOCoreSources<Cents, M>,
 }
 
 impl CumulativeValueDestroyedByCohort {
@@ -25,7 +26,7 @@ impl CumulativeValueDestroyedByCohort {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let metric = "value_destroyed";
-        let stored = CumulativeUTXOCoreColumns::forced_import(
+        let stored = CumulativeUTXOCoreSources::forced_import(
             cache,
             db,
             "value_destroyed_cumulative_cents",
@@ -34,13 +35,13 @@ impl CumulativeValueDestroyedByCohort {
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .columns
-                .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
+                .stored
+                .get(&filter)
                 .expect("supported value-destroyed cohort");
             LazyFiatPerBlockCumulativeRolling::from_cumulative_cents_source(
                 &name,
                 version,
-                &source,
+                source,
                 mappings,
                 cached_starts,
             )

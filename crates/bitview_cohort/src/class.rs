@@ -113,8 +113,8 @@ pub struct Class<T> {
     pub _2026: T,
 }
 
-define_column_id!(
-    ClassId for Class, version = 1 {
+define_cohort_id!(
+    ClassId for Class {
         _2009 => _2009,
         _2010 => _2010,
         _2011 => _2011,

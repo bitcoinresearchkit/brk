@@ -6,7 +6,7 @@
 
 # Interface: UrpdParams
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1543](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1543)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1416](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1416)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1543](https://github
 
 > **cohort**: [`Cohort`](../type-aliases/Cohort.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1544](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1544)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1417](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1417)
 
 ***
 
@@ -22,6 +22,6 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1544](https://github
 
 > **date**: `string`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1545](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1545)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1418](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1418)
 
 Calendar date of the URPD snapshot in `YYYY-MM-DD` format.

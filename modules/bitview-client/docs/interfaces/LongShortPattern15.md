@@ -6,20 +6,20 @@
 
 # Interface: LongShortPattern15
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7107](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7107)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7010](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7010)
 
 ## Properties
 
 ### long
 
-> **long**: [`CentsUsdPattern`](CentsUsdPattern.md)
+> **long**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7108](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7108)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7011](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7011)
 
 ***
 
 ### short
 
-> **short**: [`CentsUsdPattern`](CentsUsdPattern.md)
+> **short**: [`BtcCentsSatsUsdPattern`](BtcCentsSatsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7109](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7109)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7012](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7012)

@@ -142,7 +142,7 @@ mod tests {
                         values,
                         vec![PartsPerMillion32::from(3.0); if sorted { 3 } else { 8 }]
                     );
-                    let (decodes, _) = diagnostics::take();
+                    let decodes = diagnostics::take();
                     assert!(
                         decodes > 0 && decodes <= 4,
                         "short read decoded {decodes} chunks"

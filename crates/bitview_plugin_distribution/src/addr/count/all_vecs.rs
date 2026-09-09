@@ -1,28 +1,24 @@
-use bitview_cohort::{AddrTypeId, WithAddrTypes};
+use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock};
+use bitview_vecs::{LazyPerBlock, StoredSeries, import_stored};
 use brk_error::Result;
-use brk_types::{StoredU64, Version};
+use brk_types::{Height, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use rayon::{iter, prelude::*};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use rayon::prelude::*;
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Ident, Rw, StorageMode, WritableVec};
 
 use super::AddrTypeToAddrCount;
 
-/// Per-block `StoredU64` counts with an aggregate `all` plus a per-address-type
-/// breakdown. Shared primitive backing addr-count, empty-addr-count, and the
-/// funded/total pairs used by exposed, reused, and respent.
 #[derive(Deref, DerefMut, Traversable)]
-pub struct AddrCountsVecs<M: StorageMode = Rw>(
+pub struct AddrCountsVecs<M: StorageMode = Rw> {
+    #[deref]
+    #[deref_mut]
     #[traversable(flatten)]
-    pub  ColumnarPerBlock<
-        StoredU64,
-        AddrTypeId,
-        WithAddrTypes<LazyColumnPerBlock<StoredU64, AddrTypeId>, LazyPerBlock<StoredU64>>,
-        M,
-    >,
-);
+    pub series: WithAddrTypes<LazyPerBlock<StoredU64>>,
+    #[traversable(hidden)]
+    pub stored: WithAddrTypes<StoredSeries<Height, StoredU64, M>>,
+}
 
 impl AddrCountsVecs {
     pub fn forced_import(
@@ -32,30 +28,55 @@ impl AddrCountsVecs {
         version: Version,
         mappings: &MappingsVecs,
     ) -> Result<Self> {
-        Ok(Self(ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &format!("{name}_by_type"),
-            version,
-            |source| LazyColumnPerBlock::with_addr_types(name, version, source, mappings),
-        )?))
+        let version = version + Version::ONE;
+        let stored = WithAddrTypes {
+            all: import_stored(cache, db, name, version)?,
+            by_addr_type: ByAddrType::try_from_fn(|id| {
+                import_stored(cache, db, &format!("{}_{name}", id.name()), version)
+            })?,
+        };
+        let build = |name: &str, source: &StoredSeries<Height, StoredU64>| {
+            LazyPerBlock::from_height_source::<Ident>(name, version, source, mappings)
+        };
+        let series = WithAddrTypes {
+            all: build(name, &stored.all),
+            by_addr_type: AddrTypeId::series(|id, type_name| {
+                build(
+                    &format!("{type_name}_{name}"),
+                    id.select(&stored.by_addr_type),
+                )
+            }),
+        };
+        Ok(Self { series, stored })
     }
 
     pub fn min_resume_len(&self) -> usize {
-        self.height.len()
+        self.stored
+            .iter()
+            .map(AnyVec::len)
+            .min()
+            .unwrap_or_default()
     }
-
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        iter::once(&mut self.height as &mut dyn AnyStoredVec)
+        self.stored
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect::<Vec<_>>()
+            .into_par_iter()
     }
-
     pub fn reset_height(&mut self) -> Result<()> {
-        self.height.reset()?;
+        for target in self.stored.iter_mut() {
+            target.reset()?;
+        }
         Ok(())
     }
-
-    #[inline(always)]
-    pub fn push_counts(&mut self, counts: &AddrTypeToAddrCount) {
-        self.push(counts.row());
+    pub fn push_counts(&mut self, values: &AddrTypeToAddrCount) {
+        let mut total = StoredU64::default();
+        for (target, &value) in self.stored.by_addr_type.values_mut().zip(values.values()) {
+            let value = StoredU64::from(value);
+            total += value;
+            target.push(value);
+        }
+        self.stored.all.push(total);
     }
 }

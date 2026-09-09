@@ -6,7 +6,7 @@
 
 # Interface: OverRangeUnderPattern18
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6390](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6390)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6261](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6261)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:6390](https://github
 
 > **over**: [`_100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8`](100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern8.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6391](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6391)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6262](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6262)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:6391](https://github
 
 > **range**: [`_0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern8`](0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern8.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6392](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6392)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6263](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6263)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:6392](https://github
 
 > **under**: [`_100btc100k100sats10btc10k10m10sats1btc1k1mPattern8`](100btc100k100sats10btc10k10m10sats1btc1k1mPattern8.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6393](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6393)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6264](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6264)

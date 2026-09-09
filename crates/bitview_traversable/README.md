@@ -17,7 +17,7 @@ Fields declared as `M::WriteOnly<T>` hold `T` in the writer and disappear into
 `()` in the read-only view. They are excluded from traversal automatically;
 no per-state projection implementation is needed.
 
-The crate implements traversal for vecdb's stored, mutable, columnar,
+The crate implements traversal for vecdb's stored, mutable,
 overflow, cached, and lazy vector families, plus common containers such as
 `Box`, `Option`, and `BTreeMap`. Backend-specific implementations
 are enabled with the matching `pco`, `zerocopy`, `lz4`, or `zstd` feature.

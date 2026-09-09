@@ -9,4 +9,4 @@ pub use compute::compute;
 pub use count_vecs::CountVecs;
 pub use flags::Flags;
 pub use import::forced_import;
-pub use vecs::{PatternId, Vecs};
+pub use vecs::Vecs;

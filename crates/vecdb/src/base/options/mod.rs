@@ -19,7 +19,7 @@ pub struct ImportOptions<'a> {
     pub initial_capacity: Option<usize>,
     /// Overrides the compression strategy's maximum uncompressed chunk size.
     pub max_compression_chunk_size: Option<usize>,
-    /// Shared retention budget for stored column sources. None disables retention.
+    /// Shared retention budget for stored sources. None disables retention.
     pub cache_budget: Option<&'static CacheBudget>,
 }
 

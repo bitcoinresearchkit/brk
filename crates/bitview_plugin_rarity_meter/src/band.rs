@@ -1,11 +1,11 @@
 use bitview_traversable::Traversable;
-use brk_types::{Cents, PartsPerMillion32, RarityPercentileId};
+use brk_types::{Cents, PartsPerMillion32};
 
-use bitview_vecs::{LazyColumnRatioPerBlock, LazyPerBlock, Price};
+use bitview_vecs::{LazyPerBlock, LazyRatioPerBlock, Price};
 
 #[derive(Clone, Traversable)]
 pub struct Band {
     #[traversable(flatten)]
-    pub ratio: LazyColumnRatioPerBlock<PartsPerMillion32, RarityPercentileId>,
+    pub ratio: LazyRatioPerBlock<PartsPerMillion32>,
     pub price: Price<LazyPerBlock<Cents>>,
 }

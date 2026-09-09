@@ -1,9 +1,7 @@
-use std::array;
-
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
-use brk_types::{Cents, Version};
-use vecdb::{ColumnId, Rw, StorageMode, VecValue};
+use bitview_vecs::{LazyPriceWithRatioPerBlock, StoredSeries};
+use brk_types::{Cents, Height};
+use vecdb::{Rw, StorageMode};
 
 use super::{ema_vecs::EmaVecs, sma::SmaVecs};
 
@@ -49,6 +47,7 @@ const EMA_PERIOD_IDS: [EmaPeriodId; EMA_PERIOD_COUNT] = [
 ];
 
 impl EmaPeriodId {
+    pub const ALL: &'static [Self] = &EMA_PERIOD_IDS;
     pub const fn days(self) -> usize {
         match self {
             Self::OneWeek => 7,
@@ -91,6 +90,68 @@ impl EmaPeriodId {
         }
     }
 
+    pub fn try_series<T, E>(mut create: impl FnMut(Self) -> Result<T, E>) -> Result<EmaVecs<T>, E> {
+        Ok(EmaVecs {
+            _1w: create(Self::OneWeek)?,
+            _8d: create(Self::EightDays)?,
+            _12d: create(Self::TwelveDays)?,
+            _13d: create(Self::ThirteenDays)?,
+            _21d: create(Self::TwentyOneDays)?,
+            _26d: create(Self::TwentySixDays)?,
+            _1m: create(Self::OneMonth)?,
+            _34d: create(Self::ThirtyFourDays)?,
+            _55d: create(Self::FiftyFiveDays)?,
+            _89d: create(Self::EightyNineDays)?,
+            _144d: create(Self::OneHundredFortyFourDays)?,
+            _200d: create(Self::TwoHundredDays)?,
+            _1y: create(Self::OneYear)?,
+            _2y: create(Self::TwoYears)?,
+            _200w: create(Self::TwoHundredWeeks)?,
+            _4y: create(Self::FourYears)?,
+        })
+    }
+    pub fn select<T>(self, values: &EmaVecs<T>) -> &T {
+        match self {
+            Self::OneWeek => &values._1w,
+            Self::EightDays => &values._8d,
+            Self::TwelveDays => &values._12d,
+            Self::ThirteenDays => &values._13d,
+            Self::TwentyOneDays => &values._21d,
+            Self::TwentySixDays => &values._26d,
+            Self::OneMonth => &values._1m,
+            Self::ThirtyFourDays => &values._34d,
+            Self::FiftyFiveDays => &values._55d,
+            Self::EightyNineDays => &values._89d,
+            Self::OneHundredFortyFourDays => &values._144d,
+            Self::TwoHundredDays => &values._200d,
+            Self::OneYear => &values._1y,
+            Self::TwoYears => &values._2y,
+            Self::TwoHundredWeeks => &values._200w,
+            Self::FourYears => &values._4y,
+        }
+    }
+
+    pub fn select_mut<T>(self, values: &mut EmaVecs<T>) -> &mut T {
+        match self {
+            Self::OneWeek => &mut values._1w,
+            Self::EightDays => &mut values._8d,
+            Self::TwelveDays => &mut values._12d,
+            Self::ThirteenDays => &mut values._13d,
+            Self::TwentyOneDays => &mut values._21d,
+            Self::TwentySixDays => &mut values._26d,
+            Self::OneMonth => &mut values._1m,
+            Self::ThirtyFourDays => &mut values._34d,
+            Self::FiftyFiveDays => &mut values._55d,
+            Self::EightyNineDays => &mut values._89d,
+            Self::OneHundredFortyFourDays => &mut values._144d,
+            Self::TwoHundredDays => &mut values._200d,
+            Self::OneYear => &mut values._1y,
+            Self::TwoYears => &mut values._2y,
+            Self::TwoHundredWeeks => &mut values._200w,
+            Self::FourYears => &mut values._4y,
+        }
+    }
+
     pub fn series<T>(mut create: impl FnMut(Self) -> T) -> EmaVecs<T> {
         EmaVecs {
             _1w: create(Self::OneWeek),
@@ -113,50 +174,6 @@ impl EmaPeriodId {
     }
 }
 
-impl ColumnId for EmaPeriodId {
-    type Row<T>
-        = [T; EMA_PERIOD_COUNT]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &EMA_PERIOD_IDS;
-
-    #[inline]
-    fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
-    }
-
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
-    }
-
-    #[inline]
-    fn from_fn<T, F>(mut create: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        array::from_fn(|index| create(EMA_PERIOD_IDS[index]))
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(create)
-    }
-}
-
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     /// Simple moving averages of block-level Bitcoin spot prices over trailing
@@ -166,22 +183,17 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// block it recursively applies `alpha = 2 / (span + 1)`, where `span` is
     /// the number of blocks from the trailing period's monotonic-time start
     /// through the represented block.
-    pub ema: ColumnarPerBlock<
-        Cents,
-        EmaPeriodId,
-        EmaVecs<LazyColumnPriceWithRatioPerBlock<EmaPeriodId>>,
-        M,
-    >,
+    pub ema: EmaVecs<LazyPriceWithRatioPerBlock>,
+    #[traversable(hidden)]
+    pub ema_stored: EmaVecs<StoredSeries<Height, Cents, M>>,
 }
 
 #[cfg(test)]
 mod tests {
-    use vecdb::ColumnId;
-
     use super::{EMA_PERIOD_IDS, EmaPeriodId};
 
     #[test]
-    fn ema_columns_match_public_fields() {
+    fn ema_windows_match_public_fields() {
         assert_eq!(EmaPeriodId::ALL, EMA_PERIOD_IDS);
 
         let series = EmaPeriodId::series(|period| period);

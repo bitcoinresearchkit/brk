@@ -8,6 +8,6 @@
 
 > **P2PK65Bytes** = [`U8x65`](U8x65.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:864](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L864)
+Defined in: [Developer/mono/modules/bitview-client/index.js:827](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L827)
 
 ## Type Parameters

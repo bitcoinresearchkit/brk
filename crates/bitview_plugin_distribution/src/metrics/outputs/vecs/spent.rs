@@ -7,13 +7,14 @@ use brk_error::Result;
 use brk_types::{StoredU64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::CumulativeUTXOColumns;
+use crate::metrics::CumulativeUTXOSources;
 
 #[derive(Traversable)]
 pub struct SpentOutputCount<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroups<LazyPerBlockCumulativeRolling<StoredU64>>,
-    pub stored: CumulativeUTXOColumns<StoredU64, M>,
+    #[traversable(hidden)]
+    pub stored: CumulativeUTXOSources<StoredU64, M>,
 }
 
 impl SpentOutputCount {
@@ -25,7 +26,7 @@ impl SpentOutputCount {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let stored = CumulativeUTXOColumns::forced_import(
+        let stored = CumulativeUTXOSources::forced_import(
             cache,
             db,
             "spent_utxo_count_cumulative",
@@ -36,9 +37,9 @@ impl SpentOutputCount {
             LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,
                 version,
-                &stored
-                    .columns
-                    .additive_source(&filter, &format!("{name}_cumulative"), version)
+                stored
+                    .stored
+                    .get(&filter)
                     .expect("spent-output cohort source"),
                 cached_starts,
                 mappings,

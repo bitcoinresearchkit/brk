@@ -234,12 +234,13 @@ pub fn process_blocks(
             .par_iter_vecs_mut()
             .chain(vecs.addrs.par_iter_height_mut())
             .chain(
-                [
-                    vecs.coindays_created.stored_mut(),
-                    vecs.coinblocks_destroyed.stored_mut(),
-                ]
-                .into_par_iter(),
+                vecs.coindays_created
+                    .iter_mut()
+                    .map(|v| v.stored_mut())
+                    .collect::<Vec<_>>()
+                    .into_par_iter(),
             )
+            .chain([vecs.coinblocks_destroyed.stored_mut()].into_par_iter())
             .try_for_each(|v| v.any_truncate_if_needed_at(start))?;
     }
 
@@ -415,7 +416,13 @@ pub fn process_blocks(
         vecs.cohorts
             .supply
             .push_maturation(&tick_tock.matured, block_price);
-        vecs.coindays_created.push_block(tick_tock.coindays_created);
+        for (target, value) in vecs
+            .coindays_created
+            .iter_mut()
+            .zip(tick_tock.coindays_created.iter())
+        {
+            target.push_block(*value);
+        }
 
         transfer_addresses.prepare(&outputs_result.received_data);
 

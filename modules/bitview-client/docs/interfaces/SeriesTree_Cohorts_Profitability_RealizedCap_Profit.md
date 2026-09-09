@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Profitability\_RealizedCap\_Profit
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14955](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14955)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14334](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14334)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14955](https://githu
 
 > **\_100pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14966](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14966)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14345](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14345)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14966](https://githu
 
 > **\_10pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14957](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14957)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14336](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14336)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14957](https://githu
 
 > **\_200pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14967](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14967)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14346](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14346)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14967](https://githu
 
 > **\_20pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14958](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14958)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14337](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14337)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14958](https://githu
 
 > **\_300pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14968](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14968)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14347](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14347)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14968](https://githu
 
 > **\_30pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14959](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14959)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14338](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14338)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14959](https://githu
 
 > **\_40pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14960](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14960)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14339](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14339)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14960](https://githu
 
 > **\_500pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14969](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14969)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14348](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14348)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14969](https://githu
 
 > **\_50pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14961](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14961)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14340](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14340)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14961](https://githu
 
 > **\_60pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14962](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14962)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14341](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14341)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14962](https://githu
 
 > **\_70pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14963](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14963)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14342](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14342)
 
 ***
 
@@ -102,7 +102,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14963](https://githu
 
 > **\_80pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14964](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14964)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14343](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14343)
 
 ***
 
@@ -110,7 +110,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14964](https://githu
 
 > **\_90pct**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14965](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14965)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14344](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14344)
 
 ***
 
@@ -118,4 +118,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14965](https://githu
 
 > **total**: [`SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total`](SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14956](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14956)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14335](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14335)

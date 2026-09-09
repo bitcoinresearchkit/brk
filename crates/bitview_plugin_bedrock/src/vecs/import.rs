@@ -1,14 +1,14 @@
 use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BoundedToF64;
-use bitview_vecs::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPrice, LazyDailyMetric};
+use bitview_vecs::{DailyMappings, LazyDailyMetric, LazyDailyPrice, import_stored};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableColumnarVec};
+use vecdb::{CacheBudget, CachedBoxedVec, Database};
 
 use super::Vecs;
 use crate::{
-    CapitalizedPriceVecs, CostBasisVecs, LossPercentileId, ModeVecs, Modes, PriceBandId, STORAGE,
+    CapitalizedPriceVecs, CostBasisVecs, ModeVecs, Modes, Percentiles, PriceBands, STORAGE,
 };
 
 impl ModeVecs {
@@ -19,50 +19,39 @@ impl ModeVecs {
         version: Version,
         mappings: &DailyMappings,
     ) -> Result<Self> {
-        let loss_threshold = ColumnarDailyMetric::forced_import(
-            cache,
-            db,
-            &format!("{name}_loss_thresholds_bounded"),
-            version + Version::ONE,
-            |source| {
-                LossPercentileId::series(|percentile| {
-                    LazyDailyMetric::from_source::<BoundedToF64>(
-                        &format!("{name}_loss_threshold_{}", percentile.suffix()),
-                        version + Version::ONE,
-                        source
-                            .column(
-                                &format!("{name}_loss_threshold_{}_bounded", percentile.suffix()),
-                                version + Version::ONE,
-                                percentile,
-                            )
-                            .read_only_boxed_clone(),
-                        mappings,
-                    )
-                })
-            },
-        )?;
-
-        let prices = ColumnarDailyMetric::forced_import(
-            cache,
-            db,
-            &format!("{name}_price_bands"),
-            version,
-            |source| {
-                PriceBandId::series(|band| {
-                    LazyColumnDailyPrice::new(
-                        &format!("{name}_{}", band.suffix()),
-                        version,
-                        source,
-                        band,
-                        mappings,
-                    )
-                })
-            },
-        )?;
-
+        let version = version + Version::TWO;
+        let loss_threshold_stored = Percentiles::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{name}_loss_threshold_{}_bounded", id.suffix()),
+                version,
+            )
+        })?;
+        let loss_threshold = Percentiles::from_fn(|id| {
+            LazyDailyMetric::from_source::<BoundedToF64>(
+                &format!("{name}_loss_threshold_{}", id.suffix()),
+                version,
+                id.select(&loss_threshold_stored).read_only_boxed_clone(),
+                mappings,
+            )
+        });
+        let prices_stored = PriceBands::try_from_fn(|id| {
+            import_stored(cache, db, &format!("{name}_{}_cents", id.suffix()), version)
+        })?;
+        let prices = PriceBands::from_fn(|id| {
+            LazyDailyPrice::from_day1_source(
+                &format!("{name}_{}", id.suffix()),
+                version,
+                id.select(&prices_stored),
+                mappings,
+            )
+        });
         Ok(Self {
             loss_threshold,
             prices,
+            loss_threshold_stored,
+            prices_stored,
         })
     }
 }

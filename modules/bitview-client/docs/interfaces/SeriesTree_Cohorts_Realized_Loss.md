@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Realized\_Loss
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12557](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12557)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12225](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12225)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12557](https://githu
 
 > **addrBalance**: [`SeriesTree_Cohorts_Realized_Loss_AddrBalance`](SeriesTree_Cohorts_Realized_Loss_AddrBalance.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12572](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12572)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12234](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12234)
 
 ***
 
@@ -22,15 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12572](https://githu
 
 > **age**: [`SeriesTree_Cohorts_Realized_Loss_Age`](SeriesTree_Cohorts_Realized_Loss_Age.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12559](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12559)
-
-***
-
-### ageRangeMatrix
-
-> **ageRangeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12566](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12566)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12227](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12227)
 
 ***
 
@@ -38,15 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12566](https://githu
 
 > **all**: [`BlockCumulativeSumPattern`](BlockCumulativeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12558](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12558)
-
-***
-
-### amountRangeMatrix
-
-> **amountRangeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12571](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12571)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12226](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12226)
 
 ***
 
@@ -54,15 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12571](https://githu
 
 > **class**: [`SeriesTree_Cohorts_Realized_Loss_Class`](SeriesTree_Cohorts_Realized_Loss_Class.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12561](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12561)
-
-***
-
-### classMatrix
-
-> **classMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12568](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12568)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12229](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12229)
 
 ***
 
@@ -70,15 +46,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12568](https://githu
 
 > **entry**: [`DiscountPremiumPattern5`](DiscountPremiumPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12562](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12562)
-
-***
-
-### entryMatrix
-
-> **entryMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12569](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12569)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12230](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12230)
 
 ***
 
@@ -86,15 +54,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12569](https://githu
 
 > **epoch**: [`SeriesTree_Cohorts_Realized_Loss_Epoch`](SeriesTree_Cohorts_Realized_Loss_Epoch.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12560](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12560)
-
-***
-
-### epochMatrix
-
-> **epochMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12567](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12567)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12228](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12228)
 
 ***
 
@@ -102,15 +62,15 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12567](https://githu
 
 > **negative**: [`SeriesTree_Cohorts_Realized_Loss_Negative`](SeriesTree_Cohorts_Realized_Loss_Negative.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12573](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12573)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12235](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12235)
 
 ***
 
 ### term
 
-> **term**: [`LongShortPattern6`](LongShortPattern6.md)
+> **term**: [`LongShortPattern7`](LongShortPattern7.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12564](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12564)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12232](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12232)
 
 ***
 
@@ -118,15 +78,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12564](https://githu
 
 > **type**: [`EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern5`](EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12565](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12565)
-
-***
-
-### typeMatrix
-
-> **typeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12570](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12570)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12233](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12233)
 
 ***
 
@@ -134,4 +86,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12570](https://githu
 
 > **utxoAmount**: [`SeriesTree_Cohorts_Realized_Loss_UtxoAmount`](SeriesTree_Cohorts_Realized_Loss_UtxoAmount.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12563](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12563)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12231](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12231)

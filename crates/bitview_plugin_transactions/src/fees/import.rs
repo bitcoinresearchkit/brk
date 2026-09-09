@@ -1,17 +1,13 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-    PerTxDistribution,
+    CachedWindowStartVec, PerBlockCumulativeRolling, PerTxDistribution, import_stored,
 };
 use brk_error::Result;
-use brk_types::{StoredBool, TxIndex, Version};
-use vecdb::{
-    CacheBudget, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
-    ReadableColumnarVec,
-};
+use brk_types::Version;
+use vecdb::{CacheBudget, Database, EagerVec, ImportableVec};
 
-use super::{CountVecs, CpfpFlags, CpfpRoleId, Vecs};
+use super::{CountVecs, CpfpFlags, Vecs};
 
 /// Bump this when fee/feerate aggregation logic changes (e.g., skip coinbase, skip zero-fee).
 const VERSION: Version = Version::new(5);
@@ -24,41 +20,20 @@ pub fn forced_import(
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
     let v = version + VERSION;
-    let count_source = ColumnarPerBlockCumulativeRolling::forced_import(
-        cache,
-        db,
-        "cpfp_count_cumulative",
-        version,
-        |_| (),
-    )?;
-    let counts = count_source.cumulative.read_only_clone();
-    let count = CountVecs {
-        cpfp_parent: LazyColumnPerBlockCumulativeRolling::new(
-            "cpfp_parent_count",
-            version,
-            &counts,
-            CpfpRoleId::Parent,
-            mappings,
-            cached_starts,
-        ),
-        cpfp_child: LazyColumnPerBlockCumulativeRolling::new(
-            "cpfp_child_count",
-            version,
-            &counts,
-            CpfpRoleId::Child,
-            mappings,
-            cached_starts,
-        ),
-        source: count_source,
-    };
-
-    let cpfp_flags_source =
-        EagerVec::<ColumnarVec<PcoVec<TxIndex, StoredBool>, CpfpRoleId>>::forced_import(
+    let count = |name| {
+        PerBlockCumulativeRolling::forced_import(
+            cache,
             db,
-            "cpfp_flags",
-            version,
-        )?;
-    let flags = cpfp_flags_source.read_only_clone();
+            name,
+            version + Version::ONE,
+            mappings,
+            cached_starts,
+        )
+    };
+    let count = CountVecs {
+        cpfp_parent: count("cpfp_parent_count")?,
+        cpfp_child: count("cpfp_child_count")?,
+    };
 
     Ok(Vecs {
         count,
@@ -74,9 +49,8 @@ pub fn forced_import(
             mappings,
         )?,
         cpfp_flags: CpfpFlags {
-            is_cpfp_parent: flags.column("is_cpfp_parent", version, CpfpRoleId::Parent),
-            is_cpfp_child: flags.column("is_cpfp_child", version, CpfpRoleId::Child),
+            is_cpfp_parent: import_stored(cache, db, "is_cpfp_parent", version + Version::ONE)?,
+            is_cpfp_child: import_stored(cache, db, "is_cpfp_child", version + Version::ONE)?,
         },
-        cpfp_flags_source,
     })
 }

@@ -2,9 +2,8 @@ use brk_error::Result;
 
 use std::path::Path;
 
-use bitview_cohort::{ByTerm, ProfitabilityRangeId, UTXOAggregate};
+use bitview_cohort::{ByTerm, ProfitabilityRange, UTXOAggregate};
 use brk_types::{Cents, Date};
-use vecdb::ColumnId;
 
 use crate::{
     metrics::{CohortMetrics, CostBasisBlockData},
@@ -41,12 +40,14 @@ impl CohortMetrics {
         self.profitability.push(
             spot_price,
             ByTerm {
-                short: ProfitabilityRangeId::map_ref(&profitability, |row| row.supply.short),
-                long: ProfitabilityRangeId::map_ref(&profitability, |row| row.supply.long),
+                short: ProfitabilityRange::from_fn(|id| id.select(&profitability).supply.short),
+                long: ProfitabilityRange::from_fn(|id| id.select(&profitability).supply.long),
             },
             ByTerm {
-                short: ProfitabilityRangeId::map_ref(&profitability, |row| row.realized_cap.short),
-                long: ProfitabilityRangeId::map_ref(&profitability, |row| row.realized_cap.long),
+                short: ProfitabilityRange::from_fn(|id| {
+                    id.select(&profitability).realized_cap.short
+                }),
+                long: ProfitabilityRange::from_fn(|id| id.select(&profitability).realized_cap.long),
             },
         );
     }

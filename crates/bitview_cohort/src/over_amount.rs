@@ -102,8 +102,8 @@ pub struct OverAmount<T> {
     pub _10k_btc: T,
 }
 
-define_column_id!(
-    OverAmountId for OverAmount, version = 1 {
+define_cohort_id!(
+    OverAmountId for OverAmount {
         Over1Sat => _1sat,
         Over10Sats => _10sats,
         Over100Sats => _100sats,

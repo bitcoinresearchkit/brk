@@ -1,16 +1,15 @@
 use bitview_compute::{NumericValue, compute_cumulative_sats_from_indexes};
 use bitview_transforms::{CentsUnsignedToDollars, SatsSignedToBitcoin, SatsToBitcoin};
-use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, SatsSigned, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableVec, Rw, StorageMode,
-    UnaryTransform, VecIndex, VecValue,
+    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableVec, Rw, UnaryTransform, VecIndex,
+    VecValue,
 };
 
-use crate::{IndexSources, LazyPerBlock, PerBlock};
+use crate::{IndexSources, LazyPerBlock, PerBlock, Value};
 
 /// Trait that associates a sats type with its transform to Bitcoin.
 pub trait AmountType: NumericValue + JsonSchema {
@@ -26,17 +25,12 @@ impl AmountType for SatsSigned {
 }
 
 /// The policy selects sats retention; the independent cents source stays budgeted.
-#[derive(Traversable)]
-pub struct ValuePerBlock<M: StorageMode = Rw, S: CachedVecStrategy = Budgeted> {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
-    /// Reported in satoshis.
-    pub sats: PerBlock<Sats, M, S>,
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, Cents>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: PerBlock<Cents, M>,
-}
+pub type ValuePerBlock<M = Rw, S = Budgeted> = Value<
+    PerBlock<Sats, M, S>,
+    PerBlock<Cents, M>,
+    LazyPerBlock<Bitcoin, Sats>,
+    LazyPerBlock<Dollars, Cents>,
+>;
 
 impl<S: CachedVecStrategy> ValuePerBlock<Rw, S> {
     pub fn forced_import(

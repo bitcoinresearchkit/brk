@@ -1,15 +1,8 @@
-#[cfg(feature = "storage")]
-use std::array;
 use std::result::Result;
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-#[cfg(feature = "storage")]
-use brk_types::Version;
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue};
 
-#[cfg(feature = "storage")]
 const WINDOW_COUNT: usize = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -20,7 +13,6 @@ pub enum WindowId {
     Year1,
 }
 
-#[cfg(feature = "storage")]
 const WINDOW_IDS: [WindowId; WINDOW_COUNT] = [
     WindowId::Day1,
     WindowId::Week1,
@@ -29,6 +21,10 @@ const WINDOW_IDS: [WindowId; WINDOW_COUNT] = [
 ];
 
 impl WindowId {
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+    pub const ALL: &'static [Self] = &WINDOW_IDS;
     pub const fn suffix(self) -> &'static str {
         match self {
             Self::Day1 => "24h",
@@ -54,51 +50,6 @@ impl WindowId {
             Self::Month1 => &windows._1m,
             Self::Year1 => &windows._1y,
         }
-    }
-}
-
-#[cfg(feature = "storage")]
-impl ColumnId for WindowId {
-    type Row<T>
-        = [T; WINDOW_COUNT]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &WINDOW_IDS;
-
-    #[inline]
-    fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
-    }
-
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
-    }
-
-    #[inline]
-    fn from_fn<T, F>(mut create: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        array::from_fn(|index| create(WINDOW_IDS[index]))
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(create)
     }
 }
 
@@ -187,12 +138,11 @@ impl<A, B> Windows<(A, B)> {
 
 #[cfg(all(test, feature = "storage"))]
 mod tests {
-    use vecdb::ColumnId;
 
     use super::{WINDOW_IDS, WindowId};
 
     #[test]
-    fn window_columns_match_named_fields() {
+    fn window_ids_match_named_fields() {
         assert_eq!(WindowId::ALL, WINDOW_IDS);
 
         let windows = WindowId::series(|window| window);

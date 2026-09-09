@@ -6,23 +6,15 @@
 
 # Interface: SeriesTree\_Cohorts\_Profitability\_Supply
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14675](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14675)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14056](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14056)
 
 ## Properties
-
-### height
-
-> **height**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:14679](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14679)
-
-***
 
 ### loss
 
 > **loss**: [`SeriesTree_Cohorts_Profitability_Supply_Loss`](SeriesTree_Cohorts_Profitability_Supply_Loss.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14678](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14678)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14059](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14059)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14678](https://githu
 
 > **profit**: [`SeriesTree_Cohorts_Profitability_Supply_Profit`](SeriesTree_Cohorts_Profitability_Supply_Profit.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14677](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14677)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14058](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14058)
 
 ***
 
@@ -38,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14677](https://githu
 
 > **range**: [`SeriesTree_Cohorts_Profitability_Supply_Range`](SeriesTree_Cohorts_Profitability_Supply_Range.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14676](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14676)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14057](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14057)

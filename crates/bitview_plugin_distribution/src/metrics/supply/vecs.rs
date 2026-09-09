@@ -1,21 +1,25 @@
 use bitview_cohort::{
     AgeRange, AgeRangeId, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroupsWithoutAmount,
-    UTXORows,
+    UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_transforms::{HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, SatsToCents};
+use bitview_transforms::{
+    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, SatsToCents, StoredU64ToCents,
+    StoredU64ToSats,
+};
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, ColumnarValuePerBlockCumulativeRolling, LazyPercentPerBlock,
-    LazyRollingDeltasAmountFromHeight, LazyValuePerBlock, LazyValuePerBlockCumulativeRolling,
+    CachedWindowStartVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
+    LazyValuePerBlock, LazyValuePerBlockCumulativeRolling, PerBlockCumulativeRolling, SatsCents,
 };
 use brk_error::Result;
 use brk_types::{
-    Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version,
+    Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, StoredU64, Version,
 };
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode,
+    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, LazyVec, Rw,
+    StorageMode,
 };
 
 use super::{SupplyBase, SupplyByCohort, SupplySources, SupplyTotal};
@@ -29,11 +33,9 @@ pub struct SupplyVecs<M: StorageMode = Rw> {
     pub total: SupplyTotal<M>,
     /// Amount of unspent bitcoin that ages out of an exact UTXO age range
     /// during the represented block interval.
-    pub matured: ColumnarValuePerBlockCumulativeRolling<
-        AgeRangeId,
-        AgeRange<LazyValuePerBlockCumulativeRolling>,
-        M,
-    >,
+    pub matured: AgeRange<LazyValuePerBlockCumulativeRolling>,
+    #[traversable(hidden)]
+    matured_sources: AgeRange<SatsCents<PerBlockCumulativeRolling<StoredU64, M>>>,
     /// One half of a UTXO cohort's unspent supply.
     pub half: UTXOGroupsWithoutAmount<LazyValuePerBlock>,
     /// Unspent supply in profit: UTXO cohort outputs whose creation price is
@@ -59,7 +61,7 @@ impl SupplyVecs {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let total = SupplyTotal::forced_import(cache, db, version, mappings, spot_price)?;
         let all_supply = total.all_supply();
         let in_profit = SupplyByCohort::forced_import(
@@ -131,46 +133,66 @@ impl SupplyVecs {
             )
         });
         let matured_version = version + MATURED_VERSION;
-        let matured = ColumnarValuePerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!(
-                "{}_age_range_matured_supply_cumulative",
-                CohortContext::Utxo.prefix()
-            ),
-            matured_version,
-            |sats, cents| {
-                AgeRangeId::series(CohortContext::Utxo, |column, name| {
-                    let name = format!("{name}_matured_supply");
-                    let (sats, cents) =
-                        ColumnarValuePerBlockCumulativeRolling::<AgeRangeId, ()>::sources_from(
-                            sats,
-                            cents,
-                            &format!("{name}_cumulative"),
-                            matured_version,
-                            [column],
-                        );
-                    LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
-                        &name,
-                        matured_version,
-                        &sats,
-                        &cents,
-                        mappings,
-                        cached_starts,
-                    )
-                })
-            },
-        )?;
+        let matured_sources = AgeRange::try_from_fn(|id| -> Result<_> {
+            let name = format!(
+                "{}_matured_supply",
+                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+            );
+            Ok(SatsCents {
+                sats: PerBlockCumulativeRolling::forced_import(
+                    cache,
+                    db,
+                    &format!("{name}_raw_sats"),
+                    matured_version + Version::ONE,
+                    mappings,
+                    cached_starts,
+                )?,
+                cents: PerBlockCumulativeRolling::forced_import(
+                    cache,
+                    db,
+                    &format!("{name}_raw_cents"),
+                    matured_version + Version::ONE,
+                    mappings,
+                    cached_starts,
+                )?,
+            })
+        })?;
+        let matured = AgeRange::from_fn(|id| {
+            let name = format!(
+                "{}_matured_supply",
+                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+            );
+            let source = id.select(&matured_sources);
+            let sats = LazyVec::transformed::<StoredU64ToSats>(
+                &format!("{name}_cumulative_sats"),
+                matured_version,
+                source.sats.cumulative.height.read_only_boxed_clone(),
+            );
+            let cents = LazyVec::transformed::<StoredU64ToCents>(
+                &format!("{name}_cumulative_cents"),
+                matured_version,
+                source.cents.cumulative.height.read_only_boxed_clone(),
+            );
+            LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
+                &name,
+                matured_version,
+                &sats,
+                &cents,
+                mappings,
+                cached_starts,
+            )
+        });
 
-        Ok(Self {
+        Ok(Box::new(Self {
             total,
             matured,
+            matured_sources,
             half,
             in_profit,
             in_loss,
             delta,
             dominance,
-        })
+        }))
     }
 
     pub fn sources(&self, filter: &Filter) -> Option<SupplySources> {
@@ -183,19 +205,36 @@ impl SupplyVecs {
     pub fn min_resume_len(&self) -> usize {
         self.total
             .min_len()
-            .min(self.matured.len())
+            .min(
+                self.matured_sources
+                    .iter()
+                    .flat_map(|v| {
+                        [
+                            v.sats.cumulative.height.len(),
+                            v.cents.cumulative.height.len(),
+                        ]
+                    })
+                    .min()
+                    .unwrap_or_default(),
+            )
             .min(self.in_profit.min_len())
             .min(self.in_loss.min_len())
     }
 
     #[inline(always)]
     pub fn push_maturation(&mut self, matured: &AgeRange<Sats>, price: Cents) {
-        let cents = AgeRange::from_fn(|column| SatsToCents::apply(*column.select(matured), price));
-        self.matured.push_block(matured.clone(), cents);
+        for id in AgeRangeId::ALL {
+            let sats = *id.select(matured);
+            let source = id.select_mut(&mut self.matured_sources);
+            source.sats.push_block(StoredU64::from(u64::from(sats)));
+            source
+                .cents
+                .push_block(StoredU64::from(u64::from(SatsToCents::apply(sats, price))));
+        }
     }
 
     #[inline(always)]
-    pub fn push(&mut self, total: UTXORows<Sats>, profitability: &UTXORows<UnrealizedState>) {
+    pub fn push(&mut self, total: UTXOValues<Sats>, profitability: &UTXOValues<UnrealizedState>) {
         let in_profit = profitability.map(|state| state.supply_in_profit);
         let in_loss = profitability.map(|state| state.supply_in_loss);
 
@@ -206,7 +245,11 @@ impl SupplyVecs {
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.total.collect_vecs_mut();
-        vecs.extend(self.matured.collect_vecs_mut());
+        vecs.extend(
+            self.matured_sources
+                .iter_mut()
+                .flat_map(|v| [v.sats.stored_mut(), v.cents.stored_mut()]),
+        );
         vecs.extend(self.in_profit.collect_vecs_mut());
         vecs.extend(self.in_loss.collect_vecs_mut());
         vecs

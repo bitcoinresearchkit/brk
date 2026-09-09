@@ -6,7 +6,7 @@
 
 # Interface: SeriesLeafWithSchema
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1241](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1241)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1122](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1122)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:1241](https://github
 
 > `optional` **description?**: `string` \| `null`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1245](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1245)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1126](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1126)
 
 Human-readable metric definition, when documented.
 
@@ -24,7 +24,7 @@ Human-readable metric definition, when documented.
 
 > **indexes**: [`Index`](../type-aliases/Index.md)[]
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1244](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1244)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1125](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1125)
 
 Available indexes for this series.
 
@@ -34,7 +34,7 @@ Available indexes for this series.
 
 > **kind**: `string`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1243](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1243)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1124](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1124)
 
 The Rust type (e.g., "Sats", "StoredF64").
 
@@ -44,7 +44,7 @@ The Rust type (e.g., "Sats", "StoredF64").
 
 > **name**: `string`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1242](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1242)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1123](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1123)
 
 The series name/identifier.
 
@@ -54,6 +54,6 @@ The series name/identifier.
 
 > **type**: `string`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1246](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1246)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1127](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1127)
 
 JSON Schema type (e.g., "integer", "number", "string", "boolean", "array", "object").

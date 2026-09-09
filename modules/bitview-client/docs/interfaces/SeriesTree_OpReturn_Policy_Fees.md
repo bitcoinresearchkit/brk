@@ -6,23 +6,15 @@
 
 # Interface: SeriesTree\_OpReturn\_Policy\_Fees
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8629](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8629)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8312](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8312)
 
 ## Properties
-
-### cumulative
-
-> **cumulative**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`[]\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:8634](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8634)
-
-***
 
 ### multiple
 
 > **multiple**: [`AverageBlockCumulativeFeeSumPattern`](AverageBlockCumulativeFeeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8633](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8633)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8316](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8316)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8633](https://github
 
 > **oversized**: [`AverageBlockCumulativeFeeSumPattern`](AverageBlockCumulativeFeeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8632](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8632)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8315](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8315)
 
 ***
 
@@ -38,7 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8632](https://github
 
 > **preV30Nonstandard**: [`AverageBlockCumulativeFeeSumPattern`](AverageBlockCumulativeFeeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8631](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8631)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8314](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8314)
 
 ***
 
@@ -46,4 +38,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8631](https://github
 
 > **preV30Standard**: [`AverageBlockCumulativeFeeSumPattern`](AverageBlockCumulativeFeeSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8630](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8630)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8313](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8313)

@@ -1,11 +1,11 @@
-use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
+use bitview_cohort::UTXOAggregate;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    ColumnarDailyMetric, DailyMappings, IndexSources, LazyColumnDailyPriceWithRatio,
+    DailyMappings, IndexSources, LazyDailyPriceWithRatio, StoredSeries, import_stored,
 };
 use brk_error::Result;
-use brk_types::{Cents, Height, Version};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
+use brk_types::{Cents, Day1, Height, Version};
+use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode, WritableVec};
 
 use crate::WeightedPair;
 
@@ -15,19 +15,11 @@ pub struct CapitalizedPriceVecs<M: StorageMode = Rw> {
     /// sum(bucket price squared * weighted sats) / sum(bucket price * weighted sats).
     /// Uses rounded URPD buckets, not exact per-output second moments. Empty or
     /// zero-capitalization distributions are undefined. Final cents are floored.
-    pub awake: ColumnarDailyMetric<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<LazyColumnDailyPriceWithRatio<UTXOAggregateId>>,
-        M,
-    >,
+    pub awake: UTXOAggregate<LazyDailyPriceWithRatio>,
     /// The same capital-weighted mean using daily mobility-weighted URPDs.
-    pub coinflow: ColumnarDailyMetric<
-        Cents,
-        UTXOAggregateId,
-        UTXOAggregate<LazyColumnDailyPriceWithRatio<UTXOAggregateId>>,
-        M,
-    >,
+    pub coinflow: UTXOAggregate<LazyDailyPriceWithRatio>,
+    #[traversable(hidden)]
+    pub stored: WeightedPair<UTXOAggregate<StoredSeries<Day1, Cents, M>>>,
 }
 
 impl CapitalizedPriceVecs {
@@ -39,45 +31,56 @@ impl CapitalizedPriceVecs {
         mappings: &DailyMappings,
         spot: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let import = |weight| {
-            ColumnarDailyMetric::forced_import(
-                cache,
-                db,
-                &format!("{weight}_capitalized_price_cents_by_aggregate"),
-                version + Version::ONE,
-                |source| {
-                    let cohort = |cohort: UTXOAggregateId| {
-                        LazyColumnDailyPriceWithRatio::new(
-                            &cohort.metric_name(&format!("{weight}_capitalized_price")),
-                            version + Version::ONE,
-                            source,
-                            cohort,
-                            indexes,
-                            mappings,
-                            spot,
-                        )
-                    };
-                    UTXOAggregate {
-                        all: cohort(UTXOAggregateId::All),
-                        sth: cohort(UTXOAggregateId::Sth),
-                        lth: cohort(UTXOAggregateId::Lth),
-                    }
-                },
-            )
+        let version = version + Version::TWO;
+        let import = |weight: &str| {
+            UTXOAggregate::try_from_fn(|id| {
+                import_stored(
+                    cache,
+                    db,
+                    &id.metric_name(&format!("{weight}_capitalized_price_cents")),
+                    version,
+                )
+            })
         };
-        Ok(Self {
-            awake: import("awake")?,
+        let stored = WeightedPair {
+            cointime: import("awake")?,
             coinflow: import("coinflow")?,
+        };
+        let build = |weight: &str, sources: &UTXOAggregate<StoredSeries<Day1, Cents>>| {
+            UTXOAggregate::from_fn(|id| {
+                LazyDailyPriceWithRatio::from_day1_source(
+                    &id.metric_name(&format!("{weight}_capitalized_price")),
+                    version,
+                    id.select(sources),
+                    indexes,
+                    mappings,
+                    spot,
+                )
+            })
+        };
+        let awake = build("awake", &stored.cointime);
+        let coinflow = build("coinflow", &stored.coinflow);
+        Ok(Self {
+            awake,
+            coinflow,
+            stored,
         })
     }
 
     pub fn push(&mut self, prices: &UTXOAggregate<WeightedPair<Cents>>) {
-        self.awake.push(prices.map(|price| price.cointime));
-        self.coinflow.push(prices.map(|price| price.coinflow));
+        for (target, price) in self.stored.cointime.iter_mut().zip(prices.iter()) {
+            target.push(price.cointime);
+        }
+        for (target, price) in self.stored.coinflow.iter_mut().zip(prices.iter()) {
+            target.push(price.coinflow);
+        }
     }
 
     pub fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
-        [self.awake.stored_mut(), self.coinflow.stored_mut()].into_iter()
+        self.stored
+            .iter_mut()
+            .flat_map(|sources| sources.iter_mut())
+            .map(|v| v as &mut dyn AnyStoredVec)
     }
 
     pub fn minimum_len(&mut self) -> usize {

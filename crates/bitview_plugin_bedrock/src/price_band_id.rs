@@ -1,6 +1,3 @@
-use brk_types::Version;
-use vecdb::{ColumnId, VecValue};
-
 use super::{LEVEL_COUNT, LevelId, PriceBands};
 
 const PERCENTILE_COUNT: usize = 5;
@@ -41,6 +38,8 @@ pub enum PriceBandId {
 }
 
 impl PriceBandId {
+    pub const ALL: &'static [Self] = &PRICE_BAND_IDS;
+
     pub const fn suffix(self) -> &'static str {
         match self {
             Self::FloorPct95 => "floor_pct95",
@@ -119,62 +118,16 @@ impl From<LevelId> for PriceBandId {
     }
 }
 
-impl ColumnId for PriceBandId {
-    type Row<T>
-        = PriceBands<T>
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &PRICE_BAND_IDS;
-
-    #[inline]
-    fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        self.select(row)
-    }
-
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        self.select_mut(row)
-    }
-
-    #[inline]
-    fn from_fn<T, F>(create: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        PriceBands::from_fn(create)
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(create)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use vecdb::ColumnId;
-
     use super::{PRICE_BAND_IDS, PriceBandId};
 
     #[test]
-    fn storage_order_matches_public_order() {
+    fn selection_matches_public_order() {
         assert_eq!(PriceBandId::ALL, PRICE_BAND_IDS);
-        let row = PriceBandId::from_fn(|id| id);
+        let values = PriceBandId::series(|id| id);
         for &id in PriceBandId::ALL {
-            assert_eq!(id.get(&row), &id);
+            assert_eq!(id.select(&values), &id);
         }
     }
 }

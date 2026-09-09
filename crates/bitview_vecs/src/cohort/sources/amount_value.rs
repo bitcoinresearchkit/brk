@@ -1,0 +1,107 @@
+use bitview_cohort::{Amount, AmountRange, CohortContext};
+use bitview_transforms::{StoredU64ToCents, StoredU64ToSats};
+use bitview_traversable::Traversable;
+use brk_error::Result;
+use brk_types::{Cents, Height, Sats, StoredU64, Version};
+use derive_more::{Deref, DerefMut};
+use vecdb::{AnyStoredVec, CacheBudget, Database, LazyVec, Rw, StorageMode};
+
+use super::AmountSources;
+use crate::SatsCents;
+
+#[derive(Deref, DerefMut, Traversable)]
+pub struct AmountValueSources<S: Clone, M: StorageMode = Rw> {
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    pub series: Amount<S>,
+    #[traversable(hidden)]
+    pub stored: SatsCents<AmountSources<StoredU64, (), M>>,
+}
+
+impl<S: Clone> AmountValueSources<S> {
+    #[allow(clippy::too_many_arguments)]
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        storage_name: &str,
+        context: CohortContext,
+        metric: &str,
+        version: Version,
+        mut build: impl FnMut(
+            &str,
+            LazyVec<Height, Sats, Height, StoredU64>,
+            LazyVec<Height, Cents, Height, StoredU64>,
+        ) -> S,
+    ) -> Result<Self> {
+        let sats = AmountSources::forced_import(
+            cache,
+            db,
+            &format!("{storage_name}_sats"),
+            context,
+            metric,
+            version,
+            |_, _| (),
+        )?;
+        let cents = AmountSources::forced_import(
+            cache,
+            db,
+            &format!("{storage_name}_cents"),
+            context,
+            metric,
+            version,
+            |_, _| (),
+        )?;
+        let series = Amount::new(|filter, cohort| {
+            let name = context.metric_name(&filter, cohort, metric);
+            let sats = LazyVec::transformed::<StoredU64ToSats>(
+                &format!("{name}_cumulative_sats"),
+                version,
+                sats.stored
+                    .get(&filter)
+                    .expect("amount cohort")
+                    .read_only_boxed_clone(),
+            );
+            let cents = LazyVec::transformed::<StoredU64ToCents>(
+                &format!("{name}_cumulative_cents"),
+                version,
+                cents
+                    .stored
+                    .get(&filter)
+                    .expect("amount cohort")
+                    .read_only_boxed_clone(),
+            );
+            build(&name, sats, cents)
+        });
+        Ok(Self {
+            series,
+            stored: SatsCents { sats, cents },
+        })
+    }
+
+    pub fn push_cumulative(&mut self, sats: &AmountRange<Sats>, cents: &AmountRange<Cents>) {
+        self.stored
+            .sats
+            .push_cumulative(&AmountRange::from_fn(|id| {
+                StoredU64::from(u64::from(*id.select(sats)))
+            }));
+        self.stored
+            .cents
+            .push_cumulative(&AmountRange::from_fn(|id| {
+                StoredU64::from(u64::from(*id.select(cents)))
+            }));
+    }
+
+    pub fn len(&self) -> usize {
+        self.stored.sats.len().min(self.stored.cents.len())
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        let mut vecs = self.stored.sats.collect_vecs_mut();
+        vecs.extend(self.stored.cents.collect_vecs_mut());
+        vecs
+    }
+}

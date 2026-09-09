@@ -1,5 +1,5 @@
 use bitview_cohort::{
-    AgeRangeId, AmountRange, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroups, UTXORows,
+    AmountRange, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroups, UTXOValues,
 };
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SatsToCents;
@@ -8,18 +8,19 @@ use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, ReadOnlyClone,
-    ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, ReadableBoxedVec,
+    ReadableCloneableVec, Rw, StorageMode,
 };
 
-use crate::metrics::{ColumnarAmount, UTXOColumns};
+use crate::metrics::{AmountSources, UTXOSources};
 
 #[derive(Traversable)]
 pub struct SupplyTotal<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts:
-        UTXOAndAddrGroups<LazySpotValuePerBlock, ColumnarAmount<Sats, LazySpotValuePerBlock, M>>,
-    pub stored: UTXOColumns<Sats, M>,
+        UTXOAndAddrGroups<LazySpotValuePerBlock, AmountSources<Sats, LazySpotValuePerBlock, M>>,
+    #[traversable(hidden)]
+    pub stored: UTXOSources<Sats, M>,
     #[traversable(skip)]
     all_supply: ReadableBoxedVec<Height, Sats>,
     #[traversable(skip)]
@@ -34,19 +35,14 @@ impl SupplyTotal {
         mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let stored = UTXOColumns::forced_import(cache, db, "supply_sats", version)?;
-        let age_ranges = stored.age_range.height.read_only_clone();
+        let stored = UTXOSources::forced_import(cache, db, "supply_sats", version)?;
         let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
-        let all_sats = age_ranges.sum_columns(
-            &format!("{all_name}_sats"),
-            version,
-            AgeRangeId::ALL.iter().copied(),
-        );
+        let all_sats = stored.get(&Filter::All).expect("all supply source");
         let all_supply = all_sats.read_only_boxed_clone();
         let sats = LazyPerBlock::from_height_source::<Ident>(
             &format!("{all_name}_sats"),
             version,
-            &all_sats,
+            all_sats,
             mappings,
         );
         let all_cents = LazyIndexedVec::new(
@@ -73,34 +69,13 @@ impl SupplyTotal {
             if matches!(filter, Filter::All) {
                 all.clone()
             } else {
-                let source_name = format!("{name}_sats");
-                let source = if let Some(column) = AgeRangeId::matching(&filter) {
-                    return LazySpotValuePerBlock::from_sats_source(
-                        &name,
-                        version,
-                        &age_ranges.column(&source_name, version, column),
-                        mappings,
-                        spot_price,
-                    );
-                } else if let Some(columns) = AgeRangeId::aggregate_columns(&filter) {
-                    return LazySpotValuePerBlock::from_sats_source(
-                        &name,
-                        version,
-                        &age_ranges.sum_columns(&source_name, version, columns),
-                        mappings,
-                        spot_price,
-                    );
-                } else {
-                    stored
-                        .additive_source(&filter, &source_name, version)
-                        .expect("total-supply cohort source")
-                };
+                let source = stored.get(&filter).expect("total-supply cohort source");
                 LazySpotValuePerBlock::from_sats_source(
-                    &name, version, &source, mappings, spot_price,
+                    &name, version, source, mappings, spot_price,
                 )
             }
         });
-        let addr_balance = ColumnarAmount::forced_import(
+        let addr_balance = AmountSources::forced_import(
             cache,
             db,
             "addrs_supply_sats_by_balance_range",
@@ -146,18 +121,18 @@ impl SupplyTotal {
     }
 
     #[inline(always)]
-    pub fn push(&mut self, rows: UTXORows<Sats>) {
-        self.stored.push(rows);
+    pub fn push(&mut self, cohort_values: UTXOValues<Sats>) {
+        self.stored.push(cohort_values);
     }
 
     #[inline(always)]
-    pub fn push_addr_balance(&mut self, row: AmountRange<Sats>) {
-        self.cohorts.addr_balance.push(row);
+    pub fn push_addr_balance(&mut self, values: AmountRange<Sats>) {
+        self.cohorts.addr_balance.push(values);
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         let mut vecs = self.stored.collect_vecs_mut();
-        vecs.push(self.cohorts.addr_balance.stored_mut());
+        vecs.extend(self.cohorts.addr_balance.collect_vecs_mut());
         vecs
     }
 }

@@ -15,8 +15,8 @@ pub struct UTXOAllAndSth<T> {
     pub sth: T,
 }
 
-define_column_id!(
-    UTXOAllAndSthId for UTXOAllAndSth, version = 1 {
+define_cohort_id!(
+    UTXOAllAndSthId for UTXOAllAndSth {
         All => all,
         Sth => sth,
     }

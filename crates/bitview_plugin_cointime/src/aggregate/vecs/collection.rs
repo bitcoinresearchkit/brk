@@ -14,5 +14,6 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub lth: CohortVecs,
     /// Height-indexed source stored for all, short-term-holder, and
     /// long-term-holder cointime aggregates.
+    #[traversable(hidden)]
     pub sources: Sources<M>,
 }

@@ -301,20 +301,20 @@ fn incremental_compute_reads_only_the_new_tail_and_invalidates_rewrites() {
     source.height.write().unwrap();
     let exit = Exit::new();
     let compute = |from: usize, target: &mut PerBlock<StoredU64>, source: &PerBlock<StoredU64>| {
-        let mut rows = 0;
+        let mut count = 0;
         target
             .height
             .compute_transform(
                 Height::from(from),
                 &source.height,
                 |(height, value, _)| {
-                    rows += 1;
+                    count += 1;
                     (height, value)
                 },
                 &exit,
             )
             .unwrap();
-        rows
+        count
     };
     assert_eq!(compute(0, &mut target, &source), 4096);
     let reader = target.read_only_clone();

@@ -1,24 +1,19 @@
-use bitview_cohort::{ByType, OutputTypeId};
+use bitview_cohort::ByType;
 use bitview_traversable::Traversable;
-use brk_types::{PartsPerMillion32, StoredU16, StoredU64};
+use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
 use vecdb::{Rw, StorageMode};
 
 use super::{SpendableOutputCount, WithOutputTypes};
 use bitview_vecs::{
-    ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnCountPerBlockCumulativeRolling,
-    LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
+    LazyCountPerBlockCumulativeRolling, LazyPerBlockCumulativeRolling,
+    LazyPercentCumulativeRolling, StoredSeries,
 };
 
 #[derive(Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
     /// Counts of transaction outputs, including coinbase. Per-type series
     /// classify outputs by BRK locking-script type.
-    pub output_count: ColumnarPerBlock<
-        StoredU16,
-        OutputTypeId,
-        WithOutputTypes<LazyColumnCountPerBlockCumulativeRolling>,
-        M,
-    >,
+    pub output_count: WithOutputTypes<LazyCountPerBlockCumulativeRolling>,
     /// Number of transaction outputs excluding `OP_RETURN` outputs, which are
     /// provably unspendable.
     pub spendable_output_count: SpendableOutputCount,
@@ -28,14 +23,13 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// Number of transactions containing at least one output of a
     /// BRK locking-script type. Each transaction is counted once per type; the
     /// `all` aggregate counts every transaction, including coinbase.
-    pub tx_count: ColumnarPerBlockCumulativeRolling<
-        StoredU64,
-        OutputTypeId,
-        WithOutputTypes<LazyColumnPerBlockCumulativeRolling<StoredU64, OutputTypeId>>,
-        M,
-    >,
+    pub tx_count: WithOutputTypes<LazyPerBlockCumulativeRolling<StoredU64>>,
     /// Transactions containing an output type divided by all
     /// transactions over the same cumulative or trailing window, including
     /// coinbase transactions.
     pub tx_share: ByType<LazyPercentCumulativeRolling<PartsPerMillion32>>,
+    #[traversable(hidden)]
+    pub output_count_stored: ByType<StoredSeries<Height, StoredU16, M>>,
+    #[traversable(hidden)]
+    pub tx_count_stored: ByType<StoredSeries<Height, StoredU64, M>>,
 }

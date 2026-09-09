@@ -1,10 +1,10 @@
-use bitview_cohort::OutputTypeId;
+use bitview_cohort::{ByType, Filter, OutputTypeId};
 use bitview_compute::{CoinbasePolicy, walk_blocks};
 use bitview_plugin_indexer::Indexer;
 use brk_error::{OptionData, Result};
 use brk_exit::Exit;
 use brk_types::{StoredU16, StoredU64};
-use vecdb::{AnyVec, ColumnId, ReadableVec, VecIndex};
+use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 
@@ -18,22 +18,31 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
         + indexer.vecs().transactions.first_txout_index.version()
         + indexer.vecs().transactions.txid.version();
 
-    vecs.output_count
-        .validate_and_truncate(dep_version, starting_lengths.height)?;
-    vecs.tx_count
-        .validate_and_truncate(dep_version, starting_lengths.height)?;
-
+    for target in vecs.stored_vecs_mut() {
+        target.any_validate_computed_version_or_reset(dep_version)?;
+        target.any_truncate_if_needed_at(starting_lengths.height.to_usize())?;
+    }
     let skip = vecs
-        .output_count
-        .height
-        .len()
-        .min(vecs.tx_count.cumulative.len());
+        .stored_vecs_mut()
+        .map(|target| target.len())
+        .min()
+        .unwrap_or_default();
 
     let first_tx_index = &indexer.vecs().transactions.first_tx_index;
     let end = first_tx_index.len();
     if skip < end {
-        vecs.output_count.truncate_if_needed_at(skip)?;
-        vecs.tx_count.truncate_if_needed_at(skip)?;
+        for target in vecs.stored_vecs_mut() {
+            target.any_truncate_if_needed_at(skip)?;
+        }
+        let mut cumulative = ByType::new(|filter, _| {
+            let Filter::Type(output_type) = filter else {
+                unreachable!()
+            };
+            vecs.tx_count_stored
+                .get(output_type)
+                .collect_last()
+                .unwrap_or_default()
+        });
 
         let fi_batch = first_tx_index.collect_range_at(skip, end);
         let txid_len = indexer.vecs().transactions.txid.len();
@@ -70,20 +79,24 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
                 Ok(())
             },
             |agg| {
-                vecs.output_count.push(OutputTypeId::from_fn(|column| {
-                    let value = agg.entries_per_type[column.output_type() as usize];
+                for &id in OutputTypeId::ALL {
+                    let output_type = id.output_type();
+                    let value = agg.entries_per_type[output_type as usize];
                     debug_assert!(u16::try_from(value).is_ok());
-                    StoredU16::new(value as u16)
-                }));
-                vecs.tx_count.push_block(OutputTypeId::from_fn(|column| {
-                    StoredU64::from(agg.txs_per_type[column.output_type() as usize])
-                }));
+                    vecs.output_count_stored
+                        .get_mut(output_type)
+                        .push(StoredU16::new(value as u16));
+                    let total = cumulative.get_mut(output_type);
+                    *total += StoredU64::from(agg.txs_per_type[output_type as usize]);
+                    vecs.tx_count_stored.get_mut(output_type).push(*total);
+                }
 
                 height += 1;
                 if height.is_multiple_of(WRITE_INTERVAL) {
                     let _lock = exit.lock();
-                    vecs.output_count.write()?;
-                    vecs.tx_count.write()?;
+                    for target in vecs.stored_vecs_mut() {
+                        target.write()?;
+                    }
                 }
                 Ok(())
             },
@@ -91,10 +104,24 @@ pub fn compute(vecs: &mut Vecs, indexer: &Indexer, exit: &Exit) -> Result<()> {
 
         {
             let _lock = exit.lock();
-            vecs.output_count.write()?;
-            vecs.tx_count.write()?;
+            for target in vecs.stored_vecs_mut() {
+                target.write()?;
+            }
         }
     }
 
     Ok(())
+}
+
+impl Vecs {
+    fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+        self.output_count_stored
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .chain(
+                self.tx_count_stored
+                    .iter_mut()
+                    .map(|v| v as &mut dyn AnyStoredVec),
+            )
+    }
 }

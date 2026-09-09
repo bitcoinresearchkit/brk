@@ -14,3 +14,14 @@ pub struct Flags<V> {
     /// many outputs as inputs.
     pub is_batch_payout: V,
 }
+
+impl<V> Flags<V> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut V> {
+        [
+            &mut self.is_coinjoin,
+            &mut self.is_consolidation,
+            &mut self.is_batch_payout,
+        ]
+        .into_iter()
+    }
+}

@@ -17,19 +17,35 @@ use crate::{
 use bitview_traversable::Traversable;
 
 #[cfg(feature = "storage")]
-use vecdb::{ColumnId, Formattable, VecValue, Version};
+use vecdb::Formattable;
 
 pub const PROFITABILITY_COUNT: usize = PROFITABILITY_RANGE_COUNT + PROFIT_COUNT + LOSS_COUNT;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
-pub struct ProfitabilityRow<T> {
+pub struct Profitability<T> {
     pub range: ProfitabilityRange<T>,
     pub profit: Profit<T>,
     pub loss: Loss<T>,
 }
 
-impl<T> ProfitabilityRow<T>
+impl<T> Profitability<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.range
+            .iter()
+            .chain(self.profit.iter())
+            .chain(self.loss.iter())
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.range
+            .iter_mut()
+            .chain(self.profit.iter_mut())
+            .chain(self.loss.iter_mut())
+    }
+}
+
+impl<T> Profitability<T>
 where
     T: AddAssign + Copy + Default,
 {
@@ -59,7 +75,7 @@ where
 }
 
 #[cfg(feature = "storage")]
-impl<T: Formattable> Formattable for ProfitabilityRow<T> {
+impl<T: Formattable> Formattable for Profitability<T> {
     fn write_to(&self, buf: &mut Vec<u8>) {
         buf.extend_from_slice(b"{\"range\":");
         write_array(self.range.iter(), buf);
@@ -99,7 +115,7 @@ fn write_array<'a, T: Formattable + 'a>(values: impl Iterator<Item = &'a T>, buf
     buf.push(b']');
 }
 
-/// Every profitability range and aggregate threshold in column storage order.
+/// Every profitability range and aggregate threshold in iteration order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum ProfitabilityId {
@@ -205,12 +221,32 @@ pub const PROFITABILITY_IDS: [ProfitabilityId; PROFITABILITY_COUNT] = [
 ];
 
 impl ProfitabilityId {
-    pub fn series<T>(mut create: impl FnMut(Self, &'static str) -> T) -> ProfitabilityRow<T> {
-        ProfitabilityRow {
+    pub fn series<T>(mut create: impl FnMut(Self, &'static str) -> T) -> Profitability<T> {
+        Profitability {
             range: Self::range_series(&mut create),
             profit: Self::profit_series(&mut create),
             loss: Self::loss_series(create),
         }
+    }
+
+    pub fn try_series<T, E>(
+        mut create: impl FnMut(Self, &'static str) -> Result<T, E>,
+    ) -> Result<Profitability<T>, E> {
+        let names = Self::series(|id, name| (id, name));
+        Ok(Profitability {
+            range: ProfitabilityRange::try_from_fn(|id| {
+                let &(id, name) = id.select(&names.range);
+                create(id, name)
+            })?,
+            profit: Profit::try_from_fn(|id| {
+                let &(id, name) = id.select(&names.profit);
+                create(id, name)
+            })?,
+            loss: Loss::try_from_fn(|id| {
+                let &(id, name) = id.select(&names.loss);
+                create(id, name)
+            })?,
+        })
     }
 
     pub fn range_ids() -> &'static [Self] {
@@ -349,61 +385,19 @@ impl ProfitabilityId {
         self as usize
     }
 
-    pub fn select<T>(self, row: &ProfitabilityRow<T>) -> &T {
+    pub fn select<T>(self, values: &Profitability<T>) -> &T {
         match self.group() {
-            ProfitabilityGroupId::Range(id) => id.select(&row.range),
-            ProfitabilityGroupId::Profit(id) => id.select(&row.profit),
-            ProfitabilityGroupId::Loss(id) => id.select(&row.loss),
+            ProfitabilityGroupId::Range(id) => id.select(&values.range),
+            ProfitabilityGroupId::Profit(id) => id.select(&values.profit),
+            ProfitabilityGroupId::Loss(id) => id.select(&values.loss),
         }
     }
 
-    pub fn select_mut<T>(self, row: &mut ProfitabilityRow<T>) -> &mut T {
+    pub fn select_mut<T>(self, values: &mut Profitability<T>) -> &mut T {
         match self.group() {
-            ProfitabilityGroupId::Range(id) => id.select_mut(&mut row.range),
-            ProfitabilityGroupId::Profit(id) => id.select_mut(&mut row.profit),
-            ProfitabilityGroupId::Loss(id) => id.select_mut(&mut row.loss),
-        }
-    }
-}
-#[cfg(feature = "storage")]
-impl ColumnId for ProfitabilityId {
-    type Row<T>
-        = ProfitabilityRow<T>
-    where
-        T: VecValue;
-    const VERSION: Version = Version::TWO;
-    const ALL: &'static [Self] = Self::ALL;
-    #[inline]
-    fn index(self) -> usize {
-        Self::index(self)
-    }
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        self.select(row)
-    }
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        self.select_mut(row)
-    }
-    #[inline]
-    fn from_fn<T, F>(mut f: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        Self::series(|id, _| f(id))
-    }
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, mut f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        ProfitabilityRow {
-            range: ProfitabilityRangeId::map(row.range, &mut f),
-            profit: ProfitId::map(row.profit, &mut f),
-            loss: LossId::map(row.loss, f),
+            ProfitabilityGroupId::Range(id) => id.select_mut(&mut values.range),
+            ProfitabilityGroupId::Profit(id) => id.select_mut(&mut values.profit),
+            ProfitabilityGroupId::Loss(id) => id.select_mut(&mut values.loss),
         }
     }
 }
@@ -445,24 +439,24 @@ mod tests {
     }
 
     #[test]
-    fn rows_expand_ranges_into_profit_prefixes_and_loss_suffixes() {
+    fn ranges_expand_into_profit_prefixes_and_loss_suffixes() {
         let ranges = ProfitabilityRange::from_fn(|id| id.index() + 1);
-        let row = ProfitabilityRow::from_ranges(ranges.clone());
+        let values = Profitability::from_ranges(ranges.clone());
 
         assert_eq!(
-            row.profit.total,
+            values.profit.total,
             ranges.iter().take(PROFIT_COUNT + 1).copied().sum::<usize>()
         );
         assert_eq!(
-            row.profit._500pct,
+            values.profit._500pct,
             ranges.over_1000pct_in_profit + ranges._500pct_to_1000pct_in_profit
         );
         assert_eq!(
-            row.loss.total,
+            values.loss.total,
             ranges.iter().skip(PROFIT_COUNT + 1).copied().sum::<usize>()
         );
         assert_eq!(
-            row.loss._80pct,
+            values.loss._80pct,
             ranges.iter().rev().take(2).copied().sum::<usize>()
         );
     }

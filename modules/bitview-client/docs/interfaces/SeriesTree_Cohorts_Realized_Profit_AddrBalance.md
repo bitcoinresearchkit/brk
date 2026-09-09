@@ -6,23 +6,15 @@
 
 # Interface: SeriesTree\_Cohorts\_Realized\_Profit\_AddrBalance
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12496](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12496)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12165](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12165)
 
 ## Properties
-
-### matrix
-
-> **matrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12500](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12500)
-
-***
 
 ### over
 
 > **over**: [`SeriesTree_Cohorts_Realized_Profit_AddrBalance_Over`](SeriesTree_Cohorts_Realized_Profit_AddrBalance_Over.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12499](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12499)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12168](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12168)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12499](https://githu
 
 > **range**: [`SeriesTree_Cohorts_Realized_Profit_AddrBalance_Range`](SeriesTree_Cohorts_Realized_Profit_AddrBalance_Range.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12497](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12497)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12166](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12166)
 
 ***
 
@@ -38,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12497](https://githu
 
 > **under**: [`SeriesTree_Cohorts_Realized_Profit_AddrBalance_Under`](SeriesTree_Cohorts_Realized_Profit_AddrBalance_Under.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12498](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12498)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12167](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12167)

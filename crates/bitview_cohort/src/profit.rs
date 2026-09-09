@@ -98,8 +98,8 @@ pub struct Profit<T> {
     pub _500pct: T,
 }
 
-define_column_id!(
-    ProfitId for Profit, version = 1 {
+define_cohort_id!(
+    ProfitId for Profit {
         Total => total,
         Over10Pct => _10pct,
         Over20Pct => _20pct,

@@ -1,15 +1,15 @@
-use bitview_cohort::{AddrTypeId, WithAddrTypes};
+use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::StoredU64ToStoredU32;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyPerBlockCumulativeAverage,
+    CachedWindowStartVec, LazyPerBlockCumulativeAverage, PerBlockCumulativeRolling,
 };
 use brk_error::Result;
 use brk_types::{StoredU32, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::{AddrTypeToActivityCounts, BlockActivityCounts};
 
@@ -36,15 +36,15 @@ pub struct AddrActivityVecs<M: StorageMode = Rw> {
         WithAddrTypes<LazyPerBlockCumulativeAverage<StoredU32, StoredU64, StoredU64ToStoredU32>>,
 
     #[traversable(hidden)]
-    cumulative_reactivated: ColumnarPerBlockCumulativeRolling<StoredU64, AddrTypeId, (), M>,
+    cumulative_reactivated: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     #[traversable(hidden)]
-    cumulative_sending: ColumnarPerBlockCumulativeRolling<StoredU64, AddrTypeId, (), M>,
+    cumulative_sending: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     #[traversable(hidden)]
-    cumulative_receiving: ColumnarPerBlockCumulativeRolling<StoredU64, AddrTypeId, (), M>,
+    cumulative_receiving: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     #[traversable(hidden)]
-    cumulative_bidirectional: ColumnarPerBlockCumulativeRolling<StoredU64, AddrTypeId, (), M>,
+    cumulative_bidirectional: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     #[traversable(hidden)]
-    cumulative_active: ColumnarPerBlockCumulativeRolling<StoredU64, AddrTypeId, (), M>,
+    cumulative_active: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
 }
 
 impl AddrActivityVecs {
@@ -56,77 +56,54 @@ impl AddrActivityVecs {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
-        let cumulative_reactivated = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            "reactivated_addrs_by_type_cumulative",
-            cumulative_version,
-            |_| (),
-        )?;
-        let cumulative_sending = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            "sending_addrs_by_type_cumulative",
-            cumulative_version,
-            |_| (),
-        )?;
-        let cumulative_receiving = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            "receiving_addrs_by_type_cumulative",
-            cumulative_version,
-            |_| (),
-        )?;
-        let cumulative_bidirectional = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            "bidirectional_addrs_by_type_cumulative",
-            cumulative_version,
-            |_| (),
-        )?;
-        let cumulative_active = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            "active_addrs_by_type_cumulative",
-            cumulative_version,
-            |_| (),
-        )?;
-
-        let reactivated = LazyPerBlockCumulativeAverage::with_addr_types(
-            "reactivated_addrs",
-            version,
-            &cumulative_reactivated.cumulative.read_only_clone(),
-            mappings,
-            cached_starts,
-        );
-        let sending = LazyPerBlockCumulativeAverage::with_addr_types(
-            "sending_addrs",
-            version,
-            &cumulative_sending.cumulative.read_only_clone(),
-            mappings,
-            cached_starts,
-        );
-        let receiving = LazyPerBlockCumulativeAverage::with_addr_types(
-            "receiving_addrs",
-            version,
-            &cumulative_receiving.cumulative.read_only_clone(),
-            mappings,
-            cached_starts,
-        );
-        let bidirectional = LazyPerBlockCumulativeAverage::with_addr_types(
-            "bidirectional_addrs",
-            version,
-            &cumulative_bidirectional.cumulative.read_only_clone(),
-            mappings,
-            cached_starts,
-        );
-        let active = LazyPerBlockCumulativeAverage::with_addr_types(
-            "active_addrs",
-            version,
-            &cumulative_active.cumulative.read_only_clone(),
-            mappings,
-            cached_starts,
-        );
+        let import = |name: &str| -> Result<_> {
+            let source = |name: &str| {
+                PerBlockCumulativeRolling::forced_import(
+                    cache,
+                    db,
+                    name,
+                    cumulative_version + Version::ONE,
+                    mappings,
+                    cached_starts,
+                )
+            };
+            Ok(WithAddrTypes {
+                all: source(name)?,
+                by_addr_type: ByAddrType::try_from_fn(|id| {
+                    source(&format!("{}_{name}", id.name()))
+                })?,
+            })
+        };
+        let views = |name: &str, source: &WithAddrTypes<PerBlockCumulativeRolling<StoredU64>>| {
+            WithAddrTypes {
+                all: LazyPerBlockCumulativeAverage::new(
+                    name,
+                    version,
+                    &source.all.cumulative.height,
+                    mappings,
+                    cached_starts,
+                ),
+                by_addr_type: AddrTypeId::series(|id, type_name| {
+                    LazyPerBlockCumulativeAverage::new(
+                        &format!("{type_name}_{name}"),
+                        version,
+                        &id.select(&source.by_addr_type).cumulative.height,
+                        mappings,
+                        cached_starts,
+                    )
+                }),
+            }
+        };
+        let cumulative_reactivated = import("reactivated_addrs")?;
+        let reactivated = views("reactivated_addrs", &cumulative_reactivated);
+        let cumulative_sending = import("sending_addrs")?;
+        let sending = views("sending_addrs", &cumulative_sending);
+        let cumulative_receiving = import("receiving_addrs")?;
+        let receiving = views("receiving_addrs", &cumulative_receiving);
+        let cumulative_bidirectional = import("bidirectional_addrs")?;
+        let bidirectional = views("bidirectional_addrs", &cumulative_bidirectional);
+        let cumulative_active = import("active_addrs")?;
+        let active = views("active_addrs", &cumulative_active);
 
         Ok(Self {
             reactivated,
@@ -144,48 +121,67 @@ impl AddrActivityVecs {
 
     pub fn min_resume_len(&self) -> usize {
         [
-            self.cumulative_reactivated.cumulative.len(),
-            self.cumulative_sending.cumulative.len(),
-            self.cumulative_receiving.cumulative.len(),
-            self.cumulative_bidirectional.cumulative.len(),
-            self.cumulative_active.cumulative.len(),
+            &self.cumulative_reactivated,
+            &self.cumulative_sending,
+            &self.cumulative_receiving,
+            &self.cumulative_bidirectional,
+            &self.cumulative_active,
         ]
         .into_iter()
+        .flat_map(|family| family.iter())
+        .map(|v| v.cumulative.height.len())
         .min()
         .unwrap_or_default()
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
+        self.cumulative_sources_mut()
+            .map(|v| &mut v.cumulative.height as &mut dyn AnyStoredVec)
+            .collect::<Vec<_>>()
+            .into_par_iter()
+    }
+
+    fn cumulative_sources_mut(
+        &mut self,
+    ) -> impl Iterator<Item = &mut PerBlockCumulativeRolling<StoredU64>> {
         [
-            self.cumulative_reactivated.stored_mut(),
-            self.cumulative_sending.stored_mut(),
-            self.cumulative_receiving.stored_mut(),
-            self.cumulative_bidirectional.stored_mut(),
-            self.cumulative_active.stored_mut(),
+            &mut self.cumulative_reactivated,
+            &mut self.cumulative_sending,
+            &mut self.cumulative_receiving,
+            &mut self.cumulative_bidirectional,
+            &mut self.cumulative_active,
         ]
-        .into_par_iter()
+        .into_iter()
+        .flat_map(|family| family.iter_mut())
     }
 
     pub fn reset_height(&mut self) -> Result<()> {
-        self.cumulative_reactivated.reset()?;
-        self.cumulative_sending.reset()?;
-        self.cumulative_receiving.reset()?;
-        self.cumulative_bidirectional.reset()?;
-        self.cumulative_active.reset()?;
+        for source in self.cumulative_sources_mut() {
+            source.cumulative.height.reset()?;
+        }
         Ok(())
     }
 
     #[inline(always)]
     pub fn push_height(&mut self, counts: &AddrTypeToActivityCounts) {
-        self.cumulative_reactivated
-            .push_block(counts.row(|counts| counts.reactivated));
-        self.cumulative_sending
-            .push_block(counts.row(|counts| counts.sending));
-        self.cumulative_receiving
-            .push_block(counts.row(|counts| counts.receiving));
-        self.cumulative_bidirectional
-            .push_block(counts.row(|counts| counts.bidirectional));
-        self.cumulative_active
-            .push_block(counts.row(BlockActivityCounts::active));
+        let push = |targets: &mut WithAddrTypes<PerBlockCumulativeRolling<StoredU64>>,
+                    value: fn(&BlockActivityCounts) -> u32| {
+            let mut total = StoredU64::default();
+            for (target, counts) in targets.by_addr_type.values_mut().zip(counts.values()) {
+                let value = StoredU64::from(u64::from(value(counts)));
+                total += value;
+                target.push_block(value);
+            }
+            targets.all.push_block(total);
+        };
+        push(&mut self.cumulative_reactivated, |counts| {
+            counts.reactivated
+        });
+        push(&mut self.cumulative_sending, |counts| counts.sending);
+        push(&mut self.cumulative_receiving, |counts| counts.receiving);
+        push(&mut self.cumulative_bidirectional, |counts| {
+            counts.bidirectional
+        });
+        push(&mut self.cumulative_active, BlockActivityCounts::active);
     }
 }

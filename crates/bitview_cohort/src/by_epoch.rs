@@ -48,8 +48,8 @@ pub struct ByEpoch<T> {
     pub _4: T,
 }
 
-define_column_id!(
-    EpochId for ByEpoch, version = 1 {
+define_cohort_id!(
+    EpochId for ByEpoch {
         _0 => _0,
         _1 => _1,
         _2 => _2,

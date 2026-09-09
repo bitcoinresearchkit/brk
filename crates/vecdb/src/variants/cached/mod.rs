@@ -77,7 +77,7 @@ impl<T> CacheState<T> {
 /// read touches every source chunk; [`Self::snapshot`] explicitly requests the
 /// complete snapshot.
 ///
-/// Use the invalidating truncate methods when replacing existing rows.
+/// Use the invalidating truncate methods when replacing existing values.
 /// Other writes through `inner` that preserve length and version require
 /// [`Self::invalidate`] before dependent reads. Writers must exclude readers
 /// throughout mutation and publication; invalidation is not a publication gate.

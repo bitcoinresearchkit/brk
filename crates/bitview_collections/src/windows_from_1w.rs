@@ -1,17 +1,10 @@
-#[cfg(feature = "storage")]
-use std::array;
 use std::result::Result;
 
 use crate::Windows;
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-#[cfg(feature = "storage")]
-use brk_types::Version;
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue};
 
-#[cfg(feature = "storage")]
 const WINDOW_FROM_1W_COUNT: usize = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -21,7 +14,6 @@ pub enum WindowFrom1wId {
     Year1,
 }
 
-#[cfg(feature = "storage")]
 const WINDOW_FROM_1W_IDS: [WindowFrom1wId; WINDOW_FROM_1W_COUNT] = [
     WindowFrom1wId::Week1,
     WindowFrom1wId::Month1,
@@ -29,6 +21,10 @@ const WINDOW_FROM_1W_IDS: [WindowFrom1wId; WINDOW_FROM_1W_COUNT] = [
 ];
 
 impl WindowFrom1wId {
+    pub const fn index(self) -> usize {
+        self as usize
+    }
+    pub const ALL: &'static [Self] = &WINDOW_FROM_1W_IDS;
     pub const fn suffix(self) -> &'static str {
         match self {
             Self::Week1 => "1w",
@@ -59,51 +55,6 @@ impl WindowFrom1wId {
             Self::Month1 => &windows._1m,
             Self::Year1 => &windows._1y,
         }
-    }
-}
-
-#[cfg(feature = "storage")]
-impl ColumnId for WindowFrom1wId {
-    type Row<T>
-        = [T; WINDOW_FROM_1W_COUNT]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &WINDOW_FROM_1W_IDS;
-
-    #[inline]
-    fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
-    }
-
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
-    }
-
-    #[inline]
-    fn from_fn<T, F>(mut create: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        array::from_fn(|index| create(WINDOW_FROM_1W_IDS[index]))
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(create)
     }
 }
 
@@ -140,12 +91,11 @@ impl<A> WindowsFrom1w<A> {
 
 #[cfg(all(test, feature = "storage"))]
 mod tests {
-    use vecdb::ColumnId;
 
     use super::{WINDOW_FROM_1W_IDS, WindowFrom1wId};
 
     #[test]
-    fn window_from_1w_columns_match_named_fields() {
+    fn window_from_1w_ids_match_named_fields() {
         assert_eq!(WindowFrom1wId::ALL, WINDOW_FROM_1W_IDS);
 
         let windows = WindowFrom1wId::series(|window| window);

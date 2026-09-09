@@ -5,7 +5,7 @@ use bitview_cohort::{
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{RatioCents, RatioDollars};
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
@@ -36,24 +36,14 @@ pub struct RelativeVecs<M: StorageMode = Rw> {
     /// price. Unrealized profit sums market value minus creation-date value only
     /// for outputs above their creation price. Returns zero when cohort market
     /// cap is zero.
-    pub unrealized_profit_to_own_mcap: ColumnarPerBlock<
-        PartsPerMillion32,
-        TermId,
-        ByTerm<LazyColumnPercentPerBlock<PartsPerMillion32, TermId>>,
-        M,
-    >,
+    pub unrealized_profit_to_own_mcap: ByTerm<PercentPerBlock<PartsPerMillion32, M>>,
     #[traversable(wrap = "unrealized/loss", rename = "to_own_mcap")]
     /// Unrealized loss divided by the short- or long-term-holder cohort's own
     /// market cap, its unspent BTC supply valued at the represented block's spot
     /// price. Unrealized loss sums creation-date value minus market value only
     /// for outputs below their creation price. Returns zero when cohort market
     /// cap is zero.
-    pub unrealized_loss_to_own_mcap: ColumnarPerBlock<
-        PartsPerMillion32,
-        TermId,
-        ByTerm<LazyColumnPercentPerBlock<PartsPerMillion32, TermId>>,
-        M,
-    >,
+    pub unrealized_loss_to_own_mcap: ByTerm<PercentPerBlock<PartsPerMillion32, M>>,
     #[traversable(wrap = "unrealized/net_pnl", rename = "to_own_mcap")]
     /// Net unrealized profit and loss divided by the short- or long-term-holder
     /// cohort's own market cap. It equals `(spot price - realized price) / spot
@@ -86,7 +76,7 @@ impl RelativeVecs {
         mappings: &MappingsVecs,
         all_chain: &AllChainSources,
         sources: &UTXOAggregate<RelativeSource<'_>>,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let aggregate_version = version + Version::ONE;
         let supply_profitability_shares =
             SupplyProfitabilityShares::forced_import(cache, db, aggregate_version, mappings)?;
@@ -157,7 +147,7 @@ impl RelativeVecs {
             )
         });
 
-        Ok(Self {
+        Ok(Box::new(Self {
             supply_profitability_shares,
             unrealized_profit_to_mcap,
             unrealized_loss_to_mcap,
@@ -167,7 +157,7 @@ impl RelativeVecs {
             gross_pnl_composition,
             invested_capital_in_profit_share,
             invested_capital_in_loss_share,
-        })
+        }))
     }
 
     fn import_term_percent(
@@ -176,29 +166,15 @@ impl RelativeVecs {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-    ) -> Result<
-        ColumnarPerBlock<
-            PartsPerMillion32,
-            TermId,
-            ByTerm<LazyColumnPercentPerBlock<PartsPerMillion32, TermId>>,
-        >,
-    > {
-        ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &format!("{metric}_ppm_by_term"),
-            version,
-            |source| {
-                ByTerm::from_fn(|id| {
-                    let name = CohortContext::Utxo.metric_name(
-                        id.select(&TERM_FILTERS),
-                        id.select(&TERM_NAMES).id,
-                        metric,
-                    );
-                    LazyColumnPercentPerBlock::new(&name, version, source, id, mappings)
-                })
-            },
-        )
+    ) -> Result<ByTerm<PercentPerBlock<PartsPerMillion32>>> {
+        ByTerm::try_from_fn(|id| {
+            let name = CohortContext::Utxo.metric_name(
+                id.select(&TERM_FILTERS),
+                id.select(&TERM_NAMES).id,
+                metric,
+            );
+            PercentPerBlock::forced_import(cache, db, &name, version + Version::ONE, mappings)
+        })
     }
 
     fn aggregate_metric_name(id: UTXOAggregateId, metric: &str) -> String {
@@ -236,63 +212,73 @@ impl RelativeVecs {
     ) -> Result<()> {
         self.supply_profitability_shares
             .compute(max_from, sources, exit)?;
-        self.unrealized_profit_to_own_mcap.compute_columns2(
-            max_from,
-            |id| &Self::term_source(sources, id).unrealized.profit.usd.height,
-            |id| &Self::term_source(sources, id).supply.total.usd.height,
-            |_, value, market_cap| RatioDollars::<PartsPerMillion32>::apply(value, market_cap),
-            exit,
-        )?;
-        self.unrealized_loss_to_own_mcap.compute_columns2(
-            max_from,
-            |id| &Self::term_source(sources, id).unrealized.loss.usd.height,
-            |id| &Self::term_source(sources, id).supply.total.usd.height,
-            |_, value, market_cap| RatioDollars::<PartsPerMillion32>::apply(value, market_cap),
-            exit,
-        )?;
+        for id in [TermId::Short, TermId::Long] {
+            let source = Self::term_source(sources, id);
+            id.select_mut(&mut self.unrealized_profit_to_own_mcap)
+                .compute_binary::<_, _, RatioDollars<PartsPerMillion32>>(
+                    max_from,
+                    &source.unrealized.profit.usd.height,
+                    &source.supply.total.usd.height,
+                    exit,
+                )?;
+            id.select_mut(&mut self.unrealized_loss_to_own_mcap)
+                .compute_binary::<_, _, RatioDollars<PartsPerMillion32>>(
+                    max_from,
+                    &source.unrealized.loss.usd.height,
+                    &source.supply.total.usd.height,
+                    exit,
+                )?;
+        }
         self.gross_pnl_composition
             .compute(max_from, sources, exit)?;
-        self.invested_capital_in_profit_share.compute_columns2(
-            max_from,
-            |id| {
-                &id.select(sources)
-                    .unrealized_aggregate
-                    .invested_capital_in_profit
-                    .cents
-                    .height
-            },
-            |id| &id.select(sources).realized.cap.cents.height,
-            |_, invested, realized_cap| {
-                RatioCents::<PartsPerMillion32>::apply(invested, realized_cap)
-            },
-            exit,
-        )?;
-        self.invested_capital_in_loss_share.compute_columns2(
-            max_from,
-            |id| {
-                &id.select(sources)
-                    .unrealized_aggregate
-                    .invested_capital_in_loss
-                    .cents
-                    .height
-            },
-            |id| &id.select(sources).realized.cap.cents.height,
-            |_, invested, realized_cap| {
-                RatioCents::<PartsPerMillion32>::apply(invested, realized_cap)
-            },
-            exit,
-        )?;
+        for id in UTXOAggregateId::ALL {
+            let source = id.select(sources);
+            for (target, invested) in [
+                (
+                    id.select_mut(&mut self.invested_capital_in_profit_share.stored),
+                    &source
+                        .unrealized_aggregate
+                        .invested_capital_in_profit
+                        .cents
+                        .height,
+                ),
+                (
+                    id.select_mut(&mut self.invested_capital_in_loss_share.stored),
+                    &source
+                        .unrealized_aggregate
+                        .invested_capital_in_loss
+                        .cents
+                        .height,
+                ),
+            ] {
+                target.compute_transform2(
+                    max_from,
+                    invested,
+                    &source.realized.cap.cents.height,
+                    |(height, invested, realized_cap, _)| {
+                        (
+                            height,
+                            RatioCents::<PartsPerMillion32>::apply(invested, realized_cap),
+                        )
+                    },
+                    exit,
+                )?;
+            }
+        }
         Ok(())
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        vec![
-            self.supply_profitability_shares.stored_mut(),
-            self.unrealized_profit_to_own_mcap.stored_mut(),
-            self.unrealized_loss_to_own_mcap.stored_mut(),
-            self.gross_pnl_composition.stored_mut(),
-            self.invested_capital_in_profit_share.stored_mut(),
-            self.invested_capital_in_loss_share.stored_mut(),
-        ]
+        let mut vecs = self.supply_profitability_shares.collect_vecs_mut();
+        vecs.extend(self.gross_pnl_composition.collect_vecs_mut());
+        vecs.extend(
+            self.unrealized_profit_to_own_mcap
+                .iter_mut()
+                .chain(self.unrealized_loss_to_own_mcap.iter_mut())
+                .map(|v| &mut v.ppm.height as &mut dyn AnyStoredVec),
+        );
+        vecs.extend(self.invested_capital_in_profit_share.collect_vecs_mut());
+        vecs.extend(self.invested_capital_in_loss_share.collect_vecs_mut());
+        vecs
     }
 }

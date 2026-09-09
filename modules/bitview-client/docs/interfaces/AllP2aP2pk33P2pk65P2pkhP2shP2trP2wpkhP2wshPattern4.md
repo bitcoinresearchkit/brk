@@ -6,76 +6,76 @@
 
 # Interface: AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern4
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4890](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4890)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4715](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4715)
 
 ## Properties
 
 ### all
 
-> **all**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **all**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4891](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4891)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4716](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4716)
 
 ***
 
 ### p2a
 
-> **p2a**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2a**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4892](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4892)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4717](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4717)
 
 ***
 
 ### p2pk33
 
-> **p2pk33**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2pk33**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4893](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4893)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4718](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4718)
 
 ***
 
 ### p2pk65
 
-> **p2pk65**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2pk65**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4894](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4894)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4719](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4719)
 
 ***
 
 ### p2pkh
 
-> **p2pkh**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2pkh**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4895](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4895)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4720](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4720)
 
 ***
 
 ### p2sh
 
-> **p2sh**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2sh**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4896](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4896)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4721](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4721)
 
 ***
 
 ### p2tr
 
-> **p2tr**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2tr**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4897](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4897)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4722](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4722)
 
 ***
 
 ### p2wpkh
 
-> **p2wpkh**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2wpkh**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4898](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4898)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4723](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4723)
 
 ***
 
 ### p2wsh
 
-> **p2wsh**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **p2wsh**: [`SeriesPattern1`](../type-aliases/SeriesPattern1.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:4899](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L4899)
+Defined in: [Developer/mono/modules/bitview-client/index.js:4724](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L4724)

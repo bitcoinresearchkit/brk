@@ -2,8 +2,8 @@ use std::thread;
 
 use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, Filter, SpendableType, Term,
-    UTXO_AGGREGATE_FILTERS, UTXOAggregate, UTXOAllAndSth, UTXOCoreRows,
-    UTXOGroupsWithoutAmountOrType, UTXORows,
+    UTXO_AGGREGATE_FILTERS, UTXOAggregate, UTXOAllAndSth, UTXOCoreValues,
+    UTXOGroupsWithoutAmountOrType, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
@@ -58,14 +58,7 @@ impl CohortMetrics<Rw> {
         let v = version + VERSION;
 
         // Supply must exist before either branch can build its shared views.
-        let supply = Box::new(SupplyVecs::forced_import(
-            cache,
-            db,
-            v,
-            mappings,
-            cached_starts,
-            spot_price,
-        )?);
+        let supply = SupplyVecs::forced_import(cache, db, v, mappings, cached_starts, spot_price)?;
         let all_chain_sources =
             AllChainSources::new(supply.total.all_supply(), supply.total.all_market_cap());
 
@@ -75,24 +68,14 @@ impl CohortMetrics<Rw> {
                 let outputs_activity = thread::Builder::new()
                     .stack_size(IMPORT_STACK_SIZE)
                     .spawn_scoped(scope, || -> Result<_> {
-                        let outputs = Box::new(OutputsVecs::forced_import(
-                            cache,
-                            db,
-                            v,
-                            mappings,
-                            cached_starts,
-                        )?);
-                        let activity = Box::new(ActivityVecs::forced_import(
-                            cache,
-                            db,
-                            v,
-                            mappings,
-                            cached_starts,
-                        )?);
+                        let outputs =
+                            OutputsVecs::forced_import(cache, db, v, mappings, cached_starts)?;
+                        let activity =
+                            ActivityVecs::forced_import(cache, db, v, mappings, cached_starts)?;
                         Ok((outputs, activity))
                     })?;
 
-                let realized = Box::new(RealizedVecs::forced_import(
+                let realized = RealizedVecs::forced_import(
                     cache,
                     db,
                     v,
@@ -100,14 +83,9 @@ impl CohortMetrics<Rw> {
                     cached_starts,
                     spot_price,
                     &all_chain_sources,
-                )?);
-                let unrealized = Box::new(UnrealizedVecs::forced_import(
-                    cache,
-                    db,
-                    v,
-                    mappings,
-                    &realized.price.cohorts,
-                )?);
+                )?;
+                let unrealized =
+                    UnrealizedVecs::forced_import(cache, db, v, mappings, &realized.price.cohorts)?;
                 let relative_sources = UTXOAggregate::from_fn(|id| {
                     let filter = id.select(&UTXO_AGGREGATE_FILTERS);
                     RelativeSource {
@@ -124,28 +102,22 @@ impl CohortMetrics<Rw> {
                         nupl: unrealized.nupl.get(filter).expect("aggregate NUPL source"),
                     }
                 });
-                let relative = Box::new(RelativeVecs::forced_import(
+                let relative = RelativeVecs::forced_import(
                     cache,
                     db,
                     v,
                     mappings,
                     &all_chain_sources,
                     &relative_sources,
-                )?);
+                )?;
                 Ok((
                     (realized, unrealized, relative),
                     outputs_activity.join().unwrap()?,
                 ))
             })?;
-        let cost_basis = Box::new(CostBasisVecs::forced_import(cache, db, v, mappings)?);
-        let profitability = Box::new(ProfitabilityVecs::forced_import(
-            cache,
-            db,
-            v,
-            mappings,
-            cached_starts,
-            spot_price,
-        )?);
+        let cost_basis = CostBasisVecs::forced_import(cache, db, v, mappings)?;
+        let profitability =
+            ProfitabilityVecs::forced_import(cache, db, v, mappings, cached_starts, spot_price)?;
 
         Ok(Self {
             supply,
@@ -204,8 +176,8 @@ impl CohortMetrics<Rw> {
             ..
         } = states;
 
-        let total = UTXORows {
-            core: UTXOCoreRows {
+        let total = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).supply_value()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).supply_value()),
                 class: Class::from_fn(|id| id.select(class).supply_value()),
@@ -214,8 +186,8 @@ impl CohortMetrics<Rw> {
             amount_range: AmountRange::from_fn(|id| id.select(amount_range).supply_value()),
             type_: SpendableType::from_fn(|id| id.select(type_).supply_value()),
         };
-        let profitability = UTXORows {
-            core: UTXOCoreRows {
+        let profitability = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| {
                     id.select_mut(age_range)
                         .compute_unrealized_state(height_price)
@@ -266,8 +238,8 @@ impl CohortMetrics<Rw> {
             ..
         } = states;
 
-        let rows = UTXORows {
-            core: UTXOCoreRows {
+        let cohort_values = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).output_counts()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).output_counts()),
                 class: Class::from_fn(|id| id.select(class).output_counts()),
@@ -276,8 +248,8 @@ impl CohortMetrics<Rw> {
             amount_range: AmountRange::from_fn(|id| id.select(amount_range).output_counts()),
             type_: SpendableType::from_fn(|id| id.select(type_).output_counts()),
         };
-        let unspent_count = rows.map(|counts| counts.0);
-        let spent_count = rows.map(|counts| counts.1);
+        let unspent_count = cohort_values.map(|counts| counts.0);
+        let spent_count = cohort_values.map(|counts| counts.1);
         outputs.push(unspent_count, spent_count);
     }
 
@@ -294,8 +266,8 @@ impl CohortMetrics<Rw> {
             ..
         } = states;
 
-        let transfer_volume = UTXORows {
-            core: UTXOCoreRows {
+        let transfer_volume = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).transfer_volume()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).transfer_volume()),
                 class: Class::from_fn(|id| id.select(class).transfer_volume()),
@@ -304,8 +276,8 @@ impl CohortMetrics<Rw> {
             amount_range: AmountRange::from_fn(|id| id.select(amount_range).transfer_volume()),
             type_: SpendableType::from_fn(|id| id.select(type_).transfer_volume()),
         };
-        let core = UTXORows {
-            core: UTXOCoreRows {
+        let core = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).core_activity()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).core_activity()),
                 class: Class::from_fn(|id| id.select(class).core_activity()),
@@ -340,8 +312,8 @@ impl CohortMetrics<Rw> {
             ..
         } = states;
 
-        let rows = UTXORows {
-            core: UTXOCoreRows {
+        let cohort_values = UTXOValues {
+            core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).realized_block_data()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).realized_block_data()),
                 class: Class::from_fn(|id| id.select(class).realized_block_data()),
@@ -350,7 +322,7 @@ impl CohortMetrics<Rw> {
             amount_range: AmountRange::from_fn(|id| id.select(amount_range).realized_block_data()),
             type_: SpendableType::from_fn(|id| id.select(type_).realized_block_data()),
         };
-        realized.push(&rows);
+        realized.push(&cohort_values);
     }
 
     #[inline(always)]

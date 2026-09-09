@@ -126,8 +126,8 @@ pub struct OverAge<T> {
     pub _12y: T,
 }
 
-define_column_id!(
-    OverAgeId for OverAge, version = 1 {
+define_cohort_id!(
+    OverAgeId for OverAge {
         Over1D => _1d,
         Over1W => _1w,
         Over1M => _1m,

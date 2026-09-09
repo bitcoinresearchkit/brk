@@ -7,7 +7,11 @@ use brk_types::{Height, Sats, StoredU64, Version};
 use vecdb::ReadableCloneableVec;
 
 use super::Vecs;
-use crate::{STORAGE, breakdown::BreakdownVecs, total::Total};
+use crate::{
+    STORAGE,
+    breakdown::{KindBreakdownVecs, PolicyBreakdownVecs},
+    total::Total,
+};
 
 impl Vecs {
     pub fn import(
@@ -29,26 +33,24 @@ impl Vecs {
             block_size,
             chain_fees,
         )?;
-        let columnar_version = version + Version::ONE;
+        let breakdown_version = version + Version::ONE;
         let total_data = total.data_bytes_source();
-        let by_kind = BreakdownVecs::forced_import(
+        let by_kind = KindBreakdownVecs::forced_import(
             context.cache_budget(),
             &db,
-            "op_return_cumulative_by_kind",
             "op_return",
-            columnar_version,
+            breakdown_version,
             mappings,
             cached_starts,
             total_data,
             block_size,
             chain_fees,
         )?;
-        let policy = BreakdownVecs::forced_import(
+        let policy = PolicyBreakdownVecs::forced_import(
             context.cache_budget(),
             &db,
-            "op_return_cumulative_policy",
             "op_return_policy",
-            columnar_version,
+            breakdown_version,
             mappings,
             cached_starts,
             total_data,

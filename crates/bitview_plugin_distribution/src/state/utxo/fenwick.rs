@@ -5,7 +5,6 @@ use bitview_cohort::{
     ProfitabilityRangeId, compute_profitability_boundaries,
 };
 use brk_types::{Cents, CentsCompact, PartsPerMillion32, Sats};
-use vecdb::ColumnId;
 
 use crate::state::PendingDelta;
 use bitview_compute::{FenwickNode, FenwickTree};
@@ -335,7 +334,7 @@ impl CostBasisFenwick {
             } else {
                 CostBasisNode::default()
             };
-            *ProfitabilityRangeId::ALL[i].get_mut(&mut result) =
+            *ProfitabilityRangeId::ALL[i].select_mut(&mut result) =
                 ProfitabilityRangeResult::from_all_and_sth(
                     (cum.all_sats - prev.all_sats).max(0) as u64,
                     (cum.all_usd - prev.all_usd).max(0) as u128,
@@ -346,7 +345,7 @@ impl CostBasisFenwick {
         }
 
         // Last range: everything >= last boundary
-        *ProfitabilityRangeId::ALL[PROFITABILITY_RANGE_COUNT - 1].get_mut(&mut result) =
+        *ProfitabilityRangeId::ALL[PROFITABILITY_RANGE_COUNT - 1].select_mut(&mut result) =
             ProfitabilityRangeResult::from_all_and_sth(
                 (self.totals.all_sats - prev.all_sats).max(0) as u64,
                 (self.totals.all_usd - prev.all_usd).max(0) as u128,

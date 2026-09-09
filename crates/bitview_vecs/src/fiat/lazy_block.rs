@@ -1,17 +1,11 @@
-use bitview_traversable::Traversable;
 use brk_types::{Dollars, Height, Version};
 use vecdb::{LazyVec, ReadableCloneableVec};
 
-use crate::{FiatType, LazyPerBlock, LazyPreviousDeltaVec};
+use crate::{Fiat, FiatType, LazyPerBlock, LazyPreviousDeltaVec};
 
 /// Per-block fiat data derived from stored cumulative cents.
-#[derive(Clone, Traversable)]
-pub struct LazyFiatBlock<C: FiatType> {
-    /// Reported in US dollars.
-    pub usd: LazyVec<Height, Dollars, Height, C>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPreviousDeltaVec<Height, C>,
-}
+pub type LazyFiatBlock<C> =
+    Fiat<LazyPreviousDeltaVec<Height, C>, LazyVec<Height, Dollars, Height, C>>;
 
 impl<C: FiatType> LazyFiatBlock<C> {
     pub fn from_cumulative_source(

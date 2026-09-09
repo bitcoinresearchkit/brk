@@ -1,13 +1,13 @@
 use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
+use bitview_vecs::{LazyPriceWithRatioPerBlock, import_stored};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
 use vecdb::{CacheBudget, Database, ReadableCloneableVec};
 
 use super::{Vecs, sma::SmaVecs, vecs::EmaPeriodId};
 
-const EMA_VERSION: Version = Version::ONE;
+const EMA_VERSION: Version = Version::TWO;
 
 pub fn forced_import(
     cache: &'static CacheBudget,
@@ -19,19 +19,26 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     let sma = SmaVecs::new(cache, version, mappings, &blocks.lookback, spot_price);
     let ema_version = version + EMA_VERSION;
-    let ema =
-        ColumnarPerBlock::forced_import(cache, db, "price_ema_cents", ema_version, |source| {
-            EmaPeriodId::series(|period| {
-                LazyColumnPriceWithRatioPerBlock::new(
-                    &format!("price_ema_{}", period.suffix()),
-                    ema_version,
-                    source,
-                    period,
-                    mappings,
-                    spot_price,
-                )
-            })
-        })?;
-
-    Ok(Vecs { sma, ema })
+    let ema_stored = EmaPeriodId::try_series(|period| {
+        import_stored(
+            cache,
+            db,
+            &format!("price_ema_{}_cents", period.suffix()),
+            ema_version,
+        )
+    })?;
+    let ema = EmaPeriodId::series(|period| {
+        LazyPriceWithRatioPerBlock::from_height_source(
+            &format!("price_ema_{}", period.suffix()),
+            ema_version,
+            period.select(&ema_stored),
+            mappings,
+            spot_price,
+        )
+    });
+    Ok(Vecs {
+        sma,
+        ema,
+        ema_stored,
+    })
 }

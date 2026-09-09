@@ -6,23 +6,23 @@
 
 # Interface: SeriesTree\_Cohorts\_Relative
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14568](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14568)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14015](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14015)
 
 ## Properties
 
 ### investedCapital
 
-> **investedCapital**: [`SeriesTree_Cohorts_Relative_InvestedCapital`](SeriesTree_Cohorts_Relative_InvestedCapital.md)
+> **investedCapital**: [`InPattern`](InPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14571](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14571)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14018](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14018)
 
 ***
 
 ### supply
 
-> **supply**: [`SeriesTree_Cohorts_Relative_Supply`](SeriesTree_Cohorts_Relative_Supply.md)
+> **supply**: [`InPattern`](InPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14569](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14569)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14016](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14016)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:14569](https://githu
 
 > **unrealized**: [`SeriesTree_Cohorts_Relative_Unrealized`](SeriesTree_Cohorts_Relative_Unrealized.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:14570](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L14570)
+Defined in: [Developer/mono/modules/bitview-client/index.js:14017](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L14017)

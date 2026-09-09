@@ -1,22 +1,16 @@
-use std::ops::AddAssign;
-
-use bitview_cohort::{AgeRangeId, CohortContext, TermId, UTXOAggregateId};
+use bitview_cohort::{AgeRange, AgeRangeId, CohortContext, UTXOAggregate, UTXOAggregateId};
 use bitview_plugin::ImportContext;
 use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_transforms::BoundedToF64;
 use bitview_vecs::{
-    ColumnarPerBlock, LazyColumnPerBlock, LazyFiatPerBlock, LazyPerBlock,
-    LazyPriceWithRatioPerBlock, LazySpotValuePerBlock,
+    LazyFiatPerBlock, LazyPerBlock, LazyPriceWithRatioPerBlock, LazySpotValuePerBlock, PerBlock,
+    StoredSeries, import_stored,
 };
 use brk_error::Result;
-use brk_types::{BoundedRatio, Cents, Height, StoredF64, Version};
-use vecdb::{
-    CacheBudget, CachedBoxedVec, Database, ImportOptions, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableColumnarVec,
-};
+use brk_types::{Cents, Height, Version};
+use vecdb::{CacheBudget, CachedBoxedVec, Database, PcoVecValue};
 
 use super::Vecs;
 use crate::{
@@ -24,113 +18,63 @@ use crate::{
     STORAGE, SpendingExposureSeries,
 };
 
-impl SpendingExposureSeries {
-    fn new(
-        version: Version,
-        source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF64>, AgeRangeId>,
-        mobility_source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
-        mappings: &MappingsVecs,
-    ) -> Self {
-        let age_range = AgeRangeId::series(CohortContext::Utxo, |column, name| {
-            LazyColumnPerBlock::new(
-                &format!("{name}_spending_exposure"),
-                version,
-                source,
-                column,
-                mappings,
-            )
-        });
-        let mobility = AgeRangeId::series(CohortContext::Utxo, |column, name| {
-            LazyPerBlock::from_height_source::<BoundedToF64>(
-                &format!("{name}_mobility"),
-                version,
-                &mobility_source.column(&format!("{name}_mobility_source"), version, column),
-                mappings,
-            )
-        });
-
-        Self {
-            age_range,
-            mobility,
-        }
-    }
-}
-
 impl AggregateSources {
     fn forced_import(cache: &'static CacheBudget, db: &Database, version: Version) -> Result<Self> {
         Ok(Self {
             supply: MobilityId::try_from_fn(|side| {
-                ImportableVec::forced_import_with(
-                    ImportOptions::new(
-                        db,
-                        &format!("coinflow_{}_supply_sats_by_term", side.name()),
-                        version,
-                    )
-                    .with_cache_budget(cache),
-                )
-            })?,
-            supply_in_loss_share: ImportableVec::forced_import_with(
-                ImportOptions::new(
+                import_aggregate(
+                    cache,
                     db,
-                    "coinflow_supply_in_loss_share_bounded_by_aggregate",
-                    version + Version::ONE,
-                )
-                .with_cache_budget(cache),
-            )?,
-            horizon: HorizonId::try_from_fn(|horizon| {
-                ImportableVec::forced_import_with(
-                    ImportOptions::new(
-                        db,
-                        &format!(
-                            "coinflow_{}_supply_in_loss_share_bounded_by_aggregate",
-                            horizon.name()
-                        ),
-                        version + Version::ONE,
-                    )
-                    .with_cache_budget(cache),
+                    &format!("coinflow_{}_supply_sats", side.name()),
+                    version,
                 )
             })?,
-            cap: ImportableVec::forced_import_with(
-                ImportOptions::new(db, "coinflow_cap_cents_by_term", version)
-                    .with_cache_budget(cache),
+            supply_in_loss_share: import_aggregate(
+                cache,
+                db,
+                "coinflow_supply_in_loss_share_bounded",
+                version,
             )?,
-            price: ImportableVec::forced_import_with(
-                ImportOptions::new(db, "coinflow_price_cents_by_aggregate", version)
-                    .with_cache_budget(cache),
-            )?,
+            horizon: HorizonId::try_from_fn(|h| {
+                import_aggregate(
+                    cache,
+                    db,
+                    &format!("coinflow_{}_supply_in_loss_share_bounded", h.name()),
+                    version,
+                )
+            })?,
+            cap: import_aggregate(cache, db, "coinflow_cap_cents", version)?,
+            price: import_aggregate(cache, db, "coinflow_price_cents", version)?,
         })
     }
+}
 
-    fn additive_source<T>(
-        source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermId>,
-        name: &str,
-        version: Version,
-        aggregate: UTXOAggregateId,
-    ) -> ReadableBoxedVec<Height, T>
-    where
-        T: PcoVecValue + AddAssign,
-    {
-        match aggregate.term() {
-            Some(term) => source.column(name, version, term).read_only_boxed_clone(),
-            None => source
-                .sum_columns(name, version, TermId::ALL.iter().copied())
-                .read_only_boxed_clone(),
-        }
-    }
-
-    fn exact_source<T>(
-        source: &ReadOnlyColumnarVec<PcoVec<Height, T>, UTXOAggregateId>,
-        name: &str,
-        version: Version,
-        aggregate: UTXOAggregateId,
-    ) -> ReadableBoxedVec<Height, T>
-    where
-        T: PcoVecValue,
-    {
-        source
-            .column(name, version, aggregate)
-            .read_only_boxed_clone()
-    }
+fn import_aggregate<T: PcoVecValue>(
+    cache: &'static CacheBudget,
+    db: &Database,
+    metric: &str,
+    version: Version,
+) -> Result<UTXOAggregate<StoredSeries<Height, T>>> {
+    Ok(UTXOAggregate {
+        all: import_stored(
+            cache,
+            db,
+            &UTXOAggregateId::All.metric_name(metric),
+            version,
+        )?,
+        sth: import_stored(
+            cache,
+            db,
+            &UTXOAggregateId::Sth.metric_name(metric),
+            version,
+        )?,
+        lth: import_stored(
+            cache,
+            db,
+            &UTXOAggregateId::Lth.metric_name(metric),
+            version,
+        )?,
+    })
 }
 
 impl AggregateVecs {
@@ -146,24 +90,14 @@ impl AggregateVecs {
             mobile: LazySpotValuePerBlock::from_sats_source(
                 &metric_name("mobile_supply"),
                 version,
-                &AggregateSources::additive_source(
-                    &sources.supply.mobile.read_only_clone(),
-                    &metric_name("mobile_supply_sats"),
-                    version,
-                    aggregate,
-                ),
+                aggregate.select(&sources.supply.mobile),
                 mappings,
                 spot_price,
             ),
             immobile: LazySpotValuePerBlock::from_sats_source(
                 &metric_name("immobile_supply"),
                 version,
-                &AggregateSources::additive_source(
-                    &sources.supply.immobile.read_only_clone(),
-                    &metric_name("immobile_supply_sats"),
-                    version,
-                    aggregate,
-                ),
+                aggregate.select(&sources.supply.immobile),
                 mappings,
                 spot_price,
             ),
@@ -171,12 +105,7 @@ impl AggregateVecs {
         let supply_in_loss_share = LazyPerBlock::from_height_source::<BoundedToF64>(
             &metric_name("coinflow_supply_in_loss_share"),
             version,
-            &AggregateSources::exact_source(
-                &sources.supply_in_loss_share.read_only_clone(),
-                &metric_name("coinflow_supply_in_loss_share"),
-                version,
-                aggregate,
-            ),
+            aggregate.select(&sources.supply_in_loss_share),
             mappings,
         );
         let horizon = HorizonId::from_fn(|horizon| {
@@ -185,12 +114,7 @@ impl AggregateVecs {
                 supply_in_loss_share: LazyPerBlock::from_height_source::<BoundedToF64>(
                     &name,
                     version,
-                    &AggregateSources::exact_source(
-                        &horizon.select(&sources.horizon).read_only_clone(),
-                        &name,
-                        version,
-                        aggregate,
-                    ),
+                    aggregate.select(horizon.select(&sources.horizon)),
                     mappings,
                 ),
             }
@@ -198,23 +122,13 @@ impl AggregateVecs {
         let cap = LazyFiatPerBlock::from_cents_source(
             &metric_name("coinflow_cap"),
             version,
-            &AggregateSources::additive_source(
-                &sources.cap.read_only_clone(),
-                &metric_name("coinflow_cap_cents"),
-                version,
-                aggregate,
-            ),
+            aggregate.select(&sources.cap),
             mappings,
         );
         let price = LazyPriceWithRatioPerBlock::from_height_source(
             &metric_name("coinflow_price"),
             version,
-            &AggregateSources::exact_source(
-                &sources.price.read_only_clone(),
-                &metric_name("coinflow_price_cents"),
-                version,
-                aggregate,
-            ),
+            aggregate.select(&sources.price),
             mappings,
             spot_price,
         );
@@ -239,69 +153,51 @@ impl Vecs {
         let database = STORAGE.open_database(context, 250_000)?;
         let cache = context.cache_budget();
         let db = &database;
-        let version = STORAGE.schema_version();
+        let version = STORAGE.schema_version() + Version::ONE;
         let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
-        let spending_rate = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &CohortContext::Utxo.prefixed("age_range_spending_rate"),
-            version,
-            |source| {
-                AgeRangeId::series(CohortContext::Utxo, |column, name| {
-                    LazyColumnPerBlock::new(
-                        &format!("{name}_spending_rate"),
-                        version,
-                        source,
-                        column,
-                        mappings,
-                    )
-                })
-            },
-        )?;
-        let mobility_source = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &CohortContext::Utxo.prefixed("age_range_mobility_bounded_source"),
-            version,
-            |_| (),
-        )?;
-        let spending_exposure = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &CohortContext::Utxo.prefixed("age_range_spending_exposure"),
-            version,
-            |source| {
-                SpendingExposureSeries::new(
+        let spending_rate = AgeRange::try_from_fn(|id| {
+            let name = format!(
+                "{}_spending_rate",
+                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+            );
+            PerBlock::forced_import(cache, db, &name, version, mappings)
+        })?;
+        let mobility_source = AgeRange::try_from_fn(|id| {
+            let name = format!(
+                "{}_mobility_bounded_source",
+                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+            );
+            import_stored(cache, db, &name, version)
+        })?;
+        let spending_exposure = SpendingExposureSeries {
+            age_range: AgeRange::try_from_fn(|id| {
+                let name = format!(
+                    "{}_spending_exposure",
+                    CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                );
+                PerBlock::forced_import(cache, db, &name, version, mappings)
+            })?,
+            mobility: AgeRangeId::series(CohortContext::Utxo, |id, name| {
+                LazyPerBlock::from_height_source::<BoundedToF64>(
+                    &format!("{name}_mobility"),
                     version,
-                    source,
-                    &mobility_source.height.read_only_clone(),
+                    id.select(&mobility_source),
                     mappings,
                 )
-            },
-        )?;
+            }),
+        };
         let supply_for = |side: MobilityId| {
             let side = side.name();
-            AgeRangeId::series(CohortContext::Utxo, |column, name| {
+            AgeRangeId::series(CohortContext::Utxo, |id, name| {
                 let name = format!("{name}_{side}_supply");
-                let supply = distribution
-                    .cohorts
-                    .supply
-                    .total
-                    .stored
-                    .age_range
-                    .height
-                    .read_only_clone()
-                    .column(&name, version, column);
-                let weight = mobility_source
-                    .height
-                    .read_only_clone()
-                    .column(&name, version, column);
+                let supply = id.select(&distribution.cohorts.supply.total.stored.cohorts.age.range);
+                let weight = id.select(&mobility_source);
                 if side == "immobile" {
                     LazySpotValuePerBlock::from_weighted_supply::<true>(
                         &name,
                         version,
-                        &supply,
-                        &weight,
+                        supply,
+                        weight,
                         mappings,
                         &spot_price,
                     )
@@ -309,8 +205,8 @@ impl Vecs {
                     LazySpotValuePerBlock::from_weighted_supply::<false>(
                         &name,
                         version,
-                        &supply,
-                        &weight,
+                        supply,
+                        weight,
                         mappings,
                         &spot_price,
                     )

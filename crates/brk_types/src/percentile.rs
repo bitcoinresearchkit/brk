@@ -1,6 +1,4 @@
 use crate::VSize;
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 /// Standard percentile values used throughout BRK.
 pub const PERCENTILES: [u8; 19] = [
@@ -10,7 +8,7 @@ pub const PERCENTILES: [u8; 19] = [
 /// Length of the PERCENTILES array.
 pub const PERCENTILES_LEN: usize = PERCENTILES.len();
 
-/// Percentiles used by the rarity meter, in physical column order.
+/// Percentiles used by the rarity meter, in ascending percentile order.
 pub const RARITY_PERCENTILES: [f64; 19] = [
     0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95,
     0.98, 0.99, 0.995, 0.999,
@@ -193,93 +191,57 @@ impl RarityPercentileId {
     }
 }
 
-#[cfg(feature = "storage")]
-impl ColumnId for PercentileId {
-    type Row<T>
-        = [T; PERCENTILES_LEN]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &PERCENTILE_IDS;
+impl PercentileId {
+    pub const ALL: &'static [Self] = &PERCENTILE_IDS;
 
     #[inline]
-    fn index(self) -> usize {
+    pub fn index(self) -> usize {
         self as usize
     }
 
     #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
+    pub fn get<T>(self, values: &[T; PERCENTILES_LEN]) -> &T {
+        &values[self.index()]
     }
 
     #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
+    pub fn get_mut<T>(self, values: &mut [T; PERCENTILES_LEN]) -> &mut T {
+        &mut values[self.index()]
     }
 
     #[inline]
-    fn from_fn<T, F>(f: F) -> Self::Row<T>
+    pub fn from_fn<T, F>(f: F) -> [T; PERCENTILES_LEN]
     where
-        T: VecValue,
         F: FnMut(Self) -> T,
     {
         PERCENTILE_IDS.map(f)
     }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(f)
-    }
 }
 
-#[cfg(feature = "storage")]
-impl ColumnId for RarityPercentileId {
-    type Row<T>
-        = [T; RARITY_PERCENTILES_LEN]
-    where
-        T: VecValue;
-
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = &RARITY_PERCENTILE_IDS;
+impl RarityPercentileId {
+    pub const ALL: &'static [Self] = &RARITY_PERCENTILE_IDS;
 
     #[inline]
-    fn index(self) -> usize {
+    pub fn index(self) -> usize {
         self as usize
     }
 
     #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self.index()]
+    pub fn get<T>(self, values: &[T; RARITY_PERCENTILES_LEN]) -> &T {
+        &values[self.index()]
     }
 
     #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self.index()]
+    pub fn get_mut<T>(self, values: &mut [T; RARITY_PERCENTILES_LEN]) -> &mut T {
+        &mut values[self.index()]
     }
 
     #[inline]
-    fn from_fn<T, F>(f: F) -> Self::Row<T>
+    pub fn from_fn<T, F>(f: F) -> [T; RARITY_PERCENTILES_LEN]
     where
-        T: VecValue,
         F: FnMut(Self) -> T,
     {
         RARITY_PERCENTILE_IDS.map(f)
-    }
-
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(f)
     }
 }
 

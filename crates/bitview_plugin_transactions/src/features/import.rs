@@ -1,13 +1,11 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-};
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{CacheBudget, Database, ReadOnlyClone};
+use vecdb::{CacheBudget, Database};
 
-use super::{CountVecs, FeatureId, Vecs};
+use super::{CountVecs, Vecs};
 
 pub fn forced_import(
     cache: &'static CacheBudget,
@@ -16,39 +14,26 @@ pub fn forced_import(
     mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
-    let source = ColumnarPerBlockCumulativeRolling::forced_import(
-        cache,
-        db,
-        "tx_feature_count_cumulative",
-        version,
-        |_| (),
-    )?;
-    let counts = source.cumulative.read_only_clone();
-    let import = |name, feature| {
-        LazyColumnPerBlockCumulativeRolling::new(
+    let import = |name| {
+        PerBlockCumulativeRolling::forced_import(
+            cache,
+            db,
             name,
-            version,
-            &counts,
-            feature,
+            version + Version::ONE,
             mappings,
             cached_starts,
         )
     };
-
     Ok(Vecs {
         count: CountVecs {
-            inscription: import("tx_count_inscription", FeatureId::Inscription),
-            annex: import("tx_count_annex", FeatureId::Annex),
-            sighash_all: import("tx_count_sighash_all", FeatureId::SighashAll),
-            sighash_none: import("tx_count_sighash_none", FeatureId::SighashNone),
-            sighash_single: import("tx_count_sighash_single", FeatureId::SighashSingle),
-            sighash_default: import("tx_count_sighash_default", FeatureId::SighashDefault),
-            sighash_anyone_can_pay: import(
-                "tx_count_sighash_anyone_can_pay",
-                FeatureId::SighashAnyoneCanPay,
-            ),
-            dust_output: import("tx_count_dust_output", FeatureId::DustOutput),
-            source,
+            inscription: import("tx_count_inscription")?,
+            annex: import("tx_count_annex")?,
+            sighash_all: import("tx_count_sighash_all")?,
+            sighash_none: import("tx_count_sighash_none")?,
+            sighash_single: import("tx_count_sighash_single")?,
+            sighash_default: import("tx_count_sighash_default")?,
+            sighash_anyone_can_pay: import("tx_count_sighash_anyone_can_pay")?,
+            dust_output: import("tx_count_dust_output")?,
         },
     })
 }

@@ -1,6 +1,7 @@
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::RarityPercentileId;
+use brk_types::RarityPercentileId::*;
 
 #[derive(Clone)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -47,8 +48,6 @@ pub struct RarityPercentiles<T> {
 
 impl<T> RarityPercentiles<T> {
     pub fn from_fn(mut f: impl FnMut(RarityPercentileId) -> T) -> Self {
-        use RarityPercentileId::*;
-
         Self {
             pct0_1: f(Pct0_1),
             pct0_5: f(Pct0_5),
@@ -72,9 +71,7 @@ impl<T> RarityPercentiles<T> {
         }
     }
 
-    fn get(&self, id: RarityPercentileId) -> &T {
-        use RarityPercentileId::*;
-
+    pub fn get(&self, id: RarityPercentileId) -> &T {
         match id {
             Pct0_1 => &self.pct0_1,
             Pct0_5 => &self.pct0_5,
@@ -100,5 +97,81 @@ impl<T> RarityPercentiles<T> {
 
     pub fn boundary_refs(&self) -> [&T; 10] {
         RarityPercentileId::BOUNDARIES.map(|id| self.get(id))
+    }
+}
+
+impl<T> RarityPercentiles<T> {
+    pub fn try_from_fn<E>(
+        mut f: impl FnMut(RarityPercentileId) -> Result<T, E>,
+    ) -> Result<Self, E> {
+        Ok(Self {
+            pct0_1: f(Pct0_1)?,
+            pct0_5: f(Pct0_5)?,
+            pct1: f(Pct1)?,
+            pct2: f(Pct2)?,
+            pct5: f(Pct5)?,
+            pct10: f(Pct10)?,
+            pct20: f(Pct20)?,
+            pct30: f(Pct30)?,
+            pct40: f(Pct40)?,
+            pct50: f(Pct50)?,
+            pct60: f(Pct60)?,
+            pct70: f(Pct70)?,
+            pct80: f(Pct80)?,
+            pct90: f(Pct90)?,
+            pct95: f(Pct95)?,
+            pct98: f(Pct98)?,
+            pct99: f(Pct99)?,
+            pct99_5: f(Pct99_5)?,
+            pct99_9: f(Pct99_9)?,
+        })
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [
+            &self.pct0_1,
+            &self.pct0_5,
+            &self.pct1,
+            &self.pct2,
+            &self.pct5,
+            &self.pct10,
+            &self.pct20,
+            &self.pct30,
+            &self.pct40,
+            &self.pct50,
+            &self.pct60,
+            &self.pct70,
+            &self.pct80,
+            &self.pct90,
+            &self.pct95,
+            &self.pct98,
+            &self.pct99,
+            &self.pct99_5,
+            &self.pct99_9,
+        ]
+        .into_iter()
+    }
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [
+            &mut self.pct0_1,
+            &mut self.pct0_5,
+            &mut self.pct1,
+            &mut self.pct2,
+            &mut self.pct5,
+            &mut self.pct10,
+            &mut self.pct20,
+            &mut self.pct30,
+            &mut self.pct40,
+            &mut self.pct50,
+            &mut self.pct60,
+            &mut self.pct70,
+            &mut self.pct80,
+            &mut self.pct90,
+            &mut self.pct95,
+            &mut self.pct98,
+            &mut self.pct99,
+            &mut self.pct99_5,
+            &mut self.pct99_9,
+        ]
+        .into_iter()
     }
 }

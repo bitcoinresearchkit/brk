@@ -1,14 +1,14 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock};
+use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
-use rayon::{iter, prelude::*};
+use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode, WritableVec,
 };
 
 use crate::AllChainSources;
@@ -17,14 +17,14 @@ use crate::AllChainSources;
 pub struct AvgAmountVecs<M: StorageMode = Rw> {
     /// Mean value of an output unspent at the represented block: unspent supply
     /// divided by unspent output count.
-    pub utxo: WithAddrTypes<LazyColumnSpotValuePerBlock<AddrTypeId>, LazySpotValuePerBlock>,
+    pub utxo: WithAddrTypes<LazySpotValuePerBlock>,
     /// Mean balance of a funded address: unspent supply divided by funded
     /// address count.
-    pub addr: WithAddrTypes<LazyColumnSpotValuePerBlock<AddrTypeId>, LazySpotValuePerBlock>,
+    pub addr: WithAddrTypes<LazySpotValuePerBlock>,
     #[traversable(hidden)]
-    utxo_source: ColumnarPerBlock<Sats, AddrTypeId, (), M>,
+    utxo_source: ByAddrType<StoredSeries<Height, Sats, M>>,
     #[traversable(hidden)]
-    addr_source: ColumnarPerBlock<Sats, AddrTypeId, (), M>,
+    addr_source: ByAddrType<StoredSeries<Height, Sats, M>>,
 }
 
 impl AvgAmountVecs {
@@ -51,22 +51,22 @@ impl AvgAmountVecs {
             funded_addr_count,
             |_, count, supply| supply / count,
         );
-        let utxo_source = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            "avg_utxo_amount_sats_by_type",
-            version,
-            |_| (),
-        )?;
-        let addr_source = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            "avg_addr_amount_sats_by_type",
-            version,
-            |_| (),
-        )?;
-        let utxo_columns = utxo_source.height.read_only_clone();
-        let addr_columns = addr_source.height.read_only_clone();
+        let utxo_source = ByAddrType::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{}_avg_utxo_amount_sats", id.name()),
+                version + Version::ONE,
+            )
+        })?;
+        let addr_source = ByAddrType::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{}_avg_addr_amount_sats", id.name()),
+                version + Version::ONE,
+            )
+        })?;
         let utxo = WithAddrTypes {
             all: LazySpotValuePerBlock::from_sats_source(
                 "avg_utxo_amount",
@@ -75,12 +75,11 @@ impl AvgAmountVecs {
                 mappings,
                 spot_price,
             ),
-            by_addr_type: AddrTypeId::series(|column, type_name| {
-                LazyColumnSpotValuePerBlock::new(
+            by_addr_type: AddrTypeId::series(|id, type_name| {
+                LazySpotValuePerBlock::from_sats_source(
                     &format!("{type_name}_avg_utxo_amount"),
                     version,
-                    &utxo_columns,
-                    column,
+                    id.select(&utxo_source),
                     mappings,
                     spot_price,
                 )
@@ -94,12 +93,11 @@ impl AvgAmountVecs {
                 mappings,
                 spot_price,
             ),
-            by_addr_type: AddrTypeId::series(|column, type_name| {
-                LazyColumnSpotValuePerBlock::new(
+            by_addr_type: AddrTypeId::series(|id, type_name| {
+                LazySpotValuePerBlock::from_sats_source(
                     &format!("{type_name}_avg_addr_amount"),
                     version,
-                    &addr_columns,
-                    column,
+                    id.select(&addr_source),
                     mappings,
                     spot_price,
                 )
@@ -115,12 +113,22 @@ impl AvgAmountVecs {
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        iter::once(self.utxo_source.stored_mut()).chain(iter::once(self.addr_source.stored_mut()))
+        self.utxo_source
+            .iter_mut()
+            .chain(self.addr_source.iter_mut())
+            .map(|(_, v)| v as &mut dyn AnyStoredVec)
+            .collect::<Vec<_>>()
+            .into_par_iter()
     }
 
     pub fn reset_height(&mut self) -> Result<()> {
-        self.utxo_source.height.reset()?;
-        self.addr_source.height.reset()?;
+        for (_, target) in self
+            .utxo_source
+            .iter_mut()
+            .chain(self.addr_source.iter_mut())
+        {
+            target.reset()?;
+        }
         Ok(())
     }
 
@@ -132,20 +140,22 @@ impl AvgAmountVecs {
         max_from: Height,
         exit: &Exit,
     ) -> Result<()> {
-        self.utxo_source.compute_columns2(
-            max_from,
-            |column| *column.select(supply_sats),
-            |column| *column.select(utxo_count),
-            |_, supply, count| supply / count,
-            exit,
-        )?;
-        self.addr_source.compute_columns2(
-            max_from,
-            |column| *column.select(supply_sats),
-            |column| *column.select(funded_addr_count),
-            |_, supply, count| supply / count,
-            exit,
-        )?;
+        for &id in AddrTypeId::ALL {
+            id.select_mut(&mut self.utxo_source).compute_transform2(
+                max_from,
+                *id.select(supply_sats),
+                *id.select(utxo_count),
+                |(height, supply, count, _)| (height, supply / count),
+                exit,
+            )?;
+            id.select_mut(&mut self.addr_source).compute_transform2(
+                max_from,
+                *id.select(supply_sats),
+                *id.select(funded_addr_count),
+                |(height, supply, count, _)| (height, supply / count),
+                exit,
+            )?;
+        }
 
         Ok(())
     }

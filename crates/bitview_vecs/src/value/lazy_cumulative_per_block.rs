@@ -1,21 +1,15 @@
 use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin};
-use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use vecdb::{Ident, ReadableCloneableVec};
 
-use crate::{IndexSources, LazyPerBlock};
+use crate::{IndexSources, LazyPerBlock, Value};
 
-#[derive(Clone, Traversable)]
-pub struct LazyCumulativeValuePerBlock {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
-    /// Reported in satoshis.
-    pub sats: LazyPerBlock<Sats>,
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, Cents>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPerBlock<Cents>,
-}
+pub type LazyCumulativeValuePerBlock = Value<
+    LazyPerBlock<Sats>,
+    LazyPerBlock<Cents>,
+    LazyPerBlock<Bitcoin, Sats>,
+    LazyPerBlock<Dollars, Cents>,
+>;
 
 impl LazyCumulativeValuePerBlock {
     pub fn from_sources(

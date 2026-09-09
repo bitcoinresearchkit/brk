@@ -5,18 +5,18 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
-use rayon::{iter, prelude::*};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{AddrCountsVecs, AddrTypeToAddrCount};
-use crate::metrics::ColumnarAmount;
+use crate::metrics::AmountSources;
 
 #[derive(Traversable)]
 pub struct FundedAddrCountsVecs<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub counts: AddrCountsVecs<M>,
     /// Number of funded addresses grouped by balance at the represented block.
-    pub balance: ColumnarAmount<
+    pub balance: AmountSources<
         StoredU64,
         LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
         M,
@@ -33,7 +33,7 @@ impl FundedAddrCountsVecs {
     ) -> Result<Self> {
         Ok(Self {
             counts: AddrCountsVecs::forced_import(cache, db, "addr_count", version, mappings)?,
-            balance: ColumnarAmount::forced_import(
+            balance: AmountSources::forced_import(
                 cache,
                 db,
                 "addrs_addr_count_by_balance_range",
@@ -61,7 +61,7 @@ impl FundedAddrCountsVecs {
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.counts
             .par_iter_height_mut()
-            .chain(iter::once(self.balance.stored_mut()))
+            .chain(self.balance.collect_vecs_mut().into_par_iter())
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

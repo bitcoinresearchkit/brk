@@ -1,6 +1,6 @@
 macro_rules! impl_named_row_formattable {
-    ($row:ident { $($field:ident),+ $(,)? }) => {
-        impl<T: Formattable> Formattable for $row<T> {
+    ($collection:ident { $($field:ident),+ $(,)? }) => {
+        impl<T: Formattable> Formattable for $collection<T> {
             fn write_to(&self, output: &mut Vec<u8>) {
                 output.push(b'{');
                 let mut first = true;

@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Realized\_AdjustedSopr
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13494](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13494)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13007](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13007)
 
 ## Properties
 
@@ -14,20 +14,20 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:13494](https://githu
 
 > **ratio**: [`SeriesTree_Cohorts_Realized_AdjustedSopr_Ratio`](SeriesTree_Cohorts_Realized_AdjustedSopr_Ratio.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13495](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13495)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13008](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13008)
 
 ***
 
 ### transferVolume
 
-> **transferVolume**: [`SeriesTree_Cohorts_Realized_AdjustedSopr_TransferVolume`](SeriesTree_Cohorts_Realized_AdjustedSopr_TransferVolume.md)
+> **transferVolume**: [`AllSthPattern2`](AllSthPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13496](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13496)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13009](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13009)
 
 ***
 
 ### valueDestroyed
 
-> **valueDestroyed**: [`SeriesTree_Cohorts_Realized_AdjustedSopr_ValueDestroyed`](SeriesTree_Cohorts_Realized_AdjustedSopr_ValueDestroyed.md)
+> **valueDestroyed**: [`AllSthPattern2`](AllSthPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13497](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13497)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13010](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13010)

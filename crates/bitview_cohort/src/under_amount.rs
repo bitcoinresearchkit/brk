@@ -88,8 +88,8 @@ pub struct UnderAmount<T> {
     pub _100k_btc: T,
 }
 
-define_column_id!(
-    UnderAmountId for UnderAmount, version = 1 {
+define_cohort_id!(
+    UnderAmountId for UnderAmount {
         Under10Sats => _10sats,
         Under100Sats => _100sats,
         Under1KSats => _1k_sats,

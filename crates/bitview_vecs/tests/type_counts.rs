@@ -1,9 +1,9 @@
-use bitview_cohort::{OutputTypeId, SpendableTypeId};
+use bitview_cohort::{ByType, Filter, SpendableType, SpendableTypeId};
 use bitview_collections::WindowId;
-use bitview_vecs::{ColumnarPerBlock, CountTotal, OutputTypeCounts, SpendableTypeCounts};
+use bitview_vecs::{CountTotal, OutputTypeCounts, SpendableTypeCounts, import_stored};
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CachedVec, ColumnId, Database, ReadOnlyClone, ReadableVec, WritableVec};
+use vecdb::{AnyStoredVec, CachedVec, Database, ReadOnlyClone, ReadableVec, WritableVec};
 
 mod common;
 
@@ -19,41 +19,43 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     let version = Version::new(11);
     let selected = SpendableTypeId::ALL[0].output_type();
 
-    let mut inputs = ColumnarPerBlock::<StoredU16, SpendableTypeId, ()>::forced_import(
-        &common::CACHE_BUDGET,
-        &db,
-        "inputs",
-        version,
-        |_| (),
-    )
+    let mut inputs = SpendableType::try_new(|_, name| {
+        import_stored::<Height, StoredU16>(
+            &common::CACHE_BUDGET,
+            &db,
+            &format!("inputs_{name}"),
+            version,
+        )
+    })
     .unwrap();
-    let mut outputs = ColumnarPerBlock::<StoredU16, OutputTypeId, ()>::forced_import(
-        &common::CACHE_BUDGET,
-        &db,
-        "outputs",
-        version,
-        |_| (),
-    )
+    let mut outputs = ByType::try_new(|_, name| {
+        import_stored::<Height, StoredU16>(
+            &common::CACHE_BUDGET,
+            &db,
+            &format!("outputs_{name}"),
+            version,
+        )
+    })
     .unwrap();
     for count in [0_u16, 1, 1] {
-        inputs.push(SpendableTypeId::from_fn(|id| {
-            StoredU16::new(if id.output_type() == selected {
+        let values = ByType::new(|filter, _| {
+            StoredU16::new(if filter == Filter::Type(selected) {
                 count
             } else {
                 0
             })
-        }));
-        outputs.push(OutputTypeId::from_fn(|id| {
-            StoredU16::new(if id.output_type() == selected {
-                count
-            } else {
-                0
-            })
-        }));
+        });
+        for (target, &value) in inputs.iter_mut().zip(values.spendable.iter()) {
+            target.push(value);
+        }
+        for (target, &value) in outputs.iter_mut().zip(values.iter()) {
+            target.push(value);
+        }
     }
-    inputs.write().unwrap();
-    outputs.write().unwrap();
-    let input = SpendableTypeCounts::from_columnar_count_source(
+    for target in inputs.iter_mut().chain(outputs.iter_mut()) {
+        target.write().unwrap();
+    }
+    let input = SpendableTypeCounts::from_count_sources(
         CountTotal::from_transformed_source(
             "non_coinbase",
             version,
@@ -64,15 +66,15 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         ),
         |name| format!("{name}_inputs"),
         version,
-        &inputs.height.read_only_clone(),
+        &inputs,
         &indexes,
         &windows,
     );
-    let output = OutputTypeCounts::from_columnar_count_source(
+    let output = OutputTypeCounts::from_count_sources(
         CountTotal::from_source("all", version, &cached, &indexes, &windows),
         |name| format!("{name}_outputs"),
         version,
-        &outputs.height.read_only_clone(),
+        &outputs,
         &indexes,
         &windows,
     );

@@ -1,8 +1,7 @@
-use bitview_cohort::UTXOAggregateId;
 use bitview_collections::ByPercentile;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyColumnPerBlock, LazyColumnPercentPerBlock, Price};
-use brk_types::{Cents, PartsPerMillion32, PercentileId};
+use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Price};
+use brk_types::{Cents, PartsPerMillion32};
 
 use super::CostBasisSide;
 
@@ -15,15 +14,15 @@ pub struct CostBasis {
     /// represented block's spot price.
     pub in_loss: CostBasisSide,
     /// Lowest creation price among that cohort's unspent outputs.
-    pub min: Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>,
+    pub min: Price<LazyPerBlock<Cents>>,
     /// Highest creation price among that cohort's unspent outputs.
-    pub max: Price<LazyColumnPerBlock<Cents, UTXOAggregateId>>,
+    pub max: Price<LazyPerBlock<Cents>>,
     /// Creation-price percentiles weighted by that cohort's unspent satoshis.
-    pub per_coin: ByPercentile<Price<LazyColumnPerBlock<Cents, PercentileId>>>,
+    pub per_coin: ByPercentile<Price<LazyPerBlock<Cents>>>,
     /// Creation-price percentiles weighted by each output's USD value at
     /// creation.
-    pub per_dollar: ByPercentile<Price<LazyColumnPerBlock<Cents, PercentileId>>>,
+    pub per_dollar: ByPercentile<Price<LazyPerBlock<Cents>>>,
     /// Share of that cohort's unspent supply with a creation price within 5%
     /// above or below the represented block's spot price.
-    pub supply_density: LazyColumnPercentPerBlock<PartsPerMillion32, UTXOAggregateId>,
+    pub supply_density: LazyPercentPerBlock<PartsPerMillion32>,
 }

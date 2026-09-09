@@ -1,4 +1,4 @@
-use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount, UTXORows};
+use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount, UTXOValues};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::LazySpotValuePerBlock;
@@ -6,13 +6,14 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
-use crate::metrics::UTXOTypedColumns;
+use crate::metrics::UTXOTypedSources;
 
 #[derive(Traversable)]
 pub struct SupplyByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmount<LazySpotValuePerBlock>,
-    pub stored: UTXOTypedColumns<Sats, M>,
+    #[traversable(hidden)]
+    pub stored: UTXOTypedSources<Sats, M>,
 }
 
 impl SupplyByCohort {
@@ -25,13 +26,11 @@ impl SupplyByCohort {
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let stored =
-            UTXOTypedColumns::forced_import(cache, db, &format!("{metric}_sats"), version)?;
+            UTXOTypedSources::forced_import(cache, db, &format!("{metric}_sats"), version)?;
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let source = stored
-                .additive_source(&filter, &format!("{name}_sats"), version)
-                .expect("supported supply cohort");
-            LazySpotValuePerBlock::from_sats_source(&name, version, &source, mappings, spot_price)
+            let source = stored.get(&filter).expect("supported supply cohort");
+            LazySpotValuePerBlock::from_sats_source(&name, version, source, mappings, spot_price)
         });
 
         Ok(Self { cohorts, stored })
@@ -46,8 +45,8 @@ impl SupplyByCohort {
     }
 
     #[inline(always)]
-    pub fn push(&mut self, rows: UTXORows<Sats>) {
-        self.stored.push(rows.core, rows.type_);
+    pub fn push(&mut self, cohort_values: UTXOValues<Sats>) {
+        self.stored.push(cohort_values.core, cohort_values.type_);
     }
 
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {

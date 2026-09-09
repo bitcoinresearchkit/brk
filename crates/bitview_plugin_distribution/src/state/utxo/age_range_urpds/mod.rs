@@ -1,9 +1,9 @@
 use std::{cmp::Ordering, ops::Range};
 
-use bitview_cohort::{AGE_RANGE_COUNT, AgeRange, AgeRangeId};
+use bitview_cohort::{AGE_RANGE_COUNT, AgeRange};
 use brk_error::{Error, Result};
 use brk_types::{CentsCompact, Sats, UrpdRaw, Version};
-use vecdb::{Bytes, ColumnId};
+use vecdb::Bytes;
 
 mod aggregate;
 mod read;
@@ -13,10 +13,10 @@ pub use read::EncodedAgeRangeUrpds;
 
 const DIR_NAME: &str = "utxos_age_range_urpds";
 const MAGIC: [u8; 8] = *b"BRKARURP";
-const FORMAT_VERSION: Version = Version::ONE.combine(AgeRangeId::VERSION);
+const FORMAT_VERSION: Version = Version::ONE.combine(Version::ONE);
 const VERSION_OFFSET: usize = MAGIC.len();
-const COLUMN_COUNT_OFFSET: usize = VERSION_OFFSET + size_of::<Version>();
-const OFFSETS_OFFSET: usize = COLUMN_COUNT_OFFSET + size_of::<u32>();
+const AGE_RANGE_COUNT_OFFSET: usize = VERSION_OFFSET + size_of::<Version>();
+const OFFSETS_OFFSET: usize = AGE_RANGE_COUNT_OFFSET + size_of::<u32>();
 const HEADER_LEN: usize = OFFSETS_OFFSET + (AGE_RANGE_COUNT + 1) * size_of::<u64>();
 
 /// One day's independently compressed age-range URPDs in a single indexed file.
@@ -76,9 +76,9 @@ impl AgeRangeUrpds {
         let mut buffer = Vec::with_capacity(capacity.max(HEADER_LEN));
         buffer.resize(HEADER_LEN, 0);
         buffer[..MAGIC.len()].copy_from_slice(&MAGIC);
-        buffer[VERSION_OFFSET..COLUMN_COUNT_OFFSET]
+        buffer[VERSION_OFFSET..AGE_RANGE_COUNT_OFFSET]
             .copy_from_slice(FORMAT_VERSION.to_bytes().as_ref());
-        buffer[COLUMN_COUNT_OFFSET..OFFSETS_OFFSET]
+        buffer[AGE_RANGE_COUNT_OFFSET..OFFSETS_OFFSET]
             .copy_from_slice((AGE_RANGE_COUNT as u32).to_bytes().as_ref());
         Self::set_offset(&mut buffer, 0);
         buffer
@@ -100,16 +100,16 @@ impl AgeRangeUrpds {
         if header[..MAGIC.len()] != MAGIC {
             return Err(Self::invalid("invalid magic"));
         }
-        if Version::from_bytes(&header[VERSION_OFFSET..COLUMN_COUNT_OFFSET])? != FORMAT_VERSION {
+        if Version::from_bytes(&header[VERSION_OFFSET..AGE_RANGE_COUNT_OFFSET])? != FORMAT_VERSION {
             return Err(Self::invalid("unsupported format version"));
         }
         if usize::try_from(u32::from_bytes(
-            &header[COLUMN_COUNT_OFFSET..OFFSETS_OFFSET],
+            &header[AGE_RANGE_COUNT_OFFSET..OFFSETS_OFFSET],
         )?)
         .ok()
             != Some(AGE_RANGE_COUNT)
         {
-            return Err(Self::invalid("unexpected column count"));
+            return Err(Self::invalid("unexpected age-range count"));
         }
 
         let mut previous = Self::offset(header, 0)?;

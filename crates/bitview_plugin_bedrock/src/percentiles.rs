@@ -30,6 +30,28 @@ impl_named_row_formattable!(Percentiles {
 });
 
 impl<T> Percentiles<T> {
+    pub fn try_from_fn<E>(
+        mut create: impl FnMut(LossPercentileId) -> Result<T, E>,
+    ) -> Result<Self, E> {
+        Ok(Self {
+            pct95: create(LossPercentileId::Pct95)?,
+            pct98: create(LossPercentileId::Pct98)?,
+            pct99: create(LossPercentileId::Pct99)?,
+            pct99_5: create(LossPercentileId::Pct99_5)?,
+            pct99_9: create(LossPercentileId::Pct99_9)?,
+        })
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [
+            &mut self.pct95,
+            &mut self.pct98,
+            &mut self.pct99,
+            &mut self.pct99_5,
+            &mut self.pct99_9,
+        ]
+        .into_iter()
+    }
     pub fn from_fn(mut create: impl FnMut(LossPercentileId) -> T) -> Self {
         Self {
             pct95: create(LossPercentileId::Pct95),

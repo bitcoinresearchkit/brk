@@ -1,5 +1,3 @@
-#[cfg(feature = "storage")]
-use std::array;
 use std::{
     iter,
     ops::{Add, AddAssign},
@@ -12,9 +10,6 @@ use super::{Filter, SpendableType, UnspendableType};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 pub const OP_RETURN: &str = "op_return";
 pub const OUTPUT_TYPE_COUNT: usize = OutputType::COUNT;
@@ -93,44 +88,6 @@ impl OutputTypeId {
     #[inline]
     pub const fn index(self) -> usize {
         self as usize
-    }
-}
-#[cfg(feature = "storage")]
-impl ColumnId for OutputTypeId {
-    type Row<T>
-        = [T; OUTPUT_TYPE_COUNT]
-    where
-        T: VecValue;
-    const VERSION: Version = Version::ONE;
-    const ALL: &'static [Self] = Self::ALL;
-    #[inline]
-    fn index(self) -> usize {
-        Self::index(self)
-    }
-    #[inline]
-    fn get<T: VecValue>(self, row: &Self::Row<T>) -> &T {
-        &row[self as usize]
-    }
-    #[inline]
-    fn get_mut<T: VecValue>(self, row: &mut Self::Row<T>) -> &mut T {
-        &mut row[self as usize]
-    }
-    #[inline]
-    fn from_fn<T, F>(mut f: F) -> Self::Row<T>
-    where
-        T: VecValue,
-        F: FnMut(Self) -> T,
-    {
-        array::from_fn(|index| f(OUTPUT_TYPE_IDS[index]))
-    }
-    #[inline]
-    fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
-    where
-        T: VecValue,
-        U: VecValue,
-        F: FnMut(T) -> U,
-    {
-        row.map(f)
     }
 }
 
@@ -272,7 +229,7 @@ mod tests {
 
     #[cfg(feature = "storage")]
     #[test]
-    fn column_ids_match_by_type_order() {
+    fn cohort_ids_match_by_type_order() {
         let by_type = ByType::new(|filter, _| {
             let Filter::Type(output_type) = filter else {
                 unreachable!()
@@ -280,16 +237,21 @@ mod tests {
             output_type
         });
         let output_types: Vec<_> = by_type.iter().copied().collect();
-        let column_output_types: Vec<_> = OutputTypeId::ALL
+        let selected_output_types: Vec<_> = OutputTypeId::ALL
             .iter()
-            .map(|column| column.output_type())
+            .map(|id| id.output_type())
             .collect();
 
-        assert_eq!(column_output_types, output_types);
+        assert_eq!(selected_output_types, output_types);
 
-        let row = OutputTypeId::from_fn(|column| column.index());
-        for column in OutputTypeId::ALL {
-            assert_eq!(*column.get(&row), column.index());
+        let values = ByType::new(|filter, _| {
+            let Filter::Type(output_type) = filter else {
+                unreachable!()
+            };
+            OutputTypeId::from_output_type(output_type).index()
+        });
+        for id in OutputTypeId::ALL {
+            assert_eq!(*values.get(id.output_type()), id.index());
         }
     }
 }

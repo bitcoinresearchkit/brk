@@ -134,7 +134,7 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
                         _ => {}
                     }
                     compute(&mut output, if phase == 3 { 7 } else { blocks.len() });
-                    for (column, vec) in [
+                    for (metric, vec) in [
                         &output.min.height,
                         &output.max.height,
                         &output.pct10.height,
@@ -148,8 +148,11 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
                     {
                         assert_eq!(
                             vec.collect_range_at(0, vec.len()),
-                            expected.iter().map(|row| row[column]).collect::<Vec<_>>(),
-                            "{name} phase={phase} column={column}"
+                            expected
+                                .iter()
+                                .map(|values| values[metric])
+                                .collect::<Vec<_>>(),
+                            "{name} phase={phase} metric={metric}"
                         );
                     }
                 }

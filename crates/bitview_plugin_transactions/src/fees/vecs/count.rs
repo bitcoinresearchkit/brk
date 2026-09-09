@@ -1,21 +1,21 @@
 use bitview_traversable::Traversable;
 use brk_types::StoredU64;
-use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
-use super::CpfpRoleId;
-use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
+use bitview_vecs::PerBlockCumulativeRolling;
 
-#[derive(Deref, DerefMut, Traversable)]
+#[derive(Traversable)]
 pub struct CountVecs<M: StorageMode = Rw> {
     /// Number of confirmed transactions whose same-block descendants raise
     /// their fee rate under Single Fee Linearization.
-    pub cpfp_parent: LazyColumnPerBlockCumulativeRolling<StoredU64, CpfpRoleId>,
+    pub cpfp_parent: PerBlockCumulativeRolling<StoredU64, M>,
     /// Number of confirmed transactions whose fee raises the effective rate of
     /// a same-block ancestor-closed chunk under Single Fee Linearization.
-    pub cpfp_child: LazyColumnPerBlockCumulativeRolling<StoredU64, CpfpRoleId>,
-    #[deref]
-    #[deref_mut]
-    #[traversable(hidden)]
-    pub source: ColumnarPerBlockCumulativeRolling<StoredU64, CpfpRoleId, (), M>,
+    pub cpfp_child: PerBlockCumulativeRolling<StoredU64, M>,
+}
+
+impl CountVecs {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PerBlockCumulativeRolling<StoredU64>> {
+        [&mut self.cpfp_parent, &mut self.cpfp_child].into_iter()
+    }
 }

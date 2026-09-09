@@ -10,12 +10,9 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Dollars, Height, SatsFract, Version};
 use schemars::JsonSchema;
-use vecdb::{
-    CacheBudget, ColumnId, Database, Ident, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec,
-    UnaryTransform,
-};
+use vecdb::{CacheBudget, Database, Ident, ReadableCloneableVec, UnaryTransform};
 
-use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock, PerBlock};
+use crate::{IndexSources, LazyPerBlock, PerBlock};
 
 /// Generic price metric with cents, USD, and sats representations.
 #[derive(Clone, Traversable)]
@@ -40,28 +37,6 @@ impl Price<PerBlock<Cents>> {
         let cents = PerBlock::forced_import(cache, db, &format!("{name}_cents"), version, indexes)?;
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(name, version, &cents);
         Ok(Self::from_cents_and_usd(name, version, cents, usd))
-    }
-}
-
-impl<C> Price<LazyColumnPerBlock<Cents, C>>
-where
-    C: ColumnId,
-{
-    pub fn from_columnar_source(
-        name: &str,
-        version: Version,
-        source: &ReadOnlyColumnarVec<PcoVec<Height, Cents>, C>,
-        column: C,
-        indexes: &IndexSources,
-    ) -> Self {
-        let cents =
-            LazyColumnPerBlock::new(&format!("{name}_cents"), version, source, column, indexes);
-        let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
-            name,
-            version,
-            &cents.resolutions,
-        );
-        Self::from_cents_and_usd(name, version, cents, usd)
     }
 }
 

@@ -176,10 +176,6 @@ impl Region {
             return Ok(());
         }
 
-        if let Some(group) = self.0.group() {
-            return group.reserve(self, capacity);
-        }
-
         let added_reserve = capacity - reserved;
         let mut layout = db.layout_mut();
 
@@ -442,11 +438,6 @@ impl Region {
                 })?;
         }
         let added_reserve = new_reserved - reserved;
-
-        if let Some(group) = self.0.group() {
-            group.reserve(self, new_reserved)?;
-            return self.write_with(data, at, truncate, allow_grow);
-        }
 
         let copy_len = if truncate { write_offset } else { len };
 

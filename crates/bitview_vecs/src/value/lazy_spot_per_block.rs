@@ -1,23 +1,19 @@
 use bitview_compute::WeightedCohortState;
 use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents};
-use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, BoundedRatio, Cents, Dollars, Height, Sats, Version};
 use vecdb::{BinaryTransform, Ident, ReadableBoxedVec, ReadableCloneableVec};
 
-use crate::{DerivedResolutions, IndexSources, LazyIndexedVec, LazyPerBlock, ReadableResolutions};
+use crate::{
+    DerivedResolutions, IndexSources, LazyIndexedVec, LazyPerBlock, ReadableResolutions, Value,
+};
 
 /// Fully lazy point-in-time value backed by one sats source.
-#[derive(Clone, Traversable)]
-pub struct LazySpotValuePerBlock {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyPerBlock<Bitcoin, Sats>,
-    /// Reported in satoshis.
-    pub sats: LazyPerBlock<Sats>,
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, Cents>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyPerBlock<Cents>,
-}
+pub type LazySpotValuePerBlock = Value<
+    LazyPerBlock<Sats>,
+    LazyPerBlock<Cents>,
+    LazyPerBlock<Bitcoin, Sats>,
+    LazyPerBlock<Dollars, Cents>,
+>;
 
 pub trait SpotValueSource {
     type SatsResolutions: ReadableResolutions<Sats>;

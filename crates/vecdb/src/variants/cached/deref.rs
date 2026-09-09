@@ -12,7 +12,7 @@ impl<V: StoredVec, S: CachedVecStrategy> Deref for CachedVec<V, S> {
 }
 
 impl<V: StoredVec, S: CachedVecStrategy> DerefMut for CachedVec<V, S> {
-    /// Inner compute APIs may rewrite rows without changing length/version.
+    /// Inner compute APIs may rewrite values without changing length/version.
     /// Ordinary pushes and writes use the forwarding traits instead.
     fn deref_mut(&mut self) -> &mut V {
         self.invalidate();

@@ -50,8 +50,8 @@ pub struct ByEntry<T> {
     pub premium: T,
 }
 
-define_column_id!(
-    EntryId for ByEntry, version = 1 {
+define_cohort_id!(
+    EntryId for ByEntry {
         Discount => discount,
         Premium => premium,
     }

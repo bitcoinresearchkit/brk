@@ -1,14 +1,11 @@
 use std::{
     mem,
-    sync::{
-        Arc, Weak,
-        atomic::{AtomicBool, Ordering},
-    },
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use parking_lot::{Mutex, RwLock, RwLockWriteGuard};
 
-use crate::{Database, RegionMetadata, WeakDatabase, region_group::RegionGroupInner};
+use crate::{Database, RegionMetadata, WeakDatabase};
 
 #[derive(Debug)]
 pub struct RegionInner {
@@ -18,7 +15,6 @@ pub struct RegionInner {
     pub meta: RwLock<RegionMetadata>,
     /// Sorted, merged dirty byte ranges relative to the region start.
     dirty_ranges: Mutex<Vec<(usize, usize)>>,
-    group: RwLock<Weak<RegionGroupInner>>,
 }
 
 impl RegionInner {
@@ -29,7 +25,6 @@ impl RegionInner {
             accessed: AtomicBool::new(false),
             meta: RwLock::new(meta),
             dirty_ranges: Mutex::new(Vec::new()),
-            group: RwLock::new(Weak::new()),
         }
     }
 
@@ -41,16 +36,6 @@ impl RegionInner {
     #[inline(always)]
     pub fn was_accessed(&self) -> bool {
         self.accessed.load(Ordering::Relaxed)
-    }
-
-    #[inline]
-    pub fn group(&self) -> Option<Arc<RegionGroupInner>> {
-        self.group.read().upgrade()
-    }
-
-    #[inline]
-    pub fn set_group(&self, group: Weak<RegionGroupInner>) {
-        *self.group.write() = group;
     }
 
     #[inline(always)]

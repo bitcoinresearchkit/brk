@@ -1,5 +1,5 @@
-use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
-use bitview_vecs::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPriceWithRatio};
+use bitview_cohort::UTXOAggregate;
+use bitview_vecs::{DailyMappings, LazyDailyPriceWithRatio, StoredSeries, import_stored};
 use brk_types::{Cents, Day1, Height, PriceRatio, Version};
 use tempfile::tempdir;
 use vecdb::{
@@ -12,7 +12,7 @@ use crate::common::CACHE_BUDGET;
 mod common;
 
 #[test]
-fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
+fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
@@ -36,45 +36,51 @@ fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
     .read_only_cached_boxed_clone();
     let mappings = DailyMappings::new(&indexes);
     let import = || {
-        ColumnarDailyMetric::forced_import(
-            &CACHE_BUDGET,
-            &db,
-            "test_capitalized_price_cents_by_aggregate",
-            Version::ONE,
-            |source| {
-                let price = |id: UTXOAggregateId| {
-                    LazyColumnDailyPriceWithRatio::new(
-                        &id.metric_name("test_capitalized_price"),
-                        Version::ONE,
-                        source,
-                        id,
-                        &indexes,
-                        &mappings,
-                        &spot,
-                    )
-                };
-                UTXOAggregate {
-                    all: price(UTXOAggregateId::All),
-                    sth: price(UTXOAggregateId::Sth),
-                    lth: price(UTXOAggregateId::Lth),
-                }
-            },
-        )
-        .unwrap()
+        let stored = UTXOAggregate::try_from_fn(|id| {
+            import_stored::<Day1, Cents>(
+                &CACHE_BUDGET,
+                &db,
+                &id.metric_name("test_capitalized_price_cents"),
+                Version::ONE,
+            )
+        })
+        .unwrap();
+        let prices = UTXOAggregate::from_fn(|id| {
+            LazyDailyPriceWithRatio::from_day1_source(
+                &id.metric_name("test_capitalized_price"),
+                Version::ONE,
+                id.select(&stored),
+                &indexes,
+                &mappings,
+                &spot,
+            )
+        });
+        (stored, prices)
     };
-    let mut prices = import();
+    let push = |stored: &mut UTXOAggregate<StoredSeries<Day1, Cents>>,
+                values: UTXOAggregate<Cents>| {
+        for (target, &value) in stored.iter_mut().zip(values.iter()) {
+            target.push(value);
+        }
+    };
+    let (mut stored, prices) = import();
     for (all, sth, lth) in [
         (Cents::new(100), 50, 200),
         (Cents::NAN, 75, 300),
         (Cents::new(1), 1, 1),
     ] {
-        prices.push(UTXOAggregate {
-            all,
-            sth: Cents::new(sth),
-            lth: Cents::new(lth),
-        });
+        push(
+            &mut stored,
+            UTXOAggregate {
+                all,
+                sth: Cents::new(sth),
+                lth: Cents::new(lth),
+            },
+        );
     }
-    prices.day1.write().unwrap();
+    for target in stored.iter_mut() {
+        target.write().unwrap();
+    }
     let mut json = Vec::new();
     prices
         .all
@@ -129,25 +135,36 @@ fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         Some(PriceRatio::ONE)
     );
     drop(prices);
-    let mut prices = import();
+    drop(stored);
+    let (mut stored, prices) = import();
     assert_eq!(
         prices.all.cents.day1.collect_one_at(0),
         Some(Cents::new(100))
     );
     // Matches the production invalidation-before-computation sequence.
     CACHE_BUDGET.invalidate();
-    prices.day1.truncate_if_needed_at(1).unwrap();
-    prices.push(UTXOAggregate {
-        all: Cents::new(200),
-        sth: Cents::new(40),
-        lth: Cents::new(600),
-    });
-    prices.push(UTXOAggregate {
-        all: Cents::new(50),
-        sth: Cents::new(25),
-        lth: Cents::new(100),
-    });
-    prices.day1.write().unwrap();
+    for target in stored.iter_mut() {
+        target.truncate_if_needed_at(1).unwrap();
+    }
+    push(
+        &mut stored,
+        UTXOAggregate {
+            all: Cents::new(200),
+            sth: Cents::new(40),
+            lth: Cents::new(600),
+        },
+    );
+    push(
+        &mut stored,
+        UTXOAggregate {
+            all: Cents::new(50),
+            sth: Cents::new(25),
+            lth: Cents::new(100),
+        },
+    );
+    for target in stored.iter_mut() {
+        target.write().unwrap();
+    }
     assert_eq!(
         prices.all.relative.ppm.height.collect_one_at(2),
         Some(PriceRatio::from(2.0))
@@ -156,7 +173,7 @@ fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         prices.all.cents.day1.collect_one_at(0),
         Some(Cents::new(100))
     );
-    for price in prices.series.iter() {
+    for price in prices.iter() {
         assert_eq!(price.cents.day1.len(), 3);
     }
     assert_eq!(

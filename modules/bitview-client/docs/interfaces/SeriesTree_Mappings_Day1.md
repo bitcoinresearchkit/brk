@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Mappings\_Day1
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:9612](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L9612)
+Defined in: [Developer/mono/modules/bitview-client/index.js:9264](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L9264)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:9612](https://github
 
 > **date**: [`SeriesPattern8`](../type-aliases/SeriesPattern8.md)\<`string`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:9613](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L9613)
+Defined in: [Developer/mono/modules/bitview-client/index.js:9265](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L9265)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:9613](https://github
 
 > **firstHeight**: [`SeriesPattern8`](../type-aliases/SeriesPattern8.md)\<`number`\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:9614](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L9614)
+Defined in: [Developer/mono/modules/bitview-client/index.js:9266](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L9266)

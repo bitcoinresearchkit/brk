@@ -6,28 +6,28 @@
 
 # Interface: SeriesTree\_Cohorts\_Realized\_SoprRatioExtended
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13560](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13560)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13027](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13027)
 
 ## Properties
 
 ### all
 
-> **all**: [`_1m1w1yHeightPattern`](1m1w1yHeightPattern.md)
+> **all**: [`_1m1w1yPattern`](1m1w1yPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13561](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13561)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13028](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13028)
 
 ***
 
 ### lth
 
-> **lth**: [`_1m1w1yHeightPattern`](1m1w1yHeightPattern.md)
+> **lth**: [`_1m1w1yPattern`](1m1w1yPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13563](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13563)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13030](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13030)
 
 ***
 
 ### sth
 
-> **sth**: [`_1m1w1yHeightPattern`](1m1w1yHeightPattern.md)
+> **sth**: [`_1m1w1yPattern`](1m1w1yPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:13562](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L13562)
+Defined in: [Developer/mono/modules/bitview-client/index.js:13029](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L13029)

@@ -6,15 +6,15 @@
 
 # Interface: SeriesTree\_Addrs\_Reused
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8113](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8113)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7966](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7966)
 
 ## Properties
 
 ### count
 
-> **count**: [`SeriesTree_Addrs_Reused_Count`](SeriesTree_Addrs_Reused_Count.md)
+> **count**: [`FundedTotalPattern`](FundedTotalPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8114](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8114)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7967](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7967)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8114](https://github
 
 > **events**: [`SeriesTree_Addrs_Reused_Events`](SeriesTree_Addrs_Reused_Events.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8115](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8115)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7968](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7968)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8115](https://github
 
 > **supply**: [`SeriesTree_Addrs_Reused_Supply`](SeriesTree_Addrs_Reused_Supply.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8116](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8116)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7969](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7969)

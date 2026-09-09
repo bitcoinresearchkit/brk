@@ -1,17 +1,15 @@
 use bitview_traversable::Traversable;
 use brk_types::{FeeRate, Sats, StoredBool, TxIndex};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnarVec, EagerVec, LazyColumnVec, PcoVec, ReadOnlyColumnarVec, Rw, StorageMode};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
-use bitview_vecs::PerTxDistribution;
+use bitview_vecs::{PerTxDistribution, StoredSeries};
 
 mod count;
 mod cpfp_flags;
-mod cpfp_role_id;
 
 pub use count::CountVecs;
 pub use cpfp_flags::CpfpFlags;
-pub use cpfp_role_id::CpfpRoleId;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -46,10 +44,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub cpfp_flags: CpfpFlags<
-        LazyColumnVec<ReadOnlyColumnarVec<PcoVec<TxIndex, StoredBool>, CpfpRoleId>, CpfpRoleId>,
-    >,
-    #[traversable(hidden)]
-    pub cpfp_flags_source:
-        M::Stored<EagerVec<ColumnarVec<PcoVec<TxIndex, StoredBool>, CpfpRoleId>>>,
+    pub cpfp_flags: CpfpFlags<StoredSeries<TxIndex, StoredBool, M>>,
 }

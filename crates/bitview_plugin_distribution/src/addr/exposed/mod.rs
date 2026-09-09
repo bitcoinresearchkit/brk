@@ -40,7 +40,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
-use rayon::{iter, prelude::*};
+use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode,
@@ -113,7 +113,12 @@ impl ExposedAddrVecs {
         self.count
             .par_iter_height_mut()
             .chain(self.supply.par_iter_height_mut())
-            .chain(iter::once(self.supply_share.stored_mut()))
+            .chain(
+                self.supply_share
+                    .stored_vecs_mut()
+                    .collect::<Vec<_>>()
+                    .into_par_iter(),
+            )
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

@@ -2,13 +2,13 @@ use bitview_cohort::{AddrTypeId, ByAddrType};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPercentPerBlock, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, StoredSeries, import_stored};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode, WritableVec,
 };
 
 use super::vecs::AddrSupplyVecs;
@@ -21,9 +21,9 @@ use super::vecs::AddrSupplyVecs;
 pub struct AddrSupplyShareVecs<M: StorageMode = Rw> {
     pub all: LazyPercentPerBlock<PartsPerMillion32>,
     #[traversable(flatten)]
-    pub by_addr_type: ByAddrType<LazyColumnPercentPerBlock<PartsPerMillion32, AddrTypeId>>,
+    pub by_addr_type: ByAddrType<LazyPercentPerBlock<PartsPerMillion32>>,
     #[traversable(hidden)]
-    ppm: ColumnarPerBlock<PartsPerMillion32, AddrTypeId, (), M>,
+    ppm: ByAddrType<StoredSeries<Height, PartsPerMillion32, M>>,
 }
 
 impl AddrSupplyShareVecs {
@@ -44,20 +44,19 @@ impl AddrSupplyShareVecs {
             all_supply,
             mappings,
         );
-        let ppm = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            &format!("{name}_ppm_by_type"),
-            version,
-            |_| (),
-        )?;
-        let source = ppm.height.read_only_clone();
-        let by_addr_type = AddrTypeId::series(|column, type_name| {
-            LazyColumnPercentPerBlock::new(
+        let ppm = ByAddrType::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{}_{name}_ppm", id.name()),
+                version + Version::ONE,
+            )
+        })?;
+        let by_addr_type = AddrTypeId::series(|id, type_name| {
+            LazyPercentPerBlock::from_height_source(
                 &format!("{type_name}_{name}"),
                 version,
-                &source,
-                column,
+                id.select(&ppm),
                 mappings,
             )
         });
@@ -70,12 +69,14 @@ impl AddrSupplyShareVecs {
     }
 
     pub fn reset_height(&mut self) -> Result<()> {
-        self.ppm.height.reset()?;
+        for (_, target) in self.ppm.iter_mut() {
+            target.reset()?;
+        }
         Ok(())
     }
 
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.ppm.stored_mut()
+    pub fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+        self.ppm.iter_mut().map(|(_, v)| v as &mut dyn AnyStoredVec)
     }
 
     pub fn compute_rest(
@@ -85,12 +86,20 @@ impl AddrSupplyShareVecs {
         type_supply_sats: &ByAddrType<&impl ReadableVec<Height, Sats>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.ppm.compute_row_columns2(
-            max_from,
-            &supply.height,
-            |column| *column.select(type_supply_sats),
-            |_, category, total| RatioSats::<PartsPerMillion32>::apply(category, total),
-            exit,
-        )
+        for &id in AddrTypeId::ALL {
+            id.select_mut(&mut self.ppm).compute_transform2(
+                max_from,
+                &id.select(&supply.series.by_addr_type).sats.height,
+                *id.select(type_supply_sats),
+                |(height, category, total, _)| {
+                    (
+                        height,
+                        RatioSats::<PartsPerMillion32>::apply(category, total),
+                    )
+                },
+                exit,
+            )?;
+        }
+        Ok(())
     }
 }

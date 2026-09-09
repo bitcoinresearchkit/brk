@@ -2,11 +2,11 @@ use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, StoredSeries, import_stored};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
-use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
 
 use super::{RelativeSource, share_views};
 
@@ -26,7 +26,7 @@ pub struct SupplyProfitabilityShares<M: StorageMode = Rw> {
     /// cohort has no unspent supply.
     pub supply_in_loss_share: UTXOAggregate<LazyPercentPerBlock<PartsPerMillion32>>,
     #[traversable(hidden)]
-    pub profit_share_source: ColumnarPerBlock<PartsPerMillion32, UTXOAggregateId, (), M>,
+    pub profit_share_source: UTXOAggregate<StoredSeries<Height, PartsPerMillion32, M>>,
 }
 
 impl SupplyProfitabilityShares {
@@ -37,23 +37,23 @@ impl SupplyProfitabilityShares {
         mappings: &MappingsVecs,
     ) -> Result<Self> {
         let version = version + VERSION;
-        let profit_share_source = ColumnarPerBlock::forced_import(
-            cache,
-            db,
-            "supply_in_profit_share_ppm_by_aggregate",
-            version,
-            |_| (),
-        )?;
-        let source = profit_share_source.height.read_only_clone();
+        let profit_share_source = UTXOAggregate::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &id.metric_name("supply_in_profit_share_ppm"),
+                version + Version::ONE,
+            )
+        })?;
         let supply_in_profit_share = share_views(
-            &source,
+            &profit_share_source,
             "supply_in_profit_share",
             version,
             Self::public_profit_share,
             mappings,
         );
         let supply_in_loss_share = share_views(
-            &source,
+            &profit_share_source,
             "supply_in_loss_share",
             version,
             Self::public_loss_share,
@@ -100,17 +100,25 @@ impl SupplyProfitabilityShares {
         sources: &UTXOAggregate<RelativeSource<'_>>,
         exit: &Exit,
     ) -> Result<()> {
-        self.profit_share_source.compute_columns2(
-            max_from,
-            |id| &id.select(sources).supply.in_profit.sats.height,
-            |id| &id.select(sources).supply.total.sats.height,
-            |_, profit, total| Self::stored_profit_share(profit, total),
-            exit,
-        )
+        for id in UTXOAggregateId::ALL {
+            let source = id.select(sources);
+            id.select_mut(&mut self.profit_share_source)
+                .compute_transform2(
+                    max_from,
+                    &source.supply.in_profit.sats.height,
+                    &source.supply.total.sats.height,
+                    |(height, profit, total, _)| (height, Self::stored_profit_share(profit, total)),
+                    exit,
+                )?;
+        }
+        Ok(())
     }
 
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.profit_share_source.stored_mut()
+    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        self.profit_share_source
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect()
     }
 }
 

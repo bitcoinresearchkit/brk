@@ -9,7 +9,7 @@ use brk_types::{
     TxIndex, VSize, Weight,
 };
 use rayon::join;
-use vecdb::{AnyVec, ColumnId, ReadableVec, VecIndex};
+use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 use super::Vecs;
 use crate::{breakdown::BlockMetrics, policy::Policy};

@@ -1,25 +1,21 @@
-use crate::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPrice};
 use bitview_collections::ByPercentile;
 use bitview_traversable::Traversable;
 use brk_error::Result;
-use brk_types::{Cents, PERCENTILES_LEN, PercentileId, Version};
+use brk_types::{Cents, Day1, PERCENTILES_LEN, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+
+use crate::{DailyMappings, LazyDailyPrice, StoredSeries, import_stored};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct DailyPercentilesVecs<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub prices: ColumnarDailyMetric<
-        Cents,
-        PercentileId,
-        ByPercentile<LazyColumnDailyPrice<PercentileId>>,
-        M,
-    >,
+    pub prices: ByPercentile<LazyDailyPrice>,
+    #[traversable(hidden)]
+    pub stored: ByPercentile<StoredSeries<Day1, Cents, M>>,
 }
-
-const VERSION: Version = Version::ONE;
 
 impl DailyPercentilesVecs {
     pub fn forced_import(
@@ -29,28 +25,39 @@ impl DailyPercentilesVecs {
         version: Version,
         mappings: &DailyMappings,
     ) -> Result<Self> {
-        let version = version + VERSION;
-        let prices = ColumnarDailyMetric::forced_import(cache, db, name, version, |source| {
-            ByPercentile::from_fn(|id| {
-                LazyColumnDailyPrice::new(
-                    &format!("{name}_pct{:02}", id.percentile()),
-                    version,
-                    source,
-                    id,
-                    mappings,
-                )
-            })
+        let version = version + Version::TWO;
+        let stored = ByPercentile::try_from_fn(|id| {
+            import_stored(
+                cache,
+                db,
+                &format!("{name}_pct{:02}_cents", id.percentile()),
+                version,
+            )
         })?;
-
-        Ok(Self { prices })
+        let prices = ByPercentile::from_fn(|id| {
+            LazyDailyPrice::from_day1_source(
+                &format!("{name}_pct{:02}", id.percentile()),
+                version,
+                stored.select(id),
+                mappings,
+            )
+        });
+        Ok(Self { prices, stored })
     }
 
-    #[inline(always)]
-    pub fn push(&mut self, percentile_prices: &[Cents; PERCENTILES_LEN]) {
-        self.prices.push(*percentile_prices);
+    pub fn push(&mut self, prices: &[Cents; PERCENTILES_LEN]) {
+        for (target, &price) in self.stored.iter_mut().zip(prices) {
+            target.push(price);
+        }
     }
 
-    pub fn stored_mut(&mut self) -> &mut dyn AnyStoredVec {
-        self.prices.stored_mut()
+    pub fn min_len(&self) -> usize {
+        self.stored.iter().map(AnyVec::len).min().unwrap_or(0)
+    }
+    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
+        self.stored
+            .iter_mut()
+            .map(|v| v as &mut dyn AnyStoredVec)
+            .collect()
     }
 }

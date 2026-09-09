@@ -3,9 +3,9 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Sats, StoredBool, StoredU64, TxInIndex};
-use vecdb::{AnyStoredVec, AnyVec, ColumnId, PcoVec, ReadableVec, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, PcoVec, ReadableVec, VecIndex, WritableVec};
 
-use super::{PatternId, Vecs, coinjoin::Candidate};
+use super::{Vecs, coinjoin::Candidate};
 
 const WRITE_INTERVAL: usize = 10_000;
 
@@ -32,23 +32,32 @@ pub fn compute(
         + features.has_inscription.version()
         + mappings.height.tx_index_count.version();
 
-    vecs.flags_source
-        .validate_computed_version_or_reset(version)?;
-    vecs.count
-        .cumulative
-        .validate_computed_version_or_reset(version)?;
+    for target in vecs.flags.iter_mut() {
+        target.validate_computed_version_or_reset(version)?;
+    }
+    for target in vecs.count.iter_mut() {
+        target
+            .cumulative
+            .height
+            .validate_computed_version_or_reset(version)?;
+    }
 
     let starting_lengths = indexer.safe_lengths();
     let target_tx = mappings.tx_index.input_count.len();
     let target_height = mappings.height.tx_index_count.len();
     let tx_len = vecs
-        .flags_source
-        .len()
+        .flags
+        .iter_mut()
+        .map(|v| v.len())
+        .min()
+        .unwrap_or_default()
         .min(starting_lengths.tx_index.to_usize());
     let count_len = vecs
         .count
-        .cumulative
-        .len()
+        .iter_mut()
+        .map(|v| v.cumulative.height.len())
+        .min()
+        .unwrap_or_default()
         .min(starting_lengths.height.to_usize());
     let start_height = count_len.min(mappings.tx_heights.resume_height(
         tx_len,
@@ -61,8 +70,15 @@ pub fn compute(
 
     let first_tx = &indexer.vecs().transactions.first_tx_index;
     let start_tx = first_tx.collect_one_at(start_height).unwrap().to_usize();
-    vecs.flags_source.truncate_if_needed_at(start_tx)?;
-    vecs.count.truncate_if_needed_at(start_height)?;
+    for target in vecs.flags.iter_mut() {
+        target.truncate_if_needed_at(start_tx)?;
+    }
+    for target in vecs.count.iter_mut() {
+        target
+            .cumulative
+            .height
+            .truncate_if_needed_at(start_height)?;
+    }
 
     let first_txin = indexer
         .vecs()
@@ -152,19 +168,24 @@ pub fn compute(
             coinjoin_count += coinjoin as u64;
             consolidation_count += consolidation as u64;
             batch_payout_count += batch_payout as u64;
-            vecs.flags_source.push([
-                StoredBool::from(coinjoin),
-                StoredBool::from(consolidation),
-                StoredBool::from(batch_payout),
-            ]);
+            vecs.flags.is_coinjoin.push(StoredBool::from(coinjoin));
+            vecs.flags
+                .is_consolidation
+                .push(StoredBool::from(consolidation));
+            vecs.flags
+                .is_batch_payout
+                .push(StoredBool::from(batch_payout));
         }
 
         vecs.count
-            .push_block(PatternId::from_fn(|pattern| match pattern {
-                PatternId::Coinjoin => StoredU64::from(coinjoin_count),
-                PatternId::Consolidation => StoredU64::from(consolidation_count),
-                PatternId::BatchPayout => StoredU64::from(batch_payout_count),
-            }));
+            .coinjoin
+            .push_block(StoredU64::from(coinjoin_count));
+        vecs.count
+            .consolidation
+            .push_block(StoredU64::from(consolidation_count));
+        vecs.count
+            .batch_payout
+            .push_block(StoredU64::from(batch_payout_count));
 
         if (height + 1).is_multiple_of(WRITE_INTERVAL) {
             let _lock = exit.lock();
@@ -180,8 +201,12 @@ pub fn compute(
 
 impl Vecs {
     fn write(&mut self) -> Result<()> {
-        self.flags_source.write()?;
-        self.count.write()?;
+        for target in self.flags.iter_mut() {
+            target.write()?;
+        }
+        for target in self.count.iter_mut() {
+            target.cumulative.height.write()?;
+        }
         Ok(())
     }
 }

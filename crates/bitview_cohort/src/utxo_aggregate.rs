@@ -36,8 +36,8 @@ pub struct UTXOAggregate<T> {
     pub lth: T,
 }
 
-define_column_id!(
-    UTXOAggregateId for UTXOAggregate, version = 1 {
+define_cohort_id!(
+    UTXOAggregateId for UTXOAggregate {
         All => all,
         Sth => sth,
         Lth => lth,

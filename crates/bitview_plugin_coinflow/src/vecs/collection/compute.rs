@@ -1,6 +1,6 @@
 use std::iter;
 
-use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregate};
+use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregateId};
 use bitview_compute::{
     AgeBand, MINIMUM_DURATION_DAYS, WeightedCohortContribution, WeightedCohortState, WeightedRatio,
 };
@@ -10,7 +10,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, BoundedRatio, Cents, Height, Sats, StoredF64, Timestamp, Version};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
-use vecdb::{AnyStoredVec, ColumnId, ReadableVec, VecValue, WritableVec};
+use vecdb::{AnyStoredVec, ReadableVec, VecValue, WritableVec};
 
 use super::Vecs;
 use crate::{AGE_COHORT_COUNT, AggregateSources, Dependencies, HorizonId, Horizons};
@@ -74,13 +74,14 @@ impl ComputePlugin for Vecs {
                 .cents
                 .height
         });
-        let coindays_created = &distribution.coindays_created.cumulative;
+        let coindays_created =
+            AgeRange::from_fn(|id| &id.select(&distribution.coindays_created).cumulative.height);
 
         self.compute_primary(
             &starting_lengths,
             &mappings.timestamp.monotonic,
             &transfer_volumes,
-            coindays_created,
+            &coindays_created,
             &supplies,
             &loss_supplies,
             &realized_caps,
@@ -145,7 +146,7 @@ impl AggregateState {
 struct PrimaryBatch {
     timestamps: Vec<Timestamp>,
     transfer_volumes: AgeRange<Vec<Sats>>,
-    coindays_created: Vec<AgeRange<StoredF64>>,
+    coindays_created: AgeRange<Vec<StoredF64>>,
     supplies: AgeRange<Vec<Sats>>,
     loss_supplies: AgeRange<Vec<Sats>>,
     realized_caps: AgeRange<Vec<Cents>>,
@@ -156,7 +157,7 @@ impl PrimaryBatch {
     fn collect(
         timestamps: &impl ReadableVec<Height, Timestamp>,
         transfer_volumes: &AgeRange<&impl ReadableVec<Height, Sats>>,
-        coindays_created: &impl ReadableVec<Height, AgeRange<StoredF64>>,
+        coindays_created: &AgeRange<&impl ReadableVec<Height, StoredF64>>,
         supplies: &AgeRange<&impl ReadableVec<Height, Sats>>,
         loss_supplies: &AgeRange<&impl ReadableVec<Height, Sats>>,
         realized_caps: &AgeRange<&impl ReadableVec<Height, Cents>>,
@@ -166,7 +167,7 @@ impl PrimaryBatch {
         Self {
             timestamps: timestamps.collect_range_at(start, end),
             transfer_volumes: Self::collect_age_range(transfer_volumes, start, end),
-            coindays_created: coindays_created.collect_range_at(start, end),
+            coindays_created: Self::collect_age_range(coindays_created, start, end),
             supplies: Self::collect_age_range(supplies, start, end),
             loss_supplies: Self::collect_age_range(loss_supplies, start, end),
             realized_caps: Self::collect_age_range(realized_caps, start, end),
@@ -186,23 +187,27 @@ impl PrimaryBatch {
         AgeRange::par_from_fn(|id| id.select(sources).collect_range_at(start, end))
     }
 
-    fn rows(&self, genesis_timestamp: Timestamp, bounds: &AgeRange<AgeBand>) -> Vec<PrimaryRow> {
+    fn primary_values_batch(
+        &self,
+        genesis_timestamp: Timestamp,
+        bounds: &AgeRange<AgeBand>,
+    ) -> Vec<PrimaryValues> {
         (0..self.len())
             .into_par_iter()
-            .map(|offset| self.row(offset, genesis_timestamp, bounds))
+            .map(|offset| self.primary_values(offset, genesis_timestamp, bounds))
             .collect()
     }
 
-    fn row(
+    fn primary_values(
         &self,
         offset: usize,
         genesis_timestamp: Timestamp,
         bounds: &AgeRange<AgeBand>,
-    ) -> PrimaryRow {
+    ) -> PrimaryValues {
         let hazards = AgeRange::from_fn(|id| {
             Self::spending_rate(
                 id.select(&self.transfer_volumes)[offset],
-                *id.get(&self.coindays_created[offset]),
+                id.select(&self.coindays_created)[offset],
             )
         });
         let network_age = self.timestamps[offset]
@@ -238,9 +243,9 @@ impl PrimaryBatch {
             );
         }
 
-        PrimaryRow {
-            spending_rate: AgeRangeId::from_fn(|id| StoredF64::from(*id.select(&hazards))),
-            spending_exposure: AgeRangeId::from_fn(|id| StoredF64::from(*id.select(&exposures))),
+        PrimaryValues {
+            spending_rate: AgeRange::from_fn(|id| StoredF64::from(*id.select(&hazards))),
+            spending_exposure: AgeRange::from_fn(|id| StoredF64::from(*id.select(&exposures))),
             mobility: mobilities,
             terms,
         }
@@ -257,7 +262,7 @@ impl PrimaryBatch {
     }
 }
 
-struct PrimaryRow {
+struct PrimaryValues {
     spending_rate: AgeRange<StoredF64>,
     spending_exposure: AgeRange<StoredF64>,
     mobility: AgeRange<BoundedRatio>,
@@ -271,7 +276,7 @@ impl Vecs {
         starting_lengths: &Lengths,
         timestamps: &impl ReadableVec<Height, Timestamp>,
         transfer_volumes: &AgeRange<&impl ReadableVec<Height, Sats>>,
-        coindays_created: &impl ReadableVec<Height, AgeRange<StoredF64>>,
+        coindays_created: &AgeRange<&impl ReadableVec<Height, StoredF64>>,
         supplies: &AgeRange<&impl ReadableVec<Height, Sats>>,
         loss_supplies: &AgeRange<&impl ReadableVec<Height, Sats>>,
         realized_caps: &AgeRange<&impl ReadableVec<Height, Cents>>,
@@ -280,7 +285,7 @@ impl Vecs {
         let source_version = Version::combine_all(
             iter::once(timestamps.version())
                 .chain(transfer_volumes.iter().map(|vec| vec.version()))
-                .chain(iter::once(coindays_created.version()))
+                .chain(coindays_created.iter().map(|vec| vec.version()))
                 .chain(supplies.iter().map(|vec| vec.version()))
                 .chain(loss_supplies.iter().map(|vec| vec.version()))
                 .chain(realized_caps.iter().map(|vec| vec.version())),
@@ -304,7 +309,7 @@ impl Vecs {
         let source_end = transfer_volumes
             .iter()
             .map(|vec| vec.len())
-            .chain(iter::once(coindays_created.len()))
+            .chain(coindays_created.iter().map(|vec| vec.len()))
             .chain(supplies.iter().map(|vec| vec.len()))
             .chain(loss_supplies.iter().map(|vec| vec.len()))
             .chain(realized_caps.iter().map(|vec| vec.len()))
@@ -333,8 +338,8 @@ impl Vecs {
                 chunk_start,
                 chunk_end,
             );
-            for row in batch.rows(genesis_timestamp, &bounds) {
-                self.push_primary(row);
+            for values in batch.primary_values_batch(genesis_timestamp, &bounds) {
+                self.push_primary(values);
             }
 
             {
@@ -349,57 +354,81 @@ impl Vecs {
         Ok(Height::from(start))
     }
 
-    fn push_primary(&mut self, row: PrimaryRow) {
-        self.age_range.spending_rate.push(row.spending_rate);
-        self.age_range.spending_exposure.push(row.spending_exposure);
-        self.age_range.mobility_source.push(row.mobility);
+    fn push_primary(&mut self, values: PrimaryValues) {
+        for (target, value) in self
+            .age_range
+            .spending_rate
+            .iter_mut()
+            .zip(values.spending_rate.iter())
+        {
+            target.height.push(*value);
+        }
+        for (target, value) in self
+            .age_range
+            .spending_exposure
+            .age_range
+            .iter_mut()
+            .zip(values.spending_exposure.iter())
+        {
+            target.height.push(*value);
+        }
+        for (target, value) in self
+            .age_range
+            .mobility_source
+            .iter_mut()
+            .zip(values.mobility.iter())
+        {
+            target.push(*value);
+        }
 
-        let all = row.terms.short.merged(row.terms.long);
-        self.aggregate_sources.push(row.terms, all);
+        let all = values.terms.short.merged(values.terms.long);
+        self.aggregate_sources.push(values.terms, all);
     }
 
     fn primary_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
-        [
-            self.age_range.spending_rate.stored_mut(),
-            self.age_range.spending_exposure.stored_mut(),
-            self.age_range.mobility_source.stored_mut(),
-        ]
-        .into_iter()
-        .chain(self.aggregate_sources.primary_vecs_mut())
+        self.age_range
+            .spending_rate
+            .iter_mut()
+            .map(|v| &mut v.height as &mut dyn AnyStoredVec)
+            .chain(
+                self.age_range
+                    .spending_exposure
+                    .age_range
+                    .iter_mut()
+                    .map(|v| &mut v.height as &mut dyn AnyStoredVec),
+            )
+            .chain(
+                self.age_range
+                    .mobility_source
+                    .iter_mut()
+                    .map(|v| v as &mut dyn AnyStoredVec),
+            )
+            .chain(self.aggregate_sources.primary_vecs_mut())
     }
 }
 
 impl AggregateSources {
     fn push(&mut self, terms: ByTerm<AggregateState>, all: AggregateState) {
-        self.supply.mobile.push(ByTerm {
-            short: terms.short.weighted.weighted_supply,
-            long: terms.long.weighted.weighted_supply,
-        });
-        self.supply.immobile.push(ByTerm {
-            short: terms.short.weighted.complement_supply,
-            long: terms.long.weighted.complement_supply,
-        });
-        self.supply_in_loss_share.push(UTXOAggregate {
-            all: all.weighted.supply_in_loss.value(),
-            sth: terms.short.weighted.supply_in_loss.value(),
-            lth: terms.long.weighted.supply_in_loss.value(),
-        });
-        for horizon in HorizonId::ALL {
-            horizon.select_mut(&mut self.horizon).push(UTXOAggregate {
-                all: horizon.select(&all.horizon_supply_in_loss).value(),
-                sth: horizon.select(&terms.short.horizon_supply_in_loss).value(),
-                lth: horizon.select(&terms.long.horizon_supply_in_loss).value(),
-            });
+        for (id, state) in [
+            (UTXOAggregateId::All, all),
+            (UTXOAggregateId::Sth, terms.short),
+            (UTXOAggregateId::Lth, terms.long),
+        ] {
+            id.select_mut(&mut self.supply.mobile)
+                .push(state.weighted.weighted_supply);
+            id.select_mut(&mut self.supply.immobile)
+                .push(state.weighted.complement_supply);
+            id.select_mut(&mut self.supply_in_loss_share)
+                .push(state.weighted.supply_in_loss.value());
+            id.select_mut(&mut self.cap)
+                .push(state.weighted.weighted_cap);
+            id.select_mut(&mut self.price)
+                .push(state.weighted.realized_price());
+            for horizon in HorizonId::ALL {
+                id.select_mut(horizon.select_mut(&mut self.horizon))
+                    .push(horizon.select(&state.horizon_supply_in_loss).value());
+            }
         }
-        self.cap.push(ByTerm {
-            short: terms.short.weighted.weighted_cap,
-            long: terms.long.weighted.weighted_cap,
-        });
-        self.price.push(UTXOAggregate {
-            all: all.weighted.realized_price(),
-            sth: terms.short.weighted.realized_price(),
-            lth: terms.long.weighted.realized_price(),
-        });
     }
 
     fn primary_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
@@ -420,17 +449,27 @@ impl AggregateSources {
             _1m,
         } = horizon;
         [
-            &mut supply.mobile as &mut dyn AnyStoredVec,
-            &mut supply.immobile,
-            supply_in_loss_share,
-            cap,
-            price,
+            &mut supply.mobile.all as &mut dyn AnyStoredVec,
+            &mut supply.mobile.sth,
+            &mut supply.mobile.lth,
+            &mut supply.immobile.all,
+            &mut supply.immobile.sth,
+            &mut supply.immobile.lth,
+            &mut supply_in_loss_share.all,
+            &mut supply_in_loss_share.sth,
+            &mut supply_in_loss_share.lth,
+            &mut cap.all,
+            &mut cap.sth,
+            &mut cap.lth,
+            &mut price.all,
+            &mut price.sth,
+            &mut price.lth,
         ]
         .into_iter()
         .chain(
             [_8y, _4y, _2y, _1y, _6m, _3m, _1m]
                 .into_iter()
-                .map(|horizon| horizon as &mut dyn AnyStoredVec),
+                .flat_map(|h| [&mut h.all as &mut dyn AnyStoredVec, &mut h.sth, &mut h.lth]),
         )
     }
 }
@@ -654,25 +693,26 @@ mod tests {
                 let age = id.select(&bounds).lower;
                 vec![Sats::from((100_000_000.0 * (-age / 1_000.0).exp()) as u64)]
             }),
-            coindays_created: vec![AgeRange::from_fn(|_| StoredF64::from(100.0))],
+            coindays_created: AgeRange::from_fn(|_| vec![StoredF64::from(100.0)]),
             supplies: AgeRange::from_fn(|_| vec![supply]),
             loss_supplies: AgeRange::from_fn(|_| vec![Sats::from(10_u64)]),
             realized_caps: AgeRange::from_fn(|_| vec![cap]),
         };
-        let row = batch.row(0, Timestamp::ZERO, &bounds);
+        let values = batch.primary_values(0, Timestamp::ZERO, &bounds);
         let mut expected = WeightedCohortState::default();
         for &id in AgeRangeId::ALL {
-            let raw = *id.select(&row.mobility);
-            let exposure = f64::from(*id.select(&row.spending_exposure));
+            let raw = *id.select(&values.mobility);
+            let exposure = f64::from(*id.select(&values.spending_exposure));
             assert_eq!(raw, BoundedRatio::from(AgeBand::mobility(exposure)));
             expected.add(supply, Sats::from(10_u64), cap, raw);
         }
         assert!(
-            row.mobility
+            values
+                .mobility
                 .iter()
                 .any(|value| *value != BoundedRatio::ZERO)
         );
-        let all = row.terms.short.merged(row.terms.long).weighted;
+        let all = values.terms.short.merged(values.terms.long).weighted;
         assert_eq!(all.weighted_supply, expected.weighted_supply);
         assert_eq!(all.complement_supply, expected.complement_supply);
         assert_eq!(all.weighted_cap, expected.weighted_cap);

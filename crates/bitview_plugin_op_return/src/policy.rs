@@ -17,6 +17,39 @@ pub struct Policy<T> {
 }
 
 impl<T> Policy<T> {
+    pub fn try_new<E>(
+        mut create: impl FnMut(OpReturnPolicyId, &'static str) -> Result<T, E>,
+    ) -> Result<Self, E> {
+        Ok(Self {
+            pre_v30_standard: create(OpReturnPolicyId::PreV30Standard, "pre_v30_standard")?,
+            pre_v30_nonstandard: create(
+                OpReturnPolicyId::PreV30Nonstandard,
+                "pre_v30_nonstandard",
+            )?,
+            oversized: create(OpReturnPolicyId::Oversized, "oversized")?,
+            multiple: create(OpReturnPolicyId::Multiple, "multiple")?,
+        })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [
+            &self.pre_v30_standard,
+            &self.pre_v30_nonstandard,
+            &self.oversized,
+            &self.multiple,
+        ]
+        .into_iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [
+            &mut self.pre_v30_standard,
+            &mut self.pre_v30_nonstandard,
+            &mut self.oversized,
+            &mut self.multiple,
+        ]
+        .into_iter()
+    }
     pub fn new(mut create: impl FnMut(OpReturnPolicyId, &'static str) -> T) -> Self {
         Self {
             pre_v30_standard: create(OpReturnPolicyId::PreV30Standard, "pre_v30_standard"),

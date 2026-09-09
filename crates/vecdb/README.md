@@ -19,7 +19,6 @@ key-value database or an ACID transaction layer.
 | `ZstdVec<I, T>` | Denser general-purpose compression |
 | `MutableVec<V>` | Updates and sparse deletions over a raw stored vector |
 | `OverflowVec<I, T>` | Compact common values with a stored overflow path |
-| `ColumnarVec<V, C>` | One row index split into independently readable typed columns |
 | `EagerVec<V>` | Incrementally computed results stored on disk |
 | `LazyVec<I, T, SI, ST>` | A cheap, read-only derivation from one source vector |
 

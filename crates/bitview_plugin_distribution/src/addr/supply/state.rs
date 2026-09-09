@@ -1,7 +1,7 @@
-use bitview_cohort::{AddrTypeId, ByAddrType};
+use bitview_cohort::ByAddrType;
 use brk_types::{Height, Sats};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, ReadableVec};
+use vecdb::ReadableVec;
 
 use super::vecs::AddrSupplyVecs;
 
@@ -11,11 +11,6 @@ use super::vecs::AddrSupplyVecs;
 pub struct AddrTypeToSupply(ByAddrType<Sats>);
 
 impl AddrTypeToSupply {
-    #[inline]
-    pub fn row(&self) -> <AddrTypeId as ColumnId>::Row<Sats> {
-        AddrTypeId::from_fn(|column| *column.select(&self.0))
-    }
-
     /// Apply a signed `after - before` delta to an unsigned supply slot.
     #[inline]
     pub fn apply_delta(slot: &mut Sats, before: Sats, after: Sats) {

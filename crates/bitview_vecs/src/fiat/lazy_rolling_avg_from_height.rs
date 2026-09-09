@@ -1,17 +1,11 @@
 use bitview_transforms::AvgCentsToUsd;
-use bitview_traversable::Traversable;
 use brk_types::{Dollars, Height, StoredF32, Version};
 use vecdb::ReadableCloneableVec;
 
-use crate::{FiatType, IndexSources, LazyPerBlock, LazyRollingAvgFromHeight};
+use crate::{Fiat, FiatType, IndexSources, LazyPerBlock, LazyRollingAvgFromHeight};
 
-#[derive(Clone, Traversable)]
-pub struct LazyRollingAvgFiatFromHeight<C: FiatType> {
-    /// Reported in US dollars.
-    pub usd: LazyPerBlock<Dollars, StoredF32>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyRollingAvgFromHeight<C>,
-}
+pub type LazyRollingAvgFiatFromHeight<C> =
+    Fiat<LazyRollingAvgFromHeight<C>, LazyPerBlock<Dollars, StoredF32>>;
 
 impl<C: FiatType> LazyRollingAvgFiatFromHeight<C> {
     pub fn new(

@@ -2,7 +2,7 @@ use crate::{Result, ValueWriter};
 
 use super::ReadBounds;
 
-/// A row writer that cannot outlive its explicit read bounds.
+/// A value writer that cannot outlive its explicit read bounds.
 pub struct BoundedWriter<'a> {
     writer: Box<dyn ValueWriter + 'a>,
     bounds: &'a ReadBounds,

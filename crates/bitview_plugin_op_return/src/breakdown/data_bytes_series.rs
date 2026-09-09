@@ -1,17 +1,17 @@
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioBytes;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyColumnPerBlockCumulativeRolling, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, PerBlockCumulativeRolling};
 use brk_types::{Bytes, Height, PartsPerMillion32, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, ReadableCloneableVec};
+use vecdb::{ReadableCloneableVec, Rw, StorageMode};
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct DataBytesSeries<C: ColumnId> {
+#[derive(Deref, DerefMut, Traversable)]
+pub struct DataBytesSeries<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub data_bytes: LazyColumnPerBlockCumulativeRolling<Bytes, C>,
+    pub data_bytes: PerBlockCumulativeRolling<Bytes, M>,
     /// Cumulative `OP_RETURN` data bytes in a breakdown bucket divided by
     /// cumulative data bytes across all `OP_RETURN` outputs.
     pub data_share: LazyPercentPerBlock<PartsPerMillion32>,
@@ -20,11 +20,11 @@ pub struct DataBytesSeries<C: ColumnId> {
     pub chain_share: LazyPercentPerBlock<PartsPerMillion32>,
 }
 
-impl<C: ColumnId> DataBytesSeries<C> {
+impl DataBytesSeries {
     pub fn new(
         prefix: &str,
         version: Version,
-        data_bytes: LazyColumnPerBlockCumulativeRolling<Bytes, C>,
+        data_bytes: PerBlockCumulativeRolling<Bytes>,
         total_data: &impl ReadableCloneableVec<Height, Bytes>,
         block_size: &impl ReadableCloneableVec<Height, StoredU64>,
         mappings: &MappingsVecs,

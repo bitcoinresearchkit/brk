@@ -18,6 +18,36 @@ pub struct UTXOGroupCore<T> {
 }
 
 impl<T> UTXOGroupCore<T> {
+    pub fn try_new<E>(
+        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
+    ) -> Result<Self, E> {
+        Ok(Self {
+            all: create(Filter::All, "")?,
+            age: ByAge::try_new(&mut create)?,
+            epoch: ByEpoch::try_new(&mut create)?,
+            class: Class::try_new(&mut create)?,
+            entry: ByEntry::try_new(create)?,
+        })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        [&self.all]
+            .into_iter()
+            .chain(self.age.iter())
+            .chain(self.epoch.iter())
+            .chain(self.class.iter())
+            .chain(self.entry.iter())
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [&mut self.all]
+            .into_iter()
+            .chain(self.age.iter_mut())
+            .chain(self.epoch.iter_mut())
+            .chain(self.class.iter_mut())
+            .chain(self.entry.iter_mut())
+    }
+
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,

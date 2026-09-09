@@ -7,20 +7,21 @@ use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmount, UTXOColumns};
+use crate::metrics::{AmountSources, UTXOSources};
 
 #[derive(Traversable)]
 pub struct UnspentOutputCount<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOAndAddrGroups<
         LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
-        ColumnarAmount<
+        AmountSources<
             StoredU64,
             LazyPerBlockWithDeltas<StoredU64, StoredI64, PartsPerMillionSigned64>,
             M,
         >,
     >,
-    pub stored: UTXOColumns<StoredU64, M>,
+    #[traversable(hidden)]
+    pub stored: UTXOSources<StoredU64, M>,
 }
 
 impl UnspentOutputCount {
@@ -31,21 +32,19 @@ impl UnspentOutputCount {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored = UTXOColumns::forced_import(cache, db, "utxo_count", version)?;
+        let stored = UTXOSources::forced_import(cache, db, "utxo_count", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "utxo_count");
             LazyPerBlockWithDeltas::from_height_source(
                 &name,
                 version,
-                &stored
-                    .additive_source(&filter, &name, version)
-                    .expect("unspent-output cohort source"),
+                stored.get(&filter).expect("unspent-output cohort source"),
                 Version::TWO,
                 mappings,
                 cached_starts,
             )
         });
-        let addr_balance = ColumnarAmount::forced_import(
+        let addr_balance = AmountSources::forced_import(
             cache,
             db,
             "addrs_utxo_count_by_balance_range",
@@ -73,7 +72,7 @@ impl UnspentOutputCount {
     }
 
     #[inline(always)]
-    pub fn push_addr_balance(&mut self, row: AmountRange<StoredU64>) {
-        self.cohorts.addr_balance.push(row);
+    pub fn push_addr_balance(&mut self, values: AmountRange<StoredU64>) {
+        self.cohorts.addr_balance.push(values);
     }
 }

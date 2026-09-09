@@ -2,29 +2,27 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
-};
+use bitview_vecs::{CachedWindowStartVec, LazyPercentCumulativeRolling, PerBlockCumulativeRolling};
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, ReadableCloneableVec};
+use vecdb::{ReadableCloneableVec, Rw, StorageMode};
 
-#[derive(Clone, Deref, DerefMut, Traversable)]
-pub struct FeesSeries<C: ColumnId> {
+#[derive(Deref, DerefMut, Traversable)]
+pub struct FeesSeries<M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub fees: LazyColumnPerBlockCumulativeRolling<Sats, C>,
+    pub fees: PerBlockCumulativeRolling<Sats, M>,
     /// Fees of transactions in a breakdown bucket divided by all transaction
     /// fees over the same cumulative or trailing window.
     pub fee_share: LazyPercentCumulativeRolling<PartsPerMillion32>,
 }
 
-impl<C: ColumnId> FeesSeries<C> {
+impl FeesSeries {
     pub fn new(
         prefix: &str,
         version: Version,
-        fees: LazyColumnPerBlockCumulativeRolling<Sats, C>,
+        fees: PerBlockCumulativeRolling<Sats>,
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
         cached_starts: &Windows<&CachedWindowStartVec>,
         mappings: &MappingsVecs,

@@ -1,0 +1,71 @@
+use std::ops::AddAssign;
+
+use crate::{
+    AgeRange, AgeRangeId, ByEntry, ByEpoch, Class, ClassId, EntryId, EpochId, Filter, UTXOValues,
+};
+
+/// Values for disjoint UTXO age, epoch, class, and entry cohorts.
+#[derive(Clone, Default)]
+pub struct UTXOCoreValues<T> {
+    pub age_range: AgeRange<T>,
+    pub epoch: ByEpoch<T>,
+    pub class: Class<T>,
+    pub entry: ByEntry<T>,
+}
+
+impl<T> UTXOCoreValues<T> {
+    /// Resolve a direct cohort or sum its disjoint age ranges before storing it.
+    pub fn value(&self, filter: &Filter) -> Option<T>
+    where
+        T: Copy + AddAssign,
+    {
+        match filter {
+            Filter::Epoch(_) => EpochId::matching(filter).map(|id| *id.select(&self.epoch)),
+            Filter::Class(_) => ClassId::matching(filter).map(|id| *id.select(&self.class)),
+            Filter::Entry(_) => EntryId::matching(filter).map(|id| *id.select(&self.entry)),
+            _ => {
+                if let Some(id) = AgeRangeId::matching(filter) {
+                    return Some(*id.select(&self.age_range));
+                }
+                let mut ranges = AgeRangeId::aggregate_ranges(filter)?;
+                let mut total = *ranges.next()?.select(&self.age_range);
+                for id in ranges {
+                    total += *id.select(&self.age_range);
+                }
+                Some(total)
+            }
+        }
+    }
+
+    pub fn map<U>(&self, mut map: impl FnMut(&T) -> U) -> UTXOCoreValues<U> {
+        UTXOCoreValues {
+            age_range: AgeRange::from_fn(|id| map(id.select(&self.age_range))),
+            epoch: ByEpoch::from_fn(|id| map(id.select(&self.epoch))),
+            class: Class::from_fn(|id| map(id.select(&self.class))),
+            entry: ByEntry::from_fn(|id| map(id.select(&self.entry))),
+        }
+    }
+}
+
+impl<T> From<UTXOValues<T>> for UTXOCoreValues<T> {
+    fn from(cohort_values: UTXOValues<T>) -> Self {
+        cohort_values.core
+    }
+}
+
+impl<T: AddAssign + Copy> AddAssign for UTXOCoreValues<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        for (left, right) in self.age_range.iter_mut().zip(rhs.age_range.iter()) {
+            *left += *right;
+        }
+        for (left, right) in self.epoch.iter_mut().zip(rhs.epoch.iter()) {
+            *left += *right;
+        }
+        for (left, right) in self.class.iter_mut().zip(rhs.class.iter()) {
+            *left += *right;
+        }
+        for (left, right) in self.entry.iter_mut().zip(rhs.entry.iter()) {
+            *left += *right;
+        }
+    }
+}

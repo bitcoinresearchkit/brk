@@ -42,6 +42,34 @@ impl_named_row_formattable!(Levels {
 });
 
 impl<T> Levels<T> {
+    pub fn try_from_fn<E>(mut create: impl FnMut(LevelId) -> Result<T, E>) -> Result<Self, E> {
+        Ok(Self {
+            pct10: create(LevelId::Pct10)?,
+            pct20: create(LevelId::Pct20)?,
+            pct30: create(LevelId::Pct30)?,
+            pct40: create(LevelId::Pct40)?,
+            pct50: create(LevelId::Pct50)?,
+            pct60: create(LevelId::Pct60)?,
+            pct70: create(LevelId::Pct70)?,
+            pct80: create(LevelId::Pct80)?,
+            pct90: create(LevelId::Pct90)?,
+        })
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        [
+            &mut self.pct10,
+            &mut self.pct20,
+            &mut self.pct30,
+            &mut self.pct40,
+            &mut self.pct50,
+            &mut self.pct60,
+            &mut self.pct70,
+            &mut self.pct80,
+            &mut self.pct90,
+        ]
+        .into_iter()
+    }
     pub fn from_fn(mut create: impl FnMut(LevelId) -> T) -> Self {
         Self {
             pct10: create(LevelId::Pct10),

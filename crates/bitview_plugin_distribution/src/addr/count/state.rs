@@ -1,7 +1,7 @@
-use bitview_cohort::{AddrTypeId, ByAddrType};
-use brk_types::{Height, StoredU64};
+use bitview_cohort::ByAddrType;
+use brk_types::Height;
 use derive_more::{Deref, DerefMut};
-use vecdb::{ColumnId, ReadableVec};
+use vecdb::ReadableVec;
 
 use super::AddrCountsVecs;
 
@@ -10,12 +10,6 @@ use super::AddrCountsVecs;
 /// [`AddrCountsVecs`] on disk.
 #[derive(Debug, Default, Deref, DerefMut)]
 pub struct AddrTypeToAddrCount(ByAddrType<u64>);
-
-impl AddrTypeToAddrCount {
-    pub fn row(&self) -> <AddrTypeId as ColumnId>::Row<StoredU64> {
-        AddrTypeId::from_fn(|id| StoredU64::from(*id.select(&self.0)))
-    }
-}
 
 impl From<ByAddrType<u64>> for AddrTypeToAddrCount {
     #[inline]

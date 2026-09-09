@@ -1,91 +1,137 @@
+use std::ptr;
+
 use bitview_cohort::{
-    AgeRangeId, AmountRange, AmountRangeId, ClassId, CohortContext, EntryId, EpochId, Filter,
-    OverAgeId, OverAmountId, SpendableTypeId, UTXOAggregateId, UnderAgeId, UnderAmountId,
+    AgeRange, AgeRangeId, AmountRange, AmountRangeId, CohortContext, Filter, SpendableTypeId,
+    UTXOOverlappingValues, UTXOValues,
 };
-use bitview_vecs::{ColumnarAmount, ExactUTXOColumns};
-use brk_types::{Height, StoredU64, Version};
+use bitview_vecs::{AmountSources, ExactUTXOSources, UTXOSources};
+use brk_types::{Cents, Height, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec,
-    PcoVec, ReadOnlyClone, ReadableVec, WritableVec,
-};
+use vecdb::{CacheBudget, Database, ReadableVec};
 
 static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
 
-fn seed_legacy_axis<C: ColumnId>(db: &Database, name: &str, version: Version) -> (String, Version) {
-    let mut source = EagerVec::<ColumnarVec<PcoVec<Height, StoredU64>, C>>::forced_import(
-        db,
-        name,
-        version + Version::ONE,
-    )
-    .unwrap();
-    source.push(C::from_fn(|id| StoredU64::from(id.index() as u64 + 17)));
-    source.write().unwrap();
-    (source.name().to_owned(), source.version())
+#[test]
+fn exact_totals_never_sum_independently_computed_values() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut sources =
+        ExactUTXOSources::<Cents>::forced_import(&CACHE, &db, "exact_prices", Version::ONE)
+            .unwrap();
+    let maximum = Cents::from(u64::MAX - 1);
+    let direct = UTXOValues::<Cents>::default().map(|_| maximum);
+    let overlapping = UTXOOverlappingValues::<Cents>::default().map(|_| Cents::from(17_u64));
+    sources.push(direct, overlapping);
+    for source in sources.collect_vecs_mut() {
+        source.write().unwrap();
+    }
+    assert_eq!(
+        sources.get(&Filter::All).unwrap().collect_one_at(0),
+        Some(Cents::from(17_u64))
+    );
+    assert!(
+        sources
+            .stored
+            .cohorts
+            .age
+            .range
+            .iter()
+            .all(|source| source.collect_one_at(0) == Some(maximum))
+    );
+    assert!(
+        sources
+            .stored
+            .amount
+            .range
+            .iter()
+            .all(|source| source.collect_one_at(0) == Some(maximum))
+    );
+    assert!(
+        sources
+            .stored
+            .amount
+            .under
+            .iter()
+            .all(|source| source.collect_one_at(0) == Some(Cents::from(17_u64)))
+    );
 }
 
 #[test]
-fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
+fn source_selection_borrows_the_named_owner_for_each_cohort_family() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let sources =
+        UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "selection", Version::ONE).unwrap();
+    assert!(ptr::eq(
+        sources.get(&Filter::All).unwrap(),
+        &sources.cohorts.all
+    ));
+    for id in AgeRangeId::ALL {
+        assert!(ptr::eq(
+            sources.get(id.filter()).unwrap(),
+            id.select(&sources.cohorts.age.range)
+        ));
+    }
+    for id in AmountRangeId::ALL {
+        assert!(ptr::eq(
+            sources.get(id.filter()).unwrap(),
+            id.select(&sources.amount.range)
+        ));
+    }
+    for id in SpendableTypeId::ALL {
+        assert!(ptr::eq(
+            sources.get(&Filter::Type(id.output_type())).unwrap(),
+            id.select(&sources.type_)
+        ));
+    }
+}
+
+#[test]
+fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
     let dir = tempdir().unwrap();
-    let db = Database::open(dir.path()).unwrap();
     let version = Version::new(31);
-    let legacy = vec![
-        seed_legacy_axis::<AgeRangeId>(&db, "utxos_existing_by_age_range", version),
-        seed_legacy_axis::<EpochId>(&db, "existing_by_epoch", version),
-        seed_legacy_axis::<ClassId>(&db, "existing_by_class", version),
-        seed_legacy_axis::<EntryId>(&db, "existing_by_entry", version),
-        seed_legacy_axis::<SpendableTypeId>(&db, "existing_by_type", version),
-        seed_legacy_axis::<AmountRangeId>(&db, "utxos_existing_by_amount_range", version),
-        seed_legacy_axis::<UTXOAggregateId>(&db, "existing_by_aggregate", version),
-        seed_legacy_axis::<UnderAgeId>(&db, "utxos_existing_by_under_age", version),
-        seed_legacy_axis::<OverAgeId>(&db, "utxos_existing_by_over_age", version),
-        seed_legacy_axis::<UnderAmountId>(&db, "utxos_existing_by_under_amount", version),
-        seed_legacy_axis::<OverAmountId>(&db, "utxos_existing_by_over_amount", version),
-    ];
-    let mut columns =
-        ExactUTXOColumns::<StoredU64>::forced_import(&CACHE, &db, "existing", version).unwrap();
-    assert_eq!(columns.min_len(), 1);
-    let identity: Vec<_> = columns
+    let mut expected_names = Vec::new();
+    {
+        let db = Database::open(dir.path()).unwrap();
+        let mut sources =
+            ExactUTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+        let mut direct = UTXOValues::default();
+        direct.core.age_range = AgeRange::from_fn(|id| StoredU64::from(id.index() as u64 + 1));
+        let overlapping =
+            UTXOOverlappingValues::default().map(|_: &StoredU64| StoredU64::from(17_u64));
+        sources.push(direct, overlapping);
+        for vec in sources.collect_vecs_mut() {
+            assert_eq!(vec.len(), 1);
+            expected_names.push(vec.name().to_owned());
+            vec.write().unwrap();
+        }
+        db.flush().unwrap();
+    }
+    let db = Database::open(dir.path()).unwrap();
+    let mut sources =
+        ExactUTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+    assert_eq!(sources.min_len(), 1);
+    let names: Vec<_> = sources
         .collect_vecs_mut()
         .iter()
-        .map(|v| {
-            assert_eq!(v.len(), 1);
-            (v.name().to_owned(), v.version())
-        })
+        .map(|v| v.name().to_owned())
         .collect();
-    assert_eq!(identity, legacy);
-    let row = columns.direct.collect_last().unwrap();
-    for &id in AgeRangeId::ALL {
-        assert_eq!(
-            id.select(&row.age_range),
-            &StoredU64::from(id.index() as u64 + 17)
-        );
-    }
+    assert_eq!(names, expected_names);
     assert_eq!(
-        columns
-            .overlapping
-            .aggregate
-            .height
-            .collect_last()
-            .unwrap()
-            .all,
-        StoredU64::from(17_u64)
+        sources.get(&Filter::All).unwrap().collect_one_at(0),
+        Some(StoredU64::from(17_u64))
     );
-
-    let exact = columns.source(&Filter::All, "exact", version).unwrap();
-    let sum = columns
-        .direct
-        .additive_source(&Filter::All, "sum", version)
-        .unwrap();
-    assert_eq!(exact.collect_one_at(0), Some(StoredU64::from(17_u64)));
-    assert_ne!(exact.collect_one_at(0), sum.collect_one_at(0));
+    let values = sources.stored.collect_last().unwrap();
+    for (index, value) in values.core.age_range.iter().enumerate() {
+        assert_eq!(*value, StoredU64::from(index as u64 + 1));
+    }
 }
 
 #[test]
 fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut amounts = ColumnarAmount::<StoredU64, ()>::forced_import(
+    let mut amounts = AmountSources::<StoredU64, ()>::forced_import(
         &CACHE,
         &db,
         "amount_source",
@@ -95,23 +141,25 @@ fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
         |_, _| (),
     )
     .unwrap();
-    let row = |value| AmountRange::from_fn(|_| StoredU64::from(value));
+    let values = |value| AmountRange::from_fn(|_| StoredU64::from(value));
     for value in [2_u64, 3] {
-        amounts.push_cumulative(&row(value));
+        amounts.push_cumulative(&values(value));
     }
-    amounts.stored_mut().write().unwrap();
-    amounts.stored_mut().any_truncate_if_needed_at(1).unwrap();
-    amounts.push_cumulative(&row(10));
-    amounts.push_cumulative(&row(1));
-    amounts.stored_mut().write().unwrap();
+    for vec in amounts.collect_vecs_mut() {
+        vec.write().unwrap();
+        vec.any_truncate_if_needed_at(1).unwrap();
+    }
+    amounts.push_cumulative(&values(10));
+    amounts.push_cumulative(&values(1));
+    for vec in amounts.collect_vecs_mut() {
+        vec.write().unwrap();
+    }
+    assert_eq!(amounts.len(), 3);
     assert!(
         amounts
-            .height
-            .collect_last()
+            .checkpoint(Height::from(2_usize))
             .unwrap()
             .iter()
-            .all(|value| *value == StoredU64::from(13_u64))
+            .all(|v| *v == StoredU64::from(13_u64))
     );
-    let reader = amounts.read_only_clone();
-    assert_eq!(reader.height.len(), 3);
 }

@@ -6,28 +6,28 @@
 
 # Interface: AllLthSthPattern6
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6152](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6152)
+Defined in: [Developer/mono/modules/bitview-client/index.js:5883](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L5883)
 
 ## Properties
 
 ### all
 
-> **all**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **all**: [`BtcCentsDeltaSatsUsdPattern`](BtcCentsDeltaSatsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6153](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6153)
+Defined in: [Developer/mono/modules/bitview-client/index.js:5884](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L5884)
 
 ***
 
 ### lth
 
-> **lth**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **lth**: [`BtcCentsDeltaSatsUsdPattern`](BtcCentsDeltaSatsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6154](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6154)
+Defined in: [Developer/mono/modules/bitview-client/index.js:5885](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L5885)
 
 ***
 
 ### sth
 
-> **sth**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
+> **sth**: [`BtcCentsDeltaSatsUsdPattern`](BtcCentsDeltaSatsUsdPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6155](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6155)
+Defined in: [Developer/mono/modules/bitview-client/index.js:5886](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L5886)

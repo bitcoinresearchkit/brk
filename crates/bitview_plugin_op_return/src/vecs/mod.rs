@@ -6,10 +6,13 @@ use brk_error::Result;
 
 use bitview_plugin::{Plugin, PluginStorage};
 use bitview_traversable::Traversable;
-use brk_types::{Height, OpReturnKind, OpReturnPolicyId, Version};
+use brk_types::{Height, Version};
 use vecdb::{Database, Rw, StorageMode};
 
-use super::{breakdown::BreakdownVecs, total::Total};
+use super::{
+    breakdown::{KindBreakdownVecs, PolicyBreakdownVecs},
+    total::Total,
+};
 use crate::STORAGE;
 
 #[derive(Traversable)]
@@ -23,11 +26,11 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// to one kind, while transaction counts, full virtual sizes, and full fees
     /// are counted once for every kind present in a transaction, so those
     /// metrics can overlap across kinds.
-    pub by_kind: BreakdownVecs<OpReturnKind, M>,
+    pub by_kind: KindBreakdownVecs<M>,
     /// Metrics split by pre-v30 `OP_RETURN` relay-policy shape. `oversized` and
     /// `multiple` can overlap, and both are subsets of `pre_v30_nonstandard`;
     /// `pre_v30_standard` is the complementary category.
-    pub policy: BreakdownVecs<OpReturnPolicyId, M>,
+    pub policy: PolicyBreakdownVecs<M>,
 }
 
 impl<M: StorageMode> Plugin for Vecs<M>

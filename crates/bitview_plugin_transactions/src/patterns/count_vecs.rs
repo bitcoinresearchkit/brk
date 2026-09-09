@@ -1,28 +1,33 @@
 use bitview_traversable::Traversable;
 use brk_types::StoredU64;
-use derive_more::{Deref, DerefMut};
 use vecdb::{Rw, StorageMode};
 
-use super::PatternId;
-use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
+use bitview_vecs::PerBlockCumulativeRolling;
 
 /// Transaction counts by detected structural pattern.
 ///
 /// These are heuristic classifications of transactions, not protocol labels.
-#[derive(Deref, DerefMut, Traversable)]
+#[derive(Traversable)]
 pub struct CountVecs<M: StorageMode = Rw> {
     /// Counts transactions heuristically classified as CoinJoin candidates:
     /// at least five inputs and outputs, neither count five times the other,
     /// sufficiently repeated input/output values, no recognized address reuse,
     /// and no detected `OP_RETURN` or inscription.
-    pub coinjoin: LazyColumnPerBlockCumulativeRolling<StoredU64, PatternId>,
+    pub coinjoin: PerBlockCumulativeRolling<StoredU64, M>,
     /// Counts transactions with at least five times as many inputs as outputs.
-    pub consolidation: LazyColumnPerBlockCumulativeRolling<StoredU64, PatternId>,
+    pub consolidation: PerBlockCumulativeRolling<StoredU64, M>,
     /// Counts non-coinbase transactions with at least five times as many outputs
     /// as inputs.
-    pub batch_payout: LazyColumnPerBlockCumulativeRolling<StoredU64, PatternId>,
-    #[deref]
-    #[deref_mut]
-    #[traversable(hidden)]
-    pub source: ColumnarPerBlockCumulativeRolling<StoredU64, PatternId, (), M>,
+    pub batch_payout: PerBlockCumulativeRolling<StoredU64, M>,
+}
+
+impl CountVecs {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PerBlockCumulativeRolling<StoredU64>> {
+        [
+            &mut self.coinjoin,
+            &mut self.consolidation,
+            &mut self.batch_payout,
+        ]
+        .into_iter()
+    }
 }

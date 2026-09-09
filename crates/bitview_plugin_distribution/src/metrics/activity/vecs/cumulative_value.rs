@@ -1,4 +1,4 @@
-use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups, UTXORows};
+use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::{ColumnarAmountValue, CumulativeUTXOValueColumns};
+use crate::metrics::{AmountValueSources, CumulativeUTXOValueSources};
 
 #[derive(Traversable)]
 pub struct CumulativeValueByCohort<M: StorageMode = Rw> {
@@ -16,9 +16,10 @@ pub struct CumulativeValueByCohort<M: StorageMode = Rw> {
     /// balance immediately before the spend.
     pub cohorts: UTXOAndAddrGroups<
         LazyValuePerBlockCumulativeRolling,
-        ColumnarAmountValue<LazyValuePerBlockCumulativeRolling, M>,
+        AmountValueSources<LazyValuePerBlockCumulativeRolling, M>,
     >,
-    pub stored: CumulativeUTXOValueColumns<M>,
+    #[traversable(hidden)]
+    pub stored: CumulativeUTXOValueSources<M>,
 }
 
 impl CumulativeValueByCohort {
@@ -30,7 +31,7 @@ impl CumulativeValueByCohort {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored = CumulativeUTXOValueColumns::forced_import(
+        let stored = CumulativeUTXOValueSources::forced_import(
             cache,
             db,
             &format!("{metric}_cumulative"),
@@ -51,7 +52,7 @@ impl CumulativeValueByCohort {
             )
         });
         let addr_version = version + Version::ONE;
-        let addr_balance = ColumnarAmountValue::forced_import(
+        let addr_balance = AmountValueSources::forced_import(
             cache,
             db,
             &format!("addrs_{metric}_cumulative_by_balance_range"),
@@ -79,7 +80,7 @@ impl CumulativeValueByCohort {
     }
 
     #[inline(always)]
-    pub fn push_block(&mut self, sats: UTXORows<Sats>, cents: UTXORows<Cents>) {
+    pub fn push_block(&mut self, sats: UTXOValues<Sats>, cents: UTXOValues<Cents>) {
         self.stored.push_block(sats, cents);
     }
 

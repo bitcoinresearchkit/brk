@@ -16,6 +16,23 @@ pub struct UTXOGroupsWithoutAmountOrType<T> {
 }
 
 impl<T> UTXOGroupsWithoutAmountOrType<T> {
+    pub fn try_new<E>(
+        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
+    ) -> Result<Self, E> {
+        Ok(Self {
+            core: UTXOGroupCore::try_new(&mut create)?,
+            term: ByTerm::try_new(create)?,
+        })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.core.iter().chain(self.term.iter())
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.core.iter_mut().chain(self.term.iter_mut())
+    }
+
     pub fn new<F>(mut create: F) -> Self
     where
         F: FnMut(Filter, &'static str) -> T,

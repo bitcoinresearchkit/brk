@@ -6,13 +6,14 @@ use brk_error::Result;
 use brk_types::{CentsSigned, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use crate::metrics::UTXOCoreColumns;
+use crate::metrics::UTXOCoreSources;
 
 #[derive(Traversable)]
 pub struct NetUnrealizedByCohort<M: StorageMode = Rw> {
     #[traversable(flatten)]
     pub cohorts: UTXOGroupsWithoutAmountOrType<LazyFiatPerBlock<CentsSigned>>,
-    pub stored: UTXOCoreColumns<CentsSigned, M>,
+    #[traversable(hidden)]
+    pub stored: UTXOCoreSources<CentsSigned, M>,
 }
 
 impl NetUnrealizedByCohort {
@@ -24,13 +25,13 @@ impl NetUnrealizedByCohort {
     ) -> Result<Self> {
         let metric = "net_unrealized_pnl";
         let stored =
-            UTXOCoreColumns::forced_import(cache, db, "net_unrealized_pnl_cents", version)?;
+            UTXOCoreSources::forced_import(cache, db, "net_unrealized_pnl_cents", version)?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .additive_source(&filter, &format!("{name}_cents"), version)
+                .get(&filter)
                 .expect("supported net unrealized cohort");
-            LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
+            LazyFiatPerBlock::from_cents_source(&name, version, source, mappings)
         });
         Ok(Self { cohorts, stored })
     }

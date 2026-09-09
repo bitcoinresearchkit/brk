@@ -1,23 +1,17 @@
-use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{LazyVec, UnaryTransform, VecIndex};
+use vecdb::{LazyVec, UnaryTransform};
 
-use crate::SpotValueSource;
+use crate::{SpotValueSource, Value};
 
 /// Fully lazy value type at height level.
 ///
 /// All fields are lazy transforms from existing sources - no storage.
-#[derive(Clone, Traversable)]
-pub struct LazyValue<I: VecIndex> {
-    /// Reported in BTC; one BTC equals 100,000,000 satoshis.
-    pub btc: LazyVec<I, Bitcoin, I, Sats>,
-    /// Reported in satoshis.
-    pub sats: LazyVec<I, Sats, I, Sats>,
-    /// Reported in US dollars.
-    pub usd: LazyVec<I, Dollars, I, Dollars>,
-    /// Reported in US cents; 100 cents equal one US dollar.
-    pub cents: LazyVec<I, Cents, I, Cents>,
-}
+pub type LazyValue<I> = Value<
+    LazyVec<I, Sats, I, Sats>,
+    LazyVec<I, Cents, I, Cents>,
+    LazyVec<I, Bitcoin, I, Sats>,
+    LazyVec<I, Dollars, I, Dollars>,
+>;
 
 impl LazyValue<Height> {
     pub fn from_spot_block_source<

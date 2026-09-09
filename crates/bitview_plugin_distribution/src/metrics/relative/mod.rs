@@ -1,11 +1,9 @@
-use bitview_cohort::{
-    CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate};
 use bitview_compute::FixedRatio;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::LazyPercentPerBlock;
+use bitview_vecs::{LazyPercentPerBlock, StoredSeries};
 use brk_types::{Height, PartsPerMillion32, Version};
-use vecdb::{LazyVec, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec};
+use vecdb::LazyVec;
 
 mod gross_pnl_composition;
 mod source;
@@ -18,7 +16,7 @@ pub use supply_profitability_shares::SupplyProfitabilityShares;
 pub use vecs::RelativeVecs;
 
 fn share_views<B: FixedRatio>(
-    source: &ReadOnlyColumnarVec<PcoVec<Height, PartsPerMillion32>, UTXOAggregateId>,
+    sources: &UTXOAggregate<StoredSeries<Height, PartsPerMillion32>>,
     metric: &str,
     version: Version,
     compute: fn(Height, PartsPerMillion32) -> B,
@@ -30,7 +28,7 @@ fn share_views<B: FixedRatio>(
             id.select(&UTXO_AGGREGATE_NAMES).id,
             metric,
         );
-        let source = source.column(&format!("{name}_source"), version, id);
+        let source = id.select(sources);
         let source = LazyVec::init(
             &format!("{name}_{}_source", B::SUFFIX),
             version,

@@ -362,7 +362,7 @@ def get_health() -> Health
 
 Health check.
 
-Liveness probe. Returns server identity, uptime, and indexed/computed heights from local state only (no bitcoind round-trip). For real chain-tip catch-up, request `GET /api/server/sync`.
+Local health and query-readiness check. Returns server identity, uptime, and a coherent local sync snapshot without a bitcoind round-trip. Reads the published prefix during processing; an empty index waits until the request deadline, then returns 504. Responses are not cached. For chain-tip catch-up, request `GET /api/server/sync`.
 
 Endpoint: `GET /health`
 
@@ -390,7 +390,7 @@ def get_sync_status() -> SyncStatus
 
 Sync status.
 
-Returns the sync status of the indexer, including indexed height, tip height, blocks behind, and last indexed timestamp.
+Returns a coherent local index snapshot and a separately observed Bitcoin Core tip height. The two heights can differ during indexing or a reorg. Conditional requests refresh these observations before validation.
 
 Endpoint: `GET /api/server/sync`
 
@@ -404,7 +404,7 @@ def get_disk_usage() -> DiskUsage
 
 Disk usage.
 
-Returns the disk space used by BRK and Bitcoin data.
+Returns allocated file bytes for BRK and Bitcoin data. Each request scans both trees; these are independent observations, not an atomic filesystem snapshot. Conditional requests validate the newly observed totals. Directory-link cycles and excessive nesting fail without returning partial totals.
 
 Endpoint: `GET /api/server/disk`
 
@@ -475,7 +475,7 @@ def search_series(q: SeriesName, limit: Optional[Limit] = None) -> List[str]
 
 Search series.
 
-Search series by name or descriptive terms. Matches metric names, descriptions, formulas, cohort aliases, partial words, and common typos.
+Search series by name or descriptive terms. Results prioritize whole query words in names, then descriptions, then fuzzy names, then fuzzy descriptions. Word order does not matter. Descriptions provide cohort terminology and formulas. The decoded q parameter is limited to 1024 UTF-8 bytes.
 
 Endpoint: `GET /api/series/search`
 
@@ -489,7 +489,7 @@ def get_series_info(series: SeriesName) -> SeriesInfo
 
 Get series info.
 
-Returns the optional description, supported indexes, and value type for the specified series.
+Returns the optional description, supported indexes, and value type for the specified series. The decoded series name is limited to 1024 UTF-8 bytes.
 
 Endpoint: `GET /api/series/{series}`
 
@@ -569,7 +569,7 @@ def get_series_version(series: SeriesName, index: Index) -> Version
 
 Get series version.
 
-Returns the current version of a series. Changes when the series data is updated.
+Returns the vector's schema/computation version, not its length or latest update. Appends and reorgs do not by themselves change this version.
 
 Endpoint: `GET /api/series/{series}/{index}/version`
 
@@ -698,7 +698,7 @@ def get_historical_price(
 
 Historical price.
 
-Get historical BTC/USD price. Optionally specify a UNIX timestamp to get the price at that time.
+Completed four-hour BTC/USD closes, oldest first, labeled by interval end. With a UNIX timestamp, returns the latest nonempty completed close at or before it; before the first close returns an empty list. The current partial interval is excluded. USD only; exchangeRates is empty.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-historical-price)*
 
@@ -906,7 +906,7 @@ def get_block_by_timestamp(timestamp: Timestamp) -> BlockTimestamp
 
 Block by timestamp.
 
-Find the block closest to a given UNIX timestamp.
+Find the block with the greatest header timestamp at or before the given UNIX timestamp, choosing the earliest height on ties.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-block-timestamp)*
 
@@ -1212,7 +1212,7 @@ def get_pool_blocks(slug: PoolSlug) -> List[BlockInfoV1]
 
 Mining pool blocks.
 
-Get the 10 most recent blocks mined by a specific pool.
+Get up to 100 recent blocks mined by a specific pool.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
@@ -1228,7 +1228,7 @@ def get_pool_blocks_from(slug: PoolSlug, height: Height) -> List[BlockInfoV1]
 
 Mining pool blocks from height.
 
-Get 10 blocks mined by a specific pool before (and including) the given height.
+Get up to 100 blocks mined by a specific pool before (and including) the given height.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#get-mining-pool-blocks)*
 
@@ -1453,7 +1453,7 @@ def get_mempool_hash() -> NextBlockHash
 
 Mempool content hash.
 
-Returns an opaque hash that changes whenever the projected next block changes. Same value as the mempool ETag. Useful as a freshness/liveness signal: if it stays constant for tens of seconds on a live network, the mempool sync loop has stalled.
+Returns an opaque content token for the published projected next block, including statistics and transaction bodies. This is not the HTTP ETag. An unchanged token means unchanged content, not necessarily a stalled sync loop.
 
 Endpoint: `GET /api/mempool/hash`
 
@@ -1763,7 +1763,7 @@ def post_tx(body: str) -> Txid
 
 Broadcast transaction.
 
-Broadcast a raw transaction to the network. The transaction should be provided as hex in the request body. The txid will be returned on success.
+Submit a raw transaction as hexadecimal text (at most 8,000,000 request bytes, including whitespace). Returns its txid as plain text. No responses are cached. Cancellation or a transport error after dispatch may leave the submission outcome unknown; do not automatically retry.
 
 *[Mempool.space docs](https://mempool.space/docs/api/rest#post-transaction)*
 
@@ -1793,7 +1793,7 @@ def get_oracle_histogram_payments_live() -> List[int]
 
 Live payment output histogram.
 
-Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the forming mempool block. A flat array of log-scale bins.
+Live smoothed histogram of oracle-eligible payment outputs, binned by output value on the oracle log scale. It combines the committed oracle window with the complete mempool's eligible outputs from a matching chain publication. A flat array of log-scale bins.
 
 Endpoint: `GET /api/oracle/histogram/payments/live`
 
@@ -1821,7 +1821,7 @@ def get_oracle_histogram_outputs_live() -> List[int]
 
 Live output value histogram.
 
-Live unfiltered output value histogram for the forming mempool block. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
+Live unfiltered output value histogram for the complete published mempool. Every live output is binned by value on the oracle log scale; no oracle payment filters are applied. A flat array of log-scale bins, all zero when no mempool is configured.
 
 Endpoint: `GET /api/oracle/histogram/outputs/live`
 
@@ -1866,4 +1866,3 @@ Compact OpenAPI specification.
 Compact OpenAPI specification optimized for LLM consumption. Removes redundant fields while preserving essential API information. The full specification is available at `GET /openapi.json`.
 
 Endpoint: `GET /api.json`
-

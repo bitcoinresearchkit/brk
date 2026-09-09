@@ -2,11 +2,14 @@ use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, Price};
+use bitview_vecs::{PerBlock, Price};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, RARITY_PERCENTILES_LEN, RarityPercentileId, StoredI8, Version};
-use vecdb::{AnyVec, CacheBudget, ColumnId, Database, ReadableVec, Rw, StorageMode, WritableVec};
+use std::ops::Range;
+use vecdb::{
+    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableVec, Rw, StorageMode, WritableVec,
+};
 
 use super::{COMPUTE_BATCH_SIZE, Component, component};
 
@@ -21,12 +24,7 @@ pub struct RarityMeterInner<M: StorageMode = Rw> {
     /// through 99.9% use the lowest. The 10th through 90th percentiles are
     /// logarithmically interpolated between the combined 5th and 95th boundaries
     /// when both are positive, otherwise linearly interpolated.
-    pub prices: ColumnarPerBlock<
-        Cents,
-        RarityPercentileId,
-        RarityPercentiles<Price<LazyColumnPerBlock<Cents, RarityPercentileId>>>,
-        M,
-    >,
+    pub prices: RarityPercentiles<Price<PerBlock<Cents, M>>>,
     /// Signed count of combined extreme boundaries crossed by spot price.
     /// Negative values mean spot is below lower bands and therefore unusually
     /// low; positive values mean it is above upper bands and unusually high;
@@ -41,7 +39,7 @@ pub struct RarityMeterInner<M: StorageMode = Rw> {
     pub score: PerBlock<StoredI8, M>,
 }
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::TWO;
 
 pub fn forced_import(
     cache: &'static CacheBudget,
@@ -51,23 +49,15 @@ pub fn forced_import(
     mappings: &MappingsVecs,
 ) -> Result<RarityMeterInner> {
     let version = version + VERSION;
-    let prices = ColumnarPerBlock::<Cents, RarityPercentileId, _>::forced_import(
-        cache,
-        db,
-        &format!("{prefix}_percentiles_cents"),
-        version,
-        |source| {
-            RarityPercentiles::from_fn(|id| {
-                Price::from_columnar_source(
-                    &format!("{prefix}_{}", id.price_suffix()),
-                    version,
-                    source,
-                    id,
-                    mappings,
-                )
-            })
-        },
-    )?;
+    let prices = RarityPercentiles::try_from_fn(|id| {
+        Price::forced_import(
+            cache,
+            db,
+            &format!("{prefix}_{}", id.price_suffix()),
+            version,
+            mappings,
+        )
+    })?;
 
     Ok(RarityMeterInner {
         prices,
@@ -101,12 +91,11 @@ pub fn compute(
         .min()
         .unwrap_or_default();
 
-    inner.prices.height.compute_batched_to(
+    inner.compute_prices(
         starting_height,
         source_end,
         dependency_version,
-        COMPUTE_BATCH_SIZE,
-        |cents, range| {
+        |range| {
             let component_prices: Vec<_> = components
                 .iter()
                 .map(|component| {
@@ -122,15 +111,15 @@ pub fn compute(
                 })
                 .collect();
 
-            for offset in 0..range.len() {
-                cents.push(RarityMeterInner::combine_percentiles(
-                    &component_prices,
-                    &lower_component_prices,
-                    offset,
-                ));
-            }
-
-            Ok(())
+            (0..range.len())
+                .map(|offset| {
+                    RarityMeterInner::combine_percentiles(
+                        &component_prices,
+                        &lower_component_prices,
+                        offset,
+                    )
+                })
+                .collect()
         },
         exit,
     )?;
@@ -147,22 +136,18 @@ pub fn compute_combined(
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;
-    let dependency_version = meters
-        .iter()
-        .map(|meter| meter.prices.height.version())
-        .sum();
+    let dependency_version = meters.iter().map(|meter| meter.prices_version()).sum();
     let source_end = meters
         .iter()
-        .map(|meter| meter.prices.height.len())
+        .map(|meter| meter.prices_len())
         .min()
         .unwrap_or_default();
 
-    inner.prices.height.compute_batched_to(
+    inner.compute_prices(
         starting_height,
         source_end,
         dependency_version,
-        COMPUTE_BATCH_SIZE,
-        |cents, range| {
+        |range| {
             let meter_prices: Vec<_> = meters
                 .iter()
                 .map(|meter| {
@@ -173,15 +158,9 @@ pub fn compute_combined(
                 })
                 .collect();
 
-            for offset in 0..range.len() {
-                cents.push(RarityMeterInner::combine_percentiles(
-                    &meter_prices,
-                    &[],
-                    offset,
-                ));
-            }
-
-            Ok(())
+            (0..range.len())
+                .map(|offset| RarityMeterInner::combine_percentiles(&meter_prices, &[], offset))
+                .collect()
         },
         exit,
     )?;
@@ -191,6 +170,51 @@ pub fn compute_combined(
 }
 
 impl RarityMeterInner {
+    fn prices_len(&self) -> usize {
+        self.prices
+            .iter()
+            .map(|p| p.cents.height.len())
+            .min()
+            .unwrap_or_default()
+    }
+    fn prices_version(&self) -> Version {
+        self.prices.iter().map(|p| p.cents.height.version()).sum()
+    }
+    fn compute_prices(
+        &mut self,
+        starting_height: Height,
+        source_end: usize,
+        version: Version,
+        mut compute: impl FnMut(Range<usize>) -> Vec<[Cents; RARITY_PERCENTILES_LEN]>,
+        exit: &Exit,
+    ) -> Result<()> {
+        for price in self.prices.iter_mut() {
+            price
+                .cents
+                .height
+                .validate_computed_version_or_reset(version)?;
+        }
+        let start = self.prices_len().min(usize::from(starting_height));
+        for price in self.prices.iter_mut() {
+            price.cents.height.truncate_if_needed_at(start)?;
+        }
+        let mut chunk_start = start;
+        while chunk_start < source_end {
+            let end = (chunk_start + COMPUTE_BATCH_SIZE).min(source_end);
+            for values in compute(chunk_start..end) {
+                for (price, value) in self.prices.iter_mut().zip(values) {
+                    price.cents.height.push(value);
+                }
+            }
+            let _lock = exit.lock();
+            for price in self.prices.iter_mut() {
+                price.cents.height.write()?;
+            }
+            chunk_start = end;
+        }
+        Ok(())
+    }
+
     pub fn needs_compute(
         &self,
         components: &[&Component],
@@ -207,10 +231,10 @@ impl RarityMeterInner {
         let score_end = prices_end.min(spot.len());
         let starting_height = usize::from(starting_height);
 
-        self.prices.height.len() != prices_end
+        self.prices_len() != prices_end
             || self.index.height.len() != score_end
             || self.score.height.len() != score_end
-            || self.prices.height.len() > starting_height
+            || self.prices_len() > starting_height
             || self.index.height.len() > starting_height
             || self.score.height.len() > starting_height
     }
@@ -230,10 +254,11 @@ impl RarityMeterInner {
             .unwrap_or_default()
             .min(spot.len());
 
+        let version = self.prices_version() + spot.version();
         self.index.height.compute_batched_to(
             starting_height,
             source_end,
-            self.prices.height.version() + spot.version(),
+            version,
             COMPUTE_BATCH_SIZE,
             |index, range| {
                 let spot = spot.collect_range_at(range.start, range.end);
@@ -437,14 +462,14 @@ mod tests {
             bands([10, 20, 30, 40, 50, 500, 600, 700, 800, 900]),
             bands([15, 25, 35, 45, 55, 450, 550, 650, 750, 850]),
         ];
-        let row = RarityMeterInner::combine_percentiles(&components, &[], 0);
+        let values = RarityMeterInner::combine_percentiles(&components, &[], 0);
 
-        assert_eq!(*Pct0_1.get(&row), Cents::from(15_u64));
-        assert_eq!(*Pct5.get(&row), Cents::from(55_u64));
-        assert_eq!(*Pct95.get(&row), Cents::from(450_u64));
-        assert_eq!(*Pct99_9.get(&row), Cents::from(850_u64));
+        assert_eq!(*Pct0_1.get(&values), Cents::from(15_u64));
+        assert_eq!(*Pct5.get(&values), Cents::from(55_u64));
+        assert_eq!(*Pct95.get(&values), Cents::from(450_u64));
+        assert_eq!(*Pct99_9.get(&values), Cents::from(850_u64));
         assert_eq!(
-            *Pct50.get(&row),
+            *Pct50.get(&values),
             RarityMeterInner::interpolate(Cents::from(55_u64), Cents::from(450_u64), 0.5)
         );
     }
@@ -461,14 +486,14 @@ mod tests {
             vec![Some(Cents::from(45_u64))],
             vec![Some(Cents::from(55_u64))],
         ]];
-        let row = RarityMeterInner::combine_percentiles(&components, &lower_components, 0);
+        let values = RarityMeterInner::combine_percentiles(&components, &lower_components, 0);
 
-        assert_eq!(*Pct0_1.get(&row), Cents::from(15_u64));
-        assert_eq!(*Pct0_5.get(&row), Cents::from(20_u64));
-        assert_eq!(*Pct1.get(&row), Cents::from(30_u64));
-        assert_eq!(*Pct2.get(&row), Cents::from(45_u64));
-        assert_eq!(*Pct5.get(&row), Cents::from(55_u64));
-        assert_eq!(*Pct95.get(&row), Cents::from(500_u64));
+        assert_eq!(*Pct0_1.get(&values), Cents::from(15_u64));
+        assert_eq!(*Pct0_5.get(&values), Cents::from(20_u64));
+        assert_eq!(*Pct1.get(&values), Cents::from(30_u64));
+        assert_eq!(*Pct2.get(&values), Cents::from(45_u64));
+        assert_eq!(*Pct5.get(&values), Cents::from(55_u64));
+        assert_eq!(*Pct95.get(&values), Cents::from(500_u64));
         assert_eq!(
             RarityMeterInner::lower_score_at(Cents::from(35_u64), &lower_components[0], 0),
             -2

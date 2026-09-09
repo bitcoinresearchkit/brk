@@ -126,8 +126,8 @@ pub struct UnderAge<T> {
     pub _15y: T,
 }
 
-define_column_id!(
-    UnderAgeId for UnderAge, version = 1 {
+define_cohort_id!(
+    UnderAgeId for UnderAge {
         Under1W => _1w,
         Under1M => _1m,
         Under2M => _2m,

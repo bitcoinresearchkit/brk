@@ -1,216 +1,205 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
-};
-use brk_error::Result;
-use brk_types::{Bytes, Height, Sats, StoredU64, VSize, Version};
-use vecdb::{AnyVec, CacheBudget, Database, ReadableCloneableVec, Rw, StorageMode};
+use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
+use brk_error::{Error, Result};
+use brk_types::{Bytes, Height, OpReturnKind, OpReturnPolicyId, Sats, StoredU64, VSize, Version};
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, Rw, VecIndex};
 
-use super::{BlockMetrics, BreakdownAxis, DataBytesSeries, FeesSeries};
+use super::{BlockMetrics, DataBytesSeries, FeesSeries};
+use crate::{by_kind::ByKind, policy::Policy};
 
 #[derive(Traversable)]
-pub struct BreakdownVecs<C: BreakdownAxis, M: StorageMode = Rw> {
-    /// Number of `OP_RETURN` outputs assigned to a breakdown bucket.
-    pub output_count: ColumnarPerBlockCumulativeRolling<
-        StoredU64,
-        C,
-        C::Series<LazyColumnPerBlockCumulativeRolling<StoredU64, C>>,
-        M,
-    >,
-    /// Number of script bytes following the `OP_RETURN` opcode in outputs
-    /// assigned to a breakdown bucket.
-    pub data_bytes: ColumnarPerBlockCumulativeRolling<Bytes, C, C::Series<DataBytesSeries<C>>, M>,
-    /// Number of transactions assigned to a breakdown bucket; each
-    /// transaction is counted at most once within a bucket.
-    pub tx_count: ColumnarPerBlockCumulativeRolling<
-        StoredU64,
-        C,
-        C::Series<LazyColumnPerBlockCumulativeRolling<StoredU64, C>>,
-        M,
-    >,
-    /// Sum of full virtual sizes of transactions assigned to a breakdown
-    /// bucket; each transaction is included once within that bucket.
-    pub tx_vsize: ColumnarPerBlockCumulativeRolling<
-        VSize,
-        C,
-        C::Series<LazyColumnPerBlockCumulativeRolling<VSize, C>>,
-        M,
-    >,
-    /// Sum of full fees of transactions assigned to a breakdown bucket; each
-    /// transaction is included once within that bucket.
-    pub fees: ColumnarPerBlockCumulativeRolling<Sats, C, C::Series<FeesSeries<C>>, M>,
+pub struct BreakdownVecs<C, D, V, F> {
+    /// Number of OP_RETURN outputs assigned to each bucket.
+    pub output_count: C,
+    /// Script bytes following OP_RETURN assigned to each bucket.
+    pub data_bytes: D,
+    /// Transactions assigned to each bucket, counted at most once per bucket.
+    pub tx_count: C,
+    /// Full virtual sizes of transactions assigned to each bucket.
+    pub tx_vsize: V,
+    /// Full fees of transactions assigned to each bucket.
+    pub fees: F,
 }
 
-impl<C: BreakdownAxis> BreakdownVecs<C> {
-    #[allow(clippy::too_many_arguments)]
-    pub fn forced_import(
-        cache: &'static CacheBudget,
-        db: &Database,
-        source_prefix: &str,
-        series_prefix: &str,
-        version: Version,
-        mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        total_data: &impl ReadableCloneableVec<Height, Bytes>,
-        block_size: &impl ReadableCloneableVec<Height, StoredU64>,
-        chain_fees: &impl ReadableCloneableVec<Height, Sats>,
-    ) -> Result<Self> {
-        let output_count = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{source_prefix}_output_count"),
-            version,
-            |source| {
-                C::series(|column, name| {
-                    LazyColumnPerBlockCumulativeRolling::new(
+macro_rules! impl_breakdown {
+    ($name:ident, $group:ident, $id:ident) => {
+        pub type $name<M = Rw> = BreakdownVecs<
+            $group<PerBlockCumulativeRolling<StoredU64, M>>,
+            $group<DataBytesSeries<M>>,
+            $group<PerBlockCumulativeRolling<VSize, M>>,
+            $group<FeesSeries<M>>,
+        >;
+        impl $name {
+            #[allow(clippy::too_many_arguments)]
+            pub fn forced_import(
+                cache: &'static CacheBudget,
+                db: &Database,
+                series_prefix: &str,
+                version: Version,
+                mappings: &MappingsVecs,
+                cached_starts: &Windows<&CachedWindowStartVec>,
+                total_data: &impl ReadableCloneableVec<Height, Bytes>,
+                block_size: &impl ReadableCloneableVec<Height, StoredU64>,
+                chain_fees: &impl ReadableCloneableVec<Height, Sats>,
+            ) -> Result<Self> {
+                let version = version + Version::ONE;
+                let output_count = $group::try_new(|_, name| {
+                    PerBlockCumulativeRolling::forced_import(
+                        cache,
+                        db,
                         &format!("{series_prefix}_{name}_output_count"),
                         version,
-                        source,
-                        column,
                         mappings,
                         cached_starts,
                     )
-                })
-            },
-        )?;
-        let data_bytes = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{source_prefix}_data_bytes"),
-            version,
-            |source| {
-                C::series(|column, name| {
+                })?;
+                let data_bytes = $group::try_new(|_, name| {
                     let prefix = format!("{series_prefix}_{name}");
-                    let data_bytes = LazyColumnPerBlockCumulativeRolling::new(
+                    let source = PerBlockCumulativeRolling::forced_import(
+                        cache,
+                        db,
                         &format!("{prefix}_data_bytes"),
                         version,
-                        source,
-                        column,
                         mappings,
                         cached_starts,
-                    );
-                    DataBytesSeries::new(
-                        &prefix, version, data_bytes, total_data, block_size, mappings,
-                    )
-                })
-            },
-        )?;
-        let tx_count = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{source_prefix}_tx_count"),
-            version,
-            |source| {
-                C::series(|column, name| {
-                    LazyColumnPerBlockCumulativeRolling::new(
+                    )?;
+                    Ok::<_, Error>(DataBytesSeries::new(
+                        &prefix, version, source, total_data, block_size, mappings,
+                    ))
+                })?;
+                let tx_count = $group::try_new(|_, name| {
+                    PerBlockCumulativeRolling::forced_import(
+                        cache,
+                        db,
                         &format!("{series_prefix}_{name}_tx_count"),
                         version,
-                        source,
-                        column,
                         mappings,
                         cached_starts,
                     )
-                })
-            },
-        )?;
-        let tx_vsize = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{source_prefix}_tx_vsize"),
-            version,
-            |source| {
-                C::series(|column, name| {
-                    LazyColumnPerBlockCumulativeRolling::new(
+                })?;
+                let tx_vsize = $group::try_new(|_, name| {
+                    PerBlockCumulativeRolling::forced_import(
+                        cache,
+                        db,
                         &format!("{series_prefix}_{name}_tx_vsize"),
                         version,
-                        source,
-                        column,
                         mappings,
                         cached_starts,
                     )
-                })
-            },
-        )?;
-        let fees = ColumnarPerBlockCumulativeRolling::forced_import(
-            cache,
-            db,
-            &format!("{source_prefix}_fees"),
-            version,
-            |source| {
-                C::series(|column, name| {
+                })?;
+                let fees = $group::try_new(|_, name| {
                     let prefix = format!("{series_prefix}_{name}");
-                    let fees = LazyColumnPerBlockCumulativeRolling::new(
+                    let source = PerBlockCumulativeRolling::forced_import(
+                        cache,
+                        db,
                         &format!("{prefix}_fees"),
                         version,
-                        source,
-                        column,
                         mappings,
                         cached_starts,
-                    );
-                    FeesSeries::new(&prefix, version, fees, chain_fees, cached_starts, mappings)
+                    )?;
+                    Ok::<_, Error>(FeesSeries::new(
+                        &prefix,
+                        version,
+                        source,
+                        chain_fees,
+                        cached_starts,
+                        mappings,
+                    ))
+                })?;
+                Ok(Self {
+                    output_count,
+                    data_bytes,
+                    tx_count,
+                    tx_vsize,
+                    fees,
                 })
-            },
-        )?;
+            }
 
-        Ok(Self {
-            output_count,
-            data_bytes,
-            tx_count,
-            tx_vsize,
-            fees,
-        })
-    }
+            pub fn len(&self) -> usize {
+                self.output_count
+                    .iter()
+                    .map(|v| v.cumulative.height.len())
+                    .chain(self.data_bytes.iter().map(|v| v.cumulative.height.len()))
+                    .chain(self.tx_count.iter().map(|v| v.cumulative.height.len()))
+                    .chain(self.tx_vsize.iter().map(|v| v.cumulative.height.len()))
+                    .chain(self.fees.iter().map(|v| v.cumulative.height.len()))
+                    .min()
+                    .unwrap_or_default()
+            }
 
-    pub fn len(&self) -> usize {
-        self.output_count
-            .cumulative
-            .len()
-            .min(self.data_bytes.cumulative.len())
-            .min(self.tx_count.cumulative.len())
-            .min(self.tx_vsize.cumulative.len())
-            .min(self.fees.cumulative.len())
-    }
+            pub fn push(&mut self, values: [BlockMetrics; $id::ALL.len()]) {
+                for (id, target) in $id::ALL.iter().zip(self.output_count.iter_mut()) {
+                    target.push_block(StoredU64::from(id.get(&values).output_count));
+                }
+                for (id, target) in $id::ALL.iter().zip(self.data_bytes.iter_mut()) {
+                    target.data_bytes.push_block(id.get(&values).data_bytes);
+                }
+                for (id, target) in $id::ALL.iter().zip(self.tx_count.iter_mut()) {
+                    target.push_block(StoredU64::from(id.get(&values).tx_count));
+                }
+                for (id, target) in $id::ALL.iter().zip(self.tx_vsize.iter_mut()) {
+                    target.push_block(id.get(&values).tx_vsize);
+                }
+                for (id, target) in $id::ALL.iter().zip(self.fees.iter_mut()) {
+                    target.fees.push_block(id.get(&values).fees);
+                }
+            }
 
-    pub fn push(&mut self, row: C::Row<BlockMetrics>) {
-        self.output_count.push_block(C::map(row.clone(), |metrics| {
-            StoredU64::from(metrics.output_count)
-        }));
-        self.data_bytes
-            .push_block(C::map(row.clone(), |metrics| metrics.data_bytes));
-        self.tx_count.push_block(C::map(row.clone(), |metrics| {
-            StoredU64::from(metrics.tx_count)
-        }));
-        self.tx_vsize
-            .push_block(C::map(row.clone(), |metrics| metrics.tx_vsize));
-        self.fees.push_block(C::map(row, |metrics| metrics.fees));
-    }
+            fn stored_vecs_mut(&mut self) -> impl Iterator<Item = &mut dyn AnyStoredVec> {
+                self.output_count
+                    .iter_mut()
+                    .map(|v| &mut v.cumulative.height as &mut dyn AnyStoredVec)
+                    .chain(
+                        self.data_bytes
+                            .iter_mut()
+                            .map(|v| &mut v.data_bytes.cumulative.height as &mut dyn AnyStoredVec),
+                    )
+                    .chain(
+                        self.tx_count
+                            .iter_mut()
+                            .map(|v| &mut v.cumulative.height as &mut dyn AnyStoredVec),
+                    )
+                    .chain(
+                        self.tx_vsize
+                            .iter_mut()
+                            .map(|v| &mut v.cumulative.height as &mut dyn AnyStoredVec),
+                    )
+                    .chain(
+                        self.fees
+                            .iter_mut()
+                            .map(|v| &mut v.fees.cumulative.height as &mut dyn AnyStoredVec),
+                    )
+            }
 
-    pub fn validate_and_truncate(&mut self, version: Version, height: Height) -> Result<()> {
-        self.output_count.validate_and_truncate(version, height)?;
-        self.data_bytes.validate_and_truncate(version, height)?;
-        self.tx_count.validate_and_truncate(version, height)?;
-        self.tx_vsize.validate_and_truncate(version, height)?;
-        self.fees.validate_and_truncate(version, height)?;
-        Ok(())
-    }
+            pub fn validate_and_truncate(
+                &mut self,
+                version: Version,
+                height: Height,
+            ) -> Result<()> {
+                for target in self.stored_vecs_mut() {
+                    target.any_validate_computed_version_or_reset(version)?;
+                    target.any_truncate_if_needed_at(height.to_usize())?;
+                }
+                Ok(())
+            }
 
-    pub fn truncate_if_needed_at(&mut self, len: usize) -> Result<()> {
-        self.output_count.truncate_if_needed_at(len)?;
-        self.data_bytes.truncate_if_needed_at(len)?;
-        self.tx_count.truncate_if_needed_at(len)?;
-        self.tx_vsize.truncate_if_needed_at(len)?;
-        self.fees.truncate_if_needed_at(len)?;
-        Ok(())
-    }
+            pub fn truncate_if_needed_at(&mut self, len: usize) -> Result<()> {
+                for target in self.stored_vecs_mut() {
+                    target.any_truncate_if_needed_at(len)?;
+                }
+                Ok(())
+            }
 
-    pub fn write(&mut self) -> Result<()> {
-        self.output_count.write()?;
-        self.data_bytes.write()?;
-        self.tx_count.write()?;
-        self.tx_vsize.write()?;
-        self.fees.write()?;
-        Ok(())
-    }
+            pub fn write(&mut self) -> Result<()> {
+                for target in self.stored_vecs_mut() {
+                    target.write()?;
+                }
+                Ok(())
+            }
+        }
+    };
 }
+impl_breakdown!(KindBreakdownVecs, ByKind, OpReturnKind);
+impl_breakdown!(PolicyBreakdownVecs, Policy, OpReturnPolicyId);

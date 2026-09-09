@@ -19,3 +19,5 @@ pub use lazy_rolling_avg_from_height::LazyRollingAvgFiatFromHeight;
 pub use lazy_rolling_sum_from_height::LazyRollingSumFiatFromHeight;
 pub use lazy_rolling_sums_from_height::LazyRollingSumsFiatFromHeight;
 pub use per_block::{FiatPerBlock, FiatType};
+mod units;
+pub use units::Fiat;

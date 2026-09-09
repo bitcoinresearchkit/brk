@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Realized\_NetPnl
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12946](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12946)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12607](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12607)
 
 ## Properties
 
@@ -14,15 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12946](https://githu
 
 > **age**: [`SeriesTree_Cohorts_Realized_NetPnl_Age`](SeriesTree_Cohorts_Realized_NetPnl_Age.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12948](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12948)
-
-***
-
-### ageRangeMatrix
-
-> **ageRangeMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12953](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12953)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12609](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12609)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12953](https://githu
 
 > **all**: [`BlockCumulativeDeltaSumPattern`](BlockCumulativeDeltaSumPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12947](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12947)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12608](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12608)
 
 ***
 
@@ -38,7 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12947](https://githu
 
 > **change1m**: [`SeriesTree_Cohorts_Realized_NetPnl_Change1m`](SeriesTree_Cohorts_Realized_NetPnl_Change1m.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12957](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12957)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12614](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12614)
 
 ***
 
@@ -46,15 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12957](https://githu
 
 > **class**: [`SeriesTree_Cohorts_Realized_NetPnl_Class`](SeriesTree_Cohorts_Realized_NetPnl_Class.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12950](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12950)
-
-***
-
-### classMatrix
-
-> **classMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12955](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12955)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12611](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12611)
 
 ***
 
@@ -62,15 +46,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12955](https://githu
 
 > **entry**: [`SeriesTree_Cohorts_Realized_NetPnl_Entry`](SeriesTree_Cohorts_Realized_NetPnl_Entry.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12951](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12951)
-
-***
-
-### entryMatrix
-
-> **entryMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12956](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12956)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12612](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12612)
 
 ***
 
@@ -78,15 +54,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12956](https://githu
 
 > **epoch**: [`SeriesTree_Cohorts_Realized_NetPnl_Epoch`](SeriesTree_Cohorts_Realized_NetPnl_Epoch.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12949](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12949)
-
-***
-
-### epochMatrix
-
-> **epochMatrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:12954](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12954)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12610](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12610)
 
 ***
 
@@ -94,4 +62,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:12954](https://githu
 
 > **term**: [`SeriesTree_Cohorts_Realized_NetPnl_Term`](SeriesTree_Cohorts_Realized_NetPnl_Term.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:12952](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L12952)
+Defined in: [Developer/mono/modules/bitview-client/index.js:12613](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L12613)

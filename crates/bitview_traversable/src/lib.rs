@@ -2,7 +2,6 @@ use std::{
     collections::{BTreeMap, btree_map::Entry},
     fmt::Display,
     iter,
-    ops::AddAssign,
 };
 
 use schemars::{JsonSchema, SchemaGenerator};
@@ -10,11 +9,10 @@ use serde::Serialize;
 use serde_json::to_value;
 use vecdb::{
     AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachedVec, CachedVecStrategy,
-    ColumnId, ColumnarVec, CompressionStrategy, DeltaOp, EagerVec, Formattable, IndexVec,
-    LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec,
-    MutableVec, OverflowVec, OverflowVecValue, RawStrategy, ReadOnlyColumnarVec,
-    ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
-    ReadableColumnarVec, ReadableVec, StoredVec, TypedVec, VecIndex, VecValue,
+    CompressionStrategy, DeltaOp, EagerVec, Formattable, IndexVec, LazyAggVec, LazyDeltaVec,
+    LazyVec, MutableVec, OverflowVec, OverflowVecValue, RawStrategy, ReadOnlyCompressedVec,
+    ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec, ReadableVec, StoredVec, TypedVec,
+    VecIndex, VecValue,
 };
 
 #[cfg(feature = "lz4")]
@@ -219,36 +217,6 @@ where
     }
 }
 
-impl<V, C> Traversable for ColumnarVec<V, C>
-where
-    V: StoredVec,
-    C: ColumnId,
-    C::Row<V::T>: Formattable + Serialize + JsonSchema,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<V::I, C::Row<V::T>, _>(self)
-    }
-}
-
-impl<V, C> Traversable for ReadOnlyColumnarVec<V, C>
-where
-    V: StoredVec,
-    C: ColumnId,
-    C::Row<V::T>: Formattable + Serialize + JsonSchema,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<V::I, C::Row<V::T>, _>(self)
-    }
-}
-
 impl<I, T> Traversable for OverflowVec<I, T>
 where
     I: VecIndex,
@@ -274,22 +242,6 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
-    }
-}
-
-impl<S, T, C> Traversable for LazyColumnarVec<S, T, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-    T: VecValue,
-    C::Row<T>: Formattable + Serialize + JsonSchema,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<S::I, C::Row<T>, _>(self)
     }
 }
 
@@ -387,36 +339,6 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
-    }
-}
-
-impl<S, C> Traversable for LazyColumnVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-    S::T: Formattable + Serialize + JsonSchema,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<S::I, S::T, _>(self)
-    }
-}
-
-impl<S, C> Traversable for LazyColumnSumVec<S, C>
-where
-    C: ColumnId,
-    S: ReadableColumnarVec<C>,
-    S::T: Formattable + Serialize + JsonSchema + AddAssign,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<S::I, S::T, _>(self)
     }
 }
 

@@ -5,9 +5,9 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Sats, StoredBool, StoredU64, TxInIndex, TxIndex};
 use rayon::{join, prelude::*};
-use vecdb::{AnyStoredVec, AnyVec, ColumnId, PcoVec, ReadableVec, VecIndex, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, PcoVec, ReadableVec, VecIndex, WritableVec};
 
-use super::{super::size, CpfpRoleId, Vecs};
+use super::{super::size, Vecs};
 
 mod block;
 
@@ -95,11 +95,15 @@ impl Vecs {
         self.effective_fee_rate
             .tx_index
             .validate_computed_version_or_reset(dep_version)?;
-        self.cpfp_flags_source
-            .validate_computed_version_or_reset(dep_version)?;
-        self.count
-            .cumulative
-            .validate_computed_version_or_reset(dep_version)?;
+        for target in self.cpfp_flags.iter_mut() {
+            target.validate_computed_version_or_reset(dep_version)?;
+        }
+        for target in self.count.iter_mut() {
+            target
+                .cumulative
+                .height
+                .validate_computed_version_or_reset(dep_version)?;
+        }
 
         let target = self
             .input_value
@@ -112,7 +116,13 @@ impl Vecs {
             .len()
             .min(self.fee_rate.len())
             .min(self.effective_fee_rate.tx_index.len())
-            .min(self.cpfp_flags_source.len())
+            .min(
+                self.cpfp_flags
+                    .iter_mut()
+                    .map(|v| v.len())
+                    .min()
+                    .unwrap_or_default(),
+            )
             .min(starting_lengths.tx_index.to_usize());
         let max_height = indexer
             .vecs()
@@ -123,7 +133,13 @@ impl Vecs {
         let next_height = mappings
             .tx_heights
             .resume_height(tx_len, target, max_height);
-        let count_len = self.count.cumulative.len().min(max_height);
+        let count_len = self
+            .count
+            .iter_mut()
+            .map(|v| v.cumulative.height.len())
+            .min()
+            .unwrap_or_default()
+            .min(max_height);
         let start_height = count_len.min(next_height);
         if start_height >= max_height {
             return Ok(());
@@ -143,9 +159,15 @@ impl Vecs {
         self.effective_fee_rate
             .tx_index
             .truncate_if_needed(TxIndex::from(start_tx))?;
-        self.cpfp_flags_source
-            .truncate_if_needed(TxIndex::from(start_tx))?;
-        self.count.truncate_if_needed_at(start_height)?;
+        for target in self.cpfp_flags.iter_mut() {
+            target.truncate_if_needed_at(start_tx)?;
+        }
+        for target in self.count.iter_mut() {
+            target
+                .cumulative
+                .height
+                .truncate_if_needed_at(start_height)?;
+        }
 
         let mut tx_count = mappings.height.tx_index_count.cursor();
         let mut next_block_input = indexer.vecs().inputs.first_txin_index.cursor();
@@ -227,22 +249,31 @@ impl Vecs {
                     self.fee.tx_index.push(fee);
                     self.fee_rate.push(fee_rate);
                     self.effective_fee_rate.tx_index.push(effective);
-                    self.cpfp_flags_source
-                        .push([StoredBool::from(is_parent), StoredBool::from(is_child)]);
+                    self.cpfp_flags
+                        .is_cpfp_parent
+                        .push(StoredBool::from(is_parent));
+                    self.cpfp_flags
+                        .is_cpfp_child
+                        .push(StoredBool::from(is_child));
                 }
                 self.count
-                    .push_block(CpfpRoleId::from_fn(|role| match role {
-                        CpfpRoleId::Parent => StoredU64::from(parent_count),
-                        CpfpRoleId::Child => StoredU64::from(child_count),
-                    }));
+                    .cpfp_parent
+                    .push_block(StoredU64::from(parent_count));
+                self.count
+                    .cpfp_child
+                    .push_block(StoredU64::from(child_count));
 
                 if (height + offset) % 1_000 == 0 {
                     let _lock = exit.lock();
                     self.fee.tx_index.write()?;
                     self.fee_rate.write()?;
                     self.effective_fee_rate.tx_index.write()?;
-                    self.cpfp_flags_source.write()?;
-                    self.count.write()?;
+                    for target in self.cpfp_flags.iter_mut() {
+                        target.write()?;
+                    }
+                    for target in self.count.iter_mut() {
+                        target.cumulative.height.write()?;
+                    }
                 }
             }
 
@@ -256,8 +287,12 @@ impl Vecs {
         self.fee.tx_index.write()?;
         self.fee_rate.write()?;
         self.effective_fee_rate.tx_index.write()?;
-        self.cpfp_flags_source.write()?;
-        self.count.write()?;
+        for target in self.cpfp_flags.iter_mut() {
+            target.write()?;
+        }
+        for target in self.count.iter_mut() {
+            target.cumulative.height.write()?;
+        }
 
         Ok(())
     }

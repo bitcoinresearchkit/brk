@@ -57,7 +57,7 @@ impl<V: StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for CachedVec<V
 }
 
 impl<V: TypedVec + WritableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S> {
-    /// Invalidate shared snapshots before a truncation can replace existing rows.
+    /// Invalidate shared snapshots before a truncation can replace existing values.
     /// A no-op keeps the warm snapshot intact.
     pub fn truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         if index < self.inner.len() {
@@ -67,7 +67,7 @@ impl<V: TypedVec + WritableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
         Ok(())
     }
 
-    /// Update the stamp even when no rows need truncation, as for the inner vec.
+    /// Update the stamp even when no values need truncation, as for the inner vec.
     pub fn truncate_if_needed_with_stamp(&mut self, index: V::I, stamp: Stamp) -> Result<()> {
         self.inner.update_stamp(stamp);
         self.truncate_if_needed_at(index.to_usize())

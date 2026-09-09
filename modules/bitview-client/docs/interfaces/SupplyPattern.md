@@ -6,12 +6,12 @@
 
 # Interface: SupplyPattern
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7323](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7323)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7261](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7261)
 
 ## Properties
 
 ### supply
 
-> **supply**: [`InPattern3`](InPattern3.md)
+> **supply**: [`InPattern2`](InPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:7324](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L7324)
+Defined in: [Developer/mono/modules/bitview-client/index.js:7262](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L7262)

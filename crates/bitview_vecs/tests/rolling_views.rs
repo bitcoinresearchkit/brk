@@ -8,7 +8,7 @@ use brk_types::{
 use common::{indexes, stored};
 use schemars::JsonSchema;
 use tempfile::tempdir;
-use vecdb::{AnyVec, CachedVec, ColumnId, Database, ReadableVec, UnaryTransform};
+use vecdb::{AnyVec, CachedVec, Database, ReadableVec, UnaryTransform};
 
 mod common;
 
@@ -92,7 +92,7 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         CachedWindowStartVec::new(LazyWindowStartVec::days(
             id.suffix(),
             Version::new(3),
-            Windows::<()>::DAYS[ColumnId::index(id)] as u64,
+            Windows::<()>::DAYS[id.index()] as u64,
             timestamps.read_only_cached_boxed_clone(),
         ))
     });

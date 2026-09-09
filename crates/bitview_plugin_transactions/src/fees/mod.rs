@@ -4,4 +4,4 @@ mod vecs;
 
 pub use compute::compute;
 pub use import::forced_import;
-pub use vecs::{CountVecs, CpfpFlags, CpfpRoleId, Vecs};
+pub use vecs::{CountVecs, CpfpFlags, Vecs};

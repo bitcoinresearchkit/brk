@@ -6,28 +6,28 @@
 
 # Interface: OverRangeUnderPattern
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6432](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6432)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6184](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6184)
 
 ## Properties
 
 ### over
 
-> **over**: [`_10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern`](10y12y18m1d1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern.md)
+> **over**: [`_100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern`](100btc100k100sats10btc10k10m10sats1btc1k1m1satPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6433](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6433)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6185](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6185)
 
 ***
 
 ### range
 
-> **range**: [`_10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mOverUnderPattern`](10y12y18m1d1h1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mOverUnderPattern.md)
+> **range**: [`_0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern`](0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6434](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6434)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6186](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6186)
 
 ***
 
 ### under
 
-> **under**: [`_10y12y15y18m1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern`](10y12y15y18m1m1w1y2m2y3m3y4m4y5m5y6m6y7y8y9mPattern.md)
+> **under**: [`_100btc100k100sats10btc10k10m10sats1btc1k1mPattern`](100btc100k100sats10btc10k10m10sats1btc1k1mPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:6435](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L6435)
+Defined in: [Developer/mono/modules/bitview-client/index.js:6187](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L6187)

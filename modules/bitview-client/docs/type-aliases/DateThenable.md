@@ -8,7 +8,7 @@
 
 > **DateThenable**\<`T`\> = (`onfulfilled?`, `onrejected?`) => `Promise`\<[`DateSeriesData`](DateSeriesData.md)\<`T`\>\>
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:1848](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L1848)
+Defined in: [Developer/mono/modules/bitview-client/index.js:1721](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L1721)
 
 ## Type Parameters
 

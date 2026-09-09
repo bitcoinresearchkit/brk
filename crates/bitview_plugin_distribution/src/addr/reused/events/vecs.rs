@@ -7,14 +7,13 @@ use bitview_plugin_outputs::ByTypeVecs;
 use bitview_transforms::RatioU64;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, CountPerBlockRollingAverage,
-    CumulativeCountVec, LazyColumnPerBlockCumulativeRolling, LazyPerBlockCumulativeRolling,
-    LazyPercentCumulativeRolling, PerBlockRollingAverage,
+    CachedWindowStartVec, CountPerBlockRollingAverage, CumulativeCountVec,
+    LazyPercentCumulativeRolling, PerBlockCumulativeRolling, PerBlockRollingAverage,
 };
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{PartsPerMillion32, StoredF32, StoredU32, StoredU64, Version};
-use rayon::{iter, prelude::*};
+use rayon::prelude::*;
 use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::state::AddrTypeToAddrEventCount;
@@ -71,15 +70,7 @@ pub struct AddrEventsVecs<M: StorageMode = Rw> {
     /// every output after an address's first lifetime receive; respending counts
     /// outputs to addresses with more than one prior lifetime spend. Multiple
     /// qualifying outputs to one address are counted separately.
-    pub output_to_reused_addr_count: ColumnarPerBlockCumulativeRolling<
-        StoredU64,
-        AddrTypeId,
-        WithAddrTypes<
-            LazyColumnPerBlockCumulativeRolling<StoredU64, AddrTypeId>,
-            LazyPerBlockCumulativeRolling<StoredU64>,
-        >,
-        M,
-    >,
+    pub output_to_reused_addr_count: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     /// Share of outputs classified by an address-event rule, using
     /// the matching output type as denominator.
     pub output_to_reused_addr_share: WithAddrTypes<LazyPercentCumulativeRolling<PartsPerMillion32>>,
@@ -90,15 +81,7 @@ pub struct AddrEventsVecs<M: StorageMode = Rw> {
     /// before that input: more than one prior lifetime receive for reuse, or
     /// more than one prior lifetime spend for respending. Multiple qualifying
     /// inputs from one address are counted separately.
-    pub input_from_reused_addr_count: ColumnarPerBlockCumulativeRolling<
-        StoredU64,
-        AddrTypeId,
-        WithAddrTypes<
-            LazyColumnPerBlockCumulativeRolling<StoredU64, AddrTypeId>,
-            LazyPerBlockCumulativeRolling<StoredU64>,
-        >,
-        M,
-    >,
+    pub input_from_reused_addr_count: WithAddrTypes<PerBlockCumulativeRolling<StoredU64, M>>,
     /// Share of inputs spending from addresses that satisfy an address
     /// predicate, using the matching input type as denominator.
     pub input_from_reused_addr_share:
@@ -118,10 +101,10 @@ impl AddrEventsVecs {
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         all: LazyPercentCumulativeRolling<PartsPerMillion32>,
-        numerators: &ByAddrType<LazyColumnPerBlockCumulativeRolling<StoredU64, AddrTypeId>>,
+        numerators: &ByAddrType<PerBlockCumulativeRolling<StoredU64>>,
         denominators: &ByAddrType<CumulativeCountVec>,
     ) -> WithAddrTypes<LazyPercentCumulativeRolling<PartsPerMillion32>> {
-        let by_addr_type = AddrTypeId::series(|column, type_name| {
+        let by_addr_type = AddrTypeId::series(|id, type_name| {
             LazyPercentCumulativeRolling::from_cumulative_ratio_with_numerator::<
                 StoredU64,
                 StoredU64,
@@ -129,12 +112,8 @@ impl AddrEventsVecs {
             >(
                 &format!("{type_name}_{name}"),
                 version,
-                column
-                    .select(numerators)
-                    .cumulative
-                    .resolutions
-                    .height_source(),
-                column.select(denominators),
+                id.select(numerators).cumulative.resolutions.height_source(),
+                id.select(denominators),
                 cached_starts,
                 mappings,
             )
@@ -152,22 +131,23 @@ impl AddrEventsVecs {
         outputs_by_type: &ByTypeVecs,
         inputs_by_type: &InputsByTypeVecs,
     ) -> Result<Self> {
-        let import_count = |name: &str| {
-            ColumnarPerBlockCumulativeRolling::forced_import(
-                cache,
-                db,
-                &format!("{name}_by_type_cumulative"),
-                version,
-                |source| {
-                    LazyColumnPerBlockCumulativeRolling::with_addr_types(
-                        name,
-                        version,
-                        source,
-                        mappings,
-                        cached_starts,
-                    )
-                },
-            )
+        let import_count = |name: &str| -> Result<_> {
+            let import = |name: &str| {
+                PerBlockCumulativeRolling::forced_import(
+                    cache,
+                    db,
+                    name,
+                    version + Version::ONE,
+                    mappings,
+                    cached_starts,
+                )
+            };
+            Ok(WithAddrTypes {
+                all: import(name)?,
+                by_addr_type: ByAddrType::try_from_fn(|id| {
+                    import(&format!("{}_{name}", id.name()))
+                })?,
+            })
         };
 
         let output_to_reused_addr_count = import_count(&format!("output_to_{name}_addr_count"))?;
@@ -251,25 +231,36 @@ impl AddrEventsVecs {
 
     pub fn min_resume_len(&self) -> usize {
         self.output_to_reused_addr_count
-            .cumulative
-            .len()
-            .min(self.input_from_reused_addr_count.cumulative.len())
+            .iter()
+            .chain(self.input_from_reused_addr_count.iter())
+            .map(|value| value.cumulative.height.len())
+            .min()
+            .unwrap_or_default()
             .min(self.active_reused_addr_count.block.len())
             .min(self.active_reused_addr_share.block.len())
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        iter::once(self.output_to_reused_addr_count.stored_mut())
-            .chain(iter::once(self.input_from_reused_addr_count.stored_mut()))
+        self.output_to_reused_addr_count
+            .iter_mut()
+            .chain(self.input_from_reused_addr_count.iter_mut())
+            .map(|value| &mut value.cumulative.height as &mut dyn AnyStoredVec)
             .chain([
                 self.active_reused_addr_count.stored_mut(),
                 &mut self.active_reused_addr_share.block as &mut dyn AnyStoredVec,
             ])
+            .collect::<Vec<_>>()
+            .into_par_iter()
     }
 
     pub fn reset_height(&mut self) -> Result<()> {
-        self.output_to_reused_addr_count.reset()?;
-        self.input_from_reused_addr_count.reset()?;
+        for value in self
+            .output_to_reused_addr_count
+            .iter_mut()
+            .chain(self.input_from_reused_addr_count.iter_mut())
+        {
+            value.cumulative.height.reset()?;
+        }
         self.active_reused_addr_count.reset()?;
         self.active_reused_addr_share.block.reset()?;
         Ok(())
@@ -283,8 +274,15 @@ impl AddrEventsVecs {
         active_addr_count: u32,
         active_reused_addr_count: u32,
     ) {
-        self.output_to_reused_addr_count.push_block(uses.row());
-        self.input_from_reused_addr_count.push_block(spends.row());
+        for (targets, values) in [
+            (&mut self.output_to_reused_addr_count, uses),
+            (&mut self.input_from_reused_addr_count, spends),
+        ] {
+            targets.all.push_block(StoredU64::from(values.sum()));
+            for (target, &value) in targets.by_addr_type.values_mut().zip(values.values()) {
+                target.push_block(StoredU64::from(value));
+            }
+        }
         self.active_reused_addr_count
             .push_block(StoredU32::from(active_reused_addr_count));
         // Stored as a percentage in [0, 100] to match the rest of the

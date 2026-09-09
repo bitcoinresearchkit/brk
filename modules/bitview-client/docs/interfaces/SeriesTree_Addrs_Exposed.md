@@ -6,15 +6,15 @@
 
 # Interface: SeriesTree\_Addrs\_Exposed
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8303](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8303)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8030](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8030)
 
 ## Properties
 
 ### count
 
-> **count**: [`SeriesTree_Addrs_Exposed_Count`](SeriesTree_Addrs_Exposed_Count.md)
+> **count**: [`FundedTotalPattern`](FundedTotalPattern.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8304](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8304)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8031](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8031)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:8304](https://github
 
 > **supply**: [`SeriesTree_Addrs_Exposed_Supply`](SeriesTree_Addrs_Exposed_Supply.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:8305](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L8305)
+Defined in: [Developer/mono/modules/bitview-client/index.js:8032](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L8032)

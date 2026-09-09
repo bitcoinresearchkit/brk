@@ -13,3 +13,9 @@ pub struct CpfpFlags<V> {
     /// ancestor-closed SFL chunk is evaluated.
     pub is_cpfp_child: V,
 }
+
+impl<V> CpfpFlags<V> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut V> {
+        [&mut self.is_cpfp_parent, &mut self.is_cpfp_child].into_iter()
+    }
+}

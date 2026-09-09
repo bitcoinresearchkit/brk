@@ -1,12 +1,12 @@
 use bitview_cohort::{
     AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
-    UTXOAggregate, UTXOAggregateId, UTXORows,
+    UTXOAggregate, UTXOAggregateId, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{DaysToYears, SatsToCents};
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock};
+use bitview_vecs::{CachedWindowStartVec, LazyPerBlock, RollingWindows};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredF32, StoredF64, Version};
@@ -43,7 +43,7 @@ pub struct ActivityVecs<M: StorageMode = Rw> {
     /// bitcoin: coin days destroyed divided by transfer volume in BTC. Higher
     /// values mean older coins moved on average. Returns zero when transfer
     /// volume is zero.
-    pub dormancy: UTXOAggregate<ColumnarRollingWindows<StoredF32, M>>,
+    pub dormancy: UTXOAggregate<RollingWindows<StoredF32, M>>,
 }
 
 impl ActivityVecs {
@@ -53,7 +53,7 @@ impl ActivityVecs {
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let aggregate_version = version;
         let version = version + Version::ONE;
         let transfer_volume = Box::new(CumulativeValueByCohort::forced_import(
@@ -101,7 +101,7 @@ impl ActivityVecs {
             )
         });
         let dormancy = UTXOAggregate::try_from_fn(|id| {
-            ColumnarRollingWindows::forced_import(
+            RollingWindows::forced_import(
                 cache,
                 db,
                 &Self::aggregate_metric_name(id, "dormancy"),
@@ -109,14 +109,14 @@ impl ActivityVecs {
                 mappings,
             )
         })?;
-        Ok(Self {
+        Ok(Box::new(Self {
             transfer_volume,
             coindays_destroyed,
             transfer_volume_in_profit,
             transfer_volume_in_loss,
             coinyears_destroyed,
             dormancy,
-        })
+        }))
     }
 
     fn aggregate_version(version: Version, id: UTXOAggregateId) -> Version {
@@ -147,10 +147,10 @@ impl ActivityVecs {
     pub fn push(
         &mut self,
         height_price: Cents,
-        transfer_volume: UTXORows<Sats>,
-        coindays_destroyed: UTXORows<StoredF64>,
-        transfer_volume_in_profit: UTXORows<Sats>,
-        transfer_volume_in_loss: UTXORows<Sats>,
+        transfer_volume: UTXOValues<Sats>,
+        coindays_destroyed: UTXOValues<StoredF64>,
+        transfer_volume_in_profit: UTXOValues<Sats>,
+        transfer_volume_in_loss: UTXOValues<Sats>,
     ) {
         let transfer_value = transfer_volume.map(|sats| SatsToCents::apply(*sats, height_price));
         let profit_value =
@@ -192,7 +192,12 @@ impl ActivityVecs {
         vecs.extend(self.coindays_destroyed.stored.collect_vecs_mut());
         vecs.extend(self.transfer_volume_in_profit.collect_vecs_mut());
         vecs.extend(self.transfer_volume_in_loss.collect_vecs_mut());
-        vecs.extend(self.dormancy.iter_mut().map(|value| value.stored_mut()));
+        vecs.extend(
+            self.dormancy
+                .iter_mut()
+                .flat_map(|value| value.as_mut_array())
+                .map(|value| &mut value.height as &mut dyn AnyStoredVec),
+        );
         vecs
     }
 
@@ -213,20 +218,29 @@ impl ActivityVecs {
                 .expect("aggregate transfer-volume cohort")
                 .sum
                 .0;
-            id.select_mut(&mut self.dormancy).compute_columns2(
-                max_from,
-                |window| &window.select(coindays_destroyed).height,
-                |window| &window.select(transfer_volume).btc.height,
-                |_, rolling_coindays, rolling_btc| {
-                    let btc = f64::from(rolling_btc);
-                    if btc == 0.0 {
-                        StoredF32::from(0.0f32)
-                    } else {
-                        StoredF32::from((f64::from(rolling_coindays) / btc) as f32)
-                    }
-                },
-                exit,
-            )?;
+            for ((target, coindays), volume) in id
+                .select_mut(&mut self.dormancy)
+                .as_mut_array()
+                .into_iter()
+                .zip(coindays_destroyed.as_array())
+                .zip(transfer_volume.as_array())
+            {
+                target.height.compute_transform2(
+                    max_from,
+                    &coindays.height,
+                    &volume.btc.height,
+                    |(height, rolling_coindays, rolling_btc, _)| {
+                        let btc = f64::from(rolling_btc);
+                        let value = if btc == 0.0 {
+                            0.0
+                        } else {
+                            (f64::from(rolling_coindays) / btc) as f32
+                        };
+                        (height, StoredF32::from(value))
+                    },
+                    exit,
+                )?;
+            }
         }
         Ok(())
     }

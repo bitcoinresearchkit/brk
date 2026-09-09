@@ -29,6 +29,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub lth: AggregateVecs,
     /// Height-indexed source stored for all, short-term-holder, and
     /// long-term-holder Coinflow aggregates.
+    #[traversable(hidden)]
     pub aggregate_sources: AggregateSources<M>,
 }
 

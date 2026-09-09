@@ -6,7 +6,7 @@
 
 # Interface: Pagination
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:889](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L889)
+Defined in: [Developer/mono/modules/bitview-client/index.js:852](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L852)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:889](https://github.
 
 > `optional` **page?**: `number` \| `null`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:890](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L890)
+Defined in: [Developer/mono/modules/bitview-client/index.js:853](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L853)
 
 Pagination index
 
@@ -24,6 +24,6 @@ Pagination index
 
 > `optional` **perPage?**: `number` \| `null`
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:891](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L891)
+Defined in: [Developer/mono/modules/bitview-client/index.js:854](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L854)
 
 Results per page (default: 1000, max: 1000)

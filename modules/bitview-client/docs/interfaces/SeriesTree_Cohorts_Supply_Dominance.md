@@ -6,7 +6,7 @@
 
 # Interface: SeriesTree\_Cohorts\_Supply\_Dominance
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10973](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10973)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10597](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10597)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10973](https://githu
 
 > **addrBalance**: [`OverRangeUnderPattern20`](OverRangeUnderPattern20.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10982](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10982)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10606](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10606)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10982](https://githu
 
 > **age**: [`SeriesTree_Cohorts_Supply_Dominance_Age`](SeriesTree_Cohorts_Supply_Dominance_Age.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10975](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10975)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10599](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10599)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10975](https://githu
 
 > **all**: [`PercentPpmRatioPattern2`](PercentPpmRatioPattern2.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10974](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10974)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10598](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10598)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10974](https://githu
 
 > **class**: [`SeriesTree_Cohorts_Supply_Dominance_Class`](SeriesTree_Cohorts_Supply_Dominance_Class.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10977](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10977)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10601](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10601)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10977](https://githu
 
 > **entry**: [`SeriesTree_Cohorts_Supply_Dominance_Entry`](SeriesTree_Cohorts_Supply_Dominance_Entry.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10978](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10978)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10602](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10602)
 
 ***
 
@@ -54,15 +54,15 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10978](https://githu
 
 > **epoch**: [`SeriesTree_Cohorts_Supply_Dominance_Epoch`](SeriesTree_Cohorts_Supply_Dominance_Epoch.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10976](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10976)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10600](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10600)
 
 ***
 
 ### term
 
-> **term**: [`SeriesTree_Cohorts_Supply_Dominance_Term`](SeriesTree_Cohorts_Supply_Dominance_Term.md)
+> **term**: [`LongShortPattern12`](LongShortPattern12.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10980](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10980)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10604](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10604)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10980](https://githu
 
 > **type**: [`SeriesTree_Cohorts_Supply_Dominance_Type`](SeriesTree_Cohorts_Supply_Dominance_Type.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10981](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10981)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10605](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10605)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:10981](https://githu
 
 > **utxoAmount**: [`OverRangeUnderPattern20`](OverRangeUnderPattern20.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:10979](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L10979)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10603](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10603)

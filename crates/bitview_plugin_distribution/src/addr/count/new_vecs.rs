@@ -30,7 +30,7 @@ impl NewAddrCountVecs {
                 mappings,
             ),
             by_addr_type: total.by_addr_type.map_with_name(|name, total| {
-                LazyPerBlockCumulativeRolling::from_column_source(
+                LazyPerBlockCumulativeRolling::from_lazy_source(
                     &format!("{name}_new_addr_count"),
                     version,
                     total,

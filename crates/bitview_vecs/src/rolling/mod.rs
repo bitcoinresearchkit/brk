@@ -1,5 +1,3 @@
-mod columnar_windows;
-mod columnar_windows_from_1w;
 mod complete;
 mod delta;
 mod distribution;
@@ -11,9 +9,8 @@ mod lazy_per_second_windows;
 mod lazy_sum_from_height;
 mod lazy_sums_from_height;
 mod windows;
+mod windows_from_1w;
 
-pub use columnar_windows::ColumnarRollingWindows;
-pub use columnar_windows_from_1w::ColumnarRollingWindowsFrom1w;
 pub use complete::RollingComplete;
 pub use delta::*;
 pub use distribution::RollingDistribution;
@@ -25,6 +22,7 @@ pub use lazy_per_second_windows::LazyPerSecondWindows;
 pub use lazy_sum_from_height::LazyRollingSumFromHeight;
 pub use lazy_sums_from_height::LazyRollingSumsFromHeight;
 pub use windows::RollingWindows;
+pub use windows_from_1w::RollingWindowsFrom1w;
 mod amount_totals;
 mod totals;
 pub use amount_totals::RollingAmountTotals;

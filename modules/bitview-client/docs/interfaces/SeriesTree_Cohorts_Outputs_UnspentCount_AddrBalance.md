@@ -6,23 +6,15 @@
 
 # Interface: SeriesTree\_Cohorts\_Outputs\_UnspentCount\_AddrBalance
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11351](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11351)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10963](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10963)
 
 ## Properties
-
-### matrix
-
-> **matrix**: [`SeriesPattern18`](../type-aliases/SeriesPattern18.md)\<`number`\>
-
-Defined in: [Developer/mono/modules/bitview-client/index.js:11355](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11355)
-
-***
 
 ### over
 
 > **over**: [`SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Over`](SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Over.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11354](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11354)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10966](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10966)
 
 ***
 
@@ -30,7 +22,7 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11354](https://githu
 
 > **range**: [`SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Range`](SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Range.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11352](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11352)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10964](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10964)
 
 ***
 
@@ -38,4 +30,4 @@ Defined in: [Developer/mono/modules/bitview-client/index.js:11352](https://githu
 
 > **under**: [`SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Under`](SeriesTree_Cohorts_Outputs_UnspentCount_AddrBalance_Under.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:11353](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L11353)
+Defined in: [Developer/mono/modules/bitview-client/index.js:10965](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L10965)

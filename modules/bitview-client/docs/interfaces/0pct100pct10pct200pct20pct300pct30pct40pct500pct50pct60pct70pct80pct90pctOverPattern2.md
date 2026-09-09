@@ -6,204 +6,204 @@
 
 # Interface: \_0pct100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctOverPattern2
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2660](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2660)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2533](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2533)
 
 ## Properties
 
 ### \_0pctTo10pctInLoss
 
-> **\_0pctTo10pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_0pctTo10pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2661](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2661)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2534](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2534)
 
 ***
 
 ### \_0pctTo10pctInProfit
 
-> **\_0pctTo10pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_0pctTo10pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2662](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2662)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2535](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2535)
 
 ***
 
 ### \_100pctTo200pctInProfit
 
-> **\_100pctTo200pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_100pctTo200pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2663](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2663)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2536](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2536)
 
 ***
 
 ### \_10pctTo20pctInLoss
 
-> **\_10pctTo20pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_10pctTo20pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2664](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2664)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2537](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2537)
 
 ***
 
 ### \_10pctTo20pctInProfit
 
-> **\_10pctTo20pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_10pctTo20pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2665](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2665)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2538](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2538)
 
 ***
 
 ### \_200pctTo300pctInProfit
 
-> **\_200pctTo300pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_200pctTo300pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2666](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2666)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2539](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2539)
 
 ***
 
 ### \_20pctTo30pctInLoss
 
-> **\_20pctTo30pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_20pctTo30pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2667](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2667)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2540](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2540)
 
 ***
 
 ### \_20pctTo30pctInProfit
 
-> **\_20pctTo30pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_20pctTo30pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2668](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2668)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2541](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2541)
 
 ***
 
 ### \_300pctTo500pctInProfit
 
-> **\_300pctTo500pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_300pctTo500pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2669](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2669)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2542](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2542)
 
 ***
 
 ### \_30pctTo40pctInLoss
 
-> **\_30pctTo40pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_30pctTo40pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2670](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2670)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2543](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2543)
 
 ***
 
 ### \_30pctTo40pctInProfit
 
-> **\_30pctTo40pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_30pctTo40pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2671](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2671)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2544](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2544)
 
 ***
 
 ### \_40pctTo50pctInLoss
 
-> **\_40pctTo50pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_40pctTo50pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2672](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2672)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2545](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2545)
 
 ***
 
 ### \_40pctTo50pctInProfit
 
-> **\_40pctTo50pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_40pctTo50pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2673](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2673)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2546](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2546)
 
 ***
 
 ### \_500pctTo1000pctInProfit
 
-> **\_500pctTo1000pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_500pctTo1000pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2674](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2674)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2547](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2547)
 
 ***
 
 ### \_50pctTo60pctInLoss
 
-> **\_50pctTo60pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_50pctTo60pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2675](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2675)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2548](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2548)
 
 ***
 
 ### \_50pctTo60pctInProfit
 
-> **\_50pctTo60pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_50pctTo60pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2676](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2676)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2549](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2549)
 
 ***
 
 ### \_60pctTo70pctInLoss
 
-> **\_60pctTo70pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_60pctTo70pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2677](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2677)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2550](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2550)
 
 ***
 
 ### \_60pctTo70pctInProfit
 
-> **\_60pctTo70pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_60pctTo70pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2678](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2678)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2551](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2551)
 
 ***
 
 ### \_70pctTo80pctInLoss
 
-> **\_70pctTo80pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_70pctTo80pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2679](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2679)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2552](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2552)
 
 ***
 
 ### \_70pctTo80pctInProfit
 
-> **\_70pctTo80pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_70pctTo80pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2680](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2680)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2553](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2553)
 
 ***
 
 ### \_80pctTo90pctInLoss
 
-> **\_80pctTo90pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_80pctTo90pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2681](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2681)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2554](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2554)
 
 ***
 
 ### \_80pctTo90pctInProfit
 
-> **\_80pctTo90pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_80pctTo90pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2682](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2682)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2555](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2555)
 
 ***
 
 ### \_90pctTo100pctInLoss
 
-> **\_90pctTo100pctInLoss**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_90pctTo100pctInLoss**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2683](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2683)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2556](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2556)
 
 ***
 
 ### \_90pctTo100pctInProfit
 
-> **\_90pctTo100pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **\_90pctTo100pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2684](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2684)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2557](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2557)
 
 ***
 
 ### over1000pctInProfit
 
-> **over1000pctInProfit**: [`AllLthSthPattern4`](AllLthSthPattern4.md)
+> **over1000pctInProfit**: [`AllLthSthPattern5`](AllLthSthPattern5.md)
 
-Defined in: [Developer/mono/modules/bitview-client/index.js:2685](https://github.com/bitcoinresearchkit/brk/blob/5fc2a239df8aa10fda5a85d6a97dfb7da3f00c2f/modules/bitview-client/index.js#L2685)
+Defined in: [Developer/mono/modules/bitview-client/index.js:2558](https://github.com/bitcoinresearchkit/brk/blob/0f15a1b7c568a2f7b912d2fccd42fd2565d5f337/modules/bitview-client/index.js#L2558)

@@ -51,9 +51,15 @@ pub fn write(
         .par_iter_mut()
         .chain(vecs.addrs.par_iter_stateful_height_mut())
         .chain(
+            vecs.coindays_created
+                .iter_mut()
+                .map(|v| v.stored_mut())
+                .collect::<Vec<_>>()
+                .into_par_iter(),
+        )
+        .chain(
             [
                 &mut vecs.supply_state as &mut dyn AnyStoredVec,
-                vecs.coindays_created.stored_mut(),
                 vecs.coinblocks_destroyed.stored_mut(),
             ]
             .into_par_iter(),

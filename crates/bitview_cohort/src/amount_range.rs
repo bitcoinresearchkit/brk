@@ -116,8 +116,8 @@ pub struct AmountRange<T> {
     pub over_100k_btc: T,
 }
 
-define_column_id!(
-    AmountRangeId for AmountRange, version = 1 {
+define_cohort_id!(
+    AmountRangeId for AmountRange {
         Zero => _0sats,
         From1SatTo10Sats => _1sat_to_10sats,
         From10SatsTo100Sats => _10sats_to_100sats,
@@ -143,17 +143,14 @@ impl AmountRangeId {
     }
 
     pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL
-            .iter()
-            .copied()
-            .find(|column| column.filter() == filter)
+        Self::ALL.iter().copied().find(|id| id.filter() == filter)
     }
 
     pub fn included_by(filter: &Filter) -> impl Iterator<Item = Self> + '_ {
         Self::ALL
             .iter()
             .copied()
-            .filter(|column| filter.includes(column.filter()))
+            .filter(|id| filter.includes(id.filter()))
     }
 }
 

@@ -1,5 +1,5 @@
 use bitview_cohort::{
-    CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXORows,
+    CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXOValues,
 };
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{MvrvToNupl, NegCentsUnsignedToDollars};
@@ -16,7 +16,7 @@ use super::{
     super::UnrealizedAggregateSources, NetUnrealizedByCohort, UnrealizedByCohort, UnrealizedSources,
 };
 use crate::{
-    metrics::{AdditiveAggregateFiatPerBlock, AggregateFiatPerBlock, UTXOTermColumns},
+    metrics::{AdditiveAggregateFiatPerBlock, AggregateFiatPerBlock, UTXOTermSources},
     state::UnrealizedState,
 };
 
@@ -47,11 +47,11 @@ pub struct UnrealizedVecs<M: StorageMode = Rw> {
     /// outputs whose creation price is less than or equal to the represented
     /// block's spot price. This raw numerator underlies the profit-side
     /// capitalized price.
-    pub capitalized_cap_in_profit_raw: UTXOTermColumns<CentsSquaredSats, M>,
+    pub capitalized_cap_in_profit_raw: UTXOTermSources<CentsSquaredSats, M>,
     /// Sum of creation price squared times unspent sats for a UTXO cohort's
     /// outputs whose creation price is greater than the represented block's
     /// spot price. This raw numerator underlies the loss-side capitalized price.
-    pub capitalized_cap_in_loss_raw: UTXOTermColumns<CentsSquaredSats, M>,
+    pub capitalized_cap_in_loss_raw: UTXOTermSources<CentsSquaredSats, M>,
     /// Pain index of an aggregate UTXO cohort: the capital-weighted creation
     /// price of its unspent supply in loss minus the represented block's spot
     /// price. Larger values mean the loss-side capital is further underwater;
@@ -87,7 +87,7 @@ impl UnrealizedVecs {
         version: Version,
         mappings: &MappingsVecs,
         realized_price: &UTXOGroups<LazyPriceWithRatioPerBlock>,
-    ) -> Result<Self> {
+    ) -> Result<Box<Self>> {
         let profit = UnrealizedByCohort::forced_import(
             cache,
             db,
@@ -126,9 +126,9 @@ impl UnrealizedVecs {
             mappings,
         )?;
         let capitalized_cap_in_profit_raw =
-            UTXOTermColumns::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
+            UTXOTermSources::forced_import(db, "capitalized_cap_in_profit_raw", version)?;
         let capitalized_cap_in_loss_raw =
-            UTXOTermColumns::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
+            UTXOTermSources::forced_import(db, "capitalized_cap_in_loss_raw", version)?;
         let pain_index = AggregateFiatPerBlock::forced_import(
             cache,
             db,
@@ -169,7 +169,7 @@ impl UnrealizedVecs {
                     .cents,
             )
         });
-        Ok(Self {
+        Ok(Box::new(Self {
             profit,
             loss,
             net_pnl,
@@ -183,7 +183,7 @@ impl UnrealizedVecs {
             net_sentiment,
             nupl,
             negative_loss,
-        })
+        }))
     }
 
     fn cohort_version(version: Version, filter: &Filter) -> Version {
@@ -213,32 +213,36 @@ impl UnrealizedVecs {
     #[inline(always)]
     pub fn push(
         &mut self,
-        rows: &UTXORows<UnrealizedState>,
+        cohort_values: &UTXOValues<UnrealizedState>,
         spot: Cents,
         aggregate: &UTXOAggregate<UnrealizedState>,
     ) {
-        let profit = rows.map(|state| state.unrealized_profit);
+        let profit = cohort_values.map(|state| state.unrealized_profit);
         self.profit.stored.push(profit.core, profit.type_);
-        let loss = rows.map(|state| state.unrealized_loss);
+        let loss = cohort_values.map(|state| state.unrealized_loss);
         self.loss.stored.push(loss.core, loss.type_);
-        self.net_pnl.stored.push(rows.map(|state| {
+        self.net_pnl.stored.push(cohort_values.map(|state| {
             CentsSigned::new(
                 state.unrealized_profit.inner() as i64 - state.unrealized_loss.inner() as i64,
             )
         }));
-        let rows = aggregate.map(|state| UnrealizedAggregateBlockData::new(spot, state));
-        self.gross_pnl.push(rows.map(|row| row.gross_pnl));
+        let cohort_values = aggregate.map(|state| UnrealizedAggregateBlockData::new(spot, state));
+        self.gross_pnl
+            .push_additive(cohort_values.map(|values| values.gross_pnl));
         self.invested_capital_in_profit
-            .push(rows.map(|row| row.invested_capital_in_profit));
+            .push_additive(cohort_values.map(|values| values.invested_capital_in_profit));
         self.invested_capital_in_loss
-            .push(rows.map(|row| row.invested_capital_in_loss));
-        self.pain_index.push(rows.map(|row| row.pain_index));
-        self.greed_index.push(rows.map(|row| row.greed_index));
-        self.net_sentiment.push(rows.map(|row| row.net_sentiment));
+            .push_additive(cohort_values.map(|values| values.invested_capital_in_loss));
+        self.pain_index
+            .push(cohort_values.map(|values| values.pain_index));
+        self.greed_index
+            .push(cohort_values.map(|values| values.greed_index));
+        self.net_sentiment
+            .push(cohort_values.map(|values| values.net_sentiment));
         self.capitalized_cap_in_profit_raw
-            .push(&rows.map(|row| row.capitalized_cap_in_profit_raw));
+            .push(&cohort_values.map(|values| values.capitalized_cap_in_profit_raw));
         self.capitalized_cap_in_loss_raw
-            .push(&rows.map(|row| row.capitalized_cap_in_loss_raw));
+            .push(&cohort_values.map(|values| values.capitalized_cap_in_loss_raw));
     }
 
     pub fn min_resume_len(&self) -> usize {
@@ -261,16 +265,14 @@ impl UnrealizedVecs {
         let mut vecs = self.profit.stored.collect_vecs_mut();
         vecs.extend(self.loss.stored.collect_vecs_mut());
         vecs.extend(self.net_pnl.stored.collect_vecs_mut());
-        vecs.extend([
-            self.gross_pnl.stored_mut(),
-            self.invested_capital_in_profit.stored_mut(),
-            self.invested_capital_in_loss.stored_mut(),
-            self.pain_index.stored_mut(),
-            self.greed_index.stored_mut(),
-            self.net_sentiment.stored_mut(),
-            self.capitalized_cap_in_profit_raw.stored_mut(),
-            self.capitalized_cap_in_loss_raw.stored_mut(),
-        ]);
+        vecs.extend(self.gross_pnl.collect_vecs_mut());
+        vecs.extend(self.invested_capital_in_profit.collect_vecs_mut());
+        vecs.extend(self.invested_capital_in_loss.collect_vecs_mut());
+        vecs.extend(self.pain_index.collect_vecs_mut());
+        vecs.extend(self.greed_index.collect_vecs_mut());
+        vecs.extend(self.net_sentiment.collect_vecs_mut());
+        vecs.extend(self.capitalized_cap_in_profit_raw.collect_vecs_mut());
+        vecs.extend(self.capitalized_cap_in_loss_raw.collect_vecs_mut());
         vecs
     }
 }

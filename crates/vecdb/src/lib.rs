@@ -58,13 +58,12 @@ pub use traits::{
 pub use variants::{
     AggFold, Budgeted, BudgetedCachedVec, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue,
     CacheBudget, CachedBoxedVec, CachedReadableVec, CachedVec, CachedVecBudget, CachedVecStrategy,
-    ColumnId, ColumnarVec, CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange,
-    DeltaOp, DeltaRate, DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec, LazyAggVec,
-    LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec, MapOption, MutableVec,
-    Negate, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor, OverflowVecValue,
-    Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
-    ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
-    ReadWriteRawVec, ReadableColumnarVec, UnaryTransform, VecReader, VecReaderCursor,
+    CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate,
+    DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec,
+    MapOption, MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader,
+    OverflowVecReaderCursor, OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor,
+    RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
+    ReadWriteRawVec, UnaryTransform, VecReader, VecReaderCursor,
 };
 #[cfg(feature = "lz4")]
 pub use variants::{LZ4Strategy, LZ4Vec, LZ4VecValue};

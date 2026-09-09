@@ -1,5 +1,4 @@
 mod aggregated;
-mod columnar;
 mod count_rolling_average;
 mod cumulative_average;
 mod cumulative_rolling;
@@ -19,7 +18,6 @@ mod std_dev;
 mod stored;
 
 pub use aggregated::PerBlockAggregated;
-pub use columnar::*;
 pub use count_rolling_average::CountPerBlockRollingAverage;
 pub use cumulative_average::PerBlockCumulativeAverage;
 pub use cumulative_rolling::PerBlockCumulativeRolling;
@@ -37,3 +35,5 @@ pub use rolling::PerBlockRolling;
 pub use rolling_average::PerBlockRollingAverage;
 pub use std_dev::StdDevPerBlock;
 pub use stored::PerBlock;
+mod lazy_count_cumulative_rolling;
+pub use lazy_count_cumulative_rolling::LazyCountPerBlockCumulativeRolling;

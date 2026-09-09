@@ -24,6 +24,22 @@ pub struct PriceBands<T> {
 impl_named_row_formattable!(PriceBands { floor, level });
 
 impl<T> PriceBands<T> {
+    pub fn try_from_fn<E>(mut create: impl FnMut(PriceBandId) -> Result<T, E>) -> Result<Self, E> {
+        Ok(Self {
+            floor: Percentiles {
+                pct95: create(PriceBandId::FloorPct95)?,
+                pct98: create(PriceBandId::FloorPct98)?,
+                pct99: create(PriceBandId::FloorPct99)?,
+                pct99_5: create(PriceBandId::FloorPct99_5)?,
+                pct99_9: create(PriceBandId::FloorPct99_9)?,
+            },
+            level: Levels::try_from_fn(|id| create(id.into()))?,
+        })
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.floor.iter_mut().chain(self.level.iter_mut())
+    }
     pub fn from_fn(mut create: impl FnMut(PriceBandId) -> T) -> Self {
         Self {
             floor: Percentiles {

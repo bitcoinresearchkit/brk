@@ -12,15 +12,15 @@ mod unrealized;
 
 pub use activity::{ActivitySources, ActivityVecs};
 pub use bitview_vecs::AdditiveAggregateFiatPerBlock;
-pub use bitview_vecs::UTXOTermColumns;
+pub use bitview_vecs::UTXOTermSources;
 pub use bitview_vecs::{
     AdditiveAggregateFiatPerBlockCumulativeWithSums, AggregateFiatPerBlock,
     AggregatePercentPerBlock, AggregatePriceWithRatioPerBlock,
 };
-pub use bitview_vecs::{ColumnarAmount, ColumnarAmountValue};
+pub use bitview_vecs::{AmountSources, AmountValueSources};
 pub use bitview_vecs::{
-    CumulativeUTXOColumns, CumulativeUTXOCoreColumns, CumulativeUTXOCoreValueColumns,
-    CumulativeUTXOValueColumns, ExactUTXOColumns, UTXOColumns, UTXOCoreColumns, UTXOTypedColumns,
+    CumulativeUTXOCoreSources, CumulativeUTXOCoreValueSources, CumulativeUTXOSources,
+    CumulativeUTXOValueSources, ExactUTXOSources, UTXOCoreSources, UTXOSources, UTXOTypedSources,
 };
 pub use cohorts::CohortMetrics;
 pub use cost_basis::CostBasisBlockData;
