@@ -68,7 +68,7 @@ impl ComputePlugin for Vecs {
         let cointime_wakefulness =
             AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1.0);
         let age_supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age.range)
+            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age)
                 .sats
                 .day1
                 .0

@@ -1,8 +1,9 @@
 use brk_types::OutputType;
 
 use crate::{
-    AgeId, AgeRangeId, AmountId, CLASS_NAMES, ClassId, ENTRY_NAMES, EPOCH_NAMES, EntryPrice,
-    EpochId, OP_RETURN, SPENDABLE_TYPE_NAMES, TERM_NAMES, Term, UTXO_ALL_NAME,
+    AgeRangeId, AmountRangeId, CLASS_NAMES, ClassId, ENTRY_NAMES, EPOCH_NAMES, EntryPrice, EpochId,
+    LTH_AGE_RANGE_IDS, OP_RETURN, SPENDABLE_TYPE_NAMES, STH_AGE_RANGE_IDS, TERM_NAMES, Term,
+    UTXO_ALL_NAME,
 };
 
 /// A supported cohort, composed from the selectors of its constituent groups.
@@ -10,8 +11,8 @@ use crate::{
 pub enum CohortId {
     All,
     Term(Term),
-    Age(AgeId),
-    Amount(AmountId),
+    Age(AgeRangeId),
+    Amount(AmountRangeId),
     Epoch(EpochId),
     Class(ClassId),
     Entry(EntryPrice),
@@ -39,16 +40,13 @@ impl CohortId {
 
     /// Disjoint age ranges making up an age-based or all-chain cohort.
     pub fn age_ranges(self) -> Option<impl Iterator<Item = AgeRangeId>> {
-        let bounds = match self {
-            Self::All => 0..usize::MAX,
-            Self::Term(Term::Sth) => 0..Term::THRESHOLD_HOURS,
-            Self::Term(Term::Lth) => Term::THRESHOLD_HOURS..usize::MAX,
-            Self::Age(age) => age.bounds(),
+        let ranges = match self {
+            Self::All => AgeRangeId::ALL,
+            Self::Term(Term::Sth) => STH_AGE_RANGE_IDS,
+            Self::Term(Term::Lth) => LTH_AGE_RANGE_IDS,
+            Self::Age(age) => &AgeRangeId::ALL[age.index()..=age.index()],
             _ => return None,
         };
-        Some(AgeRangeId::ALL.iter().copied().filter(move |id| {
-            let range = id.bounds();
-            range.start >= bounds.start && range.end <= bounds.end
-        }))
+        Some(ranges.iter().copied())
     }
 }

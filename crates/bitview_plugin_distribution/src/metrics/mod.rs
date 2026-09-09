@@ -20,7 +20,7 @@ pub use bitview_vecs::{
 pub use bitview_vecs::{AmountSources, AmountValueSources};
 pub use bitview_vecs::{
     CumulativeUTXOCoreSources, CumulativeUTXOCoreValueSources, CumulativeUTXOSources,
-    CumulativeUTXOValueSources, ExactUTXOSources, UTXOCoreSources, UTXOSources, UTXOTypedSources,
+    CumulativeUTXOValueSources, UTXOCoreSources, UTXOSources, UTXOTypedSources,
 };
 pub use cohorts::CohortMetrics;
 pub use cost_basis::CostBasisBlockData;

@@ -1,8 +1,6 @@
 use bitview_collections::RarityPercentiles;
-use bitview_plugin_indexer::Indexer;
-use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{PerBlock, Price};
+use bitview_vecs::{IndexSources, PerBlock, Price};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, RARITY_PERCENTILES_LEN, RarityPercentileId, StoredI8, Version};
@@ -46,7 +44,7 @@ pub fn forced_import(
     db: &Database,
     prefix: &str,
     version: Version,
-    mappings: &MappingsVecs,
+    mappings: &IndexSources,
 ) -> Result<RarityMeterInner> {
     let version = version + VERSION;
     let prices = RarityPercentiles::try_from_fn(|id| {
@@ -71,10 +69,9 @@ pub fn compute(
     components: &[&Component],
     lower_components: &[[&impl ReadableVec<Height, Option<Cents>>; 5]],
     spot: &impl ReadableVec<Height, Cents>,
-    indexer: &Indexer,
+    starting_height: Height,
     exit: &Exit,
 ) -> Result<()> {
-    let starting_height = indexer.safe_lengths().height;
     let dependency_version = components
         .iter()
         .map(|component| component::boundary_version(component))
@@ -124,18 +121,17 @@ pub fn compute(
         exit,
     )?;
 
-    inner.compute_index(spot, indexer, exit)?;
-    inner.compute_score(components, lower_components, spot, indexer, exit)
+    inner.compute_index(spot, starting_height, exit)?;
+    inner.compute_score(components, lower_components, spot, starting_height, exit)
 }
 
 pub fn compute_combined(
     inner: &mut RarityMeterInner,
     meters: &[&RarityMeterInner],
     spot: &impl ReadableVec<Height, Cents>,
-    indexer: &Indexer,
+    starting_height: Height,
     exit: &Exit,
 ) -> Result<()> {
-    let starting_height = indexer.safe_lengths().height;
     let dependency_version = meters.iter().map(|meter| meter.prices_version()).sum();
     let source_end = meters
         .iter()
@@ -165,8 +161,8 @@ pub fn compute_combined(
         exit,
     )?;
 
-    inner.compute_index(spot, indexer, exit)?;
-    inner.compute_combined_score(meters, indexer, exit)
+    inner.compute_index(spot, starting_height, exit)?;
+    inner.compute_combined_score(meters, starting_height, exit)
 }
 
 impl RarityMeterInner {
@@ -194,9 +190,16 @@ impl RarityMeterInner {
                 .height
                 .validate_computed_version_or_reset(version)?;
         }
-        let start = self.prices_len().min(usize::from(starting_height));
-        for price in self.prices.iter_mut() {
-            price.cents.height.truncate_if_needed_at(start)?;
+        let start = self
+            .prices_len()
+            .min(usize::from(starting_height))
+            .min(source_end);
+        {
+            let _lock = exit.lock();
+            for price in self.prices.iter_mut() {
+                price.cents.height.truncate_if_needed_at(start)?;
+                price.cents.height.write()?;
+            }
         }
         let mut chunk_start = start;
         while chunk_start < source_end {
@@ -242,10 +245,9 @@ impl RarityMeterInner {
     fn compute_index(
         &mut self,
         spot: &impl ReadableVec<Height, Cents>,
-        indexer: &Indexer,
+        starting_height: Height,
         exit: &Exit,
     ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
         let bands = self.prices.boundary_refs().map(|price| &price.cents.height);
         let source_end = bands
             .iter()
@@ -282,10 +284,9 @@ impl RarityMeterInner {
         components: &[&Component],
         lower_components: &[[&impl ReadableVec<Height, Option<Cents>>; 5]],
         spot: &impl ReadableVec<Height, Cents>,
-        indexer: &Indexer,
+        starting_height: Height,
         exit: &Exit,
     ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
         let dependency_version = components
             .iter()
             .map(|component| component::boundary_version(component))
@@ -348,10 +349,9 @@ impl RarityMeterInner {
     fn compute_combined_score(
         &mut self,
         meters: &[&RarityMeterInner],
-        indexer: &Indexer,
+        starting_height: Height,
         exit: &Exit,
     ) -> Result<()> {
-        let starting_height = indexer.safe_lengths().height;
         let dependency_version = meters
             .iter()
             .map(|meter| meter.score.height.version())

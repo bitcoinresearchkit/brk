@@ -18,6 +18,7 @@ use components::Components;
 use extremes::Extremes;
 use inner::RarityMeterInner;
 use rayon::{join, prelude::*};
+use reference_prices::ReferencePrices;
 use vecdb::{Database, Rw, StorageMode};
 
 mod band;
@@ -30,6 +31,13 @@ mod extreme;
 mod extremes;
 mod has;
 mod inner;
+#[cfg(test)]
+mod recovery_tests;
+mod reference_price;
+mod reference_prices;
+#[cfg(test)]
+#[path = "../../bitview_vecs/tests/common/mod.rs"]
+mod test_common;
 mod threshold_vecs;
 
 pub use dependencies::Dependencies;
@@ -43,6 +51,10 @@ pub const ID: PluginId = STORAGE.id();
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     db: Database,
+
+    /// Model-specific realized prices reconstructed from the distribution's
+    /// disjoint raw capitalization and supply histories.
+    pub reference_prices: ReferencePrices<M>,
 
     /// Reference-price components used by the Rarity Meter. A UTXO's creation
     /// price is Bitcoin's spot price when that output was created. Realized
@@ -77,6 +89,8 @@ impl Vecs {
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let version = STORAGE.schema_version();
+        let reference_prices =
+            ReferencePrices::forced_import(context.cache_budget(), &db, version, mappings)?;
         let this = Self {
             components: components::forced_import(
                 context.cache_budget(),
@@ -84,9 +98,11 @@ impl Vecs {
                 version,
                 mappings,
                 distribution,
+                &reference_prices,
                 cointime,
                 coinflow,
             )?,
+            reference_prices,
             extremes: extremes::forced_import(context.cache_budget(), &db, version, mappings)?,
             full: inner::forced_import(
                 context.cache_budget(),
@@ -148,6 +164,26 @@ impl ComputePlugin for Vecs {
         let spot = &prices.spot.cents.height;
         let metrics = &distribution.cohorts;
         let realized = &metrics.realized;
+        let cap_raw = &realized.cap_raw;
+        let supply = &metrics.supply.total.cohorts.utxo;
+
+        self.reference_prices.compute(
+            indexer.safe_lengths().height,
+            [
+                &cap_raw.term.short,
+                &cap_raw.term.long,
+                &cap_raw.age._4m_to_5m,
+                &cap_raw.age._5m_to_6m,
+            ],
+            [
+                &supply.term.short.sats.height,
+                &supply.term.long.sats.height,
+                &supply.age._4m_to_5m.sats.height,
+                &supply.age._5m_to_6m.sats.height,
+            ],
+            spot,
+            exit,
+        )?;
 
         let (components_result, extremes_result) = join(
             || {
@@ -155,6 +191,7 @@ impl ComputePlugin for Vecs {
                     &mut self.components,
                     indexer,
                     distribution,
+                    &self.reference_prices,
                     cointime,
                     coinflow,
                     exit,
@@ -230,7 +267,14 @@ impl ComputePlugin for Vecs {
             inner.needs_compute(components, lower_components, spot, starting_height)
         });
         let compute = |(inner, components, lower_components)| {
-            inner::compute(inner, components, lower_components, spot, indexer, exit)
+            inner::compute(
+                inner,
+                components,
+                lower_components,
+                spot,
+                starting_height,
+                exit,
+            )
         };
 
         if has_work {
@@ -244,7 +288,7 @@ impl ComputePlugin for Vecs {
             &mut self.full,
             &[&self.local, &self.cycle],
             spot,
-            indexer,
+            starting_height,
             exit,
         )?;
 

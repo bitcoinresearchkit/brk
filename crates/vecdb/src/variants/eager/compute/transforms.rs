@@ -13,6 +13,7 @@ where
     V: StoredVec,
 {
     /// Computes a fixed output range from source data prepared in bounded batches.
+    /// Clamps the retained prefix to `to` and persists it even without new rows.
     /// The callback must append exactly one value for every index in its range.
     pub fn compute_batched_to<F>(
         &mut self,
@@ -33,7 +34,11 @@ where
         }
 
         self.validate_computed_version_or_reset(version)?;
-        self.truncate_if_needed(max_from)?;
+        {
+            let _lock = exit.lock();
+            self.truncate_if_needed_at(max_from.to_usize().min(to))?;
+            self.write()?;
+        }
 
         while self.len() < to {
             let from = self.len();
@@ -45,11 +50,6 @@ where
                 ));
             }
 
-            let _lock = exit.lock();
-            self.write()?;
-        }
-
-        if self.is_dirty() {
             let _lock = exit.lock();
             self.write()?;
         }
@@ -68,6 +68,7 @@ where
     where
         F: FnMut(V::I) -> (V::I, V::T),
     {
+        let max_from = V::I::from(max_from.to_usize().min(to));
         self.compute_init(version, max_from, exit, |this| {
             let from = this.len();
             let end = this.batch_end(to);
@@ -128,6 +129,7 @@ where
         A: VecValue,
         F: FnMut((V::I, A, &Self)) -> (V::I, V::T),
     {
+        let max_from = V::I::from(max_from.to_usize().min(source.len()));
         self.compute_init(source.version(), max_from, exit, |this| {
             let skip = this.len();
             let end = this.batch_end(source.len());

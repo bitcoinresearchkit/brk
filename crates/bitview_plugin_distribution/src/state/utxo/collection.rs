@@ -76,8 +76,8 @@ impl UTXOStates {
         for ((state, supply), unspent_count) in self
             .age_range
             .iter_mut()
-            .zip(metrics.supply.total.cohorts.utxo.age.range.iter())
-            .zip(metrics.outputs.unspent_count.cohorts.utxo.age.range.iter())
+            .zip(metrics.supply.total.cohorts.utxo.age.iter())
+            .zip(metrics.outputs.unspent_count.cohorts.utxo.age.iter())
         {
             if Self::import_one(state, &supply.sats.height, &unspent_count.height, height)?
                 != height
@@ -124,7 +124,7 @@ impl UTXOStates {
         for ((state, supply), unspent_count) in self
             .amount_range
             .iter_mut()
-            .zip(metrics.supply.total.cohorts.utxo.utxo_amount.range.iter())
+            .zip(metrics.supply.total.cohorts.utxo.utxo_amount.iter())
             .zip(
                 metrics
                     .outputs
@@ -132,7 +132,6 @@ impl UTXOStates {
                     .cohorts
                     .utxo
                     .utxo_amount
-                    .range
                     .iter(),
             )
         {

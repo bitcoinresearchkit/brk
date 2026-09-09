@@ -12,14 +12,8 @@ pub fn compute(
     starting_height: Height,
     exit: &Exit,
 ) -> Result<()> {
-    let supplies = &distribution.cohorts.supply.total.stored.amount.range;
-    let counts = &distribution
-        .cohorts
-        .outputs
-        .unspent_count
-        .stored
-        .amount
-        .range;
+    let supplies = &distribution.cohorts.supply.total.stored.amount;
+    let counts = &distribution.cohorts.outputs.unspent_count.stored.amount;
     let end = supplies
         .iter()
         .map(AnyVec::len)

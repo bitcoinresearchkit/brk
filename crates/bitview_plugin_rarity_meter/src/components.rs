@@ -10,7 +10,7 @@ use brk_types::Version;
 use rayon::prelude::*;
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
-use super::{Component, component};
+use super::{Component, component, reference_prices::ReferencePrices};
 
 #[derive(Traversable)]
 pub struct Components<M: StorageMode = Rw> {
@@ -70,12 +70,14 @@ pub struct Components<M: StorageMode = Rw> {
     pub coinflow_price: Component<M>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
     distribution: &DistributionVecs,
+    reference_prices: &ReferencePrices,
     cointime: &CointimeVecs,
     coinflow: &CoinflowVecs,
 ) -> Result<Components> {
@@ -96,10 +98,10 @@ pub fn forced_import(
         sth_capitalized_price: import!("sth_capitalized_price", capitalized_price.sth),
         lth_realized_price: import!("lth_realized_price", realized_price.term.long),
         lth_capitalized_price: import!("lth_capitalized_price", capitalized_price.lth),
-        over_6m_realized_price: import!("over_6m_realized_price", realized_price.age.over._6m),
-        over_4m_realized_price: import!("over_4m_realized_price", realized_price.age.over._4m),
-        under_4m_realized_price: import!("under_4m_realized_price", realized_price.age.under._4m),
-        under_6m_realized_price: import!("under_6m_realized_price", realized_price.age.under._6m),
+        over_6m_realized_price: import!("over_6m_realized_price", reference_prices.over_6m),
+        over_4m_realized_price: import!("over_4m_realized_price", reference_prices.over_4m),
+        under_4m_realized_price: import!("under_4m_realized_price", reference_prices.under_4m),
+        under_6m_realized_price: import!("under_6m_realized_price", reference_prices.under_6m),
         vaulted_price: import!("vaulted_price", cointime.prices.vaulted),
         active_price: import!("active_price", cointime.prices.active),
         true_market_mean_price: import!("true_market_mean_price", cointime.prices.true_market_mean),
@@ -112,6 +114,7 @@ pub fn compute(
     components: &mut Components,
     indexer: &Indexer,
     distribution: &DistributionVecs,
+    reference_prices: &ReferencePrices,
     cointime: &CointimeVecs,
     coinflow: &CoinflowVecs,
     exit: &Exit,
@@ -148,19 +151,19 @@ pub fn compute(
         ),
         (
             &mut components.over_6m_realized_price,
-            &realized_price.age.over._6m.relative.ratio.height,
+            &reference_prices.over_6m.relative.ratio.height,
         ),
         (
             &mut components.over_4m_realized_price,
-            &realized_price.age.over._4m.relative.ratio.height,
+            &reference_prices.over_4m.relative.ratio.height,
         ),
         (
             &mut components.under_4m_realized_price,
-            &realized_price.age.under._4m.relative.ratio.height,
+            &reference_prices.under_4m.relative.ratio.height,
         ),
         (
             &mut components.under_6m_realized_price,
-            &realized_price.age.under._6m.relative.ratio.height,
+            &reference_prices.under_6m.relative.ratio.height,
         ),
         (
             &mut components.vaulted_price,

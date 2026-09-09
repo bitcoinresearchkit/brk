@@ -35,7 +35,7 @@ impl ComputePlugin for Vecs {
             ..
         } = self;
         let subsidy = &mining.rewards.subsidy;
-        let realized_cap = &distribution.cohorts.realized.cap.cohorts.utxo.age.range;
+        let realized_cap = &distribution.cohorts.realized.cap.cohorts.utxo.age;
         let supply = &distribution.cohorts.supply;
         let supply_total_sats = &supply.total.cohorts.utxo.all.sats.height;
 

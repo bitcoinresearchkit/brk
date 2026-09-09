@@ -66,7 +66,7 @@ where
     }
 
     /// Helper that repeatedly calls a compute function until it completes.
-    /// Writes between iterations when batch limit is hit.
+    /// Persists every successful batch, including a truncation-only final batch.
     pub fn repeat_until_complete<F>(&mut self, exit: &Exit, mut f: F) -> Result<()>
     where
         F: FnMut(&mut Self) -> Result<()>,
@@ -77,7 +77,7 @@ where
             if batch_limit_reached {
                 debug!("Batch limit reached, saving to disk...");
             }
-            if self.is_dirty() {
+            {
                 let _lock = exit.lock();
                 self.write()?;
             }

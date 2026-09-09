@@ -2,9 +2,9 @@ use std::ptr;
 
 use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, AmountRangeId, CohortContext, CohortId, SpendableTypeId,
-    UTXOOverlappingValues, UTXOValues,
+    UTXOAggregate, UTXOValues,
 };
-use bitview_vecs::{AmountSources, ExactUTXOSources, UTXOSources};
+use bitview_vecs::{AmountSources, UTXOSources};
 use brk_types::{Cents, Height, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{CacheBudget, Database, ReadableVec};
@@ -16,12 +16,12 @@ fn exact_totals_never_sum_independently_computed_values() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut sources =
-        ExactUTXOSources::<Cents>::forced_import(&CACHE, &db, "exact_prices", Version::ONE)
-            .unwrap();
+        UTXOSources::<Cents>::forced_import(&CACHE, &db, "exact_prices", Version::ONE).unwrap();
     let maximum = Cents::from(u64::MAX - 1);
     let direct = UTXOValues::<Cents>::default().map(|_| maximum);
-    let overlapping = UTXOOverlappingValues::<Cents>::default().map(|_| Cents::from(17_u64));
-    sources.push(direct, overlapping);
+    let aggregate = UTXOAggregate::<Cents>::default().map(|_| Cents::from(17_u64));
+    sources.push_exact(direct, aggregate);
+    assert_eq!(sources.collect_vecs_mut().len(), 77);
     for source in sources.collect_vecs_mut() {
         source.write().unwrap();
     }
@@ -31,26 +31,21 @@ fn exact_totals_never_sum_independently_computed_values() {
     );
     assert!(
         sources
-            .stored
             .cohorts
             .age
-            .range
             .iter()
             .all(|source| source.collect_one_at(0) == Some(maximum))
     );
     assert!(
         sources
-            .stored
             .amount
-            .range
             .iter()
             .all(|source| source.collect_one_at(0) == Some(maximum))
     );
     assert!(
         sources
-            .stored
-            .amount
-            .under
+            .cohorts
+            .term
             .iter()
             .all(|source| source.collect_one_at(0) == Some(Cents::from(17_u64)))
     );
@@ -69,13 +64,13 @@ fn source_selection_borrows_the_named_owner_for_each_cohort_family() {
     for id in AgeRangeId::ALL {
         assert!(ptr::eq(
             sources.get(id.cohort()).unwrap(),
-            id.select(&sources.cohorts.age.range)
+            id.select(&sources.cohorts.age)
         ));
     }
     for id in AmountRangeId::ALL {
         assert!(ptr::eq(
             sources.get(id.cohort()).unwrap(),
-            id.select(&sources.amount.range)
+            id.select(&sources.amount)
         ));
     }
     for id in SpendableTypeId::ALL {
@@ -94,12 +89,11 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
     {
         let db = Database::open(dir.path()).unwrap();
         let mut sources =
-            ExactUTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+            UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
         let mut direct = UTXOValues::default();
         direct.core.age_range = AgeRange::from_fn(|id| StoredU64::from(id.index() as u64 + 1));
-        let overlapping =
-            UTXOOverlappingValues::default().map(|_: &StoredU64| StoredU64::from(17_u64));
-        sources.push(direct, overlapping);
+        let aggregate = UTXOAggregate::default().map(|_: &StoredU64| StoredU64::from(17_u64));
+        sources.push_exact(direct, aggregate);
         for vec in sources.collect_vecs_mut() {
             assert_eq!(vec.len(), 1);
             expected_names.push(vec.name().to_owned());
@@ -109,7 +103,7 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
     }
     let db = Database::open(dir.path()).unwrap();
     let mut sources =
-        ExactUTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
+        UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "exact", version).unwrap();
     assert_eq!(sources.min_len(), 1);
     let names: Vec<_> = sources
         .collect_vecs_mut()
@@ -121,7 +115,7 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
         sources.get(CohortId::All).unwrap().collect_one_at(0),
         Some(StoredU64::from(17_u64))
     );
-    let values = sources.stored.collect_last().unwrap();
+    let values = sources.collect_last().unwrap();
     for (index, value) in values.core.age_range.iter().enumerate() {
         assert_eq!(*value, StoredU64::from(index as u64 + 1));
     }

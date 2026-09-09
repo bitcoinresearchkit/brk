@@ -6,7 +6,7 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Version};
 use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
 
-use crate::metrics::ExactUTXOSources;
+use crate::metrics::UTXOSources;
 
 #[derive(Traversable)]
 pub struct RealizedPriceByCohort<M: StorageMode = Rw> {
@@ -14,7 +14,7 @@ pub struct RealizedPriceByCohort<M: StorageMode = Rw> {
     pub cohorts: UTXOGroups<LazyPriceWithRatioPerBlock>,
     /// Reported in cents per BTC.
     #[traversable(hidden)]
-    pub stored: ExactUTXOSources<Cents, M>,
+    pub stored: UTXOSources<Cents, M>,
 }
 
 impl RealizedPriceByCohort {
@@ -26,7 +26,7 @@ impl RealizedPriceByCohort {
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let stored = ExactUTXOSources::forced_import(cache, db, "realized_price_cents", version)?;
+        let stored = UTXOSources::forced_import(cache, db, "realized_price_cents", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, "realized_price");
             LazyPriceWithRatioPerBlock::from_height_source(

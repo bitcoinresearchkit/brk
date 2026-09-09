@@ -52,25 +52,24 @@ impl ComputePlugin for Vecs {
                     .transfer_volume
                     .cohorts
                     .utxo
-                    .age
-                    .range,
+                    .age,
             )
             .cumulative
             .sats
             .height
         });
         let supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age.range)
+            &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age)
                 .sats
                 .height
         });
         let loss_supplies = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.supply.in_loss.cohorts.age.range)
+            &id.select(&distribution.cohorts.supply.in_loss.cohorts.age)
                 .sats
                 .height
         });
         let realized_caps = AgeRange::from_fn(|id| {
-            &id.select(&distribution.cohorts.realized.cap.cohorts.utxo.age.range)
+            &id.select(&distribution.cohorts.realized.cap.cohorts.utxo.age)
                 .cents
                 .height
         });

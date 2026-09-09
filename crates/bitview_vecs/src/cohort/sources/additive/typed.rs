@@ -1,7 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    CohortContext, CohortId, SpendableType, SpendableTypeId, UTXOCoreValues, UTXOOverlappingValues,
+    CohortContext, CohortId, SpendableType, SpendableTypeId, UTXOAggregate, UTXOCoreValues,
 };
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -61,16 +61,16 @@ impl<T: PcoVecValue + AddAssign> UTXOTypedSources<T> {
     }
 
     pub fn push(&mut self, core: UTXOCoreValues<T>, type_: SpendableType<T>) {
-        self.push_with_overlapping(core, type_, None);
+        self.push_with_aggregate(core, type_, None);
     }
 
-    pub(crate) fn push_with_overlapping(
+    pub(crate) fn push_with_aggregate(
         &mut self,
         core: UTXOCoreValues<T>,
         type_: SpendableType<T>,
-        overlapping: Option<&UTXOOverlappingValues<T>>,
+        aggregate: Option<&UTXOAggregate<T>>,
     ) {
-        self.core.push_with_overlapping(core, overlapping);
+        self.core.push_with_aggregate(core, aggregate);
         for (target, &value) in self.type_.iter_mut().zip(type_.iter()) {
             target.push(value);
         }

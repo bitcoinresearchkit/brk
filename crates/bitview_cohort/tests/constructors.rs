@@ -27,10 +27,6 @@ fn iteration_and_mutation_follow_cohort_order() {
     check!(ProfitabilityRange, ProfitabilityRangeId);
     check!(UTXOAggregate, UTXOAggregateId);
     check!(UTXOAllAndSth, UTXOAllAndSthId);
-    check!(UnderAge, UnderAgeId);
-    check!(OverAge, OverAgeId);
-    check!(UnderAmount, UnderAmountId);
-    check!(OverAmount, OverAmountId);
 
     let mut terms = ByTerm::from_fn(|term| term);
     assert!(terms.iter().copied().eq([Term::Sth, Term::Lth]));
@@ -57,7 +53,7 @@ fn fallible_construction_stops_at_the_first_error() {
 fn utxo_and_address_names_do_not_collide() {
     let groups = UTXOAndAddrGroups {
         utxo: UTXOGroups::new(|_| ()),
-        addr_balance: Amount::new(|_| ()),
+        addr_balance: AmountRange::new(|_| ()),
     };
     let mut names = BTreeSet::new();
     groups.map_with_id(|context, id, _| {

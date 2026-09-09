@@ -1,4 +1,4 @@
-use bitview_cohort::{Amount, AmountRange, CohortContext, CohortId};
+use bitview_cohort::{AmountRange, CohortContext, CohortId};
 use bitview_transforms::{StoredU64ToCents, StoredU64ToSats};
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -14,7 +14,7 @@ pub struct AmountValueSources<S: Clone, M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub series: Amount<S>,
+    pub series: AmountRange<S>,
     #[traversable(hidden)]
     pub stored: SatsCents<AmountSources<StoredU64, (), M>>,
 }
@@ -52,17 +52,17 @@ impl<S: Clone> AmountValueSources<S> {
             version,
             |_, _| (),
         )?;
-        let series = Amount::from_fn(|id| {
+        let series = AmountRange::from_fn(|id| {
             let name = context.metric_name(CohortId::Amount(id), metric);
             let sats = LazyVec::transformed::<StoredU64ToSats>(
                 &format!("{name}_cumulative_sats"),
                 version,
-                sats.stored.get(id).read_only_boxed_clone(),
+                id.select(&sats.stored).read_only_boxed_clone(),
             );
             let cents = LazyVec::transformed::<StoredU64ToCents>(
                 &format!("{name}_cumulative_cents"),
                 version,
-                cents.stored.get(id).read_only_boxed_clone(),
+                id.select(&cents.stored).read_only_boxed_clone(),
             );
             build(&name, sats, cents)
         });

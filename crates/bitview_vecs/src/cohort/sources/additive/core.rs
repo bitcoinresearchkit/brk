@@ -1,8 +1,8 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    AgeRange, ByAge, ByEntry, ByEpoch, ByTerm, Class, CohortContext, CohortId, UTXOCoreValues,
-    UTXOGroupCore, UTXOGroupsWithoutAmountOrType, UTXOOverlappingValues,
+    AgeRange, ByEntry, ByEpoch, Class, CohortContext, CohortId, UTXOAggregate, UTXOCoreValues,
+    UTXOGroupsWithoutAmountOrType,
 };
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -49,37 +49,20 @@ impl<T: PcoVecValue + AddAssign> UTXOCoreSources<T> {
     }
 
     pub fn push(&mut self, cohort_values: impl Into<UTXOCoreValues<T>>) {
-        self.push_with_overlapping(cohort_values.into(), None);
+        self.push_with_aggregate(cohort_values.into(), None);
     }
 
-    pub(crate) fn push_with_overlapping(
+    pub(crate) fn push_with_aggregate(
         &mut self,
         cohort_values: UTXOCoreValues<T>,
-        overlapping: Option<&UTXOOverlappingValues<T>>,
+        aggregate: Option<&UTXOAggregate<T>>,
     ) {
-        let values = if let Some(overlapping) = overlapping {
-            UTXOGroupsWithoutAmountOrType {
-                core: UTXOGroupCore {
-                    all: overlapping.aggregate.all,
-                    age: ByAge {
-                        range: cohort_values.age_range,
-                        under: overlapping.under_age.clone(),
-                        over: overlapping.over_age.clone(),
-                    },
-                    epoch: cohort_values.epoch,
-                    class: cohort_values.class,
-                    entry: cohort_values.entry,
-                },
-                term: ByTerm {
-                    short: overlapping.aggregate.sth,
-                    long: overlapping.aggregate.lth,
-                },
-            }
-        } else {
-            UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
-                cohort_values.value(cohort_id).expect("core cohort")
-            })
-        };
+        let values = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            aggregate
+                .and_then(|values| values.get(cohort_id))
+                .copied()
+                .unwrap_or_else(|| cohort_values.value(cohort_id).expect("core cohort"))
+        });
         for (target, &value) in self.cohorts.iter_mut().zip(values.iter()) {
             target.push(value);
         }
@@ -88,7 +71,7 @@ impl<T: PcoVecValue + AddAssign> UTXOCoreSources<T> {
     pub fn collect_last(&self) -> Option<UTXOCoreValues<T>> {
         Some(UTXOCoreValues {
             age_range: AgeRange::try_from_fn(|id| {
-                id.select(&self.cohorts.age.range).collect_last().ok_or(())
+                id.select(&self.cohorts.age).collect_last().ok_or(())
             })
             .ok()?,
             epoch: ByEpoch::try_from_fn(|id| {

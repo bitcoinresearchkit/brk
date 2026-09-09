@@ -76,7 +76,7 @@ pub fn forced_import(
     let import_supply = |side: &str, complement: bool| {
         AgeRangeId::series(CohortContext::Utxo, |id, name| {
             let name = format!("{name}_{side}_supply");
-            let supply = id.select(&distribution.cohorts.supply.total.stored.cohorts.age.range);
+            let supply = id.select(&distribution.cohorts.supply.total.stored.cohorts.age);
             let weight = id.select(&activity_sources);
             if complement {
                 LazySpotValuePerBlock::from_weighted_supply::<true>(

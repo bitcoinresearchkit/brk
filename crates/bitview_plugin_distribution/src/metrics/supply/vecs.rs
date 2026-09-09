@@ -1,6 +1,6 @@
 use bitview_cohort::{
-    AgeRange, AgeRangeId, CohortContext, CohortId, UTXOAndAddrGroups, UTXOGroupsWithoutAmount,
-    UTXOValues,
+    AgeRange, AgeRangeId, AmountRange, CohortContext, CohortId, UTXOAndAddrGroups,
+    UTXOGroupsWithoutAmount, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
@@ -95,21 +95,19 @@ impl SupplyVecs {
                 )
             }
         });
-        let addr_balance = total
-            .cohorts
-            .addr_balance
-            .series
-            .map_with_id(|cohort_id, total| {
-                SupplyBase::from_total(
-                    CohortContext::Addr,
-                    cohort_id,
-                    version + Version::ONE,
-                    total.clone(),
-                    all_supply,
-                    mappings,
-                    cached_starts,
-                )
-            });
+        let addr_balance = AmountRange::from_fn(|id| {
+            let cohort_id = id.cohort();
+            let total = id.select(&total.cohorts.addr_balance.series);
+            SupplyBase::from_total(
+                CohortContext::Addr,
+                cohort_id,
+                version + Version::ONE,
+                total.clone(),
+                all_supply,
+                mappings,
+                cached_starts,
+            )
+        });
         let bases = UTXOAndAddrGroups { utxo, addr_balance };
         let delta = bases.map_with_id(|_, _, base| base.delta.clone());
         let dominance = bases.map_with_id(|_, _, base| base.dominance.clone());

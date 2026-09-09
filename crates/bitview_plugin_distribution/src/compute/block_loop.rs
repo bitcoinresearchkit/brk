@@ -558,7 +558,7 @@ fn push_cohort_states(
     cohorts.push_activity(utxo_states, height_price);
     cohorts.push_realized(utxo_states);
     let all_capitalized_price =
-        cohorts.push_overlapping(utxo_states, height_price, &unrealized_states);
+        cohorts.push_aggregate(utxo_states, height_price, &unrealized_states);
 
     // Phase 3: reset per-block values
     utxo_states.reset_block();

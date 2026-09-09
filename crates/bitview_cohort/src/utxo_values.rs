@@ -2,10 +2,7 @@ use std::ops::AddAssign;
 
 use derive_more::{Deref, DerefMut};
 
-use crate::{
-    AmountId, AmountRange, OverAge, OverAmount, SpendableType, UTXOAggregate, UTXOCoreValues,
-    UTXOOverlappingValues, UnderAge, UnderAmount,
-};
+use crate::{AmountRange, SpendableType, UTXOAggregate, UTXOCoreValues};
 
 #[derive(Clone, Default, Deref, DerefMut)]
 pub struct UTXOValues<T> {
@@ -25,20 +22,11 @@ impl<T> UTXOValues<T> {
         }
     }
 
-    pub fn aggregate(&self) -> UTXOOverlappingValues<T>
+    pub fn aggregate(&self) -> UTXOAggregate<T>
     where
         T: AddAssign + Copy,
     {
-        let age_value = |id| self.core.value(id).expect("age cohort");
-        UTXOOverlappingValues {
-            aggregate: UTXOAggregate::from_fn(|id| age_value(id.cohort())),
-            under_age: UnderAge::new(age_value),
-            over_age: OverAge::new(age_value),
-            under_amount: UnderAmount::from_fn(|id| {
-                self.amount_range.aggregate(AmountId::Under(id))
-            }),
-            over_amount: OverAmount::from_fn(|id| self.amount_range.aggregate(AmountId::Over(id))),
-        }
+        UTXOAggregate::from_fn(|id| self.core.value(id.cohort()).expect("aggregate cohort"))
     }
 }
 
@@ -68,11 +56,8 @@ mod tests {
         cohort_values += cohort_values.map(|_| 2);
         cohort_values.map(|value| assert_eq!(*value, 3));
         let aggregates = cohort_values.aggregate();
-        assert_eq!(aggregates.aggregate.all, 3 * AGE_RANGE_COUNT as u64);
-        assert_eq!(
-            aggregates.aggregate.all,
-            aggregates.aggregate.sth + aggregates.aggregate.lth
-        );
+        assert_eq!(aggregates.all, 3 * AGE_RANGE_COUNT as u64);
+        assert_eq!(aggregates.all, aggregates.sth + aggregates.lth);
     }
 
     #[test]
@@ -96,35 +81,8 @@ mod tests {
                 .map(|range| 1u64 << range.index())
                 .sum::<u64>()
         };
-        let expected_amount =
-            |id: AmountId| id.ranges().map(|range| 1u64 << range.index()).sum::<u64>();
-
         UTXOAggregate::from_fn(|id| {
-            assert_eq!(
-                id.select(&aggregates.aggregate).0,
-                expected_age(id.cohort())
-            );
-        });
-        UnderAge::from_fn(|id| {
-            assert_eq!(
-                id.select(&aggregates.under_age).0,
-                expected_age(id.cohort())
-            );
-        });
-        OverAge::from_fn(|id| {
-            assert_eq!(id.select(&aggregates.over_age).0, expected_age(id.cohort()));
-        });
-        UnderAmount::from_fn(|id| {
-            assert_eq!(
-                id.select(&aggregates.under_amount).0,
-                expected_amount(AmountId::Under(id))
-            );
-        });
-        OverAmount::from_fn(|id| {
-            assert_eq!(
-                id.select(&aggregates.over_amount).0,
-                expected_amount(AmountId::Over(id))
-            );
+            assert_eq!(id.select(&aggregates).0, expected_age(id.cohort()));
         });
     }
 }

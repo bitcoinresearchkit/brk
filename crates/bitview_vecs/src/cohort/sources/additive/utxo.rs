@@ -1,7 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    Amount, AmountRange, CohortContext, CohortId, SpendableType, UTXOOverlappingValues, UTXOValues,
+    AmountRange, CohortContext, CohortId, SpendableType, UTXOAggregate, UTXOValues,
 };
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -21,7 +21,7 @@ pub struct UTXOSources<T: PcoVecValue, M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub typed: UTXOTypedSources<T, M>,
-    pub amount: Amount<StoredSeries<Height, T, M>>,
+    pub amount: AmountRange<StoredSeries<Height, T, M>>,
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
@@ -33,7 +33,7 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
     ) -> Result<Self> {
         Ok(Self {
             typed: UTXOTypedSources::forced_import(cache, db, name, version)?,
-            amount: Amount::try_new(|cohort_id| {
+            amount: AmountRange::try_new(|cohort_id| {
                 import_stored(
                     cache,
                     db,
@@ -46,7 +46,7 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
 
     pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
         match cohort_id {
-            CohortId::Amount(id) => Some(self.amount.get(id)),
+            CohortId::Amount(id) => Some(id.select(&self.amount)),
             _ => self.typed.get(cohort_id),
         }
     }
@@ -59,42 +59,33 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
     }
 
     pub fn push(&mut self, cohort_values: UTXOValues<T>) {
-        self.push_with_overlapping(cohort_values, None);
+        self.push_with_aggregate(cohort_values, None);
     }
 
-    pub fn push_exact(
-        &mut self,
-        cohort_values: UTXOValues<T>,
-        overlapping: UTXOOverlappingValues<T>,
-    ) {
-        self.push_with_overlapping(cohort_values, Some(&overlapping));
+    pub fn push_exact(&mut self, cohort_values: UTXOValues<T>, aggregate: UTXOAggregate<T>) {
+        self.push_with_aggregate(cohort_values, Some(&aggregate));
     }
 
-    fn push_with_overlapping(
+    fn push_with_aggregate(
         &mut self,
         cohort_values: UTXOValues<T>,
-        overlapping: Option<&UTXOOverlappingValues<T>>,
+        aggregate: Option<&UTXOAggregate<T>>,
     ) {
-        let values = if let Some(overlapping) = overlapping {
-            Amount {
-                range: cohort_values.amount_range,
-                under: overlapping.under_amount.clone(),
-                over: overlapping.over_amount.clone(),
-            }
-        } else {
-            Amount::from_fn(|id| cohort_values.amount_range.aggregate(id))
-        };
-        for (target, &value) in self.amount.iter_mut().zip(values.iter()) {
+        for (target, &value) in self
+            .amount
+            .iter_mut()
+            .zip(cohort_values.amount_range.iter())
+        {
             target.push(value);
         }
         self.typed
-            .push_with_overlapping(cohort_values.core, cohort_values.type_, overlapping);
+            .push_with_aggregate(cohort_values.core, cohort_values.type_, aggregate);
     }
 
     pub fn collect_last(&self) -> Option<UTXOValues<T>> {
         Some(UTXOValues {
             amount_range: AmountRange::try_from_fn(|id| {
-                id.select(&self.amount.range).collect_last().ok_or(())
+                id.select(&self.amount).collect_last().ok_or(())
             })
             .ok()?,
             type_: SpendableType::try_from_fn(|id| id.select(&self.type_).collect_last().ok_or(()))

@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{AgeId, CohortContext, CohortId, CohortName, Term};
+use super::{CohortContext, CohortId, CohortName, Term};
 
 // Age boundary constants in hours
 pub const HOURS_1H: usize = 1;
@@ -104,7 +104,7 @@ impl AgeRangeId {
     }
 
     pub const fn cohort(self) -> CohortId {
-        CohortId::Age(AgeId::Range(self))
+        CohortId::Age(self)
     }
 
     pub fn from_cohort_name(context: CohortContext, name: &str) -> Option<Self> {
@@ -473,7 +473,7 @@ mod tests {
             *id.select_mut(&mut named) += AGE_RANGE_COUNT;
             assert_eq!(*id.select(&named), id.index() + AGE_RANGE_COUNT);
             assert_eq!(id.bounds(), id.select(&AGE_RANGE_BOUNDS));
-            assert_eq!(id.cohort(), CohortId::Age(AgeId::Range(id)));
+            assert_eq!(id.cohort(), CohortId::Age(id));
             assert_eq!(id.cohort().name(), id.name().id);
             assert_eq!(
                 id.term(),

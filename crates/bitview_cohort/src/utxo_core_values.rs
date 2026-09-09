@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use crate::{AgeId, AgeRange, ByEntry, ByEpoch, Class, CohortId, UTXOValues};
+use crate::{AgeRange, ByEntry, ByEpoch, Class, CohortId, UTXOValues};
 
 /// Values for disjoint UTXO age, epoch, class, and entry cohorts.
 #[derive(Clone, Default)]
@@ -21,7 +21,7 @@ impl<T> UTXOCoreValues<T> {
             CohortId::Epoch(epoch) => Some(*epoch.select(&self.epoch)),
             CohortId::Class(class) => Some(*class.select(&self.class)),
             CohortId::Entry(entry) => Some(*self.entry.get(entry)),
-            CohortId::Age(AgeId::Range(range)) => Some(*range.select(&self.age_range)),
+            CohortId::Age(range) => Some(*range.select(&self.age_range)),
             _ => {
                 let mut ranges = id.age_ranges()?;
                 let mut total = *ranges.next()?.select(&self.age_range);

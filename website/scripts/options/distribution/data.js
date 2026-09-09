@@ -31,10 +31,6 @@ export function buildCohortData() {
   const {
     TERM_NAMES,
     EPOCH_NAMES,
-    UNDER_AGE_NAMES,
-    OVER_AGE_NAMES,
-    OVER_AMOUNT_NAMES,
-    UNDER_AMOUNT_NAMES,
     AMOUNT_RANGE_NAMES,
     SPENDABLE_TYPE_NAMES,
     CLASS_NAMES,
@@ -75,30 +71,10 @@ export function buildCohortData() {
     tree: selectCohortTree({ tree: cohorts, path: "term.long" }),
   }));
 
-  // Under age cohorts
-  const underAge = lazy(() =>
-    entries(UNDER_AGE_NAMES).map(([key, names], i, arr) => ({
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.at(i, arr.length),
-      tree: selectCohortTree({ tree: cohorts, path: `age.under.${key}` }),
-    })),
-  );
-
-  // Over age cohorts
-  const overAge = lazy(() =>
-    entries(OVER_AGE_NAMES).map(([key, names], i, arr) => ({
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.at(i, arr.length),
-      tree: selectCohortTree({ tree: cohorts, path: `age.over.${key}` }),
-    })),
-  );
-
   const ageRange = lazy(() =>
     ageRanges.map(({ key, ...range }) => ({
       ...range,
-      tree: selectCohortTree({ tree: cohorts, path: `age.range.${key}` }),
+      tree: selectCohortTree({ tree: cohorts, path: `age.${key}` }),
       matured: cohorts.supply.matured[key],
     })),
   );
@@ -112,59 +88,6 @@ export function buildCohortData() {
     })),
   );
 
-  const utxosOverAmount = lazy(() =>
-    entries(OVER_AMOUNT_NAMES).map(([key, names], i, arr) => ({
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.at(i, arr.length),
-      tree: selectCohortTree({ tree: cohorts, path: `utxoAmount.over.${key}` }),
-    })),
-  );
-
-  const addressesOverAmount = lazy(() =>
-    entries(OVER_AMOUNT_NAMES).map(([key, names], i, arr) => {
-      const cohort = selectCohortTree({
-        tree: cohorts,
-        path: `addrBalance.over.${key}`,
-      });
-      return {
-        name: names.short,
-        title: `Addresses ${names.long}`,
-        color: colors.at(i, arr.length),
-        tree: cohort,
-        addressCount: addrs.funded.balance.over[key],
-      };
-    }),
-  );
-
-  const utxosUnderAmount = lazy(() =>
-    entries(UNDER_AMOUNT_NAMES).map(([key, names], i, arr) => ({
-      name: names.short,
-      title: `UTXOs ${names.long}`,
-      color: colors.at(i, arr.length),
-      tree: selectCohortTree({
-        tree: cohorts,
-        path: `utxoAmount.under.${key}`,
-      }),
-    })),
-  );
-
-  const addressesUnderAmount = lazy(() =>
-    entries(UNDER_AMOUNT_NAMES).map(([key, names], i, arr) => {
-      const cohort = selectCohortTree({
-        tree: cohorts,
-        path: `addrBalance.under.${key}`,
-      });
-      return {
-        name: names.short,
-        title: `Addresses ${names.long}`,
-        color: colors.at(i, arr.length),
-        tree: cohort,
-        addressCount: addrs.funded.balance.under[key],
-      };
-    }),
-  );
-
   const utxosAmountRange = lazy(() =>
     entries(AMOUNT_RANGE_NAMES).map(([key, names], i, arr) => ({
       name: names.short,
@@ -172,7 +95,7 @@ export function buildCohortData() {
       color: colors.at(i, arr.length),
       tree: selectCohortTree({
         tree: cohorts,
-        path: `utxoAmount.range.${key}`,
+        path: `utxoAmount.${key}`,
       }),
     })),
   );
@@ -181,14 +104,14 @@ export function buildCohortData() {
     entries(AMOUNT_RANGE_NAMES).map(([key, names], i, arr) => {
       const cohort = selectCohortTree({
         tree: cohorts,
-        path: `addrBalance.range.${key}`,
+        path: `addrBalance.${key}`,
       });
       return {
         name: names.short,
         title: `Addresses ${names.long}`,
         color: colors.at(i, arr.length),
         tree: cohort,
-        addressCount: addrs.funded.balance.range[key],
+        addressCount: addrs.funded.balance[key],
       };
     }),
   );
@@ -321,29 +244,11 @@ export function buildCohortData() {
     get termLong() {
       return termLong();
     },
-    get underAge() {
-      return underAge();
-    },
-    get overAge() {
-      return overAge();
-    },
     get ageRange() {
       return ageRange();
     },
     get epoch() {
       return epoch();
-    },
-    get utxosOverAmount() {
-      return utxosOverAmount();
-    },
-    get addressesOverAmount() {
-      return addressesOverAmount();
-    },
-    get utxosUnderAmount() {
-      return utxosUnderAmount();
-    },
-    get addressesUnderAmount() {
-      return addressesUnderAmount();
     },
     get utxosAmountRange() {
       return utxosAmountRange();

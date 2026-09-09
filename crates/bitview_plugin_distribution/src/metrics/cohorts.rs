@@ -31,6 +31,10 @@ use crate::{
 const VERSION: Version = Version::new(0);
 const IMPORT_STACK_SIZE: usize = 8 * 1024 * 1024;
 
+#[cfg(test)]
+#[path = "cohorts_tests.rs"]
+mod tests;
+
 /// Distribution metrics organized by metric, with cohorts at the leaves.
 #[derive(Traversable)]
 pub struct CohortMetrics<M: StorageMode = Rw> {
@@ -313,6 +317,15 @@ impl CohortMetrics<Rw> {
             ..
         } = states;
 
+        realized.cap_raw.push_age(&AgeRange::from_fn(|id| {
+            id.select(age_range).realized.cap_raw()
+        }));
+        realized
+            .capitalized_cap_raw
+            .push_age(&AgeRange::from_fn(|id| {
+                id.select(age_range).realized.capitalized_cap_raw()
+            }));
+
         let cohort_values = UTXOValues {
             core: UTXOCoreValues {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).realized_block_data()),
@@ -369,7 +382,6 @@ impl CohortMetrics<Rw> {
             .cohorts
             .utxo
             .age
-            .range
             .under_1h
             .cumulative
             .cents
@@ -380,7 +392,6 @@ impl CohortMetrics<Rw> {
             .value_destroyed
             .cohorts
             .age
-            .range
             .under_1h
             .cumulative
             .cents
@@ -508,7 +519,7 @@ impl CohortMetrics<Rw> {
 
     /// Aggregate realized fields from age-range states and push all/STH/LTH.
     /// Called during the block loop after separate cohorts' push_state but before reset.
-    pub fn push_overlapping(
+    pub fn push_aggregate(
         &mut self,
         states: &UTXOStates,
         height_price: Cents,

@@ -46,10 +46,9 @@
  * @typedef {keyof Bitview.SeriesTree_Addrs_Raw} AddressableType
  *
  * Bitview pattern types (using new pattern names)
- * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "age.over._1d">} MaxAgePattern
- * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "age.range.under1h">} AgeRangePattern
- * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "utxoAmount.range._0sats">} UtxoAmountPattern
- * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "addrBalance.range._0sats">} AddrAmountPattern
+ * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "age.under1h">} AgeRangePattern
+ * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "utxoAmount._0sats">} UtxoAmountPattern
+ * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "addrBalance._0sats">} AddrAmountPattern
  * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "entry.discount">} BasicUtxoPattern
  * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "epoch._0">} EpochPattern
  * @typedef {import("./options/distribution/cohort-tree-types.js").ProjectCohortPath<Bitview.SeriesTree_Cohorts, "type.empty">} EmptyPattern
@@ -226,7 +225,7 @@
  * Capability-based pattern groupings (patterns that have specific properties)
  * @typedef {AllUtxoPattern | ShortTermPattern | LongTermPattern | AgeRangePattern | UtxoAmountPattern | BasicUtxoPattern | EmptyPattern} PatternWithRealizedPrice
  * @typedef {AllUtxoPattern} PatternWithFullRealized
- * @typedef {ShortTermPattern | LongTermPattern | MaxAgePattern | BasicUtxoPattern} PatternWithNupl
+ * @typedef {ShortTermPattern | LongTermPattern | AgeRangePattern | BasicUtxoPattern} PatternWithNupl
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithCostBasis
  * @typedef {AllUtxoPattern | AgeRangePattern | UtxoAmountPattern} PatternWithActivity
  * @typedef {AllUtxoPattern | AgeRangePattern} PatternWithCostBasisPercentiles

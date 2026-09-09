@@ -1,8 +1,7 @@
 use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Lengths;
-use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyRatioPerBlock, StoredSeries, import_stored};
+use bitview_vecs::{IndexSources, LazyRatioPerBlock, StoredSeries, import_stored};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
@@ -52,7 +51,7 @@ pub fn forced_import(
     db: &Database,
     name: &str,
     version: Version,
-    mappings: &MappingsVecs,
+    mappings: &IndexSources,
     price_source: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Component> {
     let version = version + VERSION;
@@ -105,9 +104,14 @@ pub fn compute(
         .map(|v| v.len())
         .min()
         .unwrap_or_default()
-        .min(usize::from(starting_lengths.height));
-    for vec in component.ratios.iter_mut() {
-        vec.truncate_if_needed_at(start)?;
+        .min(usize::from(starting_lengths.height))
+        .min(ratio_source.len());
+    {
+        let _lock = exit.lock();
+        for vec in component.ratios.iter_mut() {
+            vec.truncate_if_needed_at(start)?;
+            vec.write()?;
+        }
     }
     let expected_len = start.saturating_sub(START_HEIGHT);
     if block_decay_pct.len() != expected_len {

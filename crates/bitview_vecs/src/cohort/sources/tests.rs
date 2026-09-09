@@ -1,6 +1,6 @@
 use std::iter;
 
-use bitview_cohort::{AgeRange, CohortId, OverAgeId, Term, UTXOCoreValues, UTXOValues, UnderAgeId};
+use bitview_cohort::{AgeRange, AgeRangeId, CohortId, Term, UTXOCoreValues, UTXOValues};
 use brk_types::{Cents, Height, OutputType, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{CacheBudget, Database, ReadableVec};
@@ -44,8 +44,7 @@ fn additive_and_cumulative_sources_share_exact_aggregate_selection() {
     }
     for cohort_id in iter::once(CohortId::All)
         .chain([CohortId::Term(Term::Sth), CohortId::Term(Term::Lth)])
-        .chain(UnderAgeId::ALL.iter().copied().map(UnderAgeId::cohort))
-        .chain(OverAgeId::ALL.iter().copied().map(OverAgeId::cohort))
+        .chain(AgeRangeId::ALL.iter().copied().map(AgeRangeId::cohort))
     {
         let total: u64 = cohort_id
             .age_ranges()

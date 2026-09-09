@@ -9,30 +9,6 @@ fn aggregate_ranges_match_canonical_cohorts() {
     ] {
         assert_eq!(cohort.age_ranges().unwrap().collect::<Vec<_>>(), expected);
     }
-    for &cohort in UnderAgeId::ALL {
-        let hours = *cohort.select(&UNDER_AGE_HOURS);
-        let expected: Vec<_> = AgeRangeId::ALL
-            .iter()
-            .copied()
-            .filter(|id| id.bounds().end <= hours)
-            .collect();
-        assert_eq!(
-            cohort.cohort().age_ranges().unwrap().collect::<Vec<_>>(),
-            expected
-        );
-    }
-    for &cohort in OverAgeId::ALL {
-        let hours = *cohort.select(&OVER_AGE_HOURS);
-        let expected: Vec<_> = AgeRangeId::ALL
-            .iter()
-            .copied()
-            .filter(|id| id.bounds().start >= hours)
-            .collect();
-        assert_eq!(
-            cohort.cohort().age_ranges().unwrap().collect::<Vec<_>>(),
-            expected
-        );
-    }
     for &range in AgeRangeId::ALL {
         assert_eq!(
             range.cohort().age_ranges().unwrap().collect::<Vec<_>>(),

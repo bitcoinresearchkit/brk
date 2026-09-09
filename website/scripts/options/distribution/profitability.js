@@ -884,8 +884,8 @@ export function createProfitabilitySectionLongTerm({ cohort, title }) {
 }
 
 /**
- * Section for AgeRange cohorts (mid-tier: has unrealized profit/loss/netPnl, mid realized)
- * @param {{ cohort: CohortAgeRange, title: (name: string) => string }} args
+ * Section for core and age-range cohorts with mid-tier realized metrics.
+ * @param {{ cohort: CohortCore | CohortAgeRange, title: (name: string) => string }} args
  * @returns {PartialOptionsGroup}
  */
 export function createProfitabilitySectionWithInvestedCapitalPct({

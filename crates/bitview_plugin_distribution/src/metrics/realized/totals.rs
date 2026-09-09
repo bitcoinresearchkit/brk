@@ -1,4 +1,4 @@
-use std::ops::AddAssign;
+use std::ops::{Add, AddAssign, Sub};
 
 use brk_types::{Cents, CentsSats, Sats};
 
@@ -22,6 +22,26 @@ impl AddAssign for RealizedTotals {
     fn add_assign(&mut self, rhs: Self) {
         self.cap_raw += rhs.cap_raw;
         self.supply += rhs.supply;
+    }
+}
+
+impl Add for RealizedTotals {
+    type Output = Self;
+
+    fn add(mut self, rhs: Self) -> Self {
+        self += rhs;
+        self
+    }
+}
+
+impl Sub for RealizedTotals {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            cap_raw: self.cap_raw - rhs.cap_raw,
+            supply: self.supply - rhs.supply,
+        }
     }
 }
 

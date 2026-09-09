@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use bitview_cohort::{Amount, AmountRange, CohortContext};
+use bitview_cohort::{AmountRange, CohortContext};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
@@ -18,9 +18,9 @@ pub struct AmountSources<T: PcoVecValue, S: Clone, M: StorageMode = Rw> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
-    pub series: Amount<S>,
+    pub series: AmountRange<S>,
     #[traversable(hidden)]
-    pub stored: Amount<StoredSeries<Height, T, M>>,
+    pub stored: AmountRange<StoredSeries<Height, T, M>>,
     last: M::WriteOnly<CumulativeState<AmountRange<T>>>,
 }
 
@@ -35,7 +35,7 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
         version: Version,
         mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> Result<Self> {
-        let stored = Amount::try_new(|cohort_id| {
+        let stored = AmountRange::try_new(|cohort_id| {
             let cohort = cohort_id.name();
             import_stored(
                 cache,
@@ -44,8 +44,11 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
                 version + Version::ONE,
             )
         })?;
-        let series = stored.map_with_id(|cohort_id, source| {
-            build(&context.metric_name(cohort_id, metric), source)
+        let series = AmountRange::from_fn(|id| {
+            build(
+                &context.metric_name(id.cohort(), metric),
+                id.select(&stored),
+            )
         });
         Ok(Self {
             series,
@@ -55,7 +58,6 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
     }
 
     pub fn push(&mut self, values: AmountRange<T>) {
-        let values = Amount::from_fn(|id| values.aggregate(id));
         for (target, &value) in self.stored.iter_mut().zip(values.iter()) {
             target.push(value);
         }
@@ -68,12 +70,7 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
         let len = self.len();
         let values = self.last.accumulate(
             len,
-            || {
-                AmountRange::try_from_fn(|id| {
-                    id.select(&self.stored.range).collect_last().ok_or(())
-                })
-                .ok()
-            },
+            || AmountRange::try_from_fn(|id| id.select(&self.stored).collect_last().ok_or(())).ok(),
             |values| {
                 for (value, &delta) in values.iter_mut().zip(delta.iter()) {
                     *value += delta;
@@ -91,8 +88,7 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
     }
 
     pub fn checkpoint(&self, height: Height) -> Option<AmountRange<T>> {
-        AmountRange::try_from_fn(|id| id.select(&self.stored.range).collect_one(height).ok_or(()))
-            .ok()
+        AmountRange::try_from_fn(|id| id.select(&self.stored).collect_one(height).ok_or(())).ok()
     }
 
     pub fn reset(&mut self) -> Result<()> {

@@ -724,6 +724,8 @@ dependencies = [
  "brk_error",
  "brk_exit",
  "brk_oracle",
+ "brk_reader",
+ "brk_rpc",
  "brk_types",
  "derive_more",
  "rayon",
@@ -988,6 +990,7 @@ dependencies = [
 name = "bitview_plugin_rarity_meter"
 version = "0.12.2"
 dependencies = [
+ "bitview_cohort",
  "bitview_collections",
  "bitview_compute",
  "bitview_plugin",
@@ -1007,6 +1010,7 @@ dependencies = [
  "derive_more",
  "rayon",
  "schemars",
+ "tempfile",
  "vecdb",
 ]
 

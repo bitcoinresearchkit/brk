@@ -57,7 +57,7 @@ impl<M: StorageMode> Vecs<M> {
             return Some(1.0);
         }
 
-        let supplies = &distribution.cohorts.supply.total.cohorts.utxo.age.range;
+        let supplies = &distribution.cohorts.supply.total.cohorts.utxo.age;
         let supply = age.select(supplies).sats.day1.collect_one(day).flatten()?;
 
         match weight {

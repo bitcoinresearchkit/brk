@@ -7,8 +7,7 @@ use std::collections::BTreeMap;
 
 use bitview_cohort::{
     AGE_RANGE_NAMES, AMOUNT_RANGE_NAMES, CLASS_NAMES, ENTRY_NAMES, EPOCH_NAMES, LOSS_NAMES,
-    OVER_AGE_NAMES, OVER_AMOUNT_NAMES, PROFIT_NAMES, PROFITABILITY_RANGE_NAMES,
-    SPENDABLE_TYPE_NAMES, TERM_NAMES, UNDER_AGE_NAMES, UNDER_AMOUNT_NAMES,
+    PROFIT_NAMES, PROFITABILITY_RANGE_NAMES, SPENDABLE_TYPE_NAMES, TERM_NAMES,
 };
 use brk_types::{Index, pools};
 use serde::Serialize;
@@ -58,11 +57,7 @@ pub fn cohort_constants() -> Vec<(&'static str, Value)> {
         ("ENTRY_NAMES", to_value(&ENTRY_NAMES)),
         ("SPENDABLE_TYPE_NAMES", to_value(&SPENDABLE_TYPE_NAMES)),
         ("AGE_RANGE_NAMES", to_value(&AGE_RANGE_NAMES)),
-        ("UNDER_AGE_NAMES", to_value(&UNDER_AGE_NAMES)),
-        ("OVER_AGE_NAMES", to_value(&OVER_AGE_NAMES)),
         ("AMOUNT_RANGE_NAMES", to_value(&AMOUNT_RANGE_NAMES)),
-        ("OVER_AMOUNT_NAMES", to_value(&OVER_AMOUNT_NAMES)),
-        ("UNDER_AMOUNT_NAMES", to_value(&UNDER_AMOUNT_NAMES)),
         (
             "PROFITABILITY_RANGE_NAMES",
             to_value(&PROFITABILITY_RANGE_NAMES),

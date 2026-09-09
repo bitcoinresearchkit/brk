@@ -6,7 +6,7 @@ use brk_types::Sats;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{AmountBucket, AmountId, CohortId, CohortName};
+use super::{AmountBucket, CohortId, CohortName};
 
 /// Amount range bounds
 pub const AMOUNT_RANGE_BOUNDS: AmountRange<Range<Sats>> = AmountRange {
@@ -112,22 +112,6 @@ impl AmountRange<CohortName> {
 }
 
 impl<T> AmountRange<T> {
-    /// Resolve a named amount cohort from its disjoint ranges.
-    pub fn aggregate(&self, cohort: AmountId) -> T
-    where
-        T: Copy + AddAssign,
-    {
-        if let AmountId::Range(id) = cohort {
-            return *id.select(self);
-        }
-        let mut ranges = cohort.ranges();
-        let mut total = *ranges.next().expect("nonempty amount cohort").select(self);
-        for id in ranges {
-            total += *id.select(self);
-        }
-        total
-    }
-
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|id| create(id.cohort()))
     }
@@ -244,6 +228,10 @@ where
 
 impl AmountRangeId {
     pub const fn cohort(self) -> CohortId {
-        CohortId::Amount(AmountId::Range(self))
+        CohortId::Amount(self)
+    }
+
+    pub fn name(self) -> &'static CohortName {
+        self.select(&AMOUNT_RANGE_NAMES)
     }
 }

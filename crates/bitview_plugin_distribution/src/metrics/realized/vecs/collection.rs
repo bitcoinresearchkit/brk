@@ -10,7 +10,7 @@ use bitview_transforms::{
 use bitview_traversable::Traversable;
 use bitview_vecs::{
     CachedWindowStartVec, LazyPerBlock, LazyPercentPerBlock, PercentRollingWindows, RollingWindows,
-    RollingWindowsFrom1w,
+    RollingWindowsFrom1w, UTXOAgeSources,
 };
 use brk_error::Result;
 use brk_exit::Exit;
@@ -19,8 +19,8 @@ use brk_types::{
     PartsPerMillionSigned64, PriceRatio, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, LazyVec,
-    ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, AnyVec, BinaryTransform, BytesVec, CacheBudget, CachedBoxedVec, Database, Ident,
+    ImportableVec, LazyVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
 };
 
 use super::{
@@ -35,7 +35,7 @@ use crate::{
     AllChainSources,
     metrics::{
         AdditiveAggregateFiatPerBlockCumulativeWithSums, AggregatePercentPerBlock,
-        AggregatePriceWithRatioPerBlock, RealizedBlockData, RealizedTotals, UTXOTermSources,
+        AggregatePriceWithRatioPerBlock, RealizedBlockData, RealizedTotals,
     },
 };
 
@@ -85,17 +85,22 @@ pub struct RealizedVecs<M: StorageMode = Rw> {
     /// when the cohort has no invested value.
     pub capitalized_price: AggregatePriceWithRatioPerBlock<M>,
     /// Raw sum of creation price in cents per BTC multiplied by unspent
-    /// satoshis for an aggregate UTXO cohort. Dividing by 100,000,000 converts
+    /// satoshis for a disjoint age band or holder aggregate. Dividing by 100,000,000 converts
     /// it to realized capitalization in cents; dividing by unspent satoshis
     /// gives realized price in cents per BTC. It is an intermediate product,
     /// not itself a capitalization or price.
-    pub cap_raw: UTXOTermSources<CentsSats, M>,
+    pub cap_raw: UTXOAgeSources<CentsSats, M>,
+    /// Exact realized-cap numerator for each disjoint UTXO-amount bucket.
+    /// Sum these inputs and the corresponding supplies before dividing to
+    /// reconstruct an amount-threshold realized price without rounding loss.
+    #[traversable(wrap = "cap_raw", rename = "utxo_amount")]
+    pub amount_cap_raw: AmountRange<M::Stored<BytesVec<Height, CentsSats>>>,
     /// Raw sum of squared creation price in cents per BTC multiplied by unspent
-    /// satoshis for an aggregate UTXO cohort. Dividing it by the cohort's raw
+    /// satoshis for a disjoint age band or holder aggregate. Dividing it by the cohort's raw
     /// creation-price-times-satoshis sum gives capitalized price in cents per
     /// BTC. It is an intermediate product, not itself a capitalization or
     /// price.
-    pub capitalized_cap_raw: UTXOTermSources<CentsSquaredSats, M>,
+    pub capitalized_cap_raw: UTXOAgeSources<CentsSquaredSats, M>,
     /// Value forgone relative to each spent output's highest Bitcoin spot price
     /// from its creation block through its spending block, inclusive: that peak
     /// minus the spending price, multiplied by the output's BTC value.
@@ -173,9 +178,16 @@ impl RealizedVecs {
             mappings,
             spot_price,
         )?;
-        let cap_raw = UTXOTermSources::forced_import(db, "cap_raw", version)?;
+        let cap_raw = UTXOAgeSources::forced_import(db, "cap_raw", version)?;
+        let amount_cap_raw = AmountRange::try_new(|id| {
+            BytesVec::forced_import(
+                db,
+                &CohortContext::Utxo.metric_name(id, "cap_raw"),
+                version + Version::ONE,
+            )
+        })?;
         let capitalized_cap_raw =
-            UTXOTermSources::forced_import(db, "capitalized_cap_raw", version)?;
+            UTXOAgeSources::forced_import(db, "capitalized_cap_raw", version)?;
         let peak_regret = AdditiveAggregateFiatPerBlockCumulativeWithSums::forced_import(
             cache,
             db,
@@ -339,6 +351,7 @@ impl RealizedVecs {
             gross_pnl,
             capitalized_price,
             cap_raw,
+            amount_cap_raw,
             capitalized_cap_raw,
             peak_regret,
             net_pnl_change_1m_to_rcap,
@@ -533,6 +546,13 @@ impl RealizedVecs {
 
     #[inline(always)]
     pub fn push(&mut self, cohort_values: &UTXOValues<RealizedBlockData>) {
+        for (target, values) in self
+            .amount_cap_raw
+            .iter_mut()
+            .zip(cohort_values.amount_range.iter())
+        {
+            target.push(values.cap_raw);
+        }
         let aggregate_price = cohort_values
             .map(RealizedBlockData::totals)
             .aggregate()
@@ -541,7 +561,7 @@ impl RealizedVecs {
         self.cap.stored.push(cohort_values.map(|values| values.cap));
         self.price
             .stored
-            .push(cohort_values.map(|values| values.price), aggregate_price);
+            .push_exact(cohort_values.map(|values| values.price), aggregate_price);
         self.profit
             .stored
             .push_block(cohort_values.map(|values| values.profit));
@@ -586,6 +606,13 @@ impl RealizedVecs {
             .min(self.capitalized_price.len())
             .min(self.peak_regret.len())
             .min(self.cap_raw.len())
+            .min(
+                self.amount_cap_raw
+                    .iter()
+                    .map(AnyVec::len)
+                    .min()
+                    .unwrap_or(0),
+            )
             .min(self.capitalized_cap_raw.len())
     }
 
@@ -606,6 +633,11 @@ impl RealizedVecs {
         vecs.extend(self.peak_regret.collect_vecs_mut());
         vecs.extend(self.net_pnl_change_1m_to_rcap.collect_vecs_mut());
         vecs.extend(self.cap_raw.collect_vecs_mut());
+        vecs.extend(
+            self.amount_cap_raw
+                .iter_mut()
+                .map(|v| v as &mut dyn AnyStoredVec),
+        );
         vecs.extend(self.capitalized_cap_raw.collect_vecs_mut());
         vecs.extend(
             self.sell_side_risk_ratio

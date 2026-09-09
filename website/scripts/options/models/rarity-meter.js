@@ -225,7 +225,7 @@ export function createRarityMeterSection() {
           {
             name: ">6M RP",
             title: ">6M Realized Price",
-            pattern: cohorts.realized.price.age.over._6m,
+            pattern: rarityMeter.referencePrices.over6m,
             percentiles: components.over6mRealizedPrice,
             legend: ">6M RP",
             color: colors.realized,
@@ -233,7 +233,7 @@ export function createRarityMeterSection() {
           {
             name: ">4M RP",
             title: ">4M Realized Price",
-            pattern: cohorts.realized.price.age.over._4m,
+            pattern: rarityMeter.referencePrices.over4m,
             percentiles: components.over4mRealizedPrice,
             legend: ">4M RP",
             color: colors.realized,
@@ -241,7 +241,7 @@ export function createRarityMeterSection() {
           {
             name: "<4M RP",
             title: "<4M Realized Price",
-            pattern: cohorts.realized.price.age.under._4m,
+            pattern: rarityMeter.referencePrices.under4m,
             percentiles: components.under4mRealizedPrice,
             legend: "<4M RP",
             color: colors.realized,
@@ -249,7 +249,7 @@ export function createRarityMeterSection() {
           {
             name: "<6M RP",
             title: "<6M Realized Price",
-            pattern: cohorts.realized.price.age.under._6m,
+            pattern: rarityMeter.referencePrices.under6m,
             percentiles: components.under6mRealizedPrice,
             legend: "<6M RP",
             color: colors.realized,

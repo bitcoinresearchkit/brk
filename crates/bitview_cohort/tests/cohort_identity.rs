@@ -4,6 +4,7 @@ use brk_types::OutputType;
 #[test]
 fn identity_roundtrips_through_composed_groups() {
     let cohorts = UTXOGroups::new(|id| id);
+    assert_eq!(cohorts.iter().count(), 77);
     for &id in cohorts.iter() {
         assert_eq!(cohorts.get(id), Some(&id));
     }
@@ -18,13 +19,13 @@ fn identity_roundtrips_through_composed_groups() {
     assert_eq!(core.get(AmountRangeId::Zero.cohort()), None);
     assert_eq!(core.get(CohortId::Type(OutputType::P2PKH)), None);
 
-    let ages = ByAge::from_fn(|id| id);
+    let ages = AgeRange::from_fn(|id| id);
     for &id in ages.iter() {
-        assert_eq!(*ages.get(id), id);
+        assert_eq!(*id.select(&ages), id);
     }
-    let amounts = Amount::from_fn(|id| id);
+    let amounts = AmountRange::from_fn(|id| id);
     for &id in amounts.iter() {
-        assert_eq!(*amounts.get(id), id);
+        assert_eq!(*id.select(&amounts), id);
     }
 }
 
@@ -52,8 +53,7 @@ fn canonical_names_preserve_series_prefixes() {
         (CohortId::Term(Term::Sth), "sth_supply"),
         (CohortId::Term(Term::Lth), "lth_supply"),
         (AgeRangeId::Under1H.cohort(), "utxos_under_1h_old_supply"),
-        (UnderAgeId::Under9M.cohort(), "utxos_under_9m_old_supply"),
-        (OverAgeId::Over18M.cohort(), "utxos_over_18m_old_supply"),
+        (AgeRangeId::Over15Y.cohort(), "utxos_over_15y_old_supply"),
         (AmountRangeId::Zero.cohort(), "utxos_0sats_supply"),
         (EpochId::_0.cohort(), "epoch_0_supply"),
         (ClassId::_2009.cohort(), "class_2009_supply"),
@@ -75,25 +75,10 @@ fn canonical_names_preserve_series_prefixes() {
 }
 
 #[test]
-fn amount_aggregation_uses_exact_ranges_or_complete_thresholds() {
+fn amount_identity_keeps_disjoint_bucket_names() {
     let values = AmountRange::from_fn(|id| id.index() as u64 + 1);
-    let cohorts = Amount::from_fn(|id| id);
-    for &cohort in cohorts.iter() {
-        let bounds = cohort.bounds();
-        let expected: u64 = AmountRangeId::ALL
-            .iter()
-            .copied()
-            .filter(|id| {
-                let range = id.select(&AMOUNT_RANGE_BOUNDS);
-                range.start >= bounds.start && range.end <= bounds.end
-            })
-            .map(|id| *id.select(&values))
-            .sum();
-        assert_eq!(values.aggregate(cohort), expected);
-        assert!(cohort.ranges().next().is_some());
-    }
     for &id in AmountRangeId::ALL {
-        assert_eq!(AmountId::Range(id).ranges().collect::<Vec<_>>(), [id]);
-        assert_eq!(values.aggregate(AmountId::Range(id)), *id.select(&values));
+        assert_eq!(*id.select(&values), id.index() as u64 + 1);
+        assert_eq!(id.name().id, id.cohort().name());
     }
 }

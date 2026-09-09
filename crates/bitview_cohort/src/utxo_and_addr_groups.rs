@@ -1,7 +1,7 @@
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 
-use crate::{Amount, CohortContext, CohortId, UTXOGroups};
+use crate::{AmountRange, CohortContext, CohortId, UTXOGroups};
 
 /// UTXO groups plus groups defined by the controlling address's balance.
 ///
@@ -9,7 +9,7 @@ use crate::{Amount, CohortContext, CohortId, UTXOGroups};
 /// address-balance storage when its UTXO counterpart is stored separately.
 #[derive(Clone)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
-pub struct UTXOAndAddrGroups<T: Clone, A = Amount<T>> {
+pub struct UTXOAndAddrGroups<T: Clone, A = AmountRange<T>> {
     #[cfg_attr(feature = "storage", traversable(flatten))]
     pub utxo: UTXOGroups<T>,
     /// Groups addresses by their balance, not individual output value.
@@ -25,9 +25,13 @@ impl<T: Clone> UTXOAndAddrGroups<T> {
             utxo: self
                 .utxo
                 .map_with_id(|id, value| map(CohortContext::Utxo, id, value)),
-            addr_balance: self
-                .addr_balance
-                .map_with_id(|id, value| map(CohortContext::Addr, id, value)),
+            addr_balance: AmountRange::from_fn(|id| {
+                map(
+                    CohortContext::Addr,
+                    id.cohort(),
+                    id.select(&self.addr_balance),
+                )
+            }),
         }
     }
 }

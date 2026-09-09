@@ -190,7 +190,7 @@ impl Vecs {
             let side = side.name();
             AgeRangeId::series(CohortContext::Utxo, |id, name| {
                 let name = format!("{name}_{side}_supply");
-                let supply = id.select(&distribution.cohorts.supply.total.stored.cohorts.age.range);
+                let supply = id.select(&distribution.cohorts.supply.total.stored.cohorts.age);
                 let weight = id.select(&mobility_source);
                 if side == "immobile" {
                     LazySpotValuePerBlock::from_weighted_supply::<true>(

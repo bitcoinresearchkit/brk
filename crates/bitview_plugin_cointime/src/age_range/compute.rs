@@ -26,23 +26,14 @@ pub fn compute(
                 .transfer_volume
                 .cohorts
                 .utxo
-                .age
-                .range,
+                .age,
         )
         .block
         .sats
     });
     let coindays_destroyed = AgeRange::from_fn(|id| {
-        &id.select(
-            &distribution
-                .cohorts
-                .activity
-                .coindays_destroyed
-                .cohorts
-                .age
-                .range,
-        )
-        .block
+        &id.select(&distribution.cohorts.activity.coindays_destroyed.cohorts.age)
+            .block
     });
     let coindays_created =
         AgeRange::from_fn(|id| &id.select(&distribution.coindays_created).cumulative.height);

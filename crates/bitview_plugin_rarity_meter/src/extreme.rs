@@ -2,9 +2,8 @@ use std::{collections::VecDeque, iter::repeat_n};
 
 use bitview_compute::{ExactOrderStats, FenwickTree, NumericValue};
 use bitview_plugin_indexer::Indexer;
-use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{PerBlock, PercentPerBlock};
+use bitview_vecs::{IndexSources, PerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, StoredU8, Version};
@@ -16,6 +15,10 @@ use vecdb::{
 };
 
 use crate::threshold_vecs::ThresholdVecs;
+
+#[cfg(test)]
+#[path = "extreme_recovery_tests.rs"]
+mod recovery_tests;
 
 const MIN_HISTORY_BLOCKS: usize = 210_000;
 const WRITE_INTERVAL: usize = 10_000;
@@ -101,7 +104,7 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &MappingsVecs,
+        mappings: &IndexSources,
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let thresholds = ThresholdVecs {
@@ -148,7 +151,7 @@ where
         source: &impl ReadableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute(indexer, source, COINS_IN_LOSS, exit)
+        self.compute(indexer.safe_lengths().height, source, COINS_IN_LOSS, exit)
     }
 
     pub fn compute_realized(
@@ -157,7 +160,7 @@ where
         source: &impl ReadableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute(indexer, source, REALIZED, exit)
+        self.compute(indexer.safe_lengths().height, source, REALIZED, exit)
     }
 
     pub fn compute_seller_exhaustion(
@@ -166,12 +169,17 @@ where
         source: &impl ReadableVec<Height, T>,
         exit: &Exit,
     ) -> Result<()> {
-        self.compute(indexer, source, SELLER_EXHAUSTION, exit)
+        self.compute(
+            indexer.safe_lengths().height,
+            source,
+            SELLER_EXHAUSTION,
+            exit,
+        )
     }
 
     fn compute(
         &mut self,
-        indexer: &Indexer,
+        starting_height: Height,
         source: &impl ReadableVec<Height, T>,
         config: Config,
         exit: &Exit,
@@ -196,7 +204,7 @@ where
                 .unwrap_or_default(),
             self.tail.ppm.height.len(),
             self.rank.height.len(),
-            indexer.safe_lengths().height.to_usize(),
+            starting_height.to_usize(),
             source_end,
         ]
         .into_iter()
@@ -208,6 +216,7 @@ where
         }
         self.tail.ppm.height.any_truncate_if_needed_at(start)?;
         self.rank.height.any_truncate_if_needed_at(start)?;
+        self.write(exit)?;
 
         if source_end.saturating_sub(start) > BULK_BACKFILL_THRESHOLD {
             self.compute_bulk(source, start, source_end, config, exit)
@@ -337,13 +346,18 @@ where
         exit: &Exit,
     ) -> Result<()> {
         if (height_index + 1).is_multiple_of(WRITE_INTERVAL) || height_index + 1 == source_end {
-            let _lock = exit.lock();
-            for v in self.thresholds.iter_mut() {
-                v.height.write()?;
-            }
-            self.tail.ppm.height.write()?;
-            self.rank.height.write()?;
+            self.write(exit)?;
         }
+        Ok(())
+    }
+
+    fn write(&mut self, exit: &Exit) -> Result<()> {
+        let _lock = exit.lock();
+        for v in self.thresholds.iter_mut() {
+            v.height.write()?;
+        }
+        self.tail.ppm.height.write()?;
+        self.rank.height.write()?;
         Ok(())
     }
 }
