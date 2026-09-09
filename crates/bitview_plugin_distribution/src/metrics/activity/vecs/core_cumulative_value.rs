@@ -32,10 +32,10 @@ impl CoreCumulativeValueByCohort {
             &format!("{metric}_cumulative"),
             version,
         )?;
-        let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
+        let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
             let (sats, cents) = stored
-                .sources(&filter, &name, version)
+                .sources(cohort_id, &name, version)
                 .expect("supported core stored value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,

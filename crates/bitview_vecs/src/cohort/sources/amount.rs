@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use bitview_cohort::{Amount, AmountRange, AmountRangeId, CohortContext};
+use bitview_cohort::{Amount, AmountRange, CohortContext};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
@@ -35,7 +35,8 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
         version: Version,
         mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> Result<Self> {
-        let stored = Amount::try_new(|_, cohort| {
+        let stored = Amount::try_new(|cohort_id| {
+            let cohort = cohort_id.name();
             import_stored(
                 cache,
                 db,
@@ -43,11 +44,8 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
                 version + Version::ONE,
             )
         })?;
-        let series = Amount::new(|filter, cohort| {
-            build(
-                &context.metric_name(&filter, cohort, metric),
-                stored.get(&filter).expect("amount cohort"),
-            )
+        let series = stored.map_with_id(|cohort_id, source| {
+            build(&context.metric_name(cohort_id, metric), source)
         });
         Ok(Self {
             series,
@@ -57,20 +55,7 @@ impl<T: PcoVecValue + AddAssign, S: Clone> AmountSources<T, S> {
     }
 
     pub fn push(&mut self, values: AmountRange<T>) {
-        let values = Amount::new(|filter, _| {
-            if let Some(id) = AmountRangeId::matching(&filter) {
-                return *id.select(&values);
-            }
-            let mut ranges = AmountRangeId::included_by(&filter);
-            let mut value = *ranges
-                .next()
-                .expect("nonempty amount cohort")
-                .select(&values);
-            for id in ranges {
-                value += *id.select(&values);
-            }
-            value
-        });
+        let values = Amount::from_fn(|id| values.aggregate(id));
         for (target, &value) in self.stored.iter_mut().zip(values.iter()) {
             target.push(value);
         }

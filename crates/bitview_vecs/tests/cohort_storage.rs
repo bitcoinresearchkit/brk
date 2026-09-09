@@ -1,7 +1,7 @@
 use std::ptr;
 
 use bitview_cohort::{
-    AgeRange, AgeRangeId, AmountRange, AmountRangeId, CohortContext, Filter, SpendableTypeId,
+    AgeRange, AgeRangeId, AmountRange, AmountRangeId, CohortContext, CohortId, SpendableTypeId,
     UTXOOverlappingValues, UTXOValues,
 };
 use bitview_vecs::{AmountSources, ExactUTXOSources, UTXOSources};
@@ -26,7 +26,7 @@ fn exact_totals_never_sum_independently_computed_values() {
         source.write().unwrap();
     }
     assert_eq!(
-        sources.get(&Filter::All).unwrap().collect_one_at(0),
+        sources.get(CohortId::All).unwrap().collect_one_at(0),
         Some(Cents::from(17_u64))
     );
     assert!(
@@ -63,24 +63,24 @@ fn source_selection_borrows_the_named_owner_for_each_cohort_family() {
     let sources =
         UTXOSources::<StoredU64>::forced_import(&CACHE, &db, "selection", Version::ONE).unwrap();
     assert!(ptr::eq(
-        sources.get(&Filter::All).unwrap(),
+        sources.get(CohortId::All).unwrap(),
         &sources.cohorts.all
     ));
     for id in AgeRangeId::ALL {
         assert!(ptr::eq(
-            sources.get(id.filter()).unwrap(),
+            sources.get(id.cohort()).unwrap(),
             id.select(&sources.cohorts.age.range)
         ));
     }
     for id in AmountRangeId::ALL {
         assert!(ptr::eq(
-            sources.get(id.filter()).unwrap(),
+            sources.get(id.cohort()).unwrap(),
             id.select(&sources.amount.range)
         ));
     }
     for id in SpendableTypeId::ALL {
         assert!(ptr::eq(
-            sources.get(&Filter::Type(id.output_type())).unwrap(),
+            sources.get(CohortId::Type(id.output_type())).unwrap(),
             id.select(&sources.type_)
         ));
     }
@@ -118,7 +118,7 @@ fn native_cohorts_reopen_and_preserve_independently_computed_totals() {
         .collect();
     assert_eq!(names, expected_names);
     assert_eq!(
-        sources.get(&Filter::All).unwrap().collect_one_at(0),
+        sources.get(CohortId::All).unwrap().collect_one_at(0),
         Some(StoredU64::from(17_u64))
     );
     let values = sources.stored.collect_last().unwrap();

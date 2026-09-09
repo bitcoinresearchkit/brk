@@ -158,14 +158,14 @@ impl Vecs {
         let spending_rate = AgeRange::try_from_fn(|id| {
             let name = format!(
                 "{}_spending_rate",
-                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                CohortContext::Utxo.full_name(id.cohort())
             );
             PerBlock::forced_import(cache, db, &name, version, mappings)
         })?;
         let mobility_source = AgeRange::try_from_fn(|id| {
             let name = format!(
                 "{}_mobility_bounded_source",
-                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                CohortContext::Utxo.full_name(id.cohort())
             );
             import_stored(cache, db, &name, version)
         })?;
@@ -173,7 +173,7 @@ impl Vecs {
             age_range: AgeRange::try_from_fn(|id| {
                 let name = format!(
                     "{}_spending_exposure",
-                    CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                    CohortContext::Utxo.full_name(id.cohort())
                 );
                 PerBlock::forced_import(cache, db, &name, version, mappings)
             })?,

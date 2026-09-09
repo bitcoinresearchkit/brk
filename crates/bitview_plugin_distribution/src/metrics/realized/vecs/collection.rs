@@ -1,7 +1,6 @@
 use bitview_cohort::{
-    AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
-    UTXOAggregate, UTXOAggregateId, UTXOAllAndSth, UTXOGroups, UTXOGroupsWithoutAmountOrType,
-    UTXOValues,
+    AmountRange, CohortContext, CohortId, UTXOAggregate, UTXOAggregateId, UTXOAllAndSth,
+    UTXOGroups, UTXOGroupsWithoutAmountOrType, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
@@ -196,7 +195,7 @@ impl RealizedVecs {
             PercentRollingWindows::forced_import(
                 cache,
                 db,
-                &Self::aggregate_metric_name(id, "sell_side_risk_ratio"),
+                &id.metric_name("sell_side_risk_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
                 mappings,
             )
@@ -205,7 +204,7 @@ impl RealizedVecs {
             RollingWindowsFrom1w::forced_import(
                 cache,
                 db,
-                &Self::aggregate_metric_name(id, "sopr"),
+                &id.metric_name("sopr"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
                 mappings,
             )
@@ -214,7 +213,7 @@ impl RealizedVecs {
             RollingWindows::forced_import(
                 cache,
                 db,
-                &Self::aggregate_metric_name(id, "realized_profit_to_loss_ratio"),
+                &id.metric_name("realized_profit_to_loss_ratio"),
                 Self::aggregate_metric_version(version, id, Version::TWO),
                 mappings,
             )
@@ -254,21 +253,21 @@ impl RealizedVecs {
         let sopr = Sopr24hVecs::forced_import(cache, db, version, mappings)?;
         let adjusted_sopr =
             AdjustedSoprVecs::forced_import(cache, db, version, mappings, cached_starts)?;
-        let mvrv = price.cohorts.map_named(|filter, cohort_name, price| {
+        let mvrv = price.cohorts.map_with_id(|cohort_id, price| {
             LazyPerBlock::from_lazy::<Ident, PriceRatio>(
-                &CohortContext::Utxo.metric_name(filter, cohort_name, "mvrv"),
-                Self::cohort_version(version, filter),
+                &CohortContext::Utxo.metric_name(cohort_id, "mvrv"),
+                Self::cohort_version(version, cohort_id),
                 &price.relative.ratio,
             )
         });
-        let negative_loss = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
+        let negative_loss = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
             let loss = loss
                 .cohorts
                 .utxo
-                .get(&filter)
+                .get(cohort_id)
                 .expect("realized-loss cohort");
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_loss_neg");
-            let version = Self::cohort_version(version, &filter) + Version::ONE;
+            let name = CohortContext::Utxo.metric_name(cohort_id, "realized_loss_neg");
+            let version = Self::cohort_version(version, cohort_id) + Version::ONE;
             let base = LazyVec::transformed::<NegCentsUnsignedToDollars>(
                 &name,
                 version,
@@ -286,18 +285,14 @@ impl RealizedVecs {
             NegRealizedLoss { base, sum }
         });
         let cap_to_own_mcap = UTXOAggregate::from_fn(|id| {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
-            let name = CohortContext::Utxo.metric_name(
-                filter,
-                id.select(&UTXO_AGGREGATE_NAMES).id,
-                "realized_cap_to_own_mcap",
-            );
+            let cohort_id = id.cohort();
+            let name = CohortContext::Utxo.metric_name(cohort_id, "realized_cap_to_own_mcap");
             let source = LazyVec::init(
                 &format!("{name}_ppm_source"),
-                Self::cohort_version(version, filter) + Version::TWO,
+                Self::cohort_version(version, cohort_id) + Version::TWO,
                 price
                     .cohorts
-                    .get(filter)
+                    .get(cohort_id)
                     .expect("realized-price cohort")
                     .relative
                     .ppm
@@ -307,24 +302,20 @@ impl RealizedVecs {
             );
             LazyPercentPerBlock::from_height_source(
                 &name,
-                Self::cohort_version(version, filter) + Version::TWO,
+                Self::cohort_version(version, cohort_id) + Version::TWO,
                 &source,
                 mappings,
             )
         });
         let net_pnl_change_1m_to_mcap = UTXOAggregate::from_fn(|id| {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
-            let name = CohortContext::Utxo.metric_name(
-                filter,
-                id.select(&UTXO_AGGREGATE_NAMES).id,
-                "net_pnl_change_1m_to_mcap",
-            );
+            let cohort_id = id.cohort();
+            let name = CohortContext::Utxo.metric_name(cohort_id, "net_pnl_change_1m_to_mcap");
             let source = all_chain.with_market_cap(
                 &format!("{name}_ppm_source"),
                 Version::new(5),
                 &net_pnl
                     .cohorts
-                    .get(filter)
+                    .get(cohort_id)
                     .expect("aggregate net-realized-PnL cohort")
                     .delta
                     .absolute
@@ -361,9 +352,9 @@ impl RealizedVecs {
         }))
     }
 
-    fn cohort_version(version: Version, filter: &Filter) -> Version {
+    fn cohort_version(version: Version, cohort_id: CohortId) -> Version {
         version
-            + if matches!(filter, Filter::All) {
+            + if matches!(cohort_id, CohortId::All) {
                 Version::ONE
             } else {
                 Version::ZERO
@@ -380,14 +371,6 @@ impl RealizedVecs {
             }
     }
 
-    fn aggregate_metric_name(id: UTXOAggregateId, metric: &str) -> String {
-        CohortContext::Utxo.metric_name(
-            id.select(&UTXO_AGGREGATE_FILTERS),
-            id.select(&UTXO_AGGREGATE_NAMES).id,
-            metric,
-        )
-    }
-
     fn net_pnl_to_market_cap(net_pnl: CentsSigned, market_cap: Cents) -> PartsPerMillionSigned64 {
         let market_cap = f64::from(market_cap);
         if market_cap > 0.0 {
@@ -402,13 +385,13 @@ impl RealizedVecs {
         PartsPerMillion32::from(1.0 / f64::from(mvrv))
     }
 
-    pub fn sources(&self, filter: &Filter) -> Option<RealizedSources> {
+    pub fn sources(&self, cohort_id: CohortId) -> Option<RealizedSources> {
         Some(RealizedSources {
-            cap: self.cap.cohorts.utxo.get(filter)?.clone(),
-            profit: self.profit.cohorts.utxo.get(filter)?.clone(),
-            loss: self.loss.cohorts.utxo.get(filter)?.clone(),
-            net_pnl: self.net_pnl.cohorts.get(filter)?.clone(),
-            value_destroyed: self.value_destroyed.cohorts.get(filter)?.clone(),
+            cap: self.cap.cohorts.utxo.get(cohort_id)?.clone(),
+            profit: self.profit.cohorts.utxo.get(cohort_id)?.clone(),
+            loss: self.loss.cohorts.utxo.get(cohort_id)?.clone(),
+            net_pnl: self.net_pnl.cohorts.get(cohort_id)?.clone(),
+            value_destroyed: self.value_destroyed.cohorts.get(cohort_id)?.clone(),
         })
     }
 

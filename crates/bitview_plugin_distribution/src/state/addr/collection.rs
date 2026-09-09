@@ -2,7 +2,7 @@ use brk_error::{Error, Result};
 
 use std::path::Path;
 
-use bitview_cohort::{AmountRange, AmountRangeId, CohortContext, Filter};
+use bitview_cohort::{AmountRange, AmountRangeId, CohortContext, CohortId};
 use brk_types::{Cents, Height, StoredU64};
 use rayon::prelude::*;
 
@@ -18,8 +18,8 @@ pub struct AddrStates {
 impl AddrStates {
     pub fn new(path: &Path) -> Self {
         Self {
-            amount_range: AmountRange::new(|filter: Filter, name| {
-                let name = CohortContext::Addr.full_name(&filter, name);
+            amount_range: AmountRange::new(|cohort_id: CohortId| {
+                let name = CohortContext::Addr.full_name(cohort_id);
                 AddrCohortState::new(path, &name)
             }),
             starting_height: Height::ZERO,

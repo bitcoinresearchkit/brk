@@ -4,7 +4,7 @@ use brk_types::Sats;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{AmountFilter, CohortName, Filter};
+use super::{AmountId, CohortId, CohortName};
 
 /// Over-amount thresholds
 pub const OVER_AMOUNT_THRESHOLDS: OverAmount<Sats> = OverAmount {
@@ -38,37 +38,6 @@ pub const OVER_AMOUNT_NAMES: OverAmount<CohortName> = OverAmount {
     _100btc: CohortName::new("over_100btc", "100+ BTC", "Over 100 BTC"),
     _1k_btc: CohortName::new("over_1k_btc", "1k+ BTC", "Over 1K BTC"),
     _10k_btc: CohortName::new("over_10k_btc", "10k+ BTC", "Over 10K BTC"),
-};
-
-/// Over-amount filters
-pub const OVER_AMOUNT_FILTERS: OverAmount<Filter> = OverAmount {
-    _1sat: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1sat)),
-    _10sats: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10sats)),
-    _100sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._100sats,
-    )),
-    _1k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._1k_sats,
-    )),
-    _10k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._10k_sats,
-    )),
-    _100k_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._100k_sats,
-    )),
-    _1m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._1m_sats,
-    )),
-    _10m_sats: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._10m_sats,
-    )),
-    _1btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1btc)),
-    _10btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._10btc)),
-    _100btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._100btc)),
-    _1k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(OVER_AMOUNT_THRESHOLDS._1k_btc)),
-    _10k_btc: Filter::Amount(AmountFilter::GreaterOrEqual(
-        OVER_AMOUNT_THRESHOLDS._10k_btc,
-    )),
 };
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -127,27 +96,17 @@ impl OverAmount<CohortName> {
 }
 
 impl<T> OverAmount<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        Self::from_fn(|id| {
-            create(
-                id.select(&OVER_AMOUNT_FILTERS).clone(),
-                id.select(&OVER_AMOUNT_NAMES).id,
-            )
-        })
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| {
-            create(
-                id.select(&OVER_AMOUNT_FILTERS).clone(),
-                id.select(&OVER_AMOUNT_NAMES).id,
-            )
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
+    }
+}
+
+impl OverAmountId {
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Amount(AmountId::Over(self))
     }
 }

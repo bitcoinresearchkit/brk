@@ -1,7 +1,4 @@
-use bitview_cohort::{
-    AmountRange, CohortContext, Filter, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES,
-    UTXOAggregate, UTXOAggregateId, UTXOValues,
-};
+use bitview_cohort::{AmountRange, CohortId, UTXOAggregate, UTXOAggregateId, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{DaysToYears, SatsToCents};
@@ -83,11 +80,11 @@ impl ActivityVecs {
             cached_starts,
         )?);
         let coinyears_destroyed = UTXOAggregate::from_fn(|id| {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
-            let name = Self::aggregate_metric_name(id, "coinyears_destroyed");
+            let cohort_id = id.cohort();
+            let name = id.metric_name("coinyears_destroyed");
             let source = coindays_destroyed
                 .cohorts
-                .get(filter)
+                .get(cohort_id)
                 .expect("aggregate coindays-destroyed source")
                 .sum
                 ._1y
@@ -104,7 +101,7 @@ impl ActivityVecs {
             RollingWindows::forced_import(
                 cache,
                 db,
-                &Self::aggregate_metric_name(id, "dormancy"),
+                &id.metric_name("dormancy"),
                 Self::aggregate_version(aggregate_version, id),
                 mappings,
             )
@@ -129,17 +126,9 @@ impl ActivityVecs {
             }
     }
 
-    fn aggregate_metric_name(id: UTXOAggregateId, metric: &str) -> String {
-        CohortContext::Utxo.metric_name(
-            id.select(&UTXO_AGGREGATE_FILTERS),
-            id.select(&UTXO_AGGREGATE_NAMES).id,
-            metric,
-        )
-    }
-
-    pub fn sources(&self, filter: &Filter) -> Option<ActivitySources> {
+    pub fn sources(&self, cohort_id: CohortId) -> Option<ActivitySources> {
         Some(ActivitySources {
-            transfer_volume: self.transfer_volume.cohorts.utxo.get(filter)?.clone(),
+            transfer_volume: self.transfer_volume.cohorts.utxo.get(cohort_id)?.clone(),
         })
     }
 
@@ -203,18 +192,18 @@ impl ActivityVecs {
 
     pub fn compute_dormancy(&mut self, max_from: Height, exit: &Exit) -> Result<()> {
         for id in UTXOAggregateId::ALL {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
+            let cohort_id = id.cohort();
             let coindays_destroyed = &self
                 .coindays_destroyed
                 .cohorts
-                .get(filter)
+                .get(cohort_id)
                 .expect("aggregate coindays-destroyed cohort")
                 .sum;
             let transfer_volume = &self
                 .transfer_volume
                 .cohorts
                 .utxo
-                .get(filter)
+                .get(cohort_id)
                 .expect("aggregate transfer-volume cohort")
                 .sum
                 .0;

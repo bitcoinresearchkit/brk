@@ -1,5 +1,5 @@
 use bitview_cohort::{
-    AmountRange, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroups, UTXOValues,
+    AmountRange, CohortContext, CohortId, UTXOAndAddrGroups, UTXOGroups, UTXOValues,
 };
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SatsToCents;
@@ -36,8 +36,8 @@ impl SupplyTotal {
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "supply_sats", version)?;
-        let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
-        let all_sats = stored.get(&Filter::All).expect("all supply source");
+        let all_name = CohortContext::Utxo.metric_name(CohortId::All, "supply");
+        let all_sats = stored.get(CohortId::All).expect("all supply source");
         let all_supply = all_sats.read_only_boxed_clone();
         let sats = LazyPerBlock::from_height_source::<Ident>(
             &format!("{all_name}_sats"),
@@ -64,12 +64,12 @@ impl SupplyTotal {
                 mappings,
             ),
         );
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "supply");
-            if matches!(filter, Filter::All) {
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "supply");
+            if matches!(cohort_id, CohortId::All) {
                 all.clone()
             } else {
-                let source = stored.get(&filter).expect("total-supply cohort source");
+                let source = stored.get(cohort_id).expect("total-supply cohort source");
                 LazySpotValuePerBlock::from_sats_source(
                     &name, version, source, mappings, spot_price,
                 )
@@ -108,8 +108,8 @@ impl SupplyTotal {
         self.stored.min_len().min(self.cohorts.addr_balance.len())
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&LazySpotValuePerBlock> {
-        self.cohorts.utxo.get(filter)
+    pub fn get(&self, cohort_id: CohortId) -> Option<&LazySpotValuePerBlock> {
+        self.cohorts.utxo.get(cohort_id)
     }
 
     pub fn all_supply(&self) -> &ReadableBoxedVec<Height, Sats> {

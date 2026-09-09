@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use bitview_cohort::{ByAddrType, EntryPrice, Filter, Term};
+use bitview_cohort::{ByAddrType, EntryPrice};
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_inputs::Vecs as InputsVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
@@ -224,7 +224,7 @@ pub fn process_blocks(
     debug!("AddrCache created, entering main loop");
 
     // Initialize Fenwick tree from imported BTreeMap state (one-time)
-    utxo_states.init_fenwick_if_needed(&Filter::Term(Term::Sth));
+    utxo_states.init_fenwick_if_needed();
 
     // Pre-truncate all stored vecs to starting_height (one-time).
     // This eliminates per-push truncation checks inside the block loop.

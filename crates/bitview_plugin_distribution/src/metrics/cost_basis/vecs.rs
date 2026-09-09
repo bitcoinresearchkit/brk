@@ -1,6 +1,4 @@
-use bitview_cohort::{
-    CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{AggregatePercentPerBlock, PerBlock, PercentilesVecs, Price};
@@ -92,13 +90,13 @@ impl CostBasisVecs {
         let cohorts = UTXOAggregate::from_fn(|id| CostBasis {
             in_profit: CostBasisSide {
                 per_coin: Price::from_height_source(
-                    &Self::cohort_metric_name(id, "cost_basis_in_profit_per_coin"),
+                    &id.metric_name("cost_basis_in_profit_per_coin"),
                     aggregate_version,
                     &id.select(&in_profit_per_coin_source).cents.height,
                     mappings,
                 ),
                 per_dollar: Price::from_height_source(
-                    &Self::cohort_metric_name(id, "cost_basis_in_profit_per_dollar"),
+                    &id.metric_name("cost_basis_in_profit_per_dollar"),
                     aggregate_version,
                     &id.select(&in_profit_per_dollar_source).cents.height,
                     mappings,
@@ -106,26 +104,26 @@ impl CostBasisVecs {
             },
             in_loss: CostBasisSide {
                 per_coin: Price::from_height_source(
-                    &Self::cohort_metric_name(id, "cost_basis_in_loss_per_coin"),
+                    &id.metric_name("cost_basis_in_loss_per_coin"),
                     aggregate_version,
                     &id.select(&in_loss_per_coin_source).cents.height,
                     mappings,
                 ),
                 per_dollar: Price::from_height_source(
-                    &Self::cohort_metric_name(id, "cost_basis_in_loss_per_dollar"),
+                    &id.metric_name("cost_basis_in_loss_per_dollar"),
                     aggregate_version,
                     &id.select(&in_loss_per_dollar_source).cents.height,
                     mappings,
                 ),
             },
             min: Price::from_height_source(
-                &Self::cohort_metric_name(id, "cost_basis_min"),
+                &id.metric_name("cost_basis_min"),
                 aggregate_version,
                 &id.select(&min_source).cents.height,
                 mappings,
             ),
             max: Price::from_height_source(
-                &Self::cohort_metric_name(id, "cost_basis_max"),
+                &id.metric_name("cost_basis_max"),
                 aggregate_version,
                 &id.select(&max_source).cents.height,
                 mappings,
@@ -160,7 +158,7 @@ impl CostBasisVecs {
             Price::forced_import(
                 cache,
                 db,
-                &Self::cohort_metric_name(id, metric),
+                &id.metric_name(metric),
                 version + Version::ONE,
                 mappings,
             )
@@ -180,22 +178,8 @@ impl CostBasisVecs {
             } else {
                 base_version
             };
-            PercentilesVecs::forced_import(
-                cache,
-                db,
-                &Self::cohort_metric_name(id, metric),
-                version,
-                mappings,
-            )
+            PercentilesVecs::forced_import(cache, db, &id.metric_name(metric), version, mappings)
         })
-    }
-
-    fn cohort_metric_name(id: UTXOAggregateId, metric: &str) -> String {
-        CohortContext::Utxo.metric_name(
-            id.select(&UTXO_AGGREGATE_FILTERS),
-            id.select(&UTXO_AGGREGATE_NAMES).id,
-            metric,
-        )
     }
 
     #[inline(always)]

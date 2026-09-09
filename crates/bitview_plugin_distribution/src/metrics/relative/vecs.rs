@@ -1,7 +1,4 @@
-use bitview_cohort::{
-    ByTerm, CohortContext, TERM_FILTERS, TERM_NAMES, TermId, UTXO_AGGREGATE_FILTERS,
-    UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{ByTerm, CohortContext, CohortId, Term, UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{RatioCents, RatioDollars};
 use bitview_traversable::Traversable;
@@ -113,7 +110,7 @@ impl RelativeVecs {
 
         let unrealized_profit_to_mcap = UTXOAggregate::from_fn(|id| {
             let source = id.select(sources);
-            let name = Self::aggregate_metric_name(id, "unrealized_profit_to_mcap");
+            let name = id.metric_name("unrealized_profit_to_mcap");
             let source = all_chain.with_market_cap(
                 &format!("{name}_ppm_source"),
                 Version::new(2),
@@ -124,7 +121,7 @@ impl RelativeVecs {
         });
         let unrealized_loss_to_mcap = UTXOAggregate::from_fn(|id| {
             let source = id.select(sources);
-            let name = Self::aggregate_metric_name(id, "unrealized_loss_to_mcap");
+            let name = id.metric_name("unrealized_loss_to_mcap");
             let source = all_chain.with_market_cap(
                 &format!("{name}_ppm_source"),
                 Version::new(2),
@@ -135,12 +132,12 @@ impl RelativeVecs {
         });
         let net_unrealized_pnl_to_own_mcap = ByTerm::from_fn(|term_id| {
             let aggregate_id = match term_id {
-                TermId::Short => UTXOAggregateId::Sth,
-                TermId::Long => UTXOAggregateId::Lth,
+                Term::Sth => UTXOAggregateId::Sth,
+                Term::Lth => UTXOAggregateId::Lth,
             };
             let source = aggregate_id.select(sources).nupl.ppm.height.clone();
             LazyPercentPerBlock::from_height_source(
-                &Self::aggregate_metric_name(aggregate_id, "net_unrealized_pnl_to_own_mcap"),
+                &aggregate_id.metric_name("net_unrealized_pnl_to_own_mcap"),
                 version + Version::new(4),
                 &source,
                 mappings,
@@ -168,21 +165,9 @@ impl RelativeVecs {
         mappings: &MappingsVecs,
     ) -> Result<ByTerm<PercentPerBlock<PartsPerMillion32>>> {
         ByTerm::try_from_fn(|id| {
-            let name = CohortContext::Utxo.metric_name(
-                id.select(&TERM_FILTERS),
-                id.select(&TERM_NAMES).id,
-                metric,
-            );
+            let name = CohortContext::Utxo.metric_name(CohortId::Term(id), metric);
             PercentPerBlock::forced_import(cache, db, &name, version + Version::ONE, mappings)
         })
-    }
-
-    fn aggregate_metric_name(id: UTXOAggregateId, metric: &str) -> String {
-        CohortContext::Utxo.metric_name(
-            id.select(&UTXO_AGGREGATE_FILTERS),
-            id.select(&UTXO_AGGREGATE_NAMES).id,
-            metric,
-        )
     }
 
     fn ratio_to_market_cap(value: Cents, market_cap: Cents) -> PartsPerMillion32 {
@@ -196,11 +181,11 @@ impl RelativeVecs {
 
     fn term_source<'a>(
         sources: &'a UTXOAggregate<RelativeSource<'a>>,
-        id: TermId,
+        id: Term,
     ) -> &'a RelativeSource<'a> {
         match id {
-            TermId::Short => &sources.sth,
-            TermId::Long => &sources.lth,
+            Term::Sth => &sources.sth,
+            Term::Lth => &sources.lth,
         }
     }
 
@@ -212,16 +197,18 @@ impl RelativeVecs {
     ) -> Result<()> {
         self.supply_profitability_shares
             .compute(max_from, sources, exit)?;
-        for id in [TermId::Short, TermId::Long] {
+        for id in [Term::Sth, Term::Lth] {
             let source = Self::term_source(sources, id);
-            id.select_mut(&mut self.unrealized_profit_to_own_mcap)
+            self.unrealized_profit_to_own_mcap
+                .get_mut(id)
                 .compute_binary::<_, _, RatioDollars<PartsPerMillion32>>(
                     max_from,
                     &source.unrealized.profit.usd.height,
                     &source.supply.total.usd.height,
                     exit,
                 )?;
-            id.select_mut(&mut self.unrealized_loss_to_own_mcap)
+            self.unrealized_loss_to_own_mcap
+                .get_mut(id)
                 .compute_binary::<_, _, RatioDollars<PartsPerMillion32>>(
                     max_from,
                     &source.unrealized.loss.usd.height,

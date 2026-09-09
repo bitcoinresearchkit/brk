@@ -1,4 +1,4 @@
-use bitview_cohort::{Amount, AmountRange, CohortContext};
+use bitview_cohort::{Amount, AmountRange, CohortContext, CohortId};
 use bitview_transforms::{StoredU64ToCents, StoredU64ToSats};
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -52,24 +52,17 @@ impl<S: Clone> AmountValueSources<S> {
             version,
             |_, _| (),
         )?;
-        let series = Amount::new(|filter, cohort| {
-            let name = context.metric_name(&filter, cohort, metric);
+        let series = Amount::from_fn(|id| {
+            let name = context.metric_name(CohortId::Amount(id), metric);
             let sats = LazyVec::transformed::<StoredU64ToSats>(
                 &format!("{name}_cumulative_sats"),
                 version,
-                sats.stored
-                    .get(&filter)
-                    .expect("amount cohort")
-                    .read_only_boxed_clone(),
+                sats.stored.get(id).read_only_boxed_clone(),
             );
             let cents = LazyVec::transformed::<StoredU64ToCents>(
                 &format!("{name}_cumulative_cents"),
                 version,
-                cents
-                    .stored
-                    .get(&filter)
-                    .expect("amount cohort")
-                    .read_only_boxed_clone(),
+                cents.stored.get(id).read_only_boxed_clone(),
             );
             build(&name, sats, cents)
         });

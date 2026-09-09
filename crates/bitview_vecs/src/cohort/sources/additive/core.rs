@@ -1,7 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    AgeRange, ByAge, ByEntry, ByEpoch, ByTerm, Class, CohortContext, Filter, UTXOCoreValues,
+    AgeRange, ByAge, ByEntry, ByEpoch, ByTerm, Class, CohortContext, CohortId, UTXOCoreValues,
     UTXOGroupCore, UTXOGroupsWithoutAmountOrType, UTXOOverlappingValues,
 };
 use bitview_traversable::Traversable;
@@ -29,19 +29,19 @@ impl<T: PcoVecValue + AddAssign> UTXOCoreSources<T> {
         version: Version,
     ) -> Result<Self> {
         Ok(Self {
-            cohorts: UTXOGroupsWithoutAmountOrType::try_new(|filter, cohort| {
+            cohorts: UTXOGroupsWithoutAmountOrType::try_new(|cohort_id| {
                 import_stored(
                     cache,
                     db,
-                    &CohortContext::Utxo.metric_name(&filter, cohort, name),
+                    &CohortContext::Utxo.metric_name(cohort_id, name),
                     version + Version::TWO,
                 )
             })?,
         })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&StoredSeries<Height, T>> {
-        self.cohorts.get(filter)
+    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+        self.cohorts.get(cohort_id)
     }
 
     pub fn min_len(&self) -> usize {
@@ -76,8 +76,8 @@ impl<T: PcoVecValue + AddAssign> UTXOCoreSources<T> {
                 },
             }
         } else {
-            UTXOGroupsWithoutAmountOrType::new(|filter, _| {
-                cohort_values.value(&filter).expect("core cohort")
+            UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+                cohort_values.value(cohort_id).expect("core cohort")
             })
         };
         for (target, &value) in self.cohorts.iter_mut().zip(values.iter()) {

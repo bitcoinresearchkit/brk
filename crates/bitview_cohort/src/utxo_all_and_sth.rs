@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Filter, Term};
+use crate::{CohortId, Term};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
@@ -23,10 +23,10 @@ define_cohort_id!(
 );
 
 impl<T> UTXOAllAndSth<T> {
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        match filter {
-            Filter::All => Some(&self.all),
-            Filter::Term(Term::Sth) => Some(&self.sth),
+    pub fn get(&self, id: CohortId) -> Option<&T> {
+        match id {
+            CohortId::All => Some(&self.all),
+            CohortId::Term(Term::Sth) => Some(&self.sth),
             _ => None,
         }
     }

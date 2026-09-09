@@ -4,25 +4,7 @@ use brk_types::{Halving, Height};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, Filter};
-
-/// Epoch values
-pub const EPOCH_VALUES: ByEpoch<Halving> = ByEpoch {
-    _0: Halving::new(0),
-    _1: Halving::new(1),
-    _2: Halving::new(2),
-    _3: Halving::new(3),
-    _4: Halving::new(4),
-};
-
-/// Epoch filters
-pub const EPOCH_FILTERS: ByEpoch<Filter> = ByEpoch {
-    _0: Filter::Epoch(EPOCH_VALUES._0),
-    _1: Filter::Epoch(EPOCH_VALUES._1),
-    _2: Filter::Epoch(EPOCH_VALUES._2),
-    _3: Filter::Epoch(EPOCH_VALUES._3),
-    _4: Filter::Epoch(EPOCH_VALUES._4),
-};
+use super::{CohortId, CohortName};
 
 /// Epoch names
 pub const EPOCH_NAMES: ByEpoch<CohortName> = ByEpoch {
@@ -65,34 +47,12 @@ impl ByEpoch<CohortName> {
 }
 
 impl<T> ByEpoch<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        let f = EPOCH_FILTERS;
-        let n = EPOCH_NAMES;
-        Self {
-            _0: create(f._0, n._0.id),
-            _1: create(f._1, n._1.id),
-            _2: create(f._2, n._2.id),
-            _3: create(f._3, n._3.id),
-            _4: create(f._4, n._4.id),
-        }
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        let f = EPOCH_FILTERS;
-        let n = EPOCH_NAMES;
-        Ok(Self {
-            _0: create(f._0, n._0.id)?,
-            _1: create(f._1, n._1.id)?,
-            _2: create(f._2, n._2.id)?,
-            _3: create(f._3, n._3.id)?,
-            _4: create(f._4, n._4.id)?,
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
     }
 
     pub fn mut_vec_from_height(&mut self, height: Height) -> Option<&mut T> {
@@ -112,11 +72,9 @@ impl<T> ByEpoch<T> {
         }
     }
 }
+
 impl EpochId {
-    pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL
-            .iter()
-            .copied()
-            .find(|id| id.select(&EPOCH_FILTERS) == filter)
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Epoch(self)
     }
 }

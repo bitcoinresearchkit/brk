@@ -1,6 +1,6 @@
 use std::iter;
 
-use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregateId};
+use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, Term, UTXOAggregateId};
 use bitview_compute::{
     AgeBand, MINIMUM_DURATION_DAYS, WeightedCohortContribution, WeightedCohortState, WeightedRatio,
 };
@@ -228,7 +228,7 @@ impl PrimaryBatch {
             let total_cap = id.select(&self.realized_caps)[offset];
             let loss_supply = id.select(&self.loss_supplies)[offset];
 
-            let term = if TERM_FILTERS.short.includes(id.filter()) {
+            let term = if id.term() == Term::Sth {
                 &mut terms.short
             } else {
                 &mut terms.long
@@ -783,10 +783,7 @@ mod tests {
     #[test]
     fn age_ranges_belong_to_exactly_one_term() {
         for id in AgeRangeId::ALL {
-            assert_ne!(
-                TERM_FILTERS.short.includes(id.filter()),
-                TERM_FILTERS.long.includes(id.filter())
-            );
+            assert_ne!(id.term() == Term::Sth, id.term() == Term::Lth);
         }
     }
 }

@@ -32,14 +32,14 @@ impl SpentOutputCount {
             "spent_utxo_count_cumulative",
             version,
         )?;
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "spent_utxo_count");
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "spent_utxo_count");
             LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,
                 version,
                 stored
                     .stored
-                    .get(&filter)
+                    .get(cohort_id)
                     .expect("spent-output cohort source"),
                 cached_starts,
                 mappings,

@@ -3,11 +3,10 @@ use std::ops::{Add, AddAssign};
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 use brk_types::OutputType;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, Filter};
+use super::{CohortId, CohortName};
 
 pub const SPENDABLE_TYPE_COUNT: usize = 11;
 
@@ -119,36 +118,6 @@ impl SpendableTypeId {
     }
 }
 
-/// Spendable type values
-pub const SPENDABLE_TYPE_VALUES: SpendableType<OutputType> = SpendableType {
-    p2pk65: OutputType::P2PK65,
-    p2pk33: OutputType::P2PK33,
-    p2pkh: OutputType::P2PKH,
-    p2ms: OutputType::P2MS,
-    p2sh: OutputType::P2SH,
-    p2wpkh: OutputType::P2WPKH,
-    p2wsh: OutputType::P2WSH,
-    p2tr: OutputType::P2TR,
-    p2a: OutputType::P2A,
-    unknown: OutputType::Unknown,
-    empty: OutputType::Empty,
-};
-
-/// Spendable type filters
-pub const SPENDABLE_TYPE_FILTERS: SpendableType<Filter> = SpendableType {
-    p2pk65: Filter::Type(SPENDABLE_TYPE_VALUES.p2pk65),
-    p2pk33: Filter::Type(SPENDABLE_TYPE_VALUES.p2pk33),
-    p2pkh: Filter::Type(SPENDABLE_TYPE_VALUES.p2pkh),
-    p2ms: Filter::Type(SPENDABLE_TYPE_VALUES.p2ms),
-    p2sh: Filter::Type(SPENDABLE_TYPE_VALUES.p2sh),
-    p2wpkh: Filter::Type(SPENDABLE_TYPE_VALUES.p2wpkh),
-    p2wsh: Filter::Type(SPENDABLE_TYPE_VALUES.p2wsh),
-    p2tr: Filter::Type(SPENDABLE_TYPE_VALUES.p2tr),
-    p2a: Filter::Type(SPENDABLE_TYPE_VALUES.p2a),
-    unknown: Filter::Type(SPENDABLE_TYPE_VALUES.unknown),
-    empty: Filter::Type(SPENDABLE_TYPE_VALUES.empty),
-};
-
 /// Spendable type names
 pub const SPENDABLE_TYPE_NAMES: SpendableType<CohortName> = SpendableType {
     p2pk65: CohortName::new("p2pk65", "P2PK65", "Pay to Public Key (65 bytes)"),
@@ -191,36 +160,18 @@ pub struct SpendableType<T> {
     pub empty: T,
 }
 
-impl<T> SpendableType<T> {
-    pub fn from_fn(mut f: impl FnMut(SpendableTypeId) -> T) -> Self {
-        Self {
-            p2pk65: f(SpendableTypeId::P2PK65),
-            p2pk33: f(SpendableTypeId::P2PK33),
-            p2pkh: f(SpendableTypeId::P2PKH),
-            p2ms: f(SpendableTypeId::P2MS),
-            p2sh: f(SpendableTypeId::P2SH),
-            p2wpkh: f(SpendableTypeId::P2WPKH),
-            p2wsh: f(SpendableTypeId::P2WSH),
-            p2tr: f(SpendableTypeId::P2TR),
-            p2a: f(SpendableTypeId::P2A),
-            unknown: f(SpendableTypeId::Unknown),
-            empty: f(SpendableTypeId::Empty),
-        }
-    }
-}
-
-impl_collection_formattable!(SpendableType {
-    p2pk65,
-    p2pk33,
-    p2pkh,
-    p2ms,
-    p2sh,
-    p2wpkh,
-    p2wsh,
-    p2tr,
-    p2a,
-    unknown,
-    empty,
+impl_cohort_collection!(SpendableTypeId for SpendableType {
+    P2PK65 => p2pk65,
+    P2PK33 => p2pk33,
+    P2PKH => p2pkh,
+    P2MS => p2ms,
+    P2SH => p2sh,
+    P2WPKH => p2wpkh,
+    P2WSH => p2wsh,
+    P2TR => p2tr,
+    P2A => p2a,
+    Unknown => unknown,
+    Empty => empty,
 });
 
 impl SpendableType<CohortName> {
@@ -230,168 +181,42 @@ impl SpendableType<CohortName> {
 }
 
 impl<T> SpendableType<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        let f = SPENDABLE_TYPE_FILTERS;
-        let n = SPENDABLE_TYPE_NAMES;
-        Self {
-            p2pk65: create(f.p2pk65, n.p2pk65.id),
-            p2pk33: create(f.p2pk33, n.p2pk33.id),
-            p2pkh: create(f.p2pkh, n.p2pkh.id),
-            p2ms: create(f.p2ms, n.p2ms.id),
-            p2sh: create(f.p2sh, n.p2sh.id),
-            p2wpkh: create(f.p2wpkh, n.p2wpkh.id),
-            p2wsh: create(f.p2wsh, n.p2wsh.id),
-            p2tr: create(f.p2tr, n.p2tr.id),
-            p2a: create(f.p2a, n.p2a.id),
-            unknown: create(f.unknown, n.unknown.id),
-            empty: create(f.empty, n.empty.id),
-        }
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|kind| create(CohortId::Type(kind.output_type())))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        let f = SPENDABLE_TYPE_FILTERS;
-        let n = SPENDABLE_TYPE_NAMES;
-        Ok(Self {
-            p2pk65: create(f.p2pk65, n.p2pk65.id)?,
-            p2pk33: create(f.p2pk33, n.p2pk33.id)?,
-            p2pkh: create(f.p2pkh, n.p2pkh.id)?,
-            p2ms: create(f.p2ms, n.p2ms.id)?,
-            p2sh: create(f.p2sh, n.p2sh.id)?,
-            p2wpkh: create(f.p2wpkh, n.p2wpkh.id)?,
-            p2wsh: create(f.p2wsh, n.p2wsh.id)?,
-            p2tr: create(f.p2tr, n.p2tr.id)?,
-            p2a: create(f.p2a, n.p2a.id)?,
-            unknown: create(f.unknown, n.unknown.id)?,
-            empty: create(f.empty, n.empty.id)?,
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|kind| create(CohortId::Type(kind.output_type())))
+    }
+
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> SpendableType<U> {
+        SpendableType::from_fn(|kind| map(CohortId::Type(kind.output_type()), kind.select(self)))
     }
 
     pub fn get(&self, output_type: OutputType) -> &T {
-        match output_type {
-            OutputType::P2PK65 => &self.p2pk65,
-            OutputType::P2PK33 => &self.p2pk33,
-            OutputType::P2PKH => &self.p2pkh,
-            OutputType::P2MS => &self.p2ms,
-            OutputType::P2SH => &self.p2sh,
-            OutputType::P2WPKH => &self.p2wpkh,
-            OutputType::P2WSH => &self.p2wsh,
-            OutputType::P2TR => &self.p2tr,
-            OutputType::P2A => &self.p2a,
-            OutputType::Unknown => &self.unknown,
-            OutputType::Empty => &self.empty,
-            _ => unreachable!(),
-        }
+        SpendableTypeId::from_output_type(output_type)
+            .expect("spendable output type")
+            .select(self)
     }
 
     pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
-        match output_type {
-            OutputType::P2PK65 => &mut self.p2pk65,
-            OutputType::P2PK33 => &mut self.p2pk33,
-            OutputType::P2PKH => &mut self.p2pkh,
-            OutputType::P2MS => &mut self.p2ms,
-            OutputType::P2SH => &mut self.p2sh,
-            OutputType::P2WPKH => &mut self.p2wpkh,
-            OutputType::P2WSH => &mut self.p2wsh,
-            OutputType::P2TR => &mut self.p2tr,
-            OutputType::P2A => &mut self.p2a,
-            OutputType::Unknown => &mut self.unknown,
-            OutputType::Empty => &mut self.empty,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self.p2pk65,
-            &self.p2pk33,
-            &self.p2pkh,
-            &self.p2ms,
-            &self.p2sh,
-            &self.p2wpkh,
-            &self.p2wsh,
-            &self.p2tr,
-            &self.p2a,
-            &self.unknown,
-            &self.empty,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self.p2pk65,
-            &mut self.p2pk33,
-            &mut self.p2pkh,
-            &mut self.p2ms,
-            &mut self.p2sh,
-            &mut self.p2wpkh,
-            &mut self.p2wsh,
-            &mut self.p2tr,
-            &mut self.p2a,
-            &mut self.unknown,
-            &mut self.empty,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self.p2pk65,
-            &mut self.p2pk33,
-            &mut self.p2pkh,
-            &mut self.p2ms,
-            &mut self.p2sh,
-            &mut self.p2wpkh,
-            &mut self.p2wsh,
-            &mut self.p2tr,
-            &mut self.p2a,
-            &mut self.unknown,
-            &mut self.empty,
-        ]
-        .into_par_iter()
+        SpendableTypeId::from_output_type(output_type)
+            .expect("spendable output type")
+            .select_mut(self)
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
-        [
-            (OutputType::P2PK65, &self.p2pk65),
-            (OutputType::P2PK33, &self.p2pk33),
-            (OutputType::P2PKH, &self.p2pkh),
-            (OutputType::P2MS, &self.p2ms),
-            (OutputType::P2SH, &self.p2sh),
-            (OutputType::P2WPKH, &self.p2wpkh),
-            (OutputType::P2WSH, &self.p2wsh),
-            (OutputType::P2TR, &self.p2tr),
-            (OutputType::P2A, &self.p2a),
-            (OutputType::Unknown, &self.unknown),
-            (OutputType::Empty, &self.empty),
-        ]
-        .into_iter()
+        SpendableTypeId::ALL
+            .iter()
+            .map(|id| id.output_type())
+            .zip(self.iter())
     }
 
     pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
-        [
-            (OutputType::P2PK65, &mut self.p2pk65),
-            (OutputType::P2PK33, &mut self.p2pk33),
-            (OutputType::P2PKH, &mut self.p2pkh),
-            (OutputType::P2MS, &mut self.p2ms),
-            (OutputType::P2SH, &mut self.p2sh),
-            (OutputType::P2WPKH, &mut self.p2wpkh),
-            (OutputType::P2WSH, &mut self.p2wsh),
-            (OutputType::P2TR, &mut self.p2tr),
-            (OutputType::P2A, &mut self.p2a),
-            (OutputType::Unknown, &mut self.unknown),
-            (OutputType::Empty, &mut self.empty),
-        ]
-        .into_iter()
+        SpendableTypeId::ALL
+            .iter()
+            .map(|id| id.output_type())
+            .zip(self.iter_mut())
     }
 }
 
@@ -438,13 +263,23 @@ where
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "storage")]
     use super::*;
 
-    #[cfg(feature = "storage")]
     #[test]
     fn cohort_ids_match_spendable_type_order() {
-        let output_types: Vec<_> = SPENDABLE_TYPE_VALUES.iter().copied().collect();
+        let output_types = [
+            OutputType::P2PK65,
+            OutputType::P2PK33,
+            OutputType::P2PKH,
+            OutputType::P2MS,
+            OutputType::P2SH,
+            OutputType::P2WPKH,
+            OutputType::P2WSH,
+            OutputType::P2TR,
+            OutputType::P2A,
+            OutputType::Unknown,
+            OutputType::Empty,
+        ];
         let selected_output_types: Vec<_> = SpendableTypeId::ALL
             .iter()
             .map(|id| id.output_type())
@@ -456,9 +291,35 @@ mod tests {
             None
         );
 
-        let values = SpendableType::from_fn(|id| id.index());
-        for id in SpendableTypeId::ALL {
+        let mut values = SpendableType::from_fn(|id| id.index());
+        assert!(values.iter_typed().map(|(kind, _)| kind).eq(output_types));
+        for &id in SpendableTypeId::ALL {
+            let kind = id.output_type();
+            assert_eq!(SpendableTypeId::from_output_type(kind), Some(id));
             assert_eq!(*id.select(&values), id.index());
+            assert_eq!(*values.get(kind), id.index());
+            *values.get_mut(kind) += 1;
+            assert_eq!(*id.select(&values), id.index() + 1);
         }
+        for ((kind, value), &id) in values.iter_typed_mut().zip(SpendableTypeId::ALL) {
+            assert_eq!(kind, id.output_type());
+            assert_eq!(*value, id.index() + 1);
+            *value += 1;
+        }
+        for &id in SpendableTypeId::ALL {
+            assert_eq!(*values.get(id.output_type()), id.index() + 2);
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "spendable output type")]
+    fn get_rejects_op_return() {
+        SpendableType::<()>::default().get(OutputType::OpReturn);
+    }
+
+    #[test]
+    #[should_panic(expected = "spendable output type")]
+    fn get_mut_rejects_op_return() {
+        SpendableType::<()>::default().get_mut(OutputType::OpReturn);
     }
 }

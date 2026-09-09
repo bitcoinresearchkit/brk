@@ -17,10 +17,10 @@ fn iteration_and_mutation_follow_cohort_order() {
         }};
     }
     check!(AgeRange, AgeRangeId);
+    check!(SpendableType, SpendableTypeId);
     check!(AmountRange, AmountRangeId);
-    check!(ByEntry, EntryId);
+    check!(ByEntry, EntryPrice);
     check!(ByEpoch, EpochId);
-    check!(ByTerm, TermId);
     check!(Class, ClassId);
     check!(Profit, ProfitId);
     check!(Loss, LossId);
@@ -31,14 +31,20 @@ fn iteration_and_mutation_follow_cohort_order() {
     check!(OverAge, OverAgeId);
     check!(UnderAmount, UnderAmountId);
     check!(OverAmount, OverAmountId);
+
+    let mut terms = ByTerm::from_fn(|term| term);
+    assert!(terms.iter().copied().eq([Term::Sth, Term::Lth]));
+    assert_eq!(*terms.get(Term::Sth), Term::Sth);
+    *terms.get_mut(Term::Lth) = Term::Sth;
+    assert!(terms.iter().all(|&term| term == Term::Sth));
 }
 
 #[test]
 fn fallible_construction_stops_at_the_first_error() {
     let mut calls = 0;
-    let result = AmountRange::try_new(|_, name| {
+    let result = AmountRange::try_new(|id| {
         calls += 1;
-        if calls == 2 { Err(name) } else { Ok(()) }
+        if calls == 2 { Err(id.name()) } else { Ok(()) }
     });
     assert_eq!(
         result.err(),
@@ -50,12 +56,12 @@ fn fallible_construction_stops_at_the_first_error() {
 #[test]
 fn utxo_and_address_names_do_not_collide() {
     let groups = UTXOAndAddrGroups {
-        utxo: UTXOGroups::new(|_, _| ()),
-        addr_balance: Amount::new(|_, _| ()),
+        utxo: UTXOGroups::new(|_| ()),
+        addr_balance: Amount::new(|_| ()),
     };
     let mut names = BTreeSet::new();
-    groups.map_named(|context, filter, name, _| {
-        assert!(names.insert(context.full_name(filter, name)));
+    groups.map_with_id(|context, id, _| {
+        assert!(names.insert(context.full_name(id)));
     });
     assert_eq!(
         names.len(),

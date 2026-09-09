@@ -4,10 +4,7 @@ use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{
-    AmountRange, AmountRangeId, Filter, OVER_AMOUNT_FILTERS, OverAmount, OverAmountId,
-    UNDER_AMOUNT_FILTERS, UnderAmount, UnderAmountId,
-};
+use crate::{AmountId, AmountRange, CohortId, OverAmount, UnderAmount};
 
 #[derive(Debug, Default, Clone, Serialize, JsonSchema)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -18,51 +15,40 @@ pub struct Amount<T> {
 }
 
 impl<T> Amount<T> {
-    pub fn new(mut create: impl FnMut(Filter, &'static str) -> T) -> Self {
+    pub fn from_fn(mut create: impl FnMut(AmountId) -> T) -> Self {
         Self {
-            range: AmountRange::new(&mut create),
-            under: UnderAmount::new(&mut create),
-            over: OverAmount::new(create),
+            range: AmountRange::from_fn(|id| create(AmountId::Range(id))),
+            under: UnderAmount::from_fn(|id| create(AmountId::Under(id))),
+            over: OverAmount::from_fn(|id| create(AmountId::Over(id))),
         }
     }
 
-    pub fn try_new<E>(
-        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
-    ) -> Result<Self, E> {
+    pub fn try_from_fn<E>(mut create: impl FnMut(AmountId) -> Result<T, E>) -> Result<Self, E> {
         Ok(Self {
-            range: AmountRange::try_new(&mut create)?,
-            under: UnderAmount::try_new(&mut create)?,
-            over: OverAmount::try_new(create)?,
+            range: AmountRange::try_from_fn(|id| create(AmountId::Range(id)))?,
+            under: UnderAmount::try_from_fn(|id| create(AmountId::Under(id)))?,
+            over: OverAmount::try_from_fn(|id| create(AmountId::Over(id)))?,
         })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        AmountRangeId::matching(filter)
-            .map(|id| id.select(&self.range))
-            .or_else(|| {
-                UnderAmountId::ALL
-                    .iter()
-                    .copied()
-                    .find(|id| id.select(&UNDER_AMOUNT_FILTERS) == filter)
-                    .map(|id| id.select(&self.under))
-            })
-            .or_else(|| {
-                OverAmountId::ALL
-                    .iter()
-                    .copied()
-                    .find(|id| id.select(&OVER_AMOUNT_FILTERS) == filter)
-                    .map(|id| id.select(&self.over))
-            })
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(CohortId::Amount(id)))
     }
 
-    pub fn map_named<U>(&self, mut map: impl FnMut(&Filter, &'static str, &T) -> U) -> Amount<U> {
-        Amount::new(|filter, name| {
-            map(
-                &filter,
-                name,
-                self.get(&filter).expect("known cohort filter"),
-            )
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(CohortId::Amount(id)))
+    }
+
+    pub fn get(&self, id: AmountId) -> &T {
+        match id {
+            AmountId::Range(id) => id.select(&self.range),
+            AmountId::Under(id) => id.select(&self.under),
+            AmountId::Over(id) => id.select(&self.over),
+        }
+    }
+
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> Amount<U> {
+        Amount::from_fn(|id| map(CohortId::Amount(id), self.get(id)))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

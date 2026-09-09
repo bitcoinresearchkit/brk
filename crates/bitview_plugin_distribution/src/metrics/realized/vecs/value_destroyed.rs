@@ -32,11 +32,11 @@ impl CumulativeValueDestroyedByCohort {
             "value_destroyed_cumulative_cents",
             version,
         )?;
-        let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
+        let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
             let source = stored
                 .stored
-                .get(&filter)
+                .get(cohort_id)
                 .expect("supported value-destroyed cohort");
             LazyFiatPerBlockCumulativeRolling::from_cumulative_cents_source(
                 &name,

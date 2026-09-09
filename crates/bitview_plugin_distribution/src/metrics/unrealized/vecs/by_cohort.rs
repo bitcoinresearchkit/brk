@@ -34,9 +34,9 @@ where
     ) -> Result<Self> {
         let stored =
             UTXOTypedSources::forced_import(cache, db, &format!("{metric}_cents"), version)?;
-        let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let source = stored.get(&filter).expect("supported unrealized cohort");
+        let cohorts = UTXOGroupsWithoutAmount::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
+            let source = stored.get(cohort_id).expect("supported unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, source, mappings)
         });
         Ok(Self { cohorts, stored })

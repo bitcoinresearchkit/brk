@@ -1,9 +1,8 @@
 use std::thread;
 
 use bitview_cohort::{
-    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, Filter, SpendableType, Term,
-    UTXO_AGGREGATE_FILTERS, UTXOAggregate, UTXOAllAndSth, UTXOCoreValues,
-    UTXOGroupsWithoutAmountOrType, UTXOValues,
+    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, CohortId, SpendableType, Term,
+    UTXOAggregate, UTXOAllAndSth, UTXOCoreValues, UTXOGroupsWithoutAmountOrType, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
@@ -87,19 +86,22 @@ impl CohortMetrics<Rw> {
                 let unrealized =
                     UnrealizedVecs::forced_import(cache, db, v, mappings, &realized.price.cohorts)?;
                 let relative_sources = UTXOAggregate::from_fn(|id| {
-                    let filter = id.select(&UTXO_AGGREGATE_FILTERS);
+                    let cohort_id = id.cohort();
                     RelativeSource {
-                        supply: supply.sources(filter).expect("aggregate supply sources"),
+                        supply: supply.sources(cohort_id).expect("aggregate supply sources"),
                         unrealized: unrealized
-                            .sources(filter)
+                            .sources(cohort_id)
                             .expect("aggregate unrealized sources"),
                         unrealized_aggregate: unrealized
-                            .aggregate_sources(filter)
+                            .aggregate_sources(cohort_id)
                             .expect("aggregate unrealized sources"),
                         realized: realized
-                            .sources(filter)
+                            .sources(cohort_id)
                             .expect("aggregate realized sources"),
-                        nupl: unrealized.nupl.get(filter).expect("aggregate NUPL source"),
+                        nupl: unrealized
+                            .nupl
+                            .get(cohort_id)
+                            .expect("aggregate NUPL source"),
                     }
                 });
                 let relative = RelativeVecs::forced_import(
@@ -140,18 +142,18 @@ impl CohortMetrics<Rw> {
     }
 
     fn sopr_24h_inputs(&self) -> UTXOGroupsWithoutAmountOrType<Sopr24hInput> {
-        UTXOGroupsWithoutAmountOrType::new(|filter, _| {
+        UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
             Sopr24hInput::new(
                 self.activity
                     .transfer_volume
                     .cohorts
                     .utxo
-                    .get(&filter)
+                    .get(cohort_id)
                     .expect("SOPR transfer-volume cohort"),
                 self.realized
                     .value_destroyed
                     .cohorts
-                    .get(&filter)
+                    .get(cohort_id)
                     .expect("SOPR value-destroyed cohort"),
             )
         })
@@ -209,11 +211,10 @@ impl CohortMetrics<Rw> {
         };
 
         let mut aggregates = UTXOAggregate::default();
-        let sth_filter = Filter::Term(Term::Sth);
         for id in AgeRangeId::ALL {
             let state = id.select(&profitability.age_range);
             aggregates.all += state;
-            if sth_filter.includes(id.filter()) {
+            if id.term() == Term::Sth {
                 aggregates.sth += state;
             } else {
                 aggregates.lth += state;
@@ -391,34 +392,34 @@ impl CohortMetrics<Rw> {
             all: AdjustedSoprComputeSource {
                 activity: self
                     .activity
-                    .sources(&Filter::All)
+                    .sources(CohortId::All)
                     .expect("all activity sources"),
                 realized: self
                     .realized
-                    .sources(&Filter::All)
+                    .sources(CohortId::All)
                     .expect("all realized sources"),
             },
             sth: AdjustedSoprComputeSource {
                 activity: self
                     .activity
-                    .sources(&Filter::Term(Term::Sth))
+                    .sources(CohortId::Term(Term::Sth))
                     .expect("STH activity sources"),
                 realized: self
                     .realized
-                    .sources(&Filter::Term(Term::Sth))
+                    .sources(CohortId::Term(Term::Sth))
                     .expect("STH realized sources"),
             },
         };
         let realized_sources = UTXOAggregate::from_fn(|id| {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
+            let cohort_id = id.cohort();
             RealizedAggregateSources {
                 activity: self
                     .activity
-                    .sources(filter)
+                    .sources(cohort_id)
                     .expect("aggregate activity sources"),
                 realized: self
                     .realized
-                    .sources(filter)
+                    .sources(cohort_id)
                     .expect("aggregate realized sources"),
             }
         });
@@ -444,28 +445,28 @@ impl CohortMetrics<Rw> {
         )?;
 
         let relative_sources = UTXOAggregate::from_fn(|id| {
-            let filter = id.select(&UTXO_AGGREGATE_FILTERS);
+            let cohort_id = id.cohort();
             RelativeSource {
                 supply: self
                     .supply
-                    .sources(filter)
+                    .sources(cohort_id)
                     .expect("aggregate supply sources"),
                 unrealized: self
                     .unrealized
-                    .sources(filter)
+                    .sources(cohort_id)
                     .expect("aggregate unrealized sources"),
                 unrealized_aggregate: self
                     .unrealized
-                    .aggregate_sources(filter)
+                    .aggregate_sources(cohort_id)
                     .expect("aggregate unrealized sources"),
                 realized: self
                     .realized
-                    .sources(filter)
+                    .sources(cohort_id)
                     .expect("aggregate realized sources"),
                 nupl: self
                     .unrealized
                     .nupl
-                    .get(filter)
+                    .get(cohort_id)
                     .expect("aggregate NUPL source"),
             }
         });
@@ -519,15 +520,13 @@ impl CohortMetrics<Rw> {
             ..
         } = self;
 
-        let sth_filter = Filter::Term(Term::Sth);
-
         let mut accumulated = UTXOAggregate::<RealizedAggregateState>::default();
 
         for id in AgeRangeId::ALL {
             let state = id.select(&states.age_range);
             accumulated.all.add(&state.realized);
 
-            if sth_filter.includes(id.filter()) {
+            if id.term() == Term::Sth {
                 accumulated.sth.add(&state.realized);
             } else {
                 accumulated.lth.add(&state.realized);

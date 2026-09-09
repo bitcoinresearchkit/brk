@@ -1,4 +1,4 @@
-use bitview_cohort::{ByType, Filter, SpendableType, SpendableTypeId};
+use bitview_cohort::{ByType, CohortId, SpendableType, SpendableTypeId};
 use bitview_collections::WindowId;
 use bitview_vecs::{CountTotal, OutputTypeCounts, SpendableTypeCounts, import_stored};
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
@@ -19,37 +19,38 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     let version = Version::new(11);
     let selected = SpendableTypeId::ALL[0].output_type();
 
-    let mut inputs = SpendableType::try_new(|_, name| {
+    let mut inputs = SpendableType::try_new(|id| {
         import_stored::<Height, StoredU16>(
             &common::CACHE_BUDGET,
             &db,
-            &format!("inputs_{name}"),
+            &format!("inputs_{}", id.name()),
             version,
         )
     })
     .unwrap();
-    let mut outputs = ByType::try_new(|_, name| {
+    let mut outputs = ByType::try_new(|id| {
         import_stored::<Height, StoredU16>(
             &common::CACHE_BUDGET,
             &db,
-            &format!("outputs_{name}"),
+            &format!("outputs_{}", id.name()),
             version,
         )
     })
     .unwrap();
     for count in [0_u16, 1, 1] {
-        let values = ByType::new(|filter, _| {
-            StoredU16::new(if filter == Filter::Type(selected) {
+        let values = ByType::new(|cohort_id| {
+            StoredU16::new(if cohort_id == CohortId::Type(selected) {
                 count
             } else {
                 0
             })
         });
-        for (target, &value) in inputs.iter_mut().zip(values.spendable.iter()) {
-            target.push(value);
+        for &id in SpendableTypeId::ALL {
+            let kind = id.output_type();
+            inputs.get_mut(kind).push(*values.spendable.get(kind));
         }
-        for (target, &value) in outputs.iter_mut().zip(values.iter()) {
-            target.push(value);
+        for (kind, target) in outputs.iter_typed_mut() {
+            target.push(*values.get(kind));
         }
     }
     for target in inputs.iter_mut().chain(outputs.iter_mut()) {

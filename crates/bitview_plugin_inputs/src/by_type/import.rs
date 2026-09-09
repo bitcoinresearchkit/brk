@@ -21,8 +21,8 @@ impl Vecs {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::TWO;
-        let input_count_stored = SpendableType::try_new(|_, name| {
-            import_stored(cache, db, &format!("{name}_prevout_count"), version)
+        let input_count_stored = SpendableType::try_new(|id| {
+            import_stored(cache, db, &format!("{}_prevout_count", id.name()), version)
         })?;
         let input_count = WithInputTypes::from_count_sources(
             CountTotal::from_source(
@@ -44,11 +44,11 @@ impl Vecs {
             cached_starts,
             mappings,
         );
-        let tx_count_stored = SpendableType::try_new(|_, name| {
+        let tx_count_stored = SpendableType::try_new(|id| {
             import_stored(
                 cache,
                 db,
-                &format!("tx_count_with_{name}_prevout_cumulative"),
+                &format!("tx_count_with_{}_prevout_cumulative", id.name()),
                 version,
             )
         })?;

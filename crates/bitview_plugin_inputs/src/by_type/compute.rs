@@ -1,6 +1,6 @@
 use brk_error::Result;
 
-use bitview_cohort::{Filter, SpendableType, SpendableTypeId};
+use bitview_cohort::{SpendableType, SpendableTypeId};
 use bitview_plugin_indexer::Indexer;
 use brk_error::OptionData;
 use brk_exit::Exit;
@@ -37,12 +37,8 @@ impl Vecs {
             for target in self.stored_vecs_mut() {
                 target.any_truncate_if_needed_at(skip)?;
             }
-            let mut cumulative = SpendableType::new(|filter, _| {
-                let Filter::Type(output_type) = filter else {
-                    unreachable!()
-                };
-                self.tx_count_stored
-                    .get(output_type)
+            let mut cumulative = SpendableType::from_fn(|id| {
+                id.select(&self.tx_count_stored)
                     .collect_last()
                     .unwrap_or_default()
             });

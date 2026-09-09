@@ -1,12 +1,13 @@
 #![doc = include_str!("../README.md")]
 
 #[macro_use]
-mod cohort_id;
+mod macros;
 
+mod age_id;
 mod age_range;
 mod amount;
 mod amount_bucket;
-mod amount_filter;
+mod amount_id;
 mod amount_range;
 mod by_addr_type;
 mod by_age;
@@ -17,9 +18,8 @@ mod by_term;
 mod by_type;
 mod class;
 mod cohort_context;
+mod cohort_id;
 mod cohort_name;
-mod filter;
-mod filtered;
 mod loss;
 mod over_age;
 mod over_amount;
@@ -28,7 +28,6 @@ mod profitability;
 mod profitability_range;
 mod spendable_type;
 mod state_level;
-mod time_filter;
 mod under_age;
 mod under_amount;
 mod unspendable_type;
@@ -44,10 +43,11 @@ mod with_addr_types;
 
 pub use brk_types::{Age, Term};
 
+pub use age_id::AgeId;
 pub use age_range::*;
 pub use amount::*;
 pub use amount_bucket::*;
-pub use amount_filter::*;
+pub use amount_id::AmountId;
 pub use amount_range::*;
 pub use by_addr_type::*;
 pub use by_age::*;
@@ -58,9 +58,8 @@ pub use by_term::*;
 pub use by_type::*;
 pub use class::*;
 pub use cohort_context::*;
+pub use cohort_id::CohortId;
 pub use cohort_name::*;
-pub use filter::*;
-pub use filtered::*;
 pub use loss::*;
 pub use over_age::*;
 pub use over_amount::*;
@@ -69,7 +68,6 @@ pub use profitability::*;
 pub use profitability_range::*;
 pub use spendable_type::*;
 pub use state_level::*;
-pub use time_filter::*;
 pub use under_age::*;
 pub use under_amount::*;
 pub use unspendable_type::*;

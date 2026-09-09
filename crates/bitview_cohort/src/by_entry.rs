@@ -3,13 +3,7 @@ use bitview_traversable::Traversable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, Filter};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EntryPrice {
-    Discount,
-    Premium,
-}
+use super::{CohortId, CohortName};
 
 impl EntryPrice {
     #[inline]
@@ -26,11 +20,6 @@ impl EntryPrice {
         matches!(self, Self::Discount)
     }
 }
-
-pub const ENTRY_FILTERS: ByEntry<Filter> = ByEntry {
-    discount: Filter::Entry(EntryPrice::Discount),
-    premium: Filter::Entry(EntryPrice::Premium),
-};
 
 pub const ENTRY_NAMES: ByEntry<CohortName> = ByEntry {
     discount: CohortName::new("veteran", "Veteran", "Veteran Coins"),
@@ -51,7 +40,7 @@ pub struct ByEntry<T> {
 }
 
 define_cohort_id!(
-    EntryId for ByEntry {
+    EntryPrice for ByEntry {
         Discount => discount,
         Premium => premium,
     }
@@ -64,49 +53,19 @@ impl ByEntry<CohortName> {
 }
 
 impl<T> ByEntry<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        let f = ENTRY_FILTERS;
-        let n = ENTRY_NAMES;
-        Self {
-            discount: create(f.discount, n.discount.id),
-            premium: create(f.premium, n.premium.id),
-        }
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|entry| create(CohortId::Entry(entry)))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        let f = ENTRY_FILTERS;
-        let n = ENTRY_NAMES;
-        Ok(Self {
-            discount: create(f.discount, n.discount.id)?,
-            premium: create(f.premium, n.premium.id)?,
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|entry| create(CohortId::Entry(entry)))
     }
 
     pub fn get(&self, entry: EntryPrice) -> &T {
-        match entry {
-            EntryPrice::Discount => &self.discount,
-            EntryPrice::Premium => &self.premium,
-        }
+        entry.select(self)
     }
 
     pub fn get_mut(&mut self, entry: EntryPrice) -> &mut T {
-        match entry {
-            EntryPrice::Discount => &mut self.discount,
-            EntryPrice::Premium => &mut self.premium,
-        }
-    }
-}
-impl EntryId {
-    pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL
-            .iter()
-            .copied()
-            .find(|id| id.select(&ENTRY_FILTERS) == filter)
+        entry.select_mut(self)
     }
 }

@@ -1,10 +1,7 @@
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 
-use crate::{
-    Amount, ByTerm, Filter, SPENDABLE_TYPE_FILTERS, SPENDABLE_TYPE_NAMES, SpendableType,
-    TERM_FILTERS, TERM_NAMES, Term, UTXOGroupCore,
-};
+use crate::{Amount, ByTerm, CohortId, SpendableType, SpendableTypeId, UTXOGroupCore};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
@@ -24,45 +21,29 @@ pub struct UTXOGroups<T> {
 }
 
 impl<T> UTXOGroups<T> {
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        match filter {
-            Filter::Term(term) => match term {
-                Term::Sth => Some(&self.term.short),
-                Term::Lth => Some(&self.term.long),
-            },
-            Filter::Amount(_) => self.utxo_amount.get(filter),
-            Filter::Type(output_type) => Some(self.type_.get(*output_type)),
-            _ => self.core.get(filter),
+    pub fn get(&self, id: CohortId) -> Option<&T> {
+        match id {
+            CohortId::Term(term) => Some(self.term.get(term)),
+            CohortId::Amount(amount) => Some(self.utxo_amount.get(amount)),
+            CohortId::Type(kind) => {
+                SpendableTypeId::from_output_type(kind).map(|kind| kind.select(&self.type_))
+            }
+            _ => self.core.get(id),
         }
     }
 
-    pub fn map_named<U>(
-        &self,
-        mut map: impl FnMut(&Filter, &'static str, &T) -> U,
-    ) -> UTXOGroups<U> {
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> UTXOGroups<U> {
         UTXOGroups {
-            core: self.core.map_named(&mut map),
-            utxo_amount: self.utxo_amount.map_named(&mut map),
-            term: ByTerm::from_fn(|id| {
-                map(
-                    id.select(&TERM_FILTERS),
-                    id.select(&TERM_NAMES).id,
-                    id.select(&self.term),
-                )
-            }),
-            type_: SpendableType::from_fn(|id| {
-                map(
-                    id.select(&SPENDABLE_TYPE_FILTERS),
-                    id.select(&SPENDABLE_TYPE_NAMES).id,
-                    id.select(&self.type_),
-                )
-            }),
+            core: self.core.map_with_id(&mut map),
+            utxo_amount: self.utxo_amount.map_with_id(&mut map),
+            term: self.term.map_with_id(&mut map),
+            type_: self.type_.map_with_id(map),
         }
     }
 
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter, &'static str) -> T,
+        F: FnMut(CohortId) -> T,
     {
         Self {
             core: UTXOGroupCore::new(&mut create),

@@ -15,7 +15,8 @@ pub struct UTXOTermSources<T: BytesVecValue, M: StorageMode = Rw> {
 impl<T: BytesVecValue + Copy> UTXOTermSources<T> {
     pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
         Ok(Self {
-            term: ByTerm::try_new(|_, cohort| {
+            term: ByTerm::try_new(|cohort_id| {
+                let cohort = cohort_id.name();
                 BytesVec::forced_import(db, &format!("{cohort}_{name}"), version + Version::ONE)
             })?,
         })

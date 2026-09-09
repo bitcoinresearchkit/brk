@@ -1,8 +1,6 @@
 use std::ops::AddAssign;
 
-use crate::{
-    AgeRange, AgeRangeId, ByEntry, ByEpoch, Class, ClassId, EntryId, EpochId, Filter, UTXOValues,
-};
+use crate::{AgeId, AgeRange, ByEntry, ByEpoch, Class, CohortId, UTXOValues};
 
 /// Values for disjoint UTXO age, epoch, class, and entry cohorts.
 #[derive(Clone, Default)]
@@ -15,19 +13,17 @@ pub struct UTXOCoreValues<T> {
 
 impl<T> UTXOCoreValues<T> {
     /// Resolve a direct cohort or sum its disjoint age ranges before storing it.
-    pub fn value(&self, filter: &Filter) -> Option<T>
+    pub fn value(&self, id: CohortId) -> Option<T>
     where
         T: Copy + AddAssign,
     {
-        match filter {
-            Filter::Epoch(_) => EpochId::matching(filter).map(|id| *id.select(&self.epoch)),
-            Filter::Class(_) => ClassId::matching(filter).map(|id| *id.select(&self.class)),
-            Filter::Entry(_) => EntryId::matching(filter).map(|id| *id.select(&self.entry)),
+        match id {
+            CohortId::Epoch(epoch) => Some(*epoch.select(&self.epoch)),
+            CohortId::Class(class) => Some(*class.select(&self.class)),
+            CohortId::Entry(entry) => Some(*self.entry.get(entry)),
+            CohortId::Age(AgeId::Range(range)) => Some(*range.select(&self.age_range)),
             _ => {
-                if let Some(id) = AgeRangeId::matching(filter) {
-                    return Some(*id.select(&self.age_range));
-                }
-                let mut ranges = AgeRangeId::aggregate_ranges(filter)?;
+                let mut ranges = id.age_ranges()?;
                 let mut total = *ranges.next()?.select(&self.age_range);
                 for id in ranges {
                     total += *id.select(&self.age_range);

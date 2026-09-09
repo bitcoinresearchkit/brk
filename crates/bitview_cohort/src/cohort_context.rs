@@ -1,11 +1,11 @@
-use super::Filter;
+use super::CohortId;
 
 /// Context for cohort naming - determines whether a prefix is needed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CohortContext {
-    /// UTXO-based cohorts: uses "utxos_" prefix for Time/Amount filters
+    /// UTXO-based cohorts: uses "utxos_" prefix for age/amount cohorts.
     Utxo,
-    /// Address-based cohorts: uses "addrs_" prefix for Amount filters
+    /// Address-based cohorts: uses "addrs_" prefix for amount cohorts.
     Addr,
 }
 
@@ -21,33 +21,23 @@ impl CohortContext {
         format!("{}_{}", self.prefix(), name)
     }
 
-    /// Build full name for a filter, adding prefix only for Time/Amount filters.
+    /// Build the canonical name, adding a context prefix only for age/amount cohorts.
     ///
     /// Prefix rules:
     /// - No prefix: `All`, `Term`, `Epoch`, `Class`, `Entry`, `Type`
-    /// - Context prefix: `Time`, `Amount`
-    pub fn full_name(&self, filter: &Filter, name: &str) -> String {
-        match filter {
-            Filter::All
-            | Filter::Term(_)
-            | Filter::Epoch(_)
-            | Filter::Class(_)
-            | Filter::Entry(_)
-            | Filter::Type(_) => name.to_string(),
-            Filter::Time(_) | Filter::Amount(_) => self.prefixed(name),
+    /// - Context prefix: `Age`, `Amount`
+    pub fn full_name(&self, id: CohortId) -> String {
+        match id {
+            CohortId::Age(_) | CohortId::Amount(_) => self.prefixed(id.name()),
+            _ => id.name().to_owned(),
         }
     }
 
-    pub fn metric_name(&self, filter: &Filter, cohort: &str, metric: &str) -> String {
-        if matches!(filter, Filter::All) {
+    pub fn metric_name(&self, id: CohortId, metric: &str) -> String {
+        if id.is_all() {
             return metric.to_owned();
         }
-        let cohort = self.full_name(filter, cohort);
-        if cohort.is_empty() {
-            metric.to_owned()
-        } else {
-            format!("{cohort}_{metric}")
-        }
+        format!("{}_{metric}", self.full_name(id))
     }
 }
 
@@ -59,11 +49,7 @@ mod tests {
     fn all_cohort_never_prefixes_metric_names() {
         for context in [CohortContext::Utxo, CohortContext::Addr] {
             assert_eq!(
-                context.metric_name(&Filter::All, "all", "capitalized_price"),
-                "capitalized_price"
-            );
-            assert_eq!(
-                context.metric_name(&Filter::All, "", "capitalized_price"),
+                context.metric_name(CohortId::All, "capitalized_price"),
                 "capitalized_price"
             );
         }

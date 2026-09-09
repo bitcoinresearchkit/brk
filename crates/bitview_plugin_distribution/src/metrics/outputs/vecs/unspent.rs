@@ -33,12 +33,12 @@ impl UnspentOutputCount {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "utxo_count", version)?;
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "utxo_count");
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "utxo_count");
             LazyPerBlockWithDeltas::from_height_source(
                 &name,
                 version,
-                stored.get(&filter).expect("unspent-output cohort source"),
+                stored.get(cohort_id).expect("unspent-output cohort source"),
                 Version::TWO,
                 mappings,
                 cached_starts,

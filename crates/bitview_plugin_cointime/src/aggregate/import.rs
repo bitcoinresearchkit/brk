@@ -1,4 +1,4 @@
-use bitview_cohort::{ByTerm, TermId, UTXOAggregate, UTXOAggregateId};
+use bitview_cohort::{ByTerm, Term, UTXOAggregate, UTXOAggregateId};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BoundedToF64;
 use bitview_vecs::{
@@ -22,8 +22,10 @@ pub fn forced_import(
     let version = version + Version::ONE;
     let sources = Sources::forced_import(cache, db, version)?;
     let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
-    let term_loss_share = |term: TermId| {
-        term.select(&sources.supply_in_loss_share)
+    let term_loss_share = |term: Term| {
+        sources
+            .supply_in_loss_share
+            .get(term)
             .read_only_boxed_clone()
     };
     let all = CohortVecs::new(
@@ -38,7 +40,7 @@ pub fn forced_import(
         UTXOAggregateId::Sth,
         version,
         &sources,
-        term_loss_share(TermId::Short),
+        term_loss_share(Term::Sth),
         mappings,
         spot_price,
     );
@@ -46,7 +48,7 @@ pub fn forced_import(
         UTXOAggregateId::Lth,
         version,
         &sources,
-        term_loss_share(TermId::Long),
+        term_loss_share(Term::Lth),
         mappings,
         spot_price,
     );
@@ -71,7 +73,8 @@ impl Sources {
             dormant_supply: import_aggregate(cache, db, "dormant_supply_sats", version)?,
             awake_cap: import_aggregate(cache, db, "awake_cap_cents", version)?,
             awake_price: import_aggregate(cache, db, "awake_price_cents", version)?,
-            supply_in_loss_share: ByTerm::try_new(|_, name| {
+            supply_in_loss_share: ByTerm::try_new(|cohort_id| {
+                let name = cohort_id.name();
                 import_stored(
                     cache,
                     db,

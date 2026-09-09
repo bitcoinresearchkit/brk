@@ -26,10 +26,10 @@ impl NetUnrealizedByCohort {
         let metric = "net_unrealized_pnl";
         let stored =
             UTXOCoreSources::forced_import(cache, db, "net_unrealized_pnl_cents", version)?;
-        let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
+        let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
             let source = stored
-                .get(&filter)
+                .get(cohort_id)
                 .expect("supported net unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, source, mappings)
         });

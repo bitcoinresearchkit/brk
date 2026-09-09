@@ -1,6 +1,6 @@
 use derive_more::{Deref, DerefMut};
 
-use crate::{ByTerm, Filter, TERM_FILTERS, TERM_NAMES, Term, UTXOGroupCore};
+use crate::{ByTerm, CohortId, UTXOGroupCore};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
@@ -16,9 +16,7 @@ pub struct UTXOGroupsWithoutAmountOrType<T> {
 }
 
 impl<T> UTXOGroupsWithoutAmountOrType<T> {
-    pub fn try_new<E>(
-        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
-    ) -> Result<Self, E> {
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
         Ok(Self {
             core: UTXOGroupCore::try_new(&mut create)?,
             term: ByTerm::try_new(create)?,
@@ -35,7 +33,7 @@ impl<T> UTXOGroupsWithoutAmountOrType<T> {
 
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter, &'static str) -> T,
+        F: FnMut(CohortId) -> T,
     {
         Self {
             core: UTXOGroupCore::new(&mut create),
@@ -43,29 +41,20 @@ impl<T> UTXOGroupsWithoutAmountOrType<T> {
         }
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        match filter {
-            Filter::Term(term) => match term {
-                Term::Sth => Some(&self.term.short),
-                Term::Lth => Some(&self.term.long),
-            },
-            _ => self.core.get(filter),
+    pub fn get(&self, id: CohortId) -> Option<&T> {
+        match id {
+            CohortId::Term(term) => Some(self.term.get(term)),
+            _ => self.core.get(id),
         }
     }
 
-    pub fn map_named<U>(
+    pub fn map_with_id<U>(
         &self,
-        mut map: impl FnMut(&Filter, &'static str, &T) -> U,
+        mut map: impl FnMut(CohortId, &T) -> U,
     ) -> UTXOGroupsWithoutAmountOrType<U> {
         UTXOGroupsWithoutAmountOrType {
-            core: self.core.map_named(&mut map),
-            term: ByTerm::from_fn(|id| {
-                map(
-                    id.select(&TERM_FILTERS),
-                    id.select(&TERM_NAMES).id,
-                    id.select(&self.term),
-                )
-            }),
+            core: self.core.map_with_id(&mut map),
+            term: self.term.map_with_id(map),
         }
     }
 }

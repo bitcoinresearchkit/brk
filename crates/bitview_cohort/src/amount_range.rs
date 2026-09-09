@@ -6,7 +6,7 @@ use brk_types::Sats;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{AmountBucket, AmountFilter, CohortName, Filter};
+use super::{AmountBucket, AmountId, CohortId, CohortName};
 
 /// Amount range bounds
 pub const AMOUNT_RANGE_BOUNDS: AmountRange<Range<Sats>> = AmountRange {
@@ -48,37 +48,6 @@ pub const AMOUNT_RANGE_NAMES: AmountRange<CohortName> = AmountRange {
     _1k_btc_to_10k_btc: CohortName::new("1k_btc_to_10k_btc", "1k-10k BTC", "1K-10K BTC"),
     _10k_btc_to_100k_btc: CohortName::new("10k_btc_to_100k_btc", "10k-100k BTC", "10K-100K BTC"),
     over_100k_btc: CohortName::new("over_100k_btc", "100k+ BTC", "100K+ BTC"),
-};
-
-/// Amount range filters
-pub const AMOUNT_RANGE_FILTERS: AmountRange<Filter> = AmountRange {
-    _0sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._0sats)),
-    _1sat_to_10sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1sat_to_10sats)),
-    _10sats_to_100sats: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10sats_to_100sats)),
-    _100sats_to_1k_sats: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._100sats_to_1k_sats,
-    )),
-    _1k_sats_to_10k_sats: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._1k_sats_to_10k_sats,
-    )),
-    _10k_sats_to_100k_sats: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._10k_sats_to_100k_sats,
-    )),
-    _100k_sats_to_1m_sats: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._100k_sats_to_1m_sats,
-    )),
-    _1m_sats_to_10m_sats: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._1m_sats_to_10m_sats,
-    )),
-    _10m_sats_to_1btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10m_sats_to_1btc)),
-    _1btc_to_10btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1btc_to_10btc)),
-    _10btc_to_100btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._10btc_to_100btc)),
-    _100btc_to_1k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._100btc_to_1k_btc)),
-    _1k_btc_to_10k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS._1k_btc_to_10k_btc)),
-    _10k_btc_to_100k_btc: Filter::Amount(AmountFilter::Range(
-        AMOUNT_RANGE_BOUNDS._10k_btc_to_100k_btc,
-    )),
-    over_100k_btc: Filter::Amount(AmountFilter::Range(AMOUNT_RANGE_BOUNDS.over_100k_btc)),
 };
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -136,24 +105,6 @@ define_cohort_id!(
     }
 );
 
-impl AmountRangeId {
-    #[inline]
-    pub fn filter(self) -> &'static Filter {
-        self.select(&AMOUNT_RANGE_FILTERS)
-    }
-
-    pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL.iter().copied().find(|id| id.filter() == filter)
-    }
-
-    pub fn included_by(filter: &Filter) -> impl Iterator<Item = Self> + '_ {
-        Self::ALL
-            .iter()
-            .copied()
-            .filter(|id| filter.includes(id.filter()))
-    }
-}
-
 impl AmountRange<CohortName> {
     pub const fn names() -> &'static Self {
         &AMOUNT_RANGE_NAMES
@@ -161,28 +112,28 @@ impl AmountRange<CohortName> {
 }
 
 impl<T> AmountRange<T> {
-    pub fn new<F>(mut create: F) -> Self
+    /// Resolve a named amount cohort from its disjoint ranges.
+    pub fn aggregate(&self, cohort: AmountId) -> T
     where
-        F: FnMut(Filter, &'static str) -> T,
+        T: Copy + AddAssign,
     {
-        Self::from_fn(|id| {
-            create(
-                id.select(&AMOUNT_RANGE_FILTERS).clone(),
-                id.select(&AMOUNT_RANGE_NAMES).id,
-            )
-        })
+        if let AmountId::Range(id) = cohort {
+            return *id.select(self);
+        }
+        let mut ranges = cohort.ranges();
+        let mut total = *ranges.next().expect("nonempty amount cohort").select(self);
+        for id in ranges {
+            total += *id.select(self);
+        }
+        total
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| {
-            create(
-                id.select(&AMOUNT_RANGE_FILTERS).clone(),
-                id.select(&AMOUNT_RANGE_NAMES).id,
-            )
-        })
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
+    }
+
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
     }
 
     #[inline(always)]
@@ -288,5 +239,11 @@ where
         self._1k_btc_to_10k_btc += rhs._1k_btc_to_10k_btc;
         self._10k_btc_to_100k_btc += rhs._10k_btc_to_100k_btc;
         self.over_100k_btc += rhs.over_100k_btc;
+    }
+}
+
+impl AmountRangeId {
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Amount(AmountId::Range(self))
     }
 }

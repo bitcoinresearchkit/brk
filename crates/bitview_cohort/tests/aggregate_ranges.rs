@@ -1,46 +1,56 @@
 use bitview_cohort::*;
 
 #[test]
-fn aggregate_ranges_match_named_filters_and_reject_unsupported_selections() {
-    for (filter, expected) in [
-        (&Filter::All, AgeRangeId::ALL),
-        (&TERM_FILTERS.short, STH_AGE_RANGE_IDS.as_slice()),
-        (&TERM_FILTERS.long, LTH_AGE_RANGE_IDS.as_slice()),
+fn aggregate_ranges_match_canonical_cohorts() {
+    for (cohort, expected) in [
+        (CohortId::All, AgeRangeId::ALL),
+        (CohortId::Term(Term::Sth), STH_AGE_RANGE_IDS),
+        (CohortId::Term(Term::Lth), LTH_AGE_RANGE_IDS),
     ] {
-        assert_eq!(
-            AgeRangeId::aggregate_ranges(filter)
-                .unwrap()
-                .collect::<Vec<_>>(),
-            expected
-        );
+        assert_eq!(cohort.age_ranges().unwrap().collect::<Vec<_>>(), expected);
     }
-    for filter in UNDER_AGE_FILTERS.iter().chain(OVER_AGE_FILTERS.iter()) {
+    for &cohort in UnderAgeId::ALL {
+        let hours = *cohort.select(&UNDER_AGE_HOURS);
         let expected: Vec<_> = AgeRangeId::ALL
             .iter()
             .copied()
-            .filter(|id| filter.includes(id.filter()))
+            .filter(|id| id.bounds().end <= hours)
             .collect();
         assert_eq!(
-            AgeRangeId::aggregate_ranges(filter)
-                .unwrap()
-                .collect::<Vec<_>>(),
+            cohort.cohort().age_ranges().unwrap().collect::<Vec<_>>(),
             expected
         );
     }
-    for filter in AGE_RANGE_FILTERS
-        .iter()
-        .chain(AMOUNT_RANGE_FILTERS.iter())
-        .chain(EPOCH_FILTERS.iter())
-        .chain(CLASS_FILTERS.iter())
-        .chain(ENTRY_FILTERS.iter())
-    {
-        assert!(AgeRangeId::aggregate_ranges(filter).is_none(), "{filter:?}");
+    for &cohort in OverAgeId::ALL {
+        let hours = *cohort.select(&OVER_AGE_HOURS);
+        let expected: Vec<_> = AgeRangeId::ALL
+            .iter()
+            .copied()
+            .filter(|id| id.bounds().start >= hours)
+            .collect();
+        assert_eq!(
+            cohort.cohort().age_ranges().unwrap().collect::<Vec<_>>(),
+            expected
+        );
     }
-    for filter in [
-        Filter::Time(TimeFilter::LowerThan(17)),
-        Filter::Time(TimeFilter::GreaterOrEqual(17)),
-        Filter::Time(TimeFilter::Range(0..usize::MAX)),
-    ] {
-        assert!(AgeRangeId::aggregate_ranges(&filter).is_none());
+    for &range in AgeRangeId::ALL {
+        assert_eq!(
+            range.cohort().age_ranges().unwrap().collect::<Vec<_>>(),
+            [range]
+        );
+    }
+}
+
+#[test]
+fn non_age_cohorts_do_not_resolve_to_age_ranges() {
+    for cohort in AmountRangeId::ALL
+        .iter()
+        .copied()
+        .map(AmountRangeId::cohort)
+        .chain(EpochId::ALL.iter().copied().map(EpochId::cohort))
+        .chain(ClassId::ALL.iter().copied().map(ClassId::cohort))
+        .chain(EntryPrice::ALL.iter().copied().map(CohortId::Entry))
+    {
+        assert!(cohort.age_ranges().is_none(), "{cohort:?}");
     }
 }

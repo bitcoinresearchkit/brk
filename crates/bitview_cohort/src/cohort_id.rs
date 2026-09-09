@@ -1,151 +1,54 @@
-macro_rules! define_cohort_id {
-    (
-        $id:ident for $collection:ident {
-            $($variant:ident => $field:ident),+ $(,)?
-        }
-    ) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        #[repr(u8)]
-        pub enum $id {
-            $($variant),+
-        }
+use brk_types::OutputType;
 
-        impl $id {
-            pub const ALL: &'static [Self] = &[$(Self::$variant),+];
+use crate::{
+    AgeId, AgeRangeId, AmountId, CLASS_NAMES, ClassId, ENTRY_NAMES, EPOCH_NAMES, EntryPrice,
+    EpochId, OP_RETURN, SPENDABLE_TYPE_NAMES, TERM_NAMES, Term, UTXO_ALL_NAME,
+};
 
-            #[inline]
-            pub const fn index(self) -> usize {
-                self as usize
-            }
-
-            #[inline]
-            pub fn select<T>(self, values: &$collection<T>) -> &T {
-                match self {
-                    $(Self::$variant => &values.$field),+
-                }
-            }
-
-            #[inline]
-            pub fn select_mut<T>(self, values: &mut $collection<T>) -> &mut T {
-                match self {
-                    $(Self::$variant => &mut values.$field),+
-                }
-            }
-        }
-
-        impl<T> $collection<T> {
-            pub fn as_array(&self) -> [&T; $id::ALL.len()] {
-                [$(&self.$field),+]
-            }
-
-            pub fn as_array_mut(&mut self) -> [&mut T; $id::ALL.len()] {
-                [$(&mut self.$field),+]
-            }
-
-            pub fn iter(&self) -> impl DoubleEndedIterator<Item = &T> + ExactSizeIterator {
-                self.as_array().into_iter()
-            }
-
-            pub fn iter_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> + ExactSizeIterator {
-                self.as_array_mut().into_iter()
-            }
-
-            pub fn par_iter_mut(&mut self) -> impl rayon::iter::ParallelIterator<Item = &mut T>
-            where
-                T: Send + Sync,
-            {
-                rayon::iter::IntoParallelIterator::into_par_iter(self.as_array_mut())
-            }
-
-            pub fn from_fn(mut f: impl FnMut($id) -> T) -> Self {
-                Self {
-                    $($field: f($id::$variant)),+
-                }
-            }
-
-            pub fn try_from_fn<E>(mut f: impl FnMut($id) -> Result<T, E>) -> Result<Self, E> {
-                Ok(Self {
-                    $($field: f($id::$variant)?),+
-                })
-            }
-        }
-
-
-
-        #[cfg(feature = "storage")]
-        impl<T: vecdb::Formattable> vecdb::Formattable for $collection<T> {
-            fn write_to(&self, output: &mut Vec<u8>) {
-                output.push(b'{');
-                let mut first = true;
-                $(
-                    if !first {
-                        output.push(b',');
-                    }
-                    first = false;
-                    output.extend_from_slice(concat!("\"", stringify!($field), "\":").as_bytes());
-                    vecdb::Formattable::fmt_json(&self.$field, output);
-                )+
-                let _ = first;
-                output.push(b'}');
-            }
-
-            fn fmt_csv(&self, output: &mut String) -> std::fmt::Result {
-                let mut json = Vec::new();
-                vecdb::Formattable::write_to(self, &mut json);
-                let json = std::str::from_utf8(&json).map_err(|_| std::fmt::Error)?;
-
-                output.push('"');
-                for character in json.chars() {
-                    if character == '"' {
-                        output.push('"');
-                    }
-                    output.push(character);
-                }
-                output.push('"');
-                Ok(())
-            }
-        }
-    };
+/// A supported cohort, composed from the selectors of its constituent groups.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CohortId {
+    All,
+    Term(Term),
+    Age(AgeId),
+    Amount(AmountId),
+    Epoch(EpochId),
+    Class(ClassId),
+    Entry(EntryPrice),
+    Type(OutputType),
 }
 
-macro_rules! impl_collection_formattable {
-    (
-        $collection:ident {
-            $($field:ident),+ $(,)?
-        }
-    ) => {
-        #[cfg(feature = "storage")]
-        impl<T: vecdb::Formattable> vecdb::Formattable for $collection<T> {
-            fn write_to(&self, output: &mut Vec<u8>) {
-                output.push(b'{');
-                let mut first = true;
-                $(
-                    if !first {
-                        output.push(b',');
-                    }
-                    first = false;
-                    output.extend_from_slice(concat!("\"", stringify!($field), "\":").as_bytes());
-                    vecdb::Formattable::fmt_json(&self.$field, output);
-                )+
-                let _ = first;
-                output.push(b'}');
-            }
+impl CohortId {
+    pub fn is_all(self) -> bool {
+        matches!(self, Self::All)
+    }
 
-            fn fmt_csv(&self, output: &mut String) -> std::fmt::Result {
-                let mut json = Vec::new();
-                vecdb::Formattable::write_to(self, &mut json);
-                let json = std::str::from_utf8(&json).map_err(|_| std::fmt::Error)?;
-
-                output.push('"');
-                for character in json.chars() {
-                    if character == '"' {
-                        output.push('"');
-                    }
-                    output.push(character);
-                }
-                output.push('"');
-                Ok(())
-            }
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::All => UTXO_ALL_NAME.id,
+            Self::Term(term) => TERM_NAMES.get(term).id,
+            Self::Age(age) => age.name().id,
+            Self::Amount(amount) => amount.name().id,
+            Self::Epoch(epoch) => epoch.select(&EPOCH_NAMES).id,
+            Self::Class(class) => class.select(&CLASS_NAMES).id,
+            Self::Entry(entry) => entry.select(&ENTRY_NAMES).id,
+            Self::Type(OutputType::OpReturn) => OP_RETURN,
+            Self::Type(output_type) => SPENDABLE_TYPE_NAMES.get(output_type).id,
         }
-    };
+    }
+
+    /// Disjoint age ranges making up an age-based or all-chain cohort.
+    pub fn age_ranges(self) -> Option<impl Iterator<Item = AgeRangeId>> {
+        let bounds = match self {
+            Self::All => 0..usize::MAX,
+            Self::Term(Term::Sth) => 0..Term::THRESHOLD_HOURS,
+            Self::Term(Term::Lth) => Term::THRESHOLD_HOURS..usize::MAX,
+            Self::Age(age) => age.bounds(),
+            _ => return None,
+        };
+        Some(AgeRangeId::ALL.iter().copied().filter(move |id| {
+            let range = id.bounds();
+            range.start >= bounds.start && range.end <= bounds.end
+        }))
+    }
 }

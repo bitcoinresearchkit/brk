@@ -4,10 +4,7 @@ use rayon::prelude::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    AGE_RANGE_FILTERS, AgeRange, AgeRangeId, Filter, OVER_AGE_FILTERS, OverAge, OverAgeId,
-    UNDER_AGE_FILTERS, UnderAge, UnderAgeId,
-};
+use crate::{AgeId, AgeRange, CohortId, OverAge, UnderAge};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -18,54 +15,40 @@ pub struct ByAge<T> {
 }
 
 impl<T> ByAge<T> {
-    pub fn new(mut create: impl FnMut(Filter, &'static str) -> T) -> Self {
+    pub fn from_fn(mut create: impl FnMut(AgeId) -> T) -> Self {
         Self {
-            range: AgeRange::new(&mut create),
-            under: UnderAge::new(&mut create),
-            over: OverAge::new(create),
+            range: AgeRange::from_fn(|id| create(AgeId::Range(id))),
+            under: UnderAge::from_fn(|id| create(AgeId::Under(id))),
+            over: OverAge::from_fn(|id| create(AgeId::Over(id))),
         }
     }
 
-    pub fn try_new<E>(
-        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
-    ) -> Result<Self, E> {
+    pub fn try_from_fn<E>(mut create: impl FnMut(AgeId) -> Result<T, E>) -> Result<Self, E> {
         Ok(Self {
-            range: AgeRange::try_new(&mut create)?,
-            under: UnderAge::try_new(&mut create)?,
-            over: OverAge::try_new(create)?,
+            range: AgeRange::try_from_fn(|id| create(AgeId::Range(id)))?,
+            under: UnderAge::try_from_fn(|id| create(AgeId::Under(id)))?,
+            over: OverAge::try_from_fn(|id| create(AgeId::Over(id)))?,
         })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        AgeRangeId::ALL
-            .iter()
-            .copied()
-            .find(|id| id.select(&AGE_RANGE_FILTERS) == filter)
-            .map(|id| id.select(&self.range))
-            .or_else(|| {
-                UnderAgeId::ALL
-                    .iter()
-                    .copied()
-                    .find(|id| id.select(&UNDER_AGE_FILTERS) == filter)
-                    .map(|id| id.select(&self.under))
-            })
-            .or_else(|| {
-                OverAgeId::ALL
-                    .iter()
-                    .copied()
-                    .find(|id| id.select(&OVER_AGE_FILTERS) == filter)
-                    .map(|id| id.select(&self.over))
-            })
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(CohortId::Age(id)))
     }
 
-    pub fn map_named<U>(&self, mut map: impl FnMut(&Filter, &'static str, &T) -> U) -> ByAge<U> {
-        ByAge::new(|filter, name| {
-            map(
-                &filter,
-                name,
-                self.get(&filter).expect("known cohort filter"),
-            )
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(CohortId::Age(id)))
+    }
+
+    pub fn get(&self, id: AgeId) -> &T {
+        match id {
+            AgeId::Range(id) => id.select(&self.range),
+            AgeId::Under(id) => id.select(&self.under),
+            AgeId::Over(id) => id.select(&self.over),
+        }
+    }
+
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> ByAge<U> {
+        ByAge::from_fn(|id| map(CohortId::Age(id), self.get(id)))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {

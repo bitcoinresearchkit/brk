@@ -36,11 +36,11 @@ impl CumulativeRealizedByCohort {
             &format!("{metric}_cumulative_cents"),
             version,
         )?;
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
             let source = stored
                 .stored
-                .get(&filter)
+                .get(cohort_id)
                 .expect("supported stored realized cohort");
             LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                 &name,

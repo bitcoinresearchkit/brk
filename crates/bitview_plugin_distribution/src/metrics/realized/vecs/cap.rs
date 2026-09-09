@@ -33,12 +33,12 @@ impl RealizedCapByCohort {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "realized_cap_cents", version)?;
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_cap");
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "realized_cap");
             LazyFiatPerBlockWithDeltas::from_cents_source(
                 &name,
                 version,
-                stored.get(&filter).expect("realized-cap cohort source"),
+                stored.get(cohort_id).expect("realized-cap cohort source"),
                 Version::TWO,
                 mappings,
                 cached_starts,

@@ -1,4 +1,4 @@
-use bitview_cohort::{CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate};
+use bitview_cohort::{CohortContext, UTXOAggregate};
 use bitview_compute::FixedRatio;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyPercentPerBlock, StoredSeries};
@@ -23,11 +23,7 @@ fn share_views<B: FixedRatio>(
     mappings: &MappingsVecs,
 ) -> UTXOAggregate<LazyPercentPerBlock<B>> {
     UTXOAggregate::from_fn(|id| {
-        let name = CohortContext::Utxo.metric_name(
-            id.select(&UTXO_AGGREGATE_FILTERS),
-            id.select(&UTXO_AGGREGATE_NAMES).id,
-            metric,
-        );
+        let name = CohortContext::Utxo.metric_name(id.cohort(), metric);
         let source = id.select(sources);
         let source = LazyVec::init(
             &format!("{name}_{}_source", B::SUFFIX),

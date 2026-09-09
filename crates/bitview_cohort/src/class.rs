@@ -4,51 +4,7 @@ use brk_types::{Timestamp, Year};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, Filter};
-
-/// Class values
-pub const CLASS_VALUES: Class<Year> = Class {
-    _2009: Year::new(2009),
-    _2010: Year::new(2010),
-    _2011: Year::new(2011),
-    _2012: Year::new(2012),
-    _2013: Year::new(2013),
-    _2014: Year::new(2014),
-    _2015: Year::new(2015),
-    _2016: Year::new(2016),
-    _2017: Year::new(2017),
-    _2018: Year::new(2018),
-    _2019: Year::new(2019),
-    _2020: Year::new(2020),
-    _2021: Year::new(2021),
-    _2022: Year::new(2022),
-    _2023: Year::new(2023),
-    _2024: Year::new(2024),
-    _2025: Year::new(2025),
-    _2026: Year::new(2026),
-};
-
-/// Class filters
-pub const CLASS_FILTERS: Class<Filter> = Class {
-    _2009: Filter::Class(CLASS_VALUES._2009),
-    _2010: Filter::Class(CLASS_VALUES._2010),
-    _2011: Filter::Class(CLASS_VALUES._2011),
-    _2012: Filter::Class(CLASS_VALUES._2012),
-    _2013: Filter::Class(CLASS_VALUES._2013),
-    _2014: Filter::Class(CLASS_VALUES._2014),
-    _2015: Filter::Class(CLASS_VALUES._2015),
-    _2016: Filter::Class(CLASS_VALUES._2016),
-    _2017: Filter::Class(CLASS_VALUES._2017),
-    _2018: Filter::Class(CLASS_VALUES._2018),
-    _2019: Filter::Class(CLASS_VALUES._2019),
-    _2020: Filter::Class(CLASS_VALUES._2020),
-    _2021: Filter::Class(CLASS_VALUES._2021),
-    _2022: Filter::Class(CLASS_VALUES._2022),
-    _2023: Filter::Class(CLASS_VALUES._2023),
-    _2024: Filter::Class(CLASS_VALUES._2024),
-    _2025: Filter::Class(CLASS_VALUES._2025),
-    _2026: Filter::Class(CLASS_VALUES._2026),
-};
+use super::{CohortId, CohortName};
 
 /// Class names
 pub const CLASS_NAMES: Class<CohortName> = Class {
@@ -143,60 +99,12 @@ impl Class<CohortName> {
 }
 
 impl<T> Class<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        let f = CLASS_FILTERS;
-        let n = CLASS_NAMES;
-        Self {
-            _2009: create(f._2009, n._2009.id),
-            _2010: create(f._2010, n._2010.id),
-            _2011: create(f._2011, n._2011.id),
-            _2012: create(f._2012, n._2012.id),
-            _2013: create(f._2013, n._2013.id),
-            _2014: create(f._2014, n._2014.id),
-            _2015: create(f._2015, n._2015.id),
-            _2016: create(f._2016, n._2016.id),
-            _2017: create(f._2017, n._2017.id),
-            _2018: create(f._2018, n._2018.id),
-            _2019: create(f._2019, n._2019.id),
-            _2020: create(f._2020, n._2020.id),
-            _2021: create(f._2021, n._2021.id),
-            _2022: create(f._2022, n._2022.id),
-            _2023: create(f._2023, n._2023.id),
-            _2024: create(f._2024, n._2024.id),
-            _2025: create(f._2025, n._2025.id),
-            _2026: create(f._2026, n._2026.id),
-        }
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        let f = CLASS_FILTERS;
-        let n = CLASS_NAMES;
-        Ok(Self {
-            _2009: create(f._2009, n._2009.id)?,
-            _2010: create(f._2010, n._2010.id)?,
-            _2011: create(f._2011, n._2011.id)?,
-            _2012: create(f._2012, n._2012.id)?,
-            _2013: create(f._2013, n._2013.id)?,
-            _2014: create(f._2014, n._2014.id)?,
-            _2015: create(f._2015, n._2015.id)?,
-            _2016: create(f._2016, n._2016.id)?,
-            _2017: create(f._2017, n._2017.id)?,
-            _2018: create(f._2018, n._2018.id)?,
-            _2019: create(f._2019, n._2019.id)?,
-            _2020: create(f._2020, n._2020.id)?,
-            _2021: create(f._2021, n._2021.id)?,
-            _2022: create(f._2022, n._2022.id)?,
-            _2023: create(f._2023, n._2023.id)?,
-            _2024: create(f._2024, n._2024.id)?,
-            _2025: create(f._2025, n._2025.id)?,
-            _2026: create(f._2026, n._2026.id)?,
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
     }
 
     pub fn mut_vec_from_timestamp(&mut self, timestamp: Timestamp) -> Option<&mut T> {
@@ -228,11 +136,9 @@ impl<T> Class<T> {
         }
     }
 }
+
 impl ClassId {
-    pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL
-            .iter()
-            .copied()
-            .find(|id| id.select(&CLASS_FILTERS) == filter)
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Class(self)
     }
 }

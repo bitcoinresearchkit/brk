@@ -4,7 +4,7 @@ use brk_error::Result as ErrorResult;
 use brk_types::OutputType;
 use rayon::prelude::*;
 
-use super::Filter;
+use super::CohortId;
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
@@ -162,9 +162,9 @@ impl<T> ByAddrType<T> {
 
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter) -> T,
+        F: FnMut(CohortId) -> T,
     {
-        Self::from_fn(|id| create(Filter::Type(id.output_type())))
+        Self::from_fn(|id| create(CohortId::Type(id.output_type())))
     }
 
     pub fn new_with_name<F>(f: F) -> ErrorResult<Self>
@@ -359,8 +359,6 @@ impl<T> ByAddrType<Option<T>> {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "storage")]
-    #[cfg(feature = "storage")]
     use super::{ADDR_TYPE_IDS, AddrTypeId, ByAddrType};
 
     #[test]
@@ -371,7 +369,6 @@ mod tests {
         assert!(series.values().copied().eq(ADDR_TYPE_IDS));
     }
 
-    #[cfg(feature = "storage")]
     #[test]
     fn iteration_order_matches_cohort_indexes() {
         let values = ByAddrType::from_fn(|id| id.index());

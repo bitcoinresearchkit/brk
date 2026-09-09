@@ -1,5 +1,5 @@
 use bitview_cohort::{
-    CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXOValues,
+    CohortContext, CohortId, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXOValues,
 };
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{MvrvToNupl, NegCentsUnsignedToDollars};
@@ -150,21 +150,21 @@ impl UnrealizedVecs {
             aggregate_version,
             mappings,
         )?;
-        let nupl = realized_price.map_named(|filter, cohort_name, price| {
+        let nupl = realized_price.map_with_id(|cohort_id, price| {
             LazyRatioPerBlock::from_lazy_source::<MvrvToNupl, PriceRatio>(
-                &CohortContext::Utxo.metric_name(filter, cohort_name, "nupl"),
-                Self::cohort_version(version, filter) + Version::new(5),
+                &CohortContext::Utxo.metric_name(cohort_id, "nupl"),
+                Self::cohort_version(version, cohort_id) + Version::new(5),
                 &price.relative.ppm,
             )
         });
-        let negative_loss = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "unrealized_loss_neg");
+        let negative_loss = UTXOGroupsWithoutAmount::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "unrealized_loss_neg");
             LazyPerBlock::from_lazy::<NegCentsUnsignedToDollars, Cents>(
                 &name,
-                Self::cohort_version(version, &filter),
+                Self::cohort_version(version, cohort_id),
                 &loss
                     .cohorts
-                    .get(&filter)
+                    .get(cohort_id)
                     .expect("unrealized-loss cohort")
                     .cents,
             )
@@ -186,27 +186,31 @@ impl UnrealizedVecs {
         }))
     }
 
-    fn cohort_version(version: Version, filter: &Filter) -> Version {
+    fn cohort_version(version: Version, cohort_id: CohortId) -> Version {
         version
-            + if matches!(filter, Filter::All) {
+            + if matches!(cohort_id, CohortId::All) {
                 Version::ONE
             } else {
                 Version::ZERO
             }
     }
 
-    pub fn sources(&self, filter: &Filter) -> Option<UnrealizedSources> {
+    pub fn sources(&self, cohort_id: CohortId) -> Option<UnrealizedSources> {
         Some(UnrealizedSources {
-            profit: self.profit.cohorts.get(filter)?.clone(),
-            loss: self.loss.cohorts.get(filter)?.clone(),
+            profit: self.profit.cohorts.get(cohort_id)?.clone(),
+            loss: self.loss.cohorts.get(cohort_id)?.clone(),
         })
     }
 
-    pub fn aggregate_sources(&self, filter: &Filter) -> Option<UnrealizedAggregateSources> {
+    pub fn aggregate_sources(&self, cohort_id: CohortId) -> Option<UnrealizedAggregateSources> {
         Some(UnrealizedAggregateSources {
-            gross_pnl: self.gross_pnl.series.get(filter)?.clone(),
-            invested_capital_in_profit: self.invested_capital_in_profit.series.get(filter)?.clone(),
-            invested_capital_in_loss: self.invested_capital_in_loss.series.get(filter)?.clone(),
+            gross_pnl: self.gross_pnl.series.get(cohort_id)?.clone(),
+            invested_capital_in_profit: self
+                .invested_capital_in_profit
+                .series
+                .get(cohort_id)?
+                .clone(),
+            invested_capital_in_loss: self.invested_capital_in_loss.series.get(cohort_id)?.clone(),
         })
     }
 

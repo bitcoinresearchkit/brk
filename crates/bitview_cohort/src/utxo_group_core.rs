@@ -1,10 +1,7 @@
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 
-use crate::{
-    ByAge, ByEntry, ByEpoch, CLASS_FILTERS, CLASS_NAMES, Class, ClassId, ENTRY_FILTERS,
-    ENTRY_NAMES, EPOCH_FILTERS, EPOCH_NAMES, EntryId, EpochId, Filter,
-};
+use crate::{ByAge, ByEntry, ByEpoch, Class, CohortId};
 
 #[derive(Default, Clone)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -18,11 +15,9 @@ pub struct UTXOGroupCore<T> {
 }
 
 impl<T> UTXOGroupCore<T> {
-    pub fn try_new<E>(
-        mut create: impl FnMut(Filter, &'static str) -> Result<T, E>,
-    ) -> Result<Self, E> {
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
         Ok(Self {
-            all: create(Filter::All, "")?,
+            all: create(CohortId::All)?,
             age: ByAge::try_new(&mut create)?,
             epoch: ByEpoch::try_new(&mut create)?,
             class: Class::try_new(&mut create)?,
@@ -50,10 +45,10 @@ impl<T> UTXOGroupCore<T> {
 
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter, &'static str) -> T,
+        F: FnMut(CohortId) -> T,
     {
         Self {
-            all: create(Filter::All, ""),
+            all: create(CohortId::All),
             age: ByAge::new(&mut create),
             epoch: ByEpoch::new(&mut create),
             class: Class::new(&mut create),
@@ -61,45 +56,24 @@ impl<T> UTXOGroupCore<T> {
         }
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        match filter {
-            Filter::All => Some(&self.all),
-            Filter::Time(_) => self.age.get(filter),
-            Filter::Epoch(_) => EpochId::matching(filter).map(|id| id.select(&self.epoch)),
-            Filter::Class(_) => ClassId::matching(filter).map(|id| id.select(&self.class)),
-            Filter::Entry(_) => EntryId::matching(filter).map(|id| id.select(&self.entry)),
-            Filter::Term(_) | Filter::Amount(_) | Filter::Type(_) => None,
+    pub fn get(&self, id: CohortId) -> Option<&T> {
+        match id {
+            CohortId::All => Some(&self.all),
+            CohortId::Age(age) => Some(self.age.get(age)),
+            CohortId::Epoch(epoch) => Some(epoch.select(&self.epoch)),
+            CohortId::Class(class) => Some(class.select(&self.class)),
+            CohortId::Entry(entry) => Some(self.entry.get(entry)),
+            CohortId::Term(_) | CohortId::Amount(_) | CohortId::Type(_) => None,
         }
     }
 
-    pub fn map_named<U>(
-        &self,
-        mut map: impl FnMut(&Filter, &'static str, &T) -> U,
-    ) -> UTXOGroupCore<U> {
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> UTXOGroupCore<U> {
         UTXOGroupCore {
-            all: map(&Filter::All, "", &self.all),
-            age: self.age.map_named(&mut map),
-            epoch: ByEpoch::from_fn(|id| {
-                map(
-                    id.select(&EPOCH_FILTERS),
-                    id.select(&EPOCH_NAMES).id,
-                    id.select(&self.epoch),
-                )
-            }),
-            class: Class::from_fn(|id| {
-                map(
-                    id.select(&CLASS_FILTERS),
-                    id.select(&CLASS_NAMES).id,
-                    id.select(&self.class),
-                )
-            }),
-            entry: ByEntry::from_fn(|id| {
-                map(
-                    id.select(&ENTRY_FILTERS),
-                    id.select(&ENTRY_NAMES).id,
-                    id.select(&self.entry),
-                )
-            }),
+            all: map(CohortId::All, &self.all),
+            age: self.age.map_with_id(&mut map),
+            epoch: ByEpoch::from_fn(|id| map(id.cohort(), id.select(&self.epoch))),
+            class: Class::from_fn(|id| map(id.cohort(), id.select(&self.class))),
+            entry: ByEntry::from_fn(|entry| map(CohortId::Entry(entry), self.entry.get(entry))),
         }
     }
 }

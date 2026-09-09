@@ -3,9 +3,8 @@ use std::ops::AddAssign;
 use derive_more::{Deref, DerefMut};
 
 use crate::{
-    AgeRangeId, AmountRange, AmountRangeId, Filter, OVER_AGE_FILTERS, OVER_AMOUNT_FILTERS, OverAge,
-    OverAmount, SpendableType, TERM_FILTERS, UNDER_AGE_FILTERS, UNDER_AMOUNT_FILTERS,
-    UTXOAggregate, UTXOCoreValues, UTXOOverlappingValues, UnderAge, UnderAmount,
+    AmountId, AmountRange, OverAge, OverAmount, SpendableType, UTXOAggregate, UTXOCoreValues,
+    UTXOOverlappingValues, UnderAge, UnderAmount,
 };
 
 #[derive(Clone, Default, Deref, DerefMut)]
@@ -28,45 +27,18 @@ impl<T> UTXOValues<T> {
 
     pub fn aggregate(&self) -> UTXOOverlappingValues<T>
     where
-        T: AddAssign + Clone + Default,
+        T: AddAssign + Copy,
     {
+        let age_value = |id| self.core.value(id).expect("age cohort");
         UTXOOverlappingValues {
-            aggregate: UTXOAggregate {
-                all: Self::sum(self.age_range.iter()),
-                sth: self.sum_age(&TERM_FILTERS.short),
-                lth: self.sum_age(&TERM_FILTERS.long),
-            },
-            under_age: UnderAge::from_fn(|id| self.sum_age(id.select(&UNDER_AGE_FILTERS))),
-            over_age: OverAge::from_fn(|id| self.sum_age(id.select(&OVER_AGE_FILTERS))),
+            aggregate: UTXOAggregate::from_fn(|id| age_value(id.cohort())),
+            under_age: UnderAge::new(age_value),
+            over_age: OverAge::new(age_value),
             under_amount: UnderAmount::from_fn(|id| {
-                self.sum_amount(id.select(&UNDER_AMOUNT_FILTERS))
+                self.amount_range.aggregate(AmountId::Under(id))
             }),
-            over_amount: OverAmount::from_fn(|id| self.sum_amount(id.select(&OVER_AMOUNT_FILTERS))),
+            over_amount: OverAmount::from_fn(|id| self.amount_range.aggregate(AmountId::Over(id))),
         }
-    }
-
-    fn sum_age(&self, filter: &Filter) -> T
-    where
-        T: AddAssign + Clone + Default,
-    {
-        Self::sum(AgeRangeId::included_by(filter).map(|id| id.select(&self.age_range)))
-    }
-
-    fn sum_amount(&self, filter: &Filter) -> T
-    where
-        T: AddAssign + Clone + Default,
-    {
-        Self::sum(AmountRangeId::included_by(filter).map(|id| id.select(&self.amount_range)))
-    }
-
-    fn sum<'a>(values: impl Iterator<Item = &'a T>) -> T
-    where
-        T: AddAssign + Clone + Default + 'a,
-    {
-        values.fold(T::default(), |mut total, value| {
-            total += value.clone();
-            total
-        })
     }
 }
 
@@ -88,7 +60,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::AGE_RANGE_COUNT;
+    use crate::{AGE_RANGE_COUNT, AgeRange, CohortId};
 
     #[test]
     fn addition_and_aggregation_cover_every_cohort_axis() {
@@ -101,5 +73,58 @@ mod tests {
             aggregates.aggregate.all,
             aggregates.aggregate.sth + aggregates.aggregate.lth
         );
+    }
+
+    #[test]
+    fn aggregation_uses_canonical_ranges_without_requiring_default() {
+        #[derive(Clone, Copy)]
+        struct Value(u64);
+
+        impl AddAssign for Value {
+            fn add_assign(&mut self, rhs: Self) {
+                self.0 += rhs.0;
+            }
+        }
+
+        let mut values = UTXOValues::<u64>::default().map(|_| Value(0));
+        values.age_range = AgeRange::from_fn(|id| Value(1 << id.index()));
+        values.amount_range = AmountRange::from_fn(|id| Value(1 << id.index()));
+        let aggregates = values.aggregate();
+        let expected_age = |id: CohortId| {
+            id.age_ranges()
+                .unwrap()
+                .map(|range| 1u64 << range.index())
+                .sum::<u64>()
+        };
+        let expected_amount =
+            |id: AmountId| id.ranges().map(|range| 1u64 << range.index()).sum::<u64>();
+
+        UTXOAggregate::from_fn(|id| {
+            assert_eq!(
+                id.select(&aggregates.aggregate).0,
+                expected_age(id.cohort())
+            );
+        });
+        UnderAge::from_fn(|id| {
+            assert_eq!(
+                id.select(&aggregates.under_age).0,
+                expected_age(id.cohort())
+            );
+        });
+        OverAge::from_fn(|id| {
+            assert_eq!(id.select(&aggregates.over_age).0, expected_age(id.cohort()));
+        });
+        UnderAmount::from_fn(|id| {
+            assert_eq!(
+                id.select(&aggregates.under_amount).0,
+                expected_amount(AmountId::Under(id))
+            );
+        });
+        OverAmount::from_fn(|id| {
+            assert_eq!(
+                id.select(&aggregates.over_amount).0,
+                expected_amount(AmountId::Over(id))
+            );
+        });
     }
 }

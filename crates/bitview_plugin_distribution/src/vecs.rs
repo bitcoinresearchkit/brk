@@ -221,7 +221,7 @@ impl Vecs {
                     &db,
                     &format!(
                         "{}_coindays_created",
-                        CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                        CohortContext::Utxo.full_name(id.cohort())
                     ),
                     version + COINDAYS_CREATED_VERSION + Version::ONE,
                     mappings,

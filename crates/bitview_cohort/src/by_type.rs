@@ -6,91 +6,12 @@ use std::{
 use brk_types::OutputType;
 use rayon::prelude::*;
 
-use super::{Filter, SpendableType, UnspendableType};
+use super::{CohortId, SpendableType, UnspendableType};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 
 pub const OP_RETURN: &str = "op_return";
-pub const OUTPUT_TYPE_COUNT: usize = OutputType::COUNT;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[repr(u8)]
-pub enum OutputTypeId {
-    P2PK65,
-    P2PK33,
-    P2PKH,
-    P2MS,
-    P2SH,
-    P2WPKH,
-    P2WSH,
-    P2TR,
-    P2A,
-    Unknown,
-    Empty,
-    OpReturn,
-}
-
-pub const OUTPUT_TYPE_IDS: [OutputTypeId; OUTPUT_TYPE_COUNT] = [
-    OutputTypeId::P2PK65,
-    OutputTypeId::P2PK33,
-    OutputTypeId::P2PKH,
-    OutputTypeId::P2MS,
-    OutputTypeId::P2SH,
-    OutputTypeId::P2WPKH,
-    OutputTypeId::P2WSH,
-    OutputTypeId::P2TR,
-    OutputTypeId::P2A,
-    OutputTypeId::Unknown,
-    OutputTypeId::Empty,
-    OutputTypeId::OpReturn,
-];
-
-impl OutputTypeId {
-    pub const fn from_output_type(value: OutputType) -> Self {
-        match value {
-            OutputType::P2PK65 => Self::P2PK65,
-            OutputType::P2PK33 => Self::P2PK33,
-            OutputType::P2PKH => Self::P2PKH,
-            OutputType::P2MS => Self::P2MS,
-            OutputType::P2SH => Self::P2SH,
-            OutputType::P2WPKH => Self::P2WPKH,
-            OutputType::P2WSH => Self::P2WSH,
-            OutputType::P2TR => Self::P2TR,
-            OutputType::P2A => Self::P2A,
-            OutputType::Unknown => Self::Unknown,
-            OutputType::Empty => Self::Empty,
-            OutputType::OpReturn => Self::OpReturn,
-        }
-    }
-
-    pub const fn output_type(self) -> OutputType {
-        match self {
-            Self::P2PK65 => OutputType::P2PK65,
-            Self::P2PK33 => OutputType::P2PK33,
-            Self::P2PKH => OutputType::P2PKH,
-            Self::P2MS => OutputType::P2MS,
-            Self::P2SH => OutputType::P2SH,
-            Self::P2WPKH => OutputType::P2WPKH,
-            Self::P2WSH => OutputType::P2WSH,
-            Self::P2TR => OutputType::P2TR,
-            Self::P2A => OutputType::P2A,
-            Self::Unknown => OutputType::Unknown,
-            Self::Empty => OutputType::Empty,
-            Self::OpReturn => OutputType::OpReturn,
-        }
-    }
-}
-
-impl OutputTypeId {
-    pub const ALL: &'static [Self] = &OUTPUT_TYPE_IDS;
-
-    #[inline]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-}
-
 #[derive(Default, Clone, Debug)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
 pub struct ByType<T> {
@@ -101,61 +22,62 @@ pub struct ByType<T> {
 }
 
 impl<T> ByType<T> {
+    pub fn from_fn(mut create: impl FnMut(OutputType) -> T) -> Self {
+        Self {
+            spendable: SpendableType::from_fn(|kind| create(kind.output_type())),
+            unspendable: UnspendableType {
+                op_return: create(OutputType::OpReturn),
+            },
+        }
+    }
+
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> ByType<U> {
+        ByType {
+            spendable: self.spendable.map_with_id(&mut map),
+            unspendable: UnspendableType {
+                op_return: map(
+                    CohortId::Type(OutputType::OpReturn),
+                    &self.unspendable.op_return,
+                ),
+            },
+        }
+    }
+
     pub fn new<F>(mut create: F) -> Self
     where
-        F: FnMut(Filter, &'static str) -> T,
+        F: FnMut(CohortId) -> T,
     {
         Self {
             spendable: SpendableType::new(&mut create),
             unspendable: UnspendableType {
-                op_return: create(Filter::Type(OutputType::OpReturn), OP_RETURN),
+                op_return: create(CohortId::Type(OutputType::OpReturn)),
             },
         }
     }
 
     pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
     where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
+        F: FnMut(CohortId) -> Result<T, E>,
     {
         Ok(Self {
             spendable: SpendableType::try_new(&mut create)?,
             unspendable: UnspendableType {
-                op_return: create(Filter::Type(OutputType::OpReturn), OP_RETURN)?,
+                op_return: create(CohortId::Type(OutputType::OpReturn))?,
             },
         })
     }
 
     pub fn get(&self, output_type: OutputType) -> &T {
         match output_type {
-            OutputType::P2PK65 => &self.spendable.p2pk65,
-            OutputType::P2PK33 => &self.spendable.p2pk33,
-            OutputType::P2PKH => &self.spendable.p2pkh,
-            OutputType::P2MS => &self.spendable.p2ms,
-            OutputType::P2SH => &self.spendable.p2sh,
-            OutputType::P2WPKH => &self.spendable.p2wpkh,
-            OutputType::P2WSH => &self.spendable.p2wsh,
-            OutputType::P2TR => &self.spendable.p2tr,
-            OutputType::P2A => &self.spendable.p2a,
-            OutputType::Empty => &self.spendable.empty,
-            OutputType::Unknown => &self.spendable.unknown,
             OutputType::OpReturn => &self.unspendable.op_return,
+            kind => self.spendable.get(kind),
         }
     }
 
     pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
         match output_type {
-            OutputType::P2PK65 => &mut self.spendable.p2pk65,
-            OutputType::P2PK33 => &mut self.spendable.p2pk33,
-            OutputType::P2PKH => &mut self.spendable.p2pkh,
-            OutputType::P2MS => &mut self.spendable.p2ms,
-            OutputType::P2SH => &mut self.spendable.p2sh,
-            OutputType::P2WPKH => &mut self.spendable.p2wpkh,
-            OutputType::P2WSH => &mut self.spendable.p2wsh,
-            OutputType::P2TR => &mut self.spendable.p2tr,
-            OutputType::P2A => &mut self.spendable.p2a,
-            OutputType::Unknown => &mut self.spendable.unknown,
-            OutputType::Empty => &mut self.spendable.empty,
             OutputType::OpReturn => &mut self.unspendable.op_return,
+            kind => self.spendable.get_mut(kind),
         }
     }
 
@@ -224,34 +146,43 @@ where
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "storage")]
     use super::*;
 
-    #[cfg(feature = "storage")]
     #[test]
-    fn cohort_ids_match_by_type_order() {
-        let by_type = ByType::new(|filter, _| {
-            let Filter::Type(output_type) = filter else {
-                unreachable!()
-            };
-            output_type
-        });
-        let output_types: Vec<_> = by_type.iter().copied().collect();
-        let selected_output_types: Vec<_> = OutputTypeId::ALL
-            .iter()
-            .map(|id| id.output_type())
-            .collect();
+    fn typed_iteration_preserves_collection_order() {
+        let types = ByType::from_fn(|kind| kind);
+        let expected = [
+            OutputType::P2PK65,
+            OutputType::P2PK33,
+            OutputType::P2PKH,
+            OutputType::P2MS,
+            OutputType::P2SH,
+            OutputType::P2WPKH,
+            OutputType::P2WSH,
+            OutputType::P2TR,
+            OutputType::P2A,
+            OutputType::Unknown,
+            OutputType::Empty,
+            OutputType::OpReturn,
+        ];
+        assert_eq!(expected.len(), OutputType::COUNT);
+        assert!(types.iter().copied().eq(expected));
+        assert!(types.iter_typed().map(|(kind, _)| kind).eq(expected));
+        for (kind, value) in types.iter_typed() {
+            assert_eq!(kind, *value);
+            assert_eq!(*types.get(kind), kind);
+        }
 
-        assert_eq!(selected_output_types, output_types);
-
-        let values = ByType::new(|filter, _| {
-            let Filter::Type(output_type) = filter else {
-                unreachable!()
-            };
-            OutputTypeId::from_output_type(output_type).index()
-        });
-        for id in OutputTypeId::ALL {
-            assert_eq!(*values.get(id.output_type()), id.index());
+        let mut values = ByType::from_fn(|kind| kind as usize);
+        for (kind, value) in values.iter_typed_mut() {
+            *value = kind as usize + 1;
+        }
+        for kind in expected {
+            assert_eq!(*values.get(kind), kind as usize + 1);
+            *values.get_mut(kind) += 1;
+        }
+        for (kind, value) in values.iter_typed() {
+            assert_eq!(*value, kind as usize + 2);
         }
     }
 }

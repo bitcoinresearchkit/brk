@@ -16,8 +16,8 @@ pub fn forced_import(
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
     let version = version + Version::TWO;
-    let output_count_stored = ByType::try_new(|_, name| {
-        import_stored(cache, db, &format!("{name}_output_count"), version)
+    let output_count_stored = ByType::try_new(|id| {
+        import_stored(cache, db, &format!("{}_output_count", id.name()), version)
     })?;
     let output_count = WithOutputTypes::from_count_sources(
         CountTotal::from_source(
@@ -39,11 +39,11 @@ pub fn forced_import(
         cached_starts,
         mappings,
     );
-    let tx_count_stored = ByType::try_new(|_, name| {
+    let tx_count_stored = ByType::try_new(|id| {
         import_stored(
             cache,
             db,
-            &format!("tx_count_with_{name}_output_cumulative"),
+            &format!("tx_count_with_{}_output_cumulative", id.name()),
             version,
         )
     })?;

@@ -1,6 +1,6 @@
 use std::iter;
 
-use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS};
+use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, Term};
 use bitview_compute::WeightedCohortState;
 use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
@@ -127,7 +127,7 @@ impl Sources {
             for offset in 0..chunk_end - chunk_start {
                 let mut terms = ByTerm::<WeightedCohortState>::default();
                 for &id in AgeRangeId::ALL {
-                    let term = if TERM_FILTERS.short.includes(id.filter()) {
+                    let term = if id.term() == Term::Sth {
                         &mut terms.short
                     } else {
                         &mut terms.long

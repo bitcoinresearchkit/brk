@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use bitview_cohort::{
-    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, CohortContext, Filter,
-    SpendableType,
+    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, CohortContext, CohortId,
+    SpendableType, Term,
 };
 use brk_error::{Error, Result};
 use brk_types::{Height, Sats, StoredU64};
@@ -30,25 +30,15 @@ pub struct UTXOStates {
 
 impl UTXOStates {
     pub fn new(path: &Path) -> Self {
-        let name = |filter: &Filter, cohort: &str| CohortContext::Utxo.full_name(filter, cohort);
+        let name = |id: CohortId| CohortContext::Utxo.full_name(id);
 
         Self {
-            age_range: AgeRange::new(|filter, cohort| {
-                UTXOCohortState::new(path, &name(&filter, cohort))
-            }),
-            epoch: ByEpoch::new(|filter, cohort| {
-                UTXOCohortState::new(path, &name(&filter, cohort))
-            }),
-            class: Class::new(|filter, cohort| UTXOCohortState::new(path, &name(&filter, cohort))),
-            entry: ByEntry::new(|filter, cohort| {
-                UTXOCohortState::new(path, &name(&filter, cohort))
-            }),
-            amount_range: AmountRange::new(|filter, cohort| {
-                UTXOCohortState::new(path, &name(&filter, cohort))
-            }),
-            type_: SpendableType::new(|filter, cohort| {
-                UTXOCohortState::new(path, &name(&filter, cohort))
-            }),
+            age_range: AgeRange::new(|id| UTXOCohortState::new(path, &name(id))),
+            epoch: ByEpoch::new(|id| UTXOCohortState::new(path, &name(id))),
+            class: Class::new(|id| UTXOCohortState::new(path, &name(id))),
+            entry: ByEntry::new(|id| UTXOCohortState::new(path, &name(id))),
+            amount_range: AmountRange::new(|id| UTXOCohortState::new(path, &name(id))),
+            type_: SpendableType::new(|id| UTXOCohortState::new(path, &name(id))),
             transient: UTXOTransientState::default(),
         }
     }
@@ -263,7 +253,7 @@ impl UTXOStates {
         Ok(())
     }
 
-    pub fn init_fenwick_if_needed(&mut self, sth_filter: &Filter) {
+    pub fn init_fenwick_if_needed(&mut self) {
         if self.transient.fenwick.is_initialized() {
             return;
         }
@@ -273,10 +263,10 @@ impl UTXOStates {
             transient,
             ..
         } = self;
-        transient.fenwick.compute_is_sth(sth_filter);
+        transient.fenwick.compute_is_sth();
         let maps = AgeRangeId::ALL.iter().filter_map(|&id| {
             let map = id.select(age_range).cost_basis_map();
-            (!map.is_empty()).then(|| (map, sth_filter.includes(id.filter())))
+            (!map.is_empty()).then(|| (map, id.term() == Term::Sth))
         });
         transient.fenwick.bulk_init(maps);
     }

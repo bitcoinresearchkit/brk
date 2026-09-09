@@ -4,19 +4,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, Filter, Term};
-
-/// Term values
-pub const TERM_VALUES: ByTerm<Term> = ByTerm {
-    short: Term::Sth,
-    long: Term::Lth,
-};
-
-/// Term filters
-pub const TERM_FILTERS: ByTerm<Filter> = ByTerm {
-    short: Filter::Term(TERM_VALUES.short),
-    long: Filter::Term(TERM_VALUES.long),
-};
+use super::{CohortId, CohortName, Term};
 
 /// Term names
 pub const TERM_NAMES: ByTerm<CohortName> = ByTerm {
@@ -33,10 +21,10 @@ pub struct ByTerm<T> {
     pub long: T,
 }
 
-define_cohort_id!(
-    TermId for ByTerm {
-        Short => short,
-        Long => long,
+impl_cohort_collection!(
+    Term for ByTerm {
+        Sth => short,
+        Lth => long,
     }
 );
 
@@ -47,28 +35,16 @@ impl ByTerm<CohortName> {
 }
 
 impl<T> ByTerm<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        let f = TERM_FILTERS;
-        let n = TERM_NAMES;
-        Self {
-            short: create(f.short, n.short.id),
-            long: create(f.long, n.long.id),
-        }
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|term| create(CohortId::Term(term)))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        let f = TERM_FILTERS;
-        let n = TERM_NAMES;
-        Ok(Self {
-            short: create(f.short, n.short.id)?,
-            long: create(f.long, n.long.id)?,
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|term| create(CohortId::Term(term)))
+    }
+
+    pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> ByTerm<U> {
+        ByTerm::from_fn(|term| map(CohortId::Term(term), self.get(term)))
     }
 
     pub fn par_iter(&self) -> impl ParallelIterator<Item = &T>
@@ -76,5 +52,19 @@ impl<T> ByTerm<T> {
         T: Send + Sync,
     {
         [&self.short, &self.long].into_par_iter()
+    }
+
+    pub fn get(&self, term: Term) -> &T {
+        match term {
+            Term::Sth => &self.short,
+            Term::Lth => &self.long,
+        }
+    }
+
+    pub fn get_mut(&mut self, term: Term) -> &mut T {
+        match term {
+            Term::Sth => &mut self.short,
+            Term::Lth => &mut self.long,
+        }
     }
 }

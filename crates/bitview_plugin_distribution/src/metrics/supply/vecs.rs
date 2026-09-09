@@ -1,5 +1,5 @@
 use bitview_cohort::{
-    AgeRange, AgeRangeId, CohortContext, Filter, UTXOAndAddrGroups, UTXOGroupsWithoutAmount,
+    AgeRange, AgeRangeId, CohortContext, CohortId, UTXOAndAddrGroups, UTXOGroupsWithoutAmount,
     UTXOValues,
 };
 use bitview_collections::Windows;
@@ -80,19 +80,13 @@ impl SupplyVecs {
             mappings,
             spot_price,
         )?;
-        let utxo = total.cohorts.utxo.map_named(|filter, cohort_name, total| {
-            let full_name = CohortContext::Utxo.full_name(filter, cohort_name);
-            if matches!(filter, Filter::All) {
-                SupplyBase::from_all_total(
-                    &full_name,
-                    version,
-                    total.clone(),
-                    mappings,
-                    cached_starts,
-                )
+        let utxo = total.cohorts.utxo.map_with_id(|cohort_id, total| {
+            if matches!(cohort_id, CohortId::All) {
+                SupplyBase::from_all_total(version, total.clone(), mappings, cached_starts)
             } else {
                 SupplyBase::from_total(
-                    &full_name,
+                    CohortContext::Utxo,
+                    cohort_id,
                     version,
                     total.clone(),
                     all_supply,
@@ -105,10 +99,10 @@ impl SupplyVecs {
             .cohorts
             .addr_balance
             .series
-            .map_named(|filter, name, total| {
-                let full_name = CohortContext::Addr.full_name(filter, name);
+            .map_with_id(|cohort_id, total| {
                 SupplyBase::from_total(
-                    &full_name,
+                    CohortContext::Addr,
+                    cohort_id,
                     version + Version::ONE,
                     total.clone(),
                     all_supply,
@@ -117,18 +111,17 @@ impl SupplyVecs {
                 )
             });
         let bases = UTXOAndAddrGroups { utxo, addr_balance };
-        let delta = bases.map_named(|_, _, _, base| base.delta.clone());
-        let dominance = bases.map_named(|_, _, _, base| base.dominance.clone());
-        let half = in_profit.cohorts.map_named(|filter, cohort_name, _| {
-            let full_name = CohortContext::Utxo.full_name(filter, cohort_name);
+        let delta = bases.map_with_id(|_, _, base| base.delta.clone());
+        let dominance = bases.map_with_id(|_, _, base| base.dominance.clone());
+        let half = in_profit.cohorts.map_with_id(|cohort_id, _| {
             LazyValuePerBlock::from_spot_block_source::<
                 HalveSats,
                 HalveSatsToBitcoin,
                 HalveCents,
                 HalveDollars,
             >(
-                &SupplyBase::metric_name(&full_name, "supply_half"),
-                total.get(filter).expect("supported half-supply view"),
+                &CohortContext::Utxo.metric_name(cohort_id, "supply_half"),
+                total.get(cohort_id).expect("supported half-supply view"),
                 version,
             )
         });
@@ -136,7 +129,7 @@ impl SupplyVecs {
         let matured_sources = AgeRange::try_from_fn(|id| -> Result<_> {
             let name = format!(
                 "{}_matured_supply",
-                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                CohortContext::Utxo.full_name(id.cohort())
             );
             Ok(SatsCents {
                 sats: PerBlockCumulativeRolling::forced_import(
@@ -160,7 +153,7 @@ impl SupplyVecs {
         let matured = AgeRange::from_fn(|id| {
             let name = format!(
                 "{}_matured_supply",
-                CohortContext::Utxo.full_name(id.filter(), id.name().id)
+                CohortContext::Utxo.full_name(id.cohort())
             );
             let source = id.select(&matured_sources);
             let sats = LazyVec::transformed::<StoredU64ToSats>(
@@ -195,10 +188,10 @@ impl SupplyVecs {
         }))
     }
 
-    pub fn sources(&self, filter: &Filter) -> Option<SupplySources> {
+    pub fn sources(&self, cohort_id: CohortId) -> Option<SupplySources> {
         Some(SupplySources {
-            total: self.total.get(filter)?.clone(),
-            in_profit: self.in_profit.get(filter)?.clone(),
+            total: self.total.get(cohort_id)?.clone(),
+            in_profit: self.in_profit.get(cohort_id)?.clone(),
         })
     }
 

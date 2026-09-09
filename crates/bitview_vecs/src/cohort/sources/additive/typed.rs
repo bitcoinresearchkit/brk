@@ -1,7 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    CohortContext, Filter, SpendableType, SpendableTypeId, UTXOCoreValues, UTXOOverlappingValues,
+    CohortContext, CohortId, SpendableType, SpendableTypeId, UTXOCoreValues, UTXOOverlappingValues,
 };
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -33,23 +33,23 @@ impl<T: PcoVecValue + AddAssign> UTXOTypedSources<T> {
     ) -> Result<Self> {
         Ok(Self {
             core: UTXOCoreSources::forced_import(cache, db, name, version)?,
-            type_: SpendableType::try_new(|filter, cohort| {
+            type_: SpendableType::try_new(|cohort_id| {
                 import_stored(
                     cache,
                     db,
-                    &CohortContext::Utxo.metric_name(&filter, cohort, name),
+                    &CohortContext::Utxo.metric_name(cohort_id, name),
                     version + Version::TWO,
                 )
             })?,
         })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&StoredSeries<Height, T>> {
-        match filter {
-            Filter::Type(output_type) => {
-                SpendableTypeId::from_output_type(*output_type).map(|id| id.select(&self.type_))
+    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+        match cohort_id {
+            CohortId::Type(output_type) => {
+                SpendableTypeId::from_output_type(output_type).map(|id| id.select(&self.type_))
             }
-            _ => self.core.get(filter),
+            _ => self.core.get(cohort_id),
         }
     }
 

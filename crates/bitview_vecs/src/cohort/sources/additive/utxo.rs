@@ -1,8 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{
-    Amount, AmountRange, AmountRangeId, CohortContext, Filter, SpendableType,
-    UTXOOverlappingValues, UTXOValues,
+    Amount, AmountRange, CohortContext, CohortId, SpendableType, UTXOOverlappingValues, UTXOValues,
 };
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -34,21 +33,21 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
     ) -> Result<Self> {
         Ok(Self {
             typed: UTXOTypedSources::forced_import(cache, db, name, version)?,
-            amount: Amount::try_new(|filter, cohort| {
+            amount: Amount::try_new(|cohort_id| {
                 import_stored(
                     cache,
                     db,
-                    &CohortContext::Utxo.metric_name(&filter, cohort, name),
+                    &CohortContext::Utxo.metric_name(cohort_id, name),
                     version + Version::TWO,
                 )
             })?,
         })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&StoredSeries<Height, T>> {
-        match filter {
-            Filter::Amount(_) => self.amount.get(filter),
-            _ => self.typed.get(filter),
+    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+        match cohort_id {
+            CohortId::Amount(id) => Some(self.amount.get(id)),
+            _ => self.typed.get(cohort_id),
         }
     }
 
@@ -83,20 +82,7 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
                 over: overlapping.over_amount.clone(),
             }
         } else {
-            Amount::new(|filter, _| {
-                if let Some(id) = AmountRangeId::matching(&filter) {
-                    return *id.select(&cohort_values.amount_range);
-                }
-                let mut ranges = AmountRangeId::included_by(&filter);
-                let mut total = *ranges
-                    .next()
-                    .expect("nonempty amount cohort")
-                    .select(&cohort_values.amount_range);
-                for id in ranges {
-                    total += *id.select(&cohort_values.amount_range);
-                }
-                total
-            })
+            Amount::from_fn(|id| cohort_values.amount_range.aggregate(id))
         };
         for (target, &value) in self.amount.iter_mut().zip(values.iter()) {
             target.push(value);
@@ -111,13 +97,8 @@ impl<T: PcoVecValue + AddAssign> UTXOSources<T> {
                 id.select(&self.amount.range).collect_last().ok_or(())
             })
             .ok()?,
-            type_: SpendableType::try_new(|filter, _| {
-                let Filter::Type(output_type) = filter else {
-                    unreachable!()
-                };
-                self.type_.get(output_type).collect_last().ok_or(())
-            })
-            .ok()?,
+            type_: SpendableType::try_from_fn(|id| id.select(&self.type_).collect_last().ok_or(()))
+                .ok()?,
             core: self.typed.core.collect_last()?,
         })
     }

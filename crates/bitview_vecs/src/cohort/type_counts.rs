@@ -1,4 +1,4 @@
-use bitview_cohort::{ByAddrType, ByType, Filter, SpendableType};
+use bitview_cohort::{ByAddrType, ByType, SpendableType};
 use bitview_collections::Windows;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
@@ -38,14 +38,11 @@ macro_rules! impl_type_counts {
                 indexes: &IndexSources,
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
             ) -> Self {
-                let by_type = $group::new(|filter, name| {
-                    let Filter::Type(output_type) = filter else {
-                        unreachable!()
-                    };
+                let by_type = sources.map_with_id(|id, source| {
                     LazyCountPerBlockCumulativeRolling::from_height_source(
-                        &per_type_name(name),
+                        &per_type_name(id.name()),
                         version,
-                        sources.get(output_type),
+                        source,
                         indexes,
                         windows,
                     )
@@ -60,14 +57,11 @@ macro_rules! impl_type_counts {
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
                 indexes: &IndexSources,
             ) -> $group<LazyPercentCumulativeRolling<PartsPerMillion32>> {
-                $group::new(|filter, type_name| {
-                    let Filter::Type(output_type) = filter else {
-                        unreachable!()
-                    };
+                self.by_type.map_with_id(|id, source| {
                     self.total.lazy_share(
-                        &name(type_name),
+                        &name(id.name()),
                         version,
-                        &self.by_type.get(output_type).cumulative_source(),
+                        &source.cumulative_source(),
                         windows,
                         indexes,
                     )
@@ -75,12 +69,7 @@ macro_rules! impl_type_counts {
             }
 
             pub fn addr_type_counts(&self) -> ByAddrType<CumulativeCountVec> {
-                ByAddrType::new(|filter| {
-                    let Filter::Type(output_type) = filter else {
-                        unreachable!()
-                    };
-                    self.by_type.get(output_type).cumulative_source()
-                })
+                ByAddrType::from_fn(|id| self.by_type.get(id.output_type()).cumulative_source())
             }
         }
 
@@ -93,14 +82,11 @@ macro_rules! impl_type_counts {
                 indexes: &IndexSources,
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
             ) -> Self {
-                let by_type = $group::new(|filter, name| {
-                    let Filter::Type(output_type) = filter else {
-                        unreachable!()
-                    };
+                let by_type = sources.map_with_id(|id, source| {
                     LazyPerBlockCumulativeRolling::from_cumulative_source(
-                        &per_type_name(name),
+                        &per_type_name(id.name()),
                         version,
-                        sources.get(output_type),
+                        source,
                         windows,
                         indexes,
                     )
@@ -115,14 +101,11 @@ macro_rules! impl_type_counts {
                 windows: &Windows<&impl ReadableCloneableVec<Height, Height>>,
                 indexes: &IndexSources,
             ) -> $group<LazyPercentCumulativeRolling<PartsPerMillion32>> {
-                $group::new(|filter, type_name| {
-                    let Filter::Type(output_type) = filter else {
-                        unreachable!()
-                    };
+                self.by_type.map_with_id(|id, source| {
                     self.total.lazy_share(
-                        &name(type_name),
+                        &name(id.name()),
                         version,
-                        &self.by_type.get(output_type).cumulative.height,
+                        &source.cumulative.height,
                         windows,
                         indexes,
                     )

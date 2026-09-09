@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AgeRangeId, CohortContext, CohortName, Filter, LTH_AGE_RANGE_IDS, STH_AGE_RANGE_IDS,
-    TERM_FILTERS, TERM_NAMES, Term, TermId,
+    AgeRangeId, CohortContext, CohortId, CohortName, LTH_AGE_RANGE_IDS, STH_AGE_RANGE_IDS,
+    TERM_NAMES, Term,
 };
 
 #[cfg(feature = "storage")]
@@ -11,12 +11,6 @@ use bitview_traversable::Traversable;
 
 /// Canonical name for the aggregate cohort containing every UTXO.
 pub const UTXO_ALL_NAME: CohortName = CohortName::new("all", "All", "All UTXOs");
-
-pub const UTXO_AGGREGATE_FILTERS: UTXOAggregate<Filter> = UTXOAggregate {
-    all: Filter::All,
-    sth: TERM_FILTERS.short,
-    lth: TERM_FILTERS.long,
-};
 
 /// Canonical names for the aggregate UTXO cohorts.
 pub const UTXO_AGGREGATE_NAMES: UTXOAggregate<CohortName> = UTXOAggregate {
@@ -48,8 +42,8 @@ impl UTXOAggregateId {
     pub const fn age_range_ids(self) -> &'static [AgeRangeId] {
         match self {
             Self::All => AgeRangeId::ALL,
-            Self::Sth => &STH_AGE_RANGE_IDS,
-            Self::Lth => &LTH_AGE_RANGE_IDS,
+            Self::Sth => STH_AGE_RANGE_IDS,
+            Self::Lth => LTH_AGE_RANGE_IDS,
         }
     }
 
@@ -68,20 +62,24 @@ impl UTXOAggregateId {
         }
     }
 
-    pub const fn term(self) -> Option<TermId> {
+    pub const fn cohort(self) -> CohortId {
+        match self {
+            Self::All => CohortId::All,
+            Self::Sth => CohortId::Term(Term::Sth),
+            Self::Lth => CohortId::Term(Term::Lth),
+        }
+    }
+
+    pub const fn term(self) -> Option<Term> {
         match self {
             Self::All => None,
-            Self::Sth => Some(TermId::Short),
-            Self::Lth => Some(TermId::Long),
+            Self::Sth => Some(Term::Sth),
+            Self::Lth => Some(Term::Lth),
         }
     }
 
     pub fn metric_name(self, metric: &str) -> String {
-        CohortContext::Utxo.metric_name(
-            self.select(&UTXO_AGGREGATE_FILTERS),
-            self.cohort_name().id,
-            metric,
-        )
+        CohortContext::Utxo.metric_name(self.cohort(), metric)
     }
 }
 
@@ -94,20 +92,20 @@ impl<T> UTXOAggregate<T> {
         }
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&T> {
-        match filter {
-            Filter::All => Some(&self.all),
-            Filter::Term(Term::Sth) => Some(&self.sth),
-            Filter::Term(Term::Lth) => Some(&self.lth),
+    pub fn get(&self, id: CohortId) -> Option<&T> {
+        match id {
+            CohortId::All => Some(&self.all),
+            CohortId::Term(Term::Sth) => Some(&self.sth),
+            CohortId::Term(Term::Lth) => Some(&self.lth),
             _ => None,
         }
     }
 
-    pub fn get_mut(&mut self, filter: &Filter) -> Option<&mut T> {
-        match filter {
-            Filter::All => Some(&mut self.all),
-            Filter::Term(Term::Sth) => Some(&mut self.sth),
-            Filter::Term(Term::Lth) => Some(&mut self.lth),
+    pub fn get_mut(&mut self, id: CohortId) -> Option<&mut T> {
+        match id {
+            CohortId::All => Some(&mut self.all),
+            CohortId::Term(Term::Sth) => Some(&mut self.sth),
+            CohortId::Term(Term::Lth) => Some(&mut self.lth),
             _ => None,
         }
     }

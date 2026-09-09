@@ -4,9 +4,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    CohortName, Filter, HOURS_1D, HOURS_1M, HOURS_1W, HOURS_1Y, HOURS_2M, HOURS_2Y, HOURS_3M,
-    HOURS_3Y, HOURS_4M, HOURS_4Y, HOURS_5M, HOURS_5Y, HOURS_6M, HOURS_6Y, HOURS_7Y, HOURS_8Y,
-    HOURS_9M, HOURS_10Y, HOURS_12Y, HOURS_18M, TimeFilter,
+    AgeId, CohortId, CohortName, HOURS_1D, HOURS_1M, HOURS_1W, HOURS_1Y, HOURS_2M, HOURS_2Y,
+    HOURS_3M, HOURS_3Y, HOURS_4M, HOURS_4Y, HOURS_5M, HOURS_5Y, HOURS_6M, HOURS_6Y, HOURS_7Y,
+    HOURS_8Y, HOURS_9M, HOURS_10Y, HOURS_12Y, HOURS_18M,
 };
 
 /// Over-age thresholds in hours
@@ -31,30 +31,6 @@ pub const OVER_AGE_HOURS: OverAge<usize> = OverAge {
     _8y: HOURS_8Y,
     _10y: HOURS_10Y,
     _12y: HOURS_12Y,
-};
-
-/// Over-age filters (GreaterOrEqual threshold in hours)
-pub const OVER_AGE_FILTERS: OverAge<Filter> = OverAge {
-    _1d: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1d)),
-    _1w: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1w)),
-    _1m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1m)),
-    _2m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._2m)),
-    _3m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._3m)),
-    _4m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._4m)),
-    _5m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._5m)),
-    _6m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._6m)),
-    _9m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._9m)),
-    _1y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._1y)),
-    _18m: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._18m)),
-    _2y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._2y)),
-    _3y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._3y)),
-    _4y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._4y)),
-    _5y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._5y)),
-    _6y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._6y)),
-    _7y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._7y)),
-    _8y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._8y)),
-    _10y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._10y)),
-    _12y: Filter::Time(TimeFilter::GreaterOrEqual(OVER_AGE_HOURS._12y)),
 };
 
 /// Over-age names
@@ -158,49 +134,33 @@ impl OverAge<CohortName> {
 }
 
 impl<T> OverAge<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        Self::from_fn(|id| {
-            create(
-                id.select(&OVER_AGE_FILTERS).clone(),
-                id.select(&OVER_AGE_NAMES).id,
-            )
-        })
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| {
-            create(
-                id.select(&OVER_AGE_FILTERS).clone(),
-                id.select(&OVER_AGE_NAMES).id,
-            )
-        })
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
+    }
+}
+
+impl OverAgeId {
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Age(AgeId::Over(self))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::AGE_RANGE_FILTERS;
+    use crate::AgeRangeId;
 
     #[test]
     fn new_thresholds_include_only_older_ranges() {
-        assert!(!OVER_AGE_FILTERS._9m.includes(&AGE_RANGE_FILTERS._6m_to_9m));
-        assert!(OVER_AGE_FILTERS._9m.includes(&AGE_RANGE_FILTERS._9m_to_1y));
-        assert!(
-            !OVER_AGE_FILTERS
-                ._18m
-                .includes(&AGE_RANGE_FILTERS._1y_to_18m)
-        );
-        assert!(
-            OVER_AGE_FILTERS
-                ._18m
-                .includes(&AGE_RANGE_FILTERS._18m_to_2y)
-        );
+        let nine_months: Vec<_> = OverAgeId::Over9M.cohort().age_ranges().unwrap().collect();
+        assert!(!nine_months.contains(&AgeRangeId::From6MTo9M));
+        assert!(nine_months.contains(&AgeRangeId::From9MTo1Y));
+        let eighteen_months: Vec<_> = OverAgeId::Over18M.cohort().age_ranges().unwrap().collect();
+        assert!(!eighteen_months.contains(&AgeRangeId::From1YTo18M));
+        assert!(eighteen_months.contains(&AgeRangeId::From18MTo2Y));
     }
 }

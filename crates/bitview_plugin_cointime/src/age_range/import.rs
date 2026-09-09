@@ -27,10 +27,7 @@ pub fn forced_import(
     let version = parent_version + VERSION;
     let import_coindays = |metric: &str| {
         AgeRange::try_from_fn(|id| {
-            let name = format!(
-                "{}_{metric}",
-                CohortContext::Utxo.full_name(id.filter(), id.name().id)
-            );
+            let name = format!("{}_{metric}", CohortContext::Utxo.full_name(id.cohort()));
             PerBlockCumulativeRolling::forced_import(
                 cache,
                 db,
@@ -46,7 +43,7 @@ pub fn forced_import(
     let activity_sources = AgeRange::try_from_fn(|id| {
         let name = format!(
             "{}_wakefulness_bounded_source",
-            CohortContext::Utxo.full_name(id.filter(), id.name().id)
+            CohortContext::Utxo.full_name(id.cohort())
         );
         import_stored(cache, db, &name, version)
     })?;

@@ -27,12 +27,12 @@ impl RealizedPriceByCohort {
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = ExactUTXOSources::forced_import(cache, db, "realized_price_cents", version)?;
-        let cohorts = UTXOGroups::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_price");
+        let cohorts = UTXOGroups::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "realized_price");
             LazyPriceWithRatioPerBlock::from_height_source(
                 &name,
                 version,
-                stored.get(&filter).expect("realized-price cohort source"),
+                stored.get(cohort_id).expect("realized-price cohort source"),
                 mappings,
                 spot_price,
             )

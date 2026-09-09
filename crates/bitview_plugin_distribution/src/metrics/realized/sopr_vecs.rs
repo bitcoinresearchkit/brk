@@ -1,4 +1,4 @@
-use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmountOrType};
+use bitview_cohort::{CohortContext, CohortId, UTXOGroupsWithoutAmountOrType};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
@@ -23,11 +23,11 @@ impl Sopr24hVecs {
         version: Version,
         mappings: &MappingsVecs,
     ) -> Result<Self> {
-        let cohorts = UTXOGroupsWithoutAmountOrType::try_new(|filter, cohort| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort, "sopr_24h");
+        let cohorts = UTXOGroupsWithoutAmountOrType::try_new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "sopr_24h");
             let version = version
                 + Version::new(3)
-                + if filter == Filter::All {
+                + if cohort_id == CohortId::All {
                     Version::ONE
                 } else {
                     Version::ZERO

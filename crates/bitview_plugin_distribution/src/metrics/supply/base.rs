@@ -1,3 +1,4 @@
+use bitview_cohort::{CohortContext, CohortId};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
@@ -19,14 +20,15 @@ pub struct SupplyBase {
 
 impl SupplyBase {
     pub fn from_total(
-        cohort_name: &str,
+        context: CohortContext,
+        cohort: CohortId,
         version: Version,
         total: LazySpotValuePerBlock,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
-        let dominance_name = Self::metric_name(cohort_name, "supply_dominance");
+        let dominance_name = context.metric_name(cohort, "supply_dominance");
         let source = LazyIndexedVec::new(
             &format!("{dominance_name}_ppm_source"),
             version,
@@ -38,7 +40,8 @@ impl SupplyBase {
             LazyPercentPerBlock::from_height_source(&dominance_name, version, &source, mappings);
 
         Self::new(
-            cohort_name,
+            context,
+            cohort,
             version,
             total,
             dominance,
@@ -48,13 +51,12 @@ impl SupplyBase {
     }
 
     pub fn from_all_total(
-        cohort_name: &str,
         version: Version,
         total: LazySpotValuePerBlock,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
-        let dominance_name = Self::metric_name(cohort_name, "supply_dominance");
+        let dominance_name = CohortContext::Utxo.metric_name(CohortId::All, "supply_dominance");
         let source = LazyVec::init(
             &format!("{dominance_name}_ppm_source"),
             version,
@@ -65,7 +67,8 @@ impl SupplyBase {
             LazyPercentPerBlock::from_height_source(&dominance_name, version, &source, mappings);
 
         Self::new(
-            cohort_name,
+            CohortContext::Utxo,
+            CohortId::All,
             version,
             total,
             dominance,
@@ -75,7 +78,8 @@ impl SupplyBase {
     }
 
     fn new(
-        cohort_name: &str,
+        context: CohortContext,
+        cohort: CohortId,
         version: Version,
         total: LazySpotValuePerBlock,
         dominance: LazyPercentPerBlock<PartsPerMillion32>,
@@ -83,7 +87,7 @@ impl SupplyBase {
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let delta = LazyRollingDeltasAmountFromHeight::new(
-            &Self::metric_name(cohort_name, "supply_delta"),
+            &context.metric_name(cohort, "supply_delta"),
             version + Version::TWO,
             &total.sats.height,
             cached_starts,
@@ -94,14 +98,6 @@ impl SupplyBase {
             total,
             delta,
             dominance,
-        }
-    }
-
-    pub fn metric_name(cohort_name: &str, metric: &str) -> String {
-        if cohort_name.is_empty() {
-            metric.to_owned()
-        } else {
-            format!("{cohort_name}_{metric}")
         }
     }
 

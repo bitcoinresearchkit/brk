@@ -31,11 +31,11 @@ impl CoindaysDestroyedByCohort {
             "coindays_destroyed_cumulative",
             version,
         )?;
-        let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "coindays_destroyed");
+        let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "coindays_destroyed");
             let source = stored
                 .stored
-                .get(&filter)
+                .get(cohort_id)
                 .expect("supported coindays-destroyed cohort");
             LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,

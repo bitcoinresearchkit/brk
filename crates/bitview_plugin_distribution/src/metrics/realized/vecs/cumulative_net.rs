@@ -38,11 +38,11 @@ impl CumulativeNetRealizedByCohort {
             "net_realized_pnl_cumulative_cents",
             version,
         )?;
-        let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "net_realized_pnl");
+        let cohorts = UTXOGroupsWithoutAmountOrType::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, "net_realized_pnl");
             let source = stored
                 .stored
-                .get(&filter)
+                .get(cohort_id)
                 .expect("supported net realized cohort");
             LazyFiatPerBlockCumulativeWithSumsAndDeltas::from_cumulative_cents_source(
                 &name,

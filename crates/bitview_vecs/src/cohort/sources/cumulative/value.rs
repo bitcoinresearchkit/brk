@@ -1,4 +1,4 @@
-use bitview_cohort::{Filter, UTXOValues};
+use bitview_cohort::{CohortId, UTXOValues};
 use bitview_transforms::{StoredU64ToCents, StoredU64ToSats};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
@@ -34,7 +34,7 @@ impl CumulativeUTXOValueSources {
 
     pub fn sources(
         &self,
-        filter: &Filter,
+        cohort_id: CohortId,
         name: &str,
         version: Version,
     ) -> Option<(
@@ -45,12 +45,12 @@ impl CumulativeUTXOValueSources {
             LazyVec::transformed::<StoredU64ToSats>(
                 &format!("{name}_cumulative_sats"),
                 version,
-                self.sats.stored.get(filter)?.read_only_boxed_clone(),
+                self.sats.stored.get(cohort_id)?.read_only_boxed_clone(),
             ),
             LazyVec::transformed::<StoredU64ToCents>(
                 &format!("{name}_cumulative_cents"),
                 version,
-                self.cents.stored.get(filter)?.read_only_boxed_clone(),
+                self.cents.stored.get(cohort_id)?.read_only_boxed_clone(),
             ),
         ))
     }

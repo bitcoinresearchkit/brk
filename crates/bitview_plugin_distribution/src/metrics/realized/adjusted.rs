@@ -1,6 +1,4 @@
-use bitview_cohort::{
-    CohortContext, Filter, TERM_NAMES, Term, UTXO_ALL_NAME, UTXOAllAndSth, UTXOAllAndSthId,
-};
+use bitview_cohort::{CohortContext, CohortId, Term, UTXOAllAndSth, UTXOAllAndSthId};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
@@ -103,14 +101,10 @@ impl AdjustedSoprVecs {
 
     fn cohort_metric_name(id: UTXOAllAndSthId, metric: &str) -> String {
         match id {
-            UTXOAllAndSthId::All => {
-                CohortContext::Utxo.metric_name(&Filter::All, UTXO_ALL_NAME.id, metric)
+            UTXOAllAndSthId::All => CohortContext::Utxo.metric_name(CohortId::All, metric),
+            UTXOAllAndSthId::Sth => {
+                CohortContext::Utxo.metric_name(CohortId::Term(Term::Sth), metric)
             }
-            UTXOAllAndSthId::Sth => CohortContext::Utxo.metric_name(
-                &Filter::Term(Term::Sth),
-                TERM_NAMES.short.id,
-                metric,
-            ),
         }
     }
 

@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortContext, CohortName, Filter, OVER_AGE_FILTERS, TimeFilter, UNDER_AGE_FILTERS};
+use super::{AgeId, CohortContext, CohortId, CohortName, Term};
 
 // Age boundary constants in hours
 pub const HOURS_1H: usize = 1;
@@ -17,7 +17,7 @@ pub const HOURS_1M: usize = 24 * 30;
 pub const HOURS_2M: usize = 24 * 2 * 30;
 pub const HOURS_3M: usize = 24 * 3 * 30;
 pub const HOURS_4M: usize = 24 * 4 * 30;
-pub const HOURS_5M: usize = 24 * 5 * 30; // STH/LTH threshold
+pub const HOURS_5M: usize = Term::THRESHOLD_HOURS;
 pub const HOURS_6M: usize = 24 * 6 * 30;
 pub const HOURS_9M: usize = HOURS_6M + HOURS_3M;
 pub const HOURS_1Y: usize = 24 * 365;
@@ -35,7 +35,7 @@ pub const HOURS_12Y: usize = 24 * 12 * 365;
 pub const HOURS_15Y: usize = 24 * 15 * 365;
 
 pub const AGE_RANGE_COUNT: usize = 23;
-pub const STH_AGE_RANGE_COUNT: usize = 8;
+pub const STH_AGE_RANGE_COUNT: usize = AgeRangeId::From5MTo6M.index();
 pub const LTH_AGE_RANGE_COUNT: usize = AGE_RANGE_COUNT - STH_AGE_RANGE_COUNT;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -92,34 +92,8 @@ pub const AGE_RANGE_IDS: [AgeRangeId; AGE_RANGE_COUNT] = [
     AgeRangeId::Over15Y,
 ];
 
-pub const STH_AGE_RANGE_IDS: [AgeRangeId; STH_AGE_RANGE_COUNT] = [
-    AgeRangeId::Under1H,
-    AgeRangeId::From1HTo1D,
-    AgeRangeId::From1DTo1W,
-    AgeRangeId::From1WTo1M,
-    AgeRangeId::From1MTo2M,
-    AgeRangeId::From2MTo3M,
-    AgeRangeId::From3MTo4M,
-    AgeRangeId::From4MTo5M,
-];
-
-pub const LTH_AGE_RANGE_IDS: [AgeRangeId; LTH_AGE_RANGE_COUNT] = [
-    AgeRangeId::From5MTo6M,
-    AgeRangeId::From6MTo9M,
-    AgeRangeId::From9MTo1Y,
-    AgeRangeId::From1YTo18M,
-    AgeRangeId::From18MTo2Y,
-    AgeRangeId::From2YTo3Y,
-    AgeRangeId::From3YTo4Y,
-    AgeRangeId::From4YTo5Y,
-    AgeRangeId::From5YTo6Y,
-    AgeRangeId::From6YTo7Y,
-    AgeRangeId::From7YTo8Y,
-    AgeRangeId::From8YTo10Y,
-    AgeRangeId::From10YTo12Y,
-    AgeRangeId::From12YTo15Y,
-    AgeRangeId::Over15Y,
-];
+pub const STH_AGE_RANGE_IDS: &[AgeRangeId] = AGE_RANGE_IDS.split_at(STH_AGE_RANGE_COUNT).0;
+pub const LTH_AGE_RANGE_IDS: &[AgeRangeId] = AGE_RANGE_IDS.split_at(STH_AGE_RANGE_COUNT).1;
 
 impl AgeRangeId {
     pub const ALL: &'static [Self] = &AGE_RANGE_IDS;
@@ -128,36 +102,14 @@ impl AgeRangeId {
     pub const fn index(self) -> usize {
         self as usize
     }
-}
 
-impl AgeRangeId {
+    pub const fn cohort(self) -> CohortId {
+        CohortId::Age(AgeId::Range(self))
+    }
+
     pub fn from_cohort_name(context: CohortContext, name: &str) -> Option<Self> {
         let name = name.strip_prefix(context.prefix())?.strip_prefix('_')?;
         Self::ALL.iter().copied().find(|id| id.name().id == name)
-    }
-
-    pub fn matching(filter: &Filter) -> Option<Self> {
-        Self::ALL.iter().copied().find(|id| id.filter() == filter)
-    }
-
-    pub fn included_by(filter: &Filter) -> impl Iterator<Item = Self> + '_ {
-        Self::ALL
-            .iter()
-            .copied()
-            .filter(|id| filter.includes(id.filter()))
-    }
-
-    /// Age ranges for a named aggregate, excluding exact ranges and unsupported thresholds.
-    pub fn aggregate_ranges(filter: &Filter) -> Option<impl Iterator<Item = Self> + '_> {
-        let supported = match filter {
-            Filter::All | Filter::Term(_) => true,
-            Filter::Time(_) => UNDER_AGE_FILTERS
-                .iter()
-                .chain(OVER_AGE_FILTERS.iter())
-                .any(|candidate| candidate == filter),
-            _ => false,
-        };
-        supported.then(|| Self::included_by(filter))
     }
 
     #[inline]
@@ -166,13 +118,16 @@ impl AgeRangeId {
     }
 
     #[inline]
-    pub fn filter(self) -> &'static Filter {
-        self.select(&AGE_RANGE_FILTERS)
-    }
-
-    #[inline]
     pub fn name(self) -> &'static CohortName {
         self.select(&AGE_RANGE_NAMES)
+    }
+
+    pub fn term(self) -> Term {
+        if self.bounds().end <= Term::THRESHOLD_HOURS {
+            Term::Sth
+        } else {
+            Term::Lth
+        }
     }
 
     pub fn select<T>(self, values: &AgeRange<T>) -> &T {
@@ -308,33 +263,6 @@ pub const AGE_RANGE_BOUNDS: AgeRange<Range<usize>> = AgeRange {
     over_15y: HOURS_15Y..usize::MAX,
 };
 
-/// Age range filters
-pub const AGE_RANGE_FILTERS: AgeRange<Filter> = AgeRange {
-    under_1h: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.under_1h)),
-    _1h_to_1d: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1h_to_1d)),
-    _1d_to_1w: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1d_to_1w)),
-    _1w_to_1m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1w_to_1m)),
-    _1m_to_2m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1m_to_2m)),
-    _2m_to_3m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._2m_to_3m)),
-    _3m_to_4m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._3m_to_4m)),
-    _4m_to_5m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._4m_to_5m)),
-    _5m_to_6m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._5m_to_6m)),
-    _6m_to_9m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._6m_to_9m)),
-    _9m_to_1y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._9m_to_1y)),
-    _1y_to_18m: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._1y_to_18m)),
-    _18m_to_2y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._18m_to_2y)),
-    _2y_to_3y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._2y_to_3y)),
-    _3y_to_4y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._3y_to_4y)),
-    _4y_to_5y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._4y_to_5y)),
-    _5y_to_6y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._5y_to_6y)),
-    _6y_to_7y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._6y_to_7y)),
-    _7y_to_8y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._7y_to_8y)),
-    _8y_to_10y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._8y_to_10y)),
-    _10y_to_12y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._10y_to_12y)),
-    _12y_to_15y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS._12y_to_15y)),
-    over_15y: Filter::Time(TimeFilter::Range(AGE_RANGE_BOUNDS.over_15y)),
-};
-
 /// Age range names
 pub const AGE_RANGE_NAMES: AgeRange<CohortName> = AgeRange {
     under_1h: CohortName::new("under_1h_old", "<1h", "Under 1 Hour Old"),
@@ -422,61 +350,33 @@ pub struct AgeRange<T> {
     pub over_15y: T,
 }
 
-impl_collection_formattable!(AgeRange {
-    under_1h,
-    _1h_to_1d,
-    _1d_to_1w,
-    _1w_to_1m,
-    _1m_to_2m,
-    _2m_to_3m,
-    _3m_to_4m,
-    _4m_to_5m,
-    _5m_to_6m,
-    _6m_to_9m,
-    _9m_to_1y,
-    _1y_to_18m,
-    _18m_to_2y,
-    _2y_to_3y,
-    _3y_to_4y,
-    _4y_to_5y,
-    _5y_to_6y,
-    _6y_to_7y,
-    _7y_to_8y,
-    _8y_to_10y,
-    _10y_to_12y,
-    _12y_to_15y,
-    over_15y,
+impl_cohort_collection!(AgeRangeId for AgeRange {
+    Under1H => under_1h,
+    From1HTo1D => _1h_to_1d,
+    From1DTo1W => _1d_to_1w,
+    From1WTo1M => _1w_to_1m,
+    From1MTo2M => _1m_to_2m,
+    From2MTo3M => _2m_to_3m,
+    From3MTo4M => _3m_to_4m,
+    From4MTo5M => _4m_to_5m,
+    From5MTo6M => _5m_to_6m,
+    From6MTo9M => _6m_to_9m,
+    From9MTo1Y => _9m_to_1y,
+    From1YTo18M => _1y_to_18m,
+    From18MTo2Y => _18m_to_2y,
+    From2YTo3Y => _2y_to_3y,
+    From3YTo4Y => _3y_to_4y,
+    From4YTo5Y => _4y_to_5y,
+    From5YTo6Y => _5y_to_6y,
+    From6YTo7Y => _6y_to_7y,
+    From7YTo8Y => _7y_to_8y,
+    From8YTo10Y => _8y_to_10y,
+    From10YTo12Y => _10y_to_12y,
+    From12YTo15Y => _12y_to_15y,
+    Over15Y => over_15y,
 });
 
 impl<T> AgeRange<T> {
-    pub fn from_fn(mut create: impl FnMut(AgeRangeId) -> T) -> Self {
-        Self {
-            under_1h: create(AgeRangeId::Under1H),
-            _1h_to_1d: create(AgeRangeId::From1HTo1D),
-            _1d_to_1w: create(AgeRangeId::From1DTo1W),
-            _1w_to_1m: create(AgeRangeId::From1WTo1M),
-            _1m_to_2m: create(AgeRangeId::From1MTo2M),
-            _2m_to_3m: create(AgeRangeId::From2MTo3M),
-            _3m_to_4m: create(AgeRangeId::From3MTo4M),
-            _4m_to_5m: create(AgeRangeId::From4MTo5M),
-            _5m_to_6m: create(AgeRangeId::From5MTo6M),
-            _6m_to_9m: create(AgeRangeId::From6MTo9M),
-            _9m_to_1y: create(AgeRangeId::From9MTo1Y),
-            _1y_to_18m: create(AgeRangeId::From1YTo18M),
-            _18m_to_2y: create(AgeRangeId::From18MTo2Y),
-            _2y_to_3y: create(AgeRangeId::From2YTo3Y),
-            _3y_to_4y: create(AgeRangeId::From3YTo4Y),
-            _4y_to_5y: create(AgeRangeId::From4YTo5Y),
-            _5y_to_6y: create(AgeRangeId::From5YTo6Y),
-            _6y_to_7y: create(AgeRangeId::From6YTo7Y),
-            _7y_to_8y: create(AgeRangeId::From7YTo8Y),
-            _8y_to_10y: create(AgeRangeId::From8YTo10Y),
-            _10y_to_12y: create(AgeRangeId::From10YTo12Y),
-            _12y_to_15y: create(AgeRangeId::From12YTo15Y),
-            over_15y: create(AgeRangeId::Over15Y),
-        }
-    }
-
     pub fn par_from_fn(create: impl Fn(AgeRangeId) -> T + Send + Sync) -> Self
     where
         T: Send,
@@ -506,34 +406,6 @@ impl<T> AgeRange<T> {
         }))
     }
 
-    pub fn try_from_fn<E>(mut create: impl FnMut(AgeRangeId) -> Result<T, E>) -> Result<Self, E> {
-        Ok(Self {
-            under_1h: create(AgeRangeId::Under1H)?,
-            _1h_to_1d: create(AgeRangeId::From1HTo1D)?,
-            _1d_to_1w: create(AgeRangeId::From1DTo1W)?,
-            _1w_to_1m: create(AgeRangeId::From1WTo1M)?,
-            _1m_to_2m: create(AgeRangeId::From1MTo2M)?,
-            _2m_to_3m: create(AgeRangeId::From2MTo3M)?,
-            _3m_to_4m: create(AgeRangeId::From3MTo4M)?,
-            _4m_to_5m: create(AgeRangeId::From4MTo5M)?,
-            _5m_to_6m: create(AgeRangeId::From5MTo6M)?,
-            _6m_to_9m: create(AgeRangeId::From6MTo9M)?,
-            _9m_to_1y: create(AgeRangeId::From9MTo1Y)?,
-            _1y_to_18m: create(AgeRangeId::From1YTo18M)?,
-            _18m_to_2y: create(AgeRangeId::From18MTo2Y)?,
-            _2y_to_3y: create(AgeRangeId::From2YTo3Y)?,
-            _3y_to_4y: create(AgeRangeId::From3YTo4Y)?,
-            _4y_to_5y: create(AgeRangeId::From4YTo5Y)?,
-            _5y_to_6y: create(AgeRangeId::From5YTo6Y)?,
-            _6y_to_7y: create(AgeRangeId::From6YTo7Y)?,
-            _7y_to_8y: create(AgeRangeId::From7YTo8Y)?,
-            _8y_to_10y: create(AgeRangeId::From8YTo10Y)?,
-            _10y_to_12y: create(AgeRangeId::From10YTo12Y)?,
-            _12y_to_15y: create(AgeRangeId::From12YTo15Y)?,
-            over_15y: create(AgeRangeId::Over15Y)?,
-        })
-    }
-
     /// Get mutable reference by Age. O(1).
     #[inline]
     pub fn get_mut(&mut self, age: Age) -> &mut T {
@@ -546,108 +418,12 @@ impl<T> AgeRange<T> {
         AgeRangeId::from(age).select(self)
     }
 
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(Filter, &'static str) -> T,
-    {
-        Self::from_fn(|id| create(id.filter().clone(), id.name().id))
+    pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
+        Self::from_fn(|id| create(id.cohort()))
     }
 
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(Filter, &'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| create(id.filter().clone(), id.name().id))
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        [
-            &self.under_1h,
-            &self._1h_to_1d,
-            &self._1d_to_1w,
-            &self._1w_to_1m,
-            &self._1m_to_2m,
-            &self._2m_to_3m,
-            &self._3m_to_4m,
-            &self._4m_to_5m,
-            &self._5m_to_6m,
-            &self._6m_to_9m,
-            &self._9m_to_1y,
-            &self._1y_to_18m,
-            &self._18m_to_2y,
-            &self._2y_to_3y,
-            &self._3y_to_4y,
-            &self._4y_to_5y,
-            &self._5y_to_6y,
-            &self._6y_to_7y,
-            &self._7y_to_8y,
-            &self._8y_to_10y,
-            &self._10y_to_12y,
-            &self._12y_to_15y,
-            &self.over_15y,
-        ]
-        .into_iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        [
-            &mut self.under_1h,
-            &mut self._1h_to_1d,
-            &mut self._1d_to_1w,
-            &mut self._1w_to_1m,
-            &mut self._1m_to_2m,
-            &mut self._2m_to_3m,
-            &mut self._3m_to_4m,
-            &mut self._4m_to_5m,
-            &mut self._5m_to_6m,
-            &mut self._6m_to_9m,
-            &mut self._9m_to_1y,
-            &mut self._1y_to_18m,
-            &mut self._18m_to_2y,
-            &mut self._2y_to_3y,
-            &mut self._3y_to_4y,
-            &mut self._4y_to_5y,
-            &mut self._5y_to_6y,
-            &mut self._6y_to_7y,
-            &mut self._7y_to_8y,
-            &mut self._8y_to_10y,
-            &mut self._10y_to_12y,
-            &mut self._12y_to_15y,
-            &mut self.over_15y,
-        ]
-        .into_iter()
-    }
-
-    pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
-    where
-        T: Send + Sync,
-    {
-        [
-            &mut self.under_1h,
-            &mut self._1h_to_1d,
-            &mut self._1d_to_1w,
-            &mut self._1w_to_1m,
-            &mut self._1m_to_2m,
-            &mut self._2m_to_3m,
-            &mut self._3m_to_4m,
-            &mut self._4m_to_5m,
-            &mut self._5m_to_6m,
-            &mut self._6m_to_9m,
-            &mut self._9m_to_1y,
-            &mut self._1y_to_18m,
-            &mut self._18m_to_2y,
-            &mut self._2y_to_3y,
-            &mut self._3y_to_4y,
-            &mut self._4y_to_5y,
-            &mut self._5y_to_6y,
-            &mut self._6y_to_7y,
-            &mut self._7y_to_8y,
-            &mut self._8y_to_10y,
-            &mut self._10y_to_12y,
-            &mut self._12y_to_15y,
-            &mut self.over_15y,
-        ]
-        .into_par_iter()
+    pub fn try_new<E>(mut create: impl FnMut(CohortId) -> Result<T, E>) -> Result<Self, E> {
+        Self::try_from_fn(|id| create(id.cohort()))
     }
 }
 
@@ -670,7 +446,6 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "storage")]
     #[test]
     fn cohort_ids_match_storage_order_and_term_split() {
         assert_eq!(AgeRangeId::ALL, &AGE_RANGE_IDS);
@@ -678,14 +453,8 @@ mod tests {
             STH_AGE_RANGE_IDS.len() + LTH_AGE_RANGE_IDS.len(),
             AGE_RANGE_COUNT
         );
-        assert_eq!(
-            STH_AGE_RANGE_IDS.as_slice(),
-            &AGE_RANGE_IDS[..STH_AGE_RANGE_COUNT]
-        );
-        assert_eq!(
-            LTH_AGE_RANGE_IDS.as_slice(),
-            &AGE_RANGE_IDS[STH_AGE_RANGE_COUNT..]
-        );
+        assert_eq!(STH_AGE_RANGE_IDS, &AGE_RANGE_IDS[..STH_AGE_RANGE_COUNT]);
+        assert_eq!(LTH_AGE_RANGE_IDS, &AGE_RANGE_IDS[STH_AGE_RANGE_COUNT..]);
         assert_eq!(STH_AGE_RANGE_IDS.last(), Some(&AgeRangeId::From4MTo5M));
         assert_eq!(LTH_AGE_RANGE_IDS.first(), Some(&AgeRangeId::From5MTo6M));
 
@@ -704,7 +473,16 @@ mod tests {
             *id.select_mut(&mut named) += AGE_RANGE_COUNT;
             assert_eq!(*id.select(&named), id.index() + AGE_RANGE_COUNT);
             assert_eq!(id.bounds(), id.select(&AGE_RANGE_BOUNDS));
-            assert_eq!(id.filter(), id.select(&AGE_RANGE_FILTERS));
+            assert_eq!(id.cohort(), CohortId::Age(AgeId::Range(id)));
+            assert_eq!(id.cohort().name(), id.name().id);
+            assert_eq!(
+                id.term(),
+                if id.index() < STH_AGE_RANGE_COUNT {
+                    Term::Sth
+                } else {
+                    Term::Lth
+                }
+            );
             assert_eq!(id.name().id, id.select(&AGE_RANGE_NAMES).id);
         }
 

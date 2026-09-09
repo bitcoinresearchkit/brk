@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
 use bitview_cohort::{
-    AGE_RANGE_COUNT, AgeRangeId, Filter, PROFITABILITY_RANGE_COUNT, ProfitabilityRange,
-    ProfitabilityRangeId, compute_profitability_boundaries,
+    AGE_RANGE_COUNT, AgeRangeId, PROFITABILITY_RANGE_COUNT, ProfitabilityRange,
+    ProfitabilityRangeId, Term, compute_profitability_boundaries,
 };
 use brk_types::{Cents, CentsCompact, PartsPerMillion32, Sats};
 
@@ -121,10 +121,10 @@ impl CostBasisFenwick {
         self.initialized
     }
 
-    /// Pre-compute `is_sth` lookup from the STH filter and age-range filters.
-    pub fn compute_is_sth(&mut self, sth_filter: &Filter) {
+    /// Pre-compute the holder classification of each age range.
+    pub fn compute_is_sth(&mut self) {
         for id in AgeRangeId::ALL {
-            self.is_sth[id.index()] = sth_filter.includes(id.filter());
+            self.is_sth[id.index()] = id.term() == Term::Sth;
         }
     }
 

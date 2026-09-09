@@ -1,6 +1,6 @@
 use std::ops::AddAssign;
 
-use bitview_cohort::{Filter, UTXOOverlappingValues, UTXOValues};
+use bitview_cohort::{CohortId, UTXOOverlappingValues, UTXOValues};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
@@ -27,8 +27,8 @@ impl<T: PcoVecValue + AddAssign> ExactUTXOSources<T> {
             stored: UTXOSources::forced_import(cache, db, name, version)?,
         })
     }
-    pub fn get(&self, filter: &Filter) -> Option<&StoredSeries<Height, T>> {
-        self.stored.get(filter)
+    pub fn get(&self, cohort_id: CohortId) -> Option<&StoredSeries<Height, T>> {
+        self.stored.get(cohort_id)
     }
     pub fn push(&mut self, direct: UTXOValues<T>, overlapping: UTXOOverlappingValues<T>) {
         self.stored.push_exact(direct, overlapping);

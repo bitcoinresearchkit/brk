@@ -6,7 +6,7 @@ use std::{
 };
 
 use bitview_cohort::{
-    AgeRangeId, ByTerm, TERM_FILTERS, TERM_NAMES, UTXO_ALL_NAME, UTXOAggregate, UTXOAggregateId,
+    AgeRangeId, ByTerm, TERM_NAMES, Term, UTXO_ALL_NAME, UTXOAggregate, UTXOAggregateId,
 };
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_error::Result;
@@ -202,7 +202,7 @@ impl DayUrpds {
         let mut weighted = BTreeMap::new();
 
         for &age in AgeRangeId::ALL {
-            let is_short = TERM_FILTERS.short.includes(age.filter());
+            let is_short = age.term() == Term::Sth;
 
             for &(price, sats) in sources.get(age) {
                 Self::add_weighted_entry(&mut weighted, price, sats, age, is_short, weights);
@@ -232,7 +232,7 @@ impl DayUrpds {
 
         for (age, price, sats) in entries {
             *raw.map.entry(price).or_default() += sats;
-            let is_short = TERM_FILTERS.short.includes(age.filter());
+            let is_short = age.term() == Term::Sth;
             Self::add_weighted_entry(&mut weighted, price, sats, age, is_short, weights);
         }
 

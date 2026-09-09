@@ -1,4 +1,4 @@
-use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount, UTXOValues};
+use bitview_cohort::{CohortContext, CohortId, UTXOGroupsWithoutAmount, UTXOValues};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::LazySpotValuePerBlock;
@@ -27,17 +27,17 @@ impl SupplyByCohort {
     ) -> Result<Self> {
         let stored =
             UTXOTypedSources::forced_import(cache, db, &format!("{metric}_sats"), version)?;
-        let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
-            let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
-            let source = stored.get(&filter).expect("supported supply cohort");
+        let cohorts = UTXOGroupsWithoutAmount::new(|cohort_id| {
+            let name = CohortContext::Utxo.metric_name(cohort_id, metric);
+            let source = stored.get(cohort_id).expect("supported supply cohort");
             LazySpotValuePerBlock::from_sats_source(&name, version, source, mappings, spot_price)
         });
 
         Ok(Self { cohorts, stored })
     }
 
-    pub fn get(&self, filter: &Filter) -> Option<&LazySpotValuePerBlock> {
-        self.cohorts.get(filter)
+    pub fn get(&self, cohort_id: CohortId) -> Option<&LazySpotValuePerBlock> {
+        self.cohorts.get(cohort_id)
     }
 
     pub fn min_len(&self) -> usize {
