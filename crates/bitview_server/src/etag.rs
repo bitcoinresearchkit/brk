@@ -1,5 +1,3 @@
-use std::str;
-
 use axum::http::{
     HeaderMap, HeaderValue,
     header::{ETAG, IF_NONE_MATCH},
@@ -10,10 +8,6 @@ use axum::http::{
 pub struct Etag(HeaderValue);
 
 impl Etag {
-    pub fn as_str(&self) -> &str {
-        str::from_utf8(self.token()).unwrap()
-    }
-
     pub fn matches(&self, headers: &HeaderMap) -> bool {
         let target = self.token();
         headers.get_all(IF_NONE_MATCH).iter().any(|value| {

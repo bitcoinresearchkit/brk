@@ -1,6 +1,6 @@
 use bitview_bindgen::{
     GenericSyntax, escape_python_keyword, extract_inner_type, find_common_prefix,
-    find_common_suffix, infer_accumulated_name, to_camel_case, to_pascal_case, to_snake_case,
+    find_common_suffix, to_camel_case, to_pascal_case, to_snake_case,
 };
 
 #[test]
@@ -17,14 +17,6 @@ fn names_respect_word_boundaries_and_unicode() {
     ] {
         assert_eq!(find_common_prefix(names).as_deref(), prefix);
         assert_eq!(find_common_suffix(names).as_deref(), suffix);
-    }
-    for (parent, field, descendant, expected) in [
-        ("", "price", "other", "price"),
-        ("parent", "price", "price_close", "price"),
-        ("parent", "price", "other", "parent_price"),
-        ("é", "供給", "other", "é_供給"),
-    ] {
-        assert_eq!(infer_accumulated_name(parent, field, descendant), expected);
     }
 }
 
@@ -68,18 +60,12 @@ fn inner_type_and_language_arrays_keep_owned_public_results() {
     ] {
         assert_eq!(extract_inner_type(input), expected);
     }
-    for (input, rust, js, python) in [
-        ("Foo<Bar<Cents>>", "Cents", "Cents", "Cents"),
-        (
-            "[[Cents; 2]; 3]",
-            "[[Cents; 2]; 3]",
-            "Cents[][]",
-            "List[List[Cents]]",
-        ),
-        ("[Cents; 0]", "[Cents; 0]", "Cents[]", "List[Cents]"),
-        ("[Cents; x]", "[Cents; x]", "[Cents; x]", "[Cents; x]"),
+    for (input, js, python) in [
+        ("Foo<Bar<Cents>>", "Cents", "Cents"),
+        ("[[Cents; 2]; 3]", "Cents[][]", "List[List[Cents]]"),
+        ("[Cents; 0]", "Cents[]", "List[Cents]"),
+        ("[Cents; x]", "[Cents; x]", "[Cents; x]"),
     ] {
-        assert_eq!(GenericSyntax::RUST.convert(input), rust);
         assert_eq!(GenericSyntax::JAVASCRIPT.convert(input), js);
         assert_eq!(GenericSyntax::PYTHON.convert(input), python);
     }
@@ -87,43 +73,29 @@ fn inner_type_and_language_arrays_keep_owned_public_results() {
 
 #[test]
 fn template_backends_keep_their_distinct_identity_and_discriminator_rules() {
-    use bitview_bindgen::{JavaScriptSyntax, LanguageSyntax, PythonSyntax, RustSyntax};
+    use bitview_bindgen::{JavaScriptSyntax, LanguageSyntax, PythonSyntax};
 
-    for (template, js, python, rust) in [
-        ("", "_m(baseName, disc)", "_m(base_name, '')", "base_name"),
-        (
-            "{disc}",
-            "_m(baseName, disc)",
-            "_m(base_name, disc)",
-            "_m(&base_name, &disc)",
-        ),
-        (
-            "raw",
-            "_m(baseName, 'raw')",
-            "_m(base_name, 'raw')",
-            "_m(&base_name, \"raw\")",
-        ),
+    for (template, js, python) in [
+        ("", "_m(baseName, disc)", "_m(base_name, '')"),
+        ("{disc}", "_m(baseName, disc)", "_m(base_name, disc)"),
+        ("raw", "_m(baseName, 'raw')", "_m(base_name, 'raw')"),
         (
             "ratio_{disc}",
             "_m(_m(baseName, 'ratio'), disc)",
             "_m(_m(base_name, 'ratio'), disc)",
-            "_m(&_m(&base_name, \"ratio\"), &disc)",
         ),
         (
             "_{disc}",
             "_m(_m(baseName, ''), disc)",
             "_m(_m(base_name, ''), disc)",
-            "_m(&_m(&base_name, \"\"), &disc)",
         ),
         (
             "{disc}{disc}",
             "_m(_m(baseName, '{disc}'), disc)",
             "_m(_m(base_name, '{disc}'), disc)",
-            "_m(&_m(&base_name, \"{disc}\"), &disc)",
         ),
     ] {
         assert_eq!(JavaScriptSyntax.template_expr("base_name", template), js);
         assert_eq!(PythonSyntax.template_expr("base_name", template), python);
-        assert_eq!(RustSyntax.template_expr("base_name", template), rust);
     }
 }

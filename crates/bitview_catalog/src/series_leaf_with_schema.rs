@@ -31,11 +31,6 @@ impl SeriesLeafWithSchema {
         }
     }
 
-    /// The OpenAPI/JSON Schema type.
-    pub fn openapi_type(&self) -> &str {
-        &self.openapi_type
-    }
-
     /// The series name/identifier.
     pub fn name(&self) -> &str {
         &self.leaf.name
@@ -49,11 +44,6 @@ impl SeriesLeafWithSchema {
     /// Available indexes for this series.
     pub fn indexes(&self) -> &BTreeSet<Index> {
         &self.leaf.indexes
-    }
-
-    /// Human-readable metric definition, when documented.
-    pub fn description(&self) -> Option<&str> {
-        self.leaf.description.as_deref()
     }
 
     /// Check if this leaf refers to the same series as another.

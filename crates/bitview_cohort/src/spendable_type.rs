@@ -111,11 +111,6 @@ impl SpendableTypeId {
 
 impl SpendableTypeId {
     pub const ALL: &'static [Self] = &SPENDABLE_TYPE_IDS;
-
-    #[inline]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
 }
 
 /// Spendable type names
@@ -173,12 +168,6 @@ impl_cohort_collection!(SpendableTypeId for SpendableType {
     Unknown => unknown,
     Empty => empty,
 });
-
-impl SpendableType<CohortName> {
-    pub const fn names() -> &'static Self {
-        &SPENDABLE_TYPE_NAMES
-    }
-}
 
 impl<T> SpendableType<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
@@ -291,23 +280,23 @@ mod tests {
             None
         );
 
-        let mut values = SpendableType::from_fn(|id| id.index());
+        let mut values = SpendableType::from_fn(|id| id as usize);
         assert!(values.iter_typed().map(|(kind, _)| kind).eq(output_types));
         for &id in SpendableTypeId::ALL {
             let kind = id.output_type();
             assert_eq!(SpendableTypeId::from_output_type(kind), Some(id));
-            assert_eq!(*id.select(&values), id.index());
-            assert_eq!(*values.get(kind), id.index());
+            assert_eq!(*id.select(&values), (id as usize));
+            assert_eq!(*values.get(kind), (id as usize));
             *values.get_mut(kind) += 1;
-            assert_eq!(*id.select(&values), id.index() + 1);
+            assert_eq!(*id.select(&values), (id as usize) + 1);
         }
         for ((kind, value), &id) in values.iter_typed_mut().zip(SpendableTypeId::ALL) {
             assert_eq!(kind, id.output_type());
-            assert_eq!(*value, id.index() + 1);
+            assert_eq!(*value, (id as usize) + 1);
             *value += 1;
         }
         for &id in SpendableTypeId::ALL {
-            assert_eq!(*values.get(id.output_type()), id.index() + 2);
+            assert_eq!(*values.get(id.output_type()), (id as usize) + 2);
         }
     }
 

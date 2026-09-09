@@ -61,7 +61,8 @@ impl Query {
         let prices = heights
             .iter()
             .map(|height| {
-                self.price()
+                self.plugins()
+                    .price
                     .spot
                     .cents
                     .height
@@ -91,17 +92,5 @@ impl Query {
             ..
         } = resolved;
         chain.build_v1_heights(self, &heights, &prices, _publication)
-    }
-
-    /// Page of blocks mined by `slug`, in descending height order, capped at
-    /// `limit`. `before_height` is the inclusive upper bound to paginate from.
-    pub fn pool_blocks(
-        &self,
-        slug: PoolSlug,
-        before_height: Option<Height>,
-        limit: usize,
-    ) -> Result<Vec<BlockInfoV1>> {
-        let resolved = self.resolve_pool_blocks(slug, before_height, limit)?;
-        self.pool_blocks_resolved(resolved)
     }
 }

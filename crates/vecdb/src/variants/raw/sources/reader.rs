@@ -5,9 +5,6 @@ use rawdb::{Reader, Region};
 use super::super::{RawStrategy, ReadWriteRawVec};
 use crate::{AnyStoredVec, HEADER_OFFSET, ReadOnlyRawVec, VecIndex, VecValue};
 
-#[cfg(feature = "zerocopy")]
-use std::slice as StdSlice;
-
 /// Read-only random-access handle into a raw vector's stored data.
 ///
 /// Created via `raw_vec.reader()` (available on BytesVec/ZeroCopyVec via Deref).
@@ -114,13 +111,6 @@ where
         I: VecIndex,
     {
         Self::from_region(vec.region(), vec.stored_len())
-    }
-    #[inline(always)]
-    #[cfg(feature = "zerocopy")]
-    pub fn as_bytes(&self) -> &[u8] {
-        // SAFETY: `data` points to `stored_len * SIZE_OF_T` bytes and `_reader`
-        // keeps the mmap generation containing them alive for this borrow.
-        unsafe { StdSlice::from_raw_parts(self.data, self.stored_len * Self::SIZE_OF_T) }
     }
 }
 

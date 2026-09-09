@@ -52,11 +52,4 @@ impl<T> PriceBands<T> {
             level: Levels::from_fn(|id: LevelId| create(id.into())),
         }
     }
-
-    pub fn map<U>(self, mut map: impl FnMut(T) -> U) -> PriceBands<U> {
-        PriceBands {
-            floor: self.floor.map(&mut map),
-            level: self.level.map(map),
-        }
-    }
 }

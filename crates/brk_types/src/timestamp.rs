@@ -75,14 +75,6 @@ impl Timestamp {
     }
 
     #[inline]
-    pub fn difference_in_days_between(&self, older: Self) -> usize {
-        // if self.0 < older.0 {
-        //     unreachable!()
-        // }
-        ((self.0 - older.0) / ONE_DAY_IN_SEC) as usize
-    }
-
-    #[inline]
     pub fn difference_in_days_between_float(&self, older: Self) -> f64 {
         // if self.0 < older.0 {
         //     unreachable!()
@@ -93,11 +85,6 @@ impl Timestamp {
     #[inline]
     pub fn difference_in_hours_between(&self, older: Self) -> usize {
         ((self.0 - older.0) / ONE_HOUR_IN_SEC) as usize
-    }
-
-    #[inline]
-    pub fn is_more_than_hour(&self) -> bool {
-        self.0 >= ONE_HOUR_IN_SEC
     }
 
     pub fn now() -> Self {

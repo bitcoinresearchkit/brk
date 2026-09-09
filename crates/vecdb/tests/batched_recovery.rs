@@ -8,7 +8,6 @@ use vecdb::{
 #[derive(Clone, Copy, Debug)]
 enum Compute {
     Batched,
-    To,
     Transform,
 }
 
@@ -61,16 +60,6 @@ fn check_recovery<V: StoredVec<I = usize, T = u64>>(compute: Compute) {
                                 appended += 1;
                             }
                             Ok(())
-                        },
-                        &exit,
-                    ),
-                    Compute::To => output.compute_to(
-                        max_from,
-                        to,
-                        dependency_version,
-                        |index| {
-                            appended += 1;
-                            (index, expected[index])
                         },
                         &exit,
                     ),
@@ -131,11 +120,6 @@ fn zstd_batched_recovery() {
 #[test]
 fn zerocopy_batched_recovery() {
     check_recovery::<vecdb::ZeroCopyVec<usize, u64>>(Compute::Batched);
-}
-
-#[test]
-fn zero_append_compute_to_recovery() {
-    check_legacy_recovery(Compute::To);
 }
 
 #[test]

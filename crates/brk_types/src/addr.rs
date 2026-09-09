@@ -22,13 +22,6 @@ use vecdb::Formattable;
 )]
 pub struct Addr(String);
 
-impl Addr {
-    /// Get the script for this address
-    pub fn script(&self) -> Result<ScriptBuf, Error> {
-        AddrBytes::addr_to_script(&self.0)
-    }
-}
-
 impl From<String> for Addr {
     #[inline]
     fn from(addr: String) -> Self {

@@ -4,10 +4,8 @@
 mod macros;
 
 mod age_range;
-mod amount_bucket;
 mod amount_range;
 mod by_addr_type;
-mod by_any_addr;
 mod by_entry;
 mod by_epoch;
 mod by_term;
@@ -34,10 +32,8 @@ mod with_addr_types;
 pub use brk_types::{Age, Term};
 
 pub use age_range::*;
-pub use amount_bucket::*;
 pub use amount_range::*;
 pub use by_addr_type::*;
-pub use by_any_addr::*;
 pub use by_entry::*;
 pub use by_epoch::*;
 pub use by_term::*;

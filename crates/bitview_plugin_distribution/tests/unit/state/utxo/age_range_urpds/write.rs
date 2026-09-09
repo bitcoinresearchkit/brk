@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fs::OpenOptions};
+use std::fs::OpenOptions;
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregateId};
 use brk_types::{CentsCompact, Date, Sats, UrpdRaw};
@@ -26,21 +26,24 @@ fn packed_file_reads_all_or_one_age_range() {
     }
 
     let id = AgeRangeId::From2YTo3Y;
-    let one = AgeRangeUrpds::read_one(root.path(), id, date).unwrap();
+    let one = AgeRangeUrpds::read_one_bytes(root.path(), id, date).unwrap();
     assert_eq!(
-        one.map,
-        expected.get(id).iter().copied().collect::<BTreeMap<_, _>>()
+        UrpdRaw::deserialize_entries(&one).unwrap(),
+        expected.get(id)
     );
 
     let mut captured = Vec::new();
     for id in UTXOAggregateId::ALL.iter().copied() {
-        assert_eq!(
-            AgeRangeUrpds::read_aggregate(root.path(), id, date)
-                .unwrap()
-                .map,
-            expected.aggregate(id).unwrap().map
-        );
         let encoded = AgeRangeUrpds::read_aggregate_encoded(root.path(), id, date).unwrap();
+        assert_eq!(
+            encoded.decode_entries().unwrap(),
+            expected
+                .aggregate(id)
+                .unwrap()
+                .map
+                .into_iter()
+                .collect::<Vec<_>>()
+        );
         assert_eq!(encoded.sections().count(), id.age_range_ids().len());
         for (section, age) in encoded.sections().zip(id.age_range_ids()) {
             assert_eq!(
@@ -62,15 +65,21 @@ fn packed_file_reads_all_or_one_age_range() {
     replacement.write(root.path(), date).unwrap();
     for (id, encoded) in captured {
         assert_eq!(
-            encoded.decode().unwrap().map,
-            expected.aggregate(id).unwrap().map
+            encoded.decode_entries().unwrap(),
+            expected
+                .aggregate(id)
+                .unwrap()
+                .map
+                .into_iter()
+                .collect::<Vec<_>>()
         );
     }
     assert!(
-        AgeRangeUrpds::read_one(root.path(), id, date)
-            .unwrap()
-            .map
-            .is_empty()
+        UrpdRaw::deserialize_entries(
+            &AgeRangeUrpds::read_one_bytes(root.path(), id, date).unwrap()
+        )
+        .unwrap()
+        .is_empty()
     );
     assert_eq!(
         UrpdRaw::deserialize_entries(&bytes).unwrap(),

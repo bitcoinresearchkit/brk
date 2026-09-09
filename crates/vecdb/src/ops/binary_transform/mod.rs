@@ -1,14 +1,6 @@
-pub mod divide;
-pub mod minus;
-pub mod plus;
 mod reverse_operands;
-pub mod times;
 
-pub use divide::Divide;
-pub use minus::Minus;
-pub use plus::Plus;
 pub use reverse_operands::ReverseOperands;
-pub use times::Times;
 
 /// Trait for binary transforms used by vector computations.
 /// Zero-sized types implementing this get monomorphized (zero runtime cost).

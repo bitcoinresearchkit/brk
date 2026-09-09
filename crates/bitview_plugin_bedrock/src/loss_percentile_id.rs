@@ -50,20 +50,16 @@ impl LossPercentileId {
             Self::Pct99_9 => &mut values.pct99_9,
         }
     }
-
-    pub fn series<T>(create: impl FnMut(Self) -> T) -> Percentiles<T> {
-        Percentiles::from_fn(create)
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{LOSS_PERCENTILE_IDS, LossPercentileId};
+    use super::{LOSS_PERCENTILE_IDS, LossPercentileId, Percentiles};
 
     #[test]
     fn selection_matches_public_order() {
         assert_eq!(LossPercentileId::ALL, LOSS_PERCENTILE_IDS);
-        let values = LossPercentileId::series(|id| id);
+        let values = Percentiles::from_fn(|id| id);
         for id in LossPercentileId::ALL {
             assert_eq!(id.select(&values), &id);
         }

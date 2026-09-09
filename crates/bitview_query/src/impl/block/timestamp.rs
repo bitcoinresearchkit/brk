@@ -35,13 +35,6 @@ impl ResolvedBlockTimestamp {
 }
 
 impl Query {
-    /// Greatest header timestamp at or before the target, with earliest-height
-    /// ties. Future targets need not select the highest block.
-    pub fn block_by_timestamp(&self, timestamp: Timestamp) -> Result<BlockTimestamp> {
-        self.resolve_block_by_timestamp(timestamp)
-            .map(ResolvedBlockTimestamp::into_value)
-    }
-
     pub fn resolve_block_by_timestamp(&self, target: Timestamp) -> Result<ResolvedBlockTimestamp> {
         let indexer = self.indexer();
         let mappings = self.plugins().mappings;

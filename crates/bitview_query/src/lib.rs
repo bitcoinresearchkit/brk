@@ -15,32 +15,8 @@ use std::{
 #[cfg(any(feature = "chain", feature = "series", feature = "price"))]
 use bitview_plugin::PublicationReadGuard;
 
-#[cfg(feature = "bedrock")]
-use bitview_plugin_bedrock::Vecs as Bedrock;
-#[cfg(feature = "blocks")]
-use bitview_plugin_blocks::Vecs as Blocks;
-#[cfg(feature = "coinflow")]
-use bitview_plugin_coinflow::Vecs as Coinflow;
-#[cfg(feature = "cointime")]
-use bitview_plugin_cointime::Vecs as Cointime;
-#[cfg(feature = "distribution")]
-use bitview_plugin_distribution::Vecs as Distribution;
 #[cfg(feature = "indexer")]
 use bitview_plugin_indexer::{Indexer, Lengths};
-#[cfg(feature = "inputs")]
-use bitview_plugin_inputs::Vecs as Inputs;
-#[cfg(feature = "mappings")]
-use bitview_plugin_mappings::Vecs as Mappings;
-#[cfg(feature = "mining")]
-use bitview_plugin_mining::Vecs as Mining;
-#[cfg(feature = "outputs")]
-use bitview_plugin_outputs::Vecs as Outputs;
-#[cfg(feature = "pools")]
-use bitview_plugin_pools::Vecs as Pools;
-#[cfg(feature = "price")]
-use bitview_plugin_price::Vecs as Price;
-#[cfg(feature = "transactions")]
-use bitview_plugin_transactions::Vecs as Transactions;
 #[cfg(feature = "indexer")]
 use bitview_types::SyncStatus;
 #[cfg(feature = "indexer")]
@@ -97,12 +73,54 @@ pub use query_plugin_set::{
     SupportsPools, SupportsPrice, SupportsTransactions,
 };
 #[cfg(feature = "indexer")]
-use query_plugins::QueryPlugins;
+pub use query_plugins::QueryPlugins;
 pub use representation_id::RepresentationId;
 pub use series_output::*;
-pub use vecs::{ResolvedSeriesInfo, Vecs};
+pub use vecs::{ResolvedSeriesInfo, SeriesEntry, SeriesEntryLookup, Vecs};
 
 #[cfg(feature = "indexer")]
+/// Read-only queries whose resolved chain views pin the published prefix.
+/// Bare lengths and unguarded internal helpers cannot authorize chain reads.
+///
+/// ```compile_fail
+/// use bitview_query::Query;
+/// use brk_types::{BlockHash, Height, Lengths};
+/// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
+///     query.block_raw_at_height(height, hash, safe).unwrap();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use bitview_query::Query;
+/// use brk_types::{BlockHash, Height, Lengths};
+/// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
+///     query.block_raw_size_at_height(height, hash, safe).unwrap();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use bitview_query::Query;
+/// use brk_types::{Height, Lengths};
+/// fn unpinned(query: &Query, height: Height, lengths: Lengths) {
+///     query.block_txids_by_height(height, lengths).unwrap();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use bitview_query::Query;
+/// use brk_types::TxIndex;
+/// fn unpinned(query: &Query, indices: &[TxIndex]) {
+///     query.transactions_at_indices(indices).unwrap();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use bitview_query::Query;
+/// use brk_types::Txid;
+/// fn unguarded(query: &Query, txid: &Txid) {
+///     query.resolve_confirmed_position(txid).unwrap();
+/// }
+/// ```
 #[derive(Clone)]
 pub struct Query(Arc<QueryInner<'static>>, Option<Instant>);
 #[cfg(feature = "indexer")]
@@ -333,82 +351,10 @@ impl Query {
         self.0.plugins.indexer
     }
 
-    #[cfg(feature = "bedrock")]
+    /// The shared read-only plugin composition backing this query view.
     #[inline]
-    pub fn bedrock(&self) -> &Bedrock<Ro> {
-        self.0.plugins.bedrock
-    }
-
-    #[cfg(feature = "blocks")]
-    #[inline]
-    pub fn blocks_plugin(&self) -> &Blocks<Ro> {
-        self.0.plugins.blocks
-    }
-
-    #[cfg(feature = "coinflow")]
-    #[inline]
-    pub fn coinflow(&self) -> &Coinflow<Ro> {
-        self.0.plugins.coinflow
-    }
-
-    #[cfg(feature = "cointime")]
-    #[inline]
-    pub fn cointime(&self) -> &Cointime<Ro> {
-        self.0.plugins.cointime
-    }
-
-    #[cfg(feature = "distribution")]
-    #[inline]
-    pub fn distribution(&self) -> &Distribution<Ro> {
-        self.0.plugins.distribution
-    }
-
-    #[cfg(feature = "inputs")]
-    #[inline]
-    pub fn inputs(&self) -> &Inputs<Ro> {
-        self.0.plugins.inputs
-    }
-
-    #[cfg(feature = "mappings")]
-    #[inline]
-    pub fn mappings(&self) -> &Mappings<Ro> {
-        self.0.plugins.mappings
-    }
-
-    #[cfg(feature = "mining")]
-    #[inline]
-    pub fn mining(&self) -> &Mining<Ro> {
-        self.0.plugins.mining
-    }
-
-    #[cfg(feature = "outputs")]
-    #[inline]
-    pub fn outputs(&self) -> &Outputs<Ro> {
-        self.0.plugins.outputs
-    }
-
-    #[inline]
-    #[cfg(feature = "mappings")]
-    fn plugins(&self) -> &QueryPlugins<'static> {
+    pub fn plugins(&self) -> &QueryPlugins<'static> {
         &self.0.plugins
-    }
-
-    #[cfg(feature = "pools")]
-    #[inline]
-    pub fn pools(&self) -> &Pools<Ro> {
-        self.0.plugins.pools
-    }
-
-    #[cfg(feature = "price")]
-    #[inline]
-    pub fn price(&self) -> &Price<Ro> {
-        self.0.plugins.price
-    }
-
-    #[cfg(feature = "transactions")]
-    #[inline]
-    pub fn transactions(&self) -> &Transactions<Ro> {
-        self.0.plugins.transactions
     }
 
     #[inline]

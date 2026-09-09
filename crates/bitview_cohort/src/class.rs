@@ -92,12 +92,6 @@ define_cohort_id!(
     }
 );
 
-impl Class<CohortName> {
-    pub const fn names() -> &'static Self {
-        &CLASS_NAMES
-    }
-}
-
 impl<T> Class<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|id| create(id.cohort()))

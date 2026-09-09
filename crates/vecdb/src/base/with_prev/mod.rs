@@ -49,34 +49,12 @@ impl<T> WithPrev<T> {
         self.previous.clone_from(&self.current);
     }
 
-    /// Copies previous into current.
-    #[inline]
-    pub fn restore(&mut self)
-    where
-        T: Clone,
-    {
-        self.current.clone_from(&self.previous);
-    }
-
-    #[inline]
-    pub fn swap(&mut self) {
-        mem::swap(&mut self.current, &mut self.previous);
-    }
-
     #[inline]
     pub fn take_current(&mut self) -> T
     where
         T: Default,
     {
         mem::take(&mut self.current)
-    }
-
-    #[inline]
-    pub fn take_previous(&mut self) -> T
-    where
-        T: Default,
-    {
-        mem::take(&mut self.previous)
     }
 
     #[inline]

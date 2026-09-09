@@ -1,6 +1,6 @@
 use brk_error::Result;
 
-use bitview_cohort::AmountBucket;
+use bitview_cohort::AmountRangeId;
 use brk_types::{Cents, Sats, TypeIndex};
 use vecdb::VecIndex;
 
@@ -37,12 +37,12 @@ pub fn process_sent(
                     addresses.observe_send(output_type, type_index);
                 let will_be_empty = addr_data.has_1_utxos();
 
-                let prev_bucket = AmountBucket::from(prev_balance);
-                let cohort_state = cohorts.amount_range.get_mut_by_bucket(prev_bucket);
+                let prev_bucket = AmountRangeId::from(prev_balance);
+                let cohort_state = prev_bucket.select_mut(&mut cohorts.amount_range);
 
                 // Mutates addr_data.spent_txo_count (+= 1). on_send_applied reads the post-spend view.
                 cohort_state.send(addr_data, value, current_price, prev_price)?;
-                let new_bucket = AmountBucket::from(addr_data.balance());
+                let new_bucket = AmountRangeId::from(addr_data.balance());
                 let crossing_boundary = prev_bucket != new_bucket;
                 metrics.on_send_applied(
                     addr_data,
@@ -58,9 +58,8 @@ pub fn process_sent(
                 if will_be_empty {
                     lookup.move_to_empty(type_index);
                 } else if crossing_boundary {
-                    cohorts
-                        .amount_range
-                        .get_mut_by_bucket(new_bucket)
+                    new_bucket
+                        .select_mut(&mut cohorts.amount_range)
                         .add(addr_data);
                 }
             }

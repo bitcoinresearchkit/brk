@@ -159,19 +159,6 @@ impl OpReturnKind {
     pub fn get<T>(self, values: &[T; OP_RETURN_KIND_COUNT]) -> &T {
         &values[self.index()]
     }
-
-    #[inline]
-    pub fn get_mut<T>(self, values: &mut [T; OP_RETURN_KIND_COUNT]) -> &mut T {
-        &mut values[self.index()]
-    }
-
-    #[inline]
-    pub fn from_fn<T, F>(f: F) -> [T; OP_RETURN_KIND_COUNT]
-    where
-        F: FnMut(Self) -> T,
-    {
-        OP_RETURN_KINDS.map(f)
-    }
 }
 
 #[cfg(test)]

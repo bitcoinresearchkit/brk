@@ -167,14 +167,6 @@ where
     }
 
     #[inline]
-    pub fn iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.keyspace
-            .iter()
-            .map(|result| result.unwrap())
-            .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
-    }
-
-    #[inline]
     pub fn prefix<P: Into<ByteView>>(
         &self,
         prefix: P,

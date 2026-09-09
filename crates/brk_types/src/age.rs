@@ -1,4 +1,4 @@
-use crate::{Sats, Term, Timestamp};
+use crate::{Sats, Timestamp};
 
 /// Represents the age of a UTXO or address balance.
 /// Encapsulates all age-related calculations in one type-safe struct.
@@ -30,16 +30,6 @@ impl Age {
     #[inline]
     pub fn days(&self) -> f64 {
         self.days
-    }
-
-    /// STH or LTH based on age (5 months = 3600 hours threshold)
-    #[inline]
-    pub fn term(&self) -> Term {
-        if self.hours >= Term::THRESHOLD_HOURS {
-            Term::Lth
-        } else {
-            Term::Sth
-        }
     }
 
     /// Calculate satdays destroyed for given supply

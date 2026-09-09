@@ -10,9 +10,10 @@ use std::{
 
 use serde_json::{Value, from_str};
 use tokio::task::{self, JoinSet};
+use vecdb::CacheBudget;
 
 use super::{
-    chain_fixture::{CACHE_BUDGET, default_first, run_genesis},
+    chain_fixture::{default_first, run_genesis_with_budget},
     server_routes::exchange_with_etag,
 };
 
@@ -30,7 +31,9 @@ async fn chart(address: SocketAddr) -> Vec<Value> {
 
 #[test]
 fn chart_reads_survive_concurrent_cache_eviction_and_reorgs() {
-    run_genesis(default_first(), |mut fixture| async move {
+    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+
+    run_genesis_with_budget(default_first(), &CACHE_BUDGET, |mut fixture| async move {
         fixture.publish(1, 1);
         let address = fixture.address;
         let first = chart(address).await;

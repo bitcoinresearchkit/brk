@@ -86,23 +86,6 @@ impl Query {
         Ok((txid, height))
     }
 
-    /// Resolve a txid to (TxIndex, Height).
-    ///
-    /// Position resolution without acquiring a read view is internal only.
-    ///
-    /// ```compile_fail
-    /// use bitview_query::Query;
-    /// use brk_types::Txid;
-    /// fn unguarded(query: &Query, txid: &Txid) {
-    ///     query.resolve_confirmed_position(txid).unwrap();
-    /// }
-    /// ```
-    pub fn resolve_tx(&self, txid: &Txid) -> Result<(TxIndex, Height)> {
-        self.read_indexer()?
-            .resolve_confirmed_position(txid)
-            .map_err(|error| self.transaction_error(error))
-    }
-
     // ── TxStatus construction (single source of truth) ─────────────
 
     /// Block hash + timestamp for a height (cached vecs, fast).
@@ -116,38 +99,6 @@ impl Query {
 
     // ── Transaction queries ────────────────────────────────────────
 
-    /// Resolve a tx body: published indexer → live mempool → `Vanished` tombstone.
-    /// Published confirmation takes precedence over a lagging mempool cycle.
-    /// The tombstone fallback covers the race where a mined tx has been
-    /// buried but `safe_lengths.tx_index` hasn't caught up. `Replaced`
-    /// tombstones are excluded since they will never confirm.
-    fn lookup_tx<R>(
-        &self,
-        txid: &Txid,
-        f: impl Fn(&Transaction) -> R,
-        indexed: impl FnOnce(TxIndex, &SafeLengths) -> Result<R>,
-    ) -> Result<R> {
-        let read = self.read_indexer()?;
-        match read.resolve_confirmed_position(txid) {
-            Ok((idx, _)) => indexed(idx, read.pin()),
-            Err(Error::UnknownTxid) => self
-                .mempool()
-                .ok_or(Error::UnknownTxid)?
-                .transaction(txid, &self.tip_blockhash_at(read.pin())?)?
-                .as_deref()
-                .map(f)
-                .ok_or(Error::UnknownTxid),
-            Err(e) => Err(e),
-        }
-    }
-
-    pub fn transaction(&self, txid: &Txid) -> Result<Transaction> {
-        self.lookup_tx(txid, Transaction::clone, |idx, pin| {
-            self.transaction_by_index(idx, pin)
-        })
-        .map_err(|error| self.transaction_error(error))
-    }
-
     pub fn transaction_status(&self, txid: &Txid) -> Result<TxStatus> {
         let read = self.read_indexer()?;
         match read.resolve_confirmed_position(txid) {
@@ -160,18 +111,6 @@ impl Query {
                 .ok_or_else(|| self.transaction_error(Error::UnknownTxid)),
             Err(error) => Err(error),
         }
-    }
-
-    pub fn transaction_raw(&self, txid: &Txid) -> Result<Vec<u8>> {
-        self.lookup_tx(txid, Transaction::encode_bytes, |idx, pin| {
-            self.transaction_raw_by_index(idx, pin)
-        })
-        .map_err(|error| self.transaction_error(error))
-    }
-
-    pub fn transaction_hex(&self, txid: &Txid) -> Result<String> {
-        self.transaction_raw(txid)
-            .map(|bytes| bytes.to_lower_hex_string())
     }
 
     /// Resolve txid to (tx_index, first_txout_index, output_count).
@@ -216,21 +155,6 @@ impl Query {
         indexed_transaction::read_at(self, tx_index, pin.lengths()).map(|(bytes, _)| bytes)
     }
 
-    /// Blocking submission with a bounded deadline and no ambiguous replay.
-    /// HTTP submissions use the cancellation-aware async RPC method instead.
-    /// An error does not establish that submission failed.
-    pub fn broadcast_transaction(&self, hex: &str) -> Result<Txid> {
-        self.client().send_raw_transaction(hex)
-    }
-
-    pub fn merkleblock_proof(&self, txid: &Txid) -> Result<String> {
-        let read = self.read_indexer()?;
-        let (_, height) = read
-            .resolve_confirmed_position(txid)
-            .map_err(|error| self.transaction_error(error))?;
-        self.merkleblock_proof_at(*txid, height, read)
-    }
-
     /// Build a merkleblock proof from a pre-resolved confirmed transaction.
     pub fn merkleblock_proof_resolved(&self, tx: ResolvedConfirmedTx) -> Result<String> {
         let read = self.read_indexer()?;
@@ -257,14 +181,6 @@ impl Query {
             |t| *t == target,
         );
         Ok(serialize_hex(&mb))
-    }
-
-    pub fn merkle_proof(&self, txid: &Txid) -> Result<MerkleProof> {
-        let read = self.read_indexer()?;
-        let (tx_index, height) = read
-            .resolve_confirmed_position(txid)
-            .map_err(|error| self.transaction_error(error))?;
-        self.merkle_proof_at(tx_index, height, read)
     }
 
     /// Build a merkle proof from a pre-resolved confirmed transaction.
@@ -338,13 +254,6 @@ impl Query {
         }
         Ok(tx_index)
     }
-    /// Height for a confirmed tx_index via in-memory TxHeights lookup.
-    /// Bounded against the safe-lengths snapshot so rejected tx_indices
-    /// never dereference slots a concurrent writer might be populating.
-    #[inline]
-    pub fn confirmed_status_height(&self, tx_index: TxIndex) -> Result<Height> {
-        self.confirmed_status_height_bounded(tx_index, self.safe_lengths())
-    }
 
     pub(crate) fn confirmed_status_height_bounded(
         &self,
@@ -359,15 +268,6 @@ impl Query {
             .tx_heights
             .get_shared(tx_index)
             .data()
-    }
-    /// Full confirmed TxStatus from a known height.
-    #[inline]
-    pub fn confirmed_status_at(&self, height: Height) -> Result<TxStatus> {
-        let status = self.confirmed_status_at_bounded(height, self.safe_lengths())?;
-        if height >= self.safe_lengths().height {
-            return Err(Error::UnknownTxid);
-        }
-        Ok(status)
     }
 
     pub(crate) fn confirmed_status_at_bounded(

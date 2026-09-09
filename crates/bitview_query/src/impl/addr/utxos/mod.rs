@@ -27,20 +27,6 @@ impl Query {
             .map(|(utxos, _)| utxos)
     }
 
-    /// Capture a bounded selection without waiting if the indexer is updating.
-    pub fn addr_utxos_preflight(
-        &self,
-        addr: &Addr,
-        max_utxos: usize,
-    ) -> Result<Option<ResolvedAddrUtxos>> {
-        let addr = AddrBytes::from_str(addr)?;
-        let Some(guard) = self.try_read_publication() else {
-            return Ok(None);
-        };
-        self.resolve_addr_utxos_guarded(&addr, guard, max_utxos)
-            .map(Some)
-    }
-
     pub fn resolve_addr_utxos(&self, addr: &Addr, max_utxos: usize) -> Result<ResolvedAddrUtxos> {
         let addr = AddrBytes::from_str(addr)?;
         let guard = self.read_publication()?;

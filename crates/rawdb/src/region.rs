@@ -9,9 +9,7 @@ use std::{fs::File, slice, sync::Arc};
 use log::{debug, trace};
 use parking_lot::RwLockReadGuard;
 
-use crate::{
-    Database, Error, HolePunch, PAGE_SIZE, PAGE_SIZE_MINUS_1, RegionInner, RegionMetadata, Result,
-};
+use crate::{Database, Error, PAGE_SIZE, PAGE_SIZE_MINUS_1, RegionInner, RegionMetadata, Result};
 
 #[cfg(unix)]
 use std::sync::OnceLock;
@@ -251,48 +249,13 @@ impl Region {
     /// Appends data to the region. Not durable until `flush()`.
     #[inline]
     pub fn write(&self, data: &[u8]) -> Result<()> {
-        self.write_with(data, None, false, false)
+        self.write_with(data, None, false)
     }
 
     /// Writes data at offset within the region. Not durable until `flush()`.
     #[inline]
     pub fn write_at(&self, data: &[u8], at: usize) -> Result<()> {
-        self.write_with(data, Some(at), false, false)
-    }
-
-    /// Writes data at an arbitrary reserved offset, growing the logical region
-    /// length when needed. Bytes skipped between the old length and `at` must
-    /// not be read unless they have been initialized separately.
-    ///
-    /// This is intended for sparse, fixed-layout storage whose independent
-    /// sections are filled out of order.
-    #[doc(hidden)]
-    #[inline]
-    pub fn write_at_grow(&self, data: &[u8], at: usize) -> Result<()> {
-        self.write_with(data, Some(at), false, true)
-    }
-
-    /// Deallocates initialized but unused bytes inside this region without
-    /// changing its logical length.
-    #[doc(hidden)]
-    pub fn punch_hole(&self, offset: usize, len: usize) -> Result<()> {
-        if len == 0 {
-            return Ok(());
-        }
-        let end = offset.checked_add(len).ok_or(Error::RegionSizeOverflow {
-            current: offset,
-            requested: len,
-        })?;
-        let meta = self.0.meta_mut();
-        if end > meta.reserved() {
-            return Err(Error::WriteOutOfBounds {
-                position: end,
-                region_len: meta.reserved(),
-            });
-        }
-        let start = meta.start() + offset;
-        let db = self.db();
-        HolePunch::punch(&db.file(), start, len)
+        self.write_with(data, Some(at), false)
     }
 
     /// Writes ascending (offset, value) pairs directly to the mmap within region bounds.
@@ -369,17 +332,11 @@ impl Region {
     /// Truncates to `at`, then writes data there.
     #[inline]
     pub fn truncate_write(&self, at: usize, data: &[u8]) -> Result<()> {
-        self.write_with(data, Some(at), true, false)
+        self.write_with(data, Some(at), true)
     }
 
     #[inline]
-    fn write_with(
-        &self,
-        data: &[u8],
-        at: Option<usize>,
-        truncate: bool,
-        allow_grow: bool,
-    ) -> Result<()> {
+    fn write_with(&self, data: &[u8], at: Option<usize>, truncate: bool) -> Result<()> {
         let db = self.db();
         let index = self.index();
         let meta = self.meta();
@@ -390,8 +347,7 @@ impl Region {
 
         let data_len = data.len();
 
-        if !allow_grow
-            && let Some(at_val) = at
+        if let Some(at_val) = at
             && at_val > len
         {
             return Err(Error::WriteOutOfBounds {
@@ -558,23 +514,6 @@ impl Region {
         Ok(())
     }
 
-    pub fn rename(&self, new_id: &str) -> Result<()> {
-        let old_id = self.meta().id().to_string();
-        let db = self.db();
-        debug!("{}: rename '{}' -> '{}'", db, old_id, new_id);
-        trace!(
-            "{}: rename '{}' -> '{}' acquiring regions_mut",
-            db, old_id, new_id
-        );
-        let mut regions = db.regions_mut();
-        let mut meta = self.0.meta_mut();
-        let index = self.index();
-        regions.rename(&old_id, new_id)?;
-        meta.set_id(new_id.to_string());
-        meta.write_if_dirty(index, &regions);
-        Ok(())
-    }
-
     /// Space becomes reusable after the next `flush()`.
     pub fn remove(self) -> Result<()> {
         let db = self.db();
@@ -628,6 +567,7 @@ impl Region {
     }
 
     #[inline(always)]
+    #[doc(hidden)]
     pub fn ptr_eq(&self, other: &Region) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
     }

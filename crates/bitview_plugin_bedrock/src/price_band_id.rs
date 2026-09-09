@@ -96,10 +96,6 @@ impl PriceBandId {
             Self::LevelPct90 => &mut values.level.pct90,
         }
     }
-
-    pub fn series<T>(create: impl FnMut(Self) -> T) -> PriceBands<T> {
-        PriceBands::from_fn(create)
-    }
 }
 
 impl From<LevelId> for PriceBandId {
@@ -120,12 +116,12 @@ impl From<LevelId> for PriceBandId {
 
 #[cfg(test)]
 mod tests {
-    use super::{PRICE_BAND_IDS, PriceBandId};
+    use super::{PRICE_BAND_IDS, PriceBandId, PriceBands};
 
     #[test]
     fn selection_matches_public_order() {
         assert_eq!(PriceBandId::ALL, PRICE_BAND_IDS);
-        let values = PriceBandId::series(|id| id);
+        let values = PriceBands::from_fn(|id| id);
         for &id in PriceBandId::ALL {
             assert_eq!(id.select(&values), &id);
         }

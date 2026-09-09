@@ -26,6 +26,6 @@ pub use ohlc::Ohlc;
 pub use per_resolution::PerResolution;
 pub use percent::Percent;
 pub use rarity_percentiles::RarityPercentiles;
-pub use windows::{WindowId, Windows};
-pub use windows_from_1w::{WindowFrom1wId, WindowsFrom1w};
+pub use windows::Windows;
+pub use windows_from_1w::WindowsFrom1w;
 pub use windows_to_1m::WindowsTo1m;

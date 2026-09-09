@@ -44,7 +44,7 @@ pub async fn check_snapshots(state: &AppState, address: SocketAddr) {
     urpd_sources::check(state, address).await;
     let cohort = Cohort::new("fixture").unwrap();
     let date = Date::new(2009, 1, 3);
-    let path = state.sync(|query| query.distribution().states_path.clone());
+    let path = state.sync(|query| query.plugins().distribution.states_path.clone());
     fs::create_dir_all(UrpdRaw::dir(&path, "emptyfixture"))
         .await
         .unwrap();
@@ -450,7 +450,7 @@ pub fn benchmark_inputs(state: &AppState) {
     state.sync(|query| {
         let cohort = Cohort::new("fixture").unwrap();
         let date = Date::new(2009, 1, 3); // The fixture's populated genesis day.
-        let path = &query.distribution().states_path;
+        let path = &query.plugins().distribution.states_path;
         for rows in [0_u32, 1, 10_000, 100_000] {
             let mut random = 0x1234_5678_u64;
             let mut price = 0;

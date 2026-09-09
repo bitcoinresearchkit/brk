@@ -6,7 +6,6 @@ use bitcoin::{
 use derive_more::Deref;
 
 use super::{BlockHash, CoinbaseTag, Height};
-use crate::BlkMetadata;
 
 /// Raw block bytes and per-tx offsets for fast txid hashing.
 /// Present when block was parsed from blk*.dat files, absent for RPC blocks.
@@ -145,46 +144,6 @@ impl From<(Height, BlockHash, BitcoinBlock)> for Block {
             block,
             raw: None,
         }
-    }
-}
-
-impl From<ReadBlock> for Block {
-    #[inline]
-    fn from(value: ReadBlock) -> Self {
-        value.block
-    }
-}
-
-#[derive(Debug, Deref)]
-pub struct ReadBlock {
-    #[deref]
-    block: Block,
-    metadata: BlkMetadata,
-    tx_metadata: Vec<BlkMetadata>,
-}
-
-impl From<(Block, BlkMetadata, Vec<BlkMetadata>)> for ReadBlock {
-    #[inline]
-    fn from((block, metadata, tx_metadata): (Block, BlkMetadata, Vec<BlkMetadata>)) -> Self {
-        Self {
-            block,
-            metadata,
-            tx_metadata,
-        }
-    }
-}
-
-impl ReadBlock {
-    pub fn metadata(&self) -> &BlkMetadata {
-        &self.metadata
-    }
-
-    pub fn tx_metadata(&self) -> &Vec<BlkMetadata> {
-        &self.tx_metadata
-    }
-
-    pub fn inner(self) -> Block {
-        self.block
     }
 }
 

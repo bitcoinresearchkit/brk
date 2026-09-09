@@ -171,23 +171,6 @@ impl OutputType {
     pub fn pubkey_exposed_at_funding(&self) -> bool {
         matches!(self, Self::P2PK65 | Self::P2PK33 | Self::P2TR)
     }
-
-    pub fn as_vec() -> Vec<Self> {
-        vec![
-            Self::P2PK65,
-            Self::P2PK33,
-            Self::P2PKH,
-            Self::P2MS,
-            Self::P2SH,
-            Self::OpReturn,
-            Self::P2WPKH,
-            Self::P2WSH,
-            Self::P2TR,
-            Self::P2A,
-            Self::Empty,
-            Self::Unknown,
-        ]
-    }
 }
 
 impl From<&ScriptBuf> for OutputType {

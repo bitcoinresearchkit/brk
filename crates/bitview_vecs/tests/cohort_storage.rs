@@ -4,12 +4,78 @@ use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, AmountRangeId, CohortContext, CohortId, SpendableTypeId,
     UTXOAggregate, UTXOValues,
 };
-use bitview_vecs::{AmountSources, UTXOSources};
-use brk_types::{Cents, Height, StoredU64, Version};
+use bitview_traversable::Traversable;
+use bitview_vecs::{
+    AggregateFiatPerBlock, AggregatePerBlock, AggregatePercentPerBlock,
+    AggregatePriceWithRatioPerBlock, AmountSources, UTXOSources,
+};
+use brk_types::{Cents, Height, PartsPerMillion32, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, Database, ReadableVec};
+use vecdb::{CacheBudget, CachedVec, Database, PcoVecValue, ReadOnlyClone, ReadableVec, Ro};
+
+mod common;
 
 static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
+
+#[test]
+fn aggregate_view_families_share_storage_and_read_only_projection() {
+    fn check<V: Clone, T: PcoVecValue + PartialEq>(
+        mut owner: AggregatePerBlock<V, T>,
+        values: UTXOAggregate<T>,
+    ) where
+        AggregatePerBlock<V, T>: Traversable,
+        AggregatePerBlock<V, T, Ro>: Traversable,
+    {
+        assert!(owner.is_empty());
+        owner.push(values.clone());
+        assert_eq!(owner.len(), 1);
+        let stored = owner.collect_vecs_mut();
+        assert_eq!(stored.len(), 3);
+        for source in stored {
+            source.write().unwrap();
+        }
+        let reader = owner.read_only_clone();
+        for (source, expected) in reader.stored.iter().zip(values.iter()) {
+            assert_eq!(source.collect_one(Height::ZERO), Some(*expected));
+        }
+        assert_eq!(owner.to_tree_node(), reader.to_tree_node());
+        assert_eq!(
+            owner.iter_any_exportable().count(),
+            owner.iter_any_visible().count() + 3,
+        );
+    }
+
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let indexes = common::indexes(&db);
+    let spot = CachedVec::wrap(common::stored::<Height, _>(
+        &db,
+        "spot",
+        [Cents::from(100_u64)],
+    ));
+    let amounts = UTXOAggregate::from_fn(|id| Cents::from(id.index() as u64 + 1));
+    check(
+        AggregateFiatPerBlock::forced_import(&CACHE, &db, "fiat", Version::ONE, &indexes).unwrap(),
+        amounts.clone(),
+    );
+    check(
+        AggregatePercentPerBlock::forced_import(&CACHE, &db, "share", Version::ONE, &indexes)
+            .unwrap(),
+        UTXOAggregate::from_fn(|id| PartsPerMillion32::from(id.index() as f64 / 2.0)),
+    );
+    check(
+        AggregatePriceWithRatioPerBlock::forced_import(
+            &CACHE,
+            &db,
+            "price",
+            Version::ONE,
+            &indexes,
+            &spot.read_only_cached_boxed_clone(),
+        )
+        .unwrap(),
+        amounts,
+    );
+}
 
 #[test]
 fn exact_totals_never_sum_independently_computed_values() {

@@ -25,8 +25,8 @@ use vecdb::{
 
 use super::{
     super::{
-        AdjustedSoprComputeSource, AdjustedSoprVecs, NegRealizedLoss, RealizedAggregateSources,
-        RealizedAggregateState, Sopr24hInput, Sopr24hVecs,
+        AdjustedSoprVecs, NegRealizedLoss, RealizedAggregateSources, RealizedAggregateState,
+        Sopr24hInput, Sopr24hVecs,
     },
     CumulativeNetRealizedByCohort, CumulativeRealizedByCohort, CumulativeValueDestroyedByCohort,
     RealizedCapByCohort, RealizedPriceByCohort, RealizedSources,
@@ -438,7 +438,7 @@ impl RealizedVecs {
     pub fn compute_adjusted_sopr<V1, V2>(
         &mut self,
         max_from: Height,
-        sources: &UTXOAllAndSth<AdjustedSoprComputeSource>,
+        sources: &UTXOAllAndSth<&RealizedAggregateSources>,
         under_1h_transfer_volume_cumulative: &V1,
         under_1h_value_destroyed_cumulative: &V2,
         exit: &Exit,

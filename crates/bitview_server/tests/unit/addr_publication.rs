@@ -289,12 +289,21 @@ impl AddrPublication {
         // Confirmed native results and HTTP identities must win over that copy.
         if let Some(confirmed) = first.txdata.get(1) {
             let txid = confirmed.compute_txid().into();
-            let expected = fixture.query.sync(|q| q.transaction(&txid)).unwrap();
-            let expected_cpfp = fixture.query.sync(|q| q.cpfp(&txid)).unwrap();
-            let expected_rate = fixture.query.sync(|q| q.effective_fee_rate(&txid)).unwrap();
+            let expected = fixture
+                .query
+                .sync(|q| q.transaction_json_resolved(q.resolve_transaction(&txid)?))
+                .unwrap();
+            let expected_cpfp = fixture
+                .query
+                .sync(|q| q.confirmed_cpfp_resolved(q.resolve_confirmed_tx(&txid)?))
+                .unwrap();
+            let expected_rate = expected_cpfp.effective_fee_per_vsize;
             let expected_spends = fixture.query.sync(|q| q.outspends(&txid)).unwrap();
             assert!(expected_spends[0].status.as_ref().unwrap().confirmed);
-            assert!(expected.status.confirmed);
+            assert_eq!(
+                from_slice::<Value>(&expected).unwrap()["status"]["confirmed"],
+                true
+            );
             fixture.node.lock().unwrap().transactions = vec![confirmed.clone()];
             fixture.tick(true).await;
             let tip = first.block_hash().into();
@@ -310,7 +319,13 @@ impl AddrPublication {
                 stale_rbf.rate, expected_rate,
                 "fixture must distinguish live and chain rates"
             );
-            let expected_rbf = fixture.query.sync(|q| q.tx_rbf(&txid)).unwrap();
+            let expected_rbf = fixture
+                .query
+                .sync(|q| {
+                    q.resolve_rbf(&txid)
+                        .and_then(|resolved| q.tx_rbf_resolved(resolved))
+                })
+                .unwrap();
             let replacement = expected_rbf.replacements.as_ref().unwrap();
             assert_eq!(replacement.mined, Some(true));
             assert_eq!(replacement.tx.rate, expected_rate);
@@ -338,11 +353,21 @@ impl AddrPublication {
                 to_value(&expected_spends[0]).unwrap()
             );
             assert_eq!(
-                to_value(fixture.query.sync(|q| q.cpfp(&txid)).unwrap()).unwrap(),
+                to_value(
+                    fixture
+                        .query
+                        .sync(|q| q.confirmed_cpfp_resolved(q.resolve_confirmed_tx(&txid)?))
+                        .unwrap()
+                )
+                .unwrap(),
                 to_value(&expected_cpfp).unwrap()
             );
             assert_eq!(
-                fixture.query.sync(|q| q.effective_fee_rate(&txid)).unwrap(),
+                fixture
+                    .query
+                    .sync(|q| q.confirmed_cpfp_resolved(q.resolve_confirmed_tx(&txid)?))
+                    .unwrap()
+                    .effective_fee_per_vsize,
                 expected_rate
             );
             assert!(
@@ -353,8 +378,11 @@ impl AddrPublication {
                     .confirmed
             );
             assert_eq!(
-                to_value(fixture.query.sync(|q| q.transaction(&txid)).unwrap()).unwrap(),
-                to_value(&expected).unwrap(),
+                fixture
+                    .query
+                    .sync(|q| q.transaction_json_resolved(q.resolve_transaction(&txid)?))
+                    .unwrap(),
+                expected,
             );
             for suffix in ["", "/status", "/outspends", "/outspend/0", "/cpfp", "/rbf"] {
                 let path = if suffix == "/cpfp" {
@@ -368,8 +396,8 @@ impl AddrPublication {
                 assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                 let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                 let expected = match suffix {
-                    "" => to_value(&expected).unwrap(),
-                    "/status" => to_value(&expected.status).unwrap(),
+                    "" => from_slice::<Value>(&expected).unwrap(),
+                    "/status" => from_slice::<Value>(&expected).unwrap()["status"].clone(),
                     "/outspends" => to_value(&expected_spends).unwrap(),
                     "/outspend/0" => to_value(&expected_spends[0]).unwrap(),
                     "/cpfp" => to_value(&expected_cpfp).unwrap(),

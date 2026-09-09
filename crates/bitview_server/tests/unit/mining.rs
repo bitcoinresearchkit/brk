@@ -74,7 +74,7 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
     ] {
         let path = format!("/api/v1/mining/pool/unknown/blocks{suffix}");
         let expected = state.sync(|q| {
-            let prices = &q.price().spot.cents.height;
+            let prices = &q.plugins().price.spot.cents.height;
             prices.invalidate();
             let snapshot = q
                 .resolve_pool_blocks(PoolSlug::Unknown, before, 100)
@@ -105,7 +105,12 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
             let body = to_string(&rows).unwrap();
             assert_eq!(
                 body,
-                to_string(&q.pool_blocks(PoolSlug::Unknown, before, 100).unwrap()).unwrap()
+                to_string(
+                    &q.resolve_pool_blocks(PoolSlug::Unknown, before, 100)
+                        .and_then(|resolved| q.pool_blocks_resolved(resolved))
+                        .unwrap()
+                )
+                .unwrap()
             );
             body
         });

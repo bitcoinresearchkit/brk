@@ -1,10 +1,7 @@
 use brk_error::{Error, Result};
 use brk_mempool::Mempool;
 pub use brk_mempool::{BlockTemplateSource, ResolvedBlockTemplateDiff};
-use brk_types::{
-    BlockTemplate, BlockTemplateDiff, MempoolBlock, MempoolInfo, MempoolRecentTx, NextBlockHash,
-    RecommendedFees, Txid,
-};
+use brk_types::{MempoolBlock, MempoolInfo, MempoolRecentTx, NextBlockHash, RecommendedFees, Txid};
 use serde::Serialize;
 use serde_json::to_vec;
 
@@ -33,10 +30,6 @@ impl Query {
     pub fn mempool_info_json(&self) -> Result<(Vec<u8>, RepresentationId)> {
         let info = self.mempool_info()?;
         Ok(serialize_json(&info))
-    }
-
-    pub fn mempool_txids(&self) -> Result<Vec<Txid>> {
-        self.require_mempool()?.txids()
     }
 
     pub fn mempool_txids_hash(&self) -> Result<u64> {
@@ -70,12 +63,6 @@ impl Query {
         Ok(serialize_json(&recent))
     }
 
-    /// `first_seen` Unix-second timestamps. Matches mempool.space's
-    /// `POST /api/v1/transaction-times`. Returns 0 for unknowns.
-    pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
-        self.require_mempool()?.transaction_times(txids)
-    }
-
     /// Transaction times and an exact, order-sensitive result hash from one
     /// mempool state snapshot.
     pub fn transaction_times_with_hash(&self, txids: &[Txid]) -> Result<(Vec<u64>, u64)> {
@@ -85,12 +72,6 @@ impl Query {
     /// Content identity of the published projected next block, not a liveness clock.
     pub fn mempool_hash(&self) -> Result<NextBlockHash> {
         self.require_mempool()?.next_block_hash()
-    }
-
-    /// Full projected next block (Core's `getblocktemplate` selection)
-    /// with stats and full tx bodies in GBT order.
-    pub fn block_template(&self) -> Result<BlockTemplate> {
-        self.require_mempool()?.block_template()
     }
 
     /// Capture a published template for cheap validation and deferred construction.
@@ -111,14 +92,5 @@ impl Query {
             .ok_or_else(|| Error::NotFound(format!("unknown since hash: {since}")))?;
         resolved.source().hash()?;
         Ok(resolved)
-    }
-
-    /// Delta of the projected next block since `since`. `NotFound`
-    /// when `since` has aged out (client should fall back to
-    /// `block_template`).
-    pub fn block_template_diff(&self, since: NextBlockHash) -> Result<BlockTemplateDiff> {
-        self.require_mempool()?
-            .block_template_diff(since)?
-            .ok_or_else(|| Error::NotFound(format!("unknown since hash: {since}")))
     }
 }

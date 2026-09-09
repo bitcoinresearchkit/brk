@@ -96,7 +96,7 @@ pub fn compute(
         (&mut vecs.price.ths_min.height, &vecs.price.ths.height),
         (&mut vecs.value.ths_min.height, &vecs.value.ths.height),
     ] {
-        min_vec.compute_all_time_low_(starting_height, src_vec, exit, true)?;
+        min_vec.compute_all_time_low(starting_height, src_vec, exit, true)?;
     }
 
     vecs.price

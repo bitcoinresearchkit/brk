@@ -94,27 +94,6 @@ impl CentsCompact {
         }
     }
 
-    /// Round to N significant digits.
-    /// E.g., 12345 (= $123.45) with round_to(4) → 12350 (= $123.50)
-    /// E.g., 12345 (= $123.45) with round_to(3) → 12300 (= $123.00)
-    #[inline]
-    pub fn round_to(self, digits: i32) -> Self {
-        if unlikely(self.is_nan()) {
-            return Self::NAN;
-        }
-
-        let v = self.0 as u64;
-        let ilog10 = v.checked_ilog10().unwrap_or(0) as i32;
-        if ilog10 >= digits {
-            let log_diff = ilog10 - digits + 1;
-            let pow = 10u64.pow(log_diff as u32);
-            // Add half for rounding
-            Self::from_finite_u64(((v + pow / 2) / pow) * pow)
-        } else {
-            self
-        }
-    }
-
     /// Round to nearest dollar, then apply N significant digits.
     /// E.g., 12345 (= $123.45) → 12300 (= $123.00) with 5 digits
     /// E.g., 1234567 (= $12345.67) → 1234600 (= $12346.00) with 5 digits
@@ -262,7 +241,6 @@ mod tests {
             Some(CentsCompact::NAN)
         );
         assert_eq!(CentsCompact::NAN.saturating_sub(finite), CentsCompact::NAN);
-        assert_eq!(CentsCompact::NAN.round_to(3), CentsCompact::NAN);
         assert_eq!(CentsCompact::NAN.round_to_dollar(3), CentsCompact::NAN);
     }
 

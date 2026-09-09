@@ -40,12 +40,6 @@ define_cohort_id!(
     }
 );
 
-impl ByEpoch<CohortName> {
-    pub const fn names() -> &'static Self {
-        &EPOCH_NAMES
-    }
-}
-
 impl<T> ByEpoch<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|id| create(id.cohort()))

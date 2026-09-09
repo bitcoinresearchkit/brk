@@ -38,7 +38,7 @@ impl TestPlugins {
         Self {
             first: TestPlugin {},
             second: TestPlugin {},
-            publication: Publication::new(),
+            publication: Publication::default(),
             computed_while_closed: false,
             committed_while_closed: false,
             fail_compute: false,

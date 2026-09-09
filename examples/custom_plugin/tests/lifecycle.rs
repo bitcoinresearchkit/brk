@@ -3,7 +3,7 @@ use std::{path::Path, time::Duration};
 use bitview::update;
 use bitview_custom_plugin_example::near_full_blocks::{Dependencies, ID, Vecs as NearFullBlocks};
 use bitview_plugin::{ComputePlugin, ImportContext, Publication, UpdateContext};
-use bitview_query::Vecs as QueryVecs;
+use bitview_query::{SeriesEntryLookup, Vecs as QueryVecs};
 use bitview_runtime::{ComputePluginSet, PluginSet};
 use bitview_traversable::Traversable;
 use brk_error::{Error, Result};
@@ -63,9 +63,11 @@ impl TestPlugins {
 
     fn queried_streak(&self) -> Result<Vec<u8>> {
         let query = QueryVecs::build(self);
-        let entry = query
-            .entry(&"near_full_block_streak".into(), Index::Height)
-            .expect("custom series should be queryable at height");
+        let SeriesEntryLookup::Found(entry) =
+            query.lookup_entry(&"near_full_block_streak".into(), Index::Height)
+        else {
+            panic!("custom series should be queryable at height");
+        };
 
         assert_eq!(entry.plugin().id(), ID);
         let _read = self

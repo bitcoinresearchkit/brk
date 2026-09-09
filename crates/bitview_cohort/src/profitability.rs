@@ -261,18 +261,6 @@ impl ProfitabilityId {
         &PROFITABILITY_IDS[PROFITABILITY_RANGE_COUNT + PROFIT_COUNT..]
     }
 
-    pub fn ranges(self) -> &'static [ProfitabilityRangeId] {
-        match self.group() {
-            ProfitabilityGroupId::Range(id) => &ProfitabilityRangeId::ALL[id.index()..=id.index()],
-            ProfitabilityGroupId::Profit(id) => {
-                &ProfitabilityRangeId::ALL[..PROFIT_COUNT + 1 - id.index()]
-            }
-            ProfitabilityGroupId::Loss(id) => {
-                &ProfitabilityRangeId::ALL[PROFIT_COUNT + 1 + id.index()..]
-            }
-        }
-    }
-
     pub fn range_series<T>(
         mut create: impl FnMut(Self, &'static str) -> T,
     ) -> ProfitabilityRange<T> {
@@ -295,14 +283,6 @@ impl ProfitabilityId {
 
     pub fn loss_series<T>(mut create: impl FnMut(Self, &'static str) -> T) -> Loss<T> {
         Loss::from_fn(|id| create(Self::loss_ids()[id.index()], id.select(Loss::names()).id))
-    }
-
-    #[inline]
-    pub const fn is_profit(self) -> bool {
-        let index = self as usize;
-        index < PROFIT_COUNT + 1
-            || (index >= PROFITABILITY_RANGE_COUNT
-                && index < PROFITABILITY_RANGE_COUNT + PROFIT_COUNT)
     }
 }
 
@@ -380,24 +360,11 @@ impl ProfitabilityId {
 impl ProfitabilityId {
     pub const ALL: &'static [Self] = &PROFITABILITY_IDS;
 
-    #[inline]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
-
     pub fn select<T>(self, values: &Profitability<T>) -> &T {
         match self.group() {
             ProfitabilityGroupId::Range(id) => id.select(&values.range),
             ProfitabilityGroupId::Profit(id) => id.select(&values.profit),
             ProfitabilityGroupId::Loss(id) => id.select(&values.loss),
-        }
-    }
-
-    pub fn select_mut<T>(self, values: &mut Profitability<T>) -> &mut T {
-        match self.group() {
-            ProfitabilityGroupId::Range(id) => id.select_mut(&mut values.range),
-            ProfitabilityGroupId::Profit(id) => id.select_mut(&mut values.profit),
-            ProfitabilityGroupId::Loss(id) => id.select_mut(&mut values.loss),
         }
     }
 }
@@ -415,7 +382,7 @@ mod tests {
         assert_eq!(ProfitabilityId::profit_ids().len(), PROFIT_COUNT);
         assert_eq!(ProfitabilityId::loss_ids().len(), LOSS_COUNT);
         for (index, id) in PROFITABILITY_IDS.into_iter().enumerate() {
-            assert_eq!(id.index(), index);
+            assert_eq!(id as usize, index);
         }
 
         assert!(
@@ -463,19 +430,27 @@ mod tests {
 
     #[test]
     fn aggregate_ids_select_their_exact_ranges() {
-        for &id in ProfitabilityId::range_ids() {
-            assert_eq!(id.ranges().len(), 1);
+        let ranges = ProfitabilityRange::from_fn(|id| id.index() + 1);
+        let values = Profitability::from_ranges(ranges.clone());
+        for (index, &id) in ProfitabilityId::range_ids().iter().enumerate() {
+            assert_eq!(*id.select(&values), index + 1);
         }
         for (threshold, &id) in ProfitabilityId::profit_ids().iter().enumerate() {
             assert_eq!(
-                id.ranges(),
-                &ProfitabilityRangeId::ALL[..PROFIT_COUNT + 1 - threshold]
+                *id.select(&values),
+                ranges
+                    .iter()
+                    .take(PROFIT_COUNT + 1 - threshold)
+                    .sum::<usize>()
             );
         }
         for (threshold, &id) in ProfitabilityId::loss_ids().iter().enumerate() {
             assert_eq!(
-                id.ranges(),
-                &ProfitabilityRangeId::ALL[PROFIT_COUNT + 1 + threshold..]
+                *id.select(&values),
+                ranges
+                    .iter()
+                    .skip(PROFIT_COUNT + 1 + threshold)
+                    .sum::<usize>()
             );
         }
     }

@@ -1,4 +1,4 @@
-use bitview_collections::WindowId;
+use bitview_collections::Windows;
 use bitview_transforms::SatsToCents;
 use bitview_vecs::{
     LazyWindowStartVec, ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
@@ -28,15 +28,18 @@ fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
         "timestamps",
         (0..3).map(|i| Timestamp::from(i * 600_u32)),
     );
-    let starts = WindowId::series(|window| {
-        LazyWindowStartVec::days(
-            window.suffix(),
-            Version::ONE,
-            1,
-            timestamps.read_only_boxed_clone(),
-        )
+    let starts = LazyWindowStartVec::days(
+        "starts",
+        Version::ONE,
+        1,
+        timestamps.read_only_boxed_clone(),
+    );
+    let windows = WindowStarts(Windows {
+        _24h: &starts,
+        _1w: &starts,
+        _1m: &starts,
+        _1y: &starts,
     });
-    let windows = WindowStarts(WindowId::series(|window| window.select(&starts)));
     let mut full = ValuePerBlockFull::<Rw, Pinned>::forced_import(
         &common::CACHE_BUDGET,
         &db,

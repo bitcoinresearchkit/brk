@@ -75,33 +75,3 @@ define_cohort_id!(
         Over80Pct => _80pct,
     }
 );
-
-impl<T> Loss<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(&'static str) -> T,
-    {
-        Self::from_fn(|id| create(id.select(&LOSS_NAMES).id))
-    }
-
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(&'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| create(id.select(&LOSS_NAMES).id))
-    }
-
-    /// Iterate from narrowest (_80pct) to broadest (total), yielding each threshold
-    /// with a growing suffix slice of `ranges` (2 ranges through all loss ranges).
-    pub fn iter_mut_with_growing_suffix<'a, R>(
-        &'a mut self,
-        ranges: &'a [R],
-    ) -> impl Iterator<Item = (&'a mut T, &'a [R])> {
-        let len = ranges.len();
-        self.as_array_mut()
-            .into_iter()
-            .rev()
-            .enumerate()
-            .map(move |(n, threshold)| (threshold, &ranges[len - 2 - n..]))
-    }
-}

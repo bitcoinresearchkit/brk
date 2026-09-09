@@ -76,6 +76,7 @@ impl Layout {
         Some(size)
     }
 
+    #[doc(hidden)]
     pub fn start_to_region(&self) -> &BTreeMap<usize, Region> {
         &self.start_to_region
     }

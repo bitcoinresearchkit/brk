@@ -210,7 +210,7 @@ impl AppState {
         timestamp: Timestamp,
     ) -> Result<Response, Error> {
         self.read_block_response(move |q| {
-            let block = q.block_by_timestamp(timestamp)?;
+            let block = q.resolve_block_by_timestamp(timestamp)?.into_value();
             let params =
                 CacheParams::revalidate(format!("block-timestamp-v2-{}", block.hash).into());
             if params.matches_etag(&headers) {

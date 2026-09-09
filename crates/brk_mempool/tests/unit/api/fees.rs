@@ -1,5 +1,5 @@
 use brk_error::Error;
-use brk_types::TxidPrefix;
+use brk_types::{BlockHash, FeeRate, TxidPrefix};
 
 use super::*;
 use crate::{
@@ -13,7 +13,7 @@ fn projections_require_publication_and_complete_template_selection() {
     assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
     assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
     assert!(matches!(
-        mempool.block_template(),
+        mempool.block_template_source().build(),
         Err(Error::StateUpdating)
     ));
     assert!(matches!(
@@ -25,7 +25,14 @@ fn projections_require_publication_and_complete_template_selection() {
     let blocks = mempool.block_stats().unwrap();
     assert!(!blocks.is_empty());
     assert!(blocks.iter().all(|block| block.tx_count == 0));
-    assert!(mempool.block_template().unwrap().transactions.is_empty());
+    assert!(
+        mempool
+            .block_template_source()
+            .build()
+            .unwrap()
+            .transactions
+            .is_empty()
+    );
     mempool.test_tick(&[test_support::fake_txid(42)], FeeRate::new(2.0));
     assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
     assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
@@ -40,16 +47,19 @@ fn live_rate_requires_a_matching_completed_projection() {
     let fallback = entry.fee_rate();
     mempool.test_state_lock().write().txs.insert(tx, entry);
     let tip = BlockHash::default();
-    assert!(mempool.effective_fee_rate(&txid, &tip).is_err());
+    assert!(mempool.cpfp_info(&txid, &tip).is_err());
     mempool.test_tick(&[txid], FeeRate::new(1.0));
     mempool.test_state_lock().write().publish_at(tip, &[txid]);
     assert_eq!(
-        mempool.effective_fee_rate(&txid, &tip).unwrap(),
+        mempool
+            .cpfp_info(&txid, &tip)
+            .unwrap()
+            .map(|info| info.effective_fee_per_vsize),
         Some(fallback)
     );
     assert!(
         mempool
-            .effective_fee_rate(&txid, &"11".repeat(32).parse().unwrap())
+            .cpfp_info(&txid, &"11".repeat(32).parse().unwrap())
             .is_err()
     );
     mempool
@@ -59,8 +69,8 @@ fn live_rate_requires_a_matching_completed_projection() {
         .remove_by_prefix(&TxidPrefix::from(txid));
     assert!(mempool.snapshot().chunk_rate_for(&txid).is_some());
     mempool.test_state_lock().write().publish_at(tip, &[]);
-    assert!(mempool.effective_fee_rate(&txid, &tip).is_err());
+    assert!(mempool.cpfp_info(&txid, &tip).is_err());
     mempool.test_tick(&[], FeeRate::new(1.0));
     mempool.test_state_lock().write().publish_at(tip, &[]);
-    assert_eq!(mempool.effective_fee_rate(&txid, &tip).unwrap(), None);
+    assert!(mempool.cpfp_info(&txid, &tip).unwrap().is_none());
 }

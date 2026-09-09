@@ -32,7 +32,7 @@ fn check_publication_gates() {
         ("txin_index", Index::TxOutIndex),
         ("txin_index", Index::TxInIndex),
         (
-            "utxos_over_5m_old_transfer_volume_average_1y_cents",
+            "utxos_4m_to_5m_old_transfer_volume_average_1y_cents",
             Index::Day1,
         ),
         ("addr_state", Index::P2AAddrIndex),

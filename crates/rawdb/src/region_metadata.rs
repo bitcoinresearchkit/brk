@@ -89,11 +89,6 @@ impl RegionMetadata {
         &self.id
     }
 
-    pub fn set_id(&mut self, id: String) {
-        Self::validate_id(&id);
-        Self::update_value_if_different(&mut self.id, id, &mut self.needs_write);
-    }
-
     pub fn set_reserved(&mut self, reserved: usize) {
         assert!(self.len() <= reserved);
         assert!(reserved >= PAGE_SIZE);
@@ -117,11 +112,6 @@ impl RegionMetadata {
         *own = other;
         *needs_write = true;
         true
-    }
-
-    #[inline(always)]
-    pub fn remaining(&self) -> usize {
-        self.reserved - self.len
     }
 
     fn to_bytes(&self) -> [u8; SIZE_OF_REGION_METADATA] {

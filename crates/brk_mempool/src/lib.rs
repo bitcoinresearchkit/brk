@@ -11,21 +11,21 @@
 //!                                            prevouts
 //! ```
 //!
-//! 1. [`steps::fetcher`] - one mixed batched RPC for
+//! 1. `steps::fetcher` - one mixed batched RPC for
 //!    `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`,
 //!    then a single mixed `getmempoolentry`+`getrawtransaction` batch
 //!    on new txids only. GBT-only txs are synthesized inline from the
 //!    GBT payload so block 0 matches Core's selection exactly without
 //!    a follow-up entry fetch that could race the listing.
-//! 2. [`steps::preparer`] - decode and classify into
+//! 2. `steps::preparer` - decode and classify into
 //!    `TxsPulled { live_len, added, removed }`. Pure CPU.
-//! 3. [`steps::applier`] - apply the diff to [`state::State`] under a
+//! 3. `steps::applier` - apply the diff to `state::State` under a
 //!    single write lock.
-//! 4. [`steps::prevouts::fill`] - fills `prevout: None` inputs in one
+//! 4. `steps::prevouts::fill` - fills `prevout: None` inputs in one
 //!    pass, using same-cycle in-mempool parents directly and the
 //!    caller-supplied resolver (default: `getrawtransaction`) for
 //!    confirmed parents.
-//! 5. [`snapshot::Rebuilder`] - rebuilds the projected-blocks
+//! 5. `snapshot::Rebuilder` - rebuilds the projected-blocks
 //!    [`Snapshot`] from the same-cycle GBT and min fee.
 //!
 //! # Locking domains

@@ -154,8 +154,13 @@ pub async fn check_prevouts(
     let parent = &block.txdata[0];
     for transaction in block.txdata.iter().skip(1) {
         let txid = transaction.compute_txid().into();
-        let actual = query.sync(|q| q.transaction(&txid)).unwrap();
-        for (input, expected) in actual.input.iter().zip(&transaction.input) {
+        let bytes = query
+            .sync(|q| q.transaction_json_resolved(q.resolve_transaction(&txid)?))
+            .unwrap();
+        let actual: Value = serde_json::from_slice(&bytes).unwrap();
+        let inputs = actual["vin"].as_array().unwrap();
+        assert_eq!(inputs.len(), transaction.input.len());
+        for (input, expected) in inputs.iter().zip(&transaction.input) {
             let parent = block
                 .txdata
                 .iter()
@@ -163,11 +168,11 @@ pub async fn check_prevouts(
                 .unwrap();
             let output = &parent.output[expected.previous_output.vout as usize];
             assert_eq!(
-                input.prevout.as_ref().unwrap().script_pubkey,
-                output.script_pubkey
+                input["prevout"]["scriptpubkey"],
+                to_value(&output.script_pubkey).unwrap()
             );
             assert_eq!(
-                u64::from(input.prevout.as_ref().unwrap().value),
+                input["prevout"]["value"].as_u64().unwrap(),
                 output.value.to_sat()
             );
         }
@@ -175,7 +180,7 @@ pub async fn check_prevouts(
             exchange_with_etag(address, "GET", &format!("/api/tx/{txid}"), "\"old\"").await;
         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
         let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
-        assert_eq!(body, to_value(actual).unwrap());
+        assert_eq!(body, actual);
     }
     let parent_txid = Txid::from(parent.compute_txid());
     let mut collision = parent.compute_txid().to_byte_array();

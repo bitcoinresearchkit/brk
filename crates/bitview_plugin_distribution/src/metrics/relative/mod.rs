@@ -15,6 +15,22 @@ pub use source::RelativeSource;
 pub use supply_profitability_shares::SupplyProfitabilityShares;
 pub use vecs::RelativeVecs;
 
+fn public_profit_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
+    if profit_share.is_nan() {
+        PartsPerMillion32::ZERO
+    } else {
+        profit_share
+    }
+}
+
+fn public_loss_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
+    if profit_share.is_nan() {
+        PartsPerMillion32::ZERO
+    } else {
+        PartsPerMillion32::ONE - profit_share
+    }
+}
+
 fn share_views<B: FixedRatio>(
     sources: &UTXOAggregate<StoredSeries<Height, PartsPerMillion32>>,
     metric: &str,

@@ -70,14 +70,6 @@ impl UTXOAggregateId {
         }
     }
 
-    pub const fn term(self) -> Option<Term> {
-        match self {
-            Self::All => None,
-            Self::Sth => Some(Term::Sth),
-            Self::Lth => Some(Term::Lth),
-        }
-    }
-
     pub fn metric_name(self, metric: &str) -> String {
         CohortContext::Utxo.metric_name(self.cohort(), metric)
     }
@@ -97,15 +89,6 @@ impl<T> UTXOAggregate<T> {
             CohortId::All => Some(&self.all),
             CohortId::Term(Term::Sth) => Some(&self.sth),
             CohortId::Term(Term::Lth) => Some(&self.lth),
-            _ => None,
-        }
-    }
-
-    pub fn get_mut(&mut self, id: CohortId) -> Option<&mut T> {
-        match id {
-            CohortId::All => Some(&mut self.all),
-            CohortId::Term(Term::Sth) => Some(&mut self.sth),
-            CohortId::Term(Term::Lth) => Some(&mut self.lth),
             _ => None,
         }
     }

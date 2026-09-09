@@ -139,15 +139,6 @@ where
     }
 
     #[inline]
-    pub fn get_first_empty_index(&self) -> V::I {
-        self.current_holes()
-            .first()
-            .copied()
-            .map(V::I::from)
-            .unwrap_or_else(|| V::I::from(self.vec.len()))
-    }
-
-    #[inline]
     pub fn reserve_pushed(&mut self, additional: usize) {
         self.vec.reserve_pushed(additional);
     }
@@ -189,18 +180,5 @@ where
             "get_append_only requires a vector without holes or updates"
         );
         self.vec.get_append_only(index, reader)
-    }
-
-    #[inline]
-    pub fn read_ref<'a>(
-        &self,
-        index: I,
-        reader: &'a VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<&'a T> {
-        let index = index.to_usize();
-        if self.current_holes().contains(&index) || self.current_updated().contains_key(&index) {
-            return None;
-        }
-        self.vec.read_ref_at(index, reader)
     }
 }

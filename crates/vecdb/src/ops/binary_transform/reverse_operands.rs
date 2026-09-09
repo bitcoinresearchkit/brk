@@ -18,10 +18,17 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Minus;
+
+    struct Subtract;
+
+    impl BinaryTransform<i32, i32> for Subtract {
+        fn apply(left: i32, right: i32) -> i32 {
+            left - right
+        }
+    }
 
     #[test]
     fn reverses_noncommutative_operands() {
-        assert_eq!(ReverseOperands::<Minus>::apply(2i32, 9i32), 7);
+        assert_eq!(ReverseOperands::<Subtract>::apply(2, 9), 7);
     }
 }

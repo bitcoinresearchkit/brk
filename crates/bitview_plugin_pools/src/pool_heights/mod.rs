@@ -86,13 +86,6 @@ impl PoolHeights {
         heights[start..end].iter().rev().copied().collect()
     }
 
-    pub fn latest_height(&self, slug: PoolSlug, through_height: Height) -> Option<Height> {
-        let state = self.0.read();
-        let heights = state.by_pool.get(&slug)?;
-        let end = Self::cumulative_count(heights, through_height.to_usize());
-        end.checked_sub(1).map(|index| heights[index])
-    }
-
     fn cumulative_count(heights: &[Height], through_height: usize) -> usize {
         heights.partition_point(|height| height.to_usize() <= through_height)
     }
@@ -395,20 +388,21 @@ mod tests {
     }
 
     #[test]
-    fn latest_height_is_bounded_by_height() {
+    fn single_latest_height_is_bounded_by_height() {
         let (pool_heights, _) = fixture();
 
         assert_eq!(
-            pool_heights.latest_height(PoolSlug::F2Pool, Height::from(4_u32)),
-            Some(Height::from(3_u32))
+            pool_heights.latest_heights(PoolSlug::F2Pool, Height::from(4_u32), 1),
+            [Height::from(3_u32)]
         );
         assert_eq!(
-            pool_heights.latest_height(PoolSlug::F2Pool, Height::from(1_u32)),
-            Some(Height::from(0_u32))
+            pool_heights.latest_heights(PoolSlug::F2Pool, Height::from(1_u32), 1),
+            [Height::from(0_u32)]
         );
-        assert_eq!(
-            pool_heights.latest_height(PoolSlug::Luxor, Height::from(4_u32)),
-            None
+        assert!(
+            pool_heights
+                .latest_heights(PoolSlug::Luxor, Height::from(4_u32), 1)
+                .is_empty()
         );
     }
 }

@@ -1,4 +1,4 @@
-use bitview_collections::WindowId;
+use bitview_collections::Windows;
 use bitview_vecs::PerBlockCumulativeRolling;
 use brk_types::{Height, StoredU64, Version};
 use tempfile::tempdir;
@@ -12,7 +12,12 @@ fn mutable_checkpoint_access_invalidates_same_length_cumulative_state() {
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let starts = common::stored::<Height, _>(&db, "starts", [Height::ZERO; 4]);
-    let windows = WindowId::series(|_| &starts);
+    let windows = Windows {
+        _24h: &starts,
+        _1w: &starts,
+        _1m: &starts,
+        _1y: &starts,
+    };
     let mut values = PerBlockCumulativeRolling::<StoredU64>::forced_import(
         &common::CACHE_BUDGET,
         &db,

@@ -55,18 +55,6 @@ impl CentsSigned {
     pub fn to_dollars(self) -> Dollars {
         Dollars::from(self.0 as f64 / 100.0)
     }
-
-    pub fn round_to(self, digits: i32) -> Self {
-        let v = self.0;
-        let ilog10 = v.unsigned_abs().checked_ilog10().unwrap_or(0) as i32;
-        Self::from(if ilog10 >= digits {
-            let log_diff = ilog10 - digits + 1;
-            let pow = 10.0_f64.powi(log_diff);
-            ((v as f64 / pow).round() * pow) as i64
-        } else {
-            v
-        })
-    }
 }
 
 impl From<Dollars> for CentsSigned {
@@ -247,7 +235,7 @@ impl Mul<usize> for CentsSigned {
 
 impl CheckedSub for CentsSigned {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self)
+        self.checked_sub(rhs)
     }
 }
 #[cfg(feature = "storage")]

@@ -54,7 +54,20 @@ fn display_backed_formatters_keep_exact_bytes() {
     check(&OutPoint::COINBASE);
     check(&PoolSlug::Unknown);
     check(&PoolSlug::OneThash);
-    for output_type in OutputType::as_vec() {
+    for output_type in [
+        OutputType::P2PK65,
+        OutputType::P2PK33,
+        OutputType::P2PKH,
+        OutputType::P2MS,
+        OutputType::P2SH,
+        OutputType::OpReturn,
+        OutputType::P2WPKH,
+        OutputType::P2WSH,
+        OutputType::P2TR,
+        OutputType::P2A,
+        OutputType::Empty,
+        OutputType::Unknown,
+    ] {
         check(&output_type);
     }
 }

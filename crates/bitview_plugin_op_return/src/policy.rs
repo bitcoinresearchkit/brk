@@ -50,14 +50,6 @@ impl<T> Policy<T> {
         ]
         .into_iter()
     }
-    pub fn new(mut create: impl FnMut(OpReturnPolicyId, &'static str) -> T) -> Self {
-        Self {
-            pre_v30_standard: create(OpReturnPolicyId::PreV30Standard, "pre_v30_standard"),
-            pre_v30_nonstandard: create(OpReturnPolicyId::PreV30Nonstandard, "pre_v30_nonstandard"),
-            oversized: create(OpReturnPolicyId::Oversized, "oversized"),
-            multiple: create(OpReturnPolicyId::Multiple, "multiple"),
-        }
-    }
 
     pub fn get(&self, policy: OpReturnPolicyId) -> &T {
         match policy {

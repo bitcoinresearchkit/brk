@@ -9,7 +9,7 @@ use super::*;
 #[test]
 fn same_tip_publications_invalidate_the_warmed_window() {
     let cache = LiveOracle::default();
-    let gate = Publication::new();
+    let gate = Publication::default();
     let seed = Cell::new(1_000_000u64);
     let builds = Cell::new(0);
     let read = |tip| {

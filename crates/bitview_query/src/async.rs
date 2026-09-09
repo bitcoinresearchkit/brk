@@ -103,9 +103,4 @@ impl AsyncQuery {
     {
         f(&self.0)
     }
-
-    #[inline]
-    pub fn inner(&self) -> &Query {
-        &self.0
-    }
 }

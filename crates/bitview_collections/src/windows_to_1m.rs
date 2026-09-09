@@ -25,14 +25,6 @@ impl<A> WindowsTo1m<A> {
         })
     }
 
-    pub fn as_array(&self) -> [&A; 3] {
-        [&self._24h, &self._1w, &self._1m]
-    }
-
-    pub fn as_mut_array(&mut self) -> [&mut A; 3] {
-        [&mut self._24h, &mut self._1w, &mut self._1m]
-    }
-
     pub fn as_mut_array_with_days(&mut self) -> [(&mut A, usize); 3] {
         [(&mut self._24h, 1), (&mut self._1w, 7), (&mut self._1m, 30)]
     }

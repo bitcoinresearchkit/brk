@@ -8,7 +8,7 @@ use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use vecdb::{AnyStoredVec, BinaryTransform, CacheBudget, Database, Rw, StorageMode};
 
-use super::{RelativeSource, share_views};
+use super::{RelativeSource, public_loss_share, public_profit_share, share_views};
 
 const VERSION: Version = Version::ONE;
 
@@ -49,14 +49,14 @@ impl SupplyProfitabilityShares {
             &profit_share_source,
             "supply_in_profit_share",
             version,
-            Self::public_profit_share,
+            public_profit_share,
             mappings,
         );
         let supply_in_loss_share = share_views(
             &profit_share_source,
             "supply_in_loss_share",
             version,
-            Self::public_loss_share,
+            public_loss_share,
             mappings,
         );
 
@@ -73,24 +73,6 @@ impl SupplyProfitabilityShares {
             PartsPerMillion32::NAN
         } else {
             RatioSats::apply(profit, total)
-        }
-    }
-
-    #[inline(always)]
-    fn public_profit_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
-        if profit_share.is_nan() {
-            PartsPerMillion32::ZERO
-        } else {
-            profit_share
-        }
-    }
-
-    #[inline(always)]
-    fn public_loss_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
-        if profit_share.is_nan() {
-            PartsPerMillion32::ZERO
-        } else {
-            PartsPerMillion32::ONE - profit_share
         }
     }
 
@@ -126,29 +108,29 @@ impl SupplyProfitabilityShares {
 mod tests {
     use brk_types::{Height, PartsPerMillion32, Sats};
 
-    use super::SupplyProfitabilityShares;
+    use super::{SupplyProfitabilityShares, public_loss_share, public_profit_share};
 
     #[test]
     fn derives_both_public_shares_from_profit_share() {
         let empty = SupplyProfitabilityShares::stored_profit_share(Sats::ZERO, Sats::ZERO);
         assert!(empty.is_nan());
         assert_eq!(
-            SupplyProfitabilityShares::public_profit_share(Height::ZERO, empty),
+            public_profit_share(Height::ZERO, empty),
             PartsPerMillion32::ZERO
         );
         assert_eq!(
-            SupplyProfitabilityShares::public_loss_share(Height::ZERO, empty),
+            public_loss_share(Height::ZERO, empty),
             PartsPerMillion32::ZERO
         );
 
         let profit_share =
             SupplyProfitabilityShares::stored_profit_share(Sats::new(25), Sats::new(100));
         assert_eq!(
-            SupplyProfitabilityShares::public_profit_share(Height::ZERO, profit_share),
+            public_profit_share(Height::ZERO, profit_share),
             PartsPerMillion32::from(0.25)
         );
         assert_eq!(
-            SupplyProfitabilityShares::public_loss_share(Height::ZERO, profit_share),
+            public_loss_share(Height::ZERO, profit_share),
             PartsPerMillion32::from(0.75)
         );
     }

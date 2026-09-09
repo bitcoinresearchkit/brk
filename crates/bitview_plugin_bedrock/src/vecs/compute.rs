@@ -4,7 +4,6 @@ use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregate};
 use bitview_compute::AgeBand;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_coinflow::HorizonId;
-use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -154,7 +153,9 @@ impl ComputePlugin for Vecs {
             .chain(coinflow_spending_rate.iter().map(|vec| vec.len()))
             .min()
             .unwrap_or_default();
-        let recompute_from = Self::recompute_day(indexer, mappings)
+        let recompute_from = mappings
+            .height
+            .recompute_day(indexer.safe_lengths().height)
             .map(usize::from)
             .unwrap_or_default();
         let weighted_urpd_is_current =
@@ -392,19 +393,6 @@ impl Vecs {
             .map(|vec| vec.len())
             .min()
             .unwrap_or_default()
-    }
-
-    fn recompute_day(indexer: &Indexer, mappings: &MappingsVecs) -> Option<Day1> {
-        let starting_height = indexer.safe_lengths().height;
-        mappings
-            .height
-            .day1
-            .collect_one(starting_height)
-            .or_else(|| {
-                starting_height
-                    .decremented()
-                    .and_then(|height| mappings.height.day1.collect_one(height))
-            })
     }
 
     fn mode_weights(

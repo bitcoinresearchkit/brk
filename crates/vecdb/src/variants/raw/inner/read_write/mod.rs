@@ -5,7 +5,7 @@ use rawdb::Reader;
 
 use super::{RawStrategy, ReadOnlyRawVec};
 use crate::{
-    AnyStoredVec, AnyVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
+    AnyStoredVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
     RawRangeCursor, ReadWriteBaseVec, Result as CrateResult, VecIndex, VecReader, VecValue,
     Version, vec_region_name_with,
 };
@@ -103,18 +103,8 @@ where
     }
 
     #[inline(always)]
-    pub fn pushed(&self) -> &[T] {
-        self.base.pushed()
-    }
-
-    #[inline(always)]
     pub fn mut_pushed(&mut self) -> &mut Vec<T> {
         self.base.mut_pushed()
-    }
-
-    #[inline]
-    pub fn push(&mut self, value: T) {
-        self.base.mut_pushed().push(value);
     }
 
     #[inline]
@@ -147,27 +137,6 @@ where
     fn unchecked_read_at(&self, index: usize, reader: &Reader) -> T {
         let ptr = reader.prefixed(HEADER_OFFSET).as_ptr();
         unsafe { S::read_from_ptr(ptr, index * Self::SIZE_OF_T) }
-    }
-
-    #[inline]
-    pub fn read_at_once(&self, index: usize) -> CrateResult<T> {
-        let len = self.stored_len();
-        if index >= len {
-            return Err(Error::IndexTooHigh {
-                index,
-                len,
-                name: self.name().to_string(),
-            });
-        }
-
-        Ok(self.base.region().with_read_bytes(|bytes| unsafe {
-            S::read_from_ptr(bytes.as_ptr().add(HEADER_OFFSET), index * Self::SIZE_OF_T)
-        }))
-    }
-
-    #[inline]
-    pub fn read_once(&self, index: I) -> CrateResult<T> {
-        self.read_at_once(index.to_usize())
     }
 
     /// Reads from the persisted or pushed layer.

@@ -6,8 +6,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    CheckedSub, FeeRate, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw,
-    Txid, VSize, Weight, Witness,
+    CheckedSub, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid,
+    VSize, Weight, Witness,
 };
 
 /// Transaction information compatible with mempool.space API format
@@ -93,12 +93,6 @@ impl Transaction {
     #[inline]
     pub fn vsize(&self) -> VSize {
         VSize::from(self.weight)
-    }
-
-    /// Fee rate in sat/vB
-    #[inline]
-    pub fn fee_rate(&self) -> FeeRate {
-        FeeRate::from((self.fee, self.vsize()))
     }
 
     /// Recompute `total_sigop_cost` from current inputs/outputs and

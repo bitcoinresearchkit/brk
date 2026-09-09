@@ -26,12 +26,4 @@ impl BlockStatus {
             next_best,
         }
     }
-
-    pub fn not_in_best_chain() -> Self {
-        Self {
-            in_best_chain: false,
-            height: None,
-            next_best: None,
-        }
-    }
 }

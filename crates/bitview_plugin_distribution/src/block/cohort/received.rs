@@ -1,4 +1,4 @@
-use bitview_cohort::AmountBucket;
+use bitview_cohort::AmountRangeId;
 use brk_types::{Cents, Sats, TypeIndex};
 use rustc_hash::FxHashMap;
 
@@ -53,16 +53,16 @@ pub fn process_received(
                 addr_data.receive_outputs(recv.total_value, price, recv.output_count);
                 cohorts
                     .amount_range
-                    .get_mut_by_bucket(AmountBucket::from(recv.total_value))
+                    .get_mut(recv.total_value)
                     .add(addr_data);
             } else {
                 let prev_balance = addr_data.balance();
                 let new_balance = prev_balance + recv.total_value;
-                let prev_bucket = AmountBucket::from(prev_balance);
-                let new_bucket = AmountBucket::from(new_balance);
+                let prev_bucket = AmountRangeId::from(prev_balance);
+                let new_bucket = AmountRangeId::from(new_balance);
 
-                if let Some((old_bucket, new_bucket)) = prev_bucket.transition_to(new_bucket) {
-                    let cohort_state = cohorts.amount_range.get_mut_by_bucket(old_bucket);
+                if prev_bucket != new_bucket {
+                    let cohort_state = prev_bucket.select_mut(&mut cohorts.amount_range);
 
                     if cohort_state.inner.supply.utxo_count < addr_data.utxo_count() as u64 {
                         panic!(
@@ -81,14 +81,12 @@ pub fn process_received(
 
                     cohort_state.subtract(addr_data);
                     addr_data.receive_outputs(recv.total_value, price, recv.output_count);
-                    cohorts
-                        .amount_range
-                        .get_mut_by_bucket(new_bucket)
+                    new_bucket
+                        .select_mut(&mut cohorts.amount_range)
                         .add(addr_data);
                 } else {
-                    cohorts
-                        .amount_range
-                        .get_mut_by_bucket(new_bucket)
+                    new_bucket
+                        .select_mut(&mut cohorts.amount_range)
                         .receive_outputs(addr_data, recv.total_value, price, recv.output_count);
                 }
             }

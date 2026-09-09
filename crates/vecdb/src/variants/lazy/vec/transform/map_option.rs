@@ -17,11 +17,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Negate;
+    use crate::Halve;
 
     #[test]
     fn maps_present_values_and_preserves_absence() {
-        assert_eq!(MapOption::<Negate>::apply(Some(4i32)), Some(-4));
-        assert_eq!(MapOption::<Negate>::apply(None::<i32>), None);
+        assert_eq!(MapOption::<Halve>::apply(Some(5usize)), Some(2));
+        assert_eq!(MapOption::<Halve>::apply(None::<usize>), None);
     }
 }

@@ -8,7 +8,7 @@ use std::{
 use bitview_cohort::{AgeRangeId, CohortContext, UTXO_ALL_NAME, UTXOAggregateId};
 use bitview_plugin_distribution::AgeRangeUrpds;
 use brk_error::{Error, Result};
-use brk_types::{Cents, Cohort, Date, Day1, Urpd, UrpdAggregation, UrpdRaw, UrpdWeight};
+use brk_types::{Cents, Cohort, Date, Day1, UrpdAggregation, UrpdRaw, UrpdWeight};
 use vecdb::ReadableOptionVec;
 
 use crate::Query;
@@ -100,11 +100,6 @@ impl Query {
         Ok(dir)
     }
 
-    /// Available dates for a cohort.
-    pub fn urpd_dates(&self, cohort: &Cohort) -> Result<Vec<Date>> {
-        self.urpd_dates_with_weight(cohort, UrpdWeight::Raw)
-    }
-
     /// Available dates for a cohort and weighting.
     pub fn urpd_dates_with_weight(&self, cohort: &Cohort, weight: UrpdWeight) -> Result<Vec<Date>> {
         let _guard = self.read_publication()?;
@@ -142,24 +137,6 @@ impl Query {
         let weighted_dir = self.weighted_urpd_dir(weighted_cohort, weight)?;
         visit_intersection(dates_in_dir(&dir)?, dates_in_dir(&weighted_dir)?, visit);
         Ok(())
-    }
-
-    /// Raw URPD data for a cohort on a specific date.
-    pub fn urpd_raw(&self, cohort: &Cohort, date: Date) -> Result<UrpdRaw> {
-        self.urpd_raw_with_weight(cohort, date, UrpdWeight::Raw)
-    }
-
-    /// Raw URPD data with an optional Bedrock weighting.
-    pub fn urpd_raw_with_weight(
-        &self,
-        cohort: &Cohort,
-        date: Date,
-        weight: UrpdWeight,
-    ) -> Result<UrpdRaw> {
-        let _guard = self.read_publication()?;
-        let (input, scalar) = self.urpd_input_inner(cohort, date, weight)?;
-        drop(_guard);
-        Ok(input.decode()?.apply_weight(scalar))
     }
 
     fn urpd_input_inner(
@@ -239,22 +216,6 @@ impl Query {
         UTXOAggregateId::from_cohort_name(cohort)
     }
 
-    /// URPD for a cohort on a specific date.
-    pub fn urpd_at(&self, cohort: &Cohort, date: Date, agg: UrpdAggregation) -> Result<Urpd> {
-        self.urpd_at_with_weight(cohort, date, agg, UrpdWeight::Raw)
-    }
-
-    /// URPD for a cohort on a specific date and weighting.
-    pub fn urpd_at_with_weight(
-        &self,
-        cohort: &Cohort,
-        date: Date,
-        agg: UrpdAggregation,
-        weight: UrpdWeight,
-    ) -> Result<Urpd> {
-        self.resolve_urpd_at(cohort, date, agg, weight)?.build()
-    }
-
     /// Capture one dated snapshot and its pricing inputs under publication protection.
     pub fn resolve_urpd_at(
         &self,
@@ -265,21 +226,6 @@ impl Query {
     ) -> Result<ResolvedUrpd> {
         let _guard = self.read_publication()?;
         self.resolve_urpd_inner(cohort, date, aggregation, weight)
-    }
-
-    /// URPD for the most recently available date in a cohort.
-    pub fn urpd_latest(&self, cohort: &Cohort, agg: UrpdAggregation) -> Result<Urpd> {
-        self.urpd_latest_with_weight(cohort, agg, UrpdWeight::Raw)
-    }
-
-    /// Most recent URPD for a cohort and weighting.
-    pub fn urpd_latest_with_weight(
-        &self,
-        cohort: &Cohort,
-        agg: UrpdAggregation,
-        weight: UrpdWeight,
-    ) -> Result<Urpd> {
-        self.resolve_urpd_latest(cohort, agg, weight)?.build()
     }
 
     /// Capture the latest snapshot and its pricing inputs under publication protection.

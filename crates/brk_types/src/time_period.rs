@@ -32,41 +32,6 @@ pub enum TimePeriod {
     All,
 }
 
-impl TimePeriod {
-    /// Approximate number of blocks for this time period (10 min per block average)
-    pub fn block_count(&self) -> usize {
-        match self {
-            TimePeriod::Day => 144,
-            TimePeriod::ThreeDays => 432,
-            TimePeriod::Week => 1008,
-            TimePeriod::Month => 4320,
-            TimePeriod::ThreeMonths => 12960,
-            TimePeriod::SixMonths => 25920,
-            TimePeriod::Year => 52560,
-            TimePeriod::TwoYears => 105120,
-            TimePeriod::ThreeYears => 157680,
-            TimePeriod::All => usize::MAX,
-        }
-    }
-
-    /// Parse from URL path segment
-    pub fn from_path(s: &str) -> Option<Self> {
-        match s {
-            "24h" => Some(TimePeriod::Day),
-            "3d" => Some(TimePeriod::ThreeDays),
-            "1w" => Some(TimePeriod::Week),
-            "1m" => Some(TimePeriod::Month),
-            "3m" => Some(TimePeriod::ThreeMonths),
-            "6m" => Some(TimePeriod::SixMonths),
-            "1y" => Some(TimePeriod::Year),
-            "2y" => Some(TimePeriod::TwoYears),
-            "3y" => Some(TimePeriod::ThreeYears),
-            "all" => Some(TimePeriod::All),
-            _ => None,
-        }
-    }
-}
-
 impl fmt::Display for TimePeriod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

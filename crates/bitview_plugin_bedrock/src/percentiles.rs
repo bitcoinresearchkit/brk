@@ -72,14 +72,4 @@ impl<T> Percentiles<T> {
         ]
         .into_iter()
     }
-
-    pub fn map<U>(self, mut map: impl FnMut(T) -> U) -> Percentiles<U> {
-        Percentiles {
-            pct95: map(self.pct95),
-            pct98: map(self.pct98),
-            pct99: map(self.pct99),
-            pct99_5: map(self.pct99_5),
-            pct99_9: map(self.pct99_9),
-        }
-    }
 }

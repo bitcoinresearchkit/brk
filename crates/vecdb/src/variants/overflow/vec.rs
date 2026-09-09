@@ -152,17 +152,6 @@ where
         Self::encode_with_overflow(&mut self.overflow, value)
     }
 
-    fn fill_hole_at(&mut self, index: usize, value: T) -> Result<()> {
-        debug_assert!(self.compact.holes().contains(&index));
-        let compact = self.encode(&value);
-        self.compact.update_at(index, compact)?;
-        let stored_len = self.compact.stored_len();
-        if index >= stored_len {
-            self.pushed[index - stored_len] = value;
-        }
-        Ok(())
-    }
-
     fn replace_compact(&mut self, old: T::Compact, value: &T) -> Result<T::Compact> {
         Ok(match (T::overflow_index(old), value.to_compact()) {
             (Some(overflow_index), None) => {
@@ -179,38 +168,6 @@ where
                 T::from_overflow_index(overflow_index)
             }
         })
-    }
-
-    fn update_at_with_reader(
-        &mut self,
-        index: usize,
-        value: T,
-        reader: &OverflowVecReader<I, T>,
-    ) -> Result<()> {
-        if self.compact.holes().contains(&index) {
-            return self.fill_hole_at(index, value);
-        }
-
-        let old = reader
-            .compact(&self.compact, I::from(index))
-            .ok_or_else(|| Error::IndexTooHigh {
-                index,
-                len: self.len(),
-                name: self.name().to_string(),
-            })?;
-        let compact = self.replace_compact(old, &value)?;
-
-        self.compact.update_at(index, compact)?;
-        let stored_len = self.compact.stored_len();
-        if index >= stored_len {
-            self.pushed[index - stored_len] = value;
-        }
-        Ok(())
-    }
-
-    fn update_at(&mut self, index: usize, value: T) -> Result<()> {
-        let reader = self.reader();
-        self.update_at_with_reader(index, value, &reader)
     }
 
     fn delete_with_reader(&mut self, index: I, reader: &OverflowVecReader<I, T>) {
@@ -246,20 +203,11 @@ where
         self.compact.holes()
     }
 
-    pub fn reserve_pushed(&mut self, additional: usize) {
-        self.compact.reserve_pushed(additional);
-        self.pushed.reserve(additional);
-    }
-
     #[inline(always)]
     pub fn push(&mut self, value: T) {
         let compact = self.encode(&value);
         self.compact.push(compact);
         self.pushed.push(value);
-    }
-
-    pub fn update(&mut self, index: I, value: T) -> Result<()> {
-        self.update_at(index.to_usize(), value)
     }
 
     /// Replaces one final value per index, sorting and applying the owned batch.
@@ -302,35 +250,11 @@ where
         self.compact.update_many(compact_updates)
     }
 
-    pub fn delete(&mut self, index: I) {
-        let reader = self.reader();
-        self.delete_with_reader(index, &reader);
-    }
-
     pub fn delete_many(&mut self, indices: impl IntoIterator<Item = I>) {
         let reader = self.reader();
         for index in indices {
             self.delete_with_reader(index, &reader);
         }
-    }
-
-    pub fn get_first_empty_index(&self) -> I {
-        self.compact.get_first_empty_index()
-    }
-
-    pub fn fill_first_hole_or_push(&mut self, value: T) -> Result<I> {
-        if !self.compact.holes().is_empty() {
-            let compact = self.encode(&value);
-            let stored_len = self.compact.stored_len();
-            let index = self.compact.fill_first_hole_or_push(compact)?.to_usize();
-            if index >= stored_len {
-                self.pushed[index - stored_len] = value;
-            }
-            return Ok(I::from(index));
-        }
-        let index = I::from(self.len());
-        self.push(value);
-        Ok(index)
     }
 
     /// Fills the lowest available indexes, then appends, preserving input order.

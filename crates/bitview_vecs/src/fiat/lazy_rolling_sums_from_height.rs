@@ -25,14 +25,12 @@ impl<C: FiatType> LazyRollingSumsFiatFromHeight<C> {
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
         indexes: &IndexSources,
     ) -> Self {
-        let cumulative_cents = cumulative_cents.read_only_boxed_clone();
-
         Self(window_starts.map_with_suffix(|suffix, window_start| {
             let name = format!("{name}_{suffix}");
-            let cents = LazyRollingSumFromHeight::new(
+            let cents = LazyRollingSumFromHeight::from_cumulative(
                 &format!("{name}_cents"),
                 version,
-                cumulative_cents.clone(),
+                cumulative_cents,
                 *window_start,
                 indexes,
             );

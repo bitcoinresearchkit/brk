@@ -108,19 +108,6 @@ impl Mempool {
         Ok(())
     }
 
-    /// Mempool tx spending `(txid, vout)`, or `None`. The spender's
-    /// input list is walked to rule out `TxidPrefix` collisions.
-    pub fn lookup_spender(
-        &self,
-        txid: &Txid,
-        vout: Vout,
-        tip: &BlockHash,
-    ) -> Result<Option<(Txid, Vin)>> {
-        let state = self.read();
-        state.ensure_published_at(tip)?;
-        Ok(Self::lookup_spender_for(&state, txid, vout))
-    }
-
     fn outspend_for(state: &State, txid: &Txid, vout: Vout) -> TxOutspend {
         let Some((spender_txid, vin)) = Self::lookup_spender_for(state, txid, vout) else {
             return TxOutspend::UNSPENT;
@@ -197,17 +184,6 @@ impl Mempool {
         Some((spender.entry.txid, Vin::from(vin_pos)))
     }
 
-    /// Snapshot of all live mempool txids.
-    ///
-    /// Allocates `32 * len(mempool)` bytes under the read guard. Sized for
-    /// diagnostics. Route layers serving large pools should paginate at
-    /// their boundary rather than calling this per request.
-    pub fn txids(&self) -> Result<Vec<Txid>> {
-        let state = self.read();
-        state.ensure_published()?;
-        Ok(state.txs.txids().copied().collect())
-    }
-
     /// Order-sensitive validator for the current txid array.
     pub fn txids_hash(&self) -> Result<u64> {
         let state = self.read();
@@ -228,16 +204,6 @@ impl Mempool {
         let state = self.read();
         state.ensure_published()?;
         Ok(state.txs.recent().to_vec())
-    }
-
-    /// `first_seen` Unix-second timestamps for `txids`, in input order.
-    /// Returns 0 for unknown txids. `Vanished` tombstones fall back to
-    /// the buried entry's `first_seen` to avoid flicker between drop
-    /// and indexer catch-up.
-    pub fn transaction_times(&self, txids: &[Txid]) -> Result<Vec<u64>> {
-        let state = self.read();
-        state.ensure_published()?;
-        Ok(Self::transaction_times_for(&state, txids))
     }
 
     /// Transaction times and an order-sensitive hash of that exact result,

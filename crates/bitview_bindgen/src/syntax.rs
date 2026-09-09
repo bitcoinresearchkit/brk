@@ -124,16 +124,12 @@ pub trait LanguageSyntax {
 #[cfg(test)]
 mod tests {
     use super::LanguageSyntax;
-    use crate::{JavaScriptSyntax, PythonSyntax, RustSyntax};
+    use crate::{JavaScriptSyntax, PythonSyntax};
 
     #[test]
     fn trailing_discriminator_is_a_separate_name_part() {
         let template = "2009_transfer_volume{disc}";
 
-        assert_eq!(
-            RustSyntax.template_expr("acc", template),
-            "_m(&_m(&acc, \"2009_transfer_volume\"), &disc)"
-        );
         assert_eq!(
             PythonSyntax.template_expr("acc", template),
             "_m(_m(acc, '2009_transfer_volume'), disc)"

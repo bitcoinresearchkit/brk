@@ -5,8 +5,6 @@
 
 mod javascript;
 mod python;
-mod rust;
 
 pub use javascript::JavaScriptSyntax;
 pub use python::PythonSyntax;
-pub use rust::RustSyntax;

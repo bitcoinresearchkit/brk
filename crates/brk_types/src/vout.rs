@@ -40,10 +40,6 @@ impl Vout {
     pub fn to_be_bytes(&self) -> [u8; 2] {
         self.0.to_be_bytes()
     }
-
-    pub fn to_ne_bytes(&self) -> [u8; 2] {
-        self.0.to_ne_bytes()
-    }
 }
 
 impl From<u16> for Vout {

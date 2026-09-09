@@ -120,18 +120,6 @@ impl UrpdRaw {
         Self::dir(states_path, name).join(date.to_string())
     }
 
-    pub fn read(states_path: &Path, name: &str, date: Date) -> Result<Self> {
-        let bytes = Self::read_bytes(states_path, name, date)?;
-        Self::deserialize_exact(&bytes)
-    }
-
-    /// Decode exactly one snapshot, rejecting trailing data.
-    pub fn deserialize_exact(bytes: &[u8]) -> Result<Self> {
-        Ok(Self {
-            map: Self::deserialize_entries(bytes)?.into_iter().collect(),
-        })
-    }
-
     /// Read persisted entries and calculate percentiles without building a map.
     pub fn read_cost_basis_percentile_prices(
         states_path: &Path,
@@ -297,11 +285,6 @@ impl UrpdRaw {
             )));
         }
         Ok(decoded.entries)
-    }
-
-    /// Deserialize from the pco-compressed format.
-    pub fn deserialize(data: &[u8]) -> Result<Self> {
-        Self::deserialize_with_rest(data).map(|(s, _)| s)
     }
 
     /// Serialize to the pco-compressed format.

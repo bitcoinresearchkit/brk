@@ -66,33 +66,6 @@ impl Mempool {
         }
     }
 
-    /// Full projected next block: Core's `getblocktemplate` selection
-    /// (block 0) with aggregate stats and full tx bodies in GBT order.
-    pub fn block_template(&self) -> Result<BlockTemplate> {
-        self.block_template_source().build()
-    }
-
-    /// Full template and the exact source identity used to assemble it.
-    pub fn block_template_with_source(&self) -> Result<(BlockTemplate, BlockTemplateSource)> {
-        let source = self.block_template_source();
-        let template = source.clone().build()?;
-        Ok((template, source))
-    }
-
-    /// Delta of the projected next block since `since`. `None` when
-    /// `since` has aged out of the rebuilder's history (server should
-    /// 404 -> client falls back to `block_template`).
-    ///
-    /// `order` walks the new template in template order. Each entry is
-    /// either a `Retained` index into the prior template (which the
-    /// client cached when it obtained `since`) or a `New` inline body.
-    /// `removed` is the convenience list of txids that left.
-    pub fn block_template_diff(&self, since: NextBlockHash) -> Result<Option<BlockTemplateDiff>> {
-        self.resolve_block_template_diff(since)
-            .map(ResolvedBlockTemplateDiff::build)
-            .transpose()
-    }
-
     /// Validate and capture the historical side of one diff request.
     #[must_use]
     pub fn resolve_block_template_diff(
@@ -106,16 +79,6 @@ impl Mempool {
             past,
             source,
         })
-    }
-
-    /// Build a diff from already-resolved history and return its actual source.
-    pub fn block_template_diff_resolved(
-        &self,
-        resolved: ResolvedBlockTemplateDiff,
-    ) -> Result<(BlockTemplateDiff, BlockTemplateSource)> {
-        let source = resolved.source().clone();
-        let diff = resolved.build()?;
-        Ok((diff, source))
     }
 }
 

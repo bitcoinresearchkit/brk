@@ -1,8 +1,8 @@
 use brk_error::{OptionData, Result};
 use brk_types::{
     CPFP_CHAIN_LIMIT, ChunkInput, CpfpCluster, CpfpClusterTx, CpfpClusterTxIndex, CpfpEntry,
-    CpfpInfo, FeeRate, Height, Sats, SigOps, TxInIndex, TxIndex, Txid, VSize, Weight,
-    find_seed_chunk, linearize,
+    CpfpInfo, FeeRate, Height, Sats, SigOps, TxIndex, Txid, VSize, Weight, find_seed_chunk,
+    linearize,
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use smallvec::SmallVec;
@@ -151,7 +151,7 @@ impl Query {
             let mut children = SmallVec::new();
             for output in first..first + count {
                 let input = spent.get(output).data()?;
-                if input == TxInIndex::UNSPENT {
+                if input.is_unspent() {
                     continue;
                 }
                 let child = spending_tx.get(usize::from(input)).data()?;

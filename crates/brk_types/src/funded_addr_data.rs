@@ -147,11 +147,6 @@ impl FundedAddrData {
     }
 
     #[inline]
-    pub fn has_0_sats(&self) -> bool {
-        self.balance() == Sats::ZERO
-    }
-
-    #[inline]
     pub fn utxo_count(&self) -> u32 {
         self.funded_txo_count
             .checked_sub(self.spent_txo_count)
@@ -246,10 +241,6 @@ impl FundedAddrData {
         } else {
             Sats::ZERO
         }
-    }
-
-    pub fn receive(&mut self, amount: Sats, price: Cents) {
-        self.receive_outputs(amount, price, 1);
     }
 
     /// Applies received outputs and returns their exact realized-cap delta.
@@ -481,7 +472,7 @@ mod tests {
     #[test]
     fn funded_addr_data_keeps_realized_cap_logical_in_json() {
         let mut data = FundedAddrData::default();
-        data.receive(Sats::ONE_BTC, Cents::new(10_000));
+        data.receive_outputs(Sats::ONE_BTC, Cents::new(10_000), 1);
 
         let json = to_value(&data).unwrap();
         assert_eq!(json["realized_cap_raw"], 1_000_000_000_000_u64);

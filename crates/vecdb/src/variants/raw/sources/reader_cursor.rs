@@ -63,21 +63,4 @@ where
         self.pos += 1;
         Some(value)
     }
-
-    /// Folds over the next `n` values and advances the position.
-    #[inline]
-    pub fn fold<B>(&mut self, n: usize, mut init: B, mut f: impl FnMut(B, T) -> B) -> B {
-        let end = self.pos.saturating_add(n).min(self.reader.len());
-        while self.pos < end {
-            init = f(init, self.reader.get_at(self.pos));
-            self.pos += 1;
-        }
-        init
-    }
-
-    /// Calls `f` for each of the next `n` values and advances the position.
-    #[inline]
-    pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
-        self.fold(n, (), |(), value| f(value));
-    }
 }

@@ -1,5 +1,5 @@
-use bitview_cohort::{ByType, CohortId, SpendableType, SpendableTypeId};
-use bitview_collections::WindowId;
+use bitview_cohort::{ByType, SpendableType, SpendableTypeId};
+use bitview_collections::Windows;
 use bitview_vecs::{CountTotal, OutputTypeCounts, SpendableTypeCounts, import_stored};
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use tempfile::tempdir;
@@ -13,7 +13,12 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     let db = Database::open(dir.path()).unwrap();
     let indexes = common::indexes(&db);
     let starts = common::stored::<Height, _>(&db, "starts", [Height::ZERO; 3]);
-    let windows = WindowId::series(|_| &starts);
+    let windows = Windows {
+        _24h: &starts,
+        _1w: &starts,
+        _1m: &starts,
+        _1y: &starts,
+    };
     let mut totals = common::stored::<Height, _>(&db, "totals", [1_u64, 4, 8].map(StoredU64::from));
     let cached = CachedVec::wrap(totals.read_only_clone());
     let version = Version::new(11);
@@ -38,13 +43,8 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     })
     .unwrap();
     for count in [0_u16, 1, 1] {
-        let values = ByType::new(|cohort_id| {
-            StoredU16::new(if cohort_id == CohortId::Type(selected) {
-                count
-            } else {
-                0
-            })
-        });
+        let values =
+            ByType::from_fn(|kind| StoredU16::new(if kind == selected { count } else { 0 }));
         for &id in SpendableTypeId::ALL {
             let kind = id.output_type();
             inputs.get_mut(kind).push(*values.spendable.get(kind));
@@ -71,7 +71,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         &indexes,
         &windows,
     );
-    let output = OutputTypeCounts::from_count_sources(
+    let mut output = OutputTypeCounts::from_count_sources(
         CountTotal::from_source("all", version, &cached, &indexes, &windows),
         |name| format!("{name}_outputs"),
         version,
@@ -80,7 +80,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         &windows,
     );
     assert_eq!(input.by_type.iter().count(), 11);
-    assert_eq!(output.by_type.iter().count(), 12);
+    assert_eq!(output.by_type.iter_mut().count(), 12);
     let input_shares = input.lazy_shares(
         version,
         |name| format!("{name}_input_share"),

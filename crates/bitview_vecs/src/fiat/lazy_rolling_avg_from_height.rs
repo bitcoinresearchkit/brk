@@ -15,10 +15,10 @@ impl<C: FiatType> LazyRollingAvgFiatFromHeight<C> {
         window_start: &impl ReadableCloneableVec<Height, Height>,
         indexes: &IndexSources,
     ) -> Self {
-        let cents = LazyRollingAvgFromHeight::new(
+        let cents = LazyRollingAvgFromHeight::from_cumulative(
             &format!("{name}_cents"),
             version,
-            cumulative.read_only_boxed_clone(),
+            cumulative,
             window_start,
             indexes,
         );

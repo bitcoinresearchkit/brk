@@ -3,10 +3,8 @@ use brk_types::RangeMap;
 fn check(map: &mut RangeMap<usize, usize>, starts: &[usize]) {
     for index in (0..40).chain((0..40).rev()) {
         let floor = starts.iter().rposition(|&first| first <= index);
-        let ceil = starts.iter().position(|&first| first >= index);
         assert_eq!(map.get(index), floor);
         assert_eq!(map.get_shared(index), floor);
-        assert_eq!(map.ceil(index), ceil);
     }
     let mut cursor = map.cursor();
     for index in (0..40)

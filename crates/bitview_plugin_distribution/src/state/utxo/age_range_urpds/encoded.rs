@@ -12,12 +12,6 @@ impl EncodedAgeRangeUrpds {
         })
     }
 
-    pub fn decode(&self) -> Result<UrpdRaw> {
-        Ok(UrpdRaw {
-            map: self.decode_entries()?.into_iter().collect(),
-        })
-    }
-
     /// Decode and validate the selected aggregate without building a map.
     pub fn decode_entries(&self) -> Result<Vec<(CentsCompact, Sats)>> {
         // Decode one section at a time, including All, so captured requests do

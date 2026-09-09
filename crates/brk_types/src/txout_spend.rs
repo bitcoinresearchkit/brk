@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Height, TxStatus, Txid, Vin};
+use crate::{TxStatus, Txid, Vin};
 
 /// Status of an output indicating whether it has been spent
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -30,12 +30,4 @@ impl TxOutspend {
         vin: None,
         status: None,
     };
-
-    pub fn is_deeply_spent(&self, current_height: Height) -> bool {
-        self.spent
-            && self
-                .status
-                .as_ref()
-                .is_some_and(|status| status.is_deeply_confirmed(current_height))
-    }
 }

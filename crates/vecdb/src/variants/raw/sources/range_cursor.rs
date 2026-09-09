@@ -109,10 +109,9 @@ where
             let values = remaining.min(available);
             let end = self.window_position + values * Self::SIZE_OF_T;
             while self.window_position < end {
-                value = fold(value, unsafe {
-                    S::read_from_ptr(self.window, self.window_position)
-                });
+                let next = unsafe { S::read_from_ptr(self.window, self.window_position) };
                 self.window_position += Self::SIZE_OF_T;
+                value = fold(value, next);
             }
             remaining -= values;
         }
@@ -122,9 +121,7 @@ where
     /// Calls `f` for up to the next `n` values and advances the position.
     #[inline]
     pub fn for_each(&mut self, n: usize, mut f: impl FnMut(T)) {
-        for _ in 0..n.min(self.remaining()) {
-            f(self.next().unwrap());
-        }
+        self.fold(n, (), |(), value| f(value));
     }
 
     pub fn new(region: &'a Region, stored_len: usize, from: usize, to: usize) -> Self {

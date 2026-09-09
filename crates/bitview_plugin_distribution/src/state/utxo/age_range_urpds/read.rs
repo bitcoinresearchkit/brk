@@ -52,13 +52,6 @@ impl AgeRangeUrpds {
         Ok(data)
     }
 
-    pub fn read_one(states_path: &Path, id: AgeRangeId, date: Date) -> Result<UrpdRaw> {
-        let data = Self::read_one_bytes(states_path, id, date)?;
-        Ok(UrpdRaw {
-            map: UrpdRaw::deserialize_entries(&data)?.into_iter().collect(),
-        })
-    }
-
     /// Read one encoded section without decompressing it or loading other cohorts.
     /// Callers must hold the producer's publication guard during the file read.
     pub fn read_one_bytes(states_path: &Path, id: AgeRangeId, date: Date) -> Result<Vec<u8>> {
@@ -68,10 +61,6 @@ impl AgeRangeUrpds {
         let mut data = vec![0; range.len()];
         file.read_exact_at(&mut data, range.start as u64)?;
         Ok(data)
-    }
-
-    pub fn read_aggregate(states_path: &Path, id: UTXOAggregateId, date: Date) -> Result<UrpdRaw> {
-        Self::read_aggregate_encoded(states_path, id, date)?.decode()
     }
 
     /// Capture encoded aggregate input while holding the producer's publication guard.

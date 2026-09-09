@@ -5,8 +5,7 @@ use bitview_cohort::{
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{
-    HalveCents, HalveDollars, HalveSats, HalveSatsToBitcoin, SatsToCents, StoredU64ToCents,
-    StoredU64ToSats,
+    HalveDollars, HalveSatsToBitcoin, SatsToCents, StoredU64ToCents, StoredU64ToSats,
 };
 use bitview_traversable::Traversable;
 use bitview_vecs::{
@@ -18,8 +17,8 @@ use brk_types::{
     Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, StoredU64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, LazyVec, Rw,
-    StorageMode,
+    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Halve, LazyVec,
+    Rw, StorageMode,
 };
 
 use super::{SupplyBase, SupplyByCohort, SupplySources, SupplyTotal};
@@ -113,9 +112,9 @@ impl SupplyVecs {
         let dominance = bases.map_with_id(|_, _, base| base.dominance.clone());
         let half = in_profit.cohorts.map_with_id(|cohort_id, _| {
             LazyValuePerBlock::from_spot_block_source::<
-                HalveSats,
+                Halve,
                 HalveSatsToBitcoin,
-                HalveCents,
+                Halve,
                 HalveDollars,
             >(
                 &CohortContext::Utxo.metric_name(cohort_id, "supply_half"),

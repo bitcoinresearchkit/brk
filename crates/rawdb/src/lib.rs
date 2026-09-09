@@ -1,7 +1,6 @@
 #![doc = include_str!("../README.md")]
 
 use std::{
-    collections::HashSet,
     fmt,
     fs::{self, File, OpenOptions},
     mem::ManuallyDrop,
@@ -257,35 +256,6 @@ impl Database {
             return Err(Error::RegionNotFound);
         };
         region.remove()
-    }
-
-    /// Removes all regions except those in `ids`.
-    pub fn retain_regions(&self, mut ids: HashSet<String>) -> Result<()> {
-        debug!(
-            "{}: retain_regions called with {} ids to keep",
-            self,
-            ids.len()
-        );
-
-        let regions = self.regions();
-        let regions_to_remove: Vec<_> = regions
-            .id_to_index()
-            .keys()
-            .filter(|id| !ids.remove(&**id))
-            .filter_map(|id| regions.get_from_id(id).cloned())
-            .collect();
-        drop(regions);
-
-        if !ids.is_empty() {
-            debug!(
-                "{}: retain_regions: {} ids in retain set not found in db: {:?}",
-                self,
-                ids.len(),
-                ids
-            );
-        }
-
-        self.remove_regions(regions_to_remove)
     }
 
     /// Removes every region that has not been returned by [`Self::get_region`]

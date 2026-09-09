@@ -340,11 +340,17 @@ mod tests {
             assert_eq!(*id.select(&pnl.short), Cents::from(100_u64));
             assert_eq!(*id.select(&pnl.long), Cents::from(100_u64));
         }
-        for id in ProfitabilityId::ALL {
+        for id in ProfitabilityRangeId::ALL {
             assert_eq!(
-                *id.select(&nupl),
+                *id.select(&nupl.range),
                 PartsPerMillionSigned32::from(if id.is_profit() { 0.5 } else { -0.5 })
             );
+        }
+        for value in nupl.profit.iter() {
+            assert_eq!(*value, PartsPerMillionSigned32::from(0.5));
+        }
+        for value in nupl.loss.iter() {
+            assert_eq!(*value, PartsPerMillionSigned32::from(-0.5));
         }
     }
 }

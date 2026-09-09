@@ -18,7 +18,7 @@ fn malformed_snapshot_returns_errors() {
     ] {
         let mut bytes = valid.clone();
         bytes[offset..offset + 8].copy_from_slice(value.to_le_bytes().as_ref());
-        assert!(UrpdRaw::deserialize_exact(&bytes).is_err());
+        assert!(UrpdRaw::deserialize_entries(&bytes).is_err());
     }
     for prices in [[100, 100], [200, 100]] {
         let bytes = UrpdRaw::serialize_iter(
@@ -27,10 +27,10 @@ fn malformed_snapshot_returns_errors() {
                 .map(|price| (CentsCompact::new(price), Sats::from(1_u64))),
         )
         .unwrap();
-        assert!(UrpdRaw::deserialize_exact(&bytes).is_err());
+        assert!(UrpdRaw::deserialize_entries(&bytes).is_err());
     }
     for end in [0, 23, valid.len() - 1] {
-        assert!(UrpdRaw::deserialize_exact(&valid[..end]).is_err());
+        assert!(UrpdRaw::deserialize_entries(&valid[..end]).is_err());
     }
 }
 
@@ -45,7 +45,7 @@ fn reserved_price_is_rejected_without_constructing_a_nan_price() {
         }
         bytes.extend(keys);
         bytes.extend(values);
-        assert!(UrpdRaw::deserialize_exact(&bytes).is_err());
+        assert!(UrpdRaw::deserialize_entries(&bytes).is_err());
     }
 }
 
@@ -65,30 +65,45 @@ fn file_roundtrip() {
         expected.iter().map(|(&price, &sats)| (price, sats)),
     )
     .unwrap();
-    let actual = UrpdRaw::read(&root, "test", date).unwrap();
-
-    assert_eq!(actual.map, expected);
+    let encoded = UrpdRaw::read_bytes(&root, "test", date).unwrap();
+    let expected_entries = expected
+        .iter()
+        .map(|(&price, &sats)| (price, sats))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        UrpdRaw::deserialize_entries(&encoded).unwrap(),
+        expected_entries
+    );
     assert_eq!(
         UrpdRaw::read_cost_basis_percentile_prices(&root, "test", date).unwrap(),
-        actual.cost_basis_percentile_prices()
+        UrpdRaw { map: expected }.cost_basis_percentile_prices()
     );
 
-    let encoded = UrpdRaw::read_bytes(&root, "test", date).unwrap();
     UrpdRaw::write(
         &root,
         "test",
         date,
-        expected.iter().map(|(&price, _)| (price, Sats::ZERO)),
+        expected_entries
+            .iter()
+            .map(|&(price, _)| (price, Sats::ZERO)),
     )
     .unwrap();
-    assert_eq!(UrpdRaw::deserialize_exact(&encoded).unwrap().map, expected);
-    assert_ne!(UrpdRaw::read(&root, "test", date).unwrap().map, expected);
+    assert_eq!(
+        UrpdRaw::deserialize_entries(&encoded).unwrap(),
+        expected_entries
+    );
+    let rewritten = UrpdRaw::read_bytes(&root, "test", date).unwrap();
+    assert_ne!(
+        UrpdRaw::deserialize_entries(&rewritten).unwrap(),
+        expected_entries
+    );
     let mut trailing = encoded;
     trailing.push(0);
-    assert!(UrpdRaw::deserialize_exact(&trailing).is_err());
+    assert!(UrpdRaw::deserialize_entries(&trailing).is_err());
 
     UrpdRaw::write(&root, "empty", date, iter::empty()).unwrap();
-    assert!(UrpdRaw::read(&root, "empty", date).unwrap().map.is_empty());
+    let empty = UrpdRaw::read_bytes(&root, "empty", date).unwrap();
+    assert!(UrpdRaw::deserialize_entries(&empty).unwrap().is_empty());
 
     let oversized = UrpdRaw::path(&root, "empty", date);
     fs::OpenOptions::new()

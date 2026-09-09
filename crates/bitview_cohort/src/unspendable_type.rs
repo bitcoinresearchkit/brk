@@ -10,12 +10,6 @@ pub struct UnspendableType<T> {
     pub op_return: T,
 }
 
-impl<T> UnspendableType<T> {
-    pub fn as_vec(&self) -> [&T; 1] {
-        [&self.op_return]
-    }
-}
-
 impl<T> Add for UnspendableType<T>
 where
     T: Add<Output = T>,

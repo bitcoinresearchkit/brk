@@ -14,5 +14,4 @@ pub use positions::*;
 use tree::get_shortest_leaf_name;
 pub use tree::{
     PatternBaseResult, detect_index_patterns, get_fields_with_child_info, get_node_fields,
-    get_pattern_instance_base, infer_accumulated_name,
 };

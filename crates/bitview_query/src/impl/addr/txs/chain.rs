@@ -13,12 +13,6 @@ pub struct ResolvedAddrChainTxs {
 }
 
 impl ResolvedAddrChainTxs {
-    /// The newest block represented by this page, when the page is non-empty.
-    #[inline]
-    pub fn block_hash(&self) -> Option<BlockHash> {
-        self.anchor_height.map(|_| self.activity_anchor)
-    }
-
     /// Latest relevant block, or the resolved tip while the page is empty.
     #[inline]
     pub const fn activity_anchor(&self) -> BlockHash {
@@ -27,17 +21,6 @@ impl ResolvedAddrChainTxs {
 }
 
 impl Query {
-    pub fn addr_txs_chain(
-        &self,
-        addr: &Addr,
-        after_txid: Option<Txid>,
-        limit: usize,
-    ) -> Result<Vec<Transaction>> {
-        let guard = self.pin_safe_lengths()?;
-        let txindices = self.addr_txindices(addr, after_txid, limit, &guard)?;
-        self.transactions_at_indices(&txindices, &guard)
-    }
-
     /// Resolve an address page once before body loading.
     pub fn resolve_addr_chain_txs(
         &self,

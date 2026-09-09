@@ -1,6 +1,4 @@
 use bitview_plugin::{ComputePlugin, UpdateContext};
-use bitview_plugin_indexer::Indexer;
-use bitview_plugin_mappings::Vecs as MappingsVecs;
 use brk_error::Result;
 use brk_types::{CapitalSentimentPhase, Cents, Day1, Height, StoredBool, StoredU8, Version};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
@@ -81,7 +79,9 @@ impl ComputePlugin for Vecs {
             .unwrap_or_default();
         let first_heights = first_height.collect();
         let source_end = mappings.day1.date.len().min(first_heights.len());
-        let recompute_from = recompute_day(indexer, mappings)
+        let recompute_from = mappings
+            .height
+            .recompute_day(indexer.safe_lengths().height)
             .map(usize::from)
             .unwrap_or_default();
         let start = self
@@ -289,19 +289,6 @@ fn classify_phase(
         return Phase::HopefulBull;
     }
     Phase::EarlyBear
-}
-
-fn recompute_day(indexer: &Indexer, mappings: &MappingsVecs) -> Option<Day1> {
-    let starting_height = indexer.safe_lengths().height;
-    mappings
-        .height
-        .day1
-        .collect_one(starting_height)
-        .or_else(|| {
-            starting_height
-                .decremented()
-                .and_then(|height| mappings.height.day1.collect_one(height))
-        })
 }
 
 #[cfg(test)]

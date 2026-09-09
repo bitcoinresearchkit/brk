@@ -193,48 +193,10 @@ impl RarityPercentileId {
 
 impl PercentileId {
     pub const ALL: &'static [Self] = &PERCENTILE_IDS;
-
-    #[inline]
-    pub fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    pub fn get<T>(self, values: &[T; PERCENTILES_LEN]) -> &T {
-        &values[self.index()]
-    }
-
-    #[inline]
-    pub fn get_mut<T>(self, values: &mut [T; PERCENTILES_LEN]) -> &mut T {
-        &mut values[self.index()]
-    }
-
-    #[inline]
-    pub fn from_fn<T, F>(f: F) -> [T; PERCENTILES_LEN]
-    where
-        F: FnMut(Self) -> T,
-    {
-        PERCENTILE_IDS.map(f)
-    }
 }
 
 impl RarityPercentileId {
     pub const ALL: &'static [Self] = &RARITY_PERCENTILE_IDS;
-
-    #[inline]
-    pub fn index(self) -> usize {
-        self as usize
-    }
-
-    #[inline]
-    pub fn get<T>(self, values: &[T; RARITY_PERCENTILES_LEN]) -> &T {
-        &values[self.index()]
-    }
-
-    #[inline]
-    pub fn get_mut<T>(self, values: &mut [T; RARITY_PERCENTILES_LEN]) -> &mut T {
-        &mut values[self.index()]
-    }
 
     #[inline]
     pub fn from_fn<T, F>(f: F) -> [T; RARITY_PERCENTILES_LEN]
@@ -331,7 +293,7 @@ mod tests {
     #[test]
     fn percentile_ids_match_values_and_storage_order() {
         for (index, id) in PERCENTILE_IDS.into_iter().enumerate() {
-            assert_eq!(id.index(), index);
+            assert_eq!(id as usize, index);
             assert_eq!(id.percentile(), PERCENTILES[index]);
         }
     }
@@ -340,7 +302,7 @@ mod tests {
     #[test]
     fn rarity_percentile_ids_match_values_and_storage_order() {
         for (index, id) in RARITY_PERCENTILE_IDS.into_iter().enumerate() {
-            assert_eq!(id.index(), index);
+            assert_eq!(id as usize, index);
             assert_eq!(id.percentile(), RARITY_PERCENTILES[index]);
         }
     }

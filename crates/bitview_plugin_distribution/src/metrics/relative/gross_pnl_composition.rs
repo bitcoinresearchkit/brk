@@ -7,7 +7,7 @@ use brk_exit::Exit;
 use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
-use super::{RelativeSource, share_views};
+use super::{RelativeSource, public_loss_share, public_profit_share, share_views};
 
 const VERSION: Version = Version::ONE;
 
@@ -54,14 +54,14 @@ impl GrossPnlComposition {
             &profit_share_source,
             "unrealized_profit_to_own_gross_pnl",
             version,
-            Self::public_profit_share,
+            public_profit_share,
             mappings,
         );
         let unrealized_loss_to_own_gross_pnl = share_views(
             &profit_share_source,
             "unrealized_loss_to_own_gross_pnl",
             version,
-            Self::public_loss_share,
+            public_loss_share,
             mappings,
         );
         let net_unrealized_pnl_to_own_gross_pnl = share_views(
@@ -86,24 +86,6 @@ impl GrossPnlComposition {
             PartsPerMillion32::NAN
         } else {
             PartsPerMillion32::from(f64::from(profit) / f64::from(gross))
-        }
-    }
-
-    #[inline(always)]
-    fn public_profit_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
-        if profit_share.is_nan() {
-            PartsPerMillion32::ZERO
-        } else {
-            profit_share
-        }
-    }
-
-    #[inline(always)]
-    fn public_loss_share(_: Height, profit_share: PartsPerMillion32) -> PartsPerMillion32 {
-        if profit_share.is_nan() {
-            PartsPerMillion32::ZERO
-        } else {
-            PartsPerMillion32::ONE - profit_share
         }
     }
 
@@ -148,18 +130,18 @@ impl GrossPnlComposition {
 mod tests {
     use brk_types::{Dollars, Height, PartsPerMillion32, PartsPerMillionSigned32};
 
-    use super::GrossPnlComposition;
+    use super::{GrossPnlComposition, public_loss_share, public_profit_share};
 
     #[test]
     fn derives_every_public_share_from_profit_composition() {
         let empty = GrossPnlComposition::stored_profit_share(Dollars::ZERO, Dollars::ZERO);
         assert!(empty.is_nan());
         assert_eq!(
-            GrossPnlComposition::public_profit_share(Height::ZERO, empty),
+            public_profit_share(Height::ZERO, empty),
             PartsPerMillion32::ZERO
         );
         assert_eq!(
-            GrossPnlComposition::public_loss_share(Height::ZERO, empty),
+            public_loss_share(Height::ZERO, empty),
             PartsPerMillion32::ZERO
         );
         assert_eq!(
@@ -170,11 +152,11 @@ mod tests {
         let profit_share =
             GrossPnlComposition::stored_profit_share(Dollars::from(25.0), Dollars::from(100.0));
         assert_eq!(
-            GrossPnlComposition::public_profit_share(Height::ZERO, profit_share),
+            public_profit_share(Height::ZERO, profit_share),
             PartsPerMillion32::from(0.25)
         );
         assert_eq!(
-            GrossPnlComposition::public_loss_share(Height::ZERO, profit_share),
+            public_loss_share(Height::ZERO, profit_share),
             PartsPerMillion32::from(0.75)
         );
         assert_eq!(

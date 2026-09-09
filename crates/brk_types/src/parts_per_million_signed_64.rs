@@ -67,7 +67,7 @@ impl PartsPerMillionSigned64 {
 
     #[inline]
     pub fn to_f32(self) -> f32 {
-        if unlikely(self.0 == i64::MIN) {
+        if unlikely(self.is_nan()) {
             f32::NAN
         } else {
             self.0 as f32 / 1_000_000.0
@@ -89,8 +89,7 @@ impl From<usize> for PartsPerMillionSigned64 {
 impl From<i64> for PartsPerMillionSigned64 {
     #[inline]
     fn from(value: i64) -> Self {
-        debug_assert!(value != i64::MIN, "i64::MIN is reserved as NaN sentinel");
-        Self(value)
+        Self::new(value)
     }
 }
 

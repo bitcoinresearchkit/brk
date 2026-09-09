@@ -26,17 +26,14 @@ impl LazyRollingAvgsAmountFromHeight {
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
         indexes: &IndexSources,
     ) -> Self {
-        let cum_sats = cumulative_sats.read_only_boxed_clone();
-        let cum_cents = cumulative_cents.read_only_boxed_clone();
-
         Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
 
             // Sats rolling average, stored as a float.
-            let sats = LazyRollingAvgFromHeight::new(
+            let sats = LazyRollingAvgFromHeight::from_cumulative(
                 &format!("{full_name}_sats"),
                 version,
-                cum_sats.clone(),
+                cumulative_sats,
                 *window_start,
                 indexes,
             );
@@ -49,10 +46,10 @@ impl LazyRollingAvgsAmountFromHeight {
             );
 
             // Cents rolling average, stored as a float.
-            let cents = LazyRollingAvgFromHeight::new(
+            let cents = LazyRollingAvgFromHeight::from_cumulative(
                 &format!("{full_name}_cents"),
                 version,
-                cum_cents.clone(),
+                cumulative_cents,
                 *window_start,
                 indexes,
             );

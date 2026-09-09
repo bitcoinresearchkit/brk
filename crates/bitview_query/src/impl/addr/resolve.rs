@@ -32,12 +32,4 @@ impl Query {
             .filter(|type_index| *type_index < self.safe_lengths().to_type_index(output_type))
             .map(|type_index| (output_type, type_index)))
     }
-    /// Lookup the per-type index of an address by `(output_type, hash)`.
-    /// Returns `UnknownAddr` if the hash is absent from the type's index.
-    pub fn type_index_for(&self, output_type: OutputType, hash: &AddrHash) -> Result<TypeIndex> {
-        self.indexer()
-            .stores()
-            .addr_index(output_type, hash)?
-            .ok_or(Error::UnknownAddr)
-    }
 }

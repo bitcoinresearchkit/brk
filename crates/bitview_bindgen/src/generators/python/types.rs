@@ -322,7 +322,7 @@ pub fn schema_to_python_type(
     "Any".to_string()
 }
 
-/// Convert JS-style type to Python type (e.g., "Txid[]" -> "List[Txid]", "integer" -> "int")
+/// Convert JS-style type to Python type (e.g., `Txid[]` -> `List[Txid]`, `integer` -> `int`).
 pub fn js_type_to_python(js_type: &str) -> String {
     if let Some(inner) = js_type.strip_suffix("[]") {
         format!("List[{}]", js_type_to_python(inner))

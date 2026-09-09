@@ -1,21 +1,11 @@
 use bitview_cohort::UTXOAggregate;
-use bitview_traversable::Traversable;
 use brk_error::Result;
-use brk_types::{Height, Version};
-use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use brk_types::Version;
+use vecdb::{CacheBudget, Database, Rw};
 
-use crate::{FiatType, IndexSources, LazyFiatPerBlock, StoredSeries, import_stored};
+use crate::{AggregatePerBlock, FiatType, IndexSources, LazyFiatPerBlock, import_stored};
 
-#[derive(Deref, DerefMut, Traversable)]
-pub struct AggregateFiatPerBlock<C: FiatType, M: StorageMode = Rw> {
-    #[deref]
-    #[deref_mut]
-    #[traversable(flatten)]
-    pub series: UTXOAggregate<LazyFiatPerBlock<C>>,
-    #[traversable(hidden)]
-    pub stored: UTXOAggregate<StoredSeries<Height, C, M>>,
-}
+pub type AggregateFiatPerBlock<C, M = Rw> = AggregatePerBlock<LazyFiatPerBlock<C>, C, M>;
 
 impl<C: FiatType> AggregateFiatPerBlock<C> {
     pub fn forced_import(
@@ -44,27 +34,8 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
         Ok(Self { series, stored })
     }
 
-    pub fn push(&mut self, values: UTXOAggregate<C>) {
-        for (target, &value) in self.stored.iter_mut().zip(values.iter()) {
-            target.push(value);
-        }
-    }
-
     pub fn push_additive(&mut self, mut values: UTXOAggregate<C>) {
         values.all = values.sth + values.lth;
         self.push(values);
-    }
-
-    pub fn len(&self) -> usize {
-        self.stored.iter().map(AnyVec::len).min().unwrap_or(0)
-    }
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-    pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
-        self.stored
-            .iter_mut()
-            .map(|v| v as &mut dyn AnyStoredVec)
-            .collect()
     }
 }

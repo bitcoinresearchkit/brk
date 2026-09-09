@@ -54,14 +54,6 @@ impl TypeIndex {
         self.increment();
         i
     }
-
-    pub fn to_be_bytes(&self) -> [u8; 4] {
-        self.0.to_be_bytes()
-    }
-
-    pub fn to_ne_bytes(&self) -> [u8; 4] {
-        self.0.to_ne_bytes()
-    }
 }
 
 impl From<u32> for TypeIndex {

@@ -1,7 +1,7 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
-use vecdb::{DeltaOp, LazyDeltaVec, VecValue};
+use vecdb::{DeltaOp, LazyDeltaVec, ReadableCloneableVec, VecValue};
 
 use crate::{IndexSources, Resolutions};
 use bitview_compute::NumericValue;
@@ -36,5 +36,23 @@ where
             height,
             resolutions: Box::new(resolutions),
         }
+    }
+
+    pub fn from_cumulative(
+        name: &str,
+        version: Version,
+        cumulative: &impl ReadableCloneableVec<Height, S>,
+        window_start: &impl ReadableCloneableVec<Height, Height>,
+        indexes: &IndexSources,
+    ) -> Self {
+        let window_start = window_start.read_only_boxed_clone();
+        let height = LazyDeltaVec::new(
+            name,
+            version,
+            cumulative.read_only_boxed_clone(),
+            window_start.version(),
+            move || window_start.snapshot(),
+        );
+        Self::new(name, version, height, indexes)
     }
 }

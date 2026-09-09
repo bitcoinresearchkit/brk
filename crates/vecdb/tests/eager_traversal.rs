@@ -1,15 +1,12 @@
 use std::{
     any,
-    sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
 use brk_exit::Exit;
 use tempfile::tempdir;
 use vecdb::{
-    AnyVec, BytesVec, BytesVecValue, Database, EagerVec, Error, ImportableVec, ReadableVec,
+    AnyVec, BytesVec, BytesVecValue, Database, EagerVec, ImportableVec, ReadableVec,
     Result as VecdbResult, VecValue, Version,
 };
 
@@ -17,7 +14,6 @@ struct CountingSource<T> {
     values: Vec<T>,
     version: Version,
     reads: AtomicUsize,
-    fallible_folds: AtomicUsize,
 }
 
 impl<T> CountingSource<T> {
@@ -26,7 +22,6 @@ impl<T> CountingSource<T> {
             values,
             version: Version::ONE,
             reads: AtomicUsize::new(0),
-            fallible_folds: AtomicUsize::new(0),
         }
     }
 }
@@ -84,7 +79,6 @@ impl<T: VecValue> ReadableVec<usize, T> for CountingSource<T> {
         init: B,
         mut f: F,
     ) -> Result<B, E> {
-        self.fallible_folds.fetch_add(1, Ordering::Relaxed);
         let end = to.min(self.len());
         self.values[from.min(end)..end]
             .iter()
@@ -141,22 +135,9 @@ fn integer_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()> 
     lifecycle(
         values.clone(),
         &[4_u64, 20, 22, 40, 48, 54, 68, 80],
-        |out, from, source, exit| out.compute_cumulative_binary(from, source, source, exit),
-    )?;
-    lifecycle(
-        values.clone(),
-        &[0_usize, 1, 1, 2, 1, 1, 1, 2],
-        |out, from, source, exit| out.compute_rolling_count(from, source, 3, |v| *v > 4, exit),
-    )?;
-    lifecycle(
-        values.clone(),
-        &[2_u64, 8, 8, 9, 9, 9, 7, 7],
-        |out, from, source, exit| out.compute_max(from, source, 3, exit),
-    )?;
-    lifecycle(
-        values.clone(),
-        &[2_u64, 2, 1, 1, 1, 3, 3, 3],
-        |out, from, source, exit| out.compute_min(from, source, 3, exit),
+        |out, from, source, exit| {
+            out.compute_cumulative_transformed_binary(from, source, source, |a, b| a + b, exit)
+        },
     )?;
     for sources in 1..=4 {
         let expected: Vec<_> = values.iter().map(|value| value * sources as u64).collect();
@@ -198,7 +179,7 @@ fn integer_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()> 
 }
 
 #[test]
-fn floating_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()> {
+fn sma_preserves_resume_and_version_reset() -> VecdbResult<()> {
     let values = vec![2_f32, 8., 1., 9., 4., 3., 7., 6.];
     let mut sma = Vec::new();
     let mut previous = 0.0;
@@ -211,32 +192,8 @@ fn floating_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()>
         sma.push(previous);
     }
     lifecycle(values.clone(), &sma, |out, from, source, exit| {
-        out.compute_sma(from, source, 3, exit)
+        out.compute_sma(from, source, 3, exit, None)
     })?;
-    lifecycle(
-        values.clone(),
-        &[2., 5., 2., 8., 4., 4., 4., 6.],
-        |out, from, source, exit| out.compute_rolling_median(from, source, 3, exit),
-    )?;
-    for (rma, k) in [(false, 0.5_f32), (true, 1.0_f32 / 3.0)] {
-        let mut expected = Vec::new();
-        let mut previous = 0.0;
-        for (i, &value) in values.iter().enumerate() {
-            previous = if i >= 3 {
-                value * k + previous * (1.0 - k)
-            } else {
-                (previous * i as f32 + value) / (i + 1) as f32
-            };
-            expected.push(previous);
-        }
-        lifecycle(values.clone(), &expected, |out, from, source, exit| {
-            if rma {
-                out.compute_rma(from, source, 3, exit)
-            } else {
-                out.compute_ema(from, source, 3, exit)
-            }
-        })?;
-    }
     Ok(())
 }
 
@@ -307,89 +264,6 @@ fn transforms_clamp_uneven_and_empty_sources() -> VecdbResult<()> {
         |_| panic!("empty source callback"),
         &exit,
     )?;
-    assert!(out.is_empty());
-    Ok(())
-}
-
-#[derive(Debug, Default)]
-struct TrackedValue {
-    value: i64,
-    clones: Arc<AtomicUsize>,
-}
-
-impl Clone for TrackedValue {
-    fn clone(&self) -> Self {
-        self.clones.fetch_add(1, Ordering::Relaxed);
-        Self {
-            value: self.value,
-            clones: Arc::clone(&self.clones),
-        }
-    }
-}
-
-impl From<TrackedValue> for i64 {
-    fn from(value: TrackedValue) -> Self {
-        value.value
-    }
-}
-
-#[test]
-fn lookback_consumes_owned_previous_values_without_extra_clones() -> VecdbResult<()> {
-    let directory = tempdir()?;
-    let db = Database::open(directory.path())?;
-    let exit = Exit::new();
-    for window in [0, 1, 5, 32] {
-        let clones = Arc::new(AtomicUsize::new(0));
-        let mut source = CountingSource::new(
-            (0..16)
-                .map(|value| TrackedValue {
-                    value,
-                    clones: Arc::clone(&clones),
-                })
-                .collect(),
-        );
-        let name = format!("change_{window}");
-        let expected: Vec<i64> = (0..16)
-            .map(|i| if i < window { 0 } else { window as i64 })
-            .collect();
-        let mut out: EagerVec<BytesVec<usize, i64>> = EagerVec::import(&db, &name, Version::ONE)?;
-        for from in [0, 6, 16] {
-            clones.store(0, Ordering::Relaxed);
-            source.reads.store(0, Ordering::Relaxed);
-            out.compute_change(from, &source, window, &exit)?;
-            assert_eq!(out.collect(), expected);
-            assert_eq!(
-                clones.load(Ordering::Relaxed),
-                source.reads.load(Ordering::Relaxed)
-            );
-        }
-        drop(out);
-        let mut out: EagerVec<BytesVec<usize, i64>> = EagerVec::import(&db, &name, Version::ONE)?;
-        source.version = Version::TWO;
-        clones.store(0, Ordering::Relaxed);
-        source.reads.store(0, Ordering::Relaxed);
-        out.compute_change(16, &source, window, &exit)?;
-        assert_eq!(out.collect(), expected);
-        assert!(source.reads.load(Ordering::Relaxed) > 0);
-        assert_eq!(
-            clones.load(Ordering::Relaxed),
-            source.reads.load(Ordering::Relaxed)
-        );
-    }
-    Ok(())
-}
-
-#[test]
-fn checked_sum_keeps_its_fallible_early_exit() -> VecdbResult<()> {
-    let directory = tempdir()?;
-    let db = Database::open(directory.path())?;
-    let source = CountingSource::new(vec![1_u64, 2, 3]);
-    let mut out: EagerVec<BytesVec<usize, u64>> = EagerVec::import(&db, "sum", Version::ONE)?;
-    assert!(matches!(
-        out.compute_sum(0, &source, 0, &Exit::new()),
-        Err(Error::Underflow)
-    ));
-    assert_eq!(source.fallible_folds.load(Ordering::Relaxed), 1);
     assert!(out.is_empty());
     Ok(())
 }

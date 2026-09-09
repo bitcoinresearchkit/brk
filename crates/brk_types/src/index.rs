@@ -170,13 +170,6 @@ impl Index {
         }
     }
 
-    pub fn all_possible_values() -> Vec<&'static str> {
-        Self::all()
-            .into_iter()
-            .flat_map(|i| i.possible_values().iter().cloned())
-            .collect::<Vec<_>>()
-    }
-
     pub fn name(&self) -> &'static str {
         match self {
             Self::Minute10 => Minute10::index_name(),

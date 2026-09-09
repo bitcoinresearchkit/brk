@@ -35,13 +35,11 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
         indexes: &IndexSources,
     ) -> Self {
-        let cum_source = cumulative.read_only_boxed_clone();
-
         Self(window_starts.map_with_suffix(|suffix, window_start| {
-            LazyRollingAvgFromHeight::new(
+            LazyRollingAvgFromHeight::from_cumulative(
                 &format!("{name}_{suffix}"),
                 version,
-                cum_source.clone(),
+                cumulative,
                 *window_start,
                 indexes,
             )

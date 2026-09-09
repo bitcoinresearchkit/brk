@@ -92,7 +92,7 @@ impl Query {
         let prices = if begin == end {
             Vec::new()
         } else {
-            let Some(prices) = self.price().spot.cents.height.cached_snapshot() else {
+            let Some(prices) = self.plugins().price.spot.cents.height.cached_snapshot() else {
                 return Ok(None);
             };
             prices
@@ -131,7 +131,8 @@ impl Query {
     ) -> Result<ResolvedBlocksV1> {
         let (begin, end, _) = blocks.range();
         let mut prices = Vec::with_capacity(end - begin);
-        self.price()
+        self.plugins()
+            .price
             .spot
             .cents
             .height

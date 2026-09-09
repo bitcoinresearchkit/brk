@@ -1,4 +1,4 @@
-use crate::{AnyStoredVec, Format, ReadOnlyRawVec, VecIndex, VecReader};
+use crate::{Format, ReadOnlyRawVec, VecIndex};
 
 use super::ReadWriteRawVec;
 
@@ -45,49 +45,6 @@ where
 {
     /// The size of T in bytes.
     pub const SIZE_OF_T: usize = size_of::<T>();
-
-    /// Returns a reference to the value directly from the memory-mapped file without copying.
-    /// Very efficient for large types or frequent reads.
-    ///
-    /// Returns `None` if:
-    /// - Index is beyond stored length (might be in pushed layer)
-    #[inline]
-    pub fn read_ref<'a>(
-        &self,
-        index: I,
-        reader: &'a VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<&'a T> {
-        self.read_ref_at(index.to_usize(), reader)
-    }
-
-    /// Returns a reference to the value at the given usize index directly from the memory-mapped file.
-    #[inline]
-    pub fn read_ref_at<'a>(
-        &self,
-        index: usize,
-        reader: &'a VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<&'a T> {
-        let stored_len = reader.len();
-        debug_assert_eq!(stored_len, self.stored_len(), "stale VecReader");
-
-        // Cannot return ref for pushed values (they're in a Vec, not mmap)
-        if index >= stored_len {
-            return None;
-        }
-
-        self.stored_ref_at(index, reader)
-    }
-
-    #[inline]
-    fn stored_ref_at<'a>(
-        &self,
-        index: usize,
-        reader: &'a VecReader<I, T, ZeroCopyStrategy<T>>,
-    ) -> Option<&'a T> {
-        let offset = index * Self::SIZE_OF_T;
-        let bytes = reader.as_bytes().get(offset..)?;
-        T::ref_from_prefix(bytes).map(|(v, _)| v).ok()
-    }
 }
 
 impl_vec_wrapper!(

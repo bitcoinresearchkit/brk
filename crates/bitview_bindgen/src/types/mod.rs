@@ -35,11 +35,6 @@ impl GenericSyntax {
         close: '>',
         default_type: "unknown",
     };
-    pub const RUST: Self = Self {
-        open: '<',
-        close: '>',
-        default_type: "_",
-    };
 
     pub fn wrap(&self, name: &str, type_param: &str) -> String {
         // Convert the type_param from Rust syntax to target syntax
@@ -90,7 +85,6 @@ mod tests {
     fn fixed_rust_arrays_use_target_language_syntax() {
         assert_eq!(GenericSyntax::JAVASCRIPT.convert("[Cents; 19]"), "Cents[]");
         assert_eq!(GenericSyntax::PYTHON.convert("[Cents; 19]"), "List[Cents]");
-        assert_eq!(GenericSyntax::RUST.convert("[Cents; 19]"), "[Cents; 19]");
     }
 
     #[test]

@@ -1,12 +1,10 @@
 #[cfg(feature = "chain")]
-use brk_types::BlockHash;
-#[cfg(feature = "chain")]
-use serde_json::to_vec;
-
 #[cfg(feature = "chain")]
 use super::broadcast;
 #[cfg(feature = "chain")]
 use super::urpd;
+#[cfg(feature = "chain")]
+use brk_types::BlockHash;
 
 #[cfg(feature = "chain")]
 use bitcoin::consensus::encode;
@@ -84,7 +82,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     let timestamp_path = "/api/v1/mining/blocks/timestamp/4294967295";
     state.sync(|q| {
         q.indexer().vecs().blocks.timestamp.invalidate();
-        q.mappings().timestamp.monotonic.invalidate();
+        q.plugins().mappings.timestamp.monotonic.invalidate();
     });
     let timestamp_response = exchange_with_etag(address, "GET", timestamp_path, "\"old\"").await;
     assert!(
@@ -97,8 +95,14 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let timestamp_list = format!("\"ignored,tag\", {timestamp_tag}");
-    let expected =
-        state.sync(|q| SerdeJsonToString(&q.block_by_timestamp(u32::MAX.into()).unwrap()).unwrap());
+    let expected = state.sync(|q| {
+        SerdeJsonToString(
+            &q.resolve_block_by_timestamp(u32::MAX.into())
+                .map(|resolved| resolved.into_value())
+                .unwrap(),
+        )
+        .unwrap()
+    });
     assert_eq!(
         timestamp_response.split_once("\r\n\r\n").unwrap().1,
         expected
@@ -165,7 +169,14 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
                 .cached_snapshot()
                 .is_none()
         );
-        assert!(q.mappings().timestamp.monotonic.cached_snapshot().is_none());
+        assert!(
+            q.plugins()
+                .mappings
+                .timestamp
+                .monotonic
+                .cached_snapshot()
+                .is_none()
+        );
     });
     check_block_height(state, address).await;
     let historical = exchange_with_etag(address, "GET", "/api/v1/blocks/0", "\"old\"").await;
@@ -176,15 +187,12 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let historical_expected = state.sync(|q| {
-        for height in [Some(0u32.into()), Some(1u32.into()), Some(u32::MAX.into())] {
-            let snapshot = q.resolve_blocks_v1(height, 15).unwrap();
-            let rows = snapshot.build(q).unwrap();
-            assert_eq!(
-                to_vec(&rows).unwrap(),
-                to_vec(&q.blocks_v1(height, 15).unwrap()).unwrap()
-            );
-        }
-        SerdeJsonToString(&q.blocks_v1(Some(0u32.into()), 15).unwrap()).unwrap()
+        SerdeJsonToString(
+            &q.resolve_blocks_v1(Some(0u32.into()), 15)
+                .and_then(|resolved| resolved.build(q))
+                .unwrap(),
+        )
+        .unwrap()
     });
     assert_eq!(
         historical.split_once("\r\n\r\n").unwrap().1,
@@ -210,7 +218,10 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let expected_raw = state.sync(|q| {
-        let height = q.height_by_hash(&hash).unwrap();
+        let height = q
+            .resolve_block_snapshot(&hash)
+            .map(|resolved| resolved.last_height().unwrap())
+            .unwrap();
         let blocks = &q.indexer().vecs().blocks;
         q.reader()
             .read_raw_bytes(
@@ -235,7 +246,15 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .find_map(|line| line.strip_prefix("etag: "))
         .unwrap()
         .to_owned();
-    let base_expected = state.sync(|q| SerdeJsonToString(&q.block(&hash).unwrap()).unwrap());
+    let base_expected = state.sync(|q| {
+        SerdeJsonToString(
+            &q.resolve_block_snapshot(&hash)
+                .and_then(|resolved| resolved.build(q))
+                .map(|mut rows| rows.pop().unwrap())
+                .unwrap(),
+        )
+        .unwrap()
+    });
     assert_eq!(base.split_once("\r\n\r\n").unwrap().1, base_expected);
     let header_path = format!("{base_path}/header");
     let header = exchange_with_etag(address, "GET", &header_path, "\"old\"").await;
@@ -258,11 +277,14 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let header_expected = state.sync(|q| {
-        let header = q
-            .read_block_header(q.height_by_hash(&hash).unwrap())
+        let bytes = q
+            .resolve_block_snapshot(&hash)
+            .unwrap()
+            .anchor_header_hex(q)
             .unwrap();
+        let header: bitcoin::block::Header = encode::deserialize_hex(&bytes).unwrap();
         assert_eq!(BlockHash::from(header.block_hash()), hash);
-        encode::serialize_hex(&header)
+        bytes
     });
     assert_eq!(header_expected.len(), 160);
     assert_eq!(header.split_once("\r\n\r\n").unwrap().1, header_expected);
@@ -291,7 +313,14 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .await
         .unwrap_or_else(|_| panic!("V1 response failed"));
     let v1_tag = v1.headers()[ETAG].to_str().unwrap().to_owned();
-    let v1_expected = state.sync(|q| SerdeJsonToString(&q.blocks_v1(None, 15).unwrap()).unwrap());
+    let v1_expected = state.sync(|q| {
+        SerdeJsonToString(
+            &q.resolve_blocks_v1(None, 15)
+                .and_then(|resolved| resolved.build(q))
+                .unwrap(),
+        )
+        .unwrap()
+    });
     assert_eq!(
         to_bytes(v1.into_body(), usize::MAX).await.unwrap().as_ref(),
         v1_expected.as_bytes()
@@ -302,7 +331,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         let body = SerdeJsonToString(&snapshot.build(q).unwrap()).unwrap();
         assert_eq!(
             body,
-            SerdeJsonToString(&q.blocks(None, 10).unwrap()).unwrap()
+            SerdeJsonToString(&q.resolve_blocks(None, 10).unwrap().build(q).unwrap()).unwrap()
         );
         (etag, body)
     });
@@ -461,12 +490,18 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     let invalid =
         exchange_with_etag(address, "GET", &format!("{single_path}?x=1"), &single_tag).await;
     assert!(invalid.starts_with("HTTP/1.1 400"), "{invalid}");
-    state.sync(|q| q.price().spot.cents.height.invalidate());
+    state.sync(|q| q.plugins().price.spot.cents.height.invalidate());
     let cold = exchange_with_etag(address, "GET", "/api/v1/blocks", &v1_tag).await;
     assert!(cold.starts_with("HTTP/1.1 304"), "{cold}");
     state.sync(|q| {
         assert!(
-            q.price().spot.cents.height.cached_snapshot().is_none(),
+            q.plugins()
+                .price
+                .spot
+                .cents
+                .height
+                .cached_snapshot()
+                .is_none(),
             "cold V1 validation must not materialize prices"
         )
     });
@@ -545,7 +580,13 @@ async fn check_height_block_lists(state: &AppState, address: SocketAddr) {
             let expected = SerdeJsonToString(&snapshot.build(q).unwrap()).unwrap();
             assert_eq!(
                 expected,
-                SerdeJsonToString(&q.blocks(Some(height.into()), 10).unwrap()).unwrap()
+                SerdeJsonToString(
+                    &q.resolve_blocks(Some(height.into()), 10)
+                        .unwrap()
+                        .build(q)
+                        .unwrap()
+                )
+                .unwrap()
             );
             (expected, anchor)
         });
@@ -787,7 +828,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
         let states_path = plugins.distribution().states_path.clone();
         let query = AsyncQuery::build(&plugins, None);
         query.sync(|q| {
-            let prices = &q.price().spot.cents.height;
+            let prices = &q.plugins().price.spot.cents.height;
             prices.invalidate();
             let snapshot = q.try_resolve_blocks_v1(None, 15).unwrap().unwrap();
             assert!(snapshot.anchor().is_none());
@@ -971,7 +1012,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     fs::write(AgeRangeUrpds::dir(&states_path).join("2026-09-01"), b"").await.unwrap();
                     for weight in UrpdWeight::WEIGHTED {
                         let weighted_dir = query.sync(|query| {
-                            query.bedrock().urpd_dir(weight, &Cohort::new("all").unwrap())
+                            query.plugins().bedrock.urpd_dir(weight, &Cohort::new("all").unwrap())
                         });
                         urpd::check_weighted_errors(address, &weighted_dir, weight).await;
                     }

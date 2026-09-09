@@ -103,21 +103,6 @@ impl TreeNode {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        if let Self::Branch(tree) = self {
-            tree.is_empty()
-        } else {
-            false
-        }
-    }
-
-    pub fn as_mut_branch(&mut self) -> &mut IndexMap<String, TreeNode> {
-        match self {
-            Self::Branch(b) => b,
-            _ => panic!(),
-        }
-    }
-
     /// Wraps a node in a Branch with the given key.
     /// Used by #[traversable(wrap = "...")] to produce Branch { key: inner }.
     pub fn wrap(key: &str, inner: Self) -> Self {

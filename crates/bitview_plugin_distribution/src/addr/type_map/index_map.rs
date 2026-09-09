@@ -35,9 +35,4 @@ impl<T> AddrTypeToTypeIndexMap<T> {
     pub fn into_iter(self) -> impl Iterator<Item = (OutputType, FxHashMap<TypeIndex, T>)> {
         self.0.into_iter()
     }
-
-    /// Consume and return the inner ByAddrType.
-    pub fn into_inner(self) -> ByAddrType<FxHashMap<TypeIndex, T>> {
-        self.0
-    }
 }

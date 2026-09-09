@@ -112,7 +112,10 @@ fn check_format_shapes(state: &AppState) {
                             expected_metadata
                         );
                     }
-                    let [single, bulk, raw] = outputs.map(|output| output.output.to_string());
+                    let [single, bulk, raw] = outputs.map(|output| match output.output {
+                        bitview_query::Output::CSV(text) => text,
+                        bitview_query::Output::Json(bytes) => String::from_utf8(bytes).unwrap(),
+                    });
                     if format == "csv" {
                         assert_eq!(single, bulk);
                         assert_eq!(single, raw);

@@ -1,33 +1,9 @@
 use brk_error::Result;
-use brk_types::{Addr, Height, Lengths, OutputType, Txid, TypeIndex};
+use brk_types::{Height, Lengths, OutputType, Txid, TypeIndex};
 
 use crate::Query;
 
 impl Query {
-    /// Height of the last on-chain activity for an address (last tx_index to height).
-    /// With `before_txid`, returns the newest activity strictly older than that
-    /// cursor. Used by paginated chain etags so a new tx above the cursor
-    /// doesn't invalidate deeper pages.
-    pub fn addr_last_activity_height(
-        &self,
-        addr: &Addr,
-        before_txid: Option<&Txid>,
-    ) -> Result<Height> {
-        let pin = self.pin_safe_lengths()?;
-        let (output_type, type_index) = self.resolve_addr(addr)?;
-        self.addr_last_activity_height_bounded(output_type, type_index, before_txid, pin.lengths())
-    }
-
-    pub fn addr_last_activity_height_for(
-        &self,
-        output_type: OutputType,
-        type_index: TypeIndex,
-        before_txid: Option<&Txid>,
-    ) -> Result<Height> {
-        let pin = self.pin_safe_lengths()?;
-        self.addr_last_activity_height_bounded(output_type, type_index, before_txid, pin.lengths())
-    }
-
     pub(crate) fn addr_last_activity_height_bounded(
         &self,
         output_type: OutputType,

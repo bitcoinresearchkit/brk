@@ -3,7 +3,7 @@ use brk_types::{
     Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     Month3, Month6, StoredU64, Timestamp, Version, Week1, Year1, Year10,
 };
-use vecdb::{LazyVec, ReadableBoxedVec, VecValue};
+use vecdb::{LazyVec, ReadableBoxedVec, ReadableVec, VecValue};
 
 use bitview_vecs::LazyPreviousDeltaVec;
 
@@ -112,6 +112,16 @@ impl Vecs {
             }),
             tx_index_count: LazyPreviousDeltaVec::new("tx_index_count", version, transaction_count),
         }
+    }
+
+    /// First day affected by a height recomputation, falling back to the last
+    /// indexed block when the starting height is just beyond the current tip.
+    pub fn recompute_day(&self, starting_height: Height) -> Option<Day1> {
+        self.day1.collect_one(starting_height).or_else(|| {
+            starting_height
+                .decremented()
+                .and_then(|height| self.day1.collect_one(height))
+        })
     }
 
     fn from_timestamps<T: VecValue>(

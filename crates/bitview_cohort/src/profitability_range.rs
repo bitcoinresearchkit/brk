@@ -339,29 +339,3 @@ impl ProfitabilityRangeId {
 
 /// Number of profitability range buckets.
 pub const PROFITABILITY_RANGE_COUNT: usize = 25;
-
-impl<T> ProfitabilityRange<T> {
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(&'static str) -> T,
-    {
-        Self::from_fn(|id| create(id.select(&PROFITABILITY_RANGE_NAMES).id))
-    }
-
-    pub fn try_new<F, E>(mut create: F) -> Result<Self, E>
-    where
-        F: FnMut(&'static str) -> Result<T, E>,
-    {
-        Self::try_from_fn(|id| create(id.select(&PROFITABILITY_RANGE_NAMES).id))
-    }
-
-    /// Iterate mutably, yielding `(is_profit, &mut T)` for each range.
-    pub fn iter_mut_with_is_profit(
-        &mut self,
-    ) -> impl DoubleEndedIterator<Item = (bool, &mut T)> + ExactSizeIterator {
-        ProfitabilityRangeId::ALL
-            .iter()
-            .zip(self.iter_mut())
-            .map(|(id, value)| (id.is_profit(), value))
-    }
-}

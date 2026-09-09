@@ -6,8 +6,6 @@ pub mod block;
 pub mod cpfp;
 pub mod indexed_transaction;
 pub mod indexer;
-#[cfg(feature = "mappings")]
-pub mod mappings;
 #[cfg(feature = "chain")]
 pub mod mempool;
 #[cfg(feature = "chain")]

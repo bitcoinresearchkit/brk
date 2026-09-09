@@ -28,12 +28,6 @@ impl Query {
         }
     }
 
-    /// Hash to height, requiring an exact best-chain match at the safe bound.
-    pub fn height_by_hash(&self, hash: &BlockHash) -> Result<Height> {
-        let guard = self.pin_safe_lengths()?;
-        self.height_by_hash_at(hash, &guard)
-    }
-
     pub(super) fn height_by_hash_at(
         &self,
         hash: &BlockHash,

@@ -464,12 +464,12 @@ mod tests {
         ];
         let values = RarityMeterInner::combine_percentiles(&components, &[], 0);
 
-        assert_eq!(*Pct0_1.get(&values), Cents::from(15_u64));
-        assert_eq!(*Pct5.get(&values), Cents::from(55_u64));
-        assert_eq!(*Pct95.get(&values), Cents::from(450_u64));
-        assert_eq!(*Pct99_9.get(&values), Cents::from(850_u64));
+        assert_eq!(values[Pct0_1 as usize], Cents::from(15_u64));
+        assert_eq!(values[Pct5 as usize], Cents::from(55_u64));
+        assert_eq!(values[Pct95 as usize], Cents::from(450_u64));
+        assert_eq!(values[Pct99_9 as usize], Cents::from(850_u64));
         assert_eq!(
-            *Pct50.get(&values),
+            values[Pct50 as usize],
             RarityMeterInner::interpolate(Cents::from(55_u64), Cents::from(450_u64), 0.5)
         );
     }
@@ -488,12 +488,12 @@ mod tests {
         ]];
         let values = RarityMeterInner::combine_percentiles(&components, &lower_components, 0);
 
-        assert_eq!(*Pct0_1.get(&values), Cents::from(15_u64));
-        assert_eq!(*Pct0_5.get(&values), Cents::from(20_u64));
-        assert_eq!(*Pct1.get(&values), Cents::from(30_u64));
-        assert_eq!(*Pct2.get(&values), Cents::from(45_u64));
-        assert_eq!(*Pct5.get(&values), Cents::from(55_u64));
-        assert_eq!(*Pct95.get(&values), Cents::from(500_u64));
+        assert_eq!(values[Pct0_1 as usize], Cents::from(15_u64));
+        assert_eq!(values[Pct0_5 as usize], Cents::from(20_u64));
+        assert_eq!(values[Pct1 as usize], Cents::from(30_u64));
+        assert_eq!(values[Pct2 as usize], Cents::from(45_u64));
+        assert_eq!(values[Pct5 as usize], Cents::from(55_u64));
+        assert_eq!(values[Pct95 as usize], Cents::from(500_u64));
         assert_eq!(
             RarityMeterInner::lower_score_at(Cents::from(35_u64), &lower_components[0], 0),
             -2

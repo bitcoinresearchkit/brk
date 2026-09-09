@@ -121,7 +121,7 @@ fn benchmark_native_oracle_window() {
             });
             let reader = Reader::new_without_rlimit(blocks_path, &client);
             let mut indexer = Indexer::import(ImportContext::new(directory.path(), &CACHE_BUDGET), &reader).unwrap();
-            indexer.index(&Exit::default()).unwrap();
+            indexer.checked_index(&Exit::default()).unwrap();
             indexer.finish_update().unwrap();
             let safe = indexer.safe_lengths();
             assert_eq!(usize::from(safe.height), 41);

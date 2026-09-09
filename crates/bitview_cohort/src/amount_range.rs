@@ -6,7 +6,7 @@ use brk_types::Sats;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{AmountBucket, CohortId, CohortName};
+use super::{CohortId, CohortName};
 
 /// Amount range bounds
 pub const AMOUNT_RANGE_BOUNDS: AmountRange<Range<Sats>> = AmountRange {
@@ -105,12 +105,6 @@ define_cohort_id!(
     }
 );
 
-impl AmountRange<CohortName> {
-    pub const fn names() -> &'static Self {
-        &AMOUNT_RANGE_NAMES
-    }
-}
-
 impl<T> AmountRange<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|id| create(id.cohort()))
@@ -121,52 +115,8 @@ impl<T> AmountRange<T> {
     }
 
     #[inline(always)]
-    pub fn get(&self, value: Sats) -> &T {
-        match AmountBucket::from(value).index() {
-            0 => &self._0sats,
-            1 => &self._1sat_to_10sats,
-            2 => &self._10sats_to_100sats,
-            3 => &self._100sats_to_1k_sats,
-            4 => &self._1k_sats_to_10k_sats,
-            5 => &self._10k_sats_to_100k_sats,
-            6 => &self._100k_sats_to_1m_sats,
-            7 => &self._1m_sats_to_10m_sats,
-            8 => &self._10m_sats_to_1btc,
-            9 => &self._1btc_to_10btc,
-            10 => &self._10btc_to_100btc,
-            11 => &self._100btc_to_1k_btc,
-            12 => &self._1k_btc_to_10k_btc,
-            13 => &self._10k_btc_to_100k_btc,
-            _ => &self.over_100k_btc,
-        }
-    }
-
-    #[inline(always)]
     pub fn get_mut(&mut self, value: Sats) -> &mut T {
-        self.get_mut_by_bucket(AmountBucket::from(value))
-    }
-
-    /// Get mutable reference by pre-computed bucket index.
-    /// Use with `AmountBucket::transition_to` to avoid recomputing bucket.
-    #[inline(always)]
-    pub fn get_mut_by_bucket(&mut self, bucket: AmountBucket) -> &mut T {
-        match bucket.index() {
-            0 => &mut self._0sats,
-            1 => &mut self._1sat_to_10sats,
-            2 => &mut self._10sats_to_100sats,
-            3 => &mut self._100sats_to_1k_sats,
-            4 => &mut self._1k_sats_to_10k_sats,
-            5 => &mut self._10k_sats_to_100k_sats,
-            6 => &mut self._100k_sats_to_1m_sats,
-            7 => &mut self._1m_sats_to_10m_sats,
-            8 => &mut self._10m_sats_to_1btc,
-            9 => &mut self._1btc_to_10btc,
-            10 => &mut self._10btc_to_100btc,
-            11 => &mut self._100btc_to_1k_btc,
-            12 => &mut self._1k_btc_to_10k_btc,
-            13 => &mut self._10k_btc_to_100k_btc,
-            _ => &mut self.over_100k_btc,
-        }
+        AmountRangeId::from(value).select_mut(self)
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (Sats, &T)> {
@@ -233,5 +183,36 @@ impl AmountRangeId {
 
     pub fn name(self) -> &'static CohortName {
         self.select(&AMOUNT_RANGE_NAMES)
+    }
+}
+
+impl From<Sats> for AmountRangeId {
+    #[inline(always)]
+    fn from(value: Sats) -> Self {
+        let value = u64::from(value);
+        let index = if value == 0 {
+            0
+        } else {
+            (value.ilog10() as usize + 1).min(Self::ALL.len() - 1)
+        };
+        Self::ALL[index]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn amount_classification_matches_bounds_and_selection() {
+        let mut ranges = AmountRange::from_fn(|id| id);
+        for &id in AmountRangeId::ALL {
+            let bounds = id.select(&AMOUNT_RANGE_BOUNDS);
+            for value in [bounds.start, bounds.end - Sats::_1] {
+                assert_eq!(AmountRangeId::from(value), id);
+                assert_eq!(*ranges.get_mut(value), id);
+            }
+        }
+        assert_eq!(AmountRangeId::from(Sats::MAX), AmountRangeId::Over100kBtc);
     }
 }

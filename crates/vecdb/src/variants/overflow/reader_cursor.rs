@@ -47,23 +47,6 @@ where
         self.position += 1;
         Some(value)
     }
-
-    /// Folds over the next `count` values and advances the cursor.
-    #[inline]
-    pub fn fold<B>(&mut self, count: usize, mut value: B, mut fold: impl FnMut(B, T) -> B) -> B {
-        let end = self.position.saturating_add(count).min(self.reader.len());
-        while self.position < end {
-            value = fold(value, self.reader.get_at(self.position));
-            self.position += 1;
-        }
-        value
-    }
-
-    /// Calls `f` for each of the next `count` values and advances the cursor.
-    #[inline]
-    pub fn for_each(&mut self, count: usize, mut f: impl FnMut(T)) {
-        self.fold(count, (), |(), value| f(value));
-    }
 }
 
 impl<I, T> OverflowVecReader<I, T>

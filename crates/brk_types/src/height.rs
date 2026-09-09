@@ -63,16 +63,8 @@ impl Height {
         fs::write(path, self.to_bytes())
     }
 
-    pub fn increment(&mut self) {
-        self.0 += 1;
-    }
-
     pub fn incremented(self) -> Self {
         Self(self.0 + 1)
-    }
-
-    pub fn decrement(&mut self) {
-        *self = self.decremented().unwrap();
     }
 
     pub fn decremented(self) -> Option<Self> {
@@ -81,14 +73,6 @@ impl Height {
 
     pub fn is_zero(self) -> bool {
         self == Self::ZERO
-    }
-
-    pub fn is_not_zero(self) -> bool {
-        self != Self::ZERO
-    }
-
-    pub fn is_deeply_confirmed(self, current_height: Self) -> bool {
-        (*current_height).saturating_sub(*self) > 6
     }
 
     pub fn left_before_next_diff_adj(self) -> u32 {

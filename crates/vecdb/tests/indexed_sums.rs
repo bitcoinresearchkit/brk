@@ -43,69 +43,26 @@ fn check_indexed_sums<V: StoredVec<I = usize, T = u64>>() {
     source.write().unwrap();
     let exit = Exit::new();
 
-    for filtered in [false, true] {
-        let name = if filtered { "filtered" } else { "all" };
-        let expected: Vec<_> = groups
-            .iter()
-            .map(|group| {
-                group
-                    .iter()
-                    .copied()
-                    .filter(|value| !filtered || value % 2 == 0)
-                    .fold(0u64, u64::saturating_add)
-            })
-            .collect();
-        let mut output: EagerVec<V> = EagerVec::forced_import(&db, name, Version::ONE).unwrap();
-        for phase in 0..5 {
-            if phase == 2 {
-                drop(output);
-                output = EagerVec::forced_import(&db, name, Version::ONE).unwrap();
-            }
-            if phase == 4 {
-                output
-                    .validate_computed_version_or_reset(Version::ZERO)
-                    .unwrap();
-            }
-            let from = if phase == 3 { 7 } else { groups.len() };
-            if filtered {
-                let mut visited = Vec::new();
-                output
-                    .compute_filtered_sum_from_indexes(
-                        from,
-                        &first,
-                        &counts,
-                        &source,
-                        |value| {
-                            visited.push(*value);
-                            value % 2 == 0
-                        },
-                        &exit,
-                    )
-                    .unwrap();
-                let source_from = match phase {
-                    1 | 2 => groups.len(),
-                    3 => 7,
-                    _ => 0,
-                };
-                assert_eq!(
-                    visited,
-                    groups[source_from..]
-                        .iter()
-                        .flatten()
-                        .copied()
-                        .collect::<Vec<_>>()
-                );
-            } else {
-                output
-                    .compute_sum_from_indexes(from, &first, &counts, &source, &exit)
-                    .unwrap();
-            }
-            assert_eq!(
-                output.collect(),
-                expected,
-                "filtered={filtered} phase={phase}"
-            );
+    let expected: Vec<_> = groups
+        .iter()
+        .map(|group| group.iter().copied().fold(0u64, u64::saturating_add))
+        .collect();
+    let mut output: EagerVec<V> = EagerVec::forced_import(&db, "all", Version::ONE).unwrap();
+    for phase in 0..5 {
+        if phase == 2 {
+            drop(output);
+            output = EagerVec::forced_import(&db, "all", Version::ONE).unwrap();
         }
+        if phase == 4 {
+            output
+                .validate_computed_version_or_reset(Version::ZERO)
+                .unwrap();
+        }
+        let from = if phase == 3 { 7 } else { groups.len() };
+        output
+            .compute_sum_from_indexes(from, &first, &counts, &source, &exit)
+            .unwrap();
+        assert_eq!(output.collect(), expected, "phase={phase}");
     }
 
     let empty_first: BytesVec<usize, usize> =
@@ -162,7 +119,13 @@ fn check_cumulative<V: StoredVec<I = usize, T = u64>>() {
             let from = if phase == 3 { 11 } else { 32 };
             match mode {
                 0 => output.compute_cumulative(from, &source1, &exit),
-                1 => output.compute_cumulative_binary(from, &source1, &source2, &exit),
+                1 => output.compute_cumulative_transformed_binary(
+                    from,
+                    &source1,
+                    &source2,
+                    |a, b| a + b,
+                    &exit,
+                ),
                 _ => output.compute_cumulative_transformed_binary(
                     from,
                     &source1,

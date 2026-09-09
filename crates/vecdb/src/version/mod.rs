@@ -49,8 +49,4 @@ impl Version {
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.to_bytes().as_ref())
     }
-
-    pub fn swap_bytes(self) -> Self {
-        Self(self.0.swap_bytes())
-    }
 }

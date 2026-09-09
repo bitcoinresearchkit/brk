@@ -1,5 +1,4 @@
 use bitview_vecs::PerBlockDistribution;
-use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, StoredU64, TxIndex, VSize, Version, get_percentile};
 use common::{indexes, stored};
@@ -176,17 +175,22 @@ fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
     )
     .unwrap();
     let mut value = 0u64;
-    source
-        .0
-        .try_for_each_mut(|windows| -> Result<()> {
-            for window in windows.0.as_mut_array() {
-                value += 1;
-                window.height.push(StoredU64::from(value));
-                window.height.write()?;
-            }
-            Ok(())
-        })
-        .unwrap();
+    let stats = &mut source.0;
+    for windows in [
+        &mut stats.min,
+        &mut stats.max,
+        &mut stats.pct10,
+        &mut stats.pct25,
+        &mut stats.median,
+        &mut stats.pct75,
+        &mut stats.pct90,
+    ] {
+        for window in windows.0.as_mut_array() {
+            value += 1;
+            window.height.push(StoredU64::from(value));
+            window.height.write().unwrap();
+        }
+    }
     let lazy = LazyRollingDistribution::<StoredU64, StoredU64>::from_rolling_distribution::<Ident>(
         "converted",
         Version::ONE,

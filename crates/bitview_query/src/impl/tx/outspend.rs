@@ -95,7 +95,7 @@ impl Query {
                 .try_get(first_txout + Vout::from(index))
                 .data()?;
 
-            if txin_index == TxInIndex::UNSPENT || txin_index >= bound.txin_index {
+            if txin_index.is_unspent() || txin_index >= bound.txin_index {
                 continue;
             }
             ordered &= requested

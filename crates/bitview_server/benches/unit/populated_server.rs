@@ -148,7 +148,11 @@ fn benchmark_csv(state: &AppState) {
             for limit in [0, 1] {
                 let mut times = [Vec::new(), Vec::new()];
                 let selection = from_value(json!({"series": names, "index": "height", "limit": limit, "format": "csv"})).unwrap();
-                let expected = query.format_bulk(query.resolve(selection, usize::MAX).unwrap()).unwrap().output.to_string();
+                let resolved = query.resolve(selection, usize::MAX).unwrap();
+                let bitview_query::Output::CSV(expected) = query.format_bulk(resolved).unwrap().output
+                else {
+                    panic!("expected CSV");
+                };
                 for round in 0..24 {
                     for variant in [round % 2, 1 - round % 2] {
                         let started = Instant::now();
@@ -205,9 +209,14 @@ fn benchmark_timestamp_response() {
     run_fixture(move |state, _| async move {
         let timestamp = Timestamp::from(u32::MAX);
         let expected = state.sync(|q| {
-            q.mappings().timestamp.monotonic.snapshot();
+            q.plugins().mappings.timestamp.monotonic.snapshot();
             q.indexer().vecs().blocks.timestamp.snapshot();
-            to_vec(&q.block_by_timestamp(timestamp).unwrap()).unwrap()
+            to_vec(
+                &q.resolve_block_by_timestamp(timestamp)
+                    .map(|resolved| resolved.into_value())
+                    .unwrap(),
+            )
+            .unwrap()
         });
         let response = state
             .respond_block_timestamp(HeaderMap::new(), timestamp)
@@ -231,7 +240,10 @@ fn benchmark_timestamp_response() {
                     if variant < 2 {
                         state.sync(|q| {
                             let hash = if variant == 0 {
-                                q.block_by_timestamp(timestamp).unwrap().hash
+                                q.resolve_block_by_timestamp(timestamp)
+                                    .map(|resolved| resolved.into_value())
+                                    .unwrap()
+                                    .hash
                             } else {
                                 q.resolve_block_by_timestamp(timestamp).unwrap().hash()
                             };
@@ -314,6 +326,9 @@ async fn benchmark_health(state: &AppState) {
 }
 
 #[cfg(feature = "series")]
+// Compare the generic Value/serialization response against the byte response.
+// The latest-value generic case explicitly round-trips the canonical JSON;
+// it is an adapter-cost comparison, not a retained legacy query implementation.
 async fn benchmark_scalar(state: &AppState, length: bool) {
     let response = if length {
         state
@@ -324,7 +339,9 @@ async fn benchmark_scalar(state: &AppState, length: bool) {
     } else {
         state
             .respond_json_content(&HeaderMap::new(), |q| {
-                q.latest(&"timestamp".into(), Index::Height)
+                Ok::<serde_json::Value, brk_error::Error>(serde_json::from_slice(
+                    &q.latest_json(&"timestamp".into(), Index::Height)?,
+                )?)
             })
             .await
     };
@@ -359,7 +376,11 @@ async fn benchmark_scalar(state: &AppState, length: bool) {
                         } else {
                             state
                                 .respond_json_content(&headers, move |q| {
-                                    q.latest(&series, Index::Height)
+                                    Ok::<serde_json::Value, brk_error::Error>(
+                                        serde_json::from_slice(
+                                            &q.latest_json(&series, Index::Height)?,
+                                        )?,
+                                    )
                                 })
                                 .await
                         }
@@ -437,7 +458,7 @@ async fn benchmark_scalar(state: &AppState, length: bool) {
             samples.sort_unstable();
         }
         eprintln!(
-            "length={length} conditional={conditional}: unbounded {:?}, admitted {:?}",
+            "length={length} conditional={conditional}: generic value response {:?}, byte response {:?}",
             times[0][10], times[1][10]
         );
         if length {

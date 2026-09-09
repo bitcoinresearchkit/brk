@@ -129,11 +129,6 @@ impl Sats {
         self.0 as u128
     }
 
-    #[inline(always)]
-    pub const fn as_i128(self) -> i128 {
-        self.0 as i128
-    }
-
     pub fn is_max(&self) -> bool {
         *self == Self::MAX
     }

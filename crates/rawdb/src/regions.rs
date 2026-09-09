@@ -71,6 +71,7 @@ impl Regions {
     }
 
     #[inline]
+    #[doc(hidden)]
     pub fn id_to_index(&self) -> &HashMap<String, usize> {
         &self.id_to_index
     }
@@ -191,23 +192,6 @@ impl Regions {
             .write_if_dirty(index, self);
 
         Ok(region)
-    }
-
-    pub fn rename(&mut self, old_id: &str, new_id: &str) -> Result<()> {
-        let index = self
-            .id_to_index
-            .get(old_id)
-            .copied()
-            .ok_or(Error::RegionNotFound)?;
-
-        if self.id_to_index.contains_key(new_id) {
-            return Err(Error::RegionAlreadyExists);
-        }
-
-        self.id_to_index.remove(old_id);
-        self.id_to_index.insert(new_id.to_string(), index);
-
-        Ok(())
     }
 
     pub fn remove(&mut self, region: &Region) -> Result<()> {

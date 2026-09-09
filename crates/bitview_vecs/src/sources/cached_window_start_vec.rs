@@ -20,14 +20,6 @@ impl CachedWindowStartVec {
         &self.0.inner
     }
 
-    pub fn version(&self) -> Version {
-        self.0.version()
-    }
-
-    pub fn snapshot(&self) -> Arc<Vec<Height>> {
-        self.0.snapshot()
-    }
-
     pub fn invalidate(&self) {
         self.0.invalidate();
     }

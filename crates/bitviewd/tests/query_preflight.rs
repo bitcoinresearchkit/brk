@@ -1,4 +1,8 @@
-use std::{mem::discriminant, thread};
+use std::{
+    mem::discriminant,
+    thread,
+    time::{Duration, Instant},
+};
 
 use bitview::{ComputePluginSet, ImportContext};
 use bitview_default::DefaultPlugins;
@@ -7,7 +11,7 @@ use brk_error::Error;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use brk_types::{Addr, BlockHash, Day1, NextBlockHash, Txid};
+use brk_types::{Addr, BlockHash, NextBlockHash, Txid};
 use tempfile::tempdir;
 use vecdb::CacheBudget;
 
@@ -43,7 +47,6 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
         query.local_sync_status(),
         Err(Error::StateUpdating)
     ));
-    assert!(!query.day_is_deeply_confirmed(Day1::default()).unwrap());
     gate.finish_update();
 
     let unknown_block = BlockHash::default();
@@ -51,18 +54,10 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
         query.resolve_block_snapshot(&unknown_block),
         Err(Error::NotFound(_))
     ));
-    assert!(matches!(
-        query.height_by_hash(&unknown_block),
-        Err(Error::NotFound(_))
-    ));
 
     let unknown_txid = Txid::COINBASE;
     assert!(matches!(
         query.resolve_confirmed_tx(&unknown_txid),
-        Err(Error::UnknownTxid)
-    ));
-    assert!(matches!(
-        query.resolve_tx(&unknown_txid),
         Err(Error::UnknownTxid)
     ));
     assert!(matches!(
@@ -103,13 +98,11 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
     for raw in ["17jGLFhcnPYqG17qN2ouxbScrcnroHqRP", "not-an-address"] {
         let addr = Addr::from(raw.to_owned());
         let expected = query.addr(addr.clone()).unwrap_err();
-        let actual = query.addr_stats_preflight(&addr).unwrap_err();
-        assert_eq!(discriminant(&actual), discriminant(&expected));
         assert_eq!(
             discriminant(&query.resolve_addr_chain_txs(&addr, None, 25).unwrap_err()),
             discriminant(&expected)
         );
-        let actual = match query.addr_utxos_preflight(&addr, 1000) {
+        let actual = match query.resolve_addr_utxos(&addr, 1000) {
             Ok(_) => panic!("unknown or invalid address should be rejected"),
             Err(error) => error,
         };
@@ -140,33 +133,28 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
     ));
 
     gate.begin_update();
+    let timed = query.with_deadline(Instant::now() + Duration::from_millis(20));
     assert!(matches!(
-        query.addr_utxos_preflight(&unknown_addr, 1000),
-        Ok(None)
+        timed.resolve_addr_utxos(&unknown_addr, 1000),
+        Err(Error::ReadTimeout)
     ));
     assert!(matches!(
-        query.addr_utxos_preflight(&invalid_addr, 1000),
+        query.resolve_addr_utxos(&invalid_addr, 1000),
         Err(Error::InvalidAddr)
     ));
     gate.finish_update();
 
     gate.begin_update();
     let addr = Addr::from("17jGLFhcnPYqG17qN2ouxbScrcnroHqRP".to_owned());
-    assert!(matches!(query.addr_stats_preflight(&addr), Ok(None)));
-    assert!(matches!(
-        query.addr_stats_preflight(&Addr::from("not-an-address".to_owned())),
-        Err(Error::InvalidAddr)
-    ));
+    let timed = query.with_deadline(Instant::now() + Duration::from_millis(20));
+    assert!(matches!(timed.addr(addr.clone()), Err(Error::ReadTimeout)));
     assert!(matches!(
         query.addr(Addr::from("not-an-address".to_owned())),
         Err(Error::InvalidAddr)
     ));
 
     gate.finish_update();
-    assert!(matches!(
-        query.addr_stats_preflight(&addr),
-        Err(Error::UnknownAddr)
-    ));
+    assert!(matches!(query.addr(addr), Err(Error::UnknownAddr)));
 }
 
 static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

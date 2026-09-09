@@ -9,7 +9,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableVec, Rw, StorageMode};
 
-use super::AdjustedSoprComputeSource;
+use super::RealizedAggregateSources;
 
 const SOURCE_VERSION: Version = Version::ONE;
 const RATIO_VERSION: Version = Version::ONE;
@@ -120,7 +120,7 @@ impl AdjustedSoprVecs {
     pub fn compute<V1, V2>(
         &mut self,
         max_from: Height,
-        sources: &UTXOAllAndSth<AdjustedSoprComputeSource>,
+        sources: &UTXOAllAndSth<&RealizedAggregateSources>,
         under_1h_transfer_volume_cumulative: &V1,
         under_1h_value_destroyed_cumulative: &V2,
         exit: &Exit,

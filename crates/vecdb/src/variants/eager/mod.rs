@@ -28,10 +28,9 @@ pub mod writable;
 /// - **Batched Writes**: Flushes periodically to prevent excessive memory usage
 ///
 /// # Common Operations
-/// - Transformations: `compute_transform()`, `compute_range()`
-/// - Arithmetic: `compute_add()`, `compute_subtract()`, `compute_multiply()`, `compute_divide()`
-/// - Moving statistics: `compute_sma()`, `compute_ema()`, `compute_sum()`, `compute_max()`, `compute_min()`
-/// - Lookback calculations: `compute_change()`, `compute_percentage_change()`
+/// - Transformations: `compute_transform()`, `compute_batched_to()`
+/// - Arithmetic: `compute_subtract()`, `compute_multiply()`
+/// - Moving statistics: `compute_sma()`, `compute_rolling_ema()`, `compute_rolling_sum()`
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
 pub struct EagerVec<V>(V);

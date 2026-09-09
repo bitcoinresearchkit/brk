@@ -53,7 +53,11 @@ fn address_history_preserves_exclusive_cursors_and_published_bounds() {
             let (output_type, type_index) = q.resolve_addr(&addr).unwrap();
             let stores = q.indexer().stores();
             let indices: Vec<_> = stores
-                .addr_tx_indexes(output_type, type_index)
+                .addr_tx_indexes_before(
+                    output_type,
+                    type_index,
+                    q.indexer().safe_lengths().tx_index,
+                )
                 .unwrap()
                 .rev()
                 .collect();
@@ -99,14 +103,17 @@ fn address_history_preserves_exclusive_cursors_and_published_bounds() {
                 }
             }
             for (position, cursor) in txids.iter().enumerate() {
-                let activity = q.addr_last_activity_height(&addr, Some(cursor));
+                let page = q
+                    .resolve_addr_chain_txs(&addr, Some(*cursor), usize::MAX)
+                    .unwrap();
                 if let Some(index) = indices.get(position + 1) {
+                    let (_, height) = q.txid_and_height_by_index(*index).unwrap();
                     assert_eq!(
-                        activity.unwrap(),
-                        q.confirmed_status_height(*index).unwrap()
+                        page.activity_anchor(),
+                        q.resolve_block_hash(height).unwrap()
                     );
                 } else {
-                    assert!(matches!(activity, Err(QueryError::UnknownAddr)));
+                    assert_eq!(page.activity_anchor(), q.tip_blockhash());
                 }
             }
             let unknown = "00".repeat(32).parse().unwrap();
@@ -115,7 +122,7 @@ fn address_history_preserves_exclusive_cursors_and_published_bounds() {
                 Err(QueryError::UnknownTxid)
             ));
             assert!(matches!(
-                q.addr_last_activity_height(&addr, Some(&unknown)),
+                q.resolve_addr_chain_txs(&addr, Some(unknown), usize::MAX),
                 Err(QueryError::UnknownTxid)
             ));
         });
@@ -156,7 +163,8 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         #[cfg(feature = "series")]
         let version_etag = {
             let version = query
-                .sync(|q| q.version(&"timestamp".into(), Index::Height))
+                .sync(|q| q.find_version(&"timestamp".into(), Index::Height))
+                .unwrap()
                 .unwrap();
             let expected = format!("W/\"sv1-{version}\"");
             for prefix in ["series"] {
@@ -206,12 +214,25 @@ fn reorganization_preserves_publication_and_validator_contracts() {
             // A successful publication must expose historical seeds through
             // the existing read-only query, not just the compute-side buffer.
             assert_eq!(
-                query.price().spot.cents.height.collect_range_at(0, 2),
+                query
+                    .plugins()
+                    .price
+                    .spot
+                    .cents
+                    .height
+                    .collect_range_at(0, 2),
                 vec![Cents::ZERO; 2]
             );
             let day = Day1::try_from(Date::new(2009, 1, 3)).unwrap();
             assert_eq!(
-                query.price().split.close.cents.day1.collect_one_flat(day),
+                query
+                    .plugins()
+                    .price
+                    .split
+                    .close
+                    .cents
+                    .day1
+                    .collect_one_flat(day),
                 Some(Cents::ZERO)
             );
         });
@@ -397,15 +418,17 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         query
             .run(move |q| {
                 assert!(matches!(
-                    q.transaction(&collision),
+                    q.resolve_transaction(&collision),
                     Err(QueryError::UnknownTxid)
                 ));
                 assert!(matches!(
-                    q.transaction_raw(&collision),
+                    q.resolve_raw_transaction(&collision)
+                        .and_then(|resolved| q.transaction_raw_resolved(resolved)),
                     Err(QueryError::UnknownTxid)
                 ));
                 assert!(matches!(
-                    q.transaction_hex(&collision),
+                    q.resolve_raw_transaction(&collision)
+                        .and_then(|resolved| q.transaction_hex_resolved(resolved)),
                     Err(QueryError::UnknownTxid)
                 ));
                 assert!(matches!(
@@ -413,7 +436,8 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     Err(QueryError::UnknownTxid)
                 ));
                 assert!(matches!(
-                    q.merkle_proof(&collision),
+                    q.resolve_confirmed_tx(&collision)
+                        .and_then(|resolved| q.merkle_proof_resolved(resolved)),
                     Err(QueryError::UnknownTxid)
                 ));
                 Ok(())
@@ -593,7 +617,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
             .unwrap();
         let recent_v1 = query
             .run(|q| {
-                let prices = &q.price().spot.cents.height;
+                let prices = &q.plugins().price.spot.cents.height;
                 let timestamps = &q.indexer().vecs().blocks.timestamp;
                 timestamps.invalidate();
                 prices.invalidate();
@@ -617,22 +641,25 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     prices.cached_snapshot().is_none(),
                     "building captured rows must not read the cached price source"
                 );
-                let expected = q.blocks_v1(None, 15)?;
-                assert_eq!(to_vec(&rows).unwrap(), to_vec(&expected).unwrap());
-                assert_eq!(q.blocks(None, 10)?.len(), rows.len());
+                assert_eq!(q.resolve_blocks(None, 10)?.build(q)?.len(), rows.len());
                 assert!(
                     timestamps.cached_snapshot().is_none(),
                     "block bodies must not fill timestamp history"
                 );
                 let warm = timestamps.snapshot();
                 assert_eq!(
-                    to_vec(&q.blocks_v1(None, 15)?).unwrap(),
+                    to_vec(
+                        &q.resolve_blocks_v1(None, 15)
+                            .and_then(|resolved| resolved.build(q))?
+                    )
+                    .unwrap(),
                     to_vec(&rows).unwrap()
                 );
                 assert!(
                     Arc::ptr_eq(&warm, &timestamps.cached_snapshot().unwrap()),
                     "body reads must reuse an existing timestamp snapshot"
                 );
+                drop(prices.snapshot());
                 q.try_resolve_blocks_v1(None, 15)?
                     .ok_or(QueryError::Internal("expected warm V1 snapshot"))
             })
@@ -801,21 +828,14 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         let after_reorg_status = async move {
             exchange_with_etag(address, "GET", &after_reorg_status_path, &status_etag).await
         };
-        let mut after_reorg_raw = Vec::new();
-        for resolved in [false, true] {
+        let after_reorg_raw = {
             let query = query.clone();
-            after_reorg_raw.push(async move {
+            async move {
                 query
-                    .run(move |q| {
-                        if resolved {
-                            q.resolve_block_snapshot(&old_hash)?.anchor_raw(q)
-                        } else {
-                            q.block_raw(&old_hash)
-                        }
-                    })
+                    .run(move |q| q.resolve_block_snapshot(&old_hash)?.anchor_raw(q))
                     .await
-            });
-        }
+            }
+        };
         let mut after_reorg_raw_http = Vec::new();
         for method in ["GET", "HEAD"] {
             let path = raw_path.clone();
@@ -858,21 +878,14 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 exchange_with_etag(address, method, "/api/block-height/1", &tag).await
             }));
         }
-        let mut after_reorg_headers = Vec::new();
-        for resolved in [false, true] {
+        let after_reorg_headers = {
             let query = query.clone();
-            after_reorg_headers.push(async move {
+            async move {
                 query
-                    .run(move |q| {
-                        if resolved {
-                            q.resolve_block_snapshot(&old_hash)?.anchor_header_hex(q)
-                        } else {
-                            q.block_header_hex(&old_hash)
-                        }
-                    })
+                    .run(move |q| q.resolve_block_snapshot(&old_hash)?.anchor_header_hex(q))
                     .await
-            });
-        }
+            }
+        };
         let mut after_reorg_header_http = Vec::new();
         for method in ["GET", "HEAD"] {
             let path = header_path.clone();
@@ -881,13 +894,15 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 .push(async move { exchange_with_etag(address, method, &path, &tag).await });
         }
         let mut after_reorg_base = Vec::new();
-        for mode in 0..3 {
+        for mode in 0..2 {
             let query = query.clone();
             after_reorg_base.push((mode, async move {
                 query
                     .run(move |q| match mode {
-                        0 => q.block(&old_hash),
-                        1 => q.block_by_height(1u32.into()),
+                        1 => q
+                            .resolve_blocks(Some(1u32.into()), 1)
+                            .and_then(|resolved| resolved.build(q))
+                            .map(|mut rows| rows.pop().unwrap()),
                         _ => q
                             .resolve_block_snapshot(&old_hash)?
                             .build(q)
@@ -907,8 +922,12 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     .run(move |q| {
                         let _ = started.send(());
                         match mode {
-                            0 => q.blocks_v1(None, 15),
-                            1 => q.block_by_height_v1(1u32.into()).map(|block| vec![block]),
+                            0 => q
+                                .resolve_blocks_v1(None, 15)
+                                .and_then(|resolved| resolved.build(q)),
+                            1 => q
+                                .resolve_blocks_v1(Some(1u32.into()), 1)
+                                .and_then(|resolved| resolved.build(q)),
                             _ => q.resolve_block_v1(&old_hash)?.build(q),
                         }
                     })
@@ -1088,12 +1107,12 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         let base = timeout(Duration::from_secs(5), after_reorg_base_http)
             .await
             .unwrap();
-        for task in after_reorg_raw {
-            assert!(matches!(
-                timeout(Duration::from_secs(5), task).await.unwrap(),
-                Err(QueryError::NotFound(_))
-            ));
-        }
+        assert!(matches!(
+            timeout(Duration::from_secs(5), after_reorg_raw)
+                .await
+                .unwrap(),
+            Err(QueryError::NotFound(_))
+        ));
         for task in after_reorg_raw_http {
             let response = timeout(Duration::from_secs(5), task).await.unwrap();
             assert!(
@@ -1209,10 +1228,12 @@ fn reorganization_preserves_publication_and_validator_contracts() {
             );
             assert!(!response.contains("\r\netag:"));
         }
-        for task in after_reorg_headers {
-            let result = timeout(Duration::from_secs(5), task).await.unwrap();
-            assert!(matches!(result, Err(QueryError::NotFound(_))));
-        }
+        assert!(matches!(
+            timeout(Duration::from_secs(5), after_reorg_headers)
+                .await
+                .unwrap(),
+            Err(QueryError::NotFound(_))
+        ));
         assert!(
             base.starts_with("HTTP/1.1 404"),
             "displaced base hash cannot return 304 or replacement rows: {base}"

@@ -1,3 +1,5 @@
+use std::panic::{AssertUnwindSafe, catch_unwind};
+
 use rawdb::Database;
 use tempfile::TempDir;
 use vecdb::{AnyStoredVec, BytesVec, ImportableVec, Result, Version, WritableVec};
@@ -18,9 +20,8 @@ fn raw_reader_cursor_reads_persisted_values() -> Result<()> {
 
     // Reader cursors intentionally do not include later uncommitted values.
     vec.push(10);
-    assert_eq!(vec.read_once(9)?, 9);
-    assert!(vec.read_once(10).is_err());
     let reader = vec.reader();
+    assert_eq!(reader.try_get(9), Some(9));
     assert_eq!(reader.try_get(10), None);
 
     assert_eq!(vec.get_append_only(9, &reader), Some(9));
@@ -39,16 +40,12 @@ fn raw_reader_cursor_reads_persisted_values() -> Result<()> {
     assert_eq!(cursor.position(), 4);
 
     assert_eq!(
-        cursor.fold(3, Vec::new(), |mut values, value| {
-            values.push(value);
-            values
-        }),
+        (0..3).map(|_| cursor.next().unwrap()).collect::<Vec<_>>(),
         vec![4, 5, 6]
     );
     assert_eq!(cursor.position(), 7);
 
-    let mut tail = Vec::new();
-    cursor.for_each(usize::MAX, |value| tail.push(value));
+    let tail = std::iter::from_fn(|| cursor.next()).collect::<Vec<_>>();
     assert_eq!(tail, vec![7, 8, 9]);
     assert_eq!(cursor.position(), 10);
     assert_eq!(cursor.remaining(), 0);
@@ -85,6 +82,32 @@ fn raw_range_cursor_stays_within_declared_range() -> Result<()> {
     assert_eq!(cursor.remaining(), 0);
     assert_eq!(cursor.next(), None);
 
+    Ok(())
+}
+
+#[test]
+fn raw_range_cursor_consumes_value_before_callback_panic() -> Result<()> {
+    let temp = TempDir::new()?;
+    let db = Database::open(temp.path())?;
+    let mut vec = BytesVec::<usize, u64>::import(&db, "range", Version::ONE)?;
+    for value in 0..3 {
+        vec.push(value);
+    }
+    vec.write()?;
+
+    for use_fold in [false, true] {
+        let mut cursor = vec.range_cursor_at(0, 3);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            if use_fold {
+                cursor.fold(3, (), |(), _| panic!("callback failure"));
+            } else {
+                cursor.for_each(3, |_| panic!("callback failure"));
+            }
+        }));
+        assert!(result.is_err());
+        assert_eq!(cursor.position(), 1);
+        assert_eq!(cursor.next(), Some(1));
+    }
     Ok(())
 }
 

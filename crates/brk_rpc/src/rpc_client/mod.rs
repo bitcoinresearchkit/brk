@@ -5,7 +5,10 @@ use std::{
     time::Duration,
 };
 
-use brk_error::{Error, Result};
+#[cfg(feature = "async")]
+use brk_error::Error;
+use brk_error::Result;
+#[cfg(feature = "async")]
 use corepc_jsonrpc::error::Error as ErrorError;
 
 use crate::Auth;
@@ -19,7 +22,6 @@ mod mempool_entry;
 mod mempool_state;
 mod methods;
 mod rpc_call;
-mod submission;
 mod txid_array_parser;
 
 pub use inner::ClientInner;
@@ -27,6 +29,7 @@ pub use mempool_state::MempoolState;
 
 /// Explicit Core decode/policy rejections are invalid input, unlike an
 /// infrastructure error whose submission outcome may be unknown.
+#[cfg(feature = "async")]
 pub fn transaction_error(error: Error) -> Error {
     if let Error::CorepcRPC(ErrorError::Rpc(rpc)) = &error
         && matches!(rpc.code, -22 | -25 | -26 | -27)

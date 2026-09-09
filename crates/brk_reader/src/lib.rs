@@ -95,12 +95,6 @@ impl Reader {
         Ok(buffer)
     }
 
-    /// Streams every canonical block from genesis to the current
-    /// chain tip.
-    pub fn all(&self) -> Result<BlockReceiver> {
-        self.after(None)
-    }
-
     /// Streams every canonical block strictly after `hash` (or from
     /// genesis when `None`) up to the current chain tip.
     pub fn after(&self, hash: Option<BlockHash>) -> Result<BlockReceiver> {

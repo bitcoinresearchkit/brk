@@ -1,10 +1,7 @@
 use std::ops::{Add, AddAssign};
 
-use brk_error::Result as ErrorResult;
 use brk_types::OutputType;
 use rayon::prelude::*;
-
-use super::CohortId;
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
@@ -46,11 +43,6 @@ pub const ADDR_TYPE_IDS: [AddrTypeId; ADDR_TYPE_COUNT] = [
 
 impl AddrTypeId {
     pub const ALL: &'static [Self] = &ADDR_TYPE_IDS;
-
-    #[inline]
-    pub const fn index(self) -> usize {
-        self as usize
-    }
 }
 
 impl AddrTypeId {
@@ -160,20 +152,6 @@ impl<T> ByAddrType<T> {
         }))
     }
 
-    pub fn new<F>(mut create: F) -> Self
-    where
-        F: FnMut(CohortId) -> T,
-    {
-        Self::from_fn(|id| create(CohortId::Type(id.output_type())))
-    }
-
-    pub fn new_with_name<F>(f: F) -> ErrorResult<Self>
-    where
-        F: Fn(&'static str) -> ErrorResult<T>,
-    {
-        Self::try_from_fn(|id| f(id.name()))
-    }
-
     pub fn map_with_name<U>(&self, f: impl Fn(&'static str, &T) -> U) -> ByAddrType<U> {
         ByAddrType::from_fn(|id| f(id.name(), id.select(self)))
     }
@@ -254,14 +232,6 @@ impl<T> ByAddrType<T> {
     #[inline]
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.as_array_mut().into_iter()
-    }
-
-    #[inline]
-    pub fn par_values(&mut self) -> impl ParallelIterator<Item = &T>
-    where
-        T: Send + Sync,
-    {
-        self.as_array().into_par_iter()
     }
 
     #[inline]
@@ -349,14 +319,6 @@ where
     }
 }
 
-impl<T> ByAddrType<Option<T>> {
-    pub fn take(&mut self) {
-        self.values_mut().for_each(|opt| {
-            opt.take();
-        });
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{ADDR_TYPE_IDS, AddrTypeId, ByAddrType};
@@ -371,10 +333,10 @@ mod tests {
 
     #[test]
     fn iteration_order_matches_cohort_indexes() {
-        let values = ByAddrType::from_fn(|id| id.index());
+        let values = ByAddrType::from_fn(|id| id as usize);
 
         for id in ADDR_TYPE_IDS {
-            assert_eq!(*id.select(&values), id.index());
+            assert_eq!(*id.select(&values), (id as usize));
         }
     }
 

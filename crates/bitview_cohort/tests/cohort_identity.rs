@@ -47,6 +47,20 @@ fn holder_classification_matches_age_bounds_and_aggregate_selectors() {
 }
 
 #[test]
+fn composed_mapping_does_not_fall_back_to_the_dereferenced_core() {
+    let cohorts = UTXOGroupsWithoutAmountOrType::new(|id| id);
+    let mut count = 0;
+    let mapped = cohorts.map_with_id(|id, &value| {
+        count += 1;
+        assert_eq!(id, value);
+        value
+    });
+    assert_eq!(count, cohorts.iter().count());
+    assert_eq!(mapped.term.short, CohortId::Term(Term::Sth));
+    assert_eq!(mapped.term.long, CohortId::Term(Term::Lth));
+}
+
+#[test]
 fn canonical_names_preserve_series_prefixes() {
     for (id, name) in [
         (CohortId::All, "supply"),

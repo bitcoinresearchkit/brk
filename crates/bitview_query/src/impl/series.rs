@@ -161,12 +161,7 @@ impl Query {
         }
     }
 
-    /// Returns the latest value for a single series as a JSON value.
-    pub fn latest(&self, series: &SeriesName, index: Index) -> Result<Value> {
-        from_slice(&self.read_latest_json(series, index)?).map_err(Into::into)
-    }
-
-    /// Latest value with the same JSON representation as serializing `latest`.
+    /// Latest value in the canonical JSON representation.
     pub fn latest_json(&self, series: &SeriesName, index: Index) -> Result<Vec<u8>> {
         reserialize_json(self.read_latest_json(series, index)?)
     }
@@ -189,11 +184,6 @@ impl Query {
         let entry = self.get_entry(series, index)?;
         let read = SeriesRead::new(self, vec![entry])?;
         Ok(read.columns().next().unwrap().len())
-    }
-
-    /// Returns the version for a single series.
-    pub fn version(&self, series: &SeriesName, index: Index) -> Result<Version> {
-        Ok(self.get_entry(series, index)?.vec().version())
     }
 
     /// Metadata lookup without missing-name suggestions. Unsupported indexes

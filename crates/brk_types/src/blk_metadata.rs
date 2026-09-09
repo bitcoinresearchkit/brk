@@ -14,14 +14,6 @@ impl BlkMetadata {
         self.position
     }
 
-    pub fn blk_index(&self) -> u16 {
-        self.position.blk_index()
-    }
-
-    pub fn offset(&self) -> u32 {
-        self.position.offset()
-    }
-
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.len

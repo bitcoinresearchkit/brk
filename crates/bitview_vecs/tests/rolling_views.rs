@@ -88,15 +88,26 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         "timestamps",
         (0..32u32).map(|i| Timestamp::from(i * i * 43_200)),
     ));
-    let starts = WindowId::series(|id| {
+    let starts = Windows {
+        _24h: 1,
+        _1w: 7,
+        _1m: 30,
+        _1y: 365,
+    }
+    .map_with_suffix(|suffix, &days| {
         CachedWindowStartVec::new(LazyWindowStartVec::days(
-            id.suffix(),
+            suffix,
             Version::new(3),
-            Windows::<()>::DAYS[id.index()] as u64,
+            days,
             timestamps.read_only_cached_boxed_clone(),
         ))
     });
-    let starts_ref = WindowId::series(|id| id.select(&starts));
+    let starts_ref = Windows {
+        _24h: &starts._24h,
+        _1w: &starts._1w,
+        _1m: &starts._1m,
+        _1y: &starts._1y,
+    };
     let sats_values: Vec<_> = (0..32u64)
         .map(|i| Sats::from(i * (i + 1) * 50_000_003))
         .collect();
@@ -138,17 +149,11 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
             &indexes,
         );
 
-    for id in [
-        WindowId::Day1,
-        WindowId::Week1,
-        WindowId::Month1,
-        WindowId::Year1,
-    ] {
-        let suffix = id.suffix();
-        let sum = id.select(&sums);
-        let avg = id.select(&averages);
-        let fiat = id.select(&fiat);
-        let start = id.select(&starts);
+    for (slot, suffix) in Windows::<()>::SUFFIXES.into_iter().enumerate() {
+        let sum = sums.as_array()[slot];
+        let avg = averages.as_array()[slot];
+        let fiat = fiat.as_array()[slot];
+        let start = starts.as_array()[slot];
         let fiat_avg =
             LazyRollingAvgFiatFromHeight::new("fiat_avg", version, &cents, start, &indexes);
         let expected_sats: Vec<_> = start
@@ -216,8 +221,8 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
             "fiat_avg",
             version,
         );
-        let amount = id.select(&amount_delta.absolute);
-        let money = id.select(&fiat_delta.absolute);
+        let amount = amount_delta.absolute.as_array()[slot];
+        let money = fiat_delta.absolute.as_array()[slot];
         check_conversion::<_, _, <SatsSigned as AmountType>::ToBitcoin>(
             &amount.btc,
             &amount.sats.height,
@@ -252,7 +257,7 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
                 );
             }};
         }
-        check_rate!("amount_delta", id.select(&amount_delta.rate));
-        check_rate!("fiat_delta", id.select(&fiat_delta.rate));
+        check_rate!("amount_delta", amount_delta.rate.as_array()[slot]);
+        check_rate!("fiat_delta", fiat_delta.rate.as_array()[slot]);
     }
 }

@@ -33,10 +33,6 @@ impl State {
             .map(|guard| SafeLengths::new(guard, self.lengths()))
     }
 
-    pub fn pin(&self) -> SafeLengths {
-        SafeLengths::new(self.reorg.read_arc(), self.lengths())
-    }
-
     pub fn try_pin(&self) -> Option<SafeLengths> {
         self.reorg
             .try_read_arc()
@@ -100,7 +96,7 @@ mod tests {
             ..old
         };
         state.finish_update(old);
-        let pin = state.pin();
+        let pin = state.pin_for(Duration::from_secs(1)).unwrap();
         let writer = state.clone();
         let (finished, done) = mpsc::channel();
         let task = thread::spawn(move || {
@@ -125,7 +121,7 @@ mod tests {
             ..Default::default()
         };
         state.finish_update(lengths);
-        let prefix = state.pin();
+        let prefix = state.pin_for(Duration::from_secs(1)).unwrap();
         let writer = state.clone();
         let (finished, done) = mpsc::channel();
         let task = thread::spawn(move || {
@@ -153,7 +149,7 @@ mod tests {
             height: Height::new(2),
             ..Default::default()
         });
-        let prefix = state.pin();
+        let prefix = state.pin_for(Duration::from_secs(1)).unwrap();
         let writer = state.clone();
         let (started, ready) = mpsc::channel();
         let (finished, done) = mpsc::channel();

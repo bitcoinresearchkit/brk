@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Day1, PERCENTILES_LEN, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use crate::{DailyMappings, LazyDailyPrice, StoredSeries, import_stored};
 
@@ -51,9 +51,6 @@ impl DailyPercentilesVecs {
         }
     }
 
-    pub fn min_len(&self) -> usize {
-        self.stored.iter().map(AnyVec::len).min().unwrap_or(0)
-    }
     pub fn collect_vecs_mut(&mut self) -> Vec<&mut dyn AnyStoredVec> {
         self.stored
             .iter_mut()

@@ -19,7 +19,7 @@ macro_rules! mutation_roundtrip {
                 ImportOptions::new(&db, "values", Version::ONE).with_saved_stamped_changes(4);
             let mut vec = MutableVec::<V>::import_with(options)?;
             vec.reserve_pushed(6);
-            assert_eq!(vec.get_first_empty_index(), 0);
+            assert!(vec.is_empty());
             for value in 10..14 {
                 vec.push(value);
             }
@@ -45,7 +45,7 @@ macro_rules! mutation_roundtrip {
             assert_eq!(vec.holes(), &BTreeSet::from([0, 1, 3]));
             assert_eq!(vec.fill_first_hole_or_push(100)?, 0);
             assert_eq!(vec.fill_first_hole_or_push(101)?, 1);
-            assert_eq!(vec.get_first_empty_index(), 3);
+            assert_eq!(vec.holes().first(), Some(&3));
             assert_eq!(
                 vec.collect_holed(),
                 [Some(100), Some(101), Some(22), None, Some(24)]
@@ -81,7 +81,7 @@ macro_rules! mutation_roundtrip {
         assert!(vec.update_at(4, 999).is_err());
         assert_eq!(vec.len(), 4);
         assert_eq!(vec.fill_first_hole_or_push(14)?, 4);
-        assert_eq!(vec.get_first_empty_index(), 5);
+        assert_eq!(vec.len(), 5);
         vec.delete_at(0);
         vec.update_at(0, 20)?;
         assert!(vec.holes().is_empty());
@@ -113,7 +113,7 @@ fn zerocopy_mutation_api_roundtrip() -> Result<()> {
 
 #[cfg(feature = "zerocopy")]
 #[test]
-fn zerocopy_borrows_only_unmodified_values() -> Result<()> {
+fn zerocopy_reader_merges_updates_and_holes() -> Result<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let mut vec = MutableVec::<ZeroCopyVec<usize, u32>>::import(&db, "values", Version::ONE)?;
@@ -123,12 +123,10 @@ fn zerocopy_borrows_only_unmodified_values() -> Result<()> {
     vec.write()?;
     let reader = vec.reader();
     assert_eq!(vec.get_append_only(0, &reader), Some(10));
-    assert_eq!(vec.read_ref(0, &reader), Some(&10));
     vec.update(0, 20)?;
     vec.delete(1);
-    assert_eq!(vec.read_ref(0, &reader), None);
-    assert_eq!(vec.read_ref(1, &reader), None);
-    assert_eq!(vec.read_ref(2, &reader), Some(&12));
     assert_eq!(vec.get_with_reader(0, &reader), Some(20));
+    assert_eq!(vec.get_with_reader(1, &reader), None);
+    assert_eq!(vec.get_with_reader(2, &reader), Some(12));
     Ok(())
 }

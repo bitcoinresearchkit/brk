@@ -37,9 +37,7 @@ pub use error::{Error, Result};
 
 pub use iterators::ValueWriter;
 
-pub use ops::{
-    BinaryTransform, CheckedSub, Divide, Minus, Plus, ReverseOperands, SaturatingAdd, Times,
-};
+pub use ops::{BinaryTransform, CheckedSub, ReverseOperands, SaturatingAdd};
 
 pub use read_bounds::{BoundedVec, BoundedWriter, ReadBounds};
 pub use sparse_read::SparseRead;
@@ -60,10 +58,10 @@ pub use variants::{
     CacheBudget, CachedBoxedVec, CachedReadableVec, CachedVec, CachedVecBudget, CachedVecStrategy,
     CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate,
     DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec,
-    MapOption, MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader,
-    OverflowVecReaderCursor, OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor,
-    RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
-    ReadWriteRawVec, UnaryTransform, VecReader, VecReaderCursor,
+    MapOption, MutableVec, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor,
+    OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyCompressedVec,
+    ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec, ReadWriteRawVec, UnaryTransform,
+    VecReader, VecReaderCursor,
 };
 #[cfg(feature = "lz4")]
 pub use variants::{LZ4Strategy, LZ4Vec, LZ4VecValue};

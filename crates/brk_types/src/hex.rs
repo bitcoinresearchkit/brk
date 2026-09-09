@@ -10,12 +10,6 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct Hex(String);
 
-impl Hex {
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
 impl From<String> for Hex {
     fn from(s: String) -> Self {
         Self(s)

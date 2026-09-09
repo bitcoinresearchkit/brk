@@ -83,18 +83,4 @@ impl<T> Levels<T> {
             pct90: create(LevelId::Pct90),
         }
     }
-
-    pub fn map<U>(self, mut map: impl FnMut(T) -> U) -> Levels<U> {
-        Levels {
-            pct10: map(self.pct10),
-            pct20: map(self.pct20),
-            pct30: map(self.pct30),
-            pct40: map(self.pct40),
-            pct50: map(self.pct50),
-            pct60: map(self.pct60),
-            pct70: map(self.pct70),
-            pct80: map(self.pct80),
-            pct90: map(self.pct90),
-        }
-    }
 }

@@ -60,11 +60,6 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
         self.clear_cache();
     }
 
-    /// Reserve capacity for additional entries.
-    pub fn reserve(&mut self, additional: usize) {
-        self.first_indexes.reserve(additional);
-    }
-
     /// Push a new first_index. Value is implicitly the current length.
     /// Must be called in order (first_index must be >= all previous).
     #[inline]
@@ -76,12 +71,6 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
             "RangeMap: first_index must be monotonically increasing"
         );
         self.first_indexes.push(first_index);
-    }
-
-    /// Returns the last pushed first_index, if any.
-    #[inline]
-    pub fn last_key(&self) -> Option<I> {
-        self.first_indexes.last().copied()
     }
 
     /// Floor: returns the value (position) of the largest first_index <= given index.
@@ -109,21 +98,6 @@ impl<I: Ord + Copy + Default + Into<usize>, V: From<usize> + Copy + Default> Ran
                 );
             }
             Some(value)
-        } else {
-            None
-        }
-    }
-
-    /// Ceil: returns the value (position) of the smallest first_index >= given index.
-    #[inline]
-    pub fn ceil(&self, index: I) -> Option<V> {
-        if self.first_indexes.is_empty() {
-            return None;
-        }
-
-        let pos = self.first_indexes.partition_point(|&first| first < index);
-        if pos < self.first_indexes.len() {
-            Some(V::from(pos))
         } else {
             None
         }

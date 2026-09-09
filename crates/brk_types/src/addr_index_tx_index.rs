@@ -23,10 +23,6 @@ impl AddrIndexTxIndex {
     pub fn min_for_addr(addr_index: TypeIndex) -> Self {
         Self(u64::from(addr_index) << 32)
     }
-
-    pub fn max_for_addr(addr_index: TypeIndex) -> Self {
-        Self((u64::from(addr_index) << 32) | u64::MAX >> 32)
-    }
 }
 
 impl From<(TypeIndex, TxIndex)> for AddrIndexTxIndex {

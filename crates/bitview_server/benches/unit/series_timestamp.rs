@@ -1,6 +1,6 @@
 use std::{hint::black_box, time::Instant};
 
-use brk_types::{Height, RangeMap, Timestamp};
+use brk_types::{Height, Timestamp};
 use parking_lot::RwLock;
 use tempfile::tempdir;
 use vecdb::{
@@ -25,19 +25,19 @@ fn benchmark_timestamp_lookup() {
     stored.write().unwrap();
     let values = CachedVec::wrap(stored.read_only_clone());
     let start = Instant::now();
-    let copied = RwLock::new(RangeMap::<Timestamp, Height>::from(values.collect()));
+    let copied = RwLock::new(values.collect());
     eprintln!(
-        "timestamp copied-map initialization {:?}, extra timestamp bytes {}",
+        "timestamp copied-vector initialization {:?}, extra timestamp bytes {}",
         start.elapsed(),
         LEN * size_of::<Timestamp>()
     );
     let targets = [
-        0,
-        1_200_000_000,
-        1_200_000_001,
-        1_350_000_000,
-        1_499_999_400,
-        u32::MAX,
+        (0, 0),
+        (1_200_000_000, 0),
+        (1_200_000_001, 2),
+        (1_350_000_000, 500_000),
+        (1_499_999_400, 999_998),
+        (u32::MAX, LEN - 1),
     ];
     let mut times = [Vec::new(), Vec::new(), Vec::new()];
     for round in 0..24 {
@@ -45,13 +45,13 @@ fn benchmark_timestamp_lookup() {
             let variant = (round + offset) % 3;
             let start = Instant::now();
             for sample in 0..6000 {
-                let target = Timestamp::new(black_box(targets[sample % targets.len()]));
+                let (target, expected) = targets[sample % targets.len()];
+                let target = Timestamp::new(black_box(target));
                 let position = match variant {
                     0 => copied
                         .read()
-                        .ceil(target)
-                        .map(usize::from)
-                        .unwrap_or(LEN - 1),
+                        .partition_point(|value| *value < target)
+                        .min(LEN - 1),
                     1 => {
                         let (mut low, mut high) = (0, values.visible_len());
                         while low < high {
@@ -73,14 +73,7 @@ fn benchmark_timestamp_lookup() {
                     }
                 };
                 if round == 0 {
-                    assert_eq!(
-                        position,
-                        copied
-                            .read()
-                            .ceil(target)
-                            .map(usize::from)
-                            .unwrap_or(LEN - 1)
-                    );
+                    assert_eq!(position, expected);
                 }
                 black_box(position);
             }
@@ -93,7 +86,7 @@ fn benchmark_timestamp_lookup() {
         samples.sort_unstable();
     }
     eprintln!(
-        "timestamp warm lookup: copied map {:?}, scalar probes {:?}, shared snapshot {:?}",
+        "timestamp warm lookup: copied vector {:?}, scalar probes {:?}, shared snapshot {:?}",
         times[0][10], times[1][10], times[2][10]
     );
 }

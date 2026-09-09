@@ -132,11 +132,6 @@ where
         Ok(this)
     }
 
-    #[inline]
-    pub fn decode_page(&self, page_index: usize, reader: &Reader) -> CrateResult<Vec<T>> {
-        Self::decode_page_with(self.stored_len(), page_index, reader, &self.pages.read())
-    }
-
     fn pages_region_name_with(name: &str) -> String {
         format!("{}_pages", vec_region_name_with::<I>(name))
     }

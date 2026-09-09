@@ -204,14 +204,6 @@ impl<'a> Vecs<'a> {
         &self.catalog
     }
 
-    /// Finds a queryable vector and its owning plugin at the requested index.
-    pub fn entry(&self, series: &SeriesName, index: Index) -> Option<SeriesEntry<'a>> {
-        match self.lookup_entry(series, index) {
-            SeriesEntryLookup::Found(entry) => Some(entry),
-            SeriesEntryLookup::Unsupported(_) | SeriesEntryLookup::Missing => None,
-        }
-    }
-
     fn series_position(&self, name: &str) -> Option<usize> {
         self.series_names
             .binary_search_by(|candidate| {

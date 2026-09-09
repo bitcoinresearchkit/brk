@@ -4,7 +4,7 @@ use brk_exit::Exit;
 
 use super::super::EagerVec;
 use crate::{
-    AnyStoredVec, AnyVec, BinaryTransform, Cursor, Error, ReadableVec, Result, StoredVec, VecIndex,
+    AnyStoredVec, AnyVec, BinaryTransform, Error, ReadableVec, Result, StoredVec, VecIndex,
     VecValue, Version, WritableVec,
 };
 
@@ -55,67 +55,6 @@ where
         }
 
         Ok(())
-    }
-
-    pub fn compute_to<F>(
-        &mut self,
-        max_from: V::I,
-        to: usize,
-        version: Version,
-        mut t: F,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        F: FnMut(V::I) -> (V::I, V::T),
-    {
-        let max_from = V::I::from(max_from.to_usize().min(to));
-        self.compute_init(version, max_from, exit, |this| {
-            let from = this.len();
-            let end = this.batch_end(to);
-            if from >= end {
-                return Ok(());
-            }
-
-            for i in from..end {
-                let (idx, val) = t(V::I::from(i));
-                this.debug_checked_push(idx, val);
-            }
-
-            Ok(())
-        })
-    }
-
-    pub fn compute_range<A, F>(
-        &mut self,
-        max_from: V::I,
-        other: &impl ReadableVec<V::I, A>,
-        t: F,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: VecValue,
-        F: FnMut(V::I) -> (V::I, V::T),
-    {
-        self.compute_to(max_from, other.len(), other.version(), t, exit)
-    }
-
-    pub fn compute_from_index<A>(
-        &mut self,
-        max_from: V::I,
-        other: &impl ReadableVec<V::I, A>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        V::T: From<V::I>,
-        A: VecValue,
-    {
-        self.compute_to(
-            max_from,
-            other.len(),
-            other.version(),
-            |i| (i, V::T::from(i)),
-            exit,
-        )
     }
 
     pub fn compute_transform<A, F>(
@@ -327,113 +266,5 @@ where
                 Ok(())
             },
         )
-    }
-
-    /// Compute values through an indirection: for each index i, produces
-    /// `source2[source1[i]]`. Keys from source1 must be monotonically increasing
-    /// so that source2 access is sequential (cursor-friendly).
-    pub fn compute_indirect_sequential<A>(
-        &mut self,
-        max_from: V::I,
-        source1: &impl ReadableVec<V::I, A>,
-        source2: &impl ReadableVec<A, V::T>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        A: VecValue + VecIndex,
-    {
-        // Cursor persists across batches to avoid re-decompressing pages.
-        let mut cursor = Cursor::new(source2);
-        let mut cursor_pos: usize = 0;
-        let mut last_v: Option<V::T> = None;
-
-        self.compute_init(
-            source1.version() + source2.version(),
-            max_from,
-            exit,
-            |this| {
-                let skip = this.len();
-                let end = this.batch_end(source1.len());
-                if skip >= end {
-                    return Ok(());
-                }
-
-                let keys: Vec<A> = source1.collect_range_at(skip, end);
-
-                for key in keys {
-                    let key_pos = key.to_usize();
-                    let v = if key_pos >= cursor_pos {
-                        if key_pos > cursor_pos {
-                            cursor.advance(key_pos - cursor_pos);
-                        }
-                        let v = cursor.next().unwrap();
-                        cursor_pos = key_pos + 1;
-                        v
-                    } else {
-                        // Duplicate key from gap-filled periods — reuse previous value
-                        last_v.clone().unwrap()
-                    };
-                    last_v = Some(v.clone());
-                    this.push(v);
-                }
-
-                Ok(())
-            },
-        )
-    }
-
-    pub fn compute_first_per_index(
-        &mut self,
-        max_from: V::T,
-        other: &impl ReadableVec<V::T, V::I>,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        V::I: VecValue + VecIndex,
-        V::T: VecIndex,
-    {
-        self.validate_computed_version_or_reset(other.version())?;
-
-        self.repeat_until_complete(exit, |this| {
-            let skip = if this.len() > 0 {
-                this.collect_last()
-                    .unwrap()
-                    .to_usize()
-                    .min(max_from.to_usize())
-            } else {
-                0
-            };
-
-            let end = this.batch_end(other.len());
-            if skip >= end {
-                return Ok(());
-            }
-
-            let mut prev_i = None;
-            let batch = other.collect_range_at(skip, end);
-
-            if let Some(&first_target) = batch.first() {
-                this.truncate_if_needed(first_target)?;
-            }
-
-            for (j, i) in batch.into_iter().enumerate() {
-                let v = V::T::from(skip + j);
-                debug_assert!(prev_i.is_none_or(|prev| prev <= i));
-                if prev_i.is_some_and(|prev_i| prev_i == i) {
-                    continue;
-                }
-                if this.collect_one(i).is_none_or(|old_v| old_v > v) {
-                    // Pad gaps with the current value so empty periods get zero-length ranges
-                    let i_usize = i.to_usize();
-                    while this.len() < i_usize {
-                        this.push(v);
-                    }
-                    this.push(v);
-                }
-                prev_i.replace(i);
-            }
-
-            Ok(())
-        })
     }
 }

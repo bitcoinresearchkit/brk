@@ -99,7 +99,8 @@ fn publication_wait_runs_once_and_retains_worker_admission() {
             reader
                 .read_admitted(move |q| {
                     count.fetch_add(1, Ordering::SeqCst);
-                    q.blocks_v1(None, 10)
+                    q.resolve_blocks_v1(None, 10)
+                        .and_then(|resolved| resolved.build(q))
                 })
                 .await
         });

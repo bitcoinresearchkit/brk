@@ -92,26 +92,7 @@ fn import_aggregate<T: PcoVecValue>(
     metric: &str,
     version: Version,
 ) -> Result<UTXOAggregate<StoredSeries<Height, T>>> {
-    Ok(UTXOAggregate {
-        all: import_stored(
-            cache,
-            db,
-            &UTXOAggregateId::All.metric_name(metric),
-            version,
-        )?,
-        sth: import_stored(
-            cache,
-            db,
-            &UTXOAggregateId::Sth.metric_name(metric),
-            version,
-        )?,
-        lth: import_stored(
-            cache,
-            db,
-            &UTXOAggregateId::Lth.metric_name(metric),
-            version,
-        )?,
-    })
+    UTXOAggregate::try_from_fn(|id| import_stored(cache, db, &id.metric_name(metric), version))
 }
 
 impl CohortVecs {

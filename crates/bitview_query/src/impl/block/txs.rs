@@ -2,9 +2,8 @@ use bitcoin::{ScriptBuf, Transaction as BitcoinTransaction};
 use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlkPosition, BlockHash, BlockTxIndex, Height, OutPoint, OutputType, RawLockTime, Sats, SigOps,
-    StoredU32, Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout,
-    Weight,
+    BlkPosition, BlockTxIndex, Height, OutPoint, OutputType, RawLockTime, Sats, SigOps, StoredU32,
+    Transaction, TxIn, TxInIndex, TxIndex, TxOut, TxStatus, Txid, TypeIndex, Vout, Weight,
 };
 use rustc_hash::FxHashMap;
 use vecdb::{ReadableVec, VecIndex};
@@ -12,75 +11,7 @@ use vecdb::{ReadableVec, VecIndex};
 use crate::{Query, r#impl::indexed_transaction};
 
 impl Query {
-    /// All txids in the block, canonical order (coinbase first).
-    /// `NotFound` if the hash is unknown (or only collides on the 8-byte
-    /// prefix), `OutOfRange` if the resolved height is past the indexed tip.
-    /// Unpaginated by design.
-    pub fn block_txids(&self, hash: &BlockHash) -> Result<Vec<Txid>> {
-        let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash_at(hash, &guard)?;
-        self.block_txids_by_height(height, &guard)
-    }
-
-    /// Up to `count` transactions from the block, starting at the in-block
-    /// offset `start_index` (0 = coinbase). `OutOfRange` when `start_index`
-    /// is past the last tx in the block. Caller (route layer) sets `count`.
-    pub fn block_txs(
-        &self,
-        hash: &BlockHash,
-        start_index: BlockTxIndex,
-        count: u32,
-    ) -> Result<Vec<Transaction>> {
-        let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash_at(hash, &guard)?;
-        self.block_txs_at_height(height, start_index, count, &guard)
-    }
-
-    /// Txid at an in-block offset (`index` is the position within the block,
-    /// 0 = coinbase). `NotFound` if the hash is unknown or only collides on
-    /// the 8-byte prefix; `OutOfRange` if `index` is past the last tx in
-    /// the block.
-    pub fn block_txid_at_index(&self, hash: &BlockHash, index: BlockTxIndex) -> Result<Txid> {
-        let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash_at(hash, &guard)?;
-        self.block_txid_at_index_by_height(height, index.into(), &guard)
-    }
-
     // === Helper methods ===
-
-    /// Batch-read transactions at arbitrary indices.
-    /// Reads in ascending index order for I/O locality, returns in caller's order.
-    ///
-    /// Three-phase approach for sequential cursor I/O:
-    ///   Phase 1: decode transactions, collect outpoints + per-input prevout
-    ///            metadata (sorted by tx_index).
-    ///   Phase 2: resolve each prevout's script_pubkey (sorted by
-    ///            output_type, then type_index, for sequential addr-vec reads).
-    ///   Phase 3: assemble `Transaction` objects, compute fees.
-    ///
-    /// The final `unwrap` is provably safe: `order` is a permutation of
-    /// `0..len`, Phase 1 produces exactly one `DecodedTx` per position, and
-    /// Phase 3 assigns each `txs[pos]` once before the collect.
-    ///
-    /// Unprotected helpers are not part of the public API:
-    /// ```compile_fail
-    /// use bitview_query::Query;
-    /// use brk_types::{Height, Lengths};
-    /// fn unpinned(query: &Query, height: Height, lengths: Lengths) {
-    ///     query.block_txids_by_height(height, lengths).unwrap();
-    /// }
-    /// ```
-    /// ```compile_fail
-    /// use bitview_query::Query;
-    /// use brk_types::TxIndex;
-    /// fn unpinned(query: &Query, indices: &[TxIndex]) {
-    ///     query.transactions_at_indices(indices).unwrap();
-    /// }
-    /// ```
-    pub fn transactions_by_indices(&self, indices: &[TxIndex]) -> Result<Vec<Transaction>> {
-        let guard = self.pin_safe_lengths()?;
-        self.transactions_at_indices(indices, &guard)
-    }
 
     pub(crate) fn block_txs_at_height(
         &self,

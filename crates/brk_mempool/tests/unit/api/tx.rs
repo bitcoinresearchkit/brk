@@ -126,7 +126,7 @@ fn transaction_reads_reject_unready_or_wrong_chain_and_share_vanished_bodies() {
         assert!(mempool.outspend_if_present(&txid, Vout::ZERO, tip).is_err());
         assert!(mempool.outspends_if_present(&txid, tip).is_err());
         assert!(mempool.outspend(&txid, Vout::ZERO, tip).is_err());
-        assert!(mempool.lookup_spender(&txid, Vout::ZERO, tip).is_err());
+        assert!(mempool.outspend(&txid, Vout::ZERO, tip).is_err());
         assert!(
             mempool
                 .merge_outspends(&txid, &mut [TxOutspend::UNSPENT], tip)
@@ -176,11 +176,9 @@ fn aggregates_require_completed_observations_including_empty_results() {
     let mempool = Mempool::for_test();
     let txid = fake_txid(1);
     let check = |ready| {
-        assert_eq!(mempool.txids().is_ok(), ready);
         assert_eq!(mempool.txids_hash().is_ok(), ready);
         assert_eq!(mempool.txids_with_hash().is_ok(), ready);
         assert_eq!(mempool.recent_txs().is_ok(), ready);
-        assert_eq!(mempool.transaction_times(&[txid]).is_ok(), ready);
         assert_eq!(mempool.transaction_times_with_hash(&[txid]).is_ok(), ready);
     };
     check(false);
@@ -189,8 +187,11 @@ fn aggregates_require_completed_observations_including_empty_results() {
         .write()
         .publish_at(BlockHash::default(), &[]);
     check(true);
-    assert!(mempool.txids().unwrap().is_empty());
-    assert_eq!(mempool.transaction_times(&[txid]).unwrap(), vec![0]);
+    assert!(mempool.txids_with_hash().unwrap().0.is_empty());
+    assert_eq!(
+        mempool.transaction_times_with_hash(&[txid]).unwrap().0,
+        vec![0]
+    );
     mempool.test_state_lock().write().published_tip = None;
     check(false);
     let tx = fake_tx(1, &[], &[(p2wpkh_script(1), 1_234)]);
@@ -206,7 +207,6 @@ fn aggregates_require_completed_observations_including_empty_results() {
     let (txids, hash) = mempool.txids_with_hash().unwrap();
     assert_eq!(txids, vec![txid]);
     assert_eq!(hash, mempool.txids_hash().unwrap());
-    assert_eq!(txids, mempool.txids().unwrap());
 }
 
 #[test]

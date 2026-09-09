@@ -103,16 +103,17 @@ fn sorted_reads_preserve_holes_staged_sidecar_reuse_truncation_and_reopen() -> R
     let published = expected.clone();
     assert_sorted_reads(&source, &expected);
     assert_sorted_reads(&reader, &published);
-    for (index, value) in [
+    let updates = [
         (0, TestValue(7)),
         (1, TestValue(9000)),
         (211, TestValue(11)),
-    ] {
-        source.update(index, value)?;
+    ];
+    source.update_many(updates.to_vec())?;
+    for (index, value) in updates {
         expected[index] = Some(value);
     }
+    source.delete_many([2, 422]);
     for index in [2, 422] {
-        source.delete(index);
         expected[index] = None;
     }
     source.push(TestValue(77_777));
@@ -195,8 +196,10 @@ fn roundtrip_updates_holes_and_read_only_visibility() -> Result<()> {
     vec.update_many(vec![(0, TestValue(5_000)), (1, TestValue(6_000))])?;
     vec.delete_many([1, 0]);
     assert_eq!(vec.holes().len(), 2);
-    assert_eq!(vec.fill_first_hole_or_push(TestValue(9))?, 0);
-    assert_eq!(vec.fill_first_hole_or_push(TestValue(7_000))?, 1);
+    assert_eq!(
+        vec.fill_holes_or_push_many(vec![TestValue(9), TestValue(7_000)]),
+        vec![0, 1]
+    );
     assert_eq!(
         vec.collect(),
         vec![TestValue(9), TestValue(7_000), TestValue(3)]
@@ -247,7 +250,7 @@ fn forced_version_reset_removes_data_and_holes() -> Result<()> {
     vec.push(TestValue(1_000));
     vec.push(TestValue(2_000));
     vec.write()?;
-    vec.delete(0);
+    vec.delete_many([0]);
     vec.write()?;
     assert_eq!(vec.holes().len(), 1);
     drop(vec);
@@ -255,7 +258,7 @@ fn forced_version_reset_removes_data_and_holes() -> Result<()> {
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "reset", Version::TWO)?;
     assert!(vec.is_empty());
     assert!(vec.holes().is_empty());
-    assert_eq!(vec.fill_first_hole_or_push(TestValue(3_000))?, 0);
+    assert_eq!(vec.fill_holes_or_push_many(vec![TestValue(3_000)]), vec![0]);
     vec.write()?;
     assert_eq!(vec.collect(), vec![TestValue(3_000)]);
     Ok(())
@@ -270,9 +273,9 @@ fn fills_holes_in_unwritten_values() -> Result<()> {
     vec.push(TestValue(1));
     vec.push(TestValue(2));
     vec.push(TestValue(3));
-    vec.delete(1);
+    vec.delete_many([1]);
 
-    assert_eq!(vec.fill_first_hole_or_push(TestValue(4))?, 1);
+    assert_eq!(vec.fill_holes_or_push_many(vec![TestValue(4)]), vec![1]);
     assert!(vec.holes().is_empty());
     assert_eq!(
         vec.collect(),
@@ -291,7 +294,7 @@ fn update_many_batches_final_values_across_every_storage_state() -> Result<()> {
         vec.push(TestValue(value));
     }
     vec.write()?;
-    vec.delete(2);
+    vec.delete_many([2]);
     vec.push(TestValue(3));
     vec.push(TestValue(3_000));
 
@@ -349,7 +352,7 @@ fn fill_holes_or_push_many_preserves_value_order_and_indexes() -> Result<()> {
     vec.delete_many([1, 2]);
     vec.push(TestValue(3));
     vec.push(TestValue(3_000));
-    vec.delete(4);
+    vec.delete_many([4]);
 
     assert_eq!(
         vec.fill_holes_or_push_many(vec![

@@ -88,7 +88,9 @@ impl MempoolPublication {
             let expected = self.state.sync(|q| match index {
                 0 => to_value(q.mempool_info().unwrap()).unwrap(),
                 1 => to_value(q.mempool_recent().unwrap()).unwrap(),
-                _ => to_value(q.mempool_txids().unwrap()).unwrap(),
+                _ => {
+                    to_value(q.mempool_txids_with_hash().map(|(txids, _)| txids).unwrap()).unwrap()
+                }
             });
             let response = exchange_with_etag(address, "GET", path, "\"old\"").await;
             assert!(response.starts_with("HTTP/1.1 200"), "{path}: {response}");

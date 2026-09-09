@@ -13,7 +13,7 @@ use crate::AppState;
 /// Exercise production packed writing and native/HTTP reads on a populated day.
 pub async fn check(state: &AppState, address: SocketAddr) {
     let date = Date::new(2009, 1, 3);
-    let path = state.sync(|q| q.distribution().states_path.clone());
+    let path = state.sync(|q| q.plugins().distribution.states_path.clone());
     let staging = tempdir().unwrap();
     let mut producer = UTXOStates::new(staging.path());
     for age in producer.age_range.iter_mut() {
@@ -47,11 +47,6 @@ pub async fn check(state: &AppState, address: SocketAddr) {
         ("utxos_under_1h_old", 3.0),
     ] {
         let cohort = Cohort::new(name).unwrap();
-        let raw = state.sync(|q| q.urpd_raw(&cohort, date)).unwrap();
-        assert_eq!(
-            u64::from(raw.checked_supply().unwrap()) as f64 / 100_000_000.0,
-            total
-        );
         for aggregation in [
             UrpdAggregation::Raw,
             UrpdAggregation::Lin200,
@@ -77,7 +72,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
         (UrpdWeight::Cointime, 200_000_000_u64),
         (UrpdWeight::Coinflow, 400_000_000),
     ] {
-        let dir = state.sync(|q| q.bedrock().urpd_dir(weight, &cohort));
+        let dir = state.sync(|q| q.plugins().bedrock.urpd_dir(weight, &cohort));
         let file = dir.join(date.to_string());
         remember(&mut originals, file.clone());
         fs::create_dir_all(dir).unwrap();
@@ -126,7 +121,10 @@ async fn check_representation(
     total: f64,
 ) {
     let expected = state
-        .sync(|q| q.urpd_at_with_weight(cohort, date, aggregation, weight))
+        .sync(|q| {
+            q.resolve_urpd_at(cohort, date, aggregation, weight)
+                .and_then(|resolved| resolved.build())
+        })
         .unwrap();
     let expected = to_value(expected).unwrap();
     assert_eq!(expected["total_supply"], total);

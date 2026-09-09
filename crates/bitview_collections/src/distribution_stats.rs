@@ -54,30 +54,4 @@ impl<A> DistributionStats<A> {
             pct90: f(Self::SUFFIXES[6])?,
         })
     }
-
-    /// Apply a fallible operation to each of the 7 fields.
-    pub fn try_for_each_mut<E>(
-        &mut self,
-        mut f: impl FnMut(&mut A) -> StdResult<(), E>,
-    ) -> StdResult<(), E> {
-        f(&mut self.min)?;
-        f(&mut self.max)?;
-        f(&mut self.pct10)?;
-        f(&mut self.pct25)?;
-        f(&mut self.median)?;
-        f(&mut self.pct75)?;
-        f(&mut self.pct90)?;
-        Ok(())
-    }
-
-    /// Get minimum value by applying a function to each field.
-    pub fn min_by(&self, mut f: impl FnMut(&A) -> usize) -> usize {
-        f(&self.min)
-            .min(f(&self.max))
-            .min(f(&self.pct10))
-            .min(f(&self.pct25))
-            .min(f(&self.median))
-            .min(f(&self.pct75))
-            .min(f(&self.pct90))
-    }
 }

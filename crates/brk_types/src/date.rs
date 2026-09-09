@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt, str::FromStr};
 
 use brk_error::{Error, Result as ErrorResult};
 use itoa::Buffer;
-use jiff::{Span, Timestamp as JiffTimestamp, Zoned, civil::Date as Date_, tz::TimeZone};
+use jiff::{Span, Timestamp as JiffTimestamp, civil::Date as Date_, tz::TimeZone};
 use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
@@ -10,7 +10,6 @@ use serde::{
 };
 
 use super::{Day1, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10};
-use crate::ONE_DAY_IN_SEC_F64;
 
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
@@ -64,25 +63,6 @@ impl Date {
     pub fn try_into_jiff(self) -> ErrorResult<Date_> {
         let year = i16::try_from(self.0 / 10_000).map_err(|_| Error::UnindexableDate)?;
         Date_::new(year, self.month() as i8, self.day() as i8).map_err(|_| Error::UnindexableDate)
-    }
-
-    pub fn today() -> Self {
-        Self::from(Timestamp::now())
-    }
-
-    pub fn completion(&self) -> f64 {
-        let date = Date_::from(*self);
-        let now = Zoned::now().with_time_zone(TimeZone::UTC);
-        let today = now.date();
-
-        if date < today {
-            1.0
-        } else if date == today {
-            let rounded = JiffTimestamp::from(*self);
-            now.timestamp().duration_since(rounded).as_secs_f64() / ONE_DAY_IN_SEC_F64
-        } else {
-            0.0
-        }
     }
 }
 

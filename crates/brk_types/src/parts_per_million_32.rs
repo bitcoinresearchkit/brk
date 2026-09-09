@@ -62,7 +62,7 @@ impl PartsPerMillion32 {
 
     #[inline]
     pub fn to_f32(self) -> f32 {
-        if unlikely(self.0 == u32::MAX) {
+        if unlikely(self.is_nan()) {
             f32::NAN
         } else {
             self.0 as f32 / 1_000_000.0
@@ -84,8 +84,7 @@ impl From<usize> for PartsPerMillion32 {
 impl From<u32> for PartsPerMillion32 {
     #[inline]
     fn from(value: u32) -> Self {
-        debug_assert!(value != u32::MAX, "u32::MAX is reserved as NaN sentinel");
-        Self(value)
+        Self::new(value)
     }
 }
 

@@ -25,10 +25,6 @@ struct Inner {
 }
 
 impl Publication {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// Waits for existing readers, then closes the pipeline to mutable reads.
     /// Calling this while the same update is already running is a no-op.
     pub fn begin_update(&self) {

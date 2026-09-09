@@ -27,7 +27,7 @@ pub use cost_basis::CostBasisBlockData;
 pub use cost_basis::CostBasisVecs;
 pub use outputs::OutputsVecs;
 pub use profitability::ProfitabilityVecs;
-pub use realized::{AdjustedSoprComputeSource, RealizedAggregateSources};
+pub use realized::RealizedAggregateSources;
 pub use realized::{RealizedAggregateState, RealizedSources, RealizedVecs};
 pub use realized::{RealizedBlockData, RealizedTotals, Sopr24hInput};
 pub use relative::RelativeSource;

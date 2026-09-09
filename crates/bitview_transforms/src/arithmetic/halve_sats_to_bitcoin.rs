@@ -1,11 +1,11 @@
 use brk_types::{Bitcoin, Sats};
-use vecdb::UnaryTransform;
+use vecdb::{Halve, UnaryTransform};
 
 pub struct HalveSatsToBitcoin;
 
 impl UnaryTransform<Sats, Bitcoin> for HalveSatsToBitcoin {
     #[inline(always)]
     fn apply(sats: Sats) -> Bitcoin {
-        Bitcoin::from(sats / 2)
+        Bitcoin::from(Halve::apply(sats))
     }
 }

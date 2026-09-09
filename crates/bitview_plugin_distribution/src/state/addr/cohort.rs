@@ -138,7 +138,7 @@ mod tests {
         let mut cohort = AddrCohortState::new(Path::new(""), "test");
         let mut addr = FundedAddrData::default();
 
-        addr.receive(Sats::ONE_BTC, Cents::new(10_000));
+        addr.receive_outputs(Sats::ONE_BTC, Cents::new(10_000), 1);
         cohort.add(&addr);
         cohort.receive_outputs(&mut addr, Sats::new(50_000_000), Cents::new(20_000), 1);
         cohort

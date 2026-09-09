@@ -1,6 +1,5 @@
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -28,12 +27,6 @@ impl_cohort_collection!(
     }
 );
 
-impl ByTerm<CohortName> {
-    pub const fn names() -> &'static Self {
-        &TERM_NAMES
-    }
-}
-
 impl<T> ByTerm<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|term| create(CohortId::Term(term)))
@@ -45,13 +38,6 @@ impl<T> ByTerm<T> {
 
     pub fn map_with_id<U>(&self, mut map: impl FnMut(CohortId, &T) -> U) -> ByTerm<U> {
         ByTerm::from_fn(|term| map(CohortId::Term(term), self.get(term)))
-    }
-
-    pub fn par_iter(&self) -> impl ParallelIterator<Item = &T>
-    where
-        T: Send + Sync,
-    {
-        [&self.short, &self.long].into_par_iter()
     }
 
     pub fn get(&self, term: Term) -> &T {

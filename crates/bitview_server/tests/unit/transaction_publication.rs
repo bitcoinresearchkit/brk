@@ -91,7 +91,7 @@ fn confirmed_handoffs_pin_the_prefix_and_revalidate_replaced_blocks() {
         let raw = query.sync(|q| q.resolve_raw_transaction(&txid).unwrap());
         let json = query.sync(|q| q.resolve_transaction(&txid).unwrap());
         query.sync(|q| {
-            q.resolve_tx(&txid).unwrap();
+            q.resolve_confirmed_tx(&txid).unwrap();
             q.merkle_proof_resolved(confirmed).unwrap();
             q.merkleblock_proof_resolved(confirmed).unwrap();
             q.confirmed_cpfp_resolved(confirmed).unwrap();
@@ -127,7 +127,10 @@ fn confirmed_handoffs_pin_the_prefix_and_revalidate_replaced_blocks() {
         // position is no longer proof that the original transaction exists.
         fixture.publish(2, 1);
         query.sync(|q| {
-            assert!(matches!(q.resolve_tx(&txid), Err(Error::UnknownTxid)));
+            assert!(matches!(
+                q.resolve_confirmed_tx(&txid),
+                Err(Error::UnknownTxid)
+            ));
             assert!(matches!(
                 q.resolve_confirmed_tx(&txid),
                 Err(Error::UnknownTxid),
@@ -221,14 +224,30 @@ impl TransactionPublication {
         self.tags.clear();
         for suffix in SUFFIXES {
             let expected = query.sync(|q| match suffix {
-                "" => to_vec(&q.transaction(&self.txid).unwrap()).unwrap(),
+                "" => q
+                    .transaction_json_resolved(q.resolve_transaction(&self.txid).unwrap())
+                    .unwrap(),
                 "/status" => to_vec(&q.transaction_status(&self.txid).unwrap()).unwrap(),
-                "/hex" => q.transaction_hex(&self.txid).unwrap().into_bytes(),
-                "/raw" => q.transaction_raw(&self.txid).unwrap(),
+                "/hex" => q
+                    .resolve_raw_transaction(&self.txid)
+                    .and_then(|resolved| q.transaction_hex_resolved(resolved))
+                    .unwrap()
+                    .into_bytes(),
+                "/raw" => q
+                    .resolve_raw_transaction(&self.txid)
+                    .and_then(|resolved| q.transaction_raw_resolved(resolved))
+                    .unwrap(),
                 "/outspend/0" => to_vec(&q.outspend(&self.txid, Vout::ZERO).unwrap()).unwrap(),
                 "/outspends" => to_vec(&q.outspends(&self.txid).unwrap()).unwrap(),
-                "/cpfp" => to_vec(&q.cpfp(&self.txid).unwrap()).unwrap(),
-                "/rbf" => to_vec(&q.tx_rbf(&self.txid).unwrap()).unwrap(),
+                "/cpfp" => q
+                    .cpfp_json_resolved(q.resolve_cpfp(&self.txid).unwrap())
+                    .unwrap(),
+                "/rbf" => to_vec(
+                    &q.resolve_rbf(&self.txid)
+                        .and_then(|resolved| q.tx_rbf_resolved(resolved))
+                        .unwrap(),
+                )
+                .unwrap(),
                 "/replacements" | "/fullrbf/replacements" => to_vec(
                     &q.recent_replacements(suffix == "/fullrbf/replacements")
                         .unwrap(),

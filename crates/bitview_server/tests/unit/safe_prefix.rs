@@ -29,9 +29,19 @@ fn immutable_reads_use_published_prefix_during_append() {
                 q.indexer().publication().clone(),
             )
         });
-        let txid = state.sync(|q| q.block_txids(&hash).unwrap()[0]);
+        let txid = state.sync(|q| {
+            q.resolve_block_snapshot(&hash)
+                .and_then(|resolved| resolved.anchor_txids(q))
+                .unwrap()[0]
+        });
         let addr = state.sync(|q| {
-            Addr::try_from(&q.transaction(&txid).unwrap().output[0].script_pubkey).unwrap()
+            let bytes = q
+                .transaction_json_resolved(q.resolve_transaction(&txid).unwrap())
+                .unwrap();
+            let transaction: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            let script: bitcoin::ScriptBuf =
+                serde_json::from_value(transaction["vout"][0]["scriptpubkey"].clone()).unwrap();
+            Addr::try_from(&script).unwrap()
         });
         let mut paths = vec![
             "/api/server/sync".to_owned(),
@@ -178,7 +188,11 @@ fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
         fixture.publish(1, 1);
         let query = fixture.query.clone();
         let old_hash = query.sync(|q| q.tip_blockhash());
-        let expected_ids = query.sync(|q| q.block_txids(&old_hash).unwrap());
+        let expected_ids = query.sync(|q| {
+            q.resolve_block_snapshot(&old_hash)
+                .and_then(|resolved| resolved.anchor_txids(q))
+                .unwrap()
+        });
         let addr = Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
         let expected_utxos = query.sync(|q| q.addr_utxos(addr.clone(), 1000).unwrap());
         thread::scope(|scope| {
@@ -242,7 +256,11 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
         thread::scope(|scope| {
             // Keep this inside the scope closure so an assertion failure drops
             // the pin before scope cleanup joins the writer.
-            let pin = query.sync(|q| q.indexer().pin_safe_lengths());
+            let pin = query.sync(|q| {
+                q.indexer()
+                    .pin_safe_lengths_for(Duration::from_secs(1))
+                    .unwrap()
+            });
             let rows = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
             let txids = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
             let txs = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
@@ -325,7 +343,12 @@ fn request_deadline_bounds_gate_waits_and_skips_expired_work() {
         let query = state
             .query
             .with_deadline(started + Duration::from_millis(50));
-        let result = query.run(|q| q.blocks_v1(None, 1)).await;
+        let result = query
+            .run(|q| {
+                q.resolve_blocks_v1(None, 1)
+                    .and_then(|resolved| resolved.build(q))
+            })
+            .await;
         gate.finish_update();
         assert!(matches!(result, Err(Error::ReadTimeout)));
         assert!(started.elapsed() < Duration::from_secs(1));

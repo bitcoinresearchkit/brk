@@ -6,13 +6,13 @@ use bitview_cohort::*;
 fn iteration_and_mutation_follow_cohort_order() {
     macro_rules! check {
         ($collection:ident, $id:ident) => {{
-            let mut values = $collection::from_fn(|id| id.index());
+            let mut values = $collection::from_fn(|id| id as usize);
             assert!(values.iter().copied().eq(0..$id::ALL.len()));
             for value in values.iter_mut() {
                 *value += 1;
             }
             for &id in $id::ALL {
-                assert_eq!(*id.select(&values), id.index() + 1);
+                assert_eq!(*id.select(&values), id as usize + 1);
             }
         }};
     }

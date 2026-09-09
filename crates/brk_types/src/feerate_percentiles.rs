@@ -49,30 +49,4 @@ impl FeeRatePercentiles {
             max,
         }
     }
-
-    /// Convert to array format [min, 10%, 25%, 50%, 75%, 90%, max].
-    pub fn to_array(&self) -> [FeeRate; 7] {
-        [
-            self.min,
-            self.pct10,
-            self.pct25,
-            self.median,
-            self.pct75,
-            self.pct90,
-            self.max,
-        ]
-    }
-
-    /// Create from array format [min, 10%, 25%, 50%, 75%, 90%, max].
-    pub fn from_array(arr: [FeeRate; 7]) -> Self {
-        Self {
-            min: arr[0],
-            pct10: arr[1],
-            pct25: arr[2],
-            median: arr[3],
-            pct75: arr[4],
-            pct90: arr[5],
-            max: arr[6],
-        }
-    }
 }

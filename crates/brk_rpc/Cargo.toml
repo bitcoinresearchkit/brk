@@ -9,16 +9,16 @@ repository.workspace = true
 exclude = ["examples/"]
 
 [features]
-async = ["dep:http-body-util", "dep:hyper", "dep:hyper-util", "dep:tokio"]
+async = ["dep:base64", "dep:http-body-util", "dep:hyper", "dep:hyper-util", "dep:tokio"]
 
 [dependencies]
-base64 = "0.23"
+base64 = { version = "0.23", optional = true }
 http-body-util = { version = "0.1", optional = true }
 hyper = { version = "1", features = ["client", "http1"], optional = true }
 hyper-util = { version = "0.1", features = ["tokio"], optional = true }
 tokio = { workspace = true, features = ["fs", "time", "net", "sync", "macros"], optional = true }
 bitcoin = { workspace = true }
-brk_error = { workspace = true, features = ["corepc", "serde_json", "ureq"] }
+brk_error = { workspace = true, features = ["corepc", "serde_json"] }
 brk_logger = { workspace = true }
 brk_types = { workspace = true }
 corepc-jsonrpc = { workspace = true }
@@ -28,7 +28,6 @@ rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
-ureq = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

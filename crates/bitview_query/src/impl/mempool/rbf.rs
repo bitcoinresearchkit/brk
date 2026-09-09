@@ -38,12 +38,6 @@ impl Query {
         })
     }
 
-    /// RBF history for a tx. Matches mempool.space's
-    /// `GET /api/v1/tx/:txid/rbf`.
-    pub fn tx_rbf(&self, txid: &Txid) -> Result<RbfResponse> {
-        self.tx_rbf_resolved(self.resolve_rbf(txid)?)
-    }
-
     /// Enrich an already resolved tree without repeating its mempool lookup.
     pub fn tx_rbf_resolved(&self, rbf: ResolvedRbf) -> Result<RbfResponse> {
         if rbf.source.is_empty() {

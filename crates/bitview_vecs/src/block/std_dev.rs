@@ -47,13 +47,9 @@ impl StdDevPerBlock {
         source: &impl ReadableVec<Height, StoredF32>,
     ) -> Result<()> {
         if self.days == usize::MAX {
-            self.sma.height.compute_sma_(
-                starting_lengths.height,
-                source,
-                usize::MAX,
-                exit,
-                None,
-            )?;
+            self.sma
+                .height
+                .compute_sma(starting_lengths.height, source, usize::MAX, exit, None)?;
             self.sd.height.compute_expanding_sd(
                 starting_lengths.height,
                 source,

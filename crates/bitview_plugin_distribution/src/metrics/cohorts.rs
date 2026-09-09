@@ -1,8 +1,8 @@
 use std::thread;
 
 use bitview_cohort::{
-    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, CohortId, SpendableType, Term,
-    UTXOAggregate, UTXOAllAndSth, UTXOCoreValues, UTXOGroupsWithoutAmountOrType, UTXOValues,
+    AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, SpendableType, Term, UTXOAggregate,
+    UTXOAllAndSth, UTXOCoreValues, UTXOGroupsWithoutAmountOrType, UTXOValues,
 };
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
@@ -21,9 +21,9 @@ use vecdb::{
 use crate::{
     AllChainSources,
     metrics::{
-        ActivityVecs, AdjustedSoprComputeSource, CostBasisVecs, OutputsVecs, ProfitabilityVecs,
-        RealizedAggregateSources, RealizedAggregateState, RealizedVecs, RelativeSource,
-        RelativeVecs, Sopr24hInput, SupplyVecs, UnrealizedVecs,
+        ActivityVecs, CostBasisVecs, OutputsVecs, ProfitabilityVecs, RealizedAggregateSources,
+        RealizedAggregateState, RealizedVecs, RelativeSource, RelativeVecs, Sopr24hInput,
+        SupplyVecs, UnrealizedVecs,
     },
     state::{AddrCohortState, RealizedOps, UTXOStates, UnrealizedState},
 };
@@ -399,28 +399,6 @@ impl CohortMetrics<Rw> {
             .read_only_clone();
 
         let sopr_inputs = self.sopr_24h_inputs();
-        let adjusted_sources = UTXOAllAndSth {
-            all: AdjustedSoprComputeSource {
-                activity: self
-                    .activity
-                    .sources(CohortId::All)
-                    .expect("all activity sources"),
-                realized: self
-                    .realized
-                    .sources(CohortId::All)
-                    .expect("all realized sources"),
-            },
-            sth: AdjustedSoprComputeSource {
-                activity: self
-                    .activity
-                    .sources(CohortId::Term(Term::Sth))
-                    .expect("STH activity sources"),
-                realized: self
-                    .realized
-                    .sources(CohortId::Term(Term::Sth))
-                    .expect("STH realized sources"),
-            },
-        };
         let realized_sources = UTXOAggregate::from_fn(|id| {
             let cohort_id = id.cohort();
             RealizedAggregateSources {
@@ -434,6 +412,10 @@ impl CohortMetrics<Rw> {
                     .expect("aggregate realized sources"),
             }
         });
+        let adjusted_sources = UTXOAllAndSth {
+            all: &realized_sources.all,
+            sth: &realized_sources.sth,
+        };
         let Self {
             realized: realized_vecs,
             relative,

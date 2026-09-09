@@ -1,5 +1,4 @@
 mod adjusted;
-mod adjusted_sopr_compute_source;
 mod aggregate_sources;
 mod aggregate_state;
 mod block_data;
@@ -10,7 +9,6 @@ mod totals;
 mod vecs;
 
 pub use adjusted::AdjustedSoprVecs;
-pub use adjusted_sopr_compute_source::AdjustedSoprComputeSource;
 pub use aggregate_sources::RealizedAggregateSources;
 pub use aggregate_state::RealizedAggregateState;
 pub use block_data::RealizedBlockData;

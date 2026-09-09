@@ -1,16 +1,16 @@
 use std::{thread::sleep, time::Duration};
 
 use bitcoin::{
-    Block, BlockHash as BitcoinBlockHash, Network, Transaction, Txid as BitcoinTxid, block::Header,
+    Block, BlockHash as BitcoinBlockHash, Network, Transaction, Txid as BitcoinTxid,
     consensus::encode,
 };
 use brk_error::{Error, Result};
-use brk_types::{BlockHash, FeeRate, Height, MempoolEntryInfo, Txid, Vout};
+use brk_types::{BlockHash, FeeRate, Height, MempoolEntryInfo, Txid};
 use corepc_jsonrpc::error::Error as JsonRpcError;
 use corepc_types::{
     v17::{
-        GetBlockCount, GetBlockHeader, GetBlockHeaderVerbose, GetBlockTemplate, GetBlockVerboseOne,
-        GetBlockVerboseZero, GetTxOut,
+        GetBlockCount, GetBlockHeaderVerbose, GetBlockTemplate, GetBlockVerboseOne,
+        GetBlockVerboseZero,
     },
     v24::GetMempoolInfo,
     v28::GetBlockchainInfo,
@@ -88,15 +88,6 @@ impl Client {
         self.0.call_with_retry("getblock", &(hash, 1u8))
     }
 
-    pub fn get_block_header<'a, H>(&self, hash: &'a H) -> Result<Header>
-    where
-        &'a H: Into<&'a BitcoinBlockHash>,
-    {
-        let hash: &BitcoinBlockHash = hash.into();
-        let r: GetBlockHeader = self.0.call_with_retry("getblockheader", &(hash, false))?;
-        Ok(encode::deserialize_hex(&r.0)?)
-    }
-
     pub fn get_block_header_info<'a, H>(&self, hash: &'a H) -> Result<GetBlockHeaderVerbose>
     where
         &'a H: Into<&'a BitcoinBlockHash>,
@@ -144,75 +135,6 @@ impl Client {
         Ok(hashes)
     }
 
-    pub fn get_tx_out(
-        &self,
-        txid: &Txid,
-        vout: Vout,
-        include_mempool: Option<bool>,
-    ) -> Result<Option<GetTxOut>> {
-        let txid: &BitcoinTxid = txid.into();
-        let vout = u32::from(vout);
-        match include_mempool {
-            Some(include_mempool) => self
-                .0
-                .call_with_retry("gettxout", &(txid, vout, include_mempool)),
-            None => self.0.call_with_retry("gettxout", &(txid, vout)),
-        }
-    }
-
-    pub fn get_raw_mempool(&self) -> Result<Vec<Txid>> {
-        let raw: Box<RawValue> = self.0.call_with_retry("getrawmempool", &NO_ARGS)?;
-        Ok(TxidArrayParser::parse(raw.get())?)
-    }
-
-    pub fn get_raw_transaction<'a, T>(&self, txid: &'a T) -> Result<Transaction>
-    where
-        &'a T: Into<&'a BitcoinTxid>,
-    {
-        let hex = self.get_raw_transaction_hex(txid)?;
-        Ok(encode::deserialize_hex(&hex)?)
-    }
-
-    pub fn get_raw_transaction_from<'a, T, H>(
-        &self,
-        txid: &'a T,
-        block_hash: &'a H,
-    ) -> Result<Transaction>
-    where
-        &'a T: Into<&'a BitcoinTxid>,
-        &'a H: Into<&'a BitcoinBlockHash>,
-    {
-        let hex = self.get_raw_transaction_hex_from(txid, block_hash)?;
-        Ok(encode::deserialize_hex(&hex)?)
-    }
-
-    pub fn get_raw_transaction_hex<'a, T>(&self, txid: &'a T) -> Result<String>
-    where
-        &'a T: Into<&'a BitcoinTxid>,
-    {
-        let txid: &BitcoinTxid = txid.into();
-        self.0.call_with_retry("getrawtransaction", &(txid, false))
-    }
-
-    pub fn get_raw_transaction_hex_from<'a, T, H>(
-        &self,
-        txid: &'a T,
-        block_hash: &'a H,
-    ) -> Result<String>
-    where
-        &'a T: Into<&'a BitcoinTxid>,
-        &'a H: Into<&'a BitcoinBlockHash>,
-    {
-        let txid: &BitcoinTxid = txid.into();
-        let block_hash: &BitcoinBlockHash = block_hash.into();
-        self.0
-            .call_with_retry("getrawtransaction", &(txid, false, block_hash))
-    }
-
-    pub fn get_mempool_raw_tx(&self, txid: &Txid) -> Result<Transaction> {
-        self.get_raw_transaction(txid)
-    }
-
     /// Batched `getrawtransaction` over a slice of txids. Returns a map keyed
     /// by txid containing the deserialized tx. Individual failures (e.g. a
     /// tx that evicted between the listing and this call) are logged and
@@ -248,14 +170,6 @@ impl Client {
         }
 
         Ok(out)
-    }
-
-    /// Submit without replaying an ambiguous transport failure or redirect.
-    /// This blocking operation has a 60-second total deadline including waiting
-    /// for another submission. An error may leave the submission outcome unknown.
-    /// HTTP callers use the async client to support request cancellation.
-    pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
-        self.0.send_raw_transaction(hex)
     }
 
     /// Core's projected next block + live mempool txid set +

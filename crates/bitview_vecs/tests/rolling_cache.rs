@@ -1,6 +1,6 @@
 #![cfg(feature = "diagnostics")]
 
-use bitview_collections::{WindowId, Windows};
+use bitview_collections::Windows;
 use bitview_vecs::{
     CachedWindowStartVec, LazyPerBlockCumulativeRolling, LazyWindowStartVec,
     PerBlockCumulativeRolling,
@@ -34,17 +34,28 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         "timestamps",
         (0..N).map(|i| Timestamp::from((i * 600) as u32)),
     ));
-    let starts = WindowId::series(|id| {
+    let starts = Windows {
+        _24h: 1,
+        _1w: 7,
+        _1m: 30,
+        _1y: 365,
+    }
+    .map_with_suffix(|suffix, &days| {
         CachedWindowStartVec::new(LazyWindowStartVec::days(
-            id.suffix(),
+            suffix,
             Version::ONE,
-            Windows::<()>::DAYS[id.index()] as u64,
+            days,
             timestamps.read_only_cached_boxed_clone(),
         ))
     });
-    let starts_ref = WindowId::series(|id| id.select(&starts));
-    for id in WindowId::ALL {
-        id.select(&starts).snapshot();
+    let starts_ref = Windows {
+        _24h: &starts._24h,
+        _1w: &starts._1w,
+        _1m: &starts._1m,
+        _1y: &starts._1y,
+    };
+    for start in starts.as_array() {
+        start.snapshot();
     }
     let mut metric = PerBlockCumulativeRolling::<StoredU64>::forced_import(
         &CACHE_BUDGET,
@@ -73,8 +84,8 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         .collect();
     CACHE_BUDGET.invalidate();
     diagnostics::take();
-    for (slot, id) in WindowId::ALL.iter().enumerate() {
-        let mapping = id.select(&starts).snapshot();
+    for (slot, start) in starts.as_array().into_iter().enumerate() {
+        let mapping = start.snapshot();
         let expected: Vec<_> = ends
             .iter()
             .map(|&end| {
@@ -84,7 +95,10 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
                 ))
             })
             .collect();
-        assert_eq!(id.select(&metric.sum).resolutions.day1.collect(), expected);
+        assert_eq!(
+            metric.sum.as_array()[slot].resolutions.day1.collect(),
+            expected
+        );
         assert_eq!(diagnostics::take(), if slot == 0 { N / 1024 } else { 0 });
         let averages: Vec<_> = ends
             .iter()
@@ -96,7 +110,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
             })
             .collect();
         assert_eq!(
-            id.select(&metric.average).resolutions.day1.collect(),
+            metric.average.as_array()[slot].resolutions.day1.collect(),
             averages
         );
         assert_eq!(diagnostics::take(), 0);

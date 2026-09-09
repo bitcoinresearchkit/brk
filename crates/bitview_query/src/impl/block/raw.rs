@@ -20,32 +20,6 @@ struct RawRecord {
 }
 
 impl Query {
-    /// Read an exact block while pinning its published immutable prefix.
-    ///
-    /// Bare lengths cannot authorize a raw read; use this method or a resolved
-    /// block snapshot instead of calling the internal raw helpers.
-    ///
-    /// ```compile_fail
-    /// use bitview_query::Query;
-    /// use brk_types::{BlockHash, Height, Lengths};
-    /// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
-    ///     query.block_raw_at_height(height, hash, safe).unwrap();
-    /// }
-    /// ```
-    ///
-    /// ```compile_fail
-    /// use bitview_query::Query;
-    /// use brk_types::{BlockHash, Height, Lengths};
-    /// fn unpinned(query: &Query, height: Height, hash: &BlockHash, safe: Lengths) {
-    ///     query.block_raw_size_at_height(height, hash, safe).unwrap();
-    /// }
-    /// ```
-    pub fn block_raw(&self, hash: &BlockHash) -> Result<Vec<u8>> {
-        let guard = self.pin_safe_lengths()?;
-        let height = self.height_by_hash_at(hash, &guard)?;
-        self.block_raw_at_height(height, hash, &guard)
-    }
-
     fn open_raw_record(&self, height: Height, guard: &SafeLengths) -> Result<RawRecord> {
         let safe = guard.lengths();
         if height >= safe.height {

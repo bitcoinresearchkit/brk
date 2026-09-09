@@ -9,20 +9,6 @@ use vecdb::PrintableIndex;
 #[derive(Default, Debug, Deref, Clone, Serialize)]
 pub struct StoredString(String);
 
-impl StoredString {
-    pub fn new(string: String) -> Self {
-        Self(string)
-    }
-
-    pub fn as_str(&self) -> &str {
-        self
-    }
-
-    pub fn as_string(&self) -> &String {
-        self
-    }
-}
-
 impl From<String> for StoredString {
     #[inline]
     fn from(value: String) -> Self {

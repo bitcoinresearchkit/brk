@@ -170,15 +170,9 @@ impl<M: StorageMode> Indexer<M> {
     }
 
     /// Copy the pipeline-safe bounds. This does not pin the backing data;
-    /// retain [`Self::pin_safe_lengths`] protection across dependent reads.
+    /// retain [`Self::pin_safe_lengths_for`] protection across dependent reads.
     pub fn safe_lengths(&self) -> Lengths {
         self.state.lengths()
-    }
-
-    /// Stabilize the already published immutable prefix, including across
-    /// rollback. This does not wait for an append-only compute pass.
-    pub fn pin_safe_lengths(&self) -> SafeLengths {
-        self.state.pin()
     }
 
     pub fn try_pin_safe_lengths(&self) -> Option<SafeLengths> {
@@ -243,11 +237,6 @@ impl Indexer {
     pub fn import(context: ImportContext<'_>, reader: &Reader) -> Result<Self> {
         validate_reader_source(reader)?;
         Self::import_inner(context, reader, true)
-    }
-
-    pub fn index(&mut self, exit: &Exit) -> Result<()> {
-        self.begin_update();
-        self.index_inner(exit, false)
     }
 
     pub fn checked_index(&mut self, exit: &Exit) -> Result<()> {

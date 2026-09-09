@@ -4,8 +4,7 @@ use rawdb::Region;
 
 use super::{RawStrategy, ReadOnlyRawVec};
 use crate::{
-    Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, Result as CrateResult, Stamp,
-    VecIndex, VecReader, VecValue,
+    HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, VecIndex, VecReader, VecValue,
 };
 
 pub mod any_vec;
@@ -18,11 +17,6 @@ where
     T: VecValue,
     S: RawStrategy<T>,
 {
-    #[inline]
-    pub fn stamp(&self) -> Stamp {
-        self.base.header().stamp()
-    }
-
     pub fn reader(&self) -> VecReader<I, T, S> {
         VecReader::from_read_only(self)
     }
@@ -31,27 +25,6 @@ where
     #[inline]
     pub fn range_cursor_at(&self, from: usize, to: usize) -> RawRangeCursor<'_, I, T, S> {
         RawRangeCursor::new(self.region(), self.stored_len(), from, to)
-    }
-
-    #[inline]
-    pub fn read_at_once(&self, index: usize) -> CrateResult<T> {
-        let len = self.base.len();
-        if index >= len {
-            return Err(Error::IndexTooHigh {
-                index,
-                len,
-                name: self.base.name().to_string(),
-            });
-        }
-
-        Ok(self.base.region().with_read_bytes(|bytes| unsafe {
-            S::read_from_ptr(bytes.as_ptr().add(HEADER_OFFSET), index * size_of::<T>())
-        }))
-    }
-
-    #[inline]
-    pub fn read_once(&self, index: I) -> CrateResult<T> {
-        self.read_at_once(index.to_usize())
     }
 
     pub fn region(&self) -> &Region {

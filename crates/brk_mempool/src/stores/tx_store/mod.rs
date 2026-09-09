@@ -59,10 +59,6 @@ impl TxStore {
         (record.entry.txid == *txid).then_some(record)
     }
 
-    pub fn entry_by_prefix(&self, prefix: &TxidPrefix) -> Option<&TxEntry> {
-        self.records.get(prefix).map(|r| &r.entry)
-    }
-
     /// Tx + entry in one map probe. Used by the RBF builder and the
     /// snapshot builder which need both per visited tx.
     pub fn record_by_prefix(&self, prefix: &TxidPrefix) -> Option<&TxRecord> {

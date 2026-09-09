@@ -1,7 +1,7 @@
 use std::{convert::Infallible, iter, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
-use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Open, Version};
+use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Version};
 use vecdb::{
     AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
 };
@@ -69,11 +69,13 @@ impl<I: VecIndex> LazyOhlcVec<I> {
             .map_or(prices.len(), |height| height.to_usize().min(prices.len()));
 
         if first < end {
-            let mut candle = CandleBuilder::new(prices[first]);
+            let mut candle = OHLCCents::from(Close::new(prices[first]));
             for &price in &prices[first + 1..end] {
-                candle.include(price);
+                candle.high = candle.high.max(High::new(price));
+                candle.low = candle.low.min(Low::new(price));
+                candle.close = Close::new(price);
             }
-            Some(candle.finish())
+            Some(candle)
         } else {
             let close = first
                 .checked_sub(1)
@@ -185,39 +187,6 @@ impl<I: VecIndex> Traversable for LazyOhlcVec<I> {
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, OHLCCents, _>(self)
-    }
-}
-
-struct CandleBuilder {
-    open: Cents,
-    high: Cents,
-    low: Cents,
-    close: Cents,
-}
-
-impl CandleBuilder {
-    fn new(price: Cents) -> Self {
-        Self {
-            open: price,
-            high: price,
-            low: price,
-            close: price,
-        }
-    }
-
-    fn include(&mut self, price: Cents) {
-        self.high = self.high.max(price);
-        self.low = self.low.min(price);
-        self.close = price;
-    }
-
-    fn finish(self) -> OHLCCents {
-        OHLCCents {
-            open: Open::new(self.open),
-            high: High::new(self.high),
-            low: Low::new(self.low),
-            close: Close::new(self.close),
-        }
     }
 }
 

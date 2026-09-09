@@ -24,7 +24,7 @@ fn block_template_hash_matches_next_block_hash() {
     let txid = insert_tx(&mempool, 0xA0, 1_234, 100);
     mempool.test_tick(&[txid], FeeRate::new(1.0));
 
-    let template = mempool.block_template().unwrap();
+    let template = mempool.block_template_source().build().unwrap();
     assert_eq!(template.hash, mempool.next_block_hash().unwrap());
     assert_eq!(template.transactions.len(), 1);
     assert_eq!(template.transactions[0].txid, txid);
@@ -62,17 +62,19 @@ fn block_template_diff_round_trip_reconstructs_t1_from_t0() {
     let txid_a = insert_tx(&mempool, 0xA1, 1_111, 100);
     let txid_b = insert_tx(&mempool, 0xA2, 2_222, 100);
     mempool.test_tick(&[txid_a, txid_b], FeeRate::new(1.0));
-    let t0 = mempool.block_template().unwrap();
+    let t0 = mempool.block_template_source().build().unwrap();
 
     // T1: add a third tx, advance gbt. block_template_diff(t0.hash) must
     // be reconstructible into the new block 0 ordering by combining the
     // retained prior-indexed bodies from T0 with the New bodies inline.
     let txid_c = insert_tx(&mempool, 0xA3, 3_333, 100);
     mempool.test_tick(&[txid_a, txid_b, txid_c], FeeRate::new(1.0));
-    let t1 = mempool.block_template().unwrap();
+    let t1 = mempool.block_template_source().build().unwrap();
 
     let diff = mempool
-        .block_template_diff(t0.hash)
+        .resolve_block_template_diff(t0.hash)
+        .map(|resolved| resolved.build())
+        .transpose()
         .unwrap()
         .expect("t0 is still in history");
     assert_eq!(diff.since, t0.hash);
@@ -99,11 +101,16 @@ fn block_template_diff_removed_lists_evicted_txs() {
     let txid_a = insert_tx(&mempool, 0xA4, 1_111, 100);
     let txid_b = insert_tx(&mempool, 0xA5, 2_222, 100);
     mempool.test_tick(&[txid_a, txid_b], FeeRate::new(1.0));
-    let t0 = mempool.block_template().unwrap();
+    let t0 = mempool.block_template_source().build().unwrap();
 
     // T1: txid_a no longer in gbt.
     mempool.test_tick(&[txid_b], FeeRate::new(1.0));
-    let diff = mempool.block_template_diff(t0.hash).unwrap().unwrap();
+    let diff = mempool
+        .resolve_block_template_diff(t0.hash)
+        .map(|resolved| resolved.build())
+        .transpose()
+        .unwrap()
+        .unwrap();
     assert_eq!(diff.removed, vec![txid_a]);
 }
 
@@ -119,7 +126,12 @@ fn block_template_diff_preserves_reordering_and_prior_removal_order() {
     let before = mempool.next_block_hash().unwrap();
 
     mempool.test_tick(&[d, added, b], FeeRate::new(1.0));
-    let diff = mempool.block_template_diff(before).unwrap().unwrap();
+    let diff = mempool
+        .resolve_block_template_diff(before)
+        .map(|resolved| resolved.build())
+        .transpose()
+        .unwrap()
+        .unwrap();
     assert_eq!(diff.removed, [a, c]);
     assert_eq!(diff.order.len(), 3);
     assert!(matches!(diff.order[0], BlockTemplateDiffEntry::Retained(3)));
@@ -127,7 +139,12 @@ fn block_template_diff_preserves_reordering_and_prior_removal_order() {
     assert!(matches!(diff.order[2], BlockTemplateDiffEntry::Retained(1)));
 
     mempool.test_tick(&[], FeeRate::new(1.0));
-    let empty = mempool.block_template_diff(before).unwrap().unwrap();
+    let empty = mempool
+        .resolve_block_template_diff(before)
+        .map(|resolved| resolved.build())
+        .transpose()
+        .unwrap()
+        .unwrap();
     assert!(empty.order.is_empty());
     assert_eq!(empty.removed, [a, b, c, d]);
 }
@@ -138,7 +155,6 @@ fn block_template_diff_unknown_since_returns_none() {
     mempool.test_tick(&[], FeeRate::new(1.0));
     let bogus = NextBlockHash::new(0xDEAD_BEEF);
     assert!(mempool.resolve_block_template_diff(bogus).is_none());
-    assert!(mempool.block_template_diff(bogus).unwrap().is_none());
 }
 
 #[test]
@@ -159,7 +175,7 @@ fn resolved_template_and_diff_keep_the_validated_publication_after_history_evict
     }
     assert!(mempool.resolve_block_template_diff(since).is_none());
 
-    let (diff, _) = mempool.block_template_diff_resolved(resolved).unwrap();
+    let diff = resolved.build().unwrap();
     assert_eq!(diff.since, since);
     assert_eq!(diff.hash, since);
     assert_eq!(diff.order.len(), 1);
@@ -173,7 +189,7 @@ fn resolved_template_and_diff_keep_the_validated_publication_after_history_evict
 fn block_template_empty_pool_has_no_transactions() {
     let mempool = Mempool::for_test();
     mempool.test_tick(&[], FeeRate::new(2.0));
-    let template = mempool.block_template().unwrap();
+    let template = mempool.block_template_source().build().unwrap();
     assert!(template.transactions.is_empty());
 }
 
@@ -184,7 +200,7 @@ fn body_fills_publish_a_new_identity_and_diff_reconstructs_every_field() {
     let stable = insert_tx(&mempool, 11, 100, 100);
     let ids = [changed, stable];
     mempool.test_tick(&ids, FeeRate::new(1.0));
-    let before = mempool.block_template().unwrap();
+    let before = mempool.block_template_source().build().unwrap();
     let published = mempool.snapshot();
     mempool.test_state_lock().write().txs.apply_fills(
         &TxidPrefix::from(changed),
@@ -199,21 +215,26 @@ fn body_fills_publish_a_new_identity_and_diff_reconstructs_every_field() {
             .is_none()
     );
     assert_eq!(
-        to_vec(&mempool.block_template().unwrap()).unwrap(),
+        to_vec(&mempool.block_template_source().build().unwrap()).unwrap(),
         to_vec(&before).unwrap()
     );
     // Body changes alone must rebuild: no GBT, membership or fee-floor change.
     mempool
         .rebuilder()
         .tick(mempool.test_state_lock(), &ids, FeeRate::new(1.0), false);
-    let after = mempool.block_template().unwrap();
+    let after = mempool.block_template_source().build().unwrap();
     assert_ne!(before.hash, after.hash);
     assert!(after.transactions[0].input[0].prevout.is_some());
     assert!(Arc::ptr_eq(
         &published.template_transactions()[1],
         &mempool.snapshot().template_transactions()[1]
     ));
-    let diff = mempool.block_template_diff(before.hash).unwrap().unwrap();
+    let diff = mempool
+        .resolve_block_template_diff(before.hash)
+        .map(|resolved| resolved.build())
+        .transpose()
+        .unwrap()
+        .unwrap();
     assert!(diff.removed.is_empty());
     assert!(matches!(&diff.order[0], BlockTemplateDiffEntry::New(_)));
     assert!(matches!(
@@ -239,23 +260,26 @@ fn published_bodies_survive_removal_and_incomplete_selection_is_not_served() {
     let mempool = Mempool::for_test();
     let txid = insert_tx(&mempool, 20, 100, 100);
     mempool.test_tick(&[txid], FeeRate::new(1.0));
-    let before = mempool.block_template().unwrap();
+    let before = mempool.block_template_source().build().unwrap();
     mempool
         .test_state_lock()
         .write()
         .txs
         .remove_by_prefix(&TxidPrefix::from(txid));
     assert_eq!(
-        to_vec(&mempool.block_template().unwrap()).unwrap(),
+        to_vec(&mempool.block_template_source().build().unwrap()).unwrap(),
         to_vec(&before).unwrap()
     );
     mempool.test_tick(&[txid], FeeRate::new(1.0));
     assert!(matches!(
-        mempool.block_template(),
+        mempool.block_template_source().build(),
         Err(Error::StateUpdating)
     ));
     assert!(matches!(
-        mempool.block_template_diff(before.hash),
+        mempool
+            .resolve_block_template_diff(before.hash)
+            .map(|resolved| resolved.build())
+            .transpose(),
         Err(Error::StateUpdating)
     ));
 }

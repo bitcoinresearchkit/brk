@@ -3,8 +3,8 @@ use std::{convert::Infallible, iter, sync::Arc};
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, CachedBoxedVec, CachedReadableVec, CachedVec, PrintableIndex,
-    ReadOnlyClone, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
+    AnyExportableVec, AnyVec, CachedVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec,
+    ReadableVec, TypedVec, VecIndex, short_type_name,
 };
 
 /// Pinned first-height lookup derived from one monotonic height-to-period
@@ -25,16 +25,8 @@ impl<I: VecIndex> CachedFirstHeightVec<I> {
         self.0.version()
     }
 
-    pub fn snapshot(&self) -> Arc<Vec<Height>> {
-        self.0.snapshot()
-    }
-
     pub fn read_only_boxed_clone(&self) -> ReadableBoxedVec<I, Height> {
         ReadableBoxedVec::new(self.clone())
-    }
-
-    pub fn read_only_cached_boxed_clone(&self) -> CachedBoxedVec<I, Height> {
-        self.0.cached_boxed_clone()
     }
 }
 

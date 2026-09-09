@@ -30,11 +30,6 @@ impl OpReturnPolicyId {
     }
 
     #[inline]
-    pub fn get_mut<T>(self, values: &mut [T; OP_RETURN_POLICY_COUNT]) -> &mut T {
-        &mut values[self.index()]
-    }
-
-    #[inline]
     pub fn from_fn<T, F>(f: F) -> [T; OP_RETURN_POLICY_COUNT]
     where
         F: FnMut(Self) -> T,

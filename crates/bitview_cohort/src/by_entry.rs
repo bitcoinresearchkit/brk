@@ -14,11 +14,6 @@ impl EntryPrice {
             Self::Premium
         }
     }
-
-    #[inline]
-    pub const fn is_discount(self) -> bool {
-        matches!(self, Self::Discount)
-    }
 }
 
 pub const ENTRY_NAMES: ByEntry<CohortName> = ByEntry {
@@ -45,12 +40,6 @@ define_cohort_id!(
         Premium => premium,
     }
 );
-
-impl ByEntry<CohortName> {
-    pub const fn names() -> &'static Self {
-        &ENTRY_NAMES
-    }
-}
 
 impl<T> ByEntry<T> {
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {

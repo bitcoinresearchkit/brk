@@ -24,9 +24,8 @@ impl Visualizer {
         let workspace_root = Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
             .and_then(|p| p.parent())
-            .ok_or("Failed to find workspace root")?
-            .to_path_buf();
-        Ok(Self { workspace_root })
+            .ok_or("Failed to find workspace root")?;
+        Ok(Self::new(workspace_root))
     }
 
     pub fn generate(&self) -> Result<(), Box<dyn Error>> {

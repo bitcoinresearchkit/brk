@@ -58,10 +58,6 @@ pub struct Fetcher {
 }
 
 impl Fetcher {
-    pub fn import(hars_path: Option<&Path>) -> Result<Self> {
-        Self::new(hars_path)
-    }
-
     pub fn new(hars_path: Option<&Path>) -> Result<Self> {
         let agent = new_agent(30);
         Ok(Self {

@@ -412,12 +412,6 @@ impl<T> AgeRange<T> {
         AgeRangeId::from(age).select_mut(self)
     }
 
-    /// Get reference by Age. O(1).
-    #[inline]
-    pub fn get(&self, age: Age) -> &T {
-        AgeRangeId::from(age).select(self)
-    }
-
     pub fn new(mut create: impl FnMut(CohortId) -> T) -> Self {
         Self::from_fn(|id| create(id.cohort()))
     }
@@ -550,7 +544,15 @@ mod tests {
             Timestamp::ZERO,
         );
 
-        assert_eq!(AGE_RANGE_NAMES.get(age_at_540_days).id, "1y_to_18m_old");
-        assert_eq!(AGE_RANGE_NAMES.get(age_at_18m).id, "18m_to_2y_old");
+        assert_eq!(
+            AgeRangeId::from(age_at_540_days)
+                .select(&AGE_RANGE_NAMES)
+                .id,
+            "1y_to_18m_old"
+        );
+        assert_eq!(
+            AgeRangeId::from(age_at_18m).select(&AGE_RANGE_NAMES).id,
+            "18m_to_2y_old"
+        );
     }
 }

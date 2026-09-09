@@ -314,7 +314,7 @@ mod tests {
         let mut state = AddrStateVecs::forced_import(&db, Version::ONE)?;
 
         let mut funded_data = FundedAddrData::default();
-        funded_data.receive(Sats::new(1_000), Cents::new(100));
+        funded_data.receive_outputs(Sats::new(1_000), Cents::new(100), 1);
         let inline_empty = EmptyAddrData {
             tx_count: 1,
             funded_txo_count: 1,
@@ -389,7 +389,7 @@ mod tests {
             transfered: Sats::new(1_000),
         };
         let mut newly_funded = FundedAddrData::from(&inline_empty);
-        newly_funded.receive(Sats::new(200), Cents::new(100));
+        newly_funded.receive_outputs(Sats::new(200), Cents::new(100), 1);
         let mut empty = AddrTypeToTypeIndexMap::default();
         empty.insert_for_type(
             OutputType::P2PKH,
@@ -426,7 +426,7 @@ mod tests {
         );
 
         let mut extended_to_funded = FundedAddrData::from(&extended_empty);
-        extended_to_funded.receive(Sats::new(300), Cents::new(100));
+        extended_to_funded.receive_outputs(Sats::new(300), Cents::new(100), 1);
         let replacement_extended = EmptyAddrData {
             tx_count: 17,
             funded_txo_count: 1,
@@ -530,7 +530,7 @@ mod tests {
         assert_empty_eq(&stored_empty(&state, 4), &inline);
 
         let mut funded_updated = funded_a.clone();
-        funded_updated.receive(Sats::new(500), Cents::new(200));
+        funded_updated.receive_outputs(Sats::new(500), Cents::new(200), 1);
         let funded_to_extended = extended_empty(18, 300);
         let extended_updated = extended_empty(19, 400);
         let extended_to_inline = inline_empty(2, 500);
@@ -606,7 +606,7 @@ mod tests {
 
     fn funded_data(amount: u64) -> FundedAddrData {
         let mut data = FundedAddrData::default();
-        data.receive(Sats::new(amount), Cents::new(100));
+        data.receive_outputs(Sats::new(amount), Cents::new(100), 1);
         data
     }
 

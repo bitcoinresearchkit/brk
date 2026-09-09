@@ -59,19 +59,6 @@ impl Stores {
             .range(range))
     }
 
-    pub fn addr_tx_indexes(
-        &self,
-        addr_type: OutputType,
-        addr_index: TypeIndex,
-    ) -> Result<impl DoubleEndedIterator<Item = TxIndex> + '_> {
-        Ok(self
-            .addr_type_to_addr_index_and_tx_index
-            .get(addr_type)
-            .data()?
-            .prefix(addr_index)
-            .map(|(key, _)| key.tx_index()))
-    }
-
     pub fn addr_tx_indexes_before(
         &self,
         addr_type: OutputType,
