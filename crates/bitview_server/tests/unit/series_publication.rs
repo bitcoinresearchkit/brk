@@ -1,8 +1,8 @@
 use std::{net::SocketAddr, time::Duration};
 
 use brk_types::{Index, Timestamp};
-use serde_json::Value;
-use tokio::time::timeout;
+use serde_json::{Value, from_slice, from_str, from_value, json};
+use tokio::{spawn, time::timeout};
 use vecdb::ReadableVec;
 
 use super::server_routes::exchange_with_etag;
@@ -26,7 +26,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
         );
         // Public readers must install their own bounds, without a caller scope.
         state.sync(|query| {
-            let params = serde_json::from_value(serde_json::json!({
+            let params = from_value(json!({
                 "series": "price_close", "index": index.name(),
             }))
             .unwrap();
@@ -35,7 +35,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
             assert_eq!(column.len(), last + 1);
             let mut expected = Vec::new();
             column.write_json(None, None, &mut expected).unwrap();
-            let values: Value = serde_json::from_slice(&expected).unwrap();
+            let values: Value = from_slice(&expected).unwrap();
             assert_eq!(values.as_array().unwrap().len(), last + 1);
             assert_eq!(values[last].as_f64(), Some(0.0));
             drop(read);
@@ -54,7 +54,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
         );
         let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-        let body: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+        let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
         assert_eq!(body["start"], last);
         assert_eq!(body["end"], last + 1);
         assert_eq!(body["data"].as_array().unwrap().len(), 1);
@@ -69,8 +69,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
             let path = format!("/api/series/price_close/{}/{suffix}", index.name());
             let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
             assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-            let body: Value =
-                serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+            let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
             if suffix == "len" {
                 assert_eq!(body, last + 1);
             } else {
@@ -94,7 +93,7 @@ pub async fn check(state: &AppState, address: SocketAddr, monotonic_time: u32) {
                 } else {
                     "*".to_owned()
                 };
-                requests.push(tokio::spawn(async move {
+                requests.push(spawn(async move {
                     exchange_with_etag(address, method, &path, &tag).await
                 }));
             }

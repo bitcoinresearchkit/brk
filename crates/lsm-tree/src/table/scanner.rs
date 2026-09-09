@@ -2,12 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{fs::File, io::BufReader, path::Path};
+
 use super::{Block, DataBlock};
 use crate::{
-    CompressionType, InternalValue,
+    CompressionType, Error, InternalValue, Result,
     table::{block::BlockType, owned_data_block_iter::OwnedDataBlockIter},
 };
-use std::{fs::File, io::BufReader, path::Path};
 
 /// Table reader that is optimized for consuming an entire table
 pub struct Scanner {
@@ -27,7 +28,7 @@ impl Scanner {
         block_count: usize,
         compression: CompressionType,
         global_seqno: u64,
-    ) -> crate::Result<Self> {
+    ) -> Result<Self> {
         // TODO: a larger buffer size may be better for HDD, maybe make this configurable
         // TODO: benchmarks were inconclusive on SSD, not much difference between 4KB - 2MB
         let mut reader = BufReader::with_capacity(8 * 4_096, File::open(path)?);
@@ -50,13 +51,13 @@ impl Scanner {
     fn fetch_next_block(
         reader: &mut BufReader<File>,
         compression: CompressionType,
-    ) -> crate::Result<DataBlock> {
+    ) -> Result<DataBlock> {
         let block = Block::from_reader(reader, compression);
 
         match block {
             Ok(block) => {
                 if block.header.block_type != BlockType::Data {
-                    return Err(crate::Error::InvalidTag((
+                    return Err(Error::InvalidTag((
                         "BlockType",
                         block.header.block_type.into(),
                     )));
@@ -70,7 +71,7 @@ impl Scanner {
 }
 
 impl Iterator for Scanner {
-    type Item = crate::Result<InternalValue>;
+    type Item = Result<InternalValue>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

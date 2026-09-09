@@ -4,6 +4,7 @@ use axum::{
     http::{Request, StatusCode},
     response::IntoResponse,
 };
+use serde_json::{Value, from_slice};
 
 use super::Empty;
 
@@ -22,7 +23,7 @@ async fn accepts_only_absent_or_empty_query() {
         let response = error.into_response();
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let body = to_bytes(response.into_body(), 1024).await.unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let body: Value = from_slice(&body).unwrap();
         assert_eq!(
             body["error"]["message"],
             "this endpoint does not accept query parameters"

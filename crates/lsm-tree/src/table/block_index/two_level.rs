@@ -2,17 +2,18 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::file_accessor::FileAccessor;
-use crate::table::{IndexBlock, KeyedBlockHandle};
+use std::{path::PathBuf, sync::Arc};
+
 use crate::{
-    Cache, CompressionType, GlobalTableId, Slice,
+    Cache, CompressionType, GlobalTableId, Result, Slice,
+    file_accessor::FileAccessor,
     table::{
+        IndexBlock, KeyedBlockHandle,
         block::BlockType,
         block_index::{BlockIndexIter, iter::OwnedIndexBlockIter},
         util::load_block,
     },
 };
-use std::{path::PathBuf, sync::Arc};
 
 /// Index that translates item keys to data block handles
 ///
@@ -95,7 +96,7 @@ impl BlockIndexIter for Iter {
 }
 
 impl Iterator for Iter {
-    type Item = crate::Result<KeyedBlockHandle>;
+    type Item = Result<KeyedBlockHandle>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(lo_block) = &mut self.lo_consumer

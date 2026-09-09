@@ -1,3 +1,4 @@
+use bitview_collections::with_resolution_fields;
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
@@ -47,4 +48,4 @@ macro_rules! define_constant_vecs {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_constant_vecs);
+with_resolution_fields!(define_constant_vecs);

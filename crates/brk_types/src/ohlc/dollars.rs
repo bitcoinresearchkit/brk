@@ -1,9 +1,14 @@
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
+use schemars::JsonSchema;
+use serde::{Serialize, Serializer, ser::SerializeTuple};
+
 use super::{Close, High, Low, OHLCCents, Open};
 use crate::Dollars;
-use schemars::JsonSchema;
-use serde::ser::SerializeTuple;
-use serde::{Serialize, Serializer};
-use std::fmt::Display;
+
+#[cfg(feature = "storage")]
+use vecdb::Result as VecdbResult;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -75,7 +80,7 @@ impl From<&OHLCCents> for OHLCDollars {
 }
 
 impl Display for OHLCDollars {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
             "{}, {}, {}, {}",
@@ -98,7 +103,7 @@ impl Formattable for OHLCDollars {
         buf.push(b']');
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> FmtResult {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
@@ -122,7 +127,7 @@ impl Bytes for OHLCDollars {
         arr
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> VecdbResult<Self> {
         Ok(Self {
             open: Open::<Dollars>::from_bytes(&bytes[0..8])?,
             high: High::<Dollars>::from_bytes(&bytes[8..16])?,

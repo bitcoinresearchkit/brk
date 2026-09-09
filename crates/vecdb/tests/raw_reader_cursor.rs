@@ -1,11 +1,12 @@
 use rawdb::Database;
 use tempfile::TempDir;
+use vecdb::{AnyStoredVec, BytesVec, ImportableVec, Result, Version, WritableVec};
+
 #[cfg(debug_assertions)]
 use vecdb::MutableVec;
-use vecdb::{AnyStoredVec, BytesVec, ImportableVec, Version, WritableVec};
 
 #[test]
-fn raw_reader_cursor_reads_persisted_values() -> vecdb::Result<()> {
+fn raw_reader_cursor_reads_persisted_values() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     let mut vec = BytesVec::<usize, u64>::import(&db, "values", Version::ONE)?;
@@ -57,7 +58,7 @@ fn raw_reader_cursor_reads_persisted_values() -> vecdb::Result<()> {
 }
 
 #[test]
-fn raw_range_cursor_stays_within_declared_range() -> vecdb::Result<()> {
+fn raw_range_cursor_stays_within_declared_range() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     let mut vec = BytesVec::<usize, u64>::import(&db, "range", Version::ONE)?;

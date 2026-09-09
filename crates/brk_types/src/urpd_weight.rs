@@ -33,6 +33,9 @@ impl UrpdWeight {
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_string;
+
     use super::UrpdWeight;
 
     #[test]
@@ -40,12 +43,12 @@ mod tests {
         for weight in [UrpdWeight::Raw, UrpdWeight::Cointime, UrpdWeight::Coinflow] {
             assert_eq!(weight.to_string(), weight.as_str());
             assert_eq!(
-                serde_json::to_string(&weight).unwrap(),
+                to_string(&weight).unwrap(),
                 format!("\"{}\"", weight.as_str())
             );
         }
 
-        let schema = serde_json::to_string(&schemars::schema_for!(UrpdWeight)).unwrap();
+        let schema = to_string(&schema_for!(UrpdWeight)).unwrap();
         assert!(schema.contains("\"raw\""), "{schema}");
     }
 }

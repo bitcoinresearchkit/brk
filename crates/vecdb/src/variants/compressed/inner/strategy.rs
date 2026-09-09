@@ -1,8 +1,9 @@
+use std::ptr;
+
 use rawdb::likely;
 
-use crate::{Error, ValueStrategy};
-
 use super::EncodedChunk;
+use crate::{Error, Result, ValueStrategy};
 
 /// Trait for compression strategies used by ReadWriteCompressedVec.
 pub trait CompressionStrategy<T>: ValueStrategy<T> {
@@ -12,10 +13,10 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
     const MAX_UNCOMPRESSED_CHUNK_SIZE: usize;
 
     /// Compresses full pages into one shared compression context.
-    fn compress_chunk(values: &[T], values_per_page: usize) -> crate::Result<EncodedChunk>;
+    fn compress_chunk(values: &[T], values_per_page: usize) -> Result<EncodedChunk>;
 
     /// Builds the reusable decoder for one chunk header.
-    fn decoder(header: &[u8]) -> crate::Result<Self::Decoder>;
+    fn decoder(header: &[u8]) -> Result<Self::Decoder>;
 
     /// Decodes one page body, replacing `dst` while reusing its allocation.
     fn decompress_page_into(
@@ -23,7 +24,7 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()>;
+    ) -> Result<()>;
 
     /// Decodes one page body directly onto the end of `dst`.
     #[inline]
@@ -32,7 +33,7 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         let mut values = Vec::with_capacity(expected_len);
         Self::decompress_page_into(decoder, body, expected_len, &mut values)?;
         dst.extend(values);
@@ -46,7 +47,7 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
         let mut bytes = Vec::with_capacity(byte_len);
         if Self::IS_NATIVE_LAYOUT {
             unsafe {
-                std::ptr::copy_nonoverlapping(
+                ptr::copy_nonoverlapping(
                     values.as_ptr() as *const u8,
                     bytes.as_mut_ptr(),
                     byte_len,
@@ -63,11 +64,7 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
 
     /// Deserializes bytes into an existing buffer, reusing its allocation.
     #[inline]
-    fn bytes_to_values_into(
-        bytes: &[u8],
-        expected_len: usize,
-        dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    fn bytes_to_values_into(bytes: &[u8], expected_len: usize, dst: &mut Vec<T>) -> Result<()> {
         let expected_bytes = expected_len * size_of::<T>();
         dst.clear();
         dst.reserve(expected_len);
@@ -79,7 +76,7 @@ pub trait CompressionStrategy<T>: ValueStrategy<T> {
         }
         if Self::IS_NATIVE_LAYOUT {
             unsafe {
-                std::ptr::copy_nonoverlapping(
+                ptr::copy_nonoverlapping(
                     bytes.as_ptr(),
                     dst.as_mut_ptr() as *mut u8,
                     expected_bytes,

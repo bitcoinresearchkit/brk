@@ -2,17 +2,20 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-pub mod builder;
+use std::io::{Cursor, Read};
 
-pub use builder::Builder;
+use byteorder::{LittleEndian, ReadBytesExt};
 
 use super::bit_array::BitArrayReader;
 use crate::{
+    Error, Result,
     file::MAGIC_BYTES,
     table::filter::{FilterType, standard_bloom::builder::secondary_hash},
 };
-use byteorder::{LittleEndian, ReadBytesExt};
-use std::io::{Cursor, Read};
+
+pub mod builder;
+
+pub use builder::Builder;
 
 /// A standard bloom filter
 ///
@@ -34,7 +37,7 @@ pub struct StandardBloomFilterReader<'a> {
 }
 
 impl<'a> StandardBloomFilterReader<'a> {
-    pub fn new(slice: &'a [u8]) -> crate::Result<Self> {
+    pub fn new(slice: &'a [u8]) -> Result<Self> {
         let mut reader = Cursor::new(slice);
 
         // Check header
@@ -42,7 +45,7 @@ impl<'a> StandardBloomFilterReader<'a> {
         reader.read_exact(&mut magic)?;
 
         if magic != MAGIC_BYTES {
-            return Err(crate::Error::InvalidHeader("BloomFilter"));
+            return Err(Error::InvalidHeader("BloomFilter"));
         }
 
         // NOTE: Filter type
@@ -79,13 +82,13 @@ impl<'a> StandardBloomFilterReader<'a> {
 
         let bytes = slice
             .get(offset..)
-            .ok_or(crate::Error::InvalidHeader("BloomFilter"))?;
+            .ok_or(Error::InvalidHeader("BloomFilter"))?;
         let bit_len = bytes
             .len()
             .checked_mul(8)
-            .ok_or(crate::Error::InvalidHeader("BloomFilter"))?;
+            .ok_or(Error::InvalidHeader("BloomFilter"))?;
         if m == 0 || m != bit_len {
-            return Err(crate::Error::InvalidHeader("BloomFilter"));
+            return Err(Error::InvalidHeader("BloomFilter"));
         }
 
         Ok(Self {
@@ -147,11 +150,13 @@ impl<'a> StandardBloomFilterReader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use nanoid::nanoid;
     use test_log::test;
 
+    use super::*;
+
     #[test]
-    fn filter_bloom_standard_serde_round_trip() -> crate::Result<()> {
+    fn filter_bloom_standard_serde_round_trip() -> Result<()> {
         let mut filter = Builder::with_fp_rate(10, 0.0001);
 
         let keys = &[
@@ -183,12 +188,12 @@ mod tests {
 
         assert!(matches!(
             StandardBloomFilterReader::new(&filter_bytes),
-            Err(crate::Error::InvalidHeader("BloomFilter"))
+            Err(Error::InvalidHeader("BloomFilter"))
         ));
     }
 
     #[test]
-    fn filter_bloom_standard_basic() -> crate::Result<()> {
+    fn filter_bloom_standard_basic() -> Result<()> {
         let mut filter = Builder::with_fp_rate(10, 0.0001);
 
         let keys = [
@@ -221,13 +226,13 @@ mod tests {
     }
 
     #[test]
-    fn filter_bloom_standard_bpk() -> crate::Result<()> {
+    fn filter_bloom_standard_bpk() -> Result<()> {
         let item_count = 1_000;
         let bpk = 5.0;
 
         let mut filter = Builder::with_bpk(item_count, bpk);
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             filter.set_with_hash(Builder::get_hash(key));
@@ -238,7 +243,7 @@ mod tests {
 
         let mut false_positives = 0;
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             if filter.contains(key) {
@@ -254,13 +259,13 @@ mod tests {
     }
 
     #[test]
-    fn filter_bloom_standard_fpr() -> crate::Result<()> {
+    fn filter_bloom_standard_fpr() -> Result<()> {
         let item_count = 100_000;
         let wanted_fpr = 0.1;
 
         let mut filter = Builder::with_fp_rate(item_count, wanted_fpr);
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             filter.set_with_hash(Builder::get_hash(key));
@@ -271,7 +276,7 @@ mod tests {
 
         let mut false_positives = 0;
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             if filter.contains(key) {
@@ -288,13 +293,13 @@ mod tests {
     }
 
     #[test]
-    fn filter_bloom_standard_fpr_2() -> crate::Result<()> {
+    fn filter_bloom_standard_fpr_2() -> Result<()> {
         let item_count = 100_000;
         let wanted_fpr = 0.5;
 
         let mut filter = Builder::with_fp_rate(item_count, wanted_fpr);
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             filter.set_with_hash(Builder::get_hash(key));
@@ -305,7 +310,7 @@ mod tests {
 
         let mut false_positives = 0;
 
-        for key in (0..item_count).map(|_| nanoid::nanoid!()) {
+        for key in (0..item_count).map(|_| nanoid!()) {
             let key = key.as_bytes();
 
             if filter.contains(key) {

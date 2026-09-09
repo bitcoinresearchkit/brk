@@ -2,8 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::Slice;
+use std::io::{Cursor, Read, Seek, Write};
+
+use byteorder::{ReadBytesExt, WriteBytesExt};
+use varint_rs::{VarintReader, VarintWriter};
+
 use crate::{
+    Result, Slice,
     coding::{Decode, Encode},
     table::{
         block::{BlockOffset, Decodable, Encodable, TRAILER_START_MARKER},
@@ -11,9 +16,6 @@ use crate::{
         util::SliceIndexes,
     },
 };
-use byteorder::{ReadBytesExt, WriteBytesExt};
-use std::io::{Cursor, Seek};
-use varint_rs::{VarintReader, VarintWriter};
 
 /// Points to a block on file
 #[derive(Copy, Clone, Debug, Default)]
@@ -43,7 +45,7 @@ impl BlockHandle {
 }
 
 impl Encode for BlockHandle {
-    fn encode_into<W: std::io::Write>(&self, writer: &mut W) -> crate::Result<()> {
+    fn encode_into<W: Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_u64_varint(*self.offset)?;
         writer.write_u32_varint(self.size)?;
         Ok(())
@@ -51,7 +53,7 @@ impl Encode for BlockHandle {
 }
 
 impl Decode for BlockHandle {
-    fn decode_from<R: std::io::Read>(reader: &mut R) -> crate::Result<Self>
+    fn decode_from<R: Read>(reader: &mut R) -> Result<Self>
     where
         Self: Sized,
     {
@@ -131,13 +133,13 @@ impl PartialEq for KeyedBlockHandle {
 }
 
 impl Encodable<BlockOffset> for KeyedBlockHandle {
-    fn encode_full_into<W: std::io::Write>(
+    fn encode_full_into<W: Write>(
         &self,
         writer: &mut W,
         state: &mut BlockOffset,
         _fixed_key_len: Option<u16>,
         _fixed_value_len: Option<u32>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         // We encode restart markers as:
         // [marker=0] [offset] [size] [seqno] [key len] [end key]
         // 1          2        3      4       5         6
@@ -159,14 +161,14 @@ impl Encodable<BlockOffset> for KeyedBlockHandle {
 
     // TODO: see https://github.com/fjall-rs/lsm-tree/issues/184
     #[cfg_attr(coverage_nightly, coverage(off))]
-    fn encode_truncated_into<W: std::io::Write>(
+    fn encode_truncated_into<W: Write>(
         &self,
         _writer: &mut W,
         _state: &mut BlockOffset,
         _shared_len: usize,
         _fixed_key_len: Option<u16>,
         _fixed_value_len: Option<u32>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         unimplemented!()
     }
 

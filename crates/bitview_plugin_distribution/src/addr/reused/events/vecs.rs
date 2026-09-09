@@ -1,7 +1,9 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_inputs::ByTypeVecs as InputsByTypeVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_outputs::ByTypeVecs;
 use bitview_transforms::RatioU64;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
@@ -12,7 +14,7 @@ use bitview_vecs::{
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{PartsPerMillion32, StoredF32, StoredU32, StoredU64, Version};
-use rayon::prelude::*;
+use rayon::{iter, prelude::*};
 use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::state::AddrTypeToAddrEventCount;
@@ -147,17 +149,17 @@ impl AddrEventsVecs {
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        outputs_by_type: &bitview_plugin_outputs::ByTypeVecs,
-        inputs_by_type: &bitview_plugin_inputs::ByTypeVecs,
+        outputs_by_type: &ByTypeVecs,
+        inputs_by_type: &InputsByTypeVecs,
     ) -> Result<Self> {
         let import_count = |name: &str| {
             ColumnarPerBlockCumulativeRolling::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_type_cumulative"),
                 version,
                 |source| {
-                    bitview_vecs::LazyColumnPerBlockCumulativeRolling::with_addr_types(
-                        cache,
+                    LazyColumnPerBlockCumulativeRolling::with_addr_types(
                         name,
                         version,
                         source,
@@ -257,10 +259,8 @@ impl AddrEventsVecs {
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(self.output_to_reused_addr_count.stored_mut())
-            .chain(rayon::iter::once(
-                self.input_from_reused_addr_count.stored_mut(),
-            ))
+        iter::once(self.output_to_reused_addr_count.stored_mut())
+            .chain(iter::once(self.input_from_reused_addr_count.stored_mut()))
             .chain([
                 self.active_reused_addr_count.stored_mut(),
                 &mut self.active_reused_addr_share.block as &mut dyn AnyStoredVec,

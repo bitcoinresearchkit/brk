@@ -1,17 +1,15 @@
-mod common;
-
 use bitview_cohort::{OutputTypeId, SpendableTypeId};
 use bitview_collections::WindowId;
 use bitview_vecs::{ColumnarPerBlock, CountTotal, OutputTypeCounts, SpendableTypeCounts};
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
-use vecdb::{
-    AnyStoredVec, CachedReadableVec, CachedVec, ColumnId, Database, ReadOnlyClone, ReadableVec,
-    WritableVec,
-};
+use tempfile::tempdir;
+use vecdb::{AnyStoredVec, CachedVec, ColumnId, Database, ReadOnlyClone, ReadableVec, WritableVec};
+
+mod common;
 
 #[test]
 fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let indexes = common::indexes(&db);
     let starts = common::stored::<Height, _>(&db, "starts", [Height::ZERO; 3]);
@@ -22,6 +20,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     let selected = SpendableTypeId::ALL[0].output_type();
 
     let mut inputs = ColumnarPerBlock::<StoredU16, SpendableTypeId, ()>::forced_import(
+        &common::CACHE_BUDGET,
         &db,
         "inputs",
         version,
@@ -29,6 +28,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     )
     .unwrap();
     let mut outputs = ColumnarPerBlock::<StoredU16, OutputTypeId, ()>::forced_import(
+        &common::CACHE_BUDGET,
         &db,
         "outputs",
         version,
@@ -69,13 +69,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         &windows,
     );
     let output = OutputTypeCounts::from_columnar_count_source(
-        CountTotal::from_source(
-            "all",
-            version,
-            cached.cached_boxed_clone(),
-            &indexes,
-            &windows,
-        ),
+        CountTotal::from_source("all", version, &cached, &indexes, &windows),
         |name| format!("{name}_outputs"),
         version,
         &outputs.height.read_only_clone(),
@@ -123,14 +117,11 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         Some(PartsPerMillion32::from(0.25))
     );
 
-    // Source owners invalidate rewritten totals; the transformed denominator
-    // has its own shared retention and must be invalidated too.
+    // Only the source owner needs to invalidate rewritten totals.
     totals.truncate_if_needed_at(2).unwrap();
     totals.push(StoredU64::from(10_u64));
     totals.write().unwrap();
     cached.invalidate();
-    input.invalidate();
-    output.invalidate();
     assert_eq!(
         input_shares
             .get(selected)

@@ -1,10 +1,11 @@
 use bitview_cohort::{AddrTypeId, ByAddrType, WithAddrTypes};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
-use rayon::prelude::*;
+use rayon::{iter, prelude::*};
 use vecdb::{
     AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, ReadableCloneableVec,
     ReadableVec, Rw, StorageMode, WritableVec,
@@ -32,7 +33,7 @@ impl AvgAmountVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
         all_chain: &AllChainSources,
         utxo_count: &impl ReadableCloneableVec<Height, StoredU64>,
@@ -50,10 +51,20 @@ impl AvgAmountVecs {
             funded_addr_count,
             |_, count, supply| supply / count,
         );
-        let utxo_source =
-            ColumnarPerBlock::forced_import(db, "avg_utxo_amount_sats_by_type", version, |_| ())?;
-        let addr_source =
-            ColumnarPerBlock::forced_import(db, "avg_addr_amount_sats_by_type", version, |_| ())?;
+        let utxo_source = ColumnarPerBlock::forced_import(
+            cache,
+            db,
+            "avg_utxo_amount_sats_by_type",
+            version,
+            |_| (),
+        )?;
+        let addr_source = ColumnarPerBlock::forced_import(
+            cache,
+            db,
+            "avg_addr_amount_sats_by_type",
+            version,
+            |_| (),
+        )?;
         let utxo_columns = utxo_source.height.read_only_clone();
         let addr_columns = addr_source.height.read_only_clone();
         let utxo = WithAddrTypes {
@@ -66,7 +77,6 @@ impl AvgAmountVecs {
             ),
             by_addr_type: AddrTypeId::series(|column, type_name| {
                 LazyColumnSpotValuePerBlock::new(
-                    cache,
                     &format!("{type_name}_avg_utxo_amount"),
                     version,
                     &utxo_columns,
@@ -86,7 +96,6 @@ impl AvgAmountVecs {
             ),
             by_addr_type: AddrTypeId::series(|column, type_name| {
                 LazyColumnSpotValuePerBlock::new(
-                    cache,
                     &format!("{type_name}_avg_addr_amount"),
                     version,
                     &addr_columns,
@@ -106,8 +115,7 @@ impl AvgAmountVecs {
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(self.utxo_source.stored_mut())
-            .chain(rayon::iter::once(self.addr_source.stored_mut()))
+        iter::once(self.utxo_source.stored_mut()).chain(iter::once(self.addr_source.stored_mut()))
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

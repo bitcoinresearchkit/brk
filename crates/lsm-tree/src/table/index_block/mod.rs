@@ -1,4 +1,16 @@
-use crate::SliceExt as _;
+use std::cmp::Ordering;
+
+use super::{
+    Block,
+    block::{BlockOffset, Encoder, Trailer},
+};
+use crate::{
+    Result, Slice, SliceExt as _,
+    table::{
+        block::{Decoder, ParsedItem},
+        util::{SliceIndexes, compare_prefixed_slice},
+    },
+};
 
 // Copyright (c) 2025-present, fjall-rs
 // This source code is licensed under both the Apache 2.0 and MIT License
@@ -10,16 +22,6 @@ mod iter;
 pub use block_handle::{BlockHandle, KeyedBlockHandle};
 pub use iter::Iter;
 
-use super::{
-    Block,
-    block::{BlockOffset, Encoder, Trailer},
-};
-use crate::Slice;
-use crate::table::{
-    block::{Decoder, ParsedItem},
-    util::{SliceIndexes, compare_prefixed_slice},
-};
-
 #[derive(Debug)]
 pub struct IndexBlockParsedItem {
     pub offset: BlockOffset,
@@ -30,7 +32,7 @@ pub struct IndexBlockParsedItem {
 }
 
 impl ParsedItem<KeyedBlockHandle> for IndexBlockParsedItem {
-    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> std::cmp::Ordering {
+    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> Ordering {
         if let Some(prefix) = &self.prefix {
             let prefix = unsafe { bytes.get_unchecked(prefix.0..prefix.1) };
             let rest_key = unsafe { bytes.get_unchecked(self.end_key.0..self.end_key.1) };
@@ -91,7 +93,7 @@ impl IndexBlock {
         ))
     }
 
-    pub fn encode_into_vec(items: &[KeyedBlockHandle]) -> crate::Result<Vec<u8>> {
+    pub fn encode_into_vec(items: &[KeyedBlockHandle]) -> Result<Vec<u8>> {
         let mut buf = vec![];
 
         Self::encode_into(&mut buf, items)?;
@@ -104,7 +106,7 @@ impl IndexBlock {
     /// # Panics
     ///
     /// Panics if the given item array if empty.
-    pub fn encode_into(writer: &mut Vec<u8>, items: &[KeyedBlockHandle]) -> crate::Result<()> {
+    pub fn encode_into(writer: &mut Vec<u8>, items: &[KeyedBlockHandle]) -> Result<()> {
         #[expect(clippy::expect_used)]
         let first_key = items.first().expect("chunk should not be empty").end_key();
 

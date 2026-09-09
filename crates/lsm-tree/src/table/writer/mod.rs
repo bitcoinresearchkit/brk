@@ -2,12 +2,19 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-mod filter;
-mod index;
-mod meta;
+use std::{
+    fs::{self, File},
+    io::{BufWriter, Write},
+    path::{self, PathBuf},
+};
+
+use index::BlockIndexWriter;
+use log::{debug, trace};
+use sfa::Writer as SfaWriter;
 
 use super::{
-    Block, BlockOffset, DataBlock, KeyedBlockHandle, block::Header as BlockHeader,
+    Block, BlockOffset, DataBlock, KeyedBlockHandle,
+    block::{BlockType, Header as BlockHeader},
     filter::BloomConstructionPolicy,
 };
 use crate::{
@@ -16,18 +23,17 @@ use crate::{
     hash::XXH3_TAG,
     table::{
         BlockHandle,
+        block::BlockType as BlockBlockType,
         writer::{
             filter::{FilterWriter, FullFilterWriter},
             index::FullIndexWriter,
         },
     },
 };
-use index::BlockIndexWriter;
-use std::{
-    fs::{self, File},
-    io::{BufWriter, Write},
-    path::{self, PathBuf},
-};
+
+mod filter;
+mod index;
+mod meta;
 
 const FILE_BUFFER_CAPACITY: usize = 256 * 1_024;
 
@@ -82,7 +88,7 @@ pub struct Writer {
 
     /// File writer
     #[expect(clippy::struct_field_names)]
-    file_writer: sfa::Writer<BufWriter<File>>,
+    file_writer: SfaWriter<BufWriter<File>>,
 
     /// Writer of index blocks
     #[expect(clippy::struct_field_names)]
@@ -109,7 +115,7 @@ pub struct Writer {
 impl Writer {
     pub fn new(path: PathBuf, table_id: u32) -> Result<Self> {
         let writer = BufWriter::with_capacity(FILE_BUFFER_CAPACITY, File::create_new(&path)?);
-        let mut writer = sfa::Writer::from_writer(writer);
+        let mut writer = SfaWriter::from_writer(writer);
         writer.start("data")?;
 
         Ok(Self {
@@ -297,7 +303,7 @@ impl Writer {
         let header = Block::write_into(
             &mut self.file_writer,
             &self.block_buffer,
-            super::block::BlockType::Data,
+            BlockType::Data,
             self.data_block_compression,
         )?;
 
@@ -357,11 +363,11 @@ impl Writer {
         }
 
         // Write index
-        log::trace!("Finishing index writer");
+        trace!("Finishing index writer");
         self.index_writer.finish(&mut self.file_writer)?;
 
         // Write filter
-        log::trace!("Finishing filter writer");
+        trace!("Finishing filter writer");
         self.filter_writer.finish(&mut self.file_writer)?;
 
         self.file_writer.start("table_version")?;
@@ -422,7 +428,7 @@ impl Writer {
             Block::write_into(
                 &mut self.file_writer,
                 &self.block_buffer,
-                crate::table::block::BlockType::Meta,
+                BlockBlockType::Meta,
                 CompressionType::None,
             )?;
         };
@@ -431,7 +437,7 @@ impl Writer {
         // not require storage-device barriers for crash or power-loss safety.
         drop(self.file_writer.into_inner()?);
 
-        log::debug!(
+        debug!(
             "Written {} items in {} blocks into new table file #{}, written {} MiB",
             self.meta.item_count,
             self.meta.data_block_count,
@@ -445,12 +451,14 @@ impl Writer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use tempfile::tempdir;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn table_writer_count() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let path = dir.path().join("1");
         let mut writer = Writer::new(path, 1)?;
         assert_eq!(0, writer.chunk_size);

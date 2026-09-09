@@ -1,18 +1,19 @@
 use std::{
     collections::BTreeMap,
-    fs, io,
-    io::Read,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
+use bitcoin::Amount;
 use brk_error::{Error, Result};
-
-mod decode;
 use pco::{ChunkConfig, standalone::simple_compress};
 use schemars::JsonSchema;
 use serde::Serialize;
 
 use crate::{Cents, CentsCompact, CostBasisByPercentile, Date, PERCENTILES, PERCENTILES_LEN, Sats};
+
+mod decode;
 
 /// Raw on-disk URPD: a map of price (cents) to supply (sats).
 /// Processed into [`crate::Urpd`] for API responses.
@@ -345,7 +346,7 @@ fn checked_supply(mut values: impl Iterator<Item = u64>) -> Result<Sats> {
     values
         .try_fold(0_u64, |sum, value| {
             sum.checked_add(value)
-                .filter(|sum| *sum <= bitcoin::Amount::MAX_MONEY.to_sat())
+                .filter(|sum| *sum <= Amount::MAX_MONEY.to_sat())
                 .ok_or_else(|| {
                     Error::Deserialization("UrpdRaw: supply exceeds Bitcoin's maximum".into())
                 })

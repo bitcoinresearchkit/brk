@@ -1,5 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{CachedWindowStartVec, PerBlockFull, PerBlockRolling};
 use brk_error::Result;
 use brk_types::{Height, StoredU64, Version, Weight};
@@ -17,7 +18,7 @@ impl Vecs {
         db: &Database,
         version: Version,
         indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {

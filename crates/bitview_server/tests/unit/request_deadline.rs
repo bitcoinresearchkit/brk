@@ -1,8 +1,11 @@
-use axum::{Router, http::StatusCode, middleware::from_fn, routing::any};
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
 };
+
+use axum::{Router, http::StatusCode, middleware::from_fn, routing::any};
+use brk_error::Error as BrkError;
+use tokio::time;
 use tower::ServiceExt;
 
 use super::*;
@@ -14,7 +17,7 @@ async fn deadline_bounds_the_initial_attempt() {
             "/",
             any(|request: Request<Body>| async move {
                 assert!(request.extensions().get::<RequestDeadline>().is_some());
-                tokio::time::sleep(Duration::from_secs(10)).await;
+                time::sleep(Duration::from_secs(10)).await;
                 StatusCode::OK
             }),
         )
@@ -38,7 +41,7 @@ async fn http_never_replays_handlers_or_classifies_readiness() {
                 "/",
                 any(move || {
                     counted.fetch_add(1, Ordering::SeqCst);
-                    async { Error::from(brk_error::Error::StateUpdating).into_response() }
+                    async { Error::from(BrkError::StateUpdating).into_response() }
                 }),
             )
             .layer(from_fn(apply));

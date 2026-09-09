@@ -1,7 +1,7 @@
 use std::{fmt, ops::Deref, path::Path};
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error};
 
 /// URPD cohort identifier. Use `GET /api/urpd` to list available cohorts.
 ///
@@ -64,8 +64,6 @@ impl AsRef<Path> for Cohort {
 impl<'de> Deserialize<'de> for Cohort {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let s = String::deserialize(d)?;
-        Self::new(s).ok_or_else(|| {
-            serde::de::Error::custom("invalid cohort: expected non-empty [a-z0-9_]+")
-        })
+        Self::new(s).ok_or_else(|| Error::custom("invalid cohort: expected non-empty [a-z0-9_]+"))
     }
 }

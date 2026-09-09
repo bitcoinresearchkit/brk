@@ -2,7 +2,7 @@ use bitview_collections::PerResolution;
 use bitview_vecs::{IndexSources, LazyPreviousDeltaVec};
 use brk_types::Version;
 use vecdb::{
-    AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
+    AnyStoredVec, CacheBudget, CachedVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
     ReadableCloneableVec, VecIndex, WritableVec,
 };
 
@@ -67,4 +67,4 @@ pub fn indexes(db: &Database) -> IndexSources {
 }
 
 #[allow(dead_code)]
-pub static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+pub static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

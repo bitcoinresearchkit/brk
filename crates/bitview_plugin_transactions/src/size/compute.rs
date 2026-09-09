@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 
 use super::Vecs;
@@ -8,7 +8,7 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_lengths = indexer.safe_lengths();

@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 pub use crate::table::filter::BloomConstructionPolicy;
 
 /// Filter policy entry
@@ -20,7 +22,7 @@ pub enum FilterPolicyEntry {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FilterPolicy(Vec<FilterPolicyEntry>);
 
-impl std::ops::Deref for FilterPolicy {
+impl Deref for FilterPolicy {
     type Target = [FilterPolicyEntry];
 
     fn deref(&self) -> &Self::Target {

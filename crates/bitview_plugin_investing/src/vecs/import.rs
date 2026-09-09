@@ -25,7 +25,7 @@ impl Vecs {
     ) -> Result<Self> {
         let version = STORAGE.schema_version();
 
-        let cached_days = mappings.height.day1_cached_boxed_clone();
+        let cached_days = mappings.height.day1_read_only_boxed_clone();
         let cached_dca_sats = CachedDcaSats::new(
             prices.split.close.usd.day1.read_only_boxed_clone(),
             cached_days.clone(),

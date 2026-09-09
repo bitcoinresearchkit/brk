@@ -1,73 +1,75 @@
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
 
-use super::{STORAGE, Vecs};
+use super::{
+    STORAGE, Vecs, count, features, fees, patterns, policy, sigops, size, versions, volume,
+};
 
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 10_000_000)?;
         let version = STORAGE.schema_version();
 
-        let count = super::count::forced_import(
+        let count = count::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let features = super::features::forced_import(
+        let features = features::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let size =
-            super::size::forced_import(context.cache_budget(), &db, version, indexer, mappings)?;
-        let fees = super::fees::forced_import(
+        let size = size::forced_import(context.cache_budget(), &db, version, indexer, mappings)?;
+        let fees = fees::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let patterns = super::patterns::forced_import(
+        let patterns = patterns::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let policy = super::policy::forced_import(
+        let policy = policy::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let sigops = super::sigops::forced_import(
+        let sigops = sigops::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let versions = super::versions::forced_import(
+        let versions = versions::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let volume = super::volume::forced_import(
+        let volume = volume::forced_import(
             context.cache_budget(),
             &db,
             version,

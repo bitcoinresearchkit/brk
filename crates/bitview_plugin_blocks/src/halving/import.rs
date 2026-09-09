@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BlocksToDaysF32;
 use bitview_vecs::LazyPerBlock;
 use brk_types::{Halving, Height, StoredU32, Version};
@@ -10,7 +11,7 @@ fn blocks_left_to_halving(height: Height) -> StoredU32 {
 }
 
 impl Vecs {
-    pub fn new(version: Version, mappings: &bitview_plugin_mappings::Vecs) -> Self {
+    pub fn new(version: Version, mappings: &MappingsVecs) -> Self {
         let v2 = Version::TWO;
 
         let epoch_source = IndexVec::new(
@@ -54,11 +55,11 @@ impl Vecs {
 
 #[cfg(test)]
 mod tests {
+    use bitview_transforms::BlocksToDaysF32;
     use brk_types::{Halving, Height, StoredU32};
     use vecdb::UnaryTransform;
 
     use super::blocks_left_to_halving;
-    use bitview_transforms::BlocksToDaysF32;
 
     #[test]
     fn formulas_match_public_halving_series_contracts() {

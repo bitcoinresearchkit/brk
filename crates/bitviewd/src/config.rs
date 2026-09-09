@@ -14,10 +14,11 @@ use brk_rpc::{Auth, Client};
 use brk_types::Port;
 use lexopt::{
     Arg::{Long, Short},
-    ValueExt,
+    Parser, ValueExt,
 };
 use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
+use toml::from_str;
 
 use crate::paths::{default_bitview_dir, fix_user_path};
 
@@ -112,7 +113,7 @@ impl Config {
 
     fn parse_args() -> Self {
         let mut config = Self::default();
-        let mut parser = lexopt::Parser::from_env();
+        let mut parser = Parser::from_env();
         let command = Self::command_name();
 
         while let Some(arg) = parser.next().unwrap() {
@@ -328,7 +329,7 @@ Finally, you can run the program with '-h' for help."
                 ));
             }
         };
-        toml::from_str(&contents).map_err(|_| {
+        from_str(&contents).map_err(|_| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!("Invalid config: {}", path.display()),

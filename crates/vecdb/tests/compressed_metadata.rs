@@ -1,10 +1,12 @@
 #![cfg(feature = "pco")]
 
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, AnyVec, Database, Error, ImportableVec, PcoVec, Version, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, Database, Error, ImportableVec, PcoVec, Result, Version, WritableVec,
+};
 
 #[test]
-fn import_rejects_invalid_page_layouts() -> vecdb::Result<()> {
+fn import_rejects_invalid_page_layouts() -> Result<()> {
     const RAW_FLAG: u32 = 1 << 31;
     const BODY_MASK: u32 = (1 << 30) - 1;
     const VALUES_PER_PAGE: usize = 8 * 1024 / size_of::<u64>();

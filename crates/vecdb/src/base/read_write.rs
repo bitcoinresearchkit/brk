@@ -1,10 +1,9 @@
-use std::{fs, marker::PhantomData, ops::Deref, path::PathBuf, sync::Arc};
+use std::{fs, marker::PhantomData, ops::Deref, path::PathBuf, result::Result, sync::Arc};
 
 use rawdb::Database;
 
-use crate::{Error, Stamp, VecIndex, VecValue};
-
 use super::{Format, HEADER_OFFSET, Header, ImportOptions, ReadOnlyBaseVec, SharedLen, WithPrev};
+use crate::{Error, Result as CrateResult, Stamp, VecIndex, VecValue};
 
 /// Base storage vector with fields common to all stored vector implementations.
 ///
@@ -32,7 +31,7 @@ where
     I: VecIndex,
     T: VecValue,
 {
-    pub fn import(options: ImportOptions, format: Format) -> crate::Result<Self> {
+    pub fn import(options: ImportOptions, format: Format) -> CrateResult<Self> {
         let initial_capacity = options.initial_capacity.unwrap_or(I::INITIAL_CAPACITY);
         let region = options
             .db
@@ -139,7 +138,7 @@ where
         self.db().path().to_path_buf()
     }
 
-    pub fn write_header_if_needed(&mut self) -> crate::Result<()> {
+    pub fn write_header_if_needed(&mut self) -> CrateResult<()> {
         if self.read_only.header.modified() {
             self.read_only.header.write(&self.read_only.region)?;
         }
@@ -150,7 +149,7 @@ where
         vec_region_name(&self.name, I::to_string())
     }
 
-    pub fn remove(self) -> crate::Result<()> {
+    pub fn remove(self) -> CrateResult<()> {
         self.read_only.region.remove()?;
         Ok(())
     }
@@ -182,13 +181,13 @@ where
     }
 
     #[inline]
-    pub fn try_fold_pushed<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold_pushed<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let stored_len = self.stored_len();
         let start = from.max(stored_len);
         if start >= to {
@@ -220,7 +219,7 @@ where
         index < stored_len
     }
 
-    pub fn reset_base(&mut self) -> crate::Result<()> {
+    pub fn reset_base(&mut self) -> CrateResult<()> {
         self.pushed.clear();
         self.read_only.stored_len.set(0);
         self.previous_stored_len = 0;

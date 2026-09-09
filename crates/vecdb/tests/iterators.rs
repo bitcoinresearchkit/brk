@@ -5,13 +5,13 @@
 
 use rawdb::Database;
 use tempfile::TempDir;
-use vecdb::{StoredVec, Version};
+use vecdb::{Result, StoredVec, Version};
 
 // ============================================================================
 // Test Setup Helpers
 // ============================================================================
 
-fn setup_db() -> vecdb::Result<(Database, TempDir)> {
+fn setup_db() -> Result<(Database, TempDir)> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     Ok((db, temp))
@@ -24,7 +24,7 @@ fn setup_db() -> vecdb::Result<(Database, TempDir)> {
 mod clean_iter {
     use super::*;
 
-    fn run_ranges<V>() -> vecdb::Result<()>
+    fn run_ranges<V>() -> Result<()>
     where
         V: StoredVec<I = usize, T = i32>,
     {
@@ -64,60 +64,70 @@ mod clean_iter {
     // ============================================================================
 
     mod bytes {
-        use super::*;
         use vecdb::BytesVec;
+
+        use super::*;
+
         type V = BytesVec<usize, i32>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
 
     #[cfg(feature = "zerocopy")]
     mod zerocopy {
-        use super::*;
         use vecdb::ZeroCopyVec;
+
+        use super::*;
+
         type V = ZeroCopyVec<usize, i32>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
 
     #[cfg(feature = "pco")]
     mod pco {
-        use super::*;
         use vecdb::PcoVec;
+
+        use super::*;
+
         type V = PcoVec<usize, i32>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
 
     #[cfg(feature = "lz4")]
     mod lz4 {
-        use super::*;
         use vecdb::LZ4Vec;
+
+        use super::*;
+
         type V = LZ4Vec<usize, i32>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
 
     #[cfg(feature = "zstd")]
     mod zstd {
-        use super::*;
         use vecdb::ZstdVec;
+
+        use super::*;
+
         type V = ZstdVec<usize, i32>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
@@ -128,24 +138,28 @@ mod clean_iter {
 
     #[cfg(feature = "zerocopy")]
     mod eager_zerocopy {
-        use super::*;
         use vecdb::{EagerVec, ZeroCopyVec};
+
+        use super::*;
+
         type V = EagerVec<ZeroCopyVec<usize, i32>>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
 
     #[cfg(feature = "pco")]
     mod eager_pco {
-        use super::*;
         use vecdb::{EagerVec, PcoVec};
+
+        use super::*;
+
         type V = EagerVec<PcoVec<usize, i32>>;
 
         #[test]
-        fn ranges() -> vecdb::Result<()> {
+        fn ranges() -> Result<()> {
             run_ranges::<V>()
         }
     }
@@ -158,7 +172,7 @@ mod clean_iter {
 mod dirty_iter {
     use super::*;
 
-    fn run_stored_and_pushed<V>() -> vecdb::Result<()>
+    fn run_stored_and_pushed<V>() -> Result<()>
     where
         V: StoredVec<I = usize, T = i32>,
     {
@@ -204,60 +218,70 @@ mod dirty_iter {
     // ============================================================================
 
     mod bytes {
-        use super::*;
         use vecdb::BytesVec;
+
+        use super::*;
+
         type V = BytesVec<usize, i32>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
 
     #[cfg(feature = "zerocopy")]
     mod zerocopy {
-        use super::*;
         use vecdb::ZeroCopyVec;
+
+        use super::*;
+
         type V = ZeroCopyVec<usize, i32>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
 
     #[cfg(feature = "pco")]
     mod pco {
-        use super::*;
         use vecdb::PcoVec;
+
+        use super::*;
+
         type V = PcoVec<usize, i32>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
 
     #[cfg(feature = "lz4")]
     mod lz4 {
-        use super::*;
         use vecdb::LZ4Vec;
+
+        use super::*;
+
         type V = LZ4Vec<usize, i32>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
 
     #[cfg(feature = "zstd")]
     mod zstd {
-        use super::*;
         use vecdb::ZstdVec;
+
+        use super::*;
+
         type V = ZstdVec<usize, i32>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
@@ -268,24 +292,28 @@ mod dirty_iter {
 
     #[cfg(feature = "zerocopy")]
     mod eager_zerocopy {
-        use super::*;
         use vecdb::{EagerVec, ZeroCopyVec};
+
+        use super::*;
+
         type V = EagerVec<ZeroCopyVec<usize, i32>>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
 
     #[cfg(feature = "pco")]
     mod eager_pco {
-        use super::*;
         use vecdb::{EagerVec, PcoVec};
+
+        use super::*;
+
         type V = EagerVec<PcoVec<usize, i32>>;
 
         #[test]
-        fn stored_and_pushed() -> vecdb::Result<()> {
+        fn stored_and_pushed() -> Result<()> {
             run_stored_and_pushed::<V>()
         }
     }
@@ -296,15 +324,16 @@ mod dirty_iter {
 // ============================================================================
 
 mod raw_features {
-    use super::*;
     use vecdb::{BytesVec, MutableVec};
+
+    use super::*;
 
     #[cfg(feature = "zerocopy")]
     use vecdb::ZeroCopyVec;
 
     // Generic test functions for MutableVec over raw vecs
 
-    fn run_iter_skips_holes<V>() -> vecdb::Result<()>
+    fn run_iter_skips_holes<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -327,7 +356,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_iter_with_updates<V>() -> vecdb::Result<()>
+    fn run_iter_with_updates<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -349,7 +378,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_iter_with_holes_and_updates<V>() -> vecdb::Result<()>
+    fn run_iter_with_holes_and_updates<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -373,7 +402,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_iter_holes_and_pushed<V>() -> vecdb::Result<()>
+    fn run_iter_holes_and_pushed<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -400,7 +429,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_iter_updates_and_pushed<V>() -> vecdb::Result<()>
+    fn run_iter_updates_and_pushed<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -426,7 +455,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_iter_skip_over_holes<V>() -> vecdb::Result<()>
+    fn run_iter_skip_over_holes<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -451,7 +480,7 @@ mod raw_features {
         Ok(())
     }
 
-    fn run_fill_holes<V>() -> vecdb::Result<()>
+    fn run_fill_holes<V>() -> Result<()>
     where
         V: RawVecOps,
     {
@@ -480,18 +509,18 @@ mod raw_features {
     // Helper trait for mutable raw-vector operations
     pub trait RawVecOps: StoredVec<I = usize, T = i32> {
         fn delete_at(&mut self, index: usize);
-        fn update_at(&mut self, index: usize, value: i32) -> vecdb::Result<()>;
-        fn fill_first_hole_or_push(&mut self, value: i32) -> vecdb::Result<usize>;
+        fn update_at(&mut self, index: usize, value: i32) -> Result<()>;
+        fn fill_first_hole_or_push(&mut self, value: i32) -> Result<usize>;
     }
 
     impl RawVecOps for MutableVec<BytesVec<usize, i32>> {
         fn delete_at(&mut self, index: usize) {
             MutableVec::<BytesVec<usize, i32>>::delete_at(self, index)
         }
-        fn update_at(&mut self, index: usize, value: i32) -> vecdb::Result<()> {
+        fn update_at(&mut self, index: usize, value: i32) -> Result<()> {
             MutableVec::<BytesVec<usize, i32>>::update_at(self, index, value)
         }
-        fn fill_first_hole_or_push(&mut self, value: i32) -> vecdb::Result<usize> {
+        fn fill_first_hole_or_push(&mut self, value: i32) -> Result<usize> {
             MutableVec::<BytesVec<usize, i32>>::fill_first_hole_or_push(self, value)
         }
     }
@@ -501,10 +530,10 @@ mod raw_features {
         fn delete_at(&mut self, index: usize) {
             MutableVec::<ZeroCopyVec<usize, i32>>::delete_at(self, index)
         }
-        fn update_at(&mut self, index: usize, value: i32) -> vecdb::Result<()> {
+        fn update_at(&mut self, index: usize, value: i32) -> Result<()> {
             MutableVec::<ZeroCopyVec<usize, i32>>::update_at(self, index, value)
         }
-        fn fill_first_hole_or_push(&mut self, value: i32) -> vecdb::Result<usize> {
+        fn fill_first_hole_or_push(&mut self, value: i32) -> Result<usize> {
             MutableVec::<ZeroCopyVec<usize, i32>>::fill_first_hole_or_push(self, value)
         }
     }
@@ -517,31 +546,31 @@ mod raw_features {
         use super::*;
 
         #[test]
-        fn iter_skips_holes() -> vecdb::Result<()> {
+        fn iter_skips_holes() -> Result<()> {
             run_iter_skips_holes::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn iter_with_updates() -> vecdb::Result<()> {
+        fn iter_with_updates() -> Result<()> {
             run_iter_with_updates::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn iter_with_holes_and_updates() -> vecdb::Result<()> {
+        fn iter_with_holes_and_updates() -> Result<()> {
             run_iter_with_holes_and_updates::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn iter_holes_and_pushed() -> vecdb::Result<()> {
+        fn iter_holes_and_pushed() -> Result<()> {
             run_iter_holes_and_pushed::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn iter_updates_and_pushed() -> vecdb::Result<()> {
+        fn iter_updates_and_pushed() -> Result<()> {
             run_iter_updates_and_pushed::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn iter_skip_over_holes() -> vecdb::Result<()> {
+        fn iter_skip_over_holes() -> Result<()> {
             run_iter_skip_over_holes::<MutableVec<BytesVec<usize, i32>>>()
         }
         #[test]
-        fn fill_holes() -> vecdb::Result<()> {
+        fn fill_holes() -> Result<()> {
             run_fill_holes::<MutableVec<BytesVec<usize, i32>>>()
         }
     }
@@ -555,31 +584,31 @@ mod raw_features {
         use super::*;
 
         #[test]
-        fn iter_skips_holes() -> vecdb::Result<()> {
+        fn iter_skips_holes() -> Result<()> {
             run_iter_skips_holes::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn iter_with_updates() -> vecdb::Result<()> {
+        fn iter_with_updates() -> Result<()> {
             run_iter_with_updates::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn iter_with_holes_and_updates() -> vecdb::Result<()> {
+        fn iter_with_holes_and_updates() -> Result<()> {
             run_iter_with_holes_and_updates::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn iter_holes_and_pushed() -> vecdb::Result<()> {
+        fn iter_holes_and_pushed() -> Result<()> {
             run_iter_holes_and_pushed::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn iter_updates_and_pushed() -> vecdb::Result<()> {
+        fn iter_updates_and_pushed() -> Result<()> {
             run_iter_updates_and_pushed::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn iter_skip_over_holes() -> vecdb::Result<()> {
+        fn iter_skip_over_holes() -> Result<()> {
             run_iter_skip_over_holes::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
         #[test]
-        fn fill_holes() -> vecdb::Result<()> {
+        fn fill_holes() -> Result<()> {
             run_fill_holes::<MutableVec<ZeroCopyVec<usize, i32>>>()
         }
     }

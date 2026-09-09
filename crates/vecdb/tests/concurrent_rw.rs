@@ -26,13 +26,14 @@ use std::{
 use rawdb::Database;
 use tempfile::TempDir;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, ImportableVec, ReadableVec, StoredVec, Version, WritableVec,
+    AnyStoredVec, AnyVec, BytesVec, ImportableVec, ReadableVec, Result, StoredVec, Version,
+    WritableVec,
 };
 
 #[cfg(feature = "pco")]
 use vecdb::PcoVec;
 
-fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
+fn setup_test_db() -> Result<(Database, TempDir)> {
     let temp_dir = TempDir::new()?;
     let db = Database::open(temp_dir.path())?;
     Ok((db, temp_dir))
@@ -40,7 +41,7 @@ fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
 
 /// Test that a cloned reader can see data after writer calls write() but before flush()
 #[test]
-fn test_reader_sees_written_data_without_flush() -> vecdb::Result<()> {
+fn test_reader_sees_written_data_without_flush() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -67,7 +68,7 @@ fn test_reader_sees_written_data_without_flush() -> vecdb::Result<()> {
 
 /// Test that reader sees new data written after clone, once write() is called
 #[test]
-fn test_reader_sees_new_data_after_write() -> vecdb::Result<()> {
+fn test_reader_sees_new_data_after_write() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -107,7 +108,7 @@ fn test_reader_sees_new_data_after_write() -> vecdb::Result<()> {
 
 /// Test concurrent read while write is happening
 #[test]
-fn test_concurrent_read_during_write() -> vecdb::Result<()> {
+fn test_concurrent_read_during_write() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -123,7 +124,7 @@ fn test_concurrent_read_during_write() -> vecdb::Result<()> {
     let barrier = Arc::new(Barrier::new(2));
 
     let reader_barrier = barrier.clone();
-    let reader_handle = thread::spawn(move || -> vecdb::Result<()> {
+    let reader_handle = thread::spawn(move || -> Result<()> {
         // Wait for writer to start
         reader_barrier.wait();
 
@@ -165,7 +166,7 @@ fn test_concurrent_read_during_write() -> vecdb::Result<()> {
 
 /// Test that multiple vecs can be written without flush, then flushed together
 #[test]
-fn test_batched_writes_single_flush() -> vecdb::Result<()> {
+fn test_batched_writes_single_flush() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -217,7 +218,7 @@ fn test_batched_writes_single_flush() -> vecdb::Result<()> {
 /// Test with PcoVec (compressed) to ensure it also works
 #[test]
 #[cfg(feature = "pco")]
-fn test_pco_concurrent_read_write() -> vecdb::Result<()> {
+fn test_pco_concurrent_read_write() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -248,7 +249,7 @@ fn test_pco_concurrent_read_write() -> vecdb::Result<()> {
 
 /// Test that reader doesn't see writer's uncommitted pushed data
 #[test]
-fn test_reader_isolation_from_pushed() -> vecdb::Result<()> {
+fn test_reader_isolation_from_pushed() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -285,7 +286,7 @@ fn test_reader_isolation_from_pushed() -> vecdb::Result<()> {
 /// CRITICAL TEST: Verify that when reader sees updated stored_len, the data is readable.
 /// This tests the memory ordering invariant: mmap write must happen-before stored_len update.
 #[test]
-fn test_memory_ordering_len_vs_data() -> vecdb::Result<()> {
+fn test_memory_ordering_len_vs_data() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -370,7 +371,7 @@ fn test_memory_ordering_len_vs_data() -> vecdb::Result<()> {
 
 /// Test that reader always sees consistent length and can read up to that length
 #[test]
-fn test_length_data_consistency_stress() -> vecdb::Result<()> {
+fn test_length_data_consistency_stress() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -444,7 +445,7 @@ fn test_length_data_consistency_stress() -> vecdb::Result<()> {
 
 /// Stress test with many concurrent readers and one writer
 #[test]
-fn test_many_readers_one_writer() -> vecdb::Result<()> {
+fn test_many_readers_one_writer() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let version = Version::ONE;
 
@@ -463,7 +464,7 @@ fn test_many_readers_one_writer() -> vecdb::Result<()> {
         .map(|_| {
             let reader = writer.read_only_clone();
             let b = barrier.clone();
-            thread::spawn(move || -> vecdb::Result<()> {
+            thread::spawn(move || -> Result<()> {
                 b.wait();
                 for _ in 0..50 {
                     let r = reader.reader();
@@ -511,7 +512,7 @@ fn test_many_readers_one_writer() -> vecdb::Result<()> {
 /// Run with: cargo test --features pco test_realworld_stress -- --ignored --nocapture
 #[test]
 #[ignore] // Run manually: takes ~10 seconds
-fn test_realworld_stress() -> vecdb::Result<()> {
+fn test_realworld_stress() -> Result<()> {
     use std::time::Instant;
 
     let (db, _temp) = setup_test_db()?;
@@ -717,7 +718,7 @@ fn test_realworld_stress() -> vecdb::Result<()> {
 /// Run with: cargo test --features pco test_extended_stress -- --ignored --nocapture
 #[test]
 #[ignore] // Run manually: takes ~30 seconds
-fn test_extended_stress() -> vecdb::Result<()> {
+fn test_extended_stress() -> Result<()> {
     use std::time::Instant;
 
     let (db, _temp) = setup_test_db()?;
@@ -874,7 +875,7 @@ fn test_extended_stress() -> vecdb::Result<()> {
 /// Run with: cargo test test_extended_stress_bytes -- --ignored --nocapture
 #[test]
 #[ignore] // Run manually
-fn test_extended_stress_bytes() -> vecdb::Result<()> {
+fn test_extended_stress_bytes() -> Result<()> {
     use std::time::Instant;
 
     let (db, _temp) = setup_test_db()?;

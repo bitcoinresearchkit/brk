@@ -1,14 +1,18 @@
-mod recovered_table;
+use std::{fs, path::Path};
 
-pub use recovered_table::RecoveredTable;
+use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
+use log::{error, info};
+use xxhash_rust::xxh3;
 
 use crate::{
     Error, Result,
     file::{CHECKSUMLESS_CURRENT_MAGIC, CURRENT_MAGIC, CURRENT_VERSION_FILE},
     version::DEFAULT_LEVEL_COUNT,
 };
-use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
-use std::{fs, path::Path};
+
+mod recovered_table;
+
+pub use recovered_table::RecoveredTable;
 
 const TABLE_ENTRY_SIZE: usize = size_of::<u32>() + size_of::<u64>();
 
@@ -30,8 +34,8 @@ impl Recovery {
             }
 
             let (payload, checksum) = bytes.split_at(bytes.len() - size_of::<u128>());
-            if xxhash_rust::xxh3::xxh3_128(payload) != LittleEndian::read_u128(checksum) {
-                log::error!("Current manifest checksum mismatch");
+            if xxh3::xxh3_128(payload) != LittleEndian::read_u128(checksum) {
+                error!("Current manifest checksum mismatch");
                 return Err(Error::Unrecoverable);
             }
             payload
@@ -50,7 +54,7 @@ impl Recovery {
             .ok_or(Error::Unrecoverable)?;
         let curr_version_id = reader.read_u64::<LittleEndian>()?;
 
-        log::info!("Recovering current manifest at {}", current_path.display());
+        info!("Recovering current manifest at {}", current_path.display());
         let mut levels = Vec::with_capacity(usize::from(DEFAULT_LEVEL_COUNT));
 
         for _ in 0..DEFAULT_LEVEL_COUNT {
@@ -92,12 +96,15 @@ impl Recovery {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use byteorder::WriteBytesExt;
+    use tempfile::tempdir;
     use test_log::test;
 
+    use super::*;
+    use crate::version::Version;
+
     fn append_checksum(current: &mut Vec<u8>) -> Result<()> {
-        let checksum = xxhash_rust::xxh3::xxh3_128(current);
+        let checksum = xxh3::xxh3_128(current);
         current.write_u128::<LittleEndian>(checksum)?;
         Ok(())
     }
@@ -107,7 +114,7 @@ mod tests {
         const TABLE_ID: u32 = 42;
         const GLOBAL_SEQNO: u64 = 84;
 
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let mut current = CURRENT_MAGIC.to_vec();
         current.write_u64::<LittleEndian>(7)?;
 
@@ -143,7 +150,7 @@ mod tests {
 
     #[test]
     fn recovery_reads_checksumless_v9_manifest() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let mut current = CHECKSUMLESS_CURRENT_MAGIC.to_vec();
         current.write_u64::<LittleEndian>(7)?;
         for _ in 0..DEFAULT_LEVEL_COUNT {
@@ -159,8 +166,8 @@ mod tests {
 
     #[test]
     fn recovery_rejects_manifest_checksum_mismatch() -> Result<()> {
-        let directory = tempfile::tempdir()?;
-        let version = crate::version::Version::new(7);
+        let directory = tempdir()?;
+        let version = Version::new(7);
         version.persist(directory.path())?;
 
         let path = directory.path().join(CURRENT_VERSION_FILE);
@@ -178,7 +185,7 @@ mod tests {
 
     #[test]
     fn recovery_rejects_impossible_table_count_before_allocating() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let mut current = CURRENT_MAGIC.to_vec();
         current.write_u64::<LittleEndian>(7)?;
         current.write_u8(1)?;

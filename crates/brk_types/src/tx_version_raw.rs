@@ -1,3 +1,4 @@
+use bitcoin::transaction::Version;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -15,14 +16,14 @@ use serde::{Deserialize, Serialize};
 )]
 pub struct TxVersionRaw(i32);
 
-impl From<bitcoin::transaction::Version> for TxVersionRaw {
+impl From<Version> for TxVersionRaw {
     #[inline]
-    fn from(value: bitcoin::transaction::Version) -> Self {
+    fn from(value: Version) -> Self {
         Self(value.0)
     }
 }
 
-impl From<TxVersionRaw> for bitcoin::transaction::Version {
+impl From<TxVersionRaw> for Version {
     #[inline]
     fn from(value: TxVersionRaw) -> Self {
         Self(value.0)

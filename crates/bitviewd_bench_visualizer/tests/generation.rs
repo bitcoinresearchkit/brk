@@ -1,5 +1,7 @@
-use bitviewd_bench_visualizer::Visualizer;
 use std::{fs, path::Path};
+
+use bitviewd_bench_visualizer::Visualizer;
+use tempfile::tempdir;
 
 fn fixture(root: &Path) {
     let base = root.join("benches/bitviewd");
@@ -35,7 +37,7 @@ fn fixture(root: &Path) {
 
 #[test]
 fn generates_all_combined_and_individual_charts() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     fixture(root.path());
     Visualizer::new(root.path()).generate().unwrap();
     let base = root.path().join("benches/bitviewd");

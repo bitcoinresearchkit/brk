@@ -1,8 +1,7 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
-use crate::{Stamp, StoredVec, WritableVec};
-
 use super::EagerVec;
+use crate::{Result, Stamp, StoredVec, WritableVec};
 
 impl<V> WritableVec<V::I, V::T> for EagerVec<V>
 where
@@ -19,12 +18,12 @@ where
     }
 
     #[inline]
-    fn truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         self.0.truncate_if_needed_at(index)
     }
 
     #[inline]
-    fn reset(&mut self) -> crate::Result<()> {
+    fn reset(&mut self) -> Result<()> {
         self.0.reset()
     }
 
@@ -39,16 +38,16 @@ where
     }
 
     #[inline]
-    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         self.0.stamped_write_with_changes(stamp)
     }
 
     #[inline]
-    fn rollback(&mut self) -> crate::Result<()> {
+    fn rollback(&mut self) -> Result<()> {
         self.0.rollback()
     }
 
-    fn find_rollback_files(&self) -> crate::Result<BTreeMap<Stamp, PathBuf>> {
+    fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>> {
         self.0.find_rollback_files()
     }
 

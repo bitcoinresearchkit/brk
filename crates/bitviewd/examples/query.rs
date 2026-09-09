@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path};
+use std::{env, fs, path::Path, thread};
 
 use bitview::ImportContext;
 use bitview_default::DefaultPlugins;
@@ -9,6 +9,7 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Addr;
+use vecdb::CacheBudget;
 
 pub fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -35,7 +36,7 @@ pub fn main() -> Result<()> {
 
     let mempool = Mempool::new(&client);
     let mempool_clone = mempool.clone();
-    std::thread::spawn(move || {
+    thread::spawn(move || {
         mempool_clone.start();
     });
 
@@ -70,4 +71,4 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

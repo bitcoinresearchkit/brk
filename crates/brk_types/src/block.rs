@@ -1,9 +1,12 @@
-use bitcoin::hashes::{Hash, HashEngine};
+use bitcoin::{
+    Block as BitcoinBlock, BlockHash as BitcoinBlockHash, Txid, VarInt,
+    block::Header,
+    hashes::{Hash, HashEngine},
+};
 use derive_more::Deref;
 
-use crate::BlkMetadata;
-
 use super::{BlockHash, CoinbaseTag, Height};
+use crate::BlkMetadata;
 
 /// Raw block bytes and per-tx offsets for fast txid hashing.
 /// Present when block was parsed from blk*.dat files, absent for RPC blocks.
@@ -19,7 +22,7 @@ pub struct Block {
     height: Height,
     hash: BlockHash,
     #[deref]
-    block: bitcoin::Block,
+    block: BitcoinBlock,
     raw: Option<RawBlockData>,
 }
 
@@ -36,8 +39,7 @@ impl Block {
     /// instead of 3N from calling `total_size()` + `weight()` separately,
     /// since `weight()` internally calls both `base_size()` and `total_size()`).
     pub fn total_size_and_weight(&self) -> (usize, usize) {
-        let overhead =
-            bitcoin::block::Header::SIZE + bitcoin::VarInt::from(self.txdata.len()).size();
+        let overhead = Header::SIZE + VarInt::from(self.txdata.len()).size();
         let mut total_size = overhead;
         let mut weight_wu = overhead * 4;
         for (i, tx) in self.txdata.iter().enumerate() {
@@ -57,7 +59,7 @@ impl Block {
 
     /// Compute txid, base_size, and total_size for the transaction at `index`.
     /// Uses raw bytes (fast path) when available, falls back to re-serialization.
-    pub fn compute_tx_id_and_sizes(&self, index: usize) -> (bitcoin::Txid, u32, u32) {
+    pub fn compute_tx_id_and_sizes(&self, index: usize) -> (Txid, u32, u32) {
         let tx = &self.txdata[index];
         if let Some(raw) = self.raw_tx_bytes(index) {
             let total_size = raw.len() as u32;
@@ -95,8 +97,8 @@ impl Block {
     /// For segwit (`raw[4] == 0x00`): hashes version + inputs/outputs + locktime,
     /// skipping marker, flag, and witness data.
     /// For legacy: hashes entire raw bytes.
-    fn hash_raw_tx(raw: &[u8], base_size: u32) -> bitcoin::Txid {
-        let mut engine = bitcoin::Txid::engine();
+    fn hash_raw_tx(raw: &[u8], base_size: u32) -> Txid {
+        let mut engine = Txid::engine();
         if raw[4] == 0x00 {
             let io_len = base_size as usize - 8;
             engine.input(&raw[..4]);
@@ -105,7 +107,7 @@ impl Block {
         } else {
             engine.input(raw);
         }
-        bitcoin::Txid::from_engine(engine)
+        Txid::from_engine(engine)
     }
 
     pub fn coinbase_tag(&self) -> CoinbaseTag {
@@ -120,23 +122,23 @@ impl Block {
     }
 }
 
-impl From<(Height, bitcoin::Block)> for Block {
+impl From<(Height, BitcoinBlock)> for Block {
     #[inline]
-    fn from((height, block): (Height, bitcoin::Block)) -> Self {
+    fn from((height, block): (Height, BitcoinBlock)) -> Self {
         Self::from((height, block.block_hash(), block))
     }
 }
 
-impl From<(Height, bitcoin::BlockHash, bitcoin::Block)> for Block {
+impl From<(Height, BitcoinBlockHash, BitcoinBlock)> for Block {
     #[inline]
-    fn from((height, hash, block): (Height, bitcoin::BlockHash, bitcoin::Block)) -> Self {
+    fn from((height, hash, block): (Height, BitcoinBlockHash, BitcoinBlock)) -> Self {
         Self::from((height, BlockHash::from(hash), block))
     }
 }
 
-impl From<(Height, BlockHash, bitcoin::Block)> for Block {
+impl From<(Height, BlockHash, BitcoinBlock)> for Block {
     #[inline]
-    fn from((height, hash, block): (Height, BlockHash, bitcoin::Block)) -> Self {
+    fn from((height, hash, block): (Height, BlockHash, BitcoinBlock)) -> Self {
         Self {
             height,
             hash,
@@ -188,8 +190,9 @@ impl ReadBlock {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use bitcoin::{Transaction, consensus::Decodable};
+
+    use super::*;
 
     fn decode_hex(s: &str) -> Vec<u8> {
         (0..s.len())

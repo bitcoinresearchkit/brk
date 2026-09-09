@@ -1,3 +1,5 @@
+use std::hint;
+
 use byteview::ByteView;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 
@@ -5,7 +7,7 @@ const COMPARISONS: u64 = 100_000;
 
 fn compare_repeated(left: &ByteView, right: &ByteView) {
     for _ in 0..COMPARISONS {
-        std::hint::black_box(left.cmp(std::hint::black_box(right)));
+        hint::black_box(left.cmp(hint::black_box(right)));
     }
 }
 

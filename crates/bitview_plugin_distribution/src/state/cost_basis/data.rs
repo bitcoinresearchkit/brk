@@ -1,18 +1,17 @@
-use brk_error::Result;
-
 use std::{
     collections::{BTreeMap, btree_map::Entry},
     fs,
     path::Path,
 };
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Cents, CentsCompact, CentsSats, CentsSquaredSats, Height, Sats, UrpdRaw};
 use rustc_hash::FxHashMap;
 use vecdb::{Bytes, unlikely};
 
-use super::unrealized::CachedUnrealizedState;
-use super::{Accumulate, CostBasisOps, CostBasisRaw, UnrealizedState};
+use super::{
+    Accumulate, CostBasisOps, CostBasisRaw, UnrealizedState, unrealized::CachedUnrealizedState,
+};
 use crate::state::pending::{PendingCapitalizedCapRawDelta, PendingDelta};
 
 /// Full cost basis tracking: BTreeMap distribution + raw scalars.
@@ -252,12 +251,14 @@ impl<S: Accumulate> CostBasisOps for CostBasisData<S> {
 mod tests {
     use std::fs;
 
+    use tempfile::tempdir;
+
     use super::*;
     use crate::state::{WithCapital, WithoutCapital};
 
     #[test]
     fn checkpoint_layout_tracks_capital_capability() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let root = dir.path();
 
         let mut compact = CostBasisData::<WithoutCapital>::create(root, "compact");
@@ -294,7 +295,7 @@ mod tests {
 
     #[test]
     fn truncated_scalar_checkpoints_return_errors() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let mut raw = CostBasisRaw::create(dir.path(), "raw");
         for len in 0..16 {
             assert!(raw.import_state(&vec![0; len]).is_err());

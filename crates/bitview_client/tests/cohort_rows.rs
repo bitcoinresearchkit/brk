@@ -1,5 +1,3 @@
-use bitview_cohort::ByEpoch;
-use brk_types::Sats;
 use std::{
     io::{BufRead, BufReader, Write},
     net::TcpListener,
@@ -7,12 +5,16 @@ use std::{
     time::Duration,
 };
 
+use bitview_cohort::ByEpoch;
+use brk_types::Sats;
+use serde_json::{json, to_value};
+
 #[test]
 fn generated_storage_path_fetches_a_structured_row() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let client =
         bitview_client::BitviewClient::new(format!("http://{}", listener.local_addr().unwrap()));
-    let row = serde_json::to_value(ByEpoch::<Sats>::default()).unwrap();
+    let row = to_value(ByEpoch::<Sats>::default()).unwrap();
     let expected = row.clone();
     let peer = thread::spawn(move || {
         let socket = listener.accept().unwrap().0;
@@ -33,7 +35,7 @@ fn generated_storage_path_fetches_a_structured_row() {
                 break;
             }
         }
-        let body = serde_json::json!({
+        let body = json!({
             "version": 1, "index": brk_types::Index::Height, "type": "ByEpoch<Sats>",
             "start": 0, "end": 1, "stamp": "2026-09-07T00:00:00Z", "data": [row]
         })
@@ -45,6 +47,6 @@ fn generated_storage_path_fetches_a_structured_row() {
     let response: bitview_client::SeriesData<ByEpoch<Sats>> = endpoint.by.height().fetch().unwrap();
     assert_eq!(response.data.len(), 1);
     assert_eq!(response.version, 1_u32);
-    assert_eq!(serde_json::to_value(&response.data[0]).unwrap(), expected);
+    assert_eq!(to_value(&response.data[0]).unwrap(), expected);
     peer.join().unwrap();
 }

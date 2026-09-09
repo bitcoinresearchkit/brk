@@ -1,6 +1,5 @@
 use schemars::JsonSchema;
-use serde::ser::SerializeTuple;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeTuple};
 
 use crate::{Height, Timestamp};
 
@@ -37,12 +36,14 @@ impl Serialize for DifficultyAdjustmentEntry {
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_value;
+
     use super::*;
 
     #[test]
     fn wire_schema_is_a_fixed_four_item_array() {
-        let schema =
-            serde_json::to_value(schemars::schema_for!(DifficultyAdjustmentEntry)).unwrap();
+        let schema = to_value(schema_for!(DifficultyAdjustmentEntry)).unwrap();
         assert_eq!(schema["type"], "array");
         assert_eq!(schema["minItems"], 4);
         assert_eq!(schema["maxItems"], 4);

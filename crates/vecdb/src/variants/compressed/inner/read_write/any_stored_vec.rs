@@ -3,10 +3,11 @@ use std::{mem, ops::Range, path::PathBuf};
 use rawdb::{Database, Region};
 use rayon::prelude::*;
 
-use crate::{AnyStoredVec, AnyVec, Error, Header, Stamp, VecIndex, VecValue, WritableVec};
-
-use super::super::{CompressionStrategy, PAGES_PER_BLOCK};
-use super::ReadWriteCompressedVec;
+use super::{
+    super::{CompressionStrategy, PAGES_PER_BLOCK},
+    ReadWriteCompressedVec,
+};
+use crate::{AnyStoredVec, AnyVec, Error, Header, Result, Stamp, VecIndex, VecValue, WritableVec};
 
 impl<I, T, S> ReadWriteCompressedVec<I, T, S>
 where
@@ -18,7 +19,7 @@ where
         &self,
         values: &[T],
         starting_page_index: usize,
-    ) -> crate::Result<(Vec<u8>, Vec<(Option<u32>, u32, bool)>)> {
+    ) -> Result<(Vec<u8>, Vec<(Option<u32>, u32, bool)>)> {
         let full_pages = values.len() / Self::PER_PAGE;
         let mut page_offset = 0;
         let mut ranges = Vec::<Range<usize>>::new();
@@ -38,7 +39,7 @@ where
         let chunks = ranges
             .par_iter()
             .map(|range| S::compress_chunk(&values[range.clone()], Self::PER_PAGE))
-            .collect::<crate::Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?;
         let mut bytes = Vec::new();
         let mut layouts = Vec::with_capacity(values.len().div_ceil(Self::PER_PAGE));
         for (chunk, range) in chunks.into_iter().zip(ranges) {
@@ -113,7 +114,7 @@ where
             .stored_len(Self::PER_PAGE, Self::SIZE_OF_T)
     }
 
-    fn write(&mut self) -> crate::Result<bool> {
+    fn write(&mut self) -> Result<bool> {
         self.base.write_header_if_needed()?;
 
         let stored_len = self.stored_len();
@@ -233,7 +234,7 @@ where
     }
 
     #[inline]
-    fn serialize_changes(&self) -> crate::Result<Vec<u8>> {
+    fn serialize_changes(&self) -> Result<Vec<u8>> {
         self.base
             .serialize_changes::<S>(|from, to| self.collect_stored_range(from, to))
     }
@@ -243,7 +244,7 @@ where
         self.base.db()
     }
 
-    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         <Self as WritableVec<I, T>>::stamped_write_with_changes(self, stamp)
     }
 
@@ -251,15 +252,15 @@ where
         <Self as WritableVec<I, T>>::save_rollback_state(self)
     }
 
-    fn remove(self) -> crate::Result<()> {
+    fn remove(self) -> Result<()> {
         Self::remove(self)
     }
 
-    fn any_truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn any_truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         <Self as WritableVec<I, T>>::truncate_if_needed_at(self, index)
     }
 
-    fn any_reset(&mut self) -> crate::Result<()> {
+    fn any_reset(&mut self) -> Result<()> {
         <Self as WritableVec<I, T>>::reset(self)
     }
 }

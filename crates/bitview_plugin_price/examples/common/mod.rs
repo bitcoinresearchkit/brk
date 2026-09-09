@@ -4,6 +4,7 @@ use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
+use vecdb::CacheBudget;
 
 pub fn import_indexer(data_dir: &Path) -> Indexer {
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -17,4 +18,4 @@ pub fn import_indexer(data_dir: &Path) -> Indexer {
     Indexer::import(context, &reader).expect("Failed to import indexer")
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

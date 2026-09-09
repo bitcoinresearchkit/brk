@@ -22,7 +22,10 @@ impl Inner {
 mod tests {
     use std::marker::PhantomData;
 
+    use bitview_cohort::EntryPrice;
     use bitview_traversable::Traversable;
+    use brk_types::Version;
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec, Ro,
         Rw, StorageMode, WritableVec,
@@ -42,7 +45,7 @@ mod tests {
 
     #[test]
     fn projection_does_not_copy_distribution_history() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut inner = Inner {
             prices: vec![Cents::new(10), Cents::new(20)],
@@ -53,12 +56,11 @@ mod tests {
         inner.price_range_max.extend(&inner.prices);
         inner.chain_state.push(BlockState {
             supply: Default::default(),
-            entry: bitview_cohort::EntryPrice::Discount,
+            entry: EntryPrice::Discount,
             price: Cents::new(10),
             timestamp: Timestamp::default(),
         });
-        let mut values =
-            EagerVec::forced_import(&db, "projection", brk_types::Version::ONE).unwrap();
+        let mut values = EagerVec::forced_import(&db, "projection", Version::ONE).unwrap();
         values.push(Cents::new(7));
         values.write().unwrap();
         let writer = Projection::<Rw> {

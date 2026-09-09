@@ -1,12 +1,5 @@
-pub mod script_type;
-pub mod script_type_with_sigops;
-
-pub use script_type::ScriptTypeVecs;
-pub use script_type_with_sigops::ScriptTypeWithSigOpsVecs;
-
-use brk_error::Result;
-
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_types::{
     EmptyOutputIndex, Height, OutputType, P2MSOutputIndex, SigOps, TypeIndex, UnknownOutputIndex,
     Version,
@@ -15,6 +8,14 @@ use rayon::prelude::*;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
 };
+
+use crate::readers::ScriptReaders;
+
+pub mod script_type;
+pub mod script_type_with_sigops;
+
+pub use script_type::ScriptTypeVecs;
+pub use script_type_with_sigops::ScriptTypeWithSigOpsVecs;
 
 #[derive(Traversable)]
 pub struct ScriptsVecs<M: StorageMode = Rw> {
@@ -129,7 +130,7 @@ impl ScriptsVecs {
         &self,
         output_type: OutputType,
         type_index: TypeIndex,
-        readers: &crate::readers::ScriptReaders,
+        readers: &ScriptReaders,
     ) -> Option<SigOps> {
         match output_type {
             OutputType::P2PK65 | OutputType::P2PK33 | OutputType::P2PKH => Some(SigOps::new(4)),

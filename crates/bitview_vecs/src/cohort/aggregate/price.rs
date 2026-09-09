@@ -1,10 +1,11 @@
-use crate::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
+
+use crate::{ColumnarPerBlock, IndexSources, LazyColumnPriceWithRatioPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AggregatePriceWithRatioPerBlock<M: StorageMode = Rw> {
@@ -25,10 +26,11 @@ impl AggregatePriceWithRatioPerBlock {
         db: &Database,
         metric: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let values = ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{metric}_cents_by_aggregate"),
             version,
@@ -36,7 +38,7 @@ impl AggregatePriceWithRatioPerBlock {
                 UTXOAggregate::from_fn(|id| {
                     let name = id.metric_name(metric);
                     LazyColumnPriceWithRatioPerBlock::new(
-                        cache, &name, version, source, id, indexes, spot_price,
+                        &name, version, source, id, indexes, spot_price,
                     )
                 })
             },

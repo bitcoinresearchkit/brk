@@ -35,12 +35,16 @@
 
 use bitview_cohort::ByAddrType;
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
+use rayon::{iter, prelude::*};
+use vecdb::{
+    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode,
+};
 
 use super::{
     count::AddrCountFundedTotalVecs,
@@ -72,9 +76,9 @@ impl ExposedAddrVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
-        all_supply: &CachedBoxedVec<Height, Sats>,
+        all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let count =
             AddrCountFundedTotalVecs::forced_import(cache, db, "exposed", version, mappings)?;
@@ -109,7 +113,7 @@ impl ExposedAddrVecs {
         self.count
             .par_iter_height_mut()
             .chain(self.supply.par_iter_height_mut())
-            .chain(rayon::iter::once(self.supply_share.stored_mut()))
+            .chain(iter::once(self.supply_share.stored_mut()))
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

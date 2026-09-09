@@ -1,4 +1,5 @@
 use brk_types::{Sats, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec,
     WritableVec,
@@ -8,7 +9,7 @@ use super::*;
 
 #[test]
 fn cumulative_delta_rejects_reversed_ranges_and_decreasing_values() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
     let mut values: EagerVec<PcoVec<Height, Sats>> =
         EagerVec::forced_import(&database, "values", Version::ONE).unwrap();
@@ -21,7 +22,7 @@ fn cumulative_delta_rejects_reversed_ranges_and_decreasing_values() {
 
 #[test]
 fn cumulative_delta_matches_range_sum_across_read_strategies() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut cumulative: EagerVec<PcoVec<Height, Sats>> =
         EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();

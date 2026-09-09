@@ -1,7 +1,7 @@
 use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin};
 use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
-use vecdb::{CachedVecStrategy, LazyVec, ReadableCloneableVec};
+use vecdb::{CachedVecStrategy, LazyVec, ReadableCloneableVec, Rw};
 
 use crate::{LazyPreviousDeltaVec, ValuePerBlock};
 
@@ -22,7 +22,7 @@ impl LazyValueBlock {
     pub fn from_cumulative<P: CachedVecStrategy>(
         name: &str,
         version: Version,
-        cumulative: &ValuePerBlock<vecdb::Rw, P>,
+        cumulative: &ValuePerBlock<Rw, P>,
     ) -> Self {
         Self::from_cumulative_sources(
             name,

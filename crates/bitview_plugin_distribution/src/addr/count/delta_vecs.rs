@@ -1,5 +1,6 @@
 use bitview_cohort::WithAddrTypes;
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyRollingDeltasFromHeight};
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
@@ -18,7 +19,7 @@ impl DeltaVecs {
         version: Version,
         addr_count: &AddrCountsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Self {
         let version = version + Version::new(3);
 

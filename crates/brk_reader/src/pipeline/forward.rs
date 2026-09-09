@@ -1,7 +1,7 @@
 use std::{fs, ops::ControlFlow, sync::OnceLock, thread};
 
 use bitcoin::block::Header;
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{BlkMetadata, Height, ReadBlock};
 use crossbeam::channel::{Receiver, Sender, bounded};
 use parking_lot::Mutex;
@@ -33,9 +33,9 @@ pub fn pipeline_forward(
     first_blk_index: u16,
     xor_bytes: XORBytes,
     canonical: &CanonicalRange,
-    send: &Sender<brk_error::Result<ReadBlock>>,
+    send: &Sender<Result<ReadBlock>>,
     parser_threads: usize,
-) -> brk_error::Result<()> {
+) -> Result<()> {
     let (parser_send, parser_recv) = bounded::<ScannedBlock>(CHANNEL_CAPACITY);
     let reorder = Mutex::new(ReorderState::new(send.clone()));
     let stop: OnceLock<Stop> = OnceLock::new();
@@ -111,7 +111,7 @@ fn read_and_dispatch(
     canonical: &CanonicalRange,
     parser_send: &Sender<ScannedBlock>,
     stop: &OnceLock<Stop>,
-) -> brk_error::Result<()> {
+) -> Result<()> {
     for (&blk_index, blk_path) in paths.range(first_blk_index..) {
         if stop.get().is_some() {
             return Ok(());

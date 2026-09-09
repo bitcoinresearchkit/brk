@@ -183,16 +183,22 @@ impl RelativeVecs {
             ByTerm<LazyColumnPercentPerBlock<PartsPerMillion32, TermId>>,
         >,
     > {
-        ColumnarPerBlock::forced_import(db, &format!("{metric}_ppm_by_term"), version, |source| {
-            ByTerm::from_fn(|id| {
-                let name = CohortContext::Utxo.metric_name(
-                    id.select(&TERM_FILTERS),
-                    id.select(&TERM_NAMES).id,
-                    metric,
-                );
-                LazyColumnPercentPerBlock::new(cache, &name, version, source, id, mappings)
-            })
-        })
+        ColumnarPerBlock::forced_import(
+            cache,
+            db,
+            &format!("{metric}_ppm_by_term"),
+            version,
+            |source| {
+                ByTerm::from_fn(|id| {
+                    let name = CohortContext::Utxo.metric_name(
+                        id.select(&TERM_FILTERS),
+                        id.select(&TERM_NAMES).id,
+                        metric,
+                    );
+                    LazyColumnPercentPerBlock::new(&name, version, source, id, mappings)
+                })
+            },
+        )
     }
 
     fn aggregate_metric_name(id: UTXOAggregateId, metric: &str) -> String {

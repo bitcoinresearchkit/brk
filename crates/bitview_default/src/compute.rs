@@ -1,6 +1,6 @@
 use std::{thread, time::Duration};
 
-use bitview_plugin::{ComputePlugin, UpdateContext};
+use bitview_plugin::{ComputePlugin, Publication, UpdateContext};
 use bitview_plugin_bedrock::{Dependencies as BedrockDependencies, ID as BEDROCK_ID};
 use bitview_plugin_blocks::{Dependencies as BlocksDependencies, ID as BLOCKS_ID};
 use bitview_plugin_capital_sentiment::{
@@ -317,7 +317,7 @@ impl DefaultPlugins {
 }
 
 impl ComputePluginSet for DefaultPlugins {
-    fn publication(&self) -> &bitview_plugin::Publication {
+    fn publication(&self) -> &Publication {
         self.indexer.publication()
     }
 

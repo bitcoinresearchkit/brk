@@ -1,6 +1,7 @@
 use std::ops::AddAssign;
 
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmount};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{FiatType, LazyFiatPerBlock};
 use brk_error::Result;
@@ -28,13 +29,14 @@ where
         db: &Database,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
-        let stored = UTXOTypedColumns::forced_import(db, &format!("{metric}_cents"), version)?;
+        let stored =
+            UTXOTypedColumns::forced_import(cache, db, &format!("{metric}_cents"), version)?;
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .additive_source(cache, &filter, &format!("{name}_cents"), version)
+                .additive_source(&filter, &format!("{name}_cents"), version)
                 .expect("supported unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
         });

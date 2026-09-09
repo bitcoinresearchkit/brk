@@ -1,3 +1,5 @@
+use std::iter;
+
 use serde::Serialize;
 
 use crate::{
@@ -21,7 +23,7 @@ impl CohortName {
 
     /// Every canonical cohort name declared by this crate.
     pub fn all() -> impl Iterator<Item = &'static Self> {
-        std::iter::once(&UTXO_ALL_NAME)
+        iter::once(&UTXO_ALL_NAME)
             .chain(TERM_NAMES.iter())
             .chain(AGE_RANGE_NAMES.iter())
             .chain(UNDER_AGE_NAMES.iter())

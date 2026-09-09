@@ -1,17 +1,15 @@
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
-use crate::{IndexSources, LazyColumnPerBlock, LazyRatioPerBlock, Price};
+use crate::{IndexSources, LazyColumnPerBlock, LazyRatioPerBlock, Price, PriceWithRatio};
 
-pub type LazyColumnPriceWithRatioPerBlock<C> =
-    crate::PriceWithRatio<Price<LazyColumnPerBlock<Cents, C>>>;
+pub type LazyColumnPriceWithRatioPerBlock<C> = PriceWithRatio<Price<LazyColumnPerBlock<Cents, C>>>;
 
 impl<C> LazyColumnPriceWithRatioPerBlock<C>
 where
     C: ColumnId,
 {
     pub fn new(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Cents>, C>,
@@ -19,7 +17,7 @@ where
         indexes: &IndexSources,
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
-        let price = Price::from_columnar_source(cache, name, version, source, column, indexes);
+        let price = Price::from_columnar_source(name, version, source, column, indexes);
         let ratio = LazyRatioPerBlock::from_price_source(
             name,
             version,

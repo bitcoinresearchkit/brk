@@ -1,13 +1,14 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fs::OpenOptions};
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregateId};
 use brk_types::{CentsCompact, Date, Sats, UrpdRaw};
+use tempfile::tempdir;
 
 use super::AgeRangeUrpds;
 
 #[test]
 fn packed_file_reads_all_or_one_age_range() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     let date = Date::new(2026, 8, 23);
     let expected = AgeRangeUrpds {
         entries: AgeRange::from_fn(|id| {
@@ -75,7 +76,7 @@ fn packed_file_reads_all_or_one_age_range() {
         UrpdRaw::deserialize_entries(&bytes).unwrap(),
         expected.get(id)
     );
-    std::fs::OpenOptions::new()
+    OpenOptions::new()
         .write(true)
         .open(AgeRangeUrpds::path(root.path(), date))
         .unwrap()

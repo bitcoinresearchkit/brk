@@ -3,9 +3,10 @@
 use std::process::ExitCode;
 
 use bitview_default::DefaultPlugins;
+use bitviewd::run;
 
 fn main() -> ExitCode {
-    match bitviewd::run(DefaultPlugins::import) {
+    match run(DefaultPlugins::import) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             if error.is_lock_error() {

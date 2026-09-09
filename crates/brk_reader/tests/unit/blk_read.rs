@@ -1,13 +1,14 @@
 use std::fs;
 
 use brk_rpc::{Auth, Client};
+use tempfile::tempdir;
 
 use super::*;
 use crate::Reader;
 
 #[test]
 fn streaming_and_direct_reads_preserve_every_xor_phase() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let plain: Vec<u8> = (0..200).collect();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     for mask in [[0; 8], [1, 17, 33, 49, 65, 81, 97, 113]] {

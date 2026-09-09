@@ -1,16 +1,17 @@
-mod common;
-
 use bitview_transforms::{CentsUnsignedToDollars, CentsUnsignedToSats};
 use bitview_vecs::{OhlcPrice, SplitPrice, SpotPrice};
 use brk_types::{Cents, Day1, Height, Version};
+use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, Pinned, ReadableCloneableVec, ReadableVec, UnaryTransform,
-    WritableVec,
+    AnyStoredVec, AnyVec, CachedVec, Database, Pinned, ReadableCloneableVec, ReadableVec,
+    UnaryTransform, WritableVec,
 };
+
+mod common;
 
 #[test]
 fn shared_price_shapes_preserve_integer_units_inverse_extrema_empty_periods_and_rewrites() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
@@ -24,7 +25,7 @@ fn shared_price_shapes_preserve_integer_units_inverse_extrema_empty_periods_and_
         &indexes,
     )
     .unwrap();
-    let _: &vecdb::CachedVec<_, Pinned> = &spot.cents.height;
+    let _: &CachedVec<_, Pinned> = &spot.cents.height;
     for value in [200u64, 400, 100, 800, 300, 600] {
         spot.cents.height.push(Cents::from(value));
     }

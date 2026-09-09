@@ -1,4 +1,7 @@
 use std::{
+    env, hint,
+    io::{self, Write},
+    path::Path,
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
@@ -7,6 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, ImportableVec, PcoVec, ReadableVec, Version,
     WritableVec,
@@ -55,7 +59,7 @@ where
         sum = vec.fold_range(s, s + range_size, sum, |acc, v| acc.wrapping_add(v));
     }
     let elapsed = start.elapsed();
-    std::hint::black_box(sum);
+    hint::black_box(sum);
     elapsed / reps as u32
 }
 
@@ -84,7 +88,7 @@ where
         }
     });
     let elapsed = start.elapsed();
-    std::hint::black_box(sum.load(Ordering::Relaxed));
+    hint::black_box(sum.load(Ordering::Relaxed));
     elapsed / reps as u32
 }
 
@@ -150,7 +154,7 @@ fn format_duration(d: Duration) -> String {
 
 // --- Populate ---
 
-fn populate_bytes(dir: &std::path::Path) {
+fn populate_bytes(dir: &Path) {
     eprint!("Populating BytesVec with {VALUE_COUNT} u64s (80 GB)...");
     flush();
     let pop_start = Instant::now();
@@ -176,7 +180,7 @@ fn populate_bytes(dir: &std::path::Path) {
     eprintln!("\n  done ({:?})", pop_start.elapsed());
 }
 
-fn populate_pco(dir: &std::path::Path) {
+fn populate_pco(dir: &Path) {
     eprint!("Populating PcoVec with {VALUE_COUNT} u64s...");
     flush();
     let pop_start = Instant::now();
@@ -238,26 +242,26 @@ where
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let mode = args.get(1).map(|s| s.as_str()).unwrap_or("both");
 
     match mode {
         "bytes" => {
-            let dir = tempfile::tempdir().unwrap();
+            let dir = tempdir().unwrap();
             populate_bytes(dir.path());
             let db = Database::open(dir.path()).unwrap();
             let vec: BytesVec<usize, u64> = BytesVec::import(&db, "bench", Version::ONE).unwrap();
             bench_type(&vec, "BytesVec<usize, u64>");
         }
         "pco" => {
-            let dir = tempfile::tempdir().unwrap();
+            let dir = tempdir().unwrap();
             populate_pco(dir.path());
             let db = Database::open(dir.path()).unwrap();
             let vec: PcoVec<usize, u64> = PcoVec::import(&db, "bench", Version::ONE).unwrap();
             bench_type(&vec, "PcoVec<usize, u64>");
         }
         _ => {
-            let bytes_dir = tempfile::tempdir().unwrap();
+            let bytes_dir = tempdir().unwrap();
             populate_bytes(bytes_dir.path());
             {
                 let db = Database::open(bytes_dir.path()).unwrap();
@@ -267,7 +271,7 @@ fn main() {
             }
             drop(bytes_dir);
 
-            let pco_dir = tempfile::tempdir().unwrap();
+            let pco_dir = tempdir().unwrap();
             populate_pco(pco_dir.path());
             {
                 let db = Database::open(pco_dir.path()).unwrap();
@@ -280,5 +284,5 @@ fn main() {
 }
 
 fn flush() {
-    std::io::Write::flush(&mut std::io::stdout()).ok();
+    Write::flush(&mut io::stdout()).ok();
 }

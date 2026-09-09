@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use parking_lot::{Mutex, RwLock};
 
-use crate::{ReadOnlyClone, ReadableVec, StoredVec, TypedVec, VecIndex, Version};
+use crate::{ReadOnlyClone, ReadableBoxedVec, ReadableVec, StoredVec, TypedVec, VecIndex, Version};
 
 mod any_stored_vec;
 pub mod any_vec;
@@ -208,8 +208,8 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
 impl<V: StoredVec, S: CachedVecStrategy> CachedVec<V, S> {
     /// Boxes a read-only clone for use with type-erased APIs (e.g. LazyVec).
     #[inline]
-    pub fn read_only_boxed_clone(&self) -> crate::ReadableBoxedVec<V::I, V::T> {
-        crate::ReadableBoxedVec::new(self.read_only_clone())
+    pub fn read_only_boxed_clone(&self) -> ReadableBoxedVec<V::I, V::T> {
+        ReadableBoxedVec::new(self.read_only_clone())
     }
 }
 

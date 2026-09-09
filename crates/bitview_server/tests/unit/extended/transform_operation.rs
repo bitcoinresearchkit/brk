@@ -1,4 +1,5 @@
 use aide::{openapi::Operation, transform::TransformOperation};
+use serde_json::to_value;
 
 use super::TransformResponseExtended;
 
@@ -8,7 +9,7 @@ fn error_schema_matches_wire_media_type() {
     let _ = TransformOperation::new(&mut operation)
         .bad_request()
         .server_errors();
-    let operation = serde_json::to_value(operation).unwrap();
+    let operation = to_value(operation).unwrap();
     assert_eq!(operation["responses"].as_object().unwrap().len(), 4);
     for status in ["400", "500", "503", "504"] {
         let content = operation["responses"][status]["content"]

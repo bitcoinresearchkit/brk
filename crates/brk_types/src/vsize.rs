@@ -1,16 +1,21 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, Weight};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::Weight;
 
 /// Virtual size in vbytes (weight / 4, rounded up). Max block vsize is ~1,000,000 vB.
 #[derive(
@@ -156,16 +161,16 @@ impl CheckedSub for VSize {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for VSize {
+impl VecdbCheckedSub for VSize {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for VSize {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for VSize {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -175,7 +180,7 @@ impl std::fmt::Display for VSize {
 impl Formattable for VSize {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

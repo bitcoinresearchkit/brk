@@ -1,13 +1,19 @@
 use std::ops::{Add, AddAssign};
 
-#[cfg(feature = "storage")]
-use bitview_traversable::Traversable;
+use brk_error::Result as ErrorResult;
 use brk_types::OutputType;
 use rayon::prelude::*;
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, VecValue, Version};
 
 use super::Filter;
+
+#[cfg(feature = "storage")]
+use std::array;
+
+#[cfg(feature = "storage")]
+use bitview_traversable::Traversable;
+
+#[cfg(feature = "storage")]
+use vecdb::{ColumnId, VecValue, Version};
 
 pub const P2PK65: &str = "p2pk65";
 pub const P2PK33: &str = "p2pk33";
@@ -78,7 +84,7 @@ impl ColumnId for AddrTypeId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(ADDR_TYPE_IDS[index]))
+        array::from_fn(|index| create(ADDR_TYPE_IDS[index]))
     }
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, create: F) -> Self::Row<U>
@@ -205,9 +211,9 @@ impl<T> ByAddrType<T> {
         Self::from_fn(|id| create(Filter::Type(id.output_type())))
     }
 
-    pub fn new_with_name<F>(f: F) -> brk_error::Result<Self>
+    pub fn new_with_name<F>(f: F) -> ErrorResult<Self>
     where
-        F: Fn(&'static str) -> brk_error::Result<T>,
+        F: Fn(&'static str) -> ErrorResult<T>,
     {
         Self::try_from_fn(|id| f(id.name()))
     }

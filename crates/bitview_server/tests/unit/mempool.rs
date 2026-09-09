@@ -13,14 +13,17 @@ use bitview_query::AsyncQuery;
 use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use serde_json::{Value, json};
+use serde_json::{Value, from_slice, from_str, json, to_string as SerdeJsonToString};
+use tempfile::tempdir;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
     runtime::Builder,
+    spawn as TokioSpawn,
     task::spawn_blocking,
     time::timeout,
 };
+use vecdb::CacheBudget;
 
 use super::server_routes::exchange_with_etag;
 use crate::{Server, ServerConfig};
@@ -77,7 +80,7 @@ async fn rpc_templates(node: TcpListener, transactions: Vec<Value>) {
         assert!(length < 4096);
         let mut bytes = vec![0; length];
         socket.read_exact(&mut bytes).await.unwrap();
-        let request: Value = serde_json::from_slice(&bytes).unwrap();
+        let request: Value = from_slice(&bytes).unwrap();
         if step % 2 == 0 {
             assert_eq!(request["method"], "getbestblockhash");
             let body =
@@ -117,7 +120,7 @@ async fn rpc_templates(node: TcpListener, transactions: Vec<Value>) {
             };
             json!({"id": call["id"], "result": result, "error": null})
         }).collect();
-        let body = serde_json::to_string(&responses).unwrap();
+        let body = SerdeJsonToString(&responses).unwrap();
         let response = format!(
             "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{body}",
             body.len()
@@ -135,7 +138,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
         .spawn(|| {
-            let directory = tempfile::tempdir().unwrap();
+            let directory = tempdir().unwrap();
             let node = StdListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
             node.set_nonblocking(true).unwrap();
             let client = Client::new(
@@ -158,7 +161,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                 .block_on(async {
                     let node = TcpListener::from_std(node).unwrap();
                     let transactions = template_transactions();
-                    let mock = tokio::spawn(rpc_templates(node, transactions.clone()));
+                    let mock = TokioSpawn(rpc_templates(node, transactions.clone()));
                     let server = Server::bind(
                         &query,
                         ServerConfig {
@@ -172,7 +175,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                     .unwrap();
                     let address = server.listener.local_addr().unwrap();
                     let admission = server.state.sync_query.clone();
-                    let serving = tokio::spawn(server.serve());
+                    let serving = TokioSpawn(server.serve());
                     // Unpublished snapshots return immediately without a validator.
                     timeout(Duration::from_secs(120), async {
                         let path = "/api/v1/mempool/block-template";
@@ -238,14 +241,12 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                         )
                         .await;
                         assert!(fees.starts_with("HTTP/1.1 200"), "{fees}");
-                        let fees: Value =
-                            serde_json::from_str(fees.split_once("\r\n\r\n").unwrap().1).unwrap();
+                        let fees: Value = from_str(fees.split_once("\r\n\r\n").unwrap().1).unwrap();
                         assert_eq!(fees["minimumFee"], 2.0);
                         let response = exchange_with_etag(address, "GET", path, "\"old\"").await;
                         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                         let body: Value =
-                            serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1)
-                                .unwrap();
+                            from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                         let body_transactions = body["transactions"].as_array().unwrap();
                         assert_eq!(body_transactions.len(), transactions.len());
                         for (actual, expected) in body_transactions.iter().zip(&transactions) {
@@ -259,7 +260,7 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                         let diff = exchange_with_etag(address, "GET", &diff_path, "\"old\"").await;
                         assert!(diff.starts_with("HTTP/1.1 200"), "{diff}");
                         let diff_body: Value =
-                            serde_json::from_str(diff.split_once("\r\n\r\n").unwrap().1).unwrap();
+                            from_str(diff.split_once("\r\n\r\n").unwrap().1).unwrap();
                         assert_eq!(diff_body["order"], json!([0, 1]));
                         let diff_tag = diff
                             .lines()
@@ -303,4 +304,4 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
         .unwrap();
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

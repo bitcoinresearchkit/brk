@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{iter, marker::PhantomData};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Timestamp, Version};
@@ -134,7 +134,7 @@ impl<I: VecIndex> ReadOnlyClone for BoundaryTimestampVec<I> {
 
 impl<I: VecIndex> Traversable for BoundaryTimestampVec<I> {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -146,9 +146,8 @@ impl<I: VecIndex> Traversable for BoundaryTimestampVec<I> {
 mod tests {
     use std::sync::Arc;
 
-    use parking_lot::RwLock;
-
     use brk_types::Epoch;
+    use parking_lot::RwLock;
     use vecdb::CachedVec;
 
     use super::*;

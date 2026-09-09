@@ -1,11 +1,15 @@
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicU32, Ordering},
+};
+
 use crate::{
-    SequenceNumberCounter,
+    Result, SequenceNumberCounter, Table,
     compaction::state::CompactionState,
     config::Config,
     table::next_table_id,
     version::{Set, Version},
 };
-use std::sync::{Arc, Mutex, atomic::AtomicU32};
 
 /// Runtime state of a table-only LSM tree.
 pub struct Inner {
@@ -25,7 +29,7 @@ pub struct Inner {
 
 impl Inner {
     /// Creates the initial empty tree state.
-    pub fn create_new(config: Config) -> crate::Result<Self> {
+    pub fn create_new(config: Config) -> Result<Self> {
         let version = Version::new(0);
         version.persist(&config.path)?;
 
@@ -44,12 +48,12 @@ impl Inner {
     pub fn recover(config: Config, version: Version, tree_id: u32) -> Self {
         let next_table_id = version
             .iter_tables()
-            .map(crate::Table::id)
+            .map(Table::id)
             .max()
             .map_or(0, |id| u64::from(id) + 1);
         let next_seqno = version
             .iter_tables()
-            .map(crate::Table::get_highest_seqno)
+            .map(Table::get_highest_seqno)
             .max()
             .map_or(0, |seqno| seqno + 1);
 
@@ -72,7 +76,7 @@ impl Inner {
     pub fn next_tree_id() -> u32 {
         static TREE_ID: AtomicU32 = AtomicU32::new(0);
 
-        let id = TREE_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let id = TREE_ID.fetch_add(1, Ordering::Relaxed);
         assert_ne!(id, u32::MAX, "ran out of tree IDs");
         id
     }

@@ -1,15 +1,18 @@
+use xxhash_rust::xxh3;
+
 /// Persisted tag for XXH3-based table filters.
 pub const XXH3_TAG: u8 = 0;
 
 /// Generates a 64-bit hash using xxh3.
 pub fn hash64(bytes: &[u8]) -> u64 {
-    xxhash_rust::xxh3::xxh3_64(bytes)
+    xxh3::xxh3_64(bytes)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn test_hash64() {

@@ -1,18 +1,21 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::type_complexity)]
 
-mod format;
-mod hook;
-mod rate_limit;
-
 use std::{backtrace::Backtrace, env, fs, io, panic, path::Path, time::Duration};
-
-use tracing::Event;
-use tracing_subscriber::{filter::Targets, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use format::Formatter;
 use hook::HookLayer;
 use rate_limit::{RateLimitedFile, is_log_file};
+use tracing::{Event, Level, error};
+use tracing_log::LogTracer;
+use tracing_subscriber::{
+    filter::Targets, fmt, layer::SubscriberExt, registry as TracingSubscriberRegistry,
+    util::SubscriberInitExt,
+};
+
+mod format;
+mod hook;
+mod rate_limit;
 
 /// Days to keep log files before cleanup
 const MAX_LOG_AGE_DAYS: u64 = 7;
@@ -37,7 +40,7 @@ pub fn init(dir: Option<&Path>) -> io::Result<()> {
 /// `LOG` and `RUST_LOG` still take precedence. This is useful for services
 /// whose normal debug traffic is too verbose for their default execution mode.
 pub fn init_with_default_level(dir: Option<&Path>, default_level: &str) -> io::Result<()> {
-    tracing_log::LogTracer::init().ok();
+    LogTracer::init().ok();
     install_panic_hook();
 
     let level = env::var("LOG").unwrap_or_else(|_| default_level.to_string());
@@ -50,9 +53,9 @@ pub fn init_with_default_level(dir: Option<&Path>, default_level: &str) -> io::R
 
     let filter: Targets = directives
         .parse()
-        .unwrap_or_else(|_| Targets::new().with_default(tracing::Level::INFO));
+        .unwrap_or_else(|_| Targets::new().with_default(Level::INFO));
 
-    let registry = tracing_subscriber::registry()
+    let registry = TracingSubscriberRegistry()
         .with(filter)
         .with(fmt::layer().event_format(Formatter::<true>))
         .with(HookLayer);
@@ -90,7 +93,7 @@ fn install_panic_hook() {
             .or_else(|| payload.downcast_ref::<String>().cloned())
             .unwrap_or_else(|| "Box<dyn Any>".to_owned());
         let backtrace = Backtrace::capture();
-        tracing::error!(location, backtrace = %backtrace, "panic: {msg}");
+        error!(location, backtrace = %backtrace, "panic: {msg}");
     }));
 }
 

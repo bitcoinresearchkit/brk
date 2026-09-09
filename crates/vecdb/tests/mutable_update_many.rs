@@ -1,8 +1,10 @@
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, MutableVec, Version, WritableVec};
+use vecdb::{
+    AnyStoredVec, BytesVec, Database, ImportableVec, MutableVec, Result, Version, WritableVec,
+};
 
 #[test]
-fn update_many_matches_individual_updates() -> vecdb::Result<()> {
+fn update_many_matches_individual_updates() -> Result<()> {
     let directory = tempdir()?;
     let database = Database::open(directory.path())?;
     let mut vec =
@@ -60,7 +62,7 @@ fn update_many_matches_individual_updates() -> vecdb::Result<()> {
 }
 
 #[test]
-fn update_many_rejects_the_whole_out_of_range_batch() -> vecdb::Result<()> {
+fn update_many_rejects_the_whole_out_of_range_batch() -> Result<()> {
     let directory = tempdir()?;
     let database = Database::open(directory.path())?;
     let mut vec =

@@ -1,7 +1,9 @@
+use crate::{extract_endpoints, parse_openapi_json};
+
 #[test]
 fn operation_names_follow_path_segments_and_explicit_overrides() {
-    let spec = crate::parse_openapi_json(r#"{"openapi":"3.1.0","info":{"title":"Fixture","version":"1"},"paths":{"/api/test":{"get":{"responses":{"200":{"description":"Success"}}}}}}"#).unwrap();
-    let mut endpoint = crate::extract_endpoints(&spec).pop().unwrap();
+    let spec = parse_openapi_json(r#"{"openapi":"3.1.0","info":{"title":"Fixture","version":"1"},"paths":{"/api/test":{"get":{"responses":{"200":{"description":"Success"}}}}}}"#).unwrap();
+    let mut endpoint = extract_endpoints(&spec).pop().unwrap();
     for (path, expected) in [
         ("/api/", "get_"),
         ("/api/block-hash/{hash}", "get_block_hash"),

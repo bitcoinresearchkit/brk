@@ -1,8 +1,11 @@
-use crate::Result;
 #[cfg(feature = "serde")]
-use crate::{Formattable, ReadableVec, TypedVec};
+use serde::Serialize;
 
 use super::AnyReadableVec;
+use crate::Result;
+
+#[cfg(feature = "serde")]
+use crate::{Formattable, ReadableVec, TypedVec};
 
 /// Type-erased trait for serializable vectors.
 pub trait AnySerializableVec: AnyReadableVec {
@@ -28,7 +31,7 @@ impl<V> AnySerializableVec for V
 where
     V: TypedVec,
     V: ReadableVec<V::I, V::T>,
-    V::T: serde::Serialize + Formattable,
+    V::T: Serialize + Formattable,
 {
     fn write_json(&self, from: Option<usize>, to: Option<usize>, buf: &mut Vec<u8>) -> Result<()> {
         let len = self.len();

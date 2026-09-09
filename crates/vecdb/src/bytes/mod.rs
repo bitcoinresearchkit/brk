@@ -1,3 +1,5 @@
+use crate::Result;
+
 pub mod array;
 pub mod numeric;
 
@@ -34,5 +36,5 @@ pub trait Bytes: Sized {
     /// Deserializes a value from bytes.
     ///
     /// For numeric types, this uses little-endian byte order (via `from_le_bytes`).
-    fn from_bytes(bytes: &[u8]) -> crate::Result<Self>;
+    fn from_bytes(bytes: &[u8]) -> Result<Self>;
 }

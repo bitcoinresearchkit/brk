@@ -1,12 +1,13 @@
-#[cfg(feature = "storage")]
-use bitview_traversable::Traversable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     AgeRangeId, CohortContext, CohortName, Filter, LTH_AGE_RANGE_IDS, STH_AGE_RANGE_IDS,
-    TERM_FILTERS, TERM_NAMES, TermId,
+    TERM_FILTERS, TERM_NAMES, Term, TermId,
 };
+
+#[cfg(feature = "storage")]
+use bitview_traversable::Traversable;
 
 /// Canonical name for the aggregate cohort containing every UTXO.
 pub const UTXO_ALL_NAME: CohortName = CohortName::new("all", "All", "All UTXOs");
@@ -96,8 +97,8 @@ impl<T> UTXOAggregate<T> {
     pub fn get(&self, filter: &Filter) -> Option<&T> {
         match filter {
             Filter::All => Some(&self.all),
-            Filter::Term(crate::Term::Sth) => Some(&self.sth),
-            Filter::Term(crate::Term::Lth) => Some(&self.lth),
+            Filter::Term(Term::Sth) => Some(&self.sth),
+            Filter::Term(Term::Lth) => Some(&self.lth),
             _ => None,
         }
     }
@@ -105,8 +106,8 @@ impl<T> UTXOAggregate<T> {
     pub fn get_mut(&mut self, filter: &Filter) -> Option<&mut T> {
         match filter {
             Filter::All => Some(&mut self.all),
-            Filter::Term(crate::Term::Sth) => Some(&mut self.sth),
-            Filter::Term(crate::Term::Lth) => Some(&mut self.lth),
+            Filter::Term(Term::Sth) => Some(&mut self.sth),
+            Filter::Term(Term::Lth) => Some(&mut self.lth),
             _ => None,
         }
     }

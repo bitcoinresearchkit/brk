@@ -1,3 +1,4 @@
+use bitcoin::{Witness as BitcoinWitness, blockdata::witness::Iter};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(transparent)]
 #[schemars(with = "Vec<String>")]
-pub struct Witness(bitcoin::Witness);
+pub struct Witness(BitcoinWitness);
 
 impl Witness {
     #[inline]
@@ -35,26 +36,26 @@ impl Witness {
     }
 
     #[inline]
-    pub fn iter(&self) -> bitcoin::blockdata::witness::Iter<'_> {
+    pub fn iter(&self) -> Iter<'_> {
         self.0.iter()
     }
 }
 
-impl From<bitcoin::Witness> for Witness {
+impl From<BitcoinWitness> for Witness {
     #[inline]
-    fn from(w: bitcoin::Witness) -> Self {
+    fn from(w: BitcoinWitness) -> Self {
         Self(w)
     }
 }
 
-impl From<Witness> for bitcoin::Witness {
+impl From<Witness> for BitcoinWitness {
     #[inline]
     fn from(w: Witness) -> Self {
         w.0
     }
 }
 
-impl From<&Witness> for bitcoin::Witness {
+impl From<&Witness> for BitcoinWitness {
     #[inline]
     fn from(w: &Witness) -> Self {
         w.0.clone()

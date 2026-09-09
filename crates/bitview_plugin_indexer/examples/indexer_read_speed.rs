@@ -1,13 +1,19 @@
-use std::{fs, path::Path, time::Instant};
+use std::{
+    env, fs,
+    path::Path,
+    time::{Duration, Instant},
+};
 
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
+use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Sats;
-use vecdb::ReadableVec;
+use vecdb::{CacheBudget, ReadableVec};
 
-fn run_benchmark(indexer: &Indexer) -> (Sats, std::time::Duration, usize) {
+fn run_benchmark(indexer: &Indexer) -> (Sats, Duration, usize) {
     let start = Instant::now();
     let mut sum = Sats::ZERO;
     let mut count = 0;
@@ -21,10 +27,10 @@ fn run_benchmark(indexer: &Indexer) -> (Sats, std::time::Duration, usize) {
     (sum, duration, count)
 }
 
-fn main() -> brk_error::Result<()> {
-    brk_logger::init(Some(Path::new(".log")))?;
+fn main() -> Result<()> {
+    init(Some(Path::new(".log")))?;
 
-    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".bitview");
+    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".bitview");
     fs::create_dir_all(&outputs_dir)?;
 
     println!("\n╔════════════════════════════════════════════════════════╗");
@@ -111,4 +117,4 @@ fn main() -> brk_error::Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

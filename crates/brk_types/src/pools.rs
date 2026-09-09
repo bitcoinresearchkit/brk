@@ -2,12 +2,13 @@ use std::sync::OnceLock;
 
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+use serde_json::from_str;
+
+use super::Pool;
+use crate::{AddrBytes, PoolSlug};
 
 #[cfg(feature = "storage")]
 use crate::Version;
-use crate::{AddrBytes, PoolSlug};
-
-use super::Pool;
 
 /// Increment when pool IDs, payout addresses, or coinbase tags change.
 #[cfg(feature = "storage")]
@@ -84,7 +85,7 @@ pub fn pools() -> &'static Pools {
     static POOLS: OnceLock<Pools> = OnceLock::new();
     POOLS.get_or_init(|| {
         let entries: Vec<JsonPoolEntry> =
-            serde_json::from_str(JSON_DATA).expect("Failed to parse pools-v2.json");
+            from_str(JSON_DATA).expect("Failed to parse pools-v2.json");
 
         let max_id = entries.iter().map(|entry| entry.id).max().unwrap_or(0);
         assert!(
@@ -150,14 +151,14 @@ pub fn pools() -> &'static Pools {
 
 #[cfg(test)]
 mod tests {
-    use crate::Addr;
+    use serde_json::to_string;
 
     use super::*;
+    use crate::Addr;
 
     #[test]
     fn bundled_json_entries_have_named_slugs() {
-        let entries: Vec<JsonPoolEntry> =
-            serde_json::from_str(JSON_DATA).expect("valid pools-v2.json");
+        let entries: Vec<JsonPoolEntry> = from_str(JSON_DATA).expect("valid pools-v2.json");
 
         for entry in entries {
             if TESTNET_IDS.contains(&entry.id) {
@@ -166,7 +167,7 @@ mod tests {
             let id = u8::try_from(entry.id).expect("pool ID fits PoolSlug");
             let slug = PoolSlug::from(id);
             assert!(
-                serde_json::to_string(&slug).is_ok(),
+                to_string(&slug).is_ok(),
                 "pool ID {} ({}) still maps to {slug:?}",
                 entry.id,
                 entry.name

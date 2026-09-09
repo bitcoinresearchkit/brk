@@ -1,3 +1,17 @@
+use std::{collections::BTreeMap, io, mem};
+
+use derive_more::{Deref, DerefMut};
+use oas3::{
+    Spec, from_json,
+    spec::{
+        MediaType, ObjectOrReference, ObjectSchema, Operation, ParameterIn, Schema, SchemaType,
+        SchemaTypeSet,
+    },
+};
+use serde_json::{Map, Value, from_str, to_string as SerdeJsonToString, to_value};
+
+use crate::ref_to_type_name;
+
 mod endpoint;
 mod parameter;
 mod request_body;
@@ -9,16 +23,6 @@ pub use parameter::Parameter;
 pub use request_body::RequestBody;
 pub use response_kind::ResponseKind;
 pub use text_schema::TextSchema;
-
-use std::{collections::BTreeMap, io};
-
-use crate::ref_to_type_name;
-use derive_more::{Deref, DerefMut};
-use oas3::Spec;
-use oas3::spec::{
-    ObjectOrReference, ObjectSchema, Operation, ParameterIn, Schema, SchemaType, SchemaTypeSet,
-};
-use serde_json::Value;
 
 /// Type schema extracted from OpenAPI components
 #[derive(Default, Deref, DerefMut)]
@@ -36,20 +40,20 @@ impl From<BTreeMap<String, Value>> for TypeSchemas {
 /// - Removes unsupported siblings from `$ref` objects (oas3 only supports `summary` and `description`)
 pub fn parse_openapi_json(json: &str) -> io::Result<Spec> {
     let mut value: Value =
-        serde_json::from_str(json).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        from_str(json).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     // Clean up for oas3 compatibility
     clean_for_oas3(&mut value);
 
     let cleaned_json =
-        serde_json::to_string(&value).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        SerdeJsonToString(&value).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    oas3::from_json(&cleaned_json).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+    from_json(&cleaned_json).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
 }
 
 /// Extract type schemas from OpenAPI JSON
 pub fn extract_schemas(json: &str) -> TypeSchemas {
-    let Ok(mut value) = serde_json::from_str::<Value>(json) else {
+    let Ok(mut value) = from_str::<Value>(json) else {
         return TypeSchemas::default();
     };
 
@@ -58,7 +62,7 @@ pub fn extract_schemas(json: &str) -> TypeSchemas {
             .get_mut("components")
             .and_then(|c| c.get_mut("schemas"))
             .and_then(Value::as_object_mut)
-            .map(|schemas| std::mem::take(schemas).into_iter().collect())
+            .map(|schemas| mem::take(schemas).into_iter().collect())
             .unwrap_or_default(),
     )
 }
@@ -77,7 +81,7 @@ fn clean_for_oas3(value: &mut Value) {
                 if let Some(schema) = map.get_mut("schema")
                     && schema.is_boolean()
                 {
-                    *schema = Value::Object(serde_json::Map::new());
+                    *schema = Value::Object(Map::new());
                 }
                 for v in map.values_mut() {
                     clean_for_oas3(v);
@@ -150,7 +154,7 @@ fn extract_json_response_schema(operation: &Operation) -> Option<Value> {
                 ObjectOrReference::Ref { .. } => None,
             })?;
     let schema = response.content.get("application/json")?.schema.as_ref()?;
-    serde_json::to_value(schema).ok()
+    to_value(schema).ok()
 }
 
 /// Extract the request body shape and media type, if any.
@@ -251,8 +255,8 @@ fn extract_parameters(operation: &Operation, location: ParameterIn) -> Vec<Param
                     schema: param
                         .schema
                         .as_ref()
-                        .and_then(|schema| serde_json::to_value(schema).ok())
-                        .unwrap_or_else(|| Value::Object(serde_json::Map::new())),
+                        .and_then(|schema| to_value(schema).ok())
+                        .unwrap_or_else(|| Value::Object(Map::new())),
                 })
             }
             _ => None,
@@ -295,7 +299,7 @@ fn extract_response_kind(operation: &Operation, spec: &Spec) -> ResponseKind {
     ResponseKind::Text(None)
 }
 
-fn schema_name_from_content(content: &oas3::spec::MediaType) -> Option<String> {
+fn schema_name_from_content(content: &MediaType) -> Option<String> {
     schema_type_from_schema(content.schema.as_ref()?)
 }
 

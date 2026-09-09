@@ -4,8 +4,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Day1, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadOnlyColumnarVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportOptions,
+    ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use crate::DailyValue;
@@ -30,12 +31,15 @@ where
     C: ColumnId,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         build_series: impl FnOnce(&ReadOnlyColumnarVec<PcoVec<Day1, T>, C>) -> S,
     ) -> Result<Self> {
-        let day1 = EagerVec::forced_import(db, name, version)?;
+        let day1 = EagerVec::forced_import_with(
+            ImportOptions::new(db, name, version).with_cache_budget(cache),
+        )?;
         let series = build_series(&day1.read_only_clone());
 
         Ok(Self { series, day1 })

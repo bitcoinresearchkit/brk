@@ -1,11 +1,14 @@
-use better_io::BetterBufRead;
-use std::marker::PhantomData;
+use std::{any, marker::PhantomData};
 
-use crate::chunk_latent_decompressor::DynChunkLatentDecompressor;
-use crate::data_types::Number;
-use crate::errors::{PcoError, PcoResult};
-use crate::metadata::{ChunkMeta, LatentVarKey, PerLatentVar};
-use crate::wrapped::PageDecompressor;
+use better_io::BetterBufRead;
+
+use crate::{
+  chunk_latent_decompressor::DynChunkLatentDecompressor,
+  data_types::Number,
+  errors::{PcoError, PcoResult},
+  metadata::{ChunkMeta, LatentVarKey, PerLatentVar},
+  wrapped::PageDecompressor,
+};
 
 #[derive(Clone, Debug)]
 pub struct ChunkDecompressorInner {
@@ -47,7 +50,7 @@ impl<T: Number> ChunkDecompressor<T> {
     if !T::mode_is_valid(&meta.mode) {
       return Err(PcoError::corruption(format!(
         "invalid mode for {} number type: {:?}",
-        std::any::type_name::<T>(),
+        any::type_name::<T>(),
         meta.mode
       )));
     }

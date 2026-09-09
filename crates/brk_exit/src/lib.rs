@@ -1,7 +1,9 @@
 //! Graceful process shutdown coordination for BRK.
 
 use std::{
+    mem,
     process::exit,
+    ptr,
     sync::{
         Arc,
         atomic::{AtomicBool, AtomicI32, Ordering},
@@ -9,6 +11,9 @@ use std::{
     thread,
 };
 
+use libc::{
+    SA_RESTART, SIGINT, SIGTERM, c_int, pipe, read, sigaction, sigemptyset, write as LibcWrite,
+};
 use log::info;
 use parking_lot::{Mutex, RwLock};
 
@@ -21,15 +26,15 @@ static SIGNAL_PIPE: AtomicI32 = AtomicI32::new(-1);
 
 type CleanupCallback = Box<dyn Fn() + Send + Sync>;
 
-extern "C" fn signal_handler(_sig: libc::c_int) {
+extern "C" fn signal_handler(_sig: c_int) {
     if SIGNAL_RECEIVED.swap(true, Ordering::Relaxed) {
         const MSG: &[u8] = b"Shutdown already pending...\n";
-        unsafe { libc::write(2, MSG.as_ptr().cast(), MSG.len()) };
+        unsafe { LibcWrite(2, MSG.as_ptr().cast(), MSG.len()) };
     } else {
         const MSG: &[u8] = b"Signal received, shutdown pending...\n";
-        unsafe { libc::write(2, MSG.as_ptr().cast(), MSG.len()) };
+        unsafe { LibcWrite(2, MSG.as_ptr().cast(), MSG.len()) };
         let fd = SIGNAL_PIPE.load(Ordering::Relaxed);
-        unsafe { libc::write(fd, b"x".as_ptr().cast(), 1) };
+        unsafe { LibcWrite(fd, b"x".as_ptr().cast(), 1) };
     }
 }
 
@@ -66,7 +71,7 @@ impl Exit {
     pub fn set_ctrlc_handler(&self) {
         let mut fds = [0i32; 2];
         assert!(
-            unsafe { libc::pipe(fds.as_mut_ptr()) } == 0,
+            unsafe { pipe(fds.as_mut_ptr()) } == 0,
             "failed to create pipe"
         );
 
@@ -74,17 +79,17 @@ impl Exit {
         SIGNAL_PIPE.store(fds[1], Ordering::Relaxed);
 
         unsafe {
-            let mut action: libc::sigaction = std::mem::zeroed();
+            let mut action: sigaction = mem::zeroed();
             action.sa_sigaction = signal_handler as *const () as usize;
-            libc::sigemptyset(&raw mut action.sa_mask);
-            action.sa_flags = libc::SA_RESTART;
+            sigemptyset(&raw mut action.sa_mask);
+            action.sa_flags = SA_RESTART;
 
             assert!(
-                libc::sigaction(libc::SIGINT, &action, std::ptr::null_mut()) == 0,
+                sigaction(SIGINT, &action, ptr::null_mut()) == 0,
                 "failed to install SIGINT handler"
             );
             assert!(
-                libc::sigaction(libc::SIGTERM, &action, std::ptr::null_mut()) == 0,
+                sigaction(SIGTERM, &action, ptr::null_mut()) == 0,
                 "failed to install SIGTERM handler"
             );
         }
@@ -93,7 +98,7 @@ impl Exit {
         let callbacks = self.cleanup_callbacks.clone();
         thread::spawn(move || {
             let mut buf = [0u8; 1];
-            unsafe { libc::read(read_fd, buf.as_mut_ptr().cast(), 1) };
+            unsafe { read(read_fd, buf.as_mut_ptr().cast(), 1) };
 
             let _guard = lock.write();
             for callback in callbacks.lock().iter() {

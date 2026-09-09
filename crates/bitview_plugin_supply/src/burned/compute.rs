@@ -1,6 +1,8 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mining::Vecs as MiningVecs;
+use bitview_plugin_outputs::Vecs as OutputsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::Sats;
 use vecdb::VecIndex;
@@ -11,9 +13,9 @@ impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        outputs: &bitview_plugin_outputs::Vecs,
-        mining: &bitview_plugin_mining::Vecs,
-        prices: &bitview_plugin_price::Vecs,
+        outputs: &OutputsVecs,
+        mining: &MiningVecs,
+        prices: &PriceVecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;

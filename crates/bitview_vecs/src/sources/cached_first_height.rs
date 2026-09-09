@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, iter, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Version};
@@ -125,7 +125,7 @@ impl<I: VecIndex> ReadOnlyClone for CachedFirstHeightVec<I> {
 
 impl<I: VecIndex> Traversable for CachedFirstHeightVec<I> {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -185,7 +185,7 @@ impl<I: VecIndex> FirstHeightSource<I> {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Height)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}

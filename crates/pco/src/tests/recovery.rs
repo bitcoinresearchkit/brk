@@ -1,16 +1,16 @@
 use half::f16;
 use rand::RngExt;
-use rand_xoshiro::rand_core::SeedableRng;
+use rand_xoshiro::{rand_core::SeedableRng, Xoroshiro128PlusPlus};
 
-use crate::chunk_config::{ChunkConfig, DeltaSpec};
-use crate::constants::Bitlen;
-use crate::data_types::latent_priv::LatentPriv;
-use crate::data_types::number_priv::NumberPriv;
-use crate::data_types::{LatentType, Number};
-use crate::errors::PcoResult;
-use crate::metadata::{ChunkMeta, DeltaEncoding, DynLatent, DynLatents, Mode};
-use crate::standalone::{simple_compress, simple_decompress, FileCompressor};
-use crate::ModeSpec;
+use crate::{
+  chunk_config::{ChunkConfig, DeltaSpec},
+  constants::Bitlen,
+  data_types::{latent_priv::LatentPriv, number_priv::NumberPriv, LatentType, Number},
+  errors::PcoResult,
+  metadata::{ChunkMeta, DeltaEncoding, DynLatent, DynLatents, Mode},
+  standalone::{simple_compress, simple_decompress, FileCompressor},
+  ModeSpec,
+};
 
 fn compress_w_meta<T: Number>(nums: &[T], config: &ChunkConfig) -> PcoResult<(Vec<u8>, ChunkMeta)> {
   let mut compressed = Vec::new();
@@ -313,7 +313,7 @@ fn test_with_int_mult() -> PcoResult<()> {
 
 #[test]
 fn test_sparse_islands() -> PcoResult<()> {
-  let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+  let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
   let mut nums = Vec::new();
   // sparse - one common island of [0, 8) and one rare of [1000, 1008)
   for _ in 0..20 {
@@ -327,7 +327,7 @@ fn test_sparse_islands() -> PcoResult<()> {
 
 #[test]
 fn test_decimals() -> PcoResult<()> {
-  let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+  let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
   let mut nums = Vec::new();
   let n = 300;
 
@@ -492,7 +492,7 @@ fn test_conv1_degenerate() -> PcoResult<()> {
 
   check::<u16>(vec![3], "short")?;
   check::<u32>(vec![0; 100], "zeros")?;
-  let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+  let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
   let mut nums = Vec::new();
   for _ in 0..1000 {
     nums.push(rng.random_range(0..1000));

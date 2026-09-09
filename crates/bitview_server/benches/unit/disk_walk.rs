@@ -1,8 +1,11 @@
-use super::*;
+use std::{hint::black_box, time::Instant};
+
+use tempfile::tempdir;
+
+use super::{dir_size as walk_dir_size, *};
+
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
-use std::{hint::black_box, time::Instant};
-use tempfile::tempdir;
 
 // Preserve the original arithmetic in benchmark-only reference walkers.
 fn allocated_bytes(metadata: &Metadata) -> u64 {
@@ -17,7 +20,7 @@ fn allocated_bytes(metadata: &Metadata) -> u64 {
 }
 
 fn dir_size(path: &Path) -> Result<u64> {
-    super::dir_size(path, black_box(&AtomicBool::new(false)))
+    walk_dir_size(path, black_box(&AtomicBool::new(false)))
 }
 
 #[test]

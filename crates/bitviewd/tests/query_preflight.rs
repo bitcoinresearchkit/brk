@@ -8,6 +8,8 @@ use brk_mempool::Mempool;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::{Addr, BlockHash, Day1, NextBlockHash, Txid};
+use tempfile::tempdir;
+use vecdb::CacheBudget;
 
 #[test]
 fn query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
@@ -20,7 +22,7 @@ fn query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() 
 }
 
 fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_updates() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
     let plugins =
@@ -153,18 +155,18 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
     assert!(matches!(query.addr_stats_preflight(&addr), Ok(None)));
     assert!(matches!(
         query.addr_stats_preflight(&Addr::from("not-an-address".to_owned())),
-        Err(brk_error::Error::InvalidAddr)
+        Err(Error::InvalidAddr)
     ));
     assert!(matches!(
         query.addr(Addr::from("not-an-address".to_owned())),
-        Err(brk_error::Error::InvalidAddr)
+        Err(Error::InvalidAddr)
     ));
 
     gate.finish_update();
     assert!(matches!(
         query.addr_stats_preflight(&addr),
-        Err(brk_error::Error::UnknownAddr)
+        Err(Error::UnknownAddr)
     ));
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

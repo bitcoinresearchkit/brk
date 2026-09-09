@@ -1,6 +1,5 @@
-use crate::Bytes;
-
 use super::Stamp;
+use crate::{Bytes, Result};
 
 impl Bytes for Stamp {
     type Array = [u8; size_of::<Self>()];
@@ -11,7 +10,7 @@ impl Bytes for Stamp {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Ok(Self(u64::from_bytes(bytes)?))
     }
 }

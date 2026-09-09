@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
-use rayon::prelude::*;
+use rayon::{iter, prelude::*};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
 
 use super::{AddrCountsVecs, AddrTypeToAddrCount};
@@ -61,7 +61,7 @@ impl FundedAddrCountsVecs {
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         self.counts
             .par_iter_height_mut()
-            .chain(rayon::iter::once(self.balance.stored_mut()))
+            .chain(iter::once(self.balance.stored_mut()))
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

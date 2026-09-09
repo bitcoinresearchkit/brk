@@ -1,11 +1,11 @@
-use crate::UTXOCoreRows;
-use derive_more::{Deref, DerefMut};
 use std::ops::AddAssign;
+
+use derive_more::{Deref, DerefMut};
 
 use crate::{
     AgeRangeId, AmountRange, AmountRangeId, Filter, OVER_AGE_FILTERS, OVER_AMOUNT_FILTERS, OverAge,
     OverAmount, SpendableType, TERM_FILTERS, UNDER_AGE_FILTERS, UNDER_AMOUNT_FILTERS,
-    UTXOAggregate, UTXOAggregateRows, UnderAge, UnderAmount,
+    UTXOAggregate, UTXOAggregateRows, UTXOCoreRows, UnderAge, UnderAmount,
 };
 
 #[derive(Clone, Default, Deref, DerefMut)]
@@ -90,6 +90,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::AGE_RANGE_COUNT;
 
     #[test]
     fn addition_and_aggregation_cover_every_cohort_axis() {
@@ -97,7 +98,7 @@ mod tests {
         rows += rows.map(|_| 2);
         rows.map(|value| assert_eq!(*value, 3));
         let aggregates = rows.aggregate();
-        assert_eq!(aggregates.aggregate.all, 3 * crate::AGE_RANGE_COUNT as u64);
+        assert_eq!(aggregates.aggregate.all, 3 * AGE_RANGE_COUNT as u64);
         assert_eq!(
             aggregates.aggregate.all,
             aggregates.aggregate.sth + aggregates.aggregate.lth

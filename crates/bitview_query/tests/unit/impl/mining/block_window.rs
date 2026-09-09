@@ -1,5 +1,7 @@
-use brk_types::Cents;
 use std::collections::BTreeMap;
+
+use brk_types::{Cents, Dollars};
+use tempfile::tempdir;
 
 use super::*;
 
@@ -33,7 +35,7 @@ fn value_reads_require_the_complete_persisted_window() {
     use brk_types::{Sats, Version};
     use vecdb::{AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
 
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
     let mut values: EagerVec<PcoVec<Height, Sats>> =
         EagerVec::forced_import(&database, "values", Version::ONE).unwrap();
@@ -91,7 +93,7 @@ fn bucket_means_preserve_clock_regressions_and_large_integer_values() {
     );
     assert_eq!(
         window.buckets[1].mean_price(&values),
-        brk_types::Dollars::from(Cents::MAX_FINITE)
+        Dollars::from(Cents::MAX_FINITE)
     );
     let unavailable = [Cents::NAN; 3];
     assert!(f64::from(window.buckets[1].mean_price(&unavailable)).is_nan());

@@ -6,6 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+use tokio::time::{self, Instant as TimeInstant};
 
 use crate::{Error, REQUEST_TIMEOUT};
 
@@ -21,8 +22,7 @@ async fn apply_for(mut request: Request<Body>, next: Next, budget: Duration) -> 
     let deadline = Instant::now() + budget;
     request.extensions_mut().insert(RequestDeadline(deadline));
     let action = request.method() == Method::POST;
-    match tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), next.run(request)).await
-    {
+    match time::timeout_at(TimeInstant::from_std(deadline), next.run(request)).await {
         Ok(response) => response,
         Err(_) => Error::timeout(action).into_response(),
     }

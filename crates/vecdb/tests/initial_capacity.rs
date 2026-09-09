@@ -3,8 +3,11 @@ use std::ops::Add;
 use rawdb::{Database, PAGE_SIZE};
 use tempfile::TempDir;
 use vecdb::{
-    AnyStoredVec, BytesVec, HEADER_OFFSET, ImportableVec, PrintableIndex, VecIndex, Version,
+    AnyStoredVec, BytesVec, HEADER_OFFSET, ImportableVec, PrintableIndex, Result, VecIndex, Version,
 };
+
+#[cfg(feature = "pco")]
+use vecdb::PcoVec;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct CapacityIndex(usize);
@@ -49,7 +52,7 @@ fn index_initial_capacity_defaults_to_zero() {
 }
 
 #[test]
-fn index_initial_capacity_is_reserved_and_reused() -> vecdb::Result<()> {
+fn index_initial_capacity_is_reserved_and_reused() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
 
@@ -67,12 +70,11 @@ fn index_initial_capacity_is_reserved_and_reused() -> vecdb::Result<()> {
 
 #[cfg(feature = "pco")]
 #[test]
-fn compressed_vec_uses_index_initial_capacity() -> vecdb::Result<()> {
+fn compressed_vec_uses_index_initial_capacity() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
 
-    let vec =
-        vecdb::PcoVec::<CapacityIndex, u32>::forced_import(&db, "compressed_values", Version::ONE)?;
+    let vec = PcoVec::<CapacityIndex, u32>::forced_import(&db, "compressed_values", Version::ONE)?;
     let expected = (HEADER_OFFSET + 10_000 * size_of::<u32>()).next_multiple_of(PAGE_SIZE);
     assert_eq!(vec.region().meta().len(), HEADER_OFFSET);
     assert_eq!(vec.region().meta().reserved(), expected);

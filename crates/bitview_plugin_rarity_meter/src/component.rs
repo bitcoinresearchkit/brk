@@ -10,13 +10,13 @@ use brk_types::{
     RarityPercentileId, StoredF32, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec,
-    PcoVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportOptions,
+    ImportableVec, PcoVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    WritableVec,
 };
 
 use super::{
-    Band, BlockDecayPercentiles, COMPUTE_BATCH_SIZE, START_HEIGHT,
-    cached_component_price::CachedComponentPrice,
+    Band, BlockDecayPercentiles, COMPUTE_BATCH_SIZE, START_HEIGHT, component_price::ComponentPrice,
 };
 
 #[derive(Traversable)]
@@ -44,8 +44,6 @@ pub struct Component<M: StorageMode = Rw> {
         M::Stored<EagerVec<ColumnarVec<PcoVec<Height, PartsPerMillion32>, RarityPercentileId>>>,
 
     block_decay_pct: M::WriteOnly<BlockDecayPercentiles>,
-
-    cached_price: M::WriteOnly<CachedComponentPrice>,
 }
 
 const VERSION: Version = Version::new(11);
@@ -59,22 +57,21 @@ pub fn forced_import(
     price_source: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Component> {
     let version = version + VERSION;
-    let cached_price = CachedComponentPrice::new(name, version, price_source);
+    let component_price = ComponentPrice::new(name, version, price_source);
     let ratios = EagerVec::<
         ColumnarVec<PcoVec<Height, PartsPerMillion32>, RarityPercentileId>,
-    >::forced_import(db, &format!("{name}_ratios_ppm"), version)?;
+    >::forced_import_with(ImportOptions::new(db, &format!("{name}_ratios_ppm"), version).with_cache_budget(cache))?;
     let source = ratios.read_only_clone();
     let bands = RarityPercentiles::from_fn(|id| {
         let suffix = id.suffix();
         let ratio = LazyColumnRatioPerBlock::new(
-            cache,
             &format!("{name}_ratio_{suffix}"),
             version,
             &source,
             id,
             mappings,
         );
-        let price = cached_price.price_for_ratio(
+        let price = component_price.price_for_ratio(
             &format!("{name}_{suffix}"),
             version,
             ratio.ppm.resolutions.height_source(),
@@ -87,7 +84,6 @@ pub fn forced_import(
         bands,
         ratios,
         block_decay_pct: BlockDecayPercentiles::default(),
-        cached_price,
     })
 }
 
@@ -97,10 +93,6 @@ pub fn compute(
     ratio_source: &impl ReadableVec<Height, StoredF32>,
     exit: &Exit,
 ) -> Result<()> {
-    component
-        .cached_price
-        .clear_if_recomputed_from(starting_lengths.height);
-
     let block_decay_pct = &mut component.block_decay_pct;
     component.ratios.compute_batched_to(
         starting_lengths.height,

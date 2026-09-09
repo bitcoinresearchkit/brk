@@ -1,27 +1,24 @@
+use brk_error::Error;
+use brk_types::TxidPrefix;
+
 use super::*;
 use crate::{
     state::TxEntry,
-    test_support::{fake_entry_info, fake_tx},
+    test_support::{self, fake_entry_info, fake_tx},
 };
 
 #[test]
 fn projections_require_publication_and_complete_template_selection() {
     let mempool = Mempool::for_test();
-    assert!(matches!(
-        mempool.fees(),
-        Err(brk_error::Error::StateUpdating)
-    ));
-    assert!(matches!(
-        mempool.block_stats(),
-        Err(brk_error::Error::StateUpdating)
-    ));
+    assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
+    assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
     assert!(matches!(
         mempool.block_template(),
-        Err(brk_error::Error::StateUpdating)
+        Err(Error::StateUpdating)
     ));
     assert!(matches!(
         mempool.next_block_hash(),
-        Err(brk_error::Error::StateUpdating)
+        Err(Error::StateUpdating)
     ));
     mempool.test_tick(&[], FeeRate::new(2.0));
     assert_eq!(mempool.fees().unwrap().minimum_fee, FeeRate::new(2.0));
@@ -29,15 +26,9 @@ fn projections_require_publication_and_complete_template_selection() {
     assert!(!blocks.is_empty());
     assert!(blocks.iter().all(|block| block.tx_count == 0));
     assert!(mempool.block_template().unwrap().transactions.is_empty());
-    mempool.test_tick(&[crate::test_support::fake_txid(42)], FeeRate::new(2.0));
-    assert!(matches!(
-        mempool.fees(),
-        Err(brk_error::Error::StateUpdating)
-    ));
-    assert!(matches!(
-        mempool.block_stats(),
-        Err(brk_error::Error::StateUpdating)
-    ));
+    mempool.test_tick(&[test_support::fake_txid(42)], FeeRate::new(2.0));
+    assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
+    assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
 }
 
 #[test]
@@ -65,7 +56,7 @@ fn live_rate_requires_a_matching_completed_projection() {
         .test_state_lock()
         .write()
         .txs
-        .remove_by_prefix(&brk_types::TxidPrefix::from(txid));
+        .remove_by_prefix(&TxidPrefix::from(txid));
     assert!(mempool.snapshot().chunk_rate_for(&txid).is_some());
     mempool.test_state_lock().write().publish_at(tip, &[]);
     assert!(mempool.effective_fee_rate(&txid, &tip).is_err());

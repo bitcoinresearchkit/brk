@@ -1,3 +1,5 @@
+use std::env;
+
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Height;
@@ -12,7 +14,7 @@ fn offline_client() -> Client {
 fn empty_ranges_skip_both_sources_in_every_mode() {
     let client = offline_client();
     let reader = Reader::new_without_rlimit(
-        std::env::temp_dir().join("brk-iterator-unused-block-directory"),
+        env::temp_dir().join("brk-iterator-unused-block-directory"),
         &client,
     );
     for blocks in [

@@ -1,18 +1,13 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, OutputType, Sats, TxOutIndex};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
 use super::Vecs;
 
-pub fn compute(
-    vecs: &mut Vecs,
-    indexer: &Indexer,
-    prices: &bitview_plugin_price::Vecs,
-    exit: &Exit,
-) -> Result<()> {
+pub fn compute(vecs: &mut Vecs, indexer: &Indexer, prices: &PriceVecs, exit: &Exit) -> Result<()> {
     let starting_lengths = indexer.safe_lengths();
     let height_vec = &mut vecs.op_return.cumulative.sats.height;
 

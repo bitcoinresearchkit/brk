@@ -1,4 +1,39 @@
+#[cfg(feature = "chain")]
+use brk_types::BlockHash;
+#[cfg(feature = "chain")]
+use serde_json::to_vec;
+
+#[cfg(feature = "chain")]
+use super::broadcast;
+#[cfg(feature = "chain")]
+use super::urpd;
+
+#[cfg(feature = "chain")]
+use bitcoin::consensus::encode;
+#[cfg(any(feature = "chain", all(feature = "chain", feature = "series")))]
+use serde_json::from_str;
+#[cfg(feature = "chain")]
+use serde_json::to_string as SerdeJsonToString;
+#[cfg(feature = "chain")]
+use std::str as StdStr;
+#[cfg(any(feature = "chain", all(feature = "chain", feature = "series")))]
+use tempfile::tempdir;
+#[cfg(feature = "chain")]
+use tokio::fs;
+#[cfg(any(feature = "chain", all(feature = "chain", feature = "series")))]
+use tokio::spawn as TokioSpawn;
+#[cfg(feature = "chain")]
+use tokio::time;
+#[cfg(feature = "chain")]
+use vecdb::CacheBudget;
+
 use std::net::SocketAddr;
+
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+};
+
 #[cfg(feature = "chain")]
 use std::{
     net::{Ipv4Addr, TcpListener as StdListener},
@@ -36,10 +71,7 @@ use tokio::{
     task::{spawn_blocking, yield_now},
     time::timeout,
 };
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::TcpStream,
-};
+
 #[cfg(feature = "chain")]
 use vecdb::ReadableVec;
 
@@ -65,8 +97,8 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let timestamp_list = format!("\"ignored,tag\", {timestamp_tag}");
-    let expected = state
-        .sync(|q| serde_json::to_string(&q.block_by_timestamp(u32::MAX.into()).unwrap()).unwrap());
+    let expected =
+        state.sync(|q| SerdeJsonToString(&q.block_by_timestamp(u32::MAX.into()).unwrap()).unwrap());
     assert_eq!(
         timestamp_response.split_once("\r\n\r\n").unwrap().1,
         expected
@@ -148,11 +180,11 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
             let snapshot = q.resolve_blocks_v1(height, 15).unwrap();
             let rows = snapshot.build(q).unwrap();
             assert_eq!(
-                serde_json::to_vec(&rows).unwrap(),
-                serde_json::to_vec(&q.blocks_v1(height, 15).unwrap()).unwrap()
+                to_vec(&rows).unwrap(),
+                to_vec(&q.blocks_v1(height, 15).unwrap()).unwrap()
             );
         }
-        serde_json::to_string(&q.blocks_v1(Some(0u32.into()), 15).unwrap()).unwrap()
+        SerdeJsonToString(&q.blocks_v1(Some(0u32.into()), 15).unwrap()).unwrap()
     });
     assert_eq!(
         historical.split_once("\r\n\r\n").unwrap().1,
@@ -167,7 +199,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .position(|v| v == b"\r\n\r\n")
         .unwrap()
         + 4;
-    let raw_headers = std::str::from_utf8(&raw_response[..boundary]).unwrap();
+    let raw_headers = StdStr::from_utf8(&raw_response[..boundary]).unwrap();
     assert!(raw_headers.starts_with("HTTP/1.1 200"), "{raw_headers}");
     assert!(raw_headers.contains("\r\ncontent-type: application/octet-stream\r\n"));
     assert!(raw_headers.contains("\r\ncache-control: public, max-age=1, must-revalidate\r\n"));
@@ -203,7 +235,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .find_map(|line| line.strip_prefix("etag: "))
         .unwrap()
         .to_owned();
-    let base_expected = state.sync(|q| serde_json::to_string(&q.block(&hash).unwrap()).unwrap());
+    let base_expected = state.sync(|q| SerdeJsonToString(&q.block(&hash).unwrap()).unwrap());
     assert_eq!(base.split_once("\r\n\r\n").unwrap().1, base_expected);
     let header_path = format!("{base_path}/header");
     let header = exchange_with_etag(address, "GET", &header_path, "\"old\"").await;
@@ -229,8 +261,8 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         let header = q
             .read_block_header(q.height_by_hash(&hash).unwrap())
             .unwrap();
-        assert_eq!(brk_types::BlockHash::from(header.block_hash()), hash);
-        bitcoin::consensus::encode::serialize_hex(&header)
+        assert_eq!(BlockHash::from(header.block_hash()), hash);
+        encode::serialize_hex(&header)
     });
     assert_eq!(header_expected.len(), 160);
     assert_eq!(header.split_once("\r\n\r\n").unwrap().1, header_expected);
@@ -243,7 +275,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .unwrap()
         .to_owned();
     let single_expected = state.sync(|q| {
-        serde_json::to_string(
+        SerdeJsonToString(
             &q.resolve_block_v1(&hash)
                 .unwrap()
                 .build(q)
@@ -259,8 +291,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
         .await
         .unwrap_or_else(|_| panic!("V1 response failed"));
     let v1_tag = v1.headers()[ETAG].to_str().unwrap().to_owned();
-    let v1_expected =
-        state.sync(|q| serde_json::to_string(&q.blocks_v1(None, 15).unwrap()).unwrap());
+    let v1_expected = state.sync(|q| SerdeJsonToString(&q.blocks_v1(None, 15).unwrap()).unwrap());
     assert_eq!(
         to_bytes(v1.into_body(), usize::MAX).await.unwrap().as_ref(),
         v1_expected.as_bytes()
@@ -268,10 +299,10 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     let (etag, expected) = state.sync(|q| {
         let snapshot = q.resolve_blocks(None, 10).unwrap();
         let etag = format!("W/\"blocks2-{}\"", snapshot.anchor().unwrap());
-        let body = serde_json::to_string(&snapshot.build(q).unwrap()).unwrap();
+        let body = SerdeJsonToString(&snapshot.build(q).unwrap()).unwrap();
         assert_eq!(
             body,
-            serde_json::to_string(&q.blocks(None, 10).unwrap()).unwrap()
+            SerdeJsonToString(&q.blocks(None, 10).unwrap()).unwrap()
         );
         (etag, body)
     });
@@ -465,7 +496,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
             .await
             .unwrap();
         let spawn_request = |owned: AppState| {
-            tokio::spawn(async move {
+            TokioSpawn(async move {
                 match mode {
                     MutableBlockRead::List => {
                         owned.respond_blocks_v1(Default::default(), None).await
@@ -477,7 +508,7 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
             })
         };
         let request = spawn_request(state.clone());
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        time::sleep(Duration::from_millis(50)).await;
         assert!(!request.is_finished());
         assert_eq!(state.sync_query.available_permits(), 0);
         request.abort();
@@ -511,10 +542,10 @@ async fn check_height_block_lists(state: &AppState, address: SocketAddr) {
         let (expected, anchor) = state.sync(|q| {
             let snapshot = q.resolve_blocks(Some(height.into()), 10).unwrap();
             let anchor = snapshot.anchor().unwrap();
-            let expected = serde_json::to_string(&snapshot.build(q).unwrap()).unwrap();
+            let expected = SerdeJsonToString(&snapshot.build(q).unwrap()).unwrap();
             assert_eq!(
                 expected,
-                serde_json::to_string(&q.blocks(Some(height.into()), 10).unwrap()).unwrap()
+                SerdeJsonToString(&q.blocks(Some(height.into()), 10).unwrap()).unwrap()
             );
             (expected, anchor)
         });
@@ -540,7 +571,7 @@ async fn check_height_block_lists(state: &AppState, address: SocketAddr) {
             } else {
                 "*".to_owned()
             };
-            pending.push(tokio::spawn(async move {
+            pending.push(TokioSpawn(async move {
                 exchange_with_etag(address, method, &path, &tag).await
             }));
         }
@@ -559,7 +590,6 @@ async fn check_height_block_lists(state: &AppState, address: SocketAddr) {
 #[cfg(feature = "chain")]
 async fn check_block_height(state: &AppState, address: SocketAddr) {
     let expected = state.sync(|q| {
-        q.indexer().vecs().blocks.blockhash.invalidate();
         q.resolve_blocks(Some(0u32.into()), 1)
             .unwrap()
             .anchor()
@@ -567,7 +597,7 @@ async fn check_block_height(state: &AppState, address: SocketAddr) {
             .to_string()
     });
     // No worker admission is required for the bounded, uncontended read,
-    // including a cold CachedVec and a full 200 response.
+    // including a full 200 response.
     let permits = state
         .sync_query
         .clone()
@@ -633,17 +663,6 @@ async fn check_block_height(state: &AppState, address: SocketAddr) {
     }
     let response = exchange_with_etag(address, "POST", "/api/block-height/0", tag).await;
     assert!(response.starts_with("HTTP/1.1 405"), "{response}");
-    state.sync(|q| {
-        assert!(
-            q.indexer()
-                .vecs()
-                .blocks
-                .blockhash
-                .cached_snapshot()
-                .is_none(),
-            "height responses must not fill hash history"
-        )
-    });
     drop(permits);
 }
 
@@ -758,7 +777,7 @@ pub async fn exchange_headers_bytes(
 #[cfg(feature = "chain")]
 fn server_routes_preserve_validation_and_errors_before_conditionals() {
     thread::Builder::new().stack_size(8 * 1024 * 1024).spawn(|| {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let node = StdListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
         node.set_nonblocking(true).unwrap();
         let client = Client::new(&format!("http://{}", node.local_addr().unwrap()), Auth::None).unwrap();
@@ -779,7 +798,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
         Builder::new_current_thread().max_blocking_threads(1).enable_all().build().unwrap().block_on(async {
             let node = TcpListener::from_std(node).unwrap();
             let (calls, mut observed) = mpsc::unbounded_channel();
-            let mock = tokio::spawn(async move {
+            let mock = TokioSpawn(async move {
                 let valid = r#"{"id":1,"result":100}"#;
                 for body in [valid, "invalid json", valid, valid, valid, valid, "", valid] {
                     let mut socket = BufReader::new(node.accept().await.unwrap().0);
@@ -806,10 +825,10 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 }
             });
             let disk_path = directory.path().join("disk");
-            tokio::fs::create_dir(&disk_path).await.unwrap();
-            tokio::fs::write(disk_path.join("data"), [0; 8192]).await.unwrap();
+            fs::create_dir(&disk_path).await.unwrap();
+            fs::write(disk_path.join("data"), [0; 8192]).await.unwrap();
             let blocks_path = directory.path().join("blocks");
-            tokio::fs::create_dir(&blocks_path).await.unwrap();
+            fs::create_dir(&blocks_path).await.unwrap();
             let server = Server::bind(&query, ServerConfig {
                 bind: Ipv4Addr::LOCALHOST.into(), port: 0.into(), data_path: disk_path,
                 ..ServerConfig::default()
@@ -822,7 +841,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
             #[cfg(feature = "series")]
             let data_admission = server.state.series_bodies.data_query.clone();
             let disk_file = server.state.data_path.join("data");
-            let serving = tokio::spawn(server.serve());
+            let serving = TokioSpawn(server.serve());
             // Unavailable snapshot joins fail immediately; lock waits and
             // queued work still share the bounded publication budget.
             timeout(Duration::from_secs(120), async {
@@ -855,7 +874,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 {
                     let response = exchange_with_limit(address, "GET", "/openapi.json", "\"old\"", 4 * 1024 * 1024).await;
                     assert!(response.starts_with("HTTP/1.1 200"));
-                    let spec: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+                    let spec: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                     let broadcast = &spec["paths"]["/api/tx"]["post"]["responses"];
                     assert_eq!(broadcast["200"]["content"]["text/plain; charset=utf-8"]["schema"]["$ref"], "#/components/schemas/Txid");
                     assert!(broadcast["200"]["content"].get("application/json").is_none());
@@ -935,7 +954,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     assert!(response.ends_with("\r\n\r\n[]"), "{response}");
                     let etag = response.lines().find_map(|line| line.strip_prefix("etag: ")).unwrap();
                     // Simulate the publication of the directory used by the producer.
-                    tokio::fs::create_dir_all(AgeRangeUrpds::dir(&states_path)).await.unwrap();
+                    fs::create_dir_all(AgeRangeUrpds::dir(&states_path)).await.unwrap();
                     let response = exchange_with_etag(address, "GET", "/api/urpd", etag).await;
                     assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                     assert!(response.contains("\"all\""), "{response}");
@@ -949,12 +968,12 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     assert!(response.ends_with("\r\n\r\n[]"), "{response}");
                     let old = response.lines().find_map(|line| line.strip_prefix("etag: ")).unwrap();
                     // Dates discovery reads filenames; no snapshot payload is read here.
-                    tokio::fs::write(AgeRangeUrpds::dir(&states_path).join("2026-09-01"), b"").await.unwrap();
+                    fs::write(AgeRangeUrpds::dir(&states_path).join("2026-09-01"), b"").await.unwrap();
                     for weight in UrpdWeight::WEIGHTED {
                         let weighted_dir = query.sync(|query| {
                             query.bedrock().urpd_dir(weight, &Cohort::new("all").unwrap())
                         });
-                        super::urpd::check_weighted_errors(address, &weighted_dir, weight).await;
+                        urpd::check_weighted_errors(address, &weighted_dir, weight).await;
                     }
                     let response = exchange_with_etag(address, "GET", path, old).await;
                     assert!(response.starts_with("HTTP/1.1 200"), "{response}");
@@ -1009,7 +1028,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                             assert!(response.contains("content-type: text/csv\r\n"));
                         } else {
                             assert!(!response.contains("content-disposition:"));
-                            let body: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+                            let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                             assert!(body["data"].as_array().unwrap().is_empty());
                         }
                         let etag = response.lines().find_map(|line| line.strip_prefix("etag: ")).unwrap();
@@ -1037,7 +1056,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     assert!(!response.contains("\r\netag:"));
                     for (encoded, text) in [("price", "price"), ("short+term+holder+balance", "short term holder balance")] {
                         let path = format!("/api/series/search?q={encoded}&limit=2");
-                        let expected = query.sync(|query| serde_json::to_string(&query.search_series(&SearchQuery { q: text.into(), limit: Limit::from(2) })).unwrap());
+                        let expected = query.sync(|query| SerdeJsonToString(&query.search_series(&SearchQuery { q: text.into(), limit: Limit::from(2) })).unwrap());
                         let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
                         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                         assert_eq!(response.split_once("\r\n\r\n").unwrap().1, expected);
@@ -1055,7 +1074,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                         (format!("page={}&per_page=1", usize::MAX), Pagination { page: Some(usize::MAX), per_page: Some(1) }),
                     ] {
                         let path = format!("/api/series/list?{parameters}");
-                        let expected = query.sync(|query| serde_json::to_string(&query.series_list(pagination)).unwrap());
+                        let expected = query.sync(|query| SerdeJsonToString(&query.series_list(pagination)).unwrap());
                         let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
                         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                         assert_eq!(response.split_once("\r\n\r\n").unwrap().1, expected);
@@ -1164,7 +1183,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 #[cfg(feature = "series")]
                 for name in ["price_close", "PRICE-CLOSE"] {
                     let path = format!("/api/series/{name}");
-                    let expected = query.sync(|query| serde_json::to_string(&query.series_info(&name.into()).unwrap()).unwrap());
+                    let expected = query.sync(|query| SerdeJsonToString(&query.series_info(&name.into()).unwrap()).unwrap());
                     let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
                     assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                     assert_eq!(response.split_once("\r\n\r\n").unwrap().1, expected);
@@ -1228,9 +1247,9 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                         assert!(response.starts_with("HTTP/1.1 304"), "{response}");
                     }
                 }
-                let timed_out = tokio::spawn(exchange(address, "GET", "/api/server/disk"));
+                let timed_out = TokioSpawn(exchange(address, "GET", "/api/server/disk"));
                 #[cfg(feature = "series")]
-                let timed_out_latest = tokio::spawn(exchange(address, "GET", "/api/series/timestamp/height/latest"));
+                let timed_out_latest = TokioSpawn(exchange(address, "GET", "/api/series/timestamp/height/latest"));
                 #[cfg(feature = "series")]
                 let waiting_data = {
                     timeout(Duration::from_secs(1), async {
@@ -1238,12 +1257,12 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     }).await.unwrap();
                     let response = exchange(address, "GET", "/api/series/timestamp/height?limit=0&x=1").await;
                     assert!(response.starts_with("HTTP/1.1 400"), "{response}");
-                    tokio::spawn(exchange(address, "HEAD", "/api/series/timestamp/height?limit=0"))
+                    TokioSpawn(exchange(address, "HEAD", "/api/series/timestamp/height?limit=0"))
                 };
                 #[cfg(feature = "series")]
-                let waiting_length = tokio::spawn(exchange(address, "HEAD", "/api/series/timestamp/height/len"));
+                let waiting_length = TokioSpawn(exchange(address, "HEAD", "/api/series/timestamp/height/len"));
                 #[cfg(feature = "series")]
-                let mut timed_out_search = tokio::spawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""));
+                let mut timed_out_search = TokioSpawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""));
                 #[cfg(feature = "series")]
                 let remaining_search = {
                     assert!(timeout(Duration::from_millis(50), &mut timed_out_search).await.is_err());
@@ -1255,11 +1274,11 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     remaining
                 };
                 #[cfg(feature = "series")]
-                let waiting_search = tokio::spawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""));
+                let waiting_search = TokioSpawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""));
                 #[cfg(feature = "series")]
-                let waiting_suggestion = tokio::spawn(exchange(address, "GET", "/api/series/no_such_series_zzzz"));
+                let waiting_suggestion = TokioSpawn(exchange(address, "GET", "/api/series/no_such_series_zzzz"));
                 #[cfg(feature = "series")]
-                let waiting_version = tokio::spawn(exchange(address, "GET", "/api/series/no_such_series_zzzz/height/version"));
+                let waiting_version = TokioSpawn(exchange(address, "GET", "/api/series/no_such_series_zzzz/height/version"));
                 timeout(Duration::from_secs(1), async {
                     while disk_admission.available_permits() != 0 { yield_now().await; }
                 }).await.unwrap();
@@ -1289,15 +1308,15 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                         assert!(!response.contains("\r\netag:"));
                     }
                     assert_eq!(search_admission.available_permits(), 0);
-                    tokio::spawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""))
+                    TokioSpawn(exchange_with_etag(address, "GET", "/api/series/search?q=price&limit=2", "\"old\""))
                 };
                 #[cfg(feature = "series")]
                 assert!(timeout(Duration::from_millis(50), &mut following_search).await.is_err());
                 #[cfg(feature = "series")]
-                let mut following_suggestion = tokio::spawn(exchange(address, "GET", "/api/series/no_such_series_zzzz"));
+                let mut following_suggestion = TokioSpawn(exchange(address, "GET", "/api/series/no_such_series_zzzz"));
                 #[cfg(feature = "series")]
                 assert!(timeout(Duration::from_millis(50), &mut following_suggestion).await.is_err());
-                let mut next = tokio::spawn(exchange_with_etag(address, "GET", "/api/server/disk", "\"old\""));
+                let mut next = TokioSpawn(exchange_with_etag(address, "GET", "/api/server/disk", "\"old\""));
                 assert!(timeout(Duration::from_millis(50), &mut next).await.is_err());
                 release.send(()).unwrap();
                 blocker.await.unwrap();
@@ -1328,12 +1347,12 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                 assert_eq!(disk_admission.available_permits(), 1);
 
                 let permit = disk_admission.clone().acquire_owned().await.unwrap();
-                let mut waiting = tokio::spawn(exchange_with_etag(address, "GET", "/api/server/disk", "\"old\""));
+                let mut waiting = TokioSpawn(exchange_with_etag(address, "GET", "/api/server/disk", "\"old\""));
                 assert!(timeout(Duration::from_millis(50), &mut waiting).await.is_err());
                 drop(permit);
                 let response = waiting.await.unwrap();
                 assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-                let body: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+                let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                 assert_eq!(body["bitcoin_bytes"], 0);
                 assert_eq!(body["ratio"], 0.0);
                 let etag = response.lines().find_map(|line| line.strip_prefix("etag: ")).unwrap();
@@ -1344,15 +1363,15 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
                     assert!(response.ends_with("\r\n\r\n"));
                     assert!(response.contains("\r\ncdn-cache-control: public, max-age=1, must-revalidate\r\n"));
                 }
-                tokio::fs::write(disk_file, [1; 16384]).await.unwrap();
+                fs::write(disk_file, [1; 16384]).await.unwrap();
                 let changed = exchange_with_etag(address, "GET", "/api/server/disk", etag).await;
                 assert!(changed.starts_with("HTTP/1.1 200"), "{changed}");
-                let changed_body: Value = serde_json::from_str(changed.split_once("\r\n\r\n").unwrap().1).unwrap();
+                let changed_body: Value = from_str(changed.split_once("\r\n\r\n").unwrap().1).unwrap();
                 assert_ne!(changed_body["brk_bytes"], body["brk_bytes"]);
                 let etag = changed.lines().find_map(|line| line.strip_prefix("etag: ")).unwrap();
                 assert!(exchange_with_etag(address, "GET", "/api/server/disk", etag).await.starts_with("HTTP/1.1 304"));
                 // A previously valid tag must not conceal an unreadable tree.
-                tokio::fs::remove_dir(blocks_path).await.unwrap();
+                fs::remove_dir(blocks_path).await.unwrap();
                 let response = exchange_with_etag(address, "GET", "/api/server/disk", etag).await;
                 assert!(response.starts_with("HTTP/1.1 500"), "{response}");
                 assert!(response.contains("\r\ncache-control: no-store\r\n"));
@@ -1361,7 +1380,7 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
             }).await.unwrap();
             serving.abort();
             let _ = serving.await;
-            super::broadcast::check(&query).await;
+            broadcast::check(&query).await;
         });
     }).unwrap().join().unwrap();
 }
@@ -1372,7 +1391,7 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
     thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
         .spawn(|| {
-            let directory = tempfile::tempdir().unwrap();
+            let directory = tempdir().unwrap();
             let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
             let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
             let plugins = DefaultPlugins::import(
@@ -1398,7 +1417,7 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
                     .await
                     .unwrap();
                     let address = server.listener.local_addr().unwrap();
-                    let serving = tokio::spawn(server.serve());
+                    let serving = TokioSpawn(server.serve());
                     for (query, expected) in [
                         ("realized+price+sth", "sth_realized_price"),
                         ("short+term+holder+realized+price", "sth_realized_price"),
@@ -1420,8 +1439,7 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
                             exchange_with_etag(address, "GET", &path, "W/\"search1-old\"").await;
                         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
                         let values: Vec<String> =
-                            serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1)
-                                .unwrap();
+                            from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                         assert_eq!(
                             values.first().map(String::as_str),
                             Some(expected),
@@ -1445,4 +1463,4 @@ fn search_endpoint_ranks_live_catalog_and_revalidates_new_revision() {
 }
 
 #[cfg(feature = "chain")]
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

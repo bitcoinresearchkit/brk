@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read, path::Path};
 
 use bitcoin::{block::Header, consensus::Decodable};
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_rpc::Client;
 use brk_types::Height;
 use tracing::warn;
@@ -13,11 +13,7 @@ use crate::{
 
 const PROBE_BUF_LEN: usize = 4096;
 
-pub fn first_block_height(
-    client: &Client,
-    blk_path: &Path,
-    xor_bytes: XORBytes,
-) -> brk_error::Result<Height> {
+pub fn first_block_height(client: &Client, blk_path: &Path, xor_bytes: XORBytes) -> Result<Height> {
     let mut file = File::open(blk_path)?;
     let mut buf = [0u8; PROBE_BUF_LEN];
     let n = file.read(&mut buf)?;

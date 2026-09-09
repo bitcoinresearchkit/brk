@@ -1,17 +1,19 @@
-mod common;
-
-use crate::common::CACHE_BUDGET;
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_vecs::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPriceWithRatio};
 use brk_types::{Cents, Day1, Height, PriceRatio, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnySerializableVec, AnyStoredVec, AnyVec, CachedVec, Database, ReadableCloneableVec,
     ReadableVec, WritableVec,
 };
 
+use crate::common::CACHE_BUDGET;
+
+mod common;
+
 #[test]
 fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.height_day1 = common::stored::<Height, _>(
@@ -35,13 +37,13 @@ fn daily_price_columns_persist_and_expose_prices_ratios_and_aligned_rewrites() {
     let mappings = DailyMappings::new(&indexes);
     let import = || {
         ColumnarDailyMetric::forced_import(
+            &CACHE_BUDGET,
             &db,
             "test_capitalized_price_cents_by_aggregate",
             Version::ONE,
             |source| {
                 let price = |id: UTXOAggregateId| {
                     LazyColumnDailyPriceWithRatio::new(
-                        &crate::common::CACHE_BUDGET,
                         &id.metric_name("test_capitalized_price"),
                         Version::ONE,
                         source,

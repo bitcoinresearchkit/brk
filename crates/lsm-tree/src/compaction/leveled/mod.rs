@@ -2,12 +2,16 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{cmp::Ordering, ops::Deref};
+
+use rustc_hash::FxHashSet;
+
 use super::{Choice, Input as CompactionInput};
 use crate::{
     compaction::state::{CompactionState, hidden_set::HiddenSet},
     slice_windows::{GrowingWindowsExt, ShrinkingWindowsExt},
     table::{Table, util::aggregate_run_key_range},
-    version::{Run, Version},
+    version::{Level, Run, Version},
 };
 
 /// Tries to find the most optimal compaction set from one level into the other.
@@ -17,7 +21,7 @@ fn pick_minimal_compaction(
     hidden_set: &HiddenSet,
     _overshoot: u64,
     table_base_size: u64,
-) -> Option<(rustc_hash::FxHashSet<u32>, bool)> {
+) -> Option<(FxHashSet<u32>, bool)> {
     // NOTE: Find largest trivial move (if it exists)
     if let Some(window) = curr_run.shrinking_windows().find(|window| {
         if hidden_set.is_blocked(window.iter().map(Table::id)) {
@@ -93,7 +97,7 @@ fn pick_minimal_compaction(
             // Find the compaction with the smallest write set
             .min_by_key(|(_, _, _waf, bytes)| *bytes)
             .map(|(window, curr_level_pull_in, _, _)| {
-                let mut ids: rustc_hash::FxHashSet<_> = window.iter().map(Table::id).collect();
+                let mut ids: FxHashSet<_> = window.iter().map(Table::id).collect();
                 ids.extend(curr_level_pull_in.iter().map(Table::id));
                 (ids, false)
             })
@@ -310,10 +314,7 @@ impl Strategy {
                     scores[idx] = (score, level_size - target_size);
 
                     // NOTE: Force a trivial move
-                    if version
-                        .level(idx + 1)
-                        .is_some_and(crate::version::Level::is_empty)
-                    {
+                    if version.level(idx + 1).is_some_and(Level::is_empty) {
                         scores[idx] = (99.99, 999);
                     }
                 }
@@ -331,9 +332,7 @@ impl Strategy {
             .into_iter()
             .enumerate()
             .max_by(|(_, (score_a, _)), (_, (score_b, _))| {
-                score_a
-                    .partial_cmp(score_b)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                score_a.partial_cmp(score_b).unwrap_or(Ordering::Equal)
             })
             .expect("should have highest score somewhere");
 
@@ -412,7 +411,7 @@ impl Strategy {
         )]
         let Some((table_ids, can_trivial_move)) = pick_minimal_compaction(
             level.first_run().expect("should have exactly one run"),
-            next_level.first_run().map(std::ops::Deref::deref),
+            next_level.first_run().map(Deref::deref),
             state.hidden_set(),
             overshoot_bytes,
             Self::TARGET_SIZE,

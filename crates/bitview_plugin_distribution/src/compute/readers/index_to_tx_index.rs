@@ -1,3 +1,5 @@
+use std::iter;
+
 use brk_types::{StoredU64, TxIndex};
 use vecdb::{ReadableVec, VecIndex};
 
@@ -35,7 +37,7 @@ impl IndexToTxIndexBuf {
         for (offset, count) in self.counts.iter().enumerate() {
             let tx_index = TxIndex::from(first + offset);
             self.result
-                .extend(std::iter::repeat_n(tx_index, u64::from(*count) as usize));
+                .extend(iter::repeat_n(tx_index, u64::from(*count) as usize));
         }
 
         &self.result

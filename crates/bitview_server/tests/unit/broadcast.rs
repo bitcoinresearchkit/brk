@@ -7,10 +7,11 @@ use std::{
 
 use bitview_query::AsyncQuery;
 use brk_rpc::{Auth, Client};
-use serde_json::{Value, json};
+use serde_json::{Value, from_slice, json};
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
+    spawn,
     sync::oneshot,
     time::timeout,
 };
@@ -66,7 +67,7 @@ async fn request(socket: &mut BufReader<TcpStream>) -> Value {
     assert!(length < 1024);
     let mut body = vec![0; length];
     socket.read_exact(&mut body).await.unwrap();
-    serde_json::from_slice(&body).unwrap()
+    from_slice(&body).unwrap()
 }
 
 async fn reply(socket: &mut BufReader<TcpStream>, value: Value) {
@@ -107,7 +108,7 @@ pub async fn check(query: &AsyncQuery) {
         server.state.node = node.clone();
         let permits = server.state.broadcast_requests.clone();
         let address = server.listener.local_addr().unwrap();
-        let serving = tokio::spawn(server.serve());
+        let serving = spawn(server.serve());
 
         for body in ["", "0", "gg", "00 11", "éé"] {
             assert_action(
@@ -146,7 +147,7 @@ pub async fn check(query: &AsyncQuery) {
 
         let (entered, observed) = oneshot::channel();
         let (release, released) = oneshot::channel();
-        let mock = tokio::spawn(async move {
+        let mock = spawn(async move {
             let mut socket = BufReader::new(listener.accept().await.unwrap().0);
             for code in [0, -22, -25, -26, -27, -28] {
                 let body = request(&mut socket).await;
@@ -185,7 +186,7 @@ pub async fn check(query: &AsyncQuery) {
                 status,
             );
         }
-        let active = tokio::spawn(async move { node.get_last_height().await });
+        let active = spawn(async move { node.get_last_height().await });
         observed.await.unwrap();
         assert_action(&exchange(address, "POST", "/api/tx", "dd", 2).await, 504);
         assert_eq!(permits.available_permits(), BroadcastPermit::CAPACITY);

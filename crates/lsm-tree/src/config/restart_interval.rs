@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 /// Restart interval policy
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RestartIntervalPolicy(Vec<u8>);
 
-impl std::ops::Deref for RestartIntervalPolicy {
+impl Deref for RestartIntervalPolicy {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {

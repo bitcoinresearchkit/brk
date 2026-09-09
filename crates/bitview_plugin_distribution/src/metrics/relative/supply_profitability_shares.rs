@@ -38,6 +38,7 @@ impl SupplyProfitabilityShares {
     ) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "supply_in_profit_share_ppm_by_aggregate",
             version,
@@ -45,7 +46,6 @@ impl SupplyProfitabilityShares {
         )?;
         let source = profit_share_source.height.read_only_clone();
         let supply_in_profit_share = share_views(
-            cache,
             &source,
             "supply_in_profit_share",
             version,
@@ -53,7 +53,6 @@ impl SupplyProfitabilityShares {
             mappings,
         );
         let supply_in_loss_share = share_views(
-            cache,
             &source,
             "supply_in_loss_share",
             version,

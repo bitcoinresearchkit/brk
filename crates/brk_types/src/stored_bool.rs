@@ -1,6 +1,12 @@
+use std::{
+    borrow::Cow,
+    fmt::{Display, Formatter, Result},
+};
+
 use derive_more::Deref;
-use schemars::{JsonSchema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex};
 
@@ -12,11 +18,11 @@ use vecdb::{Formattable, Pco, PrintableIndex};
 pub struct StoredBool(u8);
 
 impl JsonSchema for StoredBool {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         "StoredBool".into()
     }
 
-    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         bool::json_schema(generator)
     }
 }
@@ -66,8 +72,8 @@ impl PrintableIndex for StoredBool {
     }
 }
 
-impl std::fmt::Display for StoredBool {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for StoredBool {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if self.is_true() {
             f.write_str("true")
         } else {

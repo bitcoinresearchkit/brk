@@ -6,7 +6,8 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, ReadableVec, Rw,
+    StorageMode,
 };
 
 use super::UTXOTypedColumns;
@@ -23,10 +24,16 @@ pub struct UTXOColumns<T: PcoVecValue, M: StorageMode = Rw> {
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOColumns<T> {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         Ok(Self {
-            typed: UTXOTypedColumns::forced_import(db, name, version)?,
+            typed: UTXOTypedColumns::forced_import(cache, db, name, version)?,
             amount_range: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_amount_range"),
                 version + Version::ONE,
@@ -37,44 +44,41 @@ impl<T: PcoVecValue + AddAssign> UTXOColumns<T> {
 
     pub fn additive_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
-        self.direct_source(cache, filter, name, version)
-            .or_else(|| self.aggregate_amount_source(cache, filter, name, version))
-            .or_else(|| self.typed.aggregate_source(cache, filter, name, version))
+    ) -> Option<ReadableBoxedVec<Height, T>> {
+        self.direct_source(filter, name, version)
+            .or_else(|| self.aggregate_amount_source(filter, name, version))
+            .or_else(|| self.typed.aggregate_source(filter, name, version))
     }
 
     pub(crate) fn direct_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         match filter {
             Filter::Amount(_) => AmountRangeId::matching(filter)
-                .map(|id| self.amount_range.cached_column(cache, name, version, id)),
-            _ => self.typed.direct_source(cache, filter, name, version),
+                .map(|id| self.amount_range.column_source(name, version, id)),
+            _ => self.typed.direct_source(filter, name, version),
         }
     }
 
     fn aggregate_amount_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         let filter = UNDER_AMOUNT_FILTERS
             .iter()
             .chain(OVER_AMOUNT_FILTERS.iter())
             .find(|candidate| *candidate == filter)?;
         Some(
             self.amount_range
-                .cached_sum(cache, name, version, AmountRangeId::included_by(filter)),
+                .sum_source(name, version, AmountRangeId::included_by(filter)),
         )
     }
 

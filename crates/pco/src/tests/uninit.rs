@@ -1,15 +1,17 @@
-use std::cmp::min;
-use std::fmt::Debug;
+use std::{cmp::min, fmt::Debug};
 
+use better_io::BetterBufRead;
 use half::f16;
 
-use crate::data_types::Number;
-use crate::errors::PcoResult;
-use crate::standalone::{self, DecompressorItem};
-use crate::wrapped::{FileCompressor, FileDecompressor, PageDecompressor};
-use crate::{ChunkConfig, ModeSpec, PagingSpec, FULL_BATCH_N};
+use crate::{
+  data_types::Number,
+  errors::PcoResult,
+  standalone::{self, DecompressorItem},
+  wrapped::{FileCompressor, FileDecompressor, PageDecompressor},
+  ChunkConfig, ModeSpec, PagingSpec, FULL_BATCH_N,
+};
 
-fn read_page_uninit<T: Number, R: better_io::BetterBufRead>(
+fn read_page_uninit<T: Number, R: BetterBufRead>(
   page: &mut PageDecompressor<T, R>,
   len: usize,
 ) -> PcoResult<Vec<T>> {

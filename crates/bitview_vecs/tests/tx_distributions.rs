@@ -1,11 +1,14 @@
-mod common;
-
 use bitview_vecs::PerBlockDistribution;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, StoredU64, TxIndex, VSize, Version, get_percentile};
-use vecdb::{AnyStoredVec, AnyVec, Database, ReadableVec, WritableVec};
-
 use common::{indexes, stored};
+use tempfile::tempdir;
+use vecdb::{AnyStoredVec, AnyVec, Database, Ident, ReadableVec, WritableVec};
+
+use crate::common::CACHE_BUDGET;
+
+mod common;
 
 fn weighted_reference(values: &[(StoredU64, VSize)], rank: f64) -> StoredU64 {
     let total: u64 = values.iter().map(|(_, w)| u64::from(*w)).sum();
@@ -22,7 +25,7 @@ fn weighted_reference(values: &[(StoredU64, VSize)], rank: f64) -> StoredU64 {
 
 #[test]
 fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
     let blocks: Vec<Vec<_>> = (0..24u64)
@@ -60,7 +63,7 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
             for skip in [0, 1, 20] {
                 let name = format!("output_{weighted}_{nblocks}_{skip}");
                 let mut output = PerBlockDistribution::forced_import(
-                    &crate::common::CACHE_BUDGET,
+                    &CACHE_BUDGET,
                     &db,
                     &name,
                     Version::ONE,
@@ -158,11 +161,11 @@ fn stored_distributions_match_reference_after_resume_rewind_and_version_reset() 
 #[test]
 fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
     use bitview_vecs::{LazyRollingDistribution, RollingDistribution};
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
     let mut source = RollingDistribution::<StoredU64>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "source",
         Version::ONE,
@@ -172,7 +175,7 @@ fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
     let mut value = 0u64;
     source
         .0
-        .try_for_each_mut(|windows| -> brk_error::Result<()> {
+        .try_for_each_mut(|windows| -> Result<()> {
             for window in windows.0.as_mut_array() {
                 value += 1;
                 window.height.push(StoredU64::from(value));
@@ -181,9 +184,11 @@ fn lazy_rolling_distribution_preserves_all_stat_window_mappings() {
             Ok(())
         })
         .unwrap();
-    let lazy = LazyRollingDistribution::<StoredU64, StoredU64>::from_rolling_distribution::<
-        vecdb::Ident,
-    >("converted", Version::ONE, &source);
+    let lazy = LazyRollingDistribution::<StoredU64, StoredU64>::from_rolling_distribution::<Ident>(
+        "converted",
+        Version::ONE,
+        &source,
+    );
     for (stat_index, (suffix, windows)) in [
         ("min", &lazy.min),
         ("max", &lazy.max),

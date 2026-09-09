@@ -1,4 +1,4 @@
-use bitcoin::{ScriptBuf, hashes::Hash};
+use bitcoin::{ScriptBuf, Txid as BitcoinTxid, hashes::Hash};
 use brk_types::{MempoolEntryInfo, Sats, Timestamp, VSize, Weight};
 
 use super::*;
@@ -160,9 +160,9 @@ fn full_txid_lookups_reject_prefix_collisions() {
     let entry = entry_for(&tx, 100, 100);
     store.insert(tx, entry);
 
-    let mut bytes = bitcoin::Txid::from(&stored_txid).to_byte_array();
+    let mut bytes = BitcoinTxid::from(&stored_txid).to_byte_array();
     bytes[8] ^= 1;
-    let colliding_txid = Txid::from(bitcoin::Txid::from_byte_array(bytes));
+    let colliding_txid = Txid::from(BitcoinTxid::from_byte_array(bytes));
     assert_eq!(
         TxidPrefix::from(&stored_txid),
         TxidPrefix::from(&colliding_txid)

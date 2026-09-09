@@ -1,10 +1,13 @@
+use std::{sync::Arc, time::Instant};
+
 use brk_error::{Error, Result};
 use brk_mempool::Mempool;
-use std::{sync::Arc, time::Instant};
+use tokio::{
+    sync::Semaphore,
+    task::spawn_blocking,
+    time::{self, Instant as TimeInstant},
+};
 use vecdb::ReadOnlyClone;
-
-use tokio::sync::Semaphore;
-use tokio::task::spawn_blocking;
 
 use crate::{Query, QueryPluginSet};
 
@@ -56,7 +59,7 @@ impl AsyncQuery {
             })
             .await?
         };
-        tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), read)
+        time::timeout_at(TimeInstant::from_std(deadline), read)
             .await
             .unwrap_or(Err(Error::ReadTimeout))
     }

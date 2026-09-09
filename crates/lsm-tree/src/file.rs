@@ -2,8 +2,18 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    fs::File,
+    io::{Error, ErrorKind, Result, Write},
+    path::Path,
+};
+
+use tempfile::NamedTempFile;
+
 use crate::Slice;
-use std::{fs::File, io::Write, path::Path};
+
+#[cfg(windows)]
+use std::{thread, time::Duration};
 
 pub const MAGIC_BYTES: [u8; 4] = [b'L', b'S', b'M', 4];
 pub const CURRENT_MAGIC: [u8; 4] = [b'L', b'S', b'M', 10];
@@ -14,7 +24,7 @@ pub const TABLES_FOLDER: &str = "tables";
 pub const CURRENT_VERSION_FILE: &str = "current";
 
 /// Reads bytes from a file using `pread`.
-pub fn read_exact(file: &File, offset: u64, size: usize) -> std::io::Result<Slice> {
+pub fn read_exact(file: &File, offset: u64, size: usize) -> Result<Slice> {
     // SAFETY: This slice builder starts uninitialized, but we know its length
     //
     // We use read_at/seek_read which give us the number of bytes read
@@ -48,8 +58,8 @@ pub fn read_exact(file: &File, offset: u64, size: usize) -> std::io::Result<Slic
         }
 
         if bytes_read != size {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
+            return Err(Error::new(
+                ErrorKind::UnexpectedEof,
                 format!(
                     "read_exact({bytes_read}) at {offset} did not read enough bytes {size}; file has length {}",
                     file.metadata()?.len()
@@ -66,17 +76,17 @@ pub fn read_exact(file: &File, offset: u64, size: usize) -> std::io::Result<Slic
 /// External programs (antivirus, indexers, backup agents) may briefly hold files open
 /// without sharing flags on Windows, failing renames and deletes that would succeed a
 /// moment later; POSIX has no such failure mode, so elsewhere the operation runs once.
-pub fn retry_transient_io<T>(mut op: impl FnMut() -> std::io::Result<T>) -> std::io::Result<T> {
+pub fn retry_transient_io<T>(mut op: impl FnMut() -> Result<T>) -> Result<T> {
     #[cfg(windows)]
     {
         const MAX_ATTEMPTS: u32 = 10;
 
-        let mut delay = std::time::Duration::from_millis(1);
+        let mut delay = Duration::from_millis(1);
 
         for _ in 1..MAX_ATTEMPTS {
             match op() {
                 Err(e) if is_transient_windows_error(&e) => {
-                    std::thread::sleep(delay);
+                    thread::sleep(delay);
                     delay *= 2;
                 }
                 result => return result,
@@ -88,13 +98,13 @@ pub fn retry_transient_io<T>(mut op: impl FnMut() -> std::io::Result<T>) -> std:
 }
 
 #[cfg(windows)]
-fn is_transient_windows_error(e: &std::io::Error) -> bool {
+fn is_transient_windows_error(e: &Error) -> bool {
     // ERROR_ACCESS_DENIED, ERROR_SHARING_VIOLATION, ERROR_LOCK_VIOLATION, ERROR_USER_MAPPED_FILE
     matches!(e.raw_os_error(), Some(5 | 32 | 33 | 1224))
 }
 
 /// Persists a named temporary file to its final path, replacing any existing file.
-pub fn persist_temp_file(temp_file: tempfile::NamedTempFile, path: &Path) -> std::io::Result<()> {
+pub fn persist_temp_file(temp_file: NamedTempFile, path: &Path) -> Result<()> {
     let mut temp_file = Some(temp_file);
 
     retry_transient_io(|| {
@@ -112,14 +122,14 @@ pub fn persist_temp_file(temp_file: tempfile::NamedTempFile, path: &Path) -> std
 }
 
 /// Atomically rewrites a file.
-pub fn rewrite_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
+pub fn rewrite_atomic(path: &Path, content: &[u8]) -> Result<()> {
     #[expect(
         clippy::expect_used,
         reason = "every file should have a parent directory"
     )]
     let folder = path.parent().expect("should have a parent");
 
-    let mut temp_file = tempfile::NamedTempFile::new_in(folder)?;
+    let mut temp_file = NamedTempFile::new_in(folder)?;
     temp_file.write_all(content)?;
     temp_file.flush()?;
     persist_temp_file(temp_file, path)?;
@@ -129,14 +139,20 @@ pub fn rewrite_atomic(path: &Path, content: &[u8]) -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::fs::File;
-    use std::io::Write;
+    use std::{
+        fs::{self, File},
+        io::Write,
+    };
+
+    use tempfile::tempdir;
     use test_log::test;
 
+    use super::*;
+    use crate::Result as CrateResult;
+
     #[test]
-    fn atomic_rewrite() -> crate::Result<()> {
-        let dir = tempfile::tempdir()?;
+    fn atomic_rewrite() -> CrateResult<()> {
+        let dir = tempdir()?;
 
         let path = dir.path().join("test.txt");
         {
@@ -146,24 +162,24 @@ mod tests {
 
         rewrite_atomic(&path, b"newcontent")?;
 
-        let content = std::fs::read_to_string(&path)?;
+        let content = fs::read_to_string(&path)?;
         assert_eq!("newcontent", content);
 
         Ok(())
     }
 
     #[test]
-    fn persist_temp_file_replaces_existing() -> crate::Result<()> {
-        let dir = tempfile::tempdir()?;
+    fn persist_temp_file_replaces_existing() -> CrateResult<()> {
+        let dir = tempdir()?;
 
         let path = dir.path().join("test.txt");
-        std::fs::write(&path, b"old")?;
+        fs::write(&path, b"old")?;
 
-        let mut temp_file = tempfile::NamedTempFile::new_in(dir.path())?;
+        let mut temp_file = NamedTempFile::new_in(dir.path())?;
         write!(temp_file, "new")?;
         persist_temp_file(temp_file, &path)?;
 
-        let content = std::fs::read_to_string(&path)?;
+        let content = fs::read_to_string(&path)?;
         assert_eq!("new", content);
 
         Ok(())
@@ -179,7 +195,7 @@ mod tests {
 
             if attempts < 3 {
                 // ERROR_SHARING_VIOLATION
-                Err(std::io::Error::from_raw_os_error(32))
+                Err(Error::from_raw_os_error(32))
             } else {
                 Ok(42)
             }
@@ -194,11 +210,11 @@ mod tests {
     fn retry_transient_io_fails_fast_on_other_errors() {
         let mut attempts = 0;
 
-        let result: std::io::Result<()> = retry_transient_io(|| {
+        let result: Result<()> = retry_transient_io(|| {
             attempts += 1;
 
             // ERROR_FILE_NOT_FOUND
-            Err(std::io::Error::from_raw_os_error(2))
+            Err(Error::from_raw_os_error(2))
         });
 
         assert!(result.is_err());

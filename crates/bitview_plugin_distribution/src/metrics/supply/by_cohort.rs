@@ -1,4 +1,5 @@
 use bitview_cohort::{CohortContext, Filter, UTXOGroupsWithoutAmount, UTXORows};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::LazySpotValuePerBlock;
 use brk_error::Result;
@@ -20,14 +21,15 @@ impl SupplyByCohort {
         db: &Database,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let stored = UTXOTypedColumns::forced_import(db, &format!("{metric}_sats"), version)?;
+        let stored =
+            UTXOTypedColumns::forced_import(cache, db, &format!("{metric}_sats"), version)?;
         let cohorts = UTXOGroupsWithoutAmount::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .additive_source(cache, &filter, &format!("{name}_sats"), version)
+                .additive_source(&filter, &format!("{name}_sats"), version)
                 .expect("supported supply cohort");
             LazySpotValuePerBlock::from_sats_source(&name, version, &source, mappings, spot_price)
         });

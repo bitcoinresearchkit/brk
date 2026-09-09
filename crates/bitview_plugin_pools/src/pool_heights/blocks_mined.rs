@@ -1,4 +1,5 @@
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
     CachedWindowStartVec, LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight,
@@ -25,7 +26,7 @@ impl BlocksMined {
         slug: PoolSlug,
         pool_heights: PoolHeights,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let cumulative_name = format!("{name}_cumulative");

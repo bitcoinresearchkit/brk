@@ -1,7 +1,8 @@
 use std::{fs, sync::Arc, time::Duration};
 
 use brk_error::Error;
-use serde_json::{Value, json};
+use serde_json::{Value, from_slice, json};
+use tempfile::tempdir;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
@@ -9,9 +10,8 @@ use tokio::{
     time::timeout,
 };
 
-use crate::{Auth, Client};
-
 use super::Submission;
+use crate::{Auth, Client, rpc_response::MAX_RESPONSE_BYTES};
 
 async fn request(socket: &mut BufReader<TcpStream>) -> (Value, String) {
     let mut line = String::new();
@@ -34,7 +34,7 @@ async fn request(socket: &mut BufReader<TcpStream>) -> (Value, String) {
     assert!(length < 1024);
     let mut bytes = vec![0; length];
     socket.read_exact(&mut bytes).await.unwrap();
-    let body: Value = serde_json::from_slice(&bytes).unwrap();
+    let body: Value = from_slice(&bytes).unwrap();
     assert_eq!(body["method"], "sendrawtransaction");
     (body, auth)
 }
@@ -155,7 +155,7 @@ async fn redirects_and_invalid_or_oversized_results_do_not_replay() {
                 socket.get_mut().write_all(format!("HTTP/1.1 {} Redirect\r\nLocation: {url}/elsewhere\r\nContent-Length: 0\r\n\r\n", if case == 0 { 307 } else { 308 }).as_bytes()).await.unwrap();
             } else {
                 let body = if case == 2 { json!({"id":2,"result":"a".repeat(64)}).to_string() }
-                    else { " ".repeat(crate::rpc_response::MAX_RESPONSE_BYTES + 1) };
+                    else { " ".repeat(MAX_RESPONSE_BYTES + 1) };
                 reply(&mut socket, 200, &body).await;
             }
             worker.await.unwrap();
@@ -239,7 +239,7 @@ async fn in_flight_timeout_closes_socket_and_releases_admission() {
 #[tokio::test]
 async fn cookie_refresh_requires_explicit_rejection_and_stops_after_one_refresh() {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let path = directory.path().join(".cookie");
     fs::write(&path, "u:p\n").unwrap();
     let client = Client::new(

@@ -1,5 +1,6 @@
 use bitview_cohort::{AddrTypeId, WithAddrTypes};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::StoredU64ToStoredU32;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
@@ -51,75 +52,75 @@ impl AddrActivityVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
         let cumulative_reactivated = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "reactivated_addrs_by_type_cumulative",
             cumulative_version,
             |_| (),
         )?;
         let cumulative_sending = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "sending_addrs_by_type_cumulative",
             cumulative_version,
             |_| (),
         )?;
         let cumulative_receiving = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "receiving_addrs_by_type_cumulative",
             cumulative_version,
             |_| (),
         )?;
         let cumulative_bidirectional = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "bidirectional_addrs_by_type_cumulative",
             cumulative_version,
             |_| (),
         )?;
         let cumulative_active = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             "active_addrs_by_type_cumulative",
             cumulative_version,
             |_| (),
         )?;
 
-        let reactivated = bitview_vecs::LazyPerBlockCumulativeAverage::with_addr_types(
-            cache,
+        let reactivated = LazyPerBlockCumulativeAverage::with_addr_types(
             "reactivated_addrs",
             version,
             &cumulative_reactivated.cumulative.read_only_clone(),
             mappings,
             cached_starts,
         );
-        let sending = bitview_vecs::LazyPerBlockCumulativeAverage::with_addr_types(
-            cache,
+        let sending = LazyPerBlockCumulativeAverage::with_addr_types(
             "sending_addrs",
             version,
             &cumulative_sending.cumulative.read_only_clone(),
             mappings,
             cached_starts,
         );
-        let receiving = bitview_vecs::LazyPerBlockCumulativeAverage::with_addr_types(
-            cache,
+        let receiving = LazyPerBlockCumulativeAverage::with_addr_types(
             "receiving_addrs",
             version,
             &cumulative_receiving.cumulative.read_only_clone(),
             mappings,
             cached_starts,
         );
-        let bidirectional = bitview_vecs::LazyPerBlockCumulativeAverage::with_addr_types(
-            cache,
+        let bidirectional = LazyPerBlockCumulativeAverage::with_addr_types(
             "bidirectional_addrs",
             version,
             &cumulative_bidirectional.cumulative.read_only_clone(),
             mappings,
             cached_starts,
         );
-        let active = bitview_vecs::LazyPerBlockCumulativeAverage::with_addr_types(
-            cache,
+        let active = LazyPerBlockCumulativeAverage::with_addr_types(
             "active_addrs",
             version,
             &cumulative_active.cumulative.read_only_clone(),

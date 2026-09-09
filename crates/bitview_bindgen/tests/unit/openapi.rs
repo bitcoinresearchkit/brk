@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use super::*;
 
 #[test]
@@ -12,13 +14,12 @@ fn schema_extraction_preserves_owned_nested_values_and_invalid_input_fallbacks()
     ] {
         assert!(extract_schemas(input).is_empty(), "{input}");
     }
-    let expected = serde_json::json!({
+    let expected = json!({
         "Z": false,
         "Nested": {"properties": {"value": {"anyOf": [{"type":"string"}, {"$ref":"#/components/schemas/Z"}]}}},
         "A": {"enum": ["é", "", "value"]}
     });
-    let input =
-        serde_json::json!({"components": {"schemas": expected}, "ignored": [1,2,3]}).to_string();
+    let input = json!({"components": {"schemas": expected}, "ignored": [1,2,3]}).to_string();
     let schemas = extract_schemas(&input);
     drop(input);
     assert_eq!(

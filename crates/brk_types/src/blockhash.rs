@@ -8,7 +8,8 @@ use bitcoin::{BlockHash as BitcoinBlockHash, hashes::Hash};
 use brk_error::Error;
 use derive_more::Deref;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, Serializer, de};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -102,7 +103,7 @@ impl Serialize for BlockHash {
 impl<'de> Deserialize<'de> for BlockHash {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
         Self::from_str(&s).map_err(de::Error::custom)

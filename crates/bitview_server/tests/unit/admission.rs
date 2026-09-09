@@ -4,15 +4,21 @@ use std::{
 };
 
 use axum::{
-    body::Bytes,
+    body::{self, Bytes},
     http::{HeaderMap, StatusCode, header::IF_NONE_MATCH},
 };
 use bitview_query::RepresentationId;
+use brk_error::Error;
 use brk_types::Version;
-use tokio::{spawn, sync::oneshot, time::timeout};
+use tokio::{
+    spawn,
+    sync::oneshot,
+    task,
+    time::{self, timeout},
+};
 
 use super::chain_fixture::run;
-use crate::{CacheParams, CacheStrategy};
+use crate::{AppState, CacheParams, CacheStrategy};
 
 #[test]
 fn response_capacity_wait_releases_snapshot_and_resolves_again() {
@@ -51,7 +57,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
         });
         timeout(Duration::from_secs(2), async {
             while calls.load(Ordering::SeqCst) == 0 || state.sync_query.available_permits() != 1 {
-                tokio::task::yield_now().await;
+                task::yield_now().await;
             }
         })
         .await
@@ -60,7 +66,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
         let writer = gate.clone();
         timeout(
             Duration::from_secs(2),
-            tokio::task::spawn_blocking(move || writer.begin_update()),
+            task::spawn_blocking(move || writer.begin_update()),
         )
         .await
         .unwrap()
@@ -74,9 +80,7 @@ fn response_capacity_wait_releases_snapshot_and_resolves_again() {
             .await
             .unwrap()
             .unwrap();
-        let bytes = axum::body::to_bytes(response.into_body(), 1024)
-            .await
-            .unwrap();
+        let bytes = body::to_bytes(response.into_body(), 1024).await.unwrap();
         assert_eq!(&bytes[..], revision.to_string().as_bytes());
         assert_eq!(calls.load(Ordering::SeqCst), 2);
     });
@@ -101,12 +105,12 @@ fn publication_wait_runs_once_and_retains_worker_admission() {
         });
         timeout(Duration::from_secs(2), async {
             while calls.load(Ordering::SeqCst) == 0 || state.sync_query.available_permits() != 0 {
-                tokio::task::yield_now().await;
+                task::yield_now().await;
             }
         })
         .await
         .unwrap();
-        tokio::time::sleep(Duration::from_millis(150)).await;
+        time::sleep(Duration::from_millis(150)).await;
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert!(!pending.is_finished());
         let next_state = state.clone();
@@ -135,7 +139,7 @@ fn bound_responses_preserve_body_identity_and_validate_before_revalidation() {
             RepresentationId::Block(state.sync(|query| query.tip_blockhash())),
         ] {
             let params = CacheParams::resolve(
-                &crate::AppState::representation_strategy(Version::ONE, identity),
+                &AppState::representation_strategy(Version::ONE, identity),
                 state.cdn_cache_mode,
             );
             for conditional in [false, true] {
@@ -165,9 +169,7 @@ fn bound_responses_preserve_body_identity_and_validate_before_revalidation() {
                     response.headers().contains_key("content-type"),
                     !conditional
                 );
-                let bytes = axum::body::to_bytes(response.into_body(), 1024)
-                    .await
-                    .unwrap();
+                let bytes = body::to_bytes(response.into_body(), 1024).await.unwrap();
                 assert_eq!(
                     &bytes[..],
                     if conditional {
@@ -182,9 +184,7 @@ fn bound_responses_preserve_body_identity_and_validate_before_revalidation() {
                     .query
                     .with_deadline(Instant::now() + Duration::from_millis(30));
                 let error = bounded
-                    .respond_json_bound(&headers, Version::ONE, |_| {
-                        Err(brk_error::Error::StateUpdating)
-                    })
+                    .respond_json_bound(&headers, Version::ONE, |_| Err(Error::StateUpdating))
                     .await;
                 assert_eq!(error.status(), StatusCode::SERVICE_UNAVAILABLE);
                 assert!(!error.headers().contains_key("etag"));

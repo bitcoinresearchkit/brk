@@ -7,6 +7,7 @@ use tempfile::tempdir;
 use tokio::{
     io::{AsyncWriteExt, BufReader},
     net::TcpListener,
+    spawn,
     task::spawn_blocking,
 };
 
@@ -29,7 +30,7 @@ async fn warm_height_latency() {
         for asynchronous in [false, true] {
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let url = format!("http://{}", listener.local_addr().unwrap());
-            let server = tokio::spawn(async move {
+            let server = spawn(async move {
                 let mut socket = BufReader::new(listener.accept().await.unwrap().0);
                 for _ in 0..WARMUP + SAMPLES {
                     let (id, auth) = request(&mut socket).await;

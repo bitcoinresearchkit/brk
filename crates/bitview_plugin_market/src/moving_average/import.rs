@@ -17,21 +17,21 @@ pub fn forced_import(
     blocks: &BlocksVecs,
     spot_price: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Vecs> {
-    let sma = SmaVecs::new(version, mappings, &blocks.lookback, spot_price);
+    let sma = SmaVecs::new(cache, version, mappings, &blocks.lookback, spot_price);
     let ema_version = version + EMA_VERSION;
-    let ema = ColumnarPerBlock::forced_import(db, "price_ema_cents", ema_version, |source| {
-        EmaPeriodId::series(|period| {
-            LazyColumnPriceWithRatioPerBlock::new(
-                cache,
-                &format!("price_ema_{}", period.suffix()),
-                ema_version,
-                source,
-                period,
-                mappings,
-                spot_price,
-            )
-        })
-    })?;
+    let ema =
+        ColumnarPerBlock::forced_import(cache, db, "price_ema_cents", ema_version, |source| {
+            EmaPeriodId::series(|period| {
+                LazyColumnPriceWithRatioPerBlock::new(
+                    &format!("price_ema_{}", period.suffix()),
+                    ema_version,
+                    source,
+                    period,
+                    mappings,
+                    spot_price,
+                )
+            })
+        })?;
 
     Ok(Vecs { sma, ema })
 }

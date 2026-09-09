@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use brk_types::{Height, PoolSlug, StoredU64};
 use parking_lot::RwLock;
@@ -127,7 +127,7 @@ impl PoolCumulativeVec {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(StoredU64)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}

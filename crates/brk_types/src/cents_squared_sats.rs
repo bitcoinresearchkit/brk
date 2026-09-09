@@ -1,7 +1,16 @@
-use std::ops::{Add, AddAssign, Div, Sub, SubAssign};
+#[cfg(feature = "storage")]
+use itoa::Buffer;
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "storage")]
+use vecdb::Result;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -112,7 +121,7 @@ impl Div<usize> for CentsSquaredSats {
 impl Formattable for CentsSquaredSats {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }
@@ -125,13 +134,13 @@ impl Bytes for CentsSquaredSats {
         self.0.to_le_bytes()
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Ok(Self(u128::from_bytes(bytes)?))
     }
 }
 
-impl std::fmt::Display for CentsSquaredSats {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for CentsSquaredSats {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }

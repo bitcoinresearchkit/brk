@@ -1,7 +1,7 @@
-use crate::TxFeatureFlags;
-use crate::processor::txout::ProcessedOutput;
-use bitcoin::{PublicKey, TxOut, script::Instruction};
+use bitcoin::{PublicKey, Script, TxOut, script::Instruction};
 use brk_types::OutputType;
+
+use crate::{TxFeatureFlags, processor::txout::ProcessedOutput};
 
 #[derive(Default)]
 pub struct Scanner {
@@ -46,7 +46,7 @@ impl Scanner {
     }
 }
 
-pub fn has_fake_multisig_key(script: &bitcoin::Script) -> bool {
+pub fn has_fake_multisig_key(script: &Script) -> bool {
     script.instructions().any(|instruction| {
         let Ok(Instruction::PushBytes(bytes)) = instruction else {
             return false;

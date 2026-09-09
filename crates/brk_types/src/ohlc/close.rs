@@ -1,13 +1,15 @@
-use crate::StoredF64;
-use crate::{Cents, Dollars};
-use derive_more::{Deref, DerefMut};
-use schemars::JsonSchema;
-use serde::Serialize;
 use std::{
-    fmt::Display,
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div},
 };
+
+use derive_more::{Deref, DerefMut};
+use schemars::JsonSchema;
+use serde::Serialize;
+
+use crate::{Cents, Dollars, StoredF64};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
@@ -150,7 +152,7 @@ impl<T> Display for Close<T>
 where
     T: Display,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.0.fmt(f)
     }
 }

@@ -1,4 +1,7 @@
-use std::{convert::Infallible, sync::Arc};
+use std::{
+    convert::Infallible,
+    sync::{Arc, Weak},
+};
 
 use brk_types::{Height, StoredU16, StoredU64};
 use parking_lot::RwLock;
@@ -16,7 +19,8 @@ pub struct CumulativeCountVec {
 }
 
 struct Checkpoints {
-    block: Arc<Vec<StoredU16>>,
+    // Identify the source snapshot without pinning a budget-evicted allocation.
+    block: Weak<Vec<StoredU16>>,
     cumulative: Arc<Vec<u64>>,
 }
 
@@ -25,7 +29,7 @@ impl CumulativeCountVec {
         Self {
             block: ReadableBoxedVec::new(block),
             checkpoints: Arc::new(RwLock::new(Checkpoints {
-                block: Arc::new(Vec::new()),
+                block: Weak::new(),
                 cumulative: Arc::new(vec![0]),
             })),
         }
@@ -50,15 +54,15 @@ impl CumulativeCountVec {
 
         {
             let checkpoints = self.checkpoints.read();
-            if Arc::ptr_eq(&checkpoints.block, &block) {
+            if Weak::ptr_eq(&checkpoints.block, &Arc::downgrade(&block)) {
                 return (block, checkpoints.cumulative.clone());
             }
         }
 
         let cumulative = Self::build_checkpoints(&block);
         let mut checkpoints = self.checkpoints.write();
-        if !Arc::ptr_eq(&checkpoints.block, &block) {
-            checkpoints.block = block.clone();
+        if !Weak::ptr_eq(&checkpoints.block, &Arc::downgrade(&block)) {
+            checkpoints.block = Arc::downgrade(&block);
             checkpoints.cumulative = cumulative;
         }
 
@@ -238,14 +242,17 @@ impl ReadableVec<Height, StoredU64> for CumulativeCountVec {
 #[cfg(test)]
 mod tests {
     use brk_types::{Height, StoredU16, StoredU64, Version};
-    use vecdb::{AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
+    use tempfile::tempdir;
+    use vecdb::{
+        AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
+        ReadOnlyClone, WritableVec,
+    };
 
     use super::*;
-    use vecdb::{CachedReadableVec, ReadOnlyClone};
 
     #[test]
     fn sorted_counts_reuse_tails_and_handle_gaps_duplicates_and_rewrites() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut block =
             EagerVec::<PcoVec<Height, StoredU16>>::forced_import(&db, "sorted", Version::ONE)
@@ -309,7 +316,7 @@ mod tests {
 
     #[test]
     fn reconstructs_cumulative_counts_after_rewrites() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut block: EagerVec<PcoVec<Height, StoredU16>> =
             EagerVec::forced_import(&db, "count", Version::ONE).unwrap();

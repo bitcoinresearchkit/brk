@@ -1,15 +1,17 @@
-use std::{fs, path::Path};
+use std::{env, fs, path::Path};
 
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
+use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use vecdb::ReadableVec;
+use vecdb::{CacheBudget, ReadableVec};
 
-fn main() -> brk_error::Result<()> {
-    brk_logger::init(Some(Path::new(".log")))?;
+fn main() -> Result<()> {
+    init(Some(Path::new(".log")))?;
 
-    let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".bitview");
+    let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".bitview");
     fs::create_dir_all(&outputs_dir)?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
@@ -29,4 +31,4 @@ fn main() -> brk_error::Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

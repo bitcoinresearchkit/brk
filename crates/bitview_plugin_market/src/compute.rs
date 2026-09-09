@@ -1,9 +1,8 @@
-use brk_error::Result;
-
 use bitview_plugin::{ComputePlugin, UpdateContext};
+use brk_error::Result;
 use rayon::join;
 
-use super::Vecs;
+use super::{Vecs, ath, moving_average, range, returns, technical};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -26,12 +25,12 @@ impl ComputePlugin for Vecs {
         self.db.sync_bg_tasks()?;
 
         let (ath, (range, moving_average)) = join(
-            || super::ath::compute(&mut self.ath, indexer, prices, mappings, exit),
+            || ath::compute(&mut self.ath, indexer, prices, mappings, exit),
             || {
                 join(
-                    || super::range::compute(&mut self.range, indexer, prices, blocks, exit),
+                    || range::compute(&mut self.range, indexer, prices, blocks, exit),
                     || {
-                        super::moving_average::compute(
+                        moving_average::compute(
                             &mut self.moving_average,
                             indexer,
                             blocks,
@@ -47,9 +46,9 @@ impl ComputePlugin for Vecs {
         moving_average?;
 
         let (returns, technical) = join(
-            || super::returns::compute(&mut self.returns, indexer, blocks, exit),
+            || returns::compute(&mut self.returns, indexer, blocks, exit),
             || {
-                super::technical::compute(
+                technical::compute(
                     &mut self.technical,
                     indexer,
                     prices,

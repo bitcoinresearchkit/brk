@@ -1,6 +1,5 @@
-mod boundary;
-
 use bitview_collections::PerResolution;
+use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -13,6 +12,10 @@ use vecdb::{
     AnyVec, CachedVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadableBoxedVec,
     ReadableVec, Rw, StorageMode, Version,
 };
+
+use super::{DatedResolutionVecs, ResolutionVecs};
+
+mod boundary;
 
 pub use boundary::BoundaryTimestampVec;
 
@@ -67,19 +70,19 @@ impl Timestamps {
         version: Version,
         monotonic: CachedVec<EagerVec<PcoVec<Height, Timestamp>>>,
         raw_timestamps: ReadableBoxedVec<Height, Timestamp>,
-        minute10: &super::ResolutionVecs<Minute10>,
-        minute30: &super::ResolutionVecs<Minute30>,
-        hour1: &super::ResolutionVecs<Hour1>,
-        hour4: &super::ResolutionVecs<Hour4>,
-        hour12: &super::ResolutionVecs<Hour12>,
-        day1: &super::DatedResolutionVecs<Day1>,
-        day3: &super::DatedResolutionVecs<Day3>,
-        week1: &super::DatedResolutionVecs<Week1>,
-        month1: &super::DatedResolutionVecs<Month1>,
-        month3: &super::DatedResolutionVecs<Month3>,
-        month6: &super::DatedResolutionVecs<Month6>,
-        year1: &super::DatedResolutionVecs<Year1>,
-        year10: &super::DatedResolutionVecs<Year10>,
+        minute10: &ResolutionVecs<Minute10>,
+        minute30: &ResolutionVecs<Minute30>,
+        hour1: &ResolutionVecs<Hour1>,
+        hour4: &ResolutionVecs<Hour4>,
+        hour12: &ResolutionVecs<Hour12>,
+        day1: &DatedResolutionVecs<Day1>,
+        day3: &DatedResolutionVecs<Day3>,
+        week1: &DatedResolutionVecs<Week1>,
+        month1: &DatedResolutionVecs<Month1>,
+        month3: &DatedResolutionVecs<Month3>,
+        month6: &DatedResolutionVecs<Month6>,
+        year1: &DatedResolutionVecs<Year1>,
+        year10: &DatedResolutionVecs<Year10>,
     ) -> Self {
         macro_rules! period {
             ($field:ident) => {
@@ -119,7 +122,7 @@ impl Timestamps {
 
     pub fn compute_monotonic(
         &mut self,
-        indexer: &bitview_plugin_indexer::Indexer,
+        indexer: &Indexer,
         starting_height: Height,
         exit: &Exit,
     ) -> Result<bool> {

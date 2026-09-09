@@ -1,13 +1,13 @@
-use std::cmp::min;
-use std::fs::File;
-use std::io::Write;
+use std::{cmp::min, env, fs::File, io::Write};
 
 use better_io::{BetterBufRead, BetterBufReader};
 
-use crate::chunk_config::{ChunkConfig, DeltaSpec};
-use crate::errors::PcoResult;
-use crate::wrapped::{FileCompressor, FileDecompressor, PageDecompressor};
-use crate::{PagingSpec, FULL_BATCH_N};
+use crate::{
+  chunk_config::{ChunkConfig, DeltaSpec},
+  errors::PcoResult,
+  wrapped::{FileCompressor, FileDecompressor, PageDecompressor},
+  PagingSpec, FULL_BATCH_N,
+};
 
 struct Chunk {
   nums: Vec<u32>,
@@ -85,7 +85,7 @@ fn test_wrapped(chunks: &[Chunk]) -> PcoResult<()> {
   test_wrapped_decompress(chunks, compressed.as_slice())?;
 
   // ON DISK
-  let file_path = std::env::temp_dir().join("pco_test_file");
+  let file_path = env::temp_dir().join("pco_test_file");
   let f = File::create(&file_path)?;
   test_wrapped_compress(chunks, f)?;
   let f = File::open(file_path)?;

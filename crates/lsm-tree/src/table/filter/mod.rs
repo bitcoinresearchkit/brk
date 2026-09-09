@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use standard_bloom::Builder as StandardBloomFilterBuilder;
+
+use crate::Error;
+
 pub mod bit_array;
 pub mod block;
 pub mod standard_bloom;
-
-use standard_bloom::Builder as StandardBloomFilterBuilder;
 
 /// Controls the size of Bloom filters written into tables.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -75,13 +77,13 @@ enum FilterType {
 }
 
 impl TryFrom<u8> for FilterType {
-    type Error = crate::Error;
+    type Error = Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::StandardBloom),
             1 => Ok(Self::BlockedBloom),
-            _ => Err(crate::Error::InvalidTag(("FilterType", value))),
+            _ => Err(Error::InvalidTag(("FilterType", value))),
         }
     }
 }
@@ -97,8 +99,9 @@ impl From<FilterType> for u8 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn bloom_estimated_size_bpk() {

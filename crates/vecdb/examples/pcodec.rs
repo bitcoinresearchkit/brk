@@ -1,10 +1,10 @@
-use std::{fs, path::Path};
+use std::{error::Error, fs, path::Path};
 
 use vecdb::{
     AnyStoredVec, AnyVec, Database, ImportableVec, PcoVec, ReadableVec, Stamp, Version, WritableVec,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let _ = fs::remove_dir_all("compressed");
 
     let version = Version::TWO;

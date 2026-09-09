@@ -1,8 +1,7 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
-use crate::{Bytes, Error, SIZE_OF_U64, Stamp, ValueStrategy, VecIndex, VecValue};
-
 use super::{ChangeCursor, ChangeData, ReadWriteBaseVec, vec_region_name};
+use crate::{Bytes, Error, Result, SIZE_OF_U64, Stamp, ValueStrategy, VecIndex, VecValue};
 
 impl<I, T> ReadWriteBaseVec<I, T>
 where
@@ -17,8 +16,8 @@ where
 
     pub fn serialize_changes<S: ValueStrategy<T>>(
         &self,
-        collect_stored: impl FnOnce(usize, usize) -> crate::Result<Vec<T>>,
-    ) -> crate::Result<Vec<u8>> {
+        collect_stored: impl FnOnce(usize, usize) -> Result<Vec<T>>,
+    ) -> Result<Vec<u8>> {
         let write_values = |values: &[T], bytes: &mut Vec<u8>| {
             for value in values {
                 S::write_to_vec(value, bytes);
@@ -52,9 +51,7 @@ where
 
     /// Returns `Error::Overflow` on arithmetic overflow,
     /// `Error::WrongLength` if the data is truncated.
-    pub fn parse_change_data<S: ValueStrategy<T>>(
-        c: &mut ChangeCursor,
-    ) -> crate::Result<ChangeData<T>> {
+    pub fn parse_change_data<S: ValueStrategy<T>>(c: &mut ChangeCursor) -> Result<ChangeData<T>> {
         let size_of_t = size_of::<T>();
         let prev_stamp = c.read_stamp()?;
         let prev_stored_len = c.read_u64()?;
@@ -90,7 +87,7 @@ where
     }
 
     /// Caller must check `saved_stamped_changes > 0` before calling.
-    pub fn save_change_file(&self, stamp: Stamp, data: &[u8]) -> crate::Result<()> {
+    pub fn save_change_file(&self, stamp: Stamp, data: &[u8]) -> Result<()> {
         debug_assert!(self.saved_stamped_changes > 0);
         let path = self.changes_path();
         fs::create_dir_all(&path)?;
@@ -129,14 +126,14 @@ where
         self.pushed.save();
     }
 
-    pub fn read_current_change_file(&self) -> crate::Result<Vec<u8>> {
+    pub fn read_current_change_file(&self) -> Result<Vec<u8>> {
         let path = self
             .changes_path()
             .join(u64::from(self.header.stamp()).to_string());
         Ok(fs::read(path)?)
     }
 
-    pub fn find_rollback_files(&self) -> crate::Result<BTreeMap<Stamp, PathBuf>> {
+    pub fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>> {
         Ok(fs::read_dir(self.changes_path())?
             .filter_map(|entry| {
                 let path = entry.ok()?.path();

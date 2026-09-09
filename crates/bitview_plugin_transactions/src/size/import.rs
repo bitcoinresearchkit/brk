@@ -1,4 +1,5 @@
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::WeightToVSize;
 use bitview_vecs::{LazyPerTxDistributionTransformed, TxDerivedDistribution};
 use brk_error::Result;
@@ -12,7 +13,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<Vecs> {
     let weight = TxDerivedDistribution::forced_import(cache, db, "tx_weight", version, mappings)?;
 

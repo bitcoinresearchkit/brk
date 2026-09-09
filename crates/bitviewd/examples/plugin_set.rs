@@ -8,13 +8,16 @@ use std::{
 use bitview::{ImportContext, UpdateContext, bootstrap, update};
 use bitview_default::DefaultPlugins;
 use brk_exit::Exit;
+use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
+use color_eyre::{Result, install};
+use vecdb::CacheBudget;
 
-pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
+pub fn main() -> Result<()> {
+    install()?;
 
-    brk_logger::init(Some(Path::new(".log")))?;
+    init(Some(Path::new(".log")))?;
 
     let bitcoin_dir = Client::default_bitcoin_path();
     // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
@@ -48,4 +51,4 @@ pub fn main() -> color_eyre::Result<()> {
     }
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

@@ -1,16 +1,42 @@
-use std::ops::Add;
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::Add,
+};
 
 use derive_more::{Deref, DerefMut};
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
 use crate::CheckedSub;
-# [cfg (feature = "storage")] use vecdb :: { Formattable , Pco , PrintableIndex } ;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 /// Index for 2-output transactions (oracle pair candidates)
 ///
 /// This indexes all transactions with exactly 2 outputs, which are
 /// candidates for the UTXOracle algorithm (payment + change pattern).
-# [derive (Debug , PartialEq , Eq , PartialOrd , Ord , Clone , Copy , Deref , DerefMut , Default , Serialize , Deserialize , JsonSchema , Hash)] # [cfg_attr (feature = "storage" , derive (Pco))]
+#[derive(
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Hash,
+)]
+#[cfg_attr(feature = "storage", derive(Pco))]
 pub struct PairOutputIndex(u32);
 
 impl PairOutputIndex {
@@ -32,8 +58,17 @@ impl Add<usize> for PairOutputIndex {
     }
 }
 
-impl CheckedSub < PairOutputIndex > for PairOutputIndex { fn checked_sub (self , rhs : PairOutputIndex) -> Option < Self > { self . 0 . checked_sub (rhs . 0) . map (PairOutputIndex :: from) } }
-# [cfg (feature = "storage")] impl vecdb :: CheckedSub < PairOutputIndex > for PairOutputIndex { fn checked_sub (self , rhs : PairOutputIndex) -> Option < Self > { crate :: CheckedSub :: checked_sub (self , rhs) } }
+impl CheckedSub<PairOutputIndex> for PairOutputIndex {
+    fn checked_sub(self, rhs: PairOutputIndex) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(PairOutputIndex::from)
+    }
+}
+#[cfg(feature = "storage")]
+impl VecdbCheckedSub<PairOutputIndex> for PairOutputIndex {
+    fn checked_sub(self, rhs: PairOutputIndex) -> Option<Self> {
+        CheckedSub::checked_sub(self, rhs)
+    }
+}
 
 impl From<u32> for PairOutputIndex {
     #[inline]
@@ -77,13 +112,27 @@ impl From<PairOutputIndex> for usize {
     }
 }
 
-impl PairOutputIndex { pub fn index_name () -> & 'static str { "pair_output_index" } pub fn index_aliases () -> & 'static [& 'static str] { & ["pairoutput" , "pair_output_index"] } }
+impl PairOutputIndex {
+    pub fn index_name() -> &'static str {
+        "pair_output_index"
+    }
+    pub fn index_aliases() -> &'static [&'static str] {
+        &["pairoutput", "pair_output_index"]
+    }
+}
 #[cfg(feature = "storage")]
-impl PrintableIndex for PairOutputIndex { fn to_string () -> & 'static str { Self :: index_name () } fn to_possible_strings () -> & 'static [& 'static str] { Self :: index_aliases () } }
+impl PrintableIndex for PairOutputIndex {
+    fn to_string() -> &'static str {
+        Self::index_name()
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        Self::index_aliases()
+    }
+}
 
-impl std::fmt::Display for PairOutputIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for PairOutputIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -93,7 +142,7 @@ impl std::fmt::Display for PairOutputIndex {
 impl Formattable for PairOutputIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

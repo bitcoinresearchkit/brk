@@ -1,18 +1,23 @@
 use std::{
     cmp::Ordering,
     f64,
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Sub},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use ryu::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, Close, Dollars};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::{Close, Dollars};
 
 /// Fractional satoshis (f64) - for representing USD prices in sats
 ///
@@ -138,9 +143,9 @@ impl CheckedSub for SatsFract {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for SatsFract {
+impl VecdbCheckedSub for SatsFract {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -150,9 +155,9 @@ impl CheckedSub<usize> for SatsFract {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for SatsFract {
+impl VecdbCheckedSub<usize> for SatsFract {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -193,9 +198,9 @@ impl Sum for SatsFract {
     }
 }
 
-impl std::fmt::Display for SatsFract {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = ryu::Buffer::new();
+impl Display for SatsFract {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -206,7 +211,7 @@ impl Formattable for SatsFract {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         if self.0.is_finite() {
-            let mut b = ryu::Buffer::new();
+            let mut b = Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
     }

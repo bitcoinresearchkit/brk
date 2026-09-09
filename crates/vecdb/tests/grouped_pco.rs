@@ -2,13 +2,14 @@
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, Database, ImportableVec, PcoVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, AnyVec, Database, ImportableVec, PcoVec, ReadableVec, Result, Version,
+    WritableVec,
 };
 
 const VALUES_PER_PAGE: usize = 8 * 1024 / size_of::<u64>();
 
 #[test]
-fn constant_pages_roundtrip() -> vecdb::Result<()> {
+fn constant_pages_roundtrip() -> Result<()> {
     let temp = tempdir()?;
     let db = Database::open(temp.path())?;
     let expected = vec![0; VALUES_PER_PAGE * 2];
@@ -27,7 +28,7 @@ fn constant_pages_roundtrip() -> vecdb::Result<()> {
 }
 
 #[test]
-fn shared_chunks_stop_at_metadata_blocks_and_rebuild_from_chunk_boundaries() -> vecdb::Result<()> {
+fn shared_chunks_stop_at_metadata_blocks_and_rebuild_from_chunk_boundaries() -> Result<()> {
     let temp = tempdir()?;
     let db = Database::open(temp.path())?;
     let mut vec = PcoVec::<usize, u64>::forced_import(&db, "values", Version::ONE)?;

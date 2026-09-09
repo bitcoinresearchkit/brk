@@ -4,8 +4,10 @@ use bitview_default::DefaultPlugins;
 use bitviewd::Config;
 use brk_error::Result;
 use brk_exit::Exit;
+use brk_logger::init;
 use brk_reader::Reader;
 use tracing::info;
+use vecdb::CacheBudget;
 
 mod benchmark;
 
@@ -15,7 +17,7 @@ fn main() -> Result<()> {
         blocks_path,
         server,
     } = Config::import()?;
-    brk_logger::init(Some(&server.logs_path()))?;
+    init(Some(&server.logs_path()))?;
     let data_path = server.data_path;
     client.wait_for_synced_node()?;
 
@@ -41,4 +43,4 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

@@ -1,4 +1,5 @@
 use bitview_plugin_distribution::AllChainSources;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
 use brk_error::Result;
 use brk_types::{Bitcoin, Cents, Height, Version};
@@ -10,7 +11,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
     all_chain: &AllChainSources,
     cointime_cap: &impl ReadableCloneableVec<Height, Cents>,

@@ -2,7 +2,7 @@
 
 use std::{collections::BTreeSet, fmt::Write, io, path::Path};
 
-use crate::{Endpoint, generators::write_if_changed};
+use crate::{Endpoint, Parameter, generators::write_if_changed};
 
 /// Generate the OpenAPI-derived command catalog used by `bitview-cli`.
 pub fn generate_cli(endpoints: &[Endpoint], output_path: &Path) -> io::Result<()> {
@@ -57,7 +57,7 @@ pub fn generate_cli(endpoints: &[Endpoint], output_path: &Path) -> io::Result<()
     write_if_changed(output_path, &output)
 }
 
-fn write_parameters(output: &mut String, field: &str, parameters: &[crate::Parameter]) {
+fn write_parameters(output: &mut String, field: &str, parameters: &[Parameter]) {
     writeln!(output, "        {field}: &[").unwrap();
     for parameter in parameters {
         writeln!(

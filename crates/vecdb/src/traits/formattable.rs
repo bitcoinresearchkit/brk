@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, str};
 
 /// Fast formatting trait that writes UTF-8 bytes directly into a buffer,
 /// avoiding the `std::fmt` machinery for number types.
@@ -85,7 +85,7 @@ impl<T: Formattable, const N: usize> Formattable for [T; N] {
     fn fmt_csv(&self, output: &mut String) -> fmt::Result {
         let mut json = Vec::new();
         self.write_to(&mut json);
-        let json = std::str::from_utf8(&json).map_err(|_| fmt::Error)?;
+        let json = str::from_utf8(&json).map_err(|_| fmt::Error)?;
 
         output.push('"');
         for character in json.chars() {

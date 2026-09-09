@@ -1,5 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{CachedWindowStartVec, LazyPerSecondWindows};
 use brk_error::Result;
 use vecdb::{ImportableVec, PcoVec};
@@ -9,7 +10,7 @@ use super::{ByTypeVecs, CountVecs, STORAGE, Vecs};
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 20_000_000)?;

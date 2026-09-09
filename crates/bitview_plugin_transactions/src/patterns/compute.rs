@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Sats, StoredBool, StoredU64, TxInIndex};
 use vecdb::{AnyStoredVec, AnyVec, ColumnId, PcoVec, ReadableVec, VecIndex, WritableVec};
@@ -13,7 +13,7 @@ pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
     input_values: &PcoVec<TxInIndex, Sats>,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     exit: &Exit,
 ) -> Result<()> {
     let features = &indexer.vecs().transaction_features;

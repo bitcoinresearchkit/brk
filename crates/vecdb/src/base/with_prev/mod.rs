@@ -1,3 +1,5 @@
+use std::mem;
+
 pub mod default;
 
 /// Tracks current and previous values for rollback support.
@@ -58,7 +60,7 @@ impl<T> WithPrev<T> {
 
     #[inline]
     pub fn swap(&mut self) {
-        std::mem::swap(&mut self.current, &mut self.previous);
+        mem::swap(&mut self.current, &mut self.previous);
     }
 
     #[inline]
@@ -66,7 +68,7 @@ impl<T> WithPrev<T> {
     where
         T: Default,
     {
-        std::mem::take(&mut self.current)
+        mem::take(&mut self.current)
     }
 
     #[inline]
@@ -74,7 +76,7 @@ impl<T> WithPrev<T> {
     where
         T: Default,
     {
-        std::mem::take(&mut self.previous)
+        mem::take(&mut self.previous)
     }
 
     #[inline]

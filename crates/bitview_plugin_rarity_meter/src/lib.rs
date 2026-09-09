@@ -1,9 +1,29 @@
 #![allow(clippy::type_complexity)]
 
+use band::Band;
+use bitview_plugin::{
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
+};
+use bitview_plugin_coinflow::Vecs as CoinflowVecs;
+use bitview_plugin_cointime::Vecs as CointimeVecs;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_traversable::Traversable;
+use bitview_vecs::{DailyView, RepeatDay};
+use block_decay_percentiles::{BlockDecayPercentiles, START_HEIGHT};
+use brk_error::Result;
+use brk_types::{Cents, Height, Version};
+use component::Component;
+use components::Components;
+use extremes::Extremes;
+use inner::RarityMeterInner;
+use rayon::{join, prelude::*};
+use vecdb::{Database, Rw, StorageMode};
+
 mod band;
 mod block_decay_percentiles;
-mod cached_component_price;
 mod component;
+mod component_price;
 mod components;
 mod dependencies;
 mod extreme;
@@ -12,26 +32,9 @@ mod has;
 mod inner;
 mod threshold_vecs;
 
-use brk_error::Result;
-use rayon::{join, prelude::*};
-
-use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
-};
-use bitview_traversable::Traversable;
-use bitview_vecs::{DailyView, RepeatDay};
-use brk_types::{Cents, Height, Version};
-use vecdb::{Database, Rw, StorageMode};
-
-use band::Band;
-use component::Component;
-use components::Components;
 pub use dependencies::Dependencies;
-use extremes::Extremes;
-pub use has::HasRarityMeter;
-use inner::RarityMeterInner;
 
-use block_decay_percentiles::{BlockDecayPercentiles, START_HEIGHT};
+pub use has::HasRarityMeter;
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("rarity_meter"), Version::new(17));
 pub const ID: PluginId = STORAGE.id();
@@ -67,10 +70,10 @@ const COMPUTE_BATCH_SIZE: usize = 100_000;
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
-        distribution: &bitview_plugin_distribution::Vecs,
-        cointime: &bitview_plugin_cointime::Vecs,
-        coinflow: &bitview_plugin_coinflow::Vecs,
+        mappings: &MappingsVecs,
+        distribution: &DistributionVecs,
+        cointime: &CointimeVecs,
+        coinflow: &CoinflowVecs,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let version = STORAGE.schema_version();

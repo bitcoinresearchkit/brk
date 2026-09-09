@@ -3,15 +3,18 @@
 use std::{hint::black_box, time::Instant};
 
 use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, StoredU64, Version, Weight};
+use serde_json::to_vec;
+use tempfile::tempdir;
 use vecdb::{AnyStoredVec, CachedVec, Database, ImportableVec, PcoVec, WritableVec};
 
 use super::*;
+use crate::RepresentationId;
 
 #[test]
 #[ignore = "one-million-row persisted mining data path; warm OS storage, excludes HTTP and plugin lookup"]
 fn benchmark_full_history_storage() {
     const ROWS: u32 = 1_000_000;
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
     let mut times: PcoVec<Height, Timestamp> =
         PcoVec::forced_import(&database, "timestamps", Version::ONE).unwrap();
@@ -80,8 +83,8 @@ fn benchmark_full_history_storage() {
                     )
                 })
                 .unzip();
-            let body = serde_json::to_vec(&BlockSizesWeights { sizes, weights }).unwrap();
-            black_box(crate::RepresentationId::content_hash(&body));
+            let body = to_vec(&BlockSizesWeights { sizes, weights }).unwrap();
+            black_box(RepresentationId::content_hash(&body));
             let elapsed = started.elapsed();
             if let Some(expected) = &expected {
                 assert_eq!(&body, expected);

@@ -1,5 +1,5 @@
-use bitcoin::Transaction;
-use brk_types::{TxIndex, Txid, TxidPrefix, Vout};
+use bitcoin::{Transaction, Weight};
+use brk_types::{TxIndex, Txid, TxidPrefix, Vout, Weight as TypesWeight};
 
 pub struct ComputedTx<'a> {
     pub tx_index: TxIndex,
@@ -76,7 +76,7 @@ impl ComputedTx<'_> {
     }
 
     #[inline]
-    pub fn weight(&self) -> bitcoin::Weight {
-        brk_types::Weight::from_sizes(self.base_size, self.total_size).into()
+    pub fn weight(&self) -> Weight {
+        TypesWeight::from_sizes(self.base_size, self.total_size).into()
     }
 }

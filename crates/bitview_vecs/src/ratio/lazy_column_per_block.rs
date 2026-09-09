@@ -1,7 +1,7 @@
 use bitview_compute::FixedRatio;
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
-use vecdb::{CacheBudget, ColumnId, PcoVec, ReadOnlyColumnarVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec};
 
 use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock};
 
@@ -23,7 +23,6 @@ where
     C: ColumnId,
 {
     pub fn new(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, R>, C>,
@@ -31,7 +30,6 @@ where
         indexes: &IndexSources,
     ) -> Self {
         let ppm = LazyColumnPerBlock::new(
-            cache,
             &format!("{name}_{}", R::SUFFIX),
             version,
             source,

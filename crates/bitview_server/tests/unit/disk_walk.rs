@@ -1,10 +1,12 @@
-use super::*;
-#[cfg(unix)]
-use std::os::unix::fs::symlink;
 use tempfile::tempdir;
 
+use super::{dir_size as walk_dir_size, *};
+
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
+
 fn dir_size(path: &Path) -> Result<u64> {
-    super::dir_size(path, &AtomicBool::new(false))
+    walk_dir_size(path, &AtomicBool::new(false))
 }
 
 #[test]
@@ -22,7 +24,7 @@ fn byte_totals_reject_overflow() -> Result<()> {
 
 #[test]
 fn cancelled_walk_does_not_touch_the_missing_root() {
-    let error = super::dir_size(
+    let error = walk_dir_size(
         Path::new("missing-disk-fixture-root"),
         &AtomicBool::new(true),
     )

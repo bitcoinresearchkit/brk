@@ -1,12 +1,19 @@
-use std::time::Duration;
+use std::{
+    env,
+    io::{Error, ErrorKind, Result},
+    path::PathBuf,
+    time::Duration,
+};
 
 use axum::{
     ServiceExt,
     body::Body,
     http::{Request, Response, StatusCode, Uri},
-    middleware::Next,
+    middleware::{self, Next},
+    serve,
 };
 use bitview_website::{Website, router};
+use brk_logger::init;
 use tokio::net::TcpListener;
 use tower_http::{
     catch_panic::CatchPanicLayer, classify::ServerErrorsFailureClass,
@@ -14,19 +21,19 @@ use tower_http::{
     timeout::TimeoutLayer, trace::TraceLayer,
 };
 use tower_layer::Layer;
-use tracing::{error, info};
+use tracing::{Span, error, info};
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
-    let _ = brk_logger::init(None);
+async fn main() -> Result<()> {
+    let _ = init(None);
 
     // cargo run -p bitview_website --example website -- website_next_next
-    let website = match std::env::args_os().nth(1) {
+    let website = match env::args_os().nth(1) {
         Some(path) => {
-            let path = std::path::PathBuf::from(path);
+            let path = PathBuf::from(path);
             if !path.is_dir() {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
+                return Err(Error::new(
+                    ErrorKind::NotFound,
                     format!("Website folder does not exist: {}", path.display()),
                 ));
             }
@@ -44,7 +51,7 @@ async fn main() -> std::io::Result<()> {
 
     let compression_layer = CompressionLayer::new().br(true).gzip(true).zstd(true);
 
-    let response_uri_layer = axum::middleware::from_fn(
+    let response_uri_layer = middleware::from_fn(
         async |request: Request<Body>, next: Next| -> Response<Body> {
             let uri = request.uri().clone();
             let mut response = next.run(request).await;
@@ -55,24 +62,22 @@ async fn main() -> std::io::Result<()> {
 
     let trace_layer = TraceLayer::new_for_http()
         .on_request(())
-        .on_response(
-            |response: &Response<Body>, latency: Duration, _: &tracing::Span| {
-                let status = response.status().as_u16();
-                let Some(uri) = response.extensions().get::<Uri>() else {
-                    return;
-                };
-                match response.status() {
-                    StatusCode::OK
-                    | StatusCode::NOT_MODIFIED
-                    | StatusCode::TEMPORARY_REDIRECT
-                    | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
-                    _ => error!(status, %uri, ?latency),
-                }
-            },
-        )
+        .on_response(|response: &Response<Body>, latency: Duration, _: &Span| {
+            let status = response.status().as_u16();
+            let Some(uri) = response.extensions().get::<Uri>() else {
+                return;
+            };
+            match response.status() {
+                StatusCode::OK
+                | StatusCode::NOT_MODIFIED
+                | StatusCode::TEMPORARY_REDIRECT
+                | StatusCode::PERMANENT_REDIRECT => info!(status, %uri, ?latency),
+                _ => error!(status, %uri, ?latency),
+            }
+        })
         .on_body_chunk(())
         .on_failure(
-            |error: ServerErrorsFailureClass, latency: Duration, _: &tracing::Span| {
+            |error: ServerErrorsFailureClass, latency: Duration, _: &Span| {
                 error!(?error, ?latency, "request failed");
             },
         )
@@ -113,7 +118,7 @@ async fn main() -> std::io::Result<()> {
 
     let service = NormalizePathLayer::trim_trailing_slash().layer(app);
 
-    axum::serve(
+    serve(
         listener,
         ServiceExt::<Request<Body>>::into_make_service(service),
     )

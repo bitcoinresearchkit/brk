@@ -1,17 +1,18 @@
-use std::cmp::{max, min};
-use std::mem::{self, MaybeUninit};
+use std::{
+  cmp::{max, min},
+  mem::{self, MaybeUninit},
+};
 
-use crate::compression_intermediates::Bid;
-use crate::constants::{Bitlen, MULT_REQUIRED_BITS_SAVED_PER_NUM};
-use crate::data_types::float::Float;
-use crate::data_types::latent_priv::LatentPriv;
-use crate::data_types::SplitLatents;
-use crate::dyn_slices::DynLatentSlice;
-use crate::errors::PcoResult;
-use crate::metadata::{DynLatents, Mode};
-use crate::mode::int_mult;
-use crate::sampling;
-use crate::sampling::PrimaryLatentAndSavings;
+use crate::{
+  compression_intermediates::Bid,
+  constants::{Bitlen, MULT_REQUIRED_BITS_SAVED_PER_NUM},
+  data_types::{float::Float, latent_priv::LatentPriv, SplitLatents},
+  dyn_slices::DynLatentSlice,
+  errors::PcoResult,
+  metadata::{DynLatents, Mode},
+  mode::int_mult,
+  sampling::{self, PrimaryLatentAndSavings},
+};
 
 #[inline(never)]
 pub(crate) fn join_latents<F: Float>(
@@ -357,9 +358,8 @@ mod test {
   use rand::{RngExt, SeedableRng};
   use rand_xoshiro::Xoroshiro128PlusPlus;
 
-  use crate::data_types::number_priv::NumberPriv;
-
   use super::*;
+  use crate::data_types::number_priv::NumberPriv;
 
   fn assert_almost_equal_ulps(a: f32, b: f32, ulps_tolerance: u32, desc: &str) {
     let (a, b) = (a.to_latent_ordered(), b.to_latent_ordered());
@@ -599,7 +599,7 @@ mod test {
   #[test]
   fn test_float_mult_worse_than_classic_zeros() {
     let mut nums = vec![0.0_f32; 1000];
-    let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+    let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
     let config = FloatMultConfig::from_inv_base(1E7);
     for _ in 0..1000 {
       nums.push(rng.random_range(0.0..1.0));

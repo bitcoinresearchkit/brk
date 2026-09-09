@@ -1,6 +1,7 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use arc_swap::ArcSwap;
+use bitview_plugin::Publication;
 use brk_types::Lengths;
 use parking_lot::RwLock;
 
@@ -8,7 +9,7 @@ use crate::SafeLengths;
 
 /// One writer publishes complete bounds; only rollback drains pinned readers.
 pub struct State {
-    pub publication: bitview_plugin::Publication,
+    pub publication: Publication,
     lengths: ArcSwap<Lengths>,
     reorg: Arc<RwLock<()>>,
 }
@@ -26,7 +27,7 @@ impl State {
         **self.lengths.load()
     }
 
-    pub fn pin_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
+    pub fn pin_for(&self, timeout: Duration) -> Option<SafeLengths> {
         self.reorg
             .try_read_arc_for(timeout)
             .map(|guard| SafeLengths::new(guard, self.lengths()))
@@ -81,7 +82,7 @@ impl State {
 mod tests {
     use std::{sync::mpsc, thread, time::Duration};
 
-    use brk_types::Height;
+    use brk_types::{Height, TxIndex};
 
     use super::*;
 
@@ -90,12 +91,12 @@ mod tests {
         let state = Arc::new(State::new());
         let old = Lengths {
             height: Height::new(2),
-            tx_index: brk_types::TxIndex::from(3usize),
+            tx_index: TxIndex::from(3usize),
             ..Default::default()
         };
         let next = Lengths {
             height: Height::new(3),
-            tx_index: brk_types::TxIndex::from(5usize),
+            tx_index: TxIndex::from(5usize),
             ..old
         };
         state.finish_update(old);

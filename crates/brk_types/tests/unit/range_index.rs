@@ -1,11 +1,14 @@
+use schemars::schema_for;
+use serde_json::{from_str, to_string, to_value};
+
 use super::RangeIndex;
 
 #[test]
 fn dates_require_calendar_validation() {
     for date in ["2009-01-03", "2024-02-29", "9999-12-31"] {
-        let value = serde_json::to_string(date).unwrap();
+        let value = to_string(date).unwrap();
         assert!(matches!(
-            serde_json::from_str::<RangeIndex>(&value),
+            from_str::<RangeIndex>(&value),
             Ok(RangeIndex::Date(_))
         ));
     }
@@ -20,18 +23,14 @@ fn dates_require_calendar_validation() {
         "2009-04-31",
         "123é01-01",
     ] {
-        let value = serde_json::to_string(date).unwrap();
-        assert!(
-            serde_json::from_str::<RangeIndex>(&value).is_err(),
-            "{date}"
-        );
+        let value = to_string(date).unwrap();
+        assert!(from_str::<RangeIndex>(&value).is_err(), "{date}");
     }
 }
 
 #[test]
 fn schema_matches_accepted_wire_forms() {
-    let schema = serde_json::to_value(schemars::schema_for!(RangeIndex))
-        .expect("RangeIndex schema should serialize");
+    let schema = to_value(schema_for!(RangeIndex)).expect("RangeIndex schema should serialize");
     let variants = schema["anyOf"]
         .as_array()
         .expect("RangeIndex schema should contain variants");

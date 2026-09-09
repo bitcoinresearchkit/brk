@@ -1,10 +1,10 @@
 use tempfile::tempdir;
 use vecdb::{
-    BytesVec, Database, EagerVec, Error, ImportOptions, ImportableVec, MutableVec, Stamp,
-    StoredVec, Version,
+    BytesVec, Database, EagerVec, Error, HEADER_OFFSET, ImportOptions, ImportableVec, MutableVec,
+    Result, Stamp, StoredVec, Version,
 };
 
-fn roundtrip<V: StoredVec<I = usize, T = u32>>(resets_corrupted: bool) -> vecdb::Result<()> {
+fn roundtrip<V: StoredVec<I = usize, T = u32>>(resets_corrupted: bool) -> Result<()> {
     let directory = tempdir()?;
     {
         let db = Database::open(directory.path())?;
@@ -39,7 +39,7 @@ fn roundtrip<V: StoredVec<I = usize, T = u32>>(resets_corrupted: bool) -> vecdb:
         .with_max_compression_chunk_size(8192);
     let vec = V::import_with(options)?;
     assert_eq!(vec.saved_stamped_changes(), 3);
-    vec.region().truncate(vecdb::HEADER_OFFSET - 1)?;
+    vec.region().truncate(HEADER_OFFSET - 1)?;
     drop(vec);
     assert!(matches!(
         V::import(&db, "values", Version::TWO),
@@ -82,10 +82,10 @@ roundtrips!(lz4, vecdb::LZ4Vec<usize, u32>, true);
 roundtrips!(zstd, vecdb::ZstdVec<usize, u32>, true);
 
 #[test]
-fn trait_defaults_construct_default_options() -> vecdb::Result<()> {
+fn trait_defaults_construct_default_options() -> Result<()> {
     struct OptionsOnly(bool);
     impl ImportableVec for OptionsOnly {
-        fn import_with(options: ImportOptions) -> vecdb::Result<Self> {
+        fn import_with(options: ImportOptions) -> Result<Self> {
             assert_eq!(options.name, "probe");
             assert_eq!(options.version, Version::TWO);
             assert_eq!(options.saved_stamped_changes, 0);
@@ -93,7 +93,7 @@ fn trait_defaults_construct_default_options() -> vecdb::Result<()> {
             assert_eq!(options.max_compression_chunk_size, None);
             Ok(Self(false))
         }
-        fn forced_import_with(options: ImportOptions) -> vecdb::Result<Self> {
+        fn forced_import_with(options: ImportOptions) -> Result<Self> {
             Self::import_with(options)?;
             Ok(Self(true))
         }
@@ -106,19 +106,19 @@ fn trait_defaults_construct_default_options() -> vecdb::Result<()> {
 }
 
 #[test]
-fn eager_preserves_custom_convenience_constructor_dispatch() -> vecdb::Result<()> {
+fn eager_preserves_custom_convenience_constructor_dispatch() -> Result<()> {
     struct Custom;
     impl ImportableVec for Custom {
-        fn import(_: &Database, _: &str, _: Version) -> vecdb::Result<Self> {
+        fn import(_: &Database, _: &str, _: Version) -> Result<Self> {
             Err(Error::InvalidArgument("custom import"))
         }
-        fn forced_import(_: &Database, _: &str, _: Version) -> vecdb::Result<Self> {
+        fn forced_import(_: &Database, _: &str, _: Version) -> Result<Self> {
             Err(Error::InvalidArgument("custom forced import"))
         }
-        fn import_with(_: ImportOptions) -> vecdb::Result<Self> {
+        fn import_with(_: ImportOptions) -> Result<Self> {
             Err(Error::InvalidArgument("custom options"))
         }
-        fn forced_import_with(_: ImportOptions) -> vecdb::Result<Self> {
+        fn forced_import_with(_: ImportOptions) -> Result<Self> {
             Err(Error::InvalidArgument("custom forced options"))
         }
     }

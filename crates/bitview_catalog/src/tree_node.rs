@@ -269,10 +269,11 @@ impl TreeNode {
 mod tests {
     use std::collections::BTreeSet;
 
+    use brk_types::Index;
+    use serde_json::{Value, to_string as SerdeJsonToString};
+
     use super::*;
     use crate::SeriesLeaf;
-    use brk_types::Index;
-    use serde_json::Value;
 
     fn leaf(name: &str, index: Index) -> TreeNode {
         TreeNode::Leaf(SeriesLeafWithSchema {
@@ -334,7 +335,7 @@ mod tests {
             tree.descriptions(),
             BTreeMap::from([("shared", Cow::Borrowed("Shared metric description."))])
         );
-        let json = serde_json::to_string(&tree).unwrap();
+        let json = SerdeJsonToString(&tree).unwrap();
         assert_eq!(json.matches("Shared metric description.").count(), 2);
         assert!(!json.contains("\"other\":{\"description\""));
     }

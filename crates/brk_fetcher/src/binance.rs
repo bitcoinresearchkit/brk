@@ -5,14 +5,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
-use serde_json::Value;
+use serde_json::{Value, from_reader, from_slice, from_str};
 use tracing::info;
 use ureq::Agent;
 
 use crate::{
-    PriceSource, checked_get, default_retry,
+    PriceSource, checked_get, default_retry, new_agent,
     ohlc::{compute_ohlc_from_range, date_from_timestamp, ohlc_from_array, timestamp_from_ms},
 };
 
@@ -27,7 +27,7 @@ pub struct Binance {
 
 impl Binance {
     pub fn new(path: Option<&Path>) -> Self {
-        Self::new_with_agent(path, crate::new_agent(30))
+        Self::new_with_agent(path, new_agent(30))
     }
 
     pub fn new_with_agent(path: Option<&Path>, agent: Agent) -> Self {
@@ -44,7 +44,7 @@ impl Binance {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> brk_error::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         // Try live API data first
         if self
             ._1mn
@@ -79,18 +79,18 @@ impl Binance {
         )
     }
 
-    pub fn fetch_1mn(&self) -> brk_error::Result<BTreeMap<Timestamp, OHLCCents>> {
+    pub fn fetch_1mn(&self) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         let agent = &self.agent;
         default_retry(|_| {
             let url = Self::url("interval=1m&limit=1000");
             info!("Fetching {url}...");
             let bytes = checked_get(agent, &url)?;
-            let json: Value = serde_json::from_slice(&bytes)?;
+            let json: Value = from_slice(&bytes)?;
             Self::parse_ohlc_array(&json)
         })
     }
 
-    pub fn get_from_1d(&mut self, date: &Date) -> brk_error::Result<OHLCCents> {
+    pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
         if self
             ._1d
             .as_ref()
@@ -108,18 +108,18 @@ impl Binance {
             .ok_or_else(|| Error::NotFound("Couldn't find date".into()))
     }
 
-    pub fn fetch_1d(&self) -> brk_error::Result<BTreeMap<Date, OHLCCents>> {
+    pub fn fetch_1d(&self) -> Result<BTreeMap<Date, OHLCCents>> {
         let agent = &self.agent;
         default_retry(|_| {
             let url = Self::url("interval=1d");
             info!("Fetching {url}...");
             let bytes = checked_get(agent, &url)?;
-            let json: Value = serde_json::from_slice(&bytes)?;
+            let json: Value = from_slice(&bytes)?;
             Self::parse_date_ohlc_array(&json)
         })
     }
 
-    fn read_har(&self) -> brk_error::Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn read_har(&self) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         if self.path.is_none() {
             return Err(Error::NotFound("HAR path not configured".into()));
         }
@@ -140,7 +140,7 @@ impl Binance {
 
         let reader = BufReader::new(file);
 
-        let json: BTreeMap<String, Value> = if let Ok(json) = serde_json::from_reader(reader) {
+        let json: BTreeMap<String, Value> = if let Ok(json) = from_reader(reader) {
             json
         } else {
             return Ok(Default::default());
@@ -187,7 +187,7 @@ impl Binance {
                 }
 
                 let text = text.unwrap().as_str().unwrap();
-                let json: Value = serde_json::from_str(text).unwrap();
+                let json: Value = from_str(text).unwrap();
                 Self::parse_ohlc_array(&json)
             })
             .try_fold(BTreeMap::default(), |mut all, res| {
@@ -196,7 +196,7 @@ impl Binance {
             })
     }
 
-    fn parse_ohlc_array(json: &Value) -> brk_error::Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn parse_ohlc_array(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         let result = json
             .as_array()
             .ok_or_else(|| Error::Parse("Expected JSON array".into()))?
@@ -210,7 +210,7 @@ impl Binance {
         Ok(result)
     }
 
-    fn parse_date_ohlc_array(json: &Value) -> brk_error::Result<BTreeMap<Date, OHLCCents>> {
+    fn parse_date_ohlc_array(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
         Self::parse_ohlc_array(json).map(|map| {
             map.into_iter()
                 .map(|(ts, ohlc)| (date_from_timestamp(ts), ohlc))
@@ -222,7 +222,7 @@ impl Binance {
         format!("https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&{query}")
     }
 
-    pub fn ping(&self) -> brk_error::Result<()> {
+    pub fn ping(&self) -> Result<()> {
         self.agent
             .get("https://api.binance.com/api/v3/ping")
             .call()?;
@@ -235,7 +235,7 @@ impl PriceSource for Binance {
         "Binance"
     }
 
-    fn get_date(&mut self, date: Date) -> Option<brk_error::Result<OHLCCents>> {
+    fn get_date(&mut self, date: Date) -> Option<Result<OHLCCents>> {
         Some(self.get_from_1d(&date))
     }
 
@@ -243,15 +243,15 @@ impl PriceSource for Binance {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> Option<brk_error::Result<OHLCCents>> {
+    ) -> Option<Result<OHLCCents>> {
         Some(self.get_from_1mn(timestamp, previous_timestamp))
     }
 
-    fn get_height(&mut self, _height: Height) -> Option<brk_error::Result<OHLCCents>> {
+    fn get_height(&mut self, _height: Height) -> Option<Result<OHLCCents>> {
         None // Binance doesn't support height-based queries
     }
 
-    fn ping(&self) -> brk_error::Result<()> {
+    fn ping(&self) -> Result<()> {
         self.ping()
     }
 

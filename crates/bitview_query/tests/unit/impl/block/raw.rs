@@ -1,10 +1,13 @@
-use super::*;
+use std::io::Cursor;
+
 use bitcoin::{
-    Network, ScriptBuf, TxOut, Witness, blockdata::constants::genesis_block, consensus::serialize,
-    hashes::Hash,
+    Amount, Block, Network, ScriptBuf, TxOut, Witness, WitnessMerkleNode,
+    blockdata::constants::genesis_block, consensus::serialize, hashes::Hash,
 };
 
-fn frame(block: &bitcoin::Block) -> Vec<u8> {
+use super::*;
+
+fn frame(block: &Block) -> Vec<u8> {
     let bytes = serialize(block);
     let mut frame = Magic::BITCOIN.to_bytes().to_vec();
     frame.extend_from_slice(&(bytes.len() as u32).to_le_bytes());
@@ -26,7 +29,7 @@ fn raw_records_bound_allocation_and_verify_framing_and_identity() {
     let bytes = serialize(&block);
     let hash = block.block_hash().into();
     let framed = frame(&block);
-    let mut prefix_only = std::io::Cursor::new(&framed[..88]);
+    let mut prefix_only = Cursor::new(&framed[..88]);
     assert_eq!(
         Query::read_raw_prefix(&mut prefix_only, bytes.len() as u64, &hash).unwrap(),
         bytes[..80]
@@ -63,19 +66,16 @@ fn raw_payload_checks_transactions_weight_trailing_bytes_and_witness() {
     let mut trailing = bytes;
     trailing.push(0);
     assert!(Query::verify_raw_payload(&trailing, weight, 1).is_err());
-    block.txdata[0].output[0].value = bitcoin::Amount::from_sat(1);
+    block.txdata[0].output[0].value = Amount::from_sat(1);
     assert!(Query::verify_raw_payload(&serialize(&block), weight, 1).is_err());
 
     let mut witness_block = genesis_block(Network::Bitcoin);
     witness_block.txdata[0].input[0].witness = Witness::from_slice(&[[0u8; 32]]);
-    let commitment = bitcoin::Block::compute_witness_commitment(
-        &bitcoin::WitnessMerkleNode::all_zeros(),
-        &[0; 32],
-    );
+    let commitment = Block::compute_witness_commitment(&WitnessMerkleNode::all_zeros(), &[0; 32]);
     let mut script = vec![0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
     script.extend_from_slice(commitment.as_byte_array());
     witness_block.txdata[0].output.push(TxOut {
-        value: bitcoin::Amount::ZERO,
+        value: Amount::ZERO,
         script_pubkey: ScriptBuf::from_bytes(script),
     });
     witness_block.header.merkle_root = witness_block.compute_merkle_root().unwrap();

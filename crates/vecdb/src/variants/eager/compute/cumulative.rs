@@ -1,9 +1,9 @@
 use std::ops::{Add, AddAssign};
 
-use crate::{AnyVec, ReadableVec, StoredVec, VecIndex, VecValue, WritableVec};
 use brk_exit::Exit;
 
 use super::super::EagerVec;
+use crate::{AnyVec, ReadableVec, Result, StoredVec, VecIndex, VecValue, WritableVec};
 
 impl<V> EagerVec<V>
 where
@@ -18,7 +18,7 @@ where
         max_from: V::I,
         source: &impl ReadableVec<V::I, S>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S: VecValue + Into<V::T>,
         V::T: Default + AddAssign + Copy,
@@ -54,7 +54,7 @@ where
         source1: &impl ReadableVec<V::I, S1>,
         source2: &impl ReadableVec<V::I, S2>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S1: VecValue + Into<V::T>,
         S2: VecValue + Into<V::T>,
@@ -80,7 +80,7 @@ where
         source2: &impl ReadableVec<V::I, S2>,
         mut transform: F,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S1: VecValue,
         S2: VecValue,
@@ -129,7 +129,7 @@ where
         source: &impl ReadableVec<V::I, S>,
         predicate: P,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S: VecValue,
         V::T: From<usize> + AddAssign + Copy,
@@ -146,7 +146,7 @@ where
         window_size: usize,
         predicate: P,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S: VecValue,
         V::T: From<usize> + Into<usize> + Copy,
@@ -208,7 +208,7 @@ where
         from: V::I,
         predicate: P,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         S: VecValue,
         V::T: From<usize> + AddAssign + Copy,

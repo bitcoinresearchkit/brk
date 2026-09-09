@@ -1,7 +1,12 @@
-use std::ops::Add;
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::Add,
+};
 
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
@@ -31,9 +36,9 @@ impl Add<u32> for BlkPosition {
     }
 }
 
-impl std::fmt::Display for BlkPosition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for BlkPosition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -43,7 +48,7 @@ impl std::fmt::Display for BlkPosition {
 impl Formattable for BlkPosition {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

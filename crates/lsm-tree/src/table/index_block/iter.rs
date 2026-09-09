@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::cmp::Ordering;
+
 use crate::{
     double_ended_peekable::{DoubleEndedPeekable, DoubleEndedPeekableExt},
     table::{KeyedBlockHandle, block::Decoder, index_block::IndexBlockParsedItem},
@@ -24,9 +26,9 @@ impl<'a> Iter<'a> {
     pub fn seek(&mut self, needle: &[u8], seqno: u64) -> bool {
         self.decoder.inner_mut().seek(
             |end_key, s| match end_key.cmp(needle) {
-                std::cmp::Ordering::Greater => false,
-                std::cmp::Ordering::Less => true,
-                std::cmp::Ordering::Equal => s >= seqno,
+                Ordering::Greater => false,
+                Ordering::Less => true,
+                Ordering::Equal => s >= seqno,
             },
             true,
         )
@@ -55,14 +57,18 @@ impl DoubleEndedIterator for Iter<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::table::{
-        Block, BlockHandle, BlockOffset, IndexBlock, KeyedBlockHandle,
-        block::{BlockType, Header, ParsedItem},
-    };
     use test_log::test;
 
+    use crate::{
+        Result,
+        table::{
+            Block, BlockHandle, BlockOffset, IndexBlock, KeyedBlockHandle,
+            block::{BlockType, Header, ParsedItem},
+        },
+    };
+
     #[test]
-    fn index_block_iter_seek_before_start() -> crate::Result<()> {
+    fn index_block_iter_seek_before_start() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -105,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_seek_start() -> crate::Result<()> {
+    fn index_block_iter_seek_start() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -146,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_seek_middle() -> crate::Result<()> {
+    fn index_block_iter_seek_middle() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -190,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_rev_seek() -> crate::Result<()> {
+    fn index_block_iter_rev_seek() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -231,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_rev_seek_2() -> crate::Result<()> {
+    fn index_block_iter_rev_seek_2() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -272,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_rev_seek_3() -> crate::Result<()> {
+    fn index_block_iter_rev_seek_3() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -316,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_too_far() -> crate::Result<()> {
+    fn index_block_iter_too_far() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -357,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_too_far_next_back() -> crate::Result<()> {
+    fn index_block_iter_too_far_next_back() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(
@@ -396,7 +402,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_mvcc_slab() -> crate::Result<()> {
+    fn index_block_mvcc_slab() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"a".into(), 3, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(b"a".into(), 1, BlockHandle::new(BlockOffset(6_000), 7_000)),
@@ -498,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_span() -> crate::Result<()> {
+    fn index_block_iter_span() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"a".into(), 1, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(b"a".into(), 0, BlockHandle::new(BlockOffset(6_000), 7_000)),
@@ -547,7 +553,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_rev_span() -> crate::Result<()> {
+    fn index_block_iter_rev_span() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"a".into(), 1, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(b"a".into(), 0, BlockHandle::new(BlockOffset(6_000), 7_000)),
@@ -593,7 +599,7 @@ mod tests {
     }
 
     #[test]
-    fn index_block_iter_range_1() -> crate::Result<()> {
+    fn index_block_iter_range_1() -> Result<()> {
         let items = [
             KeyedBlockHandle::new(b"a".into(), 0, BlockHandle::new(BlockOffset(0), 6_000)),
             KeyedBlockHandle::new(b"b".into(), 0, BlockHandle::new(BlockOffset(13_000), 5_000)),

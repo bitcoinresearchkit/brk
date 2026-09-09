@@ -1,19 +1,21 @@
-mod inner;
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::Path,
+    sync::{Arc, Mutex},
+};
+
+use inner::Inner;
 
 use crate::{
-    DatabaseBuilder, Keyspace, KeyspaceCreateOptions,
+    DatabaseBuilder, Error, Keyspace, KeyspaceCreateOptions, Result,
     db_config::Config,
     file::{DATABASE_FORMAT, KEYSPACES_FOLDER, LOCK_FILE, VERSION_MARKER, fsync_directory},
     locked_file::LockedFileGuard,
     worker_pool::WorkerPool,
 };
-use inner::Inner;
-use std::{
-    fs::File,
-    io::Write,
-    path::Path,
-    sync::{Arc, Mutex},
-};
+
+mod inner;
 
 /// A BRK database containing named, table-only keyspaces.
 #[derive(Clone)]
@@ -29,18 +31,18 @@ impl Database {
 
     /// Opens or creates a database.
     #[doc(hidden)]
-    pub fn open(config: Config) -> crate::Result<Self> {
-        std::fs::create_dir_all(&config.path)?;
+    pub fn open(config: Config) -> Result<Self> {
+        fs::create_dir_all(&config.path)?;
 
         let marker_path = config.path.join(VERSION_MARKER);
         let lock = LockedFileGuard::create_new(&config.path.join(LOCK_FILE))?;
         if marker_path.try_exists()? {
-            if std::fs::read(&marker_path)? != DATABASE_FORMAT {
-                return Err(crate::Error::InvalidVersion);
+            if fs::read(&marker_path)? != DATABASE_FORMAT {
+                return Err(Error::InvalidVersion);
             }
         } else {
             let keyspaces_path = config.path.join(KEYSPACES_FOLDER);
-            std::fs::create_dir_all(&keyspaces_path)?;
+            fs::create_dir_all(&keyspaces_path)?;
 
             let mut marker = File::create_new(&marker_path)?;
             marker.write_all(DATABASE_FORMAT)?;
@@ -71,7 +73,7 @@ impl Database {
         &self,
         name: &str,
         create_options: impl FnOnce() -> KeyspaceCreateOptions,
-    ) -> crate::Result<Keyspace> {
+    ) -> Result<Keyspace> {
         assert!(Self::is_valid_keyspace_name(name), "invalid keyspace name");
 
         let slot = {

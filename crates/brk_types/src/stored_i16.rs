@@ -1,9 +1,18 @@
-use std::ops::{Add, AddAssign, Div};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::{Add, AddAssign, Div},
+};
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex};
 
@@ -53,9 +62,9 @@ impl CheckedSub<StoredI16> for StoredI16 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<StoredI16> for StoredI16 {
+impl VecdbCheckedSub<StoredI16> for StoredI16 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -119,9 +128,9 @@ impl PrintableIndex for StoredI16 {
     }
 }
 
-impl std::fmt::Display for StoredI16 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for StoredI16 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -131,7 +140,7 @@ impl std::fmt::Display for StoredI16 {
 impl Formattable for StoredI16 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

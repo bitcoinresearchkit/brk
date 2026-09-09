@@ -1,4 +1,4 @@
-use bitview_collections::PerResolution;
+use bitview_collections::{PerResolution, with_resolution_fields};
 use brk_types::{Date, Height, StoredU64, Timestamp};
 use vecdb::ReadableBoxedVec;
 
@@ -35,4 +35,4 @@ macro_rules! define_index_sources {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_index_sources);
+with_resolution_fields!(define_index_sources);

@@ -3,6 +3,7 @@ use bitview_cohort::{
     UTXOAggregate, UTXOAggregateId, UTXORows,
 };
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{DaysToYears, SatsToCents};
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, ColumnarRollingWindows, LazyPerBlock};
@@ -50,7 +51,7 @@ impl ActivityVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let aggregate_version = version;

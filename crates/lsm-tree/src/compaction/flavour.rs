@@ -2,12 +2,15 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{mem, time::Instant};
+
+use log::debug;
+
 use crate::{
     InternalValue, Result, Table,
     compaction::{Input as CompactionPayload, worker::Worker},
     table::multi_writer::MultiWriter,
 };
-use std::{mem, time::Instant};
 
 pub struct StandardCompaction {
     start: Instant,
@@ -55,7 +58,7 @@ impl StandardCompaction {
         payload: &CompactionPayload,
         dst_lvl: usize,
     ) -> Result<()> {
-        log::debug!("Compaction done in {:?}", self.start.elapsed());
+        debug!("Compaction done in {:?}", self.start.elapsed());
 
         let tables_to_delete = mem::take(&mut self.tables_to_rewrite);
         let created_tables = self.consume_writer(worker, dst_lvl)?;

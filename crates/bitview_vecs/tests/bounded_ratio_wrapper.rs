@@ -1,20 +1,22 @@
-mod common;
-
 use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_traversable::{Traversable, TreeNode};
 use bitview_vecs::{BoundedRatioPerBlock, LazyPerBlock};
 use brk_types::{BoundedRatio, Version};
+use common::indexes;
+use tempfile::tempdir;
 use vecdb::{AnySerializableVec, AnyStoredVec, AnyVec, Database, ReadableVec, WritableVec};
 
-use common::indexes;
+use crate::common::CACHE_BUDGET;
+
+mod common;
 
 #[test]
 fn bounded_wrapper_groups_storage_and_decimal_view() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
     let mut view = BoundedRatioPerBlock::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "loss_share",
         Version::ONE,
@@ -71,7 +73,7 @@ fn bounded_wrapper_groups_storage_and_decimal_view() {
     }
     drop(view);
     let reopened = BoundedRatioPerBlock::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "loss_share",
         Version::ONE,

@@ -1,5 +1,8 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
+use brk_error::{Error, Result};
+use brk_types::{Addr, Height as TypesHeight};
+use serde_json::to_value;
 use tokio::time::timeout;
 
 use super::{
@@ -28,8 +31,7 @@ fn immutable_reads_use_published_prefix_during_append() {
         });
         let txid = state.sync(|q| q.block_txids(&hash).unwrap()[0]);
         let addr = state.sync(|q| {
-            brk_types::Addr::try_from(&q.transaction(&txid).unwrap().output[0].script_pubkey)
-                .unwrap()
+            Addr::try_from(&q.transaction(&txid).unwrap().output[0].script_pubkey).unwrap()
         });
         let mut paths = vec![
             "/api/server/sync".to_owned(),
@@ -119,7 +121,7 @@ fn unpublished_reorg_tail_is_unavailable_then_distinguishes_absence() {
             .unwrap();
         assert_eq!(
             fixture.query.sync(|q| q.indexer().safe_lengths().height),
-            brk_types::Height::new(1)
+            TypesHeight::new(1)
         );
 
         let address = fixture.address;
@@ -177,8 +179,7 @@ fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
         let query = fixture.query.clone();
         let old_hash = query.sync(|q| q.tip_blockhash());
         let expected_ids = query.sync(|q| q.block_txids(&old_hash).unwrap());
-        let addr =
-            brk_types::Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
+        let addr = Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
         let expected_utxos = query.sync(|q| q.addr_utxos(addr.clone(), 1000).unwrap());
         thread::scope(|scope| {
             let rows = query.sync(|q| q.resolve_blocks(None, 1).unwrap());
@@ -211,8 +212,8 @@ fn append_publication_does_not_wait_for_or_change_retained_snapshots() {
                     .any(|tx| expected_ids.contains(&tx.txid))
             );
             assert_eq!(
-                serde_json::to_value(retained_utxos).unwrap(),
-                serde_json::to_value(expected_utxos).unwrap()
+                to_value(retained_utxos).unwrap(),
+                to_value(expected_utxos).unwrap()
             );
             assert_eq!(query.sync(|q| q.height()), Height::new(2));
             assert_ne!(query.sync(|q| q.tip_blockhash()), old_hash);
@@ -235,8 +236,7 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
         let query = fixture.query.clone();
         let old_hash = query.sync(|q| q.tip_blockhash());
         let expected_raw = serialize(&fixture.chain[1]);
-        let addr =
-            brk_types::Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
+        let addr = Addr::try_from(&fixture.chain[1].txdata[0].output[0].script_pubkey).unwrap();
         fixture.active.store(2, Ordering::SeqCst);
 
         thread::scope(|scope| {
@@ -313,21 +313,21 @@ fn retained_block_snapshots_survive_a_queued_real_reorg() {
 #[test]
 fn request_deadline_bounds_gate_waits_and_skips_expired_work() {
     run(|state, _| async move {
-        let query = state.query.with_deadline(std::time::Instant::now());
+        let query = state.query.with_deadline(Instant::now());
         let result = query
-            .run(|_| -> brk_error::Result<()> { panic!("expired work ran") })
+            .run(|_| -> Result<()> { panic!("expired work ran") })
             .await;
-        assert!(matches!(result, Err(brk_error::Error::ReadTimeout)));
+        assert!(matches!(result, Err(Error::ReadTimeout)));
 
         let gate = state.sync(|q| q.indexer().publication().clone());
         gate.begin_update();
-        let started = std::time::Instant::now();
+        let started = Instant::now();
         let query = state
             .query
             .with_deadline(started + Duration::from_millis(50));
         let result = query.run(|q| q.blocks_v1(None, 1)).await;
         gate.finish_update();
-        assert!(matches!(result, Err(brk_error::Error::ReadTimeout)));
+        assert!(matches!(result, Err(Error::ReadTimeout)));
         assert!(started.elapsed() < Duration::from_secs(1));
     });
 }

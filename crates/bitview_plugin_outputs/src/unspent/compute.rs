@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_inputs::CountVecs as InputsCountVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, StoredU64};
 
@@ -10,7 +10,7 @@ use crate::{ByTypeVecs, CountVecs};
 pub fn compute(
     vecs: &mut Vecs,
     count: &CountVecs,
-    inputs_count: &bitview_plugin_inputs::CountVecs,
+    inputs_count: &InputsCountVecs,
     by_type: &ByTypeVecs,
     starting_lengths: &Lengths,
     exit: &Exit,

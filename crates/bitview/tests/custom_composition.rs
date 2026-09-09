@@ -14,7 +14,7 @@
 )))]
 
 use bitview::{ComputePluginSet, Config, ImportContext, PluginSet, UpdateContext, run};
-use bitview_plugin::ComputePlugin;
+use bitview_plugin::{ComputePlugin, Publication};
 use bitview_plugin_indexer::{HasIndexer, Indexer};
 use bitview_traversable::Traversable;
 use brk_error::Result;
@@ -42,7 +42,7 @@ impl<M: StorageMode> HasIndexer<M> for Plugins<M> {
 }
 
 impl ComputePluginSet for Plugins {
-    fn publication(&self) -> &bitview_plugin::Publication {
+    fn publication(&self) -> &Publication {
         self.indexer.publication()
     }
 

@@ -5,10 +5,13 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-
 use brk_types::{HOUR4_INTERVAL, INDEX_EPOCH, Timestamp};
-use serde_json::Value;
-use tokio::{task::JoinHandle, time::timeout};
+use serde_json::{Value, from_str, to_value};
+use tokio::{
+    spawn,
+    task::JoinHandle,
+    time::{self, timeout},
+};
 use tower::ServiceExt;
 
 use super::server_routes::exchange_with_etag;
@@ -42,12 +45,10 @@ impl HistoricalPriceChecks {
                 |t| format!("/api/v1/historical-price?timestamp={t}"),
             );
             let expected =
-                serde_json::to_value(state.sync(|q| q.historical_price(timestamp)).unwrap())
-                    .unwrap();
+                to_value(state.sync(|q| q.historical_price(timestamp)).unwrap()).unwrap();
             let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
             assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-            let actual: Value =
-                serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+            let actual: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
             assert_eq!(actual, expected);
             assert!(
                 response.contains("\r\ncdn-cache-control: public, max-age=1, must-revalidate\r\n")
@@ -88,8 +89,8 @@ impl HistoricalPriceChecks {
         assert_eq!(first.status(), StatusCode::OK);
         assert_eq!(second.status(), StatusCode::OK);
         assert_eq!(state.historical_price_bodies.available_permits(), 0);
-        let pending = tokio::spawn(router.clone().oneshot(request("GET", "\"old\"")));
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        let pending = spawn(router.clone().oneshot(request("GET", "\"old\"")));
+        time::sleep(Duration::from_millis(50)).await;
         assert!(!pending.is_finished());
         for method in ["GET", "HEAD"] {
             for tag in [cases[0].2.as_str(), "*"] {
@@ -125,7 +126,7 @@ impl HistoricalPriceChecks {
                 } else {
                     "*".into()
                 };
-                tasks.push(tokio::spawn(async move {
+                tasks.push(spawn(async move {
                     exchange_with_etag(address, method, &path, &tag).await
                 }));
             }
@@ -154,7 +155,7 @@ impl HistoricalPriceChecks {
         for (_, path, etag, _) in &self.cases {
             let path = path.clone();
             let etag = etag.clone();
-            self.pending.push(tokio::spawn(async move {
+            self.pending.push(spawn(async move {
                 exchange_with_etag(address, "GET", &path, &etag).await
             }));
         }
@@ -168,9 +169,7 @@ impl HistoricalPriceChecks {
 
     pub async fn after(self, state: &AppState, address: SocketAddr) {
         for ((timestamp, path, etag, before), task) in self.cases.into_iter().zip(self.pending) {
-            let current =
-                serde_json::to_value(state.sync(|q| q.historical_price(timestamp)).unwrap())
-                    .unwrap();
+            let current = to_value(state.sync(|q| q.historical_price(timestamp)).unwrap()).unwrap();
             let mut response = timeout(Duration::from_secs(5), task)
                 .await
                 .unwrap()
@@ -186,8 +185,7 @@ impl HistoricalPriceChecks {
                 assert!(response.ends_with("\r\n\r\n"));
             } else {
                 assert!(response.starts_with("HTTP/1.1 200"), "{path}: {response}");
-                let actual: Value =
-                    serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+                let actual: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
                 assert_eq!(actual, current);
             }
         }

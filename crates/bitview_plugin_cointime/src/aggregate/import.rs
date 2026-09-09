@@ -9,8 +9,9 @@ use bitview_vecs::{
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, Version};
 use vecdb::{
-    CacheBudget, CachedBoxedVec, CachedReadableVec, Database, ImportableVec, PcoVec, PcoVecValue,
-    ReadOnlyClone, ReadOnlyColumnarVec, ReadableColumnarVec,
+    CacheBudget, CachedBoxedVec, Database, ImportOptions, ImportableVec, PcoVec, PcoVecValue,
+    ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableColumnarVec,
 };
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
@@ -24,22 +25,21 @@ pub fn forced_import(
     all_supply_in_loss_share: &PerBlock<BoundedRatio>,
 ) -> Result<Vecs> {
     let version = version + Version::ONE;
-    let sources = Sources::forced_import(db, version)?;
-    let all_loss_share = all_supply_in_loss_share
-        .height
-        .read_only_cached_boxed_clone();
+    let sources = Sources::forced_import(cache, db, version)?;
+    let all_loss_share = all_supply_in_loss_share.height.read_only_boxed_clone();
     let term_loss_share = |term: TermId| {
         let name = term.select(&TERM_NAMES).id;
-        cache
-            .wrap(sources.supply_in_loss_share.read_only_clone().column(
+        sources
+            .supply_in_loss_share
+            .read_only_clone()
+            .column(
                 &format!("{name}_awake_supply_in_loss_share"),
                 version + Version::ONE,
                 term,
-            ))
-            .cached_boxed_clone()
+            )
+            .read_only_boxed_clone()
     };
     let all = CohortVecs::new(
-        cache,
         UTXOAggregateId::All,
         version,
         &sources,
@@ -48,7 +48,6 @@ pub fn forced_import(
         spot_price,
     );
     let sth = CohortVecs::new(
-        cache,
         UTXOAggregateId::Sth,
         version,
         &sources,
@@ -57,7 +56,6 @@ pub fn forced_import(
         spot_price,
     );
     let lth = CohortVecs::new(
-        cache,
         UTXOAggregateId::Lth,
         version,
         &sources,
@@ -75,94 +73,90 @@ pub fn forced_import(
 }
 
 impl Sources {
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+    ) -> Result<Self> {
         Ok(Self {
-            awake_supply: ImportableVec::forced_import(
-                db,
-                "cointime_awake_supply_sats_by_term",
-                version,
+            awake_supply: ImportableVec::forced_import_with(
+                ImportOptions::new(db, "cointime_awake_supply_sats_by_term", version)
+                    .with_cache_budget(cache),
             )?,
-            dormant_supply: ImportableVec::forced_import(
-                db,
-                "cointime_dormant_supply_sats_by_term",
-                version,
+            dormant_supply: ImportableVec::forced_import_with(
+                ImportOptions::new(db, "cointime_dormant_supply_sats_by_term", version)
+                    .with_cache_budget(cache),
             )?,
-            awake_cap: ImportableVec::forced_import(
-                db,
-                "cointime_awake_cap_cents_by_term",
-                version,
+            awake_cap: ImportableVec::forced_import_with(
+                ImportOptions::new(db, "cointime_awake_cap_cents_by_term", version)
+                    .with_cache_budget(cache),
             )?,
-            awake_price: ImportableVec::forced_import(
-                db,
-                "cointime_awake_price_cents_by_aggregate",
-                version,
+            awake_price: ImportableVec::forced_import_with(
+                ImportOptions::new(db, "cointime_awake_price_cents_by_aggregate", version)
+                    .with_cache_budget(cache),
             )?,
-            supply_in_loss_share: ImportableVec::forced_import(
-                db,
-                "cointime_awake_supply_in_loss_share_bounded_by_term",
-                version + Version::ONE,
+            supply_in_loss_share: ImportableVec::forced_import_with(
+                ImportOptions::new(
+                    db,
+                    "cointime_awake_supply_in_loss_share_bounded_by_term",
+                    version + Version::ONE,
+                )
+                .with_cache_budget(cache),
             )?,
         })
     }
 
     fn additive_source<T>(
-        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermId>,
         name: &str,
         version: Version,
         aggregate: UTXOAggregateId,
-    ) -> CachedBoxedVec<Height, T>
+    ) -> ReadableBoxedVec<Height, T>
     where
         T: PcoVecValue + AddAssign,
     {
         match aggregate.term() {
-            Some(term) => cache
-                .wrap(source.column(name, version, term))
-                .cached_boxed_clone(),
-            None => cache
-                .wrap(source.sum_columns(name, version, TermId::ALL.iter().copied()))
-                .cached_boxed_clone(),
+            Some(term) => source.column(name, version, term).read_only_boxed_clone(),
+            None => source
+                .sum_columns(name, version, TermId::ALL.iter().copied())
+                .read_only_boxed_clone(),
         }
     }
 }
 
 impl CohortVecs {
     fn new(
-        cache: &'static CacheBudget,
         aggregate: UTXOAggregateId,
         version: Version,
         sources: &Sources,
-        supply_in_loss_share: CachedBoxedVec<Height, BoundedRatio>,
+        supply_in_loss_share: ReadableBoxedVec<Height, BoundedRatio>,
         mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
         let awake_supply = Sources::additive_source(
-            cache,
             &sources.awake_supply.read_only_clone(),
             &metric_name("awake_supply_sats"),
             version,
             aggregate,
         );
         let dormant_supply = Sources::additive_source(
-            cache,
             &sources.dormant_supply.read_only_clone(),
             &metric_name("dormant_supply_sats"),
             version,
             aggregate,
         );
         let awake_cap = Sources::additive_source(
-            cache,
             &sources.awake_cap.read_only_clone(),
             &metric_name("awake_cap_cents"),
             version,
             aggregate,
         );
-        let awake_price = cache.wrap(sources.awake_price.read_only_clone().column(
+        let awake_price = sources.awake_price.read_only_clone().column(
             &metric_name("awake_price_cents"),
             version,
             aggregate,
-        ));
+        );
 
         Self {
             awake: AwakeVecs {

@@ -1,16 +1,18 @@
 use std::collections::BTreeMap;
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
+use serde_json::Value;
+use tracing::warn;
 
 /// Parse OHLC value from a JSON array element at given index
-pub fn parse_cents(array: &[serde_json::Value], index: usize) -> Cents {
+pub fn parse_cents(array: &[Value], index: usize) -> Cents {
     let value = array
         .get(index)
         .and_then(|v| v.as_str())
         .and_then(|s| s.parse::<f64>().ok())
         .unwrap_or_else(|| {
-            tracing::warn!(
+            warn!(
                 "Failed to parse price at index {index}: {:?}",
                 array.get(index)
             );
@@ -20,7 +22,7 @@ pub fn parse_cents(array: &[serde_json::Value], index: usize) -> Cents {
 }
 
 /// Build OHLCCentsUnsigned from array indices 1-4 (open, high, low, close)
-pub fn ohlc_from_array(array: &[serde_json::Value]) -> OHLCCents {
+pub fn ohlc_from_array(array: &[Value]) -> OHLCCents {
     OHLCCents::from((
         Open::new(parse_cents(array, 1)),
         High::new(parse_cents(array, 2)),
@@ -36,7 +38,7 @@ pub fn compute_ohlc_from_range(
     timestamp: Timestamp,
     previous_timestamp: Option<Timestamp>,
     source_name: &str,
-) -> brk_error::Result<OHLCCents> {
+) -> Result<OHLCCents> {
     let previous_close = previous_timestamp.map_or(Some(Close::default()), |t| {
         tree.get(&t).map(|ohlc| ohlc.close)
     });

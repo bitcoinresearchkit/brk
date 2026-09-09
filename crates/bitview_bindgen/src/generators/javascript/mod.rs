@@ -2,17 +2,17 @@
 //!
 //! This module generates a JavaScript + JSDoc client for the Bitview API.
 
+use std::{fmt::Write, fs, io, path::Path};
+
+use serde_json::{Value, from_str, json, to_string_pretty};
+
+use super::write_if_changed;
+use crate::{ClientMetadata, Endpoint, TypeSchemas, VERSION};
+
 mod api;
 pub mod client;
 pub mod tree;
 pub mod types;
-
-use std::{fmt::Write, fs, io, path::Path};
-
-use serde_json::json;
-
-use super::write_if_changed;
-use crate::{ClientMetadata, Endpoint, TypeSchemas, VERSION};
 
 /// Generate JavaScript + JSDoc client from metadata and OpenAPI endpoints.
 ///
@@ -50,15 +50,15 @@ pub fn generate_javascript_client(
 
 fn update_package_json_version(package_json_path: &Path) -> io::Result<()> {
     let content = fs::read_to_string(package_json_path)?;
-    let mut package: serde_json::Value = serde_json::from_str(&content)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let mut package: Value =
+        from_str(&content).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     if let Some(obj) = package.as_object_mut() {
         obj.insert("version".to_string(), json!(VERSION));
     }
 
-    let updated = serde_json::to_string_pretty(&package)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+    let updated =
+        to_string_pretty(&package).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
     write_if_changed(package_json_path, &(updated + "\n"))
 }

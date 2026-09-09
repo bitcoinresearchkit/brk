@@ -3,7 +3,7 @@ use bitview_compute::FixedRatio;
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, ColumnId, PcoVec, ReadOnlyColumnarVec};
+use vecdb::{ColumnId, PcoVec, ReadOnlyColumnarVec};
 
 use crate::{IndexSources, LazyColumnPerBlock, LazyPerBlock};
 
@@ -16,7 +16,6 @@ pub struct LazyColumnPercentPerBlock<B: FixedRatio, C: ColumnId>(
 
 impl<B: FixedRatio, C: ColumnId> LazyColumnPercentPerBlock<B, C> {
     pub fn new(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, B>, C>,
@@ -24,7 +23,6 @@ impl<B: FixedRatio, C: ColumnId> LazyColumnPercentPerBlock<B, C> {
         indexes: &IndexSources,
     ) -> Self {
         let ppm = LazyColumnPerBlock::new(
-            cache,
             &format!("{name}_{}", B::SUFFIX),
             version,
             source,

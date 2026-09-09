@@ -87,7 +87,7 @@ where
         }
 
         let mut row = Vec::with_capacity(1);
-        read_rows::<V::I, V::T, V, C>(&self.columns, stored_rows, index, index + 1, &mut row);
+        read_rows::<V::I, V::T, _, C>(&self.columns, stored_rows, index, index + 1, &mut row);
         row.pop()
     }
 
@@ -105,7 +105,7 @@ where
 
         let stored_rows = self.stored_rows();
         if from < stored_rows {
-            read_rows::<V::I, V::T, V, C>(
+            read_rows::<V::I, V::T, _, C>(
                 &self.columns,
                 stored_rows,
                 from,

@@ -1,8 +1,8 @@
-use brk_error::Result;
-
 use bitview_plugin::{ComputePlugin, UpdateContext};
+use brk_error::Result;
+use rayon::join;
 
-use super::Vecs;
+use super::{Vecs, count, features, fees, patterns, policy, sigops, size, versions, volume};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -25,17 +25,17 @@ impl ComputePlugin for Vecs {
 
         self.db.sync_bg_tasks()?;
 
-        let ((r1, r2), (r3, r4)) = rayon::join(
+        let ((r1, r2), (r3, r4)) = join(
             || {
-                rayon::join(
-                    || super::count::compute(&mut self.count, indexer, &blocks.lookback, exit),
-                    || super::features::compute(&mut self.features, indexer, exit),
+                join(
+                    || count::compute(&mut self.count, indexer, &blocks.lookback, exit),
+                    || features::compute(&mut self.features, indexer, exit),
                 )
             },
             || {
-                rayon::join(
-                    || super::versions::compute(&mut self.versions, indexer, exit),
-                    || super::size::compute(&mut self.size, indexer, mappings, exit),
+                join(
+                    || versions::compute(&mut self.versions, indexer, exit),
+                    || size::compute(&mut self.size, indexer, mappings, exit),
                 )
             },
         );
@@ -44,9 +44,9 @@ impl ComputePlugin for Vecs {
         r3?;
         r4?;
 
-        super::sigops::compute(&mut self.sigops, indexer, mappings, exit)?;
+        sigops::compute(&mut self.sigops, indexer, mappings, exit)?;
 
-        super::fees::compute(
+        fees::compute(
             &mut self.fees,
             indexer,
             &inputs.value,
@@ -55,11 +55,11 @@ impl ComputePlugin for Vecs {
             exit,
         )?;
 
-        super::patterns::compute(&mut self.patterns, indexer, &inputs.value, mappings, exit)?;
+        patterns::compute(&mut self.patterns, indexer, &inputs.value, mappings, exit)?;
 
-        super::policy::compute(&mut self.policy, indexer, mappings, &self.fees, exit)?;
+        policy::compute(&mut self.policy, indexer, mappings, &self.fees, exit)?;
 
-        super::volume::compute(
+        volume::compute(
             &mut self.volume,
             indexer,
             mappings,

@@ -1,14 +1,22 @@
-use std::ops::{Add, AddAssign};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::{Add, AddAssign},
+};
 
-use crate::CheckedSub;
 use byteview::ByteView;
 use derive_more::{Deref, DerefMut};
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 use super::StoredU32;
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
 
 /// Chain-wide transaction index (0 = the genesis coinbase). For an
 /// in-block position, use `BlockTxIndex` instead.
@@ -89,9 +97,9 @@ impl CheckedSub<TxIndex> for TxIndex {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<TxIndex> for TxIndex {
+impl VecdbCheckedSub<TxIndex> for TxIndex {
     fn checked_sub(self, rhs: TxIndex) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -184,9 +192,9 @@ impl VecIndex for TxIndex {
     const INITIAL_CAPACITY: usize = 1_700_000_000;
 }
 
-impl std::fmt::Display for TxIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for TxIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -196,7 +204,7 @@ impl std::fmt::Display for TxIndex {
 impl Formattable for TxIndex {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

@@ -1,18 +1,23 @@
+use std::path::Path;
+
+use byteorder::{LittleEndian, WriteBytesExt};
+use log::trace;
+use xxhash_rust::xxh3;
+
 use crate::{
+    Result,
     file::{CURRENT_MAGIC, CURRENT_VERSION_FILE, rewrite_atomic},
     version::Version,
 };
-use byteorder::{LittleEndian, WriteBytesExt};
-use std::path::Path;
 
 impl Version {
-    pub fn persist(&self, folder: &Path) -> crate::Result<()> {
-        log::trace!("Persisting version {} in {}", self.id(), folder.display());
+    pub fn persist(&self, folder: &Path) -> Result<()> {
+        trace!("Persisting version {} in {}", self.id(), folder.display());
 
         let mut current = CURRENT_MAGIC.to_vec();
         current.write_u64::<LittleEndian>(self.id())?;
         self.encode_into(&mut current)?;
-        let checksum = xxhash_rust::xxh3::xxh3_128(&current);
+        let checksum = xxh3::xxh3_128(&current);
         current.write_u128::<LittleEndian>(checksum)?;
         rewrite_atomic(&folder.join(CURRENT_VERSION_FILE), &current)?;
 
@@ -22,25 +27,26 @@ impl Version {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::fs;
+
     use byteorder::ByteOrder;
+    use tempfile::tempdir;
     use test_log::test;
 
+    use super::*;
+
     #[test]
-    fn version_persist_replaces_partial_current() -> crate::Result<()> {
-        let directory = tempfile::tempdir()?;
+    fn version_persist_replaces_partial_current() -> Result<()> {
+        let directory = tempdir()?;
         let version = Version::new(0);
-        std::fs::write(directory.path().join(CURRENT_VERSION_FILE), b"partial")?;
+        fs::write(directory.path().join(CURRENT_VERSION_FILE), b"partial")?;
 
         version.persist(directory.path())?;
 
-        let current = std::fs::read(directory.path().join(CURRENT_VERSION_FILE))?;
+        let current = fs::read(directory.path().join(CURRENT_VERSION_FILE))?;
         assert_ne!(b"partial".as_slice(), current.as_slice());
         let (payload, checksum) = current.split_at(current.len() - size_of::<u128>());
-        assert_eq!(
-            xxhash_rust::xxh3::xxh3_128(payload),
-            byteorder::LittleEndian::read_u128(checksum),
-        );
+        assert_eq!(xxh3::xxh3_128(payload), LittleEndian::read_u128(checksum),);
         Ok(())
     }
 }

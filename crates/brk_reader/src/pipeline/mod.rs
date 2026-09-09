@@ -6,7 +6,8 @@ use brk_types::Height;
 use crossbeam::channel::bounded;
 
 use crate::{
-    BlkIndexToBlkPath, BlockReceiver, ReaderInner, XORBytes, bisect, canonical::CanonicalRange,
+    BlkIndexToBlkPath, BlockReceiver, ReaderInner, XORBytes, bisect, block_receiver,
+    canonical::CanonicalRange,
 };
 
 mod forward;
@@ -37,7 +38,7 @@ pub fn spawn(
     let parser_threads = parser_threads.clamp(1, CHANNEL_CAPACITY);
 
     if canonical.is_empty() {
-        return Ok(crate::block_receiver::new(bounded(0).1));
+        return Ok(block_receiver::new(bounded(0).1));
     }
 
     let paths = reader.refresh_paths()?;
@@ -65,7 +66,7 @@ pub fn spawn(
         }
     });
 
-    Ok(crate::block_receiver::new(recv))
+    Ok(block_receiver::new(recv))
 }
 
 fn pick_strategy(

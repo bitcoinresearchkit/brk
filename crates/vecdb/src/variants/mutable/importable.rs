@@ -1,14 +1,13 @@
 use std::collections::BTreeSet;
 
-use crate::{Bytes, Error, ImportOptions, ImportableVec};
-
 use super::{MutableRawVec, MutableVec};
+use crate::{Bytes, Error, ImportOptions, ImportableVec, Result};
 
 impl<V> MutableVec<V>
 where
     V: MutableRawVec,
 {
-    fn import_inner(options: ImportOptions) -> crate::Result<Self> {
+    fn import_inner(options: ImportOptions) -> Result<Self> {
         let holes = options
             .db
             .get_region(&Self::holes_region_name_with(options.name))
@@ -18,7 +17,7 @@ where
                     .read_all()
                     .chunks(size_of::<usize>())
                     .map(usize::from_bytes)
-                    .collect::<crate::Result<BTreeSet<usize>>>()
+                    .collect::<Result<BTreeSet<usize>>>()
             })
             .transpose()?;
         let has_stored_holes = holes.is_some();
@@ -34,11 +33,11 @@ impl<V> ImportableVec for MutableVec<V>
 where
     V: MutableRawVec,
 {
-    fn import_with(options: ImportOptions) -> crate::Result<Self> {
+    fn import_with(options: ImportOptions) -> Result<Self> {
         Self::import_inner(options)
     }
 
-    fn forced_import_with(options: ImportOptions) -> crate::Result<Self> {
+    fn forced_import_with(options: ImportOptions) -> Result<Self> {
         match Self::import_inner(options) {
             Err(Error::WrongEndian)
             | Err(Error::WrongLength { .. })

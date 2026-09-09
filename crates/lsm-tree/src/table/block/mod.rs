@@ -1,4 +1,17 @@
-use crate::SliceExt as _;
+use std::{
+    fs::File,
+    io::{Read, Write},
+};
+
+use log::trace;
+use lz4_flex::{compress, decompress_into};
+
+use crate::{
+    CompressionType, Error, Result, Slice, SliceExt as _,
+    coding::{Decode, Encode},
+    file,
+    table::BlockHandle,
+};
 
 // Copyright (c) 2025-present, fjall-rs
 // This source code is licensed under both the Apache 2.0 and MIT License
@@ -20,20 +33,13 @@ pub use offset::BlockOffset;
 pub use trailer::{TRAILER_START_MARKER, Trailer};
 pub use r#type::BlockType;
 
-use crate::{
-    CompressionType, Slice,
-    coding::{Decode, Encode},
-    table::BlockHandle,
-};
-use std::fs::File;
-
 const MAX_LZ4_EXPANSION_RATIO: usize = 256;
 
-fn validate_lengths(header: &Header, compression: CompressionType) -> crate::Result<()> {
-    let data_length = usize::try_from(header.data_length)
-        .map_err(|_| crate::Error::InvalidHeader("Block length"))?;
+fn validate_lengths(header: &Header, compression: CompressionType) -> Result<()> {
+    let data_length =
+        usize::try_from(header.data_length).map_err(|_| Error::InvalidHeader("Block length"))?;
     let uncompressed_length = usize::try_from(header.uncompressed_length)
-        .map_err(|_| crate::Error::InvalidHeader("Block length"))?;
+        .map_err(|_| Error::InvalidHeader("Block length"))?;
 
     let valid = match compression {
         CompressionType::None => data_length == uncompressed_length,
@@ -43,24 +49,24 @@ fn validate_lengths(header: &Header, compression: CompressionType) -> crate::Res
     };
 
     if !valid {
-        return Err(crate::Error::InvalidHeader("Block length"));
+        return Err(Error::InvalidHeader("Block length"));
     }
 
     Ok(())
 }
 
-fn decompress_lz4(raw_data: &[u8], uncompressed_len: usize) -> crate::Result<Slice> {
+fn decompress_lz4(raw_data: &[u8], uncompressed_len: usize) -> Result<Slice> {
     #[expect(
         unsafe_code,
         reason = "the builder is frozen only after LZ4 initializes every byte"
     )]
     let mut builder = unsafe { Slice::builder_unzeroed(uncompressed_len) };
 
-    let written = lz4_flex::decompress_into(raw_data, &mut builder)
-        .map_err(|_| crate::Error::Decompress(CompressionType::Lz4))?;
+    let written = decompress_into(raw_data, &mut builder)
+        .map_err(|_| Error::Decompress(CompressionType::Lz4))?;
 
     if written != builder.len() {
-        return Err(crate::Error::Decompress(CompressionType::Lz4));
+        return Err(Error::Decompress(CompressionType::Lz4));
     }
 
     Ok(builder.freeze().into())
@@ -83,12 +89,12 @@ impl Block {
     }
 
     /// Encodes a block into a writer.
-    pub fn write_into<W: std::io::Write>(
+    pub fn write_into<W: Write>(
         mut writer: &mut W,
         data: &[u8],
         block_type: BlockType,
         compression: CompressionType,
-    ) -> crate::Result<Header> {
+    ) -> Result<Header> {
         let mut header = Header {
             block_type,
             data_length: 0, // <-- NOTE: Is set later on
@@ -100,7 +106,7 @@ impl Block {
         let data = match compression {
             CompressionType::None => data,
 
-            CompressionType::Lz4 => &lz4_flex::compress(data),
+            CompressionType::Lz4 => &compress(data),
         };
 
         #[expect(clippy::cast_possible_truncation, reason = "blocks are limited to u32")]
@@ -111,7 +117,7 @@ impl Block {
         header.encode_into(&mut writer)?;
         writer.write_all(data)?;
 
-        log::trace!(
+        trace!(
             "Writing block with size {}B (compressed: {}B) (excluding header of {}B)",
             header.uncompressed_length,
             header.data_length,
@@ -122,10 +128,7 @@ impl Block {
     }
 
     /// Reads a block from a reader.
-    pub fn from_reader<R: std::io::Read>(
-        reader: &mut R,
-        compression: CompressionType,
-    ) -> crate::Result<Self> {
+    pub fn from_reader<R: Read>(reader: &mut R, compression: CompressionType) -> Result<Self> {
         let header = Header::decode_from(reader)?;
         validate_lengths(&header, compression)?;
         let raw_data = Slice::from_reader(reader, header.data_length as usize)?;
@@ -151,17 +154,17 @@ impl Block {
         file: &File,
         handle: BlockHandle,
         compression: CompressionType,
-    ) -> crate::Result<Self> {
-        let buf = crate::file::read_exact(file, *handle.offset(), handle.size() as usize)?;
+    ) -> Result<Self> {
+        let buf = file::read_exact(file, *handle.offset(), handle.size() as usize)?;
 
         let header = Header::decode_from(&mut &buf[..])?;
         validate_lengths(&header, compression)?;
 
         let expected_length = Header::serialized_len()
             .checked_add(header.data_length as usize)
-            .ok_or(crate::Error::InvalidHeader("Block length"))?;
+            .ok_or(Error::InvalidHeader("Block length"))?;
         if expected_length != buf.len() {
-            return Err(crate::Error::InvalidHeader("Block length"));
+            return Err(Error::InvalidHeader("Block length"));
         }
 
         let buf = match compression {
@@ -192,14 +195,18 @@ impl Block {
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
+    use tempfile::tempdir;
+    use test_log::test;
+
     use super::*;
     use crate::coding::Encode;
-    use test_log::test;
 
     // TODO: Block::from_file roundtrips
 
     #[test]
-    fn block_roundtrip_uncompressed() -> crate::Result<()> {
+    fn block_roundtrip_uncompressed() -> Result<()> {
         let mut writer = vec![];
 
         Block::write_into(
@@ -218,7 +225,7 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn block_roundtrip_lz4() -> crate::Result<()> {
+    fn block_roundtrip_lz4() -> Result<()> {
         let mut writer = vec![];
 
         Block::write_into(
@@ -238,8 +245,8 @@ mod tests {
     }
 
     #[test]
-    fn block_from_file_rejects_handle_size_mismatch() -> crate::Result<()> {
-        let directory = tempfile::tempdir()?;
+    fn block_from_file_rejects_handle_size_mismatch() -> Result<()> {
+        let directory = tempdir()?;
         let path = directory.path().join("block");
         let mut bytes = Vec::new();
         Block::write_into(
@@ -249,12 +256,12 @@ mod tests {
             CompressionType::None,
         )?;
         bytes.push(0);
-        std::fs::write(&path, &bytes)?;
+        fs::write(&path, &bytes)?;
 
         let handle = BlockHandle::new(BlockOffset(0), bytes.len() as u32);
         assert!(matches!(
             Block::from_file(&File::open(path)?, handle, CompressionType::None),
-            Err(crate::Error::InvalidHeader("Block length"))
+            Err(Error::InvalidHeader("Block length"))
         ));
         Ok(())
     }
@@ -271,7 +278,7 @@ mod tests {
 
         assert!(matches!(
             Block::from_reader(&mut &bytes[..], CompressionType::None),
-            Err(crate::Error::InvalidHeader("Block length"))
+            Err(Error::InvalidHeader("Block length"))
         ));
     }
 
@@ -287,7 +294,7 @@ mod tests {
 
         assert!(matches!(
             Block::from_reader(&mut &bytes[..], CompressionType::Lz4),
-            Err(crate::Error::InvalidHeader("Block length"))
+            Err(Error::InvalidHeader("Block length"))
         ));
     }
 }

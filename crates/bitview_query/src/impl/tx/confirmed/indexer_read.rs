@@ -62,7 +62,6 @@ impl IndexerRead<'_> {
             .vecs()
             .blocks
             .blockhash
-            .inner
             .collect_one(height)
             .ok_or(Error::UnknownTxid)?;
         Ok(hash)

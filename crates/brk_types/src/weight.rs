@@ -1,16 +1,22 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
+use bitcoin::Weight as BitcoinWeight;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, VSize};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::VSize;
 
 /// Weight in weight units (WU). Max block weight is 4,000,000 WU.
 #[derive(
@@ -40,26 +46,26 @@ pub struct Weight(u32);
 impl Weight {
     /// Maximum block weight in Bitcoin (4 million weight units).
     /// Note: Pre-SegWit 1MB blocks have weight = size * 4 = 4M, so this is consistent across all blocks.
-    pub const MAX_BLOCK: Self = Self(bitcoin::Weight::MAX_BLOCK.to_wu() as u32);
+    pub const MAX_BLOCK: Self = Self(BitcoinWeight::MAX_BLOCK.to_wu() as u32);
 
     /// Compute weight from base size and total size.
     #[inline]
     pub fn from_sizes(base_size: u32, total_size: u32) -> Self {
         let base_size = u64::from(base_size);
         let witness_size = u64::from(total_size) - base_size;
-        let value = (bitcoin::Weight::from_non_witness_data_size(base_size)
-            + bitcoin::Weight::from_witness_data_size(witness_size))
+        let value = (BitcoinWeight::from_non_witness_data_size(base_size)
+            + BitcoinWeight::from_witness_data_size(witness_size))
         .to_wu();
         debug_assert!(u32::try_from(value).is_ok());
         Self(value as u32)
     }
 
     pub fn to_vbytes_ceil(&self) -> u64 {
-        bitcoin::Weight::from(*self).to_vbytes_ceil()
+        BitcoinWeight::from(*self).to_vbytes_ceil()
     }
 
     pub fn to_vbytes_floor(&self) -> u64 {
-        bitcoin::Weight::from(*self).to_vbytes_floor()
+        BitcoinWeight::from(*self).to_vbytes_floor()
     }
 
     /// Returns block fullness as a ratio (0–1+) relative to MAX_BLOCK.
@@ -69,16 +75,16 @@ impl Weight {
     }
 }
 
-impl From<bitcoin::Weight> for Weight {
+impl From<BitcoinWeight> for Weight {
     #[inline]
-    fn from(value: bitcoin::Weight) -> Self {
+    fn from(value: BitcoinWeight) -> Self {
         let value = value.to_wu();
         debug_assert!(u32::try_from(value).is_ok());
         Self(value as u32)
     }
 }
 
-impl From<Weight> for bitcoin::Weight {
+impl From<Weight> for BitcoinWeight {
     #[inline]
     fn from(value: Weight) -> Self {
         Self::from_wu(u64::from(value.0))
@@ -89,7 +95,7 @@ impl From<VSize> for Weight {
     /// Convert virtual bytes to weight units: `weight = vbytes * WITNESS_SCALE_FACTOR`.
     #[inline]
     fn from(vsize: VSize) -> Self {
-        Self::from(bitcoin::Weight::from_vb_unchecked(*vsize))
+        Self::from(BitcoinWeight::from_vb_unchecked(*vsize))
     }
 }
 
@@ -203,16 +209,16 @@ impl CheckedSub for Weight {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Weight {
+impl VecdbCheckedSub for Weight {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for Weight {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Weight {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -222,7 +228,7 @@ impl std::fmt::Display for Weight {
 impl Formattable for Weight {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

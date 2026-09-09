@@ -1,9 +1,12 @@
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use crate::{TxIndex, Vout};
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default, JsonSchema, Hash)]
 #[cfg_attr(feature = "storage", derive(Pco))]
@@ -42,8 +45,8 @@ impl OutPoint {
     }
 }
 
-impl std::fmt::Display for OutPoint {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for OutPoint {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "tx_index: {}, vout: {}", self.tx_index(), self.vout())
     }
 }
@@ -55,7 +58,7 @@ impl Formattable for OutPoint {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> FmtResult {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {

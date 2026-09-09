@@ -1,11 +1,12 @@
 use std::fmt;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Bytes, Formattable};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{EmptyAddrIndex, FundedAddrIndex, TypeIndex};
+
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable};
 
 const MIN_EMPTY_INDEX: u32 = u32::MAX - 4_000_000_000;
 
@@ -40,7 +41,7 @@ impl From<EmptyAddrIndex> for AnyAddrIndex {
 impl Serialize for AnyAddrIndex {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: Serializer,
     {
         self.to_enum().serialize(serializer)
     }
@@ -49,7 +50,7 @@ impl Serialize for AnyAddrIndex {
 impl<'de> Deserialize<'de> for AnyAddrIndex {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let variant = AnyAddrDataIndexEnum::deserialize(deserializer)?;
         Ok(Self::from(variant))

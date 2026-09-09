@@ -1,10 +1,14 @@
-use std::ops::Sub;
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::Sub,
+};
 
-use crate::unlikely;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{Cents, Dollars};
+use crate::unlikely;
 
 /// Compact unsigned cents (u32) - memory-efficient for map keys.
 /// Supports finite values from $0.00 to $42,949,672.94.
@@ -229,9 +233,9 @@ impl Sub for CentsCompact {
     }
 }
 
-impl std::fmt::Display for CentsCompact {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for CentsCompact {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }

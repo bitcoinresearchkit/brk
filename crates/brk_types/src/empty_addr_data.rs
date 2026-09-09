@@ -1,9 +1,15 @@
+use std::fmt::{Display, Formatter, Result};
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Bytes, Formattable, OverflowVecValue, Version};
 
 use crate::{FundedAddrData, Sats};
+
+#[cfg(feature = "storage")]
+use vecdb::Result as VecdbResult;
+
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable, OverflowVecValue, Version};
 
 /// Data of an empty address
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
@@ -39,8 +45,8 @@ impl From<&FundedAddrData> for EmptyAddrData {
     }
 }
 
-impl std::fmt::Display for EmptyAddrData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for EmptyAddrData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
             "tx_count: {}, funded_txo_count: {}, transfered: {}",
@@ -56,7 +62,7 @@ impl Formattable for EmptyAddrData {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> Result {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
@@ -85,7 +91,7 @@ impl Bytes for EmptyAddrData {
         arr
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> VecdbResult<Self> {
         Ok(Self {
             tx_count: u32::from_bytes(&bytes[0..4])?,
             funded_txo_count: u32::from_bytes(&bytes[4..8])?,

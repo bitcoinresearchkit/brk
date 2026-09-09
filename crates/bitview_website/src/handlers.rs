@@ -2,17 +2,16 @@ use std::path::Path;
 
 use axum::{
     body::Body,
-    extract::State,
+    extract::{Path as ExtractPath, State},
     http::{HeaderMap, Response, StatusCode},
 };
 
-use crate::website::content_etag;
-use crate::{Error, HeaderMapExtended, Website};
+use crate::{Error, HeaderMapExtended, Website, website::content_etag};
 
 pub async fn file_handler(
     State(website): State<Website>,
     headers: HeaderMap,
-    path: axum::extract::Path<String>,
+    path: ExtractPath<String>,
 ) -> Result<Response<Body>, Error> {
     serve(&website, &path.0, &headers)
 }
@@ -96,31 +95,28 @@ fn sanitize(path: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::{future::Future, sync::OnceLock};
+    use std::{fs, future::Future, sync::OnceLock};
 
     use axum::{
         body::{Body, to_bytes},
-        http::{HeaderMap, StatusCode, header},
+        http::{HeaderMap, Response, StatusCode, header},
         response::IntoResponse,
     };
+    use tempfile::tempdir;
+    use tokio::runtime::{Builder, Runtime};
 
     use super::{sanitize, serve};
     use crate::Website;
 
     fn block_on<F: Future>(future: F) -> F::Output {
-        static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+        static RUNTIME: OnceLock<Runtime> = OnceLock::new();
 
         RUNTIME
-            .get_or_init(|| {
-                tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap()
-            })
+            .get_or_init(|| Builder::new_current_thread().enable_all().build().unwrap())
             .block_on(future)
     }
 
-    fn body_bytes(response: axum::http::Response<Body>) -> Vec<u8> {
+    fn body_bytes(response: Response<Body>) -> Vec<u8> {
         block_on(async {
             to_bytes(response.into_body(), 2 * 1024 * 1024)
                 .await
@@ -292,13 +288,13 @@ mod tests {
 
     #[test]
     fn filesystem_indexes_are_independent_and_revalidated_from_disk() {
-        let first = tempfile::tempdir().unwrap();
-        let second = tempfile::tempdir().unwrap();
+        let first = tempdir().unwrap();
+        let second = tempdir().unwrap();
         let first_site = Website::Filesystem(first.path().to_owned());
         let second_site = Website::Filesystem(second.path().to_owned());
         let first_path = first.path().join("index.html");
-        std::fs::write(&first_path, "first site").unwrap();
-        std::fs::write(second.path().join("index.html"), "second site").unwrap();
+        fs::write(&first_path, "first site").unwrap();
+        fs::write(second.path().join("index.html"), "second site").unwrap();
 
         let embedded = serve(&Website::Default, "", &HeaderMap::new()).unwrap();
         let mut headers = HeaderMap::new();
@@ -323,12 +319,12 @@ mod tests {
         if let Some(etag) = previous.headers().get(header::ETAG) {
             headers.insert(header::IF_NONE_MATCH, etag.clone());
         }
-        std::fs::write(&first_path, "updated site").unwrap();
+        fs::write(&first_path, "updated site").unwrap();
         assert_eq!(
             body_bytes(serve(&first_site, "", &headers).unwrap()),
             b"updated site"
         );
-        std::fs::remove_file(&first_path).unwrap();
+        fs::remove_file(&first_path).unwrap();
         assert_eq!(
             serve(&first_site, "", &headers)
                 .unwrap_err()

@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 /// Pinning policy
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PinningPolicy(Vec<bool>);
 
-impl std::ops::Deref for PinningPolicy {
+impl Deref for PinningPolicy {
     type Target = [bool];
 
     fn deref(&self) -> &Self::Target {

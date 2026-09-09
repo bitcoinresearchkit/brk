@@ -1,5 +1,6 @@
 use bitview_cohort::{CohortContext, UTXOAndAddrGroups, UTXOGroups};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockWithDeltas};
 use brk_error::Result;
@@ -27,17 +28,17 @@ impl RealizedCapByCohort {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored = UTXOColumns::forced_import(db, "realized_cap_cents", version)?;
+        let stored = UTXOColumns::forced_import(cache, db, "realized_cap_cents", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_cap");
             LazyFiatPerBlockWithDeltas::from_cents_source(
                 &name,
                 version,
                 &stored
-                    .additive_source(cache, &filter, &format!("{name}_cents"), version)
+                    .additive_source(&filter, &format!("{name}_cents"), version)
                     .expect("realized-cap cohort source"),
                 Version::TWO,
                 mappings,

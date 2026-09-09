@@ -1,3 +1,5 @@
+use std::result::Result;
+
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 
@@ -15,9 +17,7 @@ pub struct WindowsTo1m<A> {
 impl<A> WindowsTo1m<A> {
     pub const SUFFIXES: [&'static str; 3] = ["24h", "1w", "1m"];
 
-    pub fn try_from_fn<E>(
-        mut f: impl FnMut(&str) -> std::result::Result<A, E>,
-    ) -> std::result::Result<Self, E> {
+    pub fn try_from_fn<E>(mut f: impl FnMut(&str) -> Result<A, E>) -> Result<Self, E> {
         Ok(Self {
             _24h: f(Self::SUFFIXES[0])?,
             _1w: f(Self::SUFFIXES[1])?,

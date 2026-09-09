@@ -1,10 +1,7 @@
-pub mod addr_type;
-
-pub use addr_type::AddrTypeVecs;
-
-use brk_error::Result;
+use std::iter;
 
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_types::{
     AddrBytes, AddrHash, Height, OutputType, P2AAddrIndex, P2ABytes, P2PK33AddrIndex, P2PK33Bytes,
     P2PK65AddrIndex, P2PK65Bytes, P2PKHAddrIndex, P2PKHBytes, P2SHAddrIndex, P2SHBytes,
@@ -18,6 +15,10 @@ use vecdb::{
 };
 
 use crate::readers::AddrReaders;
+
+pub mod addr_type;
+
+pub use addr_type::AddrTypeVecs;
 
 #[derive(Traversable)]
 pub struct AddrsVecs<M: StorageMode = Rw> {
@@ -327,7 +328,7 @@ impl AddrsVecs {
             OutputType::P2WSH => make_iter!(self.p2wsh),
             OutputType::P2TR => make_iter!(self.p2tr),
             OutputType::P2A => make_iter!(self.p2a),
-            _ => Ok(Box::new(std::iter::empty())),
+            _ => Ok(Box::new(iter::empty())),
         }
     }
 }

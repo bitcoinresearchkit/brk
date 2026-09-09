@@ -2,23 +2,25 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{path::PathBuf, sync::Arc};
+
 use super::{
     BlockOffset, DataBlock, GlobalTableId, Table, bound::Bound,
-    owned_data_block_iter::OwnedDataBlockIter,
+    data_block::DataBlock as DataBlockDataBlock, owned_data_block_iter::OwnedDataBlockIter,
 };
 use crate::{
     Cache, CompressionType, InternalValue, Result,
     file_accessor::FileAccessor,
     table::{
         BlockHandle,
+        block::BlockType,
         block_index::{BlockIndexIter, BlockIndexIterImpl},
         util::load_block,
     },
 };
-use std::{path::PathBuf, sync::Arc};
 
 fn create_data_block_reader(block: DataBlock) -> OwnedDataBlockIter {
-    OwnedDataBlockIter::new(block, super::data_block::DataBlock::iter)
+    OwnedDataBlockIter::new(block, DataBlockDataBlock::iter)
 }
 
 pub struct Iter {
@@ -172,7 +174,7 @@ impl Iterator for Iter {
                 &self.file_accessor,
                 &self.cache,
                 &BlockHandle::new(handle.offset(), handle.size()),
-                crate::table::block::BlockType::Data,
+                BlockType::Data,
                 self.compression,
             ));
             let block = DataBlock::new(block);
@@ -280,7 +282,7 @@ impl DoubleEndedIterator for Iter {
                 &self.file_accessor,
                 &self.cache,
                 &BlockHandle::new(handle.offset(), handle.size()),
-                crate::table::block::BlockType::Data,
+                BlockType::Data,
                 self.compression,
             ));
             let block = DataBlock::new(block);

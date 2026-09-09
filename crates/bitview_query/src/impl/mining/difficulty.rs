@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use brk_error::{OptionData, Result};
+use brk_error::{Error, OptionData, Result};
 use brk_types::{BLOCKS_PER_DIFF_EPOCHS as BLOCKS_PER_EPOCH, DifficultyAdjustment, Epoch, Height};
 use vecdb::ReadableVec;
 
@@ -20,10 +20,7 @@ impl Query {
         let pin = self.pin_safe_lengths()?;
         let indexer = self.indexer();
         let plugins = self.plugins();
-        let current_height = pin
-            .lengths()
-            .last_height()
-            .ok_or(brk_error::Error::StateUpdating)?;
+        let current_height = pin.lengths().last_height().ok_or(Error::StateUpdating)?;
         let current_height_u32: u32 = current_height.into();
 
         let current_epoch = plugins

@@ -1,14 +1,17 @@
 use std::{
+    convert::Infallible,
+    fmt::{Formatter, Result as FmtResult},
     fs,
     hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
-    str::FromStr,
+    result::Result as StdResult,
+    str::{self as StdStr, FromStr},
     sync::OnceLock,
 };
 
 use importmap::ImportMap;
 use include_dir::{Dir, include_dir};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tracing::{error, info};
 
 use crate::Error;
@@ -129,8 +132,7 @@ impl Website {
         }
 
         let cached = INDEX_HTML.get_or_init(|| {
-            let html =
-                std::str::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
+            let html = StdStr::from_utf8(file.contents()).expect("index.html must be valid UTF-8");
             let importmap = ImportMap::scan_embedded(&EMBEDDED_WEBSITE, "");
             let html = importmap
                 .transform_html(html)
@@ -215,9 +217,9 @@ fn embedded_file(path: &str) -> Option<&'static [u8]> {
 }
 
 impl FromStr for Website {
-    type Err = std::convert::Infallible;
+    type Err = Infallible;
 
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> StdResult<Self, Self::Err> {
         Ok(match s.to_lowercase().as_str() {
             "true" | "1" | "yes" | "on" => Self::Default,
             "false" | "0" | "no" | "off" => Self::Disabled,
@@ -227,10 +229,7 @@ impl FromStr for Website {
 }
 
 impl Serialize for Website {
-    fn serialize<S: serde::Serializer>(
-        &self,
-        serializer: S,
-    ) -> std::result::Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> StdResult<S::Ok, S::Error> {
         match self {
             Self::Disabled => serializer.serialize_bool(false),
             Self::Default => serializer.serialize_bool(true),
@@ -240,9 +239,7 @@ impl Serialize for Website {
 }
 
 impl<'de> Deserialize<'de> for Website {
-    fn deserialize<D: serde::Deserializer<'de>>(
-        deserializer: D,
-    ) -> std::result::Result<Self, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> StdResult<Self, D::Error> {
         use serde::de::{self, Visitor};
 
         struct WebsiteVisitor;
@@ -250,11 +247,11 @@ impl<'de> Deserialize<'de> for Website {
         impl<'de> Visitor<'de> for WebsiteVisitor {
             type Value = Website;
 
-            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            fn expecting(&self, f: &mut Formatter) -> FmtResult {
                 f.write_str("a boolean or a path string")
             }
 
-            fn visit_bool<E: de::Error>(self, v: bool) -> std::result::Result<Self::Value, E> {
+            fn visit_bool<E: de::Error>(self, v: bool) -> StdResult<Self::Value, E> {
                 Ok(if v {
                     Website::Default
                 } else {
@@ -262,11 +259,11 @@ impl<'de> Deserialize<'de> for Website {
                 })
             }
 
-            fn visit_str<E: de::Error>(self, v: &str) -> std::result::Result<Self::Value, E> {
+            fn visit_str<E: de::Error>(self, v: &str) -> StdResult<Self::Value, E> {
                 Ok(Website::Filesystem(PathBuf::from(v)))
             }
 
-            fn visit_string<E: de::Error>(self, v: String) -> std::result::Result<Self::Value, E> {
+            fn visit_string<E: de::Error>(self, v: String) -> StdResult<Self::Value, E> {
                 Ok(Website::Filesystem(PathBuf::from(v)))
             }
         }

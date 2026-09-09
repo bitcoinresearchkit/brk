@@ -9,7 +9,11 @@ use std::{
 use brk_error::{Error, Result};
 use brk_rpc::Client;
 use brk_types::{BlkPosition, BlockHash, Height};
+use canonical::CanonicalRange;
+use reader_inner::ReaderInner;
+use rlimit::{Resource, getrlimit, setrlimit};
 use tracing::warn;
+use xor_index::XORIndex;
 
 mod bisect;
 mod blk_index_to_blk_path;
@@ -26,10 +30,8 @@ mod xor_index;
 pub use blk_index_to_blk_path::BlkIndexToBlkPath;
 pub use blk_read::BlkRead;
 pub use block_receiver::BlockReceiver;
-use canonical::CanonicalRange;
-use reader_inner::ReaderInner;
+
 pub use xor_bytes::*;
-use xor_index::XORIndex;
 
 /// bitcoind writes blocks slightly out of height order across files
 /// during initial sync, headers-first body fetch, and reindex, so a
@@ -57,10 +59,10 @@ impl Reader {
     /// raising the hard limit requires `CAP_SYS_RESOURCE` and would
     /// fail on containers and unprivileged macOS processes.
     pub fn raise_fd_limit() {
-        let (soft, hard) = rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap_or((0, 0));
+        let (soft, hard) = getrlimit(Resource::NOFILE).unwrap_or((0, 0));
         let new_soft = soft.max(TARGET_NOFILE).min(hard);
         if new_soft > soft
-            && let Err(e) = rlimit::setrlimit(rlimit::Resource::NOFILE, new_soft, hard)
+            && let Err(e) = setrlimit(Resource::NOFILE, new_soft, hard)
         {
             warn!("failed to raise NOFILE rlimit: {e}");
         }

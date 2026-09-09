@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{mem, time::Instant};
 
 use brk_types::{Cents, Height};
 use tracing::debug;
@@ -48,7 +48,7 @@ impl PriceRangeMax {
             new_n,
             new_n - old_n,
             level_count,
-            (entries * std::mem::size_of::<Cents>()) as f64 / 1_000_000.0,
+            (entries * mem::size_of::<Cents>()) as f64 / 1_000_000.0,
             start.elapsed().as_secs_f64() * 1000.0
         );
     }

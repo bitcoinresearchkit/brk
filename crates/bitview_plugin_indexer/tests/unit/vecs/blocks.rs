@@ -1,13 +1,15 @@
+use tempfile::tempdir;
 use vecdb::ReadableVec;
 
 use super::*;
 
 #[test]
 fn truncate_cached_invalidates_same_length_cache() {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let inner = PcoVec::<Height, Timestamp>::forced_import(&db, "timestamp", Version::ONE).unwrap();
-    let mut timestamps = CachedVec::wrap(inner);
+    let cache = Box::leak(Box::new(CacheBudget::new(1024)));
+    let mut timestamps = cache.wrap(inner);
 
     for timestamp in [10_u32, 20, 30] {
         timestamps.inner.push(Timestamp::from(timestamp));

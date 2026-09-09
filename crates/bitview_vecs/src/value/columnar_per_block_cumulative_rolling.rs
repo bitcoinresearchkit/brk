@@ -31,6 +31,7 @@ where
     C: ColumnId,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -40,12 +41,14 @@ where
         ) -> S,
     ) -> Result<Self> {
         let sats = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{name}_sats"),
             version,
             |_| (),
         )?;
         let cents = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{name}_cents"),
             version,
@@ -65,7 +68,6 @@ where
 
     pub fn sources(
         &self,
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         columns: impl IntoIterator<Item = C>,
@@ -74,7 +76,6 @@ where
         LazyVec<Height, Cents, Height, StoredU64>,
     ) {
         Self::sources_from(
-            cache,
             &self.sats.cumulative.read_only_clone(),
             &self.cents.cumulative.read_only_clone(),
             name,
@@ -84,7 +85,6 @@ where
     }
 
     pub fn sources_from(
-        cache: &'static CacheBudget,
         sats: &ReadOnlyColumnarVec<PcoVec<Height, StoredU64>, C>,
         cents: &ReadOnlyColumnarVec<PcoVec<Height, StoredU64>, C>,
         name: &str,
@@ -96,14 +96,12 @@ where
     ) {
         let columns: Box<[_]> = columns.into_iter().collect();
         let sats = Self::typed_source::<StoredU64ToSats, Sats>(
-            cache,
             sats,
             &format!("{name}_sats"),
             version,
             &columns,
         );
         let cents = Self::typed_source::<StoredU64ToCents, Cents>(
-            cache,
             cents,
             &format!("{name}_cents"),
             version,
@@ -113,7 +111,6 @@ where
     }
 
     fn typed_source<F, T>(
-        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredU64>, C>,
         name: &str,
         version: Version,
@@ -133,7 +130,7 @@ where
                 .read_only_boxed_clone()
         };
         // Cache one stored column or aggregate before the unit conversion.
-        LazyVec::transformed::<F>(name, version, ReadableBoxedVec::new(cache.wrap(raw)))
+        LazyVec::transformed::<F>(name, version, ReadableBoxedVec::new(raw))
     }
 
     #[inline(always)]
@@ -161,7 +158,8 @@ where
 #[cfg(test)]
 mod tests {
     use brk_types::{Cents, Sats, Version};
-    use vecdb::{AnyVec, ColumnId, Database, ReadableVec, VecValue};
+    use tempfile::tempdir;
+    use vecdb::{AnyVec, CacheBudget, ColumnId, Database, ReadableVec, VecValue};
 
     use super::ColumnarValuePerBlockCumulativeRolling;
 
@@ -213,11 +211,12 @@ mod tests {
 
     #[test]
     fn stores_units_in_separate_cohort_columns() {
-        static SOURCE_CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+        static SOURCE_CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
         let cache = &SOURCE_CACHE_BUDGET;
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut values = ColumnarValuePerBlockCumulativeRolling::<Column, _>::forced_import(
+            cache,
             &db,
             "values",
             Version::ONE,
@@ -239,7 +238,7 @@ mod tests {
         values.sats.write().unwrap();
         values.cents.write().unwrap();
 
-        let (sats, cents) = values.sources(cache, "values_cumulative", Version::ONE, [Column::A]);
+        let (sats, cents) = values.sources("values_cumulative", Version::ONE, [Column::A]);
         assert_eq!(sats.collect_range_dyn(0, 2), [Sats::new(1), Sats::new(4)]);
         assert_eq!(
             cents.collect_range_dyn(0, 2),
@@ -247,7 +246,6 @@ mod tests {
         );
 
         let (sats, cents) = values.sources(
-            cache,
             "all_values_cumulative",
             Version::ONE,
             Column::ALL.iter().copied(),

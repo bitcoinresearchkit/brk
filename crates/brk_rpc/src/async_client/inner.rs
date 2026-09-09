@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use base64::{Engine, engine::general_purpose::STANDARD};
+use bitcoin::Txid as BitcoinTxid;
 use brk_error::{Error, Result};
 use brk_types::{Height, Txid};
 use http_body_util::Full;
@@ -11,11 +12,11 @@ use hyper::{
 };
 use parking_lot::RwLock;
 use serde::de::DeserializeOwned;
-use tokio::sync::Mutex;
-
-use crate::Auth;
+use serde_json::{json, to_vec};
+use tokio::{fs as TokioFs, sync::Mutex};
 
 use super::connection::{Connection, Exchange};
+use crate::{Auth, rpc_client, rpc_response};
 
 pub struct Inner {
     connection: Mutex<Option<Connection>>,
@@ -65,13 +66,13 @@ impl Inner {
     }
 
     pub async fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
-        let body = serde_json::to_vec(&serde_json::json!({
+        let body = to_vec(&json!({
             "jsonrpc": "2.0", "id": 1, "method": "sendrawtransaction", "params": [hex],
         }))?;
-        self.call::<bitcoin::Txid>(body.into(), false)
+        self.call::<BitcoinTxid>(body.into(), false)
             .await
             .map(Txid::from)
-            .map_err(crate::rpc_client::transaction_error)
+            .map_err(rpc_client::transaction_error)
     }
 
     /// Only read-only calls may retry a disconnected exchange. An explicit
@@ -122,7 +123,7 @@ impl Inner {
             };
             if status == StatusCode::UNAUTHORIZED {
                 if refresh && let Some(path) = &self.cookie {
-                    let updated = authorization(tokio::fs::read_to_string(path).await?.trim())?;
+                    let updated = authorization(TokioFs::read_to_string(path).await?.trim())?;
                     if header.as_ref() != Some(&updated) {
                         *self.authorization.write() = Some(updated);
                         refresh = false;
@@ -131,7 +132,7 @@ impl Inner {
                 }
                 return Err(Error::Internal("node RPC authentication failed"));
             }
-            return crate::rpc_response::decode(status.is_success(), &bytes);
+            return rpc_response::decode(status.is_success(), &bytes);
         }
     }
 }

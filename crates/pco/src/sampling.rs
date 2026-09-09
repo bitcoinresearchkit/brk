@@ -1,10 +1,11 @@
-use std::cmp::max;
-use std::collections::HashMap;
+use std::{cmp::max, collections::HashMap};
 
-use crate::constants::CLASSIC_MEMORIZABLE_BINS_LOG;
-use rand_xoshiro::rand_core::{Rng, SeedableRng};
+use rand_xoshiro::{
+  rand_core::{Rng, SeedableRng},
+  Xoroshiro128PlusPlus,
+};
 
-use crate::data_types::Latent;
+use crate::{constants::CLASSIC_MEMORIZABLE_BINS_LOG, data_types::Latent};
 
 pub const MIN_SAMPLE: usize = 10;
 // 1 in this many nums get put into sample
@@ -36,7 +37,7 @@ pub fn choose_sample<T, S, Filter: Fn(&T) -> Option<S>>(
   // Maybe this is a bad idea, but it works for now.
   let target_sample_size = calc_sample_n(nums.len())?;
 
-  let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+  let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
   let mut visited = vec![0_u8; nums.len().div_ceil(8)];
   let mut res = Vec::with_capacity(target_sample_size);
   let mut n_iters = 0;

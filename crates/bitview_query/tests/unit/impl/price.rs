@@ -1,3 +1,5 @@
+use serde_json::to_value;
+
 use super::*;
 
 #[test]
@@ -39,8 +41,8 @@ fn completed_closes_are_causal_and_share_missing_data_rules() {
             .find(|p| *p.time <= timestamp)
             .unwrap();
         assert_eq!(
-            serde_json::to_value(&point.prices[0]).unwrap(),
-            serde_json::to_value(expected).unwrap()
+            to_value(&point.prices[0]).unwrap(),
+            to_value(expected).unwrap()
         );
     }
     assert!(

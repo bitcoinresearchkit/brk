@@ -1,13 +1,19 @@
-use std::ops::Add;
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::Add,
+};
 
-use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, TypeIndex};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
-
-use crate::TypeIndex;
 
 #[derive(
     Debug,
@@ -64,13 +70,13 @@ impl Add<usize> for P2MSOutputIndex {
 
 impl CheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self)
+        CheckedSub::checked_sub(self.0, rhs.0).map(Self)
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
+impl VecdbCheckedSub<P2MSOutputIndex> for P2MSOutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -97,8 +103,8 @@ impl VecIndex for P2MSOutputIndex {
     const INITIAL_CAPACITY: usize = 4_000_000;
 }
 
-impl std::fmt::Display for P2MSOutputIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for P2MSOutputIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.0.fmt(f)
     }
 }

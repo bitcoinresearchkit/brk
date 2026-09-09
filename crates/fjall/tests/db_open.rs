@@ -7,11 +7,12 @@ use std::{
     time::Duration,
 };
 
-use fjall::Database;
+use fjall::{Database, Result};
+use tempfile::tempdir;
 
 #[test]
-fn db_open() -> fjall::Result<()> {
-    let folder = tempfile::tempdir()?;
+fn db_open() -> Result<()> {
+    let folder = tempdir()?;
 
     {
         let _db = Database::builder(&folder).open()?;
@@ -26,8 +27,8 @@ fn db_open() -> fjall::Result<()> {
 }
 
 #[test]
-fn db_open_with_keyspace() -> fjall::Result<()> {
-    let folder = tempfile::tempdir()?;
+fn db_open_with_keyspace() -> Result<()> {
+    let folder = tempdir()?;
 
     {
         let db = Database::builder(&folder).open()?;
@@ -43,16 +44,16 @@ fn db_open_with_keyspace() -> fjall::Result<()> {
 }
 
 #[test]
-fn different_keyspace_names_open_concurrently() -> fjall::Result<()> {
+fn different_keyspace_names_open_concurrently() -> Result<()> {
     const THREADS: usize = 8;
 
-    let folder = tempfile::tempdir()?;
+    let folder = tempdir()?;
     let database = Database::builder(&folder).open()?;
     let barrier = Arc::new(Barrier::new(THREADS));
     let active = AtomicUsize::new(0);
     let max_active = AtomicUsize::new(0);
 
-    thread::scope(|scope| -> fjall::Result<()> {
+    thread::scope(|scope| -> Result<()> {
         let handles = (0..THREADS)
             .map(|index| {
                 let database = database.clone();
@@ -83,15 +84,15 @@ fn different_keyspace_names_open_concurrently() -> fjall::Result<()> {
 }
 
 #[test]
-fn concurrent_same_name_opens_once() -> fjall::Result<()> {
+fn concurrent_same_name_opens_once() -> Result<()> {
     const THREADS: usize = 8;
 
-    let folder = tempfile::tempdir()?;
+    let folder = tempdir()?;
     let database = Database::builder(&folder).open()?;
     let barrier = Arc::new(Barrier::new(THREADS));
     let opens = AtomicUsize::new(0);
 
-    thread::scope(|scope| -> fjall::Result<()> {
+    thread::scope(|scope| -> Result<()> {
         let handles = (0..THREADS)
             .map(|_| {
                 let database = database.clone();

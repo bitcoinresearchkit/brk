@@ -10,8 +10,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use bitcoin::{block::Header, consensus};
 use bitview_plugin::{
-    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
+    ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, Publication, UpdateContext,
 };
 use bitview_traversable::{Traversable, TreeNode};
 use brk_error::{Error, Result};
@@ -21,6 +22,7 @@ use brk_types::{BlkPosition, BlockHash, Height};
 use constants::*;
 use lengths::IndexerLengths as _;
 use processor::{BlockBuffers, BlockProcessor};
+use rayon::join as RayonJoin;
 use readers::Readers;
 use state::State;
 use stores::Stores;
@@ -122,8 +124,8 @@ fn write_xor_marker(path: &Path, source_xor: XORBytes) -> Result<()> {
 }
 
 fn read_block_hash_at(reader: &Reader, position: BlkPosition) -> Result<BlockHash> {
-    let bytes = reader.read_raw_bytes(position, bitcoin::block::Header::SIZE)?;
-    let header: bitcoin::block::Header = bitcoin::consensus::deserialize(&bytes)?;
+    let bytes = reader.read_raw_bytes(position, Header::SIZE)?;
+    let header: Header = consensus::deserialize(&bytes)?;
     Ok(BlockHash::from(header.block_hash()))
 }
 
@@ -139,7 +141,7 @@ fn recreate_plugin_dir(path: &Path, source_xor: XORBytes) -> Result<bool> {
 
 impl<M: StorageMode> Indexer<M> {
     /// Publication barrier shared by the complete pipeline and its readers.
-    pub fn publication(&self) -> &bitview_plugin::Publication {
+    pub fn publication(&self) -> &Publication {
         &self.state.publication
     }
     /// Tip block hash at the pipeline-safe ceiling.
@@ -161,7 +163,6 @@ impl<M: StorageMode> Indexer<M> {
                 .vecs
                 .blocks
                 .blockhash
-                .inner
                 .collect_one(h)
                 .unwrap_or_default(),
             None => BlockHash::default(),
@@ -184,7 +185,7 @@ impl<M: StorageMode> Indexer<M> {
         self.state.try_pin()
     }
 
-    pub fn pin_safe_lengths_for(&self, timeout: std::time::Duration) -> Option<SafeLengths> {
+    pub fn pin_safe_lengths_for(&self, timeout: Duration) -> Option<SafeLengths> {
         self.state.pin_for(timeout)
     }
 
@@ -273,7 +274,11 @@ impl Indexer {
 
         let try_import = || -> Result<Self> {
             let i = Instant::now();
-            let vecs = Vecs::forced_import(&plugin_path, STORAGE.schema_version())?;
+            let vecs = Vecs::forced_import(
+                context.cache_budget(),
+                &plugin_path,
+                STORAGE.schema_version(),
+            )?;
             info!("Loaded indexer vectors in {:.2?}", i.elapsed());
 
             let i = Instant::now();
@@ -468,7 +473,7 @@ impl Indexer {
                         let i = Instant::now();
                         let persisted = stores.persist(checkpoint)?;
                         debug!("Stores persisted in {:?}", i.elapsed());
-                        Ok::<_, brk_error::Error>(persisted)
+                        Ok::<_, Error>(persisted)
                     });
                     let vecs_res = s.spawn(|| -> Result<()> {
                         let i = Instant::now();
@@ -535,7 +540,7 @@ impl Indexer {
             let txs = processor.compute_txids()?;
             processor.push_block_size_and_weight(&txs);
 
-            let (txins_result, txouts_result) = rayon::join(
+            let (txins_result, txouts_result) = RayonJoin(
                 || buffers.inputs.resolve(&processor, &txs),
                 || processor.process_outputs(&mut buffers.addresses),
             );
@@ -661,14 +666,18 @@ impl ComputePlugin for Indexer {
 
 #[cfg(test)]
 mod import_tests {
-    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
-
     use std::path::PathBuf;
 
+    use bitcoin::{Network, blockdata::constants};
     use brk_rpc::{Auth, Client};
     use brk_types::BlockHashPrefix;
+    use fjall::Error as FjallError;
+    use tempfile::tempdir;
+    use vecdb::CacheBudget;
 
     use super::*;
+
+    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
     fn plugin_data_path(outputs_dir: &Path) -> PathBuf {
         STORAGE.path(ImportContext::new(outputs_dir, &CACHE_BUDGET))
@@ -694,7 +703,7 @@ mod import_tests {
 
     #[test]
     fn recreate_drops_old_contents_and_seeds_source_identity() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let plugin = plugin_data_path(dir.path());
         fs::create_dir_all(&plugin).unwrap();
         fs::write(plugin.join("stale"), b"stale").unwrap();
@@ -711,7 +720,7 @@ mod import_tests {
 
     #[test]
     fn recreate_does_not_report_removal_for_a_new_directory() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let plugin = plugin_data_path(dir.path());
         let source_xor = XORBytes::from([7_u8; 8]);
 
@@ -724,7 +733,7 @@ mod import_tests {
 
     #[test]
     fn empty_import_writes_identity_marker() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let reader = empty_reader(dir.path());
 
         drop(Indexer::import(
@@ -741,7 +750,7 @@ mod import_tests {
 
     #[test]
     fn malformed_xor_marker_recreates_the_index() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
         drop(Indexer::import(
@@ -766,7 +775,7 @@ mod import_tests {
 
     #[test]
     fn malformed_source_xor_never_deletes_data() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
         drop(Indexer::import(
@@ -785,7 +794,7 @@ mod import_tests {
 
     #[test]
     fn xor_marker_io_error_never_deletes_data() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let marker = plugin.join("xor.dat");
         let reader = empty_reader(dir.path());
@@ -804,7 +813,7 @@ mod import_tests {
 
     #[test]
     fn checkpoint_io_error_never_deletes_data() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let checkpoint = plugin.join("stores/height");
         let reader = empty_reader(dir.path());
@@ -823,13 +832,13 @@ mod import_tests {
 
     #[test]
     fn block_position_is_verified_against_its_header() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let blocks = dir.path().join("blocks");
         fs::create_dir(&blocks)?;
-        let genesis = bitcoin::blockdata::constants::genesis_block(bitcoin::Network::Bitcoin);
+        let genesis = constants::genesis_block(Network::Bitcoin);
         fs::write(
             blocks.join("blk00000.dat"),
-            bitcoin::consensus::serialize(&genesis.header),
+            consensus::serialize(&genesis.header),
         )?;
         let reader = empty_reader(dir.path());
 
@@ -842,7 +851,7 @@ mod import_tests {
 
     #[test]
     fn fjall_lock_never_triggers_deletion() {
-        let error = Error::from(fjall::Error::Locked);
+        let error = Error::from(FjallError::Locked);
 
         assert!(error.is_lock_error());
         assert!(!error.is_data_error());
@@ -850,7 +859,7 @@ mod import_tests {
 
     #[test]
     fn invalid_checkpoint_drops_handles_and_recreates_entire_index() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let plugin = plugin_data_path(dir.path());
         let reader = empty_reader(dir.path());
 

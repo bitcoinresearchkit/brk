@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::CentsUnsignedToDollars;
 use bitview_vecs::{FiatPerBlock, LazyFiatPerBlock, LazyPerBlock, PerBlock, RatioPerBlock};
 use brk_error::Result;
@@ -10,7 +11,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     subsidy_cents: &PerBlock<Cents>,
 ) -> Result<Vecs> {
     let thermo_cents =

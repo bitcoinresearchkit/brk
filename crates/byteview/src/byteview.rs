@@ -2,9 +2,17 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use alloc::{alloc as AllocAlloc, dealloc, handle_alloc_error};
 use std::{
-    mem::ManuallyDrop,
-    ops::Deref,
+    alloc::{self, Layout},
+    borrow::Borrow,
+    cmp::{Ord, Ordering as CmpOrdering, PartialEq, PartialOrd},
+    fmt::{Debug, Formatter, Result},
+    hash::{Hash, Hasher},
+    io::{Read, Result as IoResult},
+    mem::{self, ManuallyDrop},
+    ops::{Deref, RangeBounds},
+    ptr, slice,
     sync::atomic::{AtomicU64, Ordering, fence},
 };
 
@@ -26,12 +34,12 @@ struct HeapAllocationHeader {
     ref_count: AtomicU64,
 }
 
-fn allocation_layout(data_len: usize) -> std::alloc::Layout {
-    let Some(total_size) = std::mem::size_of::<HeapAllocationHeader>().checked_add(data_len) else {
+fn allocation_layout(data_len: usize) -> Layout {
+    let Some(total_size) = mem::size_of::<HeapAllocationHeader>().checked_add(data_len) else {
         panic!("byte slice too long");
     };
-    let alignment = std::mem::align_of::<HeapAllocationHeader>();
-    let Ok(layout) = std::alloc::Layout::from_size_align(total_size, alignment) else {
+    let alignment = mem::align_of::<HeapAllocationHeader>();
+    let Ok(layout) = Layout::from_size_align(total_size, alignment) else {
         unreachable!("heap header alignment is always valid");
     };
     layout
@@ -107,7 +115,7 @@ impl Clone for ByteView {
 
         // SAFETY: Inline views own no external resource. Heap views share their
         // allocation, whose reference count was incremented above.
-        unsafe { std::ptr::read(self) }
+        unsafe { ptr::read(self) }
     }
 }
 
@@ -127,18 +135,18 @@ impl Drop for ByteView {
         unsafe {
             let layout = allocation_layout(self.trailer.long.original_len as usize);
             let ptr = self.trailer.long.heap.cast_mut();
-            std::alloc::dealloc(ptr, layout);
+            dealloc(ptr, layout);
         }
     }
 }
 
 impl Eq for ByteView {}
 
-impl std::cmp::PartialEq for ByteView {
+impl PartialEq for ByteView {
     fn eq(&self, other: &Self) -> bool {
         unsafe {
-            let a = std::ptr::from_ref(self).cast::<u64>().read_unaligned();
-            let b = std::ptr::from_ref(other).cast::<u64>().read_unaligned();
+            let a = ptr::from_ref(self).cast::<u64>().read_unaligned();
+            let b = ptr::from_ref(other).cast::<u64>().read_unaligned();
 
             if a != b {
                 return false;
@@ -151,20 +159,20 @@ impl std::cmp::PartialEq for ByteView {
     }
 }
 
-impl std::cmp::Ord for ByteView {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+impl Ord for ByteView {
+    fn cmp(&self, other: &Self) -> CmpOrdering {
         self.as_ref().cmp(other.as_ref())
     }
 }
 
-impl std::cmp::PartialOrd for ByteView {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl PartialOrd for ByteView {
+    fn partial_cmp(&self, other: &Self) -> Option<CmpOrdering> {
         Some(self.cmp(other))
     }
 }
 
-impl std::fmt::Debug for ByteView {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for ByteView {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{:?}", &**self)
     }
 }
@@ -181,8 +189,8 @@ impl Deref for ByteView {
     }
 }
 
-impl std::hash::Hash for ByteView {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl Hash for ByteView {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
     }
 }
@@ -215,7 +223,7 @@ impl ByteView {
                 let slice_ptr = slice_ptr.as_ptr();
 
                 let prefix = (*self.trailer.long).prefix.as_mut_ptr();
-                std::ptr::copy_nonoverlapping(slice_ptr, prefix, PREFIX_SIZE);
+                ptr::copy_nonoverlapping(slice_ptr, prefix, PREFIX_SIZE);
             }
         }
     }
@@ -226,7 +234,7 @@ impl ByteView {
     /// # Errors
     ///
     /// Returns an error if an I/O error occurred.
-    pub fn from_reader<R: std::io::Read>(reader: &mut R, len: usize) -> std::io::Result<Self> {
+    pub fn from_reader<R: Read>(reader: &mut R, len: usize) -> IoResult<Self> {
         // NOTE: We can use _unzeroed to skip zeroing of the heap allocated slice
         // because we receive the `len` parameter
         // If the reader does not give us exactly `len` bytes, `read_exact` fails anyway
@@ -297,9 +305,9 @@ impl ByteView {
             unsafe {
                 let layout = allocation_layout(slice_len);
 
-                let heap_ptr = std::alloc::alloc(layout);
+                let heap_ptr = AllocAlloc(layout);
                 if heap_ptr.is_null() {
-                    std::alloc::handle_alloc_error(layout);
+                    handle_alloc_error(layout);
                 }
 
                 // Set ref count
@@ -348,8 +356,8 @@ impl ByteView {
             // SAFETY: We check for inlinability
             // so we know the the input slice fits our buffer
             unsafe {
-                let data_ptr = std::ptr::addr_of_mut!((*view.trailer.short).data).cast();
-                std::ptr::copy_nonoverlapping(slice.as_ptr(), data_ptr, slice_len);
+                let data_ptr = ptr::addr_of_mut!((*view.trailer.short).data).cast();
+                ptr::copy_nonoverlapping(slice.as_ptr(), data_ptr, slice_len);
             }
         } else {
             let long_repr = unsafe { &mut *view.trailer.long };
@@ -369,7 +377,7 @@ impl ByteView {
     }
 
     unsafe fn data_ptr(&self) -> *const u8 {
-        const HEADER_SIZE: usize = std::mem::size_of::<HeapAllocationHeader>();
+        const HEADER_SIZE: usize = mem::size_of::<HeapAllocationHeader>();
 
         debug_assert!(!self.is_inline());
 
@@ -385,7 +393,7 @@ impl ByteView {
     }
 
     unsafe fn data_ptr_mut(&mut self) -> *mut u8 {
-        const HEADER_SIZE: usize = std::mem::size_of::<HeapAllocationHeader>();
+        const HEADER_SIZE: usize = mem::size_of::<HeapAllocationHeader>();
 
         debug_assert!(!self.is_inline());
 
@@ -441,7 +449,7 @@ impl ByteView {
     ///
     /// Panics if the slice is out of bounds.
     #[must_use]
-    pub fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self {
+    pub fn slice(&self, range: impl RangeBounds<usize>) -> Self {
         use core::ops::Bound;
 
         // Credits: This is essentially taken from
@@ -503,7 +511,7 @@ impl ByteView {
             let data_ptr = unsafe { &mut (*child.trailer.short).data };
 
             unsafe {
-                std::ptr::copy_nonoverlapping(slice.as_ptr(), data_ptr.as_mut_ptr(), new_len);
+                ptr::copy_nonoverlapping(slice.as_ptr(), data_ptr.as_mut_ptr(), new_len);
             }
 
             child
@@ -556,9 +564,9 @@ impl ByteView {
         let len = self.len();
 
         if self.is_inline() {
-            unsafe { std::slice::from_raw_parts_mut((*self.trailer.short).data.as_mut_ptr(), len) }
+            unsafe { slice::from_raw_parts_mut((*self.trailer.short).data.as_mut_ptr(), len) }
         } else {
-            unsafe { std::slice::from_raw_parts_mut(self.data_ptr_mut(), len) }
+            unsafe { slice::from_raw_parts_mut(self.data_ptr_mut(), len) }
         }
     }
 
@@ -571,7 +579,7 @@ impl ByteView {
         );
 
         // SAFETY: Shall only be called if slice is inlined
-        unsafe { std::slice::from_raw_parts((*self.trailer.short).data.as_ptr(), len) }
+        unsafe { slice::from_raw_parts((*self.trailer.short).data.as_ptr(), len) }
     }
 
     fn get_long_slice(&self) -> &[u8] {
@@ -583,11 +591,11 @@ impl ByteView {
         );
 
         // SAFETY: Shall only be called if slice is heap allocated
-        unsafe { std::slice::from_raw_parts(self.data_ptr(), len) }
+        unsafe { slice::from_raw_parts(self.data_ptr(), len) }
     }
 }
 
-impl std::borrow::Borrow<[u8]> for ByteView {
+impl Borrow<[u8]> for ByteView {
     fn borrow(&self) -> &[u8] {
         self
     }
@@ -631,27 +639,25 @@ impl<const N: usize> From<&[u8; N]> for ByteView {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(target_pointer_width = "64")]
+    use std::mem;
+
+    use std::io::{Cursor, Result};
+
     use super::{ByteView, HeapAllocationHeader};
-    use std::io::Cursor;
 
     #[test]
     #[cfg(target_pointer_width = "64")]
     fn memsize() {
         use crate::byteview::{LongRepr, ShortRepr, Trailer};
 
-        assert_eq!(
-            std::mem::size_of::<ShortRepr>(),
-            std::mem::size_of::<LongRepr>()
-        );
-        assert_eq!(
-            std::mem::size_of::<Trailer>(),
-            std::mem::size_of::<LongRepr>()
-        );
+        assert_eq!(mem::size_of::<ShortRepr>(), mem::size_of::<LongRepr>());
+        assert_eq!(mem::size_of::<Trailer>(), mem::size_of::<LongRepr>());
 
-        assert_eq!(24, std::mem::size_of::<ByteView>());
+        assert_eq!(24, mem::size_of::<ByteView>());
         assert_eq!(
             32,
-            std::mem::size_of::<ByteView>() + std::mem::size_of::<HeapAllocationHeader>()
+            mem::size_of::<ByteView>() + mem::size_of::<HeapAllocationHeader>()
         );
     }
 
@@ -719,7 +725,7 @@ mod tests {
     }
 
     #[test]
-    fn from_reader_1() -> std::io::Result<()> {
+    fn from_reader_1() -> Result<()> {
         let str = b"abcdef";
         let mut cursor = Cursor::new(str);
 

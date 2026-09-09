@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use crate::record::Record;
 
 #[derive(Default)]
@@ -13,7 +15,7 @@ impl Group {
         self.durations.push(record.nanos);
         self.total += record.nanos as u128;
         self.slowest.push(record);
-        self.slowest.sort_by_key(|r| std::cmp::Reverse(r.nanos));
+        self.slowest.sort_by_key(|r| Reverse(r.nanos));
         self.slowest.truncate(3);
     }
     pub fn percentile(&self, p: usize) -> u64 {

@@ -5,14 +5,15 @@ use axum::{
     http::HeaderMap,
     response::Response,
 };
+use body::RetainedBody;
+use brk_error::{Error, Result};
+use bytes::RetainedBytes;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+
+use crate::{AppState, CacheParams};
 
 mod body;
 mod bytes;
-
-use crate::{AppState, CacheParams};
-use body::RetainedBody;
-use bytes::RetainedBytes;
 
 /// One admitted encoded response, from allocation through the final body/frame owner.
 #[derive(Clone)]
@@ -32,12 +33,12 @@ impl RawBodyPermit {
         })
     }
 
-    pub async fn acquire(budget: &Arc<Semaphore>) -> brk_error::Result<Self> {
+    pub async fn acquire(budget: &Arc<Semaphore>) -> Result<Self> {
         let permit = budget
             .clone()
             .acquire_owned()
             .await
-            .map_err(|_| brk_error::Error::Internal("response admission closed"))?;
+            .map_err(|_| Error::Internal("response admission closed"))?;
         Ok(Self {
             _permit: Arc::new(permit),
         })

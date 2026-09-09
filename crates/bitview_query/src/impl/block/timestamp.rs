@@ -84,13 +84,7 @@ impl Query {
             ));
         }
         let height = Height::from(height);
-        let hash = indexer
-            .vecs()
-            .blocks
-            .blockhash
-            .inner
-            .collect_one(height)
-            .data()?;
+        let hash = indexer.vecs().blocks.blockhash.collect_one(height).data()?;
         let timestamp = JiffTimestamp::from_second(i64::from(*timestamp))
             .map_err(|_| Error::Internal("Invalid indexed timestamp"))?;
         Ok(ResolvedBlockTimestamp {

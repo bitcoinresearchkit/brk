@@ -4,7 +4,7 @@
 
 use std::collections::VecDeque;
 
-use brk_types::{ChunkInput, CpfpClusterChunk, CpfpClusterTxIndex};
+use brk_types::{ChunkInput, CpfpClusterChunk, CpfpClusterTxIndex, linearize as TypesLinearize};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
@@ -74,7 +74,7 @@ pub fn linearize(txs: &[SnapTx], component: &[TxIndex]) -> (Vec<TxIndex>, Vec<Cp
             }
         })
         .collect();
-    let chunks = brk_types::linearize(&inputs);
+    let chunks = TypesLinearize(&inputs);
     (members, chunks)
 }
 

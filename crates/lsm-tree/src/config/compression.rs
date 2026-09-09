@@ -2,13 +2,15 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 use crate::CompressionType;
 
 /// Compression policy
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CompressionPolicy(Vec<CompressionType>);
 
-impl std::ops::Deref for CompressionPolicy {
+impl Deref for CompressionPolicy {
     type Target = [CompressionType];
 
     fn deref(&self) -> &Self::Target {

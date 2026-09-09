@@ -1,11 +1,12 @@
-#[cfg(feature = "storage")]
-use bitview_traversable::Traversable;
+use derive_more::{Deref, DerefMut};
 
 use crate::{
     ByTerm, Filter, SPENDABLE_TYPE_FILTERS, SPENDABLE_TYPE_NAMES, SpendableType, TERM_FILTERS,
-    TERM_NAMES, UTXOGroupCore,
+    TERM_NAMES, Term, UTXOGroupCore,
 };
-use derive_more::{Deref, DerefMut};
+
+#[cfg(feature = "storage")]
+use bitview_traversable::Traversable;
 
 #[derive(Default, Clone, Deref, DerefMut)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -34,8 +35,8 @@ impl<T> UTXOGroupsWithoutAmount<T> {
     pub fn get(&self, filter: &Filter) -> Option<&T> {
         match filter {
             Filter::Term(term) => match term {
-                crate::Term::Sth => Some(&self.term.short),
-                crate::Term::Lth => Some(&self.term.long),
+                Term::Sth => Some(&self.term.short),
+                Term::Lth => Some(&self.term.long),
             },
             Filter::Type(output_type) => Some(self.type_.get(*output_type)),
             _ => self.core.get(filter),

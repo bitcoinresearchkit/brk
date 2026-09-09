@@ -2,17 +2,22 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    io::{Read, Result},
+    ops::RangeBounds,
+};
+
 use byteview::{Builder, ByteView};
 
 use super::Slice;
 
 pub trait SliceExt: Sized {
-    fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self;
+    fn slice(&self, range: impl RangeBounds<usize>) -> Self;
     fn fused(left: &[u8], right: &[u8]) -> Self;
 }
 
 impl SliceExt for Slice {
-    fn slice(&self, range: impl std::ops::RangeBounds<usize>) -> Self {
+    fn slice(&self, range: impl RangeBounds<usize>) -> Self {
         Self(self.0.slice(range))
     }
 
@@ -47,7 +52,7 @@ impl Slice {
     }
 
     #[doc(hidden)]
-    pub fn from_reader<R: std::io::Read>(reader: &mut R, len: usize) -> std::io::Result<Self> {
+    pub fn from_reader<R: Read>(reader: &mut R, len: usize) -> Result<Self> {
         ByteView::from_reader(reader, len).map(Self)
     }
 }

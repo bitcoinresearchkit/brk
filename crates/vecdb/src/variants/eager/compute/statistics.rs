@@ -1,17 +1,22 @@
 use std::{
     cmp::Ordering,
     collections::VecDeque,
-    ops::{AddAssign, Div, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
-use crate::{
-    AnyVec, CheckedSub, Error, ReadableVec, StoredVec, VecIndex, VecValue, Version, WritableVec,
-};
-#[cfg(feature = "pco")]
-use crate::{ColumnId, ColumnarVec, PcoVec, PcoVecValue};
 use brk_exit::Exit;
 
 use super::super::EagerVec;
+use crate::{
+    AnyVec, CheckedSub, Error, ReadableVec, Result, StoredVec, VecIndex, VecValue, Version,
+    WritableVec,
+};
+
+#[cfg(feature = "pco")]
+use std::iter as StdIter;
+
+#[cfg(feature = "pco")]
+use crate::{ColumnId, ColumnarVec, PcoVec, PcoVecValue};
 
 impl<V> EagerVec<V>
 where
@@ -24,7 +29,7 @@ where
         window: usize,
         exit: &Exit,
         should_pop: F,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -91,7 +96,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         window: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -105,7 +110,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         window: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -119,9 +124,9 @@ where
         source: &impl ReadableVec<V::I, A>,
         window: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
-        V::T: std::ops::Add<V::T, Output = V::T> + From<A> + Default + CheckedSub,
+        V::T: Add<V::T, Output = V::T> + From<A> + Default + CheckedSub,
         A: VecValue,
     {
         // Cursor for the leaving-value reads — persists across batches so each
@@ -177,7 +182,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         values: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         V::T: From<A> + Default + AddAssign + SubAssign,
@@ -241,7 +246,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         values: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         f64: From<A> + From<V::T>,
@@ -314,7 +319,7 @@ where
         values: &impl ReadableVec<V::I, A>,
         mean: &impl ReadableVec<V::I, B>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         B: VecValue,
@@ -393,7 +398,7 @@ where
         values: &impl ReadableVec<V::I, A>,
         mean: &impl ReadableVec<V::I, B>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         B: VecValue,
@@ -444,7 +449,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         values: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         f64: From<A> + From<V::T>,
@@ -463,7 +468,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         values: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         f64: From<A> + From<V::T>,
@@ -479,7 +484,7 @@ where
         values: &impl ReadableVec<V::I, A>,
         exit: &Exit,
         alpha_fn: F,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         f64: From<A> + From<V::T>,
@@ -528,7 +533,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -549,7 +554,7 @@ where
         window_starts: &impl ReadableVec<V::I, V::I>,
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -570,7 +575,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
         should_pop: F,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue + Ord,
         V::T: From<A>,
@@ -638,7 +643,7 @@ where
         numerator: &impl ReadableVec<V::I, A>,
         denominator: &impl ReadableVec<V::I, B>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         B: VecValue,
@@ -734,9 +739,9 @@ where
         source: &impl ReadableVec<V::I, A>,
         sma: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
-        V::T: std::ops::Add<V::T, Output = V::T> + From<A> + From<f32>,
+        V::T: Add<V::T, Output = V::T> + From<A> + From<f32>,
         A: VecValue,
         f32: From<V::T> + From<A>,
     {
@@ -750,9 +755,9 @@ where
         window: usize,
         exit: &Exit,
         min_i: Option<V::I>,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
-        V::T: std::ops::Add<V::T, Output = V::T> + From<A> + From<f32>,
+        V::T: Add<V::T, Output = V::T> + From<A> + From<f32>,
         A: VecValue,
         f32: From<V::T> + From<A>,
     {
@@ -819,7 +824,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         window: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<f32>,
         A: VecValue,
@@ -880,7 +885,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         ema: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + From<f32>,
         A: VecValue,
@@ -896,7 +901,7 @@ where
         ema: usize,
         exit: &Exit,
         min_i: Option<V::I>,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + From<f32>,
         A: VecValue,
@@ -915,7 +920,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         period: usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + From<f32>,
         A: VecValue,
@@ -938,7 +943,7 @@ where
         k: f32,
         min_i: Option<V::I>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + From<f32>,
         A: VecValue,
@@ -994,7 +999,7 @@ where
         exit: &Exit,
         compare: F,
         exclude_default: bool,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default,
         A: VecValue,
@@ -1040,7 +1045,7 @@ where
         max_from: V::I,
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default,
         A: VecValue,
@@ -1055,7 +1060,7 @@ where
         max_from: V::I,
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default,
         A: VecValue,
@@ -1071,7 +1076,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         exit: &Exit,
         exclude_default: bool,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default,
         A: VecValue,
@@ -1093,7 +1098,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         from: V::I,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default + Copy,
         A: VecValue,
@@ -1109,7 +1114,7 @@ where
         source: &impl ReadableVec<V::I, A>,
         from: V::I,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default + Copy,
         A: VecValue,
@@ -1124,7 +1129,7 @@ where
         from: V::I,
         exit: &Exit,
         compare: fn(V::T, V::T) -> V::T,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A> + Ord + Default + Copy,
         A: VecValue,
@@ -1159,7 +1164,7 @@ where
         sma: &impl ReadableVec<V::I, B>,
         sd: &impl ReadableVec<V::I, C>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<f32>,
         A: VecValue + Sub<B, Output = A> + Div<C, Output = V::T>,
@@ -1192,7 +1197,7 @@ where
         window_starts: impl Fn(C) -> &'a W,
         values: &impl ReadableVec<I, A>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         A: VecValue,
         W: ReadableVec<I, I> + 'a,
@@ -1209,7 +1214,7 @@ where
         let source_len = window_starts
             .iter()
             .map(|window_starts| window_starts.len())
-            .chain(std::iter::once(values.len()))
+            .chain(StdIter::once(values.len()))
             .min()
             .unwrap_or_default();
 
@@ -1251,13 +1256,18 @@ where
 
 #[cfg(all(test, feature = "pco"))]
 mod columnar_tests {
+    use std::{
+        env, fs, process,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    use brk_exit::Exit;
+
+    use super::*;
     use crate::{
         AnyStoredVec, BytesVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
         ReadableVec, VecValue, Version, WritableVec,
     };
-    use brk_exit::Exit;
-
-    use super::*;
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     enum Column {
@@ -1307,14 +1317,11 @@ mod columnar_tests {
 
     #[test]
     fn columnar_ema_matches_individual_emas() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "vecdb-columnar-ema-{}-{suffix}",
-            std::process::id()
-        ));
+        let path = env::temp_dir().join(format!("vecdb-columnar-ema-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
         let mut values: EagerVec<PcoVec<usize, f64>> =
@@ -1377,6 +1384,6 @@ mod columnar_tests {
         drop(short_starts);
         drop(values);
         drop(db);
-        std::fs::remove_dir_all(path).unwrap();
+        fs::remove_dir_all(path).unwrap();
     }
 }

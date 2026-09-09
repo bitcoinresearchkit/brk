@@ -1,13 +1,14 @@
 #![cfg(feature = "serde")]
 
+use tempfile::tempdir;
 use vecdb::{
-    AnySerializableVec, AnyStoredVec, BytesVec, Database, ImportableVec, MutableVec, StoredVec,
-    Version, WritableVec,
+    AnySerializableVec, AnyStoredVec, BytesVec, Database, ImportableVec, MutableVec, Result,
+    StoredVec, Version, WritableVec,
 };
 
 #[test]
-fn json_ranges_follow_emitted_values_including_holes() -> vecdb::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn json_ranges_follow_emitted_values_including_holes() -> Result<()> {
+    let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let mut values = MutableVec::<BytesVec<usize, u32>>::import(&db, "values", Version::ONE)?;
     for value in [10, 20, 30, 40] {

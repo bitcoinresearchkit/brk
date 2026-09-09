@@ -1,4 +1,8 @@
+use bitview_plugin_coinflow::Vecs as CoinflowVecs;
+use bitview_plugin_cointime::Vecs as CointimeVecs;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -70,10 +74,10 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
-    distribution: &bitview_plugin_distribution::Vecs,
-    cointime: &bitview_plugin_cointime::Vecs,
-    coinflow: &bitview_plugin_coinflow::Vecs,
+    mappings: &MappingsVecs,
+    distribution: &DistributionVecs,
+    cointime: &CointimeVecs,
+    coinflow: &CoinflowVecs,
 ) -> Result<Components> {
     let utxos = &distribution.cohorts;
     let realized_price = &utxos.realized.price.cohorts;
@@ -107,9 +111,9 @@ pub fn forced_import(
 pub fn compute(
     components: &mut Components,
     indexer: &Indexer,
-    distribution: &bitview_plugin_distribution::Vecs,
-    cointime: &bitview_plugin_cointime::Vecs,
-    coinflow: &bitview_plugin_coinflow::Vecs,
+    distribution: &DistributionVecs,
+    cointime: &CointimeVecs,
+    coinflow: &CoinflowVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_lengths = indexer.safe_lengths();

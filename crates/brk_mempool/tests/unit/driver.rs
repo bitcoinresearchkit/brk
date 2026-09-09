@@ -1,5 +1,11 @@
-use std::panic::{catch_unwind, panic_any};
+use std::{
+    panic::{catch_unwind, panic_any},
+    sync::mpsc,
+    thread,
+    time::Duration as TimeDuration,
+};
 
+use brk_error::Error as ErrorError;
 use rustc_hash::FxHashMap;
 
 use super::*;
@@ -28,14 +34,9 @@ fn statistics_retain_complete_membership_independently_of_live_state() {
         );
         // Holding the live write lock must not block statistics readers.
         let reader = mempool.clone();
-        let (send, receive) = std::sync::mpsc::channel();
-        let reading = std::thread::spawn(move || send.send(reader.info().unwrap().count).unwrap());
-        assert_eq!(
-            receive
-                .recv_timeout(std::time::Duration::from_secs(1))
-                .unwrap(),
-            0
-        );
+        let (send, receive) = mpsc::channel();
+        let reading = thread::spawn(move || send.send(reader.info().unwrap().count).unwrap());
+        assert_eq!(receive.recv_timeout(TimeDuration::from_secs(1)).unwrap(), 0);
         reading.join().unwrap();
     }
     mempool.publish_observation(tip, &[]);
@@ -69,7 +70,7 @@ fn concurrent_cycles_are_rejected_before_rpc_or_mutation() {
     let _cycle = mempool.0.cycle.lock();
     assert!(matches!(
         mempool.tick_with(|_| FxHashMap::default()),
-        Err(brk_error::Error::StateUpdating)
+        Err(ErrorError::StateUpdating)
     ));
 }
 

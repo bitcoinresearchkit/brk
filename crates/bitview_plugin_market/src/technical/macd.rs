@@ -1,15 +1,17 @@
-use brk_error::Result;
-
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 
 use super::MacdChain;
+
 #[allow(clippy::too_many_arguments)]
 pub fn compute(
     chain: &mut MacdChain,
     indexer: &Indexer,
-    blocks: &bitview_plugin_blocks::Vecs,
-    prices: &bitview_plugin_price::Vecs,
+    blocks: &BlocksVecs,
+    prices: &PriceVecs,
     fast_days: usize,
     slow_days: usize,
     signal_days: usize,

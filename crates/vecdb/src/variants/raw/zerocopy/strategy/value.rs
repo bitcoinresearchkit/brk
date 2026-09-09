@@ -1,12 +1,11 @@
-use crate::{Error, ValueStrategy, ZeroCopyVecValue};
-
 use super::ZeroCopyStrategy;
+use crate::{Error, Result, ValueStrategy, ZeroCopyVecValue};
 
 impl<T: ZeroCopyVecValue> ValueStrategy<T> for ZeroCopyStrategy<T> {
     const IS_NATIVE_LAYOUT: bool = true;
 
     #[inline(always)]
-    fn read(bytes: &[u8]) -> crate::Result<T> {
+    fn read(bytes: &[u8]) -> Result<T> {
         T::read_from_prefix(bytes)
             .map(|(v, _)| v)
             .map_err(|_| Error::ZeroCopyError)

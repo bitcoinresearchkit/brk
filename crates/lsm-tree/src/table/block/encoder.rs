@@ -2,37 +2,41 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{io::Write, marker::PhantomData};
+
 use super::{
     super::{
-        block::binary_index::Builder as BinaryIndexBuilder,
-        block::hash_index::{Builder as HashIndexBuilder, MAX_POINTERS_FOR_HASH_INDEX},
+        block::{
+            binary_index::Builder as BinaryIndexBuilder,
+            hash_index::{Builder as HashIndexBuilder, MAX_POINTERS_FOR_HASH_INDEX},
+        },
         util::longest_shared_prefix_length,
     },
     Trailer,
 };
-use std::marker::PhantomData;
+use crate::Result;
 
 pub trait Encodable<Context: Default> {
     fn key(&self) -> &[u8];
 
-    fn encode_full_into<W: std::io::Write>(
+    fn encode_full_into<W: Write>(
         &self,
         writer: &mut W,
         state: &mut Context,
         fixed_key_len: Option<u16>,
         fixed_value_len: Option<u32>,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         Self: Sized;
 
-    fn encode_truncated_into<W: std::io::Write>(
+    fn encode_truncated_into<W: Write>(
         &self,
         writer: &mut W,
         state: &mut Context,
         shared_len: usize,
         fixed_key_len: Option<u16>,
         fixed_value_len: Option<u32>,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         Self: Sized;
 }
@@ -141,7 +145,7 @@ impl<'a, Context: Default, Item: Encodable<Context>> Encoder<'a, Context, Item> 
     //     self
     // }
 
-    pub fn write(&mut self, item: &'a Item) -> crate::Result<()> {
+    pub fn write(&mut self, item: &'a Item) -> Result<()> {
         // NOTE: Check if we are a restart marker
         if self
             .item_count
@@ -191,7 +195,7 @@ impl<'a, Context: Default, Item: Encodable<Context>> Encoder<'a, Context, Item> 
         Ok(())
     }
 
-    pub fn finish(self) -> crate::Result<()> {
+    pub fn finish(self) -> Result<()> {
         Trailer::write(self)
     }
 }

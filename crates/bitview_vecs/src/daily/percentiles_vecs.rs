@@ -30,10 +30,9 @@ impl DailyPercentilesVecs {
         mappings: &DailyMappings,
     ) -> Result<Self> {
         let version = version + VERSION;
-        let prices = ColumnarDailyMetric::forced_import(db, name, version, |source| {
+        let prices = ColumnarDailyMetric::forced_import(cache, db, name, version, |source| {
             ByPercentile::from_fn(|id| {
                 LazyColumnDailyPrice::new(
-                    cache,
                     &format!("{name}_pct{:02}", id.percentile()),
                     version,
                     source,

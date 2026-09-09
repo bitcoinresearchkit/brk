@@ -2,13 +2,16 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::GlobalTableId;
+use std::{fs::File, io::Result, path::Path, sync::Arc};
+
 use quick_cache::{UnitWeighter, sync::Cache as QuickCache};
-use std::{fs::File, path::Path, sync::Arc};
+use rustc_hash::FxBuildHasher;
+
+use crate::GlobalTableId;
 
 /// Caches file descriptors to tables
 pub struct DescriptorTable {
-    inner: QuickCache<GlobalTableId, Arc<File>, UnitWeighter, rustc_hash::FxBuildHasher>,
+    inner: QuickCache<GlobalTableId, Arc<File>, UnitWeighter, FxBuildHasher>,
 }
 
 impl DescriptorTable {
@@ -21,7 +24,7 @@ impl DescriptorTable {
             1_000,
             capacity as u64,
             UnitWeighter,
-            rustc_hash::FxBuildHasher,
+            FxBuildHasher,
             DefaultLifecycle::default(),
         );
 
@@ -33,7 +36,7 @@ impl DescriptorTable {
     /// # Errors
     ///
     /// Returns an error if the table file cannot be opened.
-    pub fn access_or_open(&self, id: GlobalTableId, path: &Path) -> std::io::Result<Arc<File>> {
+    pub fn access_or_open(&self, id: GlobalTableId, path: &Path) -> Result<Arc<File>> {
         self.inner
             .get_or_insert_with(&id, || File::open(path).map(Arc::new))
     }
@@ -46,16 +49,19 @@ impl DescriptorTable {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs, io::Error, sync::Barrier, thread};
+
+    use tempfile::tempdir;
+
     use super::*;
-    use std::sync::Barrier;
 
     #[test]
-    fn concurrent_miss_returns_one_shared_descriptor() -> std::io::Result<()> {
+    fn concurrent_miss_returns_one_shared_descriptor() -> Result<()> {
         const THREADS: usize = 8;
 
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let path = directory.path().join("table");
-        std::fs::write(&path, b"table")?;
+        fs::write(&path, b"table")?;
 
         let table = Arc::new(DescriptorTable::new(16));
         let barrier = Arc::new(Barrier::new(THREADS));
@@ -68,7 +74,7 @@ mod tests {
                 let table = Arc::clone(&table);
                 let barrier = Arc::clone(&barrier);
                 let path = path.clone();
-                std::thread::spawn(move || {
+                thread::spawn(move || {
                     barrier.wait();
                     table.access_or_open((1, 1).into(), &path)
                 })
@@ -80,11 +86,11 @@ mod tests {
             .map(|handle| {
                 handle
                     .join()
-                    .map_err(|_| std::io::Error::other("descriptor thread panicked"))?
+                    .map_err(|_| Error::other("descriptor thread panicked"))?
             })
-            .collect::<std::io::Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?;
         let Some(first) = descriptors.first() else {
-            return Err(std::io::Error::other("descriptor test spawned no threads"));
+            return Err(Error::other("descriptor test spawned no threads"));
         };
         assert!(descriptors.iter().all(|file| Arc::ptr_eq(first, file)));
         Ok(())

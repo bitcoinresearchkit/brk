@@ -1,3 +1,5 @@
+use std::mem;
+
 use memmap2::MmapMut;
 use parking_lot::RwLockReadGuard;
 
@@ -37,7 +39,7 @@ impl Reader {
 
         // SAFETY: Transmute extends the guard lifetime to 'static. This is safe
         // because `_db` (the Arc) outlives `mmap` (the guard) — see struct field order.
-        let mmap: RwLockReadGuard<'static, MmapMut> = unsafe { std::mem::transmute(db.mmap()) };
+        let mmap: RwLockReadGuard<'static, MmapMut> = unsafe { mem::transmute(db.mmap()) };
 
         Self {
             _db: db,

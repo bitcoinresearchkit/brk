@@ -1,4 +1,4 @@
-use brk_error::Error;
+use brk_error::{Error, Result};
 
 pub use crate::step::Step;
 
@@ -8,7 +8,7 @@ pub struct Path {
 }
 
 impl Path {
-    pub fn parse(s: &str) -> brk_error::Result<Self> {
+    pub fn parse(s: &str) -> Result<Self> {
         let mut parts = s.split('.').peekable();
         let mut steps = Vec::new();
         while let Some(name) = parts.next() {

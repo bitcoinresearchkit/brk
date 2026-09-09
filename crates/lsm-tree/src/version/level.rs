@@ -1,6 +1,9 @@
+use std::sync::Arc;
+
+use rustc_hash::FxHashSet;
+
 use super::{Run, run::Ranged};
 use crate::{KeyRange, Table};
-use std::sync::Arc;
 
 impl Ranged for Table {
     fn key_range(&self) -> &KeyRange {
@@ -47,7 +50,7 @@ impl Level {
         self.runs.iter()
     }
 
-    pub fn list_ids(&self) -> rustc_hash::FxHashSet<u32> {
+    pub fn list_ids(&self) -> FxHashSet<u32> {
         self.iter()
             .flat_map(|run| run.iter())
             .map(Table::id)

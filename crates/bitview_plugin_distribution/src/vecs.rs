@@ -3,6 +3,10 @@ use std::{mem, path::PathBuf};
 use bitview_cohort::{AddrTypeId, AgeRange, AgeRangeId, CohortContext, EntryPrice};
 use bitview_collections::Windows;
 use bitview_plugin::{ComputePlugin, ImportContext, Plugin, PluginStorage, UpdateContext};
+use bitview_plugin_inputs::ByTypeVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_outputs::ByTypeVecs as OutputsByTypeVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
     CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
@@ -89,11 +93,11 @@ impl Vecs {
 
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
-        prices: &bitview_plugin_price::Vecs,
-        inputs_by_type: &bitview_plugin_inputs::ByTypeVecs,
-        outputs_by_type: &bitview_plugin_outputs::ByTypeVecs,
+        prices: &PriceVecs,
+        inputs_by_type: &ByTypeVecs,
+        outputs_by_type: &OutputsByTypeVecs,
     ) -> Result<Self> {
         let db_path = STORAGE.path(context);
         let states_path = db_path.join("states");
@@ -220,13 +224,13 @@ impl Vecs {
             cohorts,
 
             coindays_created: ColumnarPerBlockCumulativeRolling::forced_import(
+                context.cache_budget(),
                 &db,
                 &CohortContext::Utxo.prefixed("age_range_coindays_created_cumulative"),
                 version + COINDAYS_CREATED_VERSION,
                 |source| {
                     AgeRangeId::series(CohortContext::Utxo, |column, name| {
                         LazyColumnPerBlockCumulativeRolling::new(
-                            context.cache_budget(),
                             &format!("{name}_coindays_created"),
                             version,
                             source,
@@ -259,7 +263,6 @@ impl Vecs {
 
     /// Reset in-memory caches that become stale after rollback.
     fn reset_in_memory_caches(&mut self) {
-        self.cohorts.invalidate_caches();
         self.inner.reset();
     }
 

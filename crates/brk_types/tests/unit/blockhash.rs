@@ -1,10 +1,12 @@
-use std::fmt;
+use std::{array, fmt};
 
 use bitcoin::{BlockHash as BitcoinBlockHash, hashes::Hash};
-#[cfg(feature = "storage")]
-use vecdb::Formattable;
+use serde_json::{from_str, to_string as SerdeJsonToString};
 
 use super::BlockHash;
+
+#[cfg(feature = "storage")]
+use vecdb::Formattable;
 
 struct Previous(BlockHash);
 
@@ -18,15 +20,15 @@ impl fmt::Display for Previous {
 fn formatting_preserves_bitcoin_order_and_wire_bytes() {
     for seed in 0..=u8::MAX {
         let native =
-            BitcoinBlockHash::from_byte_array(std::array::from_fn(|i| seed.wrapping_add(i as u8)));
+            BitcoinBlockHash::from_byte_array(array::from_fn(|i| seed.wrapping_add(i as u8)));
         let hash = BlockHash::from(native);
         let expected = native.to_string();
         assert_eq!(hash.to_string(), expected);
         assert_eq!(format!("{hash:>80}"), format!("{:>80}", Previous(hash)));
         assert_eq!(format!("{hash:.8}"), format!("{:.8}", Previous(hash)));
-        let json = serde_json::to_string(&hash).unwrap();
+        let json = SerdeJsonToString(&hash).unwrap();
         assert_eq!(json, format!("\"{expected}\""));
-        assert_eq!(serde_json::from_str::<BlockHash>(&json).unwrap(), hash);
+        assert_eq!(from_str::<BlockHash>(&json).unwrap(), hash);
         #[cfg(feature = "storage")]
         {
             let mut bytes = vec![b'!'];

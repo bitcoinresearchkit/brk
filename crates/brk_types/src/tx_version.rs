@@ -1,10 +1,15 @@
+use std::fmt::{Display, Formatter, Result};
+
+use bitcoin::transaction::Version;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::StoredU8;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Compact indexed transaction-version category. Values 1, 2, and 3 preserve
 /// those exact signed 32-bit Bitcoin transaction versions; 255 represents every
@@ -22,9 +27,9 @@ impl TxVersion {
     pub const NON_STANDARD: Self = Self(u8::MAX);
 }
 
-impl From<bitcoin::transaction::Version> for TxVersion {
+impl From<Version> for TxVersion {
     #[inline]
-    fn from(value: bitcoin::transaction::Version) -> Self {
+    fn from(value: Version) -> Self {
         match value.0 {
             1 => Self::ONE,
             2 => Self::TWO,
@@ -34,7 +39,7 @@ impl From<bitcoin::transaction::Version> for TxVersion {
     }
 }
 
-impl From<TxVersion> for bitcoin::transaction::Version {
+impl From<TxVersion> for Version {
     #[inline]
     fn from(value: TxVersion) -> Self {
         Self(value.0 as i32)
@@ -48,9 +53,9 @@ impl From<TxVersion> for StoredU8 {
     }
 }
 
-impl std::fmt::Display for TxVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for TxVersion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -60,7 +65,7 @@ impl std::fmt::Display for TxVersion {
 impl Formattable for TxVersion {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

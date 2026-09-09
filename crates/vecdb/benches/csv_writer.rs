@@ -2,6 +2,7 @@
 
 use std::{hint::black_box, time::Instant};
 
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVecWithWriter, BytesVec, Cursor, Database, Error, Formattable, ImportableVec,
     PcoVec, ReadableVec, Result, ValueWriter, Version, WritableVec,
@@ -117,7 +118,7 @@ fn compare<V: ReadableVec<usize, u32> + AnyVecWithWriter>(name: &str, source: &V
 #[test]
 #[ignore = "CSV collection/cursor/chunk comparison; warm local storage, no HTTP"]
 fn benchmark_csv_writers() -> Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = tempdir()?;
     let db = Database::open(temp.path())?;
     let mut raw = BytesVec::<usize, u32>::import(&db, "raw", Version::ONE)?;
     let mut compressed = PcoVec::<usize, u32>::import(&db, "compressed", Version::ONE)?;

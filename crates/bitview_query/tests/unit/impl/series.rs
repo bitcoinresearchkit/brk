@@ -1,3 +1,5 @@
+use serde_json::{from_str, to_vec};
+
 use super::{Query, Value, reserialize_json};
 
 #[test]
@@ -11,10 +13,10 @@ fn reused_json_buffer_preserves_value_bytes_and_parse_errors() {
         "[1e20, null]",
         r#"{"b":"\u0061","a":-0}"#,
     ] {
-        let value: Value = serde_json::from_str(raw).unwrap();
+        let value: Value = from_str(raw).unwrap();
         assert_eq!(
             reserialize_json(raw.as_bytes().to_vec()).unwrap(),
-            serde_json::to_vec(&value).unwrap()
+            to_vec(&value).unwrap()
         );
     }
     for raw in [b"".as_slice(), b"NaN", b"inf", b"{", b"\xff"] {

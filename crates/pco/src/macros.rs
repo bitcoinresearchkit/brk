@@ -1,6 +1,8 @@
 #![allow(clippy::single_component_path_imports)]
 
-dtype_dispatch::build_dtype_macros!(
+use dtype_dispatch::build_dtype_macros;
+
+build_dtype_macros!(
   #[doc = "\
     Defines enums holding a container generic to `Number`.
   "]
@@ -38,7 +40,7 @@ dtype_dispatch::build_dtype_macros!(
   },
 );
 
-dtype_dispatch::build_dtype_macros!(
+build_dtype_macros!(
   define_latent_enum,
 
   #[doc = "\

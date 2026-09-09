@@ -1,9 +1,11 @@
-use brk_error::Result;
-
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_types::{Height, OutPoint, OutputType, TxInIndex, TxIndex, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec};
+use vecdb::{
+    AnyStoredVec, BudgetedCachedVec, CacheBudget, Database, ImportableVec, PcoVec, Rw, Stamp,
+    StorageMode, WritableVec,
+};
 
 #[derive(Traversable)]
 pub struct InputsVecs<M: StorageMode = Rw> {
@@ -11,7 +13,7 @@ pub struct InputsVecs<M: StorageMode = Rw> {
     /// At `height`, this is where the block begins and equals the number of
     /// inputs in preceding blocks; at `tx_index`, it identifies the
     /// transaction's first input.
-    pub first_txin_index: M::Stored<PcoVec<Height, TxInIndex>>,
+    pub first_txin_index: BudgetedCachedVec<M::Stored<PcoVec<Height, TxInIndex>>>,
     /// Previous-output reference encoded as the global transaction index and
     /// zero-based output position within that transaction. Coinbase inputs use
     /// `u32::MAX` for both components.
@@ -39,7 +41,11 @@ pub struct InputsVecs<M: StorageMode = Rw> {
 }
 
 impl InputsVecs {
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+    ) -> Result<Self> {
         let (first_txin_index, outpoint, txout_index, tx_index, output_type, type_index) = parallel_import! {
             first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
             outpoint = PcoVec::forced_import(db, "outpoint", version),
@@ -49,7 +55,7 @@ impl InputsVecs {
             type_index = PcoVec::forced_import(db, "type_index", version),
         };
         Ok(Self {
-            first_txin_index,
+            first_txin_index: cache.wrap(first_txin_index),
             outpoint,
             txout_index,
             tx_index,
@@ -102,15 +108,18 @@ impl InputsVecs {
 #[cfg(test)]
 mod tests {
     use brk_types::{Version, Vout};
+    use tempfile::tempdir;
     use vecdb::{AnyVec, ReadableVec};
 
     use super::*;
 
+    static CACHE: CacheBudget = CacheBudget::new(1 << 20);
+
     #[test]
     fn rollback_keeps_all_input_facts_aligned() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let db = Database::open(dir.path()).unwrap();
-        let mut inputs = InputsVecs::forced_import(&db, Version::ONE).unwrap();
+        let mut inputs = InputsVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
 
         for txin_index in [0_usize, 2, 4] {
             inputs.first_txin_index.push(TxInIndex::from(txin_index));
@@ -176,7 +185,7 @@ mod tests {
         drop(db);
 
         let db = Database::open(dir.path()).unwrap();
-        let inputs = InputsVecs::forced_import(&db, Version::ONE).unwrap();
+        let inputs = InputsVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
         assert_eq!(inputs.first_txin_index.len(), 1);
         assert!(inputs.iter_any().skip(1).all(|vec| vec.len() == 2));
         assert_eq!(

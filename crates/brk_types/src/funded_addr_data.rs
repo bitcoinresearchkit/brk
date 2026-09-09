@@ -1,13 +1,22 @@
-use crate::unlikely;
-use brk_error::Error;
+use std::{
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    result::Result as StdResult,
+};
+
+use brk_error::{Error, Result as ErrorResult};
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+
+use crate::{Cents, CentsSats, EmptyAddrData, OutputType, Sats, unlikely};
+
+#[cfg(feature = "storage")]
+use vecdb::Result;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, OverflowVecValue, Version};
 
 #[cfg(feature = "storage")]
 use crate::FundedAddrDataCompact;
-use crate::{Cents, CentsSats, EmptyAddrData, OutputType, Sats};
 
 const CENTS_SATS_96_LIMIT: u128 = 1_u128 << 96;
 
@@ -72,7 +81,7 @@ impl CentsSats96 {
 
     #[inline]
     #[cfg(feature = "storage")]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Ok(Self([
             u32::from_bytes(&bytes[0..4])?,
             u32::from_bytes(&bytes[4..8])?,
@@ -81,20 +90,20 @@ impl CentsSats96 {
     }
 }
 
-impl std::fmt::Debug for CentsSats96 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.widen().fmt(f)
+impl Debug for CentsSats96 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        Debug::fmt(&self.widen(), f)
     }
 }
 
 impl Serialize for CentsSats96 {
-    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> StdResult<S::Ok, S::Error> {
         self.widen().serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for CentsSats96 {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> std::result::Result<Self, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> StdResult<Self, D::Error> {
         let value = CentsSats::deserialize(deserializer)?;
         if value.as_u128() >= CENTS_SATS_96_LIMIT {
             return Err(de::Error::custom("realized cap exceeds 96 bits"));
@@ -253,7 +262,7 @@ impl FundedAddrData {
     }
 
     /// Applies a spent output and returns its exact realized-cap delta.
-    pub fn send(&mut self, amount: Sats, previous_price: Cents) -> brk_error::Result<CentsSats> {
+    pub fn send(&mut self, amount: Sats, previous_price: Cents) -> ErrorResult<CentsSats> {
         if unlikely(self.balance() < amount) {
             return Err(Error::Internal("Previous amount smaller than sent amount"));
         }
@@ -286,8 +295,8 @@ impl From<&EmptyAddrData> for FundedAddrData {
     }
 }
 
-impl std::fmt::Display for FundedAddrData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for FundedAddrData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(
             f,
             "tx_count: {}, funded_txo_count: {}, spent_txo_count: {}, received: {}, sent: {}, realized_cap_raw: {}",
@@ -308,7 +317,7 @@ impl Formattable for FundedAddrData {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> FmtResult {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
@@ -340,7 +349,7 @@ impl Bytes for FundedAddrData {
         arr
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Ok(Self {
             received: Sats::from_bytes(&bytes[0..8])?,
             sent: Sats::from_bytes(&bytes[8..16])?,
@@ -397,10 +406,12 @@ impl OverflowVecValue for FundedAddrData {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "storage")]
-    use crate::SupplyState;
+    use serde_json::{from_value, to_value};
 
     use super::*;
+
+    #[cfg(feature = "storage")]
+    use crate::SupplyState;
 
     #[test]
     fn compact_realized_cap_carries_borrows_and_roundtrips() {
@@ -472,12 +483,12 @@ mod tests {
         let mut data = FundedAddrData::default();
         data.receive(Sats::ONE_BTC, Cents::new(10_000));
 
-        let json = serde_json::to_value(&data).unwrap();
+        let json = to_value(&data).unwrap();
         assert_eq!(json["realized_cap_raw"], 1_000_000_000_000_u64);
         assert!(json.get("padding").is_none());
         assert!(json.get("0").is_none());
 
-        let decoded: FundedAddrData = serde_json::from_value(json).unwrap();
+        let decoded: FundedAddrData = from_value(json).unwrap();
         assert_eq!(decoded.realized_cap_raw(), data.realized_cap_raw());
     }
 }

@@ -2,14 +2,20 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{fs::File, io::BufWriter};
+
+use log::trace;
+use sfa::Writer;
+
 use crate::{
     CompressionType, Result,
     table::{
-        Block, IndexBlock, block::Header as BlockHeader, index_block::KeyedBlockHandle,
+        Block, IndexBlock,
+        block::{BlockType, Header as BlockHeader},
+        index_block::KeyedBlockHandle,
         writer::index::BlockIndexWriter,
     },
 };
-use std::{fs::File, io::BufWriter};
 
 pub struct FullIndexWriter {
     compression: CompressionType,
@@ -39,7 +45,7 @@ impl BlockIndexWriter for FullIndexWriter {
     }
 
     fn register_data_block(&mut self, block_handle: KeyedBlockHandle) -> Result<()> {
-        log::trace!(
+        trace!(
             "Registering block at {:?} with size {} [end_key={:?}]",
             block_handle.offset(),
             block_handle.size(),
@@ -50,18 +56,13 @@ impl BlockIndexWriter for FullIndexWriter {
         Ok(())
     }
 
-    fn finish(self: Box<Self>, file_writer: &mut sfa::Writer<BufWriter<File>>) -> Result<usize> {
+    fn finish(self: Box<Self>, file_writer: &mut Writer<BufWriter<File>>) -> Result<usize> {
         file_writer.start("tli")?;
 
         let mut bytes = vec![];
         IndexBlock::encode_into(&mut bytes, &self.block_handles)?;
 
-        let header = Block::write_into(
-            file_writer,
-            &bytes,
-            crate::table::block::BlockType::Index,
-            self.compression,
-        )?;
+        let header = Block::write_into(file_writer, &bytes, BlockType::Index, self.compression)?;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -71,7 +72,7 @@ impl BlockIndexWriter for FullIndexWriter {
 
         debug_assert!(bytes_written > 0, "Block index should never be empty");
 
-        log::trace!(
+        trace!(
             "Written top level index, with {} pointers ({bytes_written}B)",
             self.block_handles.len(),
         );

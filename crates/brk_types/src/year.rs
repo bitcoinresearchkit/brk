@@ -1,14 +1,19 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display, Formatter, Result},
     ops::{Add, AddAssign, Div},
 };
 
-use crate::CheckedSub;
+use itoa::Buffer;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, Timestamp};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 /// Bitcoin year (2009, 2010, ..., 2025+)
 #[derive(
@@ -100,9 +105,9 @@ impl CheckedSub for Year {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Year {
+impl VecdbCheckedSub for Year {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -131,9 +136,9 @@ impl PrintableIndex for Year {
     }
 }
 
-impl std::fmt::Display for Year {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Year {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -143,7 +148,7 @@ impl std::fmt::Display for Year {
 impl Formattable for Year {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

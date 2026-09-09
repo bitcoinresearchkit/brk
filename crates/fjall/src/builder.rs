@@ -1,6 +1,8 @@
-use crate::{Database, db_config::Config};
-use lsm_tree::{Cache, DescriptorTable};
 use std::{path::Path, sync::Arc};
+
+use lsm_tree::{Cache, DescriptorTable};
+
+use crate::{Database, Result, db_config::Config};
 
 /// Builder for BRK's table-only database.
 pub struct Builder {
@@ -21,7 +23,7 @@ impl Builder {
     /// # Errors
     ///
     /// Returns an error if the database cannot be created, recovered, or locked.
-    pub fn open(self) -> crate::Result<Database> {
+    pub fn open(self) -> Result<Database> {
         Database::open(self.inner)
     }
 

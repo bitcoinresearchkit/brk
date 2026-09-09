@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr};
+use std::{fmt, num::ParseIntError, str::FromStr};
 
 use derive_more::Deref;
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ impl From<Port> for u16 {
 }
 
 impl FromStr for Port {
-    type Err = std::num::ParseIntError;
+    type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         s.parse::<u16>().map(Self)

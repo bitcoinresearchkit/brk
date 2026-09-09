@@ -1,6 +1,7 @@
 use bitview_cohort::{
     CohortContext, UTXO_AGGREGATE_FILTERS, UTXO_AGGREGATE_NAMES, UTXOAggregate, UTXOAggregateId,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
     ColumnarPerBlock, LazyColumnPerBlock, LazyColumnPercentPerBlock, PercentilesVecs, Price,
@@ -79,7 +80,7 @@ impl CostBasisVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let aggregate_version = version + Version::ONE;
         let in_profit_per_coin_source = Self::import_prices(
@@ -119,13 +120,13 @@ impl CostBasisVecs {
         let per_dollar_sources =
             Self::import_percentiles(cache, db, "cost_basis_per_dollar", version, mappings)?;
         let supply_density_source = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "supply_density_by_aggregate",
             aggregate_version,
             |source| {
                 UTXOAggregate::from_fn(|id| {
                     LazyColumnPercentPerBlock::new(
-                        cache,
                         &Self::cohort_metric_name(id, "supply_density"),
                         aggregate_version,
                         source,
@@ -170,7 +171,7 @@ impl CostBasisVecs {
         db: &Database,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<
         ColumnarPerBlock<
             Cents,
@@ -179,13 +180,13 @@ impl CostBasisVecs {
         >,
     > {
         ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{metric}_cents_by_aggregate"),
             version,
             |source| {
                 UTXOAggregate::from_fn(|id| {
                     Price::from_columnar_source(
-                        cache,
                         &Self::cohort_metric_name(id, metric),
                         version,
                         source,
@@ -202,7 +203,7 @@ impl CostBasisVecs {
         db: &Database,
         metric: &str,
         base_version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<UTXOAggregate<PercentilesVecs>> {
         UTXOAggregate::try_from_fn(|id| {
             let version = if matches!(id, UTXOAggregateId::All) {

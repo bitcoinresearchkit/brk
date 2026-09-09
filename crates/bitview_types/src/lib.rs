@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use brk_types::RangeIndex;
+use brk_types::{RangeIndex, de_unquote_usize};
 use serde::Deserializer;
 
 #[macro_use]
@@ -45,5 +45,5 @@ fn de_unquote_limit<'de, D>(deserializer: D) -> Result<Option<Limit>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    brk_types::de_unquote_usize(deserializer).map(|limit| limit.map(Limit::from))
+    de_unquote_usize(deserializer).map(|limit| limit.map(Limit::from))
 }

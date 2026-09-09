@@ -1,7 +1,11 @@
-use crate::{Addr, AddrBytes, OutputType, OutputTypeNormalized, Sats};
-use bitcoin::ScriptBuf;
-use schemars::{JsonSchema, SchemaGenerator};
+use std::borrow::Cow;
+
+use bitcoin::{ScriptBuf, TxOut as BitcoinTxOut};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
+use serde_json::json;
+
+use crate::{Addr, AddrBytes, OutputType, OutputTypeNormalized, Sats};
 
 /// Transaction output
 #[derive(Debug, Clone, Deserialize)]
@@ -53,15 +57,15 @@ struct TxOutSchema {
 }
 
 impl JsonSchema for TxOut {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         "TxOut".into()
     }
 
-    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         let mut schema = TxOutSchema::json_schema(generator);
         schema.insert(
             "required".to_owned(),
-            serde_json::json!([
+            json!([
                 "scriptpubkey",
                 "scriptpubkey_asm",
                 "scriptpubkey_type",
@@ -90,9 +94,9 @@ impl TxOut {
     }
 }
 
-impl From<bitcoin::TxOut> for TxOut {
+impl From<BitcoinTxOut> for TxOut {
     #[inline]
-    fn from(txout: bitcoin::TxOut) -> Self {
+    fn from(txout: BitcoinTxOut) -> Self {
         Self {
             script_pubkey: txout.script_pubkey,
             value: txout.value.into(),
@@ -103,7 +107,7 @@ impl From<bitcoin::TxOut> for TxOut {
     }
 }
 
-impl From<&TxOut> for bitcoin::TxOut {
+impl From<&TxOut> for BitcoinTxOut {
     #[inline]
     fn from(txout: &TxOut) -> Self {
         Self {
@@ -148,6 +152,9 @@ impl Serialize for TxOut {
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_value;
+
     use super::*;
 
     fn p2pk_script(pubkey: &[u8]) -> ScriptBuf {
@@ -161,7 +168,7 @@ mod tests {
     fn script_type(script: ScriptBuf) -> (OutputType, String) {
         let txout = TxOut::from((script, Sats::new(0)));
         let output_type = txout.type_();
-        let value = serde_json::to_value(txout).unwrap();
+        let value = to_value(txout).unwrap();
         let script_type = value["scriptpubkey_type"].as_str().unwrap().to_owned();
         (output_type, script_type)
     }
@@ -207,7 +214,7 @@ mod tests {
 
     #[test]
     fn schema_documents_every_emitted_field() {
-        let schema = serde_json::to_value(schemars::schema_for!(TxOut)).unwrap();
+        let schema = to_value(schema_for!(TxOut)).unwrap();
         let properties = schema["properties"].as_object().unwrap();
         for field in [
             "scriptpubkey",

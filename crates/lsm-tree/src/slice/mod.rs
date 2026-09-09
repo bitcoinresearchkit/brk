@@ -2,19 +2,24 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-mod slice_default;
-
 use std::{
+    borrow::Borrow,
+    cmp::Ordering,
+    ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
 };
+
+use byteview::ByteView;
+
+mod slice_default;
 
 pub use slice_default::SliceExt;
 
 /// An immutable byte slice that can be cloned without additional heap allocation.
 /// There is no guarantee of alignment for zero-copy (de)serialization.
 #[derive(Debug, Default, Clone, Eq, Hash, Ord)]
-pub struct Slice(byteview::ByteView);
+pub struct Slice(ByteView);
 
 impl AsRef<[u8]> for Slice {
     fn as_ref(&self) -> &[u8] {
@@ -24,7 +29,7 @@ impl AsRef<[u8]> for Slice {
 
 impl From<&[u8]> for Slice {
     fn from(value: &[u8]) -> Self {
-        Self(byteview::ByteView::new(value))
+        Self(ByteView::new(value))
     }
 }
 
@@ -91,7 +96,7 @@ impl FromIterator<u8> for Slice {
     }
 }
 
-impl std::ops::Deref for Slice {
+impl Deref for Slice {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -99,7 +104,7 @@ impl std::ops::Deref for Slice {
     }
 }
 
-impl std::borrow::Borrow<[u8]> for Slice {
+impl Borrow<[u8]> for Slice {
     fn borrow(&self) -> &[u8] {
         self
     }
@@ -124,13 +129,13 @@ impl<T> PartialOrd<T> for Slice
 where
     T: AsRef<[u8]>,
 {
-    fn partial_cmp(&self, other: &T) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &T) -> Option<Ordering> {
         self.as_ref().partial_cmp(other.as_ref())
     }
 }
 
 impl PartialOrd<Slice> for &[u8] {
-    fn partial_cmp(&self, other: &Slice) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Slice) -> Option<Ordering> {
         (*self).partial_cmp(other.as_ref())
     }
 }
@@ -138,9 +143,11 @@ impl PartialOrd<Slice> for &[u8] {
 #[cfg(test)]
 #[expect(clippy::expect_used)]
 mod tests {
-    use super::{Slice, SliceExt};
-    use std::{fmt::Debug, sync::Arc};
+    use std::{fmt::Debug, io::Cursor, sync::Arc};
+
     use test_log::test;
+
+    use super::{Slice, SliceExt};
 
     fn assert_slice_handles<T>(v: T)
     where
@@ -232,7 +239,7 @@ mod tests {
         assert_eq!(slice.as_ref(), arc_str.as_bytes());
 
         // - io::Read
-        let mut reader = std::io::Cursor::new(vec![1, 2, 3, 4]);
+        let mut reader = Cursor::new(vec![1, 2, 3, 4]);
         let slice = Slice::from_reader(&mut reader, 4).expect("read");
         assert_eq!(slice, vec![1, 2, 3, 4]);
     }

@@ -1,4 +1,5 @@
 use bitview_collections::WindowsTo1m;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{LazyPerBlock, PerBlock, RatioPerBlock};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredF32, Version};
@@ -13,7 +14,7 @@ fn forced_import_macd(
     db: &Database,
     tf: &str,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<MacdChain> {
     let line = PerBlock::forced_import(cache, db, &format!("macd_line_{tf}"), version, mappings)?;
     let signal =
@@ -52,7 +53,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     returns: &LazyPerBlock<StoredF32, PartsPerMillionSigned64>,
 ) -> Result<Vecs> {
     let v = version + VERSION;

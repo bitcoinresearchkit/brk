@@ -1,5 +1,7 @@
 use pco::data_types::Number;
 
+use crate::Result;
+
 /// Converts a vec value to and from its pco number representation.
 ///
 /// # Safety
@@ -15,5 +17,5 @@ pub unsafe trait Pco: Sized {
 
     fn to_number(self) -> Self::NumberType;
 
-    fn from_number(value: Self::NumberType) -> crate::Result<Self>;
+    fn from_number(value: Self::NumberType) -> Result<Self>;
 }

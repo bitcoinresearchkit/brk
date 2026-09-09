@@ -1,8 +1,10 @@
+use std::{fs, path::Path};
+
 use brk_error::{Error, Result};
-use brk_store::{Kind, PendingIngest, Store};
+use brk_store::{Kind, PendingIngest, Store, open_database};
 use brk_types::{AddrIndexTxIndex, Height, TxIndex, TypeIndex, Unit, Version};
 use fjall::Database;
-use std::{fs, path::Path};
+use tempfile::tempdir;
 
 use super::{DeferredStoresCommit, StoresCheckpoint};
 
@@ -16,7 +18,7 @@ fn open_store(db: &Database, path: &Path, name: &str) -> Result<Store<AddrIndexT
 
 #[test]
 fn dropped_commit_leaves_checkpoint_invalid() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
 
     checkpoint
@@ -36,10 +38,10 @@ fn dropped_commit_leaves_checkpoint_invalid() -> Result<()> {
 
 #[test]
 fn failed_ingest_does_not_publish_checkpoint() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
     let pending = checkpoint.begin(Height::new(42))?;
-    let db = brk_store::open_database(dir.path())?;
+    let db = open_database(dir.path())?;
     let ingests = vec![PendingIngest::new(|| {
         Err(Error::Internal("simulated ingest failure"))
     })];
@@ -55,10 +57,10 @@ fn failed_ingest_does_not_publish_checkpoint() -> Result<()> {
 
 #[test]
 fn persisted_commit_is_not_published_early() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
     let pending = checkpoint.begin(Height::new(42))?;
-    let db = brk_store::open_database(dir.path())?;
+    let db = open_database(dir.path())?;
 
     let persisted = DeferredStoresCommit::new(db, vec![], pending).persist()?;
     assert_eq!(checkpoint.next_height()?, None);
@@ -71,11 +73,11 @@ fn persisted_commit_is_not_published_early() -> Result<()> {
 
 #[test]
 fn dropped_deferred_ingest_reopens_without_value_or_checkpoint() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
 
     {
-        let db = brk_store::open_database(dir.path())?;
+        let db = open_database(dir.path())?;
         let mut store = open_store(&db, dir.path(), "dropped_deferred_ingest")?;
 
         checkpoint
@@ -90,7 +92,7 @@ fn dropped_deferred_ingest_reopens_without_value_or_checkpoint() -> Result<()> {
         drop(pending_checkpoint);
     }
 
-    let db = brk_store::open_database(dir.path())?;
+    let db = open_database(dir.path())?;
     let store = open_store(&db, dir.path(), "dropped_deferred_ingest")?;
 
     assert_eq!(checkpoint.next_height()?, None);
@@ -100,11 +102,11 @@ fn dropped_deferred_ingest_reopens_without_value_or_checkpoint() -> Result<()> {
 
 #[test]
 fn successful_ingest_reopens_with_value_and_checkpoint() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
 
     {
-        let db = brk_store::open_database(dir.path())?;
+        let db = open_database(dir.path())?;
         let mut store = open_store(&db, dir.path(), "successful_ingest")?;
         store.insert(key(1, 1), Unit);
 
@@ -115,7 +117,7 @@ fn successful_ingest_reopens_with_value_and_checkpoint() -> Result<()> {
             .publish()?;
     }
 
-    let db = brk_store::open_database(dir.path())?;
+    let db = open_database(dir.path())?;
     let store = open_store(&db, dir.path(), "successful_ingest")?;
 
     assert_eq!(checkpoint.next_height()?, Some(Height::new(43)));
@@ -125,7 +127,7 @@ fn successful_ingest_reopens_with_value_and_checkpoint() -> Result<()> {
 
 #[test]
 fn empty_database_has_an_explicit_zero_checkpoint() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
 
     assert_eq!(checkpoint.next_height()?, None);
@@ -136,7 +138,7 @@ fn empty_database_has_an_explicit_zero_checkpoint() -> Result<()> {
 
 #[test]
 fn malformed_checkpoint_is_invalid_but_io_errors_propagate() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let checkpoint = StoresCheckpoint::new(dir.path());
 
     fs::write(&checkpoint.path, [0_u8; 3])?;

@@ -1,6 +1,13 @@
+use std::{collections::BTreeSet, iter};
+
 use proc_macro::TokenStream;
+use proc_macro2::{Span, TokenStream as ProcMacro2TokenStream};
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Type, parse_macro_input};
+use syn::{
+    Attribute, Data, DataStruct, DeriveInput, Error, Expr, ExprLit, Field, Fields, FieldsNamed,
+    GenericArgument, GenericParam, Generics, Ident, Index, Lit, Meta, MetaNameValue, PathArguments,
+    Token, Type, TypeParam, WherePredicate, parse_macro_input, punctuated::Punctuated,
+};
 
 // ===========================================================================
 // Struct & field attribute parsing
@@ -15,14 +22,14 @@ struct StructAttr {
     wrap: Option<String>,
 }
 
-fn get_struct_attr(attrs: &[syn::Attribute]) -> StructAttr {
+fn get_struct_attr(attrs: &[Attribute]) -> StructAttr {
     let mut result = StructAttr::default();
     for attr in attrs {
         if !attr.path().is_ident("traversable") {
             continue;
         }
 
-        if let Ok(ident) = attr.parse_args::<syn::Ident>() {
+        if let Ok(ident) = attr.parse_args::<Ident>() {
             match ident.to_string().as_str() {
                 "merge" => result.merge = true,
                 "transparent" => result.transparent = true,
@@ -33,10 +40,10 @@ fn get_struct_attr(attrs: &[syn::Attribute]) -> StructAttr {
             continue;
         }
 
-        if let Ok(meta) = attr.parse_args::<syn::MetaNameValue>()
+        if let Ok(meta) = attr.parse_args::<MetaNameValue>()
             && meta.path.is_ident("wrap")
-            && let syn::Expr::Lit(syn::ExprLit {
-                lit: syn::Lit::Str(lit_str),
+            && let Expr::Lit(ExprLit {
+                lit: Lit::Str(lit_str),
                 ..
             }) = &meta.value
         {
@@ -52,7 +59,7 @@ enum FieldAttr {
 }
 
 struct FieldInfo<'a> {
-    name: &'a syn::Ident,
+    name: &'a Ident,
     ty: &'a Type,
     is_option: bool,
     attr: FieldAttr,
@@ -70,7 +77,7 @@ struct ParsedFieldAttr {
 }
 
 /// Returns `None` for skipped fields and parsed traversal metadata otherwise.
-fn get_field_attr(field: &syn::Field) -> Option<ParsedFieldAttr> {
+fn get_field_attr(field: &Field) -> Option<ParsedFieldAttr> {
     if is_write_only_type(&field.ty) {
         return None;
     }
@@ -83,22 +90,21 @@ fn get_field_attr(field: &syn::Field) -> Option<ParsedFieldAttr> {
             continue;
         }
 
-        let Ok(metas) = attr.parse_args_with(
-            syn::punctuated::Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated,
-        ) else {
+        let Ok(metas) = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+        else {
             continue;
         };
 
         for meta in metas {
             match meta {
-                syn::Meta::Path(path) if path.is_ident("skip") => return None,
-                syn::Meta::Path(path) if path.is_ident("flatten") => {
+                Meta::Path(path) if path.is_ident("skip") => return None,
+                Meta::Path(path) if path.is_ident("flatten") => {
                     attr_type = FieldAttr::Flatten;
                 }
-                syn::Meta::Path(path) if path.is_ident("hidden") => hidden = true,
-                syn::Meta::NameValue(meta) => {
-                    if let syn::Expr::Lit(syn::ExprLit {
-                        lit: syn::Lit::Str(lit_str),
+                Meta::Path(path) if path.is_ident("hidden") => hidden = true,
+                Meta::NameValue(meta) => {
+                    if let Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit_str),
                         ..
                     }) = &meta.value
                     {
@@ -122,15 +128,15 @@ fn get_field_attr(field: &syn::Field) -> Option<ParsedFieldAttr> {
     })
 }
 
-fn get_doc_comment(field: &syn::Field) -> Option<String> {
+fn get_doc_comment(field: &Field) -> Option<String> {
     let lines = field
         .attrs
         .iter()
         .filter(|attr| attr.path().is_ident("doc"))
         .filter_map(|attr| match &attr.meta {
-            syn::Meta::NameValue(meta) => match &meta.value {
-                syn::Expr::Lit(syn::ExprLit {
-                    lit: syn::Lit::Str(value),
+            Meta::NameValue(meta) => match &meta.value {
+                Expr::Lit(ExprLit {
+                    lit: Lit::Str(value),
                     ..
                 }) => Some(value.value()),
                 _ => None,
@@ -145,8 +151,8 @@ fn get_doc_comment(field: &syn::Field) -> Option<String> {
 
 fn with_description_fragment(
     description: Option<&str>,
-    collect: proc_macro2::TokenStream,
-) -> proc_macro2::TokenStream {
+    collect: ProcMacro2TokenStream,
+) -> ProcMacro2TokenStream {
     let Some(description) = description else {
         return collect;
     };
@@ -160,7 +166,7 @@ fn with_description_fragment(
     }}
 }
 
-fn is_field_skipped(field: &syn::Field) -> bool {
+fn is_field_skipped(field: &Field) -> bool {
     get_field_attr(field).is_none()
 }
 
@@ -210,8 +216,8 @@ fn extract_option_inner(ty: &Type) -> Option<&Type> {
     if let Type::Path(type_path) = ty
         && let Some(seg) = type_path.path.segments.last()
         && seg.ident == "Option"
-        && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
-        && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
+        && let PathArguments::AngleBracketed(args) = &seg.arguments
+        && let Some(GenericArgument::Type(inner)) = args.args.first()
     {
         Some(inner)
     } else {
@@ -220,7 +226,7 @@ fn extract_option_inner(ty: &Type) -> Option<&Type> {
 }
 
 /// Check if a type AST references the given identifier anywhere.
-fn type_contains_ident(ty: &Type, ident: &syn::Ident) -> bool {
+fn type_contains_ident(ty: &Type, ident: &Ident) -> bool {
     match ty {
         Type::Path(type_path) => {
             if let Some(qself) = &type_path.qself
@@ -233,14 +239,14 @@ fn type_contains_ident(ty: &Type, ident: &syn::Ident) -> bool {
                     return true;
                 }
                 match &seg.arguments {
-                    syn::PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| {
+                    PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| {
                         matches!(arg, syn::GenericArgument::Type(inner) if type_contains_ident(inner, ident))
                     }),
-                    syn::PathArguments::Parenthesized(args) => {
+                    PathArguments::Parenthesized(args) => {
                         args.inputs.iter().any(|inner| type_contains_ident(&inner.ty, ident))
                             || matches!(&args.output, syn::ReturnType::Type(_, inner) if type_contains_ident(inner, ident))
                     }
-                    syn::PathArguments::None => false,
+                    PathArguments::None => false,
                 }
             })
         }
@@ -254,7 +260,7 @@ fn type_contains_ident(ty: &Type, ident: &syn::Ident) -> bool {
 }
 
 /// Find the generic type parameter bounded by `StorageMode`, if any.
-fn find_storage_mode_param(generics: &syn::Generics) -> Option<&syn::Ident> {
+fn find_storage_mode_param(generics: &Generics) -> Option<&Ident> {
     generics.type_params().find_map(|p| {
         p.bounds
             .iter()
@@ -283,7 +289,7 @@ pub fn derive_traversable(input: TokenStream) -> TokenStream {
 // Traversable generation
 // ===========================================================================
 
-fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
+fn gen_traversable(input: &DeriveInput) -> ProcMacro2TokenStream {
     let name = &input.ident;
     let generics = &input.generics;
     let (impl_generics, ty_generics, _) = generics.split_for_impl();
@@ -291,11 +297,8 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
     let struct_attr = get_struct_attr(&input.attrs);
 
     let Data::Struct(data) = &input.data else {
-        return syn::Error::new_spanned(
-            &input.ident,
-            "Traversable can only be derived for structs",
-        )
-        .to_compile_error();
+        return Error::new_spanned(&input.ident, "Traversable can only be derived for structs")
+            .to_compile_error();
     };
 
     // Single-field tuple struct: delegate (automatic transparent).
@@ -446,11 +449,11 @@ fn gen_traversable(input: &DeriveInput) -> proc_macro2::TokenStream {
 }
 
 fn analyze_fields<'a>(
-    fields: &'a syn::FieldsNamed,
-    generic_params: &[&'a syn::Ident],
-) -> (Vec<FieldInfo<'a>>, Vec<&'a syn::Ident>, Vec<&'a syn::Type>) {
+    fields: &'a FieldsNamed,
+    generic_params: &[&'a Ident],
+) -> (Vec<FieldInfo<'a>>, Vec<&'a Ident>, Vec<&'a Type>) {
     let mut field_infos = Vec::new();
-    let mut generics_set = std::collections::BTreeSet::new();
+    let mut generics_set = BTreeSet::new();
     let mut field_traversable_types = Vec::new();
 
     for field in &fields.named {
@@ -500,10 +503,10 @@ fn analyze_fields<'a>(
 }
 
 fn build_where_clause(
-    generics: &syn::Generics,
-    generics_needing_traversable: &[&syn::Ident],
-    extra_traversable_types: &[&syn::Type],
-) -> proc_macro2::TokenStream {
+    generics: &Generics,
+    generics_needing_traversable: &[&Ident],
+    extra_traversable_types: &[&Type],
+) -> ProcMacro2TokenStream {
     let generic_params: Vec<_> = generics.type_params().map(|p| &p.ident).collect();
     let original_predicates = generics.where_clause.as_ref().map(|w| &w.predicates);
 
@@ -527,8 +530,8 @@ fn build_where_clause(
 fn generate_field_traversals(
     infos: &[FieldInfo],
     merge: bool,
-    owner: &syn::Ident,
-) -> proc_macro2::TokenStream {
+    owner: &Ident,
+) -> ProcMacro2TokenStream {
     // Process all fields in declaration order (interleaving normal and flatten)
     // so that struct field order determines tree key order.
     let field_operations: Vec<_> = infos
@@ -555,14 +558,14 @@ fn generate_field_traversals(
                         Some(wrap) => {
                             let mut parts = wrap.split('/');
                             let outer = parts.next().unwrap();
-                            let path = parts.chain(std::iter::once(key)).collect::<Vec<_>>();
+                            let path = parts.chain(iter::once(key)).collect::<Vec<_>>();
                             (outer, path)
                         }
                         None => (key, vec![]),
                     };
 
                     // Build nested wrapping: wrap(path[last], wrap(path[last-1], ... node))
-                    let build_wrapped = |base: proc_macro2::TokenStream| -> proc_macro2::TokenStream {
+                    let build_wrapped = |base: ProcMacro2TokenStream| -> ProcMacro2TokenStream {
                         wrap_path.iter().rev().fold(base, |inner, key| {
                             quote! { bitview_traversable::TreeNode::wrap(#key, #inner) }
                         })
@@ -631,11 +634,11 @@ fn generate_field_traversals(
 }
 
 fn generate_iter_body(
-    fields: &[&syn::Ident],
-    option_fields: &[&syn::Ident],
+    fields: &[&Ident],
+    option_fields: &[&Ident],
     method: &str,
-) -> proc_macro2::TokenStream {
-    let method_ident = syn::Ident::new(method, proc_macro2::Span::call_site());
+) -> ProcMacro2TokenStream {
+    let method_ident = Ident::new(method, Span::call_site());
 
     if fields.is_empty() && option_fields.is_empty() {
         return quote! { std::iter::empty() };
@@ -682,7 +685,7 @@ fn generate_iter_body(
     }
 }
 
-fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macro2::TokenStream {
+fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> ProcMacro2TokenStream {
     let all_regular: Vec<_> = infos
         .iter()
         .filter(|i| !i.is_option)
@@ -733,7 +736,7 @@ fn generate_iterator_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macr
     }
 }
 
-fn generate_description_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_macro2::TokenStream {
+fn generate_description_impl(infos: &[FieldInfo], struct_hidden: bool) -> ProcMacro2TokenStream {
     if struct_hidden {
         return quote! {
             fn collect_series_descriptions<'a>(
@@ -786,7 +789,7 @@ fn generate_description_impl(infos: &[FieldInfo], struct_hidden: bool) -> proc_m
 ///
 /// Container params are: unbounded type params, OR bounded params that appear
 /// as a bare field type (e.g. `field: M` where M is the param itself).
-fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
+fn gen_read_only_clone(input: &DeriveInput) -> ProcMacro2TokenStream {
     let generics = &input.generics;
     let name = &input.ident;
 
@@ -800,11 +803,11 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
     }
 
     // Path 2/3: classify type params as containers or leaves.
-    let type_params: Vec<&syn::TypeParam> = generics
+    let type_params: Vec<&TypeParam> = generics
         .params
         .iter()
         .filter_map(|p| match p {
-            syn::GenericParam::Type(tp) => Some(tp),
+            GenericParam::Type(tp) => Some(tp),
             _ => None,
         })
         .collect();
@@ -813,7 +816,7 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
         return quote! {};
     }
 
-    let is_bounded = |tp: &syn::TypeParam| -> bool {
+    let is_bounded = |tp: &TypeParam| -> bool {
         if !tp.bounds.is_empty() {
             return true;
         }
@@ -829,7 +832,7 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
 
     let bare_field_params = find_bare_field_params(data, &type_params);
 
-    let container_params: Vec<&syn::Ident> = type_params
+    let container_params: Vec<&Ident> = type_params
         .iter()
         .filter(|tp| !is_bounded(tp) || bare_field_params.contains(&&tp.ident))
         .map(|tp| &tp.ident)
@@ -843,11 +846,8 @@ fn gen_read_only_clone(input: &DeriveInput) -> proc_macro2::TokenStream {
 }
 
 /// Find type params used as bare (direct) field types in non-skipped fields.
-fn find_bare_field_params<'a>(
-    data: &syn::DataStruct,
-    type_params: &[&'a syn::TypeParam],
-) -> Vec<&'a syn::Ident> {
-    let fields: &syn::punctuated::Punctuated<syn::Field, _> = match &data.fields {
+fn find_bare_field_params<'a>(data: &DataStruct, type_params: &[&'a TypeParam]) -> Vec<&'a Ident> {
+    let fields: &Punctuated<Field, _> = match &data.fields {
         Fields::Named(named) => &named.named,
         Fields::Unnamed(unnamed) => &unnamed.unnamed,
         Fields::Unit => return Vec::new(),
@@ -883,10 +883,10 @@ fn find_bare_field_params<'a>(
 /// - Contains relevant param → `read_only_clone(&self.field)`
 /// - Otherwise → `self.field.clone()`
 fn gen_roc_field_value(
-    field: &syn::Field,
-    self_access: proc_macro2::TokenStream,
+    field: &Field,
+    self_access: ProcMacro2TokenStream,
     is_relevant: impl Fn(&Type) -> bool,
-) -> proc_macro2::TokenStream {
+) -> ProcMacro2TokenStream {
     if is_write_only_type(&field.ty) {
         return quote! { () };
     }
@@ -913,10 +913,10 @@ fn gen_roc_field_value(
 
 /// Generate the struct body for a ReadOnlyClone impl.
 fn gen_roc_body(
-    name: &syn::Ident,
-    data: &syn::DataStruct,
+    name: &Ident,
+    data: &DataStruct,
     is_relevant: impl Fn(&Type) -> bool,
-) -> proc_macro2::TokenStream {
+) -> ProcMacro2TokenStream {
     match &data.fields {
         Fields::Named(named) => {
             let conversions: Vec<_> = named
@@ -936,7 +936,7 @@ fn gen_roc_body(
                 .iter()
                 .enumerate()
                 .map(|(i, f)| {
-                    let idx = syn::Index::from(i);
+                    let idx = Index::from(i);
                     gen_roc_field_value(f, quote! { self.#idx }, &is_relevant)
                 })
                 .collect();
@@ -948,19 +948,19 @@ fn gen_roc_body(
 
 /// Collect type args from generics, applying a mapping function to each.
 fn collect_ty_args(
-    generics: &syn::Generics,
-    map_type: impl Fn(&syn::TypeParam) -> proc_macro2::TokenStream,
-) -> Vec<proc_macro2::TokenStream> {
+    generics: &Generics,
+    map_type: impl Fn(&TypeParam) -> ProcMacro2TokenStream,
+) -> Vec<ProcMacro2TokenStream> {
     generics
         .params
         .iter()
         .map(|p| match p {
-            syn::GenericParam::Type(tp) => map_type(tp),
-            syn::GenericParam::Lifetime(lt) => {
+            GenericParam::Type(tp) => map_type(tp),
+            GenericParam::Lifetime(lt) => {
                 let lt = &lt.lifetime;
                 quote! { #lt }
             }
-            syn::GenericParam::Const(c) => {
+            GenericParam::Const(c) => {
                 let id = &c.ident;
                 quote! { #id }
             }
@@ -973,17 +973,17 @@ fn collect_ty_args(
 // ---------------------------------------------------------------------------
 
 fn gen_read_only_clone_storage_mode(
-    name: &syn::Ident,
-    generics: &syn::Generics,
-    data: &syn::DataStruct,
-    mode_param: &syn::Ident,
-) -> proc_macro2::TokenStream {
-    let impl_params: Vec<proc_macro2::TokenStream> = generics
+    name: &Ident,
+    generics: &Generics,
+    data: &DataStruct,
+    mode_param: &Ident,
+) -> ProcMacro2TokenStream {
+    let impl_params: Vec<ProcMacro2TokenStream> = generics
         .params
         .iter()
         .filter_map(|p| match p {
-            syn::GenericParam::Type(tp) if tp.ident == *mode_param => None,
-            syn::GenericParam::Type(tp) => {
+            GenericParam::Type(tp) if tp.ident == *mode_param => None,
+            GenericParam::Type(tp) => {
                 let ident = &tp.ident;
                 let bounds = &tp.bounds;
                 if bounds.is_empty() {
@@ -992,8 +992,8 @@ fn gen_read_only_clone_storage_mode(
                     Some(quote! { #ident: #bounds })
                 }
             }
-            syn::GenericParam::Lifetime(lt) => Some(quote! { #lt }),
-            syn::GenericParam::Const(c) => {
+            GenericParam::Lifetime(lt) => Some(quote! { #lt }),
+            GenericParam::Const(c) => {
                 let ident = &c.ident;
                 let ty = &c.ty;
                 Some(quote! { const #ident: #ty })
@@ -1001,7 +1001,7 @@ fn gen_read_only_clone_storage_mode(
         })
         .collect();
 
-    let make_ty_args = |replacement: proc_macro2::TokenStream| {
+    let make_ty_args = |replacement: ProcMacro2TokenStream| {
         collect_ty_args(generics, |tp| {
             if tp.ident == *mode_param {
                 replacement.clone()
@@ -1040,12 +1040,12 @@ fn gen_read_only_clone_storage_mode(
 // ---------------------------------------------------------------------------
 
 fn gen_read_only_clone_generics(
-    name: &syn::Ident,
-    generics: &syn::Generics,
-    data: &syn::DataStruct,
-    type_params: &[&syn::TypeParam],
-    container_params: &[&syn::Ident],
-) -> proc_macro2::TokenStream {
+    name: &Ident,
+    generics: &Generics,
+    data: &DataStruct,
+    type_params: &[&TypeParam],
+    container_params: &[&Ident],
+) -> ProcMacro2TokenStream {
     // Check if any non-skipped field actually uses a container param.
     let has_container_field = match &data.fields {
         Fields::Named(named) => named.named.iter().any(|f| {
@@ -1067,14 +1067,14 @@ fn gen_read_only_clone_generics(
         return quote! {};
     }
 
-    let is_container = |ident: &syn::Ident| container_params.contains(&ident);
+    let is_container = |ident: &Ident| container_params.contains(&ident);
 
     // Impl params: containers get ReadOnlyClone (+ original bounds), others keep their bounds.
-    let impl_params: Vec<proc_macro2::TokenStream> = generics
+    let impl_params: Vec<ProcMacro2TokenStream> = generics
         .params
         .iter()
         .map(|p| match p {
-            syn::GenericParam::Type(tp) => {
+            GenericParam::Type(tp) => {
                 let ident = &tp.ident;
                 let bounds = &tp.bounds;
                 if is_container(ident) {
@@ -1089,8 +1089,8 @@ fn gen_read_only_clone_generics(
                     quote! { #ident: #bounds }
                 }
             }
-            syn::GenericParam::Lifetime(lt) => quote! { #lt },
-            syn::GenericParam::Const(c) => {
+            GenericParam::Lifetime(lt) => quote! { #lt },
+            GenericParam::Const(c) => {
                 let ident = &c.ident;
                 let ty = &c.ty;
                 quote! { const #ident: #ty }
@@ -1113,7 +1113,7 @@ fn gen_read_only_clone_generics(
     });
 
     // Where clause: propagate bounds from bounded container params to their ReadOnly.
-    let mut extra_where: Vec<proc_macro2::TokenStream> = Vec::new();
+    let mut extra_where: Vec<ProcMacro2TokenStream> = Vec::new();
 
     for tp in type_params {
         if is_container(&tp.ident) && !tp.bounds.is_empty() {
@@ -1127,7 +1127,7 @@ fn gen_read_only_clone_generics(
 
     if let Some(wc) = &generics.where_clause {
         for pred in &wc.predicates {
-            if let syn::WherePredicate::Type(pt) = pred
+            if let WherePredicate::Type(pt) = pred
                 && let Type::Path(tp) = &pt.bounded_ty
                 && let Some(seg) = tp.path.segments.first()
                 && container_params.iter().any(|cp| **cp == seg.ident)

@@ -1,13 +1,12 @@
-use std::sync::Arc;
+use std::{result::Result, sync::Arc};
 
 use parking_lot::RwLock;
 
+use super::DECODE_CHUNK_SIZE;
 use crate::{
     AnyVec, BytesStrategy, BytesVecReader, OverflowVecReader, OverflowVecValue, ReadOnlyMutableVec,
     ReadOnlyRawVec, ReadableVec, SharedLen, TypedVec, VecIndex, Version, short_type_name, unlikely,
 };
-
-use super::DECODE_CHUNK_SIZE;
 
 /// Lean read-only clone of an [`OverflowVec`](crate::OverflowVec).
 pub struct ReadOnlyOverflowVec<I, T>
@@ -237,13 +236,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let _guard = self.gate.read();
         let to = to.min(self.visible_len.get());
         let overflow = BytesVecReader::new(self.overflow.reader());

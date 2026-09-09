@@ -32,13 +32,13 @@ impl PercentilesVecs {
     ) -> Result<Self> {
         let version = version + VERSION;
         let prices = ColumnarPerBlock::<Cents, PercentileId, _>::forced_import(
+            cache,
             db,
             &format!("{prefix}_cents"),
             version,
             |source| {
                 ByPercentile::from_fn(|id| {
                     Price::from_columnar_source(
-                        cache,
                         &format!("{prefix}_pct{:02}", id.percentile()),
                         version,
                         source,

@@ -3,7 +3,7 @@ use brk_types::{
     Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     Month3, Month6, StoredU64, Timestamp, Version, Week1, Year1, Year10,
 };
-use vecdb::{CachedBoxedVec, CachedReadableVec, CachedVec, LazyVec, ReadableBoxedVec, VecValue};
+use vecdb::{LazyVec, ReadableBoxedVec, VecValue};
 
 use bitview_vecs::LazyPreviousDeltaVec;
 
@@ -26,7 +26,7 @@ pub struct Vecs {
     pub hour12: LazyVec<Height, Hour12, Height, Timestamp>,
     /// Zero-based UTC calendar day containing the block's monotonic timestamp,
     /// with 2009-01-01 equal to 0.
-    pub day1: CachedVec<LazyVec<Height, Day1, Height, Timestamp>>,
+    pub day1: LazyVec<Height, Day1, Height, Timestamp>,
     /// Zero-based three-day UTC period containing the block's monotonic
     /// timestamp, with period 1 beginning on 2009-01-03.
     pub day3: LazyVec<Height, Day3, Height, Timestamp>,
@@ -80,11 +80,9 @@ impl Vecs {
             hour12: Self::from_timestamps("hour12", timestamps.clone(), |_, timestamp| {
                 Hour12::from_timestamp(timestamp)
             }),
-            day1: CachedVec::wrap(Self::from_timestamps(
-                "day1",
-                timestamps.clone(),
-                |_, timestamp| Self::day1_from_timestamp(timestamp),
-            )),
+            day1: Self::from_timestamps("day1", timestamps.clone(), |_, timestamp| {
+                Self::day1_from_timestamp(timestamp)
+            }),
             day3: Self::from_timestamps("day3", timestamps.clone(), |_, timestamp| {
                 Day3::from_timestamp(timestamp)
             }),
@@ -162,16 +160,6 @@ impl Vecs {
 
     pub fn day1_read_only_boxed_clone(&self) -> ReadableBoxedVec<Height, Day1> {
         ReadableBoxedVec::new(self.day1.clone())
-    }
-
-    pub fn day1_cached_boxed_clone(&self) -> CachedBoxedVec<Height, Day1> {
-        self.day1.cached_boxed_clone()
-    }
-
-    /// Invalidate mappings after monotonic timestamps are rewritten without
-    /// changing length or schema version.
-    pub fn invalidate_timestamp_caches(&self) {
-        self.day1.invalidate();
     }
 }
 
@@ -350,18 +338,17 @@ mod tests {
         let third = Timestamp::from(Date::new(2009, 1, 3));
         let timestamps = TimestampVec::new([first, second]);
         let cached_timestamps = CachedVec::wrap(timestamps.clone());
-        let day1 = CachedVec::wrap(Vecs::from_timestamps(
+        let day1 = Vecs::from_timestamps(
             "day1",
             ReadableBoxedVec::new(cached_timestamps.clone()),
             |_, timestamp| Vecs::day1_from_timestamp(timestamp),
-        ));
+        );
 
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(1_usize)));
         timestamps.replace(1, third);
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(1_usize)));
 
         cached_timestamps.invalidate();
-        day1.invalidate();
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(2_usize)));
     }
 }

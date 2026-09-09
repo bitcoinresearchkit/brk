@@ -1,15 +1,18 @@
 use std::{collections::BTreeSet, fs};
 
 use bitview_bindgen::{
-    ClientMetadata, generate_javascript_client, generate_python_client, generate_rust_client,
+    ClientMetadata, Endpoint, Parameter, extract_endpoints, generate_javascript_client,
+    generate_python_client, generate_rust_client, parse_openapi_json,
 };
 use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 use brk_types::Index;
 use indexmap::IndexMap;
+use oas3::Spec;
 use serde_json::json;
+use tempfile::tempdir;
 
-fn spec() -> oas3::Spec {
-    bitview_bindgen::parse_openapi_json(r#"{
+fn spec() -> Spec {
+    parse_openapi_json(r#"{
         "openapi":"3.1.0", "info":{"title":"Fixture","version":"1"},
         "paths":{
             "/api/values/{height}":{"get":{
@@ -34,8 +37,8 @@ fn spec() -> oas3::Spec {
     }"#).unwrap()
 }
 
-fn endpoints() -> Vec<bitview_bindgen::Endpoint> {
-    bitview_bindgen::extract_endpoints(&spec())
+fn endpoints() -> Vec<Endpoint> {
+    extract_endpoints(&spec())
 }
 
 fn leaf(name: String, kind: &str, variant: usize) -> TreeNode {
@@ -101,7 +104,7 @@ fn repeated_generic_mixed_and_nested_catalogs_generate_deterministically() {
         let first = ClientMetadata::from_catalog(catalog.clone());
         let second = ClientMetadata::from_catalog(catalog);
         assert_eq!(format!("{first:?}"), format!("{second:?}"));
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let schemas = Default::default();
         for (metadata, prefix) in [(&first, "first"), (&second, "second")] {
             generate_javascript_client(
@@ -150,7 +153,7 @@ fn unicode_catalog_names_reach_all_three_generated_clients() {
             .base
             .starts_with("é_")
     );
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     generate_javascript_client(
         &metadata,
         &[],
@@ -183,7 +186,7 @@ fn python_optional_body_and_csv_keep_parameter_order_and_returns() {
         .find(|endpoint| endpoint.path == "/api/values/{height}")
         .unwrap();
     get.supports_csv = true;
-    get.query_params.push(bitview_bindgen::Parameter {
+    get.query_params.push(Parameter {
         name: "format".into(),
         param_type: "string".into(),
         required: false,
@@ -199,7 +202,7 @@ fn python_optional_body_and_csv_keep_parameter_order_and_returns() {
         .unwrap()
         .required = false;
     let metadata = ClientMetadata::from_catalog(catalog(0, 2));
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let path = dir.path().join("client.py");
     generate_python_client(&metadata, &endpoints, &Default::default(), &path).unwrap();
     let output = fs::read_to_string(path).unwrap();

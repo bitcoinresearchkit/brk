@@ -4936,8 +4936,8 @@ impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog> FromCat
     }
 }
 
-/// Catalog projection of bitview_plugin_outputs::by_type::cached_spendable_output_count::CachedSpendableOutputCount.
-pub struct CatalogCachedSpendableOutputCount<T0, T1, T2, T3> {
+/// Catalog projection of bitview_plugin_outputs::by_type::spendable_output_count::SpendableOutputCount.
+pub struct CatalogSpendableOutputCount<T0, T1, T2, T3> {
     pub block: LazyNode<T0>,
     pub cumulative: LazyNode<T1>,
     pub sum: LazyNode<T2>,
@@ -4945,7 +4945,7 @@ pub struct CatalogCachedSpendableOutputCount<T0, T1, T2, T3> {
 }
 
 impl<T0: FromCatalog, T1: FromCatalog, T2: FromCatalog, T3: FromCatalog> FromCatalog
-    for CatalogCachedSpendableOutputCount<T0, T1, T2, T3>
+    for CatalogSpendableOutputCount<T0, T1, T2, T3>
 {
     fn from_catalog(client: Arc<BitviewClientBase>, binding: usize) -> Self {
         let CatalogBinding::Branch(children) = &CATALOG_BINDINGS[binding] else {
@@ -19838,12 +19838,8 @@ type _CatalogType119 = CatalogBitviewPluginOutputsUnspentVecsVecs<_CatalogType12
 type _CatalogType120 = SeriesPattern18<[StoredU16; 12]>;
 type _CatalogType121 =
     CatalogColumnarPerBlock_2<_CatalogType21, _CatalogType100, _CatalogType100, _CatalogType120>;
-type _CatalogType122 = CatalogCachedSpendableOutputCount<
-    _CatalogType11,
-    _CatalogType12,
-    _CatalogType13,
-    _CatalogType14,
->;
+type _CatalogType122 =
+    CatalogSpendableOutputCount<_CatalogType11, _CatalogType12, _CatalogType13, _CatalogType14>;
 type _CatalogType123 = CatalogByType<_CatalogType105, _CatalogType105>;
 type _CatalogType124 = SeriesPattern18<[StoredU64; 12]>;
 type _CatalogType125 = CatalogColumnarPerBlockCumulativeRolling_2<

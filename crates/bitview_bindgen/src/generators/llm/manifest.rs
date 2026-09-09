@@ -5,7 +5,7 @@ use std::{
 };
 
 use serde::Serialize;
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value, json, to_string_pretty};
 
 use crate::{Endpoint, Parameter, TypeSchemas, generators::write_if_changed};
 
@@ -95,7 +95,7 @@ fn render_tool_manifest(endpoints: &[Endpoint], schemas: &TypeSchemas) -> io::Re
         schema_version: MANIFEST_SCHEMA_VERSION,
         operations,
     };
-    let mut content = serde_json::to_string_pretty(&manifest)
+    let mut content = to_string_pretty(&manifest)
         .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
     content.push('\n');
     Ok(content)
@@ -459,6 +459,8 @@ fn unescape_json_pointer(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::from_str;
+
     use super::*;
     use crate::{Parameter, ResponseKind, TextSchema};
 
@@ -523,7 +525,7 @@ mod tests {
         ]));
 
         let manifest = render_tool_manifest(&[post, deprecated, ignored, get], &schemas).unwrap();
-        let value: Value = serde_json::from_str(&manifest).unwrap();
+        let value: Value = from_str(&manifest).unwrap();
         let operations = value["operations"].as_array().unwrap();
 
         assert_eq!(operations.len(), 2);
@@ -590,7 +592,7 @@ mod tests {
         ]));
 
         let manifest = render_tool_manifest(&[endpoint], &schemas).unwrap();
-        let value: Value = serde_json::from_str(&manifest).unwrap();
+        let value: Value = from_str(&manifest).unwrap();
         let output = &value["operations"][0]["tool"]["outputSchema"];
 
         assert_eq!(output["anyOf"][0]["$ref"], "#/$defs/Item");
@@ -608,7 +610,7 @@ mod tests {
         )]));
 
         let manifest = render_tool_manifest(&[endpoint], &schemas).unwrap();
-        let value: Value = serde_json::from_str(&manifest).unwrap();
+        let value: Value = from_str(&manifest).unwrap();
 
         assert!(value["operations"][0]["tool"].get("outputSchema").is_none());
     }

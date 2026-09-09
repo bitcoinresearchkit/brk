@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
-use bitcoin::{Network, PublicKey, ScriptBuf, opcodes, script::Builder};
+use bitcoin::{Address, Network, PublicKey, ScriptBuf, opcodes, script::Builder};
 use brk_error::Error;
+use rapidhash::v3;
 
 use super::{
     AddrHash, OutputType, P2ABytes, P2PK33Bytes, P2PK65Bytes, P2PKHBytes, P2SHBytes, P2TRBytes,
@@ -23,9 +24,10 @@ pub enum AddrBytes {
 impl AddrHash {
     #[inline]
     pub fn from_script(script: &ScriptBuf, output_type: OutputType) -> Result<Self, Error> {
-        Ok(Self::new(rapidhash::v3::rapidhash_v3(
-            AddrBytes::script_payload(script, output_type)?,
-        )))
+        Ok(Self::new(v3::rapidhash_v3(AddrBytes::script_payload(
+            script,
+            output_type,
+        )?)))
     }
 }
 
@@ -44,7 +46,7 @@ impl AddrBytes {
     }
 
     pub fn hash(&self) -> u64 {
-        rapidhash::v3::rapidhash_v3(self.as_slice())
+        v3::rapidhash_v3(self.as_slice())
     }
 
     fn script_payload(script: &ScriptBuf, output_type: OutputType) -> Result<&[u8], Error> {
@@ -194,7 +196,7 @@ impl From<P2ABytes> for AddrBytes {
 impl AddrBytes {
     /// Parse an address string to a ScriptBuf
     pub fn addr_to_script(addr: &str) -> Result<ScriptBuf, Error> {
-        if let Ok(addr) = bitcoin::Address::from_str(addr) {
+        if let Ok(addr) = Address::from_str(addr) {
             if !addr.is_valid_for_network(Network::Bitcoin) {
                 return Err(Error::InvalidNetwork);
             }

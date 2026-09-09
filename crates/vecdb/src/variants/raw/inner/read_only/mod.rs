@@ -1,13 +1,16 @@
+use std::result::Result;
+
+use rawdb::Region;
+
+use super::{RawStrategy, ReadOnlyRawVec};
+use crate::{
+    Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, Result as CrateResult, Stamp,
+    VecIndex, VecReader, VecValue,
+};
+
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
-
-use crate::{
-    Error, HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, Stamp, VecIndex, VecReader,
-    VecValue,
-};
-
-use super::{RawStrategy, ReadOnlyRawVec};
 
 impl<I, T, S> ReadOnlyRawVec<I, T, S>
 where
@@ -31,7 +34,7 @@ where
     }
 
     #[inline]
-    pub fn read_at_once(&self, index: usize) -> crate::Result<T> {
+    pub fn read_at_once(&self, index: usize) -> CrateResult<T> {
         let len = self.base.len();
         if index >= len {
             return Err(Error::IndexTooHigh {
@@ -47,11 +50,11 @@ where
     }
 
     #[inline]
-    pub fn read_once(&self, index: I) -> crate::Result<T> {
+    pub fn read_once(&self, index: I) -> CrateResult<T> {
         self.read_at_once(index.to_usize())
     }
 
-    pub fn region(&self) -> &rawdb::Region {
+    pub fn region(&self) -> &Region {
         self.base.region()
     }
     pub fn stored_len(&self) -> usize {
@@ -76,14 +79,14 @@ where
         }
     }
     #[inline(always)]
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         len: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let offset = HEADER_OFFSET + from * size_of::<T>();
         let bytes = (to - from) * size_of::<T>();
         if self.base.region().prefers_mmap(offset, bytes) {

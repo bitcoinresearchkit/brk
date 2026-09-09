@@ -6,10 +6,12 @@ use std::{
 };
 
 use brk_error::{Error, Result};
+use corepc_jsonrpc::error::Error as ErrorError;
+
+use crate::Auth;
 
 #[cfg(feature = "async")]
 use crate::AsyncClient;
-use crate::Auth;
 
 mod block_template;
 mod inner;
@@ -26,7 +28,7 @@ pub use mempool_state::MempoolState;
 /// Explicit Core decode/policy rejections are invalid input, unlike an
 /// infrastructure error whose submission outcome may be unknown.
 pub fn transaction_error(error: Error) -> Error {
-    if let Error::CorepcRPC(corepc_jsonrpc::error::Error::Rpc(rpc)) = &error
+    if let Error::CorepcRPC(ErrorError::Rpc(rpc)) = &error
         && matches!(rpc.code, -22 | -25 | -26 | -27)
     {
         return Error::Parse(rpc.message.clone());

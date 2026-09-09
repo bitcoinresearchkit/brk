@@ -1,3 +1,15 @@
+use bitview_traversable::Traversable;
+use brk_error::Result;
+use brk_types::{
+    BlkPosition, Height, RawLockTime, SigOps, StoredBool, StoredU32, TxInIndex, TxIndex,
+    TxOutIndex, TxVersion, Txid, Version, Weight,
+};
+use rayon::prelude::*;
+use vecdb::{
+    AnyStoredVec, BudgetedCachedVec, BytesVec, CacheBudget, Database, ImportableVec, PcoVec, Rw,
+    Stamp, StorageMode, WritableVec,
+};
+
 pub mod features;
 pub mod metadata;
 
@@ -5,23 +17,11 @@ pub use features::TransactionFeaturesVecs;
 pub use features::{TransactionCounts, TxFeatureFlags};
 pub use metadata::TxMetadataVecs;
 
-use brk_error::Result;
-
-use bitview_traversable::Traversable;
-use brk_types::{
-    BlkPosition, Height, RawLockTime, SigOps, StoredBool, StoredU32, TxInIndex, TxIndex,
-    TxOutIndex, TxVersion, Txid, Version, Weight,
-};
-use rayon::prelude::*;
-use vecdb::{
-    AnyStoredVec, BytesVec, Database, ImportableVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
-};
-
 #[derive(Traversable)]
 pub struct TransactionsVecs<M: StorageMode = Rw> {
     /// Global zero-based transaction index at which the indexed block begins,
     /// equal to the number of transactions in all preceding blocks.
-    pub first_tx_index: M::Stored<PcoVec<Height, TxIndex>>,
+    pub first_tx_index: BudgetedCachedVec<M::Stored<PcoVec<Height, TxIndex>>>,
     /// Transaction ID: the double-SHA256 hash of the transaction's non-witness
     /// serialization, displayed in Bitcoin's conventional hexadecimal byte
     /// order.
@@ -101,7 +101,11 @@ impl TransactionsVecs {
         )
     }
 
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+    ) -> Result<Self> {
         let (
             first_tx_index,
             txid,
@@ -128,7 +132,7 @@ impl TransactionsVecs {
             position = PcoVec::forced_import(db, "tx_position", version),
         };
         Ok(Self {
-            first_tx_index,
+            first_tx_index: cache.wrap(first_tx_index),
             txid,
             tx_version,
             raw_locktime,

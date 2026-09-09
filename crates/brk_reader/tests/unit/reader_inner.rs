@@ -1,6 +1,7 @@
 use std::{fs, os::unix::fs::FileExt, sync::Barrier, thread};
 
 use brk_rpc::Auth;
+use tempfile::tempdir;
 
 use super::*;
 
@@ -17,7 +18,7 @@ fn contents(file: &File) -> [u8; 2] {
 
 #[test]
 fn cached_handles_are_bounded_without_invalidating_active_readers() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     for index in 0..=MAX_CACHED_FILES as u16 {
         fs::write(
             directory.path().join(format!("blk{index:05}.dat")),
@@ -45,7 +46,7 @@ fn cached_handles_are_bounded_without_invalidating_active_readers() {
 
 #[test]
 fn successful_and_failed_refreshes_discard_cached_inodes() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let path = directory.path().join("blk00000.dat");
     fs::write(&path, [1, 1]).unwrap();
     let reader = reader(directory.path().to_owned());
@@ -68,7 +69,7 @@ fn successful_and_failed_refreshes_discard_cached_inodes() {
 
 #[test]
 fn concurrent_misses_share_one_cached_handle() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     fs::write(directory.path().join("blk00000.dat"), [1, 2]).unwrap();
     let reader = Arc::new(reader(directory.path().to_owned()));
     let barrier = Arc::new(Barrier::new(9));

@@ -1,8 +1,11 @@
-use std::fmt::Write;
+use std::fmt::{Debug, Display, Result, Write};
 
 use jiff::{Timestamp, tz};
 use owo_colors::OwoColorize;
-use tracing::{Event, Level, Subscriber, field::Field};
+use tracing::{
+    Event, Level, Subscriber,
+    field::{Field, Visit},
+};
 use tracing_subscriber::{
     fmt::{FmtContext, FormatEvent, FormatFields, format::Writer},
     registry::LookupSpan,
@@ -34,7 +37,7 @@ where
         _ctx: &FmtContext<'_, S, N>,
         mut writer: Writer<'_>,
         event: &Event<'_>,
-    ) -> std::fmt::Result {
+    ) -> Result {
         let ts = Timestamp::now()
             .to_zoned(tz::TimeZone::system())
             .strftime("%Y-%m-%d %H:%M:%S")
@@ -149,19 +152,19 @@ impl<const ANSI: bool> FieldVisitor<ANSI> {
         }
     }
 
-    fn record_field(&mut self, name: &str, value: impl std::fmt::Display) {
+    fn record_field(&mut self, name: &str, value: impl Display) {
         push_field(&mut self.fields, name, value);
     }
 }
 
-fn push_field(fields: &mut String, name: &str, value: impl std::fmt::Display) {
+fn push_field(fields: &mut String, name: &str, value: impl Display) {
     if !fields.is_empty() {
         fields.push(' ');
     }
     let _ = write!(fields, "{name}={value}");
 }
 
-impl<const ANSI: bool> tracing::field::Visit for FieldVisitor<ANSI> {
+impl<const ANSI: bool> Visit for FieldVisitor<ANSI> {
     fn record_u64(&mut self, field: &Field, value: u64) {
         let name = field.name();
         if name == "status" {
@@ -190,7 +193,7 @@ impl<const ANSI: bool> tracing::field::Visit for FieldVisitor<ANSI> {
         }
     }
 
-    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+    fn record_debug(&mut self, field: &Field, value: &dyn Debug) {
         let name = field.name();
         match name {
             "method" => self.method = Some(format!("{value:?}")),

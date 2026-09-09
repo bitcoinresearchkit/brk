@@ -1,5 +1,6 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::LazyLock};
 
+use bitcoin::Txid as BitcoinTxid;
 use brk_types::{TxIndex, Txid, TxidPrefix, Version};
 
 // One version for all data sources
@@ -20,23 +21,22 @@ pub const DUPLICATE_TXID_STRS: [(&str, u32); 2] = [
     ),
 ];
 
-pub static DUPLICATE_TXIDS: std::sync::LazyLock<[Txid; 2]> = std::sync::LazyLock::new(|| {
+pub static DUPLICATE_TXIDS: LazyLock<[Txid; 2]> = LazyLock::new(|| {
     [
-        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[0].0)
+        BitcoinTxid::from_str(DUPLICATE_TXID_STRS[0].0)
             .unwrap()
             .into(),
-        bitcoin::Txid::from_str(DUPLICATE_TXID_STRS[1].0)
+        BitcoinTxid::from_str(DUPLICATE_TXID_STRS[1].0)
             .unwrap()
             .into(),
     ]
 });
 
-pub static DUPLICATE_TXID_PREFIXES: std::sync::LazyLock<[(TxidPrefix, TxIndex); 2]> =
-    std::sync::LazyLock::new(|| {
-        DUPLICATE_TXID_STRS.map(|(s, tx_index)| {
-            (
-                TxidPrefix::from(&Txid::from(bitcoin::Txid::from_str(s).unwrap())),
-                TxIndex::new(tx_index),
-            )
-        })
-    });
+pub static DUPLICATE_TXID_PREFIXES: LazyLock<[(TxidPrefix, TxIndex); 2]> = LazyLock::new(|| {
+    DUPLICATE_TXID_STRS.map(|(s, tx_index)| {
+        (
+            TxidPrefix::from(&Txid::from(BitcoinTxid::from_str(s).unwrap())),
+            TxIndex::new(tx_index),
+        )
+    })
+});

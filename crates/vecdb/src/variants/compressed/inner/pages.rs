@@ -1,8 +1,7 @@
 use rawdb::{Database, Region, unlikely};
 
-use crate::{Bytes, Error, HEADER_OFFSET};
-
 use super::Page;
+use crate::{Bytes, Error, HEADER_OFFSET, Result};
 
 pub const PAGES_PER_BLOCK: usize = 16;
 const BLOCK_BASE_BYTES: usize = size_of::<u64>();
@@ -20,7 +19,7 @@ impl PageRecord {
     const CHUNK_START_FLAG: u32 = 1 << 30;
     const BODY_MASK: u32 = Self::CHUNK_START_FLAG - 1;
 
-    fn new(span: u32, body: u32, chunk_start: bool, raw: bool) -> crate::Result<Self> {
+    fn new(span: u32, body: u32, chunk_start: bool, raw: bool) -> Result<Self> {
         if body == 0 || body > Self::BODY_MASK || span < body {
             return Err(Error::InvalidArgument("invalid compressed page size"));
         }
@@ -85,7 +84,7 @@ pub struct Pages {
 }
 
 impl Pages {
-    pub fn import(db: &Database, name: &str, page_capacity: usize) -> crate::Result<Self> {
+    pub fn import(db: &Database, name: &str, page_capacity: usize) -> Result<Self> {
         let region = db.create_region_if_needed(name)?;
         if page_capacity > 0 {
             let full_blocks = page_capacity / PAGES_PER_BLOCK;
@@ -186,7 +185,7 @@ impl Pages {
         Ok(this)
     }
 
-    pub fn flush(&mut self) -> crate::Result<()> {
+    pub fn flush(&mut self) -> Result<()> {
         let Some(change_at) = self.change_at else {
             return Ok(());
         };
@@ -277,11 +276,11 @@ impl Pages {
         page_index: usize,
         header_bytes: Option<u32>,
         body_bytes: u32,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         self.checked_push(page_index, header_bytes, body_bytes, false)
     }
 
-    pub fn push_raw(&mut self, page_index: usize, body_bytes: u32) -> crate::Result<()> {
+    pub fn push_raw(&mut self, page_index: usize, body_bytes: u32) -> Result<()> {
         self.checked_push(page_index, Some(0), body_bytes, true)
     }
 
@@ -291,7 +290,7 @@ impl Pages {
         header_bytes: Option<u32>,
         body_bytes: u32,
         raw: bool,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         if unlikely(page_index != self.len) {
             return Err(Error::UnexpectedIndex {
                 expected: self.len,
@@ -362,7 +361,7 @@ impl Pages {
             .fold(block.base, |end, record| end + record.span as u64)
     }
 
-    pub fn remove(self) -> crate::Result<()> {
+    pub fn remove(self) -> Result<()> {
         self.region.remove()?;
         Ok(())
     }

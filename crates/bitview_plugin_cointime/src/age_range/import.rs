@@ -10,7 +10,8 @@ use bitview_vecs::{
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, Version};
 use vecdb::{
-    CacheBudget, CachedBoxedVec, CachedColumnarVec, Database, PcoVec, ReadOnlyColumnarVec,
+    CacheBudget, CachedBoxedVec, Database, PcoVec, ReadOnlyClone, ReadOnlyColumnarVec,
+    ReadableColumnarVec,
 };
 
 use super::{ActivitySeries, SupplyVecs, Vecs};
@@ -28,13 +29,13 @@ pub fn forced_import(
 ) -> Result<Vecs> {
     let version = parent_version + VERSION;
     let coindays_consumed = ColumnarPerBlockCumulativeRolling::forced_import(
+        cache,
         db,
         &CohortContext::Utxo.prefixed("age_range_coindays_consumed_cumulative"),
         version,
         |source| {
             AgeRangeId::series(CohortContext::Utxo, |column, name| {
                 LazyColumnPerBlockCumulativeRolling::new(
-                    cache,
                     &format!("{name}_coindays_consumed"),
                     version,
                     source,
@@ -46,13 +47,13 @@ pub fn forced_import(
         },
     )?;
     let coindays_stored = ColumnarPerBlockCumulativeRolling::forced_import(
+        cache,
         db,
         &CohortContext::Utxo.prefixed("age_range_coindays_stored_cumulative"),
         version,
         |source| {
             AgeRangeId::series(CohortContext::Utxo, |column, name| {
                 LazyColumnPerBlockCumulativeRolling::new(
-                    cache,
                     &format!("{name}_coindays_stored"),
                     version,
                     source,
@@ -64,10 +65,11 @@ pub fn forced_import(
         },
     )?;
     let activity = ColumnarPerBlock::forced_import(
+        cache,
         db,
         &CohortContext::Utxo.prefixed("age_range_wakefulness_bounded_source"),
         version + Version::ONE,
-        |source| ActivitySeries::new(cache, version + Version::ONE, source, mappings),
+        |source| ActivitySeries::new(version + Version::ONE, source, mappings),
     )?;
     let import_supply = |side: &str, complement: bool| {
         AgeRangeId::series(CohortContext::Utxo, |column, name| {
@@ -76,16 +78,22 @@ pub fn forced_import(
                 .cohorts
                 .supply
                 .total
-                .age_ranges
-                .cached_column(column);
-            let weight = activity.cached.cached_column(column);
+                .stored
+                .age_range
+                .height
+                .read_only_clone()
+                .column(&name, version, column);
+            let weight = activity
+                .height
+                .read_only_clone()
+                .column(&name, version, column);
             if complement {
                 LazySpotValuePerBlock::from_weighted_supply::<true>(
-                    &name, version, supply, weight, mappings, spot_price,
+                    &name, version, &supply, &weight, mappings, spot_price,
                 )
             } else {
                 LazySpotValuePerBlock::from_weighted_supply::<false>(
-                    &name, version, supply, weight, mappings, spot_price,
+                    &name, version, &supply, &weight, mappings, spot_price,
                 )
             }
         })
@@ -105,17 +113,15 @@ pub fn forced_import(
 
 impl ActivitySeries {
     fn new(
-        cache: &'static CacheBudget,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
         mappings: &MappingsVecs,
     ) -> Self {
-        let cached = CachedColumnarVec::new(source.clone(), version, |column| cache.wrap(column));
         let wakefulness = AgeRangeId::series(CohortContext::Utxo, |column, name| {
             LazyPerBlock::from_height_source::<BoundedToF64>(
                 &format!("{name}_wakefulness"),
                 version,
-                cached.cached_column(column),
+                &source.column(&format!("{name}_wakefulness_source"), version, column),
                 mappings,
             )
         });
@@ -123,7 +129,7 @@ impl ActivitySeries {
             LazyPerBlock::from_height_source::<BoundedToF64<true>>(
                 &format!("{name}_dormancy"),
                 version,
-                cached.cached_column(column),
+                &source.column(&format!("{name}_dormancy_source"), version, column),
                 mappings,
             )
         });
@@ -131,13 +137,16 @@ impl ActivitySeries {
             LazyPerBlock::from_height_source::<BoundedOddsF64>(
                 &format!("{name}_wakefulness_to_dormancy"),
                 version + Version::ONE,
-                cached.cached_column(column),
+                &source.column(
+                    &format!("{name}_wakefulness_to_dormancy_source"),
+                    version,
+                    column,
+                ),
                 mappings,
             )
         });
 
         Self {
-            cached,
             wakefulness,
             dormancy,
             wakefulness_to_dormancy,

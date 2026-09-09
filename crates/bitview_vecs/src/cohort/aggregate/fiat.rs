@@ -1,10 +1,11 @@
-use crate::{ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use vecdb::{CacheBudget, Database, ReadableColumnarVec, Rw, StorageMode};
+
+use crate::{ColumnarPerBlock, FiatType, IndexSources, LazyFiatPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AggregateFiatPerBlock<C: FiatType, M: StorageMode = Rw> {
@@ -20,9 +21,10 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
         db: &Database,
         metric: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let values = ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{metric}_cents_by_aggregate"),
             version,
@@ -32,7 +34,7 @@ impl<C: FiatType> AggregateFiatPerBlock<C> {
                     LazyFiatPerBlock::from_cents_source(
                         &name,
                         version,
-                        &cache.wrap(source.column(&format!("{name}_cents"), version, id)),
+                        &source.column(&format!("{name}_cents"), version, id),
                         indexes,
                     )
                 })

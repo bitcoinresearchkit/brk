@@ -1,6 +1,14 @@
+use std::mem;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
+
+#[cfg(feature = "storage")]
+use vecdb::Error;
+#[cfg(feature = "storage")]
+use vecdb::Result;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -441,16 +449,16 @@ impl Bytes for PoolSlug {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != size_of::<Self>() {
-            return Err(vecdb::Error::WrongLength {
+            return Err(Error::WrongLength {
                 expected: size_of::<Self>(),
                 received: bytes.len(),
             });
         };
         // SAFETY: PoolId is repr(u8) and we're transmuting from u8
         // All values 0-255 are valid (includes dummy variants)
-        let s: Self = unsafe { std::mem::transmute(bytes[0]) };
+        let s: Self = unsafe { mem::transmute(bytes[0]) };
         Ok(s)
     }
 }
@@ -459,7 +467,7 @@ impl From<u8> for PoolSlug {
     #[inline]
     fn from(val: u8) -> Self {
         // SAFETY: PoolSlug is repr(u8) and all 256 values are valid (includes dummy variants)
-        unsafe { std::mem::transmute(val) }
+        unsafe { mem::transmute(val) }
     }
 }
 

@@ -1,8 +1,11 @@
+use std::time::Instant;
+
+use brk_error::Result;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Height;
 
-fn main() -> brk_error::Result<()> {
+fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
 
     let client = Client::new(
@@ -16,7 +19,7 @@ fn main() -> brk_error::Result<()> {
 
     for &h in &heights {
         let height = Height::new(h);
-        let i = std::time::Instant::now();
+        let i = Instant::now();
 
         if let Some(block) = reader.range(height, height)?.iter().next() {
             let block = block?;

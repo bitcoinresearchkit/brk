@@ -18,13 +18,14 @@
 
 use std::time::Instant;
 
-use bitcoin::{OutPoint, ScriptBuf, TxOut};
+use bitcoin::{Amount, OutPoint, ScriptBuf, Transaction, TxOut};
+use brk_error::Result;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Height;
 
-fn main() -> brk_error::Result<()> {
+fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
     let client = Client::new(
         Client::default_url(),
@@ -45,7 +46,7 @@ fn main() -> brk_error::Result<()> {
         SAMPLE_BLOCKS
     );
 
-    let mut all_txs: Vec<bitcoin::Transaction> = Vec::with_capacity(64_000);
+    let mut all_txs: Vec<Transaction> = Vec::with_capacity(64_000);
     let mut total_inputs: usize = 0;
     let mut total_outputs: usize = 0;
     let mut total_witness_bytes: usize = 0;
@@ -97,7 +98,7 @@ fn main() -> brk_error::Result<()> {
         ScriptBuf::from_bytes(bytes)
     };
     let synthetic_txout = TxOut {
-        value: bitcoin::Amount::from_sat(0),
+        value: Amount::from_sat(0),
         script_pubkey: p2wsh_spk,
     };
 

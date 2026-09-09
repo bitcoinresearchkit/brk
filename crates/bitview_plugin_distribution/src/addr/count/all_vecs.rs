@@ -1,10 +1,11 @@
 use bitview_cohort::{AddrTypeId, WithAddrTypes};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, LazyPerBlock};
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use rayon::prelude::*;
+use rayon::{iter, prelude::*};
 use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, Rw, StorageMode, WritableVec};
 
 use super::AddrTypeToAddrCount;
@@ -29,17 +30,14 @@ impl AddrCountsVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         Ok(Self(ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{name}_by_type"),
             version,
-            |source| {
-                bitview_vecs::LazyColumnPerBlock::with_addr_types(
-                    cache, name, version, source, mappings,
-                )
-            },
+            |source| LazyColumnPerBlock::with_addr_types(name, version, source, mappings),
         )?))
     }
 
@@ -48,7 +46,7 @@ impl AddrCountsVecs {
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(&mut self.height as &mut dyn AnyStoredVec)
+        iter::once(&mut self.height as &mut dyn AnyStoredVec)
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

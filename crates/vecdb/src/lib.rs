@@ -1,6 +1,14 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::type_complexity)]
 
+use std::mem;
+
+use base::{
+    ChangeCursor, ChangeData, ReadOnlyBaseVec, ReadWriteBaseVec, vec_region_name,
+    vec_region_name_with,
+};
+use variants::*;
+
 pub use rawdb::{Database, Error as RawDBError, PAGE_SIZE, Reader, likely, unlikely};
 
 #[cfg(feature = "derive")]
@@ -20,12 +28,6 @@ mod traits;
 mod variants;
 mod version;
 
-use variants::*;
-
-use base::{
-    ChangeCursor, ChangeData, ReadOnlyBaseVec, ReadWriteBaseVec, vec_region_name,
-    vec_region_name_with,
-};
 pub use base::{Format, HEADER_OFFSET, Header, ImportOptions, SharedLen, WithPrev};
 pub use bytes::Bytes;
 
@@ -55,12 +57,12 @@ pub use traits::{
 
 pub use variants::{
     AggFold, Budgeted, BudgetedCachedVec, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue,
-    CacheBudget, CachedBoxedVec, CachedColumnarVec, CachedReadableVec, CachedVec, CachedVecBudget,
-    CachedVecStrategy, ColumnId, ColumnarVec, CompressedRangeCursor, CompressionStrategy, DeltaAvg,
-    DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec,
-    LazyAggVec, LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec, MapOption,
-    MutableVec, Negate, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor,
-    OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
+    CacheBudget, CachedBoxedVec, CachedReadableVec, CachedVec, CachedVecBudget, CachedVecStrategy,
+    ColumnId, ColumnarVec, CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange,
+    DeltaOp, DeltaRate, DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec, LazyAggVec,
+    LazyColumnSumVec, LazyColumnVec, LazyColumnarVec, LazyDeltaVec, LazyVec, MapOption, MutableVec,
+    Negate, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor, OverflowVecValue,
+    Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyColumnarVec,
     ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
     ReadWriteRawVec, ReadableColumnarVec, UnaryTransform, VecReader, VecReaderCursor,
 };
@@ -82,7 +84,7 @@ const ONE_KIB: usize = 1024;
 /// amortize syscall overhead while fitting comfortably in L2/L3 cache.
 const BUFFER_SIZE: usize = 512 * ONE_KIB;
 
-const SIZE_OF_U64: usize = std::mem::size_of::<u64>();
+const SIZE_OF_U64: usize = mem::size_of::<u64>();
 /// Opt-in, calling-thread counters for diagnostic fixtures; absent from default builds.
 #[cfg(feature = "diagnostics")]
 pub mod diagnostics;

@@ -1,4 +1,5 @@
-use serde_json::{Map, Value};
+use brk_error::Result;
+use serde_json::{Map, Value, to_string as SerdeJsonToString, to_string_pretty};
 
 use crate::{fields::Ctx, mode::Mode, path::Path};
 
@@ -12,25 +13,25 @@ impl Formatter {
         Self { mode, fields }
     }
 
-    pub fn format(&self, ctx: &Ctx) -> brk_error::Result<String> {
+    pub fn format(&self, ctx: &Ctx) -> Result<String> {
         match self.mode {
             Mode::Bare => self.bare(ctx, false),
             Mode::Tsv => self.tsv(ctx),
-            Mode::Json => Ok(serde_json::to_string(&self.object(ctx)?)?),
+            Mode::Json => Ok(SerdeJsonToString(&self.object(ctx)?)?),
             Mode::Pretty if self.fields.len() == 1 => self.bare(ctx, true),
-            Mode::Pretty => Ok(serde_json::to_string_pretty(&self.object(ctx)?)?),
+            Mode::Pretty => Ok(to_string_pretty(&self.object(ctx)?)?),
         }
     }
 
-    fn bare(&self, ctx: &Ctx, pretty: bool) -> brk_error::Result<String> {
+    fn bare(&self, ctx: &Ctx, pretty: bool) -> Result<String> {
         Ok(match ctx.resolve(&self.fields[0])? {
             Value::String(s) => s,
-            other if pretty => serde_json::to_string_pretty(&other)?,
+            other if pretty => to_string_pretty(&other)?,
             other => other.to_string(),
         })
     }
 
-    fn tsv(&self, ctx: &Ctx) -> brk_error::Result<String> {
+    fn tsv(&self, ctx: &Ctx) -> Result<String> {
         let mut row = String::new();
         for (i, path) in self.fields.iter().enumerate() {
             if i > 0 {
@@ -47,7 +48,7 @@ impl Formatter {
         Ok(row)
     }
 
-    fn object(&self, ctx: &Ctx) -> brk_error::Result<Value> {
+    fn object(&self, ctx: &Ctx) -> Result<Value> {
         if self.fields.is_empty() {
             return Ok(ctx.full());
         }

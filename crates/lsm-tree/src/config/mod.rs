@@ -2,6 +2,16 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+
+use crate::{
+    Cache, CompressionType, DescriptorTable, Result, Tree, path::absolute_path,
+    version::DEFAULT_LEVEL_COUNT,
+};
+
 mod block_size;
 mod compression;
 mod filter;
@@ -21,15 +31,6 @@ pub use hash_ratio::HashRatioPolicy;
 pub use partitioning::PartitioningPolicy;
 pub use pinning::PinningPolicy;
 pub use restart_interval::RestartIntervalPolicy;
-
-use crate::{
-    Cache, CompressionType, DescriptorTable, Tree, path::absolute_path,
-    version::DEFAULT_LEVEL_COUNT,
-};
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
 
 /// Tree configuration builder
 pub struct Config {
@@ -230,7 +231,7 @@ impl Config {
     /// # Errors
     ///
     /// Will return `Err` if an IO error occurs.
-    pub fn open(self) -> crate::Result<Tree> {
+    pub fn open(self) -> Result<Tree> {
         Tree::open(self)
     }
 }

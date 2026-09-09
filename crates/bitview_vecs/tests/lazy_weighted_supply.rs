@@ -7,8 +7,8 @@ use bitview_vecs::{ColumnarPerBlock, LazySpotValuePerBlock};
 use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, CachedColumnarVec, CachedReadableVec, CachedVec, Database, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableCloneableVec, ReadableColumnarVec, ReadableVec, WritableVec,
+    AnyStoredVec, CachedReadableVec, CachedVec, Database, ImportableVec, PcoVec, ReadOnlyClone,
+    ReadableCloneableVec, ReadableColumnarVec, ReadableVec, WritableVec,
 };
 
 #[test]
@@ -23,6 +23,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
     ))
     .read_only_boxed_clone();
     let mut supply = ColumnarPerBlock::<Sats, AgeRangeId, ()>::forced_import(
+        &CACHE_BUDGET,
         &db,
         "supply",
         Version::ONE,
@@ -30,6 +31,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
     )
     .unwrap();
     let mut weights = ColumnarPerBlock::<BoundedRatio, AgeRangeId, ()>::forced_import(
+        &CACHE_BUDGET,
         &db,
         "weights",
         Version::ONE,
@@ -52,22 +54,16 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
     supply.write().unwrap();
     weights.write().unwrap();
     spot.write().unwrap();
-    let supply_cache = CachedColumnarVec::new(
-        supply.height.read_only_clone(),
-        Version::ONE,
-        CachedVec::wrap,
-    );
-    let weight_cache = CachedColumnarVec::new(
-        weights.height.read_only_clone(),
-        Version::ONE,
-        CachedVec::wrap,
-    );
+    let supply_cache = supply.height.read_only_clone();
+    let weight_cache = weights.height.read_only_clone();
     let spot = CachedVec::wrap(spot.read_only_clone()).cached_boxed_clone();
     for &id in AgeRangeId::ALL {
         let raw = supply_cache
             .column("supply", Version::ONE, id)
             .read_only_boxed_clone();
-        let weight = weight_cache.cached_column(id).cached_boxed_clone();
+        let weight = weight_cache
+            .column("weight", Version::ONE, id)
+            .read_only_boxed_clone();
         let weighted = LazySpotValuePerBlock::from_weighted_supply::<false>(
             "awake_supply",
             Version::ONE,
@@ -110,11 +106,6 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
                 Some(Some(expected.1))
             );
         }
-        supply_cache.invalidate();
-        weight_cache.invalidate();
-        // Production invalidates the shared budget before rewrites, including
-        // derived resolution caches, not only the raw age inputs.
-        CACHE_BUDGET.invalidate();
         supply.truncate_if_needed_at(4).unwrap();
         weights.truncate_if_needed_at(4).unwrap();
         supply.push(AgeRange::from_fn(|_| Sats::from(101_u64)));
@@ -135,9 +126,6 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
             Some(Some(Sats::ZERO))
         );
         // Restore before validating the next age column.
-        supply_cache.invalidate();
-        weight_cache.invalidate();
-        CACHE_BUDGET.invalidate();
         supply.truncate_if_needed_at(4).unwrap();
         weights.truncate_if_needed_at(4).unwrap();
         supply.push(AgeRange::from_fn(|_| inputs[4].0));

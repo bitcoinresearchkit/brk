@@ -1,11 +1,12 @@
 use std::time::Instant;
 
+use brk_error::Result;
 use brk_iterator::Blocks;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Height;
 
-fn main() -> brk_error::Result<()> {
+fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
 
     let client = Client::new(

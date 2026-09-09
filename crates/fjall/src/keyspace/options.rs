@@ -1,12 +1,17 @@
-use crate::config::{
-    BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PartitioningPolicy, PinningPolicy,
-    RestartIntervalPolicy,
-};
+use std::path::Path;
+
 use lsm_tree::{
-    CompressionType,
+    CompressionType, Config,
     config::{BlockSizePolicy, CompressionPolicy, HashRatioPolicy},
 };
-use std::path::Path;
+
+use crate::{
+    config::{
+        BloomConstructionPolicy, FilterPolicy, FilterPolicyEntry, PartitioningPolicy,
+        PinningPolicy, RestartIntervalPolicy,
+    },
+    db_config::Config as DbConfigConfig,
+};
 
 /// Immutable-table configuration for a keyspace.
 pub struct CreateOptions {
@@ -89,8 +94,8 @@ impl CreateOptions {
     /// Builds the underlying LSM-tree configuration.
     #[doc(hidden)]
     #[must_use]
-    pub fn tree_config(self, path: &Path, database: &crate::db_config::Config) -> lsm_tree::Config {
-        let config = lsm_tree::Config::new(path)
+    pub fn tree_config(self, path: &Path, database: &DbConfigConfig) -> Config {
+        let config = Config::new(path)
             .use_cache(database.cache.clone())
             .use_descriptor_table(Some(database.descriptor_table.clone()))
             .data_block_size_policy(BlockSizePolicy::all(4 * 1_024))

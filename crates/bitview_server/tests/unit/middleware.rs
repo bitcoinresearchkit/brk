@@ -7,7 +7,10 @@ use axum::{
     },
     middleware::from_fn,
 };
+use serde_json::{Value, from_slice};
 use tower::ServiceExt;
+
+use crate::{json_error, response_time};
 
 #[tokio::test]
 async fn middleware_preserves_errors_and_action_cache_policy() {
@@ -63,8 +66,8 @@ async fn middleware_preserves_errors_and_action_cache_policy() {
                     response.extensions_mut().insert(42_u32);
                     response
                 })
-                .layer(from_fn(crate::json_error::respond))
-                .layer(from_fn(crate::response_time::respond));
+                .layer(from_fn(json_error::respond))
+                .layer(from_fn(response_time::respond));
             let response = router
                 .oneshot(
                     Request::builder()
@@ -85,7 +88,7 @@ async fn middleware_preserves_errors_and_action_cache_policy() {
             }
             let bytes = to_bytes(response.into_body(), 4096).await.unwrap();
             if let Some(code) = expected_code {
-                let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+                let json: Value = from_slice(&bytes).unwrap();
                 assert_eq!(json["error"]["code"], code);
                 if status == StatusCode::GATEWAY_TIMEOUT {
                     assert_eq!(

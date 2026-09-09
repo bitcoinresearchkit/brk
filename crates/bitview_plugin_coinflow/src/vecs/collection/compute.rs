@@ -1,4 +1,4 @@
-use brk_error::Result;
+use std::iter;
 
 use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregate};
 use bitview_compute::{
@@ -6,6 +6,7 @@ use bitview_compute::{
 };
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::Lengths;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, BoundedRatio, Cents, Height, Sats, StoredF64, Timestamp, Version};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
@@ -277,9 +278,9 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<Height> {
         let source_version = Version::combine_all(
-            std::iter::once(timestamps.version())
+            iter::once(timestamps.version())
                 .chain(transfer_volumes.iter().map(|vec| vec.version()))
-                .chain(std::iter::once(coindays_created.version()))
+                .chain(iter::once(coindays_created.version()))
                 .chain(supplies.iter().map(|vec| vec.version()))
                 .chain(loss_supplies.iter().map(|vec| vec.version()))
                 .chain(realized_caps.iter().map(|vec| vec.version())),
@@ -303,11 +304,11 @@ impl Vecs {
         let source_end = transfer_volumes
             .iter()
             .map(|vec| vec.len())
-            .chain(std::iter::once(coindays_created.len()))
+            .chain(iter::once(coindays_created.len()))
             .chain(supplies.iter().map(|vec| vec.len()))
             .chain(loss_supplies.iter().map(|vec| vec.len()))
             .chain(realized_caps.iter().map(|vec| vec.len()))
-            .chain(std::iter::once(timestamps.len()))
+            .chain(iter::once(timestamps.len()))
             .min()
             .unwrap_or_default();
 

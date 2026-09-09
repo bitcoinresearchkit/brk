@@ -1,5 +1,5 @@
-use bitcoin::hashes::Hash;
-use brk_types::{FeeRate, TxidPrefix};
+use bitcoin::{Txid as BitcoinTxid, hashes::Hash};
+use brk_types::{FeeRate, TxOut, TxidPrefix};
 
 use super::*;
 use crate::{
@@ -16,10 +16,7 @@ fn build_rbf_world(live_seed: u8, predecessors: &[u8]) -> (Mempool, Txid, Vec<Tx
     let mempool = Mempool::for_test();
     let live_tx = fake_tx(
         live_seed,
-        &[Some(brk_types::TxOut::from((
-            p2wpkh_script(99),
-            Sats::from(6_234u64),
-        )))],
+        &[Some(TxOut::from((p2wpkh_script(99), Sats::from(6_234u64))))],
         &[(p2wpkh_script(live_seed + 1), 1_234)],
     );
     let live_txid = live_tx.txid;
@@ -173,7 +170,7 @@ fn rbf_for_tx_rejects_live_prefix_collision() {
     let mut bytes = [0u8; 32];
     bytes.copy_from_slice(live.as_slice());
     bytes[8] ^= 1;
-    let collision = Txid::from(bitcoin::Txid::from_byte_array(bytes));
+    let collision = Txid::from(BitcoinTxid::from_byte_array(bytes));
     assert_eq!(TxidPrefix::from(&live), TxidPrefix::from(&collision));
 
     assert!(

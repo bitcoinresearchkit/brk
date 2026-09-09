@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::ValuePerBlockCumulative;
 use brk_error::Result;
 use brk_types::Version;
@@ -10,7 +11,7 @@ impl Vecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         Ok(Self {
             total: ValuePerBlockCumulative::forced_import(

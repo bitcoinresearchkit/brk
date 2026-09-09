@@ -1,9 +1,10 @@
-#[cfg(feature = "storage")]
-use bitview_traversable::Traversable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Filter;
+use crate::{Filter, Term};
+
+#[cfg(feature = "storage")]
+use bitview_traversable::Traversable;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[cfg_attr(feature = "storage", derive(Traversable))]
@@ -25,7 +26,7 @@ impl<T> UTXOAllAndSth<T> {
     pub fn get(&self, filter: &Filter) -> Option<&T> {
         match filter {
             Filter::All => Some(&self.all),
-            Filter::Term(crate::Term::Sth) => Some(&self.sth),
+            Filter::Term(Term::Sth) => Some(&self.sth),
             _ => None,
         }
     }

@@ -1,12 +1,14 @@
-use crate::unlikely;
+use std::fmt::{Display, Formatter, Result as FmtResult};
+
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Result as FmtResult};
+
+use crate::{StoredF32, unlikely};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::StoredF32;
 
 /// A ratio in [0, 1], floored at scale u32::MAX - 1.
 /// Zero and one are exact; finite quantization error is less than 1 / SCALE
@@ -105,7 +107,7 @@ impl From<BoundedRatio> for StoredF32 {
 
 impl Display for BoundedRatio {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        let mut buf = itoa::Buffer::new();
+        let mut buf = Buffer::new();
         f.write_str(buf.format(self.0))
     }
 }
@@ -114,7 +116,7 @@ impl Display for BoundedRatio {
 impl Formattable for BoundedRatio {
     #[inline]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut value = itoa::Buffer::new();
+        let mut value = Buffer::new();
         buf.extend_from_slice(value.format(self.0).as_bytes());
     }
 

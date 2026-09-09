@@ -1,9 +1,10 @@
+use std::array;
+
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
 use brk_types::{StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{ColumnId, Rw, StorageMode, VecValue};
-
-use bitview_vecs::{ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling};
 
 const VERSION_COUNT: usize = 4;
 
@@ -52,7 +53,7 @@ impl ColumnId for VersionId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(VERSION_IDS[index]))
+        array::from_fn(|index| create(VERSION_IDS[index]))
     }
 
     #[inline]

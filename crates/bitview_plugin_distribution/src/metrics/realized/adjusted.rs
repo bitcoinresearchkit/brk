@@ -2,6 +2,7 @@ use bitview_cohort::{
     CohortContext, Filter, TERM_NAMES, Term, UTXO_ALL_NAME, UTXOAllAndSth, UTXOAllAndSthId,
 };
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
@@ -48,7 +49,7 @@ impl AdjustedSoprVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let source_version = version + SOURCE_VERSION;
@@ -101,7 +102,7 @@ impl AdjustedSoprVecs {
         storage_name: &str,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<
         ColumnarPerBlockCumulativeRolling<
@@ -111,12 +112,12 @@ impl AdjustedSoprVecs {
         >,
     > {
         ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             storage_name,
             version + Version::ONE,
             |source| UTXOAllAndSth {
                 all: LazyColumnPerBlockCumulativeRolling::new(
-                    cache,
                     metric,
                     Self::cohort_version(version, UTXOAllAndSthId::All),
                     source,
@@ -125,7 +126,6 @@ impl AdjustedSoprVecs {
                     cached_starts,
                 ),
                 sth: LazyColumnPerBlockCumulativeRolling::new(
-                    cache,
                     &Self::cohort_metric_name(UTXOAllAndSthId::Sth, metric),
                     Self::cohort_version(version, UTXOAllAndSthId::Sth),
                     source,

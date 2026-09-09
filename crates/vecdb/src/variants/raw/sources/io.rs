@@ -1,16 +1,17 @@
 use std::{
     fs::File,
-    io::{Read, Seek, SeekFrom},
+    io::{Error, ErrorKind, Read, Seek, SeekFrom},
     marker::PhantomData,
     os::fd::AsRawFd,
+    result::Result,
 };
 
+use libc::read as LibcRead;
 use parking_lot::RwLockReadGuard;
 use rawdb::{Region, RegionMetadata};
 
-use crate::{AnyStoredVec, BUFFER_SIZE, HEADER_OFFSET, VecIndex, VecValue, likely};
-
 use super::super::{RawStrategy, ReadWriteRawVec};
+use crate::{AnyStoredVec, BUFFER_SIZE, HEADER_OFFSET, VecIndex, VecValue, likely};
 
 /// Buffer size aligned to SIZE_OF_T for raw I/O reads.
 const fn aligned_buffer_size<T>() -> usize {
@@ -137,7 +138,7 @@ where
         while read < bytes {
             let read_len = (bytes - read).min(i32::MAX as usize);
             let result = unsafe {
-                libc::read(
+                LibcRead(
                     self.file.as_raw_fd(),
                     destination.add(read).cast(),
                     read_len,
@@ -150,8 +151,8 @@ where
             if result == 0 {
                 panic!("unexpected end of raw vector");
             }
-            let error = std::io::Error::last_os_error();
-            if error.kind() != std::io::ErrorKind::Interrupted {
+            let error = Error::last_os_error();
+            if error.kind() != ErrorKind::Interrupted {
                 panic!("failed to read raw vector: {error}");
             }
         }
@@ -183,11 +184,11 @@ where
 
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> Result<B, E>>(
         mut self,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let mut accum = init;
         loop {
             let ptr = self.buffer.as_ptr();
@@ -212,9 +213,8 @@ where
 mod tests {
     use tempfile::tempdir;
 
-    use crate::{AnyStoredVec, BytesVec, Database, ImportableVec, Version, WritableVec};
-
     use super::RawIoSource;
+    use crate::{AnyStoredVec, BytesVec, Database, ImportableVec, Version, WritableVec};
 
     #[test]
     fn read_into_appends_the_requested_range() {

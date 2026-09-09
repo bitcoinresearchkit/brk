@@ -1,3 +1,5 @@
+use std::mem;
+
 use aide::openapi::OpenApi;
 use axum::body::Bytes;
 use serde_json::{Map, Value, to_value, to_vec};
@@ -277,7 +279,7 @@ fn extract_type_from_schema(mut schema: Value) -> Value {
 fn simplify_properties(props: &mut Map<String, Value>) {
     for value in props.values_mut() {
         if let Value::Object(obj) = value {
-            *value = simplify_property_value(std::mem::take(obj));
+            *value = simplify_property_value(mem::take(obj));
         }
     }
 }
@@ -353,22 +355,23 @@ fn simplify_property_value(mut obj: Map<String, Value>) -> Value {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::ApiRoutes;
     use aide::axum::ApiRouter;
-    use serde_json::{from_slice, from_str};
+    use serde_json::{from_slice, from_str, json, to_string};
+
+    use super::*;
+    use crate::{ApiRoutes, AppState, finish_openapi};
 
     #[test]
     fn generated_schema_compaction_matches_the_json_round_trip() {
-        let (_, spec) = crate::finish_openapi(ApiRouter::<crate::AppState>::new().add_api_routes());
-        let serialized = serde_json::to_string(&spec).unwrap();
+        let (_, spec) = finish_openapi(ApiRouter::<AppState>::new().add_api_routes());
+        let serialized = to_string(&spec).unwrap();
         let through_json = compact_json(from_str(&serialized).unwrap());
         assert_eq!(ApiJson::new(&spec).bytes().as_ref(), through_json);
     }
 
     #[test]
     fn nested_properties_preserve_extra_fields_and_union_shape() {
-        let spec = serde_json::json!({
+        let spec = json!({
             "properties": {
                 "object": {"type": "object", "properties": {
                     "id": {"$ref": "#/components/schemas/Txid", "description": "drop"}
@@ -382,7 +385,7 @@ mod tests {
         let value: Value = from_slice(&compact_json(spec)).unwrap();
         assert_eq!(
             value,
-            serde_json::json!({
+            json!({
                 "properties": {
                     "object": {"properties": {"id": "Txid"}, "additionalProperties": false},
                     "single": ["string"],

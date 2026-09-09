@@ -1,15 +1,16 @@
 use bitview_cohort::{
-    AgeRangeId, AmountRange, AmountRangeId, ClassId, CohortContext, EntryId, EpochId, OverAgeId,
-    OverAmountId, SpendableTypeId, UTXOAggregateId, UnderAgeId, UnderAmountId,
+    AgeRangeId, AmountRange, AmountRangeId, ClassId, CohortContext, EntryId, EpochId, Filter,
+    OverAgeId, OverAmountId, SpendableTypeId, UTXOAggregateId, UnderAgeId, UnderAmountId,
 };
 use bitview_vecs::{ColumnarAmount, ExactUTXOColumns};
 use brk_types::{Height, StoredU64, Version};
+use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadableVec, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec,
+    PcoVec, ReadOnlyClone, ReadableVec, WritableVec,
 };
 
-static CACHE: vecdb::CacheBudget = vecdb::CacheBudget::new(1024 * 1024);
+static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
 
 fn seed_legacy_axis<C: ColumnId>(db: &Database, name: &str, version: Version) -> (String, Version) {
     let mut source = EagerVec::<ColumnarVec<PcoVec<Height, StoredU64>, C>>::forced_import(
@@ -25,7 +26,7 @@ fn seed_legacy_axis<C: ColumnId>(db: &Database, name: &str, version: Version) ->
 
 #[test]
 fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let version = Version::new(31);
     let legacy = vec![
@@ -42,7 +43,7 @@ fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
         seed_legacy_axis::<OverAmountId>(&db, "utxos_existing_by_over_amount", version),
     ];
     let mut columns =
-        ExactUTXOColumns::<StoredU64>::forced_import(&db, "existing", version).unwrap();
+        ExactUTXOColumns::<StoredU64>::forced_import(&CACHE, &db, "existing", version).unwrap();
     assert_eq!(columns.min_len(), 1);
     let identity: Vec<_> = columns
         .collect_vecs_mut()
@@ -71,12 +72,10 @@ fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
         StoredU64::from(17_u64)
     );
 
-    let exact = columns
-        .source(&CACHE, &bitview_cohort::Filter::All, "exact", version)
-        .unwrap();
+    let exact = columns.source(&Filter::All, "exact", version).unwrap();
     let sum = columns
         .direct
-        .additive_source(&CACHE, &bitview_cohort::Filter::All, "sum", version)
+        .additive_source(&Filter::All, "sum", version)
         .unwrap();
     assert_eq!(exact.collect_one_at(0), Some(StoredU64::from(17_u64)));
     assert_ne!(exact.collect_one_at(0), sum.collect_one_at(0));
@@ -84,7 +83,7 @@ fn composed_axes_reopen_existing_storage_without_renaming_or_resetting() {
 
 #[test]
 fn amount_composition_keeps_checkpoint_invalidation_and_reader_projection() {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut amounts = ColumnarAmount::<StoredU64, ()>::forced_import(
         &CACHE,

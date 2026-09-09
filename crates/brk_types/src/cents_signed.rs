@@ -1,12 +1,20 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+};
 
-use crate::CheckedSub;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::Dollars;
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Signed cents (i64) - for values that can be negative.
 /// Used for profit/loss calculations, deltas, etc.
@@ -243,15 +251,15 @@ impl CheckedSub for CentsSigned {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for CentsSigned {
+impl VecdbCheckedSub for CentsSigned {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for CentsSigned {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for CentsSigned {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -261,7 +269,7 @@ impl std::fmt::Display for CentsSigned {
 impl Formattable for CentsSigned {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

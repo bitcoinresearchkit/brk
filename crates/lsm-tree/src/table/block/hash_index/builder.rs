@@ -2,8 +2,11 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use super::{MARKER_CONFLICT, MARKER_FREE, calculate_bucket_position};
+use std::io::{Result, Write};
+
 use byteorder::WriteBytesExt;
+
+use super::{MARKER_CONFLICT, MARKER_FREE, calculate_bucket_position};
 
 /// With 254, pointers [0 - 253] can be indexed.
 pub const MAX_POINTERS_FOR_HASH_INDEX: usize = 254;
@@ -116,7 +119,7 @@ impl Builder {
     }
 
     /// Appends the raw index bytes to a writer.
-    pub fn write<W: std::io::Write>(self, writer: &mut W) -> std::io::Result<()> {
+    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
         for byte in self.0 {
             writer.write_u8(byte)?;
         }

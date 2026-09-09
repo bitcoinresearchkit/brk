@@ -1,16 +1,16 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 use rayon::join;
 
 use super::Vecs;
+use crate::LookbackVecs;
 
 impl Vecs {
     pub fn compute(
         &mut self,
         indexer: &Indexer,
-        lookback: &crate::LookbackVecs,
+        lookback: &LookbackVecs,
         exit: &Exit,
     ) -> Result<()> {
         let starting_height = indexer.safe_lengths().height;

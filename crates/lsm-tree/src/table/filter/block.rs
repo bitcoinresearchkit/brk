@@ -2,7 +2,10 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::table::{Block, filter::standard_bloom::StandardBloomFilterReader};
+use crate::{
+    Result,
+    table::{Block, filter::standard_bloom::StandardBloomFilterReader},
+};
 
 #[derive(Clone)]
 pub struct FilterBlock(Block);
@@ -13,7 +16,7 @@ impl FilterBlock {
         Self(block)
     }
 
-    pub fn maybe_contains_hash(&self, hash: u64) -> crate::Result<bool> {
+    pub fn maybe_contains_hash(&self, hash: u64) -> Result<bool> {
         Ok(StandardBloomFilterReader::new(&self.0.data)?.contains_hash(hash))
     }
 

@@ -6,6 +6,8 @@ use bitview_query::Query;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::Index;
+use tempfile::tempdir;
+use vecdb::CacheBudget;
 
 #[test]
 fn series_reads_wait_for_source_and_bound_publications() {
@@ -18,7 +20,7 @@ fn series_reads_wait_for_source_and_bound_publications() {
 }
 
 fn check_publication_gates() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
     let reader = Reader::new_without_rlimit(directory.path().join("blocks"), &client);
     let plugins =
@@ -62,4 +64,4 @@ fn check_publication_gates() {
     }
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

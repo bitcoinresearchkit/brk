@@ -1,7 +1,10 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use brk_types::{Cents, Height, StoredU64, Version};
-use vecdb::{AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, short_type_name};
+use vecdb::{
+    AnyVec, BudgetedCachedVec, CacheBudget, PrintableIndex, ReadableBoxedVec, ReadableVec,
+    TypedVec, short_type_name,
+};
 
 #[derive(Clone)]
 pub struct SmaPrefixSumVec {
@@ -11,16 +14,19 @@ pub struct SmaPrefixSumVec {
 }
 
 impl SmaPrefixSumVec {
-    pub fn new(
+    /// Exception to stored-source-only retention: one prefix scan is shared by
+    /// every SMA window, avoiding a full price scan for each endpoint lookup.
+    pub fn cached(
+        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         spot_price: impl ReadableVec<Height, Cents> + Clone + 'static,
-    ) -> Self {
-        Self {
+    ) -> BudgetedCachedVec<Self> {
+        cache.wrap(Self {
             name: Arc::from(name),
             version,
             spot_price: ReadableBoxedVec::new(spot_price),
-        }
+        })
     }
 
     fn try_for_each_value<E>(
@@ -50,7 +56,7 @@ impl SmaPrefixSumVec {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(StoredU64)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}

@@ -1,7 +1,3 @@
-#[cfg(unix)]
-use std::os::unix::process::CommandExt;
-#[cfg(not(unix))]
-use std::process::exit;
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -16,9 +12,18 @@ use bitview_query::Vecs;
 use bitview_server::{ApiRoutes, finish_openapi};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use color_eyre::eyre::{Result, bail};
+use color_eyre::{
+    eyre::{Result, bail},
+    install,
+};
 use serde_json::{json, to_string, to_string_pretty};
 use tempfile::tempdir;
+use vecdb::CacheBudget;
+
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+#[cfg(not(unix))]
+use std::process::exit;
 
 const GENERATED_OUTPUTS: &[(&str, &str)] = &[
     (
@@ -64,7 +69,7 @@ impl OutputScope {
 }
 
 pub fn main() -> Result<()> {
-    color_eyre::install()?;
+    install()?;
 
     let args = env::args().skip(1).collect::<Vec<_>>();
     match args.as_slice() {
@@ -232,7 +237,7 @@ fn verify_output_pairs(
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);
 
 #[cfg(test)]
 mod tests {

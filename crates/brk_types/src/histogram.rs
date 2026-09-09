@@ -1,13 +1,14 @@
 use std::{
+    borrow::Cow,
     fmt,
     marker::PhantomData,
     ops::{Deref, DerefMut},
 };
 
-use schemars::{JsonSchema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
-    de::{SeqAccess, Visitor},
+    de::{Error, SeqAccess, Visitor},
 };
 
 /// Fixed-length, log-scale bin histogram generic over the per-bin counter type.
@@ -109,7 +110,7 @@ impl<'de, T: Deserialize<'de> + Copy + Default, const N: usize> Deserialize<'de>
                 for (i, bin) in bins.iter_mut().enumerate() {
                     *bin = seq
                         .next_element()?
-                        .ok_or_else(|| serde::de::Error::invalid_length(i, &self))?;
+                        .ok_or_else(|| Error::invalid_length(i, &self))?;
                 }
                 Ok(Histogram(bins))
             }
@@ -120,11 +121,11 @@ impl<'de, T: Deserialize<'de> + Copy + Default, const N: usize> Deserialize<'de>
 }
 
 impl<T: JsonSchema, const N: usize> JsonSchema for Histogram<T, N> {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         format!("Histogram_{}", T::schema_name()).into()
     }
 
-    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         let mut schema = Vec::<T>::json_schema(generator);
         schema.insert("minItems".to_owned(), N.into());
         schema.insert("maxItems".to_owned(), N.into());
@@ -141,6 +142,9 @@ impl<T: JsonSchema, const N: usize> JsonSchema for Histogram<T, N> {
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_value;
+
     use super::*;
 
     #[test]
@@ -163,7 +167,7 @@ mod tests {
 
     #[test]
     fn schema_preserves_the_fixed_bin_count() {
-        let schema = serde_json::to_value(schemars::schema_for!(Histogram<u16, 3>)).unwrap();
+        let schema = to_value(schema_for!(Histogram<u16, 3>)).unwrap();
         assert_eq!(schema["type"], "array");
         assert_eq!(schema["minItems"], 3);
         assert_eq!(schema["maxItems"], 3);

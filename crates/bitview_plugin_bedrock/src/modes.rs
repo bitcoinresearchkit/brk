@@ -1,3 +1,5 @@
+use std::iter;
+
 use bitview_traversable::Traversable;
 use derive_more::{Deref, DerefMut};
 
@@ -48,10 +50,10 @@ impl<T> Modes<T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &T> {
-        std::iter::once(&self.raw).chain(self.weighted.iter())
+        iter::once(&self.raw).chain(self.weighted.iter())
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        std::iter::once(&mut self.raw).chain(self.weighted.iter_mut())
+        iter::once(&mut self.raw).chain(self.weighted.iter_mut())
     }
 }

@@ -4,6 +4,7 @@ use bitview_collections::DistributionStats;
 use bitview_compute::{ComputeRollingMedianFromStarts, compute_rolling_distribution_from_starts};
 use brk_exit::Exit;
 use brk_types::{Height, StoredF64, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, PcoVecValue,
     ReadableCloneableVec, ReadableVec, WritableVec,
@@ -38,7 +39,7 @@ fn output_refs<T: PcoVecValue>(
 
 #[test]
 fn rolling_outputs_preserve_interpolation_cache_reuse_and_restarts() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let values: Vec<_> = (0..48)
         .map(|i| StoredF64::from(((i * 7) % 13) as f64))
@@ -133,7 +134,7 @@ fn rolling_outputs_preserve_interpolation_cache_reuse_and_restarts() {
 
 #[test]
 fn median_matches_sorted_windows_through_resume_rewind_and_reset() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let population: Vec<_> = (0..53)
         .map(|i| StoredF64::from(((i * 17) % 23) as f64 - 10.0))
@@ -212,7 +213,7 @@ fn median_matches_sorted_windows_through_resume_rewind_and_reset() {
 #[test]
 fn completed_median_does_not_reread_or_sort_its_historical_window() {
     static READS: AtomicUsize = AtomicUsize::new(0);
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let source = stored(
         &db,

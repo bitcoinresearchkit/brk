@@ -15,6 +15,8 @@ use hyper::{
 use hyper_util::rt::TokioIo;
 use tokio::{net::TcpStream, pin, select, time::timeout};
 
+use crate::rpc_response::MAX_RESPONSE_BYTES;
+
 pub struct Connection {
     sender: SendRequest<Full<Bytes>>,
     driver: Option<HttpConnection<TokioIo<TcpStream>, Full<Bytes>>>,
@@ -68,14 +70,11 @@ impl Connection {
                 Err(_) => return Ok(Exchange::Disconnected),
             };
             let status = response.status();
-            let bytes = Limited::new(
-                response.into_body(),
-                crate::rpc_response::MAX_RESPONSE_BYTES,
-            )
-            .collect()
-            .await
-            .map_err(|_| Error::Internal("node RPC response unreadable or too large"))?
-            .to_bytes();
+            let bytes = Limited::new(response.into_body(), MAX_RESPONSE_BYTES)
+                .collect()
+                .await
+                .map_err(|_| Error::Internal("node RPC response unreadable or too large"))?
+                .to_bytes();
             Ok(Exchange::Complete(status, bytes))
         };
         pin!(response);

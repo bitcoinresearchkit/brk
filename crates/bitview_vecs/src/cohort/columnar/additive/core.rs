@@ -5,7 +5,8 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, ReadableVec, Rw,
+    StorageMode,
 };
 
 use crate::ColumnarPerBlock;
@@ -25,28 +26,37 @@ pub struct UTXOCoreColumns<T: PcoVecValue, M: StorageMode = Rw> {
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOCoreColumns<T> {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         let version = version + Version::ONE;
         Ok(Self {
             age_range: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_age_range"),
                 version,
                 |_| (),
             )?,
             epoch: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_epoch"),
                 version,
                 |_| (),
             )?,
             class: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_class"),
                 version,
                 |_| (),
             )?,
             entry: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_entry"),
                 version,
@@ -57,48 +67,46 @@ impl<T: PcoVecValue + AddAssign> UTXOCoreColumns<T> {
 
     pub fn additive_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
-        self.direct_source(cache, filter, name, version)
-            .or_else(|| self.aggregate_source(cache, filter, name, version))
+    ) -> Option<ReadableBoxedVec<Height, T>> {
+        self.direct_source(filter, name, version)
+            .or_else(|| self.aggregate_source(filter, name, version))
     }
 
     pub(crate) fn direct_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         match filter {
             Filter::Time(_) => AgeRangeId::matching(filter)
-                .map(|id| self.age_range.cached_column(cache, name, version, id)),
-            Filter::Epoch(_) => EpochId::matching(filter)
-                .map(|id| self.epoch.cached_column(cache, name, version, id)),
-            Filter::Class(_) => ClassId::matching(filter)
-                .map(|id| self.class.cached_column(cache, name, version, id)),
-            Filter::Entry(_) => EntryId::matching(filter)
-                .map(|id| self.entry.cached_column(cache, name, version, id)),
+                .map(|id| self.age_range.column_source(name, version, id)),
+            Filter::Epoch(_) => {
+                EpochId::matching(filter).map(|id| self.epoch.column_source(name, version, id))
+            }
+            Filter::Class(_) => {
+                ClassId::matching(filter).map(|id| self.class.column_source(name, version, id))
+            }
+            Filter::Entry(_) => {
+                EntryId::matching(filter).map(|id| self.entry.column_source(name, version, id))
+            }
             Filter::All | Filter::Term(_) | Filter::Amount(_) | Filter::Type(_) => None,
         }
     }
 
     pub(crate) fn aggregate_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
-        Some(self.age_range.cached_sum(
-            cache,
-            name,
-            version,
-            AgeRangeId::aggregate_columns(filter)?,
-        ))
+    ) -> Option<ReadableBoxedVec<Height, T>> {
+        Some(
+            self.age_range
+                .sum_source(name, version, AgeRangeId::aggregate_columns(filter)?),
+        )
     }
 
     pub fn min_len(&self) -> usize {

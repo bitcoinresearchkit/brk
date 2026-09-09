@@ -155,6 +155,8 @@ impl PaymentFilter {
 
 #[cfg(test)]
 mod tests {
+    use std::iter;
+
     use super::*;
 
     fn reference_is_common_round_value(value: u64) -> bool {
@@ -172,7 +174,7 @@ mod tests {
     }
 
     fn payment_outputs(len: usize) -> impl ExactSizeIterator<Item = (Sats, OutputType)> + Clone {
-        std::iter::repeat_n((Sats::new(12_345), OutputType::P2WPKH), len)
+        iter::repeat_n((Sats::new(12_345), OutputType::P2WPKH), len)
     }
 
     fn emitted_count(height: usize, len: usize) -> usize {

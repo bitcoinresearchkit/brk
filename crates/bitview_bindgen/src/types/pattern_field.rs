@@ -1,4 +1,7 @@
-use std::collections::BTreeSet;
+use std::{
+    collections::BTreeSet,
+    hash::{Hash, Hasher},
+};
 
 use brk_types::Index;
 
@@ -29,8 +32,8 @@ impl PatternField {
     }
 }
 
-impl std::hash::Hash for PatternField {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl Hash for PatternField {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.name.hash(state);
         self.rust_type.hash(state);
         self.json_type.hash(state);

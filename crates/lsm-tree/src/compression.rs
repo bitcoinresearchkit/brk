@@ -2,9 +2,17 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::coding::{Decode, Encode};
+use std::{
+    fmt::{Display, Formatter, Result},
+    io::{Read, Write},
+};
+
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use std::io::{Read, Write};
+
+use crate::{
+    Error, Result as CrateResult,
+    coding::{Decode, Encode},
+};
 
 /// Compression algorithm to use
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -21,8 +29,8 @@ pub enum CompressionType {
     Lz4,
 }
 
-impl std::fmt::Display for CompressionType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for CompressionType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
             "{}",
@@ -36,7 +44,7 @@ impl std::fmt::Display for CompressionType {
 }
 
 impl Encode for CompressionType {
-    fn encode_into<W: Write>(&self, writer: &mut W) -> crate::Result<()> {
+    fn encode_into<W: Write>(&self, writer: &mut W) -> CrateResult<()> {
         match self {
             Self::None => {
                 writer.write_u8(0)?;
@@ -52,7 +60,7 @@ impl Encode for CompressionType {
 }
 
 impl Decode for CompressionType {
-    fn decode_from<R: Read>(reader: &mut R) -> crate::Result<Self> {
+    fn decode_from<R: Read>(reader: &mut R) -> CrateResult<Self> {
         let tag = reader.read_u8()?;
 
         match tag {
@@ -60,15 +68,16 @@ impl Decode for CompressionType {
 
             1 => Ok(Self::Lz4),
 
-            tag => Err(crate::Error::InvalidTag(("CompressionType", tag))),
+            tag => Err(Error::InvalidTag(("CompressionType", tag))),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn compression_serialize_none() {
@@ -77,8 +86,9 @@ mod tests {
     }
 
     mod lz4 {
-        use super::*;
         use test_log::test;
+
+        use super::*;
 
         #[test]
         fn compression_serialize_none() {

@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;
 
 pub fn de_unquote_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
@@ -38,11 +38,11 @@ where
         if s == "null" || s.is_empty() {
             return Ok(None);
         }
-        s.parse().map(Some).map_err(serde::de::Error::custom)
+        s.parse().map(Some).map_err(Error::custom)
     } else {
         number(&value)
             .map(Some)
-            .ok_or_else(|| serde::de::Error::custom("expected a string or number"))
+            .ok_or_else(|| Error::custom("expected a string or number"))
     }
 }
 

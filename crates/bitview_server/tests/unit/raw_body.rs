@@ -4,15 +4,18 @@ use std::{
     pin::Pin,
 };
 
-use axum::body::HttpBody;
-use axum::http::{
-    Request,
-    header::{ACCEPT_ENCODING, CONTENT_ENCODING, CONTENT_TYPE},
+use axum::{
+    body::HttpBody,
+    http::{
+        Request,
+        header::{ACCEPT_ENCODING, CONTENT_ENCODING, CONTENT_TYPE},
+    },
 };
 use tower::{ServiceExt, service_fn};
 use tower_layer::Layer;
 
 use super::*;
+use crate::compression_layer;
 
 #[test]
 fn payload_clones_retain_admission_without_copying_bytes() {
@@ -82,7 +85,7 @@ async fn compression_releases_input_without_releasing_response_admission() {
                     headers.insert(CONTENT_TYPE, "application/octet-stream".parse().unwrap());
                 });
             let mut response = Some(response);
-            let service = crate::compression_layer().layer(service_fn(move |_: Request<Body>| {
+            let service = compression_layer().layer(service_fn(move |_: Request<Body>| {
                 ready(Ok::<_, Infallible>(response.take().unwrap()))
             }));
             let request = Request::builder()

@@ -1,4 +1,5 @@
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{
     CachedWindowStartVec, LazyPerSecondWindows, LazyRollingSumsFromHeight,
     ValuePerBlockCumulativeRolling,
@@ -13,7 +14,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
     tx_count_sums: &LazyRollingSumsFromHeight<StoredU64>,
 ) -> Result<Vecs> {

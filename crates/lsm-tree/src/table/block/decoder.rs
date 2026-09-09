@@ -2,13 +2,15 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{cmp::Ordering, io::Cursor, marker::PhantomData};
+
+use byteorder::{LittleEndian, ReadBytesExt};
+
 use super::binary_index::Reader as BinaryIndexReader;
 use crate::{
     Slice,
     table::{Block, block::Trailer},
 };
-use byteorder::{LittleEndian, ReadBytesExt};
-use std::{io::Cursor, marker::PhantomData};
 
 /// Represents an object that was parsed from a byte array
 ///
@@ -17,7 +19,7 @@ pub trait ParsedItem<M> {
     /// Compares this item's key with a needle.
     ///
     /// We can not access the key directly because it may be comprised of prefix + suffix.
-    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> std::cmp::Ordering;
+    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> Ordering;
 
     /// Returns the byte offset of the key's start position.
     fn key_offset(&self) -> usize;

@@ -22,17 +22,23 @@ pub struct CumulativeUTXOCoreValueColumns<M: StorageMode = Rw> {
 }
 
 impl CumulativeUTXOCoreValueColumns {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         let version = version + Version::ONE;
         Ok(Self {
-            age_range: Self::import(db, &format!("utxos_{name}_by_age_range"), version)?,
-            epoch: Self::import(db, &format!("{name}_by_epoch"), version)?,
-            class: Self::import(db, &format!("{name}_by_class"), version)?,
-            entry: Self::import(db, &format!("{name}_by_entry"), version)?,
+            age_range: Self::import(cache, db, &format!("utxos_{name}_by_age_range"), version)?,
+            epoch: Self::import(cache, db, &format!("{name}_by_epoch"), version)?,
+            class: Self::import(cache, db, &format!("{name}_by_class"), version)?,
+            entry: Self::import(cache, db, &format!("{name}_by_entry"), version)?,
         })
     }
 
     fn import<C>(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
@@ -40,12 +46,11 @@ impl CumulativeUTXOCoreValueColumns {
     where
         C: ColumnId,
     {
-        ColumnarValuePerBlockCumulativeRolling::forced_import(db, name, version, |_, _| ())
+        ColumnarValuePerBlockCumulativeRolling::forced_import(cache, db, name, version, |_, _| ())
     }
 
     pub fn sources(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
@@ -53,13 +58,12 @@ impl CumulativeUTXOCoreValueColumns {
         LazyVec<Height, Sats, Height, StoredU64>,
         LazyVec<Height, Cents, Height, StoredU64>,
     )> {
-        self.direct_sources(cache, filter, name, version)
-            .or_else(|| self.aggregate_sources(cache, filter, name, version))
+        self.direct_sources(filter, name, version)
+            .or_else(|| self.aggregate_sources(filter, name, version))
     }
 
     pub fn direct_sources(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
@@ -68,22 +72,20 @@ impl CumulativeUTXOCoreValueColumns {
         LazyVec<Height, Cents, Height, StoredU64>,
     )> {
         match filter {
-            Filter::Time(_) => AgeRangeId::matching(filter).map(|column| {
-                Self::column_sources(cache, &self.age_range, name, version, [column])
-            }),
+            Filter::Time(_) => AgeRangeId::matching(filter)
+                .map(|column| Self::column_sources(&self.age_range, name, version, [column])),
             Filter::Epoch(_) => EpochId::matching(filter)
-                .map(|column| Self::column_sources(cache, &self.epoch, name, version, [column])),
+                .map(|column| Self::column_sources(&self.epoch, name, version, [column])),
             Filter::Class(_) => ClassId::matching(filter)
-                .map(|column| Self::column_sources(cache, &self.class, name, version, [column])),
+                .map(|column| Self::column_sources(&self.class, name, version, [column])),
             Filter::Entry(_) => EntryId::matching(filter)
-                .map(|column| Self::column_sources(cache, &self.entry, name, version, [column])),
+                .map(|column| Self::column_sources(&self.entry, name, version, [column])),
             Filter::All | Filter::Term(_) | Filter::Amount(_) | Filter::Type(_) => None,
         }
     }
 
     pub fn aggregate_sources(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
@@ -93,7 +95,6 @@ impl CumulativeUTXOCoreValueColumns {
     )> {
         let columns = AgeRangeId::aggregate_columns(filter)?;
         Some(Self::column_sources(
-            cache,
             &self.age_range,
             name,
             version,
@@ -102,7 +103,6 @@ impl CumulativeUTXOCoreValueColumns {
     }
 
     pub fn column_sources<C>(
-        cache: &'static CacheBudget,
         source: &ColumnarValuePerBlockCumulativeRolling<C, ()>,
         name: &str,
         version: Version,
@@ -114,7 +114,7 @@ impl CumulativeUTXOCoreValueColumns {
     where
         C: ColumnId,
     {
-        source.sources(cache, &format!("{name}_cumulative"), version, columns)
+        source.sources(&format!("{name}_cumulative"), version, columns)
     }
 
     #[inline(always)]

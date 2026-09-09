@@ -2,17 +2,23 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::{
-    CompressionType, Result,
-    table::{
-        Block, BlockHandle, BlockOffset, IndexBlock, block::Header as BlockHeader,
-        index_block::KeyedBlockHandle, writer::index::BlockIndexWriter,
-    },
-};
 use std::{
     fs::File,
     io::{BufWriter, Seek, Write},
     mem::size_of,
+};
+
+use log::trace;
+use sfa::Writer;
+
+use crate::{
+    CompressionType, Result,
+    table::{
+        Block, BlockHandle, BlockOffset, IndexBlock,
+        block::{BlockType, Header as BlockHeader},
+        index_block::KeyedBlockHandle,
+        writer::index::BlockIndexWriter,
+    },
 };
 
 pub struct PartitionedIndexWriter {
@@ -58,7 +64,7 @@ impl PartitionedIndexWriter {
         let header = Block::write_into(
             &mut self.block_buffer,
             &bytes,
-            crate::table::block::BlockType::Index,
+            BlockType::Index,
             self.compression,
         )?;
 
@@ -83,7 +89,7 @@ impl PartitionedIndexWriter {
             BlockHandle::new(BlockOffset(self.relative_file_pos), bytes_written),
         );
 
-        log::trace!(
+        trace!(
             "Built Bloom filter partition ({bytes_written}B) with end_key={:?} at +{:#X?}",
             last.end_key(),
             self.relative_file_pos,
@@ -105,7 +111,7 @@ impl PartitionedIndexWriter {
 
     fn write_top_level_index(
         &mut self,
-        file_writer: &mut sfa::Writer<BufWriter<File>>,
+        file_writer: &mut Writer<BufWriter<File>>,
         index_base_offset: BlockOffset,
     ) -> Result<()> {
         file_writer.start("tli")?;
@@ -117,12 +123,7 @@ impl PartitionedIndexWriter {
         let mut bytes = vec![];
         IndexBlock::encode_into(&mut bytes, &self.tli_handles)?;
 
-        let header = Block::write_into(
-            file_writer,
-            &bytes,
-            crate::table::block::BlockType::Index,
-            self.compression,
-        )?;
+        let header = Block::write_into(file_writer, &bytes, BlockType::Index, self.compression)?;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -132,7 +133,7 @@ impl PartitionedIndexWriter {
 
         debug_assert!(bytes_written > 0, "Top level index should never be empty");
 
-        log::trace!(
+        trace!(
             "Written top level index, with {} pointers ({bytes_written} bytes)",
             self.tli_handles.len(),
         );
@@ -156,7 +157,7 @@ impl BlockIndexWriter for PartitionedIndexWriter {
     }
 
     fn register_data_block(&mut self, block_handle: KeyedBlockHandle) -> Result<()> {
-        log::trace!(
+        trace!(
             "Registering block at {:?} with size {} [end_key={:?}]",
             block_handle.offset(),
             block_handle.size(),
@@ -181,10 +182,7 @@ impl BlockIndexWriter for PartitionedIndexWriter {
         Ok(())
     }
 
-    fn finish(
-        mut self: Box<Self>,
-        file_writer: &mut sfa::Writer<BufWriter<File>>,
-    ) -> Result<usize> {
+    fn finish(mut self: Box<Self>, file_writer: &mut Writer<BufWriter<File>>) -> Result<usize> {
         if self.buffer_size > 0 {
             self.cut_index_block()?;
         }
@@ -193,7 +191,7 @@ impl BlockIndexWriter for PartitionedIndexWriter {
 
         file_writer.start("index")?;
         file_writer.write_all(&self.final_write_buffer)?;
-        log::trace!("Concatted index partitions onto blocks file");
+        trace!("Concatted index partitions onto blocks file");
 
         self.write_top_level_index(file_writer, index_base_offset)?;
 

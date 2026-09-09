@@ -1,8 +1,7 @@
 use brk_error::Result;
-
 use brk_types::Height;
 use tracing::{debug, warn};
-use vecdb::Stamp;
+use vecdb::{Result as VecdbResult, Stamp};
 
 use super::super::{
     Vecs,
@@ -18,7 +17,7 @@ impl Vecs {
     pub fn recover_state(
         &mut self,
         height: Height,
-        chain_state_rollback: Option<vecdb::Result<Stamp>>,
+        chain_state_rollback: Option<VecdbResult<Stamp>>,
         utxo_states: &mut UTXOStates,
         addr_states: &mut AddrStates,
     ) -> Result<Height> {
@@ -118,7 +117,7 @@ pub enum StartMode {
 /// Returns the consistent starting height if ALL rollbacks succeed and agree,
 /// otherwise returns Height::ZERO (need fresh start).
 fn rollback_states(
-    chain_state_rollback: vecdb::Result<Stamp>,
+    chain_state_rollback: VecdbResult<Stamp>,
     addr_state_rollbacks: Result<Vec<Stamp>>,
 ) -> Height {
     // All rollbacks must succeed - any error means fresh start
@@ -165,10 +164,12 @@ fn rollback_states(
 
 #[cfg(test)]
 mod tests {
+    use std::io::Error;
+
     use brk_types::Height;
+    use vecdb::Stamp;
 
     use super::{StartMode, determine_start_mode, rollback_states};
-    use vecdb::Stamp;
 
     #[test]
     fn rollback_requires_every_checkpoint_to_agree() {
@@ -190,7 +191,7 @@ mod tests {
         }
         assert_eq!(
             rollback_states(
-                Err(std::io::Error::other("chain rollback failed").into()),
+                Err(Error::other("chain rollback failed").into()),
                 Ok(vec![stamp])
             ),
             Height::ZERO
@@ -198,7 +199,7 @@ mod tests {
         assert_eq!(
             rollback_states(
                 Ok(stamp),
-                Err(std::io::Error::other("address rollback failed").into())
+                Err(Error::other("address rollback failed").into())
             ),
             Height::ZERO
         );

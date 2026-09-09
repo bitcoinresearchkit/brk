@@ -3,6 +3,7 @@ use std::sync::{
     atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed},
 };
 
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, BudgetedCachedVec, BytesVec, CachedReadableVec, Database, ImportableVec, Pinned,
     PinnedCachedVec, ReadOnlyClone, ReadableVec, Version, WritableVec,
@@ -10,7 +11,7 @@ use vecdb::{
 
 #[test]
 fn aliases_preserve_policy_and_share_snapshots_through_clones() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut source = BytesVec::<usize, u64>::forced_import(&db, "budgeted", Version::ONE).unwrap();
     source.push(10);

@@ -1,6 +1,7 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 
 use super::Vecs;
@@ -9,8 +10,8 @@ use crate::fees;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
-    prices: &bitview_plugin_price::Vecs,
+    mappings: &MappingsVecs,
+    prices: &PriceVecs,
     fees_vecs: &fees::Vecs,
     exit: &Exit,
 ) -> Result<()> {

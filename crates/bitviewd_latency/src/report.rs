@@ -1,5 +1,10 @@
+use std::{
+    cmp::Reverse,
+    collections::{BTreeMap, BTreeSet},
+    fmt::{Result as FmtResult, Write},
+};
+
 use crate::{Result, analysis::Analysis, group::Group};
-use std::{collections::BTreeMap, fmt::Write};
 
 fn cell(value: &str) -> String {
     value
@@ -77,15 +82,14 @@ pub fn render(analysis: &Analysis) -> Result<String> {
                 }
             }
             let mut unknown: Vec<_> = unknown.into_iter().collect();
-            unknown.sort_by_key(|(path, count)| (std::cmp::Reverse(*count), *path));
+            unknown.sort_by_key(|(path, count)| (Reverse(*count), *path));
             out.push_str("## Most frequent unmatched paths\n\nCounts combine all statuses. These may be website paths, removed endpoints or invalid requests.\n\n| Path | Requests |\n|---|---:|\n");
             for (path, count) in unknown.into_iter().take(20) {
                 writeln!(out, "| {} | {count} |", cell(path))?;
             }
             out.push('\n');
         }
-        let statuses: std::collections::BTreeSet<_> =
-            groups.keys().map(|(_, status)| *status).collect();
+        let statuses: BTreeSet<_> = groups.keys().map(|(_, status)| *status).collect();
         for status in statuses {
             let status_groups: Vec<_> = groups
                 .iter()
@@ -98,7 +102,7 @@ pub fn render(analysis: &Analysis) -> Result<String> {
                 100. * status_count as f64 / count as f64
             )?;
             let mut ranked = status_groups.clone();
-            ranked.sort_by_key(|(key, g)| (std::cmp::Reverse(g.percentile(95)), *key));
+            ranked.sort_by_key(|(key, g)| (Reverse(g.percentile(95)), *key));
             table(&mut out, "Endpoints by P95", &ranked, 20, &endpoint_counts)?;
             let mut histogram = [0usize; 9];
             for (_, group) in &status_groups {
@@ -131,7 +135,7 @@ pub fn render(analysis: &Analysis) -> Result<String> {
             }
             out.push_str("\n### Slow request examples\n\nUp to three per endpoint/status group, ranked by duration within this status.\n\n| Timestamp | Status | Duration ms | Request URI |\n|---|---:|---:|---|\n");
             let mut examples: Vec<_> = status_groups.iter().flat_map(|(_, g)| &g.slowest).collect();
-            examples.sort_by_key(|r| std::cmp::Reverse(r.nanos));
+            examples.sort_by_key(|r| Reverse(r.nanos));
             for record in examples.into_iter().take(20) {
                 writeln!(
                     out,
@@ -159,7 +163,7 @@ fn table(
     rows: &[Row<'_>],
     top: usize,
     endpoint_counts: &BTreeMap<&str, (usize, usize)>,
-) -> std::fmt::Result {
+) -> FmtResult {
     writeln!(
         out,
         "### {title}\n\n| Endpoint | Requests | P50 ms | P95 ms | P99 ms | P99.9 ms | Avg ms | Max ms | Total s | Endpoint error % |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"

@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, sync::Arc};
 
 use crate::{AnyVec, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex, VecValue, Version};
 
@@ -104,7 +104,7 @@ where
     I: VecIndex,
     T: VecValue,
 {
-    fn snapshot(&self) -> std::sync::Arc<Vec<T>> {
+    fn snapshot(&self) -> Arc<Vec<T>> {
         self.0.snapshot()
     }
 

@@ -5,7 +5,7 @@ use bitview_vecs::{LazyPerBlock, LazyPercentPerBlock, Resolutions};
 use brk_types::{
     BLOCKS_PER_DIFF_EPOCHS, Epoch, Height, PartsPerMillionSigned32, StoredF64, StoredU32, Version,
 };
-use vecdb::{CacheBudget, Ident, IndexVec, ReadOnlyClone};
+use vecdb::{Ident, IndexVec, ReadOnlyClone};
 
 use super::Vecs;
 
@@ -26,15 +26,10 @@ fn difficulty_adjustment(
 }
 
 impl Vecs {
-    pub fn new(
-        cache: &'static CacheBudget,
-        version: Version,
-        indexer: &Indexer,
-        mappings: &MappingsVecs,
-    ) -> Self {
+    pub fn new(version: Version, indexer: &Indexer, mappings: &MappingsVecs) -> Self {
         let v2 = Version::TWO;
 
-        let difficulty_source = cache.wrap(indexer.vecs().blocks.difficulty.read_only_clone());
+        let difficulty_source = indexer.vecs().blocks.difficulty.read_only_clone();
         let hashrate = LazyPerBlock::from_height_source::<DifficultyToHashF64>(
             "difficulty_hashrate",
             version,

@@ -1,7 +1,7 @@
-use brk_error::Result;
-
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_types::{CapitalSentimentPhase, Cents, Day1, Height, StoredBool, StoredU8, Version};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
 
@@ -291,7 +291,7 @@ fn classify_phase(
     Phase::EarlyBear
 }
 
-fn recompute_day(indexer: &Indexer, mappings: &bitview_plugin_mappings::Vecs) -> Option<Day1> {
+fn recompute_day(indexer: &Indexer, mappings: &MappingsVecs) -> Option<Day1> {
     let starting_height = indexer.safe_lengths().height;
     mappings
         .height

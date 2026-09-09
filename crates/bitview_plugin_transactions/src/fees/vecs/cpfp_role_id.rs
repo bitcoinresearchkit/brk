@@ -1,3 +1,5 @@
+use std::array;
+
 use brk_types::Version;
 use vecdb::{ColumnId, VecValue};
 
@@ -41,7 +43,7 @@ impl ColumnId for CpfpRoleId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(CPFP_ROLE_IDS[index]))
+        array::from_fn(|index| create(CPFP_ROLE_IDS[index]))
     }
 
     #[inline]

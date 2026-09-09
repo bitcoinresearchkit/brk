@@ -3,11 +3,12 @@ use std::{env, fs, path::Path};
 use bitview::ImportContext;
 use bitview_default::DefaultPlugins;
 use bitview_query::Vecs;
+use brk_error::Result;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use vecdb::ReadOnlyClone;
+use vecdb::{CacheBudget, ReadOnlyClone};
 
-pub fn main() -> brk_error::Result<()> {
+pub fn main() -> Result<()> {
     let tmp = env::temp_dir().join("brk_search_gen");
     fs::create_dir_all(&tmp)?;
 
@@ -34,4 +35,4 @@ pub fn main() -> brk_error::Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

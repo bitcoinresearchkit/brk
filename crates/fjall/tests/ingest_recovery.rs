@@ -1,8 +1,11 @@
-use fjall::Database;
+use std::thread;
+
+use fjall::{Database, Result};
+use tempfile::tempdir;
 
 #[test]
-fn values_and_tombstones_survive_recovery() -> fjall::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn values_and_tombstones_survive_recovery() -> Result<()> {
+    let directory = tempdir()?;
 
     {
         let database = Database::builder(&directory).open()?;
@@ -36,15 +39,15 @@ fn values_and_tombstones_survive_recovery() -> fjall::Result<()> {
 }
 
 #[test]
-fn independent_keyspaces_ingest_concurrently() -> fjall::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn independent_keyspaces_ingest_concurrently() -> Result<()> {
+    let directory = tempdir()?;
 
     {
         let database = Database::builder(&directory).open()?;
         let first = database.keyspace("first", Default::default)?;
         let second = database.keyspace("second", Default::default)?;
 
-        let (first_result, second_result) = std::thread::scope(|scope| {
+        let (first_result, second_result) = thread::scope(|scope| {
             let first = scope.spawn(|| {
                 let mut ingestion = first.start_ingestion()?;
                 ingestion.write(b"a", b"first")?;

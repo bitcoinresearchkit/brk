@@ -1,5 +1,3 @@
-mod common;
-
 use bitview_collections::WindowId;
 use bitview_transforms::SatsToCents;
 use bitview_vecs::{
@@ -9,14 +7,19 @@ use bitview_vecs::{
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Timestamp, TxIndex, Version};
 use common::{indexes, stored};
+use tempfile::tempdir;
 use vecdb::{
     AnyVec, BinaryTransform, Database, Pinned, ReadableCloneableVec, ReadableVec, Rw, WritableVec,
 };
 
+use crate::common::CACHE_BUDGET;
+
+mod common;
+
 #[test]
 fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
-    let directory = tempfile::tempdir().unwrap();
-    let reference_directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
+    let reference_directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let reference_db = Database::open(reference_directory.path()).unwrap();
     let indexes = indexes(&db);
@@ -104,7 +107,7 @@ fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
 
 #[test]
 fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = indexes(&db);
     let length = 16usize;
@@ -177,7 +180,7 @@ fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
             .collect();
 
         let mut output: ValuePerBlockCumulative = ValuePerBlockCumulative::forced_import(
-            &crate::common::CACHE_BUDGET,
+            &CACHE_BUDGET,
             &db,
             &name,
             Version::ONE,
@@ -188,7 +191,7 @@ fn cumulative_values_reopen_resume_and_rewind_from_stored_totals() {
             if phase == 2 {
                 drop(output);
                 output = ValuePerBlockCumulative::forced_import(
-                    &crate::common::CACHE_BUDGET,
+                    &CACHE_BUDGET,
                     &db,
                     &name,
                     Version::ONE,

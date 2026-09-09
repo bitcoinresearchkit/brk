@@ -2,6 +2,7 @@ use bitview_cohort::{
     AgeRange, AgeRangeId, ByEntry, ByEpoch, Class, ClassId, EntryId, EpochId, OverAge, OverAgeId,
     UTXOAggregate, UTXOAggregateId, UTXOGroupsWithoutAmountOrType, UnderAge, UnderAgeId,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock};
@@ -55,16 +56,16 @@ impl Sopr24hColumns {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let storage_version = version + Version::ONE;
         let aggregate = Self::import_columns(
+            cache,
             db,
             "sopr_24h_by_aggregate",
             storage_version,
             |name, source| UTXOAggregate {
                 all: Self::column(
-                    cache,
                     name,
                     storage_version,
                     source,
@@ -72,7 +73,6 @@ impl Sopr24hColumns {
                     mappings,
                 ),
                 sth: Self::column(
-                    cache,
                     name,
                     storage_version,
                     source,
@@ -80,7 +80,6 @@ impl Sopr24hColumns {
                     mappings,
                 ),
                 lth: Self::column(
-                    cache,
                     name,
                     storage_version,
                     source,
@@ -90,53 +89,71 @@ impl Sopr24hColumns {
             },
         )?;
         let age_range = Self::import_columns(
+            cache,
             db,
             "utxos_sopr_24h_by_age_range",
             storage_version,
             |name, source| {
                 AgeRange::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
             },
         )?;
         let under_age = Self::import_columns(
+            cache,
             db,
             "utxos_sopr_24h_by_under_age",
             storage_version,
             |name, source| {
                 UnderAge::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
             },
         )?;
         let over_age = Self::import_columns(
+            cache,
             db,
             "utxos_sopr_24h_by_over_age",
             storage_version,
             |name, source| {
                 OverAge::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
             },
         )?;
-        let epoch =
-            Self::import_columns(db, "sopr_24h_by_epoch", storage_version, |name, source| {
+        let epoch = Self::import_columns(
+            cache,
+            db,
+            "sopr_24h_by_epoch",
+            storage_version,
+            |name, source| {
                 ByEpoch::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
-            })?;
-        let class =
-            Self::import_columns(db, "sopr_24h_by_class", storage_version, |name, source| {
+            },
+        )?;
+        let class = Self::import_columns(
+            cache,
+            db,
+            "sopr_24h_by_class",
+            storage_version,
+            |name, source| {
                 Class::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
-            })?;
-        let entry =
-            Self::import_columns(db, "sopr_24h_by_entry", storage_version, |name, source| {
+            },
+        )?;
+        let entry = Self::import_columns(
+            cache,
+            db,
+            "sopr_24h_by_entry",
+            storage_version,
+            |name, source| {
                 ByEntry::from_fn(|column| {
-                    Self::column(cache, name, storage_version, source, column, mappings)
+                    Self::column(name, storage_version, source, column, mappings)
                 })
-            })?;
+            },
+        )?;
 
         Ok(Self {
             aggregate,
@@ -150,24 +167,25 @@ impl Sopr24hColumns {
     }
 
     fn import_columns<C: ColumnId, S: Clone>(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         build_series: impl FnOnce(&str, &ReadOnlyColumnarVec<PcoVec<Height, StoredF32>, C>) -> S,
     ) -> Result<ColumnarPerBlock<StoredF32, C, S>> {
-        ColumnarPerBlock::forced_import(db, name, version, |source| build_series(name, source))
+        ColumnarPerBlock::forced_import(cache, db, name, version, |source| {
+            build_series(name, source)
+        })
     }
 
     fn column<C: ColumnId>(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, StoredF32>, C>,
         column: C,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> LazyColumnPerBlock<StoredF32, C> {
         LazyColumnPerBlock::new(
-            cache,
             &format!("{name}_column_{}", column.index()),
             version,
             source,

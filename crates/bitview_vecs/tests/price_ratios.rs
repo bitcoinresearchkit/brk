@@ -1,5 +1,3 @@
-mod common;
-
 use bitview_collections::WindowId;
 use bitview_vecs::{
     ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock, LazyPriceWithRatioPerBlock,
@@ -7,14 +5,17 @@ use bitview_vecs::{
 };
 use brk_types::{Cents, Height, PriceRatio, Version};
 use common::{CACHE_BUDGET, indexes, stored};
+use tempfile::tempdir;
 use vecdb::{
     AnySerializableVec, AnyStoredVec, CachedVec, ColumnId, Database, ReadOnlyClone, ReadableVec,
     WritableVec,
 };
 
+mod common;
+
 #[test]
 fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     indexes.first_height.day1 = CachedVec::wrap(stored(
@@ -47,9 +48,14 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
         &spot,
     )
     .unwrap();
-    let mut columns =
-        ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(&db, "columns", version, |_| ())
-            .unwrap();
+    let mut columns = ColumnarPerBlock::<Cents, WindowId, ()>::forced_import(
+        &CACHE_BUDGET,
+        &db,
+        "columns",
+        version,
+        |_| (),
+    )
+    .unwrap();
     for price in prices {
         imported.cents.height.push(price);
         columns.push(WindowId::from_fn(|column| {
@@ -70,7 +76,6 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
         &spot,
     );
     let columnar = LazyColumnPriceWithRatioPerBlock::new(
-        &CACHE_BUDGET,
         "columnar",
         version,
         &columns.height.read_only_clone(),

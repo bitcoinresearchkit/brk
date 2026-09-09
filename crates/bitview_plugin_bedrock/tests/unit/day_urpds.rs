@@ -1,12 +1,15 @@
+use std::iter;
+
 use bitview_cohort::{AgeRange, AgeRangeId, UTXO_ALL_NAME};
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_types::{Cents, CentsCompact, Date, PercentileId, Sats, UrpdRaw};
+use tempfile::tempdir;
 
 use super::{DayUrpds, ModeWeights};
 
 #[test]
 fn capitalized_prices_use_each_weighted_distribution_and_backfill_identically() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     let date = Date::new(2026, 9, 7);
     let names = DayUrpds::names();
     let mut weights = ModeWeights::from_fn(|_| None);
@@ -53,7 +56,7 @@ fn capitalized_prices_use_each_weighted_distribution_and_backfill_identically() 
 
 #[test]
 fn capitalized_backfill_distinguishes_missing_and_incomplete_snapshots() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     let names = DayUrpds::names();
     let date = Date::new(2026, 9, 7);
     let missing = DayUrpds::read_capitalized_prices(root.path(), &names, date).unwrap();
@@ -107,7 +110,7 @@ fn names_cover_only_stored_aggregate_weights() {
 
 #[test]
 fn persisted_all_cost_basis_percentiles_match_in_memory_percentiles() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     let date = Date::new(2026, 8, 28);
     let names = DayUrpds::names();
     let urpds = DayUrpds::repeated([(100, 5), (200, 5)]);
@@ -120,7 +123,7 @@ fn persisted_all_cost_basis_percentiles_match_in_memory_percentiles() {
         root.path(),
         &names.all.cointime,
         date,
-        std::iter::once((CentsCompact::new(100), Sats::from(1_u64))),
+        iter::once((CentsCompact::new(100), Sats::from(1_u64))),
     )
     .unwrap();
     assert!(
@@ -149,7 +152,7 @@ fn persisted_all_cost_basis_percentiles_match_in_memory_percentiles() {
 
 #[test]
 fn historical_read_uses_packed_source_without_legacy_all_file() {
-    let root = tempfile::tempdir().unwrap();
+    let root = tempdir().unwrap();
     let date = Date::new(2026, 8, 26);
     let mut utxos = UTXOStates::new(root.path());
     utxos.reset().unwrap();

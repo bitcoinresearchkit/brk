@@ -1,22 +1,21 @@
 use bitview_plugin_indexer::Indexer;
 use brk_types::{Height, StoredU64, TxInIndex, TxIndex, TxOutIndex, Version};
-use vecdb::{CachedBoxedVec, CachedReadableVec, CachedVec, ReadableCloneableVec};
+use vecdb::{ReadableBoxedVec, ReadableCloneableVec};
 
 use bitview_vecs::LazyCumulativeIndexVec;
 
-/// Pinned canonical cumulative counts derived from the indexer's first-index
-/// boundaries.
+/// Canonical cumulative counts over the indexer's cached stored boundaries.
 #[derive(Clone)]
-pub struct CachedChainCounts {
-    transaction: CachedVec<LazyCumulativeIndexVec<Height, TxIndex>>,
-    input: CachedVec<LazyCumulativeIndexVec<Height, TxInIndex>>,
-    output: CachedVec<LazyCumulativeIndexVec<Height, TxOutIndex>>,
+pub struct ChainCounts {
+    transaction: LazyCumulativeIndexVec<Height, TxIndex>,
+    input: LazyCumulativeIndexVec<Height, TxInIndex>,
+    output: LazyCumulativeIndexVec<Height, TxOutIndex>,
 }
 
-impl CachedChainCounts {
+impl ChainCounts {
     pub fn new(version: Version, indexer: &Indexer) -> Self {
         Self {
-            transaction: CachedVec::wrap(LazyCumulativeIndexVec::new(
+            transaction: LazyCumulativeIndexVec::new(
                 "tx_count_cumulative",
                 version,
                 indexer
@@ -25,8 +24,8 @@ impl CachedChainCounts {
                     .first_tx_index
                     .read_only_boxed_clone(),
                 indexer.vecs().transactions.txid.read_only_boxed_clone(),
-            )),
-            input: CachedVec::wrap(LazyCumulativeIndexVec::new(
+            ),
+            input: LazyCumulativeIndexVec::new(
                 "input_count_cumulative",
                 version,
                 indexer
@@ -35,8 +34,8 @@ impl CachedChainCounts {
                     .first_txin_index
                     .read_only_boxed_clone(),
                 indexer.vecs().inputs.outpoint.read_only_boxed_clone(),
-            )),
-            output: CachedVec::wrap(LazyCumulativeIndexVec::new(
+            ),
+            output: LazyCumulativeIndexVec::new(
                 "output_count_cumulative",
                 version,
                 indexer
@@ -45,29 +44,23 @@ impl CachedChainCounts {
                     .first_txout_index
                     .read_only_boxed_clone(),
                 indexer.vecs().outputs.value.read_only_boxed_clone(),
-            )),
+            ),
         }
     }
 
-    pub fn transaction_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxIndex>> {
+    pub fn transaction_source(&self) -> LazyCumulativeIndexVec<Height, TxIndex> {
         self.transaction.clone()
     }
 
-    pub fn input_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxInIndex>> {
+    pub fn input_source(&self) -> LazyCumulativeIndexVec<Height, TxInIndex> {
         self.input.clone()
     }
 
-    pub fn output_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxOutIndex>> {
+    pub fn output_source(&self) -> LazyCumulativeIndexVec<Height, TxOutIndex> {
         self.output.clone()
     }
 
-    pub fn output(&self) -> CachedBoxedVec<Height, StoredU64> {
-        self.output.cached_boxed_clone()
-    }
-
-    pub fn invalidate(&self) {
-        self.transaction.invalidate();
-        self.input.invalidate();
-        self.output.invalidate();
+    pub fn output(&self) -> ReadableBoxedVec<Height, StoredU64> {
+        self.output.read_only_boxed_clone()
     }
 }

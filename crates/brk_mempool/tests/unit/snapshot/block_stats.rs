@@ -1,10 +1,12 @@
+use brk_types::Txid;
+
 use super::*;
 
 #[test]
 fn block_statistics_preserve_rank_sets_and_invalid_index_handling() {
     let txs: Vec<_> = (0..64u64)
         .map(|i| SnapTx {
-            txid: brk_types::Txid::COINBASE,
+            txid: Txid::COINBASE,
             fee: Sats::from(i * 100),
             vsize: VSize::new(if i % 7 == 0 { 0 } else { i * 11 }),
             weight: Default::default(),

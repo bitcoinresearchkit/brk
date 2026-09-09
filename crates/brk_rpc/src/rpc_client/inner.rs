@@ -1,6 +1,7 @@
 use std::{fs::read_to_string, thread::sleep, time::Duration};
 
 use brk_error::{Error, Result};
+use brk_types::Txid;
 use corepc_jsonrpc::{
     Client as JsonRpcClient, Request, Response,
     error::{Error as JsonRpcError, RpcError},
@@ -11,9 +12,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::{RawValue, to_raw_value};
 use tracing::{debug, info, warn};
 
-use crate::Auth;
-
 use super::{rpc_call::RpcCall, submission::Submission};
+use crate::Auth;
 
 #[derive(Debug)]
 pub struct ClientInner {
@@ -38,7 +38,7 @@ impl ClientInner {
         })
     }
 
-    pub fn send_raw_transaction(&self, hex: &str) -> Result<brk_types::Txid> {
+    pub fn send_raw_transaction(&self, hex: &str) -> Result<Txid> {
         self.submission.send(&self.url, &self.auth, hex)
     }
 

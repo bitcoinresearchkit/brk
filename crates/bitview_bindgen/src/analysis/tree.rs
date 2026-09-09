@@ -9,9 +9,8 @@ use bitview_catalog::{TreeNode, extract_json_type};
 use brk_types::Index;
 use indexmap::IndexMap;
 
-use crate::{IndexSetPattern, PatternField, child_type_name};
-
 use super::{find_common_prefix, find_common_suffix, normalize_prefix};
+use crate::{IndexSetPattern, PatternField, child_type_name};
 
 /// Get the shortest leaf name from a tree node.
 ///
@@ -323,8 +322,12 @@ pub fn get_fields_with_child_info(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::ptr;
+
     use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
+    use serde_json::json;
+
+    use super::*;
 
     fn make_leaf(name: &str) -> TreeNode {
         let leaf = SeriesLeaf {
@@ -333,7 +336,7 @@ mod tests {
             indexes: BTreeSet::new(),
             description: None,
         };
-        TreeNode::Leaf(SeriesLeafWithSchema::new(leaf, serde_json::json!({})))
+        TreeNode::Leaf(SeriesLeafWithSchema::new(leaf, json!({})))
     }
 
     fn make_branch(children: Vec<(&str, TreeNode)>) -> TreeNode {
@@ -367,7 +370,7 @@ mod tests {
         let TreeNode::Leaf(first) = &nested["first"] else {
             unreachable!()
         };
-        assert!(std::ptr::eq(
+        assert!(ptr::eq(
             shortest_leaf_name(&tree).unwrap().as_ptr(),
             first.name().as_ptr()
         ));

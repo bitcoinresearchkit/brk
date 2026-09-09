@@ -1,5 +1,6 @@
 use bitview_collections::RarityPercentiles;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, Price};
 use brk_error::Result;
@@ -47,17 +48,17 @@ pub fn forced_import(
     db: &Database,
     prefix: &str,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<RarityMeterInner> {
     let version = version + VERSION;
     let prices = ColumnarPerBlock::<Cents, RarityPercentileId, _>::forced_import(
+        cache,
         db,
         &format!("{prefix}_percentiles_cents"),
         version,
         |source| {
             RarityPercentiles::from_fn(|id| {
                 Price::from_columnar_source(
-                    cache,
                     &format!("{prefix}_{}", id.price_suffix()),
                     version,
                     source,

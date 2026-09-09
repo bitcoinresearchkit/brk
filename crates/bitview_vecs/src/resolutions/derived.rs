@@ -1,4 +1,4 @@
-use bitview_collections::PerResolution;
+use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_compute::ComputedVecValue;
 use bitview_traversable::Traversable;
 use brk_types::Version;
@@ -85,4 +85,4 @@ macro_rules! define_derived_resolutions {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_derived_resolutions);
+with_resolution_fields!(define_derived_resolutions);

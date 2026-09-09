@@ -1,3 +1,5 @@
+use std::cmp::Reverse;
+
 use super::*;
 
 fn check(raw: &[u32]) {
@@ -13,7 +15,7 @@ fn check(raw: &[u32]) {
             .iter()
             .enumerate()
             .filter(|(_, value)| **value <= target)
-            .max_by_key(|(h, value)| (**value, std::cmp::Reverse(*h)))
+            .max_by_key(|(h, value)| (**value, Reverse(*h)))
             .map(|(h, value)| (h, Timestamp::from(*value)));
         let actual = select_timestamp(
             raw.len(),

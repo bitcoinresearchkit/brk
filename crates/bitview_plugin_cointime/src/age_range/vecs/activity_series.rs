@@ -1,18 +1,11 @@
-use bitview_cohort::{AgeRange, AgeRangeId};
+use bitview_cohort::AgeRange;
 use bitview_traversable::Traversable;
-use brk_types::{BoundedRatio, Height, StoredF64};
-use vecdb::{Budgeted, CachedColumnarVec, PcoVec, ReadOnlyColumnarVec};
+use brk_types::{BoundedRatio, StoredF64};
 
 use bitview_vecs::LazyPerBlock;
 
 #[derive(Clone, Traversable)]
 pub struct ActivitySeries {
-    #[traversable(skip)]
-    pub cached: CachedColumnarVec<
-        ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
-        AgeRangeId,
-        Budgeted,
-    >,
     pub wakefulness: AgeRange<LazyPerBlock<StoredF64, BoundedRatio>>,
     /// Dormancy for an exact UTXO age range: one minus wakefulness. Higher
     /// values mean more of the range's accumulated holding time remains stored

@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, PartsPerMillion64, Sats};
-use vecdb::{EagerVec, PcoVec, Pinned, Rw, StorageMode};
+use vecdb::{EagerVec, PcoVec, Rw, StorageMode};
 
 use bitview_vecs::{
     LazyPercentCumulativeRolling, LazyPercentRollingWindows, ValuePerBlockCumulative,
@@ -19,7 +19,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     pub subsidy: ValuePerBlockCumulativeRolling<M>,
     /// Sum of input value minus output value across the block's non-coinbase
     /// transactions.
-    pub fees: ValuePerBlockFull<M, Pinned>,
+    pub fees: ValuePerBlockFull<M>,
     /// Sum of the output values of the block's non-coinbase transactions,
     /// equivalently their total input value minus transaction fees. Reported
     /// in satoshis.

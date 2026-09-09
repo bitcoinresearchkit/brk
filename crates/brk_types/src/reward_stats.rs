@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 use super::{Height, Sats};
 
@@ -27,20 +27,23 @@ pub struct RewardStats {
 
 fn sats_as_string<S>(value: &Sats, serializer: S) -> Result<S::Ok, S::Error>
 where
-    S: serde::Serializer,
+    S: Serializer,
 {
     serializer.serialize_str(&value.to_string())
 }
 
 fn u64_as_string<S>(value: &u64, serializer: S) -> Result<S::Ok, S::Error>
 where
-    S: serde::Serializer,
+    S: Serializer,
 {
     serializer.serialize_str(&value.to_string())
 }
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_value;
+
     use super::*;
 
     #[test]
@@ -52,12 +55,12 @@ mod tests {
             total_fee: Sats::new(4),
             total_tx: 5,
         };
-        let value = serde_json::to_value(stats).unwrap();
+        let value = to_value(stats).unwrap();
         assert_eq!(value["totalReward"], "3");
         assert_eq!(value["totalFee"], "4");
         assert_eq!(value["totalTx"], "5");
 
-        let schema = serde_json::to_value(schemars::schema_for!(RewardStats)).unwrap();
+        let schema = to_value(schema_for!(RewardStats)).unwrap();
         for field in ["totalReward", "totalFee", "totalTx"] {
             assert_eq!(schema["properties"][field]["type"], "string");
         }

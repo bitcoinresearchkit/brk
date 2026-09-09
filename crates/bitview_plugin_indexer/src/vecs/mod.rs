@@ -1,16 +1,15 @@
-use brk_error::Result;
-
-use std::path::Path;
+use std::{path::Path, result::Result as StdResult};
 
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_types::{AddrHash, Height, OutputType, Version};
 use rayon::prelude::*;
 use tracing::debug;
-use vecdb::{AnyStoredVec, AnyVec, Database, RawDBError, Rw, Stamp, StorageMode};
-
-const PAGE_SIZE: usize = 4096;
+use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, RawDBError, Rw, Stamp, StorageMode};
 
 use crate::Lengths;
+
+const PAGE_SIZE: usize = 4096;
 
 #[macro_use]
 pub mod macros;
@@ -52,7 +51,11 @@ pub struct Vecs<M: StorageMode = Rw> {
 }
 
 impl Vecs {
-    pub fn forced_import(parent: &Path, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        parent: &Path,
+        version: Version,
+    ) -> Result<Self> {
         debug!("Opening vecs database...");
         let db = Database::open(&parent.join("vecs"))?;
         debug!("Setting min len...");
@@ -68,11 +71,11 @@ impl Vecs {
             scripts,
             op_return,
         ) = parallel_import! {
-            blocks = BlocksVecs::forced_import(&db, version),
-            transactions = TransactionsVecs::forced_import(&db, version),
+            blocks = BlocksVecs::forced_import(cache, &db, version),
+            transactions = TransactionsVecs::forced_import(cache, &db, version),
             transaction_features = TransactionFeaturesVecs::forced_import(&db, version),
-            inputs = InputsVecs::forced_import(&db, version),
-            outputs = OutputsVecs::forced_import(&db, version),
+            inputs = InputsVecs::forced_import(cache, &db, version),
+            outputs = OutputsVecs::forced_import(cache, &db, version),
             addrs = AddrsVecs::forced_import(&db, version),
             scripts = ScriptsVecs::forced_import(&db, version),
             op_return = OpReturnVecs::forced_import(&db, version),
@@ -165,10 +168,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn run_bg(
-        &self,
-        f: impl FnOnce(&Database) -> std::result::Result<(), RawDBError> + Send + 'static,
-    ) {
+    pub fn run_bg(&self, f: impl FnOnce(&Database) -> StdResult<(), RawDBError> + Send + 'static) {
         self.db.run_bg(f);
     }
 

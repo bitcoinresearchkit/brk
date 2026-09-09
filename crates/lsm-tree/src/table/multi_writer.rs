@@ -2,9 +2,12 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{mem, path::PathBuf};
+
+use log::debug;
+
 use super::{filter::BloomConstructionPolicy, id::next_table_id, writer::Writer};
 use crate::{CompressionType, Result, SequenceNumberCounter, value::InternalValue};
-use std::{mem, path::PathBuf};
 
 /// Like `Writer` but will rotate to a new table, once a table grows larger than `target_size`
 ///
@@ -146,7 +149,7 @@ impl MultiWriter {
 
     /// Flushes the current writer, stores its metadata, and sets up a new writer for the next table
     fn rotate(&mut self) -> Result<()> {
-        log::debug!("Rotating table writer");
+        debug!("Rotating table writer");
 
         let new_table_id = next_table_id(&self.table_id_generator);
         let path = self.base_path.join(new_table_id.to_string());

@@ -1,7 +1,8 @@
+use brk_logger::init;
 use brk_rpc::{Auth, Client};
 
 fn main() {
-    brk_logger::init(None).unwrap();
+    init(None).unwrap();
 
     let bitcoin_dir = Client::default_bitcoin_path();
 

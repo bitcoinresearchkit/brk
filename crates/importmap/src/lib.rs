@@ -9,6 +9,7 @@ use std::{
 };
 
 use rapidhash::v3::rapidhash_v3;
+use serde_json::{json as SerdeJsonJson, to_string_pretty};
 
 #[cfg(feature = "embedded")]
 mod include_dir;
@@ -172,7 +173,7 @@ impl ImportMap {
             }
         }
 
-        let json = serde_json::to_string_pretty(&serde_json::json!({ "imports": js })).ok()?;
+        let json = to_string_pretty(&SerdeJsonJson!({ "imports": js })).ok()?;
         write!(content, "<script type=\"importmap\">\n{json}\n</script>").unwrap();
         for url in js.values() {
             write!(content, "\n<link rel=\"modulepreload\" href=\"{url}\">").unwrap();

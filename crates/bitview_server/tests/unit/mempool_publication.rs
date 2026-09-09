@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 use aide::axum::ApiRouter;
 use axum::{
@@ -6,7 +6,7 @@ use axum::{
     http::{Request, StatusCode},
 };
 use serde_json::{Value, from_str, to_value};
-use tokio::task::JoinSet;
+use tokio::{spawn as TokioSpawn, task::JoinSet, time};
 use tower::ServiceExt;
 
 use super::server_routes::exchange_with_etag;
@@ -59,7 +59,7 @@ impl MempoolPublication {
     }
 
     pub async fn check_stats_available(&self, address: SocketAddr) {
-        tokio::time::timeout(std::time::Duration::from_secs(1), async {
+        time::timeout(Duration::from_secs(1), async {
             let expected = self
                 .state
                 .sync(|q| to_value(q.mempool_info().unwrap()).unwrap());
@@ -138,8 +138,8 @@ impl MempoolPublication {
         assert_eq!(first.status(), StatusCode::OK);
         assert_eq!(second.status(), StatusCode::OK);
         assert_eq!(self.state.mempool_txid_bodies.available_permits(), 0);
-        let pending = tokio::spawn(router.clone().oneshot(request("GET", "\"old\"")));
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        let pending = TokioSpawn(router.clone().oneshot(request("GET", "\"old\"")));
+        time::sleep(Duration::from_millis(50)).await;
         assert!(!pending.is_finished());
         for method in ["GET", "HEAD"] {
             for tag in [self.tags[2].as_str(), "*"] {

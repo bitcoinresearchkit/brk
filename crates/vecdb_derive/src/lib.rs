@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DataStruct, DeriveInput, Fields, parse_macro_input, parse_quote};
+use syn::{Data, DataStruct, DeriveInput, Error, Fields, parse_macro_input, parse_quote};
 
 /// Derives the `Bytes` trait for single-field tuple structs.
 ///
@@ -107,7 +107,7 @@ fn derive_wrapper(input: TokenStream, pco: bool) -> TokenStream {
         }) if fields.unnamed.len() == 1 => &fields.unnamed[0].ty,
         _ => {
             let name = if pco { "Pco" } else { "Bytes" };
-            return syn::Error::new_spanned(
+            return Error::new_spanned(
                 struct_name,
                 format!("{name} can only be derived for single-field tuple structs"),
             )

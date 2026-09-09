@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{convert::Infallible, iter, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Open, Version};
@@ -54,7 +54,7 @@ impl<I: VecIndex> LazyOhlcVec<I> {
     fn for_each_candle(&self, from: usize, to: usize, mut each: impl FnMut(OHLCCents)) {
         let result = self.try_for_each_candle(from, to, |candle| {
             each(candle);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}
@@ -180,7 +180,7 @@ impl<I: VecIndex> ReadableVec<I, OHLCCents> for LazyOhlcVec<I> {
 
 impl<I: VecIndex> Traversable for LazyOhlcVec<I> {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -223,7 +223,11 @@ impl CandleBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::CachedFirstHeightVec;
+    use std::{
+        env, fs, process,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use brk_types::Day1;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
@@ -231,6 +235,7 @@ mod tests {
     };
 
     use super::*;
+    use crate::CachedFirstHeightVec;
 
     fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
         (**candle.open, **candle.high, **candle.low, **candle.close)
@@ -238,12 +243,11 @@ mod tests {
 
     #[test]
     fn derives_candles_and_preserves_empty_periods() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("brk-lazy-ohlc-{}-{suffix}", std::process::id()));
+        let path = env::temp_dir().join(format!("brk-lazy-ohlc-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
         let mut prices: EagerVec<PcoVec<Height, Cents>> =
@@ -300,6 +304,6 @@ mod tests {
         drop(prices);
         drop(periods);
         drop(db);
-        std::fs::remove_dir_all(path).unwrap();
+        fs::remove_dir_all(path).unwrap();
     }
 }

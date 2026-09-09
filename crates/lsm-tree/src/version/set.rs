@@ -1,9 +1,11 @@
-use crate::version::Version;
-use arc_swap::ArcSwap;
 use std::{
     path::Path,
-    sync::{Mutex, PoisonError},
+    sync::{Arc, Mutex, PoisonError},
 };
+
+use arc_swap::{ArcSwap, Guard};
+
+use crate::{Result, version::Version};
 
 /// Atomically published latest table version.
 pub struct Set {
@@ -23,13 +25,13 @@ impl Set {
 
     /// Loads the currently published version.
     #[must_use]
-    pub fn load(&self) -> std::sync::Arc<Version> {
+    pub fn load(&self) -> Arc<Version> {
         self.latest.load_full()
     }
 
     /// Borrows the currently published version for a short operation.
     #[must_use]
-    pub fn guard(&self) -> arc_swap::Guard<std::sync::Arc<Version>> {
+    pub fn guard(&self) -> Guard<Arc<Version>> {
         self.latest.load()
     }
 
@@ -37,8 +39,8 @@ impl Set {
     pub fn publish(
         &self,
         tree_path: &Path,
-        transition: impl FnOnce(&Version) -> crate::Result<Version>,
-    ) -> crate::Result<()> {
+        transition: impl FnOnce(&Version) -> Result<Version>,
+    ) -> Result<()> {
         let _publish = self
             .publish_lock
             .lock()
@@ -47,7 +49,7 @@ impl Set {
         let next = transition(&current)?;
 
         next.persist(tree_path)?;
-        self.latest.store(std::sync::Arc::new(next));
+        self.latest.store(Arc::new(next));
 
         Ok(())
     }

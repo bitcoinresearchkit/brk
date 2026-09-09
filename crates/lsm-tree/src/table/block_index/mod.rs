@@ -2,15 +2,7 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-mod full;
-pub mod iter;
-mod two_level;
-mod volatile;
-
-pub use full::FullBlockIndex;
-pub use two_level::TwoLevelBlockIndex;
-pub use volatile::VolatileBlockIndex;
-
+use self::{full::Iter, two_level::Iter as TwoLevelIter, volatile::Iter as VolatileIter};
 use super::{BlockHandle, IndexBlock, KeyedBlockHandle};
 use crate::{
     Result,
@@ -19,6 +11,15 @@ use crate::{
         util::load_block,
     },
 };
+
+mod full;
+pub mod iter;
+mod two_level;
+mod volatile;
+
+pub use full::FullBlockIndex;
+pub use two_level::TwoLevelBlockIndex;
+pub use volatile::VolatileBlockIndex;
 
 pub trait BlockIndex {
     fn iter(&self) -> BlockIndexIterImpl;
@@ -30,9 +31,9 @@ pub trait BlockIndexIter: DoubleEndedIterator<Item = Result<KeyedBlockHandle>> {
 }
 
 pub enum BlockIndexIterImpl {
-    Full(self::full::Iter),
-    Volatile(self::volatile::Iter),
-    TwoLevel(self::two_level::Iter),
+    Full(Iter),
+    Volatile(VolatileIter),
+    TwoLevel(TwoLevelIter),
 }
 
 impl BlockIndexIter for BlockIndexIterImpl {

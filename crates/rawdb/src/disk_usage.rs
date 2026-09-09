@@ -1,3 +1,6 @@
+#[cfg(any(unix, not(unix)))]
+use crate::Result;
+
 use std::{fmt, fs::File};
 
 #[cfg(unix)]
@@ -9,12 +12,12 @@ pub struct DiskUsage(u64);
 
 impl DiskUsage {
     #[cfg(unix)]
-    pub fn from_file(file: &File) -> crate::Result<Self> {
+    pub fn from_file(file: &File) -> Result<Self> {
         Ok(Self(file.metadata()?.blocks() * 512))
     }
 
     #[cfg(not(unix))]
-    pub fn from_file(file: &File) -> crate::Result<Self> {
+    pub fn from_file(file: &File) -> Result<Self> {
         Ok(Self(file.metadata()?.len()))
     }
 

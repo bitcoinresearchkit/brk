@@ -1,9 +1,11 @@
+use std::array;
+
 use bitview_traversable::Traversable;
+use bitview_vecs::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
 use brk_types::{Cents, Version};
 use vecdb::{ColumnId, Rw, StorageMode, VecValue};
 
-use super::ema_vecs::EmaVecs;
-use bitview_vecs::{ColumnarPerBlock, LazyColumnPriceWithRatioPerBlock};
+use super::{ema_vecs::EmaVecs, sma::SmaVecs};
 
 const EMA_PERIOD_COUNT: usize = 16;
 
@@ -141,7 +143,7 @@ impl ColumnId for EmaPeriodId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(EMA_PERIOD_IDS[index]))
+        array::from_fn(|index| create(EMA_PERIOD_IDS[index]))
     }
 
     #[inline]
@@ -159,7 +161,7 @@ impl ColumnId for EmaPeriodId {
 pub struct Vecs<M: StorageMode = Rw> {
     /// Simple moving averages of block-level Bitcoin spot prices over trailing
     /// monotonic-time windows, including the represented block.
-    pub sma: super::sma::SmaVecs,
+    pub sma: SmaVecs,
     /// Exponential moving average of block-level Bitcoin spot price. At each
     /// block it recursively applies `alpha = 2 / (span + 1)`, where `span` is
     /// the number of blocks from the trailing period's monotonic-time start

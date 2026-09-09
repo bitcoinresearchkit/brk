@@ -12,7 +12,7 @@ use bitview_cohort::{
 };
 use brk_types::{Index, pools};
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{Map, Value, to_string_pretty, to_value as SerdeJsonToValue};
 
 use crate::{VERSION, to_camel_case};
 
@@ -48,7 +48,7 @@ impl ClientConstants {
 /// Get all cohort constants as name-value pairs for iteration.
 pub fn cohort_constants() -> Vec<(&'static str, Value)> {
     fn to_value<T: Serialize>(v: &T) -> Value {
-        serde_json::to_value(v).unwrap()
+        SerdeJsonToValue(v).unwrap()
     }
 
     vec![
@@ -76,7 +76,7 @@ pub fn cohort_constants() -> Vec<(&'static str, Value)> {
 pub fn camel_case_keys(value: Value) -> Value {
     match value {
         Value::Object(map) => {
-            let new_map: serde_json::Map<String, Value> = map
+            let new_map: Map<String, Value> = map
                 .into_iter()
                 .map(|(k, v)| (to_camel_case(&k), v))
                 .collect();
@@ -88,5 +88,5 @@ pub fn camel_case_keys(value: Value) -> Value {
 
 /// Format a JSON value as a pretty-printed string.
 pub fn format_json<T: Serialize>(value: &T) -> String {
-    serde_json::to_string_pretty(value).unwrap()
+    to_string_pretty(value).unwrap()
 }

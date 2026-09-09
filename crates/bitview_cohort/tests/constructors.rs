@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use bitview_cohort::*;
 
 #[test]
@@ -51,7 +53,7 @@ fn utxo_and_address_names_do_not_collide() {
         utxo: UTXOGroups::new(|_, _| ()),
         addr_balance: Amount::new(|_, _| ()),
     };
-    let mut names = std::collections::BTreeSet::new();
+    let mut names = BTreeSet::new();
     groups.map_named(|context, filter, name, _| {
         assert!(names.insert(context.full_name(filter, name)));
     });

@@ -1,4 +1,6 @@
 use bitview_plugin_distribution::AllChainSources;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use bitview_vecs::LazyPerBlock;
 use brk_error::Result;
 use brk_types::{Cents, StoredF64, Version};
@@ -9,9 +11,9 @@ use super::Vecs;
 impl Vecs {
     pub fn forced_import(
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         all_chain: &AllChainSources,
-        transactions: &bitview_plugin_transactions::Vecs,
+        transactions: &TransactionsVecs,
     ) -> Result<Self> {
         let volume = &transactions.volume.transfer_volume.rolling.sum._1y;
         let native_source = all_chain.with_supply(

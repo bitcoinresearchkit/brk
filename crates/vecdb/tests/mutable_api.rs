@@ -3,8 +3,11 @@ use std::collections::BTreeSet;
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, ImportOptions, ImportableVec, MutableVec,
-    ReadableVec, Stamp, StoredVec, Version, WritableVec,
+    ReadableVec, Result, Stamp, StoredVec, Version, WritableVec,
 };
+
+#[cfg(feature = "zerocopy")]
+use vecdb::ZeroCopyVec;
 
 macro_rules! mutation_roundtrip {
     ($vec:ty) => {{
@@ -98,23 +101,22 @@ macro_rules! mutation_roundtrip {
 }
 
 #[test]
-fn bytes_mutation_api_roundtrip() -> vecdb::Result<()> {
+fn bytes_mutation_api_roundtrip() -> Result<()> {
     mutation_roundtrip!(BytesVec<usize, u32>)
 }
 
 #[cfg(feature = "zerocopy")]
 #[test]
-fn zerocopy_mutation_api_roundtrip() -> vecdb::Result<()> {
+fn zerocopy_mutation_api_roundtrip() -> Result<()> {
     mutation_roundtrip!(vecdb::ZeroCopyVec<usize, u32>)
 }
 
 #[cfg(feature = "zerocopy")]
 #[test]
-fn zerocopy_borrows_only_unmodified_values() -> vecdb::Result<()> {
+fn zerocopy_borrows_only_unmodified_values() -> Result<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
-    let mut vec =
-        MutableVec::<vecdb::ZeroCopyVec<usize, u32>>::import(&db, "values", Version::ONE)?;
+    let mut vec = MutableVec::<ZeroCopyVec<usize, u32>>::import(&db, "values", Version::ONE)?;
     for value in 10..13 {
         vec.push(value);
     }

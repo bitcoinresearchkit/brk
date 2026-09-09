@@ -1,6 +1,3 @@
-#[allow(dead_code)]
-mod common;
-
 use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -15,8 +12,11 @@ use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, BinaryTransform, BytesVec, CachedVec, Cursor, Database, Ident,
     ImportableVec, LazyVec, MutableVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableVec, Version, WritableVec,
+    ReadableVec, ReverseOperands, Version, WritableVec,
 };
+
+#[allow(dead_code)]
+mod common;
 
 /// Fails immediately instead of deadlocking on a read inside a borrowed callback.
 #[derive(Clone)]
@@ -81,7 +81,7 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
                 StoredU64,
                 StoredU64,
                 StoredU64,
-                vecdb::ReverseOperands<TestRatio>,
+                ReverseOperands<TestRatio>,
             >::new(
                 "rolling",
                 Version::ONE,

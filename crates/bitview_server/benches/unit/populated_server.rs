@@ -7,7 +7,7 @@ use axum::{
         header::{ETAG, IF_NONE_MATCH},
     },
 };
-use bitcoin::consensus::serialize;
+use bitcoin::{OutPoint, consensus::serialize};
 use bitview_types::SeriesName;
 use brk_types::{Index, Timestamp};
 use serde_json::{from_value, json, to_value, to_vec};
@@ -17,9 +17,10 @@ use vecdb::{Formattable, ValueWriter};
 use super::chain_fixture::{
     raw_fixture_block, run as run_fixture, run_populated as run_fixture_with_first,
 };
+use crate::{AppState, CacheParams, CacheStrategy};
+
 #[cfg(feature = "urpd")]
 use super::urpd;
-use crate::{AppState, CacheParams, CacheStrategy};
 
 #[test]
 #[ignore = "complete outspends query; synthetic single-block fixture, excludes HTTP"]
@@ -35,7 +36,7 @@ fn benchmark_complete_outspends() {
             .map(|i| {
                 let mut input = template.clone();
                 let vout = if shuffled { (i * 2053) % 4096 } else { i };
-                input.previous_output = bitcoin::OutPoint::new(txid, vout);
+                input.previous_output = OutPoint::new(txid, vout);
                 input
             })
             .collect();

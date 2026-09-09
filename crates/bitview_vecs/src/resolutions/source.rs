@@ -1,4 +1,4 @@
-use bitview_collections::PerResolution;
+use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
@@ -61,7 +61,7 @@ macro_rules! define_resolutions {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_resolutions);
+with_resolution_fields!(define_resolutions);
 
 impl<T> ReadOnlyClone for Resolutions<T>
 where

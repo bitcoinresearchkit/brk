@@ -1,17 +1,22 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering::Relaxed},
+use std::{
+    net::SocketAddr,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering::Relaxed},
+    },
+    thread,
+    time::Duration,
 };
 
-use super::chain_fixture::CACHE_BUDGET;
-use serde_json::Value;
+use serde_json::{Value, from_str};
+use tokio::task::{self, JoinSet};
 
 use super::{
-    chain_fixture::{default_first, run_genesis},
+    chain_fixture::{CACHE_BUDGET, default_first, run_genesis},
     server_routes::exchange_with_etag,
 };
 
-async fn chart(address: std::net::SocketAddr) -> Vec<Value> {
+async fn chart(address: SocketAddr) -> Vec<Value> {
     let response = exchange_with_etag(
         address,
         "GET",
@@ -20,7 +25,7 @@ async fn chart(address: std::net::SocketAddr) -> Vec<Value> {
     )
     .await;
     assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-    serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap()
+    from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap()
 }
 
 #[test]
@@ -36,13 +41,13 @@ fn chart_reads_survive_concurrent_cache_eviction_and_reorgs() {
         let allowed = Arc::new([first, second]);
         let stop = Arc::new(AtomicBool::new(false));
         let evict_stop = stop.clone();
-        let evictor = std::thread::spawn(move || {
+        let evictor = thread::spawn(move || {
             while !evict_stop.load(Relaxed) {
                 CACHE_BUDGET.invalidate();
-                std::thread::sleep(std::time::Duration::from_millis(1));
+                thread::sleep(Duration::from_millis(1));
             }
         });
-        let mut readers = tokio::task::JoinSet::new();
+        let mut readers = JoinSet::new();
         for _ in 0..4 {
             let allowed = allowed.clone();
             readers.spawn(async move {
@@ -53,7 +58,7 @@ fn chart_reads_survive_concurrent_cache_eviction_and_reorgs() {
             });
         }
         // Run real fixture branch replacement concurrently with the HTTP tasks.
-        let writer = tokio::task::spawn_blocking(move || {
+        let writer = task::spawn_blocking(move || {
             for branch in [2, 1, 2, 1] {
                 fixture.publish(branch, 1);
             }

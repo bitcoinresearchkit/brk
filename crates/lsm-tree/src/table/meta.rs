@@ -1,7 +1,12 @@
-use super::{Block, BlockHandle, DataBlock};
-use crate::{CompressionType, KeyRange, coding::Decode, hash::XXH3_TAG, table::block::BlockType};
-use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;
+
+use byteorder::{LittleEndian, ReadBytesExt};
+
+use super::{Block, BlockHandle, DataBlock};
+use crate::{
+    CompressionType, Error, KeyRange, Result, Slice, coding::Decode, hash::XXH3_TAG,
+    table::block::BlockType,
+};
 
 /// Metadata required to read and compact a table.
 #[derive(Debug)]
@@ -17,10 +22,10 @@ pub struct ParsedMeta {
 }
 
 impl ParsedMeta {
-    pub fn load_with_handle(file: &File, handle: &BlockHandle) -> crate::Result<Self> {
+    pub fn load_with_handle(file: &File, handle: &BlockHandle) -> Result<Self> {
         let block = Block::from_file(file, *handle, CompressionType::None)?;
         if block.header.block_type != BlockType::Meta {
-            return Err(crate::Error::InvalidTag((
+            return Err(Error::InvalidTag((
                 "BlockType",
                 block.header.block_type.into(),
             )));
@@ -44,35 +49,35 @@ impl ParsedMeta {
         })
     }
 
-    fn read(block: &DataBlock, name: &[u8]) -> crate::Slice {
+    fn read(block: &DataBlock, name: &[u8]) -> Slice {
         block
             .point_read(name)
             .unwrap_or_else(|| panic!("meta property {name:?} should exist"))
             .value
     }
 
-    fn read_u32(block: &DataBlock, name: &[u8]) -> crate::Result<u32> {
+    fn read_u32(block: &DataBlock, name: &[u8]) -> Result<u32> {
         Ok(Self::read(block, name)
             .as_ref()
             .read_u32::<LittleEndian>()?)
     }
 
-    fn read_u64(block: &DataBlock, name: &[u8]) -> crate::Result<u64> {
+    fn read_u64(block: &DataBlock, name: &[u8]) -> Result<u64> {
         Ok(Self::read(block, name)
             .as_ref()
             .read_u64::<LittleEndian>()?)
     }
 
-    fn read_compression(block: &DataBlock, name: &[u8]) -> crate::Result<CompressionType> {
+    fn read_compression(block: &DataBlock, name: &[u8]) -> Result<CompressionType> {
         CompressionType::decode_from(&mut Self::read(block, name).as_ref())
     }
 
-    fn validate_hash(block: &DataBlock, name: &[u8]) -> crate::Result<()> {
+    fn validate_hash(block: &DataBlock, name: &[u8]) -> Result<()> {
         let hash = Self::read(block, name);
         if hash.as_ref() == [XXH3_TAG] {
             Ok(())
         } else {
-            Err(crate::Error::InvalidTag((
+            Err(Error::InvalidTag((
                 "HashType",
                 hash.first().copied().unwrap_or_default(),
             )))

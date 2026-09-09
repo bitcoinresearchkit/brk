@@ -1,6 +1,7 @@
 use brk_error::Result;
 use brk_store::{Kind, Store, open_database};
 use brk_types::{AddrHash, AddrIndexTxIndex, TxIndex, TypeIndex, Unit, Version};
+use tempfile::tempdir;
 
 fn key(address: u32, transaction: u32) -> AddrIndexTxIndex {
     AddrIndexTxIndex::from((TypeIndex::new(address), TxIndex::new(transaction)))
@@ -8,7 +9,7 @@ fn key(address: u32, transaction: u32) -> AddrIndexTxIndex {
 
 #[test]
 fn owned_ingest_merges_puts_and_tombstones() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let path = dir.path();
 
     {
@@ -45,7 +46,7 @@ fn owned_ingest_merges_puts_and_tombstones() -> Result<()> {
 
 #[test]
 fn vector_pending_preserves_insert_remove_semantics() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let path = dir.path();
     let db = open_database(path)?;
     let mut store = Store::import(&db, path, "vector_pending", Version::ZERO, Kind::Vec)?;
@@ -80,7 +81,7 @@ fn vector_pending_preserves_insert_remove_semantics() -> Result<()> {
 
 #[test]
 fn pending_tombstone_hides_persisted_point_value() -> Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let path = dir.path();
     let db = open_database(path)?;
     let mut store = Store::import(&db, path, "pending_tombstone", Version::ZERO, Kind::Random)?;

@@ -1,3 +1,4 @@
+use super::toggle_center_in_place;
 use crate::data_types::Latent;
 
 fn first_order_encode_consecutive_in_place<L: Latent>(latents: &mut [L]) {
@@ -27,7 +28,7 @@ pub fn encode_in_place<L: Latent>(order: usize, mut latents: &mut [L]) -> Vec<L>
     let truncated_start = latents.len().min(1);
     latents = &mut latents[truncated_start..];
   }
-  super::toggle_center_in_place(latents);
+  toggle_center_in_place(latents);
 
   page_moments
 }
@@ -43,7 +44,7 @@ fn first_order_decode_consecutive_in_place<L: Latent>(moment: &mut L, latents: &
 // used for a single batch, so we mutate the delta moments
 #[inline(never)]
 pub fn decode_in_place<L: Latent>(delta_moments: &mut [L], latents: &mut [L]) {
-  super::toggle_center_in_place(latents);
+  toggle_center_in_place(latents);
   for moment in delta_moments.iter_mut().rev() {
     first_order_decode_consecutive_in_place(moment, latents);
   }

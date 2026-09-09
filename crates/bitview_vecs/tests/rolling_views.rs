@@ -1,5 +1,3 @@
-mod common;
-
 use bitview_collections::*;
 use bitview_compute::*;
 use bitview_transforms::{AvgCentsToUsd, AvgSatsToBtc, CentsUnsignedToDollars, SatsToBitcoin};
@@ -9,7 +7,10 @@ use brk_types::{
 };
 use common::{indexes, stored};
 use schemars::JsonSchema;
-use vecdb::{AnyVec, CachedVec, Database, ReadableVec, UnaryTransform};
+use tempfile::tempdir;
+use vecdb::{AnyVec, CachedVec, ColumnId, Database, ReadableVec, UnaryTransform};
+
+mod common;
 
 fn check_conversion<T, S, F>(
     view: &LazyPerBlock<T, S>,
@@ -62,7 +63,7 @@ fn check_conversion<T, S, F>(
 
 #[test]
 fn rolling_units_preserve_height_and_all_resolution_views() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     macro_rules! mappings {
@@ -91,7 +92,7 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         CachedWindowStartVec::new(LazyWindowStartVec::days(
             id.suffix(),
             Version::new(3),
-            Windows::<()>::DAYS[vecdb::ColumnId::index(id)] as u64,
+            Windows::<()>::DAYS[ColumnId::index(id)] as u64,
             timestamps.read_only_cached_boxed_clone(),
         ))
     });

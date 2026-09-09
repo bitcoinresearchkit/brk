@@ -1,6 +1,7 @@
-use crate::{AnyStoredVec, CompressedIoSource, ReadableVec, VecIndex, VecValue};
+use std::result::Result;
 
 use super::{super::CompressionStrategy, ReadWriteCompressedVec};
+use crate::{AnyStoredVec, CompressedIoSource, ReadableVec, VecIndex, VecValue};
 
 impl<I, T, S> ReadableVec<I, T> for ReadWriteCompressedVec<I, T, S>
 where
@@ -99,13 +100,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized,
     {

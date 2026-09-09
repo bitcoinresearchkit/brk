@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::GlobalTableId;
-use crate::table::block::Header;
-use crate::table::{Block, BlockOffset};
-use quick_cache::Weighter;
-use quick_cache::sync::Cache as QuickCache;
+use quick_cache::{OptionsBuilder, Weighter, sync::Cache as QuickCache};
+use rustc_hash::FxBuildHasher;
+
+use crate::{
+    GlobalTableId,
+    table::{Block, BlockOffset, block::Header},
+};
 
 #[derive(Eq, std::hash::Hash, PartialEq)]
 struct CacheKey(GlobalTableId, u64);
@@ -53,7 +55,7 @@ impl Weighter<CacheKey, Block> for BlockWeighter {
 pub struct Cache {
     // NOTE: rustc_hash performed best: https://fjall-rs.github.io/post/fjall-2-1
     /// Concurrent cache implementation
-    data: QuickCache<CacheKey, Block, BlockWeighter, rustc_hash::FxBuildHasher>,
+    data: QuickCache<CacheKey, Block, BlockWeighter, FxBuildHasher>,
 
     /// Capacity in bytes
     capacity: u64,
@@ -66,7 +68,7 @@ impl Cache {
         use quick_cache::sync::DefaultLifecycle;
 
         #[expect(clippy::expect_used, reason = "nothing we can do if it fails")]
-        let opts = quick_cache::OptionsBuilder::new()
+        let opts = OptionsBuilder::new()
             .weight_capacity(bytes)
             .hot_allocation(0.8)
             .estimated_items_capacity(10_000)
@@ -76,7 +78,7 @@ impl Cache {
         let quick_cache = QuickCache::with_options(
             opts,
             BlockWeighter,
-            rustc_hash::FxBuildHasher,
+            FxBuildHasher,
             DefaultLifecycle::default(),
         );
 

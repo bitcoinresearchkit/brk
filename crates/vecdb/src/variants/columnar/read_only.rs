@@ -2,13 +2,18 @@ use std::{marker::PhantomData, sync::Arc};
 
 use parking_lot::RwLock;
 
-use crate::{AnyVec, ReadableVec, SharedLen, StoredVec, TypedVec, Version, short_type_name};
-
 use super::{
     ColumnId, ColumnarVec, ReadableColumnarVec,
     read::{fold_readable, for_each_column, read_rows, try_fold_readable},
     schema::validate_column,
 };
+use crate::{
+    AnyVec, BudgetedCachedVec, ReadableVec, SharedLen, StoredVec, TypedVec, Version,
+    short_type_name,
+};
+
+#[cfg(feature = "diagnostics")]
+use crate::diagnostics;
 
 impl<V: StoredVec, C: ColumnId> ColumnarVec<V, C> {
     pub fn read_only_clone(&self) -> ReadOnlyColumnarVec<V, C> {
@@ -29,7 +34,7 @@ where
     C: ColumnId,
 {
     name: Arc<str>,
-    columns: Arc<[V::ReadOnly]>,
+    columns: Arc<[BudgetedCachedVec<V::ReadOnly>]>,
     visible_rows: SharedLen,
     gate: Arc<RwLock<()>>,
     column_ids: PhantomData<C>,
@@ -59,13 +64,25 @@ where
     type I = V::I;
     type T = V::T;
 
+    fn column_snapshot(&self, column: C) -> Arc<Vec<V::T>> {
+        validate_column(column);
+        let _guard = self.gate.read();
+        let snapshot = self.columns[column.index()].snapshot();
+        let visible = self.visible_rows.get();
+        if snapshot.len() > visible {
+            Arc::new(snapshot[..visible].to_vec())
+        } else {
+            snapshot
+        }
+    }
+
     fn read_column_sorted_into_at(&self, column: C, indices: &[usize], out: &mut Vec<V::T>) {
         validate_column(column);
         let _guard = self.gate.read();
         let len = self.visible_rows.get();
         let indices = &indices[..indices.partition_point(|&i| i < len)];
         #[cfg(feature = "diagnostics")]
-        crate::diagnostics::column();
+        diagnostics::column();
         self.columns[column.index()].read_sorted_into_at(indices, out);
     }
 
@@ -83,7 +100,7 @@ where
         for &column in columns {
             values.clear();
             #[cfg(feature = "diagnostics")]
-            crate::diagnostics::column();
+            diagnostics::column();
             self.columns[column.index()].read_sorted_into_at(indices, &mut values);
             f(column, &values);
         }
@@ -97,7 +114,7 @@ where
             validate_column(column);
         }
         let _guard = self.gate.read();
-        for_each_column::<V::I, V::T, V::ReadOnly, C, F>(
+        for_each_column::<V::I, V::T, _, C, F>(
             &self.columns,
             self.visible_rows.get(),
             columns,
@@ -119,13 +136,7 @@ where
 
     fn read_into_at(&self, from: usize, to: usize, out: &mut Vec<C::Row<V::T>>) {
         let _guard = self.gate.read();
-        read_rows::<V::I, V::T, V::ReadOnly, C>(
-            &self.columns,
-            self.visible_rows.get(),
-            from,
-            to,
-            out,
-        );
+        read_rows::<V::I, V::T, _, C>(&self.columns, self.visible_rows.get(), from, to, out);
     }
 
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(C::Row<V::T>)) {

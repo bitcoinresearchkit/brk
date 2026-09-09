@@ -1,5 +1,6 @@
-use crate::{InternalValue, Table, table::Scanner, version::Run};
 use std::sync::Arc;
+
+use crate::{Error, InternalValue, Result, Table, table::Scanner, version::Run};
 
 /// Scans through a disjoint run for compaction.
 pub struct RunScanner {
@@ -10,13 +11,10 @@ pub struct RunScanner {
 }
 
 impl RunScanner {
-    pub fn culled(
-        run: Arc<Run<Table>>,
-        (lo, hi): (Option<usize>, Option<usize>),
-    ) -> crate::Result<Self> {
+    pub fn culled(run: Arc<Run<Table>>, (lo, hi): (Option<usize>, Option<usize>)) -> Result<Self> {
         let lo = lo.unwrap_or_default();
         let hi = hi.unwrap_or(run.len() - 1);
-        let lo_reader = run.get(lo).ok_or(crate::Error::Unrecoverable)?.scan()?;
+        let lo_reader = run.get(lo).ok_or(Error::Unrecoverable)?.scan()?;
 
         Ok(Self {
             tables: run,
@@ -28,7 +26,7 @@ impl RunScanner {
 }
 
 impl Iterator for RunScanner {
-    type Item = crate::Result<InternalValue>;
+    type Item = Result<InternalValue>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -46,7 +44,7 @@ impl Iterator for RunScanner {
             self.lo_reader = Some(fail_iter!(
                 self.tables
                     .get(self.lo)
-                    .ok_or(crate::Error::Unrecoverable)
+                    .ok_or(Error::Unrecoverable)
                     .and_then(Table::scan)
             ));
         }

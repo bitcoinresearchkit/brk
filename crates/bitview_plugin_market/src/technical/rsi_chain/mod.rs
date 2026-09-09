@@ -1,12 +1,13 @@
-mod compute;
-
-pub use compute::compute;
-
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlock, PerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_types::{PartsPerMillion32, PartsPerMillionSigned64, StoredF32, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode, UnaryTransform};
+
+mod compute;
+
+pub use compute::compute;
 
 struct Gain;
 
@@ -62,7 +63,7 @@ pub fn forced_import(
     db: &Database,
     tf: &str,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     returns: &LazyPerBlock<StoredF32, PartsPerMillionSigned64>,
 ) -> Result<RsiChain> {
     macro_rules! import {

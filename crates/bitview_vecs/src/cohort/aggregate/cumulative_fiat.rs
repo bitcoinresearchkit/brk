@@ -1,4 +1,3 @@
-use crate::{ColumnarPerBlockCumulativeRolling, FiatType, LazyFiatPerBlockCumulativeWithSums};
 use bitview_cohort::{ByTerm, TermId, UTXOAggregate};
 use bitview_collections::Windows;
 use bitview_traversable::Traversable;
@@ -6,8 +5,11 @@ use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyVec, CacheBudget, CachedReadableVec, Database, ReadableCloneableVec, ReadableColumnarVec,
-    Rw, StorageMode,
+    AnyVec, CacheBudget, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
+};
+
+use crate::{
+    ColumnarPerBlockCumulativeRolling, FiatType, IndexSources, LazyFiatPerBlockCumulativeWithSums,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -29,10 +31,11 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
         db: &Database,
         metric: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
         cached_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let values = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{metric}_cumulative_cents_by_term"),
             version,
@@ -40,16 +43,16 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
                 UTXOAggregate::from_fn(|id| {
                     let name = id.metric_name(metric);
                     let cumulative = match id.term() {
-                        Some(term) => cache
-                            .wrap(source.column(&format!("{name}_cumulative_cents"), version, term))
-                            .cached_boxed_clone(),
-                        None => cache
-                            .wrap(source.sum_columns(
+                        Some(term) => source
+                            .column(&format!("{name}_cumulative_cents"), version, term)
+                            .read_only_boxed_clone(),
+                        None => source
+                            .sum_columns(
                                 &format!("{name}_cumulative_cents"),
                                 version,
                                 TermId::ALL.iter().copied(),
-                            ))
-                            .cached_boxed_clone(),
+                            )
+                            .read_only_boxed_clone(),
                     };
                     LazyFiatPerBlockCumulativeWithSums::from_cumulative_cents_source(
                         &name,

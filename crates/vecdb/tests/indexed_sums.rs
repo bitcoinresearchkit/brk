@@ -1,11 +1,15 @@
 use brk_exit::Exit;
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, BytesVec, Database, EagerVec, ImportableVec, ReadableVec, StoredVec, Version,
     WritableVec,
 };
 
+#[cfg(feature = "pco")]
+use vecdb::PcoVec;
+
 fn check_indexed_sums<V: StoredVec<I = usize, T = u64>>() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut first: BytesVec<usize, usize> =
         BytesVec::forced_import(&db, "first", Version::ONE).unwrap();
@@ -121,11 +125,11 @@ fn raw_indexed_sums_preserve_groups_saturation_and_resume() {
 #[cfg(feature = "pco")]
 #[test]
 fn compressed_indexed_sums_preserve_groups_saturation_and_resume() {
-    check_indexed_sums::<vecdb::PcoVec<usize, u64>>();
+    check_indexed_sums::<PcoVec<usize, u64>>();
 }
 
 fn check_cumulative<V: StoredVec<I = usize, T = u64>>() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut source1 = V::forced_import(&db, "source1", Version::ONE).unwrap();
     let mut source2 = V::forced_import(&db, "source2", Version::ONE).unwrap();
@@ -181,5 +185,5 @@ fn raw_cumulative_paths_preserve_stored_totals() {
 #[cfg(feature = "pco")]
 #[test]
 fn compressed_cumulative_paths_preserve_stored_totals() {
-    check_cumulative::<vecdb::PcoVec<usize, u64>>();
+    check_cumulative::<PcoVec<usize, u64>>();
 }

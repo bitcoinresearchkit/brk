@@ -1,5 +1,6 @@
-use crate::Keyspace;
 use lsm_tree::{Ingestion as TreeIngestion, Slice};
+
+use crate::{Keyspace, Result};
 
 /// A strictly sorted stream written directly into `SSTables`.
 pub struct Ingestion<'a> {
@@ -9,7 +10,7 @@ pub struct Ingestion<'a> {
 
 impl<'a> Ingestion<'a> {
     /// Starts an ingestion for `keyspace`.
-    pub fn new(keyspace: &'a Keyspace) -> crate::Result<Self> {
+    pub fn new(keyspace: &'a Keyspace) -> Result<Self> {
         let inner = TreeIngestion::new(&keyspace.inner.tree)?;
         Ok(Self { keyspace, inner })
     }
@@ -19,7 +20,7 @@ impl<'a> Ingestion<'a> {
     /// # Errors
     ///
     /// Returns an error if the table writer fails.
-    pub fn write<K: Into<Slice>, V: Into<Slice>>(&mut self, key: K, value: V) -> crate::Result<()> {
+    pub fn write<K: Into<Slice>, V: Into<Slice>>(&mut self, key: K, value: V) -> Result<()> {
         self.inner.write(key, value).map_err(Into::into)
     }
 
@@ -28,7 +29,7 @@ impl<'a> Ingestion<'a> {
     /// # Errors
     ///
     /// Returns an error if the table writer fails.
-    pub fn write_weak_tombstone<K: Into<Slice>>(&mut self, key: K) -> crate::Result<()> {
+    pub fn write_weak_tombstone<K: Into<Slice>>(&mut self, key: K) -> Result<()> {
         self.inner.write_weak_tombstone(key).map_err(Into::into)
     }
 
@@ -37,7 +38,7 @@ impl<'a> Ingestion<'a> {
     /// # Errors
     ///
     /// Returns an error if table or manifest persistence fails.
-    pub fn finish(self) -> crate::Result<()> {
+    pub fn finish(self) -> Result<()> {
         self.inner.finish()?;
         self.keyspace.request_compaction();
         Ok(())

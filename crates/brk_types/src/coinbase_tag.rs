@@ -1,6 +1,12 @@
 use derive_more::Deref;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+#[cfg(feature = "storage")]
+use vecdb::Error;
+#[cfg(feature = "storage")]
+use vecdb::Result as VecdbResult;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -29,8 +35,8 @@ impl Bytes for CoinbaseTag {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let arr: [u8; 101] = bytes.try_into().map_err(|_| vecdb::Error::WrongLength {
+    fn from_bytes(bytes: &[u8]) -> VecdbResult<Self> {
+        let arr: [u8; 101] = bytes.try_into().map_err(|_| Error::WrongLength {
             received: bytes.len(),
             expected: 101,
         })?;
@@ -60,13 +66,13 @@ impl From<&[u8]> for CoinbaseTag {
 }
 
 impl Serialize for CoinbaseTag {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&self.as_str())
     }
 }
 
 impl<'de> Deserialize<'de> for CoinbaseTag {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Ok(Self::from(s.as_bytes()))
     }

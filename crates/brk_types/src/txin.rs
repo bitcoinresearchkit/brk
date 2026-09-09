@@ -1,7 +1,9 @@
-use crate::{TxOut, Txid, Vout, Witness};
-use bitcoin::{Script, ScriptBuf, Sequence, transaction::OutPoint};
-use schemars::JsonSchema;
+use bitcoin::{Script, ScriptBuf, Sequence, TxIn as BitcoinTxIn, transaction::OutPoint};
+use schemars::{JsonSchema, Schema};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
+use serde_json::{Value, json};
+
+use crate::{TxOut, Txid, Vout, Witness};
 
 /// Transaction input
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
@@ -46,11 +48,8 @@ pub struct TxIn {
     pub inner_witness_script_asm: (),
 }
 
-fn txin_wire_schema(schema: &mut schemars::Schema) {
-    let Some(required) = schema
-        .get_mut("required")
-        .and_then(serde_json::Value::as_array_mut)
-    else {
+fn txin_wire_schema(schema: &mut Schema) {
+    let Some(required) = schema.get_mut("required").and_then(Value::as_array_mut) else {
         return;
     };
 
@@ -66,14 +65,14 @@ fn txin_wire_schema(schema: &mut schemars::Schema) {
             .iter()
             .position(|field| field == "vout")
             .map_or(required.len(), |index| index + 1);
-        required.insert(index, serde_json::json!("prevout"));
+        required.insert(index, json!("prevout"));
     }
 }
 
 /// Reconstruct a canonical `bitcoin::TxIn` from the stored brk shape.
 /// Mempool txs are never coinbase, so `vout` (u16 in brk) always fits
 /// the bitcoin protocol's u32 vout field via widening.
-impl From<&TxIn> for bitcoin::TxIn {
+impl From<&TxIn> for BitcoinTxIn {
     #[inline]
     fn from(txin: &TxIn) -> Self {
         Self {
@@ -159,11 +158,14 @@ impl Serialize for TxIn {
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::to_value;
+
     use super::*;
 
     #[test]
     fn schema_marks_only_unconditional_wire_fields_as_required() {
-        let schema = serde_json::to_value(schemars::schema_for!(TxIn)).unwrap();
+        let schema = to_value(schema_for!(TxIn)).unwrap();
         let required = schema["required"].as_array().unwrap();
         for field in [
             "txid",

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, iter::once};
+use std::{fmt::Debug, iter::once, sync::Arc};
 
 use crate::{Cursor, Error, ReadableVec, Result, VecIndex, VecValue, Version};
 
@@ -55,6 +55,13 @@ pub trait ReadableColumnarVec<C>: ReadableVec<Self::I, C::Row<Self::T>> + Clone
 where
     C: ColumnId,
 {
+    /// A full scalar snapshot. Stored sources reuse their column's existing cache.
+    fn column_snapshot(&self, column: C) -> Arc<Vec<Self::T>> {
+        Arc::new(
+            self.column("", Version::ZERO, column)
+                .collect_range_at(0, self.len()),
+        )
+    }
     type I: VecIndex;
     type T: VecValue;
 

@@ -1,27 +1,20 @@
-use brk_error::Result;
-
 use std::time::{Duration, Instant};
 
 use bitview_cohort::{ByAddrType, EntryPrice, Filter, Term};
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_inputs::Vecs as InputsVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_outputs::Vecs as OutputsVecs;
+use bitview_plugin_transactions::Vecs as TransactionsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
     Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, RangeMap, Sats, StoredF64, Timestamp, TxIndex,
     TypeIndex,
 };
-use rayon::prelude::*;
+use rayon::{join, prelude::*};
 use tracing::{debug, info};
 use vecdb::{AnyVec, ReadableVec, VecIndex, unlikely};
-
-use crate::{
-    addr::{AddrMetricsState, FundedAddrCountsVecs},
-    block::{
-        AddrCache, TransferAddressCache, process_inputs, process_outputs, process_received,
-        process_sent,
-    },
-    compute::write::write,
-    state::{BlockState, Transacted},
-};
 
 use super::{
     super::{
@@ -32,6 +25,16 @@ use super::{
     AddrReaders, BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
     BIP30_ORIGINAL_HEIGHT_2, ComputeContext, IndexToTxIndexBuf, PriceRangeMax, TxInReaders,
     TxOutReaders,
+};
+use crate::{
+    addr::{AddrMetricsState, FundedAddrCountsVecs},
+    block::{
+        AddrCache, TransferAddressCache, process_inputs, process_outputs, process_received,
+        process_sent,
+    },
+    compute::write::write,
+    state::{self, BlockState, Transacted},
+    vecs,
 };
 
 const FLUSH_BLOCK_INTERVAL: usize = 10_000;
@@ -57,10 +60,10 @@ pub fn process_blocks(
     utxo_states: &mut UTXOStates,
     addr_states: &mut AddrStates,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
-    inputs: &bitview_plugin_inputs::Vecs,
-    outputs: &bitview_plugin_outputs::Vecs,
-    transactions: &bitview_plugin_transactions::Vecs,
+    mappings: &MappingsVecs,
+    inputs: &InputsVecs,
+    outputs: &OutputsVecs,
+    transactions: &TransactionsVecs,
     starting_height: Height,
     last_height: Height,
     chain_state: &mut Vec<BlockState>,
@@ -289,8 +292,8 @@ pub fn process_blocks(
         debug_assert!(input_count > 0);
 
         // Keep tick-tock concurrent with the block reads and address processing.
-        let (tick_tock, (outputs_result, inputs_result)) = rayon::join(
-            || crate::state::tick_tock_next_block(utxo_states, chain_state, timestamp),
+        let (tick_tock, (outputs_result, inputs_result)) = join(
+            || state::tick_tock_next_block(utxo_states, chain_state, timestamp),
             || {
                 // Collect both sides concurrently, then load their shared addresses once.
                 let (
@@ -299,7 +302,7 @@ pub fn process_blocks(
                         txin_index_to_tx_index,
                         (input_values, input_prev_heights, input_output_types, input_type_indexes),
                     ),
-                ) = rayon::join(
+                ) = join(
                     || {
                         let txout_index_to_tx_index = txout_to_tx_index_buf.build(
                             first_tx_index,
@@ -340,7 +343,7 @@ pub fn process_blocks(
                     &vecs.addr_state,
                 );
 
-                rayon::join(
+                join(
                     || process_outputs(txout_index_to_tx_index, txout_data_vec),
                     || {
                         process_inputs(
@@ -417,7 +420,7 @@ pub fn process_blocks(
         transfer_addresses.prepare(&outputs_result.received_data);
 
         // Process UTXO cohorts and Addr cohorts in parallel
-        let (_, addr_result) = rayon::join(
+        let (_, addr_result) = join(
             || {
                 // UTXO cohorts receive/send
                 utxo_states.receive(transacted, height, timestamp, block_price, entry);
@@ -499,7 +502,7 @@ pub fn process_blocks(
                 false,
             )?;
             min_supply_modified = None;
-            crate::vecs::flush(vecs)?;
+            vecs::flush(vecs)?;
             pending_blocks = 0;
             last_flush = Instant::now();
 

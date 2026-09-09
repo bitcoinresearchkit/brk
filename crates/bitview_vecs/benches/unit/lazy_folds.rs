@@ -1,5 +1,8 @@
-use bitview_vecs::LazyIndexedVec;
 use std::{hint::black_box, time::Instant};
+
+use bitview_vecs::LazyIndexedVec;
+use tempfile::tempdir;
+use vecdb::ReverseOperands;
 
 use super::*;
 
@@ -82,7 +85,7 @@ fn compare<T: VecValue>(
 #[test]
 #[ignore = "same-input buffered versus direct folds; excludes import and server transport"]
 fn benchmark_lazy_folds() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let len = 32_768_usize;
     let source = stored(
@@ -145,7 +148,7 @@ fn benchmark_lazy_folds() {
         StoredU64,
         StoredU64,
         PartsPerMillion32,
-        vecdb::ReverseOperands<RatioU64<PartsPerMillion32>>,
+        ReverseOperands<RatioU64<PartsPerMillion32>>,
     >::new(
         "rolling",
         Version::ONE,

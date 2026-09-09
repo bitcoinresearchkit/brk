@@ -9,7 +9,7 @@ use bitview_vecs::{
 use brk_error::Result;
 use brk_types::{Bytes, Height, PartsPerMillion32, Sats, StoredU64, VSize, Version};
 use vecdb::{
-    AnyVec, CacheBudget, Database, Pinned, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
+    AnyVec, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode,
 };
 
@@ -19,7 +19,7 @@ use super::breakdown::BlockMetrics;
 pub struct Total<M: StorageMode = Rw> {
     /// Number of script bytes following the `OP_RETURN` opcode across all
     /// `OP_RETURN` outputs.
-    pub data_bytes: PerBlockCumulativeRolling<Bytes, M, Pinned>,
+    pub data_bytes: PerBlockCumulativeRolling<Bytes, M>,
     /// Number of transactions containing at least one `OP_RETURN` output; each
     /// transaction is counted once regardless of how many such outputs it has.
     pub tx_count: PerBlockCumulativeRolling<StoredU64, M>,
@@ -102,7 +102,7 @@ impl Total {
     fn lazy_chain_share(
         prefix: &str,
         version: Version,
-        data_bytes: &PerBlockCumulativeRolling<Bytes, Rw, Pinned>,
+        data_bytes: &PerBlockCumulativeRolling<Bytes>,
         block_size: &impl ReadableCloneableVec<Height, StoredU64>,
         mappings: &MappingsVecs,
     ) -> LazyPercentPerBlock<PartsPerMillion32> {

@@ -5,7 +5,7 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode};
 
 use super::UTXOCoreColumns;
 use crate::ColumnarPerBlock;
@@ -22,10 +22,16 @@ pub struct UTXOTypedColumns<T: PcoVecValue, M: StorageMode = Rw> {
 }
 
 impl<T: PcoVecValue + AddAssign> UTXOTypedColumns<T> {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         Ok(Self {
-            core: UTXOCoreColumns::forced_import(db, name, version)?,
+            core: UTXOCoreColumns::forced_import(cache, db, name, version)?,
             type_: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_type"),
                 version + Version::ONE,
@@ -36,26 +42,24 @@ impl<T: PcoVecValue + AddAssign> UTXOTypedColumns<T> {
 
     pub fn additive_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
-        self.direct_source(cache, filter, name, version)
-            .or_else(|| self.core.aggregate_source(cache, filter, name, version))
+    ) -> Option<ReadableBoxedVec<Height, T>> {
+        self.direct_source(filter, name, version)
+            .or_else(|| self.core.aggregate_source(filter, name, version))
     }
 
     pub(crate) fn direct_source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         match filter {
             Filter::Type(output_type) => SpendableTypeId::from_output_type(*output_type)
-                .map(|id| self.type_.cached_column(cache, name, version, id)),
-            _ => self.core.direct_source(cache, filter, name, version),
+                .map(|id| self.type_.column_source(name, version, id)),
+            _ => self.core.direct_source(filter, name, version),
         }
     }
 

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, iter};
 
 use bitview_traversable::{IndexMap, Traversable, TreeNode};
 use vecdb::AnyExportableVec;
@@ -11,7 +11,7 @@ impl Traversable for TestLeaf {
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::empty()
+        iter::empty()
     }
 
     fn collect_series_descriptions<'a>(

@@ -1,17 +1,19 @@
 use std::{
     fs::File,
     io::{Read, Seek, SeekFrom},
+    marker::PhantomData,
+    mem,
+    result::Result,
     sync::Arc,
 };
 
 use parking_lot::{RwLock, RwLockReadGuard};
 use rawdb::{Region, RegionMetadata};
 
-use crate::{AnyStoredVec, BUFFER_SIZE, Pages, VecIndex, VecValue, likely, unlikely};
-
 use super::super::inner::{
     COMPRESSED_PAGE_SIZE, CompressionStrategy, Page, PageDecoder, ReadWriteCompressedVec,
 };
+use crate::{AnyStoredVec, BUFFER_SIZE, Pages, VecIndex, VecValue, likely, unlikely};
 
 /// Buffered file I/O source for reading stored compressed data.
 ///
@@ -35,7 +37,7 @@ where
     index: usize,
     end_index: usize,
     _region_lock: RwLockReadGuard<'a, RegionMetadata>,
-    _marker: std::marker::PhantomData<(I, T, S)>,
+    _marker: PhantomData<(I, T, S)>,
 }
 
 impl<'a, I, T, S> CompressedIoSource<'a, I, T, S>
@@ -174,7 +176,7 @@ where
             index: from,
             end_index: to,
             _region_lock: region_lock,
-            _marker: std::marker::PhantomData,
+            _marker: PhantomData,
         }
     }
 
@@ -183,7 +185,7 @@ where
         output.reserve(self.end_index - self.index);
         let start_page = self.index / Self::PER_PAGE;
         let end_page = (self.end_index - 1) / Self::PER_PAGE;
-        let mut page_buf = std::mem::take(&mut self.decoded_values);
+        let mut page_buf = mem::take(&mut self.decoded_values);
 
         for page_index in start_page..=end_page {
             let page_start = page_index * Self::PER_PAGE;
@@ -246,11 +248,11 @@ where
 
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> Result<B, E>>(
         mut self,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let per_page = Self::PER_PAGE;
         let end_index = self.end_index;
         let mut page_index = self.index / per_page;
@@ -278,9 +280,8 @@ where
 mod tests {
     use tempfile::tempdir;
 
-    use crate::{AnyStoredVec, Database, ImportableVec, PcoVec, Version, WritableVec};
-
     use super::CompressedIoSource;
+    use crate::{AnyStoredVec, Database, ImportableVec, PcoVec, Version, WritableVec};
 
     #[test]
     fn read_into_handles_full_and_partial_pages() {

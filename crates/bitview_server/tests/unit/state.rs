@@ -1,4 +1,4 @@
-use axum::http::StatusCode;
+use axum::{body, http::StatusCode};
 
 use super::*;
 
@@ -34,7 +34,7 @@ async fn matching_validator_skips_body_work_and_preserves_cdn_policy() {
             "public, max-age=1, must-revalidate"
         );
         assert!(
-            axum::body::to_bytes(response.into_body(), 0)
+            body::to_bytes(response.into_body(), 0)
                 .await
                 .unwrap()
                 .is_empty()

@@ -2,7 +2,11 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::io::Write;
+
 use byteorder::{LittleEndian, WriteBytesExt};
+
+use crate::Result;
 
 #[derive(Debug)]
 pub struct Builder(Vec<u32>);
@@ -16,7 +20,7 @@ impl Builder {
         self.0.push(pos);
     }
 
-    pub fn write<W: std::io::Write>(&self, writer: &mut W) -> crate::Result<(u8, usize)> {
+    pub fn write<W: Write>(&self, writer: &mut W) -> Result<(u8, usize)> {
         // NOTE: We check if the pointers may fit in 16-bits
         // If so, we halve the index size by storing u16 instead of u32
         let step_size = {

@@ -1,8 +1,9 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, iter};
 
 use brk_error::Error;
 use brk_fetcher::compute_ohlc_from_range;
 use brk_types::{Cents, Close, High, Low, OHLCCents, Open, Timestamp};
+use serde_json::to_value;
 
 fn candle(open: u64, high: u64, low: u64, close: u64) -> OHLCCents {
     OHLCCents::from((
@@ -58,16 +59,13 @@ fn all_sparse_boundaries_match_original_candles_and_errors() {
                 )
             })
             .collect::<BTreeMap<_, _>>();
-        for previous in std::iter::once(None).chain((0..10).map(|i| Some(Timestamp::new(i)))) {
+        for previous in iter::once(None).chain((0..10).map(|i| Some(Timestamp::new(i)))) {
             for end in 0..10 {
                 let end = Timestamp::new(end);
                 let actual = compute_ohlc_from_range(&tree, end, previous, "fixture");
                 let expected = reference(&tree, end, previous);
                 match (actual, expected) {
-                    (Ok(a), Ok(b)) => assert_eq!(
-                        serde_json::to_value(a).unwrap(),
-                        serde_json::to_value(b).unwrap()
-                    ),
+                    (Ok(a), Ok(b)) => assert_eq!(to_value(a).unwrap(), to_value(b).unwrap()),
                     (Err(Error::NotFound(a)), Err(Error::NotFound(b))) => assert_eq!(a, b),
                     other => panic!("different results: {other:?}"),
                 }

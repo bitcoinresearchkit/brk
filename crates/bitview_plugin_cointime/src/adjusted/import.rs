@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{PerBlock, PercentPerBlock};
 use brk_error::Result;
 use brk_types::Version;
@@ -9,7 +10,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<Vecs> {
     Ok(Vecs {
         inflation_rate: PercentPerBlock::forced_import(

@@ -2,11 +2,12 @@
 //!
 //! These tests exercise `MutableVec` over `BytesVec` and `ZeroCopyVec`.
 
-use rawdb::Database;
 use std::collections::BTreeSet;
+
+use rawdb::Database;
 use tempfile::TempDir;
 use vecdb::{
-    AnyStoredVec, BytesVec, BytesVecReader, ImportableVec, MutableVec, ReadableVec, Stamp,
+    AnyStoredVec, BytesVec, BytesVecReader, ImportableVec, MutableVec, ReadableVec, Result, Stamp,
     StoredVec, Version, WritableVec,
 };
 
@@ -17,7 +18,7 @@ use vecdb::{VecReader, ZeroCopyStrategy, ZeroCopyVec};
 // Test Setup
 // ============================================================================
 
-fn setup_db() -> vecdb::Result<(Database, TempDir)> {
+fn setup_db() -> Result<(Database, TempDir)> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     Ok((db, temp))
@@ -31,7 +32,7 @@ pub trait RawVecOps: StoredVec<I = usize, T = u32> {
     type Reader;
 
     fn take(&mut self, index: usize, reader: &Self::Reader) -> Option<u32>;
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()>;
+    fn update(&mut self, index: usize, value: u32) -> Result<()>;
     fn holes(&self) -> &BTreeSet<usize>;
     fn collect_holed(&self) -> Vec<Option<u32>>;
     fn get_with_reader(&self, index: usize, reader: &Self::Reader) -> Option<u32>;
@@ -45,7 +46,7 @@ impl RawVecOps for MutableVec<BytesVec<usize, u32>> {
         MutableVec::<BytesVec<usize, u32>>::take(self, index, reader)
     }
 
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()> {
+    fn update(&mut self, index: usize, value: u32) -> Result<()> {
         MutableVec::<BytesVec<usize, u32>>::update(self, index, value)
     }
 
@@ -74,7 +75,7 @@ impl RawVecOps for MutableVec<ZeroCopyVec<usize, u32>> {
         MutableVec::<ZeroCopyVec<usize, u32>>::take(self, index, reader)
     }
 
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()> {
+    fn update(&mut self, index: usize, value: u32) -> Result<()> {
         MutableVec::<ZeroCopyVec<usize, u32>>::update(self, index, value)
     }
 
@@ -99,7 +100,7 @@ impl RawVecOps for MutableVec<ZeroCopyVec<usize, u32>> {
 // Generic Comprehensive Tests
 // ============================================================================
 
-fn run_comprehensive_test<V>() -> vecdb::Result<()>
+fn run_comprehensive_test<V>() -> Result<()>
 where
     V: RawVecOps,
 {
@@ -666,7 +667,7 @@ mod bytes {
     use super::*;
 
     #[test]
-    fn test_raw_vec_comprehensive() -> vecdb::Result<()> {
+    fn test_raw_vec_comprehensive() -> Result<()> {
         run_comprehensive_test::<MutableVec<BytesVec<usize, u32>>>()
     }
 }
@@ -676,13 +677,13 @@ mod zerocopy {
     use super::*;
 
     #[test]
-    fn test_raw_vec_comprehensive() -> vecdb::Result<()> {
+    fn test_raw_vec_comprehensive() -> Result<()> {
         run_comprehensive_test::<MutableVec<ZeroCopyVec<usize, u32>>>()
     }
 }
 
 #[test]
-fn read_only_clone_tracks_published_holes() -> vecdb::Result<()> {
+fn read_only_clone_tracks_published_holes() -> Result<()> {
     let (database, _temp) = setup_db()?;
     let mut vec = MutableVec::<BytesVec<usize, u32>>::forced_import(
         &database,

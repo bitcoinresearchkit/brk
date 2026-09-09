@@ -5,6 +5,7 @@ use bitview_plugin::{
     ComputePlugin, ImportContext, Plugin, PluginId, PluginStorage, UpdateContext,
 };
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
@@ -14,6 +15,7 @@ use pool_heights::PoolHeights;
 use rayon::prelude::{
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
+use tracing::warn;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, ImportableVec, ReadableVec, Rw, StorageMode,
     VecIndex, Version, WritableVec,
@@ -60,7 +62,7 @@ where
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
@@ -140,7 +142,7 @@ impl Vecs {
         let pool_computed = self.pool.header().computed_version();
         let expected = pool_vec_version + dep_version;
         if expected != pool_computed {
-            tracing::warn!(
+            warn!(
                 "Pool version mismatch: vec_version={pool_vec_version:?} + dep={dep_version:?} = {expected:?}, stored computed={pool_computed:?}, len={}",
                 self.pool.len()
             );

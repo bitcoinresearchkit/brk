@@ -84,11 +84,12 @@ impl ProfitabilityVecs {
     ) -> Result<Self> {
         let version = version + VERSION;
         let supply = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "profitability_supply_sats_by_term_and_range",
             version,
             |source| {
-                Self::series(cache, source, "supply", version, |name, source| {
+                Self::series(source, "supply", version, |name, source| {
                     LazySpotValuePerBlockWithDeltas::from_sats_source(
                         name,
                         version,
@@ -101,30 +102,35 @@ impl ProfitabilityVecs {
             },
         )?;
         let realized_cap = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "profitability_realized_cap_by_term_and_range",
             version,
             |source| {
-                Self::series(cache, source, "realized_cap", version, |name, source| {
+                Self::series(source, "realized_cap", version, |name, source| {
                     LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
         )?;
         let unrealized_pnl = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "profitability_unrealized_pnl_by_term_and_range",
             version,
             |source| {
-                Self::series(cache, source, "unrealized_pnl", version, |name, source| {
+                Self::series(source, "unrealized_pnl", version, |name, source| {
                     LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
                 })
             },
         )?;
-        let nupl =
-            ColumnarPerBlock::forced_import(db, "profitability_nupl_ppm", version, |source| {
+        let nupl = ColumnarPerBlock::forced_import(
+            cache,
+            db,
+            "profitability_nupl_ppm",
+            version,
+            |source| {
                 ProfitabilityId::series(|column, name| {
                     LazyColumnRatioPerBlock::new(
-                        cache,
                         &format!("{name}_nupl"),
                         version,
                         source,
@@ -132,7 +138,8 @@ impl ProfitabilityVecs {
                         mappings,
                     )
                 })
-            })?;
+            },
+        )?;
 
         Ok(Self {
             supply,
@@ -143,7 +150,6 @@ impl ProfitabilityVecs {
     }
 
     fn series<T, S>(
-        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, TermProfitabilityRangeId>,
         metric: &str,
         version: Version,
@@ -156,7 +162,6 @@ impl ProfitabilityVecs {
             UTXOAggregate::from_fn(|aggregate| {
                 let name = Self::metric_name(cohort_name, aggregate, metric);
                 let source = TermProfitabilityRangeId::source(
-                    cache,
                     source,
                     &format!("{name}_source"),
                     version,

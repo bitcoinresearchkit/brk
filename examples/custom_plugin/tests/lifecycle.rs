@@ -2,20 +2,21 @@ use std::{path::Path, time::Duration};
 
 use bitview::update;
 use bitview_custom_plugin_example::near_full_blocks::{Dependencies, ID, Vecs as NearFullBlocks};
-use bitview_plugin::{ComputePlugin, ImportContext, UpdateContext};
+use bitview_plugin::{ComputePlugin, ImportContext, Publication, UpdateContext};
 use bitview_query::Vecs as QueryVecs;
 use bitview_runtime::{ComputePluginSet, PluginSet};
 use bitview_traversable::Traversable;
 use brk_error::{Error, Result};
 use brk_exit::Exit;
 use brk_types::{Height, Index, Version, Weight};
-use vecdb::{AnyStoredVec, Database, ImportableVec, PAGE_SIZE, PcoVec, WritableVec};
+use tempfile::tempdir;
+use vecdb::{AnyStoredVec, CacheBudget, Database, ImportableVec, PAGE_SIZE, PcoVec, WritableVec};
 
 #[derive(PluginSet, Traversable)]
 struct TestPlugins {
     #[traversable(skip)]
     #[plugin_set(skip)]
-    publication: bitview_plugin::Publication,
+    publication: Publication,
     #[traversable(skip)]
     #[plugin_set(skip)]
     safe_height: Height,
@@ -78,7 +79,7 @@ impl TestPlugins {
 }
 
 impl ComputePluginSet for TestPlugins {
-    fn publication(&self) -> &bitview_plugin::Publication {
+    fn publication(&self) -> &Publication {
         &self.publication
     }
 
@@ -96,7 +97,7 @@ impl ComputePluginSet for TestPlugins {
 
 #[test]
 fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
-    let directory = tempfile::tempdir()?;
+    let directory = tempdir()?;
     let exit = Exit::new();
     let update_context = UpdateContext::new(&exit);
     let mut plugins = TestPlugins::import(directory.path())?;
@@ -124,4 +125,4 @@ fn plugin_survives_import_publish_query_and_same_length_reorg() -> Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

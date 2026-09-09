@@ -7,7 +7,10 @@ use bitview_vecs::{CachedWindowStartVec, PerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Version};
 
-use super::{STORAGE, Vecs};
+use super::{
+    STORAGE, Vecs, activity, adjusted, age_range, aggregate, cap, prices, reserve_risk, supply,
+    value,
+};
 
 impl Vecs {
     pub fn import(
@@ -23,14 +26,14 @@ impl Vecs {
         let version = STORAGE.schema_version();
         let v1 = version + Version::ONE;
         let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
-        let activity = super::activity::forced_import(
+        let activity = activity::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
             cached_starts,
         )?;
-        let age_range = super::age_range::forced_import(
+        let age_range = age_range::forced_import(
             context.cache_budget(),
             &db,
             version,
@@ -39,7 +42,7 @@ impl Vecs {
             &spot_price,
             distribution,
         )?;
-        let supply = super::supply::forced_import(
+        let supply = supply::forced_import(
             context.cache_budget(),
             &db,
             v1,
@@ -48,7 +51,7 @@ impl Vecs {
             &activity,
             all_chain,
         )?;
-        let aggregate = super::aggregate::forced_import(
+        let aggregate = aggregate::forced_import(
             context.cache_budget(),
             &db,
             version + Version::new(4),
@@ -56,16 +59,15 @@ impl Vecs {
             &spot_price,
             &supply.active_supply_in_loss_share.bounded,
         )?;
-        let value =
-            super::value::forced_import(context.cache_budget(), &db, v1, mappings, cached_starts)?;
-        let cap = super::cap::forced_import(
+        let value = value::forced_import(context.cache_budget(), &db, v1, mappings, cached_starts)?;
+        let cap = cap::forced_import(
             context.cache_budget(),
             &db,
             version + Version::TWO,
             mappings,
             subsidy_cents,
         )?;
-        let prices = super::prices::forced_import(
+        let prices = prices::forced_import(
             context.cache_budget(),
             &db,
             version + Version::new(3),
@@ -74,15 +76,9 @@ impl Vecs {
             all_chain,
             cap.cointime.cents.resolutions.height_source(),
         )?;
-        let adjusted =
-            super::adjusted::forced_import(context.cache_budget(), &db, version, mappings)?;
-        let reserve_risk = super::reserve_risk::forced_import(
-            context.cache_budget(),
-            &db,
-            v1,
-            mappings,
-            &spot_price,
-        )?;
+        let adjusted = adjusted::forced_import(context.cache_budget(), &db, version, mappings)?;
+        let reserve_risk =
+            reserve_risk::forced_import(context.cache_budget(), &db, v1, mappings, &spot_price)?;
 
         let this = Self {
             db,

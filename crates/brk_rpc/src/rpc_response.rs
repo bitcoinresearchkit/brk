@@ -1,12 +1,13 @@
 use brk_error::{Error, Result};
 use corepc_jsonrpc::Response;
 use serde::de::DeserializeOwned;
+use serde_json::from_slice;
 
 pub const MAX_RESPONSE_BYTES: usize = 64 * 1024;
 
 /// Decode one bounded request/response exchange with our fixed request id.
 pub fn decode<T: DeserializeOwned>(success: bool, bytes: &[u8]) -> Result<T> {
-    let response: Response = serde_json::from_slice(bytes)?;
+    let response: Response = from_slice(bytes)?;
     if response.id != 1
         || response
             .jsonrpc

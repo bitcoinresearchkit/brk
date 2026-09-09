@@ -5,7 +5,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use brk_error::{Error, Result};
 
-use super::{STORAGE, Vecs};
+use super::{STORAGE, Vecs, ath, lookback, moving_average, range, returns, technical, volatility};
 
 impl Vecs {
     pub fn import(
@@ -18,13 +18,12 @@ impl Vecs {
         let version = STORAGE.schema_version();
 
         let spot_price = prices.spot.cents.resolutions.height_source();
-        let ath =
-            super::ath::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
+        let ath = ath::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
         let cached_starts = ByLookbackPeriod::try_new(|_, days| {
             Ok::<_, Error>(blocks.lookback.cached_start_vec(days as usize))
         })?;
-        let lookback = super::lookback::forced_import(version, mappings, &cached_starts, prices)?;
-        let returns = super::returns::forced_import(
+        let lookback = lookback::forced_import(version, mappings, &cached_starts, prices)?;
+        let returns = returns::forced_import(
             context.cache_budget(),
             &db,
             version,
@@ -32,15 +31,10 @@ impl Vecs {
             &cached_starts,
             prices,
         )?;
-        let volatility = super::volatility::forced_import(version, &returns)?;
-        let range = super::range::forced_import(
-            context.cache_budget(),
-            &db,
-            version,
-            mappings,
-            spot_price,
-        )?;
-        let moving_average = super::moving_average::forced_import(
+        let volatility = volatility::forced_import(version, &returns)?;
+        let range =
+            range::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
+        let moving_average = moving_average::forced_import(
             context.cache_budget(),
             &db,
             version,
@@ -48,7 +42,7 @@ impl Vecs {
             blocks,
             spot_price,
         )?;
-        let technical = super::technical::forced_import(
+        let technical = technical::forced_import(
             context.cache_budget(),
             &db,
             version,

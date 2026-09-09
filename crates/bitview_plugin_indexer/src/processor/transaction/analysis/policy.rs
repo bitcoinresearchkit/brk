@@ -1,13 +1,11 @@
 use bitcoin::{
-    Amount, Script, Transaction, TxIn, TxOut, WitnessVersion, policy::MAX_STANDARD_TX_SIGOPS_COST,
-    taproot::LeafVersion,
+    Amount, Script, Transaction, TxIn, TxOut, WitnessVersion, constants::WITNESS_SCALE_FACTOR,
+    policy::MAX_STANDARD_TX_SIGOPS_COST, taproot::LeafVersion,
 };
 use brk_types::{Height, OutputType, SigOps};
 
-use super::super::ComputedTx;
-use super::{input, sigops::ComputedSigOps};
-use crate::TxFeatureFlags;
-use crate::processor::txout::ProcessedOutput;
+use super::{super::ComputedTx, input, sigops::ComputedSigOps};
+use crate::{TxFeatureFlags, processor::txout::ProcessedOutput};
 
 // Deterministic policy snapshots, not consensus activation heights.
 const LAST_V2_POLICY_HEIGHT: u32 = 863_500;
@@ -23,8 +21,7 @@ const MAX_V30_OP_RETURN_SCRIPT_BYTES: usize = 100_000;
 const MAX_P2WSH_SCRIPT_BYTES: usize = 3_600;
 const MAX_P2WSH_STACK_ITEMS: usize = 100;
 const MAX_WITNESS_STACK_ITEM_BYTES: usize = 80;
-const MAX_STANDARD_BARE_MULTISIG_SIGOP_COST: u32 =
-    3 * bitcoin::constants::WITNESS_SCALE_FACTOR as u32;
+const MAX_STANDARD_BARE_MULTISIG_SIGOP_COST: u32 = 3 * WITNESS_SCALE_FACTOR as u32;
 
 #[derive(Default)]
 pub struct Accumulator {
@@ -225,15 +222,15 @@ mod tests {
         P2TRBytes, P2WPKHBytes, P2WSHBytes, SigOps,
     };
 
-    use super::super::input;
     use super::{
-        FIRST_V29_POLICY_HEIGHT, FIRST_V30_POLICY_HEIGHT, LAST_V2_POLICY_HEIGHT,
+        super::input, FIRST_V29_POLICY_HEIGHT, FIRST_V30_POLICY_HEIGHT, LAST_V2_POLICY_HEIGHT,
         MAX_V29_OP_RETURN_SCRIPT_BYTES, MAX_V30_OP_RETURN_SCRIPT_BYTES,
         has_nonstandard_p2wsh_witness, has_nonstandard_taproot_witness, has_nonstandard_version,
         has_nonstandard_witness, has_too_many_bare_multisig_keys,
         has_unconditionally_nonstandard_dust, is_dust, is_standard_unknown_witness,
         op_return_is_nonstandard, p2a_spend_is_nonstandard, tracks_executed_legacy_sigops,
     };
+    use crate::TxFeatureFlags;
 
     #[test]
     pub fn tracks_executed_sigops_only_when_policy_uses_them() {
@@ -389,11 +386,7 @@ mod tests {
             witness: Witness::from_slice(&[b"stuffing"]),
             ..TxIn::default()
         };
-        let facts = input::analyze(
-            &input,
-            OutputType::P2A,
-            &mut crate::TxFeatureFlags::default(),
-        );
+        let facts = input::analyze(&input, OutputType::P2A, &mut TxFeatureFlags::default());
         assert!(has_nonstandard_witness(OutputType::P2A, &facts,));
     }
 
@@ -404,11 +397,7 @@ mod tests {
             witness: Witness::from_slice(&[oversized.as_slice(), [0x51].as_slice()]),
             ..TxIn::default()
         };
-        let facts = input::analyze(
-            &input,
-            OutputType::P2WSH,
-            &mut crate::TxFeatureFlags::default(),
-        );
+        let facts = input::analyze(&input, OutputType::P2WSH, &mut TxFeatureFlags::default());
         assert!(has_nonstandard_p2wsh_witness(&facts.witness));
 
         let control_block = [0xc0_u8; 33];
@@ -420,11 +409,7 @@ mod tests {
             ]),
             ..TxIn::default()
         };
-        let facts = input::analyze(
-            &input,
-            OutputType::P2TR,
-            &mut crate::TxFeatureFlags::default(),
-        );
+        let facts = input::analyze(&input, OutputType::P2TR, &mut TxFeatureFlags::default());
         assert!(has_nonstandard_taproot_witness(&facts.witness));
     }
 }

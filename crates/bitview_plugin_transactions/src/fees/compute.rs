@@ -1,17 +1,15 @@
-use brk_error::Result;
-use rayon::prelude::*;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use block::Block;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Sats, StoredBool, StoredU64, TxInIndex, TxIndex};
+use rayon::{join, prelude::*};
 use vecdb::{AnyStoredVec, AnyVec, ColumnId, PcoVec, ReadableVec, VecIndex, WritableVec};
 
-use super::super::size;
-use super::{CpfpRoleId, Vecs};
+use super::{super::size, CpfpRoleId, Vecs};
 
 mod block;
-
-use block::Block;
 
 const COMPUTE_BATCH_HEIGHTS: usize = 64;
 
@@ -20,7 +18,7 @@ pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
     input_values: &PcoVec<TxInIndex, Sats>,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     size_vecs: &size::Vecs,
     exit: &Exit,
 ) -> Result<()> {
@@ -44,7 +42,7 @@ pub fn compute(
     vecs.compute_fees(indexer, mappings, size_vecs, exit)?;
 
     let vsize_source = &size_vecs.vsize.tx_index;
-    let (r1, r2) = rayon::join(
+    let (r1, r2) = join(
         || {
             vecs.fee.derive_from_with_skip(
                 mappings,
@@ -75,7 +73,7 @@ impl Vecs {
     fn compute_fees(
         &mut self,
         indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         size_vecs: &size::Vecs,
         exit: &Exit,
     ) -> Result<()> {

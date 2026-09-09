@@ -1,6 +1,9 @@
+use std::fmt::{Display, Formatter, Result};
+
 use bitcoin::absolute::LockTime;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
@@ -24,8 +27,8 @@ impl From<RawLockTime> for LockTime {
     }
 }
 
-impl std::fmt::Display for RawLockTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for RawLockTime {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let lock_time = LockTime::from(*self);
         write!(f, "{lock_time}")
     }
@@ -38,7 +41,7 @@ impl Formattable for RawLockTime {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> Result {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {

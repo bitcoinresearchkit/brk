@@ -7,8 +7,7 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    CacheBudget, ColumnId, PcoVec, PcoVecValue, PinnedCachedVec, ReadOnlyColumnarVec,
-    ReadableCloneableVec, ReadableColumnarVec,
+    ColumnId, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
 };
 
 use crate::{
@@ -39,7 +38,6 @@ where
     C: ColumnId,
 {
     pub fn new(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, C>,
@@ -48,7 +46,6 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
         let cumulative = LazyColumnPerBlock::new(
-            cache,
             &format!("{name}_cumulative"),
             version,
             source,
@@ -72,18 +69,13 @@ where
     T: NumericValue + JsonSchema + PcoVecValue,
 {
     pub fn with_addr_types(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, AddrTypeId>,
         indexes: &IndexSources,
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> WithAddrTypes<Self, LazyPerBlockCumulativeRolling<T>> {
-        let cumulative = PinnedCachedVec::wrap(source.sum_columns(
-            &format!("{name}_cumulative"),
-            version,
-            ADDR_TYPE_IDS,
-        ));
+        let cumulative = source.sum_columns(&format!("{name}_cumulative"), version, ADDR_TYPE_IDS);
         let all = LazyPerBlockCumulativeRolling::from_cumulative_source(
             name,
             version,
@@ -93,7 +85,6 @@ where
         );
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnPerBlockCumulativeRolling::new(
-                cache,
                 &format!("{type_name}_{name}"),
                 version,
                 source,

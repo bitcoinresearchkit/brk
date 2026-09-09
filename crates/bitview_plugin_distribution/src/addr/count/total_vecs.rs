@@ -1,4 +1,5 @@
 use bitview_cohort::AddrTypeId;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -17,7 +18,7 @@ impl TotalAddrCountVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         Ok(Self(AddrCountsVecs::forced_import(
             cache,

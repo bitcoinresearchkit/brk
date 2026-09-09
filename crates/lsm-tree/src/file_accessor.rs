@@ -2,9 +2,15 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::GlobalTableId;
-use crate::descriptor_table::DescriptorTable;
-use std::{fs::File, path::Path, sync::Arc};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    fs::File,
+    io::Result,
+    path::Path,
+    sync::Arc,
+};
+
+use crate::{GlobalTableId, descriptor_table::DescriptorTable};
 
 /// Allows accessing a table file (either cached or pinned)
 #[derive(Clone)]
@@ -27,11 +33,7 @@ impl FileAccessor {
         }
     }
 
-    pub fn access_or_open(
-        &self,
-        table_id: GlobalTableId,
-        path: &Path,
-    ) -> std::io::Result<Arc<File>> {
+    pub fn access_or_open(&self, table_id: GlobalTableId, path: &Path) -> Result<Arc<File>> {
         match self {
             Self::File(fd) => Ok(fd.clone()),
             Self::DescriptorTable(descriptor_table) => {
@@ -41,8 +43,8 @@ impl FileAccessor {
     }
 }
 
-impl std::fmt::Debug for FileAccessor {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl Debug for FileAccessor {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
             Self::File(_) => write!(f, "FileAccessor::Pinned"),
             Self::DescriptorTable(_) => {

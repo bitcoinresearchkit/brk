@@ -105,6 +105,9 @@ where
     C: ColumnId,
     S: ReadableColumnarVec<C>,
 {
+    fn snapshot(&self) -> Arc<Vec<S::T>> {
+        self.source.column_snapshot(self.column)
+    }
     fn cursor_chunk_size(&self) -> usize {
         self.source.cursor_chunk_size()
     }

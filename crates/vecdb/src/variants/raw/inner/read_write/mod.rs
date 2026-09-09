@@ -1,20 +1,20 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, result::Result};
 
 use log::debug;
 use rawdb::Reader;
+
+use super::{RawStrategy, ReadOnlyRawVec};
+use crate::{
+    AnyStoredVec, AnyVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
+    RawRangeCursor, ReadWriteBaseVec, Result as CrateResult, VecIndex, VecReader, VecValue,
+    Version, vec_region_name_with,
+};
 
 pub mod any_stored_vec;
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
 pub mod writable;
-
-use crate::{
-    AnyStoredVec, AnyVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
-    RawRangeCursor, ReadWriteBaseVec, VecIndex, VecReader, VecValue, Version, vec_region_name_with,
-};
-
-use super::{RawStrategy, ReadOnlyRawVec};
 
 const VERSION: Version = Version::ONE;
 
@@ -51,7 +51,7 @@ where
     /// # Warning
     ///
     /// This will DELETE all existing data on format/version errors. Use with caution.
-    pub fn forced_import_with(options: ImportOptions, format: Format) -> crate::Result<Self> {
+    pub fn forced_import_with(options: ImportOptions, format: Format) -> CrateResult<Self> {
         let res = Self::import_with(options, format);
         match res {
             Err(Error::WrongEndian)
@@ -68,7 +68,7 @@ where
         }
     }
 
-    pub fn import_with(mut options: ImportOptions, format: Format) -> crate::Result<Self> {
+    pub fn import_with(mut options: ImportOptions, format: Format) -> CrateResult<Self> {
         options.version = options.version + VERSION;
 
         let name = options.name;
@@ -98,7 +98,7 @@ where
         Ok(this)
     }
 
-    pub fn remove(self) -> crate::Result<()> {
+    pub fn remove(self) -> CrateResult<()> {
         self.base.remove()
     }
 
@@ -150,7 +150,7 @@ where
     }
 
     #[inline]
-    pub fn read_at_once(&self, index: usize) -> crate::Result<T> {
+    pub fn read_at_once(&self, index: usize) -> CrateResult<T> {
         let len = self.stored_len();
         if index >= len {
             return Err(Error::IndexTooHigh {
@@ -166,7 +166,7 @@ where
     }
 
     #[inline]
-    pub fn read_once(&self, index: I) -> crate::Result<T> {
+    pub fn read_once(&self, index: I) -> CrateResult<T> {
         self.read_at_once(index.to_usize())
     }
 
@@ -228,7 +228,7 @@ where
     pub fn base_mut(&mut self) -> &mut ReadWriteBaseVec<I, T> {
         &mut self.base
     }
-    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
+    fn collect_stored_range(&self, from: usize, to: usize) -> CrateResult<Vec<T>> {
         let reader = self.raw_reader();
         Ok((from..to)
             .map(|index| self.unchecked_read_at(index, &reader))
@@ -245,13 +245,13 @@ where
         }
     }
     #[inline(always)]
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
         let bytes = (to - from) * Self::SIZE_OF_T;
         if self.region().prefers_mmap(offset, bytes) {

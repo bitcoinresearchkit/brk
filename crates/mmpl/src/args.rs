@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_rpc::{Auth, Client};
 
 #[derive(Default)]
@@ -14,7 +14,7 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn parse(raw: Vec<String>) -> brk_error::Result<Self> {
+    pub fn parse(raw: Vec<String>) -> Result<Self> {
         let mut args = Self::default();
         let mut iter = raw.into_iter();
         while let Some(a) = iter.next() {
@@ -46,7 +46,7 @@ impl Args {
         Ok(args)
     }
 
-    pub fn rpc(&self) -> brk_error::Result<Client> {
+    pub fn rpc(&self) -> Result<Client> {
         let host = self.rpcconnect.as_deref().unwrap_or("localhost");
         let port = self.rpcport.unwrap_or(8332);
         let url = format!("http://{host}:{port}");
@@ -75,7 +75,7 @@ impl Args {
 mod tests {
     use super::*;
 
-    fn parse(args: &[&str]) -> brk_error::Result<Args> {
+    fn parse(args: &[&str]) -> Result<Args> {
         Args::parse(args.iter().map(|arg| (*arg).to_owned()).collect())
     }
 

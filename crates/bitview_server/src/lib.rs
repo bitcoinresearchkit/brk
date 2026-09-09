@@ -8,6 +8,7 @@ use std::{
 };
 
 use aide::{axum::ApiRouter, openapi::OpenApi};
+use api::*;
 use axum::{
     Extension, Router, ServiceExt,
     body::Body,
@@ -18,8 +19,13 @@ use axum::{
     serve,
 };
 use bitview_query::AsyncQuery;
+use bitview_website::router as WebsiteRouter;
 use brk_error::Result;
+use cache::{CacheParams, CacheStrategy};
+use error::Error;
 use jiff::Timestamp;
+use response_size_above::ResponseSizeAbove;
+use state::*;
 use tokio::{net::TcpListener, sync::Semaphore};
 use tower_http::{
     catch_panic::CatchPanicLayer,
@@ -60,19 +66,18 @@ mod state;
 mod urpd_input;
 
 pub use api::ApiRoutes;
-use api::*;
+
 pub use bitview_website::Website;
 pub use brk_types::Port;
 pub use cache::CdnCacheMode;
-use cache::{CacheParams, CacheStrategy};
+
 pub use config::{DEFAULT_BIND, DEFAULT_MAX_UTXOS, DEFAULT_MAX_WEIGHT, ServerConfig};
-use error::Error;
+
 #[cfg(feature = "chain")]
 use raw_body::RawBodyPermit;
-use response_size_above::ResponseSizeAbove;
+
 #[cfg(feature = "series")]
 use series_bodies::SeriesBodies;
-use state::*;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -159,7 +164,7 @@ impl Server {
         let Self { state, listener } = self;
         let address = listener.local_addr()?;
 
-        let website_router = bitview_website::router(state.website.clone());
+        let website_router = WebsiteRouter(state.website.clone());
         let mut router = ApiRouter::new()
             .add_api_routes()
             .layer(from_fn(request_deadline::apply));

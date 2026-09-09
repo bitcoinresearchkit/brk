@@ -1,19 +1,12 @@
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_traversable::Traversable;
-use brk_types::{BoundedRatio, Height, StoredF64};
+use brk_types::{BoundedRatio, StoredF64};
 use derive_more::{Deref, DerefMut};
-use vecdb::{Budgeted, CachedColumnarVec, PcoVec, ReadOnlyColumnarVec};
 
 use bitview_vecs::{LazyColumnPerBlock, LazyPerBlock};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct SpendingExposureSeries {
-    #[traversable(skip)]
-    pub cached_mobility: CachedColumnarVec<
-        ReadOnlyColumnarVec<PcoVec<Height, BoundedRatio>, AgeRangeId>,
-        AgeRangeId,
-        Budgeted,
-    >,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]

@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 /// Block size policy
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BlockSizePolicy(Vec<u32>);
 
-impl std::ops::Deref for BlockSizePolicy {
+impl Deref for BlockSizePolicy {
     type Target = [u32];
 
     fn deref(&self) -> &Self::Target {

@@ -33,24 +33,23 @@ impl<T: PcoVecValue + AddAssign, S: Clone> ColumnarAmount<T, S> {
         version: Version,
         mut build: impl FnMut(&str, &dyn ReadableCloneableVec<Height, T>) -> S,
     ) -> Result<Self> {
-        let per_block = ColumnarPerBlock::forced_import(db, storage_name, version, |source| {
-            Amount::new(|filter, cohort_name| {
-                let name = context.metric_name(&filter, cohort_name, metric);
-                match AmountRangeId::matching(&filter) {
-                    Some(column) => {
-                        build(&name, &cache.wrap(source.column(&name, version, column)))
-                    }
-                    None => build(
-                        &name,
-                        &cache.wrap(source.sum_columns(
+        let per_block =
+            ColumnarPerBlock::forced_import(cache, db, storage_name, version, |source| {
+                Amount::new(|filter, cohort_name| {
+                    let name = context.metric_name(&filter, cohort_name, metric);
+                    match AmountRangeId::matching(&filter) {
+                        Some(column) => build(&name, &source.column(&name, version, column)),
+                        None => build(
                             &name,
-                            version,
-                            AmountRangeId::included_by(&filter),
-                        )),
-                    ),
-                }
-            })
-        })?;
+                            &source.sum_columns(
+                                &name,
+                                version,
+                                AmountRangeId::included_by(&filter),
+                            ),
+                        ),
+                    }
+                })
+            })?;
         Ok(Self {
             per_block,
             last: Default::default(),

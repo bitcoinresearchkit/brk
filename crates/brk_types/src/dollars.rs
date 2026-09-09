@@ -1,21 +1,25 @@
 use std::{
     cmp::Ordering,
     f64,
+    fmt::{Display, Formatter, Result},
     hash::{Hash, Hasher},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use ryu::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
-
-use crate::{Cents, Low, Open};
 
 use super::{Bitcoin, CentsSigned, Close, High, Sats, StoredF32, StoredF64};
+use crate::{Cents, CheckedSub, Low, Open};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// US Dollar amount
 #[derive(Debug, Default, Clone, Copy, Deref, Serialize, Deserialize, JsonSchema)]
@@ -383,9 +387,9 @@ impl CheckedSub for Dollars {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Dollars {
+impl VecdbCheckedSub for Dollars {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -399,9 +403,9 @@ impl CheckedSub<usize> for Dollars {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for Dollars {
+impl VecdbCheckedSub<usize> for Dollars {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -451,9 +455,9 @@ impl Sum for Dollars {
     }
 }
 
-impl std::fmt::Display for Dollars {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = ryu::Buffer::new();
+impl Display for Dollars {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -464,7 +468,7 @@ impl Formattable for Dollars {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         if self.0.is_finite() {
-            let mut b = ryu::Buffer::new();
+            let mut b = Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
     }

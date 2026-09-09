@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Sats, StoredBool, StoredU64};
 use vecdb::{AnyStoredVec, AnyVec, ReadableVec, VecIndex, WritableVec};
@@ -14,7 +14,7 @@ const WRITE_INTERVAL: usize = 10_000;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     fees: &fees::Vecs,
     exit: &Exit,
 ) -> Result<()> {

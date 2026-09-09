@@ -2,6 +2,7 @@ use std::{collections::VecDeque, iter::repeat_n};
 
 use bitview_compute::{ExactOrderStats, FenwickTree, NumericValue};
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnPerBlock, PerBlock, PercentPerBlock};
 use brk_error::Result;
@@ -105,9 +106,10 @@ where
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let thresholds = ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{name}_thresholds"),
             version,
@@ -118,14 +120,7 @@ where
                         ExtremeThresholdId::Pct0_05 => format!("{name}_threshold_pct0_05"),
                         ExtremeThresholdId::Pct0_025 => format!("{name}_threshold"),
                     };
-                    LazyColumnPerBlock::new(
-                        cache,
-                        &series_name,
-                        version,
-                        source,
-                        threshold,
-                        mappings,
-                    )
+                    LazyColumnPerBlock::new(&series_name, version, source, threshold, mappings)
                 })
             },
         )?;

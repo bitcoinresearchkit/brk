@@ -2,18 +2,23 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    fs::File,
+    io::{BufWriter, Seek, Write},
+};
+
+use log::trace;
+use sfa::Writer;
+
 use super::FilterWriter;
 use crate::{
     CompressionType, Result, Slice,
     config::BloomConstructionPolicy,
     table::{
         Block, BlockHandle, BlockOffset, IndexBlock, KeyedBlockHandle,
-        block::Header as BlockHeader, filter::standard_bloom::Builder,
+        block::{BlockType, Header as BlockHeader},
+        filter::standard_bloom::Builder,
     },
-};
-use std::{
-    fs::File,
-    io::{BufWriter, Seek, Write},
 };
 
 pub struct PartitionedFilterWriter {
@@ -70,7 +75,7 @@ impl PartitionedFilterWriter {
         let header = Block::write_into(
             &mut self.final_filter_buffer,
             &filter_bytes,
-            crate::table::block::BlockType::Filter,
+            BlockType::Filter,
             CompressionType::None,
         )?;
 
@@ -86,7 +91,7 @@ impl PartitionedFilterWriter {
             BlockHandle::new(BlockOffset(self.relative_file_pos), bytes_written),
         ));
 
-        log::trace!(
+        trace!(
             "Built Bloom filter partition ({}B) with end_key={key:?} at +{:#X?}",
             filter_bytes.len(),
             self.relative_file_pos,
@@ -101,7 +106,7 @@ impl PartitionedFilterWriter {
 
     fn write_top_level_index(
         &mut self,
-        file_writer: &mut sfa::Writer<BufWriter<File>>,
+        file_writer: &mut Writer<BufWriter<File>>,
         index_base_offset: BlockOffset,
     ) -> Result<()> {
         file_writer.start("filter_tli")?;
@@ -113,12 +118,7 @@ impl PartitionedFilterWriter {
         let mut bytes = vec![];
         IndexBlock::encode_into(&mut bytes, &self.tli_handles)?;
 
-        let header = Block::write_into(
-            file_writer,
-            &bytes,
-            crate::table::block::BlockType::Index,
-            self.compression,
-        )?;
+        let header = Block::write_into(file_writer, &bytes, BlockType::Index, self.compression)?;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -128,7 +128,7 @@ impl PartitionedFilterWriter {
 
         debug_assert!(bytes_written > 0, "Top level index should never be empty");
 
-        log::trace!(
+        trace!(
             "Written filter top level index, with {} pointers ({bytes_written} bytes) at {index_base_offset:#X?}",
             self.tli_handles.len(),
         );
@@ -175,12 +175,9 @@ impl FilterWriter for PartitionedFilterWriter {
         Ok(())
     }
 
-    fn finish(
-        mut self: Box<Self>,
-        file_writer: &mut sfa::Writer<BufWriter<File>>,
-    ) -> Result<usize> {
+    fn finish(mut self: Box<Self>, file_writer: &mut Writer<BufWriter<File>>) -> Result<usize> {
         if self.last_key.is_none() {
-            log::trace!("Filter writer has not seen any writes - not building filter");
+            trace!("Filter writer has not seen any writes - not building filter");
             return Ok(0);
         }
 
@@ -197,7 +194,7 @@ impl FilterWriter for PartitionedFilterWriter {
 
         file_writer.start("filter")?;
         file_writer.write_all(&self.final_filter_buffer)?;
-        log::trace!("Concatted filter partitions onto blocks file");
+        trace!("Concatted filter partitions onto blocks file");
 
         let block_count = self.tli_handles.len();
 

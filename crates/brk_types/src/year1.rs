@@ -1,16 +1,21 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
     ops::{Add, AddAssign, Div},
 };
 
-use crate::CheckedSub;
 use brk_error::{Error, Result};
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, Day1, Month1, Timestamp};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize, JsonSchema,
@@ -117,9 +122,9 @@ impl CheckedSub for Year1 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Year1 {
+impl VecdbCheckedSub for Year1 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -148,9 +153,9 @@ impl PrintableIndex for Year1 {
     }
 }
 
-impl std::fmt::Display for Year1 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Year1 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -160,7 +165,7 @@ impl std::fmt::Display for Year1 {
 impl Formattable for Year1 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

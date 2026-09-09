@@ -10,9 +10,8 @@ use bitview_catalog::TreeNode;
 use oas3::Spec;
 use serde_json::Value;
 
-use crate::{Endpoint, ResponseKind, TypeSchemas};
-
 use super::write_if_changed;
+use crate::{Endpoint, ResponseKind, TypeSchemas};
 
 mod manifest;
 
@@ -459,8 +458,12 @@ fn one_line(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::ptr;
+
+    use serde_json::json;
+
     use super::*;
-    use crate::Parameter;
+    use crate::{Parameter, RequestBody};
 
     #[test]
     fn text_rendering_keeps_case_expansion_and_unicode_whitespace() {
@@ -498,7 +501,7 @@ mod tests {
     #[test]
     fn borrowed_schema_references_keep_cycles_missing_roots_and_sorted_docs() {
         let mut first = endpoint("/api/thing/{id}", "GET");
-        first.request_body = Some(crate::RequestBody {
+        first.request_body = Some(RequestBody {
             body_type: "Body".into(),
             content_type: "application/json".into(),
             required: true,
@@ -508,14 +511,14 @@ mod tests {
         let schemas = TypeSchemas::from(BTreeMap::from([
             (
                 "Thing".into(),
-                serde_json::json!({"properties": {"related": {"$ref": "#/components/schemas/Related"}, "again": {"$ref": "#/components/schemas/Related"}, "missing": {"$ref": "#/components/schemas/MissingChild"}}}),
+                json!({"properties": {"related": {"$ref": "#/components/schemas/Related"}, "again": {"$ref": "#/components/schemas/Related"}, "missing": {"$ref": "#/components/schemas/MissingChild"}}}),
             ),
             (
                 "Related".into(),
-                serde_json::json!({"allOf": [{"$ref": "#/components/schemas/Thing"}, {"$ref": "#/components/schemas/Nested"}]}),
+                json!({"allOf": [{"$ref": "#/components/schemas/Thing"}, {"$ref": "#/components/schemas/Nested"}]}),
             ),
-            ("Nested".into(), serde_json::json!({"type": "string"})),
-            ("Body".into(), serde_json::json!({"type": "object"})),
+            ("Nested".into(), json!({"type": "string"})),
+            ("Body".into(), json!({"type": "object"})),
         ]));
         let endpoints = [&first, &missing];
         let referenced = referenced_schemas(&endpoints, &schemas);
@@ -523,7 +526,7 @@ mod tests {
             referenced.iter().copied().collect::<Vec<_>>(),
             ["Body", "MissingRoot", "Nested", "Related", "Thing"]
         );
-        assert!(std::ptr::eq(
+        assert!(ptr::eq(
             referenced.get("Thing").unwrap().as_ptr(),
             first.schema_name().unwrap().as_ptr()
         ));
@@ -552,12 +555,12 @@ mod tests {
                 required: true,
                 param_type: "string".to_owned(),
                 description: Some("Thing identifier".to_owned()),
-                schema: serde_json::json!({ "type": "string" }),
+                schema: json!({ "type": "string" }),
             }],
             query_params: Vec::new(),
             request_body: None,
             response_kind: ResponseKind::Json("Thing".to_owned()),
-            json_response_schema: Some(serde_json::json!({
+            json_response_schema: Some(json!({
                 "$ref": "#/components/schemas/Thing"
             })),
             deprecated: false,
@@ -603,7 +606,7 @@ mod tests {
 
     #[test]
     fn schema_renderer_keeps_required_fields_and_references() {
-        let schema = serde_json::json!({
+        let schema = json!({
             "type": "object",
             "required": ["tx"],
             "properties": {

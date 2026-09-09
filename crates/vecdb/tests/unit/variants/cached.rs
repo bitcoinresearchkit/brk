@@ -1,11 +1,13 @@
-use std::sync::{
-    Arc, Barrier,
-    atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering::SeqCst},
+use std::{
+    sync::{
+        Arc, Barrier,
+        atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering::SeqCst},
+    },
+    thread,
 };
 
-use crate::{AnyVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
-
 use super::*;
+use crate::{AnyVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
 
 struct TestBudget {
     remaining: AtomicUsize,
@@ -149,7 +151,7 @@ fn invalidation_rejects_an_in_flight_stale_materialization() {
     let source = BlockingVec::new([0, 1]);
     let cached = CachedVec::wrap(source.clone());
     let reader = cached.clone();
-    let handle = std::thread::spawn(move || reader.snapshot());
+    let handle = thread::spawn(move || reader.snapshot());
 
     source.started.wait();
     source.replace(1, 2);
@@ -257,10 +259,10 @@ fn concurrent_miss_reserves_once() {
     );
     let first = cached.clone();
     let second = cached.clone();
-    let first_handle = std::thread::spawn(move || first.collect_range_at(0, 2));
+    let first_handle = thread::spawn(move || first.collect_range_at(0, 2));
 
     source.started.wait();
-    let second_handle = std::thread::spawn(move || second.collect_range_at(0, 2));
+    let second_handle = thread::spawn(move || second.collect_range_at(0, 2));
     source.resume.wait();
 
     assert_eq!(first_handle.join().unwrap(), [0, 1]);

@@ -3,7 +3,7 @@ use bitview_collections::Windows;
 use bitview_traversable::Traversable;
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
+use vecdb::{PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec};
 
 use crate::{
     CountTotal, CumulativeCountVec, IndexSources, LazyColumnCountPerBlockCumulativeRolling,
@@ -83,16 +83,10 @@ macro_rules! impl_type_counts {
                     self.by_type.get(output_type).cumulative_source()
                 })
             }
-
-            pub fn invalidate(&self) {
-                self.total.invalidate();
-                self.by_type.iter().for_each(|count| count.invalidate());
-            }
         }
 
         impl TypeCounts<$group<LazyColumnPerBlockCumulativeRolling<StoredU64, $column>>> {
             pub fn from_columnar_source(
-                cache: &'static CacheBudget,
                 total: CountTotal,
                 per_type_name: impl Fn(&str) -> String,
                 version: Version,
@@ -105,7 +99,6 @@ macro_rules! impl_type_counts {
                         unreachable!()
                     };
                     LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &per_type_name(name),
                         version,
                         source,

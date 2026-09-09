@@ -1,8 +1,7 @@
+use bitview_plugin::{ComputePlugin, UpdateContext};
 use brk_error::Result;
 
-use bitview_plugin::{ComputePlugin, UpdateContext};
-
-use super::Vecs;
+use super::{Vecs, hashrate, rewards};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -26,7 +25,7 @@ impl ComputePlugin for Vecs {
         self.db.sync_bg_tasks()?;
 
         // Block rewards (coinbase, subsidy, fee_dominance, etc.)
-        super::rewards::compute(
+        rewards::compute(
             &mut self.rewards,
             indexer,
             mappings,
@@ -36,7 +35,7 @@ impl ComputePlugin for Vecs {
             exit,
         )?;
 
-        super::hashrate::compute(
+        hashrate::compute(
             &mut self.hashrate,
             indexer,
             &blocks.count,

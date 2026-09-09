@@ -8,9 +8,8 @@ use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, Budgeted, CacheBudget, CachedBoxedVec, CachedColumnarVec,
-    CachedReadableVec, Database, Ident, PcoVec, PinnedCachedVec, ReadOnlyClone,
-    ReadOnlyColumnarVec, ReadableColumnarVec, Rw, StorageMode,
+    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, ReadOnlyClone,
+    ReadableBoxedVec, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode,
 };
 
 use crate::metrics::{ColumnarAmount, UTXOColumns};
@@ -22,16 +21,9 @@ pub struct SupplyTotal<M: StorageMode = Rw> {
         UTXOAndAddrGroups<LazySpotValuePerBlock, ColumnarAmount<Sats, LazySpotValuePerBlock, M>>,
     pub stored: UTXOColumns<Sats, M>,
     #[traversable(skip)]
-    all_supply: CachedBoxedVec<Height, Sats>,
+    all_supply: ReadableBoxedVec<Height, Sats>,
     #[traversable(skip)]
-    all_market_cap: CachedBoxedVec<Height, Cents>,
-    /// Shared decoded age inputs for raw sums and weighted consumers.
-    #[traversable(skip)]
-    pub age_ranges: CachedColumnarVec<
-        ReadOnlyColumnarVec<PcoVec<Height, Sats>, AgeRangeId>,
-        AgeRangeId,
-        Budgeted,
-    >,
+    all_market_cap: ReadableBoxedVec<Height, Cents>,
 }
 
 impl SupplyTotal {
@@ -42,35 +34,29 @@ impl SupplyTotal {
         mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
-        let stored = UTXOColumns::forced_import(db, "supply_sats", version)?;
-        let age_ranges = CachedColumnarVec::new(
-            stored.age_range.height.read_only_clone(),
-            version,
-            |column| cache.wrap(column),
-        );
+        let stored = UTXOColumns::forced_import(cache, db, "supply_sats", version)?;
+        let age_ranges = stored.age_range.height.read_only_clone();
         let all_name = CohortContext::Utxo.metric_name(&Filter::All, "", "supply");
-        // These two frequently reused roots are pinned. The public series and
-        // all downstream consumers share them; no second series owner is kept.
-        let all_sats = PinnedCachedVec::wrap(age_ranges.sum_columns(
+        let all_sats = age_ranges.sum_columns(
             &format!("{all_name}_sats"),
             version,
             AgeRangeId::ALL.iter().copied(),
-        ));
-        let all_supply = all_sats.cached_boxed_clone();
+        );
+        let all_supply = all_sats.read_only_boxed_clone();
         let sats = LazyPerBlock::from_height_source::<Ident>(
             &format!("{all_name}_sats"),
             version,
             &all_sats,
             mappings,
         );
-        let all_cents = PinnedCachedVec::wrap(LazyIndexedVec::new(
+        let all_cents = LazyIndexedVec::new(
             &format!("{all_name}_cents_source"),
             version,
             &sats.height,
             spot_price,
             |_, sats, spot| SatsToCents::apply(sats, spot),
-        ));
-        let all_market_cap = all_cents.cached_boxed_clone();
+        );
+        let all_market_cap = all_cents.read_only_boxed_clone();
         let all = LazySpotValuePerBlock::from_sats_and_cents(
             &all_name,
             version,
@@ -92,7 +78,7 @@ impl SupplyTotal {
                     return LazySpotValuePerBlock::from_sats_source(
                         &name,
                         version,
-                        age_ranges.cached_column(column),
+                        &age_ranges.column(&source_name, version, column),
                         mappings,
                         spot_price,
                     );
@@ -106,7 +92,7 @@ impl SupplyTotal {
                     );
                 } else {
                     stored
-                        .additive_source(cache, &filter, &source_name, version)
+                        .additive_source(&filter, &source_name, version)
                         .expect("total-supply cohort source")
                 };
                 LazySpotValuePerBlock::from_sats_source(
@@ -140,7 +126,6 @@ impl SupplyTotal {
             stored,
             all_supply,
             all_market_cap,
-            age_ranges,
         })
     }
 
@@ -152,11 +137,11 @@ impl SupplyTotal {
         self.cohorts.utxo.get(filter)
     }
 
-    pub fn all_supply(&self) -> &CachedBoxedVec<Height, Sats> {
+    pub fn all_supply(&self) -> &ReadableBoxedVec<Height, Sats> {
         &self.all_supply
     }
 
-    pub fn all_market_cap(&self) -> &CachedBoxedVec<Height, Cents> {
+    pub fn all_market_cap(&self) -> &ReadableBoxedVec<Height, Cents> {
         &self.all_market_cap
     }
 

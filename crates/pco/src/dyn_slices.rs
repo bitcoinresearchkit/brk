@@ -1,8 +1,9 @@
-use std::mem::MaybeUninit;
-use std::ops::Range;
+use std::{mem::MaybeUninit, ops::Range, slice};
 
-use crate::data_types::{Latent, Number};
-use crate::macros::{define_latent_enum, define_number_enum, match_number_enum};
+use crate::{
+  data_types::{Latent, Number},
+  macros::{define_latent_enum, define_number_enum, match_number_enum},
+};
 
 type Arr<T> = [T];
 type UninitArr<T> = [MaybeUninit<T>];
@@ -47,7 +48,7 @@ impl<'a> DynNumberSliceMut<'a> {
     // SAFETY: MaybeUninit<T> has the same layout as T, and may always contain
     // an initialized T value.
     let values = unsafe {
-      std::slice::from_raw_parts_mut(
+      slice::from_raw_parts_mut(
         values.as_mut_ptr().cast::<MaybeUninit<T>>(),
         values.len(),
       )

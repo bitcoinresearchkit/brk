@@ -1,16 +1,17 @@
-use rawdb::{Database, Error, PAGE_SIZE, Result};
-use std::{fs, sync::Arc, thread};
+use std::{collections::HashSet, fs, sync::Arc, thread};
+
+use rawdb::{Database, Error, PAGE_SIZE, Reader, Result};
 use tempfile::TempDir;
 
 /// Helper to create a temporary test database
-fn setup_test_db() -> rawdb::Result<(Database, TempDir)> {
+fn setup_test_db() -> Result<(Database, TempDir)> {
     let temp_dir = TempDir::new()?;
     let db = Database::open(temp_dir.path())?;
     Ok((db, temp_dir))
 }
 
 #[test]
-fn test_database_creation() -> rawdb::Result<()> {
+fn test_database_creation() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Database should start empty
@@ -22,7 +23,7 @@ fn test_database_creation() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_open_rejects_invalid_nonempty_metadata() -> rawdb::Result<()> {
+fn test_open_rejects_invalid_nonempty_metadata() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let region = db.create_region_if_needed("test")?;
     db.flush()?;
@@ -42,7 +43,7 @@ fn test_open_rejects_invalid_nonempty_metadata() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_open_rejects_nonzero_vacant_metadata() -> rawdb::Result<()> {
+fn test_open_rejects_nonzero_vacant_metadata() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let first = db.create_region_if_needed("first")?;
     let second = db.create_region_if_needed("second")?;
@@ -65,7 +66,7 @@ fn test_open_rejects_nonzero_vacant_metadata() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_open_rejects_overlapping_regions() -> rawdb::Result<()> {
+fn test_open_rejects_overlapping_regions() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let first = db.create_region_if_needed("first")?;
     let second = db.create_region_if_needed("second")?;
@@ -88,7 +89,7 @@ fn test_open_rejects_overlapping_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_open_rejects_duplicate_region_ids() -> rawdb::Result<()> {
+fn test_open_rejects_duplicate_region_ids() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let first = db.create_region_if_needed("first")?;
     let second = db.create_region_if_needed("second")?;
@@ -112,7 +113,7 @@ fn test_open_rejects_duplicate_region_ids() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_open_rejects_region_beyond_data_file() -> rawdb::Result<()> {
+fn test_open_rejects_region_beyond_data_file() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let region = db.create_region_if_needed("test")?;
     db.flush()?;
@@ -133,7 +134,7 @@ fn test_open_rejects_region_beyond_data_file() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_create_single_region() -> rawdb::Result<()> {
+fn test_create_single_region() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test_region")?;
@@ -159,7 +160,7 @@ fn test_create_single_region() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_create_region_idempotent() -> rawdb::Result<()> {
+fn test_create_region_idempotent() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("test")?;
@@ -173,7 +174,7 @@ fn test_create_region_idempotent() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_reserve_region_capacity_preserves_data() -> rawdb::Result<()> {
+fn test_reserve_region_capacity_preserves_data() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("first")?;
@@ -205,7 +206,7 @@ fn test_reserve_region_capacity_preserves_data() -> rawdb::Result<()> {
 }
 
 #[test]
-fn region_group_is_contiguous_and_moves_as_one() -> rawdb::Result<()> {
+fn region_group_is_contiguous_and_moves_as_one() -> Result<()> {
     let (db, temp) = setup_test_db()?;
     let first = db.create_region_if_needed("first")?;
     let blocker = db.create_region_if_needed("blocker")?;
@@ -290,7 +291,7 @@ fn region_group_handle_controls_membership() -> Result<()> {
 }
 
 #[test]
-fn test_write_to_region_within_reserved() -> rawdb::Result<()> {
+fn test_write_to_region_within_reserved() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -312,7 +313,7 @@ fn test_write_to_region_within_reserved() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_append() -> rawdb::Result<()> {
+fn test_write_append() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -332,7 +333,7 @@ fn test_write_append() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_at_position() -> rawdb::Result<()> {
+fn test_write_at_position() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -351,7 +352,7 @@ fn test_write_at_position() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_exceeds_reserved() -> rawdb::Result<()> {
+fn test_write_exceeds_reserved() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -368,7 +369,7 @@ fn test_write_exceeds_reserved() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_truncate_region() -> rawdb::Result<()> {
+fn test_truncate_region() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -388,7 +389,7 @@ fn test_truncate_region() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_truncate_errors() -> rawdb::Result<()> {
+fn test_truncate_errors() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -406,7 +407,7 @@ fn test_truncate_errors() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_remove_region() -> rawdb::Result<()> {
+fn test_remove_region() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -433,7 +434,7 @@ fn test_remove_region() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_multiple_regions() -> rawdb::Result<()> {
+fn test_multiple_regions() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("region1")?;
@@ -467,7 +468,7 @@ fn test_multiple_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_region_reuse_after_removal() -> rawdb::Result<()> {
+fn test_region_reuse_after_removal() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("region1")?;
@@ -492,7 +493,7 @@ fn test_region_reuse_after_removal() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_hole_filling() -> rawdb::Result<()> {
+fn test_hole_filling() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let _region1 = db.create_region_if_needed("region1")?;
@@ -518,7 +519,7 @@ fn test_hole_filling() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_persistence() -> rawdb::Result<()> {
+fn test_persistence() -> Result<()> {
     let temp = TempDir::new()?;
     let path = temp.path();
     dbg!(&path);
@@ -552,7 +553,7 @@ fn test_persistence() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_empty_region_persistence() -> rawdb::Result<()> {
+fn test_empty_region_persistence() -> Result<()> {
     let temp = TempDir::new()?;
 
     {
@@ -573,7 +574,7 @@ fn test_empty_region_persistence() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_reader() -> rawdb::Result<()> {
+fn test_reader() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -588,7 +589,7 @@ fn test_reader() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_retain_regions() -> rawdb::Result<()> {
+fn test_retain_regions() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let _ = db.create_region_if_needed("keep1")?;
@@ -596,7 +597,7 @@ fn test_retain_regions() -> rawdb::Result<()> {
     let _ = db.create_region_if_needed("keep2")?;
     let _ = db.create_region_if_needed("remove2")?;
 
-    let mut keep_set = std::collections::HashSet::new();
+    let mut keep_set = HashSet::new();
     keep_set.insert("keep1".to_string());
     keep_set.insert("keep2".to_string());
 
@@ -613,7 +614,7 @@ fn test_retain_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_retain_accessed_regions() -> rawdb::Result<()> {
+fn test_retain_accessed_regions() -> Result<()> {
     let temp = TempDir::new()?;
     {
         let db = Database::open(temp.path())?;
@@ -639,7 +640,7 @@ fn test_retain_accessed_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_retain_regions_shrinks_metadata_and_preserves_hole_reuse() -> rawdb::Result<()> {
+fn test_retain_regions_shrinks_metadata_and_preserves_hole_reuse() -> Result<()> {
     let temp = TempDir::new()?;
     let regions = fs::File::create(temp.path().join("regions"))?;
     regions.set_len(50_000 * PAGE_SIZE as u64)?;
@@ -668,7 +669,7 @@ fn test_retain_regions_shrinks_metadata_and_preserves_hole_reuse() -> rawdb::Res
 }
 
 #[test]
-fn test_region_defragmentation() -> rawdb::Result<()> {
+fn test_region_defragmentation() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("region1")?;
@@ -700,7 +701,7 @@ fn test_region_defragmentation() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_concurrent_region_creation() -> rawdb::Result<()> {
+fn test_concurrent_region_creation() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Arc::new(Database::open(temp.path())?);
 
@@ -727,7 +728,7 @@ fn test_concurrent_region_creation() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_large_write() -> rawdb::Result<()> {
+fn test_large_write() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("large")?;
@@ -749,7 +750,7 @@ fn test_large_write() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_truncate_write() -> rawdb::Result<()> {
+fn test_truncate_write() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -775,7 +776,7 @@ fn test_truncate_write() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_punch_holes() -> rawdb::Result<()> {
+fn test_punch_holes() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -801,7 +802,7 @@ fn test_punch_holes() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_opened_region_tail_is_reclaimed() -> rawdb::Result<()> {
+fn test_opened_region_tail_is_reclaimed() -> Result<()> {
     let temp = TempDir::new()?;
 
     let allocated_before = {
@@ -826,7 +827,7 @@ fn test_opened_region_tail_is_reclaimed() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_zero_filled_removed_region_is_reclaimed() -> rawdb::Result<()> {
+fn test_zero_filled_removed_region_is_reclaimed() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let removed = db.create_region_if_needed("removed")?;
     let mut data = vec![1u8; PAGE_SIZE * 16];
@@ -850,7 +851,7 @@ fn test_zero_filled_removed_region_is_reclaimed() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_at_invalid_position() -> rawdb::Result<()> {
+fn test_write_at_invalid_position() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -864,7 +865,7 @@ fn test_write_at_invalid_position() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_empty_region_operations() -> rawdb::Result<()> {
+fn test_empty_region_operations() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("empty")?;
@@ -884,7 +885,7 @@ fn test_empty_region_operations() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_region_metadata_updates() -> rawdb::Result<()> {
+fn test_region_metadata_updates() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -922,7 +923,7 @@ fn test_region_metadata_updates() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_complex_region_lifecycle() -> rawdb::Result<()> {
+fn test_complex_region_lifecycle() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create multiple regions
@@ -989,7 +990,7 @@ fn test_complex_region_lifecycle() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_many_small_regions() -> rawdb::Result<()> {
+fn test_many_small_regions() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create 50 small regions
@@ -1030,7 +1031,7 @@ fn test_many_small_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_interleaved_operations() -> rawdb::Result<()> {
+fn test_interleaved_operations() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let r1 = db.create_region_if_needed("r1")?;
@@ -1074,7 +1075,7 @@ fn test_interleaved_operations() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_persistence_with_holes() -> rawdb::Result<()> {
+fn test_persistence_with_holes() -> Result<()> {
     let temp = TempDir::new()?;
     let path = temp.path();
 
@@ -1123,7 +1124,7 @@ fn test_persistence_with_holes() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_region_growth_patterns() -> rawdb::Result<()> {
+fn test_region_growth_patterns() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("growing")?;
@@ -1149,7 +1150,7 @@ fn test_region_growth_patterns() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_at_boundary_conditions() -> rawdb::Result<()> {
+fn test_write_at_boundary_conditions() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("boundary")?;
@@ -1170,7 +1171,7 @@ fn test_write_at_boundary_conditions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_multiple_flushes() -> rawdb::Result<()> {
+fn test_multiple_flushes() -> Result<()> {
     let temp = TempDir::new()?;
     let path = temp.path();
 
@@ -1201,13 +1202,13 @@ fn test_multiple_flushes() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_hole_coalescing() -> rawdb::Result<()> {
+fn test_hole_coalescing() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create 5 regions
     let mut regions: Vec<_> = (0..5)
         .map(|i| db.create_region_if_needed(&format!("r{}", i)))
-        .collect::<rawdb::Result<Vec<_>>>()?
+        .collect::<Result<Vec<_>>>()?
         .into_iter()
         .map(Some)
         .collect();
@@ -1237,7 +1238,7 @@ fn test_hole_coalescing() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_stress_region_creation_and_removal() -> rawdb::Result<()> {
+fn test_stress_region_creation_and_removal() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create and remove regions in a cycle
@@ -1248,7 +1249,7 @@ fn test_stress_region_creation_and_removal() -> rawdb::Result<()> {
                 let name = format!("cycle_{}_region_{}", cycle, i);
                 db.create_region_if_needed(&name)
             })
-            .collect::<rawdb::Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?;
 
         // Write to each
         for (i, r) in regions.iter().enumerate() {
@@ -1278,7 +1279,7 @@ fn test_stress_region_creation_and_removal() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_mixed_size_writes() -> rawdb::Result<()> {
+fn test_mixed_size_writes() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("mixed")?;
@@ -1307,14 +1308,14 @@ fn test_mixed_size_writes() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_concurrent_writes_to_different_regions() -> rawdb::Result<()> {
+fn test_concurrent_writes_to_different_regions() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Arc::new(Database::open(temp.path())?);
 
     // Create regions upfront
     let regions: Vec<_> = (0..10)
         .map(|i| db.create_region_if_needed(&format!("region_{}", i)))
-        .collect::<rawdb::Result<Vec<_>>>()?;
+        .collect::<Result<Vec<_>>>()?;
 
     // Write to different regions concurrently
     let handles: Vec<_> = regions
@@ -1347,7 +1348,7 @@ fn test_concurrent_writes_to_different_regions() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_concurrent_reads() -> rawdb::Result<()> {
+fn test_concurrent_reads() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let db = Arc::new(db);
 
@@ -1380,7 +1381,7 @@ fn test_concurrent_reads() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_reader_prefixed() -> rawdb::Result<()> {
+fn test_reader_prefixed() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -1399,7 +1400,7 @@ fn test_reader_prefixed() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_reader_unchecked_read() -> rawdb::Result<()> {
+fn test_reader_unchecked_read() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -1447,7 +1448,7 @@ fn test_reader_bounds_overflow() {
 
 // Test that Reader is self-contained and safe to use after dropping original references
 #[test]
-fn test_reader_outlives_region_variable() -> rawdb::Result<()> {
+fn test_reader_outlives_region_variable() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let reader = {
@@ -1465,7 +1466,7 @@ fn test_reader_outlives_region_variable() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_reader_outlives_database_variable() -> rawdb::Result<()> {
+fn test_reader_outlives_database_variable() -> Result<()> {
     let (_temp, reader) = {
         let (db, temp) = setup_test_db()?;
         let region = db.create_region_if_needed("test")?;
@@ -1482,11 +1483,11 @@ fn test_reader_outlives_database_variable() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_reader_can_be_stored_in_struct() -> rawdb::Result<()> {
+fn test_reader_can_be_stored_in_struct() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     struct DataHolder {
-        reader: rawdb::Reader,
+        reader: Reader,
     }
 
     let region = db.create_region_if_needed("test")?;
@@ -1503,7 +1504,7 @@ fn test_reader_can_be_stored_in_struct() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_multiple_readers_from_same_region() -> rawdb::Result<()> {
+fn test_multiple_readers_from_same_region() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("test")?;
@@ -1532,7 +1533,7 @@ fn test_multiple_readers_from_same_region() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_very_long_region_names() -> rawdb::Result<()> {
+fn test_very_long_region_names() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create regions with very long names
@@ -1551,7 +1552,7 @@ fn test_very_long_region_names() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_zero_byte_writes() -> rawdb::Result<()> {
+fn test_zero_byte_writes() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("empty_writes")?;
@@ -1574,7 +1575,7 @@ fn test_zero_byte_writes() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_alternating_write_and_truncate() -> rawdb::Result<()> {
+fn test_alternating_write_and_truncate() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("oscillating")?;
@@ -1605,7 +1606,7 @@ fn test_alternating_write_and_truncate() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_retain_regions_edge_cases() -> rawdb::Result<()> {
+fn test_retain_regions_edge_cases() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create some regions
@@ -1614,7 +1615,7 @@ fn test_retain_regions_edge_cases() -> rawdb::Result<()> {
     let _ = db.create_region_if_needed("remove1")?;
 
     // Retain with empty set - should remove all
-    let empty_set = std::collections::HashSet::new();
+    let empty_set = HashSet::new();
     db.retain_regions(empty_set)?;
 
     let regions = db.regions();
@@ -1628,7 +1629,7 @@ fn test_retain_regions_edge_cases() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_complex_fragmentation_scenario() -> rawdb::Result<()> {
+fn test_complex_fragmentation_scenario() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create pattern: region, region, region, region, region
@@ -1663,7 +1664,7 @@ fn test_complex_fragmentation_scenario() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_set_min_len_preallocate() -> rawdb::Result<()> {
+fn test_set_min_len_preallocate() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Preallocate large file
@@ -1685,7 +1686,7 @@ fn test_set_min_len_preallocate() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_partial_overwrites_data_integrity() -> rawdb::Result<()> {
+fn test_partial_overwrites_data_integrity() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("partial")?;
@@ -1710,7 +1711,7 @@ fn test_partial_overwrites_data_integrity() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_write_at_exact_reserved_boundary() -> rawdb::Result<()> {
+fn test_write_at_exact_reserved_boundary() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("boundary")?;
@@ -1739,7 +1740,7 @@ fn test_write_at_exact_reserved_boundary() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_comprehensive_db_operations() -> rawdb::Result<()> {
+fn test_comprehensive_db_operations() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("region1")?;
@@ -2202,7 +2203,7 @@ fn test_comprehensive_db_operations() -> rawdb::Result<()> {
 // ============================================================================
 
 #[test]
-fn test_basic_region_rename() -> rawdb::Result<()> {
+fn test_basic_region_rename() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("old_name")?;
@@ -2238,7 +2239,7 @@ fn test_basic_region_rename() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_rename_with_persistence() -> rawdb::Result<()> {
+fn test_rename_with_persistence() -> Result<()> {
     let temp = TempDir::new()?;
     let path = temp.path();
 
@@ -2268,7 +2269,7 @@ fn test_rename_with_persistence() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_rename_to_existing_name_fails() -> rawdb::Result<()> {
+fn test_rename_to_existing_name_fails() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region1 = db.create_region_if_needed("region1")?;
@@ -2287,7 +2288,7 @@ fn test_rename_to_existing_name_fails() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_rename_after_remove_and_recreate() -> rawdb::Result<()> {
+fn test_rename_after_remove_and_recreate() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     // Create a region, write some data, then remove it
@@ -2315,7 +2316,7 @@ fn test_rename_after_remove_and_recreate() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_multiple_renames() -> rawdb::Result<()> {
+fn test_multiple_renames() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("name1")?;
@@ -2341,7 +2342,7 @@ fn test_multiple_renames() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_rename_preserves_region_metadata() -> rawdb::Result<()> {
+fn test_rename_preserves_region_metadata() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("original")?;
@@ -2377,7 +2378,7 @@ fn test_rename_preserves_region_metadata() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_rename_with_special_characters() -> rawdb::Result<()> {
+fn test_rename_with_special_characters() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
 
     let region = db.create_region_if_needed("simple")?;
@@ -2399,14 +2400,14 @@ fn test_rename_with_special_characters() -> rawdb::Result<()> {
 }
 
 #[test]
-fn test_concurrent_renames() -> rawdb::Result<()> {
+fn test_concurrent_renames() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Arc::new(Database::open(temp.path())?);
 
     // Create regions upfront
     let regions: Vec<_> = (0..10)
         .map(|i| db.create_region_if_needed(&format!("region_{}", i)))
-        .collect::<rawdb::Result<Vec<_>>>()?;
+        .collect::<Result<Vec<_>>>()?;
 
     // Rename different regions concurrently
     let handles: Vec<_> = regions
@@ -2436,7 +2437,7 @@ fn test_concurrent_renames() -> rawdb::Result<()> {
 
 #[cfg(unix)]
 #[test]
-fn test_region_residency_hint() -> rawdb::Result<()> {
+fn test_region_residency_hint() -> Result<()> {
     let (db, _temp) = setup_test_db()?;
     let region = db.create_region_if_needed("resident")?;
 

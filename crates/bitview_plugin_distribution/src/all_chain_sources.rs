@@ -1,25 +1,22 @@
-use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{CachedBoxedVec, ReadableCloneableVec, VecValue};
-
 use bitview_vecs::LazyIndexedVec;
+use brk_types::{Cents, Height, Sats, Version};
+use vecdb::{ReadableBoxedVec, ReadableCloneableVec, VecValue};
 
-/// Shared handles to the pinned all-chain inputs.
-///
-/// Cloning these handles does not duplicate either cached array.
+/// Shared views of all-chain inputs. Retention belongs to their stored sources.
 #[derive(Clone)]
 pub struct AllChainSources {
-    supply: CachedBoxedVec<Height, Sats>,
-    market_cap: CachedBoxedVec<Height, Cents>,
+    supply: ReadableBoxedVec<Height, Sats>,
+    market_cap: ReadableBoxedVec<Height, Cents>,
 }
 
 impl AllChainSources {
     pub fn new(
-        supply: &CachedBoxedVec<Height, Sats>,
-        market_cap: &CachedBoxedVec<Height, Cents>,
+        supply: &impl ReadableCloneableVec<Height, Sats>,
+        market_cap: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         Self {
-            supply: supply.clone(),
-            market_cap: market_cap.clone(),
+            supply: supply.read_only_boxed_clone(),
+            market_cap: market_cap.read_only_boxed_clone(),
         }
     }
 
@@ -56,6 +53,11 @@ impl AllChainSources {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        env, fs, process,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use vecdb::{
         AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
         ReadOnlyClone, ReadableVec, WritableVec,
@@ -65,14 +67,12 @@ mod tests {
 
     #[test]
     fn derives_from_shared_chain_sources() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "brk-all-chain-sources-{}-{suffix}",
-            std::process::id()
-        ));
+        let path =
+            env::temp_dir().join(format!("brk-all-chain-sources-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
         let mut supply: EagerVec<PcoVec<Height, Sats>> =
@@ -137,6 +137,6 @@ mod tests {
         drop(realized);
         drop(supply);
         drop(db);
-        std::fs::remove_dir_all(path).unwrap();
+        fs::remove_dir_all(path).unwrap();
     }
 }

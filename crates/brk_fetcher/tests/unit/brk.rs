@@ -1,5 +1,5 @@
-use brk_types::{Day1, Height};
-use serde_json::json;
+use brk_types::{Date, Day1, Height};
+use serde_json::{json, to_value};
 
 use super::BRK;
 
@@ -11,14 +11,14 @@ fn cached_height_and_date_keep_chunk_offsets() {
         .height_to_ohlc
         .insert(Height::new(10_000), vec![price.clone(), price.clone()]);
     assert_eq!(
-        serde_json::to_value(source.get_from_height(Height::new(10_001)).unwrap()).unwrap(),
+        to_value(source.get_from_height(Height::new(10_001)).unwrap()).unwrap(),
         json!([1234, 1234, 1234, 1234])
     );
-    let date = brk_types::Date::new(2024, 1, 1);
+    let date = Date::new(2024, 1, 1);
     let (key, offset) = BRK::day_chunk(Day1::try_from(date).unwrap());
     source.day1_to_ohlc.insert(key, vec![price; offset + 1]);
     assert_eq!(
-        serde_json::to_value(source.get_from_date(date).unwrap()).unwrap(),
+        to_value(source.get_from_date(date).unwrap()).unwrap(),
         json!([1234, 1234, 1234, 1234])
     );
 }
@@ -26,15 +26,9 @@ fn cached_height_and_date_keep_chunk_offsets() {
 #[test]
 fn current_price_shapes_preserve_units_and_candle_values() {
     let point = BRK::value_to_height_ohlc(&json!(12.34)).unwrap();
-    assert_eq!(
-        serde_json::to_value(point).unwrap(),
-        json!([1234, 1234, 1234, 1234])
-    );
+    assert_eq!(to_value(point).unwrap(), json!([1234, 1234, 1234, 1234]));
     let candle = BRK::value_to_ohlc(&json!([12.34, 15.0, 10.0, 13.0])).unwrap();
-    assert_eq!(
-        serde_json::to_value(candle).unwrap(),
-        json!([1234, 1500, 1000, 1300])
-    );
+    assert_eq!(to_value(candle).unwrap(), json!([1234, 1500, 1000, 1300]));
     assert!(BRK::value_to_height_ohlc(&json!([12.34])).is_err());
     assert!(BRK::value_to_ohlc(&json!(12.34)).is_err());
 }

@@ -1,3 +1,5 @@
+use crate::with_resolution_fields;
+
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 
@@ -16,4 +18,4 @@ macro_rules! define_per_resolution {
     };
 }
 
-crate::with_resolution_fields!(define_per_resolution);
+with_resolution_fields!(define_per_resolution);

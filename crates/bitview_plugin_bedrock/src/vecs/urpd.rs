@@ -1,8 +1,10 @@
-use brk_error::Result;
-
 use std::path::PathBuf;
 
 use bitview_cohort::AgeRangeId;
+use bitview_plugin_coinflow::Vecs as CoinflowVecs;
+use bitview_plugin_cointime::Vecs as CointimeVecs;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
+use brk_error::Result;
 use brk_types::{Cohort, Date, Day1, UrpdRaw, UrpdWeight};
 use vecdb::{ReadableVec, StorageMode};
 
@@ -38,9 +40,9 @@ impl<M: StorageMode> Vecs<M> {
     /// Resolve one age-range cohort's scalar Bedrock weight for a day.
     pub fn urpd_weight<N: StorageMode>(
         &self,
-        distribution: &bitview_plugin_distribution::Vecs<N>,
-        cointime: &bitview_plugin_cointime::Vecs<N>,
-        coinflow: &bitview_plugin_coinflow::Vecs<N>,
+        distribution: &DistributionVecs<N>,
+        cointime: &CointimeVecs<N>,
+        coinflow: &CoinflowVecs<N>,
         cohort: &Cohort,
         day: Day1,
         weight: UrpdWeight,

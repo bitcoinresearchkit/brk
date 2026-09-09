@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{PartsPerMillion32, StoredU16, StoredU64};
 use vecdb::{Rw, StorageMode};
 
-use super::{CachedSpendableOutputCount, WithOutputTypes};
+use super::{SpendableOutputCount, WithOutputTypes};
 use bitview_vecs::{
     ColumnarPerBlock, ColumnarPerBlockCumulativeRolling, LazyColumnCountPerBlockCumulativeRolling,
     LazyColumnPerBlockCumulativeRolling, LazyPercentCumulativeRolling,
@@ -21,7 +21,7 @@ pub struct Vecs<M: StorageMode = Rw> {
     >,
     /// Number of transaction outputs excluding `OP_RETURN` outputs, which are
     /// provably unspendable.
-    pub spendable_output_count: CachedSpendableOutputCount,
+    pub spendable_output_count: SpendableOutputCount,
     /// Outputs of a BRK locking-script type divided by all outputs
     /// over the same cumulative or trailing window, including coinbase outputs.
     pub output_share: ByType<LazyPercentCumulativeRolling<PartsPerMillion32>>,

@@ -3,21 +3,26 @@
 // (found in the LICENSE-* files in the repository)
 
 use std::{
-    fs::{File, OpenOptions},
+    fs::{File, OpenOptions, TryLockError},
+    io::ErrorKind,
     path::Path,
     sync::Arc,
 };
+
+use log::{debug, error, warn};
+
+use crate::{Error, Result};
 
 struct LockedFileGuardInner(File);
 
 impl Drop for LockedFileGuardInner {
     fn drop(&mut self) {
-        log::debug!("Unlocking database lock");
+        debug!("Unlocking database lock");
 
         self.0
             .unlock()
             .inspect_err(|e| {
-                log::warn!("Failed to unlock database lock: {e:?}");
+                warn!("Failed to unlock database lock: {e:?}");
             })
             .ok();
     }
@@ -28,23 +33,23 @@ impl Drop for LockedFileGuardInner {
 pub struct LockedFileGuard(Arc<LockedFileGuardInner>);
 
 impl LockedFileGuard {
-    pub fn create_new(path: &Path) -> crate::Result<Self> {
-        log::debug!("Acquiring database lock at {}", path.display());
+    pub fn create_new(path: &Path) -> Result<Self> {
+        debug!("Acquiring database lock at {}", path.display());
 
         let file = match File::create_new(path) {
             Ok(f) => f,
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            Err(e) if e.kind() == ErrorKind::AlreadyExists => {
                 OpenOptions::new().read(true).write(true).open(path)?
             }
             e => e?,
         };
 
         file.try_lock().map_err(|e| match e {
-            std::fs::TryLockError::Error(e) => {
-                log::error!("Failed to acquire database lock - if this is expected, you can try opening again (maybe wait a little)");
-                crate::Error::Io(e)
+            TryLockError::Error(e) => {
+                error!("Failed to acquire database lock - if this is expected, you can try opening again (maybe wait a little)");
+                Error::Io(e)
             }
-            std::fs::TryLockError::WouldBlock => crate::Error::Locked,
+            TryLockError::WouldBlock => Error::Locked,
         })?;
 
         Ok(Self(Arc::new(LockedFileGuardInner(file))))
@@ -53,12 +58,16 @@ impl LockedFileGuard {
 
 #[cfg(test)]
 mod tests {
-    use super::LockedFileGuard;
     use std::fs::File;
 
+    use tempfile::tempdir;
+
+    use super::LockedFileGuard;
+    use crate::Result;
+
     #[test]
-    fn create_new_acquires_lock_when_file_already_exists() -> crate::Result<()> {
-        let dir = tempfile::tempdir()?;
+    fn create_new_acquires_lock_when_file_already_exists() -> Result<()> {
+        let dir = tempdir()?;
         let path = dir.path().join("lock");
 
         File::create(&path)?;

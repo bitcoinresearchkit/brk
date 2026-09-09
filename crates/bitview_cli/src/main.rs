@@ -1,10 +1,5 @@
-mod args;
-mod command;
-mod generated;
-mod parameter;
-mod request_body;
-
 use std::{
+    env,
     error::Error,
     io::{self, Write},
     process::ExitCode,
@@ -12,6 +7,14 @@ use std::{
 
 use args::Args;
 use generated::COMMANDS;
+use serde_json::{Value, from_slice, to_writer_pretty};
+use ureq::{Agent, http::Request};
+
+mod args;
+mod command;
+mod generated;
+mod parameter;
+mod request_body;
 
 const PROGRAM_NAME: &str = env!("CARGO_BIN_NAME");
 
@@ -26,7 +29,7 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let raw = std::env::args().skip(1).collect::<Vec<_>>();
+    let raw = env::args().skip(1).collect::<Vec<_>>();
     match raw.as_slice() {
         [] => {
             command::print_help(COMMANDS)?;
@@ -71,7 +74,7 @@ fn print_command_help(name: &str) -> Result<(), Box<dyn Error>> {
 
 fn execute(args: Args) -> Result<(), Box<dyn Error>> {
     let url = args.url();
-    let agent: ureq::Agent = ureq::Agent::config_builder()
+    let agent: Agent = Agent::config_builder()
         .user_agent(concat!(
             env!("CARGO_BIN_NAME"),
             "/",
@@ -80,9 +83,7 @@ fn execute(args: Args) -> Result<(), Box<dyn Error>> {
         .http_status_as_error(false)
         .build()
         .into();
-    let request = ureq::http::Request::builder()
-        .method(args.command.method)
-        .uri(url);
+    let request = Request::builder().method(args.command.method).uri(url);
     let mut response = match args.command.request_body {
         Some(body) => agent.run(
             request
@@ -102,9 +103,9 @@ fn execute(args: Args) -> Result<(), Box<dyn Error>> {
     let stdout = io::stdout();
     let mut output = stdout.lock();
     if args.pretty
-        && let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes)
+        && let Ok(value) = from_slice::<Value>(&bytes)
     {
-        serde_json::to_writer_pretty(&mut output, &value)?;
+        to_writer_pretty(&mut output, &value)?;
         writeln!(output)?;
     } else {
         output.write_all(&bytes)?;

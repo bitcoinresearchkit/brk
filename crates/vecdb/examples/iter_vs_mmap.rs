@@ -1,5 +1,10 @@
-use std::time::Instant;
+use std::{
+    hint,
+    io::{self, Write},
+    time::Instant,
+};
 
+use tempfile::tempdir;
 use vecdb::{AnyStoredVec, BytesVec, Database, ImportableVec, ReadableVec, Version, WritableVec};
 
 const VALUE_COUNT: usize = 10_000_000_000; // 10B u64s = 80GB
@@ -9,7 +14,7 @@ const REPEATS: usize = 100;
 const SEED: u64 = 42;
 
 fn main() {
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut vec: BytesVec<usize, u64> = BytesVec::import(&db, "bench", Version::TWO).unwrap();
 
@@ -45,7 +50,7 @@ fn main() {
         flush();
         let start = Instant::now();
         let sum = vec.fold_range(0, VALUE_COUNT, 0u64, |acc, v: u64| acc.wrapping_add(v));
-        std::hint::black_box(sum);
+        hint::black_box(sum);
         let elapsed = start.elapsed();
         println!("{elapsed:?} ({:.2} GB/s)", 80.0 / elapsed.as_secs_f64());
     }
@@ -78,12 +83,12 @@ fn main() {
                 acc.wrapping_add(v)
             });
         });
-        std::hint::black_box(sum);
+        hint::black_box(sum);
         let elapsed = start.elapsed();
         println!("{elapsed:?} ({:?}/iter)", elapsed / REPEATS as u32);
     }
 }
 
 fn flush() {
-    std::io::Write::flush(&mut std::io::stdout()).ok();
+    Write::flush(&mut io::stdout()).ok();
 }

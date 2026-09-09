@@ -1,16 +1,17 @@
 #![allow(clippy::type_complexity)]
 
-mod compute;
-mod dependencies;
-mod has;
-
 use bitview_plugin::{ImportContext, Plugin, PluginId, PluginStorage};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{OhlcPrice, SplitPrice, SpotPrice};
 use brk_error::Result;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
+
+mod compute;
+mod dependencies;
+mod has;
 
 pub use dependencies::Dependencies;
 pub use has::HasPrice;
@@ -52,10 +53,7 @@ where
 }
 
 impl Vecs {
-    pub fn import(
-        context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
+    pub fn import(context: ImportContext<'_>, mappings: &MappingsVecs) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let this = Self::forced_import_inner(
             context.cache_budget(),
@@ -71,7 +69,7 @@ impl Vecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let spot = SpotPrice::forced_import(cache, db, "price", version, mappings)?;
         let ohlc = OhlcPrice::from_spot("price_ohlc", version, mappings, &spot);

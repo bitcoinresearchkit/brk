@@ -1,13 +1,20 @@
-use std::ops::{Add, AddAssign};
+#[cfg(feature = "storage")]
+use std::array;
+use std::{
+    iter,
+    ops::{Add, AddAssign},
+};
+
+use brk_types::OutputType;
+use rayon::prelude::*;
+
+use super::{Filter, SpendableType, UnspendableType};
 
 #[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
-use brk_types::OutputType;
-use rayon::prelude::*;
+
 #[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue, Version};
-
-use super::{Filter, SpendableType, UnspendableType};
 
 pub const OP_RETURN: &str = "op_return";
 pub const OUTPUT_TYPE_COUNT: usize = OutputType::COUNT;
@@ -114,7 +121,7 @@ impl ColumnId for OutputTypeId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| f(OUTPUT_TYPE_IDS[index]))
+        array::from_fn(|index| f(OUTPUT_TYPE_IDS[index]))
     }
     #[inline]
     fn map<T, U, F>(row: Self::Row<T>, f: F) -> Self::Row<U>
@@ -198,13 +205,13 @@ impl<T> ByType<T> {
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.spendable
             .iter()
-            .chain(std::iter::once(&self.unspendable.op_return))
+            .chain(iter::once(&self.unspendable.op_return))
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.spendable
             .iter_mut()
-            .chain(std::iter::once(&mut self.unspendable.op_return))
+            .chain(iter::once(&mut self.unspendable.op_return))
     }
 
     pub fn par_iter_mut(&mut self) -> impl ParallelIterator<Item = &mut T>
@@ -221,14 +228,14 @@ impl<T> ByType<T> {
     }
 
     pub fn iter_typed(&self) -> impl Iterator<Item = (OutputType, &T)> {
-        self.spendable.iter_typed().chain(std::iter::once((
+        self.spendable.iter_typed().chain(iter::once((
             OutputType::OpReturn,
             &self.unspendable.op_return,
         )))
     }
 
     pub fn iter_typed_mut(&mut self) -> impl Iterator<Item = (OutputType, &mut T)> {
-        self.spendable.iter_typed_mut().chain(std::iter::once((
+        self.spendable.iter_typed_mut().chain(iter::once((
             OutputType::OpReturn,
             &mut self.unspendable.op_return,
         )))

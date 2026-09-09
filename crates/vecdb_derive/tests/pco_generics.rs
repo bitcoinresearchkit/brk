@@ -1,6 +1,9 @@
+use std::any::TypeId;
+
 use tempfile::TempDir;
 use vecdb::{
-    AnyStoredVec, Bytes, Database, ImportableVec, Pco, PcoVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, Bytes, Database, ImportableVec, Pco, PcoVec, ReadableVec, Result, Version,
+    WritableVec,
 };
 
 // Test with a single generic parameter
@@ -16,7 +19,7 @@ struct Container<T>(Wrapper<T>);
 struct FloatWrapper<T>(T);
 
 #[test]
-fn test_derive_pco_with_single_generic() -> vecdb::Result<()> {
+fn test_derive_pco_with_single_generic() -> Result<()> {
     const { assert!(Wrapper::<u64>::IS_NATIVE_LAYOUT) };
 
     let temp = TempDir::new()?;
@@ -40,7 +43,7 @@ fn test_derive_pco_with_single_generic() -> vecdb::Result<()> {
 }
 
 #[test]
-fn test_derive_pco_with_different_types() -> vecdb::Result<()> {
+fn test_derive_pco_with_different_types() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
 
@@ -75,7 +78,7 @@ fn test_derive_pco_with_different_types() -> vecdb::Result<()> {
 
 // Test with nested generics
 #[test]
-fn test_derive_pco_with_nested_generics() -> vecdb::Result<()> {
+fn test_derive_pco_with_nested_generics() -> Result<()> {
     const { assert!(Container::<u32>::IS_NATIVE_LAYOUT) };
 
     let temp = TempDir::new()?;
@@ -98,7 +101,7 @@ fn test_derive_pco_with_nested_generics() -> vecdb::Result<()> {
 
 // Test with float type
 #[test]
-fn test_derive_pco_with_float_generic() -> vecdb::Result<()> {
+fn test_derive_pco_with_float_generic() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
 
@@ -123,17 +126,17 @@ fn test_derive_pco_with_float_generic() -> vecdb::Result<()> {
 fn test_pco_number_type_with_generic() {
     // Verify that the NumberType is correctly set
     assert_eq!(
-        std::any::TypeId::of::<<Wrapper<u64> as Pco>::NumberType>(),
-        std::any::TypeId::of::<u64>()
+        TypeId::of::<<Wrapper<u64> as Pco>::NumberType>(),
+        TypeId::of::<u64>()
     );
 
     assert_eq!(
-        std::any::TypeId::of::<<Wrapper<f64> as Pco>::NumberType>(),
-        std::any::TypeId::of::<f64>()
+        TypeId::of::<<Wrapper<f64> as Pco>::NumberType>(),
+        TypeId::of::<f64>()
     );
 
     assert_eq!(
-        std::any::TypeId::of::<<Container<u32> as Pco>::NumberType>(),
-        std::any::TypeId::of::<u32>()
+        TypeId::of::<<Container<u32> as Pco>::NumberType>(),
+        TypeId::of::<u32>()
     );
 }

@@ -1,11 +1,47 @@
 #![doc = include_str!("../README.md")]
 
-use std::{borrow::Cow, fmt, io, path::PathBuf, time};
+#[cfg(feature = "bitcoin")]
+use bitcoin::address::FromScriptError;
+#[cfg(feature = "bitcoin")]
+use bitcoin::block::Bip34Error;
+#[cfg(feature = "bitcoin")]
+use bitcoin::consensus::encode::Error as EncodeError;
+#[cfg(feature = "bitcoin")]
+use bitcoin::consensus::encode::FromHexError;
+#[cfg(feature = "bitcoin")]
+use bitcoin::hex::HexToArrayError;
+#[cfg(feature = "corepc")]
+use corepc_jsonrpc::error::Error as ErrorError;
+#[cfg(feature = "fjall")]
+use fjall::Error as FjallError;
+#[cfg(feature = "jiff")]
+use jiff::Error as JiffError;
+#[cfg(feature = "pco")]
+use pco::errors::PcoError;
+#[cfg(feature = "serde_json")]
+use serde_json::Error as SerdeJsonError;
+use std::{
+    borrow::Cow,
+    fmt,
+    io::{self, Error as IoError},
+    path::PathBuf,
+    result::Result as StdResult,
+    time,
+};
 
 use thiserror::Error;
 
+#[cfg(feature = "tokio")]
+use tokio::task::JoinError;
+#[cfg(feature = "ureq")]
+use ureq::Error as UreqError;
+#[cfg(feature = "vecdb")]
+use vecdb::Error as VecdbError;
+#[cfg(feature = "vecdb")]
+use vecdb::RawDBError;
+
 /// Result using BRK's shared error type.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = StdResult<T, Error>;
 
 /// Convert `Option<T>` into a result without panicking.
 ///
@@ -29,62 +65,62 @@ pub enum Error {
 
     #[cfg(feature = "corepc")]
     #[error(transparent)]
-    CorepcRPC(#[from] corepc_jsonrpc::error::Error),
+    CorepcRPC(#[from] ErrorError),
 
     #[cfg(feature = "jiff")]
     #[error(transparent)]
-    Jiff(#[from] jiff::Error),
+    Jiff(#[from] JiffError),
 
     #[cfg(feature = "fjall")]
     #[error(transparent)]
-    Fjall(#[from] fjall::Error),
+    Fjall(#[from] FjallError),
 
     #[cfg(feature = "vecdb")]
     #[error(transparent)]
-    VecDB(#[from] vecdb::Error),
+    VecDB(#[from] VecdbError),
 
     #[cfg(feature = "vecdb")]
     #[error(transparent)]
-    RawDB(#[from] vecdb::RawDBError),
+    RawDB(#[from] RawDBError),
 
     #[cfg(feature = "ureq")]
     #[error(transparent)]
-    Ureq(#[from] ureq::Error),
+    Ureq(#[from] UreqError),
 
     #[error(transparent)]
     SystemTimeError(#[from] time::SystemTimeError),
 
     #[cfg(feature = "bitcoin")]
     #[error(transparent)]
-    BitcoinConsensusEncode(#[from] bitcoin::consensus::encode::Error),
+    BitcoinConsensusEncode(#[from] EncodeError),
 
     #[cfg(feature = "bitcoin")]
     #[error(transparent)]
-    BitcoinBip34Error(#[from] bitcoin::block::Bip34Error),
+    BitcoinBip34Error(#[from] Bip34Error),
 
     #[cfg(feature = "bitcoin")]
     #[error(transparent)]
-    BitcoinHexError(#[from] bitcoin::consensus::encode::FromHexError),
+    BitcoinHexError(#[from] FromHexError),
 
     #[cfg(feature = "bitcoin")]
     #[error(transparent)]
-    BitcoinFromScriptError(#[from] bitcoin::address::FromScriptError),
+    BitcoinFromScriptError(#[from] FromScriptError),
 
     #[cfg(feature = "bitcoin")]
     #[error(transparent)]
-    BitcoinHexToArrayError(#[from] bitcoin::hex::HexToArrayError),
+    BitcoinHexToArrayError(#[from] HexToArrayError),
 
     #[cfg(feature = "pco")]
     #[error(transparent)]
-    Pco(#[from] pco::errors::PcoError),
+    Pco(#[from] PcoError),
 
     #[cfg(feature = "serde_json")]
     #[error(transparent)]
-    SerdeJSON(#[from] serde_json::Error),
+    SerdeJSON(#[from] SerdeJsonError),
 
     #[cfg(feature = "tokio")]
     #[error(transparent)]
-    TokioJoin(#[from] tokio::task::JoinError),
+    TokioJoin(#[from] JoinError),
 
     #[error("ZeroCopy error")]
     ZeroCopyError,
@@ -186,10 +222,10 @@ impl Error {
     #[cfg(feature = "vecdb")]
     pub fn is_lock_error(&self) -> bool {
         let is_vecdb_lock = matches!(self, Error::VecDB(e) if e.is_lock_error())
-            || matches!(self, Error::RawDB(vecdb::RawDBError::TryLock(_)));
+            || matches!(self, Error::RawDB(RawDBError::TryLock(_)));
         #[cfg(feature = "fjall")]
         {
-            is_vecdb_lock || matches!(self, Error::Fjall(fjall::Error::Locked))
+            is_vecdb_lock || matches!(self, Error::Fjall(FjallError::Locked))
         }
         #[cfg(not(feature = "fjall"))]
         {
@@ -234,7 +270,7 @@ impl Error {
 mod tests;
 
 #[cfg(feature = "ureq")]
-fn is_ureq_error_permanent(e: &ureq::Error) -> bool {
+fn is_ureq_error_permanent(e: &UreqError) -> bool {
     let msg = format!("{:?}", e);
     msg.contains("nodename nor servname")
         || msg.contains("Name or service not known")
@@ -247,7 +283,7 @@ fn is_ureq_error_permanent(e: &ureq::Error) -> bool {
         || msg.contains("handshake")
 }
 
-fn is_io_error_permanent(e: &std::io::Error) -> bool {
+fn is_io_error_permanent(e: &IoError) -> bool {
     use std::io::ErrorKind::*;
     match e.kind() {
         // Permanent errors

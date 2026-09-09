@@ -79,22 +79,24 @@ where
 
 #[cfg(test)]
 mod tests {
-    static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
-
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
     };
 
-    use bitview_plugin::PluginId;
+    use bitview_plugin::{PluginId, Publication};
     use brk_exit::Exit;
+    use tempfile::tempdir;
+    use vecdb::CacheBudget;
 
     use super::*;
+
+    static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
 
     #[derive(crate::PluginSet)]
     struct TestPlugins {
         #[plugin_set(skip)]
-        publication: bitview_plugin::Publication,
+        publication: Publication,
         #[plugin_set(skip)]
         import: usize,
         #[plugin_set(skip)]
@@ -104,7 +106,7 @@ mod tests {
     }
 
     impl ComputePluginSet for TestPlugins {
-        fn publication(&self) -> &bitview_plugin::Publication {
+        fn publication(&self) -> &Publication {
             &self.publication
         }
         fn bootstrap_compute(&mut self, _context: UpdateContext<'_>) -> Result<BootstrapAction> {
@@ -123,7 +125,7 @@ mod tests {
 
     #[test]
     fn reimport_is_followed_by_a_clean_ready_import() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
         let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
@@ -149,7 +151,7 @@ mod tests {
 
     #[test]
     fn ready_composition_is_returned_without_reimport() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let imports = Arc::new(AtomicUsize::new(0));
         let computes = Arc::new(AtomicUsize::new(0));
         let import_context = ImportContext::new(directory.path(), &CACHE_BUDGET);
@@ -175,7 +177,7 @@ mod tests {
 
     #[test]
     fn cleanup_retains_only_claimed_plugin_data() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let plugins = PluginStorage::plugins_path(context);
         let blocks = plugins.join("blocks");
@@ -200,7 +202,7 @@ mod tests {
 
     #[test]
     fn duplicate_plugin_ids_are_rejected_before_sync() -> Result<()> {
-        let directory = tempfile::tempdir()?;
+        let directory = tempdir()?;
         let context = ImportContext::new(directory.path(), &CACHE_BUDGET);
         let plugins = PluginStorage::plugins_path(context);
         let blocks = PluginId::new("blocks");

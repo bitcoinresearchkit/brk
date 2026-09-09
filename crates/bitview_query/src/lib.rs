@@ -3,6 +3,9 @@
 #![allow(clippy::type_complexity)]
 
 #[cfg(feature = "indexer")]
+use bitview_plugin_indexer::SafeLengths;
+
+#[cfg(feature = "indexer")]
 use std::{
     path::Path,
     sync::Arc,
@@ -142,7 +145,7 @@ impl Query {
             .ok_or(Error::ReadTimeout)
     }
 
-    fn pin_safe_lengths(&self) -> Result<bitview_plugin_indexer::SafeLengths> {
+    fn pin_safe_lengths(&self) -> Result<SafeLengths> {
         self.indexer()
             .pin_safe_lengths_for(self.read_timeout()?)
             .ok_or(Error::ReadTimeout)

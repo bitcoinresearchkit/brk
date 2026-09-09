@@ -13,19 +13,19 @@ use std::{
 };
 
 use brk_error::{Error, Result};
+use brk_logger::register_hook;
 use brk_types::Height;
+use disk::DiskMonitor;
 use parking_lot::Mutex;
+use process::ProcessMonitor;
+use run::RunMonitor;
+use trace::TraceMonitor;
 
 mod disk;
 mod metadata;
 mod process;
 mod run;
 mod trace;
-
-use disk::DiskMonitor;
-use process::ProcessMonitor;
-use run::RunMonitor;
-use trace::TraceMonitor;
 
 #[derive(Clone)]
 pub struct Benchmark(Arc<Inner>);
@@ -81,7 +81,7 @@ impl Benchmark {
 
         let trace = Arc::new(TraceMonitor::new(&path)?);
         let trace_hook = Arc::clone(&trace);
-        brk_logger::register_hook(move |event| trace_hook.record(event))
+        register_hook(move |event| trace_hook.record(event))
             .map_err(|error| IoError::new(ErrorKind::AlreadyExists, error))?;
 
         Ok(Self(Arc::new(Inner {

@@ -6,10 +6,14 @@ use std::{
 };
 
 use base64::{Engine, engine::general_purpose::STANDARD};
+use bitcoin::Txid as BitcoinTxid;
 use brk_error::{Error, Result};
 use brk_types::Txid;
 use parking_lot::Mutex;
+use serde_json::{json, to_vec};
+use ureq::{Agent, http::StatusCode};
 
+use super::transaction_error;
 use crate::{Auth, rpc_response};
 
 #[cfg(test)]
@@ -20,12 +24,12 @@ mod tests;
 pub struct Submission {
     // Serialize actions and reuse a connection without the read transport's
     // implicit resend. The mutex wait is included in the operation deadline.
-    agent: Mutex<ureq::Agent>,
+    agent: Mutex<Agent>,
 }
 
 impl Submission {
     pub fn new() -> Self {
-        let agent = ureq::Agent::config_builder()
+        let agent = Agent::config_builder()
             .http_status_as_error(false)
             .max_redirects(0)
             .proxy(None)
@@ -54,10 +58,10 @@ impl Submission {
             .agent
             .try_lock_until(deadline)
             .ok_or(Error::Internal("node submission queue timed out"))?;
-        let body = serde_json::to_vec(&serde_json::json!({
+        let body = to_vec(&json!({
             "jsonrpc": "2.0", "id": 1, "method": "sendrawtransaction", "params": [hex],
         }))?;
-        let mut authorization = authorization(auth)?;
+        let mut authorization = authorization_header(auth)?;
         let mut refresh = true;
         loop {
             let remaining = deadline.saturating_duration_since(Instant::now());
@@ -80,9 +84,9 @@ impl Submission {
                 .with_config()
                 .limit(rpc_response::MAX_RESPONSE_BYTES as u64)
                 .read_to_vec()?;
-            if status == ureq::http::StatusCode::UNAUTHORIZED {
+            if status == StatusCode::UNAUTHORIZED {
                 if refresh && matches!(auth, Auth::CookieFile(_)) {
-                    let updated = self::authorization(auth)?;
+                    let updated = authorization_header(auth)?;
                     if updated != authorization {
                         authorization = updated;
                         refresh = false;
@@ -91,14 +95,14 @@ impl Submission {
                 }
                 return Err(Error::Internal("node RPC authentication failed"));
             }
-            return rpc_response::decode::<bitcoin::Txid>(status.is_success(), &bytes)
+            return rpc_response::decode::<BitcoinTxid>(status.is_success(), &bytes)
                 .map(Txid::from)
-                .map_err(super::transaction_error);
+                .map_err(transaction_error);
         }
     }
 }
 
-fn authorization(auth: &Auth) -> Result<Option<String>> {
+fn authorization_header(auth: &Auth) -> Result<Option<String>> {
     let credentials = match auth {
         Auth::None => return Ok(None),
         Auth::UserPass(user, password) => format!("{user}:{password}"),

@@ -1,6 +1,7 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{StoredF32, Timestamp};
 use vecdb::{ReadableVec, VecIndex};
@@ -10,8 +11,8 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    prices: &bitview_plugin_price::Vecs,
-    mappings: &bitview_plugin_mappings::Vecs,
+    prices: &PriceVecs,
+    mappings: &MappingsVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;

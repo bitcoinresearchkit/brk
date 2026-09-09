@@ -41,13 +41,13 @@ impl CapitalizedPriceVecs {
     ) -> Result<Self> {
         let import = |weight| {
             ColumnarDailyMetric::forced_import(
+                cache,
                 db,
                 &format!("{weight}_capitalized_price_cents_by_aggregate"),
                 version + Version::ONE,
                 |source| {
                     let cohort = |cohort: UTXOAggregateId| {
                         LazyColumnDailyPriceWithRatio::new(
-                            cache,
                             &cohort.metric_name(&format!("{weight}_capitalized_price")),
                             version + Version::ONE,
                             source,

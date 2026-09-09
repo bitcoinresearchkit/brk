@@ -1,14 +1,16 @@
 use std::{
     marker::PhantomData,
     mem::{MaybeUninit, align_of, size_of},
+    slice,
 };
 
-use pco::wrapped::{ChunkDecompressor, FileCompressor, FileDecompressor};
-use pco::{ChunkConfig, PagingSpec};
-
-use crate::{EncodedChunk, Error, likely};
+use pco::{
+    ChunkConfig, PagingSpec,
+    wrapped::{ChunkDecompressor, FileCompressor, FileDecompressor},
+};
 
 use super::{super::inner::CompressionStrategy, value::PcoVecValue};
+use crate::{EncodedChunk, Error, Result, likely};
 
 /// Pcodec compression strategy for numerical data.
 #[derive(Debug, Clone, Copy)]
@@ -26,7 +28,7 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut [MaybeUninit<T::NumberType>],
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         debug_assert_eq!(dst.len(), expected_len);
 
         let mut page = decoder.page_decompressor(body, expected_len)?;
@@ -48,7 +50,7 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T::NumberType>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         dst.clear();
         dst.reserve(expected_len);
         Self::decode_uninit(
@@ -68,7 +70,7 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         debug_assert!(T::IS_TRANSPARENT);
         debug_assert_eq!(size_of::<T>(), size_of::<T::NumberType>());
         debug_assert_eq!(align_of::<T>(), align_of::<T::NumberType>());
@@ -80,7 +82,7 @@ where
         // patterns when IS_TRANSPARENT is true. MaybeUninit preserves the
         // underlying value layout.
         let numbers = unsafe {
-            std::slice::from_raw_parts_mut(
+            slice::from_raw_parts_mut(
                 spare.as_mut_ptr().cast::<MaybeUninit<T::NumberType>>(),
                 spare.len(),
             )
@@ -101,7 +103,7 @@ where
 
     const MAX_UNCOMPRESSED_CHUNK_SIZE: usize = 128 * 1024;
 
-    fn compress_chunk(values: &[T], values_per_page: usize) -> crate::Result<EncodedChunk> {
+    fn compress_chunk(values: &[T], values_per_page: usize) -> Result<EncodedChunk> {
         let config = ChunkConfig::default()
             .with_compression_level(6)
             .with_enable_8_bit(true)
@@ -114,9 +116,7 @@ where
             debug_assert_eq!(align_of::<T>(), align_of::<T::NumberType>());
             // SAFETY: The Pco contract guarantees identical layouts and valid
             // bit patterns when IS_TRANSPARENT is true.
-            unsafe {
-                std::slice::from_raw_parts(values.as_ptr().cast::<T::NumberType>(), values.len())
-            }
+            unsafe { slice::from_raw_parts(values.as_ptr().cast::<T::NumberType>(), values.len()) }
         } else {
             converted = values.iter().copied().map(T::to_number).collect::<Vec<_>>();
             &converted
@@ -139,7 +139,7 @@ where
         EncodedChunk::new(bytes, header_len, page_ends)
     }
 
-    fn decoder(header: &[u8]) -> crate::Result<Self::Decoder> {
+    fn decoder(header: &[u8]) -> Result<Self::Decoder> {
         let (file, rest) = FileDecompressor::new(header)?;
         let (decoder, rest) = file.chunk_decompressor(rest)?;
         if !rest.is_empty() {
@@ -154,7 +154,7 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         let (decompressor, numbers) = decoder;
         if T::IS_TRANSPARENT {
             dst.clear();
@@ -176,7 +176,7 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         let (decompressor, numbers) = decoder;
         if T::IS_TRANSPARENT {
             return Self::decode_transparent_append(decompressor, body, expected_len, dst);

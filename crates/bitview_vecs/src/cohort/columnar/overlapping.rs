@@ -6,7 +6,7 @@ use bitview_cohort::{
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode};
 
 use crate::ColumnarPerBlock;
 
@@ -21,34 +21,44 @@ pub struct UTXOOverlappingColumns<T: PcoVecValue, M: StorageMode = Rw> {
 }
 
 impl<T: PcoVecValue> UTXOOverlappingColumns<T> {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         let version = version + Version::ONE;
         Ok(Self {
             aggregate: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("{name}_by_aggregate"),
                 version,
                 |_| (),
             )?,
             under_age: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_under_age"),
                 version,
                 |_| (),
             )?,
             over_age: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_over_age"),
                 version,
                 |_| (),
             )?,
             under_amount: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_under_amount"),
                 version,
                 |_| (),
             )?,
             over_amount: ColumnarPerBlock::forced_import(
+                cache,
                 db,
                 &format!("utxos_{name}_by_over_amount"),
                 version,
@@ -59,40 +69,39 @@ impl<T: PcoVecValue> UTXOOverlappingColumns<T> {
 
     pub fn source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         match filter {
             Filter::All | Filter::Term(_) => UTXOAggregateId::ALL
                 .iter()
                 .copied()
                 .find(|id| id.select(&UTXO_AGGREGATE_FILTERS) == filter)
-                .map(|id| self.aggregate.cached_column(cache, name, version, id)),
+                .map(|id| self.aggregate.column_source(name, version, id)),
             Filter::Time(_) => UnderAgeId::ALL
                 .iter()
                 .copied()
                 .find(|id| id.select(&UNDER_AGE_FILTERS) == filter)
-                .map(|id| self.under_age.cached_column(cache, name, version, id))
+                .map(|id| self.under_age.column_source(name, version, id))
                 .or_else(|| {
                     OverAgeId::ALL
                         .iter()
                         .copied()
                         .find(|id| id.select(&OVER_AGE_FILTERS) == filter)
-                        .map(|id| self.over_age.cached_column(cache, name, version, id))
+                        .map(|id| self.over_age.column_source(name, version, id))
                 }),
             Filter::Amount(_) => UnderAmountId::ALL
                 .iter()
                 .copied()
                 .find(|id| id.select(&UNDER_AMOUNT_FILTERS) == filter)
-                .map(|id| self.under_amount.cached_column(cache, name, version, id))
+                .map(|id| self.under_amount.column_source(name, version, id))
                 .or_else(|| {
                     OverAmountId::ALL
                         .iter()
                         .copied()
                         .find(|id| id.select(&OVER_AMOUNT_FILTERS) == filter)
-                        .map(|id| self.over_amount.cached_column(cache, name, version, id))
+                        .map(|id| self.over_amount.column_source(name, version, id))
                 }),
             Filter::Epoch(_) | Filter::Class(_) | Filter::Entry(_) | Filter::Type(_) => None,
         }

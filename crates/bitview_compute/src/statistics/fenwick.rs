@@ -1,3 +1,5 @@
+use std::ops::SubAssign;
+
 /// Trait for types that can be stored in a Fenwick tree.
 pub trait FenwickNode: Clone + Copy + Default {
     fn add_assign(&mut self, other: &Self);
@@ -74,7 +76,7 @@ impl<N: FenwickNode> FenwickTree<N> {
         field_fn: &F,
     ) -> [usize; LEN]
     where
-        V: Copy + PartialOrd + std::ops::SubAssign,
+        V: Copy + PartialOrd + SubAssign,
         F: Fn(&N) -> V,
     {
         let len = self.tree.len();

@@ -48,21 +48,14 @@ where
     C: ColumnId,
 {
     pub fn from_columnar_source(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Cents>, C>,
         column: C,
         indexes: &IndexSources,
     ) -> Self {
-        let cents = LazyColumnPerBlock::new(
-            cache,
-            &format!("{name}_cents"),
-            version,
-            source,
-            column,
-            indexes,
-        );
+        let cents =
+            LazyColumnPerBlock::new(&format!("{name}_cents"), version, source, column, indexes);
         let usd = LazyPerBlock::from_resolutions::<CentsUnsignedToDollars>(
             name,
             version,

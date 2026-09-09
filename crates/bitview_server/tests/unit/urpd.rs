@@ -14,17 +14,22 @@ use axum::{
     http::{Request, StatusCode},
     serve as serve_http,
 };
-
 use brk_types::{Cents, CentsCompact, Cohort, Date, Sats, UrpdAggregation, UrpdRaw, UrpdWeight};
 use serde_json::{Value, from_str, to_vec};
-use tokio::{fs, join, net::TcpListener, spawn, time::timeout};
+use tokio::{
+    fs, join,
+    net::TcpListener,
+    spawn,
+    time::{self, timeout},
+};
 use tower::ServiceExt;
 use tower_http::timeout::TimeoutLayer;
 
-#[cfg(feature = "chain")]
-use super::chain_fixture;
 use super::{server_routes::exchange_with_etag, urpd_sources};
 use crate::{AppState, api::ApiRoutes, urpd_input};
+
+#[cfg(feature = "chain")]
+use super::chain_fixture;
 
 #[cfg(feature = "chain")]
 #[test]
@@ -305,7 +310,7 @@ async fn check_response_admission(state: &AppState, path: &str, current: &str) {
     assert_eq!(state.urpd_bodies.available_permits(), 0);
     assert_eq!(state.urpd_query.available_permits(), 2);
     let pending = spawn(router.clone().oneshot(request("GET", "\"old\"")));
-    tokio::time::sleep(Duration::from_millis(50)).await;
+    time::sleep(Duration::from_millis(50)).await;
     assert!(!pending.is_finished());
     assert_eq!(state.urpd_query.available_permits(), 2);
     for method in ["GET", "HEAD"] {

@@ -1,3 +1,7 @@
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+
+use log::debug;
+
 use crate::{
     Config, InternalValue, Result, SequenceNumberCounter, Table, Tree,
     compaction::{
@@ -11,7 +15,6 @@ use crate::{
     table::{filter::BloomConstructionPolicy, multi_writer::MultiWriter},
     version::{Level, Run, Set, Version},
 };
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 struct Reader(Box<dyn Iterator<Item = Result<InternalValue>>>);
 
@@ -155,12 +158,9 @@ impl Worker {
             }
         };
 
-        log::debug!(
+        debug!(
             "Compacting tables {:?} into L{} (canonical L{}), target_size={}",
-            input.table_ids,
-            input.dest_level,
-            input.canonical_level,
-            input.target_size,
+            input.table_ids, input.dest_level, input.canonical_level, input.target_size,
         );
 
         Ok(writer

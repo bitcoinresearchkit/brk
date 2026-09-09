@@ -1,15 +1,13 @@
 use std::sync::Arc;
 
+use inner::HeaderInner;
 use parking_lot::RwLock;
 use rawdb::Region;
 
-pub mod inner;
-
-use inner::HeaderInner;
-
-use crate::{Stamp, Version};
-
 use super::Format;
+use crate::{Result, Stamp, Version};
+
+pub mod inner;
 
 const HEADER_VERSION: Version = Version::TWO;
 pub const HEADER_OFFSET: usize = size_of::<HeaderInner>();
@@ -21,11 +19,7 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn create_and_write(
-        region: &Region,
-        vec_version: Version,
-        format: Format,
-    ) -> crate::Result<Self> {
+    pub fn create_and_write(region: &Region, vec_version: Version, format: Format) -> Result<Self> {
         let inner = HeaderInner::create_and_write(region, vec_version, format)?;
         Ok(Self {
             inner: Arc::new(RwLock::new(inner)),
@@ -37,7 +31,7 @@ impl Header {
         region: &Region,
         vec_version: Version,
         format: Format,
-    ) -> crate::Result<Self> {
+    ) -> Result<Self> {
         let inner = HeaderInner::import_and_verify(region, vec_version, format)?;
         Ok(Self {
             inner: Arc::new(RwLock::new(inner)),
@@ -81,7 +75,7 @@ impl Header {
         self.inner.read().stamp
     }
 
-    pub fn write(&mut self, region: &Region) -> crate::Result<()> {
+    pub fn write(&mut self, region: &Region) -> Result<()> {
         self.inner.read().write(region)?;
         self.modified = false;
         Ok(())

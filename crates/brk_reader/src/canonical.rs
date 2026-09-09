@@ -1,3 +1,4 @@
+use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{BlockHash, Height};
 use rustc_hash::FxHashMap;
@@ -11,11 +12,7 @@ pub struct CanonicalRange {
 }
 
 impl CanonicalRange {
-    pub fn walk(
-        client: &Client,
-        anchor: Option<&BlockHash>,
-        tip: Height,
-    ) -> brk_error::Result<Self> {
+    pub fn walk(client: &Client, anchor: Option<&BlockHash>, tip: Height) -> Result<Self> {
         let start = match anchor {
             Some(hash) => Height::from((client.get_block_header_info(hash)?.height + 1) as u64),
             None => Height::ZERO,
@@ -25,7 +22,7 @@ impl CanonicalRange {
         Ok(range)
     }
 
-    pub fn between(client: &Client, start: Height, end: Height) -> brk_error::Result<Self> {
+    pub fn between(client: &Client, start: Height, end: Height) -> Result<Self> {
         if start > end {
             return Ok(Self {
                 start,

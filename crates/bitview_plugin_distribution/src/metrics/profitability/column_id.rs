@@ -3,8 +3,8 @@ use std::ops::AddAssign;
 use bitview_cohort::{ByTerm, ProfitabilityRange, ProfitabilityRangeId, TermId, UTXOAggregateId};
 use brk_types::{Height, Version};
 use vecdb::{
-    CacheBudget, CachedBoxedVec, CachedReadableVec, ColumnId, PcoVec, PcoVecValue,
-    ReadOnlyColumnarVec, ReadableColumnarVec, VecValue,
+    ColumnId, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableColumnarVec, VecValue,
 };
 
 const RANGE_COUNT: usize = ProfitabilityRangeId::ALL.len();
@@ -39,48 +39,46 @@ pub struct TermProfitabilityRangeId {
 
 impl TermProfitabilityRangeId {
     pub fn source<T>(
-        cache: &'static CacheBudget,
         source: &ReadOnlyColumnarVec<PcoVec<Height, T>, Self>,
         name: &str,
         version: Version,
         aggregate: UTXOAggregateId,
         ranges: &[ProfitabilityRangeId],
-    ) -> CachedBoxedVec<Height, T>
+    ) -> ReadableBoxedVec<Height, T>
     where
         T: PcoVecValue + AddAssign,
     {
         if let (Some(term), [range]) = (aggregate.term(), ranges) {
-            return cache
-                .wrap(source.column(
+            return source
+                .column(
                     name,
                     version,
                     Self {
                         term,
                         range: *range,
                     },
-                ))
-                .cached_boxed_clone();
+                )
+                .read_only_boxed_clone();
         }
 
         let selected_term = aggregate.term();
-        cache
-            .wrap(
-                source.sum_columns(
-                    name,
-                    version,
-                    TermId::ALL
-                        .iter()
-                        .copied()
-                        .filter(move |&term| selected_term.is_none_or(|selected| selected == term))
-                        .flat_map(|term| {
-                            ranges
-                                .iter()
-                                .copied()
-                                .map(move |range| Self { term, range })
-                        }),
-                ),
+
+        source
+            .sum_columns(
+                name,
+                version,
+                TermId::ALL
+                    .iter()
+                    .copied()
+                    .filter(move |&term| selected_term.is_none_or(|selected| selected == term))
+                    .flat_map(|term| {
+                        ranges
+                            .iter()
+                            .copied()
+                            .map(move |range| Self { term, range })
+                    }),
             )
-            .cached_boxed_clone()
+            .read_only_boxed_clone()
     }
 }
 

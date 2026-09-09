@@ -4,7 +4,7 @@
 //! suffix mode (fields append to acc) or prefix mode (fields prepend to acc),
 //! and extracts the field parts (relatives or prefixes) for code generation.
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, iter};
 
 use bitview_catalog::TreeNode;
 
@@ -561,7 +561,7 @@ fn determine_pattern_mode(
     // if each field's value varies by exactly one substring that's different
     // per instance, we can use a Templated mode with {disc} placeholder.
     if is_suffix {
-        let majority: Vec<_> = std::iter::once(first_majority).chain(majority).collect();
+        let majority: Vec<_> = iter::once(first_majority).chain(majority).collect();
         try_detect_template(&majority, fields)
     } else {
         None
@@ -570,6 +570,10 @@ fn determine_pattern_mode(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
+    use serde_json::Value;
+
     use super::*;
 
     #[test]
@@ -1314,8 +1318,8 @@ mod tests {
 
         fn leaf(name: &str) -> TreeNode {
             TreeNode::Leaf(SeriesLeafWithSchema::new(
-                SeriesLeaf::new(name.into(), "f32".into(), std::collections::BTreeSet::new()),
-                serde_json::Value::Null,
+                SeriesLeaf::new(name.into(), "f32".into(), BTreeSet::new()),
+                Value::Null,
             ))
         }
 

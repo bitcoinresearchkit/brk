@@ -1,20 +1,21 @@
-use brk_error::{Error, Result};
-
 use std::path::Path;
 
 use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, CohortContext, Filter,
     SpendableType,
 };
+use brk_error::{Error, Result};
 use brk_types::{Height, Sats, StoredU64};
-use rayon::prelude::*;
+use rayon::{prelude::*, scope as RayonScope};
 use vecdb::ReadableVec;
 
 use super::{CostBasisFenwick, UTXOCohortState, UTXOTransientState};
-use crate::metrics::CohortMetrics;
-use crate::state::{
-    CoreRealizedState, CostBasisData, CostBasisOps, CostBasisRaw, MinimalRealizedState,
-    RealizedOps, RealizedState, WithCapital, WithoutCapital,
+use crate::{
+    metrics::CohortMetrics,
+    state::{
+        CoreRealizedState, CostBasisData, CostBasisOps, CostBasisRaw, MinimalRealizedState,
+        RealizedOps, RealizedState, WithCapital, WithoutCapital,
+    },
 };
 
 pub struct UTXOStates {
@@ -200,7 +201,7 @@ impl UTXOStates {
             type_,
             ..
         } = self;
-        rayon::scope(|scope| {
+        RayonScope(|scope| {
             for state in age_range.iter_mut() {
                 scope.spawn(move |_| state.apply_pending());
             }

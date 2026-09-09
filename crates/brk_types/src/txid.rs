@@ -1,9 +1,13 @@
 use std::{fmt, mem, str::FromStr};
 
-use bitcoin::hashes::Hash;
+use bitcoin::{
+    Txid as BitcoinTxid,
+    hashes::{Hash, hex::HexToArrayError},
+};
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable};
 
@@ -27,40 +31,40 @@ impl Txid {
     /// Both are `#[repr(C)]` newtypes over `[u8; 32]` with identical
     /// layout, so this is a zero-cost view (no allocation, no copy).
     #[inline]
-    pub fn as_bitcoin_slice(slice: &[Txid]) -> &[bitcoin::Txid] {
-        unsafe { &*(slice as *const [Txid] as *const [bitcoin::Txid]) }
+    pub fn as_bitcoin_slice(slice: &[Txid]) -> &[BitcoinTxid] {
+        unsafe { &*(slice as *const [Txid] as *const [BitcoinTxid]) }
     }
 }
 
-impl From<bitcoin::Txid> for Txid {
+impl From<BitcoinTxid> for Txid {
     #[inline]
-    fn from(value: bitcoin::Txid) -> Self {
+    fn from(value: BitcoinTxid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<&bitcoin::Txid> for &Txid {
+impl From<&BitcoinTxid> for &Txid {
     #[inline]
-    fn from(value: &bitcoin::Txid) -> Self {
+    fn from(value: &BitcoinTxid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<Txid> for bitcoin::Txid {
+impl From<Txid> for BitcoinTxid {
     #[inline]
     fn from(value: Txid) -> Self {
         unsafe { mem::transmute(value) }
     }
 }
 
-impl From<&Txid> for bitcoin::Txid {
+impl From<&Txid> for BitcoinTxid {
     #[inline]
     fn from(value: &Txid) -> Self {
-        bitcoin::Txid::from_slice(&value.0).unwrap()
+        BitcoinTxid::from_slice(&value.0).unwrap()
     }
 }
 
-impl From<&Txid> for &bitcoin::Txid {
+impl From<&Txid> for &BitcoinTxid {
     #[inline]
     fn from(value: &Txid) -> Self {
         unsafe { mem::transmute(value) }
@@ -69,15 +73,15 @@ impl From<&Txid> for &bitcoin::Txid {
 
 impl fmt::Display for Txid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", bitcoin::Txid::from(self))
+        write!(f, "{}", BitcoinTxid::from(self))
     }
 }
 
 impl FromStr for Txid {
-    type Err = bitcoin::hashes::hex::HexToArrayError;
+    type Err = HexToArrayError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        bitcoin::Txid::from_str(s).map(Self::from)
+        BitcoinTxid::from_str(s).map(Self::from)
     }
 }
 

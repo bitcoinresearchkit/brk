@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, mem, ops::Range};
 
 use bitview_collections::DistributionStats;
 use bitview_compute::{ComputedVecValue, NumericValue};
@@ -15,7 +15,7 @@ use vecdb::{
 
 use crate::{IndexSources, PerBlock};
 
-fn effective_range(first: usize, count: usize, skip_count: usize) -> std::ops::Range<usize> {
+fn effective_range(first: usize, count: usize, skip_count: usize) -> Range<usize> {
     let start = first + skip_count.min(count);
     start..first + count
 }
@@ -36,7 +36,7 @@ fn merge_sorted<T: Copy + Ord>(window: &mut Vec<T>, block: &[T], buffer: &mut Ve
     }
     buffer.extend_from_slice(&window[wi..]);
     buffer.extend_from_slice(&block[bi..]);
-    std::mem::swap(window, buffer);
+    mem::swap(window, buffer);
 }
 
 fn remove_sorted<T: Copy + Ord>(window: &mut Vec<T>, block: &[T], buffer: &mut Vec<T>) {
@@ -52,7 +52,7 @@ fn remove_sorted<T: Copy + Ord>(window: &mut Vec<T>, block: &[T], buffer: &mut V
         }
     }
     debug_assert_eq!(bi, block.len());
-    std::mem::swap(window, buffer);
+    mem::swap(window, buffer);
 }
 
 #[derive(Deref, DerefMut, Traversable)]

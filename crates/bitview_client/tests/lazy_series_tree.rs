@@ -1,3 +1,5 @@
+use std::ptr;
+
 use bitview_client::{AnySeriesPattern, BitviewClient, Dollars, SeriesPattern2};
 
 fn pattern_name(pattern: &impl AnySeriesPattern) -> &str {
@@ -12,7 +14,7 @@ fn typed_series_path_initializes_on_the_default_stack() {
     let client = BitviewClient::new("http://localhost:3110");
 
     let price = &**client.series().price;
-    assert!(std::ptr::eq(price, &**client.series().price));
+    assert!(ptr::eq(price, &**client.series().price));
     let usd: &SeriesPattern2<Dollars> = &price.split.close.usd;
 
     assert_eq!(pattern_name(&price.split.close.usd), "price_close");

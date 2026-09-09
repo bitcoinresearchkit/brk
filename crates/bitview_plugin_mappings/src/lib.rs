@@ -27,7 +27,7 @@ use brk_types::{
     Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
     Month6, StoredU64, TxInIndex, TxIndex, TxOutIndex, Version, Week1, Year1, Year10,
 };
-use chain_counts::CachedChainCounts;
+use chain_counts::ChainCounts;
 use height::Vecs as HeightVecs;
 use resolution::{DatedResolutionVecs, ResolutionVecs};
 use timestamp::Timestamps;
@@ -35,10 +35,7 @@ use tx_heights::TxHeights;
 use tx_index::Vecs as TxIndexVecs;
 use txin_index::Vecs as TxInIndexVecs;
 use txout_index::Vecs as TxOutIndexVecs;
-use vecdb::{
-    AnyVec, CachedBoxedVec, CachedVec, Database, ReadableBoxedVec, ReadableCloneableVec, Rw,
-    StorageMode, VecIndex,
-};
+use vecdb::{Database, ReadableBoxedVec, ReadableCloneableVec, Rw, StorageMode};
 
 pub use dependencies::Dependencies;
 pub use has::HasMappings;
@@ -52,7 +49,7 @@ pub const ID: PluginId = STORAGE.id();
 pub struct Vecs<M: StorageMode = Rw> {
     #[traversable(skip)]
     db: Database,
-    chain_counts: M::WriteOnly<CachedChainCounts>,
+    chain_counts: M::WriteOnly<ChainCounts>,
     #[traversable(skip)]
     sources: IndexSources,
     #[traversable(skip)]
@@ -104,7 +101,7 @@ impl Vecs {
 
         let addr = AddrVecs::forced_import(version, indexer);
         let monotonic = Timestamps::forced_import_monotonic(&db, version)?;
-        let chain_counts = CachedChainCounts::new(version, indexer);
+        let chain_counts = ChainCounts::new(version, indexer);
         let height = HeightVecs::new(
             version,
             monotonic.read_only_boxed_clone(),
@@ -261,8 +258,6 @@ impl Vecs {
     }
 
     fn invalidate_timestamp_dependents(&self) {
-        self.height.invalidate_timestamp_caches();
-
         macro_rules! period {
             ($($field:ident),+ $(,)?) => {
                 $(self.$field.invalidate_timestamp_caches();)+
@@ -275,19 +270,19 @@ impl Vecs {
         );
     }
 
-    pub fn transaction_count_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxIndex>> {
+    pub fn transaction_count_source(&self) -> LazyCumulativeIndexVec<Height, TxIndex> {
         self.chain_counts.transaction_source()
     }
 
-    pub fn input_count_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxInIndex>> {
+    pub fn input_count_source(&self) -> LazyCumulativeIndexVec<Height, TxInIndex> {
         self.chain_counts.input_source()
     }
 
-    pub fn output_count(&self) -> CachedBoxedVec<Height, StoredU64> {
+    pub fn output_count(&self) -> ReadableBoxedVec<Height, StoredU64> {
         self.chain_counts.output()
     }
 
-    pub fn output_count_source(&self) -> CachedVec<LazyCumulativeIndexVec<Height, TxOutIndex>> {
+    pub fn output_count_source(&self) -> LazyCumulativeIndexVec<Height, TxOutIndex> {
         self.chain_counts.output_source()
     }
 }
@@ -308,9 +303,6 @@ impl ComputePlugin for Vecs {
         let starting_height = indexer.safe_lengths().height;
 
         self.tx_heights.update(indexer, starting_height);
-        if starting_height.to_usize() < indexer.vecs().transactions.first_tx_index.len() {
-            self.chain_counts.invalidate();
-        }
 
         // timestamp_monotonic must be computed first — other mappings read it
         let rewrote_existing = self

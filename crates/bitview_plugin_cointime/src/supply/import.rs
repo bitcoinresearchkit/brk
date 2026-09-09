@@ -1,4 +1,5 @@
 use bitview_plugin_distribution::AllChainSources;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{BoundedRatioPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
@@ -10,7 +11,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     spot_price: &CachedBoxedVec<Height, Cents>,
     activity: &activity::Vecs,
     all_chain: &AllChainSources,
@@ -30,7 +31,7 @@ pub fn forced_import(
 impl LazyBaseVecs {
     fn new(
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
         activity: &activity::Vecs,
         all_chain: &AllChainSources,

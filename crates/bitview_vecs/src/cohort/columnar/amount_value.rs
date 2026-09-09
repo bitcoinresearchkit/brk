@@ -28,6 +28,7 @@ impl<S: Clone> ColumnarAmountValue<S> {
         ) -> S,
     ) -> Result<Self> {
         Ok(Self(ColumnarValuePerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             storage_name,
             version,
@@ -36,8 +37,8 @@ impl<S: Clone> ColumnarAmountValue<S> {
                     let name = context.metric_name(&filter, cohort_name, metric);
                     let source_name = format!("{name}_cumulative");
                     let (sats, cents) = match AmountRangeId::matching(&filter) {
-                        Some(column) => ColumnarValuePerBlockCumulativeRolling::<AmountRangeId, ()>::sources_from(cache, sats, cents, &source_name, version, [column]),
-                        None => ColumnarValuePerBlockCumulativeRolling::<AmountRangeId, ()>::sources_from(cache, sats, cents, &source_name, version, AmountRangeId::included_by(&filter)),
+                        Some(column) => ColumnarValuePerBlockCumulativeRolling::<AmountRangeId, ()>::sources_from(sats, cents, &source_name, version, [column]),
+                        None => ColumnarValuePerBlockCumulativeRolling::<AmountRangeId, ()>::sources_from(sats, cents, &source_name, version, AmountRangeId::included_by(&filter)),
                     };
                     build(&name, sats, cents)
                 })

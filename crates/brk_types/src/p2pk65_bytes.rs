@@ -1,12 +1,16 @@
+#[cfg(feature = "storage")]
+use std::fmt::Result;
+
 use std::fmt;
 
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Bytes, Formattable};
 
 use crate::U8x65;
+
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable};
 
 #[derive(
     Debug, Clone, Deref, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash, JsonSchema,
@@ -41,7 +45,7 @@ impl Formattable for P2PK65Bytes {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> Result {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {

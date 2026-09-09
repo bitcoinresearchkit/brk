@@ -1,15 +1,19 @@
-#[allow(dead_code)]
-mod common;
-
 use std::sync::Arc;
 
 use bitview_traversable::Traversable;
 use bitview_vecs::{DailyMappings, DailyMetric, PerBlock};
+use brk_exit::Exit;
 use brk_types::{Day1, Height, StoredU64, Version};
+use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Budgeted, CachedVec, Database, Pinned, ReadOnlyClone, ReadableVec, Rw, TypedVec,
-    WritableVec,
+    AnyStoredVec, Budgeted, CachedVec, Database, EagerVec, PcoVec, Pinned, ReadOnlyClone,
+    ReadableVec, Rw, TypedVec, WritableVec,
 };
+
+use crate::common::CACHE_BUDGET;
+
+#[allow(dead_code)]
+mod common;
 
 fn is_budgeted<V: TypedVec>(_: &CachedVec<V, Budgeted>) {}
 fn is_pinned<V: TypedVec>(_: &CachedVec<V, Pinned>) {}
@@ -22,7 +26,7 @@ fn compact_ratio_reads_do_not_retain_an_expanded_cumulative_history() {
     use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
     use vecdb::{LazyVec, ReadableCloneableVec};
 
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let counts = CachedVec::wrap(common::stored::<Height, _>(
@@ -76,7 +80,7 @@ fn generic_clones_share_source_snapshots_but_do_not_retain_derived_histories() {
         source.clone().snapshot()
     }
 
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let raw =
         common::stored::<Height, _>(&db, "generic_snapshot", (0..4096u64).map(StoredU64::from));
@@ -126,11 +130,11 @@ fn generic_clones_share_source_snapshots_but_do_not_retain_derived_histories() {
 
 #[test]
 fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let mut metric = PerBlock::<StoredU64>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "source_cache_height",
         Version::ONE,
@@ -201,11 +205,11 @@ fn height_owner_catalog_and_read_only_clone_share_one_budgeted_cache() {
 
 #[test]
 fn pinned_policy_survives_owner_cloning_and_inner_compute_access_invalidates() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let mut metric = PerBlock::<StoredU64, Rw, Pinned>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "source_cache_pinned",
         Version::ONE,
@@ -219,7 +223,7 @@ fn pinned_policy_survives_owner_cloning_and_inner_compute_access_invalidates() {
     is_pinned(&reader.height);
     let snapshot = reader.height.snapshot();
     // Mutable coercion is also used by compute helpers taking &mut EagerVec.
-    let inner: &mut vecdb::EagerVec<vecdb::PcoVec<Height, StoredU64>> = &mut metric.height;
+    let inner: &mut EagerVec<PcoVec<Height, StoredU64>> = &mut metric.height;
     inner.truncate_if_needed_at(0).unwrap();
     inner.push(StoredU64::from(2u64));
     inner.write().unwrap();
@@ -230,12 +234,12 @@ fn pinned_policy_survives_owner_cloning_and_inner_compute_access_invalidates() {
 
 #[test]
 fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let mappings = DailyMappings::new(&indexes);
     let mut metric = DailyMetric::<StoredU64>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "source_cache_day",
         Version::ONE,
@@ -272,11 +276,11 @@ fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
 
 #[test]
 fn incremental_compute_reads_only_the_new_tail_and_invalidates_rewrites() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
     let mut source = PerBlock::<StoredU64>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "incremental_source",
         Version::ONE,
@@ -284,7 +288,7 @@ fn incremental_compute_reads_only_the_new_tail_and_invalidates_rewrites() {
     )
     .unwrap();
     let mut target = PerBlock::<StoredU64>::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "incremental_target",
         Version::ONE,
@@ -295,7 +299,7 @@ fn incremental_compute_reads_only_the_new_tail_and_invalidates_rewrites() {
         source.height.push(StoredU64::from(i));
     }
     source.height.write().unwrap();
-    let exit = brk_exit::Exit::new();
+    let exit = Exit::new();
     let compute = |from: usize, target: &mut PerBlock<StoredU64>, source: &PerBlock<StoredU64>| {
         let mut rows = 0;
         target

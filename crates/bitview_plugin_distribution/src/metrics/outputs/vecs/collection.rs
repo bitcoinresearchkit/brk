@@ -1,5 +1,6 @@
 use bitview_cohort::{AmountRange, UTXORows};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
@@ -21,7 +22,7 @@ impl OutputsVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {

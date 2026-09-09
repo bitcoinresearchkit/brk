@@ -1,5 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::VBytesToWeight;
 use bitview_vecs::{CachedWindowStartVec, LazyPerBlockRolling, LazyPercentVec};
 use brk_types::{Height, PartsPerMillion32, Version, Weight};
@@ -15,7 +16,7 @@ impl Vecs {
     pub fn new(
         version: Version,
         indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         size: &SizeVecs,
     ) -> Self {

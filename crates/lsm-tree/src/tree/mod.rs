@@ -1,21 +1,27 @@
-pub mod ingest;
-pub mod inner;
-
-use crate::{
-    BoxedIterator, Config, Error, InternalValue, Result, Slice, Table,
-    file::{CURRENT_VERSION_FILE, TABLES_FOLDER},
-    merge::Merger,
-    mvcc_stream::MvccStream,
-    run_reader::RunReader,
-    version::{Version, recovery::Recovery},
-};
-use inner::Inner;
 use std::{
     fs,
     ops::{Bound, Deref, RangeBounds},
     path::Path,
     sync::Arc,
 };
+
+use inner::Inner;
+use log::{debug, info};
+use rustc_hash::FxHashMap;
+
+use crate::{
+    BoxedIterator, Config, Error, InternalValue, Result, Slice, Table,
+    compaction::worker::Worker,
+    file::{CURRENT_VERSION_FILE, TABLES_FOLDER},
+    merge::Merger,
+    mvcc_stream::MvccStream,
+    range,
+    run_reader::RunReader,
+    version::{Level, Version, recovery::Recovery},
+};
+
+pub mod ingest;
+pub mod inner;
 
 /// A table-only log-structured merge tree.
 #[derive(Clone)]
@@ -36,7 +42,7 @@ impl Tree {
     ///
     /// Returns an error when the tree cannot be created, recovered, or read.
     pub fn open(config: Config) -> Result<Self> {
-        log::debug!("Opening LSM tree at {}", config.path.display());
+        debug!("Opening LSM tree at {}", config.path.display());
 
         if config.path.join("version").try_exists()? {
             return Err(Error::InvalidVersion(1));
@@ -93,16 +99,13 @@ impl Tree {
         &self,
         prefix: K,
     ) -> impl DoubleEndedIterator<Item = Result<(Slice, Slice)>> + Send + 'static {
-        self.range(crate::range::prefix_to_range(prefix.as_ref()))
+        self.range(range::prefix_to_range(prefix.as_ref()))
     }
 
     /// Returns the number of disjoint level-zero runs.
     #[must_use]
     pub fn l0_run_count(&self) -> usize {
-        self.versions
-            .guard()
-            .level(0)
-            .map_or(0, crate::version::Level::run_count)
+        self.versions.guard().level(0).map_or(0, Level::run_count)
     }
 
     /// Runs leveled compaction until no eligible work remains.
@@ -111,7 +114,7 @@ impl Tree {
     ///
     /// Returns an error when compaction cannot read, write, or publish its tables.
     pub fn compact(&self) -> Result<()> {
-        crate::compaction::worker::Worker::new(self).run()
+        Worker::new(self).run()
     }
 
     /// Returns the currently published table-layout generation.
@@ -126,7 +129,7 @@ impl Tree {
 
         for table in version
             .iter_levels()
-            .flat_map(crate::version::Level::iter)
+            .flat_map(Level::iter)
             .filter_map(|run| run.get_for_key(key))
         {
             if let Some(item) = table.get_value(key, &mut key_hash)? {
@@ -161,7 +164,7 @@ impl Tree {
             bounds.1.as_ref().map(AsRef::as_ref),
         );
 
-        for run in version.iter_levels().flat_map(crate::version::Level::iter) {
+        for run in version.iter_levels().flat_map(Level::iter) {
             match run.len() {
                 0 => {}
                 1 => {
@@ -186,7 +189,7 @@ impl Tree {
     }
 
     fn recover(config: Config) -> Result<Self> {
-        log::info!("Recovering LSM tree at {}", config.path.display());
+        info!("Recovering LSM tree at {}", config.path.display());
         let tree_id = Inner::next_tree_id();
 
         let version = Self::recover_tables(&config.path, tree_id, &config)?;
@@ -202,7 +205,7 @@ impl Tree {
 
     fn recover_tables(path: &Path, tree_id: u32, config: &Config) -> Result<Version> {
         let recovery = Recovery::load(path)?;
-        let mut expected: rustc_hash::FxHashMap<u32, (u8, u64)> = rustc_hash::FxHashMap::default();
+        let mut expected: FxHashMap<u32, (u8, u64)> = FxHashMap::default();
 
         for (level_index, runs) in (0_u8..).zip(&recovery.table_ids) {
             for table in runs.iter().flatten() {
@@ -210,7 +213,7 @@ impl Tree {
             }
         }
 
-        let tables_path = path.join(crate::file::TABLES_FOLDER);
+        let tables_path = path.join(TABLES_FOLDER);
         fs::create_dir_all(&tables_path)?;
         let mut tables = Vec::with_capacity(expected.len());
         let mut orphaned = Vec::new();

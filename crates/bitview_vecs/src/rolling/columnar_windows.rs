@@ -29,13 +29,13 @@ where
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(ColumnarPerBlock::forced_import(
+            cache,
             db,
             name,
             version,
             |source| {
                 WindowId::series(|window| {
                     LazyColumnPerBlock::new(
-                        cache,
                         &format!("{name}_{}", window.suffix()),
                         version,
                         source,

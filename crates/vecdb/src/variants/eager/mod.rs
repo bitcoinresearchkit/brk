@@ -1,4 +1,9 @@
+use brk_exit::Exit;
 use log::debug;
+
+use crate::{
+    AnyStoredVec, AnyVec, Result, StoredVec, Version, WritableVec, traits::writable::MAX_CACHE_SIZE,
+};
 
 pub mod any_stored_vec;
 pub mod any_vec;
@@ -9,11 +14,6 @@ pub mod readable_cloneable;
 pub mod stored;
 pub mod typed;
 pub mod writable;
-
-use crate::{
-    AnyStoredVec, AnyVec, StoredVec, Version, WritableVec, traits::writable::MAX_CACHE_SIZE,
-};
-use brk_exit::Exit;
 
 /// Wrapper for computing and storing derived values from source vectors.
 ///
@@ -41,15 +41,9 @@ where
     V: StoredVec,
 {
     /// Validates version, truncates to `max_from`, then runs `f` in batched writes.
-    fn compute_init<F>(
-        &mut self,
-        version: Version,
-        max_from: V::I,
-        exit: &Exit,
-        f: F,
-    ) -> crate::Result<()>
+    fn compute_init<F>(&mut self, version: Version, max_from: V::I, exit: &Exit, f: F) -> Result<()>
     where
-        F: FnMut(&mut Self) -> crate::Result<()>,
+        F: FnMut(&mut Self) -> Result<()>,
     {
         self.validate_computed_version_or_reset(version)?;
         self.truncate_if_needed(max_from)?;
@@ -73,9 +67,9 @@ where
 
     /// Helper that repeatedly calls a compute function until it completes.
     /// Writes between iterations when batch limit is hit.
-    pub fn repeat_until_complete<F>(&mut self, exit: &Exit, mut f: F) -> crate::Result<()>
+    pub fn repeat_until_complete<F>(&mut self, exit: &Exit, mut f: F) -> Result<()>
     where
-        F: FnMut(&mut Self) -> crate::Result<()>,
+        F: FnMut(&mut Self) -> Result<()>,
     {
         loop {
             f(self)?;
@@ -96,7 +90,7 @@ where
     }
 
     /// Removes this vector and all its associated regions from the database
-    pub fn remove(self) -> crate::Result<()> {
+    pub fn remove(self) -> Result<()> {
         self.0.remove()
     }
 }

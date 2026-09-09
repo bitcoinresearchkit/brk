@@ -1,3 +1,5 @@
+use std::array;
+
 use bitview_traversable::Traversable;
 use brk_types::Version;
 use vecdb::{ColumnId, VecValue};
@@ -57,7 +59,7 @@ impl ColumnId for ExtremeThresholdId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(EXTREME_THRESHOLD_IDS[index]))
+        array::from_fn(|index| create(EXTREME_THRESHOLD_IDS[index]))
     }
 
     #[inline]

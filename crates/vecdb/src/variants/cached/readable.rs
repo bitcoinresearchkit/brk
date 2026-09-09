@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::{CachedVec, CachedVecStrategy};
-use crate::{ReadableVec, TypedVec};
+use crate::{ReadableVec, TypedVec, Version};
 
 impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S> {
     /// Return a current snapshot without waiting for its cache lock or filling it.
@@ -24,7 +24,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> ReadableVec<V:
     }
 
     #[inline(always)]
-    fn snapshot_version(&self) -> crate::Version {
+    fn snapshot_version(&self) -> Version {
         self.inner.snapshot_version()
     }
 

@@ -1,5 +1,6 @@
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyPerBlockCumulativeRolling};
 use brk_error::Result;
@@ -20,16 +21,20 @@ impl CoindaysDestroyedByCohort {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
-        let stored =
-            CumulativeUTXOCoreColumns::forced_import(db, "coindays_destroyed_cumulative", version)?;
+        let stored = CumulativeUTXOCoreColumns::forced_import(
+            cache,
+            db,
+            "coindays_destroyed_cumulative",
+            version,
+        )?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "coindays_destroyed");
             let source = stored
                 .columns
-                .additive_source(cache, &filter, &format!("{name}_cumulative"), version)
+                .additive_source(&filter, &format!("{name}_cumulative"), version)
                 .expect("supported coindays-destroyed cohort");
             LazyPerBlockCumulativeRolling::from_cumulative_source(
                 &name,

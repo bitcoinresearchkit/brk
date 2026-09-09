@@ -2,8 +2,9 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use crate::KeyRange;
-use std::ops::{Bound, RangeBounds};
+use std::ops::{Bound, Deref, RangeBounds};
+
+use crate::{KeyRange, Slice};
 
 pub trait Ranged {
     fn key_range(&self) -> &KeyRange;
@@ -13,7 +14,7 @@ pub trait Ranged {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Run<T: Ranged>(Vec<T>);
 
-impl<T: Ranged> std::ops::Deref for Run<T> {
+impl<T: Ranged> Deref for Run<T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
@@ -83,7 +84,7 @@ impl<T: Ranged> Run<T> {
     pub fn get_overlapping<'a>(&'a self, key_range: &'a KeyRange) -> &'a [T] {
         let range = key_range.min()..=key_range.max();
 
-        let Some((lo, hi)) = self.range_overlap_indexes::<crate::Slice, _>(&range) else {
+        let Some((lo, hi)) = self.range_overlap_indexes::<Slice, _>(&range) else {
             return &[];
         };
 
@@ -112,7 +113,7 @@ impl<T: Ranged> Run<T> {
 
         let range = key_range.min()..=key_range.max();
 
-        let Some((lo, hi)) = self.range_overlap_indexes::<crate::Slice, _>(&range) else {
+        let Some((lo, hi)) = self.range_overlap_indexes::<Slice, _>(&range) else {
             return &[];
         };
 
@@ -181,8 +182,9 @@ impl<T: Ranged> Run<T> {
 #[cfg(test)]
 #[expect(clippy::unwrap_used)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[derive(Clone)]
     struct FakeTable {

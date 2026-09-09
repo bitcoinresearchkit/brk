@@ -5,8 +5,8 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, StoredU16, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    CachedBoxedVec, CachedReadableVec, ColumnId, Ident, LazyVec, PcoVec, PinnedCachedVec,
-    ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
+    ColumnId, Ident, LazyVec, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec,
+    ReadableColumnarVec,
 };
 
 use crate::{CumulativeCountVec, IndexSources, LazyPerBlock};
@@ -25,8 +25,6 @@ pub struct LazyColumnCountPerBlockCumulativeRolling {
     pub rolling: RollingTotals<StoredU64>,
     #[traversable(skip)]
     cumulative_source: CumulativeCountVec,
-    #[traversable(skip)]
-    cached_block: CachedBoxedVec<Height, StoredU16>,
 }
 
 impl LazyColumnCountPerBlockCumulativeRolling {
@@ -41,8 +39,8 @@ impl LazyColumnCountPerBlockCumulativeRolling {
     where
         C: ColumnId,
     {
-        let column = PinnedCachedVec::wrap(source.column(name, version, column));
-        let cumulative_source = CumulativeCountVec::new(column.cached_boxed_clone());
+        let column = source.column(name, version, column);
+        let cumulative_source = CumulativeCountVec::new(column.clone());
         let block = LazyVec::transformed::<StoredU16ToStoredU64>(
             name,
             version,
@@ -61,16 +59,11 @@ impl LazyColumnCountPerBlockCumulativeRolling {
             cumulative,
             rolling,
             cumulative_source,
-            cached_block: column.cached_boxed_clone(),
         }
     }
 
     #[inline(always)]
     pub fn cumulative_source(&self) -> CumulativeCountVec {
         self.cumulative_source.clone()
-    }
-
-    pub fn invalidate(&self) {
-        self.cached_block.invalidate();
     }
 }

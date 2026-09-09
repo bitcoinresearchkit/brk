@@ -1,15 +1,21 @@
 use std::{
     cmp::Ordering,
+    fmt::{Display, Formatter, Result},
     ops::{Add, AddAssign, Div, Mul},
 };
 
-use crate::CheckedSub;
+use ryu::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::{Sats, StoredF64};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Bitcoin amount as floating point (1 BTC = 100,000,000 satoshis)
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -131,9 +137,9 @@ impl CheckedSub<usize> for Bitcoin {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for Bitcoin {
+impl VecdbCheckedSub<usize> for Bitcoin {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 impl CheckedSub<Bitcoin> for Bitcoin {
@@ -142,15 +148,15 @@ impl CheckedSub<Bitcoin> for Bitcoin {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<Bitcoin> for Bitcoin {
+impl VecdbCheckedSub<Bitcoin> for Bitcoin {
     fn checked_sub(self, rhs: Bitcoin) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for Bitcoin {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = ryu::Buffer::new();
+impl Display for Bitcoin {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -161,7 +167,7 @@ impl Formattable for Bitcoin {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         if self.0.is_finite() {
-            let mut b = ryu::Buffer::new();
+            let mut b = Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
     }

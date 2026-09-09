@@ -1,4 +1,3 @@
-use crate::{ColumnarPerBlock, LazyColumnPercentPerBlock};
 use bitview_cohort::{UTXOAggregate, UTXOAggregateId};
 use bitview_compute::FixedRatio;
 use bitview_traversable::Traversable;
@@ -6,6 +5,8 @@ use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
+
+use crate::{ColumnarPerBlock, IndexSources, LazyColumnPercentPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AggregatePercentPerBlock<B: FixedRatio, M: StorageMode = Rw> {
@@ -26,16 +27,17 @@ impl<B: FixedRatio> AggregatePercentPerBlock<B> {
         db: &Database,
         metric: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let values = ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{metric}_{}_by_aggregate", B::SUFFIX),
             version,
             |source| {
                 UTXOAggregate::from_fn(|id| {
                     let name = id.metric_name(metric);
-                    LazyColumnPercentPerBlock::new(cache, &name, version, source, id, indexes)
+                    LazyColumnPercentPerBlock::new(&name, version, source, id, indexes)
                 })
             },
         )?;

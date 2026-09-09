@@ -1,5 +1,3 @@
-mod common;
-
 use std::collections::BTreeMap;
 
 use bitview_transforms::RatioDollars;
@@ -7,14 +5,19 @@ use bitview_traversable::{Traversable, TreeNode};
 use bitview_vecs::{BasisPointsPerBlock, LazyBasisPointsPerBlock};
 use brk_types::{BasisPoints32, Dollars, Height, Version};
 use common::{indexes, stored};
+use tempfile::tempdir;
 use vecdb::{
     AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, CachedVec, Database, ReadableVec,
     WritableVec,
 };
 
+use crate::common::CACHE_BUDGET;
+
+mod common;
+
 #[test]
 fn stored_and_lazy_views_publish_bps_not_ppm() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     indexes.first_height.day1 =
@@ -29,7 +32,7 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
         BasisPoints32::from(74_641.0),
     ];
     let mut stored = BasisPointsPerBlock::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "puell_multiple",
         Version::ONE,
@@ -92,7 +95,7 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
     drop(lazy);
     drop(stored);
     let reopened = BasisPointsPerBlock::forced_import(
-        &crate::common::CACHE_BUDGET,
+        &CACHE_BUDGET,
         &db,
         "puell_multiple",
         Version::ONE,

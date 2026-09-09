@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use super::*;
 
 #[test]
@@ -8,19 +10,17 @@ fn schema_order_matches_sorted_queue_for_every_three_node_graph() {
         let mut dependencies = [Vec::new(), Vec::new(), Vec::new()];
         let mut degrees = [0usize; 3];
         for (i, name) in names.iter().enumerate() {
-            let mut refs = vec![serde_json::json!({"$ref": "#/components/schemas/Missing"})];
+            let mut refs = vec![json!({"$ref": "#/components/schemas/Missing"})];
             for (j, dependency) in names.iter().enumerate() {
                 if mask & (1 << (i * 3 + j)) != 0 {
-                    refs.push(
-                        serde_json::json!({"$ref": format!("#/components/schemas/{dependency}")}),
-                    );
+                    refs.push(json!({"$ref": format!("#/components/schemas/{dependency}")}));
                     if i != j {
                         dependencies[i].push(j);
                         degrees[j] += 1;
                     }
                 }
             }
-            schemas.insert(name.to_string(), serde_json::json!({"anyOf": refs}));
+            schemas.insert(name.to_string(), json!({"anyOf": refs}));
         }
         let mut queue: Vec<_> = (0..3).filter(|&i| degrees[i] == 0).collect();
         let mut expected = Vec::new();

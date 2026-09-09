@@ -1,4 +1,3 @@
-use crate::request_state::RequestState;
 use aide::axum::{
     ApiRouter,
     routing::{get_with, post_with},
@@ -13,6 +12,7 @@ use brk_types::{
     CpfpInfo, Hex, MerkleProof, RbfResponse, Transaction, TxOutspend, TxStatus, Txid, TxidPrefix,
     Version,
 };
+use serde_json::to_vec;
 use tower_http::limit::RequestBodyLimitLayer;
 
 use super::broadcast;
@@ -21,6 +21,7 @@ use crate::{
     error::Result,
     extended::TransformResponseExtended,
     params::{Empty, TxIndexParam, TxidParam, TxidVout, TxidsParam},
+    request_state::RequestState,
 };
 
 pub trait TxRoutes {
@@ -192,7 +193,7 @@ impl TxRoutes for ApiRouter<AppState> {
                         let tx = q.resolve_confirmed_tx(&param.txid)?;
                         let params = CacheParams::resolve(&AppState::representation_strategy(Version::ONE, tx.identity()), mode);
                         Ok((tx, params))
-                    }, |q, tx| Ok(serde_json::to_vec(&q.merkle_proof_resolved(tx)?)?.into())).await)
+                    }, |q, tx| Ok(to_vec(&q.merkle_proof_resolved(tx)?)?.into())).await)
                 },
                 |op| op
                     .id("get_tx_merkle_proof")

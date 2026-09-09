@@ -1,10 +1,14 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed},
+use std::{
+    fmt::{Debug, Formatter, Result},
+    sync::{
+        Arc,
+        atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed},
+    },
 };
 
-use crate::{BudgetedCachedVec, CachedVecBudget, TypedVec};
 use parking_lot::Mutex;
+
+use crate::{BudgetedCachedVec, CachedVecBudget, TypedVec};
 
 /// Shared memory limit and approximate LRU eviction for registered vector caches.
 pub struct CacheBudget {
@@ -14,8 +18,8 @@ pub struct CacheBudget {
     caches: Mutex<Vec<CacheEntry>>,
 }
 
-impl std::fmt::Debug for CacheBudget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for CacheBudget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("CacheBudget")
             .field("max_bytes", &self.max_bytes)
             .field("remaining_bytes", &self.remaining_bytes.load(Relaxed))
@@ -62,11 +66,13 @@ impl CacheBudget {
             last_access.clone(),
             resident_bytes.clone(),
         );
-        self.caches.lock().push(CacheEntry {
-            last_access,
-            resident_bytes,
-            invalidate: Arc::new(cached.weak_invalidator()),
-        });
+        if self.max_bytes > 0 {
+            self.caches.lock().push(CacheEntry {
+                last_access,
+                resident_bytes,
+                invalidate: Arc::new(cached.weak_invalidator()),
+            });
+        }
         cached
     }
 
@@ -139,9 +145,14 @@ impl CachedVecBudget for CacheBudget {
 
 #[cfg(test)]
 mod tests {
-    const MAX_BYTES: usize = 1024;
+    use std::thread;
+
+    use tempfile::tempdir;
+
     use super::*;
     use crate::{AnyStoredVec, BytesVec, Database, ImportableVec, StoredVec, Version, WritableVec};
+
+    const MAX_BYTES: usize = 1024;
 
     #[test]
     fn budgets_have_independent_configurable_limits() {
@@ -161,7 +172,7 @@ mod tests {
 
     #[test]
     fn reservation_evicts_oldest_and_keeps_accounting_symmetric() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let budget = Box::leak(Box::new(CacheBudget::new(MAX_BYTES)));
         let mut sources = Vec::new();
@@ -188,7 +199,7 @@ mod tests {
 
     #[test]
     fn dropped_sources_release_registration_and_budget_on_invalidation() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let budget = Box::leak(Box::new(CacheBudget::new(MAX_BYTES)));
         let mut source = BytesVec::<usize, u64>::import(&db, "temporary", Version::ONE).unwrap();
@@ -205,7 +216,7 @@ mod tests {
 
     #[test]
     fn multi_victim_reservation_stops_after_enough_bytes() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let budget = Box::leak(Box::new(CacheBudget::new(MAX_BYTES)));
         let mut sources = Vec::new();
@@ -241,7 +252,7 @@ mod tests {
         use parking_lot::RwLock;
         use std::sync::{Barrier, atomic::AtomicUsize};
 
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let budget: &'static CacheBudget = Box::leak(Box::new(CacheBudget::new(MAX_BYTES)));
         // Leave room for only two 64-byte resident snapshots, forcing eviction
@@ -262,7 +273,7 @@ mod tests {
         let publication = RwLock::new(0u64);
         let start = Barrier::new(5);
         let reads = AtomicUsize::new(0);
-        std::thread::scope(|scope| {
+        thread::scope(|scope| {
             for worker in 0..4 {
                 let readers = &readers;
                 let publication = &publication;
@@ -276,7 +287,7 @@ mod tests {
                         assert_eq!(&*snapshot, &[*epoch; 8]);
                         reads.fetch_add(1, Relaxed);
                         drop(epoch);
-                        std::thread::yield_now();
+                        thread::yield_now();
                     }
                 });
             }
@@ -293,7 +304,7 @@ mod tests {
                 }
                 *published = epoch;
                 drop(published);
-                std::thread::yield_now();
+                thread::yield_now();
             }
         });
         assert_eq!(reads.load(Relaxed), 512);

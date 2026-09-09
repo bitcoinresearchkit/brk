@@ -1,17 +1,18 @@
-use brk_error::Result;
-
+use bitview_compute::ComputeRollingMedianFromStarts;
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::StoredF64;
 
 use super::{super::value, Vecs};
-use bitview_compute::ComputeRollingMedianFromStarts;
 
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    blocks: &bitview_plugin_blocks::Vecs,
-    prices: &bitview_plugin_price::Vecs,
+    blocks: &BlocksVecs,
+    prices: &PriceVecs,
     value: &value::Vecs,
     exit: &Exit,
 ) -> Result<()> {

@@ -1,4 +1,5 @@
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::LazyFiatPerBlock;
 use brk_error::Result;
@@ -19,14 +20,15 @@ impl NetUnrealizedByCohort {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let metric = "net_unrealized_pnl";
-        let stored = UTXOCoreColumns::forced_import(db, "net_unrealized_pnl_cents", version)?;
+        let stored =
+            UTXOCoreColumns::forced_import(cache, db, "net_unrealized_pnl_cents", version)?;
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let source = stored
-                .additive_source(cache, &filter, &format!("{name}_cents"), version)
+                .additive_source(&filter, &format!("{name}_cents"), version)
                 .expect("supported net unrealized cohort");
             LazyFiatPerBlock::from_cents_source(&name, version, &source, mappings)
         });

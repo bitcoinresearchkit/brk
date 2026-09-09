@@ -2,12 +2,13 @@
 //!
 //! Run with: cargo run -p bitview_plugin_price --example report --release
 
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 use brk_oracle::{
     Config, Oracle, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW, bin_to_cents, cents_to_bin,
 };
-use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{OutputType, Sats, Timestamp, TxIndex, TxOutIndex};
+use serde_json::from_str;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 mod common;
@@ -125,10 +126,10 @@ struct BlockError {
 }
 
 fn main() {
-    let data_dir = std::env::var("BITVIEW_DIR")
+    let data_dir = env::var("BITVIEW_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
-            let home = std::env::var("HOME").unwrap();
+            let home = env::var("HOME").unwrap();
             PathBuf::from(home).join(".bitview")
         });
 
@@ -136,14 +137,14 @@ fn main() {
     let total_heights = indexer.vecs().blocks.timestamp.len();
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
 
-    let height_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
+    let height_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
             .expect("Failed to read height_price_ohlc.json"),
     )
     .expect("Failed to parse height OHLC");
 
-    let daily_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/date_price_ohlc.json"))
+    let daily_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/date_price_ohlc.json"))
             .expect("Failed to read date_price_ohlc.json"),
     )
     .expect("Failed to parse daily OHLC");
@@ -162,7 +163,7 @@ fn main() {
         .collect();
 
     // Read block timestamps for year + day1 mapping.
-    let timestamps: Vec<brk_types::Timestamp> = indexer.vecs().blocks.timestamp.collect();
+    let timestamps: Vec<Timestamp> = indexer.vecs().blocks.timestamp.collect();
     let height_years: Vec<u16> = timestamps
         .iter()
         .map(|ts| timestamp_to_year(**ts))

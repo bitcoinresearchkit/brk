@@ -1,13 +1,14 @@
-use crate::{ReadableVec, StoredVec};
+use std::result::Result;
 
 use super::EagerVec;
+use crate::{ReadableVec, StoredVec, Version};
 
 impl<V> ReadableVec<V::I, V::T> for EagerVec<V>
 where
     V: StoredVec,
 {
     #[inline(always)]
-    fn snapshot_version(&self) -> crate::Version {
+    fn snapshot_version(&self) -> Version {
         self.0.snapshot_version()
     }
 
@@ -50,13 +51,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, V::T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, V::T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized,
     {

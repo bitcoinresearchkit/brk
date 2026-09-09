@@ -3,6 +3,7 @@ use axum::{
     handler::Handler,
     http::{Request, StatusCode},
 };
+use serde_json::to_vec;
 
 use super::*;
 
@@ -34,7 +35,7 @@ async fn version_validates_parameters_before_conditionals() {
         );
         let body = to_bytes(response.into_body(), 1024).await.unwrap();
         if status == StatusCode::OK {
-            assert_eq!(body.as_ref(), serde_json::to_vec(VERSION).unwrap());
+            assert_eq!(body.as_ref(), to_vec(VERSION).unwrap());
         } else {
             assert!(body.is_empty());
         }

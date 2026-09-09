@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
-use bitcoin::{Transaction, VarInt, block::Header, consensus::Decodable};
-use brk_error::Error;
+use bitcoin::{Block as BitcoinBlock, Transaction, VarInt, block::Header, consensus::Decodable};
+use brk_error::{Error, Result};
 use brk_types::{BlkMetadata, Block, BlockHash, Height, ReadBlock};
 
 use crate::{XORBytes, XORIndex, canonical::CanonicalRange};
@@ -34,7 +34,7 @@ pub fn parse_canonical_body(
     xor_bytes: XORBytes,
     height: Height,
     header: Header,
-) -> brk_error::Result<ReadBlock> {
+) -> Result<ReadBlock> {
     if bytes.len() < HEADER_LEN {
         return Err(Error::Internal("Block bytes shorter than header"));
     }
@@ -63,7 +63,7 @@ pub fn parse_canonical_body(
     }
 
     let raw_bytes = cursor.into_inner();
-    let mut block = Block::from((height, bitcoin_hash, bitcoin::Block { header, txdata }));
+    let mut block = Block::from((height, bitcoin_hash, BitcoinBlock { header, txdata }));
     block.set_raw_data(raw_bytes, tx_offsets);
     Ok(ReadBlock::from((block, metadata, tx_metadata)))
 }

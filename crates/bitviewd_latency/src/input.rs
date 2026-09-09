@@ -1,9 +1,12 @@
-use crate::Result;
 use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
 };
+
+use jiff::civil::Date;
+
+use crate::Result;
 
 pub fn discover(location: &Path) -> Result<Vec<PathBuf>> {
     let mut days: BTreeMap<String, Vec<PathBuf>> = BTreeMap::new();
@@ -21,7 +24,7 @@ pub fn discover(location: &Path) -> Result<Vec<PathBuf>> {
             continue;
         };
         let (day, suffix) = stem.split_once('_').unwrap_or((stem, ""));
-        if day.parse::<jiff::civil::Date>().is_err() || day.len() != 10 {
+        if day.parse::<Date>().is_err() || day.len() != 10 {
             continue;
         }
         if !["", "info", "debug", "error", "warn", "trace"].contains(&suffix) {

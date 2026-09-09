@@ -4,11 +4,13 @@
 //! after vec_a.write(), vec_b can immediately read the new data because
 //! both share the same mmap. No fsync is needed for in-process visibility.
 
+use std::error::Error;
+
 use rawdb::Database;
 use tempfile::TempDir;
-use vecdb::{StoredVec, Version};
+use vecdb::{Result as VecdbResult, StoredVec, Version};
 
-fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
+fn setup_test_db() -> VecdbResult<(Database, TempDir)> {
     let temp_dir = TempDir::new()?;
     let db = Database::open(temp_dir.path())?;
     Ok((db, temp_dir))
@@ -16,7 +18,7 @@ fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
 
 /// Tests that after write() on vec_a, a separate vec_b instance
 /// can read the new data (simulating derived vec computation).
-fn run_write_visibility_test<V>() -> Result<(), Box<dyn std::error::Error>>
+fn run_write_visibility_test<V>() -> Result<(), Box<dyn Error>>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -60,7 +62,7 @@ where
 /// 2. Compute vec_b derived from vec_a, write it
 /// 3. Compute vec_c derived from vec_b, write it
 /// 4. Final flush for durability
-fn run_compute_chain_test<V>() -> Result<(), Box<dyn std::error::Error>>
+fn run_compute_chain_test<V>() -> Result<(), Box<dyn Error>>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -125,7 +127,7 @@ where
 /// Tests that write() returns the correct boolean:
 /// - true if data was written
 /// - false if nothing to write
-fn run_write_returns_bool_test<V>() -> Result<(), Box<dyn std::error::Error>>
+fn run_write_returns_bool_test<V>() -> Result<(), Box<dyn Error>>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -163,110 +165,120 @@ where
 // ============================================================================
 
 mod bytes {
-    use super::*;
     use vecdb::BytesVec;
+
+    use super::*;
+
     type V = BytesVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
         run_write_visibility_test::<V>()
     }
 
     #[test]
-    fn test_compute_chain() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
 
     #[test]
-    fn test_write_returns_bool() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_returns_bool() -> Result<(), Box<dyn Error>> {
         run_write_returns_bool_test::<V>()
     }
 }
 
 #[cfg(feature = "pco")]
 mod pco {
-    use super::*;
     use vecdb::PcoVec;
+
+    use super::*;
+
     type V = PcoVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
         run_write_visibility_test::<V>()
     }
 
     #[test]
-    fn test_compute_chain() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
 
     #[test]
-    fn test_write_returns_bool() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_returns_bool() -> Result<(), Box<dyn Error>> {
         run_write_returns_bool_test::<V>()
     }
 }
 
 #[cfg(feature = "lz4")]
 mod lz4 {
-    use super::*;
     use vecdb::LZ4Vec;
+
+    use super::*;
+
     type V = LZ4Vec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
         run_write_visibility_test::<V>()
     }
 
     #[test]
-    fn test_compute_chain() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
 
     #[test]
-    fn test_write_returns_bool() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_returns_bool() -> Result<(), Box<dyn Error>> {
         run_write_returns_bool_test::<V>()
     }
 }
 
 #[cfg(feature = "zstd")]
 mod zstd {
-    use super::*;
     use vecdb::ZstdVec;
+
+    use super::*;
+
     type V = ZstdVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
         run_write_visibility_test::<V>()
     }
 
     #[test]
-    fn test_compute_chain() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
 
     #[test]
-    fn test_write_returns_bool() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_returns_bool() -> Result<(), Box<dyn Error>> {
         run_write_returns_bool_test::<V>()
     }
 }
 
 #[cfg(feature = "zerocopy")]
 mod zerocopy {
-    use super::*;
     use vecdb::ZeroCopyVec;
+
+    use super::*;
+
     type V = ZeroCopyVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
         run_write_visibility_test::<V>()
     }
 
     #[test]
-    fn test_compute_chain() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
 
     #[test]
-    fn test_write_returns_bool() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write_returns_bool() -> Result<(), Box<dyn Error>> {
         run_write_returns_bool_test::<V>()
     }
 }

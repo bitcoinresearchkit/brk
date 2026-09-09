@@ -1,12 +1,19 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
 
@@ -130,16 +137,16 @@ impl CheckedSub for Bytes {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Bytes {
+impl VecdbCheckedSub for Bytes {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for Bytes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buffer = itoa::Buffer::new();
+impl Display for Bytes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buffer = Buffer::new();
         f.write_str(buffer.format(self.0))
     }
 }
@@ -148,7 +155,7 @@ impl std::fmt::Display for Bytes {
 impl Formattable for Bytes {
     #[inline(always)]
     fn write_to(&self, buffer: &mut Vec<u8>) {
-        let mut formatted = itoa::Buffer::new();
+        let mut formatted = Buffer::new();
         buffer.extend_from_slice(formatted.format(self.0).as_bytes());
     }
 }

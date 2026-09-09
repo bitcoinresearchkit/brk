@@ -1,16 +1,21 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, VSize, Weight};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::{VSize, Weight};
 
 /// Weight in weight units with enough range for cumulative and rolling totals.
 #[derive(
@@ -146,16 +151,16 @@ impl CheckedSub for Weight64 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Weight64 {
+impl VecdbCheckedSub for Weight64 {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for Weight64 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buffer = itoa::Buffer::new();
+impl Display for Weight64 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buffer = Buffer::new();
         f.write_str(buffer.format(self.0))
     }
 }
@@ -164,7 +169,7 @@ impl std::fmt::Display for Weight64 {
 impl Formattable for Weight64 {
     #[inline(always)]
     fn write_to(&self, buffer: &mut Vec<u8>) {
-        let mut value = itoa::Buffer::new();
+        let mut value = Buffer::new();
         buffer.extend_from_slice(value.format(self.0).as_bytes());
     }
 }

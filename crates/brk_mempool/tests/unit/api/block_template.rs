@@ -1,5 +1,6 @@
 use brk_error::Error;
 use brk_types::{BlockTemplateDiffEntry, FeeRate, Sats, TxOut, TxidPrefix, Vin};
+use serde_json::to_vec;
 
 use super::*;
 use crate::{
@@ -198,8 +199,8 @@ fn body_fills_publish_a_new_identity_and_diff_reconstructs_every_field() {
             .is_none()
     );
     assert_eq!(
-        serde_json::to_vec(&mempool.block_template().unwrap()).unwrap(),
-        serde_json::to_vec(&before).unwrap()
+        to_vec(&mempool.block_template().unwrap()).unwrap(),
+        to_vec(&before).unwrap()
     );
     // Body changes alone must rebuild: no GBT, membership or fee-floor change.
     mempool
@@ -228,8 +229,8 @@ fn body_fills_publish_a_new_identity_and_diff_reconstructs_every_field() {
         })
         .collect();
     assert_eq!(
-        serde_json::to_vec(&reconstructed).unwrap(),
-        serde_json::to_vec(&after.transactions).unwrap()
+        to_vec(&reconstructed).unwrap(),
+        to_vec(&after.transactions).unwrap()
     );
 }
 
@@ -245,8 +246,8 @@ fn published_bodies_survive_removal_and_incomplete_selection_is_not_served() {
         .txs
         .remove_by_prefix(&TxidPrefix::from(txid));
     assert_eq!(
-        serde_json::to_vec(&mempool.block_template().unwrap()).unwrap(),
-        serde_json::to_vec(&before).unwrap()
+        to_vec(&mempool.block_template().unwrap()).unwrap(),
+        to_vec(&before).unwrap()
     );
     mempool.test_tick(&[txid], FeeRate::new(1.0));
     assert!(matches!(

@@ -2,12 +2,15 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{cmp::Ordering, mem::size_of, path::Path};
+
+use log::trace;
+
 use super::{Block, BlockHandle, GlobalTableId};
 use crate::{
-    Cache, CompressionType, KeyRange, Table, file_accessor::FileAccessor, table::block::BlockType,
-    version::run::Ranged,
+    Cache, CompressionType, Error, KeyRange, Result, Table, file_accessor::FileAccessor,
+    table::block::BlockType, version::run::Ranged,
 };
-use std::{mem::size_of, path::Path};
 
 #[must_use]
 pub fn aggregate_run_key_range(tables: &[Table]) -> KeyRange {
@@ -34,8 +37,8 @@ pub fn load_block(
     handle: &BlockHandle,
     block_type: BlockType,
     compression: CompressionType,
-) -> crate::Result<Block> {
-    log::trace!("load {block_type:?} block {handle:?}");
+) -> Result<Block> {
+    trace!("load {block_type:?} block {handle:?}");
 
     if let Some(block) = cache.get_block(table_id, handle.offset()) {
         return Ok(block);
@@ -45,7 +48,7 @@ pub fn load_block(
     let block = Block::from_file(&fd, *handle, compression)?;
 
     if block.header.block_type != block_type {
-        return Err(crate::Error::InvalidTag((
+        return Err(Error::InvalidTag((
             "BlockType",
             block.header.block_type.into(),
         )));
@@ -96,7 +99,7 @@ pub fn longest_shared_prefix_length(s1: &[u8], s2: &[u8]) -> usize {
 }
 
 #[must_use]
-pub fn compare_prefixed_slice(prefix: &[u8], suffix: &[u8], needle: &[u8]) -> std::cmp::Ordering {
+pub fn compare_prefixed_slice(prefix: &[u8], suffix: &[u8], needle: &[u8]) -> Ordering {
     use std::cmp::Ordering::{Equal, Greater};
 
     if needle.is_empty() {
@@ -134,8 +137,9 @@ pub fn compare_prefixed_slice(prefix: &[u8], suffix: &[u8], needle: &[u8]) -> st
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     #[expect(

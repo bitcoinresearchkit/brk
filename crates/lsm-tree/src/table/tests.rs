@@ -2,13 +2,18 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::fs;
+
+use nanoid::nanoid;
+use tempfile::tempdir;
+use test_log::test;
+
 use super::*;
 use crate::{
+    Cache, DescriptorTable, InternalValue, KeyRange, Result, Table, ValueType,
     config::BloomConstructionPolicy,
     table::{filter::standard_bloom::Builder as BloomBuilder, writer::Writer},
 };
-use tempfile::tempdir;
-use test_log::test;
 
 #[expect(
     clippy::too_many_lines,
@@ -18,10 +23,10 @@ use test_log::test;
 )]
 fn test_with_table(
     items: &[InternalValue],
-    f: impl Fn(Table) -> crate::Result<()>,
+    f: impl Fn(Table) -> Result<()>,
     rotate_every: Option<usize>,
     config_writer: Option<impl Fn(Writer) -> Writer>,
-) -> crate::Result<()> {
+) -> Result<()> {
     let dir = tempdir()?;
     let file = dir.path().join("table");
 
@@ -160,7 +165,7 @@ fn test_with_table(
         }
     }
 
-    std::fs::remove_file(&file)?;
+    fs::remove_file(&file)?;
 
     // Test with partitioned indexes
     {
@@ -301,12 +306,12 @@ fn test_with_table(
 
 #[test]
 #[expect(clippy::unwrap_used)]
-fn table_point_read() -> crate::Result<()> {
-    let items = [crate::InternalValue::from_components(
+fn table_point_read() -> Result<()> {
+    let items = [InternalValue::from_components(
         b"abc",
         b"asdasdasd",
         3,
-        crate::ValueType::Value,
+        ValueType::Value,
     )];
 
     test_with_table(
@@ -325,7 +330,7 @@ fn table_point_read() -> crate::Result<()> {
 
             assert_eq!(
                 table.metadata.key_range,
-                crate::KeyRange::new((b"abc".into(), b"abc".into())),
+                KeyRange::new((b"abc".into(), b"abc".into())),
             );
 
             Ok(())
@@ -336,15 +341,15 @@ fn table_point_read() -> crate::Result<()> {
 }
 
 #[test]
-fn table_range_exclusive_bounds() -> crate::Result<()> {
+fn table_range_exclusive_bounds() -> Result<()> {
     use std::ops::Bound::{Excluded, Included};
 
     let items = [
-        crate::InternalValue::from_components(b"a", b"v", 0, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"b", b"v", 0, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"c", b"v", 0, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"d", b"v", 0, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"e", b"v", 0, crate::ValueType::Value),
+        InternalValue::from_components(b"a", b"v", 0, ValueType::Value),
+        InternalValue::from_components(b"b", b"v", 0, ValueType::Value),
+        InternalValue::from_components(b"c", b"v", 0, ValueType::Value),
+        InternalValue::from_components(b"d", b"v", 0, ValueType::Value),
+        InternalValue::from_components(b"e", b"v", 0, ValueType::Value),
     ];
 
     test_with_table(
@@ -408,11 +413,11 @@ fn table_range_exclusive_bounds() -> crate::Result<()> {
 }
 
 #[test]
-fn table_scan() -> crate::Result<()> {
+fn table_scan() -> Result<()> {
     let items = [
-        crate::InternalValue::from_components(b"abc", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"def", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"xyz", b"asdasdasd", 3, crate::ValueType::Value),
+        InternalValue::from_components(b"abc", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"def", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"xyz", b"asdasdasd", 3, ValueType::Value),
     ];
 
     test_with_table(
@@ -422,7 +427,7 @@ fn table_scan() -> crate::Result<()> {
 
             assert_eq!(
                 table.metadata.key_range,
-                crate::KeyRange::new((b"abc".into(), b"xyz".into())),
+                KeyRange::new((b"abc".into(), b"xyz".into())),
             );
 
             Ok(())
@@ -433,11 +438,11 @@ fn table_scan() -> crate::Result<()> {
 }
 
 #[test]
-fn table_iter_simple() -> crate::Result<()> {
+fn table_iter_simple() -> Result<()> {
     let items = [
-        crate::InternalValue::from_components(b"abc", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"def", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"xyz", b"asdasdasd", 3, crate::ValueType::Value),
+        InternalValue::from_components(b"abc", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"def", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"xyz", b"asdasdasd", 3, ValueType::Value),
     ];
 
     test_with_table(
@@ -457,11 +462,11 @@ fn table_iter_simple() -> crate::Result<()> {
 }
 
 #[test]
-fn table_range_simple() -> crate::Result<()> {
+fn table_range_simple() -> Result<()> {
     let items = [
-        crate::InternalValue::from_components(b"abc", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"def", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"xyz", b"asdasdasd", 3, crate::ValueType::Value),
+        InternalValue::from_components(b"abc", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"def", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"xyz", b"asdasdasd", 3, ValueType::Value),
     ];
 
     test_with_table(
@@ -492,9 +497,9 @@ fn table_range_simple() -> crate::Result<()> {
 }
 
 #[test]
-fn table_range_ping_pong() -> crate::Result<()> {
+fn table_range_ping_pong() -> Result<()> {
     let items = (0u64..10)
-        .map(|i| InternalValue::from_components(i.to_be_bytes(), "", 0, crate::ValueType::Value))
+        .map(|i| InternalValue::from_components(i.to_be_bytes(), "", 0, ValueType::Value))
         .collect::<Vec<_>>();
 
     test_with_table(
@@ -531,13 +536,13 @@ fn table_range_ping_pong() -> crate::Result<()> {
 }
 
 #[test]
-fn table_range_multiple_data_blocks() -> crate::Result<()> {
+fn table_range_multiple_data_blocks() -> Result<()> {
     let items = [
-        crate::InternalValue::from_components(b"a", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"b", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"c", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"d", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"e", b"asdasdasd", 3, crate::ValueType::Value),
+        InternalValue::from_components(b"a", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"b", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"c", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"d", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"e", b"asdasdasd", 3, ValueType::Value),
     ];
 
     test_with_table(
@@ -577,13 +582,13 @@ fn table_range_multiple_data_blocks() -> crate::Result<()> {
 
 #[test]
 #[expect(clippy::unwrap_used)]
-fn table_point_read_partitioned_filter_smoke_test() -> crate::Result<()> {
+fn table_point_read_partitioned_filter_smoke_test() -> Result<()> {
     let items = [
-        crate::InternalValue::from_components(b"a", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"b", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"c", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"d", b"asdasdasd", 3, crate::ValueType::Value),
-        crate::InternalValue::from_components(b"e", b"asdasdasd", 3, crate::ValueType::Value),
+        InternalValue::from_components(b"a", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"b", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"c", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"d", b"asdasdasd", 3, ValueType::Value),
+        InternalValue::from_components(b"e", b"asdasdasd", 3, ValueType::Value),
     ];
 
     test_with_table(
@@ -613,7 +618,7 @@ fn table_point_read_partitioned_filter_smoke_test() -> crate::Result<()> {
 
 #[test]
 #[expect(clippy::unwrap_used)]
-fn table_partitioned_filter() -> crate::Result<()> {
+fn table_partitioned_filter() -> Result<()> {
     use crate::ValueType::Value;
 
     let items = [
@@ -651,14 +656,14 @@ fn table_partitioned_filter() -> crate::Result<()> {
 }
 
 #[test]
-fn table_highest_seqno() -> crate::Result<()> {
+fn table_highest_seqno() -> Result<()> {
     use crate::ValueType::Value;
 
     let items = [
-        InternalValue::from_components("a", nanoid::nanoid!().as_bytes(), 7, Value),
-        InternalValue::from_components("b", nanoid::nanoid!().as_bytes(), 5, Value),
-        InternalValue::from_components("c", nanoid::nanoid!().as_bytes(), 8, Value),
-        InternalValue::from_components("d", nanoid::nanoid!().as_bytes(), 10, Value),
+        InternalValue::from_components("a", nanoid!().as_bytes(), 7, Value),
+        InternalValue::from_components("b", nanoid!().as_bytes(), 5, Value),
+        InternalValue::from_components("c", nanoid!().as_bytes(), 8, Value),
+        InternalValue::from_components("d", nanoid!().as_bytes(), 10, Value),
     ];
 
     test_with_table(
@@ -673,14 +678,14 @@ fn table_highest_seqno() -> crate::Result<()> {
 }
 
 #[test]
-fn table_zero_bpk() -> crate::Result<()> {
+fn table_zero_bpk() -> Result<()> {
     use crate::ValueType::Value;
 
     let items = [
-        InternalValue::from_components("a", nanoid::nanoid!().as_bytes(), 7, Value),
-        InternalValue::from_components("b", nanoid::nanoid!().as_bytes(), 5, Value),
-        InternalValue::from_components("c", nanoid::nanoid!().as_bytes(), 8, Value),
-        InternalValue::from_components("d", nanoid::nanoid!().as_bytes(), 10, Value),
+        InternalValue::from_components("a", nanoid!().as_bytes(), 7, Value),
+        InternalValue::from_components("b", nanoid!().as_bytes(), 5, Value),
+        InternalValue::from_components("c", nanoid!().as_bytes(), 8, Value),
+        InternalValue::from_components("d", nanoid!().as_bytes(), 10, Value),
     ];
 
     test_with_table(
@@ -701,7 +706,7 @@ fn table_zero_bpk() -> crate::Result<()> {
     clippy::indexing_slicing,
     clippy::cast_possible_truncation
 )]
-fn table_read_fuzz_1() -> crate::Result<()> {
+fn table_read_fuzz_1() -> Result<()> {
     use crate::Slice;
     use crate::ValueType::{Tombstone, Value};
 
@@ -1051,7 +1056,7 @@ fn table_read_fuzz_1() -> crate::Result<()> {
         ),
     ];
 
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let file = dir.path().join("table_fuzz");
 
     let data_block_size = 97;
@@ -1066,12 +1071,12 @@ fn table_read_fuzz_1() -> crate::Result<()> {
 
     let _trailer = writer.finish().unwrap();
 
-    let table = crate::Table::recover(
+    let table = Table::recover(
         file,
         0,
         0,
-        Arc::new(crate::Cache::with_capacity_bytes(0)),
-        Some(Arc::new(crate::DescriptorTable::new(10))),
+        Arc::new(Cache::with_capacity_bytes(0)),
+        Some(Arc::new(DescriptorTable::new(10))),
         true,
         true,
     )
@@ -1110,7 +1115,7 @@ fn table_read_fuzz_1() -> crate::Result<()> {
 
 #[test]
 #[expect(clippy::unwrap_used)]
-fn table_partitioned_index() -> crate::Result<()> {
+fn table_partitioned_index() -> Result<()> {
     use crate::ValueType::Value;
 
     let items = [
@@ -1124,7 +1129,7 @@ fn table_partitioned_index() -> crate::Result<()> {
         InternalValue::from_components("h", "h10", 10, Value),
     ];
 
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let file = dir.path().join("table_fuzz");
 
     let mut writer = Writer::new(file.clone(), 0)
@@ -1139,12 +1144,12 @@ fn table_partitioned_index() -> crate::Result<()> {
 
     let _trailer = writer.finish().unwrap();
 
-    let table = crate::Table::recover(
+    let table = Table::recover(
         file,
         0,
         0,
-        Arc::new(crate::Cache::with_capacity_bytes(0)),
-        Some(Arc::new(crate::DescriptorTable::new(10))),
+        Arc::new(Cache::with_capacity_bytes(0)),
+        Some(Arc::new(DescriptorTable::new(10))),
         true,
         true,
     )
@@ -1168,14 +1173,14 @@ fn table_partitioned_index() -> crate::Result<()> {
 
 #[test]
 #[expect(clippy::unwrap_used)]
-fn table_return_global_seqno() -> crate::Result<()> {
+fn table_return_global_seqno() -> Result<()> {
     use crate::ValueType::Value;
 
     const SEQNO: u64 = 15;
 
     let items = [InternalValue::from_components("abc", "abc", 0, Value)];
 
-    let dir = tempfile::tempdir()?;
+    let dir = tempdir()?;
     let file = dir.path().join("table_fuzz");
 
     let mut writer = Writer::new(file.clone(), 0)?;
@@ -1186,12 +1191,12 @@ fn table_return_global_seqno() -> crate::Result<()> {
 
     let _trailer = writer.finish()?;
 
-    let table = crate::Table::recover(
+    let table = Table::recover(
         file,
         SEQNO,
         0,
-        Arc::new(crate::Cache::with_capacity_bytes(0)),
-        Some(Arc::new(crate::DescriptorTable::new(10))),
+        Arc::new(Cache::with_capacity_bytes(0)),
+        Some(Arc::new(DescriptorTable::new(10))),
         true,
         true,
     )?;

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{future, sync::Arc};
 
 use axum::{
     http::{HeaderValue, header::CACHE_CONTROL},
@@ -119,7 +119,7 @@ fn render(
 }
 
 pub fn route(html: Arc<str>) -> MethodRouter {
-    get(move || std::future::ready(response(html.clone())))
+    get(move || future::ready(response(html.clone())))
 }
 
 fn response(html: Arc<str>) -> Response {

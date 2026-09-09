@@ -4,9 +4,9 @@ use bitview_cohort::UTXOCoreRows;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
-use vecdb::{AnyStoredVec, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, PcoVecValue, Rw, StorageMode};
 
-use super::super::UTXOCoreColumns;
+use super::super::{UTXOCoreColumns, state::CumulativeState};
 
 #[derive(Traversable)]
 pub struct CumulativeUTXOCoreColumns<T, M: StorageMode = Rw>
@@ -15,16 +15,21 @@ where
 {
     #[traversable(flatten)]
     pub columns: UTXOCoreColumns<T, M>,
-    last: M::WriteOnly<super::super::state::CumulativeState<UTXOCoreRows<T>>>,
+    last: M::WriteOnly<CumulativeState<UTXOCoreRows<T>>>,
 }
 
 impl<T> CumulativeUTXOCoreColumns<T>
 where
     T: PcoVecValue + AddAssign + Copy + Default,
 {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         Ok(Self {
-            columns: UTXOCoreColumns::forced_import(db, name, version)?,
+            columns: UTXOCoreColumns::forced_import(cache, db, name, version)?,
             last: Default::default(),
         })
     }

@@ -1,12 +1,13 @@
+use core::error::Error as ErrorError;
 use std::ops::Add;
 
-use crate::{
-    AnyVec, CheckedSub, Error, ReadableVec, SaturatingAdd, StoredVec, VecIndex, VecValue, Version,
-    WritableVec, unlikely,
-};
 use brk_exit::Exit;
 
 use super::super::EagerVec;
+use crate::{
+    AnyVec, CheckedSub, Error, ReadableVec, Result, SaturatingAdd, StoredVec, VecIndex, VecValue,
+    Version, WritableVec, unlikely,
+};
 
 impl<V> EagerVec<V>
 where
@@ -18,7 +19,7 @@ where
         others: &[&O],
         exit: &Exit,
         aggregate: F,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         O: ReadableVec<V::I, V::T>,
         F: Fn(&mut V::T, V::T),
@@ -65,7 +66,7 @@ where
         max_from: V::I,
         others: &[&O],
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         O: ReadableVec<V::I, V::T>,
         V::T: Add<V::T, Output = V::T>,
@@ -80,7 +81,7 @@ where
         max_from: V::I,
         others: &[&O],
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         O: ReadableVec<V::I, V::T>,
         V::T: Add<V::T, Output = V::T> + Ord,
@@ -97,7 +98,7 @@ where
         max_from: V::I,
         others: &[&O],
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         O: ReadableVec<V::I, V::T>,
         V::T: Add<V::T, Output = V::T> + Ord,
@@ -120,7 +121,7 @@ where
         weights: &[&OW],
         values: &[&OV],
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         W: VecValue + Into<f64>,
         OW: ReadableVec<V::I, W>,
@@ -203,7 +204,7 @@ where
         indexes_count: &impl ReadableVec<V::I, B>,
         source: &(impl ReadableVec<A, V::T> + Sized),
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: Default + SaturatingAdd,
         A: VecIndex + VecValue,
@@ -285,7 +286,7 @@ where
         source: &(impl ReadableVec<A, V::T> + Sized),
         mut filter: impl FnMut(&V::T) -> bool,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: Default + SaturatingAdd,
         A: VecIndex + VecValue,
@@ -368,7 +369,7 @@ where
         first_indexes: &impl ReadableVec<V::I, A>,
         other_to_else: &impl ReadableVec<A, B>,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A>,
         A: VecValue
@@ -378,7 +379,7 @@ where
             + CheckedSub<A>
             + TryInto<V::T>
             + Default,
-        <A as TryInto<V::T>>::Error: core::error::Error + 'static,
+        <A as TryInto<V::T>>::Error: ErrorError + 'static,
         B: VecValue,
     {
         self.compute_count_from_indexes_with(
@@ -397,7 +398,7 @@ where
         other_to_else: &impl ReadableVec<A, B>,
         mut filter: impl FnMut(A) -> bool,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A>,
         A: VecValue
@@ -408,7 +409,7 @@ where
             + TryInto<V::T>
             + Default,
         B: VecValue,
-        <A as TryInto<V::T>>::Error: core::error::Error + 'static,
+        <A as TryInto<V::T>>::Error: ErrorError + 'static,
     {
         self.compute_count_from_indexes_with(
             max_from,
@@ -426,7 +427,7 @@ where
         other_to_else: &impl ReadableVec<A, B>,
         mut count_fn: impl FnMut(usize, usize) -> usize,
         exit: &Exit,
-    ) -> crate::Result<()>
+    ) -> Result<()>
     where
         V::T: From<A>,
         A: VecValue
@@ -437,7 +438,7 @@ where
             + TryInto<V::T>
             + Default,
         B: VecValue,
-        <A as TryInto<V::T>>::Error: core::error::Error + 'static,
+        <A as TryInto<V::T>>::Error: ErrorError + 'static,
     {
         self.compute_init(
             first_indexes.version() + other_to_else.version(),

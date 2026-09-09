@@ -1,9 +1,9 @@
 use brk_types::{Cents, Height, Version};
 use vecdb::ReadableCloneableVec;
 
-use crate::{IndexSources, LazyPerBlock, LazyRatioPerBlock, Price};
+use crate::{IndexSources, LazyPerBlock, LazyRatioPerBlock, Price, PriceWithRatio};
 
-pub type LazyPriceWithRatioPerBlock = crate::PriceWithRatio<Price<LazyPerBlock<Cents>>>;
+pub type LazyPriceWithRatioPerBlock = PriceWithRatio<Price<LazyPerBlock<Cents>>>;
 
 impl LazyPriceWithRatioPerBlock {
     pub fn from_height_source<V>(

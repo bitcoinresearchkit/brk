@@ -1,3 +1,7 @@
+use std::{env, fs, iter, process};
+
+use bitcoin::Amount;
+
 use super::*;
 use crate::PercentileId;
 
@@ -47,7 +51,7 @@ fn reserved_price_is_rejected_without_constructing_a_nan_price() {
 
 #[test]
 fn file_roundtrip() {
-    let root = std::env::temp_dir().join(format!("brk-urpd-file-{}", std::process::id()));
+    let root = env::temp_dir().join(format!("brk-urpd-file-{}", process::id()));
     let date = Date::new(2026, 8, 4);
     let expected = BTreeMap::from([
         (CentsCompact::new(100), Sats::from(21_u64)),
@@ -83,7 +87,7 @@ fn file_roundtrip() {
     trailing.push(0);
     assert!(UrpdRaw::deserialize_exact(&trailing).is_err());
 
-    UrpdRaw::write(&root, "empty", date, std::iter::empty()).unwrap();
+    UrpdRaw::write(&root, "empty", date, iter::empty()).unwrap();
     assert!(UrpdRaw::read(&root, "empty", date).unwrap().map.is_empty());
 
     let oversized = UrpdRaw::path(&root, "empty", date);
@@ -95,7 +99,7 @@ fn file_roundtrip() {
         .unwrap();
     assert!(UrpdRaw::read_bytes(&root, "empty", date).is_err());
 
-    std::fs::remove_dir_all(root).unwrap();
+    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -104,7 +108,7 @@ fn invalid_supplies_and_non_finite_writer_prices_are_errors() {
         map: BTreeMap::from([
             (
                 CentsCompact::new(100),
-                Sats::from(bitcoin::Amount::MAX_MONEY.to_sat()),
+                Sats::from(Amount::MAX_MONEY.to_sat()),
             ),
             (CentsCompact::new(200), Sats::from(1_u64)),
         ]),

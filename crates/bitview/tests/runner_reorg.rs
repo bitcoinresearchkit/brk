@@ -14,8 +14,9 @@
 )))]
 
 use std::{
-    fs,
+    env, fs,
     net::Ipv4Addr,
+    path::PathBuf,
     process::Command,
     sync::atomic::{AtomicUsize, Ordering},
     thread,
@@ -26,18 +27,20 @@ use bitcoin::{
     Block, Network, ScriptBuf, blockdata::constants::genesis_block, consensus::serialize,
 };
 use bitview::{ComputePluginSet, Config, ImportContext, PluginSet, UpdateContext, run};
-use bitview_plugin::ComputePlugin;
+use bitview_plugin::{ComputePlugin, Publication};
 use bitview_plugin_indexer::{HasIndexer, Indexer};
 use bitview_server::ServerConfig;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_rpc::{Auth, Client};
-use serde_json::{Value, json};
+use serde_json::{Value, from_slice, json};
+use tempfile::tempdir;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
     runtime::Builder,
+    time as TokioTime,
 };
 use vecdb::{Rw, StorageMode};
 
@@ -57,7 +60,7 @@ impl<M: StorageMode> HasIndexer<M> for Plugins<M> {
 }
 
 impl ComputePluginSet for Plugins {
-    fn publication(&self) -> &bitview_plugin::Publication {
+    fn publication(&self) -> &Publication {
         self.indexer.publication()
     }
 
@@ -147,11 +150,11 @@ fn reply(request: &Value, blocks: &[Block; 4]) -> Value {
 
 #[test]
 fn runner_publishes_same_height_reorgs() {
-    let Ok(directory) = std::env::var(CHILD_DIRECTORY) else {
+    let Ok(directory) = env::var(CHILD_DIRECTORY) else {
         // The production runner owns a process-lifetime mempool thread. Keep
         // it isolated, and bound failure time if height-only polling returns.
-        let directory = tempfile::tempdir().unwrap();
-        let mut child = Command::new(std::env::current_exe().unwrap())
+        let directory = tempdir().unwrap();
+        let mut child = Command::new(env::current_exe().unwrap())
             .args([
                 "--exact",
                 "runner_publishes_same_height_reorgs",
@@ -175,7 +178,7 @@ fn runner_publishes_same_height_reorgs() {
         }
     };
 
-    let directory = std::path::PathBuf::from(directory);
+    let directory = PathBuf::from(directory);
     let blocks_path = directory.join("blocks");
     fs::create_dir(&blocks_path).unwrap();
     let blocks = chain();
@@ -220,7 +223,7 @@ fn runner_publishes_same_height_reorgs() {
             assert!(length < 4096);
             let mut body = vec![0; length];
             socket.read_exact(&mut body).await.unwrap();
-            let body = reply(&serde_json::from_slice(&body).unwrap(), &blocks).to_string();
+            let body = reply(&from_slice(&body).unwrap(), &blocks).to_string();
             socket
                 .get_mut()
                 .write_all(
@@ -236,10 +239,10 @@ fn runner_publishes_same_height_reorgs() {
     });
     runtime.spawn(async {
         while COMMITS.load(Ordering::SeqCst) == 0 {
-            tokio::time::sleep(Duration::from_millis(10)).await;
+            TokioTime::sleep(Duration::from_millis(10)).await;
         }
         // Allow the real idle loop to observe an unchanged tip first.
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        TokioTime::sleep(Duration::from_secs(2)).await;
         assert_eq!(COMMITS.load(Ordering::SeqCst), 1);
         ACTIVE.store(2, Ordering::SeqCst);
     });

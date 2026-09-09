@@ -19,8 +19,12 @@
 //!
 //! Requires a running bitcoind with a cookie file at the default path.
 
-use std::time::{Duration, Instant};
+use std::{
+    hint,
+    time::{Duration, Instant},
+};
 
+use brk_error::Result;
 use brk_reader::{BlockReceiver, Reader};
 use brk_rpc::{Auth, Client};
 use brk_types::Height;
@@ -30,7 +34,7 @@ const REPEATS: usize = 3;
 const PARTIAL_LIMIT: usize = 400_000;
 const PARSER_COUNTS: &[usize] = &[1, 4, 16];
 
-fn main() -> brk_error::Result<()> {
+fn main() -> Result<()> {
     let bitcoin_dir = Client::default_bitcoin_path();
     let client = Client::new(
         Client::default_url(),
@@ -110,9 +114,9 @@ struct RunStats {
     count: usize,
 }
 
-fn bench<F>(repeats: usize, mut f: F) -> brk_error::Result<RunStats>
+fn bench<F>(repeats: usize, mut f: F) -> Result<RunStats>
 where
-    F: FnMut() -> brk_error::Result<BlockReceiver>,
+    F: FnMut() -> Result<BlockReceiver>,
 {
     let mut best = Duration::MAX;
     let mut total = Duration::ZERO;
@@ -124,7 +128,7 @@ where
         let mut n = 0;
         for block in recv.iter() {
             let block = block?;
-            std::hint::black_box(block.height());
+            hint::black_box(block.height());
             n += 1;
         }
         let elapsed = start.elapsed();
@@ -173,16 +177,16 @@ struct FullRun {
     count: usize,
 }
 
-fn run_once<F>(mut f: F) -> brk_error::Result<FullRun>
+fn run_once<F>(mut f: F) -> Result<FullRun>
 where
-    F: FnMut() -> brk_error::Result<BlockReceiver>,
+    F: FnMut() -> Result<BlockReceiver>,
 {
     let start = Instant::now();
     let recv = f()?;
     let mut count = 0;
     for block in recv.iter() {
         let block = block?;
-        std::hint::black_box(block.height());
+        hint::black_box(block.height());
         count += 1;
     }
     Ok(FullRun {
@@ -194,16 +198,16 @@ where
 /// Runs the pipeline starting from genesis but stops consuming once
 /// `limit` blocks have been received. Dropping the receiver then closes
 /// the channel, which unblocks and unwinds the reader's spawned worker.
-fn run_bounded<F>(limit: usize, mut f: F) -> brk_error::Result<FullRun>
+fn run_bounded<F>(limit: usize, mut f: F) -> Result<FullRun>
 where
-    F: FnMut() -> brk_error::Result<BlockReceiver>,
+    F: FnMut() -> Result<BlockReceiver>,
 {
     let start = Instant::now();
     let recv = f()?;
     let mut count = 0;
     for block in recv.iter().take(limit) {
         let block = block?;
-        std::hint::black_box(block.height());
+        hint::black_box(block.height());
         count += 1;
     }
     let elapsed = start.elapsed();

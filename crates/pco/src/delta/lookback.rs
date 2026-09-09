@@ -1,10 +1,12 @@
-use std::mem::MaybeUninit;
-use std::{array, cmp};
+use std::{array, cmp, mem::MaybeUninit};
 
-use crate::constants::{Bitlen, DeltaLookback};
-use crate::data_types::Latent;
-use crate::metadata::DeltaLookbackConfig;
-use crate::FULL_BATCH_N;
+use super::toggle_center_in_place;
+use crate::{
+  constants::{Bitlen, DeltaLookback},
+  data_types::Latent,
+  metadata::DeltaLookbackConfig,
+  FULL_BATCH_N,
+};
 
 // there are 3 types of proposed lookbacks:
 // * brute force: just try the most recent few latents
@@ -179,7 +181,7 @@ pub fn encode_in_place<L: Latent>(
   let mut state = vec![L::ZERO; state_n];
   state[state_n - real_state_n..].copy_from_slice(&latents[..real_state_n]);
 
-  super::toggle_center_in_place(latents);
+  toggle_center_in_place(latents);
 
   state
 }
@@ -204,7 +206,7 @@ pub fn decode_in_place<L: Latent>(
   window_buffer: &mut [L],
   latents: &mut [L],
 ) -> bool {
-  super::toggle_center_in_place(latents);
+  toggle_center_in_place(latents);
 
   let (window_n, state_n) = (config.window_n(), config.state_n());
   let mut start_pos = *window_buffer_pos;

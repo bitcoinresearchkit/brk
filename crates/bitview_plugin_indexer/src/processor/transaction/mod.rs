@@ -1,21 +1,9 @@
-pub mod analysis;
-pub mod computed;
-
-use brk_error::Result;
-
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_store::Store;
 use brk_types::{Height, StoredBool, TxIndex, TxVersion, Txid, TxidPrefix};
-use rayon::prelude::*;
+use rayon::{join, prelude::*};
 use tracing::error;
 use vecdb::{AnyVec, WritableVec, likely, unlikely};
-
-use crate::{
-    TransactionCounts, TransactionFeaturesVecs, TxMetadataVecs, constants::DUPLICATE_TXIDS,
-    stores::TransactionStoresMut,
-};
-
-pub use computed::ComputedTx;
 
 use self::analysis::TransactionAnalysis;
 use super::{
@@ -23,6 +11,15 @@ use super::{
     txin::{self, InputSource},
     txout::{self, BlockAddresses, ProcessedOutput},
 };
+use crate::{
+    TransactionCounts, TransactionFeaturesVecs, TxMetadataVecs, constants::DUPLICATE_TXIDS,
+    stores::TransactionStoresMut,
+};
+
+pub mod analysis;
+pub mod computed;
+
+pub use computed::ComputedTx;
 
 impl<'a> BlockProcessor<'a> {
     pub fn compute_txids(&self) -> Result<Vec<ComputedTx<'a>>> {
@@ -132,7 +129,7 @@ impl<'a> BlockProcessor<'a> {
             txid_prefixes,
         } = self.stores.transaction_stores_mut();
 
-        rayon::join(
+        join(
             || {
                 txout::finalize_outputs(
                     transactions,

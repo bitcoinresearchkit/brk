@@ -3,7 +3,7 @@ use std::{net::SocketAddr, str::from_utf8};
 use bitview_query::AsyncQuery;
 use brk_types::{Txid, Vout};
 use serde_json::to_vec;
-use tokio::task::JoinSet;
+use tokio::{join, task::JoinSet};
 
 use super::server_routes::{exchange_bytes, exchange_with_etag};
 
@@ -101,7 +101,7 @@ fn confirmed_handoffs_pin_the_prefix_and_revalidate_replaced_blocks() {
         // ordinary appends. Derived CPFP data still needs publication exclusion.
         let gate = fixture.plugins.indexer().publication().clone();
         gate.begin_update();
-        let (resolve, proof, cpfp) = tokio::join!(
+        let (resolve, proof, cpfp) = join!(
             query.run(move |q| q.resolve_confirmed_tx(&txid)),
             query.run(move |q| q.merkle_proof_resolved(confirmed)),
             query.run(move |q| q.confirmed_cpfp_resolved(confirmed)),

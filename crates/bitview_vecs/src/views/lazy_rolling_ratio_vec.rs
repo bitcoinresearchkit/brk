@@ -1,4 +1,4 @@
-use std::{convert::Infallible, marker::PhantomData, sync::Arc};
+use std::{convert::Infallible, iter, marker::PhantomData, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::Height;
@@ -384,7 +384,7 @@ where
     F: BinaryTransform<S, C, T> + Send + Sync,
 {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -394,14 +394,15 @@ where
 
 #[cfg(test)]
 mod tests {
+    use bitview_transforms::RatioSats;
     use brk_types::{Height, PartsPerMillion32, Sats};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
         ReadableVec, WritableVec,
     };
 
     use super::*;
-    use bitview_transforms::RatioSats;
 
     fn double(_: Height, value: Sats) -> Sats {
         value + value
@@ -409,7 +410,7 @@ mod tests {
 
     #[test]
     fn derives_rolling_ratios_from_one_source_and_cached_denominator() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut source: EagerVec<PcoVec<Height, Sats>> =
             EagerVec::forced_import(&db, "source", Version::ONE).unwrap();

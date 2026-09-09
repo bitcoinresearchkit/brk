@@ -1,11 +1,12 @@
-use crate::LazyOhlcCentsVecs;
-use bitview_collections::PerResolution;
+use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_traversable::Traversable;
 use brk_types::{OHLCCents, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{BytesVecValue, Formattable, LazyVec, ReadableCloneableVec, UnaryTransform};
+
+use crate::LazyOhlcCentsVecs;
 
 macro_rules! define_lazy_indexes {
     (
@@ -70,4 +71,4 @@ macro_rules! define_lazy_indexes {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_lazy_indexes);
+with_resolution_fields!(define_lazy_indexes);

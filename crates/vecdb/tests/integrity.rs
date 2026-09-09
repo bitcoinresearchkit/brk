@@ -2,14 +2,18 @@
 //!
 //! Tests verify that rollback + flush + reopen preserves data correctly.
 
+use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
+
 use rawdb::Database;
 use sha2::{Digest, Sha256};
-use std::fs;
-use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 use vecdb::{
-    BytesVec, BytesVecReader, ImportOptions, ImportableVec, MutableVec, Stamp, StoredVec, Version,
-    WritableVec,
+    BytesVec, BytesVecReader, ImportOptions, ImportableVec, MutableVec, Result as VecdbResult,
+    Stamp, StoredVec, Version, WritableVec,
 };
 
 #[cfg(feature = "zerocopy")]
@@ -26,13 +30,13 @@ pub trait IntegrityVec:
         db: &'a Database,
         name: &'a str,
         changes: u16,
-    ) -> vecdb::Result<(Self, ImportOptions<'a>)>;
+    ) -> VecdbResult<(Self, ImportOptions<'a>)>;
 }
 
 pub trait IntegrityOps {
     type Reader;
 
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()>;
+    fn update(&mut self, index: usize, value: u32) -> VecdbResult<()>;
     fn take(&mut self, index: usize) -> Option<u32>;
     fn collect_holed(&self) -> Vec<Option<u32>>;
     fn get_with_reader(&self, index: usize, reader: &Self::Reader) -> Option<u32>;
@@ -42,7 +46,7 @@ pub trait IntegrityOps {
 impl IntegrityOps for MutableVec<BytesVec<usize, u32>> {
     type Reader = BytesVecReader<usize, u32>;
 
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()> {
+    fn update(&mut self, index: usize, value: u32) -> VecdbResult<()> {
         MutableVec::<BytesVec<usize, u32>>::update(self, index, value)
     }
 
@@ -68,7 +72,7 @@ impl IntegrityOps for MutableVec<BytesVec<usize, u32>> {
 impl IntegrityOps for MutableVec<ZeroCopyVec<usize, u32>> {
     type Reader = VecReader<usize, u32, ZeroCopyStrategy<u32>>;
 
-    fn update(&mut self, index: usize, value: u32) -> vecdb::Result<()> {
+    fn update(&mut self, index: usize, value: u32) -> VecdbResult<()> {
         MutableVec::<ZeroCopyVec<usize, u32>>::update(self, index, value)
     }
 
@@ -91,7 +95,7 @@ impl IntegrityOps for MutableVec<ZeroCopyVec<usize, u32>> {
 }
 
 /// Helper to create a temporary test database
-pub fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
+pub fn setup_test_db() -> VecdbResult<(Database, TempDir)> {
     let temp_dir = TempDir::new()?;
     let db = Database::open(temp_dir.path())?;
     Ok((db, temp_dir))
@@ -99,7 +103,7 @@ pub fn setup_test_db() -> vecdb::Result<(Database, TempDir)> {
 
 /// Compute SHA-256 hash of the vecdb data file and regions directory
 /// Only hashes data (file) and regions/*, ignoring changes directory
-fn compute_directory_hash(dir: &Path) -> Result<String, Box<dyn std::error::Error>> {
+fn compute_directory_hash(dir: &Path) -> Result<String, Box<dyn Error>> {
     let mut hasher = Sha256::new();
 
     // Collect all files in sorted order for deterministic hashing
@@ -157,7 +161,7 @@ fn compute_directory_hash(dir: &Path) -> Result<String, Box<dyn std::error::Erro
 /// 1. Data can be correctly read back using individual gets
 /// 2. Data can be correctly read back using iterators
 /// 3. Redo operations produce the same readable state
-fn run_data_integrity_rollback_flush_reopen<V>() -> Result<(), Box<dyn std::error::Error>>
+fn run_data_integrity_rollback_flush_reopen<V>() -> Result<(), Box<dyn Error>>
 where
     V: IntegrityVec + WritableVec<usize, u32>,
 {
@@ -477,7 +481,7 @@ mod bytes {
             db: &'a Database,
             name: &'a str,
             changes: u16,
-        ) -> vecdb::Result<(Self, ImportOptions<'a>)> {
+        ) -> VecdbResult<(Self, ImportOptions<'a>)> {
             let mut options: ImportOptions = (db, name, Version::TWO).into();
             options = options.with_saved_stamped_changes(changes);
             let vec = Self::forced_import_with(options)?;
@@ -486,7 +490,7 @@ mod bytes {
     }
 
     #[test]
-    fn data_integrity_rollback_flush_reopen() -> Result<(), Box<dyn std::error::Error>> {
+    fn data_integrity_rollback_flush_reopen() -> Result<(), Box<dyn Error>> {
         run_data_integrity_rollback_flush_reopen::<MutableVec<BytesVec<usize, u32>>>()
     }
 }
@@ -504,7 +508,7 @@ mod zerocopy {
             db: &'a Database,
             name: &'a str,
             changes: u16,
-        ) -> vecdb::Result<(Self, ImportOptions<'a>)> {
+        ) -> VecdbResult<(Self, ImportOptions<'a>)> {
             let mut options: ImportOptions = (db, name, Version::TWO).into();
             options = options.with_saved_stamped_changes(changes);
             let vec = Self::forced_import_with(options)?;
@@ -513,7 +517,7 @@ mod zerocopy {
     }
 
     #[test]
-    fn data_integrity_rollback_flush_reopen() -> Result<(), Box<dyn std::error::Error>> {
+    fn data_integrity_rollback_flush_reopen() -> Result<(), Box<dyn Error>> {
         run_data_integrity_rollback_flush_reopen::<MutableVec<ZeroCopyVec<usize, u32>>>()
     }
 }

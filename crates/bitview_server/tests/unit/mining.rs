@@ -1,11 +1,10 @@
 use std::net::SocketAddr;
 
 use brk_types::PoolSlug;
-use serde_json::Value;
-
-use crate::AppState;
+use serde_json::{Value, from_str, to_string, to_value};
 
 use super::server_routes::exchange_with_etag;
+use crate::AppState;
 
 pub const STAT_ROUTES: &[&str] = &[
     "/api/v1/mining/pools/24h",
@@ -103,11 +102,10 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
                 prices.cached_snapshot().is_none(),
                 "body must use captured prices"
             );
-            let body = serde_json::to_string(&rows).unwrap();
+            let body = to_string(&rows).unwrap();
             assert_eq!(
                 body,
-                serde_json::to_string(&q.pool_blocks(PoolSlug::Unknown, before, 100).unwrap())
-                    .unwrap()
+                to_string(&q.pool_blocks(PoolSlug::Unknown, before, 100).unwrap()).unwrap()
             );
             body
         });
@@ -156,11 +154,8 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
         tag.starts_with("W/\"c"),
         "catalog must use content identity: {tag}"
     );
-    let body: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
-    assert_eq!(
-        body,
-        state.sync(|q| serde_json::to_value(q.all_pools()).unwrap())
-    );
+    let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+    assert_eq!(body, state.sync(|q| to_value(q.all_pools()).unwrap()));
     for method in ["GET", "HEAD"] {
         let response = exchange_with_etag(address, method, path, tag).await;
         assert!(response.starts_with("HTTP/1.1 304"), "{response}");

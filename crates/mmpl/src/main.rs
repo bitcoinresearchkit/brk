@@ -1,19 +1,20 @@
-mod args;
-mod emitter;
-mod event;
-mod usage;
-
 use std::{
+    env,
     io::{self, BufWriter},
     process::ExitCode,
     thread,
     time::{Duration, Instant},
 };
 
-use brk_mempool::Mempool;
-
 use args::Args;
+use brk_error::Result;
+use brk_mempool::Mempool;
 use emitter::Emitter;
+
+mod args;
+mod emitter;
+mod event;
+mod usage;
 
 const PERIOD: Duration = Duration::from_millis(500);
 
@@ -27,8 +28,8 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> brk_error::Result<()> {
-    let raw: Vec<String> = std::env::args().skip(1).collect();
+fn run() -> Result<()> {
+    let raw: Vec<String> = env::args().skip(1).collect();
     if raw.iter().any(|a| matches!(a.as_str(), "-h" | "--help")) {
         usage::print();
         return Ok(());

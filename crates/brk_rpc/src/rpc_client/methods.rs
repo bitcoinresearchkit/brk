@@ -19,18 +19,17 @@ use rustc_hash::FxHashMap;
 use serde_json::{from_str, json, value::RawValue};
 use tracing::{debug, info};
 
+use super::{
+    Client, ClientInner, mempool_entry::MempoolEntry, mempool_state::MempoolState,
+    rpc_call::RpcCall, txid_array_parser::TxidArrayParser,
+};
+use crate::BlockTemplateTx;
+
 /// Bitcoin Core's `-5` (`RPC_INVALID_ADDRESS_OR_KEY`) is the expected
 /// response when querying a confirmed transaction without `-txindex`.
 /// The mempool fetcher tolerates these per-item failures silently.
 const RPC_NOT_FOUND: i32 = -5;
 const NO_ARGS: [(); 0] = [];
-
-use crate::BlockTemplateTx;
-
-use super::{
-    Client, mempool_entry::MempoolEntry, mempool_state::MempoolState, rpc_call::RpcCall,
-    txid_array_parser::TxidArrayParser,
-};
 
 /// Per-batch request count for `get_block_hashes_range`,
 /// `fetch_new_pool_data`, and `get_raw_transactions`. Sized so the JSON
@@ -284,7 +283,7 @@ impl Client {
         let template: GetBlockTemplate = from_str(template_raw.get())?;
         let tip_hash = Self::parse_block_hash(&template.previous_block_hash, "previousblockhash")?;
         let tip_height = Self::template_tip_height(template.height)?;
-        let block_template = super::ClientInner::build_gbt(template.transactions)?;
+        let block_template = ClientInner::build_gbt(template.transactions)?;
         let info: GetMempoolInfo = from_str(info_raw.get())?;
         let min_fee = Self::build_min_fee(info.mempool_min_fee)?;
 

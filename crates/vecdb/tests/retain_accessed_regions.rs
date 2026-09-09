@@ -3,11 +3,11 @@
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, BytesVec, Database, ImportableVec, MutableVec, PcoVec, ReadableVec,
-    Version, WritableVec,
+    Result, Version, WritableVec,
 };
 
 #[test]
-fn retains_compressed_pages_and_mutable_holes() -> vecdb::Result<()> {
+fn retains_compressed_pages_and_mutable_holes() -> Result<()> {
     let directory = tempdir()?;
     {
         let database = Database::open(directory.path())?;

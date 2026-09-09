@@ -1,4 +1,5 @@
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_vecs::{CachedWindowStartVec, LazyPerBlock, PerBlock, PerBlockCumulativeRolling};
 use brk_error::Result;
@@ -13,7 +14,7 @@ impl DerivedVecs {
         db: &Database,
         prefix: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let name = |metric: &str| {
             if prefix.is_empty() {
@@ -60,7 +61,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
     Ok(Vecs {

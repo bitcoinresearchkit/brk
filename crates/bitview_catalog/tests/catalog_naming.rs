@@ -3,8 +3,8 @@ use std::collections::BTreeSet;
 use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeBranch, TreeNode};
 use brk_types::Index;
 use indexmap::IndexMap;
-use schemars::JsonSchema;
-use serde_json::json;
+use schemars::{JsonSchema, schema_for};
+use serde_json::{from_value, json, to_value};
 
 fn family(index: Index) -> TreeNode {
     let mut node = TreeNode::branch(
@@ -45,12 +45,9 @@ fn branch(node: &TreeNode) -> &TreeBranch {
 #[test]
 fn naming_is_internal_and_keeps_the_original_map_schema() {
     let node = family(Index::Height);
-    let encoded = serde_json::to_value(&node).unwrap();
-    assert_eq!(
-        encoded,
-        serde_json::to_value(&branch(&node).children).unwrap()
-    );
-    let decoded: TreeNode = serde_json::from_value(encoded).unwrap();
+    let encoded = to_value(&node).unwrap();
+    assert_eq!(encoded, to_value(&branch(&node).children).unwrap());
+    let decoded: TreeNode = from_value(encoded).unwrap();
     assert_eq!(node, decoded);
     assert!(!branch(&decoded).field_suffixes);
     assert!(branch(&decoded).source.is_none());
@@ -68,8 +65,8 @@ fn naming_is_internal_and_keeps_the_original_map_schema() {
         IndexMap::<String, TreeNode>::inline_schema()
     );
     assert_eq!(
-        schemars::schema_for!(TreeBranch),
-        schemars::schema_for!(IndexMap<String, TreeNode>),
+        schema_for!(TreeBranch),
+        schema_for!(IndexMap<String, TreeNode>),
     );
 }
 

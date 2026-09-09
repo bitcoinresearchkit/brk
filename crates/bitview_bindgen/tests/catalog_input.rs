@@ -5,6 +5,7 @@ use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 use brk_types::Index;
 use indexmap::IndexMap;
 use serde_json::json;
+use tempfile::tempdir;
 
 #[test]
 fn generates_every_output_from_catalog_and_openapi_only() {
@@ -31,7 +32,7 @@ fn generates_every_output_from_catalog_and_openapi_only() {
         }}}
     })
     .to_string();
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let root = directory.path();
     let paths = ClientOutputPaths::new()
         .rust(root.join("client.rs"))

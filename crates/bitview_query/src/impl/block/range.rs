@@ -143,13 +143,11 @@ impl Query {
         let (begin, end) = Self::resolve_block_range(start_height, count, guard.lengths().height);
         let anchor = end
             .checked_sub(1)
-            // A validator must not materialize CachedVec's entire hash history.
             .map(|height| {
                 self.indexer()
                     .vecs()
                     .blocks
                     .blockhash
-                    .inner
                     .collect_one_at(height)
                     .data()
             })

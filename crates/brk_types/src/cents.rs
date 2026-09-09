@@ -1,17 +1,22 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
-use crate::unlikely;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::{CentsSats, Dollars, Sats, StoredF64};
+use crate::{CheckedSub, unlikely};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Unsigned cents (u64) - for values that should never be negative.
 /// Used for invested capital, realized cap, etc.
@@ -381,15 +386,15 @@ impl CheckedSub for Cents {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Cents {
+impl VecdbCheckedSub for Cents {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for Cents {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Cents {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -399,7 +404,7 @@ impl std::fmt::Display for Cents {
 impl Formattable for Cents {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 
@@ -415,6 +420,8 @@ impl Formattable for Cents {
 
 #[cfg(test)]
 mod tests {
+    use std::panic;
+
     use super::*;
 
     #[test]
@@ -453,15 +460,13 @@ mod tests {
         assert_eq!(Cents::MAX_FINITE.checked_add(Cents::new(1)), None,);
 
         let exact_sentinel_factor = u64::MAX / 3;
-        assert!(
-            std::panic::catch_unwind(|| Cents::new(3) * Cents::new(exact_sentinel_factor)).is_err()
-        );
+        assert!(panic::catch_unwind(|| Cents::new(3) * Cents::new(exact_sentinel_factor)).is_err());
     }
 
     #[test]
     fn raw_integer_access_rejects_nan() {
-        assert!(std::panic::catch_unwind(|| Cents::NAN.inner()).is_err());
-        assert!(std::panic::catch_unwind(|| Cents::NAN.as_u128()).is_err());
-        assert!(std::panic::catch_unwind(|| u64::from(Cents::NAN)).is_err());
+        assert!(panic::catch_unwind(|| Cents::NAN.inner()).is_err());
+        assert!(panic::catch_unwind(|| Cents::NAN.as_u128()).is_err());
+        assert!(panic::catch_unwind(|| u64::from(Cents::NAN)).is_err());
     }
 }

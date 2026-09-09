@@ -1,20 +1,20 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::PathBuf,
+    result::Result as StdResult,
     sync::Arc,
 };
 
 use parking_lot::RwLock;
 use rawdb::{Database, Region};
 
+use super::DECODE_CHUNK_SIZE;
 use crate::{
     AnyStoredVec, AnyVec, BytesVec, BytesVecReader, Error, Header, ImportOptions, ImportableVec,
     MutableVec, OverflowVecReader, OverflowVecValue, ReadOnlyOverflowVec, ReadableBoxedVec,
     ReadableCloneableVec, ReadableVec, Result, SharedLen, Stamp, StoredVec, TypedVec, VecIndex,
     Version, WritableVec, short_type_name, unlikely,
 };
-
-use super::DECODE_CHUNK_SIZE;
 
 const VERSION: Version = Version::ONE;
 
@@ -712,13 +712,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, T) -> StdResult<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> StdResult<B, E> {
         let overflow_vec = &self.overflow;
         let overflow = overflow_vec.reader();
         self.compact

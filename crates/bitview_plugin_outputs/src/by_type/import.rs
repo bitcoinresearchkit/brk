@@ -6,9 +6,9 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{StoredU16, StoredU64, Version};
-use vecdb::{CacheBudget, CachedReadableVec, Database};
+use vecdb::{CacheBudget, Database};
 
-use super::{CachedSpendableOutputCount, Vecs, WithOutputTypes};
+use super::{SpendableOutputCount, Vecs, WithOutputTypes};
 
 pub fn forced_import(
     cache: &'static CacheBudget,
@@ -20,6 +20,7 @@ pub fn forced_import(
     let columnar_version = version + Version::ONE;
     let all_output_count = mappings.output_count_source();
     let output_count = ColumnarPerBlock::<StoredU16, OutputTypeId, _>::forced_import(
+        cache,
         db,
         "output_count_by_type",
         columnar_version,
@@ -28,7 +29,7 @@ pub fn forced_import(
                 CountTotal::from_source(
                     "output_count_bis",
                     columnar_version,
-                    all_output_count.cached_boxed_clone(),
+                    &all_output_count,
                     mappings,
                     cached_starts,
                 ),
@@ -48,16 +49,16 @@ pub fn forced_import(
     );
     let all_tx_count = mappings.transaction_count_source();
     let tx_count = ColumnarPerBlockCumulativeRolling::<StoredU64, OutputTypeId, _>::forced_import(
+        cache,
         db,
         "tx_count_with_output_by_type_cumulative",
         columnar_version,
         |source| {
             WithOutputTypes::from_columnar_source(
-                cache,
                 CountTotal::from_source(
                     "tx_count_bis",
                     columnar_version,
-                    all_tx_count.cached_boxed_clone(),
+                    &all_tx_count,
                     mappings,
                     cached_starts,
                 ),
@@ -82,7 +83,7 @@ pub fn forced_import(
         .op_return
         .cumulative_source();
     let spendable_output_count =
-        CachedSpendableOutputCount::new(version, &op_return_count, mappings, cached_starts);
+        SpendableOutputCount::new(version, &op_return_count, mappings, cached_starts);
 
     Ok(Vecs {
         output_count,

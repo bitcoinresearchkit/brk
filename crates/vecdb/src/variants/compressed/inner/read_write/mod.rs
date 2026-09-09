@@ -1,21 +1,21 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, result::Result, sync::Arc};
 
 use log::debug;
 use parking_lot::RwLock;
 use rawdb::{Reader, Region, likely, unlikely};
+
+use super::{CompressionStrategy, PAGES_PER_BLOCK, PageDecoder, Pages, ReadOnlyCompressedVec};
+use crate::{
+    AnyStoredVec, AnyVec, CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, Error,
+    Format, ImportOptions, ReadWriteBaseVec, Result as CrateResult, VecIndex, VecValue, Version,
+    WritableVec, vec_region_name_with,
+};
 
 pub mod any_stored_vec;
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
 pub mod writable;
-
-use crate::{
-    AnyStoredVec, AnyVec, CompressedRangeCursor, Error, Format, ImportOptions, ReadWriteBaseVec,
-    VecIndex, VecValue, Version, WritableVec, vec_region_name_with,
-};
-
-use super::{CompressionStrategy, PAGES_PER_BLOCK, PageDecoder, Pages, ReadOnlyCompressedVec};
 
 /// Independently decodable uncompressed page size.
 pub const COMPRESSED_PAGE_SIZE: usize = 8 * 1024;
@@ -56,7 +56,7 @@ where
     /// # Warning
     ///
     /// This will DELETE all existing data on format/version errors. Use with caution.
-    pub fn forced_import_with(options: ImportOptions, format: Format) -> crate::Result<Self> {
+    pub fn forced_import_with(options: ImportOptions, format: Format) -> CrateResult<Self> {
         let res = Self::import_with(options, format);
         match res {
             Err(Error::WrongEndian)
@@ -78,7 +78,7 @@ where
     }
 
     #[inline]
-    pub fn import_with(mut options: ImportOptions, format: Format) -> crate::Result<Self> {
+    pub fn import_with(mut options: ImportOptions, format: Format) -> CrateResult<Self> {
         options.version = options.version + VERSION;
         let db = options.db;
         let name = options.name;
@@ -133,7 +133,7 @@ where
     }
 
     #[inline]
-    pub fn decode_page(&self, page_index: usize, reader: &Reader) -> crate::Result<Vec<T>> {
+    pub fn decode_page(&self, page_index: usize, reader: &Reader) -> CrateResult<Vec<T>> {
         Self::decode_page_with(self.stored_len(), page_index, reader, &self.pages.read())
     }
 
@@ -141,7 +141,7 @@ where
         format!("{}_pages", vec_region_name_with::<I>(name))
     }
 
-    pub fn remove(self) -> crate::Result<()> {
+    pub fn remove(self) -> CrateResult<()> {
         self.base.remove()?;
 
         let pages = Arc::try_unwrap(self.pages).map_err(|_| Error::PagesStillReferenced)?;
@@ -169,7 +169,7 @@ where
         if from >= to {
             return init;
         }
-        crate::CompressedIoSource::new(self, from, to).fold(init, f)
+        CompressedIoSource::new(self, from, to).fold(init, f)
     }
 
     #[inline]
@@ -186,7 +186,7 @@ where
         if from >= to {
             return init;
         }
-        crate::CompressedMmapSource::new(self, from, to).fold(init, f)
+        CompressedMmapSource::new(self, from, to).fold(init, f)
     }
 
     pub const PER_PAGE: usize = COMPRESSED_PAGE_SIZE / size_of::<T>();
@@ -197,7 +197,7 @@ where
         page_index: usize,
         reader: &Reader,
         pages: &Pages,
-    ) -> crate::Result<Vec<T>> {
+    ) -> CrateResult<Vec<T>> {
         let index = Self::page_index_to_index(page_index);
 
         if unlikely(index >= stored_len) {
@@ -325,7 +325,7 @@ where
     pub fn pages(&self) -> &Arc<RwLock<Pages>> {
         &self.pages
     }
-    fn collect_stored_range(&self, from: usize, to: usize) -> crate::Result<Vec<T>> {
+    fn collect_stored_range(&self, from: usize, to: usize) -> CrateResult<Vec<T>> {
         if from >= to {
             return Ok(vec![]);
         }
@@ -356,24 +356,24 @@ where
     fn fold_source<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {
         let mmap = Self::prefers_mmap(self.region(), &self.pages, from, to);
         if mmap {
-            crate::CompressedMmapSource::new(self, from, to).fold(init, f)
+            CompressedMmapSource::new(self, from, to).fold(init, f)
         } else {
-            crate::CompressedIoSource::new(self, from, to).fold(init, f)
+            CompressedIoSource::new(self, from, to).fold(init, f)
         }
     }
     #[inline(always)]
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let mmap = Self::prefers_mmap(self.region(), &self.pages, from, to);
         if mmap {
-            crate::CompressedMmapSource::new(self, from, to).try_fold(init, f)
+            CompressedMmapSource::new(self, from, to).try_fold(init, f)
         } else {
-            crate::CompressedIoSource::new(self, from, to).try_fold(init, f)
+            CompressedIoSource::new(self, from, to).try_fold(init, f)
         }
     }
 }

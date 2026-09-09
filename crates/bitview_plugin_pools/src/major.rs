@@ -14,7 +14,7 @@ use brk_types::{PartsPerMillion32, PoolSlug};
 use derive_more::{Deref, DerefMut};
 use vecdb::{BinaryTransform, CacheBudget, Database, Rw, StorageMode, Version};
 
-use super::minor;
+use super::{PoolHeights, minor};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct Vecs<M: StorageMode = Rw> {
@@ -39,7 +39,7 @@ impl Vecs {
         cache: &'static CacheBudget,
         db: &Database,
         slug: PoolSlug,
-        pool_heights: super::PoolHeights,
+        pool_heights: PoolHeights,
         version: Version,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,

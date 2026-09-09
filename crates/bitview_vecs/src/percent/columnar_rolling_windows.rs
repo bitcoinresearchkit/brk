@@ -24,13 +24,13 @@ impl<B: FixedRatio> ColumnarPercentRollingWindows<B> {
         indexes: &IndexSources,
     ) -> Result<Self> {
         Ok(Self(ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{name}_{}", B::SUFFIX),
             version,
             |source| {
                 WindowId::series(|window| {
                     LazyColumnPercentPerBlock::new(
-                        cache,
                         &format!("{name}_{}", window.suffix()),
                         version,
                         source,

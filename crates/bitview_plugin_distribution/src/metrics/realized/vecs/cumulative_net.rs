@@ -1,5 +1,6 @@
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockCumulativeWithSumsAndDeltas};
 use brk_error::Result;
@@ -26,11 +27,12 @@ impl CumulativeNetRealizedByCohort {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = CumulativeUTXOCoreColumns::forced_import(
+            cache,
             db,
             "net_realized_pnl_cumulative_cents",
             version,
@@ -39,7 +41,7 @@ impl CumulativeNetRealizedByCohort {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "net_realized_pnl");
             let source = stored
                 .columns
-                .additive_source(cache, &filter, &format!("{name}_cumulative_cents"), version)
+                .additive_source(&filter, &format!("{name}_cumulative_cents"), version)
                 .expect("supported net realized cohort");
             LazyFiatPerBlockCumulativeWithSumsAndDeltas::from_cumulative_cents_source(
                 &name,

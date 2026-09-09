@@ -1,7 +1,7 @@
-use brk_error::Result;
-
 use bitview_cohort::{AgeRange, AgeRangeId};
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, BoundedRatio, Height, Sats, StoredF64, Version};
 use vecdb::{CheckedSub, ColumnId, ReadableVec, StoredVec, WritableVec};
@@ -14,7 +14,7 @@ const WRITE_INTERVAL: usize = 10_000;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    distribution: &bitview_plugin_distribution::Vecs,
+    distribution: &DistributionVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;

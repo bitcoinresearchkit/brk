@@ -4,7 +4,7 @@ use bitview_cohort::{Filter, UTXOAggregateRows, UTXORows};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode};
 
 use super::{UTXOColumns, UTXOOverlappingColumns};
 
@@ -18,23 +18,27 @@ pub struct ExactUTXOColumns<T: PcoVecValue, M: StorageMode = Rw> {
 }
 
 impl<T: PcoVecValue + AddAssign> ExactUTXOColumns<T> {
-    pub fn forced_import(db: &Database, name: &str, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        name: &str,
+        version: Version,
+    ) -> Result<Self> {
         Ok(Self {
-            direct: UTXOColumns::forced_import(db, name, version)?,
-            overlapping: UTXOOverlappingColumns::forced_import(db, name, version)?,
+            direct: UTXOColumns::forced_import(cache, db, name, version)?,
+            overlapping: UTXOOverlappingColumns::forced_import(cache, db, name, version)?,
         })
     }
 
     pub fn source(
         &self,
-        cache: &'static CacheBudget,
         filter: &Filter,
         name: &str,
         version: Version,
-    ) -> Option<CachedBoxedVec<Height, T>> {
+    ) -> Option<ReadableBoxedVec<Height, T>> {
         self.direct
-            .direct_source(cache, filter, name, version)
-            .or_else(|| self.overlapping.source(cache, filter, name, version))
+            .direct_source(filter, name, version)
+            .or_else(|| self.overlapping.source(filter, name, version))
     }
 
     #[inline(always)]

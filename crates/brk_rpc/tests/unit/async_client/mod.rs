@@ -1,10 +1,11 @@
 use std::{fs, time::Duration};
 
-use serde_json::Value;
+use serde_json::{Value, from_slice};
 use tempfile::tempdir;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream},
+    spawn,
     sync::oneshot,
     time::timeout,
 };
@@ -42,7 +43,7 @@ async fn message(socket: &mut BufReader<TcpStream>) -> (Value, String) {
     assert!(length < 1024);
     let mut body = vec![0; length];
     socket.read_exact(&mut body).await.unwrap();
-    let body: Value = serde_json::from_slice(&body).unwrap();
+    let body: Value = from_slice(&body).unwrap();
     (body, authorization)
 }
 
@@ -51,7 +52,7 @@ async fn reconnects_when_the_node_closes_an_idle_socket() {
     let (client, listener) = client().await;
     let (close, close_requested) = oneshot::channel();
     let (closed, closure) = oneshot::channel();
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         request(&mut socket).await;
         let response = b"HTTP/1.1 200 OK\r\nContent-Length: 19\r\n\r\n{\"id\":1,\"result\":0}";
@@ -85,7 +86,7 @@ async fn refreshes_rotated_cookie_once_after_rejection() {
         Auth::CookieFile(path.clone()),
     )
     .unwrap();
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         for (expected, rejected) in [
             ("Basic dTpw", false),
@@ -153,7 +154,7 @@ async fn validates_responses_and_reuses_connection() {
         ),
     ];
     let count = responses.len();
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         // All requests must use this one accepted socket.
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         for (status, body) in responses {
@@ -196,7 +197,7 @@ async fn cancellation_closes_stalled_header_and_body_connections() {
     for partial in ["", "HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n{"] {
         let (client, listener) = client().await;
         let (closed, closure) = oneshot::channel();
-        let server = tokio::spawn(async move {
+        let server = spawn(async move {
             let mut socket = BufReader::new(listener.accept().await.unwrap().0);
             request(&mut socket).await;
             socket
@@ -234,7 +235,7 @@ async fn cancellation_closes_stalled_header_and_body_connections() {
 #[tokio::test]
 async fn stops_after_one_stale_connection_retry() {
     let (client, listener) = client().await;
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         request(&mut socket).await;
         socket
@@ -273,7 +274,7 @@ async fn reconnects_after_close_delimited_and_chunked_responses() {
         "HTTP/1.0 200 OK\r\n\r\n{\"id\":1,\"result\":0}",
     ] {
         let (client, listener) = client().await;
-        let server = tokio::spawn(async move {
+        let server = spawn(async move {
             for _ in 0..2 {
                 let mut socket = BufReader::new(listener.accept().await.unwrap().0);
                 request(&mut socket).await;

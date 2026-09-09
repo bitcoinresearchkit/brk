@@ -1,4 +1,4 @@
-use brk_types::{FeeRate, Txid};
+use brk_types::{FeeRate, Sats, TxOut, Txid};
 
 use super::*;
 use crate::{
@@ -15,7 +15,7 @@ fn insert_with_depends(
     vsize: u64,
     parents: &[Txid],
 ) -> Txid {
-    let prevout = brk_types::TxOut::from((p2wpkh_script(seed), brk_types::Sats::from(20_000u64)));
+    let prevout = TxOut::from((p2wpkh_script(seed), Sats::from(20_000u64)));
     let tx = fake_tx(seed, &[Some(prevout)], &[(p2wpkh_script(seed + 1), 1_234)]);
     let txid = tx.txid;
     let mut info = fake_entry_info(txid, fee, vsize);

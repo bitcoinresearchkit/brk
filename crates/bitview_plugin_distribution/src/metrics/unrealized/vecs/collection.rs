@@ -1,6 +1,7 @@
 use bitview_cohort::{
     CohortContext, Filter, UTXOAggregate, UTXOGroups, UTXOGroupsWithoutAmount, UTXORows,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{MvrvToNupl, NegCentsUnsignedToDollars};
 use bitview_traversable::Traversable;
 use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, LazyRatioPerBlock};
@@ -84,7 +85,7 @@ impl UnrealizedVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         realized_price: &UTXOGroups<LazyPriceWithRatioPerBlock>,
     ) -> Result<Self> {
         let profit = UnrealizedByCohort::forced_import(

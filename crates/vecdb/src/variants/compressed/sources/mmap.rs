@@ -1,13 +1,12 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, result::Result, sync::Arc};
 
 use parking_lot::{RwLock, RwLockReadGuard};
 use rawdb::{Reader, Region};
 
-use crate::{AnyStoredVec, Pages, VecIndex, VecValue, unlikely};
-
 use super::super::inner::{
     COMPRESSED_PAGE_SIZE, CompressionStrategy, PageDecoder, ReadWriteCompressedVec,
 };
+use crate::{AnyStoredVec, Pages, VecIndex, VecValue, unlikely};
 
 /// Read-only mmap-backed source over a compressed vector.
 ///
@@ -127,11 +126,11 @@ where
 
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    pub fn try_fold<B, E, F: FnMut(B, T) -> Result<B, E>>(
         mut self,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let per_page = Self::PER_PAGE;
         let end = self.end;
         let mut page_index = self.pos / per_page;

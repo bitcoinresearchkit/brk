@@ -1,4 +1,5 @@
 use brk_types::{Day1, Height, StoredBool, StoredF64, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
     WritableVec,
@@ -34,7 +35,7 @@ fn coarser_period_uses_its_last_available_day() {
 
 #[test]
 fn repeated_view_maps_ranges_and_preserves_missing_days() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
 
     let mut source: EagerVec<PcoVec<Day1, StoredF64>> =
@@ -71,7 +72,7 @@ fn repeated_view_maps_ranges_and_preserves_missing_days() {
 
 #[test]
 fn repeated_view_supports_stored_booleans() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
 
     let mut source: EagerVec<PcoVec<Day1, StoredBool>> =

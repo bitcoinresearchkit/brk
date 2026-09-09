@@ -1,11 +1,12 @@
 use brk_types::Version;
+use tempfile::tempdir;
 use vecdb::{AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
 
 use super::*;
 
 #[test]
 fn persisted_epoch_windows_keep_the_first_retarget_ratio() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
     let mut heights: EagerVec<PcoVec<Epoch, Height>> =
         EagerVec::forced_import(&database, "heights", Version::ONE).unwrap();

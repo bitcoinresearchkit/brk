@@ -1,4 +1,8 @@
 #[cfg(feature = "storage")]
+use std::array;
+use std::result::Result;
+
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 #[cfg(feature = "storage")]
 use brk_types::Version;
@@ -84,7 +88,7 @@ impl ColumnId for WindowId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(WINDOW_IDS[index]))
+        array::from_fn(|index| create(WINDOW_IDS[index]))
     }
 
     #[inline]
@@ -121,9 +125,7 @@ impl<A> Windows<A> {
         Self::DAYS[3] as f64 * 86400.0,
     ];
 
-    pub fn try_from_fn<E>(
-        mut f: impl FnMut(&str) -> std::result::Result<A, E>,
-    ) -> std::result::Result<Self, E> {
+    pub fn try_from_fn<E>(mut f: impl FnMut(&str) -> Result<A, E>) -> Result<Self, E> {
         Ok(Self {
             _24h: f(Self::SUFFIXES[0])?,
             _1w: f(Self::SUFFIXES[1])?,

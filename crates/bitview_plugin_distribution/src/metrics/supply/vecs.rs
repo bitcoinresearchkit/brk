@@ -132,6 +132,7 @@ impl SupplyVecs {
         });
         let matured_version = version + MATURED_VERSION;
         let matured = ColumnarValuePerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!(
                 "{}_age_range_matured_supply_cumulative",
@@ -143,7 +144,6 @@ impl SupplyVecs {
                     let name = format!("{name}_matured_supply");
                     let (sats, cents) =
                         ColumnarValuePerBlockCumulativeRolling::<AgeRangeId, ()>::sources_from(
-                            cache,
                             sats,
                             cents,
                             &format!("{name}_cumulative"),

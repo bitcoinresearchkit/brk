@@ -1,6 +1,6 @@
-use brk_error::Result;
-
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, BoundedRatio, StoredF64};
 
@@ -9,7 +9,7 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    distribution: &bitview_plugin_distribution::Vecs,
+    distribution: &DistributionVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;

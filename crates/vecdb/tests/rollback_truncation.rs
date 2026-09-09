@@ -2,17 +2,19 @@
 //! (The `rollback_with_truncation` test in `tests/rollback.rs` is misnamed —
 //! it never actually calls `truncate_if_needed_at`.)
 
+use std::fs;
+
 use rawdb::Database;
 use tempfile::TempDir;
-use vecdb::{ImportOptions, Stamp, StoredVec, Version};
+use vecdb::{ImportOptions, Result, Stamp, StoredVec, Version};
 
-fn setup_db() -> vecdb::Result<(Database, TempDir)> {
+fn setup_db() -> Result<(Database, TempDir)> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     Ok((db, temp))
 }
 
-fn import_with_changes<V>(db: &Database, name: &str, changes: u16) -> vecdb::Result<V>
+fn import_with_changes<V>(db: &Database, name: &str, changes: u16) -> Result<V>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -21,7 +23,7 @@ where
     V::forced_import_with(options)
 }
 
-fn run_rollback_after_pure_truncate<V>() -> vecdb::Result<()>
+fn run_rollback_after_pure_truncate<V>() -> Result<()>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -52,7 +54,7 @@ where
     Ok(())
 }
 
-fn run_rollback_after_truncate_and_push<V>() -> vecdb::Result<()>
+fn run_rollback_after_truncate_and_push<V>() -> Result<()>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -83,7 +85,7 @@ where
     Ok(())
 }
 
-fn run_rollback_truncate_then_reflush<V>() -> vecdb::Result<()>
+fn run_rollback_truncate_then_reflush<V>() -> Result<()>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -111,7 +113,7 @@ where
     Ok(())
 }
 
-fn run_rollback_truncate_persistence<V>() -> vecdb::Result<()>
+fn run_rollback_truncate_persistence<V>() -> Result<()>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -138,7 +140,7 @@ where
     Ok(())
 }
 
-fn run_malformed_rollback_preserves_state<V>() -> vecdb::Result<()>
+fn run_malformed_rollback_preserves_state<V>() -> Result<()>
 where
     V: StoredVec<I = usize, T = u32>,
 {
@@ -153,7 +155,7 @@ where
     vec.stamped_write_with_changes(Stamp::new(2))?;
     let files = vec.find_rollback_files()?;
     let path = &files[&Stamp::new(2)];
-    let original = std::fs::read(path)?;
+    let original = fs::read(path)?;
     // The append-only change-file prefix is shared by all formats, including
     // mutable wrappers. Check its exact persisted representation.
     let mut expected = Vec::new();
@@ -168,14 +170,14 @@ where
     expected.extend(100_u32.to_le_bytes());
     assert_eq!(&original[..expected.len()], expected);
     for length in 0..original.len() {
-        std::fs::write(path, &original[..length])?;
+        fs::write(path, &original[..length])?;
         assert!(vec.rollback().is_err(), "accepted {length}-byte prefix");
         assert_eq!(vec.stamp(), Stamp::new(2));
         assert_eq!(vec.stored_len(), 4);
         assert!(vec.pushed().is_empty());
         assert_eq!(vec.collect(), [0, 1, 2, 100]);
     }
-    std::fs::write(path, original)?;
+    fs::write(path, original)?;
     vec.rollback()?;
     assert_eq!(vec.stamp(), Stamp::new(1));
     assert_eq!(vec.collect(), (0..8).collect::<Vec<_>>());

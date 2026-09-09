@@ -2,16 +2,23 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    fs,
+    path::PathBuf,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
+
+use log::{trace, warn};
+
 use super::{block_index::BlockIndexImpl, meta::ParsedMeta, regions::ParsedRegions};
 use crate::{
     GlobalTableId,
     cache::Cache,
     file_accessor::FileAccessor,
     table::{IndexBlock, filter::block::FilterBlock},
-};
-use std::{
-    path::PathBuf,
-    sync::{Arc, atomic::AtomicBool},
 };
 
 pub struct Inner {
@@ -66,11 +73,11 @@ impl Drop for Inner {
     fn drop(&mut self) {
         let global_id = self.global_id();
 
-        if self.is_deleted.load(std::sync::atomic::Ordering::Acquire) {
-            log::trace!("Cleanup deleted table {global_id:?} at {:?}", self.path);
+        if self.is_deleted.load(Ordering::Acquire) {
+            trace!("Cleanup deleted table {global_id:?} at {:?}", self.path);
 
-            if let Err(e) = std::fs::remove_file(&*self.path) {
-                log::warn!(
+            if let Err(e) = fs::remove_file(&*self.path) {
+                warn!(
                     "Failed to cleanup deleted table {global_id:?} at {:?}: {e:?}",
                     self.path,
                 );

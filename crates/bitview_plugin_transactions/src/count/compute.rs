@@ -1,6 +1,6 @@
-use brk_error::Result;
-
+use bitview_plugin_blocks::LookbackVecs;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 
 use super::Vecs;
@@ -8,7 +8,7 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    lookback: &bitview_plugin_blocks::LookbackVecs,
+    lookback: &LookbackVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;

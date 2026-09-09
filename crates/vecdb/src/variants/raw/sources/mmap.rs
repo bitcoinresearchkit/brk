@@ -1,12 +1,9 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, result::Result};
 
-use rawdb::Reader;
-
-use rawdb::Region;
-
-use crate::{AnyStoredVec, HEADER_OFFSET, VecIndex, VecValue};
+use rawdb::{Reader, Region};
 
 use super::super::{RawStrategy, ReadWriteRawVec};
+use crate::{AnyStoredVec, HEADER_OFFSET, VecIndex, VecValue};
 
 /// Read-only mmap-backed source over a raw (uncompressed) vector.
 ///
@@ -79,11 +76,7 @@ where
 
     /// Fallible fold with early exit on error.
     #[inline(always)]
-    pub fn try_fold<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
-        self,
-        init: B,
-        mut f: F,
-    ) -> std::result::Result<B, E> {
+    pub fn try_fold<B, E, F: FnMut(B, T) -> Result<B, E>>(self, init: B, mut f: F) -> Result<B, E> {
         let ptr = self.data;
         let mut byte_off = self.pos * Self::SIZE_OF_T;
         let end_byte = self.end * Self::SIZE_OF_T;

@@ -1,4 +1,4 @@
-use std::{cell::Cell, marker::PhantomData, rc::Rc, sync::Arc};
+use std::{cell::Cell, iter, marker::PhantomData, rc::Rc, sync::Arc};
 
 use bitview_traversable::{IndexMap, Traversable, TreeNode};
 use vecdb::{AnyExportableVec, ReadOnlyClone, Ro, Rw, StorageMode};
@@ -43,7 +43,7 @@ impl Traversable for Visible {
     }
 
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::empty()
+        iter::empty()
     }
 }
 

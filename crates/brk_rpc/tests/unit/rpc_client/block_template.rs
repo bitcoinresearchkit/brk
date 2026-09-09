@@ -1,4 +1,7 @@
-use bitcoin::{ScriptBuf, Transaction, TxIn, TxOut, absolute::LockTime, transaction::Version};
+use bitcoin::{
+    ScriptBuf, Transaction, TxIn, TxOut, absolute::LockTime, consensus::encode,
+    transaction::Version,
+};
 
 use super::*;
 
@@ -18,7 +21,7 @@ fn tx(seed: u32) -> Transaction {
 
 fn row(tx: &Transaction, depends: Vec<i64>) -> BlockTemplateTransaction {
     BlockTemplateTransaction {
-        data: bitcoin::consensus::encode::serialize_hex(tx),
+        data: encode::serialize_hex(tx),
         txid: tx.compute_txid().to_string(),
         hash: tx.compute_wtxid().to_string(),
         depends,

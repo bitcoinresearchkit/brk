@@ -1,4 +1,6 @@
 // Reuse the generated API catalog rather than maintaining another route list.
+use std::cmp::Reverse;
+
 const CATALOG: &str = include_str!("../../bitview_cli/src/generated.rs");
 
 pub fn catalog() -> Vec<&'static str> {
@@ -8,7 +10,7 @@ pub fn catalog() -> Vec<&'static str> {
         .collect();
     // Literal segments take precedence over parameters, like the HTTP router.
     routes.sort_by_key(|route| {
-        std::cmp::Reverse(
+        Reverse(
             route
                 .split('/')
                 .map(|s| !s.starts_with('{'))

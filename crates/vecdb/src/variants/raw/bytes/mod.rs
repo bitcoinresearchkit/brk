@@ -1,6 +1,5 @@
-use crate::{Format, ReadOnlyRawVec};
-
 use super::ReadWriteRawVec;
+use crate::{Format, ReadOnlyRawVec, VecIndex};
 
 pub mod reader;
 pub mod strategy;
@@ -37,7 +36,7 @@ pub struct BytesVec<I, T>(ReadWriteRawVec<I, T, BytesStrategy<T>>);
 
 impl<I, T> BytesVec<I, T>
 where
-    I: crate::VecIndex,
+    I: VecIndex,
     T: BytesVecValue,
 {
     pub fn reader(&self) -> BytesVecReader<I, T> {

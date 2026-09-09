@@ -30,13 +30,14 @@ impl<'a> UpdateContext<'a> {
 #[cfg(test)]
 mod tests {
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{AnyStoredVec, BytesVec, EagerVec, ImportableVec, ReadableVec, WritableVec};
 
     use super::*;
 
     #[test]
     fn compaction_completes_on_next_update_and_database_drop() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let exit = Exit::new();
         let context = UpdateContext::new(&exit);
         let db = Database::open(directory.path()).unwrap();

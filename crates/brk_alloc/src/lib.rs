@@ -3,6 +3,7 @@
 //! This crate sets mimalloc as the global allocator and provides
 //! utilities for monitoring and managing memory.
 
+use libmimalloc_sys::mi_collect;
 use mimalloc::MiMalloc as Allocator;
 
 #[global_allocator]
@@ -16,6 +17,6 @@ impl Mimalloc {
     /// Only call at natural pause points.
     #[inline]
     pub fn collect() {
-        unsafe { libmimalloc_sys::mi_collect(true) }
+        unsafe { mi_collect(true) }
     }
 }

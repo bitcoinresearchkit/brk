@@ -1,16 +1,18 @@
-use brk_error::Result;
-
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::Dollars;
 
-use super::super::{activity, value};
-use super::Vecs;
+use super::{
+    super::{activity, value},
+    Vecs,
+};
 
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    distribution: &bitview_plugin_distribution::Vecs,
+    distribution: &DistributionVecs,
     activity: &activity::Vecs,
     value: &value::Vecs,
     exit: &Exit,

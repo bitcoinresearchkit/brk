@@ -87,9 +87,12 @@ impl<I: DoubleEndedIterator<Item = Result<InternalValue>>> DoubleEndedIterator f
 #[cfg(test)]
 #[expect(clippy::string_lit_as_bytes)]
 mod tests {
-    use super::*;
-    use crate::{ValueType, value::InternalValue};
+    use std::io::Error;
+
     use test_log::test;
+
+    use super::*;
+    use crate::{Error as CrateError, ValueType, value::InternalValue};
 
     macro_rules! stream {
       ($($key:expr, $sub_key:expr, $value_type:expr),* $(,)?) => {{
@@ -151,7 +154,7 @@ mod tests {
                     999,
                     ValueType::Value,
                 )),
-                Err(crate::Error::Io(std::io::Error::other("test error"))),
+                Err(CrateError::Io(Error::other("test error"))),
             ];
 
             let iter = Box::new(vec.into_iter());
@@ -159,7 +162,7 @@ mod tests {
 
             // Because next calls drain_key_min, the error is immediately first, even though
             // the first item is technically Ok
-            assert!(matches!(iter.next().unwrap(), Err(crate::Error::Io(_))));
+            assert!(matches!(iter.next().unwrap(), Err(CrateError::Io(_))));
             iter_closed!(iter);
         }
 
@@ -171,16 +174,13 @@ mod tests {
                     999,
                     ValueType::Value,
                 )),
-                Err(crate::Error::Io(std::io::Error::other("test error"))),
+                Err(CrateError::Io(Error::other("test error"))),
             ];
 
             let iter = Box::new(vec.into_iter());
             let mut iter = MvccStream::new(iter);
 
-            assert!(matches!(
-                iter.next_back().unwrap(),
-                Err(crate::Error::Io(_))
-            ));
+            assert!(matches!(iter.next_back().unwrap(), Err(CrateError::Io(_))));
             assert_eq!(
                 InternalValue::from_components(*b"a", *b"new", 999, ValueType::Value),
                 iter.next_back().unwrap()?,

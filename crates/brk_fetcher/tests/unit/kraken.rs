@@ -1,5 +1,6 @@
+use serde_json::{json, to_value};
+
 use super::*;
-use serde_json::json;
 
 #[test]
 fn cached_dates_and_missing_dates_do_not_fetch() {
@@ -29,13 +30,13 @@ fn parsing_preserves_order_duplicates_and_errors() {
         [Timestamp::new(1), Timestamp::new(2)]
     );
     assert_eq!(
-        serde_json::to_value(&map[&Timestamp::new(2)]).unwrap(),
+        to_value(&map[&Timestamp::new(2)]).unwrap(),
         json!([400, 500, 300, 400])
     );
     let daily = Kraken::parse_date_ohlc_response(&response).unwrap();
     assert_eq!(daily.len(), 1);
     assert_eq!(
-        serde_json::to_value(daily.values().next().unwrap()).unwrap(),
+        to_value(daily.values().next().unwrap()).unwrap(),
         json!([400, 500, 300, 400])
     );
     assert!(

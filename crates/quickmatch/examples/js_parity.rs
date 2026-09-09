@@ -1,7 +1,10 @@
 //! Line-protocol oracle for modules/quickmatch-js/test/parity.test.mjs.
 //! Input: hex separators, item count, hex items; then tab-separated
 //! limit, trigram budget, minimum score, union fallback, hex separators, hex query.
-use std::io::{self, BufRead};
+use std::{
+    io::{self, BufRead},
+    str,
+};
 
 use quickmatch::{QuickMatch, QuickMatchConfig};
 
@@ -11,7 +14,7 @@ fn decode(hex: &str) -> String {
             .as_chunks::<2>()
             .0
             .iter()
-            .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
+            .map(|pair| u8::from_str_radix(str::from_utf8(pair).unwrap(), 16).unwrap())
             .collect(),
     )
     .unwrap()

@@ -1,14 +1,27 @@
-use std::ops::{Add, AddAssign, Div};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::{Add, AddAssign, Div},
+};
 
-use crate::CheckedSub;
+use bitcoin::locktime::absolute::Time;
 use derive_more::Deref;
-use jiff::{civil::date, tz::TimeZone};
+use itoa::Buffer;
+use jiff::{
+    Timestamp as JiffTimestamp,
+    civil::{Date as CivilDate, DateTime, date},
+    tz::TimeZone,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::Date;
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// UNIX timestamp in seconds
 #[derive(
@@ -50,8 +63,8 @@ impl Timestamp {
     }
 
     pub fn floor_seconds(self) -> Self {
-        let zoned = jiff::Timestamp::from(self).to_zoned(TimeZone::UTC);
-        let date_time = jiff::civil::DateTime::from(zoned);
+        let zoned = JiffTimestamp::from(self).to_zoned(TimeZone::UTC);
+        let date_time = DateTime::from(zoned);
         let trunc_date_time = date(date_time.year(), date_time.month(), date_time.day()).at(
             date_time.hour(),
             date_time.minute(),
@@ -88,12 +101,12 @@ impl Timestamp {
     }
 
     pub fn now() -> Self {
-        Self::from(jiff::Timestamp::now())
+        Self::from(JiffTimestamp::now())
     }
 
     /// Returns an ISO 8601 formatted string
     pub fn to_iso8601(self) -> String {
-        jiff::Timestamp::from(self).to_string()
+        JiffTimestamp::from(self).to_string()
     }
 }
 
@@ -113,23 +126,23 @@ impl From<i64> for Timestamp {
     }
 }
 
-impl From<jiff::Timestamp> for Timestamp {
+impl From<JiffTimestamp> for Timestamp {
     #[inline]
-    fn from(value: jiff::Timestamp) -> Self {
+    fn from(value: JiffTimestamp) -> Self {
         Self(value.as_second() as u32)
     }
 }
 
-impl From<Timestamp> for jiff::Timestamp {
+impl From<Timestamp> for JiffTimestamp {
     #[inline]
     fn from(value: Timestamp) -> Self {
-        jiff::Timestamp::from_second(*value as i64).unwrap()
+        JiffTimestamp::from_second(*value as i64).unwrap()
     }
 }
 
-impl From<bitcoin::locktime::absolute::Time> for Timestamp {
+impl From<Time> for Timestamp {
     #[inline]
-    fn from(value: bitcoin::locktime::absolute::Time) -> Self {
+    fn from(value: Time) -> Self {
         Self(value.to_consensus_u32())
     }
 }
@@ -159,7 +172,7 @@ impl From<Date> for Timestamp {
     #[inline]
     fn from(value: Date) -> Self {
         Self::from(
-            jiff::civil::Date::from(value)
+            CivilDate::from(value)
                 .to_zoned(TimeZone::UTC)
                 .unwrap()
                 .timestamp(),
@@ -173,9 +186,9 @@ impl CheckedSub<Timestamp> for Timestamp {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<Timestamp> for Timestamp {
+impl VecdbCheckedSub<Timestamp> for Timestamp {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -215,9 +228,9 @@ impl From<Timestamp> for f64 {
     }
 }
 
-impl std::fmt::Display for Timestamp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Timestamp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -227,7 +240,7 @@ impl std::fmt::Display for Timestamp {
 impl Formattable for Timestamp {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

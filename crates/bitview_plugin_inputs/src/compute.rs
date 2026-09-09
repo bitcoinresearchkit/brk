@@ -1,9 +1,8 @@
-use brk_error::Result;
-
 use bitview_plugin::{ComputePlugin, UpdateContext};
+use brk_error::Result;
 use rayon::join;
 
-use super::Vecs;
+use super::{Vecs, value};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -27,7 +26,7 @@ impl ComputePlugin for Vecs {
             ..
         } = self;
         let (value_result, rest_result) = join(
-            || super::value::compute(value, indexer, exit),
+            || value::compute(value, indexer, exit),
             || {
                 count.compute(indexer, blocks, exit)?;
                 by_type.compute(indexer, exit)

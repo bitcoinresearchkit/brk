@@ -20,7 +20,6 @@ impl Query {
                     .vecs()
                     .blocks
                     .blockhash
-                    .inner
                     .collect_one(height.incremented())
                     .data()?,
             )

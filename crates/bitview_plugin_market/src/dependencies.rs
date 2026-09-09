@@ -1,8 +1,11 @@
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_price::Vecs as PriceVecs;
 
 pub struct Dependencies<'a> {
     pub indexer: &'a Indexer,
-    pub price: &'a bitview_plugin_price::Vecs,
-    pub mappings: &'a bitview_plugin_mappings::Vecs,
-    pub blocks: &'a bitview_plugin_blocks::Vecs,
+    pub price: &'a PriceVecs,
+    pub mappings: &'a MappingsVecs,
+    pub blocks: &'a BlocksVecs,
 }

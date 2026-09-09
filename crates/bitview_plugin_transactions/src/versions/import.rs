@@ -1,4 +1,5 @@
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{
     CachedWindowStartVec, ColumnarPerBlockCumulativeRolling, LazyColumnPerBlockCumulativeRolling,
 };
@@ -12,10 +13,11 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     cached_starts: &Windows<&CachedWindowStartVec>,
 ) -> Result<Vecs> {
     let source = ColumnarPerBlockCumulativeRolling::forced_import(
+        cache,
         db,
         "tx_version_count_cumulative",
         version,
@@ -24,7 +26,6 @@ pub fn forced_import(
     let counts = source.cumulative.read_only_clone();
     let import = |name, version_id| {
         LazyColumnPerBlockCumulativeRolling::new(
-            cache,
             name,
             version,
             &counts,

@@ -1,4 +1,4 @@
-use std::{ops::AddAssign, sync::Arc};
+use std::{ops::AddAssign, result::Result, sync::Arc};
 
 use crate::{AnyVec, ReadableBoxedVec, VecIndex, VecValue, Version, cursor::Cursor};
 
@@ -132,13 +132,13 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
     ///
     /// Every implementor must provide an optimal path — there is intentionally
     /// no default to prevent silent fallback to a slow buffered path.
-    fn try_fold_range_at<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized;
 
@@ -177,13 +177,13 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
 
     /// Fallible fold over `[from, to)` by typed index with early exit on error.
     #[inline]
-    fn try_fold_range<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: I,
         to: I,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized,
     {
@@ -257,12 +257,12 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
 
     /// Fallible for-each over `[from, to)` by raw index with early exit on error.
     #[inline]
-    fn try_for_each_range_at<E, F: FnMut(T) -> std::result::Result<(), E>>(
+    fn try_for_each_range_at<E, F: FnMut(T) -> Result<(), E>>(
         &self,
         from: usize,
         to: usize,
         mut f: F,
-    ) -> std::result::Result<(), E>
+    ) -> Result<(), E>
     where
         Self: Sized,
     {

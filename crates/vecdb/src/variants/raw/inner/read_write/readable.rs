@@ -1,6 +1,7 @@
-use crate::{AnyStoredVec, HEADER_OFFSET, RawIoSource, ReadableVec, VecIndex, VecValue};
+use std::{result::Result, slice};
 
 use super::{super::RawStrategy, ReadWriteRawVec};
+use crate::{AnyStoredVec, HEADER_OFFSET, RawIoSource, ReadableVec, VecIndex, VecValue};
 
 impl<I, T, S> ReadableVec<I, T> for ReadWriteRawVec<I, T, S>
 where
@@ -46,7 +47,7 @@ where
                 if self.region().prefers_mmap(offset, bytes) {
                     let reader = self.raw_reader();
                     let src = unsafe {
-                        std::slice::from_raw_parts(
+                        slice::from_raw_parts(
                             reader
                                 .prefixed(HEADER_OFFSET)
                                 .as_ptr()
@@ -120,13 +121,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized,
     {

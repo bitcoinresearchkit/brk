@@ -2,9 +2,8 @@ use std::{collections::BTreeSet, path::PathBuf};
 
 use rawdb::{Database, Region};
 
-use crate::{AnyStoredVec, Bytes, Header, Stamp, WritableVec};
-
 use super::{MutableRawVec, MutableVec};
+use crate::{AnyStoredVec, Bytes, Header, Result, Stamp, WritableVec};
 
 impl<V> AnyStoredVec for MutableVec<V>
 where
@@ -35,7 +34,7 @@ where
         self.vec.saved_stamped_changes()
     }
 
-    fn write(&mut self) -> crate::Result<bool> {
+    fn write(&mut self) -> Result<bool> {
         self.write_inner(true)
     }
 
@@ -54,7 +53,7 @@ where
         self.vec.stored_len()
     }
 
-    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         <Self as WritableVec<V::I, V::T>>::stamped_write_with_changes(self, stamp)
     }
 
@@ -62,7 +61,7 @@ where
         <Self as WritableVec<V::I, V::T>>::save_rollback_state(self)
     }
 
-    fn serialize_changes(&self) -> crate::Result<Vec<u8>> {
+    fn serialize_changes(&self) -> Result<Vec<u8>> {
         let mut bytes = self.vec.serialize_changes()?;
         let rollback_len = self.vec.rollback_len();
         let indices = self
@@ -89,7 +88,7 @@ where
         Ok(bytes)
     }
 
-    fn remove(self) -> crate::Result<()> {
+    fn remove(self) -> Result<()> {
         let db = self.vec.db();
         let holes_region_name = self.holes_region_name();
         let has_stored_holes = self.has_stored_holes;
@@ -100,11 +99,11 @@ where
         Ok(())
     }
 
-    fn any_truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn any_truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         <Self as WritableVec<V::I, V::T>>::truncate_if_needed_at(self, index)
     }
 
-    fn any_reset(&mut self) -> crate::Result<()> {
+    fn any_reset(&mut self) -> Result<()> {
         <Self as WritableVec<V::I, V::T>>::reset(self)
     }
 }

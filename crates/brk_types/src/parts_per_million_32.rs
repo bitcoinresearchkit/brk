@@ -1,14 +1,21 @@
-use std::ops::{Add, AddAssign, Div, Sub};
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::{Add, AddAssign, Div, Sub},
+};
 
-use crate::CheckedSub;
-use crate::unlikely;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::StoredF32;
+use crate::{CheckedSub, unlikely};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Unsigned parts per million stored as u32.
 /// One unit is 0.000001. Range: 0–4,294.967294.
@@ -201,15 +208,15 @@ impl CheckedSub for PartsPerMillion32 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for PartsPerMillion32 {
+impl VecdbCheckedSub for PartsPerMillion32 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
-impl std::fmt::Display for PartsPerMillion32 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for PartsPerMillion32 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         f.write_str(buf.format(self.0))
     }
 }
@@ -218,7 +225,7 @@ impl std::fmt::Display for PartsPerMillion32 {
 impl Formattable for PartsPerMillion32 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut value = itoa::Buffer::new();
+        let mut value = Buffer::new();
         buf.extend_from_slice(value.format(self.0).as_bytes());
     }
 

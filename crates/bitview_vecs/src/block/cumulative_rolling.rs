@@ -3,7 +3,6 @@
 //! The cumulative vector is the sole stored source of truth. Per-block values
 //! and rolling sums/averages are all derived lazily from it.
 
-use crate::RollingTotals;
 use bitview_collections::Windows;
 use bitview_compute::NumericValue;
 use bitview_traversable::Traversable;
@@ -17,7 +16,7 @@ use vecdb::{
     ReadableVec, Rw, StorageMode, VecIndex, VecValue, WritableVec,
 };
 
-use crate::{IndexSources, LazyPreviousDeltaVec, PerBlock};
+use crate::{IndexSources, LazyPreviousDeltaVec, PerBlock, RollingTotals};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachedVecStrategy = Budgeted>
@@ -224,18 +223,19 @@ where
 
 #[cfg(test)]
 mod tests {
+    use bitview_transforms::StoredU64ToStoredU32;
     use brk_types::{Height, StoredU32, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
         WritableVec,
     };
 
     use crate::LazyPreviousDeltaVec;
-    use bitview_transforms::StoredU64ToStoredU32;
 
     #[test]
     fn lazy_block_is_the_delta_of_cumulative() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut cumulative: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "cumulative", Version::ONE).unwrap();

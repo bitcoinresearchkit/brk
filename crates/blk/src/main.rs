@@ -1,3 +1,12 @@
+use std::{env, process::ExitCode, thread};
+
+use args::Args;
+use brk_error::Result;
+use brk_reader::Reader;
+use fields::Ctx;
+use formatter::Formatter;
+use mode::Mode;
+
 mod args;
 mod fields;
 mod formatter;
@@ -6,15 +15,6 @@ mod path;
 mod selector;
 mod step;
 mod usage;
-
-use std::process::ExitCode;
-
-use brk_reader::Reader;
-
-use args::Args;
-use fields::Ctx;
-use formatter::Formatter;
-use mode::Mode;
 
 fn main() -> ExitCode {
     match run() {
@@ -26,8 +26,8 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> brk_error::Result<()> {
-    let raw: Vec<String> = std::env::args().skip(1).collect();
+fn run() -> Result<()> {
+    let raw: Vec<String> = env::args().skip(1).collect();
     if raw.is_empty() || raw.iter().any(|a| matches!(a.as_str(), "-h" | "--help")) {
         usage::print();
         return Ok(());
@@ -41,7 +41,7 @@ fn run() -> brk_error::Result<()> {
     let mode = Mode::pick(args.pretty, args.compact, args.paths.len())?;
     let reader = Reader::new(args.blocks_dir(), &client);
     let formatter = Formatter::new(mode, args.paths);
-    let parser_threads = (std::thread::available_parallelism()
+    let parser_threads = (thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(2)
         / 2)

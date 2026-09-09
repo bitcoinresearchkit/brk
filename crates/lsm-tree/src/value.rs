@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::fmt::{Debug, Formatter, Result};
+
 use crate::{Slice, ValueType, key::InternalKey};
 
 pub struct PointReadValue {
@@ -90,8 +92,8 @@ impl PartialEq for InternalValue {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl std::fmt::Debug for InternalValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for InternalValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
             "{:?} => {:?}",
@@ -107,8 +109,9 @@ impl std::fmt::Debug for InternalValue {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn pik_cmp_user_key() {

@@ -1,11 +1,15 @@
 #[cfg(feature = "storage")]
+use std::array;
+use std::result::Result;
+
+use crate::Windows;
+
+#[cfg(feature = "storage")]
 use bitview_traversable::Traversable;
 #[cfg(feature = "storage")]
 use brk_types::Version;
 #[cfg(feature = "storage")]
 use vecdb::{ColumnId, VecValue};
-
-use crate::Windows;
 
 #[cfg(feature = "storage")]
 const WINDOW_FROM_1W_COUNT: usize = 3;
@@ -89,7 +93,7 @@ impl ColumnId for WindowFrom1wId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(WINDOW_FROM_1W_IDS[index]))
+        array::from_fn(|index| create(WINDOW_FROM_1W_IDS[index]))
     }
 
     #[inline]
@@ -117,9 +121,7 @@ pub struct WindowsFrom1w<A> {
 impl<A> WindowsFrom1w<A> {
     pub const SUFFIXES: [&'static str; 3] = ["1w", "1m", "1y"];
 
-    pub fn try_from_fn<E>(
-        mut f: impl FnMut(&str) -> std::result::Result<A, E>,
-    ) -> std::result::Result<Self, E> {
+    pub fn try_from_fn<E>(mut f: impl FnMut(&str) -> Result<A, E>) -> Result<Self, E> {
         Ok(Self {
             _1w: f(Self::SUFFIXES[0])?,
             _1m: f(Self::SUFFIXES[1])?,

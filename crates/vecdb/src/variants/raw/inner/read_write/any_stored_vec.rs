@@ -1,15 +1,17 @@
-use std::{mem, path::PathBuf};
+use std::{mem, path::PathBuf, slice};
 
 use rawdb::{Database, Region};
 
-use crate::{AnyStoredVec, AnyVec, Error, HEADER_OFFSET, Header, Stamp, WritableVec};
-
 use super::{super::RawStrategy, ReadWriteRawVec};
+use crate::{
+    AnyStoredVec, AnyVec, Error, HEADER_OFFSET, Header, Result, Stamp, VecIndex, VecValue,
+    WritableVec,
+};
 
 impl<I, T, S> AnyStoredVec for ReadWriteRawVec<I, T, S>
 where
-    I: crate::VecIndex,
-    T: crate::VecValue,
+    I: VecIndex,
+    T: VecValue,
     S: RawStrategy<T>,
 {
     #[inline]
@@ -46,7 +48,7 @@ where
         self.base.stored_len()
     }
 
-    fn write(&mut self) -> crate::Result<bool> {
+    fn write(&mut self) -> Result<bool> {
         self.base.write_header_if_needed()?;
 
         let stored_len = self.stored_len();
@@ -75,7 +77,7 @@ where
                 // Bulk write: memory layout matches serialized format, skip per-value
                 // serialization entirely. Single memcpy from pushed buffer to mmap.
                 let bytes = unsafe {
-                    std::slice::from_raw_parts(
+                    slice::from_raw_parts(
                         taken.as_ptr() as *const u8,
                         taken.len() * Self::SIZE_OF_T,
                     )
@@ -100,12 +102,12 @@ where
         self.base.region()
     }
 
-    fn serialize_changes(&self) -> crate::Result<Vec<u8>> {
+    fn serialize_changes(&self) -> Result<Vec<u8>> {
         self.base
             .serialize_changes::<S>(|from, to| self.collect_stored_range(from, to))
     }
 
-    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         <Self as WritableVec<I, T>>::stamped_write_with_changes(self, stamp)
     }
 
@@ -113,15 +115,15 @@ where
         <Self as WritableVec<I, T>>::save_rollback_state(self)
     }
 
-    fn remove(self) -> crate::Result<()> {
+    fn remove(self) -> Result<()> {
         Self::remove(self)
     }
 
-    fn any_truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn any_truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         <Self as WritableVec<I, T>>::truncate_if_needed_at(self, index)
     }
 
-    fn any_reset(&mut self) -> crate::Result<()> {
+    fn any_reset(&mut self) -> Result<()> {
         <Self as WritableVec<I, T>>::reset(self)
     }
 }

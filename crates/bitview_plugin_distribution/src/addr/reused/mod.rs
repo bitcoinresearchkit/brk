@@ -16,25 +16,31 @@
 //!   paired with a percent over the matching block-level output/input
 //!   total.
 
-mod events;
-
-pub use events::{AddrEventsVecs, AddrTypeToAddrEventCount};
-
 use bitview_cohort::ByAddrType;
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_inputs::ByTypeVecs as InputsByTypeVecs;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_plugin_outputs::ByTypeVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
-use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableVec, Rw, StorageMode};
+use rayon::{iter, prelude::*};
+use vecdb::{
+    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    StorageMode,
+};
 
 use super::{
     count::AddrCountFundedTotalVecs,
     supply::{AddrSupplyShareVecs, AddrSupplyVecs},
 };
+
+mod events;
+
+pub use events::{AddrEventsVecs, AddrTypeToAddrEventCount};
 
 mod state;
 mod type_state;
@@ -65,12 +71,12 @@ impl ReusedAddrVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
-        outputs_by_type: &bitview_plugin_outputs::ByTypeVecs,
-        inputs_by_type: &bitview_plugin_inputs::ByTypeVecs,
-        all_supply: &CachedBoxedVec<Height, Sats>,
+        outputs_by_type: &ByTypeVecs,
+        inputs_by_type: &InputsByTypeVecs,
+        all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let count = AddrCountFundedTotalVecs::forced_import(cache, db, name, version, mappings)?;
         let events = AddrEventsVecs::forced_import(
@@ -117,7 +123,7 @@ impl ReusedAddrVecs {
             .par_iter_height_mut()
             .chain(self.events.par_iter_height_mut())
             .chain(self.supply.par_iter_height_mut())
-            .chain(rayon::iter::once(self.supply_share.stored_mut()))
+            .chain(iter::once(self.supply_share.stored_mut()))
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

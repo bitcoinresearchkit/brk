@@ -1,10 +1,10 @@
 #![doc = include_str!("../README.md")]
 
-use std::io::Read as _;
-use std::{path::Path, thread::sleep, time::Duration};
+use std::{io::Read as _, path::Path, thread::sleep, time::Duration};
 
-use brk_error::Error;
+use brk_error::{Error, Result};
 use brk_types::{Date, Height, OHLCCents, Timestamp};
+use retry::*;
 use tracing::warn;
 use ureq::Agent;
 
@@ -19,7 +19,7 @@ pub use binance::*;
 pub use brk::*;
 pub use kraken::*;
 pub use ohlc::compute_ohlc_from_range;
-use retry::*;
+
 pub use source::{PriceSource, TrackedSource};
 
 const MAX_RETRIES: usize = 12 * 60; // 12 hours of retrying
@@ -35,7 +35,7 @@ pub fn new_agent(timeout_secs: u64) -> Agent {
 }
 
 /// Perform a GET request and check the response status.
-pub fn checked_get(agent: &Agent, url: &str) -> brk_error::Result<Vec<u8>> {
+pub fn checked_get(agent: &Agent, url: &str) -> Result<Vec<u8>> {
     let mut response = agent.get(url).call()?;
     let status = response.status().as_u16();
     if status >= 400 {
@@ -58,11 +58,11 @@ pub struct Fetcher {
 }
 
 impl Fetcher {
-    pub fn import(hars_path: Option<&Path>) -> brk_error::Result<Self> {
+    pub fn import(hars_path: Option<&Path>) -> Result<Self> {
         Self::new(hars_path)
     }
 
-    pub fn new(hars_path: Option<&Path>) -> brk_error::Result<Self> {
+    pub fn new(hars_path: Option<&Path>) -> Result<Self> {
         let agent = new_agent(30);
         Ok(Self {
             binance: TrackedSource::new(Binance::new_with_agent(hars_path, agent.clone())),
@@ -80,7 +80,7 @@ impl Fetcher {
     /// Try fetching from each source in order, return first success
     fn try_sources<F>(&mut self, mut fetch: F) -> Option<OHLCCents>
     where
-        F: FnMut(&mut dyn PriceSource) -> Option<brk_error::Result<OHLCCents>>,
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
     {
         for source in self.sources_mut() {
             match fetch(source) {
@@ -92,7 +92,7 @@ impl Fetcher {
         None
     }
 
-    pub fn get_date(&mut self, date: Date) -> brk_error::Result<OHLCCents> {
+    pub fn get_date(&mut self, date: Date) -> Result<OHLCCents> {
         self.fetch_with_retry(
             |source| source.get_date(date),
             || format!("Failed to fetch price for date {date}"),
@@ -104,7 +104,7 @@ impl Fetcher {
         height: Height,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> brk_error::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         let timestamp = timestamp.floor_seconds();
         let previous_timestamp = previous_timestamp.map(|t| t.floor_seconds());
 
@@ -143,13 +143,9 @@ How to fix this:
     }
 
     /// Try each source in order, with retries on total failure
-    fn fetch_with_retry<F, E>(
-        &mut self,
-        mut fetch: F,
-        error_message: E,
-    ) -> brk_error::Result<OHLCCents>
+    fn fetch_with_retry<F, E>(&mut self, mut fetch: F, error_message: E) -> Result<OHLCCents>
     where
-        F: FnMut(&mut dyn PriceSource) -> Option<brk_error::Result<OHLCCents>>,
+        F: FnMut(&mut dyn PriceSource) -> Option<Result<OHLCCents>>,
         E: Fn() -> String,
     {
         for retry in 0..=MAX_RETRIES {
@@ -176,7 +172,7 @@ How to fix this:
     }
 
     /// Ping all sources and return results for each
-    pub fn ping(&self) -> Vec<(&'static str, brk_error::Result<()>)> {
+    pub fn ping(&self) -> Vec<(&'static str, Result<()>)> {
         vec![
             (self.binance.name(), self.binance.ping()),
             (self.kraken.name(), self.kraken.ping()),

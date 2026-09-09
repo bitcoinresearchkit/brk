@@ -1,9 +1,13 @@
+#[cfg(feature = "storage")]
+use itoa::Buffer;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use crate::VSize;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// BIP-141 sigop cost. The block-level budget is 80,000, so a `u32`
 /// fits a single tx's count with room to spare.
@@ -80,7 +84,7 @@ impl From<SigOps> for u32 {
 impl Formattable for SigOps {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

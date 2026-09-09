@@ -1,4 +1,6 @@
 use brk_types::{BlockHash, Height, Timestamp};
+use tempfile::tempdir;
+use vecdb::{Database, PcoVec};
 
 use super::*;
 
@@ -25,15 +27,12 @@ fn spending_positions(
 }
 
 fn position_fixture(
-    db: &vecdb::Database,
+    db: &Database,
     len: usize,
-) -> (
-    vecdb::PcoVec<TxInIndex, TxIndex>,
-    vecdb::PcoVec<TxIndex, TxInIndex>,
-) {
+) -> (PcoVec<TxInIndex, TxIndex>, PcoVec<TxIndex, TxInIndex>) {
     use vecdb::{AnyStoredVec, ImportableVec, Version, WritableVec};
-    let mut inputs = vecdb::PcoVec::import(db, "inputs", Version::ONE).unwrap();
-    let mut firsts = vecdb::PcoVec::import(db, "firsts", Version::ONE).unwrap();
+    let mut inputs = PcoVec::import(db, "inputs", Version::ONE).unwrap();
+    let mut firsts = PcoVec::import(db, "firsts", Version::ONE).unwrap();
     for i in 0..len {
         inputs.push(TxIndex::from(i / 3));
     }
@@ -47,8 +46,8 @@ fn position_fixture(
 
 #[test]
 fn batched_spending_positions_keep_output_slots_and_safe_bounds() {
-    let dir = tempfile::tempdir().unwrap();
-    let db = vecdb::Database::open(dir.path()).unwrap();
+    let dir = tempdir().unwrap();
+    let db = Database::open(dir.path()).unwrap();
     let (inputs, mut firsts) = position_fixture(&db, 32768);
     for requests in [
         vec![],

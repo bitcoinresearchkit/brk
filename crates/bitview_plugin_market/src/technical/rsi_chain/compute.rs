@@ -1,14 +1,15 @@
-use brk_error::Result;
-
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::PartsPerMillion32;
 
 use super::RsiChain;
+
 pub fn compute(
     chain: &mut RsiChain,
     indexer: &Indexer,
-    blocks: &bitview_plugin_blocks::Vecs,
+    blocks: &BlocksVecs,
     rma_days: usize,
     stoch_sma_days: usize,
     exit: &Exit,

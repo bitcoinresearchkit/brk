@@ -2,25 +2,28 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::mem;
+
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+
 use super::{
     Block,
     encoder::{Encodable, Encoder},
 };
-use crate::table::block::hash_index::MAX_POINTERS_FOR_HASH_INDEX;
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use crate::{Result, table::block::hash_index::MAX_POINTERS_FOR_HASH_INDEX};
 
 pub const TRAILER_START_MARKER: u8 = 255;
 
-const TRAILER_SIZE: usize = 5 * std::mem::size_of::<u32>()
-    + (2 * std::mem::size_of::<u8>())
+const TRAILER_SIZE: usize = 5 * mem::size_of::<u32>()
+    + (2 * mem::size_of::<u8>())
     // Fixed key size
-    + std::mem::size_of::<u8>()
-    + std::mem::size_of::<u16>()
+    + mem::size_of::<u8>()
+    + mem::size_of::<u16>()
     // Prefix truncation on/off (always on)
-    + std::mem::size_of::<u8>()
+    + mem::size_of::<u8>()
     // Fixed value size
-    + std::mem::size_of::<u8>()
-    + std::mem::size_of::<u32>();
+    + mem::size_of::<u8>()
+    + mem::size_of::<u32>();
 
 /// Block trailer
 ///
@@ -52,7 +55,7 @@ impl<'a> Trailer<'a> {
             clippy::indexing_slicing,
             reason = "the item_count is at the end and is a u32"
         )]
-        let reader = &mut &reader[(TRAILER_SIZE - std::mem::size_of::<u32>())..];
+        let reader = &mut &reader[(TRAILER_SIZE - mem::size_of::<u32>())..];
 
         #[expect(
             clippy::expect_used,
@@ -76,7 +79,7 @@ impl<'a> Trailer<'a> {
         }
     }
 
-    pub fn write<S: Default, T: Encodable<S>>(mut encoder: Encoder<'_, S, T>) -> crate::Result<()> {
+    pub fn write<S: Default, T: Encodable<S>>(mut encoder: Encoder<'_, S, T>) -> Result<()> {
         // IMPORTANT: Terminator marker
         encoder.writer.write_u8(TRAILER_START_MARKER)?;
 
@@ -184,13 +187,14 @@ impl<'a> Trailer<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::table::block::TRAILER_START_MARKER;
     use strum::IntoEnumIterator;
     use test_log::test;
 
+    use crate::{ValueType, table::block::TRAILER_START_MARKER};
+
     #[test]
     fn value_type_never_block_trailer_start_marker() {
-        for variant in crate::ValueType::iter() {
+        for variant in ValueType::iter() {
             let n: u8 = variant.into();
             assert_ne!(n, TRAILER_START_MARKER);
         }

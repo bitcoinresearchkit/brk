@@ -1,7 +1,7 @@
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, Bytes, ImportOptions, ImportableVec, OverflowVec, OverflowVecValue,
-    ReadableVec, Stamp, Version, WritableVec,
+    AnyStoredVec, AnyVec, Bytes, Database, ImportOptions, ImportableVec, OverflowVec,
+    OverflowVecValue, ReadableVec, Result, Stamp, Version, WritableVec,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,7 +14,7 @@ impl Bytes for TestValue {
         self.0.to_le_bytes()
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Ok(Self(u64::from_bytes(bytes)?))
     }
 }
@@ -82,9 +82,9 @@ fn assert_sorted_reads(
 }
 
 #[test]
-fn sorted_reads_preserve_holes_staged_sidecar_reuse_truncation_and_reopen() -> vecdb::Result<()> {
+fn sorted_reads_preserve_holes_staged_sidecar_reuse_truncation_and_reopen() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut source = OverflowVec::<usize, TestValue>::import(&db, "sorted", Version::ONE)?;
     let mut expected: Vec<_> = (0..10_011)
         .map(|i| {
@@ -139,9 +139,9 @@ fn sorted_reads_preserve_holes_staged_sidecar_reuse_truncation_and_reopen() -> v
 }
 
 #[test]
-fn large_range_decodes_inline_and_overflow_values() -> vecdb::Result<()> {
+fn large_range_decodes_inline_and_overflow_values() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "large", Version::ONE)?;
     let expected: Vec<_> = (0..70_000)
         .map(|index| {
@@ -164,9 +164,9 @@ fn large_range_decodes_inline_and_overflow_values() -> vecdb::Result<()> {
 }
 
 #[test]
-fn roundtrip_updates_holes_and_read_only_visibility() -> vecdb::Result<()> {
+fn roundtrip_updates_holes_and_read_only_visibility() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "values", Version::ONE)?;
     let read_only = vec.read_only_clone();
 
@@ -214,9 +214,9 @@ fn roundtrip_updates_holes_and_read_only_visibility() -> vecdb::Result<()> {
 }
 
 #[test]
-fn rollback_and_truncation_keep_sidecar_in_sync() -> vecdb::Result<()> {
+fn rollback_and_truncation_keep_sidecar_in_sync() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let options = ImportOptions::new(&db, "rollback", Version::ONE).with_saved_stamped_changes(5);
     let mut vec = OverflowVec::<usize, TestValue>::forced_import_with(options)?;
 
@@ -240,9 +240,9 @@ fn rollback_and_truncation_keep_sidecar_in_sync() -> vecdb::Result<()> {
 }
 
 #[test]
-fn forced_version_reset_removes_data_and_holes() -> vecdb::Result<()> {
+fn forced_version_reset_removes_data_and_holes() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "reset", Version::ONE)?;
     vec.push(TestValue(1_000));
     vec.push(TestValue(2_000));
@@ -262,9 +262,9 @@ fn forced_version_reset_removes_data_and_holes() -> vecdb::Result<()> {
 }
 
 #[test]
-fn fills_holes_in_unwritten_values() -> vecdb::Result<()> {
+fn fills_holes_in_unwritten_values() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "pushed", Version::ONE)?;
 
     vec.push(TestValue(1));
@@ -282,9 +282,9 @@ fn fills_holes_in_unwritten_values() -> vecdb::Result<()> {
 }
 
 #[test]
-fn update_many_batches_final_values_across_every_storage_state() -> vecdb::Result<()> {
+fn update_many_batches_final_values_across_every_storage_state() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "batch", Version::ONE)?;
 
     for value in [1, 1_000, 2, 2_000] {
@@ -337,9 +337,9 @@ fn update_many_batches_final_values_across_every_storage_state() -> vecdb::Resul
 }
 
 #[test]
-fn fill_holes_or_push_many_preserves_value_order_and_indexes() -> vecdb::Result<()> {
+fn fill_holes_or_push_many_preserves_value_order_and_indexes() -> Result<()> {
     let temp = tempdir()?;
-    let db = vecdb::Database::open(temp.path())?;
+    let db = Database::open(temp.path())?;
     let mut vec = OverflowVec::<usize, TestValue>::forced_import(&db, "insert", Version::ONE)?;
 
     for value in [1, 1_000, 2, 2_000] {

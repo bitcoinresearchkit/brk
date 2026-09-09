@@ -1,13 +1,16 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicUsize, Ordering},
+use std::{
+    any,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
 };
 
 use brk_exit::Exit;
 use tempfile::tempdir;
 use vecdb::{
-    AnyVec, BytesVec, BytesVecValue, Database, EagerVec, ImportableVec, ReadableVec, VecValue,
-    Version,
+    AnyVec, BytesVec, BytesVecValue, Database, EagerVec, Error, ImportableVec, ReadableVec,
+    Result as VecdbResult, VecValue, Version,
 };
 
 struct CountingSource<T> {
@@ -48,7 +51,7 @@ impl<T: VecValue> AnyVec for CountingSource<T> {
         size_of::<T>()
     }
     fn value_type_to_string(&self) -> &'static str {
-        std::any::type_name::<T>()
+        any::type_name::<T>()
     }
 }
 
@@ -100,8 +103,8 @@ fn lifecycle<T: VecValue, O: BytesVecValue + PartialEq>(
         usize,
         &CountingSource<T>,
         &Exit,
-    ) -> vecdb::Result<()>,
-) -> vecdb::Result<()> {
+    ) -> VecdbResult<()>,
+) -> VecdbResult<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let exit = Exit::new();
@@ -128,7 +131,7 @@ fn lifecycle<T: VecValue, O: BytesVecValue + PartialEq>(
 }
 
 #[test]
-fn integer_compute_paths_preserve_resume_and_version_reset() -> vecdb::Result<()> {
+fn integer_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()> {
     let values = vec![2_u64, 8, 1, 9, 4, 3, 7, 6];
     lifecycle(
         values.clone(),
@@ -195,7 +198,7 @@ fn integer_compute_paths_preserve_resume_and_version_reset() -> vecdb::Result<()
 }
 
 #[test]
-fn floating_compute_paths_preserve_resume_and_version_reset() -> vecdb::Result<()> {
+fn floating_compute_paths_preserve_resume_and_version_reset() -> VecdbResult<()> {
     let values = vec![2_f32, 8., 1., 9., 4., 3., 7., 6.];
     let mut sma = Vec::new();
     let mut previous = 0.0;
@@ -238,7 +241,7 @@ fn floating_compute_paths_preserve_resume_and_version_reset() -> vecdb::Result<(
 }
 
 #[test]
-fn transforms_clamp_uneven_and_empty_sources() -> vecdb::Result<()> {
+fn transforms_clamp_uneven_and_empty_sources() -> VecdbResult<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let exit = Exit::new();
@@ -331,7 +334,7 @@ impl From<TrackedValue> for i64 {
 }
 
 #[test]
-fn lookback_consumes_owned_previous_values_without_extra_clones() -> vecdb::Result<()> {
+fn lookback_consumes_owned_previous_values_without_extra_clones() -> VecdbResult<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let exit = Exit::new();
@@ -377,14 +380,14 @@ fn lookback_consumes_owned_previous_values_without_extra_clones() -> vecdb::Resu
 }
 
 #[test]
-fn checked_sum_keeps_its_fallible_early_exit() -> vecdb::Result<()> {
+fn checked_sum_keeps_its_fallible_early_exit() -> VecdbResult<()> {
     let directory = tempdir()?;
     let db = Database::open(directory.path())?;
     let source = CountingSource::new(vec![1_u64, 2, 3]);
     let mut out: EagerVec<BytesVec<usize, u64>> = EagerVec::import(&db, "sum", Version::ONE)?;
     assert!(matches!(
         out.compute_sum(0, &source, 0, &Exit::new()),
-        Err(vecdb::Error::Underflow)
+        Err(Error::Underflow)
     ));
     assert_eq!(source.fallible_folds.load(Ordering::Relaxed), 1);
     assert!(out.is_empty());

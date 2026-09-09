@@ -1,10 +1,11 @@
-use std::{collections::BTreeMap, fs, net::SocketAddr, path::PathBuf};
+use std::{collections::BTreeMap, fs, io::ErrorKind, net::SocketAddr, path::PathBuf};
 
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
 use brk_types::{
     Cents, CentsCompact, Cohort, Date, Sats, SupplyState, UrpdAggregation, UrpdRaw, UrpdWeight,
 };
-use serde_json::Value;
+use serde_json::{Value, from_str, to_value};
+use tempfile::tempdir;
 
 use super::server_routes::exchange_with_etag;
 use crate::AppState;
@@ -13,7 +14,7 @@ use crate::AppState;
 pub async fn check(state: &AppState, address: SocketAddr) {
     let date = Date::new(2009, 1, 3);
     let path = state.sync(|q| q.distribution().states_path.clone());
-    let staging = tempfile::tempdir().unwrap();
+    let staging = tempdir().unwrap();
     let mut producer = UTXOStates::new(staging.path());
     for age in producer.age_range.iter_mut() {
         age.reset_cost_basis_data_if_needed().unwrap();
@@ -109,7 +110,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
 fn remember(originals: &mut Vec<(PathBuf, Option<Vec<u8>>)>, path: PathBuf) {
     let bytes = match fs::read(&path) {
         Ok(bytes) => Some(bytes),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) if error.kind() == ErrorKind::NotFound => None,
         Err(error) => panic!("cannot capture fixture snapshot: {error}"),
     };
     originals.push((path, bytes));
@@ -127,14 +128,14 @@ async fn check_representation(
     let expected = state
         .sync(|q| q.urpd_at_with_weight(cohort, date, aggregation, weight))
         .unwrap();
-    let expected = serde_json::to_value(expected).unwrap();
+    let expected = to_value(expected).unwrap();
     assert_eq!(expected["total_supply"], total);
     let mut previous_tag = None;
     for suffix in [String::new(), format!("/{date}")] {
         let route = format!("/api/urpd/{cohort}{suffix}?agg={aggregation}&weight={weight}");
         let response = exchange_with_etag(address, "GET", &route, "\"old\"").await;
         assert!(response.starts_with("HTTP/1.1 200"), "{route}: {response}");
-        let body: Value = serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+        let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
         assert_eq!(body, expected, "{route}");
         let tag = response
             .lines()

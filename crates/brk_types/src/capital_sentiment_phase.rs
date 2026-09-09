@@ -1,6 +1,14 @@
+use std::mem;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display};
+
+#[cfg(feature = "storage")]
+use vecdb::Error;
+#[cfg(feature = "storage")]
+use vecdb::Result;
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, Pco};
 
@@ -54,7 +62,7 @@ impl CapitalSentimentPhase {
         if code >= Self::MIN_CODE && code <= Self::MAX_CODE {
             // SAFETY: The enum has contiguous explicit discriminants from
             // MIN_CODE through MAX_CODE.
-            Some(unsafe { std::mem::transmute::<u8, Self>(code) })
+            Some(unsafe { mem::transmute::<u8, Self>(code) })
         } else {
             None
         }
@@ -108,16 +116,14 @@ impl Bytes for CapitalSentimentPhase {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != size_of::<Self>() {
-            return Err(vecdb::Error::WrongLength {
+            return Err(Error::WrongLength {
                 expected: size_of::<Self>(),
                 received: bytes.len(),
             });
         }
-        Self::from_code(bytes[0]).ok_or(vecdb::Error::InvalidArgument(
-            "invalid CapitalSentimentPhase",
-        ))
+        Self::from_code(bytes[0]).ok_or(Error::InvalidArgument("invalid CapitalSentimentPhase"))
     }
 }
 
@@ -132,15 +138,15 @@ unsafe impl Pco for CapitalSentimentPhase {
     }
 
     #[inline(always)]
-    fn from_number(value: Self::NumberType) -> vecdb::Result<Self> {
-        Self::from_code(value).ok_or(vecdb::Error::InvalidArgument(
-            "invalid CapitalSentimentPhase",
-        ))
+    fn from_number(value: Self::NumberType) -> Result<Self> {
+        Self::from_code(value).ok_or(Error::InvalidArgument("invalid CapitalSentimentPhase"))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use serde_json::to_string;
+
     use super::*;
 
     #[cfg(feature = "storage")]
@@ -165,11 +171,11 @@ mod tests {
     #[test]
     fn serialized_names_are_stable() {
         assert_eq!(
-            serde_json::to_string(&CapitalSentimentPhase::RagingBull).unwrap(),
+            to_string(&CapitalSentimentPhase::RagingBull).unwrap(),
             "\"raging_bull\""
         );
         assert_eq!(
-            serde_json::to_string(&CapitalSentimentPhase::DeepBear).unwrap(),
+            to_string(&CapitalSentimentPhase::DeepBear).unwrap(),
             "\"deep_bear\""
         );
     }

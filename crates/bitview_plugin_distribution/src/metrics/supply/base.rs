@@ -7,7 +7,7 @@ use bitview_vecs::{
     LazySpotValuePerBlock,
 };
 use brk_types::{Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version};
-use vecdb::{BinaryTransform, CachedBoxedVec, LazyVec, ReadableCloneableVec};
+use vecdb::{BinaryTransform, LazyVec, ReadableCloneableVec};
 
 #[derive(Clone, Traversable)]
 pub struct SupplyBase {
@@ -22,7 +22,7 @@ impl SupplyBase {
         cohort_name: &str,
         version: Version,
         total: LazySpotValuePerBlock,
-        all_supply: &CachedBoxedVec<Height, Sats>,
+        all_supply: &impl ReadableCloneableVec<Height, Sats>,
         mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {

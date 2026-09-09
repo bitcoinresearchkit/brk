@@ -1,7 +1,8 @@
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
-use schemars::{JsonSchema, SchemaGenerator, json_schema};
-use serde::{Deserialize, Deserializer};
+use jiff::Timestamp as JiffTimestamp;
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use serde::{Deserialize, Deserializer, de::Error};
 
 use crate::{Date, Timestamp};
 
@@ -14,11 +15,11 @@ pub enum RangeIndex {
 }
 
 impl JsonSchema for RangeIndex {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         "RangeIndex".into()
     }
 
-    fn json_schema(_: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
         json_schema!({
             "description": "A positional index, YYYY-MM-DD date, or ISO 8601 timestamp.",
             "anyOf": [
@@ -76,7 +77,7 @@ impl<'de> Deserialize<'de> for RangeIndex {
         let s = String::deserialize(deserializer)?;
         let s = s.trim().trim_matches('"');
         if s.is_empty() {
-            return Err(serde::de::Error::custom("empty range index"));
+            return Err(Error::custom("empty range index"));
         }
         if let Ok(i) = s.parse::<i64>() {
             return Ok(Self::Int(i));
@@ -84,16 +85,14 @@ impl<'de> Deserialize<'de> for RangeIndex {
         if let Ok(date) = s.parse::<Date>() {
             return Ok(Self::Date(date));
         }
-        if let Ok(ts) = s.parse::<jiff::Timestamp>() {
+        if let Ok(ts) = s.parse::<JiffTimestamp>() {
             let secs = ts.as_second();
             if secs < 0 || secs > u32::MAX as i64 {
-                return Err(serde::de::Error::custom(format!(
-                    "timestamp out of range: {s}"
-                )));
+                return Err(Error::custom(format!("timestamp out of range: {s}")));
             }
             return Ok(Self::Timestamp(Timestamp::new(secs as u32)));
         }
-        Err(serde::de::Error::custom(format!(
+        Err(Error::custom(format!(
             "expected integer, YYYY-MM-DD, or ISO 8601 timestamp: {s}"
         )))
     }

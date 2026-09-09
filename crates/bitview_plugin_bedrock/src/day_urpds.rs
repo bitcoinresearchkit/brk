@@ -1,5 +1,3 @@
-use brk_error::Result;
-
 use std::{
     collections::BTreeMap,
     fs,
@@ -11,11 +9,13 @@ use bitview_cohort::{
     AgeRangeId, ByTerm, TERM_FILTERS, TERM_NAMES, UTXO_ALL_NAME, UTXOAggregate, UTXOAggregateId,
 };
 use bitview_plugin_distribution::{AgeRangeUrpds, UTXOStates};
+use brk_error::Result;
 use brk_types::{
     Cents, CentsCompact, CostBasisByPercentile, Date, Sats, UrpdRaw, UrpdWeight, Version,
 };
 
 use super::{ModeId, ModeWeights, WeightedModeId, WeightedModes, WeightedPair, WeightedUrpdNames};
+use crate::capitalized_price;
 
 const VERSION_FILE: &str = "bedrock_urpd.version";
 
@@ -42,7 +42,7 @@ pub struct DayUrpds {
 impl DayUrpds {
     pub fn capitalized_prices(&self) -> UTXOAggregate<WeightedPair<Cents>> {
         let price = |urpd: &UrpdRaw| {
-            crate::capitalized_price::capitalized_price(urpd.map.iter().map(|(&p, &s)| (p, s)))
+            capitalized_price::capitalized_price(urpd.map.iter().map(|(&p, &s)| (p, s)))
         };
         UTXOAggregate {
             all: WeightedPair {
@@ -78,7 +78,7 @@ impl DayUrpds {
                 (true, true) => {
                     let read = |name: &str| -> Result<Cents> {
                         let bytes = UrpdRaw::read_bytes(states_path, name, date)?;
-                        Ok(crate::capitalized_price::capitalized_price(
+                        Ok(capitalized_price::capitalized_price(
                             UrpdRaw::deserialize_entries(&bytes)?,
                         ))
                     };

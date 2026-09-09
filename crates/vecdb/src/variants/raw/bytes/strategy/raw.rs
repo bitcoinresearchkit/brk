@@ -1,6 +1,7 @@
-use crate::{BytesVecValue, ValueStrategy, variants::raw::RawStrategy};
+use std::slice;
 
 use super::BytesStrategy;
+use crate::{BytesVecValue, ValueStrategy, variants::raw::RawStrategy};
 
 impl<T: BytesVecValue> RawStrategy<T> for BytesStrategy<T> {
     #[inline(always)]
@@ -9,7 +10,7 @@ impl<T: BytesVecValue> RawStrategy<T> for BytesStrategy<T> {
             if T::IS_NATIVE_LAYOUT {
                 (ptr.add(byte_offset) as *const T).read_unaligned()
             } else {
-                let slice = std::slice::from_raw_parts(ptr.add(byte_offset), size_of::<T>());
+                let slice = slice::from_raw_parts(ptr.add(byte_offset), size_of::<T>());
                 <BytesStrategy<T> as ValueStrategy<T>>::read(slice).unwrap_unchecked()
             }
         }

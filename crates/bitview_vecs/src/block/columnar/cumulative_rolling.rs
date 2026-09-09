@@ -1,15 +1,14 @@
-use brk_error::Result;
-
+use bitview_compute::NumericValue;
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, ColumnId, ColumnarVec, Database, EagerVec, ImportableVec, PcoVec,
-    ReadOnlyClone, ReadOnlyColumnarVec, ReadableVec, Rw, StorageMode, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportOptions,
+    ImportableVec, PcoVec, ReadOnlyClone, ReadOnlyColumnarVec, ReadableVec, Rw, StorageMode,
+    VecValue, WritableVec,
 };
-
-use bitview_compute::NumericValue;
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct ColumnarPerBlockCumulativeRolling<T, C, S: Clone, M: StorageMode = Rw>
@@ -33,12 +32,15 @@ where
     C: ColumnId,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         build_series: impl FnOnce(&ReadOnlyColumnarVec<PcoVec<Height, T>, C>) -> S,
     ) -> Result<Self> {
-        let cumulative = EagerVec::forced_import(db, name, version)?;
+        let cumulative = EagerVec::forced_import_with(
+            ImportOptions::new(db, name, version).with_cache_budget(cache),
+        )?;
         let last_cumulative = cumulative.collect_last().map(|row| (cumulative.len(), row));
         let series = build_series(&cumulative.read_only_clone());
 
@@ -217,12 +219,15 @@ where
 mod tests {
     use brk_exit::Exit;
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, ColumnId, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, VecValue,
-        WritableVec,
+        AnyStoredVec, CacheBudget, ColumnId, Database, EagerVec, ImportableVec, PcoVec,
+        ReadableVec, VecValue, WritableVec,
     };
 
     use super::ColumnarPerBlockCumulativeRolling;
+
+    static CACHE_BUDGET: CacheBudget = CacheBudget::new(1 << 20);
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     enum Column {
@@ -272,9 +277,10 @@ mod tests {
 
     #[test]
     fn pushes_delta_rows_and_recovers_after_truncation() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut vec = ColumnarPerBlockCumulativeRolling::<StoredU64, Column, _>::forced_import(
+            &CACHE_BUDGET,
             &db,
             "values",
             Version::ONE,

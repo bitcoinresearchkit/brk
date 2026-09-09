@@ -1,21 +1,33 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
     ops::{Add, AddAssign, Rem},
 };
 
-use crate::CheckedSub;
+use bitcoin::locktime::absolute::Height as AbsoluteHeight;
 use byteview::ByteView;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use super::{Epoch, Halving, StoredU64};
+use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, CheckedSub, FromCoarserIndex};
+
+#[cfg(feature = "storage")]
+use brk_error::Error as ErrorError;
+
+#[cfg(feature = "storage")]
+use std::io::Error as IoError;
+
+#[cfg(feature = "storage")]
+use std::path::Path;
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use std::fs;
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, Formattable, Pco, PrintableIndex, Stamp, VecIndex};
-
-use crate::{BLOCKS_PER_DIFF_EPOCHS, BLOCKS_PER_HALVING, FromCoarserIndex};
-
-use super::{Epoch, Halving, StoredU64};
 
 /// Block height
 #[derive(
@@ -47,7 +59,7 @@ impl Height {
     }
 
     #[cfg(feature = "storage")]
-    pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
+    pub fn write(&self, path: &Path) -> Result<(), IoError> {
         fs::write(path, self.to_bytes())
     }
 
@@ -64,7 +76,7 @@ impl Height {
     }
 
     pub fn decremented(self) -> Option<Self> {
-        self.checked_sub(1_u32)
+        CheckedSub::checked_sub(self, 1_u32)
     }
 
     pub fn is_zero(self) -> bool {
@@ -132,9 +144,9 @@ impl CheckedSub<Height> for Height {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<Height> for Height {
+impl VecdbCheckedSub<Height> for Height {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -144,9 +156,9 @@ impl CheckedSub<u32> for Height {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<u32> for Height {
+impl VecdbCheckedSub<u32> for Height {
     fn checked_sub(self, rhs: u32) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -156,9 +168,9 @@ impl CheckedSub<usize> for Height {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for Height {
+impl VecdbCheckedSub<usize> for Height {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -174,9 +186,9 @@ impl CheckedSub<u64> for Height {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<u64> for Height {
+impl VecdbCheckedSub<u64> for Height {
     fn checked_sub(self, rhs: u64) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -247,18 +259,18 @@ impl From<Height> for u64 {
     }
 }
 
-impl From<bitcoin::locktime::absolute::Height> for Height {
+impl From<AbsoluteHeight> for Height {
     #[inline]
-    fn from(value: bitcoin::locktime::absolute::Height) -> Self {
+    fn from(value: AbsoluteHeight) -> Self {
         Self(value.to_consensus_u32())
     }
 }
 
 #[cfg(feature = "storage")]
-impl TryFrom<&std::path::Path> for Height {
-    type Error = brk_error::Error;
-    fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
-        Ok(Self::from_bytes(std::fs::read(value)?.as_slice())?.to_owned())
+impl TryFrom<&Path> for Height {
+    type Error = ErrorError;
+    fn try_from(value: &Path) -> Result<Self, Self::Error> {
+        Ok(Self::from_bytes(fs::read(value)?.as_slice())?.to_owned())
     }
 }
 
@@ -324,9 +336,9 @@ impl VecIndex for Height {
     const INITIAL_CAPACITY: usize = 1_200_000;
 }
 
-impl std::fmt::Display for Height {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Height {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -336,7 +348,7 @@ impl std::fmt::Display for Height {
 impl Formattable for Height {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

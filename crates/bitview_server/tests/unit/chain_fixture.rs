@@ -33,6 +33,7 @@ use tokio::{
     spawn,
     task::JoinHandle,
 };
+use vecdb::CacheBudget;
 
 use super::chain_rpc::reply;
 use crate::{AppState, Server, ServerConfig};
@@ -269,4 +270,4 @@ pub fn run_genesis<F: Future<Output = ()>>(
         .unwrap();
 }
 
-pub(super) static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(64 * 1024 * 1024);
+pub(super) static CACHE_BUDGET: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

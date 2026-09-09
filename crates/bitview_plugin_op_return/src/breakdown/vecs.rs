@@ -58,13 +58,13 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let output_count = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{source_prefix}_output_count"),
             version,
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &format!("{series_prefix}_{name}_output_count"),
                         version,
                         source,
@@ -76,6 +76,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             },
         )?;
         let data_bytes = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{source_prefix}_data_bytes"),
             version,
@@ -83,7 +84,6 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                 C::series(|column, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let data_bytes = LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &format!("{prefix}_data_bytes"),
                         version,
                         source,
@@ -98,13 +98,13 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             },
         )?;
         let tx_count = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{source_prefix}_tx_count"),
             version,
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &format!("{series_prefix}_{name}_tx_count"),
                         version,
                         source,
@@ -116,13 +116,13 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             },
         )?;
         let tx_vsize = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{source_prefix}_tx_vsize"),
             version,
             |source| {
                 C::series(|column, name| {
                     LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &format!("{series_prefix}_{name}_tx_vsize"),
                         version,
                         source,
@@ -134,6 +134,7 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
             },
         )?;
         let fees = ColumnarPerBlockCumulativeRolling::forced_import(
+            cache,
             db,
             &format!("{source_prefix}_fees"),
             version,
@@ -141,7 +142,6 @@ impl<C: BreakdownAxis> BreakdownVecs<C> {
                 C::series(|column, name| {
                     let prefix = format!("{series_prefix}_{name}");
                     let fees = LazyColumnPerBlockCumulativeRolling::new(
-                        cache,
                         &format!("{prefix}_fees"),
                         version,
                         source,

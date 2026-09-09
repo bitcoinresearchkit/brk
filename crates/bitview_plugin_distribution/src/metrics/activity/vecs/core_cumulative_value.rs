@@ -1,5 +1,6 @@
 use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType, UTXORows};
 use bitview_collections::Windows;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling};
 use brk_error::Result;
@@ -21,10 +22,11 @@ impl CoreCumulativeValueByCohort {
         db: &Database,
         metric: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Result<Self> {
         let stored = CumulativeUTXOCoreValueColumns::forced_import(
+            cache,
             db,
             &format!("{metric}_cumulative"),
             version,
@@ -32,7 +34,7 @@ impl CoreCumulativeValueByCohort {
         let cohorts = UTXOGroupsWithoutAmountOrType::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, metric);
             let (sats, cents) = stored
-                .sources(cache, &filter, &name, version)
+                .sources(&filter, &name, version)
                 .expect("supported core stored value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(
                 &name,

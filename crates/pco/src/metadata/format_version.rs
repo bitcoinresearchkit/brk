@@ -1,9 +1,13 @@
-use std::fmt::Display;
-use std::io::Write;
+use std::{
+  fmt::{Display, Formatter, Result},
+  io::Write,
+};
 
-use crate::bit_reader::BitReader;
-use crate::bit_writer::BitWriter;
-use crate::errors::{PcoError, PcoResult};
+use crate::{
+  bit_reader::BitReader,
+  bit_writer::BitWriter,
+  errors::{PcoError, PcoResult},
+};
 
 /// The format version of pco used to compress a file.
 ///
@@ -34,7 +38,7 @@ impl Default for FormatVersion {
 }
 
 impl Display for FormatVersion {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     write!(f, "{}.{}", self.major, self.minor)
   }
 }

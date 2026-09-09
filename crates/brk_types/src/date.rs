@@ -1,14 +1,19 @@
-use std::{fmt, str::FromStr};
+use std::{borrow::Cow, fmt, str::FromStr};
 
-use jiff::{Span, Zoned, civil::Date as Date_, tz::TimeZone};
-use schemars::{JsonSchema, SchemaGenerator, json_schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Visitor};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
-
-use crate::ONE_DAY_IN_SEC_F64;
+use brk_error::{Error, Result as ErrorResult};
+use itoa::Buffer;
+use jiff::{Span, Timestamp as JiffTimestamp, Zoned, civil::Date as Date_, tz::TimeZone};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error as DeError, Visitor},
+};
 
 use super::{Day1, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10};
+use crate::ONE_DAY_IN_SEC_F64;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Date in YYYYMMDD format stored as u32
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -16,11 +21,11 @@ use super::{Day1, Month1, Month3, Month6, Timestamp, Week1, Year1, Year10};
 pub struct Date(u32);
 
 impl JsonSchema for Date {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         "Date".into()
     }
 
-    fn json_schema(_: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
         json_schema!({
             "description": "Calendar date in YYYY-MM-DD format.",
             "type": "string",
@@ -56,10 +61,9 @@ impl Date {
     }
 
     /// Validate dates constructed directly or decoded from persisted values.
-    pub fn try_into_jiff(self) -> brk_error::Result<Date_> {
-        let year = i16::try_from(self.0 / 10_000).map_err(|_| brk_error::Error::UnindexableDate)?;
-        Date_::new(year, self.month() as i8, self.day() as i8)
-            .map_err(|_| brk_error::Error::UnindexableDate)
+    pub fn try_into_jiff(self) -> ErrorResult<Date_> {
+        let year = i16::try_from(self.0 / 10_000).map_err(|_| Error::UnindexableDate)?;
+        Date_::new(year, self.month() as i8, self.day() as i8).map_err(|_| Error::UnindexableDate)
     }
 
     pub fn today() -> Self {
@@ -74,7 +78,7 @@ impl Date {
         if date < today {
             1.0
         } else if date == today {
-            let rounded = jiff::Timestamp::from(*self);
+            let rounded = JiffTimestamp::from(*self);
             now.timestamp().duration_since(rounded).as_secs_f64() / ONE_DAY_IN_SEC_F64
         } else {
             0.0
@@ -102,7 +106,7 @@ impl From<Date> for Date_ {
     }
 }
 
-impl From<Date> for jiff::Timestamp {
+impl From<Date> for JiffTimestamp {
     #[inline]
     fn from(value: Date) -> Self {
         Self::from(Timestamp::from(value))
@@ -113,7 +117,7 @@ impl From<Timestamp> for Date {
     #[inline]
     fn from(value: Timestamp) -> Self {
         Self::from(Date_::from(
-            jiff::Timestamp::from(value).to_zoned(TimeZone::UTC),
+            JiffTimestamp::from(value).to_zoned(TimeZone::UTC),
         ))
     }
 }
@@ -220,7 +224,7 @@ impl<'de> Deserialize<'de> for Date {
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
             where
-                E: serde::de::Error,
+                E: DeError,
             {
                 v.parse().map_err(E::custom)
             }
@@ -232,7 +236,7 @@ impl<'de> Deserialize<'de> for Date {
 
 impl fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut buf = itoa::Buffer::new();
+        let mut buf = Buffer::new();
 
         let year = buf.format(self.year());
         for _ in year.len()..4 {

@@ -2,17 +2,22 @@ use std::thread;
 
 use bitview_cohort::{
     AgeRange, AgeRangeId, AmountRange, ByEntry, ByEpoch, Class, Filter, SpendableType, Term,
-    UTXO_AGGREGATE_FILTERS, UTXOAggregate, UTXOAllAndSth, UTXOGroupsWithoutAmountOrType, UTXORows,
+    UTXO_AGGREGATE_FILTERS, UTXOAggregate, UTXOAllAndSth, UTXOCoreRows,
+    UTXOGroupsWithoutAmountOrType, UTXORows,
 };
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::CachedWindowStartVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, Rw, StorageMode};
+use vecdb::{
+    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, ReadableBoxedVec, Rw,
+    StorageMode,
+};
 
 use crate::{
     AllChainSources,
@@ -46,7 +51,7 @@ impl CohortMetrics<Rw> {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
@@ -154,16 +159,11 @@ impl CohortMetrics<Rw> {
         })
     }
 
-    pub fn invalidate_caches(&self) {
-        self.supply.total.all_supply().invalidate();
-        self.supply.total.all_market_cap().invalidate();
-    }
-
-    pub fn all_supply(&self) -> &CachedBoxedVec<Height, Sats> {
+    pub fn all_supply(&self) -> &ReadableBoxedVec<Height, Sats> {
         self.supply.total.all_supply()
     }
 
-    pub fn all_market_cap(&self) -> &CachedBoxedVec<Height, Cents> {
+    pub fn all_market_cap(&self) -> &ReadableBoxedVec<Height, Cents> {
         self.supply.total.all_market_cap()
     }
 
@@ -205,7 +205,7 @@ impl CohortMetrics<Rw> {
         } = states;
 
         let total = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).supply_value()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).supply_value()),
                 class: Class::from_fn(|id| id.select(class).supply_value()),
@@ -215,7 +215,7 @@ impl CohortMetrics<Rw> {
             type_: SpendableType::from_fn(|id| id.select(type_).supply_value()),
         };
         let profitability = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| {
                     id.select_mut(age_range)
                         .compute_unrealized_state(height_price)
@@ -267,7 +267,7 @@ impl CohortMetrics<Rw> {
         } = states;
 
         let rows = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).output_counts()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).output_counts()),
                 class: Class::from_fn(|id| id.select(class).output_counts()),
@@ -295,7 +295,7 @@ impl CohortMetrics<Rw> {
         } = states;
 
         let transfer_volume = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).transfer_volume()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).transfer_volume()),
                 class: Class::from_fn(|id| id.select(class).transfer_volume()),
@@ -305,7 +305,7 @@ impl CohortMetrics<Rw> {
             type_: SpendableType::from_fn(|id| id.select(type_).transfer_volume()),
         };
         let core = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).core_activity()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).core_activity()),
                 class: Class::from_fn(|id| id.select(class).core_activity()),
@@ -341,7 +341,7 @@ impl CohortMetrics<Rw> {
         } = states;
 
         let rows = UTXORows {
-            core: bitview_cohort::UTXOCoreRows {
+            core: UTXOCoreRows {
                 age_range: AgeRange::from_fn(|id| id.select(age_range).realized_block_data()),
                 epoch: ByEpoch::from_fn(|id| id.select(epoch).realized_block_data()),
                 class: Class::from_fn(|id| id.select(class).realized_block_data()),

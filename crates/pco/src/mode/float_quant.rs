@@ -1,14 +1,15 @@
-use crate::compression_intermediates::Bid;
-use crate::constants::{Bitlen, QUANT_REQUIRED_BITS_SAVED_PER_NUM};
-use crate::data_types::float::Float;
-use crate::data_types::latent_priv::LatentPriv;
-use crate::data_types::SplitLatents;
-use crate::dyn_slices::DynLatentSlice;
-use crate::errors::PcoResult;
-use crate::metadata::{DynLatents, Mode};
-use crate::sampling::{self, PrimaryLatentAndSavings};
-use std::cmp;
-use std::mem::MaybeUninit;
+use std::{cmp, mem::MaybeUninit};
+
+use super::worst_case_categorical_entropy;
+use crate::{
+  compression_intermediates::Bid,
+  constants::{Bitlen, QUANT_REQUIRED_BITS_SAVED_PER_NUM},
+  data_types::{float::Float, latent_priv::LatentPriv, SplitLatents},
+  dyn_slices::DynLatentSlice,
+  errors::PcoResult,
+  metadata::{DynLatents, Mode},
+  sampling::{self, PrimaryLatentAndSavings},
+};
 
 #[inline(never)]
 pub(crate) fn join_latents<F: Float>(
@@ -118,7 +119,7 @@ fn estimate_best_k_and_bits_saved_from_hist(
     let freq = occurrences / sample_len;
     let n_categories = (1_u64 << k) - 1;
     let worst_case_bits_per_infrequent_primary =
-      super::worst_case_categorical_entropy(freq, n_categories as f64);
+      worst_case_categorical_entropy(freq, n_categories as f64);
     let bits_saved_per_infrequent_primary = k as f64 - worst_case_bits_per_infrequent_primary;
     if bits_saved_per_infrequent_primary > best_bits_saved {
       best_k = k as Bitlen;

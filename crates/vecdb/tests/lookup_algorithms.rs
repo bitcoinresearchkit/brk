@@ -5,8 +5,8 @@ use std::sync::{
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BytesVec, Database, ImportableVec, LazyAggVec, LazyVec, ReadBounds,
-    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, BytesVec, Database, ImportableVec, LazyAggVec, LazyVec, READ_CHUNK_SIZE,
+    ReadBounds, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Version, WritableVec,
 };
 
 #[cfg(feature = "pco")]
@@ -57,7 +57,7 @@ fn aggregation_sorted_reads_are_selective_and_preserve_empty_buckets() {
     let mut actual = Vec::new();
     agg.for_each_chunk_at(3, 11_000, &mut |at, values| {
         assert_eq!(at, 3 + actual.len());
-        assert!(values.len() <= vecdb::READ_CHUNK_SIZE);
+        assert!(values.len() <= READ_CHUNK_SIZE);
         actual.extend_from_slice(values);
     });
     assert_eq!(

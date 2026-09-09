@@ -1,18 +1,23 @@
 #[cfg(feature = "storage")]
+use std::str as StdStr;
+
+#[cfg(feature = "storage")]
 use std::fmt;
 use std::ops::AddAssign;
 
-#[cfg(feature = "storage")]
-use bitview_traversable::Traversable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{ColumnId, Formattable, VecValue, Version};
 
 use crate::{
     LOSS_COUNT, Loss, LossId, PROFIT_COUNT, PROFITABILITY_RANGE_COUNT, Profit, ProfitId,
     ProfitabilityRange, ProfitabilityRangeId,
 };
+
+#[cfg(feature = "storage")]
+use bitview_traversable::Traversable;
+
+#[cfg(feature = "storage")]
+use vecdb::{ColumnId, Formattable, VecValue, Version};
 
 pub const PROFITABILITY_COUNT: usize = PROFITABILITY_RANGE_COUNT + PROFIT_COUNT + LOSS_COUNT;
 
@@ -68,7 +73,7 @@ impl<T: Formattable> Formattable for ProfitabilityRow<T> {
     fn fmt_csv(&self, output: &mut String) -> fmt::Result {
         let mut json = Vec::new();
         self.write_to(&mut json);
-        let json = std::str::from_utf8(&json).map_err(|_| fmt::Error)?;
+        let json = StdStr::from_utf8(&json).map_err(|_| fmt::Error)?;
 
         output.push('"');
         for character in json.chars() {

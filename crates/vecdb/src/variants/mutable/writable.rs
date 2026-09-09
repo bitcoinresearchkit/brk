@@ -1,8 +1,7 @@
 use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
-use crate::{AnyStoredVec, Stamp, WritableVec};
-
 use super::{MutableRawVec, MutableVec};
+use crate::{AnyStoredVec, Result, Stamp, WritableVec};
 
 impl<V> WritableVec<V::I, V::T> for MutableVec<V>
 where
@@ -18,12 +17,12 @@ where
         self.vec.pushed()
     }
 
-    fn truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         self.truncate_mutations_at(index);
         self.vec.truncate_if_needed_at(index)
     }
 
-    fn reset(&mut self) -> crate::Result<()> {
+    fn reset(&mut self) -> Result<()> {
         self.holes.clear();
         self.updated.clear();
         self.vec.reset()?;
@@ -41,7 +40,7 @@ where
         self.vec.is_dirty() || self.holes_changed() || !self.current_updated().is_empty()
     }
 
-    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         if self.vec.saved_stamped_changes() == 0 {
             return self.stamped_write(stamp);
         }
@@ -56,7 +55,7 @@ where
         Ok(())
     }
 
-    fn rollback(&mut self) -> crate::Result<()> {
+    fn rollback(&mut self) -> Result<()> {
         let bytes = self.vec.read_current_change_file()?;
         let (modifications, previous_holes) = V::parse_mutable_changes(&bytes)?;
 
@@ -71,7 +70,7 @@ where
         Ok(())
     }
 
-    fn find_rollback_files(&self) -> crate::Result<BTreeMap<Stamp, PathBuf>> {
+    fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>> {
         self.vec.find_rollback_files()
     }
 

@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::cmp::Ordering;
+
 use crate::{
     InternalValue,
     double_ended_peekable::{DoubleEndedPeekable, DoubleEndedPeekableExt},
@@ -56,13 +58,13 @@ impl<'a> Iter<'a> {
             };
 
             match item.compare_key(needle, self.bytes) {
-                std::cmp::Ordering::Equal => {
+                Ordering::Equal => {
                     return true;
                 }
-                std::cmp::Ordering::Greater => {
+                Ordering::Greater => {
                     return false;
                 }
-                std::cmp::Ordering::Less => {
+                Ordering::Less => {
                     // Continue
 
                     #[expect(
@@ -93,13 +95,13 @@ impl<'a> Iter<'a> {
             };
 
             match item.compare_key(needle, self.bytes) {
-                std::cmp::Ordering::Equal => {
+                Ordering::Equal => {
                     return true;
                 }
-                std::cmp::Ordering::Less => {
+                Ordering::Less => {
                     return false;
                 }
-                std::cmp::Ordering::Greater => {
+                Ordering::Greater => {
                     // Continue
 
                     #[expect(
@@ -130,10 +132,10 @@ impl<'a> Iter<'a> {
             };
 
             match item.compare_key(needle, self.bytes) {
-                std::cmp::Ordering::Greater => {
+                Ordering::Greater => {
                     return true;
                 }
-                std::cmp::Ordering::Equal | std::cmp::Ordering::Less => {
+                Ordering::Equal | Ordering::Less => {
                     #[expect(
                         clippy::expect_used,
                         reason = "we peeked a value successfully, so there must be a next item in the stream"
@@ -161,10 +163,10 @@ impl<'a> Iter<'a> {
             };
 
             match item.compare_key(needle, self.bytes) {
-                std::cmp::Ordering::Less => {
+                Ordering::Less => {
                     return true;
                 }
-                std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => {
+                Ordering::Equal | Ordering::Greater => {
                     #[expect(
                         clippy::expect_used,
                         reason = "we peeked a value successfully, so there must be a next item in the stream"

@@ -1,4 +1,24 @@
-use crate::SliceExt as _;
+use std::{
+    cmp::Ordering,
+    io::{Cursor, Seek, Write},
+};
+
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use varint_rs::{VarintReader, VarintWriter};
+
+use super::block::{
+    Block, Decodable, Decoder, Encodable, Encoder, ParsedItem, TRAILER_START_MARKER, Trailer,
+    binary_index::Reader as BinaryIndexReader, hash_index::Reader as HashIndexReader,
+};
+use crate::{
+    InternalValue, Result, Slice, SliceExt as _, ValueType,
+    key::InternalKey,
+    table::{
+        block::hash_index::{MARKER_CONFLICT, MARKER_FREE},
+        util::{SliceIndexes, compare_prefixed_slice},
+    },
+    value::PointReadValue,
+};
 
 // Copyright (c) 2025-present, fjall-rs
 // This source code is licensed under both the Apache 2.0 and MIT License
@@ -10,22 +30,6 @@ mod iter;
 mod iter_test;
 
 pub use iter::Iter;
-
-use super::block::{
-    Block, Decodable, Decoder, Encodable, Encoder, ParsedItem, TRAILER_START_MARKER, Trailer,
-    binary_index::Reader as BinaryIndexReader, hash_index::Reader as HashIndexReader,
-};
-use crate::key::InternalKey;
-use crate::table::block::hash_index::{MARKER_CONFLICT, MARKER_FREE};
-use crate::table::util::{SliceIndexes, compare_prefixed_slice};
-use crate::{InternalValue, Slice, ValueType, value::PointReadValue};
-use byteorder::WriteBytesExt;
-use byteorder::{LittleEndian, ReadBytesExt};
-use std::{
-    cmp::Ordering,
-    io::{Cursor, Seek},
-};
-use varint_rs::{VarintReader, VarintWriter};
 
 impl Decodable<DataBlockParsedItem> for InternalValue {
     fn parse_restart_key<'a>(
@@ -216,13 +220,13 @@ impl Decodable<DataBlockParsedItem> for InternalValue {
 }
 
 impl Encodable<()> for InternalValue {
-    fn encode_full_into<W: std::io::Write>(
+    fn encode_full_into<W: Write>(
         &self,
         writer: &mut W,
         _state: &mut (),
         fixed_key_len: Option<u16>,
         fixed_value_len: Option<u32>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         // We encode restart markers as:
         // [value type] [seqno] [user key len] [user key] [value len] [value]
         // 1            2       3              4          5?           6?
@@ -248,14 +252,14 @@ impl Encodable<()> for InternalValue {
         Ok(())
     }
 
-    fn encode_truncated_into<W: std::io::Write>(
+    fn encode_truncated_into<W: Write>(
         &self,
         writer: &mut W,
         _state: &mut (),
         shared_len: usize,
         fixed_key_len: Option<u16>,
         fixed_value_len: Option<u32>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         // We encode truncated values as:
         // [value type] [seqno] [shared prefix len] [rest key len] [rest key] [value len] [value]
         // 1            2       3                   4              5          6?          7?
@@ -314,7 +318,7 @@ pub struct DataBlockParsedItem {
 }
 
 impl ParsedItem<InternalValue> for DataBlockParsedItem {
-    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> std::cmp::Ordering {
+    fn compare_key(&self, needle: &[u8], bytes: &[u8]) -> Ordering {
         if let Some(prefix) = &self.prefix {
             let prefix = unsafe { bytes.get_unchecked(prefix.0..prefix.1) };
             let rest_key = unsafe { bytes.get_unchecked(self.key.0..self.key.1) };
@@ -547,7 +551,7 @@ impl DataBlock {
         items: &[InternalValue],
         restart_interval: u8,
         hash_index_ratio: f32,
-    ) -> crate::Result<Vec<u8>> {
+    ) -> Result<Vec<u8>> {
         let mut buf = vec![];
 
         Self::encode_into(&mut buf, items, restart_interval, hash_index_ratio)?;
@@ -565,7 +569,7 @@ impl DataBlock {
         items: &[InternalValue],
         restart_interval: u8,
         hash_index_ratio: f32,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         #[expect(clippy::expect_used, reason = "the chunk should not be empty")]
         let first_key = &items
             .first()
@@ -610,7 +614,7 @@ impl DataBlock {
         hash_index_ratio: f32,
         fixed_key_len: Option<u16>,
         fixed_value_len: Option<u32>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         #[expect(clippy::expect_used, reason = "the chunk should not be empty")]
         let first_key = &items
             .first()
@@ -639,18 +643,19 @@ impl DataBlock {
 #[cfg(test)]
 #[expect(clippy::expect_used)]
 mod tests {
+    use test_log::test;
+
     use crate::{
-        InternalValue, Slice,
-        ValueType::{Tombstone, Value},
+        InternalValue, Result, Slice,
+        ValueType::{self, Tombstone, Value},
         table::{
             Block, DataBlock,
             block::{BlockType, Header, ParsedItem},
         },
     };
-    use test_log::test;
 
     #[test]
-    fn fixed_width_block_roundtrip_is_smaller() -> crate::Result<()> {
+    fn fixed_width_block_roundtrip_is_smaller() -> Result<()> {
         let items: Vec<_> = (0..256u64)
             .map(|i| {
                 InternalValue::from_components(i.to_be_bytes(), (i as u32).to_be_bytes(), 0, Value)
@@ -686,7 +691,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_ping_pong_fuzz_1() -> crate::Result<()> {
+    fn data_block_ping_pong_fuzz_1() -> Result<()> {
         let items = [
             InternalValue::from_components(
                 Slice::from([111]),
@@ -754,7 +759,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_simple() -> crate::Result<()> {
+    fn data_block_point_read_simple() -> Result<()> {
         let items = [
             InternalValue::from_components("b", "b", 0, Value),
             InternalValue::from_components("c", "c", 0, Value),
@@ -795,12 +800,12 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_one() -> crate::Result<()> {
+    fn data_block_point_read_one() -> Result<()> {
         let items = [InternalValue::from_components(
             "pla:earth:fact",
             "eaaaaaaaaarth",
             0,
-            crate::ValueType::Value,
+            ValueType::Value,
         )];
 
         let bytes = DataBlock::encode_into_vec(&items, 16, 0.0)?;
@@ -832,12 +837,12 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_first() -> crate::Result<()> {
+    fn data_block_point_read_first() -> Result<()> {
         let items = [InternalValue::from_components(
             "hello",
             "world",
             0,
-            crate::ValueType::Value,
+            ValueType::Value,
         )];
 
         for restart_interval in 1..=16 {
@@ -863,7 +868,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_fuzz_1() -> crate::Result<()> {
+    fn data_block_point_read_fuzz_1() -> Result<()> {
         let items = [
             InternalValue::from_components([0], b"", 23_523_531_241_241_242, Value),
             InternalValue::from_components([1], b"", 0, Value),
@@ -901,7 +906,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_fuzz_2() -> crate::Result<()> {
+    fn data_block_point_read_fuzz_2() -> Result<()> {
         let items = [
             InternalValue::from_components([0], [], 5, Value),
             InternalValue::from_components([1], [], 4, Tombstone),
@@ -936,7 +941,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_dense() -> crate::Result<()> {
+    fn data_block_point_read_dense() -> Result<()> {
         let items = [
             InternalValue::from_components(b"a", b"a", 3, Value),
             InternalValue::from_components(b"b", b"b", 2, Value),
@@ -971,7 +976,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_dense_with_hash() -> crate::Result<()> {
+    fn data_block_point_read_dense_with_hash() -> Result<()> {
         let items = [
             InternalValue::from_components(b"a", b"a", 3, Value),
             InternalValue::from_components(b"b", b"b", 2, Value),
@@ -1012,7 +1017,7 @@ mod tests {
 
     #[test]
     #[expect(clippy::unwrap_used)]
-    fn data_block_point_read_fuzz_3() -> crate::Result<()> {
+    fn data_block_point_read_fuzz_3() -> Result<()> {
         let items = [
             InternalValue::from_components(Slice::from([0]), Slice::from([]), 0, Value),
             InternalValue::from_components(Slice::from([233, 233]), Slice::from([]), 0, Value),
@@ -1048,7 +1053,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_tombstone() -> crate::Result<()> {
+    fn data_block_point_read_tombstone() -> Result<()> {
         let items = [
             InternalValue::from_components("pla:saturn:fact", "Saturn is pretty big", 0, Value),
             InternalValue::from_components("pla:saturn:name", "Saturn", 0, Value),
@@ -1086,7 +1091,7 @@ mod tests {
     }
 
     #[test]
-    fn data_block_point_read_dense_2() -> crate::Result<()> {
+    fn data_block_point_read_dense_2() -> Result<()> {
         let items = [
             InternalValue::from_components("pla:earth:fact", "eaaaaaaaaarth", 0, Value),
             InternalValue::from_components("pla:jupiter:fact", "Jupiter is big", 0, Value),

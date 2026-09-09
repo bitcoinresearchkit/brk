@@ -1,5 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BlockCountTarget;
 use bitview_vecs::{CachedWindowStartVec, ConstantVecs, LazyPerBlockCumulativeRolling};
 use brk_types::{Height, StoredU64, Version};
@@ -15,7 +16,7 @@ impl Vecs {
     pub fn new(
         version: Version,
         indexer: &Indexer,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         cached_starts: &Windows<&CachedWindowStartVec>,
     ) -> Self {
         let total_source = IndexVec::new(

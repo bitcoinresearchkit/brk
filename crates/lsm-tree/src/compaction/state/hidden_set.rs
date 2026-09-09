@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use rustc_hash::FxHashSet;
+
 /// The hidden set keeps track of which tables are currently being compacted
 ///
 /// When a table is hidden (being compacted), no other compaction task can include that
@@ -10,7 +12,7 @@
 /// If a compaction task fails, the tables are shown again (removed from the hidden set).
 #[derive(Clone, Default)]
 pub struct HiddenSet {
-    set: rustc_hash::FxHashSet<u32>,
+    set: FxHashSet<u32>,
 }
 
 impl HiddenSet {

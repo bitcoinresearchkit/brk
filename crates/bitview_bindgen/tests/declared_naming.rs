@@ -5,6 +5,7 @@ use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeNode};
 use brk_types::Index;
 use indexmap::IndexMap;
 use serde_json::json;
+use tempfile::tempdir;
 
 fn catalog(declared: bool) -> TreeNode {
     TreeNode::branch(
@@ -40,7 +41,7 @@ fn catalog(declared: bool) -> TreeNode {
 
 #[test]
 fn declared_family_and_legacy_inference_emit_identical_outputs() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     for declared in [false, true] {
         let root = directory.path().join(declared.to_string());
         let paths = ClientOutputPaths::new()

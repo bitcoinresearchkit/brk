@@ -1,10 +1,15 @@
+use bitview_plugin_bedrock::Vecs as BedrockVecs;
+use bitview_plugin_coinflow::Vecs as CoinflowVecs;
+use bitview_plugin_cointime::Vecs as CointimeVecs;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
 
 pub struct Dependencies<'a> {
     pub indexer: &'a Indexer,
-    pub bedrock: &'a bitview_plugin_bedrock::Vecs,
-    pub distribution: &'a bitview_plugin_distribution::Vecs,
-    pub cointime: &'a bitview_plugin_cointime::Vecs,
-    pub coinflow: &'a bitview_plugin_coinflow::Vecs,
-    pub price: &'a bitview_plugin_price::Vecs,
+    pub bedrock: &'a BedrockVecs,
+    pub distribution: &'a DistributionVecs,
+    pub cointime: &'a CointimeVecs,
+    pub coinflow: &'a CoinflowVecs,
+    pub price: &'a PriceVecs,
 }

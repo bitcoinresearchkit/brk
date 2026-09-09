@@ -1,11 +1,14 @@
-use crate::CheckedSub;
-use crate::{
-    FeeRate, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw, Txid, VSize,
-    Weight, Witness,
+use bitcoin::{
+    Script, Transaction as BitcoinTransaction, TxIn as BitcoinTxIn, TxOut as BitcoinTxOut,
+    consensus::Encodable, constants::WITNESS_SCALE_FACTOR,
 };
-use bitcoin::{Script, constants::WITNESS_SCALE_FACTOR};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    CheckedSub, FeeRate, RawLockTime, Sats, SigOps, TxIn, TxIndex, TxOut, TxStatus, TxVersionRaw,
+    Txid, VSize, Weight, Witness,
+};
 
 /// Transaction information compatible with mempool.space API format
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -79,9 +82,9 @@ impl Transaction {
     /// `u16` while the protocol's coinbase vout is `0xFFFFFFFF` -
     /// callers that may see coinbase shouldn't rely on this.
     pub fn encode_bytes(&self) -> Vec<u8> {
-        let bitcoin_tx: bitcoin::Transaction = self.into();
+        let bitcoin_tx: BitcoinTransaction = self.into();
         let mut buf = Vec::with_capacity(self.total_size);
-        bitcoin::consensus::Encodable::consensus_encode(&bitcoin_tx, &mut buf)
+        Encodable::consensus_encode(&bitcoin_tx, &mut buf)
             .expect("in-memory consensus_encode is infallible");
         buf
     }
@@ -181,14 +184,14 @@ fn count_sigops_with_witness_program(witness: &Witness, witness_program: &Script
 /// a `u16` and coinbase encodes `vout = 0xFFFFFFFF` in the protocol;
 /// the reconstructed value is `u16::MAX` (65535). Mempool txs are
 /// never coinbase, and confirmed-tx callers don't go through this path.
-impl From<&Transaction> for bitcoin::Transaction {
+impl From<&Transaction> for BitcoinTransaction {
     #[inline]
     fn from(tx: &Transaction) -> Self {
         Self {
             version: tx.version.into(),
             lock_time: tx.lock_time.into(),
-            input: tx.input.iter().map(bitcoin::TxIn::from).collect(),
-            output: tx.output.iter().map(bitcoin::TxOut::from).collect(),
+            input: tx.input.iter().map(BitcoinTxIn::from).collect(),
+            output: tx.output.iter().map(BitcoinTxOut::from).collect(),
         }
     }
 }

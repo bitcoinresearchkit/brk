@@ -1,4 +1,5 @@
 use brk_types::{Height, StoredU64, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadBounds, ReadableCloneableVec,
     ReadableVec, WritableVec,
@@ -8,7 +9,7 @@ use crate::{LazyCumulativeIndexVec, LazyIndexCountVec};
 
 #[test]
 fn next_boundaries_produce_cumulative_and_per_item_counts() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut first: EagerVec<PcoVec<Height, Height>> =
         EagerVec::forced_import(&db, "first", Version::ONE).unwrap();

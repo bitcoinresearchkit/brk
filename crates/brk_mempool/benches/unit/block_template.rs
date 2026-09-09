@@ -3,6 +3,7 @@ use std::{hint::black_box, time::Instant};
 use bitcoin::{Txid as BitcoinTxid, hashes::Hash};
 use brk_types::FeeRate;
 use rustc_hash::FxHashSet;
+use serde_json::to_vec;
 
 use super::*;
 use crate::{
@@ -84,8 +85,8 @@ fn benchmark_block_template_diff() {
                 source: resolved.source.clone(),
             };
             assert_eq!(
-                serde_json::to_vec(&two_tables(capture()).unwrap()).unwrap(),
-                serde_json::to_vec(&capture().build().unwrap()).unwrap(),
+                to_vec(&two_tables(capture()).unwrap()).unwrap(),
+                to_vec(&capture().build().unwrap()).unwrap(),
                 "{count} {name}"
             );
             let mut samples = [Vec::new(), Vec::new()];

@@ -1,14 +1,19 @@
-use std::{fmt, fs, io, time};
+#[cfg(feature = "lz4")]
+use lz4_flex::block::DecompressError;
+#[cfg(feature = "pco")]
+use pco::errors::PcoError;
+use std::{fmt, fs, io, result::Result as StdResult, time};
 
+use rawdb::Error as RawdbError;
 use thiserror::Error;
+
+use crate::{Format, Stamp, Version};
 
 #[cfg(feature = "zerocopy")]
 pub mod zerocopy;
 
-use crate::{Format, Stamp, Version};
-
 /// Result using vecdb's error type.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = StdResult<T, Error>;
 
 /// Error types for vecdb operations.
 #[derive(Debug, Error)]
@@ -26,12 +31,12 @@ pub enum Error {
     SystemTimeError(#[from] time::SystemTimeError),
     #[cfg(feature = "pco")]
     #[error(transparent)]
-    PCO(#[from] pco::errors::PcoError),
+    PCO(#[from] PcoError),
     #[cfg(feature = "lz4")]
     #[error(transparent)]
-    LZ4(#[from] lz4_flex::block::DecompressError),
+    LZ4(#[from] DecompressError),
     #[error(transparent)]
-    RawDB(#[from] rawdb::Error),
+    RawDB(#[from] RawdbError),
     #[error("Wrong length: received: {received:?}, expected: {expected:?}")]
     WrongLength { received: usize, expected: usize },
     #[error("Wrong endian")]
@@ -90,7 +95,7 @@ impl Error {
     pub fn is_lock_error(&self) -> bool {
         matches!(
             self,
-            Error::TryLockError(_) | Error::RawDB(rawdb::Error::TryLock(_))
+            Error::TryLockError(_) | Error::RawDB(RawdbError::TryLock(_))
         )
     }
 
@@ -99,10 +104,10 @@ impl Error {
     pub fn is_data_error(&self) -> bool {
         match self {
             Error::IO(io_err) => is_io_data_error(io_err),
-            Error::RawDB(rawdb::Error::IO(io_err)) => is_io_data_error(io_err),
-            Error::RawDB(rawdb::Error::CorruptedMetadata(_)) => true,
-            Error::RawDB(rawdb::Error::InvalidMetadataSize { .. }) => true,
-            Error::RawDB(rawdb::Error::EmptyMetadata) => true,
+            Error::RawDB(RawdbError::IO(io_err)) => is_io_data_error(io_err),
+            Error::RawDB(RawdbError::CorruptedMetadata(_)) => true,
+            Error::RawDB(RawdbError::InvalidMetadataSize { .. }) => true,
+            Error::RawDB(RawdbError::EmptyMetadata) => true,
             Error::DifferentVersion { .. }
             | Error::DifferentFormat { .. }
             | Error::StampMismatch { .. }
@@ -129,7 +134,7 @@ mod tests {
 
     #[test]
     fn nested_rawdb_lock_is_classified_as_a_lock_error() {
-        let error = Error::RawDB(rawdb::Error::TryLock(fs::TryLockError::WouldBlock));
+        let error = Error::RawDB(RawdbError::TryLock(fs::TryLockError::WouldBlock));
 
         assert!(error.is_lock_error());
         assert!(!error.is_data_error());

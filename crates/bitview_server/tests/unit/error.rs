@@ -1,8 +1,14 @@
-use super::*;
-use axum::http::{
-    HeaderName,
-    header::{CACHE_CONTROL, ETAG},
+use axum::{
+    body as AxumBody,
+    http::{
+        HeaderName,
+        header::{CACHE_CONTROL, ETAG},
+    },
 };
+use brk_error::SeriesNotFound;
+use serde_json::{Value, from_slice};
+
+use super::*;
 
 #[tokio::test]
 async fn shared_error_mapping_preserves_status_code_body_and_cache_policy() {
@@ -41,7 +47,7 @@ async fn shared_error_mapping_preserves_status_code_body_and_cache_policy() {
         (BrkError::UnindexableDate, 404, "unindexable_date"),
         (BrkError::NoData, 404, "no_data"),
         (
-            BrkError::SeriesNotFound(brk_error::SeriesNotFound::new("test".into(), vec![], 0)),
+            BrkError::SeriesNotFound(SeriesNotFound::new("test".into(), vec![], 0)),
             404,
             "series_not_found",
         ),
@@ -71,10 +77,10 @@ async fn shared_error_mapping_preserves_status_code_body_and_cache_policy() {
             response.headers().contains_key(header::RETRY_AFTER),
             code == "state_updating"
         );
-        let bytes = axum::body::to_bytes(response.into_body(), 4096)
+        let bytes = AxumBody::to_bytes(response.into_body(), 4096)
             .await
             .unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let body: Value = from_slice(&bytes).unwrap();
         assert_eq!(body["error"]["code"], code);
         assert_eq!(body["error"]["message"], message);
         assert_eq!(body["error"]["doc_url"], DOC_URL);

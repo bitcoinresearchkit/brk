@@ -7,13 +7,14 @@
 //! Run:
 //!   cargo run -p bitview_plugin_price --example experiment --release
 
-use std::{cmp::Ordering, env, path::PathBuf};
+use std::{cmp::Ordering, env, fs, path::PathBuf};
 
 use brk_oracle::{
     BINS_PER_DECADE, Config, NUM_BINS, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW,
     bin_to_cents, cents_to_bin, seed_bin as oracle_seed_bin,
 };
-use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{OutputType, Sats, Timestamp, TxIndex, TxOutIndex};
+use serde_json::from_str;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 mod common;
@@ -444,13 +445,13 @@ impl YearStats {
 }
 
 fn main() {
-    let data_dir = std::env::var("BITVIEW_DIR")
+    let data_dir = env::var("BITVIEW_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(std::env::var("HOME").unwrap()).join(".bitview"));
-    let end_override = std::env::var("ORACLE_END")
+        .unwrap_or_else(|_| PathBuf::from(env::var("HOME").unwrap()).join(".bitview"));
+    let end_override = env::var("ORACLE_END")
         .ok()
         .and_then(|s| s.parse::<usize>().ok());
-    let stats_start = std::env::var("ORACLE_STATS_START")
+    let stats_start = env::var("ORACLE_STATS_START")
         .ok()
         .and_then(|s| s.parse::<usize>().ok())
         .unwrap_or(START_HEIGHT_SLOW)
@@ -461,8 +462,8 @@ fn main() {
     let end = end_override.unwrap_or(total_heights).min(total_heights);
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
 
-    let height_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
+    let height_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
             .expect("read height_price_ohlc.json"),
     )
     .expect("parse height OHLC");
@@ -479,7 +480,7 @@ fn main() {
         })
         .collect();
 
-    let timestamps: Vec<brk_types::Timestamp> = indexer.vecs().blocks.timestamp.collect();
+    let timestamps: Vec<Timestamp> = indexer.vecs().blocks.timestamp.collect();
     let height_years: Vec<u16> = timestamps
         .iter()
         .map(|ts| timestamp_to_year(**ts))

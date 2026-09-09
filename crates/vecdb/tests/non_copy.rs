@@ -2,7 +2,8 @@
 
 use tempfile::TempDir;
 use vecdb::{
-    AnyStoredVec, Bytes, Database, ImportableVec, LZ4Vec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, Bytes, Database, Error, ImportableVec, LZ4Vec, ReadableVec, Result, Version,
+    WritableVec,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,8 +16,8 @@ impl Bytes for HeapValue {
         self.0.to_le_bytes()
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
-        let bytes: [u8; 8] = bytes.try_into().map_err(|_| vecdb::Error::WrongLength {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        let bytes: [u8; 8] = bytes.try_into().map_err(|_| Error::WrongLength {
             expected: 8,
             received: bytes.len(),
         })?;
@@ -25,7 +26,7 @@ impl Bytes for HeapValue {
 }
 
 #[test]
-fn compressed_fold_clones_non_copy_values() -> vecdb::Result<()> {
+fn compressed_fold_clones_non_copy_values() -> Result<()> {
     let temp = TempDir::new()?;
     let db = Database::open(temp.path())?;
     let mut vec: LZ4Vec<usize, HeapValue> = LZ4Vec::import(&db, "heap", Version::ONE)?;

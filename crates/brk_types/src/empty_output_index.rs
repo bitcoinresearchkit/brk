@@ -1,13 +1,16 @@
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 use std::{fmt, ops::Add};
 
-use crate::CheckedSub;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, TypeIndex};
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex};
-
-use crate::TypeIndex;
 
 #[derive(
     Debug,
@@ -59,13 +62,13 @@ impl Add<usize> for EmptyOutputIndex {
 
 impl CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self)
+        CheckedSub::checked_sub(self.0, rhs.0).map(Self)
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
+impl VecdbCheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 

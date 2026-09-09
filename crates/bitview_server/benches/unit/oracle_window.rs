@@ -10,8 +10,8 @@ use std::{
 };
 
 use bitcoin::{
-    Amount, Block, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
-    absolute::LockTime, blockdata::constants::genesis_block, consensus::serialize,
+    Amount, Block, Network, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Weight,
+    Witness, absolute::LockTime, blockdata::constants::genesis_block, consensus::serialize,
     transaction::Version,
 };
 use bitview_plugin::ImportContext;
@@ -21,12 +21,17 @@ use brk_exit::Exit;
 use brk_oracle::{Config, HistogramRaw, Oracle, cents_to_bin};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use serde_json::Value;
+use serde_json::{Value, from_slice};
+use tempfile::tempdir;
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
     runtime::Builder,
+    spawn as TokioSpawn,
 };
+use vecdb::CacheBudget;
+
+use super::chain_rpc;
 
 fn chain() -> Vec<Block> {
     let mut chain = vec![genesis_block(Network::Bitcoin)];
@@ -69,7 +74,7 @@ fn chain() -> Vec<Block> {
             block.txdata.push(tx);
         }
         block.header.merkle_root = block.compute_merkle_root().unwrap();
-        assert!(block.weight() <= bitcoin::Weight::MAX_BLOCK);
+        assert!(block.weight() <= Weight::MAX_BLOCK);
         chain.push(block);
     }
     chain
@@ -80,7 +85,7 @@ fn chain() -> Vec<Block> {
 fn benchmark_native_oracle_window() {
     thread::Builder::new().stack_size(8 * 1024 * 1024).spawn(|| {
         Builder::new_multi_thread().worker_threads(2).enable_all().build().unwrap().block_on(async {
-            let directory = tempfile::tempdir().unwrap();
+            let directory = tempdir().unwrap();
             let blocks_path = directory.path().join("blocks");
             fs::create_dir(&blocks_path).unwrap();
             let blocks = chain();
@@ -94,7 +99,7 @@ fn benchmark_native_oracle_window() {
             fs::write(blocks_path.join("blk00000.dat"), record).unwrap();
             let node = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
             let client = Client::new_with(&format!("http://{}", node.local_addr().unwrap()), Auth::None, 0, Duration::ZERO).unwrap();
-            let mock = tokio::spawn(async move {
+            let mock = TokioSpawn(async move {
                 loop {
                     let mut socket = BufReader::new(node.accept().await.unwrap().0);
                     let mut line = String::new();
@@ -109,8 +114,8 @@ fn benchmark_native_oracle_window() {
                     }
                     let mut body = vec![0; length];
                     socket.read_exact(&mut body).await.unwrap();
-                    let request: Value = serde_json::from_slice(&body).unwrap();
-                    let body = super::chain_rpc::reply(&request, 40, &blocks, 40).to_string();
+                    let request: Value = from_slice(&body).unwrap();
+                    let body = chain_rpc::reply(&request, 40, &blocks, 40).to_string();
                     socket.get_mut().write_all(format!("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: {}\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
                 }
             });
@@ -157,4 +162,4 @@ fn benchmark_native_oracle_window() {
     }).unwrap().join().unwrap();
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

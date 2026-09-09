@@ -1,5 +1,8 @@
+use std::hint;
+
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use lsm_tree::{CompressionType, Config, Tree, config::CompressionPolicy};
+use tempfile::{TempDir, tempdir};
 
 const ROWS: u32 = 100_000;
 const GENERATIONS: u32 = 4;
@@ -12,8 +15,8 @@ const OUTSIDE_KEY: u32 = ROWS + 1;
 const MAINTENANCE_ROWS: u32 = 10_000;
 const MAINTENANCE_GENERATIONS: u32 = 8;
 
-fn populated_multirun_tree() -> (tempfile::TempDir, Tree) {
-    let directory = tempfile::tempdir().expect("temporary directory");
+fn populated_multirun_tree() -> (TempDir, Tree) {
+    let directory = tempdir().expect("temporary directory");
     let tree = Tree::open(Config::new(directory.path())).expect("tree");
 
     for generation in 0..GENERATIONS {
@@ -62,10 +65,7 @@ fn populated_multirun_tree() -> (tempfile::TempDir, Tree) {
 
 fn point_reads(tree: &Tree, key: u32) {
     for _ in 0..LOOKUPS {
-        std::hint::black_box(
-            tree.get(std::hint::black_box(key.to_be_bytes()))
-                .expect("read"),
-        );
+        hint::black_box(tree.get(hint::black_box(key.to_be_bytes())).expect("read"));
     }
 }
 
@@ -96,7 +96,7 @@ fn multirun(criterion: &mut Criterion) {
             let count = tree
                 .iter()
                 .map(|item| item.expect("read"))
-                .map(std::hint::black_box)
+                .map(hint::black_box)
                 .count();
             assert_eq!(ROWS as usize - 2, count);
         });
@@ -105,7 +105,7 @@ fn multirun(criterion: &mut Criterion) {
 }
 
 fn maintenance_workload(reads_per_generation: u32, first_compressed_level: usize) {
-    let directory = tempfile::tempdir().expect("temporary directory");
+    let directory = tempdir().expect("temporary directory");
     let mut compression_policy = vec![CompressionType::None; first_compressed_level];
     compression_policy.push(CompressionType::Lz4);
     let config = Config::new(directory.path())
@@ -130,7 +130,7 @@ fn maintenance_workload(reads_per_generation: u32, first_compressed_level: usize
             } else {
                 read % MAINTENANCE_ROWS
             };
-            std::hint::black_box(tree.get(key.to_be_bytes()).expect("read"));
+            hint::black_box(tree.get(key.to_be_bytes()).expect("read"));
         }
 
         tree.compact().expect("compact");

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use rawdb::{Database, Region};
 
-use crate::{AnyVec, Header, Stamp, Version};
+use crate::{AnyVec, Header, Result, Stamp, Version};
 
 /// Trait for stored vectors that persist data to disk (as opposed to lazy computed vectors).
 pub trait AnyStoredVec: AnyVec {
@@ -20,13 +20,13 @@ pub trait AnyStoredVec: AnyVec {
     /// Writes pending changes to storage.
     /// Returns `Ok(true)` if data was written, `Ok(false)` if nothing to write.
     #[doc(hidden)]
-    fn write(&mut self) -> crate::Result<bool>;
+    fn write(&mut self) -> Result<bool>;
 
     #[doc(hidden)]
     fn db(&self) -> Database;
 
     #[inline]
-    fn flush(&mut self) -> crate::Result<()> {
+    fn flush(&mut self) -> Result<()> {
         if self.write()? {
             self.region().flush()?;
         }
@@ -49,7 +49,7 @@ pub trait AnyStoredVec: AnyVec {
     }
 
     #[inline]
-    fn stamped_write(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn stamped_write(&mut self, stamp: Stamp) -> Result<()> {
         self.update_stamp(stamp);
         self.write()?;
         Ok(())
@@ -57,7 +57,7 @@ pub trait AnyStoredVec: AnyVec {
 
     /// Flushes with the given stamp, saving changes to enable rollback.
     /// Prefixed with `any_` to avoid conflict with `WritableVec::stamped_write_with_changes`.
-    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()>;
+    fn any_stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()>;
 
     /// Advances the in-memory rollback baseline to the current stored state.
     #[doc(hidden)]
@@ -69,7 +69,7 @@ pub trait AnyStoredVec: AnyVec {
         &mut self,
         stamp: Stamp,
         with_changes: bool,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         if with_changes {
             self.any_stamped_write_with_changes(stamp)
         } else {
@@ -81,23 +81,23 @@ pub trait AnyStoredVec: AnyVec {
         }
     }
 
-    fn serialize_changes(&self) -> crate::Result<Vec<u8>>;
+    fn serialize_changes(&self) -> Result<Vec<u8>>;
 
     /// Removes this vector's region from the database.
-    fn remove(self) -> crate::Result<()>;
+    fn remove(self) -> Result<()>;
 
     /// Truncates the vector to the given length if it is longer.
     /// Prefixed with `any_` to avoid conflict with `WritableVec::truncate_if_needed_at`.
-    fn any_truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()>;
+    fn any_truncate_if_needed_at(&mut self, index: usize) -> Result<()>;
 
     /// Resets the vector state, clearing all data.
-    fn any_reset(&mut self) -> crate::Result<()>;
+    fn any_reset(&mut self) -> Result<()>;
 
     /// Includes this vector's version and clears data when dependencies change.
     fn any_validate_computed_version_or_reset(
         &mut self,
         dependency_version: Version,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         let version = self.header().vec_version() + dependency_version;
         if version != self.header().computed_version() {
             self.mut_header().update_computed_version(version);

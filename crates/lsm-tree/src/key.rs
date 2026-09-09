@@ -2,6 +2,11 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    cmp::Ordering,
+    fmt::{Debug, Formatter, Result},
+};
+
 use crate::{Slice, ValueType};
 
 #[derive(Clone, Eq)]
@@ -18,8 +23,8 @@ impl PartialEq for InternalKey {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl std::fmt::Debug for InternalKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for InternalKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
             "{:?}:{}:{}",
@@ -56,7 +61,7 @@ impl InternalKey {
 }
 
 impl PartialOrd for InternalKey {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
@@ -65,15 +70,16 @@ impl PartialOrd for InternalKey {
 // This is one of the most important functions
 // Otherwise queries will not match expected behaviour
 impl Ord for InternalKey {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         (&self.user_key, other.seqno).cmp(&(&other.user_key, self.seqno))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn key_order_smoke_test() {

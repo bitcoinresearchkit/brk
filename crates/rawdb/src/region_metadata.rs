@@ -1,9 +1,9 @@
-use std::fmt;
+use std::{fmt, mem};
 
-use crate::{Error, GiB, PAGE_SIZE, Regions};
+use crate::{Error, GiB, PAGE_SIZE, Regions, Result};
 
 pub const SIZE_OF_REGION_METADATA: usize = PAGE_SIZE; // 4096 bytes for atomic writes
-const SIZE_OF_U64: usize = std::mem::size_of::<u64>();
+const SIZE_OF_U64: usize = mem::size_of::<u64>();
 const MAX_REGION_ID_LEN: usize = 1024;
 pub const MAX_RESERVED_SIZE: usize = 1024 * GiB; // 1 TiB
 
@@ -147,7 +147,7 @@ impl RegionMetadata {
         bytes
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != SIZE_OF_REGION_METADATA {
             return Err(Error::InvalidMetadataSize {
                 expected: SIZE_OF_REGION_METADATA,

@@ -1,7 +1,10 @@
-use std::{fs::File, sync::Arc};
-
 #[cfg(unix)]
-use std::sync::OnceLock;
+use libc::_SC_PAGESIZE;
+#[cfg(unix)]
+use libc::mincore;
+#[cfg(unix)]
+use libc::sysconf;
+use std::{fs::File, slice, sync::Arc};
 
 use log::{debug, trace};
 use parking_lot::RwLockReadGuard;
@@ -9,6 +12,9 @@ use parking_lot::RwLockReadGuard;
 use crate::{
     Database, Error, HolePunch, PAGE_SIZE, PAGE_SIZE_MINUS_1, RegionInner, RegionMetadata, Result,
 };
+
+#[cfg(unix)]
+use std::sync::OnceLock;
 
 const RESIDENCY_SAMPLE_BYTES: usize = 16 * 1024 * 1024;
 const MMAP_RESIDENCY_MIN_BYTES: usize = 128 * 1024;
@@ -77,7 +83,7 @@ impl Region {
         drop(meta);
 
         let page_size = *VM_PAGE_SIZE.get_or_init(|| {
-            let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+            let page_size = unsafe { sysconf(_SC_PAGESIZE) };
             usize::try_from(page_size)
                 .ok()
                 .filter(|page_size| *page_size > 0)
@@ -104,7 +110,7 @@ impl Region {
         let is_resident = |at: usize| {
             let mut state = 0u8;
             let result = unsafe {
-                libc::mincore(
+                mincore(
                     mmap.as_ptr().add(at).cast_mut().cast(),
                     page_size,
                     (&raw mut state).cast(),
@@ -322,7 +328,7 @@ impl Region {
         assert!(first_end <= region_len);
         let first_abs_offset = region_start + first_offset;
         let first_slice =
-            unsafe { std::slice::from_raw_parts_mut(ptr.add(first_abs_offset), value_len) };
+            unsafe { slice::from_raw_parts_mut(ptr.add(first_abs_offset), value_len) };
         write_fn(&first_value, first_slice);
 
         let mut previous_offset = first_offset;
@@ -335,7 +341,7 @@ impl Region {
             assert!(end_offset <= region_len);
 
             let abs_offset = region_start + offset;
-            let slice = unsafe { std::slice::from_raw_parts_mut(ptr.add(abs_offset), value_len) };
+            let slice = unsafe { slice::from_raw_parts_mut(ptr.add(abs_offset), value_len) };
             write_fn(&value, slice);
             previous_offset = offset;
             dirty_end = end_offset;

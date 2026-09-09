@@ -2,6 +2,7 @@ use std::{hint::black_box, time::Instant};
 
 use brk_types::{Height, RangeMap, Timestamp};
 use parking_lot::RwLock;
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, AnyVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
     StoredVec, Version, WritableVec,
@@ -13,7 +14,7 @@ use vecdb::{
 #[ignore = "million-row timestamp storage comparison; temporary local data only"]
 fn benchmark_timestamp_lookup() {
     const LEN: usize = 1_000_000;
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let database = Database::open(directory.path()).unwrap();
     let mut stored: EagerVec<PcoVec<Height, Timestamp>> =
         EagerVec::import(&database, "timestamps", Version::ONE).unwrap();

@@ -1,10 +1,11 @@
 use bitview_cohort::{AddrTypeId, WithAddrTypes};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{ColumnarPerBlock, LazyColumnSpotValuePerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use rayon::prelude::*;
+use rayon::{iter, prelude::*};
 use vecdb::{
     AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode, WritableVec,
 };
@@ -32,17 +33,18 @@ impl AddrSupplyVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let name = format!("{name}_addr_supply");
         Ok(Self(ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{name}_sats_by_type"),
             version,
             |source| {
-                bitview_vecs::LazyColumnSpotValuePerBlock::with_addr_types(
-                    cache, &name, version, source, mappings, spot_price,
+                LazyColumnSpotValuePerBlock::with_addr_types(
+                    &name, version, source, mappings, spot_price,
                 )
             },
         )?))
@@ -53,7 +55,7 @@ impl AddrSupplyVecs {
     }
 
     pub fn par_iter_height_mut(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
-        rayon::iter::once(self.stored_mut())
+        iter::once(self.stored_mut())
     }
 
     pub fn reset_height(&mut self) -> Result<()> {

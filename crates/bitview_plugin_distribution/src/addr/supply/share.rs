@@ -7,7 +7,7 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone,
+    AnyStoredVec, BinaryTransform, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec,
     ReadableVec, Rw, StorageMode, WritableVec,
 };
 
@@ -34,7 +34,7 @@ impl AddrSupplyShareVecs {
         version: Version,
         mappings: &MappingsVecs,
         supply: &AddrSupplyVecs,
-        all_supply: &CachedBoxedVec<Height, Sats>,
+        all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let name = format!("{name}_addr_supply_share");
         let all = LazyPercentPerBlock::from_ratio::<Sats, Sats, RatioSats<PartsPerMillion32>>(
@@ -44,12 +44,16 @@ impl AddrSupplyShareVecs {
             all_supply,
             mappings,
         );
-        let ppm =
-            ColumnarPerBlock::forced_import(db, &format!("{name}_ppm_by_type"), version, |_| ())?;
+        let ppm = ColumnarPerBlock::forced_import(
+            cache,
+            db,
+            &format!("{name}_ppm_by_type"),
+            version,
+            |_| (),
+        )?;
         let source = ppm.height.read_only_clone();
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnPercentPerBlock::new(
-                cache,
                 &format!("{type_name}_{name}"),
                 version,
                 &source,

@@ -1,15 +1,17 @@
-mod common;
-
 use bitview_traversable::{Traversable, TreeNode};
 use bitview_vecs::PercentPerBlock;
 use brk_types::{PartsPerMillionSigned32, PartsPerMillionSigned64, Version};
+use common::indexes;
+use tempfile::tempdir;
 use vecdb::{AnySerializableVec, AnyStoredVec, AnyVec, Database, ReadableVec, WritableVec};
 
-use common::indexes;
+use crate::common::CACHE_BUDGET;
+
+mod common;
 
 #[test]
 fn signed_ppm_width_migration_rebuilds_storage_and_preserves_public_units() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     for name in [
         "hash_price_rebound",
         "hash_value_rebound",
@@ -18,7 +20,7 @@ fn signed_ppm_width_migration_rebuilds_storage_and_preserves_public_units() {
         let db = Database::open(directory.path()).unwrap();
         let sources = indexes(&db);
         let mut old = PercentPerBlock::<PartsPerMillionSigned64>::forced_import(
-            &crate::common::CACHE_BUDGET,
+            &CACHE_BUDGET,
             &db,
             name,
             Version::ONE,
@@ -36,7 +38,7 @@ fn signed_ppm_width_migration_rebuilds_storage_and_preserves_public_units() {
         let indexes = indexes(&db);
 
         let mut view = PercentPerBlock::<PartsPerMillionSigned32>::forced_import(
-            &crate::common::CACHE_BUDGET,
+            &CACHE_BUDGET,
             &db,
             name,
             Version::TWO,
@@ -79,7 +81,7 @@ fn signed_ppm_width_migration_rebuilds_storage_and_preserves_public_units() {
         assert_eq!(json, b"[-125000,1000000,null]");
         drop(view);
         let reopened = PercentPerBlock::<PartsPerMillionSigned32>::forced_import(
-            &crate::common::CACHE_BUDGET,
+            &CACHE_BUDGET,
             &db,
             name,
             Version::TWO,

@@ -1,10 +1,9 @@
 use axum::{http::header::ETAG, response::Response};
-use bitcoin::hashes::Hash;
+use bitcoin::{BlockHash as BitcoinBlockHash, hashes::Hash};
 use brk_types::{BlockHash, Dollars, Height};
 
-use crate::extended::ResponseExtended;
-
 use super::pool_blocks_params;
+use crate::extended::ResponseExtended;
 
 #[test]
 fn pool_page_identity_covers_sparse_selection_and_captured_prices() {
@@ -29,7 +28,7 @@ fn pool_page_identity_covers_sparse_selection_and_captured_prices() {
     assert_ne!(
         expected,
         tag(
-            Some(bitcoin::BlockHash::from_byte_array(changed).into()),
+            Some(BitcoinBlockHash::from_byte_array(changed).into()),
             &heights,
             &prices
         )

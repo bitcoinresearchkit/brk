@@ -3,6 +3,7 @@ use bitview_cohort::{
     EPOCH_FILTERS, EntryId, EpochId, Filter, OVER_AGE_FILTERS, OverAgeId, Term, UNDER_AGE_FILTERS,
     UTXOGroupsWithoutAmountOrType, UnderAgeId,
 };
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{LazyColumnPerBlock, LazyPerBlock};
 use brk_error::Result;
@@ -26,7 +27,7 @@ impl Sopr24hVecs {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         let version = version + VERSION;
         let stored = Sopr24hColumns::forced_import(cache, db, version, mappings)?;

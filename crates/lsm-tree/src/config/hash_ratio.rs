@@ -2,11 +2,13 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::ops::Deref;
+
 /// Hash ratio policy
 #[derive(Debug, Clone, PartialEq)]
 pub struct HashRatioPolicy(Vec<f32>);
 
-impl std::ops::Deref for HashRatioPolicy {
+impl Deref for HashRatioPolicy {
     type Target = [f32];
 
     fn deref(&self) -> &Self::Target {

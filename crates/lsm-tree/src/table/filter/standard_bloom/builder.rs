@@ -2,10 +2,12 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
-use super::super::bit_array::Builder as BitArrayBuilder;
-use crate::{file::MAGIC_BYTES, table::filter::FilterType};
-use byteorder::{LittleEndian, WriteBytesExt};
 use std::io::Write;
+
+use byteorder::{LittleEndian, WriteBytesExt};
+
+use super::super::bit_array::Builder as BitArrayBuilder;
+use crate::{file::MAGIC_BYTES, hash, table::filter::FilterType};
 
 pub fn secondary_hash(h1: u64) -> u64 {
     // Taken from https://github.com/tomtomwombat/fastbloom
@@ -170,14 +172,15 @@ impl Builder {
     /// Gets the hash of a key.
     #[must_use]
     pub fn get_hash(key: &[u8]) -> u64 {
-        crate::hash::hash64(key)
+        hash::hash64(key)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_log::test;
+
+    use super::*;
 
     #[test]
     fn bloom_calculate_m() {

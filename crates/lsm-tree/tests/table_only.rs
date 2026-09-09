@@ -1,12 +1,13 @@
-use lsm_tree::{Config, Slice, Tree};
+use std::{fs, path::Path};
 
-fn open(path: &std::path::Path) -> lsm_tree::Result<Tree> {
+use lsm_tree::{Config, Error, Result, Slice, Tree};
+use tempfile::tempdir;
+
+fn open(path: &Path) -> Result<Tree> {
     Tree::open(Config::new(path))
 }
 
-fn collect(
-    iter: impl Iterator<Item = lsm_tree::Result<(Slice, Slice)>>,
-) -> lsm_tree::Result<Vec<(Vec<u8>, Vec<u8>)>> {
+fn collect(iter: impl Iterator<Item = Result<(Slice, Slice)>>) -> Result<Vec<(Vec<u8>, Vec<u8>)>> {
     iter.map(|item| {
         let (key, value) = item?;
         Ok((key.to_vec(), value.to_vec()))
@@ -15,8 +16,8 @@ fn collect(
 }
 
 #[test]
-fn ingestion_reads_and_recovery() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn ingestion_reads_and_recovery() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
 
     let mut ingestion = tree.ingestion()?;
@@ -69,8 +70,8 @@ fn ingestion_reads_and_recovery() -> lsm_tree::Result<()> {
 }
 
 #[test]
-fn transitive_overlap_preserves_newest_value_after_recovery() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn transitive_overlap_preserves_newest_value_after_recovery() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
 
     let mut ingestion = tree.ingestion()?;
@@ -100,8 +101,8 @@ fn transitive_overlap_preserves_newest_value_after_recovery() -> lsm_tree::Resul
 }
 
 #[test]
-fn prefix_and_double_ended_ranges() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn prefix_and_double_ended_ranges() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
     let mut ingestion = tree.ingestion()?;
     ingestion.write("addr/1", "a")?;
@@ -135,8 +136,8 @@ fn prefix_and_double_ended_ranges() -> lsm_tree::Result<()> {
 }
 
 #[test]
-fn compaction_preserves_latest_values_and_open_readers() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn compaction_preserves_latest_values_and_open_readers() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
 
     for generation in 0..8_u8 {
@@ -185,8 +186,8 @@ fn compaction_preserves_latest_values_and_open_readers() -> lsm_tree::Result<()>
 }
 
 #[test]
-fn compaction_bounds_overlapping_l0_runs() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn compaction_bounds_overlapping_l0_runs() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
 
     for generation in 0..4_u8 {
@@ -210,8 +211,8 @@ fn compaction_bounds_overlapping_l0_runs() -> lsm_tree::Result<()> {
 }
 
 #[test]
-fn empty_ingestion_does_not_publish() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn empty_ingestion_does_not_publish() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
     let version = tree.current_version_id();
     tree.ingestion()?.finish()?;
@@ -220,8 +221,8 @@ fn empty_ingestion_does_not_publish() -> lsm_tree::Result<()> {
 }
 
 #[test]
-fn recovery_rejects_a_truncated_manifest() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn recovery_rejects_a_truncated_manifest() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
     let mut ingestion = tree.ingestion()?;
     ingestion.write("a", "1")?;
@@ -229,20 +230,17 @@ fn recovery_rejects_a_truncated_manifest() -> lsm_tree::Result<()> {
     drop(tree);
 
     let path = directory.path().join("current");
-    let mut bytes = std::fs::read(&path)?;
+    let mut bytes = fs::read(&path)?;
     bytes.truncate(5);
-    std::fs::write(path, bytes)?;
+    fs::write(path, bytes)?;
 
-    assert!(matches!(
-        open(directory.path()),
-        Err(lsm_tree::Error::Unrecoverable)
-    ));
+    assert!(matches!(open(directory.path()), Err(Error::Unrecoverable)));
     Ok(())
 }
 
 #[test]
-fn recovery_upgrades_a_checksumless_v9_manifest() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn recovery_upgrades_a_checksumless_v9_manifest() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
     let mut ingestion = tree.ingestion()?;
     ingestion.write("a", "1")?;
@@ -250,10 +248,10 @@ fn recovery_upgrades_a_checksumless_v9_manifest() -> lsm_tree::Result<()> {
     drop(tree);
 
     let path = directory.path().join("current");
-    let mut bytes = std::fs::read(&path)?;
-    *bytes.get_mut(3).ok_or(lsm_tree::Error::Unrecoverable)? = 9;
+    let mut bytes = fs::read(&path)?;
+    *bytes.get_mut(3).ok_or(Error::Unrecoverable)? = 9;
     bytes.truncate(bytes.len() - size_of::<u128>());
-    std::fs::write(&path, bytes)?;
+    fs::write(&path, bytes)?;
 
     let tree = open(directory.path())?;
     assert_eq!(tree.get("a")?.as_deref(), Some(b"1".as_slice()));
@@ -261,25 +259,25 @@ fn recovery_upgrades_a_checksumless_v9_manifest() -> lsm_tree::Result<()> {
     ingestion.write("b", "2")?;
     ingestion.finish()?;
 
-    let upgraded = std::fs::read(path)?;
+    let upgraded = fs::read(path)?;
     assert_eq!(upgraded.get(3), Some(&10));
     Ok(())
 }
 
 #[test]
-fn recovery_rejects_an_old_manifest_version() -> lsm_tree::Result<()> {
-    let directory = tempfile::tempdir()?;
+fn recovery_rejects_an_old_manifest_version() -> Result<()> {
+    let directory = tempdir()?;
     let tree = open(directory.path())?;
     drop(tree);
 
     let path = directory.path().join("current");
-    let mut bytes = std::fs::read(&path)?;
-    *bytes.get_mut(3).ok_or(lsm_tree::Error::Unrecoverable)? = 8;
-    std::fs::write(path, bytes)?;
+    let mut bytes = fs::read(&path)?;
+    *bytes.get_mut(3).ok_or(Error::Unrecoverable)? = 8;
+    fs::write(path, bytes)?;
 
     assert!(matches!(
         open(directory.path()),
-        Err(lsm_tree::Error::InvalidVersion(8))
+        Err(Error::InvalidVersion(8))
     ));
     Ok(())
 }
@@ -287,7 +285,7 @@ fn recovery_rejects_an_old_manifest_version() -> lsm_tree::Result<()> {
 #[test]
 #[should_panic(expected = "ingestion keys must be strictly increasing")]
 fn ingestion_rejects_unsorted_keys_in_debug_builds() {
-    let directory = tempfile::tempdir().expect("temporary directory");
+    let directory = tempdir().expect("temporary directory");
     let tree = open(directory.path()).expect("tree");
     let mut ingestion = tree.ingestion().expect("ingestion");
     ingestion.write("b", "1").expect("write");

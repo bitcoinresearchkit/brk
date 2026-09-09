@@ -1,8 +1,9 @@
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as ProcMacro2TokenStream;
 use quote::quote;
 use syn::{
-    Data, DeriveInput, Fields, GenericArgument, Meta, PathArguments, Type, parse_macro_input,
-    parse_quote,
+    Data, DeriveInput, Error, Field, Fields, GenericArgument, Meta, PathArguments, Result, Token,
+    Type, WherePredicate, parse_macro_input, parse_quote, punctuated::Punctuated,
 };
 
 enum FieldKind {
@@ -11,7 +12,7 @@ enum FieldKind {
     Skip,
 }
 
-fn field_kind(field: &syn::Field) -> syn::Result<FieldKind> {
+fn field_kind(field: &Field) -> Result<FieldKind> {
     let mut kind = FieldKind::Plugin;
 
     for attribute in &field.attrs {
@@ -19,19 +20,15 @@ fn field_kind(field: &syn::Field) -> syn::Result<FieldKind> {
             continue;
         }
 
-        let metadata = attribute.parse_args_with(
-            syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
-        )?;
+        let metadata =
+            attribute.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
 
         for meta in metadata {
             match meta {
                 Meta::Path(path) if path.is_ident("flatten") => kind = FieldKind::Flatten,
                 Meta::Path(path) if path.is_ident("skip") => kind = FieldKind::Skip,
                 _ => {
-                    return Err(syn::Error::new_spanned(
-                        meta,
-                        "expected `flatten` or `skip`",
-                    ));
+                    return Err(Error::new_spanned(meta, "expected `flatten` or `skip`"));
                 }
             }
         }
@@ -63,28 +60,25 @@ fn boxed_inner(ty: &Type) -> Option<&Type> {
 #[proc_macro_derive(PluginSet, attributes(plugin_set))]
 pub fn derive_plugin_set(input: TokenStream) -> TokenStream {
     derive_plugin_set_inner(parse_macro_input!(input as DeriveInput))
-        .unwrap_or_else(syn::Error::into_compile_error)
+        .unwrap_or_else(Error::into_compile_error)
         .into()
 }
 
-fn derive_plugin_set_inner(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+fn derive_plugin_set_inner(input: DeriveInput) -> Result<ProcMacro2TokenStream> {
     let name = input.ident;
     let Data::Struct(data) = input.data else {
-        return Err(syn::Error::new_spanned(
+        return Err(Error::new_spanned(
             name,
             "PluginSet can only be derived for structs",
         ));
     };
     let Fields::Named(fields) = data.fields else {
-        return Err(syn::Error::new_spanned(
-            name,
-            "PluginSet requires named fields",
-        ));
+        return Err(Error::new_spanned(name, "PluginSet requires named fields"));
     };
 
     let mut generics = input.generics;
     let mut visits = Vec::new();
-    let mut predicates = Vec::<syn::WherePredicate>::new();
+    let mut predicates = Vec::<WherePredicate>::new();
 
     for field in fields.named {
         let kind = field_kind(&field)?;

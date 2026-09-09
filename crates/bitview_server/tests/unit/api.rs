@@ -1,9 +1,12 @@
+use serde_json::to_value;
+
 use super::*;
+use crate::finish_openapi;
 
 #[test]
 fn schema_routes_match_enabled_features() {
-    let (_, spec) = crate::finish_openapi(ApiRouter::new().add_api_routes());
-    let spec = serde_json::to_value(spec).unwrap();
+    let (_, spec) = finish_openapi(ApiRouter::new().add_api_routes());
+    let spec = to_value(spec).unwrap();
     let paths = spec["paths"].as_object().unwrap();
     for (path, enabled) in [
         ("/health", true),

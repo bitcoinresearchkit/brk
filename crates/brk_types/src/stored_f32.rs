@@ -1,20 +1,24 @@
 use std::{
     cmp::Ordering,
     f32,
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use ryu::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco, PrintableIndex};
-
-use crate::{Close, StoredU32};
 
 use super::{Dollars, StoredF64};
+use crate::{CheckedSub, Close, StoredU32};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 /// Stored 32-bit floating point value
 #[derive(Debug, Deref, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -81,9 +85,9 @@ impl CheckedSub<StoredF32> for StoredF32 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<StoredF32> for StoredF32 {
+impl VecdbCheckedSub<StoredF32> for StoredF32 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -93,9 +97,9 @@ impl CheckedSub<usize> for StoredF32 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for StoredF32 {
+impl VecdbCheckedSub<usize> for StoredF32 {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -276,9 +280,9 @@ impl Sum for StoredF32 {
     }
 }
 
-impl std::fmt::Display for StoredF32 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = ryu::Buffer::new();
+impl Display for StoredF32 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -289,7 +293,7 @@ impl Formattable for StoredF32 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         if self.0.is_finite() {
-            let mut b = ryu::Buffer::new();
+            let mut b = Buffer::new();
             buf.extend_from_slice(b.format(self.0).as_bytes());
         }
     }
@@ -306,6 +310,9 @@ impl Formattable for StoredF32 {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(debug_assertions)]
+    use std::panic;
+
     use super::*;
 
     #[test]
@@ -322,7 +329,7 @@ mod tests {
     #[test]
     #[cfg(debug_assertions)]
     fn rejects_values_outside_f32_bounds() {
-        assert!(std::panic::catch_unwind(|| StoredF32::from(f64::NEG_INFINITY)).is_err());
-        assert!(std::panic::catch_unwind(|| StoredF32::from(f64::INFINITY)).is_err());
+        assert!(panic::catch_unwind(|| StoredF32::from(f64::NEG_INFINITY)).is_err());
+        assert!(panic::catch_unwind(|| StoredF32::from(f64::INFINITY)).is_err());
     }
 }

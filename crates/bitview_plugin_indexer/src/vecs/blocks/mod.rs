@@ -7,8 +7,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, CachedVec, Database, ImportableVec, PcoVec, Rw, Stamp,
-    StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, BudgetedCachedVec, BytesVec, CacheBudget, Database, ImportableVec,
+    PcoVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
 pub mod median_time;
@@ -17,7 +17,7 @@ pub mod median_time;
 pub struct BlocksVecs<M: StorageMode = Rw> {
     /// Double-SHA256 hash of the block header, displayed in Bitcoin's
     /// conventional hexadecimal byte order.
-    pub blockhash: CachedVec<M::Stored<BytesVec<Height, BlockHash>>>,
+    pub blockhash: M::Stored<BytesVec<Height, BlockHash>>,
     /// First 100 bytes of the coinbase transaction's first-input `scriptSig`,
     /// exposed as a string by mapping each byte to the same-valued Unicode code
     /// point. This is raw coinbase data, not a normalized mining-pool label.
@@ -25,12 +25,12 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
     /// Mining difficulty encoded by the block header, calculated as Bitcoin's
     /// maximum target divided by this block's proof-of-work target.
     #[traversable(wrap = "difficulty", rename = "value")]
-    pub difficulty: M::Stored<PcoVec<Height, StoredF64>>,
+    pub difficulty: BudgetedCachedVec<M::Stored<PcoVec<Height, StoredF64>>>,
     /// Unix timestamp in seconds associated with the indexed block or time
     /// period. Block-header timestamps are not guaranteed to increase between
     /// consecutive heights.
     #[traversable(wrap = "time")]
-    pub timestamp: CachedVec<M::Stored<PcoVec<Height, Timestamp>>>,
+    pub timestamp: BudgetedCachedVec<M::Stored<PcoVec<Height, Timestamp>>>,
     /// Median of this block's timestamp and up to ten predecessors, choosing
     /// the upper middle for early even-length windows. Compressed on disk;
     /// response builders read bounded ranges without caching the full history.
@@ -59,7 +59,11 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
 }
 
 impl BlocksVecs {
-    pub fn forced_import(db: &Database, version: Version) -> Result<Self> {
+    pub fn forced_import(
+        cache: &'static CacheBudget,
+        db: &Database,
+        version: Version,
+    ) -> Result<Self> {
         let (
             blockhash,
             coinbase_tag,
@@ -86,10 +90,10 @@ impl BlocksVecs {
             segwit_weight = PcoVec::forced_import(db, "segwit_weight", version),
         };
         let mut this = Self {
-            blockhash: CachedVec::wrap(blockhash),
+            blockhash,
             coinbase_tag,
-            difficulty,
-            timestamp: CachedVec::wrap(timestamp),
+            difficulty: cache.wrap(difficulty),
+            timestamp: cache.wrap(timestamp),
             median_time,
             total,
             weight,
@@ -136,7 +140,7 @@ impl BlocksVecs {
 
     pub fn par_iter_mut_any(&mut self) -> impl ParallelIterator<Item = &mut dyn AnyStoredVec> {
         [
-            &mut self.blockhash.inner as &mut dyn AnyStoredVec,
+            &mut self.blockhash as &mut dyn AnyStoredVec,
             &mut self.coinbase_tag,
             &mut self.difficulty,
             &mut self.timestamp.inner,
@@ -153,7 +157,7 @@ impl BlocksVecs {
 
     pub fn iter_any(&self) -> impl Iterator<Item = &dyn AnyStoredVec> {
         [
-            &self.blockhash.inner as &dyn AnyStoredVec,
+            &self.blockhash as &dyn AnyStoredVec,
             &self.coinbase_tag,
             &self.difficulty,
             &self.timestamp.inner,

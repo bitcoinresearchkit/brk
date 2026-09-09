@@ -2,8 +2,11 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use log::error;
+use sfa::{Toc, TocEntry};
+
 use super::{BlockHandle, BlockOffset};
-use sfa::TocEntry;
+use crate::{Error, Result};
 
 /// Converts a [`sfa::TocEntry`] to our [`BlockHandle`] struct.
 fn toc_entry_to_handle(entry: &TocEntry) -> BlockHandle {
@@ -47,15 +50,15 @@ pub struct ParsedRegions {
 }
 
 impl ParsedRegions {
-    pub fn parse_from_toc(toc: &sfa::Toc) -> crate::Result<Self> {
+    pub fn parse_from_toc(toc: &Toc) -> Result<Self> {
         Ok(Self {
             filter_tli: toc.section(b"filter_tli").map(toc_entry_to_handle),
             tli: toc
                 .section(b"tli")
                 .map(toc_entry_to_handle)
                 .ok_or_else(|| {
-                    log::error!("TLI should exist");
-                    crate::Error::Unrecoverable
+                    error!("TLI should exist");
+                    Error::Unrecoverable
                 })?,
             index: toc.section(b"index").map(toc_entry_to_handle),
             filter: toc.section(b"filter").map(toc_entry_to_handle),
@@ -63,8 +66,8 @@ impl ParsedRegions {
                 .section(b"meta")
                 .map(toc_entry_to_handle)
                 .ok_or_else(|| {
-                    log::error!("Metadata should exist");
-                    crate::Error::Unrecoverable
+                    error!("Metadata should exist");
+                    Error::Unrecoverable
                 })?,
         })
     }

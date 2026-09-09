@@ -1,6 +1,6 @@
-use brk_error::Result;
-
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::StoredU64;
 
@@ -9,7 +9,7 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
     exit: &Exit,
 ) -> Result<()> {
     vecs.total.compute_cumulative_sum_from_indexes(

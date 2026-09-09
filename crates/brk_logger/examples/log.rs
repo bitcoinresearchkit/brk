@@ -1,9 +1,10 @@
 use std::io;
 
+use brk_logger::init;
 use tracing::{debug, error, info, trace};
 
 fn main() -> io::Result<()> {
-    brk_logger::init(None)?;
+    init(None)?;
 
     info!("info");
     debug!("debug");

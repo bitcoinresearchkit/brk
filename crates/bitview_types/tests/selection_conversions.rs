@@ -2,6 +2,7 @@ use bitview_types::{
     DataRangeFormat, SeriesList, SeriesName, SeriesNameWithIndex, SeriesSelection,
 };
 use brk_types::Index;
+use serde_json::{from_str, to_value};
 
 #[test]
 fn single_series_conversion_preserves_all_range_fields() {
@@ -12,12 +13,12 @@ fn single_series_conversion_preserves_all_range_fields() {
         let scalar = SeriesSelection::from((
             Index::Height,
             SeriesName::from("price_close"),
-            serde_json::from_str::<DataRangeFormat>(json).unwrap(),
+            from_str::<DataRangeFormat>(json).unwrap(),
         ));
         let list = SeriesSelection::from((
             Index::Height,
             SeriesList::from(SeriesName::from("price_close")),
-            serde_json::from_str::<DataRangeFormat>(json).unwrap(),
+            from_str::<DataRangeFormat>(json).unwrap(),
         ));
         assert_eq!(scalar.index, list.index);
         assert_eq!(scalar.series.to_string(), list.series.to_string());
@@ -44,9 +45,6 @@ fn indexed_name_conversions_use_the_same_wire_shape() {
         SeriesNameWithIndex::from(("price_close", Index::Height)),
         SeriesNameWithIndex::from((SeriesName::from("price_close"), Index::Height)),
     ] {
-        assert_eq!(
-            serde_json::to_value(converted).unwrap(),
-            serde_json::to_value(&expected).unwrap(),
-        );
+        assert_eq!(to_value(converted).unwrap(), to_value(&expected).unwrap(),);
     }
 }

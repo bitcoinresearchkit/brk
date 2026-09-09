@@ -1,7 +1,9 @@
-use super::{CachedVec, CachedVecStrategy};
-use crate::{Result, Stamp, TypedVec, VecIndex, WritableVec};
+use std::{collections::BTreeMap, path::PathBuf};
 
-impl<V: crate::StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for CachedVec<V, S> {
+use super::{CachedVec, CachedVecStrategy};
+use crate::{Result, Stamp, StoredVec, TypedVec, VecIndex, WritableVec};
+
+impl<V: StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for CachedVec<V, S> {
     #[inline]
     fn push(&mut self, value: V::T) {
         self.inner.push(value);
@@ -13,12 +15,12 @@ impl<V: crate::StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for Cach
     }
 
     #[inline]
-    fn truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()> {
+    fn truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
         CachedVec::truncate_if_needed_at(self, index)
     }
 
     #[inline]
-    fn reset(&mut self) -> crate::Result<()> {
+    fn reset(&mut self) -> Result<()> {
         self.invalidate();
         self.inner.reset()
     }
@@ -35,19 +37,17 @@ impl<V: crate::StoredVec, S: CachedVecStrategy> WritableVec<V::I, V::T> for Cach
     }
 
     #[inline]
-    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()> {
+    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()> {
         self.inner.stamped_write_with_changes(stamp)
     }
 
     #[inline]
-    fn rollback(&mut self) -> crate::Result<()> {
+    fn rollback(&mut self) -> Result<()> {
         self.invalidate();
         self.inner.rollback()
     }
 
-    fn find_rollback_files(
-        &self,
-    ) -> crate::Result<std::collections::BTreeMap<Stamp, std::path::PathBuf>> {
+    fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>> {
         self.inner.find_rollback_files()
     }
 

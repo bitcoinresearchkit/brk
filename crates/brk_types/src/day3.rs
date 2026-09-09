@@ -1,13 +1,18 @@
 use std::{fmt, ops::Add};
 
-use crate::CheckedSub;
 use brk_error::{Error, Result};
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco, PrintableIndex};
 
 use super::{Date, INDEX_EPOCH, Timestamp};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco, PrintableIndex};
 
 pub const DAY3_INTERVAL: u32 = 259200;
 
@@ -67,9 +72,9 @@ impl CheckedSub for Day3 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Day3 {
+impl VecdbCheckedSub for Day3 {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -93,7 +98,7 @@ impl PrintableIndex for Day3 {
 
 impl fmt::Display for Day3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut buf = itoa::Buffer::new();
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -107,7 +112,7 @@ mod tests;
 impl Formattable for Day3 {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

@@ -3,8 +3,8 @@ use bitview_transforms::{CentsUnsignedToDollars, SatsToBitcoin, SatsToCents};
 use bitview_traversable::Traversable;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, Version};
 use vecdb::{
-    BinaryTransform, CacheBudget, ColumnId, Ident, PcoVec, PinnedCachedVec, ReadOnlyColumnarVec,
-    ReadableCloneableVec, ReadableColumnarVec,
+    BinaryTransform, ColumnId, Ident, PcoVec, ReadOnlyColumnarVec, ReadableCloneableVec,
+    ReadableColumnarVec,
 };
 
 use crate::{
@@ -31,7 +31,6 @@ where
     C: ColumnId,
 {
     pub fn new(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Sats>, C>,
@@ -39,14 +38,8 @@ where
         indexes: &IndexSources,
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
-        let sats = LazyColumnPerBlock::new(
-            cache,
-            &format!("{name}_sats"),
-            version,
-            source,
-            column,
-            indexes,
-        );
+        let sats =
+            LazyColumnPerBlock::new(&format!("{name}_sats"), version, source, column, indexes);
         let btc = LazyPerBlock::from_resolutions::<SatsToBitcoin>(name, version, &sats.resolutions);
         let cents_source = LazyIndexedVec::new(
             &format!("{name}_cents_source"),
@@ -78,23 +71,17 @@ where
 
 impl LazyColumnSpotValuePerBlock<AddrTypeId> {
     pub fn with_addr_types(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, Sats>, AddrTypeId>,
         indexes: &IndexSources,
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> WithAddrTypes<Self, LazySpotValuePerBlock> {
-        let sats = PinnedCachedVec::wrap(source.sum_columns(
-            &format!("{name}_sats"),
-            version,
-            ADDR_TYPE_IDS,
-        ));
+        let sats = source.sum_columns(&format!("{name}_sats"), version, ADDR_TYPE_IDS);
         let all =
             LazySpotValuePerBlock::from_sats_source(name, version, &sats, indexes, spot_price);
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             LazyColumnSpotValuePerBlock::new(
-                cache,
                 &format!("{type_name}_{name}"),
                 version,
                 source,

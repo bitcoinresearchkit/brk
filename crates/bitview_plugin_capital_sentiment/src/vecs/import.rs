@@ -1,12 +1,12 @@
+use bitview_plugin::ImportContext;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use bitview_vecs::{DailyMappings, DailyMetric, LazyDailyMetric};
 use brk_error::Result;
-
 use brk_types::{CapitalSentimentPhase, StoredBool, StoredI8, StoredU8};
 use vecdb::{ReadableCloneableVec, UnaryTransform};
 
 use super::Vecs;
 use crate::STORAGE;
-use bitview_plugin::ImportContext;
-use bitview_vecs::{DailyMappings, DailyMetric, LazyDailyMetric};
 
 struct CodeToPhase;
 
@@ -43,10 +43,7 @@ impl UnaryTransform<StoredBool, StoredBool> for IsLongToIsShort {
 }
 
 impl Vecs {
-    pub fn import(
-        context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
-    ) -> Result<Self> {
+    pub fn import(context: ImportContext<'_>, mappings: &MappingsVecs) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let version = STORAGE.schema_version();
         let mappings = DailyMappings::new(mappings);

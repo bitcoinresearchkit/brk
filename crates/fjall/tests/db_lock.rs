@@ -1,8 +1,11 @@
-use fjall::{Database, KeyspaceCreateOptions};
+use std::fs;
+
+use fjall::{Database, Error, KeyspaceCreateOptions, Result};
+use tempfile::tempdir;
 
 #[test]
-fn db_lock() -> fjall::Result<()> {
-    let folder = tempfile::tempdir()?;
+fn db_lock() -> Result<()> {
+    let folder = tempdir()?;
 
     let db = Database::builder(&folder).open()?;
     let tree = db.keyspace("default", KeyspaceCreateOptions::default)?;
@@ -15,27 +18,27 @@ fn db_lock() -> fjall::Result<()> {
 
     assert!(matches!(
         Database::builder(&folder).open(),
-        Err(fjall::Error::Locked),
+        Err(Error::Locked),
     ));
 
     Ok(())
 }
 
 #[test]
-fn lock_error_wins_over_an_invalid_marker() -> fjall::Result<()> {
-    let folder = tempfile::tempdir()?;
+fn lock_error_wins_over_an_invalid_marker() -> Result<()> {
+    let folder = tempdir()?;
     let database = Database::builder(&folder).open()?;
-    std::fs::write(folder.path().join("version"), b"invalid")?;
+    fs::write(folder.path().join("version"), b"invalid")?;
 
     assert!(matches!(
         Database::builder(&folder).open(),
-        Err(fjall::Error::Locked),
+        Err(Error::Locked),
     ));
 
     drop(database);
     assert!(matches!(
         Database::builder(&folder).open(),
-        Err(fjall::Error::InvalidVersion),
+        Err(Error::InvalidVersion),
     ));
 
     Ok(())

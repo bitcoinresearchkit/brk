@@ -11,7 +11,10 @@ use std::{
 use bitview_catalog::{TreeNode, extract_json_type};
 
 use super::analyze_pattern_modes;
-use crate::{PatternBaseResult, PatternField, StructuralPattern, to_pascal_case};
+use crate::{
+    PatternBaseResult, PatternField, StructuralPattern, extract_inner_type, inner_type,
+    to_pascal_case,
+};
 
 /// Context for pattern detection, holding all intermediate state.
 struct PatternContext {
@@ -193,15 +196,15 @@ fn normalize_fields_for_generic(fields: &[PatternField]) -> Option<(Vec<PatternF
                 }
             })
             .collect();
-        return Some((normalized, crate::extract_inner_type(first_type)));
+        return Some((normalized, extract_inner_type(first_type)));
     }
 
     // Case 2: Check if all leaves have wrapper types with the same inner type
     // e.g., Open<Sats>, High<Sats>, Low<Sats>, Close<Sats> all have inner type Sats
-    let first_inner = crate::inner_type(first_type);
+    let first_inner = inner_type(first_type);
     let mut has_wrapper = first_inner != first_type;
     let same_inner = leaf_types.all(|original| {
-        let inner = crate::inner_type(original);
+        let inner = inner_type(original);
         has_wrapper |= inner != original;
         inner == first_inner
     });

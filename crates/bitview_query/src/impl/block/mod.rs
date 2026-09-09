@@ -59,15 +59,7 @@ impl Query {
         }
 
         // Validate one stored row without materializing the hash-history cache.
-        if self
-            .indexer()
-            .vecs()
-            .blocks
-            .blockhash
-            .inner
-            .collect_one(height)
-            != Some(*hash)
-        {
+        if self.indexer().vecs().blocks.blockhash.collect_one(height) != Some(*hash) {
             return Err(self.block_unavailable(Error::NotFound("Block not found".into())));
         }
 

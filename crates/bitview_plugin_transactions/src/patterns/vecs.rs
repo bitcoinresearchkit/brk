@@ -1,3 +1,5 @@
+use std::array;
+
 use bitview_traversable::Traversable;
 use brk_types::{StoredBool, TxIndex, Version};
 use derive_more::{Deref, DerefMut};
@@ -53,7 +55,7 @@ impl ColumnId for PatternId {
         T: VecValue,
         F: FnMut(Self) -> T,
     {
-        std::array::from_fn(|index| create(PATTERN_IDS[index]))
+        array::from_fn(|index| create(PATTERN_IDS[index]))
     }
 
     #[inline]

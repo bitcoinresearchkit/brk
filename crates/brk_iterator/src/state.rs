@@ -60,6 +60,7 @@ mod tests {
     use brk_rpc::Auth;
 
     use super::*;
+    use crate::BlockIterator;
 
     fn rpc(start: u32, end: u32) -> State {
         let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
@@ -96,7 +97,7 @@ mod tests {
 
     #[test]
     fn empty_rpc_iterator_does_not_contact_the_client() {
-        let mut blocks = crate::BlockIterator::new(rpc(5, 4));
+        let mut blocks = BlockIterator::new(rpc(5, 4));
         assert!(blocks.next().is_none());
         assert!(blocks.next().is_none());
     }

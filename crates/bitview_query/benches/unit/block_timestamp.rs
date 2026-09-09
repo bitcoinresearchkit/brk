@@ -1,6 +1,7 @@
-use std::{hint::black_box, time::Instant};
+use std::{cmp::Reverse, hint::black_box, mem, time::Instant};
 
 use brk_types::Version;
+use tempfile::{TempDir, tempdir};
 use vecdb::{
     AnyStoredVec, CachedVec, Database, ImportableVec, PcoVec, Stamp, StoredVec, WritableVec,
 };
@@ -93,14 +94,14 @@ fn a_valid_two_hour_spike_can_leave_a_long_scan_window() {
         .iter()
         .enumerate()
         .filter(|(_, value)| **value <= 7199)
-        .max_by_key(|(h, value)| (**value, std::cmp::Reverse(*h)))
+        .max_by_key(|(h, value)| (**value, Reverse(*h)))
         .unwrap();
     assert_eq!(result, (expected.0, Timestamp::from(*expected.1)));
     assert_eq!(scanned, 21_578);
 }
 
-fn fixture(len: usize, skewed: bool) -> (tempfile::TempDir, Database, [Timestamps; 3]) {
-    let dir = tempfile::tempdir().unwrap();
+fn fixture(len: usize, skewed: bool) -> (TempDir, Database, [Timestamps; 3]) {
+    let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
     let mut columns: [CachedVec<PcoVec<Height, Timestamp>>; 3] = ["raw", "maximum", "median"]
         .map(|name| CachedVec::wrap(PcoVec::forced_import(&db, name, Version::ONE).unwrap()));
@@ -190,7 +191,7 @@ fn persisted_timestamp_search_matches_sorted_predecessor() {
         .collect()
         .into_iter()
         .enumerate()
-        .map(|(h, value)| (value, std::cmp::Reverse(h)))
+        .map(|(h, value)| (value, Reverse(h)))
         .collect();
     oracle.sort_unstable();
     for warm in [false, true] {
@@ -205,7 +206,7 @@ fn persisted_timestamp_search_matches_sorted_predecessor() {
                 Timestamp::from(u32::MAX),
             ] {
                 let i = oracle.partition_point(|(value, _)| *value <= target);
-                let &(value, std::cmp::Reverse(height)) = &oracle[i - 1];
+                let &(value, Reverse(height)) = &oracle[i - 1];
                 for stored in [false, true] {
                     assert_eq!(lookup(&columns, 20_000, target, stored).0, (height, value));
                 }
@@ -237,7 +238,7 @@ fn benchmark_timestamp_selection_storage() {
                 eprintln!(
                     "timestamp snapshot fill {:?}; retained capacity {} bytes",
                     started.elapsed(),
-                    (raw.capacity() + maximum.capacity()) * std::mem::size_of::<Timestamp>()
+                    (raw.capacity() + maximum.capacity()) * mem::size_of::<Timestamp>()
                 );
             }
             for target in targets {

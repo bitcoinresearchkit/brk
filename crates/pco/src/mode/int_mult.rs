@@ -1,16 +1,19 @@
-use std::cmp::min;
-use std::collections::HashMap;
-use std::f64::consts::PI;
-use std::mem::{self, MaybeUninit};
+use std::{
+  cmp::min,
+  collections::HashMap,
+  f64::consts::PI,
+  mem::{self, MaybeUninit},
+};
 
-use crate::constants::MULT_REQUIRED_BITS_SAVED_PER_NUM;
-use crate::data_types::latent_priv::LatentPriv;
-use crate::data_types::number_priv::NumberPriv;
-use crate::data_types::{Latent, Number, SplitLatents};
-use crate::dyn_slices::DynLatentSlice;
-use crate::errors::PcoResult;
-use crate::metadata::{DynLatent, DynLatents};
-use crate::sampling::{self, PrimaryLatentAndSavings};
+use super::worst_case_categorical_entropy;
+use crate::{
+  constants::MULT_REQUIRED_BITS_SAVED_PER_NUM,
+  data_types::{latent_priv::LatentPriv, number_priv::NumberPriv, Latent, Number, SplitLatents},
+  dyn_slices::DynLatentSlice,
+  errors::PcoResult,
+  metadata::{DynLatent, DynLatents},
+  sampling::{self, PrimaryLatentAndSavings},
+};
 
 // riemann zeta function
 const ZETA_OF_2: f64 = PI * PI / 6.0;
@@ -177,7 +180,7 @@ fn filter_score_triple_gcd(gcd: f64, triples_w_gcd: usize, total_triples: usize)
   //   converges annoyingly slowly in some cases.
   // So instead we use the method of false position.
   let concentrated_p = solve_root_by_false_position(f, lb, ub)?;
-  let worst_case_entropy_mod_gcd = super::worst_case_categorical_entropy(concentrated_p, gcd_m1);
+  let worst_case_entropy_mod_gcd = worst_case_categorical_entropy(concentrated_p, gcd_m1);
   let worst_case_bits_saved = gcd.log2() - worst_case_entropy_mod_gcd;
   if worst_case_bits_saved < MULT_REQUIRED_BITS_SAVED_PER_NUM {
     return None;
@@ -232,7 +235,7 @@ pub fn choose_base<T: Number>(nums: &[T]) -> Option<T::L> {
 #[cfg(test)]
 mod tests {
   use rand::RngExt;
-  use rand_xoshiro::rand_core::SeedableRng;
+  use rand_xoshiro::{rand_core::SeedableRng, Xoroshiro128PlusPlus};
 
   use super::*;
 
@@ -327,7 +330,7 @@ mod tests {
       None,
     );
     // even just evens can be useful if the signal is strong enough
-    let mut rng = rand_xoshiro::Xoroshiro128PlusPlus::seed_from_u64(0);
+    let mut rng = Xoroshiro128PlusPlus::seed_from_u64(0);
     let mut twos = (0_u32..200)
       .map(|_| rng.random_range(0_u32..1000) * 2)
       .collect::<Vec<_>>();

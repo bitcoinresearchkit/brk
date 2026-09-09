@@ -1,5 +1,4 @@
 use brk_error::Result;
-
 use brk_types::{Height, Lengths};
 use tracing::{debug, warn};
 use vecdb::{AnyStoredVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec};
@@ -198,9 +197,11 @@ where
 
 #[cfg(test)]
 mod checkpoint_tests {
-    use super::*;
     use brk_types::{StoredU32, TxIndex};
+    use tempfile::tempdir;
     use vecdb::{Database, ImportableVec, Stamp, Version};
+
+    use super::*;
 
     #[test]
     fn matching_checkpoint_is_accepted() {
@@ -223,7 +224,7 @@ mod checkpoint_tests {
 
     #[test]
     fn genesis_stamp_uses_current_length() {
-        let dir = tempfile::tempdir().unwrap();
+        let dir = tempdir().unwrap();
         let db = Database::open(dir.path()).unwrap();
         let mut first_index =
             PcoVec::<Height, TxIndex>::forced_import(&db, "first_index", Version::ONE).unwrap();

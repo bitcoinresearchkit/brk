@@ -10,6 +10,7 @@ use std::{
 use brk_mempool::Cycle;
 use brk_types::{Addr, AddrBytes, BlockHash, NextBlockHash, RecommendedFees, Txid};
 use rustc_hash::FxHashSet;
+use serde_json::to_writer;
 
 use crate::event::Event;
 
@@ -93,7 +94,7 @@ impl Emitter {
 }
 
 fn write_line<W: Write>(out: &mut W, ev: &Event) -> io::Result<()> {
-    serde_json::to_writer(&mut *out, ev).map_err(io::Error::other)?;
+    to_writer(&mut *out, ev).map_err(io::Error::other)?;
     out.write_all(b"\n")
 }
 

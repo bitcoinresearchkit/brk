@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
+use bitcoin::Amount;
 use brk_error::Error;
-use brk_types::{CentsCompact, Sats};
+use brk_types::{Cents, CentsCompact, Cohort, Date, Sats, UrpdAggregation, UrpdWeight};
+use serde_json::to_value;
 
 use super::*;
-use brk_types::{Cents, Cohort, Date, UrpdAggregation, UrpdWeight};
 
 fn captured(bytes: Vec<u8>, close: Cents, scalar: f64) -> ResolvedUrpd {
     ResolvedUrpd {
@@ -45,8 +46,8 @@ fn captured_inputs_preserve_weighted_output() {
             captured.aggregation,
         );
         assert_eq!(
-            serde_json::to_value(captured.build().unwrap()).unwrap(),
-            serde_json::to_value(expected).unwrap(),
+            to_value(captured.build().unwrap()).unwrap(),
+            to_value(expected).unwrap(),
         );
     }
 }
@@ -63,7 +64,7 @@ fn invalid_weights_and_market_values_return_errors() {
     let bytes = UrpdRaw {
         map: BTreeMap::from([(
             CentsCompact::new(100),
-            Sats::from(bitcoin::Amount::MAX_MONEY.to_sat()),
+            Sats::from(Amount::MAX_MONEY.to_sat()),
         )]),
     }
     .serialize()

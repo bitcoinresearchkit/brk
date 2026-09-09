@@ -9,9 +9,11 @@ use bitview_vecs::{
     LazyRollingRatioVec, LazySinceDayVec, LazyWindowVec,
 };
 use brk_types::{Day1, Height, PartsPerMillion32, StoredU16, StoredU64, Version};
+use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, BinaryTransform, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadBounds, ReadableCloneableVec, ReadableVec, VecValue, WritableVec,
+    PcoVecValue, ReadBounds, ReadableCloneableVec, ReadableVec, ReverseOperands, VecValue,
+    WritableVec,
 };
 
 #[path = "../benches/unit/lazy_folds.rs"]
@@ -75,7 +77,7 @@ fn check_folds<T: VecValue + PartialEq>(source: &impl ReadableVec<Height, T>) {
 
 #[test]
 fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let source = stored(
         &db,
@@ -143,7 +145,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         StoredU64,
         StoredU64,
         PartsPerMillion32,
-        vecdb::ReverseOperands<RatioU64<PartsPerMillion32>>,
+        ReverseOperands<RatioU64<PartsPerMillion32>>,
     >::new(
         "rolling",
         Version::ONE,
@@ -183,7 +185,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
 
 #[test]
 fn fallible_fold_stops_transforming_after_the_first_error() {
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let source = stored(&db, "source", (0..64_u64).map(StoredU64::from));
     let starts = CachedVec::wrap(stored(&db, "starts", (0..64).map(|_| Height::ZERO)));

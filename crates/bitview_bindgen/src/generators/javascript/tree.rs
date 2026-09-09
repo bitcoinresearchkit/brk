@@ -1,17 +1,17 @@
 //! JavaScript tree structure generation.
 
-use std::collections::BTreeSet;
-use std::fmt::Write;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt::Write,
+};
 
 use bitview_catalog::TreeNode;
 
+use super::{api::generate_api_methods, client::generate_static_constants};
 use crate::{
     ClientMetadata, Endpoint, GenericSyntax, JavaScriptSyntax, PatternField, build_child_path,
     generate_leaf_field, generate_tree_node_field, prepare_tree_node, to_camel_case,
 };
-
-use super::api::generate_api_methods;
-use super::client::generate_static_constants;
 
 /// Generate JSDoc typedefs for the series tree.
 pub fn generate_tree_typedefs(output: &mut String, catalog: &TreeNode, metadata: &ClientMetadata) {
@@ -35,7 +35,7 @@ fn generate_tree_typedef(
     name: &str,
     path: &str,
     node: &TreeNode,
-    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut BTreeSet<String>,
 ) {
@@ -213,7 +213,7 @@ fn generate_tree_initializer(
     name: &str,
     path: &str,
     indent: usize,
-    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut BTreeSet<String>,
 ) {

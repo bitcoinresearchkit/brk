@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
@@ -26,7 +27,7 @@ impl AddrCountFundedTotalVecs {
         db: &Database,
         name: &str,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
     ) -> Result<Self> {
         Ok(Self {
             funded: AddrCountsVecs::forced_import(

@@ -1,10 +1,17 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+};
 
-use bitview_bindgen::{CatalogTree, CatalogType, CatalogValue, detect_index_patterns};
+use bitview_bindgen::{
+    CatalogTree, CatalogType, CatalogValue, ClientOutputPaths, detect_index_patterns,
+    generate_clients,
+};
 use bitview_catalog::{SeriesLeaf, SeriesLeafWithSchema, TreeBranch, TreeNode};
 use brk_types::Index;
 use indexmap::IndexMap;
 use serde_json::json;
+use tempfile::tempdir;
 
 fn leaf(name: &str, kind: &str, index: Index) -> TreeNode {
     TreeNode::Leaf(SeriesLeafWithSchema::new(
@@ -113,15 +120,15 @@ fn rust_generation_preserves_wrapped_values_and_ignores_legacy_name_inference() 
     };
     // Deliberately violate the old naming contract. Rust uses exact bindings.
     branch.field_suffixes = true;
-    let directory = tempfile::tempdir().unwrap();
+    let directory = tempdir().unwrap();
     let path = directory.path().join("client.rs");
-    bitview_bindgen::generate_clients(
+    generate_clients(
         &catalog,
         r#"{"openapi":"3.1.0","info":{"title":"Fixture","version":"1"},"paths":{}}"#,
-        &bitview_bindgen::ClientOutputPaths::new().rust(&path),
+        &ClientOutputPaths::new().rust(&path),
     )
     .unwrap();
-    let generated = std::fs::read_to_string(path).unwrap();
+    let generated = fs::read_to_string(path).unwrap();
     assert!(generated.contains("pub struct CatalogStats<T0>"));
     assert!(generated.contains("SeriesPattern1<ByTerm<Sats>>"));
     assert!(generated.contains("CatalogBinding::Leaf(\"unrelated\")"));

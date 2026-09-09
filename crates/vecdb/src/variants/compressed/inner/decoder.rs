@@ -1,8 +1,10 @@
 use std::marker::PhantomData;
 
-use crate::VecValue;
-
 use super::{CompressionStrategy, Page};
+use crate::{Result, VecValue};
+
+#[cfg(feature = "diagnostics")]
+use crate::diagnostics;
 
 pub struct PageDecoder<T, S>
 where
@@ -33,7 +35,7 @@ where
     T: VecValue,
     S: CompressionStrategy<T>,
 {
-    fn decoder(&mut self, page: Page, header: &[u8]) -> crate::Result<&mut S::Decoder> {
+    fn decoder(&mut self, page: Page, header: &[u8]) -> Result<&mut S::Decoder> {
         if self.chunk_start != page.header_start {
             self.decoder = Some(S::decoder(header)?);
             self.chunk_start = page.header_start;
@@ -48,9 +50,9 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         #[cfg(feature = "diagnostics")]
-        crate::diagnostics::page();
+        diagnostics::page();
         if page.is_raw() {
             S::bytes_to_values_into(body, expected_len, dst)
         } else {
@@ -65,9 +67,9 @@ where
         body: &[u8],
         expected_len: usize,
         dst: &mut Vec<T>,
-    ) -> crate::Result<()> {
+    ) -> Result<()> {
         #[cfg(feature = "diagnostics")]
-        crate::diagnostics::page();
+        diagnostics::page();
         if page.is_raw() {
             let mut values = Vec::with_capacity(expected_len);
             S::bytes_to_values_into(body, expected_len, &mut values)?;

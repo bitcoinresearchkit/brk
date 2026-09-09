@@ -1,7 +1,9 @@
 //! Python tree structure generation.
 
-use std::collections::BTreeSet;
-use std::fmt::Write;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fmt::Write,
+};
 
 use bitview_catalog::TreeNode;
 
@@ -36,7 +38,7 @@ fn generate_tree_class(
     name: &str,
     path: &str,
     node: &TreeNode,
-    pattern_lookup: &std::collections::BTreeMap<Vec<PatternField>, String>,
+    pattern_lookup: &BTreeMap<Vec<PatternField>, String>,
     metadata: &ClientMetadata,
     generated: &mut BTreeSet<String>,
 ) {

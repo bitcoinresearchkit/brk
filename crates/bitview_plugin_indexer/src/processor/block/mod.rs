@@ -1,6 +1,5 @@
-use brk_error::Result;
-
-use brk_error::Error;
+use bitcoin::{VarInt, Weight, block::Header};
+use brk_error::{Error, Result};
 use brk_types::{BlockHashPrefix, Timestamp};
 use tracing::error;
 use vecdb::{WritableVec, unlikely};
@@ -31,7 +30,6 @@ impl BlockProcessor<'_> {
         self.vecs
             .blocks
             .blockhash
-            .inner
             .debug_checked_push(height, *blockhash);
         self.vecs
             .blocks
@@ -53,12 +51,12 @@ impl BlockProcessor<'_> {
     /// Push block total_size and weight, reusing per-tx sizes already computed in ComputedTx.
     /// This avoids redundant tx serialization (base_size + total_size were already computed).
     pub fn push_block_size_and_weight(&mut self, txs: &[ComputedTx]) {
-        let overhead = bitcoin::block::Header::SIZE + bitcoin::VarInt::from(txs.len()).size();
+        let overhead = Header::SIZE + VarInt::from(txs.len()).size();
         let mut total_size = overhead;
-        let mut weight = bitcoin::Weight::from_non_witness_data_size(overhead as u64);
+        let mut weight = Weight::from_non_witness_data_size(overhead as u64);
         let mut sw_txs = 0u32;
         let mut sw_size = 0usize;
-        let mut sw_weight = bitcoin::Weight::ZERO;
+        let mut sw_weight = Weight::ZERO;
 
         for (i, tx) in txs.iter().enumerate() {
             total_size += tx.total_size as usize;

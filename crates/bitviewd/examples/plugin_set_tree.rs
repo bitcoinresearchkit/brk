@@ -5,9 +5,12 @@ use bitview_default::DefaultPlugins;
 use bitview_traversable::Traversable;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
+use color_eyre::{Result, install};
+use serde_json::to_string_pretty;
+use vecdb::CacheBudget;
 
-pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
+pub fn main() -> Result<()> {
+    install()?;
 
     let tmp = env::temp_dir().join("bitview_tree_gen");
     fs::create_dir_all(&tmp)?;
@@ -18,7 +21,7 @@ pub fn main() -> color_eyre::Result<()> {
     let plugins = DefaultPlugins::import(context, &reader)?;
     let tree = plugins.to_tree_node();
 
-    let json = serde_json::to_string_pretty(&tree)?;
+    let json = to_string_pretty(&tree)?;
 
     let out_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tree.json");
     fs::write(&out_path, &json)?;
@@ -29,4 +32,4 @@ pub fn main() -> color_eyre::Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

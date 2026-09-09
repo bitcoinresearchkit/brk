@@ -186,20 +186,25 @@ impl ReadableVec<Height, Cents> for LazySmaVec {
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        env, process,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
     use vecdb::{
-        AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadableCloneableVec, WritableVec,
+        AnyStoredVec, CacheBudget, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec,
+        PcoVec, ReadableCloneableVec, WritableVec,
     };
 
     use super::*;
+
     #[test]
     fn computes_rolling_average_from_one_shared_prefix_cache() {
-        let suffix = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("brk-lazy-sma-{}-{suffix}", std::process::id()));
+        let path = env::temp_dir().join(format!("brk-lazy-sma-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
         let mut prices: EagerVec<PcoVec<Height, Cents>> =
@@ -217,11 +222,13 @@ mod tests {
         starts.write().unwrap();
 
         let prices = CachedVec::wrap(prices);
-        let prefix_sum = CachedVec::wrap(SmaPrefixSumVec::new(
+        static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
+        let prefix_sum = SmaPrefixSumVec::cached(
+            &CACHE,
             "prefix",
             Version::ONE,
             prices.read_only_cached_boxed_clone(),
-        ));
+        );
         let sma = LazySmaVec::new(
             "sma",
             Version::ONE,

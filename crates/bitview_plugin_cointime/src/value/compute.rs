@@ -1,18 +1,18 @@
-use brk_error::Result;
-
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Bitcoin, Dollars, StoredF64};
 use vecdb::ReadableVec;
 
-use super::super::activity;
-use super::Vecs;
+use super::{super::activity, Vecs};
 
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    prices: &bitview_plugin_price::Vecs,
-    distribution: &bitview_plugin_distribution::Vecs,
+    prices: &PriceVecs,
+    distribution: &DistributionVecs,
     activity: &activity::Vecs,
     exit: &Exit,
 ) -> Result<()> {

@@ -1,10 +1,11 @@
-use crate::{ColumnarPerBlock, FiatType, LazyFiatPerBlock};
 use bitview_cohort::{ByTerm, TermId, UTXOAggregate};
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, CachedReadableVec, Database, ReadableColumnarVec, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, ReadableCloneableVec, ReadableColumnarVec, Rw, StorageMode};
+
+use crate::{ColumnarPerBlock, FiatType, IndexSources, LazyFiatPerBlock};
 
 #[derive(Deref, DerefMut, Traversable)]
 pub struct AdditiveAggregateFiatPerBlock<C: FiatType, M: StorageMode = Rw> {
@@ -20,9 +21,10 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
         db: &Database,
         metric: &str,
         version: Version,
-        indexes: &crate::IndexSources,
+        indexes: &IndexSources,
     ) -> Result<Self> {
         let values = ColumnarPerBlock::forced_import(
+            cache,
             db,
             &format!("{metric}_cents_by_term"),
             version,
@@ -30,16 +32,16 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlock<C> {
                 UTXOAggregate::from_fn(|aggregate| {
                     let name = aggregate.metric_name(metric);
                     let cents = match aggregate.term() {
-                        Some(term) => cache
-                            .wrap(source.column(&format!("{name}_cents"), version, term))
-                            .cached_boxed_clone(),
-                        None => cache
-                            .wrap(source.sum_columns(
+                        Some(term) => source
+                            .column(&format!("{name}_cents"), version, term)
+                            .read_only_boxed_clone(),
+                        None => source
+                            .sum_columns(
                                 &format!("{name}_cents"),
                                 version,
                                 TermId::ALL.iter().copied(),
-                            ))
-                            .cached_boxed_clone(),
+                            )
+                            .read_only_boxed_clone(),
                     };
                     LazyFiatPerBlock::from_cents_source(&name, version, &cents, indexes)
                 })

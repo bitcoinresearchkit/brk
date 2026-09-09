@@ -43,6 +43,7 @@ impl GrossPnlComposition {
     ) -> Result<Self> {
         let version = version + VERSION;
         let profit_share_source = ColumnarPerBlock::forced_import(
+            cache,
             db,
             "unrealized_profit_to_own_gross_pnl_ppm_by_aggregate",
             version,
@@ -50,7 +51,6 @@ impl GrossPnlComposition {
         )?;
         let source = profit_share_source.height.read_only_clone();
         let unrealized_profit_to_own_gross_pnl = share_views(
-            cache,
             &source,
             "unrealized_profit_to_own_gross_pnl",
             version,
@@ -58,7 +58,6 @@ impl GrossPnlComposition {
             mappings,
         );
         let unrealized_loss_to_own_gross_pnl = share_views(
-            cache,
             &source,
             "unrealized_loss_to_own_gross_pnl",
             version,
@@ -66,7 +65,6 @@ impl GrossPnlComposition {
             mappings,
         );
         let net_unrealized_pnl_to_own_gross_pnl = share_views(
-            cache,
             &source,
             "net_unrealized_pnl_to_own_gross_pnl",
             version,

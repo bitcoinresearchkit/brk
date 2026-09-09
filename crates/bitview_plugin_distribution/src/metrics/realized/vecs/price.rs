@@ -1,4 +1,5 @@
 use bitview_cohort::{CohortContext, UTXOGroups};
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::LazyPriceWithRatioPerBlock;
 use brk_error::Result;
@@ -20,18 +21,18 @@ impl RealizedPriceByCohort {
         cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot_price: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
-        let stored = ExactUTXOColumns::forced_import(db, "realized_price_cents", version)?;
+        let stored = ExactUTXOColumns::forced_import(cache, db, "realized_price_cents", version)?;
         let cohorts = UTXOGroups::new(|filter, cohort_name| {
             let name = CohortContext::Utxo.metric_name(&filter, cohort_name, "realized_price");
             LazyPriceWithRatioPerBlock::from_height_source(
                 &name,
                 version,
                 &stored
-                    .source(cache, &filter, &format!("{name}_cents"), version)
+                    .source(&filter, &format!("{name}_cents"), version)
                     .expect("realized-price cohort source"),
                 mappings,
                 spot_price,

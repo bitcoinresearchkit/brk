@@ -1,3 +1,5 @@
+use std::array;
+
 use super::order::ExactOrderStats;
 
 /// Sorted sliding window for rolling distribution/median computations.
@@ -122,7 +124,7 @@ impl SlidingWindowSorted {
         for ((_, destination), value) in requests.into_iter().zip(sorted_values) {
             values[destination] = value;
         }
-        std::array::from_fn(|i| {
+        array::from_fn(|i| {
             let fraction = fractions[i];
             values[2 * i] * (1.0 - fraction) + values[2 * i + 1] * fraction
         })

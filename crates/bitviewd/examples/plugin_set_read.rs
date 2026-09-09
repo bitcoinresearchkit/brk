@@ -4,12 +4,13 @@ use bitview::ImportContext;
 use bitview_default::DefaultPlugins;
 use bitview_plugin_distribution::HasDistribution;
 use brk_error::Result;
+use brk_logger::init;
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
-use vecdb::{AnySerializableVec, AnyVec};
+use vecdb::{AnySerializableVec, AnyVec, CacheBudget};
 
 pub fn main() -> Result<()> {
-    brk_logger::init(None)?;
+    init(None)?;
 
     let outputs_dir = Path::new(&env::var("HOME").unwrap()).join(".bitview");
 
@@ -63,4 +64,4 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-static CACHE_BUDGET: vecdb::CacheBudget = vecdb::CacheBudget::new(2 * 1024 * 1024 * 1024);
+static CACHE_BUDGET: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);

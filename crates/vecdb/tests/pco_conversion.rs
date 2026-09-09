@@ -2,7 +2,7 @@
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Bytes, Database, Error, ImportableVec, Pco, PcoVec, ReadableVec, Version,
+    AnyStoredVec, Bytes, Database, Error, ImportableVec, Pco, PcoVec, ReadableVec, Result, Version,
     WritableVec,
 };
 
@@ -20,7 +20,7 @@ impl Bytes for CheckedValue {
         [*self as u8]
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         match bytes {
             [1] => Ok(Self::One),
             [2] => Ok(Self::Two),
@@ -37,13 +37,13 @@ unsafe impl Pco for CheckedValue {
         self as u8
     }
 
-    fn from_number(value: Self::NumberType) -> vecdb::Result<Self> {
+    fn from_number(value: Self::NumberType) -> Result<Self> {
         Self::from_bytes(&[value])
     }
 }
 
 #[test]
-fn non_transparent_values_roundtrip_through_compressed_pages() -> vecdb::Result<()> {
+fn non_transparent_values_roundtrip_through_compressed_pages() -> Result<()> {
     let temp = tempdir()?;
     let db = Database::open(temp.path())?;
     let mut vec = PcoVec::<usize, CheckedValue>::import(&db, "checked", Version::ONE)?;

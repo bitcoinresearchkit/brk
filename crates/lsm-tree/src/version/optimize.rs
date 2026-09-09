@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::mem;
+
 use super::run::Ranged;
 use crate::version::Run;
 
@@ -10,7 +12,7 @@ fn merge_disjoint<T: Ranged>(run: &mut Run<T>, additions: Vec<T>) {
         return;
     }
 
-    let existing = std::mem::take(run.inner_mut());
+    let existing = mem::take(run.inner_mut());
     let mut existing = existing.into_iter().peekable();
     let mut additions = additions.into_iter().peekable();
     let mut merged = Vec::with_capacity(existing.len() + additions.len());
@@ -86,9 +88,10 @@ pub fn optimize_runs<T: Ranged>(runs: Vec<Run<T>>) -> Vec<Run<T>> {
 #[cfg(test)]
 #[expect(clippy::unwrap_used)]
 mod tests {
+    use test_log::test;
+
     use super::*;
     use crate::KeyRange;
-    use test_log::test;
 
     fn optimize_runs_reference<T: Clone + Ranged>(runs: Vec<Run<T>>) -> Vec<Run<T>> {
         if runs.len() <= 1 {

@@ -1,11 +1,11 @@
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{collections::BTreeSet, error::Error, fs, path::Path};
 
 use vecdb::{
     AnyStoredVec, AnyVec, Database, ImportableVec, MutableVec, ReadableVec, Stamp, Version,
     WritableVec, ZeroCopyVec,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let _ = fs::remove_dir_all("raw");
 
     let version = Version::TWO;

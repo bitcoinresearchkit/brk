@@ -1,3 +1,5 @@
+use std::{convert::Infallible, iter};
+
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Date, Height, Timestamp, Version};
 use vecdb::{
@@ -114,7 +116,7 @@ impl<I: VecIndex> ReadOnlyClone for CachedDateVec<I> {
 
 impl<I: VecIndex> Traversable for CachedDateVec<I> {
     fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        std::iter::once(self as &dyn AnyExportableVec)
+        iter::once(self as &dyn AnyExportableVec)
     }
 
     fn to_tree_node(&self) -> TreeNode {
@@ -188,7 +190,7 @@ impl<I: VecIndex> DateSource<I> {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Date)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}
@@ -278,9 +280,8 @@ impl<I: VecIndex> ReadableVec<I, Date> for DateSource<I> {
 mod tests {
     use std::sync::Arc;
 
-    use parking_lot::RwLock;
-
     use brk_types::{Day1, Day3};
+    use parking_lot::RwLock;
 
     use super::*;
 

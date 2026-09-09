@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 
 use brk_error::Error;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Error as DeError};
 
 use super::{
     Date, Day1, Day3, EmptyAddrIndex, EmptyOutputIndex, Epoch, ExtendedEmptyAddrIndex,
@@ -361,10 +361,10 @@ impl fmt::Display for Index {
 impl<'de> Deserialize<'de> for Index {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let str = String::deserialize(deserializer)?;
-        Index::try_from(str.as_str()).map_err(serde::de::Error::custom)
+        Index::try_from(str.as_str()).map_err(DeError::custom)
     }
 }
 

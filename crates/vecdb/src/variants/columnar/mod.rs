@@ -1,12 +1,18 @@
-use std::{mem, sync::Arc};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    mem,
+    sync::Arc,
+};
 
 use log::warn;
 use parking_lot::RwLock;
 use rawdb::{Error as RawDbError, Region, RegionGroup};
 
-use crate::{Error, ImportOptions, Result, SharedLen, StoredVec, Version};
+use crate::{
+    AnyStoredVec, AnyVec, BudgetedCachedVec, CacheBudget, Error, ImportOptions, ReadOnlyClone,
+    Result, SharedLen, StoredVec, Version, WritableVec,
+};
 
-pub mod cached;
 pub mod column;
 pub mod lazy;
 pub mod read;
@@ -15,7 +21,6 @@ pub mod schema;
 pub mod sum;
 pub mod traits;
 
-pub use cached::*;
 pub use column::*;
 pub use lazy::*;
 pub use read_only::*;
@@ -23,16 +28,17 @@ pub use schema::*;
 pub use sum::*;
 
 const VERSION: Version = Version::new(10);
+static NO_CACHE: CacheBudget = CacheBudget::new(0);
 
 /// One logical row vector backed by one contiguous stored vector per column.
 ///
 /// All column vectors always have the same logical length. If their persisted
 /// lengths or stamps disagree during import, the complete vector is reset.
 ///
-/// Every column remains an ordinary `V`. Rawdb groups all regions owned by the
+/// Every column owns a budgeted cache around its stored `V`, shared by all readers.
+/// Rawdb groups all regions owned by the
 /// columns into one ordered allocation and relocates the complete allocation
 /// whenever any member grows.
-#[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
 pub struct ColumnarVec<V, C>
 where
@@ -40,8 +46,8 @@ where
     C: ColumnId,
 {
     name: Arc<str>,
-    columns: Vec<V>,
-    read_only_columns: Arc<[V::ReadOnly]>,
+    columns: Vec<BudgetedCachedVec<V>>,
+    read_only_columns: Arc<[BudgetedCachedVec<V::ReadOnly>]>,
     pushed: Vec<C::Row<V::T>>,
     visible_rows: SharedLen,
     gate: Arc<RwLock<()>>,
@@ -70,17 +76,18 @@ where
             .combine(Version::new(column_count));
 
         let mut columns = Vec::with_capacity(Self::COLUMN_COUNT);
+        let cache = options.cache_budget.unwrap_or(&NO_CACHE);
         for &column in C::ALL {
             let column_name = Self::column_name(options.name, column);
             let column_options = ImportOptions {
                 name: &column_name,
                 ..options
             };
-            columns.push(if forced {
+            columns.push(cache.wrap(if forced {
                 V::forced_import_with(column_options)?
             } else {
                 V::import_with(column_options)?
-            });
+            }));
         }
 
         if let Err(error) = Self::validate_columns(&columns) {
@@ -106,7 +113,7 @@ where
         let stored_rows = columns[0].stored_len();
         let read_only_columns = columns
             .iter()
-            .map(StoredVec::read_only_clone)
+            .map(ReadOnlyClone::read_only_clone)
             .collect::<Arc<[_]>>();
 
         Ok(Self {
@@ -120,7 +127,7 @@ where
         })
     }
 
-    fn validate_columns(columns: &[V]) -> Result<()> {
+    fn validate_columns(columns: &[BudgetedCachedVec<V>]) -> Result<()> {
         let first = &columns[0];
         let expected_len = first.len();
         let expected_real_len = first.real_stored_len();
@@ -149,12 +156,12 @@ where
     }
 
     #[inline]
-    fn first(&self) -> &V {
+    fn first(&self) -> &BudgetedCachedVec<V> {
         &self.columns[0]
     }
 
     #[inline]
-    fn first_mut(&mut self) -> &mut V {
+    fn first_mut(&mut self) -> &mut BudgetedCachedVec<V> {
         &mut self.columns[0]
     }
 
@@ -219,5 +226,14 @@ where
 
     pub fn reserve_pushed(&mut self, additional: usize) {
         self.pushed.reserve(additional);
+    }
+}
+
+impl<V: StoredVec, C: ColumnId> Debug for ColumnarVec<V, C> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        f.debug_struct("ColumnarVec")
+            .field("name", &self.name)
+            .field("len", &self.len())
+            .finish_non_exhaustive()
     }
 }

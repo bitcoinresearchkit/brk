@@ -1,4 +1,5 @@
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -57,7 +58,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     parent_version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<Extremes> {
     let version = parent_version + VERSION;
     Ok(Extremes {

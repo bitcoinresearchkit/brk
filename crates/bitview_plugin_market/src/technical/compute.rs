@@ -1,4 +1,6 @@
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_transforms::RatioDollars;
 use brk_error::Result;
 use brk_exit::Exit;
@@ -13,8 +15,8 @@ use super::{super::moving_average, Vecs, macd, rsi_chain};
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    prices: &bitview_plugin_price::Vecs,
-    blocks: &bitview_plugin_blocks::Vecs,
+    prices: &PriceVecs,
+    blocks: &BlocksVecs,
     moving_average: &moving_average::Vecs,
     exit: &Exit,
 ) -> Result<()> {

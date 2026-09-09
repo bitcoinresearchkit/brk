@@ -1,9 +1,8 @@
+use bitview_plugin::{ComputePlugin, UpdateContext};
 use brk_error::Result;
 use rayon::join;
 
-use bitview_plugin::{ComputePlugin, UpdateContext};
-
-use super::Vecs;
+use super::{Vecs, by_type, count, spent, unspent, value};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -27,14 +26,14 @@ impl ComputePlugin for Vecs {
 
         let starting_lengths = indexer.safe_lengths();
 
-        super::count::compute(&mut self.count, indexer, blocks, exit)?;
+        count::compute(&mut self.count, indexer, blocks, exit)?;
         let (value_result, by_type_result) = join(
-            || super::value::compute(&mut self.value, indexer, prices, exit),
-            || super::by_type::compute(&mut self.by_type, indexer, exit),
+            || value::compute(&mut self.value, indexer, prices, exit),
+            || by_type::compute(&mut self.by_type, indexer, exit),
         );
         value_result?;
         by_type_result?;
-        super::unspent::compute(
+        unspent::compute(
             &mut self.unspent,
             &self.count,
             &inputs.count,
@@ -42,7 +41,7 @@ impl ComputePlugin for Vecs {
             &starting_lengths,
             exit,
         )?;
-        let lock = super::spent::compute(&mut self.spent, indexer, exit)?;
+        let lock = spent::compute(&mut self.spent, indexer, exit)?;
         self.db.run_bg(move |db| {
             let _lock = lock;
             db.compact_deferred_default()

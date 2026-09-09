@@ -2,11 +2,11 @@ use std::collections::BTreeMap;
 
 use brk_error::{Error, Result};
 use brk_types::{Cents, Close, Date, Day1, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
-use serde_json::Value;
+use serde_json::{Value, from_slice};
 use tracing::info;
 use ureq::Agent;
 
-use crate::{PriceSource, checked_get, default_retry};
+use crate::{PriceSource, checked_get, default_retry, new_agent};
 
 #[derive(Clone)]
 #[allow(clippy::upper_case_acronyms)]
@@ -19,7 +19,7 @@ pub struct BRK {
 impl BRK {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Self::new_with_agent(crate::new_agent(30))
+        Self::new_with_agent(new_agent(30))
     }
 
     pub fn new_with_agent(agent: Agent) -> Self {
@@ -67,7 +67,7 @@ impl BRK {
             info!("Fetching {url}...");
 
             let bytes = checked_get(agent, &url)?;
-            let body: Value = serde_json::from_slice(&bytes)?;
+            let body: Value = from_slice(&bytes)?;
 
             body.as_array()
                 .ok_or_else(|| Error::Parse("Expected JSON array".into()))?
@@ -109,7 +109,7 @@ impl BRK {
             info!("Fetching {url}...");
 
             let bytes = checked_get(agent, &url)?;
-            let body: Value = serde_json::from_slice(&bytes)?;
+            let body: Value = from_slice(&bytes)?;
 
             body.as_array()
                 .ok_or_else(|| Error::Parse("Expected JSON array".into()))?

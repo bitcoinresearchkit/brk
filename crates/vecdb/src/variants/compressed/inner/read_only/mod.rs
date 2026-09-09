@@ -1,10 +1,11 @@
+use std::result::Result;
+
+use super::{CompressionStrategy, ReadOnlyCompressedVec, ReadWriteCompressedVec};
+use crate::{CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, VecIndex, VecValue};
+
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
-
-use crate::{CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, VecIndex, VecValue};
-
-use super::{CompressionStrategy, ReadOnlyCompressedVec, ReadWriteCompressedVec};
 
 impl<I, T, S> ReadOnlyCompressedVec<I, T, S>
 where
@@ -55,14 +56,14 @@ where
     }
 
     #[inline(always)]
-    fn try_fold_source<B, E, F: FnMut(B, T) -> std::result::Result<B, E>>(
+    fn try_fold_source<B, E, F: FnMut(B, T) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         len: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E> {
+    ) -> Result<B, E> {
         let mmap = ReadWriteCompressedVec::<I, T, S>::prefers_mmap(
             self.base.region(),
             &self.pages,

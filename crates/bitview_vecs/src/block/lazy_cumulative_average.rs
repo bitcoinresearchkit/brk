@@ -5,8 +5,8 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    CacheBudget, Ident, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableCloneableVec,
-    ReadableColumnarVec, UnaryTransform,
+    Ident, PcoVec, PcoVecValue, ReadOnlyColumnarVec, ReadableCloneableVec, ReadableColumnarVec,
+    UnaryTransform,
 };
 
 use crate::{IndexSources, LazyPreviousDeltaVec, LazyRollingAvgsFromHeight};
@@ -78,7 +78,6 @@ where
     F: UnaryTransform<C, T>,
 {
     pub fn with_addr_types(
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         source: &ReadOnlyColumnarVec<PcoVec<Height, C>, AddrTypeId>,
@@ -86,13 +85,12 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> WithAddrTypes<Self> {
         let cumulative_name = format!("{name}_cumulative");
-        let cumulative = cache.wrap(source.sum_columns(&cumulative_name, version, ADDR_TYPE_IDS));
+        let cumulative = source.sum_columns(&cumulative_name, version, ADDR_TYPE_IDS);
         let all =
             LazyPerBlockCumulativeAverage::new(name, version, &cumulative, indexes, window_starts);
         let by_addr_type = AddrTypeId::series(|column, type_name| {
             let name = format!("{type_name}_{name}");
-            let cumulative =
-                cache.wrap(source.column(&format!("{name}_cumulative"), version, column));
+            let cumulative = source.column(&format!("{name}_cumulative"), version, column);
             LazyPerBlockCumulativeAverage::new(&name, version, &cumulative, indexes, window_starts)
         });
 

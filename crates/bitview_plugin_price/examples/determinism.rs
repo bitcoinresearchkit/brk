@@ -9,7 +9,7 @@
 //!
 //! Run with: cargo run -p bitview_plugin_price --example determinism --release
 
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
 use brk_oracle::{
     Config, HistogramRaw, Oracle, PaymentFilter, START_HEIGHT_FAST, START_HEIGHT_SLOW,
@@ -46,10 +46,10 @@ fn build_histogram(block: &Block) -> HistogramRaw {
 }
 
 fn main() {
-    let data_dir = std::env::var("BITVIEW_DIR")
+    let data_dir = env::var("BITVIEW_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
-            let home = std::env::var("HOME").unwrap();
+            let home = env::var("HOME").unwrap();
             PathBuf::from(home).join(".bitview")
         });
 

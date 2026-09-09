@@ -1,8 +1,8 @@
-use brk_error::Result;
-
 use bitview_plugin::{ComputePlugin, UpdateContext};
+use brk_error::Result;
+use rayon::join;
 
-use super::Vecs;
+use super::{Vecs, activity, adjusted, age_range, aggregate, cap, prices, reserve_risk, value};
 use crate::Dependencies;
 
 impl ComputePlugin for Vecs {
@@ -31,14 +31,14 @@ impl ComputePlugin for Vecs {
         self.db.sync_bg_tasks()?;
 
         // Activity computes first (liveliness, vaultedness, etc.)
-        super::activity::compute(&mut self.activity, indexer, distribution, exit)?;
-        super::age_range::compute(&mut self.age_range, indexer, distribution, exit)?;
+        activity::compute(&mut self.activity, indexer, distribution, exit)?;
+        age_range::compute(&mut self.age_range, indexer, distribution, exit)?;
 
         // Age-range supply is lazy over the same cached inputs as aggregates.
         // Adjusted and value compute independently.
-        let (r1, r2) = rayon::join(
+        let (r1, r2) = join(
             || {
-                super::aggregate::compute(
+                aggregate::compute(
                     &mut self.aggregate,
                     indexer,
                     distribution,
@@ -48,9 +48,9 @@ impl ComputePlugin for Vecs {
                 )
             },
             || {
-                rayon::join(
+                join(
                     || {
-                        super::adjusted::compute(
+                        adjusted::compute(
                             &mut self.adjusted,
                             indexer,
                             inflation_rate,
@@ -61,7 +61,7 @@ impl ComputePlugin for Vecs {
                         )
                     },
                     || {
-                        super::value::compute(
+                        value::compute(
                             &mut self.value,
                             indexer,
                             prices,
@@ -78,7 +78,7 @@ impl ComputePlugin for Vecs {
         r2.1?;
 
         // Cap depends on activity + value
-        super::cap::compute(
+        cap::compute(
             &mut self.cap,
             indexer,
             distribution,
@@ -88,9 +88,9 @@ impl ComputePlugin for Vecs {
         )?;
 
         // Phase 4: pricing and reserve_risk are independent
-        let (r3, r4) = rayon::join(
+        let (r3, r4) = join(
             || {
-                super::prices::compute(
+                prices::compute(
                     &mut self.prices,
                     indexer,
                     distribution,
@@ -101,7 +101,7 @@ impl ComputePlugin for Vecs {
                 )
             },
             || {
-                super::reserve_risk::compute(
+                reserve_risk::compute(
                     &mut self.reserve_risk,
                     indexer,
                     blocks,

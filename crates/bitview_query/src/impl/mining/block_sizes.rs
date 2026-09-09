@@ -1,4 +1,4 @@
-use brk_error::Result;
+use brk_error::{Error, Result};
 use brk_types::{
     BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, StoredU64, TimePeriod, Weight,
 };
@@ -16,10 +16,7 @@ impl Query {
     pub fn block_sizes_weights(&self, time_period: TimePeriod) -> Result<BlockSizesWeights> {
         let pin = self.pin_safe_lengths()?;
         let blocks = &self.indexer().vecs().blocks;
-        let tip = pin
-            .lengths()
-            .last_height()
-            .ok_or(brk_error::Error::StateUpdating)?;
+        let tip = pin.lengths().last_height().ok_or(Error::StateUpdating)?;
         let bw = BlockWindow::new_at(self, time_period, tip)?;
 
         let block_sizes: Vec<StoredU64> = bw.read(&blocks.total)?;

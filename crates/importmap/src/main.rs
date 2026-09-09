@@ -1,4 +1,4 @@
-use std::{env, path::Path, process};
+use std::{env, error::Error, path::Path, process};
 
 use importmap::ImportMap;
 
@@ -22,7 +22,7 @@ fn main() {
     }
 }
 
-fn run(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn run(dir: &Path) -> Result<(), Box<dyn Error>> {
     let html_path = dir.join("index.html");
     if !html_path.exists() {
         return Err(format!("{} not found", html_path.display()).into());

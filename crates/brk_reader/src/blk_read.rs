@@ -5,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use brk_error::Result as ErrorResult;
 use brk_types::BlkPosition;
 
 use crate::{Reader, XORBytes, XORIndex};
@@ -28,7 +29,7 @@ impl BlkRead {
 }
 
 impl Reader {
-    pub fn reader_at(&self, position: BlkPosition) -> brk_error::Result<BlkRead> {
+    pub fn reader_at(&self, position: BlkPosition) -> ErrorResult<BlkRead> {
         let file = self.0.open_blk(position.blk_index())?;
         Ok(BlkRead::new(file, position, self.0.xor_bytes))
     }

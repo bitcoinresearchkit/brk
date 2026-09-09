@@ -3,21 +3,24 @@ mod common;
 
 #[cfg(test)]
 mod tests {
-    use brk_types::{PartsPerMillion32, StoredU16};
+    use bitview_transforms::RatioU64;
+    use bitview_vecs::{CumulativeCountVec, LazyIndexedVec, LazyRollingRatioVec};
+    use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
+    use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, BinaryTransform, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadableCloneableVec, WritableVec,
+        ReadableCloneableVec, ReadableVec, ReverseOperands, Version, WritableVec,
     };
 
-    use bitview_transforms::RatioU64;
-    use bitview_vecs::CumulativeCountVec;
-    use bitview_vecs::{LazyIndexedVec, LazyRollingRatioVec};
-    use brk_types::{Height, StoredU64};
-    use vecdb::{ReadableVec, Version};
+    #[cfg(feature = "diagnostics")]
+    use vecdb::diagnostics;
+
+    #[cfg(feature = "diagnostics")]
+    use super::common;
 
     #[test]
     fn derives_cumulative_and_rolling_ratios_from_compact_counts() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut numerator: EagerVec<PcoVec<Height, StoredU64>> =
             EagerVec::forced_import(&db, "numerator", Version::ONE).unwrap();
@@ -53,7 +56,7 @@ mod tests {
             StoredU64,
             StoredU64,
             PartsPerMillion32,
-            vecdb::ReverseOperands<RatioU64<PartsPerMillion32>>,
+            ReverseOperands<RatioU64<PartsPerMillion32>>,
         >::new(
             "rolling",
             Version::ONE,
@@ -86,17 +89,17 @@ mod tests {
         {
             use crate::common::CACHE_BUDGET;
             const N: usize = 32_768;
-            let numerator = CACHE_BUDGET.wrap(super::common::stored::<Height, _>(
+            let numerator = CACHE_BUDGET.wrap(common::stored::<Height, _>(
                 &db,
                 "cold_numerator",
                 (0..N).map(|i| StoredU64::from((i as u64 + 1) * 3)),
             ));
-            let counts = CachedVec::wrap(super::common::stored::<Height, _>(
+            let counts = CachedVec::wrap(common::stored::<Height, _>(
                 &db,
                 "cold_counts",
                 (0..N).map(|_| StoredU16::new(1)),
             ));
-            let starts = CachedVec::wrap(super::common::stored::<Height, _>(
+            let starts = CachedVec::wrap(common::stored::<Height, _>(
                 &db,
                 "cold_starts",
                 (0..N).map(|i| Height::from(i.saturating_sub(N / 2))),
@@ -115,7 +118,7 @@ mod tests {
                 StoredU64,
                 StoredU64,
                 PartsPerMillion32,
-                vecdb::ReverseOperands<RatioU64<PartsPerMillion32>>,
+                ReverseOperands<RatioU64<PartsPerMillion32>>,
             >::new(
                 "cold_rolling",
                 Version::ONE,
@@ -129,7 +132,7 @@ mod tests {
             ] {
                 for sorted in [false, true] {
                     numerator.invalidate();
-                    vecdb::diagnostics::take();
+                    diagnostics::take();
                     let values = if sorted {
                         view.read_sorted_at(&[N - 8, N - 3, N - 1])
                     } else {
@@ -139,7 +142,7 @@ mod tests {
                         values,
                         vec![PartsPerMillion32::from(3.0); if sorted { 3 } else { 8 }]
                     );
-                    let (decodes, _) = vecdb::diagnostics::take();
+                    let (decodes, _) = diagnostics::take();
                     assert!(
                         decodes > 0 && decodes <= 4,
                         "short read decoded {decodes} chunks"

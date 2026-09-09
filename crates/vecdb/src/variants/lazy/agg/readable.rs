@@ -1,6 +1,7 @@
-use crate::{ReadableVec, VecIndex, VecValue};
+use std::result::Result;
 
 use super::{AggFold, LazyAggVec};
+use crate::{ReadableVec, VecIndex, VecValue};
 
 impl<I, O, S1I, S2T, S1T, Strat> ReadableVec<I, O> for LazyAggVec<I, O, S1I, S2T, S1T, Strat>
 where
@@ -44,13 +45,13 @@ where
     }
 
     #[inline]
-    fn try_fold_range_at<B, E, F: FnMut(B, O) -> std::result::Result<B, E>>(
+    fn try_fold_range_at<B, E, F: FnMut(B, O) -> Result<B, E>>(
         &self,
         from: usize,
         to: usize,
         init: B,
         f: F,
-    ) -> std::result::Result<B, E>
+    ) -> Result<B, E>
     where
         Self: Sized,
     {

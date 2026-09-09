@@ -1,16 +1,22 @@
 use std::{
     cmp::Ordering,
+    fmt::{Display, Formatter, Result as FmtResult},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul},
 };
 
-use crate::CheckedSub;
+use ryu::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::{Sats, VSize, Weight};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 const MILLIS_PER_SAT_VBYTE: u64 = 1_000;
 
@@ -268,10 +274,10 @@ impl CheckedSub for FeeRate {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for FeeRate {
+impl VecdbCheckedSub for FeeRate {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -287,9 +293,9 @@ impl<'de> Deserialize<'de> for FeeRate {
     }
 }
 
-impl std::fmt::Display for FeeRate {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = ryu::Buffer::new();
+impl Display for FeeRate {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        let mut buf = Buffer::new();
         f.write_str(buf.format(f64::from(*self)))
     }
 }
@@ -299,7 +305,7 @@ impl Formattable for FeeRate {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
         if !self.is_nan() {
-            let mut value = ryu::Buffer::new();
+            let mut value = Buffer::new();
             buf.extend_from_slice(value.format(f64::from(*self)).as_bytes());
         }
     }
@@ -316,6 +322,8 @@ impl Formattable for FeeRate {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::{from_str, to_string};
+
     use super::*;
 
     #[test]
@@ -332,10 +340,10 @@ mod tests {
     #[test]
     fn fee_rate_keeps_decimal_json() {
         let value = FeeRate::new(10.14);
-        let json = serde_json::to_string(&value).unwrap();
+        let json = to_string(&value).unwrap();
         assert_eq!(json, "10.14");
-        assert_eq!(serde_json::from_str::<FeeRate>(&json).unwrap(), value);
-        assert_eq!(serde_json::to_string(&FeeRate::NAN).unwrap(), "null");
+        assert_eq!(from_str::<FeeRate>(&json).unwrap(), value);
+        assert_eq!(to_string(&FeeRate::NAN).unwrap(), "null");
     }
 
     #[test]

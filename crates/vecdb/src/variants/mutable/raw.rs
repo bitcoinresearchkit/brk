@@ -1,13 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::MutableVec;
 use crate::{
-    BytesVec, BytesVecReader, BytesVecValue, ImportableVec, Stamp, StoredVec, VecIndex, WritableVec,
+    BytesVec, BytesVecReader, BytesVecValue, ImportableVec, Result, Stamp, StoredVec, VecIndex,
+    WritableVec,
 };
 
 #[cfg(feature = "zerocopy")]
 use crate::{VecReader, ZeroCopyStrategy, ZeroCopyVec, ZeroCopyVecValue};
-
-use super::MutableVec;
 
 pub trait MutableRawVec: StoredVec + ImportableVec + WritableVec<Self::I, Self::T> + Sized {
     type Reader;
@@ -25,11 +25,9 @@ pub trait MutableRawVec: StoredVec + ImportableVec + WritableVec<Self::I, Self::
         previous: &BTreeMap<usize, Self::T>,
         bytes: &mut Vec<u8>,
     );
-    fn parse_mutable_changes(
-        bytes: &[u8],
-    ) -> crate::Result<(Vec<(usize, Self::T)>, BTreeSet<usize>)>;
-    fn save_change_file(&self, stamp: Stamp, bytes: &[u8]) -> crate::Result<()>;
-    fn read_current_change_file(&self) -> crate::Result<Vec<u8>>;
+    fn parse_mutable_changes(bytes: &[u8]) -> Result<(Vec<(usize, Self::T)>, BTreeSet<usize>)>;
+    fn save_change_file(&self, stamp: Stamp, bytes: &[u8]) -> Result<()>;
+    fn read_current_change_file(&self) -> Result<Vec<u8>>;
     fn save_previous(&mut self);
     fn save_previous_for_rollback(&mut self);
 }
@@ -91,7 +89,7 @@ where
     }
 
     #[inline]
-    pub fn fill_first_hole_or_push(&mut self, value: V::T) -> crate::Result<V::I> {
+    pub fn fill_first_hole_or_push(&mut self, value: V::T) -> Result<V::I> {
         if let Some(index) = self.mut_holes().pop_first() {
             self.update_value_at(index, value)?;
             return Ok(V::I::from(index));
@@ -126,12 +124,12 @@ where
     }
 
     #[inline]
-    pub fn update(&mut self, index: V::I, value: V::T) -> crate::Result<()> {
+    pub fn update(&mut self, index: V::I, value: V::T) -> Result<()> {
         self.update_value_at(index.to_usize(), value)
     }
 
     #[inline]
-    pub fn update_at(&mut self, index: usize, value: V::T) -> crate::Result<()> {
+    pub fn update_at(&mut self, index: usize, value: V::T) -> Result<()> {
         self.update_value_at(index, value)
     }
 

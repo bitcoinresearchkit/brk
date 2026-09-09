@@ -16,26 +16,28 @@
 //! Run: cargo run -p bitview_plugin_price --example dump_hist --release
 
 use std::{
-    fs::File,
+    env,
+    fs::{self, File},
     io::{BufWriter, Write},
     path::PathBuf,
 };
 
-use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{OutputType, Sats, Timestamp, TxIndex, TxOutIndex};
+use serde_json::from_str;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 mod common;
 
 fn main() {
-    let data_dir = std::env::var("BITVIEW_DIR")
+    let data_dir = env::var("BITVIEW_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(std::env::var("HOME").unwrap()).join(".bitview"));
-    let out_dir = std::env::var("DUMP_DIR").unwrap_or_else(|_| "/tmp".to_string());
-    let start: usize = std::env::var("ORACLE_START")
+        .unwrap_or_else(|_| PathBuf::from(env::var("HOME").unwrap()).join(".bitview"));
+    let out_dir = env::var("DUMP_DIR").unwrap_or_else(|_| "/tmp".to_string());
+    let start: usize = env::var("ORACLE_START")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(500_000);
-    let end: usize = std::env::var("ORACLE_END")
+    let end: usize = env::var("ORACLE_END")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(510_000);
@@ -45,13 +47,13 @@ fn main() {
     let end = end.min(total_heights);
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
 
-    let height_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
+    let height_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
             .expect("read height_price_ohlc.json"),
     )
     .expect("parse height OHLC");
 
-    let timestamps: Vec<brk_types::Timestamp> = indexer.vecs().blocks.timestamp.collect();
+    let timestamps: Vec<Timestamp> = indexer.vecs().blocks.timestamp.collect();
     let total_txs = indexer.vecs().transactions.txid.len();
     let total_outputs = indexer.vecs().outputs.value.len();
     let first_tx_index: Vec<TxIndex> = indexer.vecs().transactions.first_tx_index.collect();

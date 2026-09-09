@@ -1,6 +1,9 @@
+use std::borrow::Cow;
+
 use derive_more::{Deref, DerefMut};
-use schemars::{JsonSchema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "storage")]
 use vecdb::Bytes;
 
@@ -11,11 +14,11 @@ use vecdb::Bytes;
 pub struct U8x65(#[serde(with = "serde_bytes")] [u8; 65]);
 
 impl JsonSchema for U8x65 {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
+    fn schema_name() -> Cow<'static, str> {
         "U8x65".into()
     }
 
-    fn json_schema(generator: &mut SchemaGenerator) -> schemars::Schema {
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
         Vec::<u8>::json_schema(generator)
     }
 }

@@ -122,7 +122,6 @@ impl Query {
             .vecs()
             .blocks
             .blockhash
-            .inner
             .collect_one(height)
             .data()
     }
@@ -352,7 +351,7 @@ impl Query {
         // before indexing so incomplete local data cannot produce partial rows.
         // Fixed-size hashes can be read directly without materializing history
         // or allocating a second array for the requested range.
-        let blockhashes = indexer.vecs().blocks.blockhash.inner.reader();
+        let blockhashes = indexer.vecs().blocks.blockhash.reader();
         let difficulties = indexer
             .vecs()
             .blocks
@@ -444,12 +443,7 @@ impl Query {
         let all_pools = pools();
 
         // Bulk read all indexed data
-        let blockhashes = indexer
-            .vecs()
-            .blocks
-            .blockhash
-            .inner
-            .collect_range_at(begin, end);
+        let blockhashes = indexer.vecs().blocks.blockhash.collect_range_at(begin, end);
         let difficulties = indexer
             .vecs()
             .blocks

@@ -1,3 +1,10 @@
+#[cfg(feature = "storage")]
+use std::mem;
+#[cfg(feature = "storage")]
+use vecdb::Error as VecdbError;
+#[cfg(feature = "storage")]
+use vecdb::Result as VecdbResult;
+
 use bitcoin::{
     AddressType, ScriptBuf,
     opcodes::all::{
@@ -10,10 +17,11 @@ use brk_error::Error;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::Display;
-#[cfg(feature = "storage")]
-use vecdb::{Bytes, Formattable, Pco};
 
 use crate::AddrBytes;
+
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable, Pco};
 
 #[derive(
     Debug,
@@ -296,19 +304,19 @@ impl Bytes for OutputType {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> VecdbResult<Self> {
         if bytes.len() != size_of::<Self>() {
-            return Err(vecdb::Error::WrongLength {
+            return Err(VecdbError::WrongLength {
                 expected: size_of::<Self>(),
                 received: bytes.len(),
             });
         };
         let value = bytes[0];
         if !Self::is_valid(value) {
-            return Err(vecdb::Error::InvalidArgument("invalid OutputType"));
+            return Err(VecdbError::InvalidArgument("invalid OutputType"));
         }
         // SAFETY: We validated that value is a valid variant
-        let s: Self = unsafe { std::mem::transmute(value) };
+        let s: Self = unsafe { mem::transmute(value) };
         Ok(s)
     }
 }
@@ -324,13 +332,15 @@ unsafe impl Pco for OutputType {
     }
 
     #[inline(always)]
-    fn from_number(value: Self::NumberType) -> vecdb::Result<Self> {
+    fn from_number(value: Self::NumberType) -> VecdbResult<Self> {
         Self::from_bytes(&[value])
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use serde_json::{from_str, to_string};
+
     use super::*;
 
     #[test]
@@ -403,29 +413,25 @@ mod tests {
         for (native, native_name, normalized, normalized_name) in cases {
             assert_eq!(native.to_string(), native_name);
             assert_eq!(native.normalized(), normalized);
+            assert_eq!(to_string(&native).unwrap(), format!(r#""{native_name}""#));
             assert_eq!(
-                serde_json::to_string(&native).unwrap(),
-                format!(r#""{native_name}""#)
-            );
-            assert_eq!(
-                serde_json::from_str::<OutputType>(&format!(r#""{native_name}""#)).unwrap(),
+                from_str::<OutputType>(&format!(r#""{native_name}""#)).unwrap(),
                 native
             );
             assert_eq!(normalized.to_string(), normalized_name);
             assert_eq!(
-                serde_json::to_string(&normalized).unwrap(),
+                to_string(&normalized).unwrap(),
                 format!(r#""{normalized_name}""#)
             );
             assert_eq!(
-                serde_json::from_str::<OutputTypeNormalized>(&format!(r#""{normalized_name}""#))
-                    .unwrap(),
+                from_str::<OutputTypeNormalized>(&format!(r#""{normalized_name}""#)).unwrap(),
                 normalized
             );
         }
 
-        assert!(serde_json::from_str::<OutputType>(r#""p2pk""#).is_err());
-        assert!(serde_json::from_str::<OutputType>(r#""anchor""#).is_err());
-        assert!(serde_json::from_str::<OutputTypeNormalized>(r#""p2a""#).is_err());
+        assert!(from_str::<OutputType>(r#""p2pk""#).is_err());
+        assert!(from_str::<OutputType>(r#""anchor""#).is_err());
+        assert!(from_str::<OutputTypeNormalized>(r#""p2a""#).is_err());
     }
 
     #[cfg(feature = "storage")]

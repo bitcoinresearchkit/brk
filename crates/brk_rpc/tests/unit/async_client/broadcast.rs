@@ -1,5 +1,6 @@
 use brk_error::Error;
 use serde_json::json;
+use tokio::spawn;
 
 use super::*;
 
@@ -21,7 +22,7 @@ async fn reply(socket: &mut BufReader<TcpStream>, body: Value) {
 #[tokio::test]
 async fn submissions_reuse_connections_and_preserve_rejections() {
     let (client, listener) = client().await;
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         for code in [0, -22, -25, -26, -27, -28] {
             let (body, _) = message(&mut socket).await;
@@ -64,7 +65,7 @@ async fn submissions_reuse_connections_and_preserve_rejections() {
 async fn submissions_never_replay_after_response_loss() {
     for reused in [false, true] {
         let (client, listener) = client().await;
-        let server = tokio::spawn(async move {
+        let server = spawn(async move {
             let mut socket = BufReader::new(listener.accept().await.unwrap().0);
             if reused {
                 request(&mut socket).await;
@@ -96,7 +97,7 @@ async fn cancelled_waiter_cannot_submit_after_the_connection_is_released() {
     let (client, listener) = client().await;
     let (entered, observed) = oneshot::channel();
     let (release, released) = oneshot::channel();
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         request(&mut socket).await;
         entered.send(()).unwrap();
@@ -110,7 +111,7 @@ async fn cancelled_waiter_cannot_submit_after_the_connection_is_released() {
         );
         reply(&mut socket, json!({"id": 1, "result": "b".repeat(64)})).await;
     });
-    let active = tokio::spawn({
+    let active = spawn({
         let client = client.clone();
         async move { client.get_last_height().await }
     });
@@ -136,7 +137,7 @@ async fn cancelled_waiter_cannot_submit_after_the_connection_is_released() {
 #[tokio::test]
 async fn cancellation_after_dispatch_closes_the_connection() {
     let (client, listener) = client().await;
-    let server = tokio::spawn(async move {
+    let server = spawn(async move {
         let mut socket = BufReader::new(listener.accept().await.unwrap().0);
         let (body, _) = message(&mut socket).await;
         assert_eq!(body["method"], "sendrawtransaction");

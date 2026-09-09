@@ -1,4 +1,8 @@
+use schemars::schema_for;
+use serde_json::{from_value, to_value};
+
 use super::*;
+use crate::Day3;
 
 #[test]
 fn fallible_indexes_reject_unchecked_invalid_calendar_values() {
@@ -15,7 +19,7 @@ fn fallible_indexes_reject_unchecked_invalid_calendar_values() {
     ] {
         assert!(date.try_into_jiff().is_err(), "{date}");
         assert!(Day1::try_from(date).is_err());
-        assert!(crate::Day3::try_from(date).is_err());
+        assert!(Day3::try_from(date).is_err());
         assert!(Week1::try_from(date).is_err());
         assert!(Month1::try_from(date).is_err());
         assert!(Month3::try_from(date).is_err());
@@ -26,7 +30,7 @@ fn fallible_indexes_reject_unchecked_invalid_calendar_values() {
     for date in [Date::new(2024, 2, 29), Date::INDEX_ZERO] {
         assert_eq!(date.try_into_jiff().unwrap(), date.into_jiff());
         assert!(Day1::try_from(date).is_ok());
-        assert!(crate::Day3::try_from(date).is_ok());
+        assert!(Day3::try_from(date).is_ok());
         assert!(Week1::try_from(date).is_ok());
         assert!(Month1::try_from(date).is_ok());
         assert!(Month3::try_from(date).is_ok());
@@ -47,8 +51,8 @@ fn parsing_and_serde_share_strict_calendar_validation() {
     ] {
         let date: Date = text.parse().unwrap();
         assert_eq!(date.to_string(), text);
-        assert_eq!(serde_json::from_value::<Date>(text.into()).unwrap(), date);
-        assert_eq!(serde_json::to_value(date).unwrap(), text);
+        assert_eq!(from_value::<Date>(text.into()).unwrap(), date);
+        assert_eq!(to_value(date).unwrap(), text);
     }
     for text in [
         "2026-02-29",
@@ -70,10 +74,7 @@ fn parsing_and_serde_share_strict_calendar_validation() {
         "2026-01-01extra",
     ] {
         assert!(text.parse::<Date>().is_err(), "{text}");
-        assert!(
-            serde_json::from_value::<Date>(text.into()).is_err(),
-            "{text}"
-        );
+        assert!(from_value::<Date>(text.into()).is_err(), "{text}");
     }
 }
 
@@ -97,9 +98,9 @@ fn calendar_conversions_match_epoch_and_period_boundaries() {
 #[test]
 fn schema_matches_date_string_serialization() {
     let date = Date::new(2024, 4, 20);
-    assert_eq!(serde_json::to_value(date).unwrap(), "2024-04-20");
+    assert_eq!(to_value(date).unwrap(), "2024-04-20");
 
-    let schema = serde_json::to_value(schemars::schema_for!(Date)).unwrap();
+    let schema = to_value(schema_for!(Date)).unwrap();
     assert_eq!(schema["type"], "string");
     assert_eq!(schema["format"], "date");
     assert_eq!(schema["pattern"], r"^\d{4}-\d{2}-\d{2}$");

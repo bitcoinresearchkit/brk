@@ -1,29 +1,27 @@
 use std::{fs, ops::Range, path::Path, time::Instant};
 
-use rustc_hash::FxHashSet;
-
 use bitview_cohort::{AddrTypeId, ByAddrType};
 use brk_error::{Error, OptionData, Result};
-use brk_store::{AnyStore, Kind, PendingIngest, Store};
+use brk_store::{AnyStore, Kind, PendingIngest, Store, open_database};
 use brk_types::{
     AddrHash, AddrIndexOutPoint, AddrIndexTxIndex, BlockHashPrefix, Height, OutPoint, OutputType,
     TxIndex, TxOutIndex, TxidPrefix, TypeIndex, Unit, Version, Vout,
 };
+use checkpoint::{
+    DeferredStoresCommit, PendingStoresCheckpoint, PersistedStoresCheckpoint, StoresCheckpoint,
+};
 use fjall::Database;
 use rayon::{join, prelude::*};
+use rustc_hash::FxHashSet;
 use tracing::debug;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
-use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES};
-
 use super::Vecs;
+use crate::{Lengths, constants::DUPLICATE_TXID_PREFIXES};
 
 pub mod checkpoint;
 pub mod transaction;
 
-use checkpoint::{
-    DeferredStoresCommit, PendingStoresCheckpoint, PersistedStoresCheckpoint, StoresCheckpoint,
-};
 pub use transaction::TransactionStoresMut;
 
 #[derive(Clone)]
@@ -124,7 +122,7 @@ impl Stores {
         let path = pathbuf.as_path();
 
         fs::create_dir_all(&pathbuf)?;
-        let database = brk_store::open_database(path)?;
+        let database = open_database(path)?;
 
         let database_ref = &database;
 
@@ -516,7 +514,7 @@ fn txout_ranges(
     starting_tx_index: TxIndex,
     first_txout_indexes: &[TxOutIndex],
     rollback_end: TxOutIndex,
-) -> impl Iterator<Item = (TxIndex, std::ops::Range<usize>)> + '_ {
+) -> impl Iterator<Item = (TxIndex, Range<usize>)> + '_ {
     first_txout_indexes
         .iter()
         .copied()
@@ -532,11 +530,13 @@ fn txout_ranges(
 
 #[cfg(test)]
 mod tests {
+    use tempfile::tempdir;
+
     use super::*;
 
     #[test]
     fn empty_stores_initialize_zero_checkpoint() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let stores = Stores::forced_import(dir.path(), Version::ZERO)?;
 
         assert_eq!(stores.next_height()?, Some(Height::ZERO));
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn missing_checkpoint_with_data_stays_invalid() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
 
         {
             let mut stores = Stores::forced_import(dir.path(), Version::ZERO)?;
@@ -568,7 +568,7 @@ mod tests {
 
     #[test]
     fn synchronous_commit_persists_data_and_checkpoint() -> Result<()> {
-        let dir = tempfile::tempdir()?;
+        let dir = tempdir()?;
         let prefix = BlockHashPrefix::from(1_u64);
 
         {

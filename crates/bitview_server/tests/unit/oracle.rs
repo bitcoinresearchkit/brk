@@ -1,8 +1,10 @@
 use std::{net::SocketAddr, time::Duration};
 
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_oracle::Oracle;
 use brk_types::{Date, Day1};
-use serde_json::Value;
-use tokio::time::timeout;
+use serde_json::{Value, from_str, to_value};
+use tokio::{spawn, time::timeout};
 
 use super::server_routes::exchange_with_etag;
 use crate::AppState;
@@ -11,13 +13,8 @@ pub async fn check(state: &AppState, address: SocketAddr) {
     state.sync(|q| {
         let safe = q.indexer().safe_lengths();
         let run = |range, cap| {
-            let mut oracle = brk_oracle::Oracle::from_seed();
-            bitview_plugin_price::Vecs::feed_blocks_for_warmup(
-                &mut oracle,
-                q.indexer(),
-                range,
-                Some(&cap),
-            )
+            let mut oracle = Oracle::from_seed();
+            PriceVecs::feed_blocks_for_warmup(&mut oracle, q.indexer(), range, Some(&cap))
         };
         assert!(run(0..1, safe).is_ok());
         assert!(run(usize::MAX..usize::MAX, safe).is_err());
@@ -42,7 +39,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
             let path = format!("/api/oracle/histogram/{kind}/{point}");
             let expected = state.sync(|q| {
                 if payments {
-                    serde_json::to_value(
+                    to_value(
                         if daily {
                             q.confirmed_payment_histogram_day(day)
                         } else {
@@ -52,7 +49,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
                     )
                     .unwrap()
                 } else {
-                    serde_json::to_value(
+                    to_value(
                         if daily {
                             q.confirmed_output_histogram_day(day)
                         } else {
@@ -65,8 +62,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
             });
             let response = exchange_with_etag(address, "GET", &path, "\"old\"").await;
             assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-            let body: Value =
-                serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+            let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
             assert_eq!(body, expected);
             let etag = response
                 .lines()
@@ -101,7 +97,7 @@ pub async fn check(state: &AppState, address: SocketAddr) {
         for (path, etag) in &valid {
             let path = path.clone();
             let tag = etag.clone();
-            requests.push(tokio::spawn(async move {
+            requests.push(spawn(async move {
                 exchange_with_etag(address, "GET", &path, &tag).await
             }));
         }
@@ -133,17 +129,16 @@ async fn check_live(state: &AppState, address: SocketAddr) {
     ] {
         let expected = state.sync(|q| match path {
             "/api/oracle/price" | "/api/mempool/price" => {
-                serde_json::to_value(q.live_price().unwrap()).unwrap()
+                to_value(q.live_price().unwrap()).unwrap()
             }
             "/api/oracle/histogram/payments/live" => {
-                serde_json::to_value(q.live_payment_histogram().unwrap()).unwrap()
+                to_value(q.live_payment_histogram().unwrap()).unwrap()
             }
-            _ => serde_json::to_value(q.live_output_histogram().unwrap()).unwrap(),
+            _ => to_value(q.live_output_histogram().unwrap()).unwrap(),
         });
         let response = exchange_with_etag(address, "GET", path, "\"old\"").await;
         assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-        let actual: Value =
-            serde_json::from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+        let actual: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
         assert_eq!(actual, expected);
         let etag = response
             .lines()
@@ -186,7 +181,7 @@ async fn check_live(state: &AppState, address: SocketAddr) {
             .map(|(path, tag)| {
                 let path = *path;
                 let tag = tag.clone();
-                tokio::spawn(async move { exchange_with_etag(address, "GET", path, &tag).await })
+                spawn(async move { exchange_with_etag(address, "GET", path, &tag).await })
             })
             .collect::<Vec<_>>();
         assert!(

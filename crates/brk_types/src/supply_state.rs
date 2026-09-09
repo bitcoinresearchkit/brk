@@ -1,3 +1,8 @@
+#[cfg(feature = "storage")]
+use std::fmt::Result;
+#[cfg(feature = "storage")]
+use vecdb::Result as VecdbResult;
+
 use std::{
     fmt,
     ops::{Add, AddAssign, SubAssign},
@@ -5,10 +10,11 @@ use std::{
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Bytes, Formattable};
 
 use crate::{CheckedSub, FundedAddrData, Sats};
+
+#[cfg(feature = "storage")]
+use vecdb::{Bytes, Formattable};
 
 /// Current supply state tracking UTXO count and total value
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -89,7 +95,7 @@ impl Formattable for SupplyState {
         write!(buf, "{self}").unwrap();
     }
 
-    fn fmt_csv(&self, f: &mut String) -> std::fmt::Result {
+    fn fmt_csv(&self, f: &mut String) -> Result {
         let start = f.len();
         self.fmt_into(f);
         if f.as_bytes()[start..].contains(&b',') {
@@ -117,7 +123,7 @@ impl Bytes for SupplyState {
         arr
     }
 
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> VecdbResult<Self> {
         Ok(Self {
             utxo_count: u64::from_bytes(&bytes[0..8])?,
             value: Sats::from_bytes(&bytes[8..16])?,

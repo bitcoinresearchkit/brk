@@ -1,22 +1,26 @@
-use brk_error::Result;
+use std::iter;
 
 use bitview_cohort::{AgeRange, AgeRangeId, ByTerm, TERM_FILTERS, UTXOAggregate};
+use bitview_compute::WeightedCohortState;
+use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_vecs::PerBlock;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
-use vecdb::{AnyStoredVec, AnyVec, ColumnId, EagerVec, PcoVec, ReadableVec, WritableVec};
+use vecdb::{
+    AnyStoredVec, AnyVec, ColumnId, EagerVec, PcoVec, ReadOnlyClone, ReadableVec, WritableVec,
+};
 
-use super::{Sources, Vecs};
-use bitview_compute::WeightedCohortState;
-use bitview_vecs::PerBlock;
+use super::{super::AgeRangeVecs, Sources, Vecs};
 
 const WRITE_INTERVAL: usize = 10_000;
 
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    distribution: &bitview_plugin_distribution::Vecs,
-    age_range: &mut super::super::AgeRangeVecs,
+    distribution: &DistributionVecs,
+    age_range: &mut AgeRangeVecs,
     all_supply_in_loss_share: &mut PerBlock<BoundedRatio>,
     exit: &Exit,
 ) -> Result<()> {
@@ -36,7 +40,7 @@ pub fn compute(
             .cents
             .height
     });
-    let weights = &age_range.activity.cached;
+    let weights = &age_range.activity.height.read_only_clone();
 
     vecs.sources.compute_primary(
         starting_height,
@@ -73,7 +77,7 @@ impl Sources {
                 .map(|vec| vec.version())
                 .chain(loss_supplies.iter().map(|vec| vec.version()))
                 .chain(realized_caps.iter().map(|vec| vec.version()))
-                .chain(std::iter::once(weights.version())),
+                .chain(iter::once(weights.version())),
         );
 
         for vec in self.primary_vecs_mut() {
@@ -85,7 +89,7 @@ impl Sources {
             .primary_vecs_mut()
             .into_iter()
             .map(|vec| vec.len())
-            .chain(std::iter::once(all_supply_in_loss_share.len()))
+            .chain(iter::once(all_supply_in_loss_share.len()))
             .min()
             .unwrap_or_default()
             .min(usize::from(starting_height));
@@ -99,7 +103,7 @@ impl Sources {
             .map(|vec| vec.len())
             .chain(loss_supplies.iter().map(|vec| vec.len()))
             .chain(realized_caps.iter().map(|vec| vec.len()))
-            .chain(std::iter::once(weights.len()))
+            .chain(iter::once(weights.len()))
             .min()
             .unwrap_or_default();
 
@@ -191,21 +195,26 @@ impl Sources {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use bitview_vecs::ColumnarPerBlock;
-    use vecdb::{Database, ImportableVec};
+    use tempfile::tempdir;
+    use vecdb::{CacheBudget, Database, ImportableVec};
+
+    use super::*;
 
     #[test]
     fn shared_batches_cover_boundaries_short_inputs_and_rewrites() {
-        let directory = tempfile::tempdir().unwrap();
+        static CACHE: CacheBudget = CacheBudget::new(1 << 20);
+        let cache = &CACHE;
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut sources = Sources::forced_import(&db, Version::ONE).unwrap();
+        let mut sources = Sources::forced_import(cache, &db, Version::ONE).unwrap();
         let mut loss_share = EagerVec::forced_import(&db, "loss_share", Version::ONE).unwrap();
         let mut supply =
             PcoVec::<Height, Sats>::forced_import(&db, "supply", Version::ONE).unwrap();
         let mut loss = PcoVec::<Height, Sats>::forced_import(&db, "loss", Version::ONE).unwrap();
         let mut cap = PcoVec::<Height, Cents>::forced_import(&db, "cap", Version::ONE).unwrap();
         let mut weights = ColumnarPerBlock::<BoundedRatio, AgeRangeId, ()>::forced_import(
+            cache,
             &db,
             "weights",
             Version::ONE,

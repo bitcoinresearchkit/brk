@@ -149,10 +149,10 @@ mod tests {
     use bitcoin::ScriptBuf;
     use brk_types::OutputType;
 
-    use super::analyze;
+    use super::{ScriptSigFacts, analyze};
     use crate::TxFeatureFlags;
 
-    pub fn analyze_script(script: &ScriptBuf) -> super::ScriptSigFacts<'_> {
+    pub fn analyze_script(script: &ScriptBuf) -> ScriptSigFacts<'_> {
         analyze(
             script,
             OutputType::Unknown,

@@ -100,13 +100,15 @@ impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
 
 #[cfg(test)]
 mod tests {
+    use tempfile::tempdir;
+
     use super::Sparse;
-    use crate::{AggFold, BytesVec, ImportableVec, ReadBounds, Version, WritableVec};
+    use crate::{AggFold, BytesVec, Database, ImportableVec, ReadBounds, Version, WritableVec};
 
     #[test]
     fn clamps_partial_final_range_to_source_length() {
-        let temp = tempfile::tempdir().unwrap();
-        let db = crate::Database::open(temp.path()).unwrap();
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
         let mut source: BytesVec<usize, u64> =
             BytesVec::forced_import(&db, "source", Version::ONE).unwrap();
 
@@ -134,8 +136,8 @@ mod tests {
 
     #[test]
     fn final_range_uses_the_published_source_bound() {
-        let temp = tempfile::tempdir().unwrap();
-        let db = crate::Database::open(temp.path()).unwrap();
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
         let mut source: BytesVec<usize, u64> =
             BytesVec::forced_import(&db, "bounded_source", Version::ONE).unwrap();
 
@@ -157,8 +159,8 @@ mod tests {
 
     #[test]
     fn sparse_ranges_and_early_errors_match_reference_buckets() {
-        let temp = tempfile::tempdir().unwrap();
-        let db = crate::Database::open(temp.path()).unwrap();
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
         let mut source: BytesVec<usize, u64> =
             BytesVec::forced_import(&db, "buckets", Version::ONE).unwrap();
         let values = [10, 20, 30, 40];

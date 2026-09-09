@@ -1,15 +1,14 @@
-use std::ops::AddAssign;
-
-use brk_error::Result;
+use std::{iter, ops::AddAssign};
 
 use bitview_traversable::Traversable;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, CachedReadableVec, ColumnId, ColumnarVec,
-    Database, EagerVec, ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec,
-    ReadableColumnarVec, ReadableVec, Rw, StorageMode, VecValue, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, ColumnId, ColumnarVec, Database, EagerVec, ImportOptions,
+    ImportableVec, PcoVec, PcoVecValue, ReadOnlyClone, ReadOnlyColumnarVec, ReadableBoxedVec,
+    ReadableCloneableVec, ReadableColumnarVec, ReadableVec, Rw, StorageMode, VecValue, WritableVec,
 };
 
 #[derive(Deref, DerefMut, Traversable)]
@@ -32,12 +31,15 @@ where
     C: ColumnId,
 {
     pub fn forced_import(
+        cache: &'static CacheBudget,
         db: &Database,
         name: &str,
         version: Version,
         build_series: impl FnOnce(&ReadOnlyColumnarVec<PcoVec<Height, T>, C>) -> S,
     ) -> Result<Self> {
-        let height = EagerVec::forced_import(db, name, version)?;
+        let height = EagerVec::forced_import_with(
+            ImportOptions::new(db, name, version).with_cache_budget(cache),
+        )?;
         let series = build_series(&height.read_only_clone());
 
         Ok(Self { series, height })
@@ -80,35 +82,31 @@ where
         self.height.is_empty()
     }
 
-    pub fn cached_column(
+    pub fn column_source(
         &self,
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         column: C,
-    ) -> CachedBoxedVec<Height, T> {
-        cache
-            .wrap(self.height.read_only_clone().column(name, version, column))
-            .cached_boxed_clone()
+    ) -> ReadableBoxedVec<Height, T> {
+        self.height
+            .read_only_clone()
+            .column(name, version, column)
+            .read_only_boxed_clone()
     }
 
-    pub fn cached_sum(
+    pub fn sum_source(
         &self,
-        cache: &'static CacheBudget,
         name: &str,
         version: Version,
         columns: impl IntoIterator<Item = C>,
-    ) -> CachedBoxedVec<Height, T>
+    ) -> ReadableBoxedVec<Height, T>
     where
         T: AddAssign,
     {
-        cache
-            .wrap(
-                self.height
-                    .read_only_clone()
-                    .sum_columns(name, version, columns),
-            )
-            .cached_boxed_clone()
+        self.height
+            .read_only_clone()
+            .sum_columns(name, version, columns)
+            .read_only_boxed_clone()
     }
 
     /// Computes each column from two scalar sources.
@@ -190,12 +188,12 @@ where
             C::ALL
                 .iter()
                 .map(|&column| source2(column).version())
-                .chain(std::iter::once(source1.version())),
+                .chain(iter::once(source1.version())),
         );
         let source_end = C::ALL
             .iter()
             .map(|&column| source2(column).len())
-            .chain(std::iter::once(source1.len()))
+            .chain(iter::once(source1.len()))
             .min()
             .unwrap_or_default();
 
@@ -235,12 +233,15 @@ where
 mod tests {
     use brk_exit::Exit;
     use brk_types::{Height, StoredU64, Version};
+    use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, ColumnId, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
-        ReadableVec, VecValue, WritableVec,
+        AnyStoredVec, CacheBudget, ColumnId, Database, EagerVec, ImportableVec, PcoVec,
+        ReadOnlyClone, ReadableVec, VecValue, WritableVec,
     };
 
     use super::ColumnarPerBlock;
+
+    static CACHE_BUDGET: CacheBudget = CacheBudget::new(1 << 20);
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
     enum Column {
@@ -290,7 +291,7 @@ mod tests {
 
     #[test]
     fn computes_from_scalar_columns_and_typed_rows() {
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
 
         let mut left_a: EagerVec<PcoVec<Height, StoredU64>> =
@@ -320,6 +321,7 @@ mod tests {
         right_b.write().unwrap();
 
         let mut sums = ColumnarPerBlock::<StoredU64, Column, _>::forced_import(
+            &CACHE_BUDGET,
             &db,
             "sums",
             Version::ONE,
@@ -363,6 +365,7 @@ mod tests {
 
         let sums = sums.height.read_only_clone();
         let mut products = ColumnarPerBlock::<StoredU64, Column, _>::forced_import(
+            &CACHE_BUDGET,
             &db,
             "products",
             Version::ONE,

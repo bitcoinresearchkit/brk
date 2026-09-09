@@ -1,5 +1,5 @@
 use brk_error::Result;
-use brk_types::{Addr, Height, OutputType, Txid, TypeIndex};
+use brk_types::{Addr, Height, Lengths, OutputType, Txid, TypeIndex};
 
 use crate::Query;
 
@@ -33,7 +33,7 @@ impl Query {
         output_type: OutputType,
         type_index: TypeIndex,
         before_txid: Option<&Txid>,
-        safe: brk_types::Lengths,
+        safe: Lengths,
     ) -> Result<Height> {
         if type_index >= safe.to_type_index(output_type) {
             return Err(self.missing_addr());

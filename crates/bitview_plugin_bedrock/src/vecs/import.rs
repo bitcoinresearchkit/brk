@@ -1,4 +1,5 @@
 use bitview_plugin::ImportContext;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BoundedToF64;
 use bitview_vecs::{ColumnarDailyMetric, DailyMappings, LazyColumnDailyPrice, LazyDailyMetric};
 use brk_error::Result;
@@ -19,6 +20,7 @@ impl ModeVecs {
         mappings: &DailyMappings,
     ) -> Result<Self> {
         let loss_threshold = ColumnarDailyMetric::forced_import(
+            cache,
             db,
             &format!("{name}_loss_thresholds_bounded"),
             version + Version::ONE,
@@ -41,13 +43,13 @@ impl ModeVecs {
         )?;
 
         let prices = ColumnarDailyMetric::forced_import(
+            cache,
             db,
             &format!("{name}_price_bands"),
             version,
             |source| {
                 PriceBandId::series(|band| {
                     LazyColumnDailyPrice::new(
-                        cache,
                         &format!("{name}_{}", band.suffix()),
                         version,
                         source,
@@ -68,7 +70,7 @@ impl ModeVecs {
 impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
-        mappings: &bitview_plugin_mappings::Vecs,
+        mappings: &MappingsVecs,
         spot: &CachedBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;

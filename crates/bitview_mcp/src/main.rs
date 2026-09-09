@@ -1,3 +1,19 @@
+use std::{
+    env,
+    error::Error,
+    io,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    process,
+};
+
+use arguments::Arguments;
+use axum::serve;
+use brk_logger::init_with_default_level;
+use manifest::Catalog;
+use page::Pages;
+use tokio::net::TcpListener;
+use tracing::info;
+
 mod arguments;
 mod config;
 mod logo;
@@ -10,26 +26,11 @@ mod server_tests;
 mod upstream;
 mod upstream_response;
 
-use std::{
-    env,
-    error::Error,
-    io,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    process,
-};
-
-use arguments::Arguments;
-use axum::serve;
-use manifest::Catalog;
-use page::Pages;
-use tokio::net::TcpListener;
-use tracing::info;
-
 const BIND_START: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 3111);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    brk_logger::init_with_default_level(None, "info")?;
+    init_with_default_level(None, "info")?;
 
     let arguments = Arguments::parse(env::args().skip(1)).unwrap_or_else(|error| usage(&error));
     let (api_bases, api_url, public_url, display_name) = arguments.into_parts();

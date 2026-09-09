@@ -1,3 +1,4 @@
+use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::ThsToPhsF32;
 use bitview_vecs::{LazyPerBlock, PerBlock, PercentPerBlock};
 use brk_error::Result;
@@ -13,7 +14,7 @@ pub fn forced_import(
     cache: &'static CacheBudget,
     db: &Database,
     version: Version,
-    mappings: &bitview_plugin_mappings::Vecs,
+    mappings: &MappingsVecs,
 ) -> Result<Vecs> {
     let v4 = Version::new(4);
     let v5 = Version::new(5);

@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, ErrorKind, Read, Write},
     net::TcpListener,
     thread,
     time::Duration,
@@ -60,6 +60,6 @@ fn broadcast_decodes_plain_text_and_does_not_replay_lost_outcomes() {
     assert!(client.post_tx("cc").is_err());
     assert_eq!(
         peer.join().unwrap().accept().unwrap_err().kind(),
-        std::io::ErrorKind::WouldBlock
+        ErrorKind::WouldBlock
     );
 }

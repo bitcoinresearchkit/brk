@@ -4,6 +4,8 @@ use std::{
     process::{Command, Output},
 };
 
+use tempfile::tempdir;
+
 fn setup(home: &Path) -> PathBuf {
     let config = home.join(".bitview");
     let data = home.join("data");
@@ -33,7 +35,7 @@ fn run(home: &Path) -> Output {
 
 #[test]
 fn daemon_config_paths_daily_deduplication_and_atomic_report() {
-    let home = tempfile::tempdir().unwrap();
+    let home = tempdir().unwrap();
     let data = setup(home.path());
     let logs = data.join("logs");
     let mut log = String::new();
@@ -83,7 +85,7 @@ fn daemon_config_paths_daily_deduplication_and_atomic_report() {
 
 #[test]
 fn separates_codes_within_the_same_status_class() {
-    let home = tempfile::tempdir().unwrap();
+    let home = tempdir().unwrap();
     let data = setup(home.path());
     fs::write(data.join("logs/2026-09-04.txt"), "2026-09-04 12:00:00 - error 400 /api/tx/abc 1ms\n2026-09-04 12:00:01 - error 404 /api/tx/def 100ms\n").unwrap();
     run(home.path());
@@ -98,7 +100,7 @@ fn separates_codes_within_the_same_status_class() {
 
 #[test]
 fn rejects_arguments_before_loading_daemon_config() {
-    let home = tempfile::tempdir().unwrap();
+    let home = tempdir().unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_bitviewd_latency"))
         .env("HOME", home.path())
         .args(["--output", "elsewhere.md"])
@@ -111,7 +113,7 @@ fn rejects_arguments_before_loading_daemon_config() {
 
 #[test]
 fn missing_config_uses_default_paths_without_node_setup() {
-    let home = tempfile::tempdir().unwrap();
+    let home = tempdir().unwrap();
     let data = home.path().join(".bitview");
     fs::create_dir_all(data.join("logs")).unwrap();
     fs::write(
@@ -126,7 +128,7 @@ fn missing_config_uses_default_paths_without_node_setup() {
 
 #[test]
 fn invalid_config_preserves_existing_report() {
-    let home = tempfile::tempdir().unwrap();
+    let home = tempdir().unwrap();
     let data = setup(home.path());
     fs::write(data.join("latency.md"), "previous report").unwrap();
     fs::write(

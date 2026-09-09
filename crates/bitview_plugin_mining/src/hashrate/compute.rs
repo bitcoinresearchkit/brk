@@ -1,4 +1,4 @@
-use bitview_plugin_blocks::ONE_TERA_HASH;
+use bitview_plugin_blocks::{CountVecs, DifficultyVecs, LookbackVecs, ONE_TERA_HASH};
 use bitview_plugin_indexer::Indexer;
 use bitview_transforms::RatioDiffF32;
 use brk_error::Result;
@@ -29,9 +29,9 @@ fn reward_per_ths(reward_24h: f64, hash_rate: f64) -> StoredF32 {
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    count_vecs: &bitview_plugin_blocks::CountVecs,
-    lookback: &bitview_plugin_blocks::LookbackVecs,
-    difficulty_vecs: &bitview_plugin_blocks::DifficultyVecs,
+    count_vecs: &CountVecs,
+    lookback: &LookbackVecs,
+    difficulty_vecs: &DifficultyVecs,
     coinbase_sats_24h_sum: &impl ReadableVec<Height, Sats>,
     coinbase_usd_24h_sum: &impl ReadableVec<Height, Dollars>,
     exit: &Exit,
@@ -122,11 +122,11 @@ pub fn compute(
 
 #[cfg(test)]
 mod tests {
+    use bitview_transforms::{RatioDiffF32, ThsToPhsF32};
     use brk_types::{PartsPerMillionSigned32, PartsPerMillionSigned64, StoredF32};
     use vecdb::{BinaryTransform, UnaryTransform};
 
     use super::{estimated_network_hash_rate, reward_per_ths};
-    use bitview_transforms::{RatioDiffF32, ThsToPhsF32};
 
     #[test]
     fn network_hash_rate_scales_with_trailing_block_count() {

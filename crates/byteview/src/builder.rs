@@ -1,3 +1,5 @@
+use std::ops::{Deref, DerefMut};
+
 use crate::ByteView;
 
 /// A builder for a [`ByteView`] that allows mutation before freezing it.
@@ -18,7 +20,7 @@ impl Builder {
     }
 }
 
-impl std::ops::Deref for Builder {
+impl Deref for Builder {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -26,7 +28,7 @@ impl std::ops::Deref for Builder {
     }
 }
 
-impl std::ops::DerefMut for Builder {
+impl DerefMut for Builder {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.0.get_mut_slice()
     }

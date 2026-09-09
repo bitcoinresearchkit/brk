@@ -1,8 +1,9 @@
-use lsm_tree::{Cache, DescriptorTable};
 use std::{
-    path::{Path, PathBuf},
+    path::{self as StdPath, Path, PathBuf},
     sync::Arc,
 };
+
+use lsm_tree::{Cache, DescriptorTable};
 
 /// Shared database configuration.
 pub struct Config {
@@ -18,7 +19,7 @@ impl Config {
     /// Creates BRK's default database configuration.
     pub fn new(path: &Path) -> Self {
         Self {
-            path: std::path::absolute(path).expect("database path should be absolute"),
+            path: StdPath::absolute(path).expect("database path should be absolute"),
             cache: Arc::new(Cache::with_capacity_bytes(32 * 1_024 * 1_024)),
             descriptor_table: Arc::new(DescriptorTable::new(Self::default_open_file_limit())),
         }

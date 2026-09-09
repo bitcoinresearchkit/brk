@@ -1,13 +1,19 @@
-use std::ops::Add;
+use std::{
+    fmt::{Display, Formatter, Result},
+    ops::Add,
+};
 
-use crate::CheckedSub;
 use derive_more::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{CheckedSub, TypeIndex};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco, PrintableIndex, VecIndex};
-
-use crate::TypeIndex;
 
 /// Index into the sidecar for empty-address data that does not fit inline.
 #[derive(
@@ -67,14 +73,14 @@ impl Add<usize> for ExtendedEmptyAddrIndex {
 impl CheckedSub for ExtendedEmptyAddrIndex {
     #[inline(always)]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self)
+        CheckedSub::checked_sub(self.0, rhs.0).map(Self)
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for ExtendedEmptyAddrIndex {
+impl VecdbCheckedSub for ExtendedEmptyAddrIndex {
     #[inline(always)]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -101,8 +107,8 @@ impl VecIndex for ExtendedEmptyAddrIndex {
     const INITIAL_CAPACITY: usize = 1 << 30;
 }
 
-impl std::fmt::Display for ExtendedEmptyAddrIndex {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ExtendedEmptyAddrIndex {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.0.fmt(f)
     }
 }

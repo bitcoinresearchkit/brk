@@ -1,6 +1,7 @@
-use brk_error::Result;
-
+use bitview_plugin_blocks::Vecs as BlocksVecs;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_price::Vecs as PriceVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::PartsPerMillion32;
 use vecdb::VecIndex;
@@ -10,8 +11,8 @@ use super::Vecs;
 pub fn compute(
     vecs: &mut Vecs,
     indexer: &Indexer,
-    prices: &bitview_plugin_price::Vecs,
-    blocks: &bitview_plugin_blocks::Vecs,
+    prices: &PriceVecs,
+    blocks: &BlocksVecs,
     exit: &Exit,
 ) -> Result<()> {
     let starting_height = indexer.safe_lengths().height;

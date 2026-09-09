@@ -1,16 +1,22 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, Pco};
 
 use super::{Bitcoin, Sats};
+use crate::CheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, Pco};
 
 /// Signed satoshis (i64) - for values that can be negative.
 /// Used for changes, deltas, profit/loss calculations, etc.
@@ -105,9 +111,9 @@ impl CheckedSub for SatsSigned {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for SatsSigned {
+impl VecdbCheckedSub for SatsSigned {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -213,9 +219,9 @@ impl From<SatsSigned> for Bitcoin {
     }
 }
 
-impl std::fmt::Display for SatsSigned {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for SatsSigned {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -225,7 +231,7 @@ impl std::fmt::Display for SatsSigned {
 impl Formattable for SatsSigned {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

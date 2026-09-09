@@ -574,13 +574,7 @@ fn reorganization_preserves_publication_and_validator_contracts() {
         );
         query
             .sync(|q| {
-                let hashes = &q.indexer().vecs().blocks.blockhash;
-                hashes.invalidate();
                 let resolved = q.resolve_block_snapshot(&old_hash)?;
-                assert!(
-                    hashes.cached_snapshot().is_none(),
-                    "exact-hash resolution must not fill history"
-                );
                 assert!(
                     matches!(
                         q.resolve_block_snapshot(&wrong_hash),
@@ -594,19 +588,13 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     "a height hint must match the full hash"
                 );
                 assert_eq!(resolved.build(q)?.pop().unwrap().id, old_hash);
-                assert!(
-                    hashes.cached_snapshot().is_none(),
-                    "block revalidation and base body reads must not fill history"
-                );
                 Ok::<_, QueryError>(())
             })
             .unwrap();
         let recent_v1 = query
             .run(|q| {
                 let prices = &q.price().spot.cents.height;
-                let hashes = &q.indexer().vecs().blocks.blockhash;
                 let timestamps = &q.indexer().vecs().blocks.timestamp;
-                hashes.invalidate();
                 timestamps.invalidate();
                 prices.invalidate();
                 assert!(q.try_resolve_blocks_v1(None, 15)?.is_none());
@@ -617,10 +605,6 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 );
                 let captured = bounded.prices().iter().rev().copied().collect::<Vec<_>>();
                 let rows = bounded.build(q)?;
-                assert!(
-                    hashes.cached_snapshot().is_none(),
-                    "V1 body must not fill hash history"
-                );
                 assert!(
                     timestamps.cached_snapshot().is_none(),
                     "V1 body must not fill timestamp history"
@@ -636,10 +620,6 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                 let expected = q.blocks_v1(None, 15)?;
                 assert_eq!(to_vec(&rows).unwrap(), to_vec(&expected).unwrap());
                 assert_eq!(q.blocks(None, 10)?.len(), rows.len());
-                assert!(
-                    hashes.cached_snapshot().is_none(),
-                    "block bodies must not fill hash history"
-                );
                 assert!(
                     timestamps.cached_snapshot().is_none(),
                     "block bodies must not fill timestamp history"

@@ -1,9 +1,9 @@
 #![doc = include_str!("../README.md")]
 
+use bitview::{ComputePluginSet, ImportContext, QueryPluginSet, run as BitviewRun};
 use brk_error::Result;
-
-use bitview::{ComputePluginSet, ImportContext, QueryPluginSet};
 use brk_exit::Exit;
+use brk_logger::init;
 use brk_reader::Reader;
 use vecdb::ReadOnlyClone;
 
@@ -20,10 +20,10 @@ where
 {
     let config = Config::import()?;
 
-    brk_logger::init(Some(&config.server.logs_path()))?;
+    init(Some(&config.server.logs_path()))?;
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    bitview::run(config, exit, import)
+    BitviewRun(config, exit, import)
 }

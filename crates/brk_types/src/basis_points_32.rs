@@ -1,14 +1,20 @@
-use crate::CheckedSub;
-use crate::unlikely;
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    ops::{Add, AddAssign, Div},
+};
+
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::ops::{Add, AddAssign, Div};
+
+use crate::{CheckedSub, PartsPerMillion64, StoredF32, unlikely};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
 #[cfg(feature = "storage")]
 use vecdb::{Formattable, Pco};
-
-use crate::{PartsPerMillion64, StoredF32};
 
 /// Unsigned basis points: 10,000 represents the ratio 1.
 /// Maximum finite ratio: 429,496.7294. u32::MAX represents undefined.
@@ -126,10 +132,10 @@ impl CheckedSub for BasisPoints32 {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for BasisPoints32 {
+impl VecdbCheckedSub for BasisPoints32 {
     #[inline]
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -172,7 +178,7 @@ impl From<BasisPoints32> for StoredF32 {
 
 impl Display for BasisPoints32 {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        let mut buf = itoa::Buffer::new();
+        let mut buf = Buffer::new();
         f.write_str(buf.format(self.0))
     }
 }
@@ -181,7 +187,7 @@ impl Display for BasisPoints32 {
 impl Formattable for BasisPoints32 {
     #[inline]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut value = itoa::Buffer::new();
+        let mut value = Buffer::new();
         buf.extend_from_slice(value.format(self.0).as_bytes());
     }
 

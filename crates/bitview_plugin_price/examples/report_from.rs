@@ -5,13 +5,14 @@
 //!
 //! Run with: cargo run -p bitview_plugin_price --example report_from --release
 
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 use brk_oracle::{
-    Config, HistogramEma, HistogramRaw, NUM_BINS, PaymentFilter, START_HEIGHT_FAST, bin_to_cents,
-    cents_to_bin, pre_oracle_price_cents,
+    Config, HistogramEma, HistogramRaw, NUM_BINS, Oracle, PaymentFilter, START_HEIGHT_FAST,
+    bin_to_cents, cents_to_bin, pre_oracle_price_cents,
 };
-use brk_types::{OutputType, Sats, TxIndex, TxOutIndex};
+use brk_types::{OutputType, Sats, Timestamp, TxIndex, TxOutIndex};
+use serde_json::from_str;
 use vecdb::{AnyVec, ReadableVec, VecIndex};
 
 mod common;
@@ -145,7 +146,7 @@ fn ema_stencil_sum(ema: &HistogramEma, center: i64) -> f64 {
         .iter()
         .map(|&off| {
             let idx = center + off as i64;
-            if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS {
+            if idx >= 0 && (idx as usize) < NUM_BINS {
                 ema[idx as usize]
             } else {
                 0.0
@@ -175,14 +176,10 @@ struct GuardCfg {
 
 impl GuardCfg {
     fn from_env() -> Self {
-        let g = |k: &str, d: f64| -> f64 {
-            std::env::var(k)
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(d)
-        };
+        let g =
+            |k: &str, d: f64| -> f64 { env::var(k).ok().and_then(|s| s.parse().ok()).unwrap_or(d) };
         Self {
-            enabled: std::env::var("OCTAVE_GUARD")
+            enabled: env::var("OCTAVE_GUARD")
                 .ok()
                 .map(|v| v != "0")
                 .unwrap_or(false),
@@ -190,7 +187,7 @@ impl GuardCfg {
             raw_margin: g("GUARD_RAW", 1.0),
             q_margin: g("GUARD_QMARGIN", 4.0) as usize,
             q_min: g("GUARD_QMIN", 14.0) as usize,
-            global: std::env::var("GLOBAL_REACQUIRE")
+            global: env::var("GLOBAL_REACQUIRE")
                 .ok()
                 .map(|v| v != "0")
                 .unwrap_or(false),
@@ -208,7 +205,7 @@ fn arm_count(ema: &HistogramEma, center: i64, tau: f64) -> usize {
     let mut peak = 0.0f64;
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         let idx = center + off as i64;
-        let v = if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS {
+        let v = if idx >= 0 && (idx as usize) < NUM_BINS {
             ema[idx as usize]
         } else {
             0.0
@@ -232,7 +229,7 @@ fn arm_pattern(ema: &HistogramEma, center: i64, tau: f64) -> String {
     let mut peak = 0.0f64;
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         let idx = center + off as i64;
-        let v = if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS {
+        let v = if idx >= 0 && (idx as usize) < NUM_BINS {
             ema[idx as usize]
         } else {
             0.0
@@ -272,7 +269,7 @@ fn guarded_best_bin(
 ) -> f64 {
     let center = prev_bin.round() as usize;
     let search_start = center.saturating_sub(search_below);
-    let search_end = (center + search_above + 1).min(brk_oracle::NUM_BINS);
+    let search_end = (center + search_above + 1).min(NUM_BINS);
     if search_start >= search_end {
         return prev_bin;
     }
@@ -281,7 +278,7 @@ fn guarded_best_bin(
     for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
         for bin in search_start..search_end {
             let idx = bin as i32 + off;
-            if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS {
+            if idx >= 0 && (idx as usize) < NUM_BINS {
                 track_norm[i] = track_norm[i].max(ema[idx as usize]);
             }
         }
@@ -291,7 +288,7 @@ fn guarded_best_bin(
         if stencil_weight != 0.0 {
             for (i, &off) in STENCIL_OFFSETS.iter().enumerate() {
                 let idx = bin as i32 + off;
-                if idx >= 0 && (idx as usize) < brk_oracle::NUM_BINS && track_norm[i] > 0.0 {
+                if idx >= 0 && (idx as usize) < NUM_BINS && track_norm[i] > 0.0 {
                     total += stencil_weight * arm_weights[i] * ema[idx as usize] / track_norm[i];
                 }
             }
@@ -329,7 +326,7 @@ fn guarded_best_bin(
             // q_margin more arms and looks full (>= q_min), regardless of how
             // many bins away it sits.
             let lo = (b - guard.global_radius).max(0);
-            let hi = (b + guard.global_radius).min(brk_oracle::NUM_BINS as i64 - 1);
+            let hi = (b + guard.global_radius).min(NUM_BINS as i64 - 1);
             let mut best: Option<(i64, usize, f64)> = None;
             for n in lo..=hi {
                 if n >= search_start as i64 && n < search_end as i64 {
@@ -355,7 +352,7 @@ fn guarded_best_bin(
             let mut best: Option<(usize, f64)> = None;
             for &delta in &[-OCTAVE_BINS, OCTAVE_BINS] {
                 let n = b + delta;
-                if n < 0 || n as usize >= brk_oracle::NUM_BINS {
+                if n < 0 || n as usize >= NUM_BINS {
                     continue;
                 }
                 let qn = arm_count(ema, n, guard.tau);
@@ -524,21 +521,21 @@ struct BlockError {
 }
 
 fn main() {
-    let data_dir = std::env::var("BITVIEW_DIR")
+    let data_dir = env::var("BITVIEW_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
-            let home = std::env::var("HOME").unwrap();
+            let home = env::var("HOME").unwrap();
             PathBuf::from(home).join(".bitview")
         });
 
-    let start = std::env::var("ORACLE_START")
+    let start = env::var("ORACLE_START")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(START_HEIGHT_FAST);
-    let end_override = std::env::var("ORACLE_END")
+    let end_override = env::var("ORACLE_END")
         .ok()
         .and_then(|s| s.parse::<usize>().ok());
-    let trace_every: usize = std::env::var("TRACE_EVERY")
+    let trace_every: usize = env::var("TRACE_EVERY")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(5000);
@@ -547,14 +544,14 @@ fn main() {
     let total_heights = indexer.vecs().blocks.timestamp.len();
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
 
-    let height_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
+    let height_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/height_price_ohlc.json"))
             .expect("Failed to read height_price_ohlc.json"),
     )
     .expect("Failed to parse height OHLC");
 
-    let daily_ohlc: Vec<[f64; 4]> = serde_json::from_str(
-        &std::fs::read_to_string(format!("{manifest_dir}/examples/date_price_ohlc.json"))
+    let daily_ohlc: Vec<[f64; 4]> = from_str(
+        &fs::read_to_string(format!("{manifest_dir}/examples/date_price_ohlc.json"))
             .expect("Failed to read date_price_ohlc.json"),
     )
     .expect("Failed to parse daily OHLC");
@@ -573,7 +570,7 @@ fn main() {
         .collect();
 
     // Read block timestamps for year + day1 mapping.
-    let timestamps: Vec<brk_types::Timestamp> = indexer.vecs().blocks.timestamp.collect();
+    let timestamps: Vec<Timestamp> = indexer.vecs().blocks.timestamp.collect();
     let height_years: Vec<u16> = timestamps
         .iter()
         .map(|ts| timestamp_to_year(**ts))
@@ -599,42 +596,36 @@ fn main() {
         });
     // Exact seed override (reproduce the committed prices.txt seed at a start the
     // truncated working-tree prices.txt no longer covers).
-    let start_price = std::env::var("SEED")
+    let start_price = env::var("SEED")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(start_price);
 
     let mut config = Config::default();
-    if let Some(w) = std::env::var("EMA_WINDOW")
-        .ok()
-        .and_then(|s| s.parse().ok())
-    {
+    if let Some(w) = env::var("EMA_WINDOW").ok().and_then(|s| s.parse().ok()) {
         config.window_size = w;
     }
-    if let Some(a) = std::env::var("EMA_ALPHA").ok().and_then(|s| s.parse().ok()) {
+    if let Some(a) = env::var("EMA_ALPHA").ok().and_then(|s| s.parse().ok()) {
         config.alpha = a;
     }
     // Investigation default: widened up-reach (9 -> 12) to survive fast rallies
     // like the 2018-04-12 candle. Kept here only; config.rs is untouched.
-    config.search_below = std::env::var("SEARCH_BELOW")
+    config.search_below = env::var("SEARCH_BELOW")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(12);
-    if let Some(sa) = std::env::var("SEARCH_ABOVE")
-        .ok()
-        .and_then(|s| s.parse().ok())
-    {
+    if let Some(sa) = env::var("SEARCH_ABOVE").ok().and_then(|s| s.parse().ok()) {
         config.search_above = sa;
     }
     let guard = GuardCfg::from_env();
     // Lever 3: up-weight the 8 octave-discriminating arms (2v not on the ladder)
     // in the stencil score. They alone separate a center from its half-price
     // alias; the other 11 alias cleanly and only dilute the up/down decision.
-    let disc_weight: f64 = std::env::var("DISC_WEIGHT")
+    let disc_weight: f64 = env::var("DISC_WEIGHT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(1.0);
-    let alias_weight: f64 = std::env::var("ALIAS_WEIGHT")
+    let alias_weight: f64 = env::var("ALIAS_WEIGHT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(1.0);
@@ -642,7 +633,7 @@ fn main() {
     // to each candidate bin's stencil score. Pulls the ±window pick toward the
     // octave whose arm-shape matches real payments, resisting the ½×/2× slide
     // without a hard continuity clamp. 0 = off (bit-identical to baseline).
-    let corr_weight: f64 = std::env::var("CORR_WEIGHT")
+    let corr_weight: f64 = env::var("CORR_WEIGHT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(0.0);
@@ -650,20 +641,20 @@ fn main() {
     // price regime (which arms are tall) so correlation stays meaningful as the
     // price moves an octave over months, while remaining slow enough to ride
     // through a transient ½×/2× slide (tens of blocks) without adapting to it.
-    let corr_beta: f64 = std::env::var("CORR_BETA")
+    let corr_beta: f64 = env::var("CORR_BETA")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(0.002);
     // Apply the corr term only below this height. Lets the pre-X (slow) leg use
     // corr while the post-X (fast) leg stays bit-identical to the no-corr baseline.
     // Default = always on (global corr).
-    let corr_until: usize = std::env::var("CORR_UNTIL")
+    let corr_until: usize = env::var("CORR_UNTIL")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(usize::MAX);
     // Shape-match metric: "l1" = negative L1 distance, "dot" = matched-filter dot
     // product (both covariance-free), else Pearson.
-    let metric: u8 = match std::env::var("PROFILE_METRIC").as_deref() {
+    let metric: u8 = match env::var("PROFILE_METRIC").as_deref() {
         Ok("l1") => 1,
         Ok("dot") => 2,
         _ => 0,
@@ -672,13 +663,13 @@ fn main() {
     // Profile seed: "bootstrap" = seed from the first warm-up pick's shape (no magic
     // constant), "uniform"/"flat" = every arm equal (1/N_ARMS), else the static
     // ARM_PROFILE.
-    let profile_seed = std::env::var("PROFILE_SEED").ok();
+    let profile_seed = env::var("PROFILE_SEED").ok();
     let bootstrap_profile = profile_seed.as_deref() == Some("bootstrap");
     let uniform_profile = matches!(profile_seed.as_deref(), Some("uniform") | Some("flat"));
     // Stencil-sum weight (default 1). Set 0 for SHAPE-ONLY scoring: the shape match
     // does both within-octave localization and octave discrimination, no stencil
     // term and no cw balance to tune.
-    let stencil_weight: f64 = std::env::var("STENCIL_WEIGHT")
+    let stencil_weight: f64 = env::var("STENCIL_WEIGHT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(1.0);
@@ -698,15 +689,15 @@ fn main() {
     // at SWITCH_AT rebuild the EMA to SWITCH_WINDOW/SWITCH_ALPHA and warm-start fresh
     // (ring reset, ref_bin kept) - the same state as a fresh warm-up. Search window
     // is unchanged (both regimes share it). 0 = no switch (single-config baseline).
-    let switch_at: usize = std::env::var("SWITCH_AT")
+    let switch_at: usize = env::var("SWITCH_AT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
-    let switch_window: usize = std::env::var("SWITCH_WINDOW")
+    let switch_window: usize = env::var("SWITCH_WINDOW")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(12);
-    let switch_alpha: f64 = std::env::var("SWITCH_ALPHA")
+    let switch_alpha: f64 = env::var("SWITCH_ALPHA")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(2.0 / 7.0);
@@ -720,32 +711,32 @@ fn main() {
     eprintln!(
         "  disc_weight={disc_weight} on {DISC_ARMS:?}; alias_weight={alias_weight} on {ALIAS_ARMS:?}; corr_weight={corr_weight}"
     );
-    let anom_thresh: f64 = std::env::var("ANOM_THRESH")
+    let anom_thresh: f64 = env::var("ANOM_THRESH")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(0.0);
-    let norm_mode = match std::env::var("NORM_MODE").as_deref() {
+    let norm_mode = match env::var("NORM_MODE").as_deref() {
         Ok("unit") => NormMode::Unit,
         Ok("cap") => NormMode::Cap,
         _ => NormMode::Off,
     };
-    let norm_cap: f64 = std::env::var("NORM_CAP")
+    let norm_cap: f64 = env::var("NORM_CAP")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8000.0);
-    let norm_target: f64 = std::env::var("NORM_TARGET")
+    let norm_target: f64 = env::var("NORM_TARGET")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(4000.0);
     // Drop batch-payout txs (UTXOracle uses exactly-2-output; we cap instead).
     // 0 = disabled. A flood block's 591-output txs are dropped at 100.
-    let max_outputs: usize = std::env::var("MAX_OUTPUTS")
+    let max_outputs: usize = env::var("MAX_OUTPUTS")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(100);
     // Apply the output-count filter only below this height (it helps the thin
     // 2018-2020 era, mildly hurts high-volume years). Default = always on.
-    let max_outputs_until: usize = std::env::var("MAX_OUTPUTS_UNTIL")
+    let max_outputs_until: usize = env::var("MAX_OUTPUTS_UNTIL")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(usize::MAX);
@@ -808,8 +799,8 @@ fn main() {
     // bit-for-bit. Only meaningful under the shipped slow config (EMA_ALPHA=0.10
     // EMA_WINDOW=40 search 12/11, metric=l1, cw=8, norm off, ORACLE_END<=508000 so
     // corr stays on the whole run).
-    let verify_prod = std::env::var("VERIFY_PROD").as_deref() == Ok("1");
-    let mut prod_oracle = brk_oracle::Oracle::new(ref_bin, brk_oracle::Config::slow());
+    let verify_prod = env::var("VERIFY_PROD").as_deref() == Ok("1");
+    let mut prod_oracle = Oracle::new(ref_bin, Config::slow());
     let mut prod_max_diff = 0.0f64;
     let mut prod_diff_blocks = 0usize;
 
@@ -818,11 +809,11 @@ fn main() {
     // is diagnostic only, used to check whether the true-price stencil holes (the
     // arm-count contrast that the smeared slow EMA flattens during a crash) survive
     // when the histogram is not smoothed.
-    let sharp_span: f64 = std::env::var("SHARP_SPAN")
+    let sharp_span: f64 = env::var("SHARP_SPAN")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(3.0);
-    let sharp_window: usize = std::env::var("SHARP_WINDOW")
+    let sharp_window: usize = env::var("SHARP_WINDOW")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(6);
@@ -1024,7 +1015,7 @@ fn main() {
         };
         let do_print = h % trace_every == 0 || (anom_thresh > 0.0 && band_err.abs() >= anom_thresh);
         if do_print {
-            let eligible: u32 = (0..brk_oracle::NUM_BINS).map(|b| hist[b]).sum();
+            let eligible: u32 = (0..NUM_BINS).map(|b| hist[b]).sum();
             // true_bin centered on exchange close; +60 bins = half price, -60 = double.
             let true_bin = if ex_close > 0.0 {
                 cents_to_bin(ex_close * 100.0).round() as i64

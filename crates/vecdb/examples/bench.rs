@@ -1,23 +1,33 @@
-use std::time::{Duration, Instant};
+use std::{
+    env, fs, hint,
+    io::{self, Write},
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use vecdb::{
     AnyStoredVec, BytesVec, Database, ImportableVec, LZ4Vec, PcoVec, ReadableVec, StoredVec,
     Version, WritableVec, ZeroCopyVec, ZstdVec,
 };
 
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use std::process::Command;
+#[cfg(target_os = "macos")]
+use std::process::Stdio;
+
 const DEFAULT_VALUE_COUNT: usize = 10_000_000_000; // 10B u64s = 80 GB
 const BATCH_SIZE: usize = 10_000_000;
 const MAX_RANGE_BYTES: usize = 8 * 1024 * 1024 * 1024; // 8 GB
 
 fn value_count() -> usize {
-    std::env::var("BENCH_COUNT")
+    env::var("BENCH_COUNT")
         .ok()
         .and_then(|s| s.replace('_', "").parse().ok())
         .unwrap_or(DEFAULT_VALUE_COUNT)
 }
 
 fn range_passes() -> usize {
-    std::env::var("BENCH_PASSES")
+    env::var("BENCH_PASSES")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(5)
@@ -97,16 +107,16 @@ fn throughput_str(bytes: usize, d: Duration) -> String {
 fn drop_caches() -> bool {
     #[cfg(target_os = "macos")]
     {
-        std::process::Command::new("purge")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
+        Command::new("purge")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .status()
             .is_ok_and(|s| s.success())
     }
     #[cfg(target_os = "linux")]
     {
-        std::process::Command::new("sync").status().ok();
-        std::fs::write("/proc/sys/vm/drop_caches", "3").is_ok()
+        Command::new("sync").status().ok();
+        fs::write("/proc/sys/vm/drop_caches", "3").is_ok()
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
@@ -344,7 +354,7 @@ fn bench_vec<
         }
     }
 
-    std::hint::black_box(sum);
+    hint::black_box(sum);
 
     let results: Vec<BenchResult> = (0..6)
         .map(|i| BenchResult {
@@ -406,7 +416,7 @@ fn bench_vec<
             }
         }
 
-        std::hint::black_box(sum);
+        hint::black_box(sum);
 
         let divisor = (reps * passes) as u32;
         let row = vec![
@@ -482,7 +492,7 @@ fn bench_vec<
         }
     }
 
-    std::hint::black_box(sum);
+    hint::black_box(sum);
 
     let ro_results: Vec<BenchResult> = (0..4)
         .map(|i| BenchResult {
@@ -541,7 +551,7 @@ fn bench_vec<
             }
         }
 
-        std::hint::black_box(sum);
+        hint::black_box(sum);
 
         let divisor = (reps * ro_passes) as u32;
         let row = vec![
@@ -567,8 +577,8 @@ fn bench_vec<
 }
 
 /// Fixed bench directory — cleaned up at start so Ctrl+C leftovers don't accumulate.
-fn bench_dir() -> std::path::PathBuf {
-    std::env::temp_dir().join("vecdb_bench")
+fn bench_dir() -> PathBuf {
+    env::temp_dir().join("vecdb_bench")
 }
 
 fn cleanup_bench_dir() {
@@ -576,7 +586,7 @@ fn cleanup_bench_dir() {
     if dir.exists() {
         eprint!("  Cleaning up previous bench data...");
         flush();
-        std::fs::remove_dir_all(&dir).ok();
+        fs::remove_dir_all(&dir).ok();
         eprintln!(" done");
     }
 }
@@ -590,17 +600,17 @@ fn run_bench<
 ) {
     cleanup_bench_dir();
     let dir = bench_dir();
-    std::fs::create_dir_all(&dir).unwrap();
+    fs::create_dir_all(&dir).unwrap();
     let db = Database::open(&dir).unwrap();
     let vec = populate::<V>(&db, label, count);
     bench_vec(&vec, label, count, can_purge);
     drop(vec);
     drop(db);
-    std::fs::remove_dir_all(&dir).ok();
+    fs::remove_dir_all(&dir).ok();
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let mode = args.get(1).map(|s| s.as_str()).unwrap_or("all");
     let count = value_count();
 
@@ -634,6 +644,6 @@ fn main() {
 }
 
 fn flush() {
-    std::io::Write::flush(&mut std::io::stderr()).ok();
-    std::io::Write::flush(&mut std::io::stdout()).ok();
+    Write::flush(&mut io::stderr()).ok();
+    Write::flush(&mut io::stdout()).ok();
 }

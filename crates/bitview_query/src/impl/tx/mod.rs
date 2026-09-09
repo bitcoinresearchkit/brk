@@ -1,4 +1,3 @@
-use bitview_plugin_indexer::SafeLengths;
 use std::sync::Arc;
 
 use bitcoin::{
@@ -7,14 +6,16 @@ use bitcoin::{
     hashes::{Hash, sha256d},
     hex::DisplayHex,
 };
+use bitview_plugin_indexer::SafeLengths;
 use brk_error::{Error, OptionData, Result};
 use brk_types::{
-    BlockHash, Height, MerkleProof, Timestamp, Transaction, TxIndex, TxOutIndex, TxStatus, Txid,
-    TxidPrefix,
+    BlockHash, Height, Lengths, MerkleProof, Timestamp, Transaction, TxIndex, TxOutIndex, TxStatus,
+    Txid, TxidPrefix,
 };
 use vecdb::{ReadableVec, VecIndex};
 
 use super::indexed_transaction;
+use crate::Query;
 
 pub(crate) mod body;
 pub mod confirmed;
@@ -26,8 +27,6 @@ pub mod raw;
 pub use confirmed::ResolvedConfirmedTx;
 pub use info::ResolvedTransaction;
 pub use raw::ResolvedRawTransaction;
-
-use crate::Query;
 
 enum TransactionSource {
     Memory(Arc<Transaction>),
@@ -350,7 +349,7 @@ impl Query {
     pub(crate) fn confirmed_status_height_bounded(
         &self,
         tx_index: TxIndex,
-        bound: brk_types::Lengths,
+        bound: Lengths,
     ) -> Result<Height> {
         if tx_index >= bound.tx_index {
             return Err(Error::UnknownTxid);
@@ -374,7 +373,7 @@ impl Query {
     pub(crate) fn confirmed_status_at_bounded(
         &self,
         height: Height,
-        bound: brk_types::Lengths,
+        bound: Lengths,
     ) -> Result<TxStatus> {
         if height >= bound.height {
             return Err(Error::UnknownTxid);

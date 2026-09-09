@@ -1,10 +1,12 @@
-use brk_error::Result;
+use std::iter;
 
 use bitview_cohort::{AgeRange, AgeRangeId, UTXOAggregate};
 use bitview_compute::AgeBand;
 use bitview_plugin::{ComputePlugin, UpdateContext};
 use bitview_plugin_coinflow::HorizonId;
 use bitview_plugin_indexer::Indexer;
+use bitview_plugin_mappings::Vecs as MappingsVecs;
+use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, CostBasisByPercentile, Day1, PERCENTILES_LEN, Sats, StoredF64, Version};
 use vecdb::{AnyStoredVec, AnyVec, ColumnId, ReadableVec, VecValue};
@@ -12,7 +14,7 @@ use vecdb::{AnyStoredVec, AnyVec, ColumnId, ReadableVec, VecValue};
 use super::Vecs;
 use crate::{
     Calibration, DayResult, DayUrpds, Dependencies, LossPercentileId, ModeId, ModeResult, ModeVecs,
-    ModeWeights, PriceBandId, WeightedModeId, WeightedModes, WeightedPair,
+    ModeWeights, PriceBandId, WeightedModeId, WeightedModes, WeightedPair, WeightedUrpdNames,
 };
 
 const WRITE_INTERVAL_DAYS: usize = 100;
@@ -109,17 +111,17 @@ impl ComputePlugin for Vecs {
             });
         let weighted_urpd_names = DayUrpds::names();
 
-        let weighted_urpd_source_version: Version = std::iter::once(WEIGHTED_URPD_VERSION)
-            .chain(std::iter::once(mappings.day1.date.version()))
-            .chain(std::iter::once(distribution.supply_state.version()))
+        let weighted_urpd_source_version: Version = iter::once(WEIGHTED_URPD_VERSION)
+            .chain(iter::once(mappings.day1.date.version()))
+            .chain(iter::once(distribution.supply_state.version()))
             .chain(age_supplies.iter().map(|vec| vec.version()))
             .chain(cointime_wakefulness.iter().map(|vec| vec.version()))
             .chain(coinflow_mobility.iter().map(|vec| vec.version()))
             .sum();
         let source_version = Version::combine_all(
-            std::iter::once(weighted_urpd_source_version)
+            iter::once(weighted_urpd_source_version)
                 .chain(coinflow_spending_rate.iter().map(|vec| vec.version()))
-                .chain(std::iter::once(raw_loss_share.version()))
+                .chain(iter::once(raw_loss_share.version()))
                 .chain(weighted_loss_shares.iter().map(|vec| vec.version())),
         );
 
@@ -133,8 +135,8 @@ impl ComputePlugin for Vecs {
             vec.any_validate_computed_version_or_reset(weighted_urpd_source_version)?;
         }
 
-        let source_end = std::iter::once(mappings.day1.date.len())
-            .chain(std::iter::once(raw_loss_share.len()))
+        let source_end = iter::once(mappings.day1.date.len())
+            .chain(iter::once(raw_loss_share.len()))
             .chain(weighted_loss_shares.iter().map(|vec| vec.len()))
             .chain(age_supplies.iter().map(|vec| vec.len()))
             .chain(cointime_wakefulness.iter().map(|vec| vec.len()))
@@ -301,8 +303,8 @@ impl ComputePlugin for Vecs {
 impl Vecs {
     fn backfill_capitalized_prices(
         &mut self,
-        mappings: &bitview_plugin_mappings::Vecs,
-        names: &crate::WeightedUrpdNames,
+        mappings: &MappingsVecs,
+        names: &WeightedUrpdNames,
         start: usize,
         end: usize,
         exit: &Exit,
@@ -334,8 +336,8 @@ impl Vecs {
 
     fn backfill_cost_basis(
         &mut self,
-        mappings: &bitview_plugin_mappings::Vecs,
-        names: &crate::WeightedUrpdNames,
+        mappings: &MappingsVecs,
+        names: &WeightedUrpdNames,
         start: usize,
         end: usize,
         exit: &Exit,
@@ -382,7 +384,7 @@ impl Vecs {
             .unwrap_or_default()
     }
 
-    fn recompute_day(indexer: &Indexer, mappings: &bitview_plugin_mappings::Vecs) -> Option<Day1> {
+    fn recompute_day(indexer: &Indexer, mappings: &MappingsVecs) -> Option<Day1> {
         let starting_height = indexer.safe_lengths().height;
         mappings
             .height

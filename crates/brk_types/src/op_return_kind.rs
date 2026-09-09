@@ -1,6 +1,14 @@
+#[cfg(feature = "storage")]
+use std::mem;
+#[cfg(feature = "storage")]
+use vecdb::Error;
+#[cfg(feature = "storage")]
+use vecdb::Result;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display};
+
 #[cfg(feature = "storage")]
 use vecdb::{Bytes, ColumnId, Formattable, Pco, VecValue, Version};
 
@@ -107,19 +115,19 @@ impl Bytes for OpReturnKind {
     }
 
     #[inline]
-    fn from_bytes(bytes: &[u8]) -> vecdb::Result<Self> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != size_of::<Self>() {
-            return Err(vecdb::Error::WrongLength {
+            return Err(Error::WrongLength {
                 expected: size_of::<Self>(),
                 received: bytes.len(),
             });
         }
         let value = bytes[0];
         if !Self::is_valid(value) {
-            return Err(vecdb::Error::InvalidArgument("invalid OpReturnKind"));
+            return Err(Error::InvalidArgument("invalid OpReturnKind"));
         }
         // SAFETY: We validated that value is a valid variant.
-        Ok(unsafe { std::mem::transmute::<u8, Self>(value) })
+        Ok(unsafe { mem::transmute::<u8, Self>(value) })
     }
 }
 
@@ -134,7 +142,7 @@ unsafe impl Pco for OpReturnKind {
     }
 
     #[inline(always)]
-    fn from_number(value: Self::NumberType) -> vecdb::Result<Self> {
+    fn from_number(value: Self::NumberType) -> Result<Self> {
         Self::from_bytes(&[value])
     }
 }

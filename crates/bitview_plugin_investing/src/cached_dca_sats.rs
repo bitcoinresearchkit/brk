@@ -1,7 +1,9 @@
+use std::convert::Infallible;
+
 use brk_types::{Day1, Dollars, Height, Sats, Version};
 use vecdb::{
-    AnyVec, CachedBoxedVec, CachedVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec,
-    ReadableVec, TypedVec, VecIndex, short_type_name,
+    AnyVec, CachedVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec, TypedVec,
+    VecIndex, short_type_name,
 };
 
 use super::DCA_AMOUNT;
@@ -10,17 +12,17 @@ use super::DCA_AMOUNT;
 #[derive(Clone)]
 pub struct CachedDcaSats {
     daily: CachedVec<DcaSatsByDay>,
-    days: CachedBoxedVec<Height, Day1>,
+    days: ReadableBoxedVec<Height, Day1>,
 }
 
 impl CachedDcaSats {
     pub fn new(
         daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
-        days: CachedBoxedVec<Height, Day1>,
+        days: impl ReadableVec<Height, Day1> + Clone + 'static,
     ) -> Self {
         Self {
             daily: CachedVec::wrap(DcaSatsByDay { daily_close }),
-            days,
+            days: ReadableBoxedVec::new(days),
         }
     }
 
@@ -52,7 +54,7 @@ impl CachedDcaSats {
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Sats)) {
         let result = self.try_for_each_value(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}
@@ -206,7 +208,7 @@ impl DcaSatsByDay {
     fn for_each_cumulative(&self, from: usize, to: usize, mut each: impl FnMut(Sats)) {
         let result = self.try_for_each_cumulative(from, to, |value| {
             each(value);
-            Ok::<_, std::convert::Infallible>(())
+            Ok::<_, Infallible>(())
         });
         match result {
             Ok(()) => {}

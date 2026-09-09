@@ -2,6 +2,8 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use crate::Error;
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum BlockType {
     Data,
@@ -22,7 +24,7 @@ impl From<BlockType> for u8 {
 }
 
 impl TryFrom<u8> for BlockType {
-    type Error = crate::Error;
+    type Error = Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
@@ -30,7 +32,7 @@ impl TryFrom<u8> for BlockType {
             1 => Ok(Self::Index),
             2 => Ok(Self::Filter),
             3 => Ok(Self::Meta),
-            _ => Err(crate::Error::InvalidTag(("BlockType", value))),
+            _ => Err(Error::InvalidTag(("BlockType", value))),
         }
     }
 }

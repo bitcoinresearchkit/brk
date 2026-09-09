@@ -2,9 +2,9 @@ use brk_error::Result;
 use brk_types::{Cents, Height, Version};
 use vecdb::{CacheBudget, Database, ReadableCloneableVec, Rw};
 
-use crate::{IndexSources, LazyRatioPerBlock, PerBlock, Price};
+use crate::{IndexSources, LazyRatioPerBlock, PerBlock, Price, PriceWithRatio};
 
-pub type PriceWithRatioPerBlock<M = Rw> = crate::PriceWithRatio<Price<PerBlock<Cents, M>>>;
+pub type PriceWithRatioPerBlock<M = Rw> = PriceWithRatio<Price<PerBlock<Cents, M>>>;
 
 impl PriceWithRatioPerBlock {
     pub fn forced_import(

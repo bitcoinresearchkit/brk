@@ -1,4 +1,4 @@
-use bitview_collections::PerResolution;
+use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
@@ -45,4 +45,4 @@ macro_rules! define_lazy_ohlc_cents_vecs {
     };
 }
 
-bitview_collections::with_resolution_fields!(define_lazy_ohlc_cents_vecs);
+with_resolution_fields!(define_lazy_ohlc_cents_vecs);

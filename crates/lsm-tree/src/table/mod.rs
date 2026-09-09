@@ -2,6 +2,42 @@
 // This source code is licensed under both the Apache 2.0 and MIT License
 // (found in the LICENSE-* files in the repository)
 
+use std::{
+    borrow::Cow,
+    fmt,
+    fs::File,
+    ops::{Bound, Deref, RangeBounds},
+    path::PathBuf,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
+
+use block_index::BlockIndexImpl;
+use bound::Bound as IterBound;
+use byteorder::ReadBytesExt;
+use inner::Inner;
+use iter::Iter;
+use log::{debug, trace};
+use sfa::Reader;
+use util::load_block;
+
+use crate::{
+    CompressionType, Error, InternalValue, Result, Slice,
+    cache::Cache,
+    descriptor_table::DescriptorTable,
+    file_accessor::FileAccessor,
+    table::{
+        block::{BlockType, ParsedItem},
+        block_index::{BlockIndex, FullBlockIndex, TwoLevelBlockIndex, VolatileBlockIndex},
+        filter::{block::FilterBlock, standard_bloom::Builder},
+        meta::ParsedMeta,
+        regions::ParsedRegions,
+    },
+    value::PointReadValue,
+};
+
 pub mod block;
 pub mod block_index;
 mod bound;
@@ -28,38 +64,6 @@ pub use id::GlobalTableId;
 pub use id::next_table_id;
 pub use index_block::{BlockHandle, IndexBlock, KeyedBlockHandle};
 pub use scanner::Scanner;
-
-use crate::{
-    CompressionType, Error, InternalValue, Result, Slice,
-    cache::Cache,
-    descriptor_table::DescriptorTable,
-    file_accessor::FileAccessor,
-    table::{
-        block::{BlockType, ParsedItem},
-        block_index::{BlockIndex, FullBlockIndex, TwoLevelBlockIndex, VolatileBlockIndex},
-        filter::block::FilterBlock,
-        meta::ParsedMeta,
-        regions::ParsedRegions,
-    },
-    value::PointReadValue,
-};
-use block_index::BlockIndexImpl;
-use bound::Bound as IterBound;
-use byteorder::ReadBytesExt;
-use inner::Inner;
-use iter::Iter;
-use std::{
-    borrow::Cow,
-    fmt,
-    fs::File,
-    ops::{Bound, Deref, RangeBounds},
-    path::PathBuf,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-};
-use util::load_block;
 
 /// A disk segment (a.k.a. `Table`, `SSTable`, `SST`, `sorted string table`) that is located on disk
 ///
@@ -217,9 +221,7 @@ impl Table {
         };
 
         if let Some(filter_block) = &filter_block {
-            let key_hash = *key_hash.get_or_insert_with(|| {
-                crate::table::filter::standard_bloom::Builder::get_hash(key)
-            });
+            let key_hash = *key_hash.get_or_insert_with(|| Builder::get_hash(key));
             if !filter_block.maybe_contains_hash(key_hash)? {
                 return Ok(None);
             }
@@ -329,7 +331,7 @@ impl Table {
         file: &File,
         compression: CompressionType,
     ) -> Result<IndexBlock> {
-        log::trace!("Reading TLI block, with tli_ptr={:?}", regions.tli);
+        trace!("Reading TLI block, with tli_ptr={:?}", regions.tli);
 
         let block = Block::from_file(file, regions.tli, compression)?;
 
@@ -357,11 +359,11 @@ impl Table {
         pin_filter: bool,
         pin_index: bool,
     ) -> Result<Self> {
-        log::debug!("Recovering table from file {}", file_path.display());
+        debug!("Recovering table from file {}", file_path.display());
         let mut file = File::open(&file_path)?;
         let file_path = Arc::new(file_path);
 
-        let trailer = sfa::Reader::from_reader(&mut file)?;
+        let trailer = Reader::from_reader(&mut file)?;
 
         let table_version = trailer
             .toc()
@@ -377,7 +379,7 @@ impl Table {
 
         let regions = ParsedRegions::parse_from_toc(trailer.toc())?;
 
-        log::trace!("Reading meta block, with meta_ptr={:?}", regions.metadata);
+        trace!("Reading meta block, with meta_ptr={:?}", regions.metadata);
         let metadata = ParsedMeta::load_with_handle(&file, &regions.metadata)?;
 
         let file = Arc::new(file);
@@ -389,7 +391,7 @@ impl Table {
         };
 
         let block_index = if regions.index.is_some() {
-            log::trace!(
+            trace!(
                 "Creating partitioned block index, with tli_ptr={:?}",
                 regions.tli,
             );
@@ -405,7 +407,7 @@ impl Table {
                 table_id: (tree_id, metadata.id).into(),
             })
         } else if pin_index {
-            log::trace!(
+            trace!(
                 "Creating pinned, full block index, with tli_ptr={:?}",
                 regions.tli,
             );
@@ -413,7 +415,7 @@ impl Table {
             let block = Self::read_tli(&regions, &file, metadata.index_block_compression)?;
             BlockIndexImpl::Full(FullBlockIndex::new(block))
         } else {
-            log::trace!("Creating volatile, full block index");
+            trace!("Creating volatile, full block index");
 
             BlockIndexImpl::VolatileFull(VolatileBlockIndex {
                 cache: cache.clone(),
@@ -438,9 +440,7 @@ impl Table {
             regions
                 .filter
                 .map(|filter_handle| {
-                    log::debug!(
-                        "Loading and pinning filter block, with filter_ptr={filter_handle:?}"
-                    );
+                    debug!("Loading and pinning filter block, with filter_ptr={filter_handle:?}");
 
                     let block = Block::from_file(
                         &file,
@@ -465,7 +465,7 @@ impl Table {
             None
         };
 
-        log::debug!(
+        debug!(
             "Recovered table #{} from {}",
             metadata.id,
             file_path.display(),

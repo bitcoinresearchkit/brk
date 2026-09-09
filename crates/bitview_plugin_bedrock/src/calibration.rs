@@ -124,6 +124,8 @@ impl Calibration {
 
 #[cfg(test)]
 mod tests {
+    use tempfile::tempdir;
+
     use super::{Calibration, MINIMUM_DAYS};
     use crate::Modes;
 
@@ -137,7 +139,7 @@ mod tests {
 
         use crate::{ModeId, WeightedModes};
 
-        let directory = tempfile::tempdir().unwrap();
+        let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let source = |mode: ModeId| {
             let mut values: EagerVec<PcoVec<Day1, StoredF64>> =

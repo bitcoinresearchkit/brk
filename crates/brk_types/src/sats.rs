@@ -1,19 +1,23 @@
 use std::{
+    fmt::{Display, Formatter, Result},
     iter::Sum,
     ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
-use crate::CheckedSub;
 use bitcoin::Amount;
 use derive_more::Deref;
+use itoa::Buffer;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "storage")]
-use vecdb::{Formattable, OverflowVecValue, Pco, SaturatingAdd, Version};
-
-use crate::{StoredF64, StoredU64};
 
 use super::{Bitcoin, Cents, Dollars, Height};
+use crate::{CheckedSub, StoredF64, StoredU64};
+
+#[cfg(feature = "storage")]
+use vecdb::CheckedSub as VecdbCheckedSub;
+
+#[cfg(feature = "storage")]
+use vecdb::{Formattable, OverflowVecValue, Pco, SaturatingAdd, Version};
 
 /// Amount in satoshis (1 BTC = 100,000,000 sats)
 #[derive(
@@ -161,9 +165,9 @@ impl CheckedSub for Sats {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub for Sats {
+impl VecdbCheckedSub for Sats {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -173,9 +177,9 @@ impl CheckedSub<usize> for Sats {
     }
 }
 #[cfg(feature = "storage")]
-impl vecdb::CheckedSub<usize> for Sats {
+impl VecdbCheckedSub<usize> for Sats {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        crate::CheckedSub::checked_sub(self, rhs)
+        CheckedSub::checked_sub(self, rhs)
     }
 }
 
@@ -188,7 +192,7 @@ impl SaturatingAdd for Sats {
 
 impl SubAssign for Sats {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = self.checked_sub(rhs).unwrap_or_else(|| {
+        *self = CheckedSub::checked_sub(*self, rhs).unwrap_or_else(|| {
             panic!("Sats underflow: {} - {} would be negative", self, rhs);
         });
     }
@@ -386,9 +390,9 @@ impl Mul<Sats> for usize {
     }
 }
 
-impl std::fmt::Display for Sats {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut buf = itoa::Buffer::new();
+impl Display for Sats {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut buf = Buffer::new();
         let str = buf.format(self.0);
         f.write_str(str)
     }
@@ -398,7 +402,7 @@ impl std::fmt::Display for Sats {
 impl Formattable for Sats {
     #[inline(always)]
     fn write_to(&self, buf: &mut Vec<u8>) {
-        let mut b = itoa::Buffer::new();
+        let mut b = Buffer::new();
         buf.extend_from_slice(b.format(self.0).as_bytes());
     }
 }

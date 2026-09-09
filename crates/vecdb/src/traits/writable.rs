@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, path::PathBuf};
 use log::debug;
 use rawdb::unlikely;
 
-use crate::{AnyStoredVec, Error, Stamp, VecIndex, VecValue, Version};
+use crate::{AnyStoredVec, Error, Result, Stamp, VecIndex, VecValue, Version};
 
 /// Maximum in-memory cache size before forcing a flush (1 GiB).
 /// Prevents unbounded memory growth when pushing many values without flushing.
@@ -30,10 +30,10 @@ where
     fn pushed(&self) -> &[T];
 
     /// Truncates the vector to the given usize index if the current length exceeds it.
-    fn truncate_if_needed_at(&mut self, index: usize) -> crate::Result<()>;
+    fn truncate_if_needed_at(&mut self, index: usize) -> Result<()>;
 
     /// Resets the vector state.
-    fn reset(&mut self) -> crate::Result<()>;
+    fn reset(&mut self) -> Result<()>;
 
     /// Resets uncommitted changes.
     fn reset_unsaved(&mut self);
@@ -42,21 +42,21 @@ where
     fn is_dirty(&self) -> bool;
 
     /// Flushes with the given stamp, saving changes to enable rollback.
-    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> crate::Result<()>;
+    fn stamped_write_with_changes(&mut self, stamp: Stamp) -> Result<()>;
 
     /// Rolls back the most recent change set.
-    fn rollback(&mut self) -> crate::Result<()>;
+    fn rollback(&mut self) -> Result<()>;
 
     /// Returns available rollback change files.
     #[doc(hidden)]
-    fn find_rollback_files(&self) -> crate::Result<BTreeMap<Stamp, PathBuf>>;
+    fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>>;
 
     /// Saves type-specific rollback state after the rollback loop completes.
     #[doc(hidden)]
     fn save_rollback_state(&mut self);
 
     /// Rolls back changes to before the given stamp.
-    fn rollback_before(&mut self, stamp: Stamp) -> crate::Result<Stamp> {
+    fn rollback_before(&mut self, stamp: Stamp) -> Result<Stamp> {
         let files = self.find_rollback_files()?;
 
         // Walk change files newest-first. Each rollback decrements the vec
@@ -107,14 +107,14 @@ where
     /// Pushes a value at the given index, erroring if index != current length.
     /// Use this when you expect to always append in order.
     #[inline]
-    fn checked_push(&mut self, index: I, value: T) -> crate::Result<()> {
+    fn checked_push(&mut self, index: I, value: T) -> Result<()> {
         self.checked_push_at(index.to_usize(), value)
     }
 
     /// Pushes a value at the given usize index, erroring if index != current length.
     /// Use this when you expect to always append in order.
     #[inline]
-    fn checked_push_at(&mut self, index: usize, value: T) -> crate::Result<()> {
+    fn checked_push_at(&mut self, index: usize, value: T) -> Result<()> {
         let len = self.len();
 
         if unlikely(index != len) {
@@ -148,20 +148,20 @@ where
     }
 
     /// Truncates the vector to the given index if the current length exceeds it.
-    fn truncate_if_needed(&mut self, index: I) -> crate::Result<()> {
+    fn truncate_if_needed(&mut self, index: I) -> Result<()> {
         self.truncate_if_needed_at(index.to_usize())
     }
 
     /// Truncates the vector to the given index if needed, updating the stamp.
     #[inline]
-    fn truncate_if_needed_with_stamp(&mut self, index: I, stamp: Stamp) -> crate::Result<()> {
+    fn truncate_if_needed_with_stamp(&mut self, index: I, stamp: Stamp) -> Result<()> {
         self.update_stamp(stamp);
         self.truncate_if_needed(index)
     }
 
     /// Clears all values from the vector.
     #[inline]
-    fn clear(&mut self) -> crate::Result<()> {
+    fn clear(&mut self) -> Result<()> {
         self.truncate_if_needed_at(0)
     }
 
@@ -176,7 +176,7 @@ where
 
     /// Extends the vector to `target_len`, filling with `value`.
     /// Batches writes in ~1GB chunks to avoid memory explosion.
-    fn fill_to(&mut self, target_len: usize, value: T) -> crate::Result<()>
+    fn fill_to(&mut self, target_len: usize, value: T) -> Result<()>
     where
         T: Copy,
     {
@@ -196,11 +196,7 @@ where
 
     /// Flushes with the given stamp, optionally saving changes for rollback.
     #[inline]
-    fn stamped_write_maybe_with_changes(
-        &mut self,
-        stamp: Stamp,
-        with_changes: bool,
-    ) -> crate::Result<()> {
+    fn stamped_write_maybe_with_changes(&mut self, stamp: Stamp, with_changes: bool) -> Result<()> {
         if with_changes {
             self.stamped_write_with_changes(stamp)
         } else {
@@ -214,7 +210,7 @@ where
 
     /// Validates the computed version against the stored version, resetting if they don't match.
     /// Automatically includes the vec's own version - only pass dependency versions.
-    fn validate_computed_version_or_reset(&mut self, dep_version: Version) -> crate::Result<()> {
+    fn validate_computed_version_or_reset(&mut self, dep_version: Version) -> Result<()> {
         self.any_validate_computed_version_or_reset(dep_version)?;
 
         if self.is_empty() {
@@ -235,7 +231,7 @@ where
     /// vec.validate_computed_version_or_reset(dep_version)?;
     /// vec.truncate_if_needed(max_from)?;
     /// ```
-    fn validate_and_truncate(&mut self, dep_version: Version, max_from: I) -> crate::Result<()> {
+    fn validate_and_truncate(&mut self, dep_version: Version, max_from: I) -> Result<()> {
         self.validate_computed_version_or_reset(dep_version)?;
         self.truncate_if_needed(max_from)
     }

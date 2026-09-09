@@ -99,6 +99,8 @@ impl<T> ByDcaClass<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::ptr;
+
     use super::*;
 
     #[test]
@@ -136,7 +138,7 @@ mod tests {
             assert_eq!(name, source);
             assert_eq!(year, 2015 + seen as u16);
             assert_eq!(day, Day1::try_from(Date::new(year, 1, 1)).unwrap());
-            assert!(std::ptr::eq(source, fields[seen]));
+            assert!(ptr::eq(source, fields[seen]));
             seen += 1;
             Ok::<_, ()>(name)
         })

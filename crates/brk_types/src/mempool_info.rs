@@ -66,6 +66,9 @@ fn deserialize_fee_histogram<'de, D: Deserializer<'de>>(
 
 #[cfg(test)]
 mod tests {
+    use schemars::schema_for;
+    use serde_json::{json, to_value};
+
     use super::*;
 
     #[test]
@@ -73,10 +76,10 @@ mod tests {
         let mut info = MempoolInfo::default();
         info.fee_histogram
             .insert(FeeRate::from(2.5), VSize::from(100_u64));
-        let value = serde_json::to_value(info).unwrap();
-        assert_eq!(value["fee_histogram"], serde_json::json!([[2.5, 100]]));
+        let value = to_value(info).unwrap();
+        assert_eq!(value["fee_histogram"], json!([[2.5, 100]]));
 
-        let schema = serde_json::to_value(schemars::schema_for!(MempoolInfo)).unwrap();
+        let schema = to_value(schema_for!(MempoolInfo)).unwrap();
         let histogram = &schema["properties"]["fee_histogram"];
         assert_eq!(histogram["type"], "array");
         assert_eq!(histogram["items"]["type"], "array");
