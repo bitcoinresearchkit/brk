@@ -27,7 +27,7 @@ impl<C: FiatType> LazyRollingSumsFiatFromHeight<C> {
     ) -> Self {
         Self(window_starts.map_with_suffix(|suffix, window_start| {
             let name = format!("{name}_{suffix}");
-            let cents = LazyRollingSumFromHeight::from_cumulative(
+            let cents = LazyRollingSumFromHeight::from_source(
                 &format!("{name}_cents"),
                 version,
                 cumulative_cents,

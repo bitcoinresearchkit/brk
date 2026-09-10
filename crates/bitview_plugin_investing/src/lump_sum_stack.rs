@@ -27,8 +27,8 @@ impl LumpSumStack {
         let sats_source = LazyWindowVec::<Height, Cents, Sats>::new(
             &format!("{name}_sats_source"),
             version,
-            prices.spot.cents.height.read_only_boxed_clone(),
-            window_starts.read_only_boxed_clone(),
+            &prices.spot.cents.height,
+            window_starts,
             false,
             move |_, past, _| Self::sats_at_price(total_invested, past),
         );
@@ -42,8 +42,8 @@ impl LumpSumStack {
         let cents_source = LazyWindowVec::<Height, Cents, Cents>::new(
             &format!("{name}_cents_source"),
             version,
-            prices.spot.cents.height.read_only_boxed_clone(),
-            window_starts.read_only_boxed_clone(),
+            &prices.spot.cents.height,
+            window_starts,
             false,
             move |current, past, _| {
                 SatsToCents::apply(Self::sats_at_price(total_invested, past), current)

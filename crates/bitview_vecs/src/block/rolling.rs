@@ -57,9 +57,7 @@ where
         })
     }
 
-    pub fn cumulative_source(
-        &self,
-    ) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T, S>) {
+    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T, S>) {
         self.cumulative.resolutions.height_source()
     }
 

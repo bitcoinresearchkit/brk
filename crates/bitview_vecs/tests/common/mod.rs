@@ -54,7 +54,7 @@ pub fn indexes(db: &Database) -> IndexSources {
         height_tx_index_count: LazyPreviousDeltaVec::new(
             "tx_count",
             Version::ONE,
-            empty!("tx_cumulative").read_only_boxed_clone(),
+            &empty!("tx_cumulative"),
         ),
         day3_date: empty!("day3_date").read_only_boxed_clone(),
         week1_date: empty!("week1_date").read_only_boxed_clone(),

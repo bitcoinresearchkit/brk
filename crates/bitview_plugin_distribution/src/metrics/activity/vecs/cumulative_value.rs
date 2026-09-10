@@ -2,7 +2,7 @@ use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups, 
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling};
+use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling, SatsCents};
 use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
@@ -39,7 +39,7 @@ impl CumulativeValueByCohort {
         )?;
         let cohorts = UTXOGroups::new(|cohort_id| {
             let name = CohortContext::Utxo.metric_name(cohort_id, metric);
-            let (sats, cents) = stored
+            let SatsCents { sats, cents } = stored
                 .sources(cohort_id, &name, version)
                 .expect("supported stored value cohort");
             LazyValuePerBlockCumulativeRolling::from_cumulative_sources(

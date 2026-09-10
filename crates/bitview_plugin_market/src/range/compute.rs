@@ -22,22 +22,22 @@ pub fn compute(
         (
             &mut vecs.min._1w.cents.height,
             &mut vecs.max._1w.cents.height,
-            blocks.lookback._1w.lazy(),
+            blocks.lookback.start_vec(7),
         ),
         (
             &mut vecs.min._2w.cents.height,
             &mut vecs.max._2w.cents.height,
-            &blocks.lookback._2w,
+            blocks.lookback.start_vec(14),
         ),
         (
             &mut vecs.min._1m.cents.height,
             &mut vecs.max._1m.cents.height,
-            blocks.lookback._1m.lazy(),
+            blocks.lookback.start_vec(30),
         ),
         (
             &mut vecs.min._1y.cents.height,
             &mut vecs.max._1y.cents.height,
-            blocks.lookback._1y.lazy(),
+            blocks.lookback.start_vec(365),
         ),
     ] {
         min_vec.compute_rolling_min_from_starts(starting_height, starts, price, exit)?;
@@ -47,7 +47,7 @@ pub fn compute(
     // 2w rolling sum of true range
     vecs.true_range_sum_2w.height.compute_rolling_sum(
         starting_height,
-        &blocks.lookback._2w,
+        blocks.lookback.start_vec(14),
         &vecs.true_range.height,
         exit,
     )?;
@@ -57,7 +57,7 @@ pub fn compute(
         &vecs.true_range_sum_2w.height,
         &vecs.max._2w.cents.height,
         &vecs.min._2w.cents.height,
-        &blocks.lookback._2w,
+        blocks.lookback.start_vec(14),
         |(h, tr_sum, max, min, window_start, ..)| {
             let range = f64::from(max) - f64::from(min);
             let n = (h.to_usize() - window_start.to_usize() + 1) as f32;

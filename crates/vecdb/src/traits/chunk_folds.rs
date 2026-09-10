@@ -1,0 +1,45 @@
+use crate::{ReadableVec, VecIndex, VecValue};
+
+/// Folds borrowed chunks without routing each value through a trait object.
+#[inline]
+pub(crate) fn fold<I: VecIndex, T: VecValue, B>(
+    source: &(impl ReadableVec<I, T> + ?Sized),
+    from: usize,
+    to: usize,
+    init: B,
+    mut f: impl FnMut(B, T) -> B,
+) -> B {
+    let mut acc = Some(init);
+    source.for_each_chunk_at(from, to, &mut |_, values| {
+        acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
+    });
+    acc.unwrap()
+}
+
+/// Buffered fallback for erased sources: stop before reading another chunk
+/// after the first error. Borrowed chunk callbacks cannot return early.
+#[inline]
+pub(crate) fn try_fold<I: VecIndex, T: VecValue, B, E>(
+    source: &(impl ReadableVec<I, T> + ?Sized),
+    from: usize,
+    to: usize,
+    init: B,
+    mut f: impl FnMut(B, T) -> Result<B, E>,
+) -> Result<B, E> {
+    let to = to.min(source.len());
+    let chunk_size = source.cursor_chunk_size().max(1);
+    let mut buf = Vec::with_capacity(chunk_size.min(to.saturating_sub(from)));
+    let mut acc = init;
+
+    let mut start = from;
+    while start < to {
+        let end = start.saturating_add(chunk_size).min(to);
+        source.read_into_at(start, end, &mut buf);
+        for value in buf.drain(..) {
+            acc = f(acc, value)?;
+        }
+        start = end;
+    }
+
+    Ok(acc)
+}

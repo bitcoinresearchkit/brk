@@ -10,7 +10,7 @@ use brk_types::{
 use derive_more::{Deref, DerefMut};
 use vecdb::{
     AnyVec, CachedVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadableBoxedVec,
-    ReadableVec, Rw, StorageMode, Version,
+    ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
 };
 
 use super::{DatedResolutionVecs, ResolutionVecs};

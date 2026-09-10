@@ -3,7 +3,7 @@ use brk_types::{
     Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1, Month3,
     Month6, Version, Week1, Year1, Year10,
 };
-use vecdb::ReadableBoxedVec;
+use vecdb::ReadableCloneableVec;
 
 use crate::DailyView;
 use crate::{DailyMappings, DailyValue, LastDay, RepeatDay};
@@ -37,25 +37,25 @@ where
 {
     pub fn new(
         name: &str,
-        source: ReadableBoxedVec<Day1, T>,
+        source: &(impl ReadableCloneableVec<Day1, T> + ?Sized),
         version: Version,
         mappings: &DailyMappings,
     ) -> Self {
         Self {
-            height: DailyView::new(name, version, source.clone(), &mappings.height),
-            minute10: DailyView::new(name, version, source.clone(), &mappings.minute10),
-            minute30: DailyView::new(name, version, source.clone(), &mappings.minute30),
-            hour1: DailyView::new(name, version, source.clone(), &mappings.hour1),
-            hour4: DailyView::new(name, version, source.clone(), &mappings.hour4),
-            hour12: DailyView::new(name, version, source.clone(), &mappings.hour12),
-            day3: DailyView::new(name, version, source.clone(), &mappings.day3),
-            week1: DailyView::new(name, version, source.clone(), &mappings.week1),
-            month1: DailyView::new(name, version, source.clone(), &mappings.month1),
-            month3: DailyView::new(name, version, source.clone(), &mappings.month3),
-            month6: DailyView::new(name, version, source.clone(), &mappings.month6),
-            year1: DailyView::new(name, version, source.clone(), &mappings.year1),
-            year10: DailyView::new(name, version, source.clone(), &mappings.year10),
-            halving: DailyView::new(name, version, source.clone(), &mappings.halving),
+            height: DailyView::new(name, version, source, &mappings.height),
+            minute10: DailyView::new(name, version, source, &mappings.minute10),
+            minute30: DailyView::new(name, version, source, &mappings.minute30),
+            hour1: DailyView::new(name, version, source, &mappings.hour1),
+            hour4: DailyView::new(name, version, source, &mappings.hour4),
+            hour12: DailyView::new(name, version, source, &mappings.hour12),
+            day3: DailyView::new(name, version, source, &mappings.day3),
+            week1: DailyView::new(name, version, source, &mappings.week1),
+            month1: DailyView::new(name, version, source, &mappings.month1),
+            month3: DailyView::new(name, version, source, &mappings.month3),
+            month6: DailyView::new(name, version, source, &mappings.month6),
+            year1: DailyView::new(name, version, source, &mappings.year1),
+            year10: DailyView::new(name, version, source, &mappings.year10),
+            halving: DailyView::new(name, version, source, &mappings.halving),
             epoch: DailyView::new(name, version, source, &mappings.epoch),
         }
     }

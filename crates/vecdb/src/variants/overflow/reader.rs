@@ -1,7 +1,9 @@
 use crate::{
     BytesStrategy, BytesVec, BytesVecReader, MutableVec, OverflowVecValue, ReadOnlyMutableVec,
-    ReadOnlyRawVec, VecIndex, unlikely,
+    ReadOnlyRawVec, VecIndex,
 };
+
+use super::decode::decode;
 
 /// Reusable random-access reader for an [`OverflowVec`](crate::OverflowVec).
 pub struct OverflowVecReader<I, T>
@@ -42,12 +44,7 @@ where
 
     #[inline(always)]
     fn decode(&self, compact: T::Compact) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
-            self.overflow.get_at(overflow_index.unwrap())
-        } else {
-            T::from_compact(compact)
-        }
+        decode::<T>(compact, |index| self.overflow.get_at(index))
     }
 
     /// Returns the persisted value at `index`.

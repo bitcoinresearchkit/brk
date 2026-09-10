@@ -65,17 +65,15 @@ impl ComputePlugin for Vecs {
         self.db.sync_bg_tasks()?;
 
         let cointime_wakefulness =
-            AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1.0);
+            AgeRange::from_fn(|id| &id.select(&cointime.age_range.activity.wakefulness).day1);
         let age_supplies = AgeRange::from_fn(|id| {
             &id.select(&distribution.cohorts.supply.total.cohorts.utxo.age)
                 .sats
                 .day1
-                .0
         });
         let coinflow_mobility = AgeRange::from_fn(|id| {
             &id.select(&coinflow.age_range.spending_exposure.mobility)
                 .day1
-                .0
         });
         let coinflow_spending_rate =
             AgeRange::from_fn(|id| &id.select(&coinflow.age_range.spending_rate).day1);
@@ -86,35 +84,34 @@ impl ComputePlugin for Vecs {
             .supply_in_loss_share
             .all
             .ppm
-            .day1
-            .0;
+            .day1;
         let weighted_loss_shares =
             WeightedModes::from_fn(|mode| -> &dyn ReadableVec<Day1, Option<StoredF64>> {
                 match mode {
                     WeightedModeId::Cointime => {
-                        &cointime.supply.active_supply_in_loss_share.ratio.day1.0
+                        &cointime.supply.active_supply_in_loss_share.ratio.day1
                     }
-                    WeightedModeId::Coinflow => &coinflow.all.supply_in_loss_share.day1.0,
+                    WeightedModeId::Coinflow => &coinflow.all.supply_in_loss_share.day1,
                     WeightedModeId::Coinflow8Y => {
-                        &coinflow.all.horizon._8y.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._8y.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow4Y => {
-                        &coinflow.all.horizon._4y.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._4y.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow2Y => {
-                        &coinflow.all.horizon._2y.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._2y.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow1Y => {
-                        &coinflow.all.horizon._1y.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._1y.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow6M => {
-                        &coinflow.all.horizon._6m.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._6m.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow3M => {
-                        &coinflow.all.horizon._3m.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._3m.supply_in_loss_share.day1
                     }
                     WeightedModeId::Coinflow1M => {
-                        &coinflow.all.horizon._1m.supply_in_loss_share.day1.0
+                        &coinflow.all.horizon._1m.supply_in_loss_share.day1
                     }
                 }
             });

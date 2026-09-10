@@ -1,9 +1,6 @@
 use brk_types::{Day1, Height, StoredBool, StoredF64, Version};
 use tempfile::tempdir;
-use vecdb::{
-    AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
-    WritableVec,
-};
+use vecdb::{AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec};
 
 use super::{DailyView, DayStrategy, LastDay, RepeatDay};
 
@@ -51,12 +48,8 @@ fn repeated_view_maps_ranges_and_preserves_missing_days() {
     source.write().unwrap();
     mapping.write().unwrap();
 
-    let view = DailyView::<Height, StoredF64, RepeatDay>::new(
-        "test",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        &mapping,
-    );
+    let view =
+        DailyView::<Height, StoredF64, RepeatDay>::new("test", Version::ONE, &source, &mapping);
 
     assert_eq!(
         view.collect_range_at(0, 5),
@@ -87,12 +80,8 @@ fn repeated_view_supports_stored_booleans() {
     source.write().unwrap();
     mapping.write().unwrap();
 
-    let view = DailyView::<Height, StoredBool, RepeatDay>::new(
-        "test",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        &mapping,
-    );
+    let view =
+        DailyView::<Height, StoredBool, RepeatDay>::new("test", Version::ONE, &source, &mapping);
 
     assert_eq!(
         view.collect_range_at(0, 4),

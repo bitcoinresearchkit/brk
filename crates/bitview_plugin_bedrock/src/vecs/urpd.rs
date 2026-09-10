@@ -63,7 +63,7 @@ impl<M: StorageMode> Vecs<M> {
             }
             UrpdWeight::Coinflow => {
                 let cohort = age.select(&coinflow.age_range.spending_exposure.mobility);
-                Self::resolve_age_value(cohort.day1.0.collect_one(day).flatten(), supply)
+                Self::resolve_age_value(cohort.day1.collect_one(day).flatten(), supply)
                     .map(|value| value.clamp(0.0, 1.0))
             }
         }

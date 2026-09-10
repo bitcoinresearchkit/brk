@@ -3,7 +3,8 @@ use std::{convert::Infallible, iter, sync::Arc};
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
+    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
+    VecIndex, short_type_name,
 };
 
 /// OHLC candles derived directly from spot prices and period boundaries.
@@ -19,14 +20,14 @@ impl<I: VecIndex> LazyOhlcVec<I> {
     pub fn new(
         name: &str,
         version: Version,
-        prices: impl ReadableVec<Height, Cents> + Clone + 'static,
-        first_heights: impl ReadableVec<I, Height> + Clone + 'static,
+        prices: &(impl ReadableCloneableVec<Height, Cents> + ?Sized),
+        first_heights: &(impl ReadableCloneableVec<I, Height> + ?Sized),
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            prices: ReadableBoxedVec::new(prices),
-            first_heights: ReadableBoxedVec::new(first_heights),
+            prices: prices.read_only_boxed_clone(),
+            first_heights: first_heights.read_only_boxed_clone(),
         }
     }
 
@@ -198,13 +199,10 @@ mod tests {
     };
 
     use brk_types::Day1;
-    use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
-        WritableVec,
-    };
+    use vecdb::{AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
 
     use super::*;
-    use crate::CachedFirstHeightVec;
+    use crate::{CachedFirstHeightVec, LazyFirstHeightVec};
 
     fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
         (**candle.open, **candle.high, **candle.low, **candle.close)
@@ -234,14 +232,9 @@ mod tests {
         periods.write().unwrap();
 
         let prices = CachedVec::wrap(prices);
-        let first_heights = CachedFirstHeightVec::new(periods.read_only_boxed_clone());
+        let first_heights = CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&periods));
         let boundaries = first_heights.snapshot();
-        let ohlc = LazyOhlcVec::new(
-            "ohlc",
-            Version::ONE,
-            prices.read_only_cached_boxed_clone(),
-            first_heights,
-        );
+        let ohlc = LazyOhlcVec::new("ohlc", Version::ONE, &prices, &first_heights);
 
         assert!(Arc::ptr_eq(&boundaries, &ohlc.first_heights.snapshot()));
         assert!(Arc::ptr_eq(&prices.snapshot(), &ohlc.prices.snapshot()));

@@ -18,32 +18,20 @@ impl ChainCounts {
             transaction: LazyCumulativeIndexVec::new(
                 "tx_count_cumulative",
                 version,
-                indexer
-                    .vecs()
-                    .transactions
-                    .first_tx_index
-                    .read_only_boxed_clone(),
-                indexer.vecs().transactions.txid.read_only_boxed_clone(),
+                &indexer.vecs().transactions.first_tx_index,
+                &indexer.vecs().transactions.txid,
             ),
             input: LazyCumulativeIndexVec::new(
                 "input_count_cumulative",
                 version,
-                indexer
-                    .vecs()
-                    .inputs
-                    .first_txin_index
-                    .read_only_boxed_clone(),
-                indexer.vecs().inputs.outpoint.read_only_boxed_clone(),
+                &indexer.vecs().inputs.first_txin_index,
+                &indexer.vecs().inputs.outpoint,
             ),
             output: LazyCumulativeIndexVec::new(
                 "output_count_cumulative",
                 version,
-                indexer
-                    .vecs()
-                    .outputs
-                    .first_txout_index
-                    .read_only_boxed_clone(),
-                indexer.vecs().outputs.value.read_only_boxed_clone(),
+                &indexer.vecs().outputs.first_txout_index,
+                &indexer.vecs().outputs.value,
             ),
         }
     }

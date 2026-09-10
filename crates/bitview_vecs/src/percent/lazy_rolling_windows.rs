@@ -78,16 +78,14 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
         D: NumericValue,
         F: BinaryTransform<S, D, B> + Send + Sync + 'static,
     {
-        let source = source.read_only_boxed_clone();
-
         Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
             let ratio = LazyRollingRatioVec::<S, D, B, F>::new(
                 &format!("{full_name}_{}_source", B::SUFFIX),
                 version,
-                source.clone(),
-                operand.read_only_boxed_clone(),
-                window_start.read_only_boxed_clone(),
+                source,
+                operand,
+                *window_start,
             );
             LazyPercentPerBlock::from_height_source(&full_name, version, &ratio, indexes)
         }))

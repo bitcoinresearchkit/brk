@@ -8,9 +8,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Timestamp, TxIndex, Version};
 use common::{indexes, stored};
 use tempfile::tempdir;
-use vecdb::{
-    AnyVec, BinaryTransform, Database, Pinned, ReadableCloneableVec, ReadableVec, Rw, WritableVec,
-};
+use vecdb::{AnyVec, BinaryTransform, Database, Pinned, ReadableVec, Rw, WritableVec};
 
 use crate::common::CACHE_BUDGET;
 
@@ -28,12 +26,7 @@ fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
         "timestamps",
         (0..3).map(|i| Timestamp::from(i * 600_u32)),
     );
-    let starts = LazyWindowStartVec::days(
-        "starts",
-        Version::ONE,
-        1,
-        timestamps.read_only_boxed_clone(),
-    );
+    let starts = LazyWindowStartVec::days("starts", Version::ONE, 1, &timestamps);
     let windows = WindowStarts(Windows {
         _24h: &starts,
         _1w: &starts,

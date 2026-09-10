@@ -1,6 +1,7 @@
 use bitview_traversable::Traversable;
+use bitview_vecs::{LazyDateVec, LazyFirstHeightVec};
 use brk_types::{Date, Height, Timestamp};
-use vecdb::{ReadableBoxedVec, ReadableCloneableVec, VecIndex};
+use vecdb::{ReadableCloneableVec, VecIndex};
 
 use super::{CachedDateVec, CachedFirstHeightVec};
 
@@ -21,7 +22,7 @@ pub struct DatedResolutionVecs<I: VecIndex> {
 impl<I: VecIndex> DatedResolutionVecs<I> {
     pub fn from_period_date(
         mapping: &impl ReadableCloneableVec<Height, I>,
-        timestamps: ReadableBoxedVec<Height, Timestamp>,
+        timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
         period_from_timestamp: fn(Timestamp) -> I,
     ) -> Self
     where
@@ -34,7 +35,7 @@ impl<I: VecIndex> DatedResolutionVecs<I> {
 
     pub fn from_first_timestamp(
         mapping: &impl ReadableCloneableVec<Height, I>,
-        timestamps: ReadableBoxedVec<Height, Timestamp>,
+        timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
         period_from_timestamp: fn(Timestamp) -> I,
     ) -> Self {
         Self::new(
@@ -47,17 +48,17 @@ impl<I: VecIndex> DatedResolutionVecs<I> {
 
     pub fn new(
         mapping: &impl ReadableCloneableVec<Height, I>,
-        timestamps: ReadableBoxedVec<Height, Timestamp>,
+        timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
         period_from_timestamp: fn(Timestamp) -> I,
         date_from_period_and_timestamp: fn(I, Timestamp) -> Date,
     ) -> Self {
         Self {
-            date: CachedDateVec::new(
+            date: CachedDateVec::wrap(LazyDateVec::new(
                 timestamps,
                 period_from_timestamp,
                 date_from_period_and_timestamp,
-            ),
-            first_height: CachedFirstHeightVec::new(mapping.read_only_boxed_clone()),
+            )),
+            first_height: CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(mapping)),
         }
     }
 

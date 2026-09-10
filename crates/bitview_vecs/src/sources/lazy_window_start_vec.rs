@@ -3,15 +3,14 @@ use std::{convert::Infallible, iter, sync::Arc};
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Timestamp, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec,
-    TypedVec, short_type_name,
+    AnyExportableVec, AnyVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec,
+    ReadableCloneableVec, ReadableVec, TypedVec, short_type_name,
 };
 
 const HOUR_SECONDS: u64 = 60 * 60;
 const DAY_SECONDS: u64 = 24 * HOUR_SECONDS;
 
-/// A storage-free window-start vector backed by one pinned monotonic timestamp
-/// cache.
+/// A storage-free window-start vector backed by one monotonic timestamp source.
 ///
 /// Range and sorted reads find the first window start once, then advance it
 /// monotonically. Sorted reads jump over large request gaps with binary search.
@@ -28,7 +27,7 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         hours: u64,
-        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
+        timestamps: &(impl ReadableCloneableVec<Height, Timestamp> + ?Sized),
     ) -> Self {
         Self::new(name, version, hours * HOUR_SECONDS, timestamps)
     }
@@ -37,7 +36,7 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         days: u64,
-        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
+        timestamps: &(impl ReadableCloneableVec<Height, Timestamp> + ?Sized),
     ) -> Self {
         Self::new(name, version, days * DAY_SECONDS, timestamps)
     }
@@ -46,13 +45,13 @@ impl LazyWindowStartVec {
         name: &str,
         version: Version,
         duration_seconds: u64,
-        timestamps: impl ReadableVec<Height, Timestamp> + Clone + 'static,
+        timestamps: &(impl ReadableCloneableVec<Height, Timestamp> + ?Sized),
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
             duration_seconds,
-            timestamps: ReadableBoxedVec::new(timestamps),
+            timestamps: timestamps.read_only_boxed_clone(),
         }
     }
 
@@ -233,7 +232,7 @@ impl Traversable for LazyWindowStartVec {
 #[cfg(test)]
 mod tests {
     use parking_lot::RwLock;
-    use vecdb::{CachedReadableVec, CachedVec, ReadableVec};
+    use vecdb::{CachedVec, ReadableVec};
 
     use super::*;
     use crate::CachedWindowStartVec;
@@ -353,7 +352,7 @@ mod tests {
             "lookback",
             Version::ONE,
             duration_seconds,
-            cached_timestamps.cached_boxed_clone(),
+            cached_timestamps,
         )
     }
 
@@ -424,7 +423,7 @@ mod tests {
     #[test]
     fn range_random_and_sorted_reads_match() {
         let (_, cached_timestamps) = timestamp_fixture();
-        let window = CachedWindowStartVec::new(lazy_window(&cached_timestamps, DAY_SECONDS));
+        let window = CachedWindowStartVec::wrap(lazy_window(&cached_timestamps, DAY_SECONDS));
 
         assert_eq!(
             window.collect_range_at(1, 4),
@@ -440,7 +439,7 @@ mod tests {
     #[test]
     fn explicit_invalidations_refresh_same_length_reorgs() {
         let (timestamps, cached_timestamps) = timestamp_fixture();
-        let window = CachedWindowStartVec::new(lazy_window(&cached_timestamps, DAY_SECONDS));
+        let window = CachedWindowStartVec::wrap(lazy_window(&cached_timestamps, DAY_SECONDS));
 
         assert_eq!(window.collect_one_at(4), Some(Height::from(3_usize)));
         timestamps.replace(4, (DAY_SECONDS + 18 * HOUR_SECONDS) as u32);

@@ -3,7 +3,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{DailyMappings, DailyMetric, LazyDailyMetric};
 use brk_error::Result;
 use brk_types::{CapitalSentimentPhase, StoredBool, StoredI8, StoredU8};
-use vecdb::{ReadableCloneableVec, UnaryTransform};
+use vecdb::UnaryTransform;
 
 use super::Vecs;
 use crate::STORAGE;
@@ -65,19 +65,19 @@ impl Vecs {
         let is_short = LazyDailyMetric::from_source::<IsLongToIsShort>(
             "capital_sentiment_is_short",
             version,
-            is_long.day1.read_only_boxed_clone(),
+            &is_long.day1,
             &mappings,
         );
         let phase = LazyDailyMetric::from_source::<CodeToPhase>(
             "capital_sentiment_phase",
             version,
-            phase_code.day1.read_only_boxed_clone(),
+            &phase_code.day1,
             &mappings,
         );
         let score = LazyDailyMetric::from_source::<PhaseToScore>(
             "capital_sentiment_score",
             version,
-            phase.day1.read_only_boxed_clone(),
+            &phase.day1,
             &mappings,
         );
 

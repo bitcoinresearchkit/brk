@@ -59,13 +59,13 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Day1, T>,
+        source: &(impl ReadableCloneableVec<Day1, T> + ?Sized),
         mapping: &(impl ReadableCloneableVec<I, Day1> + ?Sized),
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
-            source,
+            source: source.read_only_boxed_clone(),
             mapping: mapping.read_only_boxed_clone(),
             _phantom: PhantomData,
         }

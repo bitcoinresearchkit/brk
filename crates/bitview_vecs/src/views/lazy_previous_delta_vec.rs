@@ -5,8 +5,8 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, CheckedSub, Cursor, Formattable, Ident, READ_CHUNK_SIZE,
-    ReadableBoxedVec, ReadableVec, SparseRead, TypedVec, UnaryTransform, VecIndex, VecValue,
-    Version, short_type_name,
+    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, SparseRead, TypedVec, UnaryTransform,
+    VecIndex, VecValue, Version, short_type_name,
 };
 
 /// Lazy `source[index] - source[index - 1]`, with zero before the first value.
@@ -30,7 +30,11 @@ where
     I: VecIndex,
     S: VecValue,
 {
-    pub fn new(name: &str, version: Version, source: ReadableBoxedVec<I, S>) -> Self {
+    pub fn new(
+        name: &str,
+        version: Version,
+        source: &(impl ReadableCloneableVec<I, S> + ?Sized),
+    ) -> Self {
         Self::transformed(name, version, source)
     }
 }
@@ -41,11 +45,15 @@ where
     S: VecValue,
     T: VecValue,
 {
-    pub fn transformed(name: &str, version: Version, source: ReadableBoxedVec<I, S>) -> Self {
+    pub fn transformed(
+        name: &str,
+        version: Version,
+        source: &(impl ReadableCloneableVec<I, S> + ?Sized),
+    ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
+            source: source.read_only_boxed_clone(),
             _output: PhantomData,
         }
     }

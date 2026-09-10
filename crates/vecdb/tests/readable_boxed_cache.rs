@@ -4,9 +4,36 @@ use std::sync::Arc;
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, ReadableBoxedVec,
+    ReadableCloneableVec, ReadableVec, Version, WritableVec,
 };
 use vecdb::{PcoVec, ReadOnlyClone, Stamp};
+
+#[test]
+fn cached_stored_reader_capture_shares_snapshots_and_invalidation() {
+    fn capture(source: &impl ReadableCloneableVec<usize, u64>) -> ReadableBoxedVec<usize, u64> {
+        source.read_only_boxed_clone()
+    }
+
+    let dir = tempdir().unwrap();
+    let db = Database::open(dir.path()).unwrap();
+    let mut values =
+        CachedVec::wrap(PcoVec::<usize, u64>::import(&db, "values", Version::ONE).unwrap());
+    values.push(10);
+    values.push(20);
+    values.write().unwrap();
+
+    let captured = capture(&values);
+    let snapshot = values.snapshot();
+    assert!(Arc::ptr_eq(&snapshot, &captured.snapshot()));
+
+    values.truncate_if_needed_at(1).unwrap();
+    values.push(30);
+    values.write().unwrap();
+    assert_eq!(captured.collect(), [10, 30]);
+    assert_eq!(snapshot.as_slice(), [10, 20]);
+    assert!(Arc::ptr_eq(&values.snapshot(), &captured.snapshot()));
+}
 
 #[test]
 fn truncation_invalidates_same_length_replacement_for_read_only_consumers() {

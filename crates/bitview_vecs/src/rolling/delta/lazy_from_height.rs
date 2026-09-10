@@ -38,10 +38,10 @@ where
         }
     }
 
-    pub fn from_cumulative(
+    pub fn from_source(
         name: &str,
         version: Version,
-        cumulative: &impl ReadableCloneableVec<Height, S>,
+        source: &impl ReadableCloneableVec<Height, S>,
         window_start: &impl ReadableCloneableVec<Height, Height>,
         indexes: &IndexSources,
     ) -> Self {
@@ -49,7 +49,7 @@ where
         let height = LazyDeltaVec::new(
             name,
             version,
-            cumulative.read_only_boxed_clone(),
+            source.read_only_boxed_clone(),
             window_start.version(),
             move || window_start.snapshot(),
         );

@@ -20,19 +20,19 @@ impl LazyDailyPrice {
         let cents = LazyDailyMetric::from_source::<Ident>(
             &format!("{name}_cents"),
             version,
-            source.read_only_boxed_clone(),
+            source,
             mappings,
         );
         let usd = LazyDailyMetric::from_source::<CentsUnsignedToDollars>(
             name,
             version,
-            cents.day1.read_only_boxed_clone(),
+            &cents.day1,
             mappings,
         );
         let sats = LazyDailyMetric::from_source::<DollarsToSatsFract>(
             &format!("{name}_sats"),
             version,
-            usd.day1.read_only_boxed_clone(),
+            &usd.day1,
             mappings,
         );
         Self { usd, cents, sats }

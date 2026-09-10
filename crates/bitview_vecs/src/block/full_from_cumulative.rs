@@ -41,8 +41,7 @@ where
     where
         V: ReadableCloneableVec<Height, T> + ?Sized,
     {
-        let block =
-            LazyPreviousDeltaVec::new(name, version, cumulative_source.read_only_boxed_clone());
+        let block = LazyPreviousDeltaVec::new(name, version, cumulative_source);
         let cumulative = LazyPerBlock::from_height_source::<Ident>(
             &format!("{name}_cumulative"),
             version,

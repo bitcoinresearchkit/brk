@@ -6,6 +6,7 @@ pub mod any_stored;
 #[cfg(feature = "schemars")]
 pub mod any_with_schema;
 pub mod any_with_writer;
+pub(crate) mod chunk_folds;
 pub mod formattable;
 pub mod importable;
 pub mod index;

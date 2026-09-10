@@ -1,6 +1,7 @@
 mod dated;
 
 use bitview_traversable::Traversable;
+use bitview_vecs::LazyFirstHeightVec;
 use brk_types::Height;
 use vecdb::{ReadableCloneableVec, VecIndex};
 
@@ -19,7 +20,7 @@ pub struct ResolutionVecs<I: VecIndex> {
 impl<I: VecIndex> ResolutionVecs<I> {
     pub fn new(mapping: &impl ReadableCloneableVec<Height, I>) -> Self {
         Self {
-            first_height: CachedFirstHeightVec::new(mapping.read_only_boxed_clone()),
+            first_height: CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(mapping)),
         }
     }
 

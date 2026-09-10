@@ -5,15 +5,55 @@ use std::sync::{
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BytesVec, CachedVec, Database, DeltaOp, DeltaSub, EagerVec, Ident, ImportableVec,
-    LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec, ReadableVec, StoredVec, UnaryTransform,
-    Version, WritableVec,
+    AnyStoredVec, BytesVec, CachedReadableVec, CachedVec, Database, DeltaOp, DeltaSub, EagerVec,
+    Ident, ImportableVec, LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec, ReadableVec,
+    StoredVec, UnaryTransform, Version, WritableVec,
 };
 
 #[cfg(feature = "pco")]
 use vecdb::PcoVec;
 
 struct Double;
+
+fn assert_boxed_folds(source: &impl ReadableVec<usize, u64>, values: &[u64]) {
+    for (from, to) in [
+        (17, 21),
+        (4090, 8195),
+        (19_000, usize::MAX),
+        (8, 3),
+        (usize::MAX, usize::MAX),
+    ] {
+        let end = to.min(values.len());
+        let expected = &values[from.min(end)..end];
+        assert_eq!(
+            source.fold_range_at(from, to, Vec::new(), |mut out, value| {
+                out.push(value);
+                out
+            }),
+            expected
+        );
+        assert_eq!(
+            source.try_fold_range_at(from, to, 0, |sum, value| Ok::<_, ()>(sum + value)),
+            Ok(expected.iter().sum())
+        );
+        if expected.is_empty() {
+            continue;
+        }
+        for stop in [0, expected.len() / 2, expected.len() - 1] {
+            let mut seen = Vec::new();
+            let result = source.try_fold_range_at(from, to, (), |(), value| {
+                seen.push(value);
+                if seen.len() == stop + 1 {
+                    Err("stop")
+                } else {
+                    Ok(())
+                }
+            });
+            assert_eq!(result, Err("stop"));
+            assert_eq!(seen, expected[..=stop]);
+        }
+    }
+}
 
 static DELTA_TRANSFORMS: AtomicUsize = AtomicUsize::new(0);
 static DELTA_READS: AtomicUsize = AtomicUsize::new(0);
@@ -217,6 +257,7 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
         Arc::new(AtomicUsize::new(0)),
     );
     let boxed = ReadableBoxedVec::new(cached.clone());
+    let cached_boxed = cached.cached_boxed_clone();
     let mut values = Vec::new();
     boxed.for_each_chunk_at(17, 21, &mut |at, chunk| {
         assert_eq!(at, 17);
@@ -235,6 +276,8 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     });
     assert_eq!(values, (0..len as u64).collect::<Vec<_>>());
     let snapshot = cached.cached_snapshot().expect("full read admits cache");
+    assert_boxed_folds(&boxed, &snapshot);
+    assert_boxed_folds(&cached_boxed, &snapshot);
     let mut calls = 0;
     boxed.for_each_chunk_at(17, len + 50, &mut |at, chunk| {
         calls += 1;
@@ -275,6 +318,10 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     source.truncate_if_needed_at(len - 1).unwrap();
     source.push(123);
     source.write().unwrap();
+    let mut expected = snapshot.to_vec();
+    expected[len - 1] = 123;
+    assert_boxed_folds(&boxed, &expected);
+    assert_boxed_folds(&cached_boxed, &expected);
     assert_eq!(identity.collect_range_at(len - 1, len), [123]);
     assert_eq!(doubled.collect_range_at(len - 1, len), [246]);
     assert_eq!(
@@ -293,6 +340,8 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     });
     assert_eq!(fallback.len(), len);
     assert_eq!(fallback[len - 1], 123);
+    assert_boxed_folds(&boxed, &expected);
+    assert_boxed_folds(&cached_boxed, &expected);
     assert!(cached.cached_snapshot().is_none());
 }
 

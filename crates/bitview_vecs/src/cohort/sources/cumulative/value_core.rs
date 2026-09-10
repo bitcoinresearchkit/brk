@@ -38,22 +38,24 @@ impl CumulativeUTXOCoreValueSources {
         cohort_id: CohortId,
         name: &str,
         version: Version,
-    ) -> Option<(
-        LazyVec<Height, Sats, Height, StoredU64>,
-        LazyVec<Height, Cents, Height, StoredU64>,
-    )> {
-        Some((
-            LazyVec::transformed::<StoredU64ToSats>(
+    ) -> Option<
+        SatsCents<
+            LazyVec<Height, Sats, Height, StoredU64>,
+            LazyVec<Height, Cents, Height, StoredU64>,
+        >,
+    > {
+        Some(SatsCents {
+            sats: LazyVec::transformed::<StoredU64ToSats>(
                 &format!("{name}_cumulative_sats"),
                 version,
                 self.sats.stored.get(cohort_id)?.read_only_boxed_clone(),
             ),
-            LazyVec::transformed::<StoredU64ToCents>(
+            cents: LazyVec::transformed::<StoredU64ToCents>(
                 &format!("{name}_cumulative_cents"),
                 version,
                 self.cents.stored.get(cohort_id)?.read_only_boxed_clone(),
             ),
-        ))
+        })
     }
 
     pub fn push_block(

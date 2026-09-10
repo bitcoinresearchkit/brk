@@ -26,9 +26,7 @@ pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachedVecStrategy = Budgete
 const VERSION: Version = Version::TWO;
 
 impl<S: CachedVecStrategy> ValuePerBlockFull<Rw, S> {
-    pub fn cumulative_sats_source(
-        &self,
-    ) -> &(impl ReadableVec<Height, Sats> + Clone + 'static + use<S>) {
+    pub fn cumulative_sats_source(&self) -> &(impl ReadableCloneableVec<Height, Sats> + use<S>) {
         self.cumulative.sats.resolutions.height_source()
     }
 

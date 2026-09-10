@@ -63,8 +63,8 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: &impl ReadableCloneableVec<I, S>,
-        metadata: &impl ReadableCloneableVec<I, M>,
+        source: &(impl ReadableCloneableVec<I, S> + ?Sized),
+        metadata: &(impl ReadableCloneableVec<I, M> + ?Sized),
         compute: impl Fn(I, S, M) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {

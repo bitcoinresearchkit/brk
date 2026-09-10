@@ -1,8 +1,7 @@
 use brk_types::{Height, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadBounds, ReadableCloneableVec,
-    ReadableVec, WritableVec,
+    AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadBounds, ReadableVec, WritableVec,
 };
 
 use crate::{LazyCumulativeIndexVec, LazyIndexCountVec};
@@ -25,18 +24,8 @@ fn next_boundaries_produce_cumulative_and_per_item_counts() {
     first.write().unwrap();
     terminal.write().unwrap();
 
-    let cumulative = LazyCumulativeIndexVec::new(
-        "cumulative",
-        Version::ONE,
-        first.read_only_boxed_clone(),
-        terminal.read_only_boxed_clone(),
-    );
-    let count = LazyIndexCountVec::new(
-        "count",
-        Version::ONE,
-        first.read_only_boxed_clone(),
-        terminal.read_only_boxed_clone(),
-    );
+    let cumulative = LazyCumulativeIndexVec::new("cumulative", Version::ONE, &first, &terminal);
+    let count = LazyIndexCountVec::new("count", Version::ONE, &first, &terminal);
 
     assert_eq!(
         cumulative.collect_range(Height::ZERO, Height::new(3)),

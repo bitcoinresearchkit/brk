@@ -49,7 +49,7 @@ where
         let cumulative =
             PerBlock::forced_import(cache, db, &format!("{name}_cumulative"), version, indexes)?;
         let source = cumulative.resolutions.height_source();
-        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let block = LazyPreviousDeltaVec::new(name, version, source);
         let rolling = RollingTotals::new(name, version, source, window_starts, indexes);
         let last_cumulative = cumulative
             .height
@@ -64,9 +64,7 @@ where
         })
     }
 
-    pub fn cumulative_source(
-        &self,
-    ) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T, P>) {
+    pub fn cumulative_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T, P>) {
         self.cumulative.resolutions.height_source()
     }
 
@@ -232,8 +230,7 @@ mod tests {
     use brk_types::{Height, StoredU32, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
-        WritableVec,
+        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
     };
 
     use crate::LazyPreviousDeltaVec;
@@ -250,11 +247,8 @@ mod tests {
         }
         cumulative.write().unwrap();
 
-        let block = LazyPreviousDeltaVec::<Height, StoredU64>::new(
-            "block",
-            Version::ONE,
-            cumulative.read_only_boxed_clone(),
-        );
+        let block =
+            LazyPreviousDeltaVec::<Height, StoredU64>::new("block", Version::ONE, &cumulative);
 
         assert_eq!(
             block.collect_range_at(0, 3),
@@ -273,7 +267,7 @@ mod tests {
             LazyPreviousDeltaVec::<Height, StoredU64, StoredU32, StoredU64ToStoredU32>::transformed(
                 "transformed",
                 Version::ONE,
-                cumulative.read_only_boxed_clone(),
+                &cumulative,
             );
         assert_eq!(
             transformed.collect_range_at(0, 3),

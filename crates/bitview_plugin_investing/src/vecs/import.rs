@@ -31,8 +31,7 @@ impl Vecs {
             cached_days.clone(),
         );
         let sats_cumulative = cached_dca_sats.read_only_boxed_clone();
-        let sats_per_day =
-            LazyPreviousDeltaVec::new("dca_sats_per_day", version, sats_cumulative.clone());
+        let sats_per_day = LazyPreviousDeltaVec::new("dca_sats_per_day", version, &sats_cumulative);
 
         let cached_starts = ByDcaPeriod::try_new(|_, days| {
             Ok::<_, Error>(blocks.lookback.cached_start_vec(days as usize))
@@ -45,8 +44,8 @@ impl Vecs {
                 let source = LazyWindowVec::<Height, Sats, Sats>::new(
                     &format!("{metric_name}_sats_source"),
                     version,
-                    sats_cumulative.clone(),
-                    (**window_starts).clone(),
+                    &sats_cumulative,
+                    &(**window_starts),
                     true,
                     |current, before, _| current.checked_sub(before).unwrap_or_default(),
                 );
@@ -125,8 +124,8 @@ impl Vecs {
                 let source = LazyWindowVec::<Height, Cents, PartsPerMillionSigned64>::new(
                     &format!("{metric_name}_ppm_source"),
                     version,
-                    prices.spot.cents.height.read_only_boxed_clone(),
-                    (**window_starts).clone(),
+                    &prices.spot.cents.height,
+                    &(**window_starts),
                     false,
                     |current, past, _| {
                         RatioDiffCents::<PartsPerMillionSigned64>::apply(current, past)
@@ -145,8 +144,8 @@ impl Vecs {
             let source = LazySinceDayVec::new(
                 &format!("{metric_name}_sats_source"),
                 version,
-                sats_cumulative.clone(),
-                cached_days.clone(),
+                &sats_cumulative,
+                &cached_days,
                 day,
                 |current, before| current.checked_sub(before).unwrap_or_default(),
             );

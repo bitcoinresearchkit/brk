@@ -25,6 +25,7 @@ use bitview_plugin_transactions::{ID as TRANSACTIONS_ID, Vecs as Transactions};
 use brk_error::Result;
 use brk_reader::Reader;
 use tracing::info;
+use vecdb::ReadableCloneableVec;
 
 use crate::{
     DefaultPlugins,
@@ -111,7 +112,11 @@ impl DefaultPlugins {
 
                 let mining = mining_handle.join().unwrap()?;
                 let block_size = blocks.size.size.cumulative_source();
-                let chain_fees = mining.rewards.fees.cumulative_sats_source().clone();
+                let chain_fees = mining
+                    .rewards
+                    .fees
+                    .cumulative_sats_source()
+                    .read_only_boxed_clone();
                 let op_return_handle = {
                     let mappings = &mappings;
                     let cached_starts = &cached_starts;

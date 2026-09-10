@@ -39,11 +39,7 @@ where
     where
         V: ReadableCloneableVec<Height, T> + ?Sized,
     {
-        let sum = LazyPreviousDeltaVec::new(
-            &format!("{name}_sum"),
-            version,
-            cumulative_source.read_only_boxed_clone(),
-        );
+        let sum = LazyPreviousDeltaVec::new(&format!("{name}_sum"), version, cumulative_source);
         let cumulative = LazyPerBlock::from_height_source::<Ident>(
             &format!("{name}_cumulative"),
             version,

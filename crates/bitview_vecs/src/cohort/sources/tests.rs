@@ -5,6 +5,8 @@ use brk_types::{Cents, Height, OutputType, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{CacheBudget, Database, ReadableVec};
 
+use crate::SatsCents;
+
 use super::{CumulativeUTXOCoreValueSources, CumulativeUTXOValueSources, UTXOCoreSources};
 
 #[test]
@@ -53,7 +55,7 @@ fn additive_and_cumulative_sources_share_exact_aggregate_selection() {
             .sum();
         let additive = additive.get(cohort_id).unwrap();
         assert_eq!(additive.collect_range_at(0, 2), [Sats::from(total); 2]);
-        for (sats, cents) in [
+        for SatsCents { sats, cents } in [
             cumulative.sources(cohort_id, "sum", Version::ONE).unwrap(),
             full.sources(cohort_id, "sum", Version::ONE).unwrap(),
         ] {

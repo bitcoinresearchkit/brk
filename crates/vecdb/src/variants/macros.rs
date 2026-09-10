@@ -267,6 +267,19 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
+        impl<I, T, S> $crate::ReadableCloneableVec<I, T>
+            for $crate::CachedVec<$wrapper<I, T>, S>
+        where
+            I: $crate::VecIndex,
+            T: $value_trait,
+            S: $crate::CachedVecStrategy,
+        {
+            #[inline]
+            fn read_only_boxed_clone(&self) -> $crate::ReadableBoxedVec<I, T> {
+                $crate::CachedVec::read_only_boxed_clone(self)
+            }
+        }
+
         impl<I, T> $crate::StoredVec for $wrapper<I, T>
         where
             I: $crate::VecIndex,

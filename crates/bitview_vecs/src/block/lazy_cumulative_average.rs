@@ -49,17 +49,12 @@ where
         indexes: &IndexSources,
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let cumulative = cumulative.read_only_boxed_clone();
         Self {
-            block: LazyPreviousDeltaVec::transformed(
-                name,
-                version,
-                cumulative.read_only_boxed_clone(),
-            ),
+            block: LazyPreviousDeltaVec::transformed(name, version, cumulative),
             average: LazyRollingAvgsFromHeight::new(
                 &format!("{name}_average"),
                 version + Version::TWO,
-                &cumulative,
+                cumulative,
                 window_starts,
                 indexes,
             ),

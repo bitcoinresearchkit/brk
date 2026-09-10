@@ -2,8 +2,8 @@ use std::{convert::Infallible, sync::Arc};
 
 use brk_types::{Cents, Height, StoredU64, Version};
 use vecdb::{
-    AnyVec, BudgetedCachedVec, CacheBudget, PrintableIndex, ReadableBoxedVec, ReadableVec,
-    TypedVec, short_type_name,
+    AnyVec, BudgetedCachedVec, CacheBudget, PrintableIndex, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableVec, TypedVec, short_type_name,
 };
 
 #[derive(Clone)]
@@ -20,12 +20,12 @@ impl SmaPrefixSumVec {
         cache: &'static CacheBudget,
         name: &str,
         version: Version,
-        spot_price: impl ReadableVec<Height, Cents> + Clone + 'static,
+        spot_price: &(impl ReadableCloneableVec<Height, Cents> + ?Sized),
     ) -> BudgetedCachedVec<Self> {
         cache.wrap(Self {
             name: Arc::from(name),
             version,
-            spot_price: ReadableBoxedVec::new(spot_price),
+            spot_price: spot_price.read_only_boxed_clone(),
         })
     }
 

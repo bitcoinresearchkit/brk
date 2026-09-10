@@ -16,52 +16,11 @@ fn setup_test_db() -> VecdbResult<(Database, TempDir)> {
     Ok((db, temp_dir))
 }
 
-/// Tests that after write() on vec_a, a separate vec_b instance
-/// can read the new data (simulating derived vec computation).
-fn run_write_visibility_test<V>() -> Result<(), Box<dyn Error>>
-where
-    V: StoredVec<I = usize, T = u32>,
-{
-    let version = Version::ZERO;
-    let (database, _temp) = setup_test_db()?;
-
-    // Create and populate vec_a
-    let mut vec_a: V = V::forced_import(&database, "vec_a", version)?;
-    for i in 0..100u32 {
-        vec_a.push(i);
-    }
-
-    // Write without flush - just mmap, no fsync
-    vec_a.write()?;
-
-    // Now create vec_b that will read from vec_a
-    // This simulates the pattern: compute vec_b derived from vec_a
-    let vec_a_reader: V = V::forced_import(&database, "vec_a", version)?;
-
-    // vec_b should see all 100 values written by vec_a
-    assert_eq!(
-        vec_a_reader.len(),
-        100,
-        "vec_b should see vec_a's written data"
-    );
-
-    for i in 0..100usize {
-        assert_eq!(
-            vec_a_reader.collect_one(i),
-            Some(i as u32),
-            "vec_b should read correct value at index {}",
-            i
-        );
-    }
-
-    Ok(())
-}
-
 /// Tests the full compute chain pattern:
 /// 1. Compute and write vec_a
 /// 2. Compute vec_b derived from vec_a, write it
 /// 3. Compute vec_c derived from vec_b, write it
-/// 4. Final flush for durability
+/// 4. Read the result through another instance, without flushing
 fn run_compute_chain_test<V>() -> Result<(), Box<dyn Error>>
 where
     V: StoredVec<I = usize, T = u32>,
@@ -78,11 +37,14 @@ where
 
     // Step 2: Compute vec_b derived from vec_a (sum of consecutive pairs)
     let vec_a_for_read: V = V::forced_import(&database, "chain_a", version)?;
+    assert_eq!(vec_a_for_read.len(), 50);
     let mut vec_b: V = V::forced_import(&database, "chain_b", version)?;
 
     for i in 0..25usize {
         let a1 = vec_a_for_read.collect_one(i * 2).unwrap();
         let a2 = vec_a_for_read.collect_one(i * 2 + 1).unwrap();
+        assert_eq!(a1, i as u32 * 4);
+        assert_eq!(a2, i as u32 * 4 + 2);
         vec_b.push(a1 + a2);
     }
     vec_b.write()?; // No fsync, just mmap write
@@ -172,11 +134,6 @@ mod bytes {
     type V = BytesVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
-        run_write_visibility_test::<V>()
-    }
-
-    #[test]
     fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
@@ -194,11 +151,6 @@ mod pco {
     use super::*;
 
     type V = PcoVec<usize, u32>;
-
-    #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
-        run_write_visibility_test::<V>()
-    }
 
     #[test]
     fn test_compute_chain() -> Result<(), Box<dyn Error>> {
@@ -220,11 +172,6 @@ mod lz4 {
     type V = LZ4Vec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
-        run_write_visibility_test::<V>()
-    }
-
-    #[test]
     fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
@@ -244,11 +191,6 @@ mod zstd {
     type V = ZstdVec<usize, u32>;
 
     #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
-        run_write_visibility_test::<V>()
-    }
-
-    #[test]
     fn test_compute_chain() -> Result<(), Box<dyn Error>> {
         run_compute_chain_test::<V>()
     }
@@ -266,11 +208,6 @@ mod zerocopy {
     use super::*;
 
     type V = ZeroCopyVec<usize, u32>;
-
-    #[test]
-    fn test_write_visibility() -> Result<(), Box<dyn Error>> {
-        run_write_visibility_test::<V>()
-    }
 
     #[test]
     fn test_compute_chain() -> Result<(), Box<dyn Error>> {

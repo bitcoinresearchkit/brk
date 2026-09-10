@@ -5,7 +5,7 @@ use bitview_vecs::{
     CachedWindowStartVec, LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight,
 };
 use brk_types::{Height, PoolSlug, StoredU64};
-use vecdb::{Ident, ReadableCloneableVec, Version};
+use vecdb::{Ident, Version};
 
 use super::{PoolCumulativeVec, PoolHeights};
 
@@ -37,8 +37,7 @@ impl BlocksMined {
             &cumulative_source,
             mappings,
         );
-        let block =
-            LazyPreviousDeltaVec::new(name, version, cumulative.height.read_only_boxed_clone());
+        let block = LazyPreviousDeltaVec::new(name, version, &cumulative.height);
         let sum = LazyRollingSumsFromHeight::new(
             &format!("{name}_sum"),
             version,

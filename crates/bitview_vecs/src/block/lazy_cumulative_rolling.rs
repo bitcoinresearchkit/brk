@@ -40,7 +40,7 @@ where
         indexes: &IndexSources,
     ) -> Self {
         let source = &cumulative.height;
-        let block = LazyPreviousDeltaVec::new(name, version, source.read_only_boxed_clone());
+        let block = LazyPreviousDeltaVec::new(name, version, source);
         let rolling = RollingTotals::new(name, version, source, window_starts, indexes);
 
         Self {

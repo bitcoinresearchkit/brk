@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use vecdb::{ReadableBoxedVec, VecIndex, VecValue, Version};
+use vecdb::{ReadableCloneableVec, VecIndex, VecValue, Version};
 
 #[derive(Clone)]
 pub struct TerminalLen {
@@ -9,11 +9,12 @@ pub struct TerminalLen {
 }
 
 impl TerminalLen {
-    pub fn new<I, T>(source: ReadableBoxedVec<I, T>) -> Self
+    pub fn new<I, T>(source: &(impl ReadableCloneableVec<I, T> + ?Sized)) -> Self
     where
         I: VecIndex,
         T: VecValue,
     {
+        let source = source.read_only_boxed_clone();
         let version = source.version();
         Self {
             get: Arc::new(move || source.visible_len()),

@@ -1,3 +1,4 @@
+mod decode;
 pub mod read_only;
 pub mod reader;
 pub mod reader_cursor;

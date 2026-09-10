@@ -4,8 +4,8 @@ use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec,
-    TypedVec, VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use vecdb::SparseRead;
@@ -85,16 +85,16 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<I, S>,
-        window_starts: impl ReadableVec<I, I> + Clone + 'static,
+        source: &(impl ReadableCloneableVec<I, S> + ?Sized),
+        window_starts: &(impl ReadableCloneableVec<I, I> + ?Sized),
         inclusive: bool,
         compute: impl Fn(S, S, usize) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
-            window_starts: ReadableBoxedVec::new(window_starts),
+            source: source.read_only_boxed_clone(),
+            window_starts: window_starts.read_only_boxed_clone(),
             inclusive,
             compute: Arc::new(compute),
         }
@@ -403,8 +403,8 @@ mod tests {
     use brk_types::{Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
-        ReadableVec, WritableVec,
+        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
+        WritableVec,
     };
 
     use super::LazyWindowVec;
@@ -431,22 +431,10 @@ mod tests {
         let compute = |current: StoredU64, previous: StoredU64, count: usize| {
             StoredU64::from((*current - *previous) + count as u64 * 1_000)
         };
-        let exclusive = LazyWindowVec::new(
-            "exclusive",
-            Version::ONE,
-            source.read_only_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
-            false,
-            compute,
-        );
-        let inclusive = LazyWindowVec::new(
-            "inclusive",
-            Version::ONE,
-            source.read_only_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
-            true,
-            compute,
-        );
+        let exclusive =
+            LazyWindowVec::new("exclusive", Version::ONE, &source, &starts, false, compute);
+        let inclusive =
+            LazyWindowVec::new("inclusive", Version::ONE, &source, &starts, true, compute);
 
         assert_eq!(
             exclusive.collect_range_at(0, 4),

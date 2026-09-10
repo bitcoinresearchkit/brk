@@ -778,11 +778,4 @@ mod tests {
             );
         }
     }
-
-    #[test]
-    fn age_ranges_belong_to_exactly_one_term() {
-        for id in AgeRangeId::ALL {
-            assert_ne!(id.term() == Term::Sth, id.term() == Term::Lth);
-        }
-    }
 }

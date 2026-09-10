@@ -30,7 +30,7 @@ impl LazyRollingSumsAmountFromHeight {
             let full_name = format!("{name}_{suffix}");
 
             // Sats lazy rolling sum
-            let sats = LazyRollingSumFromHeight::from_cumulative(
+            let sats = LazyRollingSumFromHeight::from_source(
                 &format!("{full_name}_sats"),
                 version,
                 cumulative_sats,
@@ -46,7 +46,7 @@ impl LazyRollingSumsAmountFromHeight {
             );
 
             // Cents rolling sum
-            let cents = LazyRollingSumFromHeight::from_cumulative(
+            let cents = LazyRollingSumFromHeight::from_source(
                 &format!("{full_name}_cents"),
                 version,
                 cumulative_cents,

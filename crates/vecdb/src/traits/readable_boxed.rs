@@ -2,6 +2,8 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::{AnyVec, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex, VecValue, Version};
 
+use super::chunk_folds;
+
 pub struct ReadableBoxedVec<I, T>(Box<dyn ReadableCloneableVec<I, T>>)
 where
     I: VecIndex,
@@ -134,18 +136,8 @@ where
     }
 
     #[inline]
-    fn fold_range_at<B, F: FnMut(B, T) -> B>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        mut f: F,
-    ) -> B {
-        let mut acc = Some(init);
-        self.for_each_chunk_at(from, to, &mut |_, values| {
-            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
-        });
-        acc.unwrap()
+    fn fold_range_at<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B {
+        chunk_folds::fold(self, from, to, init, f)
     }
 
     #[inline]
@@ -154,24 +146,9 @@ where
         from: usize,
         to: usize,
         init: B,
-        mut f: F,
+        f: F,
     ) -> Result<B, E> {
-        let to = to.min(self.len());
-        let chunk_size = self.cursor_chunk_size().max(1);
-        let mut buf = Vec::with_capacity(chunk_size.min(to.saturating_sub(from)));
-        let mut acc = init;
-
-        let mut start = from;
-        while start < to {
-            let end = start.saturating_add(chunk_size).min(to);
-            self.read_into_at(start, end, &mut buf);
-            for value in buf.drain(..) {
-                acc = f(acc, value)?;
-            }
-            start = end;
-        }
-
-        Ok(acc)
+        chunk_folds::try_fold(self, from, to, init, f)
     }
 
     #[inline(always)]

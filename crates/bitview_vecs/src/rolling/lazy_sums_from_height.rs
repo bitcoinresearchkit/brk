@@ -40,7 +40,7 @@ where
         indexes: &IndexSources,
     ) -> Self {
         Self(window_starts.map_with_suffix(|suffix, window_start| {
-            LazyRollingSumFromHeight::from_cumulative(
+            LazyRollingSumFromHeight::from_source(
                 &format!("{name}_{suffix}"),
                 version,
                 cumulative,

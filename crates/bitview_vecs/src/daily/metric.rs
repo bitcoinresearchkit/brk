@@ -34,8 +34,7 @@ where
             EagerVec::<PcoVec<Day1, T>>::forced_import(db, name, version)?,
             cache,
         );
-        let source = day1.read_only_boxed_clone();
-        let views = Box::new(DailyViews::new(name, source, version, mappings));
+        let views = Box::new(DailyViews::new(name, &day1, version, mappings));
 
         Ok(Self { day1, views })
     }

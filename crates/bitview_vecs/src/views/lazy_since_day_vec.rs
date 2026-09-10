@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, Formattable, PrintableIndex, READ_CHUNK_SIZE, ReadableBoxedVec,
-    ReadableVec, TypedVec, VecValue, Version, short_type_name,
+    ReadableCloneableVec, ReadableVec, TypedVec, VecValue, Version, short_type_name,
 };
 
 trait SinceDayTransform<S, T>: Send + Sync {
@@ -50,16 +50,16 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, S>,
-        days: impl ReadableVec<Height, Day1> + Clone + 'static,
+        source: &(impl ReadableCloneableVec<Height, S> + ?Sized),
+        days: &(impl ReadableCloneableVec<Height, Day1> + ?Sized),
         start_day: Day1,
         compute: impl Fn(S, S) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
-            days: ReadableBoxedVec::new(days),
+            source: source.read_only_boxed_clone(),
+            days: days.read_only_boxed_clone(),
             start_day,
             compute: Arc::new(compute),
         }
@@ -347,8 +347,8 @@ mod tests {
     use brk_types::{Day1, Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
-        ReadableVec, WritableVec,
+        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
+        WritableVec,
     };
 
     use super::LazySinceDayVec;
@@ -375,8 +375,8 @@ mod tests {
         let since_day = LazySinceDayVec::new(
             "since_day",
             Version::ONE,
-            source.read_only_boxed_clone(),
-            days.read_only_cached_boxed_clone(),
+            &source,
+            &days,
             Day1::from(1),
             |current, before| current - before,
         );

@@ -5,8 +5,8 @@ use brk_types::StoredU64;
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, Cursor, Formattable, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Cursor, Formattable, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use super::terminal_len::TerminalLen;
@@ -33,8 +33,8 @@ where
     pub fn new<TI, TT>(
         name: &str,
         version: Version,
-        first_indexes: ReadableBoxedVec<I, S>,
-        terminal: ReadableBoxedVec<TI, TT>,
+        first_indexes: &(impl ReadableCloneableVec<I, S> + ?Sized),
+        terminal: &(impl ReadableCloneableVec<TI, TT> + ?Sized),
     ) -> Self
     where
         TI: VecIndex,
@@ -43,7 +43,7 @@ where
         Self {
             name: Arc::from(name),
             base_version: version,
-            first_indexes,
+            first_indexes: first_indexes.read_only_boxed_clone(),
             terminal_len: TerminalLen::new(terminal),
         }
     }

@@ -41,11 +41,11 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
         _1y: 365,
     }
     .map_with_suffix(|suffix, &days| {
-        CachedWindowStartVec::new(LazyWindowStartVec::days(
+        CachedWindowStartVec::wrap(LazyWindowStartVec::days(
             suffix,
             Version::ONE,
             days,
-            timestamps.read_only_cached_boxed_clone(),
+            &timestamps,
         ))
     });
     let starts_ref = Windows {

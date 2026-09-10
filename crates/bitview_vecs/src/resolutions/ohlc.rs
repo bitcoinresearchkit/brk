@@ -34,10 +34,10 @@ macro_rules! define_lazy_ohlc_cents_vecs {
                 let v = version + COMPUTE_VERSION;
                 Self(PerResolution {
                     $($field: LazyOhlcVec::new(
-                        name, v, prices.clone(), mappings.first_height.$field.clone(),
+                        name, v, &prices, &mappings.first_height.$field,
                     ),)*
                     $($epoch: LazyOhlcVec::new(
-                        name, v, prices.clone(), mappings.first_height.$epoch.clone(),
+                        name, v, &prices, &mappings.first_height.$epoch,
                     ),)*
                 })
             }

@@ -117,42 +117,42 @@ impl Vecs {
         let monotonic_source = monotonic.read_only_boxed_clone();
         let day1 = DatedResolutionVecs::from_period_date(
             &height.day1,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::day1_from_timestamp,
         );
         let day3 = DatedResolutionVecs::from_first_timestamp(
             &height.day3,
-            monotonic_source.clone(),
+            &monotonic_source,
             Day3::from_timestamp,
         );
         let week1 = DatedResolutionVecs::from_first_timestamp(
             &height.week1,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::week1_from_timestamp,
         );
         let month1 = DatedResolutionVecs::from_first_timestamp(
             &height.month1,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::month1_from_timestamp,
         );
         let month3 = DatedResolutionVecs::from_first_timestamp(
             &height.month3,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::month3_from_timestamp,
         );
         let month6 = DatedResolutionVecs::from_first_timestamp(
             &height.month6,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::month6_from_timestamp,
         );
         let year1 = DatedResolutionVecs::from_first_timestamp(
             &height.year1,
-            monotonic_source.clone(),
+            &monotonic_source,
             HeightVecs::year1_from_timestamp,
         );
         let year10 = DatedResolutionVecs::from_first_timestamp(
             &height.year10,
-            monotonic_source,
+            &monotonic_source,
             HeightVecs::year10_from_timestamp,
         );
         let tx_index = TxIndexVecs::new(version, indexer);

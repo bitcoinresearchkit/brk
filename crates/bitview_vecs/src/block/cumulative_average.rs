@@ -62,12 +62,11 @@ where
         let last_cumulative = cumulative
             .collect_last()
             .map(|value| (cumulative.len(), value));
-        let source = cumulative.read_only_boxed_clone();
-        let block = LazyPreviousDeltaVec::transformed(name, version, source.clone());
+        let block = LazyPreviousDeltaVec::transformed(name, version, &cumulative);
         let average = LazyRollingAvgsFromHeight::new(
             &format!("{name}_average"),
             cumulative_version,
-            &source,
+            &cumulative,
             window_starts,
             indexes,
         );

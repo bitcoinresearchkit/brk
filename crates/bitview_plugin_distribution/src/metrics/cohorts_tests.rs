@@ -33,11 +33,11 @@ fn block_writes_keep_every_raw_cap_and_include_them_in_resume_checks() {
     let mappings = MappingsVecs::import(context, &indexer).unwrap();
     let db = Database::open(&directory.path().join("cohorts")).unwrap();
     let spot = import_stored::<Height, Cents>(&CACHE, &db, "spot", Version::ONE).unwrap();
-    let starts = CachedWindowStartVec::new(LazyWindowStartVec::days(
+    let starts = CachedWindowStartVec::wrap(LazyWindowStartVec::days(
         "test_window",
         Version::ONE,
         1,
-        mappings.timestamp.monotonic.read_only_cached_boxed_clone(),
+        &mappings.timestamp.monotonic,
     ));
     let windows = Windows {
         _24h: &starts,

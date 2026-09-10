@@ -6,7 +6,8 @@ use std::{
 use brk_types::{Height, StoredU16, StoredU64};
 use parking_lot::RwLock;
 use vecdb::{
-    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, Version, short_type_name,
+    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec, Version,
+    short_type_name,
 };
 
 const CHECKPOINT_INTERVAL: usize = 256;
@@ -25,9 +26,9 @@ struct Checkpoints {
 }
 
 impl CumulativeCountVec {
-    pub fn new(block: impl ReadableVec<Height, StoredU16> + Clone + 'static) -> Self {
+    pub fn new(block: &(impl ReadableCloneableVec<Height, StoredU16> + ?Sized)) -> Self {
         Self {
-            block: ReadableBoxedVec::new(block),
+            block: block.read_only_boxed_clone(),
             checkpoints: Arc::new(RwLock::new(Checkpoints {
                 block: Weak::new(),
                 cumulative: Arc::new(vec![0]),
@@ -244,8 +245,8 @@ mod tests {
     use brk_types::{Height, StoredU16, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadOnlyClone, WritableVec,
+        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone,
+        WritableVec,
     };
 
     use super::*;
@@ -262,7 +263,7 @@ mod tests {
         }
         block.write().unwrap();
         let cached = CachedVec::wrap(block.read_only_clone());
-        let count = CumulativeCountVec::new(cached.cached_boxed_clone());
+        let count = CumulativeCountVec::new(&cached);
         for rewrite in [false, true] {
             if rewrite {
                 block.truncate_if_needed_at(4000).unwrap();
@@ -332,7 +333,7 @@ mod tests {
         block.write().unwrap();
 
         let mut block = CachedVec::wrap(block);
-        let count = CumulativeCountVec::new(block.read_only_cached_boxed_clone());
+        let count = CumulativeCountVec::new(&block);
 
         assert_eq!(count.cumulative_at(599), Some(expected[599]));
 

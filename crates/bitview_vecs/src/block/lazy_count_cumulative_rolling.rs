@@ -31,7 +31,7 @@ impl LazyCountPerBlockCumulativeRolling {
         indexes: &IndexSources,
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Self {
-        let cumulative_source = CumulativeCountVec::new(source.read_only_boxed_clone());
+        let cumulative_source = CumulativeCountVec::new(source);
         let block = LazyVec::transformed::<StoredU16ToStoredU64>(
             name,
             version,

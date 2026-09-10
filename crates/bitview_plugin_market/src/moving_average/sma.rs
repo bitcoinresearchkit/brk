@@ -69,12 +69,8 @@ impl SmaVecs {
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let version = version + VERSION;
-        let prefix_sum = SmaPrefixSumVec::cached(
-            cache,
-            "price_sma_prefix_sum",
-            version,
-            spot_price.read_only_boxed_clone(),
-        );
+        let prefix_sum =
+            SmaPrefixSumVec::cached(cache, "price_sma_prefix_sum", version, spot_price);
 
         macro_rules! sma {
             ($name:literal, $days:expr) => {
@@ -84,8 +80,8 @@ impl SmaVecs {
                     &LazySmaVec::new(
                         concat!("price_sma_", $name, "_cents_source"),
                         version,
-                        lookback.start_vec($days).read_only_boxed_clone(),
-                        prefix_sum.read_only_boxed_clone(),
+                        lookback.start_vec($days),
+                        &prefix_sum,
                     ),
                     mappings,
                     spot_price,

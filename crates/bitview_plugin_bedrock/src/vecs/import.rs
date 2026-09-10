@@ -32,7 +32,7 @@ impl ModeVecs {
             LazyDailyMetric::from_source::<BoundedToF64>(
                 &format!("{name}_loss_threshold_{}", id.suffix()),
                 version,
-                id.select(&loss_threshold_stored).read_only_boxed_clone(),
+                id.select(&loss_threshold_stored),
                 mappings,
             )
         });

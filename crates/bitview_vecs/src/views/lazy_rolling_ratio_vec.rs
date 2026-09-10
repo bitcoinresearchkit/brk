@@ -7,8 +7,8 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
     AnyExportableVec, AnyVec, BinaryTransform, CheckedSub, Formattable, PrintableIndex,
-    READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec, SparseRead, TypedVec, VecIndex, VecValue,
-    Version, short_type_name,
+    READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, SparseRead, TypedVec,
+    VecIndex, VecValue, Version, short_type_name,
 };
 
 mod input;
@@ -45,9 +45,9 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, S>,
-        operand: impl ReadableVec<Height, C> + Clone + 'static,
-        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
+        source: &(impl ReadableCloneableVec<Height, S> + ?Sized),
+        operand: &(impl ReadableCloneableVec<Height, C> + ?Sized),
+        window_starts: &(impl ReadableCloneableVec<Height, Height> + ?Sized),
     ) -> Self {
         Self::with_operand_transform(
             name,
@@ -62,18 +62,18 @@ where
     pub fn with_operand_transform(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Height, S>,
-        operand: impl ReadableVec<Height, C> + Clone + 'static,
-        window_starts: impl ReadableVec<Height, Height> + Clone + 'static,
+        source: &(impl ReadableCloneableVec<Height, S> + ?Sized),
+        operand: &(impl ReadableCloneableVec<Height, C> + ?Sized),
+        window_starts: &(impl ReadableCloneableVec<Height, Height> + ?Sized),
         operand_transform: fn(Height, C) -> C,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
-            operand: ReadableBoxedVec::new(operand),
+            source: source.read_only_boxed_clone(),
+            operand: operand.read_only_boxed_clone(),
             operand_transform,
-            window_starts: ReadableBoxedVec::new(window_starts),
+            window_starts: window_starts.read_only_boxed_clone(),
             _marker: PhantomData,
         }
     }
@@ -398,8 +398,8 @@ mod tests {
     use brk_types::{Height, PartsPerMillion32, Sats};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec,
-        ReadableVec, WritableVec,
+        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
+        WritableVec,
     };
 
     use super::*;
@@ -439,13 +439,7 @@ mod tests {
             Sats,
             PartsPerMillion32,
             RatioSats<PartsPerMillion32>,
-        >::new(
-            "ratio",
-            Version::ONE,
-            source.read_only_boxed_clone(),
-            denominator.read_only_cached_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
-        );
+        >::new("ratio", Version::ONE, &source, &denominator, &starts);
 
         assert_eq!(
             ratio.collect_range(Height::ZERO, Height::new(4)),
@@ -482,9 +476,9 @@ mod tests {
         >::with_operand_transform(
             "transformed",
             Version::ONE,
-            source.read_only_boxed_clone(),
-            denominator.read_only_cached_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
+            &source,
+            &denominator,
+            &starts,
             double,
         );
         assert_eq!(

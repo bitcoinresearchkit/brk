@@ -100,40 +100,35 @@ fn benchmark_lazy_folds() {
     ));
     let days = CachedVec::wrap(stored(&db, "days", (0..len).map(|i| Day1::from(i / 144))));
     let counts = CachedVec::wrap(stored(&db, "counts", (0..len).map(|_| StoredU16::new(100))));
-    let counts = CumulativeCountVec::new(counts.read_only_cached_boxed_clone());
+    let counts = CumulativeCountVec::new(&counts);
     let cumulative = CachedVec::wrap(stored(
         &db,
         "cumulative",
         (0..len as u64).map(|i| StoredU64::from((i + 1) * 100)),
     ));
     let first = stored(&db, "first", (0..len).map(|i| Height::from(i / 2)));
-    let count = LazyIndexCountVec::new(
-        "count",
-        Version::ONE,
-        first.read_only_boxed_clone(),
-        source.read_only_boxed_clone(),
-    );
-    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, source.read_only_boxed_clone());
+    let count = LazyIndexCountVec::new("count", Version::ONE, &first, &source);
+    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);
     let lookback = LazyLookbackVec::new(
         "lookback",
         Version::ONE,
-        source.read_only_boxed_clone(),
+        &source,
         256,
         |current, previous| current - previous.unwrap_or_default(),
     );
     let since = LazySinceDayVec::new(
         "since",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        days.read_only_cached_boxed_clone(),
+        &source,
+        &days,
         Day1::from(2),
         |current, previous| current - previous,
     );
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &source,
+        &starts,
         true,
         |current, previous, _| current - previous,
     );
@@ -149,13 +144,7 @@ fn benchmark_lazy_folds() {
         StoredU64,
         PartsPerMillion32,
         ReverseOperands<RatioU64<PartsPerMillion32>>,
-    >::new(
-        "rolling",
-        Version::ONE,
-        counts.read_only_boxed_clone(),
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
-    );
+    >::new("rolling", Version::ONE, &counts, &source, &starts);
     let cached_rolling = LazyRollingRatioVec::<
         StoredU64,
         StoredU64,
@@ -164,9 +153,9 @@ fn benchmark_lazy_folds() {
     >::new(
         "cached_rolling",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        cumulative.read_only_cached_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &source,
+        &cumulative,
+        &starts,
     );
     compare("delta", &delta, u64::from);
     compare("lookback", &lookback, u64::from);

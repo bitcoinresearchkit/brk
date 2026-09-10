@@ -42,8 +42,7 @@ mod tests {
         denominator.write().unwrap();
         starts.write().unwrap();
 
-        let denominator =
-            CumulativeCountVec::new(CachedVec::wrap(denominator).read_only_cached_boxed_clone());
+        let denominator = CumulativeCountVec::new(&CachedVec::wrap(denominator));
         let cumulative = LazyIndexedVec::new(
             "cumulative",
             Version::ONE,
@@ -57,13 +56,7 @@ mod tests {
             StoredU64,
             PartsPerMillion32,
             ReverseOperands<RatioU64<PartsPerMillion32>>,
-        >::new(
-            "rolling",
-            Version::ONE,
-            denominator.read_only_boxed_clone(),
-            numerator.read_only_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
-        );
+        >::new("rolling", Version::ONE, &denominator, &numerator, &starts);
 
         assert_eq!(
             cumulative.collect_range_at(0, 4),
@@ -104,7 +97,7 @@ mod tests {
                 "cold_starts",
                 (0..N).map(|i| Height::from(i.saturating_sub(N / 2))),
             ));
-            let counts = CumulativeCountVec::new(counts.read_only_boxed_clone());
+            let counts = CumulativeCountVec::new(&counts);
             counts.collect_one_at(N - 1).unwrap();
             starts.snapshot();
             let cumulative = LazyIndexedVec::new(
@@ -114,18 +107,13 @@ mod tests {
                 &numerator,
                 |_, count, numerator| RatioU64::<PartsPerMillion32>::apply(numerator, count),
             );
-            let rolling = LazyRollingRatioVec::<
-                StoredU64,
-                StoredU64,
-                PartsPerMillion32,
-                ReverseOperands<RatioU64<PartsPerMillion32>>,
-            >::new(
-                "cold_rolling",
-                Version::ONE,
-                counts.read_only_boxed_clone(),
-                numerator.read_only_boxed_clone(),
-                starts.read_only_boxed_clone(),
-            );
+            let rolling =
+                LazyRollingRatioVec::<
+                    StoredU64,
+                    StoredU64,
+                    PartsPerMillion32,
+                    ReverseOperands<RatioU64<PartsPerMillion32>>,
+                >::new("cold_rolling", Version::ONE, &counts, &numerator, &starts);
             for view in [
                 cumulative.read_only_boxed_clone(),
                 rolling.read_only_boxed_clone(),

@@ -2,10 +2,10 @@ use std::{result::Result, sync::Arc};
 
 use parking_lot::RwLock;
 
-use super::DECODE_CHUNK_SIZE;
+use super::{DECODE_CHUNK_SIZE, decode::decode};
 use crate::{
     AnyVec, BytesStrategy, BytesVecReader, OverflowVecReader, OverflowVecValue, ReadOnlyMutableVec,
-    ReadOnlyRawVec, ReadableVec, SharedLen, TypedVec, VecIndex, Version, short_type_name, unlikely,
+    ReadOnlyRawVec, ReadableVec, SharedLen, TypedVec, VecIndex, Version, short_type_name,
 };
 
 /// Lean read-only clone of an [`OverflowVec`](crate::OverflowVec).
@@ -47,26 +47,20 @@ where
 
     #[inline(always)]
     fn decode(&self, compact: T::Compact) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
+        decode::<T>(compact, |index| {
             self.overflow
-                .collect_one_at(overflow_index.unwrap())
+                .collect_one_at(index)
                 .expect("OverflowVec pointer must reference a stored value")
-        } else {
-            T::from_compact(compact)
-        }
+        })
     }
 
     #[inline(always)]
     fn decode_with_reader(compact: T::Compact, overflow: &BytesVecReader<usize, T>) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
+        decode::<T>(compact, |index| {
             overflow
-                .try_get_at(overflow_index.unwrap())
+                .try_get_at(index)
                 .expect("OverflowVec pointer must reference a stored value")
-        } else {
-            T::from_compact(compact)
-        }
+        })
     }
 }
 

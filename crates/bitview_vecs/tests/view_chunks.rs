@@ -69,13 +69,13 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
                 &format!("ratio_starts_{source_id}_{window}"),
                 (0..35_000usize).map(|i| Height::from(i.saturating_sub(window))),
             ));
-            let denominator = CumulativeCountVec::new(blocks.read_only_cached_boxed_clone());
+            let denominator = CumulativeCountVec::new(&blocks);
             let ratio = LazyRollingRatioVec::<StoredU64, StoredU64, StoredU64, TestRatio>::new(
                 "ratio",
                 Version::ONE,
-                source.read_only_boxed_clone(),
-                cached.read_only_cached_boxed_clone(),
-                starts.read_only_cached_boxed_clone(),
+                &source,
+                &cached,
+                &starts,
             );
             let rolling = LazyRollingRatioVec::<
                 StoredU64,
@@ -83,11 +83,7 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
                 StoredU64,
                 ReverseOperands<TestRatio>,
             >::new(
-                "rolling",
-                Version::ONE,
-                denominator.read_only_boxed_clone(),
-                source.read_only_boxed_clone(),
-                starts.read_only_cached_boxed_clone(),
+                "rolling", Version::ONE, &denominator, &source, &starts
             );
             let cumulative = LazyIndexedVec::new(
                 "cumulative",
@@ -214,15 +210,15 @@ fn views_do_not_recursively_read_a_source_lending_chunks() {
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &source,
+        &starts,
         true,
         |a: StoredU64, b: StoredU64, n| StoredU64::from(u64::from(a) + u64::from(b) + n as u64),
     );
     let lookback = LazyLookbackVec::new(
         "lookback",
         Version::ONE,
-        source.read_only_boxed_clone(),
+        &source,
         17,
         |a: StoredU64, b: Option<StoredU64>| {
             StoredU64::from(u64::from(a) + u64::from(b.unwrap_or_default()))
@@ -231,12 +227,12 @@ fn views_do_not_recursively_read_a_source_lending_chunks() {
     let since = LazySinceDayVec::new(
         "since",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        days.read_only_cached_boxed_clone(),
+        &source,
+        &days,
         Day1::from(100usize),
         |a: StoredU64, b: StoredU64| StoredU64::from(u64::from(a) + u64::from(b)),
     );
-    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, source.read_only_boxed_clone());
+    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);
     for view in [
         window.read_only_boxed_clone(),
         lookback.read_only_boxed_clone(),
@@ -351,8 +347,8 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
         let since = LazySinceDayVec::new(
             "since",
             Version::ONE,
-            source.clone(),
-            days.read_only_cached_boxed_clone(),
+            &source,
+            &days,
             Day1::from(100usize),
             move |a: StoredU64, b: StoredU64| {
                 StoredU64::from((u64::from(a) - u64::from(b)) * *factor)
@@ -367,8 +363,8 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
             let window = LazyWindowVec::new(
                 "window",
                 Version::ONE,
-                source.clone(),
-                starts.read_only_cached_boxed_clone(),
+                &source,
+                &starts,
                 inclusive,
                 move |a: StoredU64, b: StoredU64, count| {
                     StoredU64::from((u64::from(a) - u64::from(b)) * *factor + count as u64)
@@ -383,7 +379,7 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
             let view = LazyLookbackVec::new(
                 "lookback",
                 Version::ONE,
-                source.clone(),
+                &source,
                 lookback,
                 |a: StoredU64, b: Option<StoredU64>| {
                     StoredU64::from(u64::from(a) - b.map(u64::from).unwrap_or(0))
@@ -395,7 +391,7 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
             check(view.read_only_boxed_clone(), &expected);
         }
         check(
-            LazyPreviousDeltaVec::new("delta", Version::ONE, source).read_only_boxed_clone(),
+            LazyPreviousDeltaVec::new("delta", Version::ONE, &source).read_only_boxed_clone(),
             &vec![StoredU64::from(3u64); 40_000],
         );
     }
@@ -426,8 +422,8 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
     let since = LazySinceDayVec::new(
         "since",
         Version::ONE,
-        cached.read_only_boxed_clone(),
-        days.read_only_cached_boxed_clone(),
+        &cached,
+        &days,
         Day1::from(1usize),
         move |a: StoredU64, b: StoredU64| {
             counter.fetch_add(1, Ordering::Relaxed);
@@ -438,8 +434,8 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
-        cached.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &cached,
+        &starts,
         true,
         move |a: StoredU64, b: StoredU64, _| {
             counter.fetch_add(1, Ordering::Relaxed);
@@ -450,7 +446,7 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
     let lookback = LazyLookbackVec::new(
         "lookback",
         Version::ONE,
-        cached.read_only_boxed_clone(),
+        &cached,
         10,
         move |a: StoredU64, b: Option<StoredU64>| {
             counter.fetch_add(1, Ordering::Relaxed);
@@ -460,7 +456,7 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
     check_early_stop(&since, &calls);
     check_early_stop(&window, &calls);
     check_early_stop(&lookback, &calls);
-    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, cached.read_only_boxed_clone());
+    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &cached);
     cached.snapshot();
     cached.invalidate();
     source.truncate_if_needed_at(39_999).unwrap();
@@ -502,30 +498,21 @@ fn sparse_sources_keep_legacy_emitted_value_alignment() {
         "sparse_days",
         (0..20_000usize).map(|i| Day1::from(i / 10)),
     ));
-    let window = LazyWindowVec::new(
-        "window",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
-        true,
-        |a, b, n| a + b + n as u64,
-    );
+    let window = LazyWindowVec::new("window", Version::ONE, &source, &starts, true, |a, b, n| {
+        a + b + n as u64
+    });
     let since = LazySinceDayVec::new(
         "since",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        days.read_only_cached_boxed_clone(),
+        &source,
+        &days,
         Day1::from(100usize),
         |a, b| a + b,
     );
-    let lookback = LazyLookbackVec::new(
-        "lookback",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        17,
-        |a, b| a + b.unwrap_or(0),
-    );
-    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, source.read_only_boxed_clone());
+    let lookback = LazyLookbackVec::new("lookback", Version::ONE, &source, 17, |a, b| {
+        a + b.unwrap_or(0)
+    });
+    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);
     for (from, to) in [(0usize, 20_000usize), (3990, 9000), (4096, 8192)] {
         let indices = [from, from + 2, from + 2, to - 1];
         let mut cursor = Cursor::new(&source);

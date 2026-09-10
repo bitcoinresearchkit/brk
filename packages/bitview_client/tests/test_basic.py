@@ -6,10 +6,6 @@ from __future__ import print_function
 from bitview_client import BitviewClient
 
 
-def test_client_creation():
-    BitviewClient("http://localhost:3110")
-
-
 def test_tree_exists():
     client = BitviewClient("http://localhost:3110")
     assert hasattr(client, "series")

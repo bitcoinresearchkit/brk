@@ -79,7 +79,7 @@ where
     T: VecValue + PartialOrd + JsonSchema + 'static,
 {
     /// Reuse the same height source (and cache) as every resolution.
-    pub fn height_source(&self) -> &(impl ReadableVec<Height, T> + Clone + 'static + use<T>) {
+    pub fn height_source(&self) -> &(impl ReadableCloneableVec<Height, T> + use<T>) {
         self.day1.source()
     }
 }

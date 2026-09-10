@@ -110,7 +110,11 @@ impl Vecs {
             year10: Self::from_timestamps("year10", timestamps, |_, timestamp| {
                 Self::year10_from_timestamp(timestamp)
             }),
-            tx_index_count: LazyPreviousDeltaVec::new("tx_index_count", version, transaction_count),
+            tx_index_count: LazyPreviousDeltaVec::new(
+                "tx_index_count",
+                version,
+                &transaction_count,
+            ),
         }
     }
 

@@ -56,10 +56,10 @@ pub fn compute(
 
     let hash_rate = &vecs.rate.base.height;
     for (sma, window) in [
-        (&mut vecs.rate.sma._1w.height, lookback._1w.lazy()),
-        (&mut vecs.rate.sma._1m.height, lookback._1m.lazy()),
-        (&mut vecs.rate.sma._2m.height, &lookback._2m),
-        (&mut vecs.rate.sma._1y.height, lookback._1y.lazy()),
+        (&mut vecs.rate.sma._1w.height, lookback.start_vec(7)),
+        (&mut vecs.rate.sma._1m.height, lookback.start_vec(30)),
+        (&mut vecs.rate.sma._2m.height, lookback.start_vec(60)),
+        (&mut vecs.rate.sma._1y.height, lookback.start_vec(365)),
     ] {
         sma.compute_rolling_average(starting_height, window, hash_rate, exit)?;
     }

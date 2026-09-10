@@ -23,8 +23,8 @@ pub fn forced_import(
             let source = LazyWindowVec::<Height, Dollars, PartsPerMillionSigned64>::new(
                 &format!("{metric_name}_ppm_source"),
                 version,
-                prices.spot.usd.height.read_only_boxed_clone(),
-                window_starts.read_only_boxed_clone(),
+                &prices.spot.usd.height,
+                *window_starts,
                 false,
                 |current, past, _| {
                     RatioDiffDollars::<PartsPerMillionSigned64>::apply(current, past)

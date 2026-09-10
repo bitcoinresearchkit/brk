@@ -4,9 +4,9 @@ use bitview_traversable::Traversable;
 use brk_types::Version;
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{MapOption, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
+use vecdb::{LazyVec, MapOption, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
 
-use crate::{LazyTransformLast, Resolutions};
+use crate::Resolutions;
 
 macro_rules! define_derived_resolutions {
     (
@@ -19,8 +19,8 @@ macro_rules! define_derived_resolutions {
         #[traversable(transparent)]
         pub struct DerivedResolutions<T, S1T = T>(
             pub PerResolution<
-                $(LazyTransformLast<$index, Option<T>, Option<S1T>>,)*
-                $(LazyTransformLast<$epoch_index, T, S1T>,)*
+                $(LazyVec<$index, Option<T>, $index, Option<S1T>>,)*
+                $(LazyVec<$epoch_index, T, $epoch_index, S1T>,)*
             >,
         )
         where
@@ -73,10 +73,10 @@ macro_rules! define_derived_resolutions {
                 >,
             ) -> Self {
                 Self(PerResolution {
-                    $($field: LazyTransformLast::from_boxed::<MapOption<F>>(
+                    $($field: LazyVec::transformed::<MapOption<F>>(
                         name, version, source.$field,
                     ),)*
-                    $($epoch: LazyTransformLast::from_boxed::<F>(
+                    $($epoch: LazyVec::transformed::<F>(
                         name, version, source.$epoch,
                     ),)*
                 })

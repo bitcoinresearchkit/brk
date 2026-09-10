@@ -165,26 +165,16 @@ def test_integer_mapping_methods(fixture, request):
 class TestIndexToDate:
     """Test date conversion for all index types."""
 
-    def test_day1_genesis(self, day1_metric):
-        """Day1 index 0 = 2009-01-03 (genesis)."""
+    def test_day1_genesis_gap_then_consecutive_dates(self, day1_metric):
         dates = day1_metric.dates()
-        assert dates[0] == date(2009, 1, 3)
-
-    def test_day1_index_one(self, day1_metric):
-        """Day1 index 1 = 2009-01-09 (6-day gap after genesis)."""
-        dates = day1_metric.dates()
-        assert dates[1] == date(2009, 1, 9)
-
-    def test_day1_consecutive(self, day1_metric):
-        """Day1 indexes 2+ are consecutive days after index 1."""
-        dates = day1_metric.dates()
-        assert dates[2] == date(2009, 1, 10)
-        assert dates[3] == date(2009, 1, 11)
-        assert dates[4] == date(2009, 1, 12)
-
-    def test_day1_returns_date_type(self, day1_metric):
-        dates = day1_metric.dates()
-        assert type(dates[0]) is date
+        assert dates == [
+            date(2009, 1, 3),
+            date(2009, 1, 9),
+            date(2009, 1, 10),
+            date(2009, 1, 11),
+            date(2009, 1, 12),
+        ]
+        assert all(type(value) is date for value in dates)
 
     def test_month1(self, month1_metric):
         dates = month1_metric.dates()

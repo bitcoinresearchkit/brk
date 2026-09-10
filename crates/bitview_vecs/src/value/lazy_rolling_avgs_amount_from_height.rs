@@ -30,7 +30,7 @@ impl LazyRollingAvgsAmountFromHeight {
             let full_name = format!("{name}_{suffix}");
 
             // Sats rolling average, stored as a float.
-            let sats = LazyRollingAvgFromHeight::from_cumulative(
+            let sats = LazyRollingAvgFromHeight::from_source(
                 &format!("{full_name}_sats"),
                 version,
                 cumulative_sats,
@@ -46,7 +46,7 @@ impl LazyRollingAvgsAmountFromHeight {
             );
 
             // Cents rolling average, stored as a float.
-            let cents = LazyRollingAvgFromHeight::from_cumulative(
+            let cents = LazyRollingAvgFromHeight::from_source(
                 &format!("{full_name}_cents"),
                 version,
                 cumulative_cents,

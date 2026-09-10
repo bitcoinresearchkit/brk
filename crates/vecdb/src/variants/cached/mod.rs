@@ -15,6 +15,7 @@ pub mod pinned;
 pub mod read_only_clone;
 pub mod readable;
 mod readable_cloneable;
+mod reservation;
 mod shared_budget;
 pub mod strategy;
 pub mod typed;
@@ -28,8 +29,9 @@ pub use pinned::{Pinned, PinnedCachedVec};
 pub use shared_budget::CacheBudget;
 pub use strategy::CachedVecStrategy;
 
+use reservation::Reservation;
+
 struct CacheState<T> {
-    len: usize,
     version: Version,
     generation: u64,
     data: Option<Arc<Vec<T>>>,
@@ -38,7 +40,6 @@ struct CacheState<T> {
 impl<T> CacheState<T> {
     fn empty() -> Self {
         Self {
-            len: 0,
             version: Version::ZERO,
             generation: 0,
             data: None,
@@ -46,22 +47,17 @@ impl<T> CacheState<T> {
     }
 
     fn matching_data(&self, len: usize, version: Version) -> Option<Arc<Vec<T>>> {
-        if self.len == len && self.version == version {
-            self.data.clone()
-        } else {
-            None
-        }
+        let data = self.data.as_ref()?;
+        (data.len() == len && self.version == version).then(|| data.clone())
     }
 
     fn invalidate(&mut self) {
-        self.len = 0;
         self.version = Version::ZERO;
         self.generation = self.generation.wrapping_add(1);
         self.data = None;
     }
 
-    fn replace(&mut self, len: usize, version: Version, data: Arc<Vec<T>>) {
-        self.len = len;
+    fn replace(&mut self, version: Version, data: Arc<Vec<T>>) {
         self.version = version;
         self.data = Some(data);
     }
@@ -145,7 +141,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
             let cache_is_empty = {
                 let cache = self.cache.read();
                 if let Some(data) = cache.matching_data(len, version) {
-                    self.record_cache_access();
+                    self.strategy.record_access();
                     return Some(data);
                 }
                 cache.data.is_none()
@@ -162,7 +158,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
             let (generation, released_bytes) = {
                 let mut cache = self.cache.write();
                 if let Some(data) = cache.matching_data(len, version) {
-                    self.record_cache_access();
+                    self.strategy.record_access();
                     return Some(data);
                 }
                 cache.invalidate();
@@ -174,9 +170,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
             }
 
             let bytes = len.checked_mul(size_of::<V::T>())?;
-            if bytes > 0 && !self.strategy.try_reserve(bytes) {
-                return None;
-            }
+            let reservation = Reservation::new(&self.strategy, bytes)?;
 
             let data = self.inner.collect_range_dyn(0, len);
             let mut cache = self.cache.write();
@@ -184,24 +178,18 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
                 || self.inner.len() != len
                 || self.inner.snapshot_version() != version
             {
-                self.strategy.release(bytes);
                 continue;
             }
             debug_assert_eq!(data.len(), len);
             debug_assert!(size_of::<V::T>() == 0 || data.capacity() == len);
 
             let data = Arc::new(data);
-            self.record_cache_access();
-            self.strategy.set_resident_bytes(bytes);
-            cache.replace(len, version, data.clone());
+            self.strategy.record_access();
+            reservation.retain();
+            cache.replace(version, data.clone());
 
             return Some(data);
         }
-    }
-
-    #[inline(always)]
-    fn record_cache_access(&self) {
-        self.strategy.record_access();
     }
 }
 

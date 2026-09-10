@@ -53,15 +53,15 @@ fn live_hash_uses_hash_and_live_cdn_policy() {
 }
 
 #[test]
-fn series_tail_when_end_exceeds_stable_count() {
-    let p = CacheParams::series(v(3), 0, 60, Some(50), h(0xabcd), CdnCacheMode::Live);
-    assert_eq!(tag(&p), "W/\"s3-tabcd\"");
-}
-
-#[test]
-fn series_historical_when_end_at_or_below_stable_count() {
-    let p = CacheParams::series(v(3), 10, 50, Some(50), h(0xabcd), CdnCacheMode::Live);
-    assert_eq!(tag(&p), "W/\"s3-h10-50\"");
+fn series_classification_at_stable_boundary() {
+    for (from, end, expected) in [
+        (0, 50, "W/\"s3-h0-50\""),
+        (10, 50, "W/\"s3-h10-50\""),
+        (0, 51, "W/\"s3-tabcd\""),
+    ] {
+        let p = CacheParams::series(v(3), from, end, Some(50), h(0xabcd), CdnCacheMode::Live);
+        assert_eq!(tag(&p), expected, "range {from}..{end}");
+    }
 }
 
 #[test]
@@ -84,18 +84,6 @@ fn series_mutable_class_always_tail() {
     let large = CacheParams::series(v(3), 0, 1_000_000, None, h(0xabcd), CdnCacheMode::Live);
     assert_eq!(tag(&small), "W/\"s3-tabcd\"");
     assert_eq!(tag(&large), "W/\"s3-tabcd\"");
-}
-
-#[test]
-fn series_at_stable_boundary_is_historical() {
-    let p = CacheParams::series(v(3), 0, 50, Some(50), h(0xabcd), CdnCacheMode::Live);
-    assert_eq!(tag(&p), "W/\"s3-h0-50\"");
-}
-
-#[test]
-fn series_just_past_stable_boundary_is_tail() {
-    let p = CacheParams::series(v(3), 0, 51, Some(50), h(0xabcd), CdnCacheMode::Live);
-    assert_eq!(tag(&p), "W/\"s3-tabcd\"");
 }
 
 #[test]

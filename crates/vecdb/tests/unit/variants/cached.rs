@@ -50,6 +50,7 @@ struct BlockingVec {
     started: Arc<Barrier>,
     resume: Arc<Barrier>,
     block_once: Arc<AtomicBool>,
+    panic_once: Arc<AtomicBool>,
 }
 
 impl BlockingVec {
@@ -59,6 +60,7 @@ impl BlockingVec {
             started: Arc::new(Barrier::new(2)),
             resume: Arc::new(Barrier::new(2)),
             block_once: Arc::new(AtomicBool::new(true)),
+            panic_once: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -113,6 +115,7 @@ impl ReadableVec<usize, u32> for BlockingVec {
     }
 
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<u32>) {
+        assert!(!self.panic_once.swap(false, SeqCst), "failed snapshot read");
         let values = self.values(from, to);
         if self.block_once.swap(false, SeqCst) {
             self.started.wait();
@@ -290,4 +293,66 @@ fn empty_vec_materializes_once() {
     assert!(cached.snapshot().is_empty());
     assert!(cached.snapshot().is_empty());
     assert_eq!(BUDGET.reservations.load(SeqCst), 0);
+}
+
+#[test]
+fn failed_materialization_releases_its_reservation() {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    static BUDGET: TestBudget = TestBudget::new(8);
+    let source = BlockingVec::new([10, 20]);
+    source.block_once.store(false, SeqCst);
+    source.panic_once.store(true, SeqCst);
+    let resident_bytes = Arc::new(AtomicUsize::new(0));
+    let cached = CachedVec::wrap_budgeted(
+        source,
+        &BUDGET,
+        Arc::new(AtomicU64::new(0)),
+        resident_bytes.clone(),
+    );
+
+    assert!(catch_unwind(AssertUnwindSafe(|| cached.snapshot())).is_err());
+    assert_eq!(BUDGET.remaining.load(SeqCst), 8);
+    assert_eq!(resident_bytes.load(SeqCst), 0);
+    assert!(cached.cached_snapshot().is_none());
+
+    assert_eq!(cached.snapshot().as_slice(), [10, 20]);
+    assert_eq!(BUDGET.remaining.load(SeqCst), 0);
+    assert_eq!(resident_bytes.load(SeqCst), 8);
+    cached.invalidate();
+    assert_eq!(BUDGET.remaining.load(SeqCst), 8);
+
+    assert!(BUDGET.try_reserve(4));
+    assert_eq!(cached.snapshot().as_slice(), [10, 20]);
+    assert!(cached.cached_snapshot().is_none());
+    assert_eq!(BUDGET.remaining.load(SeqCst), 4);
+    assert_eq!(resident_bytes.load(SeqCst), 0);
+    BUDGET.release(4);
+}
+
+#[test]
+fn invalidated_fill_returns_its_reservation_before_retrying() {
+    static BUDGET: TestBudget = TestBudget::new(8);
+    let source = BlockingVec::new([10, 20]);
+    let cached = CachedVec::wrap_budgeted(
+        source.clone(),
+        &BUDGET,
+        Arc::new(AtomicU64::new(0)),
+        Arc::new(AtomicUsize::new(0)),
+    );
+    let reader = cached.clone();
+    let handle = thread::spawn(move || reader.snapshot());
+
+    source.started.wait();
+    source.replace(1, 30);
+    cached.invalidate();
+    source.resume.wait();
+
+    let snapshot = handle.join().unwrap();
+    assert_eq!(snapshot.as_slice(), [10, 30]);
+    assert!(Arc::ptr_eq(&snapshot, &cached.cached_snapshot().unwrap()));
+    assert_eq!(BUDGET.reservations.load(SeqCst), 2);
+    assert_eq!(BUDGET.remaining.load(SeqCst), 0);
+    cached.invalidate();
+    assert_eq!(BUDGET.remaining.load(SeqCst), 8);
 }

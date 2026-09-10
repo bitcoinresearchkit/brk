@@ -4,8 +4,8 @@ use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{
-    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableVec,
-    TypedVec, VecIndex, VecValue, Version, short_type_name,
+    AnyExportableVec, AnyVec, Formattable, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec,
+    ReadableVec, TypedVec, VecIndex, VecValue, Version, short_type_name,
 };
 
 use vecdb::SparseRead;
@@ -59,14 +59,14 @@ where
     pub fn new(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<I, S>,
+        source: &(impl ReadableCloneableVec<I, S> + ?Sized),
         lookback: usize,
         compute: impl Fn(S, Option<S>) -> T + Send + Sync + 'static,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
-            source,
+            source: source.read_only_boxed_clone(),
             lookback,
             compute: Arc::new(compute),
         }
@@ -315,8 +315,7 @@ mod tests {
     use brk_types::{Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec,
-        WritableVec,
+        AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
     };
 
     use super::LazyLookbackVec;
@@ -333,13 +332,10 @@ mod tests {
         }
         source.write().unwrap();
 
-        let lookback = LazyLookbackVec::new(
-            "lookback",
-            Version::ONE,
-            source.read_only_boxed_clone(),
-            2,
-            |current, previous| current - previous.unwrap_or_default(),
-        );
+        let lookback =
+            LazyLookbackVec::new("lookback", Version::ONE, &source, 2, |current, previous| {
+                current - previous.unwrap_or_default()
+            });
 
         assert_eq!(
             lookback.read_sorted_at(&[0, 2, 2, 4, 5]),

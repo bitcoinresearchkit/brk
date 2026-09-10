@@ -8,12 +8,12 @@ use std::{
 use parking_lot::RwLock;
 use rawdb::{Database, Region};
 
-use super::DECODE_CHUNK_SIZE;
+use super::{DECODE_CHUNK_SIZE, decode::decode};
 use crate::{
     AnyStoredVec, AnyVec, BytesVec, BytesVecReader, Error, Header, ImportOptions, ImportableVec,
     MutableVec, OverflowVecReader, OverflowVecValue, ReadOnlyOverflowVec, ReadableBoxedVec,
     ReadableCloneableVec, ReadableVec, Result, SharedLen, Stamp, StoredVec, TypedVec, VecIndex,
-    Version, WritableVec, short_type_name, unlikely,
+    Version, WritableVec, short_type_name,
 };
 
 const VERSION: Version = Version::ONE;
@@ -88,26 +88,20 @@ where
 
     #[inline(always)]
     fn decode(&self, compact: T::Compact, reader: &OverflowVecReader<I, T>) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
+        decode::<T>(compact, |index| {
             reader
-                .overflow(&self.overflow, overflow_index.unwrap())
+                .overflow(&self.overflow, index)
                 .expect("OverflowVec pointer must reference a stored value")
-        } else {
-            T::from_compact(compact)
-        }
+        })
     }
 
     #[inline(always)]
     fn decode_current(&self, compact: T::Compact) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
+        decode::<T>(compact, |index| {
             self.overflow
-                .collect_one_at(overflow_index.unwrap())
+                .collect_one_at(index)
                 .expect("OverflowVec pointer must reference a stored value")
-        } else {
-            T::from_compact(compact)
-        }
+        })
     }
 
     #[inline(always)]
@@ -116,14 +110,11 @@ where
         overflow_vec: &MutableVec<BytesVec<usize, T>>,
         overflow: &BytesVecReader<usize, T>,
     ) -> T {
-        let overflow_index = T::overflow_index(compact);
-        if unlikely(overflow_index.is_some()) {
+        decode::<T>(compact, |index| {
             overflow_vec
-                .get_with_reader_at(overflow_index.unwrap(), overflow)
+                .get_with_reader_at(index, overflow)
                 .expect("OverflowVec pointer must reference a stored value")
-        } else {
-            T::from_compact(compact)
-        }
+        })
     }
 
     fn store_overflow(overflow: &mut MutableVec<BytesVec<usize, T>>, value: T) -> usize {

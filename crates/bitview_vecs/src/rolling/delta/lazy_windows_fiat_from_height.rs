@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_compute::FixedRatio;
 use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
-use vecdb::{DeltaChange, DeltaRate, LazyDeltaVec, ReadableCloneableVec, VecValue};
+use vecdb::{ReadableCloneableVec, VecValue};
 
 use crate::{
     FiatType, IndexSources, LazyDeltaFiatFromHeight, LazyDeltaFromHeight,
@@ -38,25 +38,17 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
         indexes: &IndexSources,
     ) -> Self {
-        let source = source.read_only_boxed_clone();
         let (absolute, rate) = window_starts
             .map_with_suffix(|suffix, window_start| {
                 let name = format!("{name}_{suffix}");
-                let cached = window_start.read_only_boxed_clone();
-                let starts_version = cached.version();
-
                 let cents_name = format!("{name}_cents");
-                let height = LazyDeltaVec::<Height, S, C, DeltaChange>::new(
+                let cents = LazyDeltaFromHeight::from_source(
                     &cents_name,
                     version,
-                    source.clone(),
-                    starts_version,
-                    {
-                        let cached = cached.clone();
-                        move || cached.snapshot()
-                    },
+                    source,
+                    *window_start,
+                    indexes,
                 );
-                let cents = LazyDeltaFromHeight::new(&cents_name, version, height, indexes);
                 let usd = LazyPerBlock::from_resolutions::<C::ToDollars>(
                     &name,
                     version,
@@ -64,16 +56,13 @@ where
                 );
                 let absolute = LazyDeltaFiatFromHeight { usd, cents };
 
-                let ppm_name = format!("{name}_rate_{}", B::SUFFIX);
-                let height = LazyDeltaVec::<Height, S, B, DeltaRate>::new(
-                    &ppm_name,
+                let rate = LazyDeltaPercentFromHeight::from_source(
+                    &name,
                     version,
-                    source.clone(),
-                    starts_version,
-                    move || cached.snapshot(),
+                    source,
+                    *window_start,
+                    indexes,
                 );
-                let ppm = LazyDeltaFromHeight::new(&ppm_name, version, height, indexes);
-                let rate = LazyDeltaPercentFromHeight::from_ppm(&name, version, ppm);
 
                 (absolute, rate)
             })

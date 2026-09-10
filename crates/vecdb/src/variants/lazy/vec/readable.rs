@@ -1,3 +1,4 @@
+use crate::traits::chunk_folds;
 use crate::{AnyVec, ReadableVec, VecIndex, VecValue};
 
 use super::LazyVec;
@@ -38,15 +39,11 @@ where
     }
 
     #[inline]
-    fn fold_range_at<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, mut f: F) -> B
+    fn fold_range_at<B, F: FnMut(B, T) -> B>(&self, from: usize, to: usize, init: B, f: F) -> B
     where
         Self: Sized,
     {
-        let mut acc = Some(init);
-        self.for_each_chunk_at(from, to, &mut |_, values| {
-            acc = Some(values.iter().cloned().fold(acc.take().unwrap(), &mut f));
-        });
-        acc.unwrap()
+        chunk_folds::fold(self, from, to, init, f)
     }
 
     #[inline]

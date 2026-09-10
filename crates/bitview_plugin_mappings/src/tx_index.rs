@@ -31,22 +31,14 @@ impl Vecs {
             input_count: LazyIndexCountVec::new(
                 "input_count",
                 version,
-                indexer
-                    .vecs()
-                    .transactions
-                    .first_txin_index
-                    .read_only_boxed_clone(),
-                indexer.vecs().inputs.outpoint.read_only_boxed_clone(),
+                &indexer.vecs().transactions.first_txin_index,
+                &indexer.vecs().inputs.outpoint,
             ),
             output_count: LazyIndexCountVec::new(
                 "output_count",
                 version,
-                indexer
-                    .vecs()
-                    .transactions
-                    .first_txout_index
-                    .read_only_boxed_clone(),
-                indexer.vecs().outputs.value.read_only_boxed_clone(),
+                &indexer.vecs().transactions.first_txout_index,
+                &indexer.vecs().outputs.value,
             ),
         }
     }

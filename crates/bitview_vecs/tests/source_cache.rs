@@ -34,7 +34,7 @@ fn compact_ratio_reads_do_not_retain_an_expanded_cumulative_history() {
         "compact_counts",
         [StoredU16::from(3u16); 16],
     ));
-    let compact = CumulativeCountVec::new(counts.read_only_cached_boxed_clone());
+    let compact = CumulativeCountVec::new(&counts);
     static READS: AtomicUsize = AtomicUsize::new(0);
     let counted = LazyVec::init(
         "counted",
@@ -234,9 +234,17 @@ fn pinned_policy_survives_owner_cloning_and_inner_compute_access_invalidates() {
 
 #[test]
 fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
+    use vecdb::ReadableCloneableVec;
+
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let indexes = common::indexes(&db);
+    let mut indexes = common::indexes(&db);
+    indexes.height_day1 = common::stored(
+        &db,
+        "daily_view_mapping",
+        [Day1::from(0usize), Day1::from(4095usize)],
+    )
+    .read_only_boxed_clone();
     let mappings = DailyMappings::new(&indexes);
     let mut metric = DailyMetric::<StoredU64>::forced_import(
         &CACHE_BUDGET,
@@ -251,6 +259,15 @@ fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
         metric.day1.push(StoredU64::from(i as u64));
     }
     metric.day1.write().unwrap();
+    assert!(metric.day1.cached_snapshot().is_none());
+    assert_eq!(
+        metric.views.height.collect(),
+        [Some(StoredU64::from(0u64)), Some(StoredU64::from(4095u64))]
+    );
+    let view_snapshot = metric
+        .day1
+        .cached_snapshot()
+        .expect("daily view bypassed cache");
     let reader = metric.read_only_clone();
     is_budgeted(&reader.day1);
     let mut json = Vec::new();
@@ -265,6 +282,7 @@ fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
         .cached_snapshot()
         .expect("daily catalog bypassed cache");
     assert!(Arc::ptr_eq(&snapshot, &reader.day1.snapshot()));
+    assert!(Arc::ptr_eq(&snapshot, &view_snapshot));
     metric
         .day1
         .truncate_if_needed(Day1::from(4095usize))
@@ -272,6 +290,10 @@ fn daily_owner_is_budgeted_and_its_catalog_uses_the_same_cache() {
     metric.day1.push(StoredU64::from(7000u64));
     metric.day1.write().unwrap();
     assert_eq!(reader.day1.collect_last(), Some(StoredU64::from(7000u64)));
+    assert_eq!(
+        reader.views.height.collect_last(),
+        Some(Some(StoredU64::from(7000u64)))
+    );
 }
 
 #[test]

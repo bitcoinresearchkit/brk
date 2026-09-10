@@ -94,7 +94,7 @@ impl<B: FixedRatio> LazyPercentPerBlock<B> {
         let source = LazyLookbackVec::new(
             &format!("{ppm_name}_source"),
             version,
-            source.read_only_boxed_clone(),
+            source,
             lookback,
             compute,
         );

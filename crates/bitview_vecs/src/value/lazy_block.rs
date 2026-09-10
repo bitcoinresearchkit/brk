@@ -32,18 +32,10 @@ impl LazyValueBlock {
         cumulative_sats: &impl ReadableCloneableVec<Height, Sats>,
         cumulative_cents: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
-        let sats = LazyPreviousDeltaVec::new(
-            &format!("{name}_sats"),
-            version,
-            cumulative_sats.read_only_boxed_clone(),
-        );
+        let sats = LazyPreviousDeltaVec::new(&format!("{name}_sats"), version, cumulative_sats);
         let btc =
             LazyVec::transformed::<SatsToBitcoin>(name, version, sats.read_only_boxed_clone());
-        let cents = LazyPreviousDeltaVec::new(
-            &format!("{name}_cents"),
-            version,
-            cumulative_cents.read_only_boxed_clone(),
-        );
+        let cents = LazyPreviousDeltaVec::new(&format!("{name}_cents"), version, cumulative_cents);
         let usd = LazyVec::transformed::<CentsUnsignedToDollars>(
             &format!("{name}_usd"),
             version,

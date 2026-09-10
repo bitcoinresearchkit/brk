@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 use brk_types::{Day1, Version};
-use vecdb::{LazyVec, ReadableBoxedVec, ReadableCloneableVec, UnaryTransform, VecValue};
+use vecdb::{LazyVec, ReadableCloneableVec, UnaryTransform, VecValue};
 
 use crate::{DailyMappings, DailyValue, DailyViews};
 
@@ -24,19 +24,14 @@ where
     pub fn from_source<F>(
         name: &str,
         version: Version,
-        source: ReadableBoxedVec<Day1, S>,
+        source: &(impl ReadableCloneableVec<Day1, S> + ?Sized),
         mappings: &DailyMappings,
     ) -> Self
     where
         F: UnaryTransform<S, T>,
     {
-        let day1 = LazyVec::transformed::<F>(name, version, source);
-        let views = Box::new(DailyViews::new(
-            name,
-            day1.read_only_boxed_clone(),
-            version,
-            mappings,
-        ));
+        let day1 = LazyVec::transformed::<F>(name, version, source.read_only_boxed_clone());
+        let views = Box::new(DailyViews::new(name, &day1, version, mappings));
 
         Self { day1, views }
     }

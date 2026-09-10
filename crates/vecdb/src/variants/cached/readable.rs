@@ -11,7 +11,7 @@ impl<V: TypedVec + ReadableVec<V::I, V::T>, S: CachedVecStrategy> CachedVec<V, S
             .cache
             .try_read()?
             .matching_data(self.inner.len(), self.inner.snapshot_version())?;
-        self.record_cache_access();
+        self.strategy.record_access();
         Some(data)
     }
 }

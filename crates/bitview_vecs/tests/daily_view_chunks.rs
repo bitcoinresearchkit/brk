@@ -129,7 +129,7 @@ fn daily_chunks_match_scalar_paths_including_missing_and_duplicate_days() {
         let repeat = DailyView::<Height, StoredU64, RepeatDay>::new(
             "repeat",
             Version::ONE,
-            source.clone(),
+            &source,
             &repeated,
         );
         check(
@@ -139,7 +139,7 @@ fn daily_chunks_match_scalar_paths_including_missing_and_duplicate_days() {
                 .collect::<Vec<_>>(),
         );
         let last =
-            DailyView::<Height, StoredU64, LastDay>::new("last", Version::ONE, source, &last);
+            DailyView::<Height, StoredU64, LastDay>::new("last", Version::ONE, &source, &last);
         check(
             last.read_only_boxed_clone(),
             &[
@@ -188,12 +188,8 @@ fn last_day_keeps_selective_source_reads() {
         "selective_mapping",
         (0..200usize).map(|i| Day1::from(i * 100)),
     );
-    let view = DailyView::<Height, StoredU64, LastDay>::new(
-        "last",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        &mapping,
-    );
+    let view =
+        DailyView::<Height, StoredU64, LastDay>::new("last", Version::ONE, &source, &mapping);
     DAILY_READS.store(0, Ordering::Relaxed);
     let mut actual = Vec::new();
     view.for_each_chunk_at(180, 183, &mut |_, values| actual.extend_from_slice(values));

@@ -39,8 +39,8 @@ impl Vecs {
         let inflation_source = LazyWindowVec::<Height, Sats, PartsPerMillionSigned64>::new(
             "inflation_rate_ppm_source",
             inflation_version,
-            supply_metrics.sats.height.read_only_boxed_clone(),
-            (*cached_starts._1y).clone(),
+            &supply_metrics.sats.height,
+            cached_starts._1y,
             false,
             |current, previous, _| {
                 if previous <= Sats::FIFTY_BTC {
@@ -133,8 +133,8 @@ impl Vecs {
         LazyWindowVec::new(
             name,
             version,
-            caps.read_only_boxed_clone(),
-            window_starts,
+            &caps,
+            &window_starts,
             false,
             |current, previous, _| {
                 let growth = |current: Cents, previous: Cents| {

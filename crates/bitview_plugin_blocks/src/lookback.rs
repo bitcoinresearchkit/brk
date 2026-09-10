@@ -104,7 +104,7 @@ impl Vecs {
                     concat!("height_", $suffix, "_ago"),
                     version,
                     $hours,
-                    timestamps.clone(),
+                    &timestamps,
                 )
             };
         }
@@ -114,13 +114,13 @@ impl Vecs {
                     concat!("height_", $suffix, "_ago"),
                     version,
                     $days,
-                    timestamps.clone(),
+                    &timestamps,
                 )
             };
         }
         macro_rules! cached_days {
             ($suffix:literal, $days:expr) => {
-                CachedWindowStartVec::new(days!($suffix, $days))
+                CachedWindowStartVec::wrap(days!($suffix, $days))
             };
         }
 
@@ -183,18 +183,18 @@ impl Vecs {
 
     pub fn window_starts(&self) -> WindowStarts<'_> {
         WindowStarts(Windows {
-            _24h: self._24h.lazy(),
-            _1w: self._1w.lazy(),
-            _1m: self._1m.lazy(),
-            _1y: self._1y.lazy(),
+            _24h: self.start_vec(1),
+            _1w: self.start_vec(7),
+            _1m: self.start_vec(30),
+            _1y: self.start_vec(365),
         })
     }
 
     pub fn start_vec(&self, days: usize) -> &LazyWindowStartVec {
         match days {
-            1 => self._24h.lazy(),
+            1 => &self._24h.inner,
             3 => &self._3d,
-            7 => self._1w.lazy(),
+            7 => &self._1w.inner,
             8 => &self._8d,
             9 => &self._9d,
             12 => &self._12d,
@@ -202,7 +202,7 @@ impl Vecs {
             14 => &self._2w,
             21 => &self._21d,
             26 => &self._26d,
-            30 => self._1m.lazy(),
+            30 => &self._1m.inner,
             34 => &self._34d,
             50 => &self._50d,
             55 => &self._55d,
@@ -210,28 +210,28 @@ impl Vecs {
             63 => &self._9w,
             84 => &self._12w,
             89 => &self._89d,
-            90 => self._3m.lazy(),
+            90 => &self._3m.inner,
             98 => &self._14w,
             111 => &self._111d,
             144 => &self._144d,
-            180 => self._6m.lazy(),
+            180 => &self._6m.inner,
             182 => &self._26w,
             200 => &self._200d,
             270 => &self._9m,
             350 => &self._350d,
             360 => &self._12m,
-            365 => self._1y.lazy(),
+            365 => &self._1y.inner,
             420 => &self._14m,
-            730 => self._2y.lazy(),
+            730 => &self._2y.inner,
             780 => &self._26m,
-            1095 => self._3y.lazy(),
+            1095 => &self._3y.inner,
             1400 => &self._200w,
-            1460 => self._4y.lazy(),
-            1825 => self._5y.lazy(),
-            2190 => self._6y.lazy(),
-            2920 => self._8y.lazy(),
+            1460 => &self._4y.inner,
+            1825 => &self._5y.inner,
+            2190 => &self._6y.inner,
+            2920 => &self._8y.inner,
             3285 => &self._9y,
-            3650 => self._10y.lazy(),
+            3650 => &self._10y.inner,
             4380 => &self._12y,
             5110 => &self._14y,
             9490 => &self._26y,

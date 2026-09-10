@@ -8,10 +8,7 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{Bytes, Height, PartsPerMillion32, Sats, StoredU64, VSize, Version};
-use vecdb::{
-    AnyVec, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Rw,
-    StorageMode,
-};
+use vecdb::{AnyVec, CacheBudget, Database, ReadOnlyClone, ReadableCloneableVec, Rw, StorageMode};
 
 use super::breakdown::BlockMetrics;
 
@@ -138,9 +135,7 @@ impl Total {
         )
     }
 
-    pub fn data_bytes_source(
-        &self,
-    ) -> &(impl ReadableVec<Height, Bytes> + Clone + 'static + use<>) {
+    pub fn data_bytes_source(&self) -> &(impl ReadableCloneableVec<Height, Bytes> + use<>) {
         self.data_bytes.cumulative_source()
     }
 

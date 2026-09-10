@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use brk_types::{Cents, Height, StoredU64, Version};
 use vecdb::{
-    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex, short_type_name,
+    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
+    VecIndex, short_type_name,
 };
 
 #[cfg(test)]
@@ -20,14 +21,14 @@ impl LazySmaVec {
     pub fn new(
         name: &str,
         version: Version,
-        window_starts: ReadableBoxedVec<Height, Height>,
-        prefix_sum: impl ReadableVec<Height, StoredU64> + Clone + 'static,
+        window_starts: &(impl ReadableCloneableVec<Height, Height> + ?Sized),
+        prefix_sum: &(impl ReadableCloneableVec<Height, StoredU64> + ?Sized),
     ) -> Self {
         Self {
             name: Arc::from(name),
             version,
-            window_starts,
-            prefix_sum: ReadableBoxedVec::new(prefix_sum),
+            window_starts: window_starts.read_only_boxed_clone(),
+            prefix_sum: prefix_sum.read_only_boxed_clone(),
         }
     }
 
@@ -192,8 +193,8 @@ mod tests {
     };
 
     use vecdb::{
-        AnyStoredVec, CacheBudget, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec,
-        PcoVec, ReadableCloneableVec, WritableVec,
+        AnyStoredVec, CacheBudget, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
+        WritableVec,
     };
 
     use super::*;
@@ -223,18 +224,8 @@ mod tests {
 
         let prices = CachedVec::wrap(prices);
         static CACHE: CacheBudget = CacheBudget::new(1024 * 1024);
-        let prefix_sum = SmaPrefixSumVec::cached(
-            &CACHE,
-            "prefix",
-            Version::ONE,
-            prices.read_only_cached_boxed_clone(),
-        );
-        let sma = LazySmaVec::new(
-            "sma",
-            Version::ONE,
-            starts.read_only_boxed_clone(),
-            prefix_sum.cached_boxed_clone(),
-        );
+        let prefix_sum = SmaPrefixSumVec::cached(&CACHE, "prefix", Version::ONE, &prices);
+        let sma = LazySmaVec::new("sma", Version::ONE, &starts, &prefix_sum);
 
         assert_eq!(
             prefix_sum.snapshot().as_slice(),

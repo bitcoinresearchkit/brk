@@ -18,7 +18,7 @@ pub fn forced_import(
     let true_range_source = LazyLookbackVec::new(
         "price_true_range_source",
         v,
-        spot_price.read_only_boxed_clone(),
+        spot_price,
         1,
         |current, previous| {
             let previous = previous.unwrap_or(current);

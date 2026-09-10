@@ -12,8 +12,7 @@ use brk_types::{Day1, Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, BinaryTransform, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadBounds, ReadableCloneableVec, ReadableVec, ReverseOperands, VecValue,
-    WritableVec,
+    PcoVecValue, ReadBounds, ReadableVec, ReverseOperands, VecValue, WritableVec,
 };
 
 #[path = "../benches/unit/lazy_folds.rs"]
@@ -95,32 +94,27 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         "denominator",
         (0..64).map(|_| StoredU16::new(10)),
     ));
-    let denominator = CumulativeCountVec::new(denominator.read_only_cached_boxed_clone());
+    let denominator = CumulativeCountVec::new(&denominator);
     let cumulative = CachedVec::wrap(stored(
         &db,
         "cumulative",
         (0..64_u64).map(|i| StoredU64::from((i + 1) * 10)),
     ));
     let first = stored(&db, "first", (0_usize..64).map(|i| Height::from(i / 2)));
-    let count = LazyIndexCountVec::new(
-        "count",
-        Version::ONE,
-        first.read_only_boxed_clone(),
-        source.read_only_boxed_clone(),
-    );
-    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, source.read_only_boxed_clone());
+    let count = LazyIndexCountVec::new("count", Version::ONE, &first, &source);
+    let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);
     let lookback = LazyLookbackVec::new(
         "lookback",
         Version::ONE,
-        source.read_only_boxed_clone(),
+        &source,
         12,
         |current, previous| current - previous.unwrap_or_default(),
     );
     let since = LazySinceDayVec::new(
         "since",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        days.read_only_cached_boxed_clone(),
+        &source,
+        &days,
         Day1::from(2),
         |current, previous| current - previous,
     );
@@ -128,8 +122,8 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         LazyWindowVec::new(
             "window",
             Version::ONE,
-            source.read_only_boxed_clone(),
-            starts.read_only_cached_boxed_clone(),
+            &source,
+            &starts,
             inclusive,
             |current, previous, count| current - previous + StoredU64::from(count),
         )
@@ -146,13 +140,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         StoredU64,
         PartsPerMillion32,
         ReverseOperands<RatioU64<PartsPerMillion32>>,
-    >::new(
-        "rolling",
-        Version::ONE,
-        denominator.read_only_boxed_clone(),
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
-    );
+    >::new("rolling", Version::ONE, &denominator, &source, &starts);
     let cached_rolling = LazyRollingRatioVec::<
         StoredU64,
         StoredU64,
@@ -161,9 +149,9 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
     >::new(
         "cached_rolling",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        cumulative.read_only_cached_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &source,
+        &cumulative,
+        &starts,
     );
 
     let check = || {
@@ -194,8 +182,8 @@ fn fallible_fold_stops_transforming_after_the_first_error() {
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
-        source.read_only_boxed_clone(),
-        starts.read_only_cached_boxed_clone(),
+        &source,
+        &starts,
         true,
         move |current, _, _| {
             captured_calls.fetch_add(1, Ordering::Relaxed);

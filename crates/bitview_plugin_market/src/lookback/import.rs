@@ -20,8 +20,8 @@ pub fn forced_import(
             let source = LazyWindowVec::<Height, Cents, Cents>::new(
                 &format!("{metric_name}_cents_source"),
                 version,
-                prices.spot.cents.height.read_only_boxed_clone(),
-                window_starts.read_only_boxed_clone(),
+                &prices.spot.cents.height,
+                *window_starts,
                 false,
                 |_, past, _| past,
             );

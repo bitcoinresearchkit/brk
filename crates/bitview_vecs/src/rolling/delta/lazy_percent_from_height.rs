@@ -1,11 +1,11 @@
 use bitview_collections::Percent;
 use bitview_compute::FixedRatio;
 use bitview_traversable::Traversable;
-use brk_types::{StoredF32, Version};
+use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{DeltaRate, VecValue};
+use vecdb::{DeltaRate, ReadableCloneableVec, VecValue};
 
-use crate::{LazyDeltaFromHeight, LazyPerBlock};
+use crate::{IndexSources, LazyDeltaFromHeight, LazyPerBlock};
 
 #[derive(Clone, Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
@@ -21,11 +21,17 @@ where
     S: VecValue + Into<f64>,
     B: FixedRatio + From<f64>,
 {
-    pub fn from_ppm(
+    pub fn from_source(
         name: &str,
         version: Version,
-        ppm: LazyDeltaFromHeight<S, B, DeltaRate>,
+        source: &impl ReadableCloneableVec<Height, S>,
+        window_start: &impl ReadableCloneableVec<Height, Height>,
+        indexes: &IndexSources,
     ) -> Self {
+        let ppm_name = format!("{name}_rate_{}", B::SUFFIX);
+        let ppm =
+            LazyDeltaFromHeight::from_source(&ppm_name, version, source, window_start, indexes);
+
         let ratio_name = format!("{name}_rate_ratio");
         let ratio =
             LazyPerBlock::from_resolutions::<B::ToRatio>(&ratio_name, version, &ppm.resolutions);

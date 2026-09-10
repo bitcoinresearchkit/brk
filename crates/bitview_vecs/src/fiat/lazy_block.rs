@@ -13,11 +13,8 @@ impl<C: FiatType> LazyFiatBlock<C> {
         version: Version,
         cumulative: &LazyPerBlock<C>,
     ) -> Self {
-        let cents = LazyPreviousDeltaVec::new(
-            &format!("{name}_cents"),
-            version,
-            cumulative.height.read_only_boxed_clone(),
-        );
+        let cents =
+            LazyPreviousDeltaVec::new(&format!("{name}_cents"), version, &cumulative.height);
         let usd =
             LazyVec::transformed::<C::ToDollars>(name, version, cents.read_only_boxed_clone());
         Self { usd, cents }

@@ -8,7 +8,7 @@ use brk_types::{
 use common::{indexes, stored};
 use schemars::JsonSchema;
 use tempfile::tempdir;
-use vecdb::{AnyVec, CachedVec, Database, ReadableVec, UnaryTransform};
+use vecdb::{AnyVec, CachedVec, Database, ReadableCloneableVec, ReadableVec, UnaryTransform};
 
 mod common;
 
@@ -95,11 +95,11 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         _1y: 365,
     }
     .map_with_suffix(|suffix, &days| {
-        CachedWindowStartVec::new(LazyWindowStartVec::days(
+        CachedWindowStartVec::wrap(LazyWindowStartVec::days(
             suffix,
             Version::new(3),
             days,
-            timestamps.read_only_cached_boxed_clone(),
+            &timestamps,
         ))
     });
     let starts_ref = Windows {
@@ -135,6 +135,14 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
     let amount_delta =
         LazyRollingDeltasAmountFromHeight::<Sats, SatsSigned, PartsPerMillionSigned64>::new(
             "amount_delta",
+            version,
+            &spot_sats,
+            &starts_ref,
+            &indexes,
+        );
+    let scalar_delta =
+        LazyRollingDeltasFromHeight::<Sats, SatsSigned, PartsPerMillionSigned64>::new(
+            "scalar_delta",
             version,
             &spot_sats,
             &starts_ref,
@@ -223,6 +231,31 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         );
         let amount = amount_delta.absolute.as_array()[slot];
         let money = fiat_delta.absolute.as_array()[slot];
+        let scalar = scalar_delta.absolute.as_array()[slot];
+        let spot = spot_sats.collect();
+        let expected_delta: Vec<_> = start
+            .collect()
+            .into_iter()
+            .enumerate()
+            .map(|(i, start)| {
+                SatsSigned::from(f64::from(spot[i]) - f64::from(spot[usize::from(start)]))
+            })
+            .collect();
+        assert_eq!(scalar.height.collect(), expected_delta);
+        assert_eq!(amount.sats.height.collect(), expected_delta);
+        assert_eq!(scalar.height.name(), format!("scalar_delta_{suffix}"));
+        assert_eq!(
+            amount.sats.height.name(),
+            format!("amount_delta_{suffix}_sats")
+        );
+        assert_eq!(
+            money.cents.height.name(),
+            format!("fiat_delta_{suffix}_cents")
+        );
+        assert_eq!(
+            scalar.height.version(),
+            version + spot_sats.read_only_boxed_clone().version() + start.version()
+        );
         check_conversion::<_, _, <SatsSigned as AmountType>::ToBitcoin>(
             &amount.btc,
             &amount.sats.height,
@@ -241,6 +274,7 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
             ($name:literal, $rate:expr) => {{
                 let name = $name;
                 let rate = $rate;
+                assert_eq!(rate.ppm.height.name(), format!("{name}_{suffix}_rate_ppm"));
                 check_conversion::<_, _, <PartsPerMillionSigned64 as FixedRatio>::ToRatio>(
                     &rate.ratio,
                     &rate.ppm.height,
@@ -259,5 +293,6 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         }
         check_rate!("amount_delta", amount_delta.rate.as_array()[slot]);
         check_rate!("fiat_delta", fiat_delta.rate.as_array()[slot]);
+        check_rate!("scalar_delta", scalar_delta.rate.as_array()[slot]);
     }
 }
