@@ -650,12 +650,12 @@ function singleBucketFolder({ name, color, pattern }, parentName) {
         title: title("Realized Cap"),
         bottom: [
           line({
-            series: pattern.realizedCap.all,
+            series: pattern.realizedCap.all.usd,
             name: "Total",
             unit: Unit.usd,
           }),
           line({
-            series: pattern.realizedCap.sth,
+            series: pattern.realizedCap.sth.usd,
             name: "STH",
             color: colors.term.short,
             unit: Unit.usd,
@@ -667,12 +667,12 @@ function singleBucketFolder({ name, color, pattern }, parentName) {
         title: title("Unrealized PnL"),
         bottom: [
           line({
-            series: pattern.unrealizedPnl.all,
+            series: pattern.unrealizedPnl.all.usd,
             name: "Total",
             unit: Unit.usd,
           }),
           line({
-            series: pattern.unrealizedPnl.sth,
+            series: pattern.unrealizedPnl.sth.usd,
             name: "STH",
             color: colors.term.short,
             unit: Unit.usd,
@@ -753,7 +753,7 @@ function groupedBucketCharts(list, groupTitle) {
           title: title("Realized Cap"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
-              series: pattern.realizedCap.all,
+              series: pattern.realizedCap.all.usd,
               name,
               color,
               unit: Unit.usd,
@@ -765,7 +765,7 @@ function groupedBucketCharts(list, groupTitle) {
           title: title("STH Realized Cap"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
-              series: pattern.realizedCap.sth,
+              series: pattern.realizedCap.sth.usd,
               name,
               color,
               unit: Unit.usd,
@@ -782,7 +782,7 @@ function groupedBucketCharts(list, groupTitle) {
           title: title("Unrealized PnL"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
-              series: pattern.unrealizedPnl.all,
+              series: pattern.unrealizedPnl.all.usd,
               name,
               color,
               unit: Unit.usd,
@@ -794,7 +794,7 @@ function groupedBucketCharts(list, groupTitle) {
           title: title("STH Unrealized PnL"),
           bottom: list.map(({ name, color, pattern }) =>
             line({
-              series: pattern.unrealizedPnl.sth,
+              series: pattern.unrealizedPnl.sth.usd,
               name,
               color,
               unit: Unit.usd,
@@ -822,15 +822,10 @@ export function createUtxoProfitabilitySection({ range }) {
     name: "UTXO Profitability",
     tree: [
       {
-        name: "Range",
-        tree: [
-          {
-            name: "Compare",
-            tree: groupedBucketCharts(range, "Profitability Range"),
-          },
-          ...range.map((bucket) => singleBucketFolder(bucket)),
-        ],
+        name: "Compare",
+        tree: groupedBucketCharts(range, "Profitability Range"),
       },
+      ...range.map((bucket) => singleBucketFolder(bucket)),
     ],
   };
 }

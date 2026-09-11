@@ -4,7 +4,7 @@
   },
   "scripts": {
     "test": "npm run test:unit && node tests/basic.js && node tests/metric_data.js && node tests/tree.js",
-    "test:unit": "node tests/hash_prefix.js && node tests/broadcast.js",
+    "test:unit": "node tests/hash_prefix.js && node tests/broadcast.js && node tests/cache.js",
     "test:basic": "node tests/basic.js",
     "test:hash-prefix": "node tests/hash_prefix.js",
     "test:metric-data": "node tests/metric_data.js",

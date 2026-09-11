@@ -79,7 +79,7 @@ fn assert_query_preflights_preserve_resolution_errors_and_safe_prefix_during_upd
 
     // An absent mempool leaves chain-only lookup errors intact. An attached but
     // never observed mempool cannot establish absence (or an empty RBF tree).
-    let query = Query::build(&plugins, Some(Mempool::new(&client)));
+    let query = Query::build(&plugins, Some(Mempool::new(&client).read_only_clone()));
     for result in [
         query.transaction_status(&unknown_txid).map(|_| ()),
         query.resolve_raw_transaction(&unknown_txid).map(|_| ()),

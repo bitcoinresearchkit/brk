@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use brk_error::{Error, Result};
-use brk_mempool::Mempool;
+use brk_mempool::ReadOnlyState;
 pub use brk_mempool::{BlockTemplateSource, ResolvedBlockTemplateDiff};
 use brk_types::{MempoolBlock, MempoolInfo, MempoolRecentTx, NextBlockHash, RecommendedFees, Txid};
 use serde::Serialize;
@@ -18,7 +20,7 @@ fn serialize_json<T: Serialize>(value: &T) -> (Vec<u8>, RepresentationId) {
 }
 
 impl Query {
-    fn require_mempool(&self) -> Result<&Mempool> {
+    fn require_mempool(&self) -> Result<Arc<ReadOnlyState>> {
         self.mempool().ok_or(Error::MempoolNotAvailable)
     }
 

@@ -6,46 +6,33 @@
 //! have an indexer hooked up). [`fill`] runs after each
 //! successful [`super::applier::apply`] and closes both gaps in one pass:
 //!
-//! 1. Snapshot under a read guard, walking `txs.unresolved()` once.
-//!    For each hole, if the parent is also in the live pool we record
-//!    a fill directly (cheap, lock-local). Otherwise we record the
-//!    hole for external resolution.
-//! 2. Drop the read guard. Call `resolver` on the remaining holes
-//!    (typically `getrawtransaction` or an indexer lookup). Failures
-//!    are simply skipped and retried next cycle.
-//! 3. Take the write guard once and fold both fill batches into the
-//!    `TxStore` via `apply_fills` -> `add_input`. Idempotent: each
-//!    fill checks `prevout.is_none()` and bails if the tx was already
-//!    removed or filled between phases.
+//! Gather unresolved inputs from private state, resolve external parents, then
+//! apply fills and address changes. Published transaction bodies remain immutable
+//! through `Arc::make_mut`; retries fill only missing inputs.
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use brk_rpc::Client;
 use brk_types::{TxOut, Txid, TxidPrefix, Vin, Vout};
-use parking_lot::RwLock;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::warn;
 
 use crate::{cycle::CycleDiff, state::State, stores::TxStore};
 
 /// Fill every unfilled prevout the cycle can resolve. Same-cycle
-/// in-mempool parents are filled lock-locally. The remainder go
-/// through `resolver` (one batched call) outside any lock.
-pub fn fill<F>(lock: &RwLock<State>, diff: &mut CycleDiff, resolver: F)
+/// in-mempool parents are filled directly. The remainder go through
+/// `resolver` in one batched call.
+pub fn fill<F>(state: &mut State, diff: &mut CycleDiff, resolver: F)
 where
     F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
 {
-    let (in_mempool, holes) = {
-        let state = lock.read();
-        gather(&state.txs)
-    };
+    let (in_mempool, holes) = gather(&state.txs);
     let external = resolve_external(holes, resolver);
 
     if in_mempool.is_empty() && external.is_empty() {
         return;
     }
 
-    let mut state = lock.write();
     for (txid, fills) in in_mempool.into_iter().chain(external) {
         let prefix = TxidPrefix::from(&txid);
         for prevout in state.txs.apply_fills(&prefix, fills) {

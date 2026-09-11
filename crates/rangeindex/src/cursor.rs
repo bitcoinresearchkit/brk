@@ -1,4 +1,4 @@
-use super::RangeMap;
+use crate::RangeMap;
 
 /// Floor lookups that reuse the last matching interval without shared state.
 pub struct RangeMapCursor<'a, I, V> {
@@ -18,7 +18,7 @@ impl<'a, I, V> RangeMapCursor<'a, I, V> {
 impl<I: Ord + Copy, V: From<usize>> RangeMapCursor<'_, I, V> {
     #[inline]
     pub fn get(&mut self, index: I) -> Option<V> {
-        let starts = &self.source.first_indexes;
+        let starts = self.source.as_slice();
         if let Some(position) = self.position
             && starts[position] <= index
             && starts.get(position + 1).is_none_or(|&end| index < end)

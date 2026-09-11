@@ -41,7 +41,7 @@ impl PrefixSumCheckpoints {
                 for item in values {
                     sum = sum.checked_add(value(item)).expect("prefix sum overflow");
                     index += 1;
-                    if index % INTERVAL == 0 {
+                    if index.is_multiple_of(INTERVAL) {
                         state.sums.push(sum);
                     }
                 }

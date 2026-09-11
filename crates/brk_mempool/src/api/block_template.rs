@@ -9,7 +9,7 @@ use brk_types::{
 };
 use rustc_hash::FxHashMap;
 
-use crate::{Mempool, ResolvedBlockTemplateDiff, Snapshot};
+use crate::{ReadOnlyState, ResolvedBlockTemplateDiff, Snapshot};
 
 /// One immutable published template, retained for validation and body construction.
 #[derive(Clone)]
@@ -53,7 +53,7 @@ impl BlockTemplateSource {
     }
 }
 
-impl Mempool {
+impl ReadOnlyState {
     pub fn next_block_hash(&self) -> Result<NextBlockHash> {
         self.block_template_source().hash()
     }
@@ -72,7 +72,7 @@ impl Mempool {
         &self,
         since: NextBlockHash,
     ) -> Option<ResolvedBlockTemplateDiff> {
-        let past = self.rebuilder().historical_block0(since)?;
+        let past = self.historical_block0(since)?;
         let source = self.block_template_source();
         Some(ResolvedBlockTemplateDiff {
             since,

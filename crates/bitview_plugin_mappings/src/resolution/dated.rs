@@ -1,62 +1,97 @@
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyDateVec, LazyFirstHeightVec};
+use bitview_vecs::RangeMapVec;
 use brk_types::{Date, Height, Timestamp};
-use vecdb::{ReadableCloneableVec, VecIndex};
+use derive_more::{Deref, DerefMut};
+use rangeindex::SharedRangeMap;
+use vecdb::{AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, VecIndex};
 
-/// Resolution with storage-free date and first-height lookups.
-#[derive(Clone, Traversable)]
+use super::ResolutionVecs;
+
+#[derive(Clone)]
+enum DateSource<I> {
+    Period(fn(I) -> Date),
+    FirstTimestamp(ReadableBoxedVec<Height, Timestamp>),
+}
+
+/// Resident date and first-height lookups, updated together before publication.
+#[derive(Clone, Deref, DerefMut, Traversable)]
 pub struct DatedResolutionVecs<I: VecIndex> {
     /// UTC calendar date in `YYYY-MM-DD` format associated with the time-period
     /// index. At `day1`, this is the represented calendar day. At coarser
     /// indexes, it is derived from the first monotonic block timestamp at or
     /// after the period.
-    pub date: LazyDateVec<I>,
-    /// Lowest block height whose resolution index is at least the requested
-    /// index. Empty indexes therefore use the first height of the next populated
-    /// index; indexes preceding the first populated one resolve to height 0.
-    pub first_height: LazyFirstHeightVec<I>,
+    pub date: RangeMapVec<I, Date>,
+    #[traversable(skip)]
+    dates: SharedRangeMap<Date, I>,
+    #[deref]
+    #[deref_mut]
+    #[traversable(flatten)]
+    resolution: ResolutionVecs<I>,
+    #[traversable(skip)]
+    date_source: DateSource<I>,
 }
 
 impl<I: VecIndex> DatedResolutionVecs<I> {
-    pub fn from_period_date(
-        mapping: &impl ReadableCloneableVec<Height, I>,
-        timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
-        period_from_timestamp: fn(Timestamp) -> I,
-    ) -> Self
+    pub fn from_period_date(mapping: &impl ReadableCloneableVec<Height, I>) -> Self
     where
         Date: From<I>,
     {
-        Self::new(mapping, timestamps, period_from_timestamp, |period, _| {
-            Date::from(period)
-        })
+        Self::new(mapping, DateSource::Period(Date::from))
     }
 
     pub fn from_first_timestamp(
         mapping: &impl ReadableCloneableVec<Height, I>,
         timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
-        period_from_timestamp: fn(Timestamp) -> I,
     ) -> Self {
         Self::new(
             mapping,
-            timestamps,
-            period_from_timestamp,
-            |_, timestamp| Date::from(timestamp),
+            DateSource::FirstTimestamp(timestamps.read_only_boxed_clone()),
         )
     }
 
-    pub fn new(
-        mapping: &impl ReadableCloneableVec<Height, I>,
-        timestamps: &impl ReadableCloneableVec<Height, Timestamp>,
-        period_from_timestamp: fn(Timestamp) -> I,
-        date_from_period_and_timestamp: fn(I, Timestamp) -> Date,
-    ) -> Self {
-        Self {
-            date: LazyDateVec::new(
-                timestamps,
-                period_from_timestamp,
-                date_from_period_and_timestamp,
-            ),
-            first_height: LazyFirstHeightVec::new(mapping),
+    fn new(mapping: &impl ReadableCloneableVec<Height, I>, date_source: DateSource<I>) -> Self {
+        let version = match &date_source {
+            DateSource::Period(_) => mapping.version(),
+            DateSource::FirstTimestamp(timestamps) => timestamps.version(),
+        };
+        let dates = SharedRangeMap::new(Vec::new());
+        let this = Self {
+            date: RangeMapVec::new("date", version, dates.clone()),
+            dates,
+            resolution: ResolutionVecs::new(mapping),
+            date_source,
+        };
+        this.update_dates(0);
+        this
+    }
+
+    pub fn update(&mut self, starting_height: Height) {
+        let keep = self.resolution.update(starting_height);
+        self.update_dates(keep);
+    }
+
+    fn update_dates(&self, from: usize) {
+        let to = self.first_height.len();
+        match &self.date_source {
+            DateSource::Period(date) => {
+                self.dates
+                    .update_at(from, (from..to).map(|i| date(I::from(i))));
+            }
+            DateSource::FirstTimestamp(timestamps) => {
+                let heights: Vec<_> = self
+                    .first_height
+                    .collect_range_at(from, to)
+                    .into_iter()
+                    .map(Height::to_usize)
+                    .collect();
+                self.dates.update_at(
+                    from,
+                    timestamps
+                        .read_sorted_at(&heights)
+                        .into_iter()
+                        .map(Date::from),
+                );
+            }
         }
     }
 }

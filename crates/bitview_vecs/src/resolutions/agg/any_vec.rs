@@ -1,18 +1,17 @@
-use crate::{AnyVec, VecIndex, VecValue, Version, short_type_name};
+use vecdb::{AnyVec, VecIndex, VecValue, Version, short_type_name};
 
 use super::LazyAggVec;
 
-impl<I, O, S1I, S2T, S1T, Strat> AnyVec for LazyAggVec<I, O, S1I, S2T, S1T, Strat>
+impl<I, O, S1I, S1T, Strat> AnyVec for LazyAggVec<I, O, S1I, S1T, Strat>
 where
     I: VecIndex,
     O: VecValue,
     S1I: VecIndex,
-    S2T: VecValue,
     S1T: VecValue,
     Strat: 'static,
 {
     fn version(&self) -> Version {
-        self.version + self.source.version() + self.mapping.version()
+        self.version + self.source.version()
     }
 
     fn name(&self) -> &str {

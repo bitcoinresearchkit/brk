@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering::Relaxed},
 };
 
-use vecdb::{AnyVec, IndexVec, ReadOnlyClone, ReadableVec, TypedVec, Version};
+use vecdb::{AnyVec, IndexVec, ReadBounds, ReadOnlyClone, ReadableVec, TypedVec, Version};
 
 // Deliberately not readable: IndexVec must require only metadata.
 #[derive(Clone)]
@@ -76,6 +76,14 @@ fn generates_indices_and_constants_using_only_live_metadata() {
     });
     assert_eq!(result, Err(3));
     assert_eq!(visits, 3);
+    let mut bounds = ReadBounds::new();
+    bounds.set("usize", 2);
+    bounds.scope(|| {
+        assert_eq!(values.collect_range_at(0, 100), [1, 2]);
+        assert_eq!(values.read_sorted_at(&[0, 0, 1, 2, 4]), [1, 1, 2]);
+        assert_eq!(values.collect_one_at(2), None);
+        assert_eq!(values.fold_range_at(0, 100, 0, |sum, value| sum + value), 3);
+    });
     len.store(6, Relaxed);
     assert_eq!(cloned.collect_one_at(5), Some(6));
     assert_eq!(constants.collect_one_at(5), Some(42));

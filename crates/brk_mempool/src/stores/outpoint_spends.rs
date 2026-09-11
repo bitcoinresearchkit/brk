@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 /// collisions are possible, so callers must verify the candidate
 /// spender's input list. Values are the spender's `TxidPrefix`,
 /// looked up against `TxStore` to recover the full spender record.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct OutpointSpends(FxHashMap<OutpointPrefix, TxidPrefix>);
 
 impl OutpointSpends {

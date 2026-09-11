@@ -14,26 +14,23 @@ use brk_types::{
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use super::{SnapTx, Snapshot, TxIndex, cluster};
-use crate::Mempool;
+use crate::ReadOnlyState;
 
-impl Mempool {
+impl ReadOnlyState {
     /// CPFP info for a live mempool tx. Returns `None` when the tx
     /// isn't in the completed live publication. Requires the graph and live
     /// fields to share the same transaction revision and requested chain tip.
     pub fn cpfp_info(&self, txid: &Txid, tip: &BlockHash) -> Result<Option<CpfpInfo>> {
-        let snapshot = self.snapshot();
-        let sigops = {
-            let state = self.read();
-            state.ensure_snapshot_at(tip, &snapshot)?;
-            let Some(tx) = state.txs.get(txid) else {
-                return Ok(None);
-            };
-            tx.total_sigop_cost
+        let state = self.pool()?;
+        state.ensure_resolved_at(tip)?;
+        let snapshot = &state.graph;
+        let Some(tx) = state.txs.get(txid) else {
+            return Ok(None);
         };
         Ok(snapshot.idx_of_txid(txid).and_then(|index| {
             snapshot
                 .tx(index)
-                .map(|seed| snapshot.cpfp_info_at(index, seed, sigops))
+                .map(|seed| snapshot.cpfp_info_at(index, seed, tx.total_sigop_cost))
         }))
     }
 }

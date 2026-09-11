@@ -7,7 +7,7 @@ use crate::stores::tx_store::TxRecord;
 /// enter and leave: `eligible` applies the round-dollar payment filter (it
 /// feeds the oracle blend), `raw` bins every output by value with no filtering.
 /// Add and remove run through the same code so the two stay symmetric.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LiveHistograms {
     eligible: HistogramRaw,
     raw: HistogramRaw,

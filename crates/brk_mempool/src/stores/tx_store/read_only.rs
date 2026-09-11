@@ -1,0 +1,83 @@
+use brk_oracle::HistogramRaw;
+use brk_types::{MempoolRecentTx, Transaction, Txid, TxidPrefix};
+use indexmap::IndexMap;
+use rustc_hash::FxBuildHasher;
+
+use crate::{state::TxEntry, stores::LiveHistograms};
+
+use super::TxRecord;
+
+/// Query data shared by the working store and each completed publication.
+#[derive(Clone, Default)]
+pub struct ReadOnlyTxStore {
+    pub(super) records: IndexMap<TxidPrefix, TxRecord, FxBuildHasher>,
+    pub(super) txids_hash: u64,
+    pub(super) content_revision: u64,
+    pub(super) recent: Vec<MempoolRecentTx>,
+    pub(super) histograms: LiveHistograms,
+}
+
+impl ReadOnlyTxStore {
+    pub fn contains(&self, txid: &Txid) -> bool {
+        self.get(txid).is_some()
+    }
+
+    pub fn len(&self) -> usize {
+        self.records.len()
+    }
+
+    pub fn get(&self, txid: &Txid) -> Option<&Transaction> {
+        self.record(txid).map(|record| record.tx.as_ref())
+    }
+
+    pub fn entry(&self, txid: &Txid) -> Option<&TxEntry> {
+        self.record(txid).map(|record| &record.entry)
+    }
+
+    pub fn record(&self, txid: &Txid) -> Option<&TxRecord> {
+        let record = self.records.get(&TxidPrefix::from(txid))?;
+        (record.entry.txid == *txid).then_some(record)
+    }
+
+    /// Tx + entry in one map probe. Used by the RBF builder and the
+    /// snapshot builder which need both per visited tx.
+    pub fn record_by_prefix(&self, prefix: &TxidPrefix) -> Option<&TxRecord> {
+        self.records.get(prefix)
+    }
+
+    /// `(prefix, record)` pairs in dense storage order. Used by the
+    /// snapshot builder to assign a compact `TxIndex` to each live tx.
+    pub fn records(&self) -> impl Iterator<Item = (&TxidPrefix, &TxRecord)> {
+        self.records.iter()
+    }
+
+    pub fn txids(&self) -> impl Iterator<Item = &Txid> {
+        self.records.values().map(|r| &r.entry.txid)
+    }
+
+    pub fn txids_hash(&self) -> u64 {
+        self.txids_hash
+    }
+
+    /// Process-local revision for every mutation that can change serialized tx bodies.
+    pub fn content_revision(&self) -> u64 {
+        self.content_revision
+    }
+
+    pub fn recent(&self) -> &[MempoolRecentTx] {
+        &self.recent
+    }
+
+    /// Snapshot the round-dollar-eligible histogram that feeds the oracle
+    /// blend. Maintained incrementally, so this is `O(NUM_BINS)`, not
+    /// `O(live_outputs)`.
+    pub fn live_eligible_histogram(&self) -> HistogramRaw {
+        self.histograms.eligible()
+    }
+
+    /// Snapshot the raw histogram: every live output binned by value with no
+    /// payment filtering. Maintained incrementally alongside the eligible one.
+    pub fn live_raw_histogram(&self) -> HistogramRaw {
+        self.histograms.raw()
+    }
+}

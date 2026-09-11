@@ -8,10 +8,10 @@ use schemars::{JsonSchema, SchemaGenerator};
 use serde::Serialize;
 use serde_json::to_value;
 use vecdb::{
-    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachePolicy, CompressionStrategy,
-    DeltaOp, EagerVec, Formattable, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec, MutableVec,
-    OverflowVec, OverflowVecValue, RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec,
-    ReadOnlyOverflowVec, ReadOnlyRawVec, ReadableVec, StoredVec, TypedVec, VecIndex, VecValue,
+    AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachePolicy, CompressionStrategy, DeltaOp,
+    EagerVec, Formattable, IndexVec, LazyDeltaVec, LazyVec, MutableVec, OverflowVec,
+    OverflowVecValue, RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec,
+    ReadOnlyRawVec, ReadableVec, StoredVec, TypedVec, VecIndex, VecValue,
 };
 
 #[cfg(feature = "lz4")]
@@ -304,24 +304,6 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
-    }
-}
-
-impl<I, O, S1I, S2T, S1T, Strat> Traversable for LazyAggVec<I, O, S1I, S2T, S1T, Strat>
-where
-    I: VecIndex,
-    O: VecValue + Formattable + Serialize + JsonSchema,
-    S1I: VecIndex,
-    S2T: VecValue,
-    S1T: VecValue,
-    Strat: AggFold<O, S1I, S2T, S1T>,
-{
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn to_tree_node(&self) -> TreeNode {
-        make_leaf::<I, O, _>(self)
     }
 }
 

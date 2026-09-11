@@ -9,6 +9,7 @@ use crate::{TxRemoval, state::TxEntry};
 /// burial time - same value `effective_fee_rate` reported while
 /// the tx was alive, so an evicted RBF predecessor reports the
 /// package-effective rate, not a misleading isolated `fee/vsize`.
+#[derive(Clone)]
 pub struct TxTombstone {
     pub tx: Arc<Transaction>,
     pub entry: TxEntry,

@@ -9,9 +9,10 @@ use crate::{
 
 /// One pull cycle's worth of changes. Produced by
 /// [`crate::Mempool::tick`] after fetch → prepare → apply → prevouts →
-/// rebuild. The snapshot is always present (the rebuilder runs every
-/// cycle). Compare `next_block_hash` across cycles if you need to
-/// detect whether the projection actually changed.
+/// rebuild. These are private working-cycle events, including applied changes
+/// when the final chain observation fails. The graph supplies the next cycle's
+/// burial rates; it is not proof of a public commit. Use a read-only handle for
+/// the last valid published data.
 pub struct Cycle {
     pub added: Vec<TxAdded>,
     pub removed: Vec<TxRemoved>,

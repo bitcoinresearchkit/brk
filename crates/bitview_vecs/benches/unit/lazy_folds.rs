@@ -98,7 +98,10 @@ fn benchmark_lazy_folds() {
         "starts",
         (0..len).map(|i| Height::from(i.saturating_sub(256))),
     );
-    let days = stored(&db, "days", (0..len).map(|i| Day1::from(i / 144)));
+    let days = common::first_heights(
+        "days",
+        (0..len.div_ceil(144)).map(|i| Height::from(i * 144)),
+    );
     let counts = stored(&db, "counts", (0..len).map(|_| StoredU16::new(100)));
     let counts = CumulativeCountVec::new(&counts);
     let cumulative = stored(

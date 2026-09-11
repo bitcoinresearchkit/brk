@@ -1,4 +1,8 @@
-use crate::{AggFold, ReadableVec, VecIndex, VecValue};
+use rangeindex::RangeMap;
+
+use vecdb::{ReadableVec, VecIndex, VecValue};
+
+use super::AggFold;
 
 /// Sparse aggregation: emits `Option<T>` per output index.
 ///
@@ -22,7 +26,7 @@ impl Sparse {
     }
 }
 
-impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
+impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, T> for Sparse {
     #[inline]
     fn try_fold<
         MI: VecIndex,
@@ -32,20 +36,20 @@ impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
         F: FnMut(B, Option<T>) -> Result<B, E>,
     >(
         source: &S,
-        mapping: &impl ReadableVec<MI, SI>,
+        mapping: &RangeMap<SI, MI>,
         from: usize,
         to: usize,
         init: B,
         mut f: F,
     ) -> Result<B, E> {
         let source_len = source.visible_len();
-        let mapping = mapping.collect_range_dyn(from, to.saturating_add(1));
+        let mapping = mapping.as_slice();
 
         let mut indices: Vec<usize> = Vec::with_capacity(to - from);
         let mut slot_map: Vec<Option<u32>> = Vec::with_capacity(to - from);
 
         (from..to).for_each(|idx| {
-            if let Some(index) = Self::source_index(&mapping, idx - from, source_len) {
+            if let Some(index) = Self::source_index(mapping, idx, source_len) {
                 slot_map.push(Some(indices.len() as u32));
                 indices.push(index);
             } else {
@@ -64,22 +68,21 @@ impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
     #[inline]
     fn collect_one<MI: VecIndex, S: ReadableVec<SI, T> + ?Sized>(
         source: &S,
-        mapping: &impl ReadableVec<MI, SI>,
+        mapping: &RangeMap<SI, MI>,
         index: usize,
     ) -> Option<Option<T>> {
-        let mapping = mapping.collect_range_dyn(index, index.saturating_add(2));
-        if mapping.is_empty() {
+        if index >= mapping.len() {
             return None;
         }
         Some(
-            Self::source_index(&mapping, 0, source.visible_len())
+            Self::source_index(mapping.as_slice(), index, source.visible_len())
                 .and_then(|i| source.collect_one_at(i)),
         )
     }
 
     fn read_sorted_into<MI: VecIndex, S: ReadableVec<SI, T> + ?Sized>(
         source: &S,
-        mapping: &impl ReadableVec<MI, SI>,
+        mapping: &RangeMap<SI, MI>,
         indices: &[usize],
         out: &mut Vec<Option<T>>,
     ) {
@@ -88,21 +91,12 @@ impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
             return;
         }
         let source_len = source.visible_len();
-        let mut boundaries = Vec::with_capacity(indices.len() * 2);
-        for &index in indices {
-            for boundary in index..=index.saturating_add(1).min(mapping.len() - 1) {
-                if boundaries.last().is_none_or(|last| *last < boundary) {
-                    boundaries.push(boundary);
-                }
-            }
-        }
-        let values = mapping.read_sorted_at(&boundaries);
+        let mapping = mapping.as_slice();
         let mut requested = Vec::with_capacity(indices.len());
         let slots: Vec<_> = indices
             .iter()
             .map(|index| {
-                let slot = boundaries.binary_search(index).unwrap();
-                Self::source_index(&values, slot, source_len).map(|index| {
+                Self::source_index(mapping, *index, source_len).map(|index| {
                     if requested.last() != Some(&index) {
                         requested.push(index);
                     }
@@ -121,19 +115,58 @@ impl<T: VecValue, SI: VecIndex> AggFold<Option<T>, SI, SI, T> for Sparse {
 
 #[cfg(test)]
 mod tests {
+    use rangeindex::RangeMap;
     use tempfile::tempdir;
 
-    use super::Sparse;
-    use crate::{
-        AggFold, AnyVec, BytesVec, Database, ImportableVec, ReadBounds, Version, WritableVec,
-    };
+    use super::{AggFold, Sparse};
+    use vecdb::{BytesVec, Database, ImportableVec, ReadBounds, Version, WritableVec};
 
-    fn mapping_source(db: &Database, values: &[usize]) -> BytesVec<usize, usize> {
-        let mut source = BytesVec::import(db, "mapping", Version::ONE).unwrap();
-        for &value in values {
+    #[test]
+    fn point_reads_match_reference_buckets() {
+        let temp = tempdir().unwrap();
+        let db = Database::open(temp.path()).unwrap();
+        let mut source = BytesVec::<usize, u64>::import(&db, "values", Version::ONE).unwrap();
+        let values = [10, 20, 30, 40];
+        for &value in &values {
             source.push(value);
         }
-        source
+        for starts in [
+            vec![],
+            vec![0],
+            vec![0, 0, 0],
+            vec![0, 1, 1, 3, 4, 8],
+            vec![2, 2, 3],
+        ] {
+            let mapping = RangeMap::<usize, usize>::from(starts.clone());
+            for source_len in [0, 2, values.len()] {
+                let expected: Vec<_> = starts
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &first)| {
+                        let end = starts
+                            .get(i + 1)
+                            .copied()
+                            .unwrap_or(source_len)
+                            .min(source_len);
+                        (first..end).last().map(|index| values[index])
+                    })
+                    .collect();
+                let mut bounds = ReadBounds::new();
+                bounds.set("usize", source_len);
+                bounds.scope(|| {
+                    for (i, &value) in expected.iter().enumerate() {
+                        assert_eq!(Sparse::collect_one(&source, &mapping, i), Some(value));
+                    }
+                    for i in [mapping.len(), usize::MAX] {
+                        assert_eq!(Sparse::collect_one(&source, &mapping, i), None);
+                    }
+                });
+            }
+        }
+    }
+
+    fn mapping_source(values: &[usize]) -> RangeMap<usize, usize> {
+        RangeMap::from(values.to_vec())
     }
 
     #[test]
@@ -147,7 +180,7 @@ mod tests {
             source.push(value);
         }
 
-        let mapping = mapping_source(&db, &[0, 2, 4]);
+        let mapping = mapping_source(&[0, 2, 4]);
         let values = Sparse::fold(
             &source,
             &mapping,
@@ -181,7 +214,7 @@ mod tests {
         let values = bounds.scope(|| {
             Sparse::fold(
                 &source,
-                &mapping_source(&db, &[0]),
+                &mapping_source(&[0]),
                 0,
                 1,
                 Vec::new(),
@@ -228,7 +261,7 @@ mod tests {
                     })
                     .collect();
                 let mut bounds = ReadBounds::new();
-                let mapping = mapping_source(&db, &mapping);
+                let mapping = mapping_source(&mapping);
                 bounds.set("usize", source_len);
                 bounds.scope(|| {
                     for (index, &expected) in expected.iter().enumerate() {

@@ -19,14 +19,19 @@ const RETENTION: Duration = Duration::from_hours(1);
 
 /// Recently-dropped txs retained for reappearance detection (Puller can revive
 /// them without RPC) and post-mine analytics (RBF/replacement chains, etc.).
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TxGraveyard {
+    revision: u64,
     tombstones: FxHashMap<Txid, TxTombstone>,
     predecessors_by_replacer: FxHashMap<Txid, SmallVec<[Txid; 1]>>,
     order: VecDeque<(Instant, Txid)>,
 }
 
 impl TxGraveyard {
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
     pub fn tombstones_len(&self) -> usize {
         self.tombstones.len()
     }
@@ -125,6 +130,7 @@ impl TxGraveyard {
                 .push(txid);
         }
         self.order.push_back((removed_at, txid));
+        self.revision = self.revision.wrapping_add(1);
     }
 
     fn remove_predecessor(&mut self, txid: &Txid, tombstone: &TxTombstone) {
@@ -146,6 +152,7 @@ impl TxGraveyard {
     /// Remove and return the tombstone, e.g. when the tx comes back to life.
     pub fn exhume(&mut self, txid: &Txid) -> Option<TxTombstone> {
         let tombstone = self.tombstones.remove(txid)?;
+        self.revision = self.revision.wrapping_add(1);
         self.remove_predecessor(txid, &tombstone);
         Some(tombstone)
     }
@@ -161,6 +168,7 @@ impl TxGraveyard {
                 break;
             }
             let (_, txid) = self.order.pop_front().unwrap();
+            self.revision = self.revision.wrapping_add(1);
             let should_remove = self
                 .tombstones
                 .get(&txid)
@@ -176,7 +184,7 @@ impl TxGraveyard {
     /// `RETENTION`. Splits `Instant::now()` arithmetic out of the test
     /// bodies and avoids real-time sleeps.
     #[cfg(test)]
-    fn shift_oldest_back(&mut self, count: usize) {
+    pub(crate) fn shift_oldest_back(&mut self, count: usize) {
         let bumped = Instant::now() - (RETENTION + Duration::from_secs(1));
         for entry in self.order.iter_mut().take(count) {
             let txid = entry.1;

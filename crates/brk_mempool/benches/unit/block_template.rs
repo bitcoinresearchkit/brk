@@ -1,3 +1,4 @@
+use crate::Mempool;
 use std::{hint::black_box, time::Instant};
 
 use bitcoin::{Txid as BitcoinTxid, hashes::Hash};
@@ -54,10 +55,10 @@ fn two_tables(resolved: ResolvedBlockTemplateDiff) -> Result<BlockTemplateDiff> 
 #[ignore = "same-input template diff comparison; excludes snapshot construction and HTTP"]
 fn benchmark_block_template_diff() {
     for count in [100usize, 2_000, 8_000] {
-        let mempool = Mempool::for_test();
+        let mut mempool = Mempool::for_test();
         let mut ids = Vec::with_capacity(count * 2);
         {
-            let mut state = mempool.test_state_lock().write();
+            let state = mempool.test_state_mut();
             for index in 0..count * 2 {
                 let mut bytes = [0; 32];
                 bytes[..8].copy_from_slice(&(index as u64 + 1).to_le_bytes());
@@ -76,9 +77,12 @@ fn benchmark_block_template_diff() {
             ("empty", Vec::new()),
         ] {
             mempool.test_tick(&ids[..count], FeeRate::new(1.0));
-            let since = mempool.next_block_hash().unwrap();
+            let since = mempool.published().next_block_hash().unwrap();
             mempool.test_tick(&selected, FeeRate::new(1.0));
-            let resolved = mempool.resolve_block_template_diff(since).unwrap();
+            let resolved = mempool
+                .published()
+                .resolve_block_template_diff(since)
+                .unwrap();
             let capture = || ResolvedBlockTemplateDiff {
                 since: resolved.since,
                 past: resolved.past.clone(),

@@ -3,9 +3,9 @@ use brk_types::{
     Date, Day1, Day3, Epoch, Halving, Height, Hour1, Hour4, Hour12, Minute10, Minute30, Month1,
     Month3, Month6, StoredU64, Timestamp, Version, Week1, Year1, Year10,
 };
-use vecdb::{LazyVec, ReadableBoxedVec, ReadableVec, VecValue};
+use vecdb::{IndexVec, LazyVec, ReadableBoxedVec, ReadableVec, VecValue};
 
-use bitview_vecs::LazyPreviousDeltaVec;
+use bitview_vecs::{LazyPreviousDeltaVec, RangeMapLookupVec};
 
 #[derive(Clone, Traversable)]
 pub struct Vecs {
@@ -26,98 +26,39 @@ pub struct Vecs {
     pub hour12: LazyVec<Height, Hour12, Height, Timestamp>,
     /// Zero-based UTC calendar day containing the block's monotonic timestamp,
     /// with 2009-01-01 equal to 0.
-    pub day1: LazyVec<Height, Day1, Height, Timestamp>,
+    pub day1: RangeMapLookupVec<Height, Day1>,
     /// Zero-based three-day UTC period containing the block's monotonic
     /// timestamp, with period 1 beginning on 2009-01-03.
     pub day3: LazyVec<Height, Day3, Height, Timestamp>,
     /// Zero-based Bitcoin difficulty-adjustment epoch: block height divided by
     /// 2,016 using integer division.
-    pub epoch: LazyVec<Height, Epoch, Height, Timestamp>,
+    pub epoch: IndexVec<Height, Epoch, ReadableBoxedVec<Height, Timestamp>>,
     /// Zero-based Bitcoin subsidy-halving epoch: block height divided by 210,000
     /// using integer division.
-    pub halving: LazyVec<Height, Halving, Height, Timestamp>,
+    pub halving: IndexVec<Height, Halving, ReadableBoxedVec<Height, Timestamp>>,
     /// Zero-based ISO week containing the block's monotonic timestamp, counted
     /// from ISO week 1 of 2009.
-    pub week1: LazyVec<Height, Week1, Height, Timestamp>,
+    pub week1: RangeMapLookupVec<Height, Week1>,
     /// Zero-based UTC calendar month containing the block's monotonic timestamp,
     /// with January 2009 equal to 0.
-    pub month1: LazyVec<Height, Month1, Height, Timestamp>,
+    pub month1: RangeMapLookupVec<Height, Month1>,
     /// Zero-based UTC calendar quarter containing the block's monotonic
     /// timestamp, with Q1 2009 equal to 0.
-    pub month3: LazyVec<Height, Month3, Height, Timestamp>,
+    pub month3: RangeMapLookupVec<Height, Month3>,
     /// Zero-based UTC calendar half-year containing the block's monotonic
     /// timestamp, with the first half of 2009 equal to 0.
-    pub month6: LazyVec<Height, Month6, Height, Timestamp>,
+    pub month6: RangeMapLookupVec<Height, Month6>,
     /// Zero-based UTC calendar year containing the block's monotonic timestamp,
     /// with 2009 equal to 0.
-    pub year1: LazyVec<Height, Year1, Height, Timestamp>,
+    pub year1: RangeMapLookupVec<Height, Year1>,
     /// Zero-based ten-year UTC period containing the block's monotonic timestamp,
     /// with 2009 through 2018 equal to 0.
-    pub year10: LazyVec<Height, Year10, Height, Timestamp>,
+    pub year10: RangeMapLookupVec<Height, Year10>,
     /// Number of transactions in the indexed block, including coinbase.
     pub tx_index_count: LazyPreviousDeltaVec<Height, StoredU64>,
 }
 
 impl Vecs {
-    pub fn new(
-        version: Version,
-        timestamps: ReadableBoxedVec<Height, Timestamp>,
-        transaction_count: ReadableBoxedVec<Height, StoredU64>,
-    ) -> Self {
-        Self {
-            minute10: Self::from_timestamps("minute10", timestamps.clone(), |_, timestamp| {
-                Minute10::from_timestamp(timestamp)
-            }),
-            minute30: Self::from_timestamps("minute30", timestamps.clone(), |_, timestamp| {
-                Minute30::from_timestamp(timestamp)
-            }),
-            hour1: Self::from_timestamps("hour1", timestamps.clone(), |_, timestamp| {
-                Hour1::from_timestamp(timestamp)
-            }),
-            hour4: Self::from_timestamps("hour4", timestamps.clone(), |_, timestamp| {
-                Hour4::from_timestamp(timestamp)
-            }),
-            hour12: Self::from_timestamps("hour12", timestamps.clone(), |_, timestamp| {
-                Hour12::from_timestamp(timestamp)
-            }),
-            day1: Self::from_timestamps("day1", timestamps.clone(), |_, timestamp| {
-                Self::day1_from_timestamp(timestamp)
-            }),
-            day3: Self::from_timestamps("day3", timestamps.clone(), |_, timestamp| {
-                Day3::from_timestamp(timestamp)
-            }),
-            epoch: Self::from_timestamps("epoch", timestamps.clone(), Self::epoch_from_height),
-            halving: Self::from_timestamps(
-                "halving",
-                timestamps.clone(),
-                Self::halving_from_height,
-            ),
-            week1: Self::from_timestamps("week1", timestamps.clone(), |_, timestamp| {
-                Self::week1_from_timestamp(timestamp)
-            }),
-            month1: Self::from_timestamps("month1", timestamps.clone(), |_, timestamp| {
-                Self::month1_from_timestamp(timestamp)
-            }),
-            month3: Self::from_timestamps("month3", timestamps.clone(), |_, timestamp| {
-                Self::month3_from_timestamp(timestamp)
-            }),
-            month6: Self::from_timestamps("month6", timestamps.clone(), |_, timestamp| {
-                Self::month6_from_timestamp(timestamp)
-            }),
-            year1: Self::from_timestamps("year1", timestamps.clone(), |_, timestamp| {
-                Self::year1_from_timestamp(timestamp)
-            }),
-            year10: Self::from_timestamps("year10", timestamps, |_, timestamp| {
-                Self::year10_from_timestamp(timestamp)
-            }),
-            tx_index_count: LazyPreviousDeltaVec::new(
-                "tx_index_count",
-                version,
-                &transaction_count,
-            ),
-        }
-    }
-
     /// First day affected by a height recomputation, falling back to the last
     /// indexed block when the starting height is just beyond the current tip.
     pub fn recompute_day(&self, starting_height: Height) -> Option<Day1> {
@@ -128,7 +69,7 @@ impl Vecs {
         })
     }
 
-    fn from_timestamps<T: VecValue>(
+    pub(crate) fn from_timestamps<T: VecValue>(
         name: &str,
         timestamps: ReadableBoxedVec<Height, Timestamp>,
         compute: fn(Height, Timestamp) -> T,
@@ -163,36 +104,34 @@ impl Vecs {
     pub fn year10_from_timestamp(timestamp: Timestamp) -> Year10 {
         Year10::from(Self::year1_from_timestamp(timestamp))
     }
-
-    fn epoch_from_height(height: Height, _: Timestamp) -> Epoch {
-        Epoch::from(height)
-    }
-
-    fn halving_from_height(height: Height, _: Timestamp) -> Halving {
-        Halving::from(height)
-    }
-
-    pub fn day1_read_only_boxed_clone(&self) -> ReadableBoxedVec<Height, Day1> {
-        ReadableBoxedVec::new(self.day1.clone())
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering::Relaxed},
+    };
 
     use brk_types::Date;
     use parking_lot::RwLock;
-    use vecdb::{AnyVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
+    use vecdb::{
+        AnyVec, PrintableIndex, ReadBounds, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex,
+        short_type_name,
+    };
 
     use super::*;
+    use crate::resolution::ResolutionVecs;
 
     #[derive(Clone)]
-    struct TimestampVec(Arc<RwLock<Vec<Timestamp>>>);
+    struct TimestampVec(Arc<RwLock<Vec<Timestamp>>>, Arc<AtomicBool>);
 
     impl TimestampVec {
         fn new(values: impl IntoIterator<Item = Timestamp>) -> Self {
-            Self(Arc::new(RwLock::new(values.into_iter().collect())))
+            Self(
+                Arc::new(RwLock::new(values.into_iter().collect())),
+                Arc::default(),
+            )
         }
 
         fn replace(&self, index: usize, timestamp: Timestamp) {
@@ -237,6 +176,10 @@ mod tests {
 
     impl ReadableVec<Height, Timestamp> for TimestampVec {
         fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Timestamp>) {
+            assert!(
+                !self.1.load(Relaxed),
+                "published lookup read raw timestamps"
+            );
             let values = self.0.read();
             let to = to.min(values.len());
             if from < to {
@@ -245,6 +188,10 @@ mod tests {
         }
 
         fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(Timestamp)) {
+            assert!(
+                !self.1.load(Relaxed),
+                "published lookup read raw timestamps"
+            );
             let values = self.0.read();
             for &value in &values[from.min(values.len())..to.min(values.len())] {
                 each(value);
@@ -258,6 +205,10 @@ mod tests {
             init: B,
             fold: F,
         ) -> B {
+            assert!(
+                !self.1.load(Relaxed),
+                "published lookup read raw timestamps"
+            );
             let values = self.0.read();
             values[from.min(values.len())..to.min(values.len())]
                 .iter()
@@ -272,6 +223,10 @@ mod tests {
             init: B,
             fold: F,
         ) -> Result<B, E> {
+            assert!(
+                !self.1.load(Relaxed),
+                "published lookup read raw timestamps"
+            );
             let values = self.0.read();
             values[from.min(values.len())..to.min(values.len())]
                 .iter()
@@ -325,22 +280,14 @@ mod tests {
 
     #[test]
     fn height_mappings_preserve_epoch_boundaries() {
-        let timestamp = Timestamp::from(Date::new(2009, 1, 1));
-
+        assert_eq!(Epoch::from(Height::from(2_015_u32)), Epoch::from(0_usize));
+        assert_eq!(Epoch::from(Height::from(2_016_u32)), Epoch::from(1_usize));
         assert_eq!(
-            Vecs::epoch_from_height(Height::from(2_015_u32), timestamp),
-            Epoch::from(0_usize)
-        );
-        assert_eq!(
-            Vecs::epoch_from_height(Height::from(2_016_u32), timestamp),
-            Epoch::from(1_usize)
-        );
-        assert_eq!(
-            Vecs::halving_from_height(Height::from(209_999_u32), timestamp),
+            Halving::from(Height::from(209_999_u32)),
             Halving::from(0_usize)
         );
         assert_eq!(
-            Vecs::halving_from_height(Height::from(210_000_u32), timestamp),
+            Halving::from(Height::from(210_000_u32)),
             Halving::from(1_usize)
         );
     }
@@ -361,5 +308,81 @@ mod tests {
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(1_usize)));
         timestamps.replace(1, third);
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(2_usize)));
+    }
+
+    fn check_resident_period<I: VecIndex + VecValue>(convert: fn(Height, Timestamp) -> I) {
+        let timestamps = [
+            Timestamp::from(Date::new(2009, 1, 3)),
+            Timestamp::from(Date::new(2009, 1, 3)),
+            Timestamp::from(Date::new(2010, 1, 1)),
+            Timestamp::from(Date::new(2019, 1, 1)),
+        ];
+        let expected = timestamps.map(|timestamp| convert(Height::ZERO, timestamp));
+        let source = TimestampVec::new(timestamps);
+        let blocked = source.1.clone();
+        let raw = LazyVec::init(
+            "guarded",
+            Version::ONE,
+            source.read_only_boxed_clone(),
+            convert,
+        );
+        let resolution = ResolutionVecs::new(&raw);
+        let reader = resolution.height_lookup().clone();
+        blocked.store(true, Relaxed);
+        assert_eq!(reader.collect(), expected);
+        assert_eq!(reader.collect_one_at(2), Some(expected[2]));
+        assert_eq!(
+            reader.read_sorted_at(&[0, 0, 2, 3, 4]),
+            [expected[0], expected[0], expected[2], expected[3]]
+        );
+        let mut bounds = ReadBounds::new();
+        bounds.set("height", 3);
+        bounds.scope(|| {
+            assert_eq!(reader.collect_range_at(0, 100), expected[..3]);
+            assert_eq!(reader.collect_one_at(3), None);
+        });
+    }
+
+    #[test]
+    fn every_calendar_reverse_view_uses_only_resident_boundaries() {
+        check_resident_period(|_, t| Vecs::day1_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::week1_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::month1_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::month3_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::month6_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::year1_from_timestamp(t));
+        check_resident_period(|_, t| Vecs::year10_from_timestamp(t));
+    }
+
+    #[test]
+    fn fixed_height_periods_never_read_timestamps() {
+        let timestamps = LazyVec::init(
+            "metadata",
+            Version::ONE,
+            TimestampVec::new(vec![Timestamp::default(); 420_001]).read_only_boxed_clone(),
+            |_: Height, _| -> Timestamp { panic!("arithmetic mapping must not read timestamps") },
+        );
+        let epoch = IndexVec::new("epoch", Version::ZERO, timestamps.clone(), Epoch::from);
+        let halving = IndexVec::new("halving", Version::ZERO, timestamps, Halving::from);
+        for index in [0usize, 2_015, 2_016, 209_999, 210_000, 420_000] {
+            assert_eq!(
+                epoch.collect_one_at(index),
+                Some(Epoch::from(Height::from(index)))
+            );
+            assert_eq!(
+                halving.collect_one_at(index),
+                Some(Halving::from(Height::from(index)))
+            );
+        }
+        let mut bounds = ReadBounds::new();
+        bounds.set("height", 2_016);
+        bounds.scope(|| {
+            assert_eq!(epoch.collect_one_at(2_016), None);
+            assert_eq!(halving.collect_one_at(2_016), None);
+            assert_eq!(
+                epoch.read_sorted_at(&[0, 2_015, 2_016]),
+                [Epoch::from(0usize); 2]
+            );
+        });
     }
 }

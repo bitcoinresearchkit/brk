@@ -1,6 +1,7 @@
 use bitview_collections::PerResolution;
 use bitview_plugin_indexer::Indexer;
 use bitview_traversable::Traversable;
+use bitview_vecs::RangeMapVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
@@ -9,8 +10,8 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, LazyVec, PcoVec,
-    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
+    Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, IndexVec, PcoVec,
+    ReadableBoxedVec, ReadableVec, Rw, StorageMode, Version,
 };
 
 use super::{DatedResolutionVecs, ResolutionVecs};
@@ -35,19 +36,19 @@ pub struct Timestamps<M: StorageMode = Rw> {
     #[deref_mut]
     #[traversable(flatten)]
     pub resolutions: PerResolution<
-        LazyVec<Minute10, Timestamp, Minute10, Height>,
-        LazyVec<Minute30, Timestamp, Minute30, Height>,
-        LazyVec<Hour1, Timestamp, Hour1, Height>,
-        LazyVec<Hour4, Timestamp, Hour4, Height>,
-        LazyVec<Hour12, Timestamp, Hour12, Height>,
-        LazyVec<Day1, Timestamp, Day1, Height>,
-        LazyVec<Day3, Timestamp, Day3, Height>,
-        LazyVec<Week1, Timestamp, Week1, Height>,
-        LazyVec<Month1, Timestamp, Month1, Height>,
-        LazyVec<Month3, Timestamp, Month3, Height>,
-        LazyVec<Month6, Timestamp, Month6, Height>,
-        LazyVec<Year1, Timestamp, Year1, Height>,
-        LazyVec<Year10, Timestamp, Year10, Height>,
+        IndexVec<Minute10, Timestamp, RangeMapVec<Minute10, Height>>,
+        IndexVec<Minute30, Timestamp, RangeMapVec<Minute30, Height>>,
+        IndexVec<Hour1, Timestamp, RangeMapVec<Hour1, Height>>,
+        IndexVec<Hour4, Timestamp, RangeMapVec<Hour4, Height>>,
+        IndexVec<Hour12, Timestamp, RangeMapVec<Hour12, Height>>,
+        IndexVec<Day1, Timestamp, RangeMapVec<Day1, Height>>,
+        IndexVec<Day3, Timestamp, RangeMapVec<Day3, Height>>,
+        IndexVec<Week1, Timestamp, RangeMapVec<Week1, Height>>,
+        IndexVec<Month1, Timestamp, RangeMapVec<Month1, Height>>,
+        IndexVec<Month3, Timestamp, RangeMapVec<Month3, Height>>,
+        IndexVec<Month6, Timestamp, RangeMapVec<Month6, Height>>,
+        IndexVec<Year1, Timestamp, RangeMapVec<Year1, Height>>,
+        IndexVec<Year10, Timestamp, RangeMapVec<Year10, Height>>,
         BoundaryTimestampVec<Halving>,
         BoundaryTimestampVec<Epoch>,
     >,
@@ -85,12 +86,9 @@ impl Timestamps {
     ) -> Self {
         macro_rules! period {
             ($field:ident) => {
-                LazyVec::init(
-                    "timestamp",
-                    version,
-                    $field.first_height.read_only_boxed_clone(),
-                    |idx, _: Height| idx.to_timestamp(),
-                )
+                IndexVec::new("timestamp", version, $field.first_height.clone(), |idx| {
+                    idx.to_timestamp()
+                })
             };
         }
 

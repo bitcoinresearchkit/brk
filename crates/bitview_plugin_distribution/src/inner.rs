@@ -1,4 +1,4 @@
-use brk_types::{Cents, Height, RangeMap, Timestamp, TxIndex};
+use brk_types::{Cents, Timestamp};
 
 use super::{compute::PriceRangeMax, state::BlockState};
 
@@ -6,7 +6,6 @@ use super::{compute::PriceRangeMax, state::BlockState};
 #[derive(Default)]
 pub struct Inner {
     pub chain_state: Vec<BlockState>,
-    pub tx_index_to_height: RangeMap<TxIndex, Height>,
     pub prices: Vec<Cents>,
     pub timestamps: Vec<Timestamp>,
     pub price_range_max: PriceRangeMax,
@@ -24,7 +23,7 @@ mod tests {
 
     use bitview_cohort::EntryPrice;
     use bitview_traversable::Traversable;
-    use brk_types::Version;
+    use brk_types::{Height, Version};
     use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, Database, EagerVec, ImportableVec, PcoVec, ReadOnlyClone, ReadableVec, Ro,
@@ -52,7 +51,6 @@ mod tests {
             timestamps: vec![Timestamp::default(); 2],
             ..Default::default()
         };
-        inner.tx_index_to_height.push(TxIndex::default());
         inner.price_range_max.extend(&inner.prices);
         inner.chain_state.push(BlockState {
             supply: Default::default(),
@@ -74,7 +72,6 @@ mod tests {
         assert_eq!(writer.inner.prices.len(), 2);
         assert_eq!(writer.inner.timestamps.len(), 2);
         assert_eq!(writer.inner.chain_state.len(), 1);
-        assert_eq!(writer.inner.tx_index_to_height.len(), 1);
         assert_eq!(writer.inner.price_range_max.range_max(0, 1), Cents::new(20));
         let (): () = reader.inner;
         assert_eq!(size_of_val(&reader.inner), 0);

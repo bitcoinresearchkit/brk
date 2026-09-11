@@ -1,109 +1,184 @@
 use std::{
+    net::TcpListener,
     panic::{catch_unwind, panic_any},
-    sync::mpsc,
-    thread,
-    time::Duration as TimeDuration,
+    sync::{Barrier, mpsc},
 };
 
-use brk_error::Error as ErrorError;
-use rustc_hash::FxHashMap;
+use brk_rpc::{Auth, Client};
+use brk_types::{AddrBytes, FeeRate, Sats, Vin};
 
 use super::*;
+use crate::{
+    state::TxEntry,
+    test_support::{fake_entry_info, fake_tx, p2wpkh_script},
+};
 
 #[test]
-fn statistics_retain_complete_membership_independently_of_live_state() {
-    use crate::{
-        state::TxEntry,
-        test_support::{fake_entry_info, fake_tx},
-    };
-    let mempool = Mempool::for_test();
-    let tip = Default::default();
-    assert!(matches!(mempool.info(), Err(Error::StateUpdating)));
-    mempool.publish_observation(tip, &[]);
-    assert_eq!(mempool.info().unwrap().count, 0);
+fn complete_membership_serves_outputs_while_inputs_remain_unresolved() {
+    let mut mempool = Mempool::for_test();
+    let tip = BlockHash::default();
+    assert!(matches!(
+        mempool.published().info(),
+        Err(Error::StateUpdating)
+    ));
+    mempool.test_publish(tip);
+    let reader = mempool.read_only_clone();
+    let empty = reader.load();
+    assert_eq!(empty.info().unwrap().count, 0);
 
-    let tx = fake_tx(1, &[None], &[]);
+    let tx = fake_tx(1, &[None], &[(p2wpkh_script(2), 1234)]);
     let txid = tx.txid;
-    {
-        let mut state = mempool.0.state.write();
-        state.published_tip = None;
-        state.info.add(&tx, 100_u64.into());
-        state.txs.insert(
-            tx,
-            TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false),
-        );
-        // Holding the live write lock must not block statistics readers.
-        let reader = mempool.clone();
-        let (send, receive) = mpsc::channel();
-        let reading = thread::spawn(move || send.send(reader.info().unwrap().count).unwrap());
-        assert_eq!(receive.recv_timeout(TimeDuration::from_secs(1)).unwrap(), 0);
-        reading.join().unwrap();
-    }
-    mempool.publish_observation(tip, &[]);
+    let state = &mut mempool.state;
+    state.info.add(&tx, 100_u64.into());
+    state.txs.insert(
+        tx,
+        TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false),
+    );
+    let (send, receive) = mpsc::channel();
+    let reading = thread::spawn(move || send.send(reader.load().info().unwrap().count).unwrap());
+    assert_eq!(receive.recv_timeout(Duration::from_secs(1)).unwrap(), 0);
+    reading.join().unwrap();
+    mempool
+        .rebuilder
+        .tick(&mempool.state, &[txid], FeeRate::new(1.0));
+    mempool.publish_observation(tip, false);
     assert_eq!(
-        mempool.info().unwrap().count,
+        mempool.published().info().unwrap().count,
         0,
-        "incomplete membership retains the previous snapshot"
+        "incomplete membership is retained"
     );
-    mempool.publish_observation(tip, &[txid]);
-    assert!(
-        mempool.0.state.read().published_tip.is_none(),
-        "unresolved inputs still hide address data"
+    assert_eq!(
+        mempool
+            .published()
+            .block_template_source()
+            .build()
+            .unwrap()
+            .transactions
+            .len(),
+        1,
+        "exact GBT advances independently"
     );
-    let first = mempool.info().unwrap();
-    assert_eq!(first.count, 1);
-    assert_eq!(u64::from(first.total_fee), 100);
-    {
-        let mut state = mempool.0.state.write();
-        let record = state.txs.remove_by_prefix(&txid.into()).unwrap();
-        state.info.remove(&record.tx, record.entry.fee);
-    }
-    assert_eq!(mempool.info().unwrap().count, 1);
-    mempool.publish_observation(tip, &[]);
-    assert_eq!(mempool.info().unwrap().count, 0);
-    assert_eq!(first.count, 1, "captured statistics are owned");
+    mempool.publish_observation(tip, true);
+    let first = mempool.published();
+    assert_eq!(first.info().unwrap().count, 1);
+    assert_eq!(
+        first.live_raw_histogram(&tip).unwrap().iter().sum::<u32>(),
+        1
+    );
+    assert_eq!(
+        first
+            .live_eligible_histogram(&tip)
+            .unwrap()
+            .iter()
+            .sum::<u32>(),
+        1
+    );
+    assert_eq!(first.txids_with_hash().unwrap().0, vec![txid]);
+    let addr = AddrBytes::try_from(&p2wpkh_script(2)).unwrap();
+    assert!(matches!(
+        first.addr_stats(&addr, &tip),
+        Err(Error::StateUpdating)
+    ));
+    assert!(matches!(
+        first.transaction(&txid, &tip),
+        Err(Error::StateUpdating)
+    ));
+    assert_eq!(empty.info().unwrap().count, 0);
+
+    let record = mempool.state.txs.remove_by_prefix(&txid.into()).unwrap();
+    mempool.state.info.remove(&record.tx, record.entry.fee);
+    assert_eq!(mempool.published().info().unwrap().count, 1);
+    mempool.test_publish(tip);
+    assert_eq!(mempool.published().info().unwrap().count, 0);
+    assert_eq!(first.info().unwrap().count, 1);
 }
 
 #[test]
-fn concurrent_cycles_are_rejected_before_rpc_or_mutation() {
-    let mempool = Mempool::for_test();
-    let _cycle = mempool.0.cycle.lock();
-    assert!(matches!(
-        mempool.tick_with(|_| FxHashMap::default()),
-        Err(ErrorError::StateUpdating)
+fn fills_isolate_published_bodies_and_reuse_unchanged_bodies() {
+    let mut mempool = Mempool::for_test();
+    let tip = BlockHash::default();
+    let unresolved = fake_tx(1, &[None], &[]);
+    let unchanged = fake_tx(2, &[], &[]);
+    let txid = unresolved.txid;
+    let other = unchanged.txid;
+    for tx in [unresolved, unchanged] {
+        let entry = TxEntry::new(&fake_entry_info(tx.txid, 100, 100), 100, false);
+        mempool.state.txs.insert(tx, entry);
+    }
+    mempool.test_publish(tip);
+    let before = mempool.published();
+    let old = &before.pool().unwrap().txs.record(&txid).unwrap().tx;
+    let stable = &before.pool().unwrap().txs.record(&other).unwrap().tx;
+    mempool.state.txs.apply_fills(
+        &txid.into(),
+        vec![(
+            Vin::from(0usize),
+            TxOut::from((p2wpkh_script(3), Sats::from(1234u64))),
+        )],
+    );
+    assert!(old.input[0].prevout.is_none());
+    mempool.test_publish(tip);
+    let after = mempool.published();
+    let changed = after.transaction(&txid, &tip).unwrap().unwrap();
+    assert!(!Arc::ptr_eq(old, &changed));
+    assert!(changed.input[0].prevout.is_some());
+    assert!(Arc::ptr_eq(
+        stable,
+        &after.transaction(&other, &tip).unwrap().unwrap()
     ));
+    assert_eq!(
+        after.pool().unwrap().graph.content_revision(),
+        after.pool().unwrap().txs.content_revision()
+    );
+}
+
+#[test]
+fn unchanged_publications_reuse_root_and_unheld_versions_are_released() {
+    let mut mempool = Mempool::for_test();
+    let tip = BlockHash::default();
+    mempool.test_publish(tip);
+    let before = mempool.published();
+    let weak = Arc::downgrade(&before);
+    mempool.test_publish(tip);
+    assert!(Arc::ptr_eq(&before, &mempool.published()));
+    mempool.test_publish("11".repeat(32).parse().unwrap());
+    assert!(weak.upgrade().is_some());
+    drop(before);
+    assert!(weak.upgrade().is_none());
+}
+
+#[test]
+fn recovery_discards_partial_private_changes_without_replacing_the_publication() {
+    let mut mempool = Mempool::for_test();
+    mempool.test_publish(BlockHash::default());
+    let before = mempool.published();
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        mempool.needs_recovery = true;
+        let tx = fake_tx(1, &[None], &[]);
+        mempool.state.info.add(&tx, 100_u64.into());
+        panic!("partial update");
+    }));
+    assert!(result.is_err());
+    mempool.restore_published();
+    assert_eq!(mempool.state.info.count, 0);
+    assert_eq!(mempool.state.txs.len(), 0);
+    assert!(Arc::ptr_eq(&before, &mempool.published()));
+    assert!(!mempool.needs_recovery);
+    assert_eq!(mempool.stats().rebuilds, before.stats().rebuilds);
 }
 
 #[test]
 fn fetch_failure_preserves_the_previous_publication() {
-    use brk_rpc::{Auth, Client};
-    use std::{net::TcpListener, sync::Arc, time::Duration};
-
-    // An unused local port fails immediately with retries disabled.
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
     drop(listener);
     let mut mempool = Mempool::for_test();
-    Arc::get_mut(&mut mempool.0).unwrap().client =
+    mempool.client =
         Client::new_with(&format!("http://{address}"), Auth::None, 0, Duration::ZERO).unwrap();
-    let tip = Default::default();
-    mempool.0.state.write().published_tip = Some(tip);
-    mempool.publish_observation(tip, &[]);
+    mempool.test_publish(BlockHash::default());
+    let before = mempool.published();
     assert!(mempool.tick_with(|_| FxHashMap::default()).is_err());
-    assert_eq!(mempool.0.state.read().published_tip, Some(tip));
-    assert_eq!(mempool.info().unwrap().count, 0);
-}
-
-#[test]
-#[should_panic(expected = "Mempool::start_with already running on this instance")]
-fn double_start_panics_with_documented_message() {
-    let mempool = Mempool::for_test();
-    // Simulate a prior `start_with` having grabbed the latch. We
-    // can't actually call it first because the real call enters an
-    // infinite loop. Flipping the atomic is what the runtime check
-    // observes anyway.
-    mempool.0.started.store(true, Ordering::Release);
-    mempool.start_with(|_: &[(Txid, Vout)]| FxHashMap::default());
+    assert!(Arc::ptr_eq(&before, &mempool.published()));
 }
 
 #[test]
@@ -120,11 +195,66 @@ fn panic_msg_extracts_string_payload() {
 
 #[test]
 fn panic_msg_falls_back_for_non_string_payload() {
-    // Payload that isn't &str or String: the helper labels it
-    // explicitly instead of dropping it on the floor.
     let payload = catch_unwind(|| panic_any(42u32)).unwrap_err();
     assert_eq!(
         Mempool::panic_msg(payload.as_ref()),
         "<non-string panic payload>"
     );
+}
+
+#[test]
+fn projection_only_changes_share_membership_containers() {
+    let mut writer = Mempool::for_test();
+    let tx = fake_tx(1, &[], &[]);
+    let txid = tx.txid;
+    writer.state.txs.insert(
+        tx,
+        TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false),
+    );
+    writer.test_tick(&[txid], FeeRate::new(1.0));
+    let before = writer.published();
+    writer.test_tick(&[txid], FeeRate::new(2.0));
+    let after = writer.published();
+    let old = before.pool().unwrap();
+    let new = after.pool().unwrap();
+    assert!(!Arc::ptr_eq(&old.graph, &new.graph));
+    assert!(Arc::ptr_eq(&old.txs, &new.txs));
+    assert!(Arc::ptr_eq(&old.addrs, &new.addrs));
+    assert!(Arc::ptr_eq(&old.outpoint_spends, &new.outpoint_spends));
+    assert!(Arc::ptr_eq(&old.graveyard, &new.graveyard));
+}
+
+#[test]
+fn concurrent_readers_observe_one_complete_membership_version() {
+    let mut writer = Mempool::for_test();
+    let tip = BlockHash::default();
+    writer.test_publish(tip);
+    let reader = writer.read_only_clone();
+    let ready = Arc::new(Barrier::new(2));
+    let start = ready.clone();
+    let reading = thread::spawn(move || {
+        start.wait();
+        for _ in 0..1000 {
+            let view = reader.load();
+            let count = view.info().unwrap().count;
+            assert_eq!(view.txids_with_hash().unwrap().0.len(), count);
+            assert_eq!(
+                view.live_raw_histogram(&tip).unwrap().iter().sum::<u32>() as usize,
+                count
+            );
+            assert_eq!(
+                view.pool().unwrap().graph.content_revision(),
+                view.pool().unwrap().txs.content_revision()
+            );
+        }
+    });
+    ready.wait();
+    for seed in 1..=100 {
+        let tx = fake_tx(seed, &[], &[(p2wpkh_script(seed), 1234)]);
+        writer.state.info.add(&tx, 100_u64.into());
+        let entry = TxEntry::new(&fake_entry_info(tx.txid, 100, 100), 100, false);
+        writer.state.txs.insert(tx, entry);
+        writer.test_publish(tip);
+    }
+    reading.join().unwrap();
 }

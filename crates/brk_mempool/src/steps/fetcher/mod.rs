@@ -4,7 +4,6 @@ use brk_error::Result;
 use brk_rpc::Client;
 use brk_types::{MempoolEntryInfo, Timestamp, Txid, VSize};
 pub use fetched::Fetched;
-use parking_lot::RwLock;
 use rustc_hash::FxHashSet;
 use tracing::warn;
 
@@ -30,13 +29,12 @@ const MAX_TX_FETCHES_PER_CYCLE: usize = 10_000;
 /// Confirmed prevouts are resolved post-apply by the caller-supplied
 /// resolver passed to `Mempool::tick_with`, so the in-crate path no
 /// longer issues a third batch for parents.
-pub fn fetch(client: &Client, lock: &RwLock<State>) -> Result<Fetched> {
+pub fn fetch(client: &Client, mempool: &State) -> Result<Fetched> {
     let (mut state, block_template) = client.fetch_mempool_state()?;
 
-    // One read snapshot decides both the RPC fetch list and the
-    // GBT-synthesis set, so they agree on what's "already known".
+    // The same private pool decides the RPC fetch list and GBT synthesis,
+    // so they agree on what's already known.
     let (new_txids, gbt_synth_set, mut missing_from_listing) = {
-        let mempool = lock.read();
         let mut gbt_txids: FxHashSet<Txid> =
             FxHashSet::with_capacity_and_hasher(block_template.len(), Default::default());
         let mut gbt_synth_set: FxHashSet<Txid> = FxHashSet::default();

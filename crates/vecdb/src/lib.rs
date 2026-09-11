@@ -56,9 +56,9 @@ pub use traits::{
 };
 
 pub use variants::{
-    AggFold, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue, CompressedRangeCursor,
+    BytesStrategy, BytesVec, BytesVecReader, BytesVecValue, CompressedRangeCursor,
     CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec,
-    EncodedChunk, Halve, Ident, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec, MapOption, MutableVec,
+    EncodedChunk, Halve, Ident, IndexVec, LazyDeltaVec, LazyVec, MapOption, MutableVec,
     OverflowVec, OverflowVecReader, OverflowVecReaderCursor, OverflowVecValue, RawRangeCursor,
     RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
     ReadWriteRawVec, UnaryTransform, VecReader, VecReaderCursor,

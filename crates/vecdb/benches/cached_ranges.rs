@@ -266,7 +266,7 @@ fn mixed_source_reclamation() {
         let read = |turn: usize| {
             // One frequently read range mixed with changing, disjoint ranges
             // across the other sources. All requested data fits the server budget.
-            let (source, from) = if turn % 3 == 0 {
+            let (source, from) = if turn.is_multiple_of(3) {
                 (0, 0)
             } else {
                 (1 + turn % 7, (turn / 7 % 16) * 1024)

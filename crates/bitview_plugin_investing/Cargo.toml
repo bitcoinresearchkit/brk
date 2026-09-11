@@ -22,4 +22,5 @@ brk_types = { workspace = true, features = ["storage"] }
 vecdb = { workspace = true }
 
 [dev-dependencies]
+rangeindex = { workspace = true }
 parking_lot = { workspace = true }

@@ -441,9 +441,8 @@ impl ComputePlugin for Vecs {
         }
         self.inner.price_range_max.extend(&self.inner.prices);
 
-        // Take chain_state and tx_index_to_height out of self to avoid borrow conflicts
+        // Take chain_state out of self to avoid borrow conflicts
         let mut chain_state = mem::take(&mut self.inner.chain_state);
-        let mut tx_index_to_height = mem::take(&mut self.inner.tx_index_to_height);
 
         // Recover or reuse chain_state
         let starting_height = if recovered_height.is_zero() {
@@ -491,9 +490,6 @@ impl ComputePlugin for Vecs {
                 })
                 .collect();
             debug!("chain_state rebuilt");
-
-            // Truncate RangeMap to match (entries are immutable, safe to keep)
-            tx_index_to_height.truncate(end);
 
             recovered_height
         };
@@ -544,7 +540,6 @@ impl ComputePlugin for Vecs {
                 transactions,
                 &compute,
                 &mut chain_state,
-                &mut tx_index_to_height,
                 entry_anchor,
                 exit,
             )?;
@@ -554,9 +549,8 @@ impl ComputePlugin for Vecs {
             self.inner.price_range_max = price_range_max;
         }
 
-        // Put chain_state and tx_index_to_height back
+        // Put chain_state back
         self.inner.chain_state = chain_state;
-        self.inner.tx_index_to_height = tx_index_to_height;
 
         // 5. Compute rest part1 (day1 mappings)
         debug!("Computing rest part 1...");

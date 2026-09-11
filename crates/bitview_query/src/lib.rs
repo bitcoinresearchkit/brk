@@ -22,7 +22,7 @@ use bitview_types::SyncStatus;
 #[cfg(feature = "indexer")]
 use brk_error::{Error, OptionData, Result};
 #[cfg(feature = "indexer")]
-use brk_mempool::Mempool;
+use brk_mempool::{ReadOnlyMempool, ReadOnlyState};
 #[cfg(feature = "indexer")]
 use brk_reader::Reader;
 #[cfg(feature = "indexer")]
@@ -127,7 +127,7 @@ pub struct Query(Arc<QueryInner<'static>>, Option<Instant>);
 struct QueryInner<'a> {
     vecs: &'a Vecs<'a>,
     plugins: QueryPlugins<'a>,
-    mempool: Option<Mempool>,
+    mempool: Option<ReadOnlyMempool>,
     #[cfg(feature = "price")]
     live_oracle: live_oracle::LiveOracle,
 }
@@ -180,7 +180,7 @@ impl Query {
     /// because the catalog contains references into that composition. A daemon
     /// should call this once; repeated or multi-instance query construction is
     /// outside this API's lifecycle contract.
-    pub fn build<P>(plugins: &P, mempool: Option<Mempool>) -> Self
+    pub fn build<P>(plugins: &P, mempool: Option<ReadOnlyMempool>) -> Self
     where
         P: ReadOnlyClone,
         P::ReadOnly: QueryPluginSet + 'static,
@@ -358,8 +358,8 @@ impl Query {
     }
 
     #[inline]
-    pub fn mempool(&self) -> Option<&Mempool> {
-        self.0.mempool.as_ref()
+    pub fn mempool(&self) -> Option<Arc<ReadOnlyState>> {
+        self.0.mempool.as_ref().map(ReadOnlyMempool::load)
     }
 
     #[inline]

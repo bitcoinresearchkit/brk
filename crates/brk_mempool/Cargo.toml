@@ -9,6 +9,7 @@ repository.workspace = true
 exclude = ["examples/"]
 
 [dependencies]
+arc-swap = { workspace = true }
 bitcoin = { workspace = true }
 brk_error = { workspace = true }
 brk_oracle = { workspace = true }
@@ -17,7 +18,6 @@ brk_types = { workspace = true }
 derive_more = { workspace = true }
 indexmap = { workspace = true }
 tracing = { workspace = true }
-parking_lot = { workspace = true }
 rustc-hash = { workspace = true }
 smallvec = { workspace = true }
 serde_json = { workspace = true }

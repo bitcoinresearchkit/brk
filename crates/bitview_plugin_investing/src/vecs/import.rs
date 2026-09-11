@@ -25,7 +25,7 @@ impl Vecs {
     ) -> Result<Self> {
         let version = STORAGE.schema_version();
 
-        let height_days = mappings.height.day1_read_only_boxed_clone();
+        let height_days = mappings.height_day1.clone();
         let dca_sats = DcaSats::new(
             prices.split.close.usd.day1.read_only_boxed_clone(),
             height_days.clone(),
@@ -145,7 +145,7 @@ impl Vecs {
                 &format!("{metric_name}_sats_source"),
                 version,
                 &sats_cumulative,
-                &height_days,
+                &mappings.first_height.day1,
                 day,
                 |current, before| current.checked_sub(before).unwrap_or_default(),
             );

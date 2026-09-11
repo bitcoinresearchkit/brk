@@ -1,12 +1,13 @@
 use bitview_plugin_indexer::Indexer;
-use brk_types::{Height, OutPoint, OutputType, RangeMap, Sats, TxInIndex, TxIndex, TypeIndex};
+use brk_types::{Height, OutPoint, OutputType, Sats, TxInIndex, TxIndex, TypeIndex};
+use rangeindex::{CachedRangeMapCursor, RangeMap};
 use vecdb::{PcoVec, ReadableVec};
 
 /// Bulk txin reader with reusable buffers.
 pub struct TxInReaders<'a> {
     indexer: &'a Indexer,
     input_values: &'a PcoVec<TxInIndex, Sats>,
-    tx_index_to_height: &'a mut RangeMap<TxIndex, Height>,
+    tx_index_to_height: CachedRangeMapCursor<'a, TxIndex, Height>,
     outpoints_buf: Vec<OutPoint>,
     values_buf: Vec<Sats>,
     prev_heights_buf: Vec<Height>,
@@ -18,12 +19,12 @@ impl<'a> TxInReaders<'a> {
     pub fn new(
         indexer: &'a Indexer,
         input_values: &'a PcoVec<TxInIndex, Sats>,
-        tx_index_to_height: &'a mut RangeMap<TxIndex, Height>,
+        tx_index_to_height: &'a RangeMap<TxIndex, Height>,
     ) -> Self {
         Self {
             indexer,
             input_values,
-            tx_index_to_height,
+            tx_index_to_height: tx_index_to_height.cached_cursor(),
             outpoints_buf: Vec::new(),
             values_buf: Vec::new(),
             prev_heights_buf: Vec::new(),

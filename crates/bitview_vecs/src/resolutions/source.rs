@@ -3,9 +3,9 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyAggVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
+use vecdb::{AnyVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
 
-use crate::{CoarserIndex, IndexSources};
+use crate::{CoarserIndex, IndexSources, LazyAggVec};
 
 macro_rules! define_resolutions {
     (
@@ -18,8 +18,8 @@ macro_rules! define_resolutions {
         #[traversable(transparent)]
         pub struct Resolutions<T>(
             pub PerResolution<
-                $(LazyAggVec<$index, Option<T>, Height, Height, T>,)*
-                $(LazyAggVec<$epoch_index, T, Height, Height, T, CoarserIndex<$epoch_index>>,)*
+                $(LazyAggVec<$index, Option<T>, Height, T>,)*
+                $(LazyAggVec<$epoch_index, T, Height, T, CoarserIndex<$epoch_index>>,)*
             >,
         )
         where
@@ -42,9 +42,9 @@ macro_rules! define_resolutions {
                     ($mapping:expr) => {{
                         LazyAggVec::new(
                             name,
-                            version,
+                            version + $mapping.version(),
                             height_source.clone(),
-                            $mapping.clone(),
+                            $mapping.mapping().clone(),
                         )
                     }};
                 }

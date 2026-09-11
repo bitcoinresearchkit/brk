@@ -1,10 +1,10 @@
 use bitview_transforms::{CentsUnsignedToDollars, CentsUnsignedToSats};
 use bitview_vecs::{OhlcPrice, SplitPrice, SpotPrice};
-use brk_types::{Cents, Day1, Height, Version};
+use brk_types::{Cents, Height, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, Database, EagerVec, PcoVec, ReadableCloneableVec, ReadableVec,
-    UnaryTransform, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, Database, EagerVec, PcoVec, ReadableVec, UnaryTransform,
+    WritableVec,
 };
 
 mod common;
@@ -15,8 +15,7 @@ fn shared_price_shapes_preserve_integer_units_inverse_extrema_empty_periods_and_
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
-        common::stored::<Day1, _>(&db, "day_starts", [0usize, 2, 2, 4].map(Height::from))
-            .read_only_boxed_clone();
+        common::first_heights("day_starts", [0usize, 2, 2, 4].map(Height::from));
     let mut spot = SpotPrice::forced_import(
         &common::CACHE_BUDGET,
         &db,

@@ -4,9 +4,7 @@ use bitview_collections::Windows;
 use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_types::{Height, StoredF32, StoredU64, Timestamp, Version};
 use tempfile::tempdir;
-use vecdb::{
-    AnyStoredVec, Database, ReadableCloneableVec, ReadableVec, VecIndex, WritableVec, diagnostics,
-};
+use vecdb::{AnyStoredVec, Database, ReadableVec, VecIndex, WritableVec, diagnostics};
 
 use crate::common::CACHE_BUDGET;
 
@@ -21,7 +19,7 @@ fn rolling_resolutions_share_the_cumulative_cache_without_caching_derivations() 
     let mut indexes = common::indexes(&db);
     let days: Vec<_> = (0..N).step_by(144).collect();
     indexes.first_height.day1 =
-        common::stored(&db, "days", days.iter().copied().map(Height::from)).read_only_boxed_clone();
+        common::first_heights("days", days.iter().copied().map(Height::from));
     let timestamps = common::stored::<Height, _>(
         &db,
         "timestamps",

@@ -1,0 +1,686 @@
+{
+  "observed_at": "2026-09-11T14:41:27Z",
+  "url": "http://127.0.0.1:3110",
+  "note": "Existing daemon; not restarted. Binary predates this refactor.",
+  "/version": {
+    "status": 200,
+    "body": "0.12.2"
+  },
+  "/health": {
+    "status": 200,
+    "body": {
+      "status": "healthy",
+      "service": "brk",
+      "version": "0.12.2",
+      "timestamp": "2026-09-11T14:41:27.343417Z",
+      "started_at": "2026-09-11T12:46:48.227914Z",
+      "uptime_seconds": 6879,
+      "indexed_height": 966517,
+      "computed_height": 966517,
+      "tip_height": 966517,
+      "blocks_behind": 0,
+      "last_indexed_at": "2026-09-11T14:22:18Z",
+      "last_indexed_at_unix": 1789136538
+    }
+  },
+  "/api/blocks/tip/hash": {
+    "status": 200,
+    "body": "000000000000000000000c453e8d79608a67347bfe3242217925968bf3ba2fb7"
+  },
+  "routes": {
+    "/api/mempool/price": [
+      {
+        "status": 503,
+        "ns": 7571917,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 5150750,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3330583,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3140667,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3874292,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 9312333,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6723542,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 22482041,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 12273541,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8653799583,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 93380000,
+        "bytes": 103
+      },
+      {
+        "status": 200,
+        "ns": 60364208,
+        "bytes": 8
+      },
+      {
+        "status": 200,
+        "ns": 10399792,
+        "bytes": 7
+      },
+      {
+        "status": 304,
+        "ns": 22236792,
+        "bytes": 0
+      },
+      {
+        "status": 304,
+        "ns": 635238292,
+        "bytes": 0
+      },
+      {
+        "status": 503,
+        "ns": 2422625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 4937959,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2518458,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3696167,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 45240083,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 38763666,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2084084,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 46195250,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 295093333,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 90652375,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 62645375,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6959666,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 19949125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 48841041,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 124899958,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 48049542,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 25037417,
+        "bytes": 103
+      }
+    ],
+    "/api/oracle/price": [
+      {
+        "status": 503,
+        "ns": 10378000,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6231709,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 7447458,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3264292,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3409250,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 5664416,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6727709,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 87045125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8687973208,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 25918083,
+        "bytes": 103
+      },
+      {
+        "status": 200,
+        "ns": 57440667,
+        "bytes": 8
+      },
+      {
+        "status": 200,
+        "ns": 9123417,
+        "bytes": 7
+      },
+      {
+        "status": 304,
+        "ns": 6526334,
+        "bytes": 0
+      },
+      {
+        "status": 304,
+        "ns": 13964125,
+        "bytes": 0
+      },
+      {
+        "status": 304,
+        "ns": 608275375,
+        "bytes": 0
+      },
+      {
+        "status": 503,
+        "ns": 25594584,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8142625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3397917,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 4380791,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 45042916,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44372792,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 5945959,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 39795000,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 294750167,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 87348542,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 63165042,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6232000,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 20830709,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 48227625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 125825708,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44817958,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 24410917,
+        "bytes": 103
+      }
+    ],
+    "/api/oracle/histogram/payments/live": [
+      {
+        "status": 503,
+        "ns": 20495916,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 1539125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6011709,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 13313084,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 16899500,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2222541,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3486625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 97168042,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8652159625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 113398666,
+        "bytes": 103
+      },
+      {
+        "status": 200,
+        "ns": 57449667,
+        "bytes": 4982
+      },
+      {
+        "status": 200,
+        "ns": 13434791,
+        "bytes": 4982
+      },
+      {
+        "status": 304,
+        "ns": 21958292,
+        "bytes": 0
+      },
+      {
+        "status": 304,
+        "ns": 608589458,
+        "bytes": 0
+      },
+      {
+        "status": 503,
+        "ns": 22602125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 5801166,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3831250,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 5338625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 45789666,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 43281083,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 4639500,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 40481125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 276289875,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 41402208,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 21440083,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6840750,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3243959,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 23716708,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 37889833,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 136726834,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44641375,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 24237541,
+        "bytes": 103
+      }
+    ],
+    "/api/oracle/histogram/outputs/live": [
+      {
+        "status": 503,
+        "ns": 20138708,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2197625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8168625,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 13309666,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 32099083,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2679917,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2991750,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 76731875,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 8650307458,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 113265875,
+        "bytes": 103
+      },
+      {
+        "status": 200,
+        "ns": 55845042,
+        "bytes": 5633
+      },
+      {
+        "status": 200,
+        "ns": 17443208,
+        "bytes": 5633
+      },
+      {
+        "status": 304,
+        "ns": 21163584,
+        "bytes": 0
+      },
+      {
+        "status": 304,
+        "ns": 544131583,
+        "bytes": 0
+      },
+      {
+        "status": 503,
+        "ns": 2572125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 1592875,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 11238041,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44688459,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 93648917,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44582333,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 3334375,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 39667458,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 294678334,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 90139708,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 62649083,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 6380500,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 26016209,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 48562292,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 123122791,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 44791125,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 24285750,
+        "bytes": 103
+      },
+      {
+        "status": 503,
+        "ns": 2652750,
+        "bytes": 103
+      }
+    ]
+  },
+  "binary": {
+    "path": "/Users/k/Developer/mono/target/debug/bitviewd",
+    "size": 212229560,
+    "modified": 1789130799.8961518,
+    "sha256": "fb6fd4548729316d74bddb97358f7420ca0eb90cee23efef515bb688054e6646"
+  }
+}

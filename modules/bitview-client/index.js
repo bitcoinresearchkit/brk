@@ -1954,18 +1954,23 @@ class BitviewClientBase {
 
   /**
    * @param {string} path
-   * @param {{ signal?: AbortSignal, cache?: boolean }} [options]
+   * @param {{ signal?: AbortSignal, cache?: boolean, etag?: string | null }} [options]
    * @returns {Promise<Response>}
    */
-  async get(path, { signal, cache = true } = {}) {
+  async get(path, { signal, cache = true, etag } = {}) {
     const url = `${this.baseUrl}${path}`;
     const signals = [AbortSignal.timeout(this.timeout)];
     if (signal) signals.push(signal);
     /** @type {RequestInit} */
     const init = { signal: AbortSignal.any(signals) };
+    // Let browsers manage HTTP revalidation; explicit validators bypass their HTTP cache.
+    const revalidate = cache && etag && typeof location === 'undefined';
+    if (revalidate) init.headers = { 'If-None-Match': etag };
     if (!cache) init.cache = 'no-store';
     const res = await fetch(url, init);
-    if (!res.ok) throw new BitviewError(`HTTP ${res.status}: ${url}`, res.status);
+    if (!res.ok && !(revalidate && res.status === 304)) {
+      throw new BitviewError(`HTTP ${res.status}: ${url}`, res.status);
+    }
     return res;
   }
 
@@ -2006,9 +2011,12 @@ class BitviewClientBase {
     if (memHit) {
       if (onValue) onValue(memHit.value);
       try {
-        const res = await this.get(path, { signal });
+        const res = await this.get(path, { signal, etag: memHit.etag });
         const netEtag = res.headers.get('ETag');
-        if (netEtag && netEtag === memHit.etag) return memHit.value;
+        if (res.status === 304 || (netEtag && netEtag === memHit.etag)) {
+          await res.body?.cancel();
+          return memHit.value;
+        }
         const cloned = browserCache ? res.clone() : null;
         const value = await parse(res);
         if (useMemCache) this._memSet(url, netEtag, value);
@@ -2042,7 +2050,10 @@ class BitviewClientBase {
       const netEtag = res.headers.get('ETag');
       // Stale won and populated memCache with matching ETag → reuse, skip parse + second onValue.
       const populated = useMemCache ? /** @type {_MemEntry<T> | undefined} */ (this._memGet(url)) : undefined;
-      if (populated && netEtag && netEtag === populated.etag) return populated.value;
+      if (populated && netEtag && netEtag === populated.etag) {
+        await res.body?.cancel();
+        return populated.value;
+      }
       const cloned = browserCache ? res.clone() : null;
       const value = await parse(res);
       if (useMemCache) this._memSet(url, netEtag, value);

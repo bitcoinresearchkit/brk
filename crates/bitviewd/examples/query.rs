@@ -34,13 +34,13 @@ pub fn main() -> Result<()> {
 
     let plugins = DefaultPlugins::import(context, &reader)?;
 
-    let mempool = Mempool::new(&client);
-    let mempool_clone = mempool.clone();
+    let mut mempool = Mempool::new(&client);
+    let read_only = mempool.read_only_clone();
     thread::spawn(move || {
-        mempool_clone.start();
+        mempool.start();
     });
 
-    let query = Query::build(&plugins, Some(mempool));
+    let query = Query::build(&plugins, Some(read_only));
 
     let _ = dbg!(query.addr(Addr::from(
         "bc1qwzrryqr3ja8w7hnja2spmkgfdcgvqwp5swz4af4ngsjecfz0w0pqud7k38".to_string(),

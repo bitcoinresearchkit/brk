@@ -728,6 +728,7 @@ dependencies = [
  "brk_rpc",
  "brk_types",
  "derive_more",
+ "rangeindex",
  "rayon",
  "rustc-hash",
  "serde",
@@ -827,6 +828,7 @@ dependencies = [
  "brk_types",
  "derive_more",
  "parking_lot",
+ "rangeindex",
  "vecdb",
 ]
 
@@ -844,6 +846,7 @@ dependencies = [
  "brk_types",
  "derive_more",
  "parking_lot",
+ "rangeindex",
  "schemars",
  "serde",
  "vecdb",
@@ -1008,6 +1011,7 @@ dependencies = [
  "brk_exit",
  "brk_types",
  "derive_more",
+ "rangeindex",
  "rayon",
  "schemars",
  "tempfile",
@@ -1227,6 +1231,7 @@ dependencies = [
  "brk_types",
  "derive_more",
  "parking_lot",
+ "rangeindex",
  "rayon",
  "schemars",
  "serde",
@@ -1470,6 +1475,7 @@ dependencies = [
 name = "brk_mempool"
 version = "0.12.2"
 dependencies = [
+ "arc-swap",
  "bitcoin",
  "brk_error",
  "brk_logger",
@@ -1478,7 +1484,6 @@ dependencies = [
  "brk_types",
  "derive_more",
  "indexmap",
- "parking_lot",
  "rustc-hash",
  "serde_json",
  "smallvec",
@@ -3543,6 +3548,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "662effc7698e08ea324d3acccf8d9d7f7bf79b9785e270a174ea36e56900c91d"
 dependencies = [
  "rand_core 0.10.1",
+]
+
+[[package]]
+name = "rangeindex"
+version = "0.12.2"
+dependencies = [
+ "parking_lot",
 ]
 
 [[package]]

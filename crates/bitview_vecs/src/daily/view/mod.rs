@@ -12,8 +12,8 @@ use brk_types::{Day1, Version};
 use schemars::SchemaGenerator;
 use serde_json::to_value;
 use vecdb::{
-    AnyExportableVec, AnyVec, Cursor, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableVec, TypedVec, VecIndex, VecValue, short_type_name,
+    AnyExportableVec, AnyVec, READ_CHUNK_SIZE, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
+    TypedVec, VecIndex, VecValue, short_type_name,
 };
 
 use crate::DailyValue;
@@ -75,7 +75,7 @@ where
     where
         F: FnMut(B, Option<T>) -> Result<B, E>,
     {
-        let mapping_len = self.mapping.len();
+        let mapping_len = self.mapping.visible_len();
         let to = to.min(mapping_len);
         if from >= to {
             return Ok(init);
@@ -246,7 +246,7 @@ where
     S: DayStrategy,
 {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Option<T>>) {
-        let to = to.min(self.mapping.len());
+        let to = to.min(self.mapping.visible_len());
         if from >= to {
             return;
         }
@@ -265,7 +265,7 @@ where
     }
 
     fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[Option<T>])) {
-        let to = to.min(self.mapping.len());
+        let to = to.min(self.mapping.visible_len());
         if from >= to {
             return;
         }
@@ -320,7 +320,7 @@ where
     }
 
     fn collect_one_at(&self, index: usize) -> Option<Option<T>> {
-        let mapping_len = self.mapping.len();
+        let mapping_len = self.mapping.visible_len();
         if index >= mapping_len {
             return None;
         }
@@ -338,7 +338,7 @@ where
         if indices.is_empty() {
             return;
         }
-        let mapping_len = self.mapping.len();
+        let mapping_len = self.mapping.visible_len();
         let indices = &indices[..indices.partition_point(|&i| i < mapping_len)];
         if indices.is_empty() {
             return;
@@ -353,27 +353,34 @@ where
             self.read_into_at(indices[0], indices[indices.len() - 1] + 1, out);
             return;
         }
+        // Gather only the needed boundaries. A prefetching cursor would also
+        // evaluate lazy mappings at every skipped index in each fetched chunk.
+        let mut mapping_indices = Vec::with_capacity(indices.len());
+        for &index in indices {
+            for i in index..S::mapping_end(index + 1, mapping_len) {
+                if mapping_indices.last().is_none_or(|&last| last < i) {
+                    mapping_indices.push(i);
+                }
+            }
+        }
+        let mapping = self.mapping.read_sorted_at(&mapping_indices);
         let source_len = self.source.visible_len();
-        let mut mapping = Cursor::new(&*self.mapping);
-        let mut window = Vec::with_capacity(2);
         let mut requested = Vec::with_capacity(indices.len());
         let mut slots = Vec::with_capacity(indices.len());
+        let mut offset = 0;
         for &index in indices {
-            window.clear();
-            for i in index..S::mapping_end(index + 1, mapping_len) {
-                if let Some(day) = mapping.get(i) {
-                    window.push(day);
-                }
+            while mapping_indices[offset] < index {
+                offset += 1;
             }
-            if window.is_empty() {
-                continue;
-            }
-            slots.push(S::source_index(&window, 0, source_len).map(|i| {
-                if requested.last() != Some(&i) {
-                    requested.push(i);
-                }
-                requested.len() - 1
-            }));
+            let end = offset + S::mapping_end(index + 1, mapping_len) - index;
+            slots.push(
+                S::source_index(&mapping[offset..end], 0, source_len).map(|i| {
+                    if requested.last() != Some(&i) {
+                        requested.push(i);
+                    }
+                    requested.len() - 1
+                }),
+            );
         }
         let values = self.source.read_sorted_at(&requested);
         out.extend(

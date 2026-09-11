@@ -1,3 +1,4 @@
+use crate::Mempool;
 use brk_types::{FeeRate, Sats, TxOut, Txid};
 
 use super::*;
@@ -9,7 +10,7 @@ use crate::{
 /// Insert a tx, optionally declaring parent dependencies for the
 /// snapshot builder's adjacency wire-up.
 fn insert_with_depends(
-    mempool: &Mempool,
+    mempool: &mut Mempool,
     seed: u8,
     fee: u64,
     vsize: u64,
@@ -21,26 +22,23 @@ fn insert_with_depends(
     let mut info = fake_entry_info(txid, fee, vsize);
     info.depends = parents.to_vec();
     let entry = TxEntry::new(&info, vsize, false);
-    let mut state = mempool.test_state_lock().write();
+    let state = mempool.test_state_mut();
     state.txs.insert(tx, entry);
     txid
 }
 
-fn publish(mempool: &Mempool, txids: &[Txid]) {
+fn publish(mempool: &mut Mempool, txids: &[Txid]) {
     mempool.test_tick(txids, FeeRate::new(1.0));
-    mempool
-        .test_state_lock()
-        .write()
-        .publish_at(BlockHash::default(), txids);
 }
 
 #[test]
 fn singleton_cpfp_info_has_no_cluster() {
-    let mempool = Mempool::for_test();
-    let txid = insert_with_depends(&mempool, 0xB0, 10_000, 100, &[]);
-    publish(&mempool, &[txid]);
+    let mut mempool = Mempool::for_test();
+    let txid = insert_with_depends(&mut mempool, 0xB0, 10_000, 100, &[]);
+    publish(&mut mempool, &[txid]);
 
     let info = mempool
+        .published()
         .cpfp_info(&txid, &BlockHash::default())
         .unwrap()
         .expect("tx is in mempool");
@@ -54,12 +52,13 @@ fn singleton_cpfp_info_has_no_cluster() {
 
 #[test]
 fn two_tx_cpfp_cluster_has_both_members_and_lifted_rate() {
-    let mempool = Mempool::for_test();
-    let parent = insert_with_depends(&mempool, 0xB1, 100, 100, &[]);
-    let child = insert_with_depends(&mempool, 0xB2, 1_900, 100, &[parent]);
-    publish(&mempool, &[parent, child]);
+    let mut mempool = Mempool::for_test();
+    let parent = insert_with_depends(&mut mempool, 0xB1, 100, 100, &[]);
+    let child = insert_with_depends(&mut mempool, 0xB2, 1_900, 100, &[parent]);
+    publish(&mut mempool, &[parent, child]);
 
     let parent_info = mempool
+        .published()
         .cpfp_info(&parent, &BlockHash::default())
         .unwrap()
         .unwrap();
@@ -75,6 +74,7 @@ fn two_tx_cpfp_cluster_has_both_members_and_lifted_rate() {
     assert!(parent_info.effective_fee_per_vsize > parent_isolated);
     // Same package -> child's reported chunk rate matches parent's.
     let child_info = mempool
+        .published()
         .cpfp_info(&child, &BlockHash::default())
         .unwrap()
         .unwrap();
@@ -87,14 +87,15 @@ fn two_tx_cpfp_cluster_has_both_members_and_lifted_rate() {
 #[test]
 fn cpfp_ancestor_and_descendant_walks_are_directional() {
     // chain: A -> B -> C
-    let mempool = Mempool::for_test();
-    let a = insert_with_depends(&mempool, 0xB3, 100, 100, &[]);
-    let b = insert_with_depends(&mempool, 0xB4, 100, 100, &[a]);
-    let c = insert_with_depends(&mempool, 0xB5, 5_800, 100, &[b]);
-    publish(&mempool, &[a, b, c]);
+    let mut mempool = Mempool::for_test();
+    let a = insert_with_depends(&mut mempool, 0xB3, 100, 100, &[]);
+    let b = insert_with_depends(&mut mempool, 0xB4, 100, 100, &[a]);
+    let c = insert_with_depends(&mut mempool, 0xB5, 5_800, 100, &[b]);
+    publish(&mut mempool, &[a, b, c]);
 
     // B sees A as an ancestor and C as a descendant.
     let info_b = mempool
+        .published()
         .cpfp_info(&b, &BlockHash::default())
         .unwrap()
         .unwrap();
@@ -108,15 +109,17 @@ fn cpfp_ancestor_and_descendant_walks_are_directional() {
 
 #[test]
 fn cpfp_info_returns_none_for_unknown_txid() {
-    let mempool = Mempool::for_test();
+    let mut mempool = Mempool::for_test();
     assert!(
         mempool
+            .published()
             .cpfp_info(&Txid::COINBASE, &BlockHash::default())
             .is_err()
     );
-    publish(&mempool, &[]);
+    publish(&mut mempool, &[]);
     assert!(
         mempool
+            .published()
             .cpfp_info(&Txid::COINBASE, &BlockHash::default())
             .unwrap()
             .is_none()
@@ -124,27 +127,39 @@ fn cpfp_info_returns_none_for_unknown_txid() {
 }
 
 #[test]
-fn cpfp_rejects_a_stale_graph_even_when_the_seed_remains_live() {
-    let mempool = Mempool::for_test();
-    let txid = insert_with_depends(&mempool, 0xB0, 100, 100, &[]);
+fn cpfp_keeps_a_compatible_graph_during_private_changes() {
+    let mut mempool = Mempool::for_test();
+    let txid = insert_with_depends(&mut mempool, 0xB0, 100, 100, &[]);
     let tip = BlockHash::default();
-    publish(&mempool, &[txid]);
-    assert!(mempool.cpfp_info(&txid, &tip).unwrap().is_some());
+    publish(&mut mempool, &[txid]);
     assert!(
         mempool
+            .published()
+            .cpfp_info(&txid, &tip)
+            .unwrap()
+            .is_some()
+    );
+    assert!(
+        mempool
+            .published()
             .cpfp_info(&txid, &"11".repeat(32).parse().unwrap())
             .is_err()
     );
-    let child = insert_with_depends(&mempool, 0xB1, 100, 100, &[txid]);
-    // Deliberately publish the live side without refreshing the graph.
-    mempool
-        .test_state_lock()
-        .write()
-        .publish_at(tip, &[txid, child]);
-    assert!(mempool.cpfp_info(&txid, &tip).is_err());
-    publish(&mempool, &[txid, child]);
+    let child = insert_with_depends(&mut mempool, 0xB1, 100, 100, &[txid]);
+    // Private membership changes cannot race the graph held by readers.
+    assert!(
+        mempool
+            .published()
+            .cpfp_info(&txid, &tip)
+            .unwrap()
+            .unwrap()
+            .descendants
+            .is_empty()
+    );
+    publish(&mut mempool, &[txid, child]);
     assert_eq!(
         mempool
+            .published()
             .cpfp_info(&txid, &tip)
             .unwrap()
             .unwrap()

@@ -4,7 +4,7 @@ use crate::common::CACHE_BUDGET;
 use bitview_cohort::{AgeRange, AgeRangeId};
 use bitview_compute::WeightedCohortState;
 use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
-use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
+use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, Database, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec, WritableVec,
@@ -16,8 +16,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
-        common::stored::<Day1, _>(&db, "daily_first_height", [0usize, 2, 4].map(Height::from))
-            .read_only_boxed_clone();
+        common::first_heights("daily_first_height", [0usize, 2, 4].map(Height::from));
     let mut supply: AgeRange<StoredSeries<Height, Sats>> = AgeRange::from_fn(|id| {
         import_stored(
             &CACHE_BUDGET,

@@ -14,7 +14,7 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     indexes.first_height.day1 =
-        stored(&db, "ratio_days", [0usize, 1, 1, 3].map(Height::from)).read_only_boxed_clone();
+        common::first_heights("ratio_days", [0usize, 1, 1, 3].map(Height::from));
     let spot = stored::<Height, _>(
         &db,
         "spot",

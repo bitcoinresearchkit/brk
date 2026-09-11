@@ -202,8 +202,7 @@ fn views_do_not_recursively_read_a_source_lending_chunks() {
         "starts",
         (0..40_000usize).map(|i| Height::from(i.saturating_sub(17))),
     );
-    let days =
-        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
+    let days = common::first_heights("days", (0..4_000usize).map(|i| Height::from(i * 10)));
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
@@ -324,8 +323,7 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
         "source",
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
-    let days =
-        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
+    let days = common::first_heights("days", (0..4_000usize).map(|i| Height::from(i * 10)));
     let starts = common::stored::<Height, _>(
         &db,
         "starts",
@@ -401,8 +399,7 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
     let cached = source.read_only_clone();
-    let days =
-        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
+    let days = common::first_heights("days", (0..4_000usize).map(|i| Height::from(i * 10)));
     let starts = common::stored::<Height, _>(
         &db,
         "starts",
@@ -483,11 +480,7 @@ fn sparse_sources_keep_legacy_emitted_value_alignment() {
         "sparse_starts",
         (0..20_000usize).map(|i| Height::from(i.saturating_sub(17))),
     );
-    let days = common::stored::<Height, _>(
-        &db,
-        "sparse_days",
-        (0..20_000usize).map(|i| Day1::from(i / 10)),
-    );
+    let days = common::first_heights("sparse_days", (0..2_000usize).map(|i| Height::from(i * 10)));
     let window = LazyWindowVec::new("window", Version::ONE, &source, &starts, true, |a, b, n| {
         a + b + n as u64
     });

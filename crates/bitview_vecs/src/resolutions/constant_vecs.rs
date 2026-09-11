@@ -5,7 +5,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use vecdb::{Formattable, IndexVec, ReadableBoxedVec, UnaryTransform, VecValue};
 
-use crate::IndexSources;
+use crate::{IndexSources, RangeMapVec};
 
 macro_rules! define_constant_vecs {
     (
@@ -21,8 +21,8 @@ macro_rules! define_constant_vecs {
             T: VecValue + Formattable + Serialize + JsonSchema,
         {
             pub height: IndexVec<Height, T, ReadableBoxedVec<Height, Minute10>>,
-            $(pub $field: IndexVec<$index, T, ReadableBoxedVec<$index, Height>>,)*
-            $(pub $epoch: IndexVec<$epoch_index, T, ReadableBoxedVec<$epoch_index, Height>>,)*
+            $(pub $field: IndexVec<$index, T, RangeMapVec<$index, Height>>,)*
+            $(pub $epoch: IndexVec<$epoch_index, T, RangeMapVec<$epoch_index, Height>>,)*
         }
 
         impl<T: VecValue + Formattable + Serialize + JsonSchema> ConstantVecs<T> {

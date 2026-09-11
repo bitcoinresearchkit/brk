@@ -35,6 +35,8 @@ mod oracle_window;
 mod populated_server;
 #[cfg(feature = "chain")]
 mod raw_responses;
+#[cfg(all(feature = "chain", feature = "series"))]
+mod resolution_mappings;
 #[cfg(feature = "chain")]
 mod safe_prefix;
 #[cfg(feature = "series")]

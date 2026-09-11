@@ -8,9 +8,3 @@ pub struct CycleDiff {
     pub removed: Vec<TxRemoved>,
     pub addrs: AddrTransitions,
 }
-
-impl CycleDiff {
-    pub fn membership_changed(&self) -> bool {
-        !self.added.is_empty() || !self.removed.is_empty()
-    }
-}

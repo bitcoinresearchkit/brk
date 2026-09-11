@@ -2,7 +2,7 @@ use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::ReadableBoxedVec;
+use vecdb::{AnyVec, ReadableBoxedVec};
 
 use crate::{IndexSources, LazyOhlcVec};
 
@@ -34,10 +34,12 @@ macro_rules! define_lazy_ohlc_cents_vecs {
                 let v = version + COMPUTE_VERSION;
                 Self(PerResolution {
                     $($field: LazyOhlcVec::new(
-                        name, v, &prices, &mappings.first_height.$field,
+                        name, v + mappings.first_height.$field.version(), &prices,
+                        mappings.first_height.$field.mapping().clone(),
                     ),)*
                     $($epoch: LazyOhlcVec::new(
-                        name, v, &prices, &mappings.first_height.$epoch,
+                        name, v + mappings.first_height.$epoch.version(), &prices,
+                        mappings.first_height.$epoch.mapping().clone(),
                     ),)*
                 })
             }

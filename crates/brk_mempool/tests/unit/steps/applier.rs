@@ -26,20 +26,15 @@ fn fresh_pulled(addition: TxAddition) -> TxsPulled {
 }
 
 #[test]
-fn publish_one_inserts_into_all_stores() {
-    let lock = RwLock::new(State::default());
-    lock.write().published_tip = Some(Default::default());
+fn insert_one_updates_all_stores() {
+    let mut lock = State::default();
     let snapshot = Snapshot::default();
     let mut diff = CycleDiff::default();
     let (addition, txid) = fresh_addition(0xC0, 200, 100);
 
-    apply(&lock, &snapshot, fresh_pulled(addition), &mut diff);
+    apply(&mut lock, &snapshot, fresh_pulled(addition), &mut diff);
 
-    let state = lock.read();
-    assert!(
-        state.published_tip.is_none(),
-        "mutation closes the old publication"
-    );
+    let state = &lock;
     assert!(state.txs.contains(&txid));
     assert_eq!(diff.added.len(), 1);
     assert_eq!(diff.added[0].txid, txid);
@@ -47,7 +42,7 @@ fn publish_one_inserts_into_all_stores() {
 
 #[test]
 fn revived_path_exhumes_body_from_graveyard() {
-    let lock = RwLock::new(State::default());
+    let mut lock = State::default();
     let snapshot = Snapshot::default();
     let (addition, txid) = fresh_addition(0xC1, 300, 100);
     let TxAddition::Fresh { tx, entry } = addition else {
@@ -56,19 +51,18 @@ fn revived_path_exhumes_body_from_graveyard() {
     // Pre-load the graveyard with this tx, then submit a Revived
     // addition that re-publishes it without a raw body.
     let rate = FeeRate::from((entry.fee, entry.vsize));
-    lock.write()
-        .graveyard
+    lock.graveyard
         .bury(tx, entry.clone(), rate, TxRemoval::Vanished);
 
     let mut diff = CycleDiff::default();
     apply(
-        &lock,
+        &mut lock,
         &snapshot,
         fresh_pulled(TxAddition::Revived { entry }),
         &mut diff,
     );
 
-    let state = lock.read();
+    let state = &lock;
     assert!(state.txs.contains(&txid), "revived tx republished");
     assert!(state.graveyard.get(&txid).is_none(), "tomb consumed");
     assert_eq!(diff.added.len(), 1);
@@ -77,33 +71,33 @@ fn revived_path_exhumes_body_from_graveyard() {
 
 #[test]
 fn revived_with_empty_graveyard_is_dropped() {
-    let lock = RwLock::new(State::default());
+    let mut lock = State::default();
     let snapshot = Snapshot::default();
     let info = fake_entry_info(Txid::COINBASE, 100, 100);
     let entry = TxEntry::new(&info, 100, false);
 
     let mut diff = CycleDiff::default();
     apply(
-        &lock,
+        &mut lock,
         &snapshot,
         fresh_pulled(TxAddition::Revived { entry }),
         &mut diff,
     );
 
-    let state = lock.read();
+    let state = &lock;
     assert!(!state.txs.contains(&Txid::COINBASE));
     assert!(diff.added.is_empty(), "no body, no event");
 }
 
 #[test]
 fn bury_preserves_chunk_rate_from_snapshot() {
-    let lock = RwLock::new(State::default());
+    let mut lock = State::default();
     let (addition, txid) = fresh_addition(0xC2, 100, 100);
 
     // Publish first to plant the tx, with a fee-rate that differs
     // from the snapshot's stub rate so we can tell them apart.
     apply(
-        &lock,
+        &mut lock,
         &Snapshot::default(),
         fresh_pulled(addition),
         &mut CycleDiff::default(),
@@ -116,7 +110,7 @@ fn bury_preserves_chunk_rate_from_snapshot() {
 
     let mut diff = CycleDiff::default();
     apply(
-        &lock,
+        &mut lock,
         &snapshot,
         TxsPulled {
             live_len: 0,
@@ -129,16 +123,16 @@ fn bury_preserves_chunk_rate_from_snapshot() {
     assert_eq!(diff.removed.len(), 1);
     assert_eq!(diff.removed[0].chunk_rate, cpfp_rate);
     assert_ne!(diff.removed[0].chunk_rate, isolated_rate);
-    let state = lock.read();
+    let state = &lock;
     assert_eq!(state.graveyard.get(&txid).unwrap().chunk_rate, cpfp_rate);
 }
 
 #[test]
 fn bury_falls_back_to_isolated_rate_when_snapshot_misses() {
-    let lock = RwLock::new(State::default());
+    let mut lock = State::default();
     let (addition, txid) = fresh_addition(0xC3, 700, 100);
     apply(
-        &lock,
+        &mut lock,
         &Snapshot::default(),
         fresh_pulled(addition),
         &mut CycleDiff::default(),
@@ -149,7 +143,7 @@ fn bury_falls_back_to_isolated_rate_when_snapshot_misses() {
 
     let mut diff = CycleDiff::default();
     apply(
-        &lock,
+        &mut lock,
         &Snapshot::default(),
         TxsPulled {
             live_len: 0,

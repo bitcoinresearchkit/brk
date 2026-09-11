@@ -1,7 +1,7 @@
+use crate::Mempool;
 use brk_error::Error;
 use brk_types::{BlockHash, FeeRate, TxidPrefix};
 
-use super::*;
 use crate::{
     state::TxEntry,
     test_support::{self, fake_entry_info, fake_tx},
@@ -9,49 +9,66 @@ use crate::{
 
 #[test]
 fn projections_require_publication_and_complete_template_selection() {
-    let mempool = Mempool::for_test();
-    assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
-    assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
+    let mut mempool = Mempool::for_test();
     assert!(matches!(
-        mempool.block_template_source().build(),
+        mempool.published().fees(),
         Err(Error::StateUpdating)
     ));
     assert!(matches!(
-        mempool.next_block_hash(),
+        mempool.published().block_stats(),
+        Err(Error::StateUpdating)
+    ));
+    assert!(matches!(
+        mempool.published().block_template_source().build(),
+        Err(Error::StateUpdating)
+    ));
+    assert!(matches!(
+        mempool.published().next_block_hash(),
         Err(Error::StateUpdating)
     ));
     mempool.test_tick(&[], FeeRate::new(2.0));
-    assert_eq!(mempool.fees().unwrap().minimum_fee, FeeRate::new(2.0));
-    let blocks = mempool.block_stats().unwrap();
+    assert_eq!(
+        mempool.published().fees().unwrap().minimum_fee,
+        FeeRate::new(2.0)
+    );
+    let blocks = mempool.published().block_stats().unwrap();
     assert!(!blocks.is_empty());
     assert!(blocks.iter().all(|block| block.tx_count == 0));
     assert!(
         mempool
+            .published()
             .block_template_source()
             .build()
             .unwrap()
             .transactions
             .is_empty()
     );
+    let previous = mempool.published();
     mempool.test_tick(&[test_support::fake_txid(42)], FeeRate::new(2.0));
-    assert!(matches!(mempool.fees(), Err(Error::StateUpdating)));
-    assert!(matches!(mempool.block_stats(), Err(Error::StateUpdating)));
+    assert_eq!(
+        mempool.published().fees().unwrap().minimum_fee,
+        previous.fees().unwrap().minimum_fee
+    );
+    assert_eq!(
+        mempool.published().next_block_hash().unwrap(),
+        previous.next_block_hash().unwrap()
+    );
 }
 
 #[test]
 fn live_rate_requires_a_matching_completed_projection() {
-    let mempool = Mempool::for_test();
+    let mut mempool = Mempool::for_test();
     let tx = fake_tx(1, &[], &[]);
     let txid = tx.txid;
     let entry = TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false);
     let fallback = entry.fee_rate();
-    mempool.test_state_lock().write().txs.insert(tx, entry);
+    mempool.test_state_mut().txs.insert(tx, entry);
     let tip = BlockHash::default();
-    assert!(mempool.cpfp_info(&txid, &tip).is_err());
+    assert!(mempool.published().cpfp_info(&txid, &tip).is_err());
     mempool.test_tick(&[txid], FeeRate::new(1.0));
-    mempool.test_state_lock().write().publish_at(tip, &[txid]);
     assert_eq!(
         mempool
+            .published()
             .cpfp_info(&txid, &tip)
             .unwrap()
             .map(|info| info.effective_fee_per_vsize),
@@ -59,18 +76,34 @@ fn live_rate_requires_a_matching_completed_projection() {
     );
     assert!(
         mempool
+            .published()
             .cpfp_info(&txid, &"11".repeat(32).parse().unwrap())
             .is_err()
     );
     mempool
-        .test_state_lock()
-        .write()
+        .test_state_mut()
         .txs
         .remove_by_prefix(&TxidPrefix::from(txid));
-    assert!(mempool.snapshot().chunk_rate_for(&txid).is_some());
-    mempool.test_state_lock().write().publish_at(tip, &[]);
-    assert!(mempool.cpfp_info(&txid, &tip).is_err());
+    assert!(
+        mempool
+            .published()
+            .snapshot()
+            .chunk_rate_for(&txid)
+            .is_some()
+    );
+    assert!(
+        mempool
+            .published()
+            .cpfp_info(&txid, &tip)
+            .unwrap()
+            .is_some()
+    );
     mempool.test_tick(&[], FeeRate::new(1.0));
-    mempool.test_state_lock().write().publish_at(tip, &[]);
-    assert!(mempool.cpfp_info(&txid, &tip).unwrap().is_none());
+    assert!(
+        mempool
+            .published()
+            .cpfp_info(&txid, &tip)
+            .unwrap()
+            .is_none()
+    );
 }

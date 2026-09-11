@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use brk_error::{Error, Result};
-use brk_mempool::Mempool;
+use brk_mempool::ReadOnlyMempool;
 use tokio::{
     sync::Semaphore,
     task::spawn_blocking,
@@ -67,7 +67,7 @@ impl AsyncQuery {
     pub fn with_deadline(&self, deadline: Instant) -> Self {
         Self(self.0.with_deadline(deadline))
     }
-    pub fn build<P>(plugins: &P, mempool: Option<Mempool>) -> Self
+    pub fn build<P>(plugins: &P, mempool: Option<ReadOnlyMempool>) -> Self
     where
         P: ReadOnlyClone,
         P::ReadOnly: QueryPluginSet + 'static,

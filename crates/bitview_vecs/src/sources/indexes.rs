@@ -2,7 +2,7 @@ use bitview_collections::{PerResolution, with_resolution_fields};
 use brk_types::{Date, Height, StoredU64, Timestamp};
 use vecdb::ReadableBoxedVec;
 
-use crate::LazyPreviousDeltaVec;
+use crate::{LazyPreviousDeltaVec, RangeMapVec};
 
 macro_rules! define_index_sources {
     (
@@ -14,8 +14,8 @@ macro_rules! define_index_sources {
         #[derive(Clone)]
         pub struct IndexSources {
             pub first_height: PerResolution<
-                $(ReadableBoxedVec<$index, Height>,)*
-                $(ReadableBoxedVec<$epoch_index, Height>,)*
+                $(RangeMapVec<$index, Height>,)*
+                $(RangeMapVec<$epoch_index, Height>,)*
             >,
             pub timestamp: PerResolution<
                 $(ReadableBoxedVec<$index, Timestamp>,)*

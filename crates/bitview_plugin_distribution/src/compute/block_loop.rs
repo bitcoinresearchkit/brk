@@ -9,11 +9,11 @@ use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
-    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, RangeMap, Sats, StoredF64, TxIndex, TypeIndex,
+    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, Sats, StoredF64, TxIndex, TypeIndex,
 };
 use rayon::{join, prelude::*};
 use tracing::{debug, info};
-use vecdb::{AnyVec, ReadableVec, VecIndex, unlikely};
+use vecdb::{ReadableVec, VecIndex, unlikely};
 
 use super::{
     super::{
@@ -64,7 +64,6 @@ pub fn process_blocks(
     transactions: &TransactionsVecs,
     ctx: &ComputeContext<'_>,
     chain_state: &mut Vec<BlockState>,
-    tx_index_to_height: &mut RangeMap<TxIndex, Height>,
     mut entry_anchor: Cents,
     exit: &Exit,
 ) -> Result<()> {
@@ -116,37 +115,10 @@ pub fn process_blocks(
     let mut vr = AddrReaders::new(&vecs.addr_state);
     debug!("AddrReaders created");
 
-    // Extend tx_index_to_height RangeMap with new entries (incremental, O(new_blocks))
-    let target_len = indexer.vecs().transactions.first_tx_index.len();
-    let current_len = tx_index_to_height.len();
-    if current_len < target_len {
-        debug!(
-            "extending tx_index_to_height RangeMap from {} to {}",
-            current_len, target_len
-        );
-        let new_entries: Vec<TxIndex> = indexer
-            .vecs()
-            .transactions
-            .first_tx_index
-            .collect_range_at(current_len, target_len);
-        for first_tx_index in new_entries {
-            tx_index_to_height.push(first_tx_index);
-        }
-    } else if current_len > target_len {
-        debug!(
-            "truncating tx_index_to_height RangeMap from {} to {}",
-            current_len, target_len
-        );
-        tx_index_to_height.truncate(target_len);
-    }
-    debug!(
-        "tx_index_to_height RangeMap ready ({} entries)",
-        tx_index_to_height.len()
-    );
-
     // Create reusable iterators and buffers for per-block reads
+    let tx_heights = mappings.tx_heights.read();
     let mut txout_iters = TxOutReaders::new(indexer);
-    let mut txin_iters = TxInReaders::new(indexer, &inputs.value, tx_index_to_height);
+    let mut txin_iters = TxInReaders::new(indexer, &inputs.value, &tx_heights);
     let mut txout_to_tx_index_buf = IndexToTxIndexBuf::new();
     let mut txin_to_tx_index_buf = IndexToTxIndexBuf::new();
 

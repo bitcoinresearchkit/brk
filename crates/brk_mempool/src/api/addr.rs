@@ -5,13 +5,13 @@ use std::{cmp::Reverse, collections::BinaryHeap, sync::Arc};
 use brk_error::Result;
 use brk_types::{AddrBytes, AddrMempoolStats, BlockHash, Transaction, TxidPrefix};
 
-use crate::Mempool;
+use crate::ReadOnlyState;
 
-impl Mempool {
+impl ReadOnlyState {
     /// Statistics from a completed publication anchored to the requested chain.
     pub fn addr_stats(&self, addr: &AddrBytes, tip: &BlockHash) -> Result<AddrMempoolStats> {
-        let state = self.read();
-        state.ensure_published_at(tip)?;
+        let state = self.pool()?;
+        state.ensure_resolved_at(tip)?;
         Ok(state
             .addrs
             .get(addr)
@@ -28,8 +28,8 @@ impl Mempool {
         limit: usize,
         tip: &BlockHash,
     ) -> Result<Vec<Arc<Transaction>>> {
-        let state = self.read();
-        state.ensure_published_at(tip)?;
+        let state = self.pool()?;
+        state.ensure_resolved_at(tip)?;
         let Some(entry) = state.addrs.get(addr) else {
             return Ok(Vec::new());
         };

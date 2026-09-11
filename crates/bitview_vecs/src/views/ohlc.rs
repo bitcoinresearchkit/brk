@@ -2,9 +2,10 @@ use std::{convert::Infallible, iter, sync::Arc};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Version};
+use rangeindex::SharedRangeMap;
 use vecdb::{
-    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, SparseRead,
-    TypedVec, VecIndex, short_type_name,
+    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
+    VecIndex, short_type_name,
 };
 
 /// OHLC candles derived directly from spot prices and period boundaries.
@@ -13,21 +14,22 @@ pub struct LazyOhlcVec<I: VecIndex> {
     name: Arc<str>,
     base_version: Version,
     prices: ReadableBoxedVec<Height, Cents>,
-    first_heights: ReadableBoxedVec<I, Height>,
+    first_heights: SharedRangeMap<Height, I>,
 }
 
 impl<I: VecIndex> LazyOhlcVec<I> {
+    /// `version` includes the boundary mapping's schema version.
     pub fn new(
         name: &str,
         version: Version,
         prices: &(impl ReadableCloneableVec<Height, Cents> + ?Sized),
-        first_heights: &(impl ReadableCloneableVec<I, Height> + ?Sized),
+        first_heights: SharedRangeMap<Height, I>,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
             prices: prices.read_only_boxed_clone(),
-            first_heights: first_heights.read_only_boxed_clone(),
+            first_heights,
         }
     }
 
@@ -37,13 +39,12 @@ impl<I: VecIndex> LazyOhlcVec<I> {
         to: usize,
         mut each: impl FnMut(OHLCCents) -> Result<(), E>,
     ) -> Result<(), E> {
-        let to = to.min(self.first_heights.len());
+        let mapping = self.first_heights.read();
+        let to = to.min(mapping.len());
         if from >= to {
             return Ok(());
         }
-        let first_heights = self
-            .first_heights
-            .collect_range_dyn(from, to.saturating_add(1));
+        let first_heights = &mapping.as_slice()[from..to.saturating_add(1).min(mapping.len())];
         let price_len = self.prices.visible_len();
         let price_from = first_heights[0].to_usize().min(price_len).saturating_sub(1);
         let price_to = first_heights
@@ -105,7 +106,7 @@ impl<I: VecIndex> LazyOhlcVec<I> {
 
 impl<I: VecIndex> AnyVec for LazyOhlcVec<I> {
     fn version(&self) -> Version {
-        self.base_version + self.prices.version() + self.first_heights.version()
+        self.base_version + self.prices.version()
     }
 
     fn name(&self) -> &str {
@@ -178,29 +179,26 @@ impl<I: VecIndex> ReadableVec<I, OHLCCents> for LazyOhlcVec<I> {
     }
 
     fn collect_one_at(&self, index: usize) -> Option<OHLCCents> {
-        let boundaries = self
-            .first_heights
-            .collect_range_dyn(index, index.saturating_add(2));
+        let mapping = self.first_heights.read();
+        let boundaries = mapping.as_slice();
         let price_len = self.prices.visible_len();
-        let first = boundaries.first()?.to_usize().min(price_len);
+        let first = boundaries.get(index)?.to_usize().min(price_len);
         let end = boundaries
-            .get(1)
+            .get(index + 1)
             .map_or(price_len, |height| height.to_usize().min(price_len));
         Some(self.candle(first, end))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<OHLCCents>) {
-        let len = self.first_heights.len();
-        let indices = &indices[..indices.partition_point(|&index| index < len)];
-        let boundaries = SparseRead::new(&self.first_heights, indices, |index| {
-            (index + 1 < len).then_some(index + 1)
-        });
+        let mapping = self.first_heights.read();
+        let boundaries = mapping.as_slice();
+        let indices = &indices[..indices.partition_point(|&index| index < boundaries.len())];
         let price_len = self.prices.visible_len();
         out.reserve(indices.len());
-        for slot in 0..indices.len() {
-            let first = boundaries.current(slot).to_usize().min(price_len);
+        for &index in indices {
+            let first = boundaries[index].to_usize().min(price_len);
             let end = boundaries
-                .previous(slot)
+                .get(index + 1)
                 .map_or(price_len, |height| height.to_usize().min(price_len));
             out.push(self.candle(first, end));
         }
@@ -226,13 +224,14 @@ mod tests {
     };
 
     use brk_types::Day1;
+    use rangeindex::SharedRangeMap;
     use vecdb::{
         AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
         PcoVec, WritableVec,
     };
 
     use super::*;
-    use crate::LazyFirstHeightVec;
+    use crate::RangeMapVec;
 
     fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
         (**candle.open, **candle.high, **candle.low, **candle.close)
@@ -251,25 +250,29 @@ mod tests {
             ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(&TEST_CACHE),
         )
         .unwrap();
-        let mut periods: EagerVec<PcoVec<Height, Day1, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "periods", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
-
         for value in [10, 20, 5, 7] {
             prices.push(Cents::new(value));
         }
-        for period in [0, 2, 2, 4] {
-            periods.push(Day1::from(period));
-        }
         prices.write().unwrap();
-        periods.write().unwrap();
 
-        let first_heights = LazyFirstHeightVec::new(&periods);
+        let first_heights = RangeMapVec::<Day1, Height>::new(
+            "first_height",
+            Version::ONE,
+            SharedRangeMap::new([0, 1, 1, 3, 3].map(Height::new).to_vec()),
+        );
         let boundaries = first_heights.collect();
-        let ohlc = LazyOhlcVec::new("ohlc", Version::ONE, &prices, &first_heights);
+        let ohlc = LazyOhlcVec::new(
+            "ohlc",
+            Version::ONE + first_heights.version(),
+            &prices,
+            first_heights.mapping().clone(),
+        );
 
-        assert_eq!(&boundaries, &ohlc.first_heights.collect());
+        assert_eq!(&boundaries, ohlc.first_heights.read().as_slice());
+        assert_eq!(
+            ohlc.version(),
+            Version::ONE + first_heights.version() + prices.read_only_boxed_clone().version()
+        );
         assert_eq!(&prices.collect(), &ohlc.prices.collect());
         let candles = ohlc.collect();
         assert_eq!(candles.len(), 5);
@@ -297,7 +300,6 @@ mod tests {
 
         drop(ohlc);
         drop(prices);
-        drop(periods);
         drop(db);
         fs::remove_dir_all(path).unwrap();
     }

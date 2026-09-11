@@ -152,8 +152,8 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                 &reader,
             )
             .unwrap();
-            let mempool = Mempool::new(&client);
-            let query = AsyncQuery::build(&plugins, Some(mempool.clone()));
+            let mut mempool = Mempool::new(&client);
+            let query = AsyncQuery::build(&plugins, Some(mempool.read_only_clone()));
             Builder::new_current_thread()
                 .enable_all()
                 .build()
@@ -205,13 +205,15 @@ fn template_revalidation_skips_body_admission_but_validates_history_and_queries(
                                 assert!(response.contains("\r\ncache-control: no-store\r\n"));
                             }
                         }
-                        let first_attempt = mempool.clone();
-                        let error =
-                            spawn_blocking(move || first_attempt.tick_with(|_| Default::default()))
-                                .await
-                                .unwrap()
+                        let (mut mempool, error) = spawn_blocking(move || {
+                            let error = mempool
+                                .tick_with(|_| Default::default())
                                 .err()
                                 .expect("invalid GBT must fail");
+                            (mempool, error)
+                        })
+                        .await
+                        .unwrap();
                         assert!(
                             error.to_string().contains("identity/weight mismatch"),
                             "{error}"

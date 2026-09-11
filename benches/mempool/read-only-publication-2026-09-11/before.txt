@@ -1,0 +1,189 @@
+
+running 1 test
+test driver::bench::publication_benchmark ... initial,0,live_bytes=21310,peak_bytes=21518,freeze_ns=208,freeze_bytes=0,freeze_allocations=0
+sample,0,noop,mutation,p50_ns=0,p95_ns=0,p99_ns=0,bytes=0,allocations=0
+sample,0,noop,graph,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,noop,publication,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,noop,cycle,p50_ns=125,p95_ns=167,p99_ns=167,bytes=0,allocations=0
+sample,0,fee,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,fee,graph,p50_ns=750,p95_ns=2792,p99_ns=2792,bytes=1432,allocations=7
+sample,0,fee,publication,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,fee,cycle,p50_ns=875,p95_ns=2916,p99_ns=2916,bytes=1432,allocations=7
+sample,0,churn,mutation,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,churn,graph,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,churn,publication,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,churn,cycle,p50_ns=167,p95_ns=208,p99_ns=208,bytes=0,allocations=0
+sample,0,replacement,mutation,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,replacement,graph,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,replacement,publication,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,replacement,cycle,p50_ns=167,p95_ns=167,p99_ns=167,bytes=0,allocations=0
+sample,0,fills,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,fills,graph,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,fills,publication,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,fills,cycle,p50_ns=166,p95_ns=167,p99_ns=167,bytes=0,allocations=0
+sample,0,eviction,mutation,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,eviction,graph,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,eviction,publication,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,eviction,cycle,p50_ns=166,p95_ns=167,p99_ns=167,bytes=0,allocations=0
+sample,0,expiry,mutation,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,expiry,graph,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,expiry,publication,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,0,expiry,cycle,p50_ns=167,p95_ns=208,p99_ns=208,bytes=0,allocations=0
+sample,0,idle,read,p50_ns=350,p95_ns=387,p99_ns=406,bytes=0,allocations=0
+reads,0,success=10100,attempts=10100
+concurrent,0,success=29,failed=58
+retention,0,live_bytes=27174,peak_bytes=35014,reclaimed_bytes=5664,release_ns=1000,writer_drop_ns=1000
+initial,100,live_bytes=152346,peak_bytes=281016,freeze_ns=1208,freeze_bytes=3552,freeze_allocations=17
+sample,100,noop,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,noop,graph,p50_ns=125,p95_ns=125,p99_ns=125,bytes=0,allocations=0
+sample,100,noop,publication,p50_ns=709,p95_ns=1958,p99_ns=1958,bytes=3552,allocations=17
+sample,100,noop,cycle,p50_ns=959,p95_ns=2209,p99_ns=2209,bytes=3552,allocations=17
+sample,100,fee,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,fee,graph,p50_ns=356792,p95_ns=372042,p99_ns=372042,bytes=370508,allocations=2025
+sample,100,fee,publication,p50_ns=833,p95_ns=875,p99_ns=875,bytes=3552,allocations=17
+sample,100,fee,cycle,p50_ns=357709,p95_ns=373000,p99_ns=373000,bytes=374060,allocations=2042
+sample,100,churn,mutation,p50_ns=1084,p95_ns=3334,p99_ns=3334,bytes=2144,allocations=19
+sample,100,churn,graph,p50_ns=353042,p95_ns=360250,p99_ns=360250,bytes=370892,allocations=2026
+sample,100,churn,publication,p50_ns=833,p95_ns=1000,p99_ns=1000,bytes=3552,allocations=17
+sample,100,churn,cycle,p50_ns=355625,p95_ns=362625,p99_ns=362625,bytes=376204,allocations=2061
+sample,100,replacement,mutation,p50_ns=1250,p95_ns=3125,p99_ns=3125,bytes=2144,allocations=19
+sample,100,replacement,graph,p50_ns=370334,p95_ns=386250,p99_ns=386250,bytes=370508,allocations=2025
+sample,100,replacement,publication,p50_ns=917,p95_ns=1375,p99_ns=1375,bytes=3552,allocations=17
+sample,100,replacement,cycle,p50_ns=373500,p95_ns=388750,p99_ns=388750,bytes=378516,allocations=2062
+sample,100,fills,mutation,p50_ns=583,p95_ns=5416,p99_ns=5416,bytes=976,allocations=12
+sample,100,fills,graph,p50_ns=356583,p95_ns=370250,p99_ns=370250,bytes=370508,allocations=2025
+sample,100,fills,publication,p50_ns=834,p95_ns=1000,p99_ns=1000,bytes=3552,allocations=17
+sample,100,fills,cycle,p50_ns=358125,p95_ns=376625,p99_ns=376625,bytes=375036,allocations=2054
+sample,100,eviction,mutation,p50_ns=42,p95_ns=84,p99_ns=84,bytes=0,allocations=0
+sample,100,eviction,graph,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,eviction,publication,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,eviction,cycle,p50_ns=167,p95_ns=167,p99_ns=167,bytes=0,allocations=0
+sample,100,expiry,mutation,p50_ns=125,p95_ns=125,p99_ns=125,bytes=0,allocations=0
+sample,100,expiry,graph,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,expiry,publication,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,100,expiry,cycle,p50_ns=250,p95_ns=250,p99_ns=250,bytes=0,allocations=0
+sample,100,idle,read,p50_ns=280,p95_ns=285,p99_ns=307,bytes=0,allocations=0
+reads,100,success=10100,attempts=10100
+concurrent,100,success=10,failed=61
+retention,100,live_bytes=278474,peak_bytes=434606,reclaimed_bytes=90096,release_ns=4459,writer_drop_ns=12667
+initial,10000,live_bytes=13462650,peak_bytes=17665380,freeze_ns=37375,freeze_bytes=34368,freeze_allocations=167
+sample,10000,noop,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,10000,noop,graph,p50_ns=3708,p95_ns=4167,p99_ns=4167,bytes=0,allocations=0
+sample,10000,noop,publication,p50_ns=34917,p95_ns=38042,p99_ns=38042,bytes=34368,allocations=167
+sample,10000,noop,cycle,p50_ns=38750,p95_ns=41834,p99_ns=41834,bytes=34368,allocations=167
+sample,10000,fee,mutation,p50_ns=42,p95_ns=292,p99_ns=292,bytes=0,allocations=0
+sample,10000,fee,graph,p50_ns=9401542,p95_ns=9579542,p99_ns=9579542,bytes=14070968,allocations=64087
+sample,10000,fee,publication,p50_ns=39083,p95_ns=55541,p99_ns=55541,bytes=34368,allocations=167
+sample,10000,fee,cycle,p50_ns=9442959,p95_ns=9635208,p99_ns=9635208,bytes=14105336,allocations=64254
+sample,10000,churn,mutation,p50_ns=113750,p95_ns=178500,p99_ns=178500,bytes=164744,allocations=1376
+sample,10000,churn,graph,p50_ns=9652292,p95_ns=9857250,p99_ns=9857250,bytes=14070968,allocations=64087
+sample,10000,churn,publication,p50_ns=39459,p95_ns=61584,p99_ns=61584,bytes=34368,allocations=167
+sample,10000,churn,cycle,p50_ns=9806791,p95_ns=10081833,p99_ns=10081833,bytes=14270080,allocations=65630
+sample,10000,replacement,mutation,p50_ns=114666,p95_ns=157000,p99_ns=157000,bytes=164744,allocations=1376
+sample,10000,replacement,graph,p50_ns=9600750,p95_ns=10110000,p99_ns=10110000,bytes=14070968,allocations=64087
+sample,10000,replacement,publication,p50_ns=41292,p95_ns=70750,p99_ns=70750,bytes=34368,allocations=167
+sample,10000,replacement,cycle,p50_ns=9765125,p95_ns=10307541,p99_ns=10307541,bytes=15126152,allocations=65631
+sample,10000,fills,mutation,p50_ns=23541,p95_ns=27833,p99_ns=27833,bytes=21040,allocations=507
+sample,10000,fills,graph,p50_ns=9699042,p95_ns=9842291,p99_ns=9842291,bytes=14070968,allocations=64087
+sample,10000,fills,publication,p50_ns=41375,p95_ns=51167,p99_ns=51167,bytes=34368,allocations=167
+sample,10000,fills,cycle,p50_ns=9761333,p95_ns=9915042,p99_ns=9915042,bytes=14126376,allocations=64761
+sample,10000,eviction,mutation,p50_ns=42,p95_ns=906583,p99_ns=906583,bytes=0,allocations=0
+sample,10000,eviction,graph,p50_ns=42,p95_ns=8770292,p99_ns=8770292,bytes=0,allocations=0
+sample,10000,eviction,publication,p50_ns=41,p95_ns=14334,p99_ns=14334,bytes=0,allocations=0
+sample,10000,eviction,cycle,p50_ns=208,p95_ns=9691291,p99_ns=9691291,bytes=0,allocations=0
+sample,10000,expiry,mutation,p50_ns=9541,p95_ns=11000,p99_ns=11000,bytes=0,allocations=0
+sample,10000,expiry,graph,p50_ns=42,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,10000,expiry,publication,p50_ns=41,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,10000,expiry,cycle,p50_ns=9667,p95_ns=11167,p99_ns=11167,bytes=0,allocations=0
+sample,10000,idle,read,p50_ns=259,p95_ns=260,p99_ns=334,bytes=0,allocations=0
+reads,10000,success=10100,attempts=10100
+concurrent,10000,success=4,failed=40
+retention,10000,live_bytes=18880278,peak_bytes=31686588,reclaimed_bytes=8227144,release_ns=122333,writer_drop_ns=158792
+initial,50000,live_bytes=61839994,peak_bytes=73917494,freeze_ns=267375,freeze_bytes=34368,freeze_allocations=167
+sample,50000,noop,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,50000,noop,graph,p50_ns=3750,p95_ns=3959,p99_ns=3959,bytes=0,allocations=0
+sample,50000,noop,publication,p50_ns=202625,p95_ns=207458,p99_ns=207458,bytes=34368,allocations=167
+sample,50000,noop,cycle,p50_ns=206500,p95_ns=211333,p99_ns=211333,bytes=34368,allocations=167
+sample,50000,fee,mutation,p50_ns=0,p95_ns=83,p99_ns=83,bytes=0,allocations=0
+sample,50000,fee,graph,p50_ns=14674292,p95_ns=14904667,p99_ns=14904667,bytes=30288040,allocations=140158
+sample,50000,fee,publication,p50_ns=263042,p95_ns=273375,p99_ns=273375,bytes=34368,allocations=167
+sample,50000,fee,cycle,p50_ns=14917083,p95_ns=15177041,p99_ns=15177041,bytes=30322408,allocations=140325
+sample,50000,churn,mutation,p50_ns=685250,p95_ns=755000,p99_ns=755000,bytes=1026744,allocations=6823
+sample,50000,churn,graph,p50_ns=14813875,p95_ns=15165583,p99_ns=15165583,bytes=30288040,allocations=140158
+sample,50000,churn,publication,p50_ns=267042,p95_ns=299709,p99_ns=299709,bytes=34368,allocations=167
+sample,50000,churn,cycle,p50_ns=15780166,p95_ns=16154542,p99_ns=16154542,bytes=32106920,allocations=147148
+sample,50000,replacement,mutation,p50_ns=721375,p95_ns=1253542,p99_ns=1253542,bytes=928440,allocations=6822
+sample,50000,replacement,graph,p50_ns=15121292,p95_ns=15713083,p99_ns=15713083,bytes=30288040,allocations=140158
+sample,50000,replacement,publication,p50_ns=355750,p95_ns=391875,p99_ns=391875,bytes=34368,allocations=167
+sample,50000,replacement,cycle,p50_ns=16232083,p95_ns=17227208,p99_ns=17227208,bytes=31914408,allocations=147148
+sample,50000,fills,mutation,p50_ns=119500,p95_ns=124250,p99_ns=124250,bytes=129800,allocations=2510
+sample,50000,fills,graph,p50_ns=15346708,p95_ns=16416292,p99_ns=16416292,bytes=30288040,allocations=140158
+sample,50000,fills,publication,p50_ns=401667,p95_ns=434583,p99_ns=434583,bytes=34368,allocations=167
+sample,50000,fills,cycle,p50_ns=15857875,p95_ns=16952084,p99_ns=16952084,bytes=30452208,allocations=142835
+sample,50000,eviction,mutation,p50_ns=1410334,p95_ns=1969500,p99_ns=1969500,bytes=868684,allocations=13
+sample,50000,eviction,graph,p50_ns=13297375,p95_ns=14428584,p99_ns=14428584,bytes=23171548,allocations=106892
+sample,50000,eviction,publication,p50_ns=287708,p95_ns=349375,p99_ns=349375,bytes=34368,allocations=167
+sample,50000,eviction,cycle,p50_ns=14993250,p95_ns=16240292,p99_ns=16240292,bytes=27220328,allocations=107073
+sample,50000,expiry,mutation,p50_ns=52458,p95_ns=55250,p99_ns=55250,bytes=0,allocations=0
+sample,50000,expiry,graph,p50_ns=4292,p95_ns=4625,p99_ns=4625,bytes=0,allocations=0
+sample,50000,expiry,publication,p50_ns=100542,p95_ns=102500,p99_ns=102500,bytes=34368,allocations=167
+sample,50000,expiry,cycle,p50_ns=158167,p95_ns=159417,p99_ns=159417,bytes=34368,allocations=167
+sample,50000,idle,read,p50_ns=5279,p95_ns=5371,p99_ns=5421,bytes=34368,allocations=167
+reads,50000,success=10100,attempts=10100
+concurrent,50000,success=4,failed=21335
+retention,50000,live_bytes=108081178,peak_bytes=139169744,reclaimed_bytes=49183224,release_ns=637583,writer_drop_ns=2717750
+initial,200000,live_bytes=246912762,peak_bytes=295503158,freeze_ns=1070959,freeze_bytes=34368,freeze_allocations=167
+sample,200000,noop,mutation,p50_ns=0,p95_ns=42,p99_ns=42,bytes=0,allocations=0
+sample,200000,noop,graph,p50_ns=10208,p95_ns=30500,p99_ns=30500,bytes=0,allocations=0
+sample,200000,noop,publication,p50_ns=930292,p95_ns=972334,p99_ns=972334,bytes=34368,allocations=167
+sample,200000,noop,cycle,p50_ns=940584,p95_ns=986416,p99_ns=986416,bytes=34368,allocations=167
+sample,200000,fee,mutation,p50_ns=42,p95_ns=83,p99_ns=83,bytes=0,allocations=0
+sample,200000,fee,graph,p50_ns=39798958,p95_ns=41022250,p99_ns=41022250,bytes=90172568,allocations=425163
+sample,200000,fee,publication,p50_ns=1126125,p95_ns=1161334,p99_ns=1161334,bytes=34368,allocations=167
+sample,200000,fee,cycle,p50_ns=40913792,p95_ns=42157541,p99_ns=42157541,bytes=90206936,allocations=425330
+sample,200000,churn,mutation,p50_ns=2818667,p95_ns=2933875,p99_ns=2933875,bytes=4108184,allocations=27227
+sample,200000,churn,graph,p50_ns=39621333,p95_ns=41305542,p99_ns=41305542,bytes=90172568,allocations=425163
+sample,200000,churn,publication,p50_ns=1119250,p95_ns=1201250,p99_ns=1201250,bytes=34368,allocations=167
+sample,200000,churn,cycle,p50_ns=43649625,p95_ns=45166125,p99_ns=45166125,bytes=100770424,allocations=452557
+sample,200000,replacement,mutation,p50_ns=2980042,p95_ns=3693125,p99_ns=3693125,bytes=6860696,allocations=27227
+sample,200000,replacement,graph,p50_ns=39813375,p95_ns=40963375,p99_ns=40963375,bytes=90172568,allocations=425163
+sample,200000,replacement,publication,p50_ns=1113542,p95_ns=1184000,p99_ns=1184000,bytes=34368,allocations=167
+sample,200000,replacement,cycle,p50_ns=44043583,p95_ns=45104250,p99_ns=45104250,bytes=93921904,allocations=452556
+sample,200000,fills,mutation,p50_ns=445000,p95_ns=453042,p99_ns=453042,bytes=518568,allocations=10012
+sample,200000,fills,graph,p50_ns=39701667,p95_ns=40820750,p99_ns=40820750,bytes=90172568,allocations=425163
+sample,200000,fills,publication,p50_ns=1110792,p95_ns=1255834,p99_ns=1255834,bytes=34368,allocations=167
+sample,200000,fills,cycle,p50_ns=41252084,p95_ns=42517083,p99_ns=42517083,bytes=90725504,allocations=435342
+sample,200000,eviction,mutation,p50_ns=1693500,p95_ns=2061583,p99_ns=2061583,bytes=868684,allocations=13
+sample,200000,eviction,graph,p50_ns=36935792,p95_ns=38411666,p99_ns=38411666,bytes=85645568,allocations=396663
+sample,200000,eviction,publication,p50_ns=999375,p95_ns=1121417,p99_ns=1121417,bytes=34368,allocations=167
+sample,200000,eviction,cycle,p50_ns=39929083,p95_ns=41198834,p99_ns=41198834,bytes=86548620,allocations=396843
+sample,200000,expiry,mutation,p50_ns=206458,p95_ns=219000,p99_ns=219000,bytes=0,allocations=0
+sample,200000,expiry,graph,p50_ns=10917,p95_ns=12333,p99_ns=12333,bytes=0,allocations=0
+sample,200000,expiry,publication,p50_ns=762250,p95_ns=807792,p99_ns=807792,bytes=34368,allocations=167
+sample,200000,expiry,cycle,p50_ns=983833,p95_ns=1025250,p99_ns=1025250,bytes=34368,allocations=167
+sample,200000,idle,read,p50_ns=5090,p95_ns=5370,p99_ns=5593,bytes=34368,allocations=167
+reads,200000,success=10100,attempts=10100
+concurrent,200000,success=2,failed=77021
+retention,200000,live_bytes=480482634,peak_bytes=534151974,reclaimed_bytes=214254072,release_ns=2117208,writer_drop_ns=24106250
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 114 filtered out; finished in 7.03s
+
+        7.03 real        15.53 user         0.13 sys
+           698187776  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               94940  page reclaims
+                  70  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                  35  messages sent
+                  35  messages received
+                   0  signals received
+                  12  voluntary context switches
+                6891  involuntary context switches
+         95168310971  instructions retired
+         56512109922  cycles elapsed
+           671056808  peak memory footprint

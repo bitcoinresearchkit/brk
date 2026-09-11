@@ -4,11 +4,10 @@ use bitview_transforms::RatioDollars;
 use bitview_traversable::{Traversable, TreeNode};
 use bitview_vecs::{BasisPointsPerBlock, LazyBasisPointsPerBlock};
 use brk_types::{BasisPoints32, Dollars, Height, Version};
-use common::{indexes, stored};
+use common::indexes;
 use tempfile::tempdir;
 use vecdb::{
-    AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, Database, ReadableCloneableVec,
-    ReadableVec, WritableVec,
+    AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, Database, ReadableVec, WritableVec,
 };
 
 use crate::common::CACHE_BUDGET;
@@ -20,8 +19,7 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
-    indexes.first_height.day1 =
-        stored(&db, "bps_days", [0usize, 2, 4].map(Height::from)).read_only_boxed_clone();
+    indexes.first_height.day1 = common::first_heights("bps_days", [0usize, 2, 4].map(Height::from));
     let values = [
         BasisPoints32::ZERO,
         BasisPoints32::ONE,

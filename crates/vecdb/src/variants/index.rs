@@ -25,7 +25,7 @@ impl<I: VecIndex, T: VecValue, S: TypedVec<I = I>> IndexVec<I, T, S> {
     }
 
     fn values(&self, from: usize, to: usize) -> impl Iterator<Item = T> + '_ {
-        (from..to.min(self.len())).map(|i| (self.compute)(I::from(i)))
+        (from..to.min(self.visible_len())).map(|i| (self.compute)(I::from(i)))
     }
 }
 
@@ -38,6 +38,9 @@ impl<I: VecIndex, T: VecValue, S: TypedVec<I = I>> AnyVec for IndexVec<I, T, S> 
     }
     fn len(&self) -> usize {
         self.source.len()
+    }
+    fn visible_len(&self) -> usize {
+        self.source.visible_len()
     }
     fn index_type_to_string(&self) -> &'static str {
         I::to_string()
@@ -90,11 +93,11 @@ impl<I: VecIndex, T: VecValue, S: TypedVec<I = I>> ReadableVec<I, T> for IndexVe
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
-        (index < self.len()).then(|| (self.compute)(I::from(index)))
+        (index < self.visible_len()).then(|| (self.compute)(I::from(index)))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
-        let len = self.len();
+        let len = self.visible_len();
         out.extend(
             indices
                 .iter()

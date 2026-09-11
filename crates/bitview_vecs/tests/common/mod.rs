@@ -1,6 +1,7 @@
 use bitview_collections::PerResolution;
-use bitview_vecs::{IndexSources, LazyPreviousDeltaVec};
-use brk_types::Version;
+use bitview_vecs::{IndexSources, LazyPreviousDeltaVec, RangeMapVec};
+use brk_types::{Height, Version};
+use rangeindex::SharedRangeMap;
 use vecdb::{
     AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
     PcoVecValue, ReadableCloneableVec, VecIndex, WritableVec,
@@ -22,6 +23,17 @@ pub fn stored<I: VecIndex, T: PcoVecValue>(
     vec
 }
 
+pub fn first_heights<I: VecIndex>(
+    name: &str,
+    values: impl IntoIterator<Item = Height>,
+) -> RangeMapVec<I, Height> {
+    RangeMapVec::new(
+        name,
+        Version::ONE,
+        SharedRangeMap::new(values.into_iter().collect()),
+    )
+}
+
 pub fn indexes(db: &Database) -> IndexSources {
     macro_rules! empty {
         ($name:expr) => {
@@ -29,29 +41,29 @@ pub fn indexes(db: &Database) -> IndexSources {
         };
     }
     macro_rules! resolutions {
-        ($prefix:literal, $method:ident) => {
+        ($prefix:literal, $make:expr) => {
             PerResolution {
-                minute10: empty!(concat!($prefix, "_minute10")).$method(),
-                minute30: empty!(concat!($prefix, "_minute30")).$method(),
-                hour1: empty!(concat!($prefix, "_hour1")).$method(),
-                hour4: empty!(concat!($prefix, "_hour4")).$method(),
-                hour12: empty!(concat!($prefix, "_hour12")).$method(),
-                day1: empty!(concat!($prefix, "_day1")).$method(),
-                day3: empty!(concat!($prefix, "_day3")).$method(),
-                week1: empty!(concat!($prefix, "_week1")).$method(),
-                month1: empty!(concat!($prefix, "_month1")).$method(),
-                month3: empty!(concat!($prefix, "_month3")).$method(),
-                month6: empty!(concat!($prefix, "_month6")).$method(),
-                year1: empty!(concat!($prefix, "_year1")).$method(),
-                year10: empty!(concat!($prefix, "_year10")).$method(),
-                halving: empty!(concat!($prefix, "_halving")).$method(),
-                epoch: empty!(concat!($prefix, "_epoch")).$method(),
+                minute10: $make(concat!($prefix, "_minute10")),
+                minute30: $make(concat!($prefix, "_minute30")),
+                hour1: $make(concat!($prefix, "_hour1")),
+                hour4: $make(concat!($prefix, "_hour4")),
+                hour12: $make(concat!($prefix, "_hour12")),
+                day1: $make(concat!($prefix, "_day1")),
+                day3: $make(concat!($prefix, "_day3")),
+                week1: $make(concat!($prefix, "_week1")),
+                month1: $make(concat!($prefix, "_month1")),
+                month3: $make(concat!($prefix, "_month3")),
+                month6: $make(concat!($prefix, "_month6")),
+                year1: $make(concat!($prefix, "_year1")),
+                year10: $make(concat!($prefix, "_year10")),
+                halving: $make(concat!($prefix, "_halving")),
+                epoch: $make(concat!($prefix, "_epoch")),
             }
         };
     }
     IndexSources {
-        first_height: resolutions!("first", read_only_boxed_clone),
-        timestamp: resolutions!("timestamp", read_only_boxed_clone),
+        first_height: resolutions!("first", |name| first_heights(name, [])),
+        timestamp: resolutions!("timestamp", |name| empty!(name).read_only_boxed_clone()),
         height_minute10: empty!("height_minute10").read_only_boxed_clone(),
         height_day1: empty!("height_day1").read_only_boxed_clone(),
         height_tx_index_count: LazyPreviousDeltaVec::new(

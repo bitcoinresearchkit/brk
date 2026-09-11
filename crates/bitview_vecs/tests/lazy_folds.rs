@@ -17,6 +17,8 @@ use vecdb::{
 
 #[path = "../benches/unit/lazy_folds.rs"]
 mod bench;
+#[allow(dead_code)]
+mod common;
 
 fn stored<T: PcoVecValue>(
     db: &Database,
@@ -84,7 +86,7 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         (0..64_u64).map(|i| StoredU64::from(i * (i + 1))),
     );
     let starts = stored(&db, "starts", (0_usize..64).map(|i| Height::from(i / 3)));
-    let days = stored(&db, "days", (0..64).map(|i| Day1::from(i / 8)));
+    let days = common::first_heights("days", (0..8usize).map(|i| Height::from(i * 8)));
     let denominator = stored(&db, "denominator", (0..64).map(|_| StoredU16::new(10)));
     let denominator = CumulativeCountVec::new(&denominator);
     let cumulative = stored(

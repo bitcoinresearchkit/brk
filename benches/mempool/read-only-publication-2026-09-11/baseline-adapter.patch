@@ -1,0 +1,89 @@
+--- a/benches/unit/publication.rs
++++ b/benches/unit/publication.rs
+@@ -14,8 +14,11 @@
+ use brk_types::{FeeRate, Sats, Transaction, TxidPrefix, Vin};
+ 
+ use super::*;
++use std::sync::Arc;
++type ReadOnlyMempool = Mempool;
++type ReadOnlyState = Snapshot;
+ use crate::{
+-    ReadOnlyMempool, ReadOnlyState, TxRemoval,
++    State, Snapshot, TxRemoval,
+     cycle::AddrTransitions,
+     state::TxEntry,
+     steps::preparer::{TxAddition, TxsPulled},
+@@ -62,29 +65,18 @@
+     }
+ }
+ 
+-// These adapters isolate the ownership API for a same-fixture baseline run.
+-fn edit<T>(writer: &mut Mempool, f: impl FnOnce(&mut State) -> T) -> T {
+-    f(&mut writer.state)
+-}
+-fn rebuild(writer: &mut Mempool, gbt: &[Txid], floor: FeeRate, _changed: bool) {
+-    writer.rebuilder.tick(&writer.state, gbt, floor);
+-}
+-fn commit(writer: &mut Mempool, ids: &[Txid]) {
+-    writer.publish_observation(BlockHash::default(), writer.state.contains_all(ids));
+-}
+-fn reader(writer: &Mempool) -> ReadOnlyMempool {
+-    writer.read_only_clone()
+-}
+-fn capture(reader: &ReadOnlyMempool) -> Arc<ReadOnlyState> {
+-    reader.load()
+-}
++// Same workload on the original writer/read API.
++fn edit<T>(writer: &mut Mempool, f: impl FnOnce(&mut State) -> T) -> T { f(&mut writer.0.state.write()) }
++fn rebuild(writer: &mut Mempool, gbt: &[Txid], floor: FeeRate, changed: bool) { writer.0.rebuilder.tick(&writer.0.state, gbt, floor, changed); }
++fn commit(writer: &mut Mempool, ids: &[Txid]) { writer.publish_observation(BlockHash::default(), ids); }
++fn reader(writer: &Mempool) -> ReadOnlyMempool { writer.clone() }
++fn capture(reader: &ReadOnlyMempool) -> Arc<ReadOnlyState> { reader.snapshot() }
+ fn read_queries(reader: &ReadOnlyMempool, txid: &Txid) -> bool {
+-    let state = reader.load();
+     let tip = BlockHash::default();
+-    let valid = black_box(state.live_raw_histogram(&tip)).is_ok();
+-    let info = black_box(state.info());
+-    let ids = black_box(state.txids_hash());
+-    let transaction = black_box(state.transaction(txid, &tip));
++    let valid = black_box(reader.live_raw_histogram(&tip)).is_ok();
++    let info = black_box(reader.info());
++    let ids = black_box(reader.txids_hash());
++    let transaction = black_box(reader.transaction(txid, &tip));
+     valid && info.is_ok() && ids.is_ok() && transaction.is_ok()
+ }
+ 
+@@ -123,8 +115,8 @@
+ }
+ 
+ fn apply(writer: &mut Mempool, pulled: TxsPulled) {
+-    let graph = writer.rebuilder.snapshot();
+-    applier::apply(&mut writer.state, &graph, pulled, &mut CycleDiff::default());
++    let graph = writer.0.rebuilder.snapshot();
++    applier::apply(&writer.0.state, &graph, pulled, &mut CycleDiff::default());
+ }
+ 
+ fn measured<T>(f: impl FnOnce() -> T) -> (T, [u128; 3]) {
+@@ -368,9 +360,7 @@
+                         let start = Instant::now();
+                         if read_queries(&reader, &txid(0)) {
+                             success += 1;
+-                            if success % 100 == 0 {
+-                                samples.push([start.elapsed().as_nanos(), 0, 0]);
+-                            }
++                            if success % 100 == 0 { samples.push([start.elapsed().as_nanos(), 0, 0]); }
+                         } else {
+                             failed += 1;
+                         }
+@@ -410,7 +400,10 @@
+         if !parallel.is_empty() {
+             report(count, "4_readers_10_updates", "read", &mut parallel);
+         }
+-        println!("concurrent,{count},success={},failed={failed}", success);
++        println!(
++            "concurrent,{count},success={},failed={failed}",
++            success
++        );
+         drop(parallel);
+         drop(reads);
+         let live = LIVE.load(Ordering::Relaxed) - initial_live;

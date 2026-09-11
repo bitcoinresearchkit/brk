@@ -30,10 +30,6 @@ impl MempoolPublication {
     pub async fn check_unavailable(&self, address: SocketAddr) {
         let mut requests = JoinSet::new();
         for (index, path) in PATHS.iter().enumerate() {
-            if index == 0 && self.state.sync(|q| q.mempool_info().is_ok()) {
-                self.check_stats_available(address).await;
-                continue;
-            }
             for method in ["GET", "HEAD"] {
                 for tag in [
                     "*",
@@ -56,29 +52,6 @@ impl MempoolPublication {
         while let Some(result) = requests.join_next().await {
             result.unwrap();
         }
-    }
-
-    pub async fn check_stats_available(&self, address: SocketAddr) {
-        time::timeout(Duration::from_secs(1), async {
-            let expected = self
-                .state
-                .sync(|q| to_value(q.mempool_info().unwrap()).unwrap());
-            let response = exchange_with_etag(address, "GET", PATHS[0], "\"old\"").await;
-            assert!(response.starts_with("HTTP/1.1 200"), "{response}");
-            let body: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
-            assert_eq!(body, expected);
-            let tag = response
-                .lines()
-                .find_map(|line| line.strip_prefix("etag: "))
-                .unwrap();
-            for method in ["GET", "HEAD"] {
-                let response = exchange_with_etag(address, method, PATHS[0], tag).await;
-                assert!(response.starts_with("HTTP/1.1 304"), "{response}");
-                assert!(response.ends_with("\r\n\r\n"));
-            }
-        })
-        .await
-        .expect("published statistics must not wait for the live update");
     }
 
     pub async fn check_available(&mut self, address: SocketAddr) {
@@ -112,6 +85,58 @@ impl MempoolPublication {
         }
         if first {
             self.check_txid_ownership().await;
+        }
+    }
+
+    #[cfg(feature = "price")]
+    pub async fn check_live_outputs(&self, address: SocketAddr) {
+        time::timeout(Duration::from_secs(5), async {
+            let mut prices = Vec::new();
+            for path in LIVE_OUTPUT_PATHS {
+                let expected = self.state.sync(|q| match path {
+                    "/api/oracle/price" | "/api/mempool/price" => {
+                        to_value(q.live_price().unwrap()).unwrap()
+                    }
+                    "/api/oracle/histogram/payments/live" => {
+                        to_value(q.live_payment_histogram().unwrap()).unwrap()
+                    }
+                    _ => to_value(q.live_output_histogram().unwrap()).unwrap(),
+                });
+                let response = exchange_with_etag(address, "GET", path, "\"old\"").await;
+                assert!(response.starts_with("HTTP/1.1 200"), "{path}: {response}");
+                let actual: Value = from_str(response.split_once("\r\n\r\n").unwrap().1).unwrap();
+                assert_eq!(actual, expected);
+                let tag = response
+                    .lines()
+                    .find_map(|line| line.strip_prefix("etag: "))
+                    .unwrap();
+                if path.ends_with("/price") {
+                    prices.push(tag.to_owned());
+                }
+                for method in ["GET", "HEAD"] {
+                    for condition in [tag, "*"] {
+                        let response = exchange_with_etag(address, method, path, condition).await;
+                        assert!(response.starts_with("HTTP/1.1 304"), "{path}: {response}");
+                        assert!(response.ends_with("\r\n\r\n"));
+                        assert!(response.contains(&format!("\r\netag: {tag}\r\n")));
+                    }
+                }
+            }
+            assert_eq!(prices[0], prices[1]);
+        })
+        .await
+        .expect("published price and histograms must remain available during private updates");
+    }
+
+    #[cfg(feature = "price")]
+    pub async fn check_live_outputs_unavailable(&self, address: SocketAddr) {
+        for path in LIVE_OUTPUT_PATHS {
+            for method in ["GET", "HEAD"] {
+                let response = exchange_with_etag(address, method, path, "*").await;
+                assert!(response.starts_with("HTTP/1.1 503"), "{path}: {response}");
+                assert!(!response.contains("\r\netag:"));
+                assert!(response.contains("\r\ncache-control: no-store\r\n"));
+            }
         }
     }
 
@@ -158,3 +183,11 @@ impl MempoolPublication {
         assert_eq!(self.state.mempool_txid_bodies.available_permits(), 2);
     }
 }
+
+#[cfg(feature = "price")]
+const LIVE_OUTPUT_PATHS: [&str; 4] = [
+    "/api/oracle/price",
+    "/api/mempool/price",
+    "/api/oracle/histogram/payments/live",
+    "/api/oracle/histogram/outputs/live",
+];

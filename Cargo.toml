@@ -34,6 +34,7 @@ inherits = "release"
 debug = true
 
 [workspace.dependencies]
+arc-swap = "1.9.2"
 aide = { version = "0.16.0-alpha.4", features = ["axum-json", "axum-query"] }
 axum = { version = "0.8.9", default-features = false, features = ["http1", "json", "query", "tokio", "tracing"] }
 bitcoin = { version = "0.32.102", features = ["serde"] }
@@ -110,6 +111,7 @@ owo-colors = "4.4.0"
 parking_lot = "0.12.5"
 pco = { package = "brk_pco", path = "crates/pco", version = "0.12.2" }
 quickmatch = { path = "crates/quickmatch", version = "0.12.2" }
+rangeindex = { version = "0.12.2", path = "crates/rangeindex" }
 rawdb = { path = "crates/rawdb", version = "0.12.2" }
 rayon = "1.12.0"
 rapidhash = "4.5.1"

@@ -29,16 +29,16 @@ pub fn main() -> Result<()> {
     let context = ImportContext::new(&outputs_dir, &CACHE_BUDGET);
     let plugins = DefaultPlugins::import(context, &reader)?;
 
-    let mempool = Mempool::new(&client);
-    let mempool_clone = mempool.clone();
+    let mut mempool = Mempool::new(&client);
+    let read_only = mempool.read_only_clone();
     thread::spawn(move || {
-        mempool_clone.start();
+        mempool.start();
     });
 
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    let query = AsyncQuery::build(&plugins, Some(mempool));
+    let query = AsyncQuery::build(&plugins, Some(read_only));
 
     let runtime = Builder::new_multi_thread().enable_all().build()?;
 

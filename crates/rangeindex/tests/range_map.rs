@@ -1,4 +1,4 @@
-use brk_types::RangeMap;
+use rangeindex::RangeMap;
 
 fn check(map: &mut RangeMap<usize, usize>, starts: &[usize]) {
     for index in (0..40).chain((0..40).rev()) {
@@ -7,12 +7,17 @@ fn check(map: &mut RangeMap<usize, usize>, starts: &[usize]) {
         assert_eq!(map.get_shared(index), floor);
     }
     let mut cursor = map.cursor();
+    let mut cached = map.cached_cursor();
     for index in (0..40)
         .chain((0..40).rev())
         .chain([usize::MAX, 0, 10, 10, 39])
     {
         assert_eq!(
             cursor.get(index),
+            starts.iter().rposition(|&first| first <= index)
+        );
+        assert_eq!(
+            cached.get(index),
             starts.iter().rposition(|&first| first <= index)
         );
     }

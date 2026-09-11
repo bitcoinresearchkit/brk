@@ -14,16 +14,17 @@ fn main() -> Result<()> {
         Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?;
 
-    let mempool = Mempool::new(&client);
+    let mut mempool = Mempool::new(&client);
 
-    let mempool_clone = mempool.clone();
+    let read_only = mempool.read_only_clone();
     thread::spawn(move || {
-        mempool_clone.start();
+        mempool.start();
     });
 
     loop {
         thread::sleep(Duration::from_secs(5));
 
+        let mempool = read_only.load();
         let info_count = mempool.info().map(|info| info.count);
         let stats = mempool.stats();
         let snapshot = mempool.snapshot();

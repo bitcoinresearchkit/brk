@@ -74,18 +74,17 @@ where
         update_context,
     )?;
 
-    let mempool = Mempool::new(&client);
+    let mut mempool = Mempool::new(&client);
 
-    let query = AsyncQuery::build(&plugins, Some(mempool.clone()));
+    let query = AsyncQuery::build(&plugins, Some(mempool.read_only_clone()));
 
     let runtime = Builder::new_multi_thread().enable_all().build()?;
     let server = runtime.block_on(Server::bind(&query, server))?;
     let server_handle = runtime.spawn(server.serve());
 
-    let mempool_clone = mempool.clone();
     let resolver = query.sync(|q| q.indexer_prevout_resolver());
     thread::spawn(move || {
-        mempool_clone.start_with(resolver);
+        mempool.start_with(resolver);
     });
 
     info!("Waiting for new blocks...");

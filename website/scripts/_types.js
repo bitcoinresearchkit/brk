@@ -82,7 +82,7 @@
  * @typedef {Bitview.CapitalizedGrossInvestedLossNetNuplProfitSentimentPattern2} FullRelativePattern
  *
  * Profitability bucket pattern (supply + realized_cap + unrealized_pnl + nupl)
- * @typedef {Bitview.NuplRealizedSupplyUnrealizedPattern} RealizedSupplyPattern
+ * @typedef {ReturnType<typeof import("./options/distribution/data.js").buildCohortData>["profitabilityRange"][number]["pattern"]} RealizedSupplyPattern
  *
  * Realized pattern (full: cap + gross + capitalized + loss + mvrv + net + peak + price + profit + sell + sopr)
  * @typedef {Bitview.CapCapitalizedGrossLossMvrvNetPeakPriceProfitSellSoprPattern} RealizedPattern

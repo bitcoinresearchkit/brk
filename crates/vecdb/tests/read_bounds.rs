@@ -1,7 +1,5 @@
 #![cfg(feature = "serde")]
 
-mod common;
-
 use std::{
     panic::{AssertUnwindSafe, catch_unwind},
     thread,
@@ -9,8 +7,8 @@ use std::{
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, Database, ImportableVec, LazyAggVec, ReadBounds,
-    ReadableCloneableVec, ReadableVec, ValueWriter, Version, WritableVec,
+    AnyStoredVec, AnyVec, BytesVec, Database, ImportableVec, ReadBounds, ValueWriter, Version,
+    WritableVec,
 };
 
 #[test]
@@ -61,58 +59,6 @@ fn explicit_bounds_cover_lengths_ranges_json_csv_and_writer_lifetimes() {
         4,
         "bounded operations must restore their caller's scope"
     );
-}
-
-#[test]
-fn nested_lazy_inputs_keep_bounds_without_an_ambient_scope_and_after_thread_handoff() {
-    let temp = tempdir().unwrap();
-    let db = Database::open(temp.path()).unwrap();
-    let mut source: BytesVec<usize, u64> =
-        BytesVec::forced_import(&db, "source", Version::ONE).unwrap();
-    for value in [10, 20, 30] {
-        source.push(value);
-    }
-    source.flush().unwrap();
-    let last = LazyAggVec::<usize, Option<u64>, usize, usize, u64>::new(
-        "last",
-        Version::ONE,
-        source.read_only_boxed_clone(),
-        common::mapping(&db, [0]),
-    );
-    assert_eq!(last.collect_one_at(0), Some(Some(30)));
-    let mut bounds = ReadBounds::new();
-    bounds.set("usize", 2);
-    let bounded = bounds.bind(&last).unwrap();
-    let read = || {
-        let mut json = Vec::new();
-        bounded.write_json(None, None, &mut json).unwrap();
-        assert_eq!(
-            json, b"[20]",
-            "output length alone does not constrain the lazy source tail"
-        );
-        json.clear();
-        bounded.write_json_value_at(0, &mut json).unwrap();
-        assert_eq!(json, b"20");
-        let mut csv = String::new();
-        bounded.write_csv_column(None, None, &mut csv).unwrap();
-        assert_eq!(csv, "20\n");
-        csv.clear();
-        bounded
-            .create_writer(None, None)
-            .write_next(&mut csv)
-            .unwrap();
-        assert_eq!(csv, "20");
-    };
-    read();
-    thread::scope(|threads| threads.spawn(read).join().unwrap());
-    let mut outer = ReadBounds::new();
-    outer.set("usize", 1);
-    outer.scope(|| {
-        assert_eq!(source.visible_len(), 1);
-        read();
-        assert_eq!(source.visible_len(), 1);
-    });
-    assert_eq!(source.visible_len(), 3);
 }
 
 #[test]

@@ -3,9 +3,9 @@
 use brk_error::Result;
 use brk_types::RecommendedFees;
 
-use crate::{Mempool, snapshot::BlockStats};
+use crate::{ReadOnlyState, snapshot::BlockStats};
 
-impl Mempool {
+impl ReadOnlyState {
     pub fn fees(&self) -> Result<RecommendedFees> {
         let snapshot = self.snapshot();
         snapshot.ensure_projection()?;

@@ -6,14 +6,14 @@ use crate::{
     test_support::{fake_entry_info, fake_tx, p2wpkh_script},
 };
 
-fn state_with(seeds: &[u8]) -> (RwLock<State>, Vec<Txid>) {
-    let state = RwLock::new(State::default());
+fn state_with(seeds: &[u8]) -> (State, Vec<Txid>) {
+    let mut state = State::default();
     let mut txids = Vec::with_capacity(seeds.len());
     for &seed in seeds {
         let tx = fake_tx(seed, &[], &[(p2wpkh_script(seed), 1_000)]);
         let txid = tx.txid;
         let entry = TxEntry::new(&fake_entry_info(txid, 100, 100), 100, false);
-        state.write().txs.insert(tx, entry);
+        state.txs.insert(tx, entry);
         txids.push(txid);
     }
     (state, txids)
@@ -25,81 +25,81 @@ fn min_fee(sats: u64) -> FeeRate {
 
 #[test]
 fn first_tick_always_builds() {
-    let rebuilder = Rebuilder::default();
-    let state = RwLock::new(State::default());
+    let mut rebuilder = Rebuilder::default();
+    let state = State::default();
 
-    rebuilder.tick(&state, &[], min_fee(1), false);
+    rebuilder.tick(&state, &[], min_fee(1));
 
     assert_eq!(rebuilder.rebuild_count(), 1);
 }
 
 #[test]
 fn identical_inputs_reuse_snapshot() {
-    let rebuilder = Rebuilder::default();
+    let mut rebuilder = Rebuilder::default();
     let (state, txids) = state_with(&[1, 2]);
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+    rebuilder.tick(&state, &txids, min_fee(1));
 
-    rebuilder.tick(&state, &txids, min_fee(1), false);
+    rebuilder.tick(&state, &txids, min_fee(1));
 
     assert_eq!(rebuilder.rebuild_count(), 1);
 }
 
 #[test]
 fn content_changes_rebuild_even_when_other_reuse_inputs_match() {
-    let rebuilder = Rebuilder::default();
-    let (state, txids) = state_with(&[1]);
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+    let mut rebuilder = Rebuilder::default();
+    let (mut state, txids) = state_with(&[1]);
+    rebuilder.tick(&state, &txids, min_fee(1));
     let before = rebuilder.snapshot();
 
     let tx = fake_tx(2, &[], &[(p2wpkh_script(2), 2_000)]);
     let entry = TxEntry::new(&fake_entry_info(tx.txid, 200, 100), 100, false);
-    state.write().txs.insert(tx, entry);
-    rebuilder.tick(&state, &txids, min_fee(1), false);
+    state.txs.insert(tx, entry);
+    rebuilder.tick(&state, &txids, min_fee(1));
 
     let after = rebuilder.snapshot();
     assert_eq!(rebuilder.rebuild_count(), 2);
     assert!(!Arc::ptr_eq(&before, &after));
     assert_eq!(after.txs.len(), 2);
-    assert_eq!(
-        after.content_revision(),
-        state.read().txs.content_revision()
-    );
+    assert_eq!(after.content_revision(), state.txs.content_revision());
 
-    rebuilder.tick(&state, &txids, min_fee(1), false);
+    rebuilder.tick(&state, &txids, min_fee(1));
     assert!(Arc::ptr_eq(&after, &rebuilder.snapshot()));
     assert_eq!(rebuilder.rebuild_count(), 2);
 }
 
 #[test]
 fn reordered_template_rebuilds() {
-    let rebuilder = Rebuilder::default();
+    let mut rebuilder = Rebuilder::default();
     let (state, mut txids) = state_with(&[1, 2]);
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+    rebuilder.tick(&state, &txids, min_fee(1));
     txids.reverse();
 
-    rebuilder.tick(&state, &txids, min_fee(1), false);
+    rebuilder.tick(&state, &txids, min_fee(1));
 
     assert_eq!(rebuilder.rebuild_count(), 2);
 }
 
 #[test]
 fn changed_min_fee_rebuilds() {
-    let rebuilder = Rebuilder::default();
+    let mut rebuilder = Rebuilder::default();
     let (state, txids) = state_with(&[1]);
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+    rebuilder.tick(&state, &txids, min_fee(1));
 
-    rebuilder.tick(&state, &txids, min_fee(2), false);
+    rebuilder.tick(&state, &txids, min_fee(2));
 
     assert_eq!(rebuilder.rebuild_count(), 2);
 }
 
 #[test]
-fn changed_pool_rebuilds() {
-    let rebuilder = Rebuilder::default();
-    let (state, txids) = state_with(&[1]);
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+fn removal_outside_template_rebuilds() {
+    let mut rebuilder = Rebuilder::default();
+    let (mut state, txids) = state_with(&[1, 2]);
+    let template = &txids[..1];
+    rebuilder.tick(&state, template, min_fee(1));
 
-    rebuilder.tick(&state, &txids, min_fee(1), true);
+    state.txs.remove_by_prefix(&txids[1].into()).unwrap();
+    rebuilder.tick(&state, template, min_fee(1));
 
     assert_eq!(rebuilder.rebuild_count(), 2);
+    assert_eq!(rebuilder.snapshot().txs.len(), 1);
 }

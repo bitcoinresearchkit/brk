@@ -36,7 +36,7 @@ fn run() -> Result<()> {
     }
     let args = Args::parse(raw)?;
     let client = args.rpc()?;
-    let mempool = Mempool::new(&client);
+    let mut mempool = Mempool::new(&client);
 
     let stdout = io::stdout();
     let mut out = BufWriter::new(stdout.lock());

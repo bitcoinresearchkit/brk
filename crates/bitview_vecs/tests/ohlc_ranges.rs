@@ -2,6 +2,7 @@
 
 use bitview_vecs::LazyOhlcVec;
 use brk_types::{Cents, Day1, Height, OHLCCents, Version};
+use rangeindex::SharedRangeMap;
 use tempfile::tempdir;
 use vecdb::{
     AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
@@ -21,10 +22,7 @@ fn cold_candles_batch_their_price_span_and_warm_reads_reuse_it() {
         ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(budget),
     )
     .unwrap();
-    let mut boundaries = EagerVec::<PcoVec<Day1, Height, Budgeted>>::import_with(
-        ImportOptions::new(&db, "days", Version::ONE).with_cache_budget(&TEST_CACHE),
-    )
-    .unwrap();
+    let mut boundaries = Vec::new();
     for i in 0..32_768usize {
         prices.push(Cents::from(100 + i as u64));
         if i % 128 == 0 {
@@ -32,9 +30,12 @@ fn cold_candles_batch_their_price_span_and_warm_reads_reuse_it() {
         }
     }
     prices.write().unwrap();
-    boundaries.write().unwrap();
-    boundaries.collect();
-    let candles = LazyOhlcVec::new("candles", Version::ONE, &prices, &boundaries);
+    let candles = LazyOhlcVec::<Day1>::new(
+        "candles",
+        Version::TWO,
+        &prices,
+        SharedRangeMap::new(boundaries),
+    );
     diagnostics::take();
     let actual = candles.collect_range_at(4, 20);
     assert_eq!(diagnostics::take(), 3, "decode the bounded price span once");
@@ -67,5 +68,3 @@ fn cold_candles_batch_their_price_span_and_warm_reads_reuse_it() {
         "sparse candles do not read the intervening days"
     );
 }
-
-static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);

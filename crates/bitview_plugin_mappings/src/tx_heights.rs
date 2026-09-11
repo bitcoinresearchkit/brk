@@ -1,20 +1,20 @@
-use std::sync::Arc;
-
 use bitview_plugin_indexer::Indexer;
-use brk_types::{Height, RangeMap, TxIndex};
-use parking_lot::{RwLock, RwLockReadGuard};
+use brk_types::{Height, TxIndex};
+use parking_lot::RwLockReadGuard;
+use rangeindex::{RangeMap, SharedRangeMap};
 use vecdb::{AnyVec, ReadableVec, VecIndex};
+
+#[cfg(test)]
+mod benchmark;
 
 /// Reverse mapping from `TxIndex` → `Height` via binary search on block boundaries.
 ///
 /// Built from `first_tx_index` (the first TxIndex in each block). A floor lookup
 /// on any TxIndex gives the block height that contains it.
 ///
-/// Wrapped in `Arc<RwLock<>>` so the compute thread can extend it while
-/// query threads read concurrently — the inner `RangeMap` is purely in-memory
-/// and wouldn't stay current through mmap like PcoVec/BytesVec do.
+/// The compute thread maintains one resident range map shared with query readers.
 #[derive(Clone)]
-pub struct TxHeights(Arc<RwLock<RangeMap<TxIndex, Height>>>);
+pub struct TxHeights(SharedRangeMap<TxIndex, Height>);
 
 impl TxHeights {
     /// Hold a stable mapping for a batch of lookups, with one read lock.
@@ -24,29 +24,16 @@ impl TxHeights {
 
     /// Build from the full `first_tx_index` vec at startup.
     pub fn init(indexer: &Indexer) -> Self {
-        let entries = indexer.vecs().transactions.first_tx_index.collect();
-        Self(Arc::new(RwLock::new(RangeMap::from(entries))))
+        let source = &indexer.vecs().transactions.first_tx_index;
+        Self(SharedRangeMap::new(source.collect()))
     }
 
     /// Extend with new blocks since last call. Truncates on reorg.
     pub fn update(&self, indexer: &Indexer, reorg_height: Height) {
-        let mut inner = self.0.write();
-        let reorg_len = reorg_height.to_usize();
-        if inner.len() > reorg_len {
-            inner.truncate(reorg_len);
-        }
-        let target_len = indexer.vecs().transactions.first_tx_index.len();
-        let current_len = inner.len();
-        if current_len < target_len {
-            let new_entries: Vec<TxIndex> = indexer
-                .vecs()
-                .transactions
-                .first_tx_index
-                .collect_range_at(current_len, target_len);
-            for entry in new_entries {
-                inner.push(entry);
-            }
-        }
+        let source = &indexer.vecs().transactions.first_tx_index;
+        let from = self.0.len().min(reorg_height.to_usize()).min(source.len());
+        self.0
+            .update_at(from, source.collect_range_at(from, source.len()));
     }
 
     /// Look up the block height for a given tx_index.
@@ -72,9 +59,9 @@ mod tests {
 
     #[test]
     fn resume_height_includes_partial_blocks_and_stops_at_the_target() {
-        let heights = TxHeights(Arc::new(RwLock::new(RangeMap::from(
+        let heights = TxHeights(SharedRangeMap::new(
             [0usize, 1, 4].map(TxIndex::from).to_vec(),
-        ))));
+        ));
         for (tx_len, expected) in [
             (0, 0),
             (1, 1),

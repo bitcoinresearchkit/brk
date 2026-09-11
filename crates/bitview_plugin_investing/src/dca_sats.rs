@@ -179,8 +179,10 @@ impl ReadOnlyClone for DcaSats {
 mod tests {
     use std::{marker::PhantomData, sync::Arc};
 
+    use bitview_vecs::RangeMapLookupVec;
     use parking_lot::RwLock;
-    use vecdb::{ReadableCloneableVec, VecValue, short_type_name};
+    use rangeindex::SharedRangeMap;
+    use vecdb::{LazyVec, ReadBounds, ReadableCloneableVec, VecValue, short_type_name};
 
     use super::*;
 
@@ -284,6 +286,40 @@ mod tests {
                 .cloned()
                 .try_fold(init, &mut fold)
         }
+    }
+
+    #[test]
+    fn shared_day_mapping_preserves_purchases_through_reorg_and_publication() {
+        let prices = MemoryVec::<Day1, _>::new([
+            Some(Dollars::mint(100.0)),
+            None,
+            Some(Dollars::mint(200.0)),
+        ]);
+        let domain = MemoryVec::<Height, _>::new([Day1::default(); 5]);
+        let metadata = LazyVec::init(
+            "day1",
+            Version::ZERO,
+            domain.read_only_boxed_clone(),
+            |_, _| -> Day1 { panic!("DCA must use shared day boundaries") },
+        );
+        let starts = SharedRangeMap::new([0usize, 2, 3, 4].map(Height::from).to_vec());
+        let days = RangeMapLookupVec::new(&starts, &metadata);
+        let cumulative = DcaSats::new(prices.read_only_boxed_clone(), days).clone();
+        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
+        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
+        assert_eq!(cumulative.collect(), [first, first, first, third, third]);
+        starts.update_at(1, [1usize, 4, 4].map(Height::from));
+        assert_eq!(cumulative.collect(), [first, first, first, first, third]);
+        assert_eq!(
+            cumulative.read_sorted_at(&[0, 3, 3, 4, 5]),
+            [first, first, first, third]
+        );
+        let mut bounds = ReadBounds::new();
+        bounds.set("height", 4);
+        bounds.scope(|| {
+            assert_eq!(cumulative.collect(), [first; 4]);
+            assert_eq!(cumulative.collect_one_at(4), None);
+        });
     }
 
     #[test]

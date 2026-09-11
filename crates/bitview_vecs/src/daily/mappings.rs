@@ -7,7 +7,7 @@ use vecdb::{LazyVec, ReadableBoxedVec, VecIndex};
 
 #[derive(Clone)]
 pub struct DailyMappings {
-    pub height: LazyVec<Height, Day1, Height, Day1>,
+    pub height: ReadableBoxedVec<Height, Day1>,
     pub minute10: LazyVec<Minute10, Day1, Minute10, Timestamp>,
     pub minute30: LazyVec<Minute30, Day1, Minute30, Timestamp>,
     pub hour1: LazyVec<Hour1, Day1, Hour1, Timestamp>,
@@ -26,15 +26,8 @@ pub struct DailyMappings {
 
 impl DailyMappings {
     pub fn new(indexes: &IndexSources) -> Self {
-        let height = LazyVec::init(
-            "day1",
-            Version::ZERO,
-            indexes.height_day1.clone(),
-            |_, day| day,
-        );
-
         Self {
-            height,
+            height: indexes.height_day1.clone(),
             minute10: timestamp_mapping(indexes.timestamp.minute10.clone()),
             minute30: timestamp_mapping(indexes.timestamp.minute30.clone()),
             hour1: timestamp_mapping(indexes.timestamp.hour1.clone()),

@@ -1,0 +1,583 @@
+--- a/crates/brk_mempool/src/api/rbf/mod.rs
++++ b/crates/brk_mempool/src/api/rbf/mod.rs
+@@ -24,33 +24,29 @@
+ impl ReadOnlyState {
+     /// Walk forward through `Replaced { by }` to the terminal replacer
+     /// and return its full predecessor tree, plus the requested tx's
+-    /// direct predecessors. Single read-lock window.
++    /// direct predecessors from the acquired publication.
+     /// Rejects histories exceeding 4096 traversal steps or 32 nested nodes;
+     /// never returns a silently truncated tree.
+     pub fn rbf_for_tx(&self, txid: &Txid, tip: &BlockHash) -> Result<RbfForTx> {
+         let state = self.pool()?;
+         state.ensure_resolved_at(tip)?;
+-        let snapshot = &state.graph;
+-        let mut rbf = {
+-            let mut remaining = MAX_RBF_WORK;
+-            let root_txid = state.graveyard.replacement_root_of(*txid, &mut remaining)?;
+-            let replaces: Vec<_> = state
+-                .graveyard
+-                .predecessors_of(txid)
+-                .take(remaining + 1)
+-                .map(|(predecessor, _)| *predecessor)
+-                .collect();
+-            remaining = remaining
+-                .checked_sub(replaces.len())
+-                .ok_or(Error::Internal("RBF history exceeds traversal limit"))?;
+-            let root =
+-                Self::build_rbf_node(&root_txid, &state.txs, &state.graveyard, &mut remaining, 0)?;
+-            RbfForTx { root, replaces }
+-        };
+-        if let Some(root) = rbf.root.as_mut() {
+-            Self::apply_snapshot_rates(root, &snapshot);
++        let mut remaining = MAX_RBF_WORK;
++        let root_txid = state.graveyard.replacement_root_of(*txid, &mut remaining)?;
++        let replaces: Vec<_> = state
++            .graveyard
++            .predecessors_of(txid)
++            .take(remaining + 1)
++            .map(|(predecessor, _)| *predecessor)
++            .collect();
++        remaining = remaining
++            .checked_sub(replaces.len())
++            .ok_or(Error::Internal("RBF history exceeds traversal limit"))?;
++        let mut root =
++            Self::build_rbf_node(&root_txid, &state.txs, &state.graveyard, &mut remaining, 0)?;
++        if let Some(root) = root.as_mut() {
++            Self::apply_snapshot_rates(root, &state.graph);
+         }
+-        Ok(rbf)
++        Ok(RbfForTx { root, replaces })
+     }
+ 
+     /// Recent terminal-replacer trees, most-recent first, deduplicated
+@@ -66,37 +62,34 @@
+     ) -> Result<Vec<RbfNode>> {
+         let state = self.pool()?;
+         state.ensure_resolved_at(tip)?;
+-        let snapshot = &state.graph;
+-        let mut trees: Vec<RbfNode> = {
+-            if limit == 0 {
+-                return Ok(Vec::new());
++        if limit == 0 {
++            return Ok(Vec::new());
++        }
++        let mut seen: FxHashSet<Txid> = FxHashSet::default();
++        let mut remaining = MAX_RBF_WORK;
++        let mut trees = Vec::new();
++        for candidate in state.graveyard.replacement_candidates_recent_first() {
++            remaining = remaining
++                .checked_sub(1)
++                .ok_or(Error::Internal("RBF history exceeds traversal limit"))?;
++            let Some((_, by)) = candidate else { continue };
++            let root = state.graveyard.replacement_root_of(*by, &mut remaining)?;
++            if !seen.insert(root) {
++                continue;
+             }
+-            let mut seen: FxHashSet<Txid> = FxHashSet::default();
+-            let mut remaining = MAX_RBF_WORK;
+-            let mut trees = Vec::new();
+-            for candidate in state.graveyard.replacement_candidates_recent_first() {
+-                remaining = remaining
+-                    .checked_sub(1)
+-                    .ok_or(Error::Internal("RBF history exceeds traversal limit"))?;
+-                let Some((_, by)) = candidate else { continue };
+-                let root = state.graveyard.replacement_root_of(*by, &mut remaining)?;
+-                if !seen.insert(root) {
+-                    continue;
+-                }
+-                if let Some(node) =
+-                    Self::build_rbf_node(&root, &state.txs, &state.graveyard, &mut remaining, 0)?
+-                    && (!full_rbf_only || node.full_rbf)
+-                {
+-                    trees.push(node);
+-                    if trees.len() == limit {
+-                        break;
+-                    }
++            if let Some(node) =
++                Self::build_rbf_node(&root, &state.txs, &state.graveyard, &mut remaining, 0)?
++                && (!full_rbf_only || node.full_rbf)
++            {
++                trees.push(node);
++                if trees.len() == limit {
++                    break;
+                 }
+             }
+-            trees
+-        };
++        }
++        // Resolve rates only for returned trees, after filtering and admission.
+         for root in &mut trees {
+-            Self::apply_snapshot_rates(root, &snapshot);
++            Self::apply_snapshot_rates(root, &state.graph);
+         }
+         Ok(trees)
+     }
+--- a/crates/brk_mempool/src/api/tx.rs
++++ b/crates/brk_mempool/src/api/tx.rs
+@@ -61,7 +61,7 @@
+         if usize::from(vout) >= transaction.output.len() {
+             return Ok(Some(TxOutspend::UNSPENT));
+         }
+-        Ok(Some(Self::outspend_for(&state, txid, vout)))
++        Ok(Some(Self::outspend_for(state, txid, vout)))
+     }
+ 
+     /// Current mempool spend status for an output whose parent may be
+@@ -70,7 +70,7 @@
+     pub fn outspend(&self, txid: &Txid, vout: Vout, tip: &BlockHash) -> Result<TxOutspend> {
+         let state = self.pool()?;
+         state.ensure_resolved_at(tip)?;
+-        Ok(Self::outspend_for(&state, txid, vout))
++        Ok(Self::outspend_for(state, txid, vout))
+     }
+ 
+     /// Spend statuses for every output of a live mempool transaction, or
+@@ -86,7 +86,7 @@
+         let Some(transaction) = state.txs.get(txid) else {
+             return Ok(None);
+         };
+-        Self::outspends_for(&state, txid, transaction.output.len()).map(Some)
++        Self::outspends_for(state, txid, transaction.output.len()).map(Some)
+     }
+ 
+     /// Overlay mempool spends onto unresolved outputs of a confirmed parent.
+@@ -104,7 +104,7 @@
+         check_output_count(outspends.len())?;
+         let state = self.pool()?;
+         state.ensure_resolved_at(tip)?;
+-        Self::overlay_outspends(&state, txid, outspends);
++        Self::overlay_outspends(state, txid, outspends);
+         Ok(())
+     }
+ 
+@@ -197,7 +197,7 @@
+         Ok((txids, state.txs.txids_hash()))
+     }
+ 
+-    /// Snapshot of recent live txs.
++    /// Recently observed additions, including transactions that have since left.
+     pub fn recent_txs(&self) -> Result<Vec<MempoolRecentTx>> {
+         let state = self.pool()?;
+         Ok(state.txs.recent().to_vec())
+@@ -207,7 +207,7 @@
+     /// captured from one state snapshot.
+     pub fn transaction_times_with_hash(&self, txids: &[Txid]) -> Result<(Vec<u64>, u64)> {
+         let state = self.pool()?;
+-        let times = Self::transaction_times_for(&state, txids);
++        let times = Self::transaction_times_for(state, txids);
+         let hash = transaction_times_hash(&times);
+         Ok((times, hash))
+     }
+--- a/crates/brk_mempool/src/cycle/diff.rs
++++ b/crates/brk_mempool/src/cycle/diff.rs
+@@ -8,9 +8,3 @@
+     pub removed: Vec<TxRemoved>,
+     pub addrs: AddrTransitions,
+ }
+-
+-impl CycleDiff {
+-    pub fn membership_changed(&self) -> bool {
+-        !self.added.is_empty() || !self.removed.is_empty()
+-    }
+-}
+--- a/crates/brk_mempool/src/driver.rs
++++ b/crates/brk_mempool/src/driver.rs
+@@ -16,7 +16,6 @@
+ use crate::{
+     Mempool, State,
+     cycle::{Cycle, CycleDiff},
+-    snapshot::Rebuilder,
+     steps::{Fetched, applier, fetcher, preparer, prevouts},
+ };
+ 
+@@ -78,12 +77,12 @@
+             .pool
+             .as_ref()
+             .map_or_else(State::default, |pool| pool.restore());
+-        self.rebuilder = published
+-            .pool
+-            .as_ref()
+-            .map_or_else(Rebuilder::default, |pool| {
+-                Rebuilder::from_snapshot(pool.graph.clone())
+-            });
++        self.rebuilder.restore(
++            published
++                .pool
++                .as_ref()
++                .map_or_else(Arc::default, |pool| pool.graph.clone()),
++        );
+         self.needs_recovery = false;
+     }
+ 
+@@ -116,12 +115,8 @@
+         );
+         prevouts::fill(&mut self.state, &mut diff, resolver);
+         let coherent_tip = self.client.get_best_block_hash().ok() == Some(tip_before);
+-        self.rebuilder.tick(
+-            &self.state,
+-            &block_template_txids,
+-            rpc.min_fee,
+-            diff.membership_changed(),
+-        );
++        self.rebuilder
++            .tick(&self.state, &block_template_txids, rpc.min_fee);
+         if coherent_tip {
+             self.publish_observation(
+                 rpc.tip_hash,
+--- a/crates/brk_mempool/src/snapshot/cpfp.rs
++++ b/crates/brk_mempool/src/snapshot/cpfp.rs
+@@ -24,16 +24,13 @@
+         let state = self.pool()?;
+         state.ensure_resolved_at(tip)?;
+         let snapshot = &state.graph;
+-        let sigops = {
+-            let Some(tx) = state.txs.get(txid) else {
+-                return Ok(None);
+-            };
+-            tx.total_sigop_cost
++        let Some(tx) = state.txs.get(txid) else {
++            return Ok(None);
+         };
+         Ok(snapshot.idx_of_txid(txid).and_then(|index| {
+             snapshot
+                 .tx(index)
+-                .map(|seed| snapshot.cpfp_info_at(index, seed, sigops))
++                .map(|seed| snapshot.cpfp_info_at(index, seed, tx.total_sigop_cost))
+         }))
+     }
+ }
+--- a/crates/brk_mempool/src/snapshot/rebuilder.rs
++++ b/crates/brk_mempool/src/snapshot/rebuilder.rs
+@@ -17,24 +17,19 @@
+ }
+ 
+ impl Rebuilder {
+-    pub fn from_snapshot(snapshot: Arc<Snapshot>) -> Self {
+-        Self {
+-            snapshot,
+-            rebuild_count: 0,
+-        }
++    pub fn restore(&mut self, snapshot: Arc<Snapshot>) {
++        self.snapshot = snapshot;
+     }
+ 
+     /// Reuse the private graph only when all of its inputs are unchanged.
+     /// Publication and template history are committed together by the writer.
+-    pub fn tick(
+-        &mut self,
+-        state: &State,
+-        gbt_txids: &[Txid],
+-        min_fee: FeeRate,
+-        membership_changed: bool,
+-    ) {
+-        let revision = state.txs.content_revision();
+-        if self.can_reuse(gbt_txids, min_fee, membership_changed, revision) {
++    pub fn tick(&mut self, state: &State, gbt_txids: &[Txid], min_fee: FeeRate) {
++        let snapshot = &self.snapshot;
++        if !snapshot.blocks.is_empty()
++            && snapshot.min_fee == min_fee
++            && snapshot.content_revision == state.txs.content_revision()
++            && snapshot.block0_txids().eq(gbt_txids.iter().copied())
++        {
+             return;
+         }
+ 
+@@ -42,36 +37,16 @@
+         self.rebuild_count += 1;
+     }
+ 
+-    fn can_reuse(
+-        &self,
+-        gbt_txids: &[Txid],
+-        min_fee: FeeRate,
+-        membership_changed: bool,
+-        revision: u64,
+-    ) -> bool {
+-        if membership_changed {
+-            return false;
+-        }
+-        let snapshot = &self.snapshot;
+-        !snapshot.blocks.is_empty()
+-            && snapshot.min_fee == min_fee
+-            && snapshot.block0_txids().eq(gbt_txids.iter().copied())
+-            && snapshot.content_revision == revision
+-    }
+-
+     pub fn rebuild_count(&self) -> u64 {
+         self.rebuild_count
+     }
+ 
+     fn build_snapshot(state: &State, gbt_txids: &[Txid], min_fee: FeeRate) -> Snapshot {
+-        let (txs, prefix_to_idx, bodies, revision) = {
+-            let (txs, prefix_to_idx) = Snapshot::build_txs(&state.txs);
+-            let bodies: Vec<_> = gbt_txids
+-                .iter()
+-                .filter_map(|txid| state.txs.record(txid).map(|record| record.tx.clone()))
+-                .collect();
+-            (txs, prefix_to_idx, bodies, state.txs.content_revision())
+-        };
++        let (txs, prefix_to_idx) = Snapshot::build_txs(&state.txs);
++        let bodies: Vec<_> = gbt_txids
++            .iter()
++            .filter_map(|txid| state.txs.record(txid).map(|record| record.tx.clone()))
++            .collect();
+ 
+         let block0: Vec<TxIndex> = gbt_txids
+             .iter()
+@@ -94,7 +69,7 @@
+ 
+         let missing = bodies.len() != gbt_txids.len();
+         let mut snapshot = Snapshot::build(txs, blocks, prefix_to_idx, min_fee);
+-        snapshot.set_template(bodies, revision, missing);
++        snapshot.set_template(bodies, state.txs.content_revision(), missing);
+         snapshot
+     }
+ 
+--- a/crates/brk_mempool/src/steps/applier.rs
++++ b/crates/brk_mempool/src/steps/applier.rs
+@@ -9,8 +9,8 @@
+     steps::preparer::{TxAddition, TxsPulled},
+ };
+ 
+-/// Applies a prepared diff to the private working state. Body proceeds: bury removed → publish added → evict. Events
+-/// are pushed into the caller-supplied [`CycleDiff`] accumulator.
++/// Applies a prepared diff to private working state: bury removals, insert
++/// additions, then evict old tombstones. Events go into [`CycleDiff`].
+ /// `prev_snapshot` supplies the previous cycle's snapshot. Burial
+ /// reads each tomb's `chunk_rate` from it (always-fresh,
+ /// package-aware via local linearization). The fallback to
+@@ -31,7 +31,7 @@
+         &mut diff.removed,
+         removed,
+     );
+-    publish_additions(state, &mut diff.addrs, &mut diff.added, added);
++    insert_additions(state, &mut diff.addrs, &mut diff.added, added);
+     state.graveyard.evict_old();
+ }
+ 
+@@ -75,7 +75,7 @@
+     })
+ }
+ 
+-fn publish_additions(
++fn insert_additions(
+     state: &mut State,
+     transitions: &mut AddrTransitions,
+     events: &mut Vec<TxAdded>,
+@@ -93,7 +93,7 @@
+                 first_seen: entry.first_seen,
+                 kind,
+             });
+-            publish_one(state, transitions, tx, entry);
++            insert_one(state, transitions, tx, entry);
+         }
+     }
+ }
+@@ -111,7 +111,7 @@
+     }
+ }
+ 
+-fn publish_one(
++fn insert_one(
+     state: &mut State,
+     transitions: &mut AddrTransitions,
+     tx: Arc<Transaction>,
+--- a/crates/brk_mempool/src/steps/fetcher/mod.rs
++++ b/crates/brk_mempool/src/steps/fetcher/mod.rs
+@@ -32,8 +32,8 @@
+ pub fn fetch(client: &Client, mempool: &State) -> Result<Fetched> {
+     let (mut state, block_template) = client.fetch_mempool_state()?;
+ 
+-    // One read snapshot decides both the RPC fetch list and the
+-    // GBT-synthesis set, so they agree on what's "already known".
++    // The same private pool decides the RPC fetch list and GBT synthesis,
++    // so they agree on what's already known.
+     let (new_txids, gbt_synth_set, mut missing_from_listing) = {
+         let mut gbt_txids: FxHashSet<Txid> =
+             FxHashSet::with_capacity_and_hasher(block_template.len(), Default::default());
+--- a/crates/brk_mempool/src/stores/tx_store/mod.rs
++++ b/crates/brk_mempool/src/stores/tx_store/mod.rs
+@@ -1,7 +1,7 @@
+-use std::sync::Arc;
+ use std::{
+     hash::{Hash, Hasher},
+     ops::Deref,
++    sync::Arc,
+ };
+ 
+ use brk_types::{MempoolRecentTx, Transaction, TxOut, Txid, TxidPrefix, Vin};
+@@ -139,9 +139,6 @@
+         }
+         let tx = Arc::make_mut(&mut record.tx);
+         let applied = Self::write_prevouts(tx, fills);
+-        if applied.is_empty() {
+-            return applied;
+-        }
+         tx.refresh_sigops();
+         if record.tx.input.iter().all(|i| i.prevout.is_some()) {
+             self.unresolved.remove(prefix);
+--- a/crates/brk_mempool/tests/unit/api/block_template.rs
++++ b/crates/brk_mempool/tests/unit/api/block_template.rs
+@@ -238,7 +238,7 @@
+     // Body changes alone must rebuild: no GBT, membership or fee-floor change.
+     mempool
+         .rebuilder
+-        .tick(&mempool.state, &ids, FeeRate::new(1.0), false);
++        .tick(&mempool.state, &ids, FeeRate::new(1.0));
+     mempool.publish_observation(Default::default(), true);
+     let after = mempool.published().block_template_source().build().unwrap();
+     assert_ne!(before.hash, after.hash);
+--- a/crates/brk_mempool/tests/unit/driver.rs
++++ b/crates/brk_mempool/tests/unit/driver.rs
+@@ -40,7 +40,7 @@
+     reading.join().unwrap();
+     mempool
+         .rebuilder
+-        .tick(&mempool.state, &[txid], FeeRate::new(1.0), true);
++        .tick(&mempool.state, &[txid], FeeRate::new(1.0));
+     mempool.publish_observation(tip, false);
+     assert_eq!(
+         mempool.published().info().unwrap().count,
+@@ -164,6 +164,7 @@
+     assert_eq!(mempool.state.txs.len(), 0);
+     assert!(Arc::ptr_eq(&before, &mempool.published()));
+     assert!(!mempool.needs_recovery);
++    assert_eq!(mempool.stats().rebuilds, before.stats().rebuilds);
+ }
+ 
+ #[test]
+--- a/crates/brk_mempool/tests/unit/lib_test_helpers.rs
++++ b/crates/brk_mempool/tests/unit/lib_test_helpers.rs
+@@ -20,14 +20,13 @@
+     }
+ 
+     pub fn test_tick(&mut self, gbt_txids: &[Txid], min_fee: FeeRate) {
+-        self.rebuilder.tick(&self.state, gbt_txids, min_fee, true);
++        self.rebuilder.tick(&self.state, gbt_txids, min_fee);
+         self.publish_observation(BlockHash::default(), true);
+     }
+ 
+     pub fn test_publish(&mut self, tip: BlockHash) {
+         let ids: Vec<_> = self.state.txs.txids().copied().collect();
+-        self.rebuilder
+-            .tick(&self.state, &ids, FeeRate::new(1.0), false);
++        self.rebuilder.tick(&self.state, &ids, FeeRate::new(1.0));
+         self.publish_observation(tip, true);
+     }
+ }
+--- a/crates/brk_mempool/tests/unit/snapshot/rebuilder.rs
++++ b/crates/brk_mempool/tests/unit/snapshot/rebuilder.rs
+@@ -28,7 +28,7 @@
+     let mut rebuilder = Rebuilder::default();
+     let state = State::default();
+ 
+-    rebuilder.tick(&state, &[], min_fee(1), false);
++    rebuilder.tick(&state, &[], min_fee(1));
+ 
+     assert_eq!(rebuilder.rebuild_count(), 1);
+ }
+@@ -37,9 +37,9 @@
+ fn identical_inputs_reuse_snapshot() {
+     let mut rebuilder = Rebuilder::default();
+     let (state, txids) = state_with(&[1, 2]);
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    rebuilder.tick(&state, &txids, min_fee(1));
+ 
+-    rebuilder.tick(&state, &txids, min_fee(1), false);
++    rebuilder.tick(&state, &txids, min_fee(1));
+ 
+     assert_eq!(rebuilder.rebuild_count(), 1);
+ }
+@@ -48,13 +48,13 @@
+ fn content_changes_rebuild_even_when_other_reuse_inputs_match() {
+     let mut rebuilder = Rebuilder::default();
+     let (mut state, txids) = state_with(&[1]);
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    rebuilder.tick(&state, &txids, min_fee(1));
+     let before = rebuilder.snapshot();
+ 
+     let tx = fake_tx(2, &[], &[(p2wpkh_script(2), 2_000)]);
+     let entry = TxEntry::new(&fake_entry_info(tx.txid, 200, 100), 100, false);
+     state.txs.insert(tx, entry);
+-    rebuilder.tick(&state, &txids, min_fee(1), false);
++    rebuilder.tick(&state, &txids, min_fee(1));
+ 
+     let after = rebuilder.snapshot();
+     assert_eq!(rebuilder.rebuild_count(), 2);
+@@ -62,7 +62,7 @@
+     assert_eq!(after.txs.len(), 2);
+     assert_eq!(after.content_revision(), state.txs.content_revision());
+ 
+-    rebuilder.tick(&state, &txids, min_fee(1), false);
++    rebuilder.tick(&state, &txids, min_fee(1));
+     assert!(Arc::ptr_eq(&after, &rebuilder.snapshot()));
+     assert_eq!(rebuilder.rebuild_count(), 2);
+ }
+@@ -71,10 +71,10 @@
+ fn reordered_template_rebuilds() {
+     let mut rebuilder = Rebuilder::default();
+     let (state, mut txids) = state_with(&[1, 2]);
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    rebuilder.tick(&state, &txids, min_fee(1));
+     txids.reverse();
+ 
+-    rebuilder.tick(&state, &txids, min_fee(1), false);
++    rebuilder.tick(&state, &txids, min_fee(1));
+ 
+     assert_eq!(rebuilder.rebuild_count(), 2);
+ }
+@@ -83,20 +83,23 @@
+ fn changed_min_fee_rebuilds() {
+     let mut rebuilder = Rebuilder::default();
+     let (state, txids) = state_with(&[1]);
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    rebuilder.tick(&state, &txids, min_fee(1));
+ 
+-    rebuilder.tick(&state, &txids, min_fee(2), false);
++    rebuilder.tick(&state, &txids, min_fee(2));
+ 
+     assert_eq!(rebuilder.rebuild_count(), 2);
+ }
+ 
+ #[test]
+-fn changed_pool_rebuilds() {
++fn removal_outside_template_rebuilds() {
+     let mut rebuilder = Rebuilder::default();
+-    let (state, txids) = state_with(&[1]);
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    let (mut state, txids) = state_with(&[1, 2]);
++    let template = &txids[..1];
++    rebuilder.tick(&state, template, min_fee(1));
+ 
+-    rebuilder.tick(&state, &txids, min_fee(1), true);
++    state.txs.remove_by_prefix(&txids[1].into()).unwrap();
++    rebuilder.tick(&state, template, min_fee(1));
+ 
+     assert_eq!(rebuilder.rebuild_count(), 2);
++    assert_eq!(rebuilder.snapshot().txs.len(), 1);
+ }
+--- a/crates/brk_mempool/tests/unit/steps/applier.rs
++++ b/crates/brk_mempool/tests/unit/steps/applier.rs
+@@ -26,7 +26,7 @@
+ }
+ 
+ #[test]
+-fn publish_one_inserts_into_all_stores() {
++fn insert_one_updates_all_stores() {
+     let mut lock = State::default();
+     let snapshot = Snapshot::default();
+     let mut diff = CycleDiff::default();
+--- a/crates/brk_mempool/benches/unit/publication.rs
++++ b/crates/brk_mempool/benches/unit/publication.rs
+@@ -66,8 +66,8 @@
+ fn edit<T>(writer: &mut Mempool, f: impl FnOnce(&mut State) -> T) -> T {
+     f(&mut writer.state)
+ }
+-fn rebuild(writer: &mut Mempool, gbt: &[Txid], floor: FeeRate, changed: bool) {
+-    writer.rebuilder.tick(&writer.state, gbt, floor, changed);
++fn rebuild(writer: &mut Mempool, gbt: &[Txid], floor: FeeRate, _changed: bool) {
++    writer.rebuilder.tick(&writer.state, gbt, floor);
+ }
+ fn commit(writer: &mut Mempool, ids: &[Txid]) {
+     writer.publish_observation(BlockHash::default(), writer.state.contains_all(ids));

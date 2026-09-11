@@ -1,11 +1,9 @@
-//! Cycle loop. `start_with` drives [`Mempool::tick_with`] every
-//! [`PERIOD`]. Each cycle is wrapped in `catch_unwind` so a panic
-//! doesn't freeze the snapshot. `parking_lot` locks don't poison.
+//! The sole update owner prepares data privately and publishes once per cycle.
 
 use std::{
     any::Any,
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::atomic::Ordering,
+    sync::Arc,
     thread,
     time::{Duration, Instant},
 };
@@ -16,7 +14,7 @@ use rustc_hash::FxHashMap;
 use tracing::error;
 
 use crate::{
-    Inner, Mempool,
+    Mempool, State,
     cycle::{Cycle, CycleDiff},
     steps::{Fetched, applier, fetcher, preparer, prevouts},
 };
@@ -24,49 +22,27 @@ use crate::{
 const PERIOD: Duration = Duration::from_millis(1000);
 
 impl Mempool {
-    /// Infinite update loop with a 1s interval. Resolves
-    /// confirmed-parent prevouts via the default `getrawtransaction`
-    /// resolver. Requires bitcoind started with `txindex=1`. Discards
-    /// per-cycle [`Cycle`] events - use [`Mempool::tick`] to consume them.
-    pub fn start(&self) {
-        self.start_with(prevouts::rpc_resolver(self.0.client.clone()));
+    /// Drive updates using Core's confirmed-parent resolver (`txindex=1`).
+    pub fn start(&mut self) {
+        self.start_with(prevouts::rpc_resolver(self.client.clone()));
     }
 
-    /// Variant of `start` that uses a caller-supplied resolver for
-    /// confirmed-parent prevouts (typically backed by an indexer).
-    ///
-    /// Sleep is `PERIOD - work_duration`, so a 350ms cycle followed by
-    /// a 100ms cycle still ticks roughly every `PERIOD`. When work
-    /// overruns `PERIOD`, the next cycle starts immediately.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a driver is already running on this `Mempool` instance.
-    /// One `Mempool` may host at most one driver. Spawn another instance
-    /// for additional loops.
-    pub fn start_with<F>(&self, resolver: F)
+    /// Drive one update per second. Overrunning cycles resume immediately.
+    /// The exclusive writer borrow prevents concurrent drivers or manual ticks.
+    pub fn start_with<F>(&mut self, resolver: F)
     where
         F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut> + Send,
     {
-        if self
-            .0
-            .started
-            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
-            .is_err()
-        {
-            panic!("Mempool::start_with already running on this instance");
-        }
         loop {
             let started = Instant::now();
             let outcome = catch_unwind(AssertUnwindSafe(|| {
                 if let Err(e) = self.tick_with(&resolver) {
-                    error!("update failed: {e}");
+                    error!("mempool update failed: {e}");
                 }
             }));
             if let Err(payload) = outcome {
-                self.0.state.write().published_tip = None;
                 error!(
-                    "mempool update panicked, continuing loop: {}",
+                    "mempool update panicked; restoring completed state: {}",
                     Self::panic_msg(&payload)
                 );
             }
@@ -76,84 +52,76 @@ impl Mempool {
         }
     }
 
-    /// One sync cycle: fetch, prepare, apply, fill prevouts, rebuild.
-    /// Returns a [`Cycle`] reporting everything that changed. Uses the
-    /// default `getrawtransaction` resolver for confirmed-parent
-    /// prevouts (requires `txindex=1`).
-    ///
-    /// # Errors
-    ///
-    /// Propagates initial RPC failures and rejects a concurrent cycle or a
-    /// changed chain before mutation. A failed final chain observation or
-    /// incomplete prevout fill keeps anchored reads unavailable, but preserves
-    /// the Cycle events for mutations already applied.
-    pub fn tick(&self) -> Result<Cycle> {
-        self.tick_with(prevouts::rpc_resolver(self.0.client.clone()))
+    pub fn tick(&mut self) -> Result<Cycle> {
+        self.tick_with(prevouts::rpc_resolver(self.client.clone()))
     }
 
-    /// Variant of [`Mempool::tick`] with a caller-supplied resolver for
-    /// confirmed-parent prevouts. The resolver MUST resolve confirmed
-    /// prevouts only. Mempool-to-mempool chains are wired internally
-    /// and the resolver is never called for them.
-    ///
-    /// # Errors
-    ///
-    /// Same as [`Mempool::tick`].
-    pub fn tick_with<F>(&self, resolver: F) -> Result<Cycle>
+    /// Resolve confirmed parents with `resolver`; mempool parents are filled
+    /// internally. Failed observations leave the public state intact. Applied
+    /// changes still appear in Cycle, even when a final observation fails.
+    pub fn tick_with<F>(&mut self, resolver: F) -> Result<Cycle>
     where
         F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
-        let Some(_cycle) = self.0.cycle.try_lock() else {
-            return Err(Error::StateUpdating);
-        };
-        // Fetch failures leave the previous publication intact. The applier
-        // closes publication before the first mutation, not before RPC work.
-        self.tick_once(resolver)
+        if self.needs_recovery {
+            self.restore_published();
+        }
+        let cycle = self.tick_once(resolver)?;
+        self.needs_recovery = false;
+        Ok(cycle)
     }
 
-    fn tick_once<F>(&self, resolver: F) -> Result<Cycle>
+    fn restore_published(&mut self) {
+        let published = self.read_only.load();
+        self.state = published
+            .pool
+            .as_ref()
+            .map_or_else(State::default, |pool| pool.restore());
+        self.rebuilder.restore(
+            published
+                .pool
+                .as_ref()
+                .map_or_else(Arc::default, |pool| pool.graph.clone()),
+        );
+        self.needs_recovery = false;
+    }
+
+    fn tick_once<F>(&mut self, resolver: F) -> Result<Cycle>
     where
         F: Fn(&[(Txid, Vout)]) -> FxHashMap<(Txid, Vout), TxOut>,
     {
         let started = Instant::now();
-        let Inner {
-            client,
-            state,
-            rebuilder,
-            ..
-        } = &*self.0;
-
-        // A JSON-RPC batch is not an atomic chain observation. Bracket both
-        // the fetch and external prevout resolution with full best-block hashes.
-        let tip_before = client.get_best_block_hash()?;
-
+        // RPC batches are not atomic. Bracket fetch and resolution with full tips.
+        let tip_before = self.client.get_best_block_hash()?;
         let Fetched {
             state: rpc,
             new_entries,
             new_txs,
             block_template_txids,
             address_view_complete,
-        } = fetcher::fetch(client, state)?;
+        } = fetcher::fetch(&self.client, &self.state)?;
         if rpc.tip_hash != tip_before {
             return Err(Error::StateUpdating);
         }
-        let pulled = preparer::prepare(&rpc.live_txids, new_entries, new_txs, state);
+        let pulled = preparer::prepare(&rpc.live_txids, new_entries, new_txs, &self.state);
         let mut diff = CycleDiff::default();
-        let prev_snapshot = rebuilder.snapshot();
-        applier::apply(state, &prev_snapshot, pulled, &mut diff);
-        drop(prev_snapshot);
-        prevouts::fill(state, &mut diff, resolver);
-        // Mutations already happened: preserve their Cycle events even if the
-        // final observation fails. Anchored address/histogram reads stay closed.
-        let coherent_tip = client.get_best_block_hash().ok() == Some(tip_before);
-        rebuilder.tick(
-            state,
-            &block_template_txids,
-            rpc.min_fee,
-            diff.membership_changed(),
+        // A panic after this point requires restoring private indexes before reuse.
+        self.needs_recovery = true;
+        applier::apply(
+            &mut self.state,
+            &self.rebuilder.snapshot(),
+            pulled,
+            &mut diff,
         );
-        if coherent_tip && address_view_complete {
-            self.publish_observation(rpc.tip_hash, &rpc.live_txids);
+        prevouts::fill(&mut self.state, &mut diff, resolver);
+        let coherent_tip = self.client.get_best_block_hash().ok() == Some(tip_before);
+        self.rebuilder
+            .tick(&self.state, &block_template_txids, rpc.min_fee);
+        if coherent_tip {
+            self.publish_observation(
+                rpc.tip_hash,
+                address_view_complete && self.state.contains_all(&rpc.live_txids),
+            );
         }
         let CycleDiff {
             added,
@@ -161,7 +129,6 @@ impl Mempool {
             addrs,
         } = diff;
         let (addr_enters, addr_leaves) = addrs.into_vecs();
-
         Ok(Cycle {
             added,
             removed,
@@ -169,27 +136,22 @@ impl Mempool {
             addr_leaves,
             tip_hash: rpc.tip_hash,
             tip_height: rpc.tip_height,
-            // Preserve diagnostics/events even when the final observation left
-            // public aggregate reads unavailable.
-            info: state.read().info.clone(),
-            snapshot: rebuilder.snapshot(),
+            info: self.state.info.clone(),
+            snapshot: self.rebuilder.snapshot(),
             took: started.elapsed(),
         })
     }
 
-    fn publish_observation(&self, tip: BlockHash, live_txids: &[Txid]) {
-        let next = {
-            let mut state = self.0.state.write();
-            state
-                .publish_at(tip, live_txids)
-                .then(|| state.info.clone())
-        };
-        if let Some(next) = next {
-            // No live-state lock, allocation or old-histogram destruction
-            // under the publication lock. Incomplete cycles retain the last
-            // complete statistics, independently of prevout availability.
-            let previous = self.0.info.write().replace(next);
-            drop(previous);
+    pub(crate) fn publish_observation(&mut self, tip: BlockHash, membership_complete: bool) {
+        let previous = self.read_only.load();
+        if let Some(next) = previous.updated(
+            &self.state,
+            tip,
+            self.rebuilder.snapshot(),
+            membership_complete,
+            self.stats(),
+        ) {
+            self.read_only.current.store(Arc::new(next));
         }
     }
 
@@ -205,3 +167,7 @@ impl Mempool {
 #[cfg(test)]
 #[path = "../tests/unit/driver.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "../benches/unit/publication.rs"]
+mod bench;

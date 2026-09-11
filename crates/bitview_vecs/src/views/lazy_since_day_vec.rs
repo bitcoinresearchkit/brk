@@ -9,6 +9,8 @@ use vecdb::{
     ReadableCloneableVec, ReadableVec, TypedVec, VecValue, Version, short_type_name,
 };
 
+use crate::RangeMapVec;
+
 trait SinceDayTransform<S, T>: Send + Sync {
     fn apply(&self, current: S, before: S) -> T;
     fn append(&self, current: &[S], before: &S, out: &mut Vec<T>);
@@ -37,7 +39,7 @@ where
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<Height, S>,
-    days: ReadableBoxedVec<Height, Day1>,
+    first_heights: RangeMapVec<Day1, Height>,
     start_day: Day1,
     compute: Arc<dyn SinceDayTransform<S, T>>,
 }
@@ -51,7 +53,7 @@ where
         name: &str,
         version: Version,
         source: &(impl ReadableCloneableVec<Height, S> + ?Sized),
-        days: &(impl ReadableCloneableVec<Height, Day1> + ?Sized),
+        first_heights: &RangeMapVec<Day1, Height>,
         start_day: Day1,
         compute: impl Fn(S, S) -> T + Send + Sync + 'static,
     ) -> Self {
@@ -59,24 +61,17 @@ where
             name: Arc::from(name),
             base_version: version,
             source: source.read_only_boxed_clone(),
-            days: days.read_only_boxed_clone(),
+            first_heights: first_heights.clone(),
             start_day,
             compute: Arc::new(compute),
         }
     }
 
     fn start_height(&self) -> usize {
-        let mut left = 0;
-        let mut right = self.len();
-        while left < right {
-            let middle = left + (right - left) / 2;
-            if self.days.collect_one_at(middle).unwrap() < self.start_day {
-                left = middle + 1;
-            } else {
-                right = middle;
-            }
-        }
-        left
+        let len = self.visible_len();
+        self.first_heights
+            .collect_one(self.start_day)
+            .map_or(len, |height| usize::from(height).min(len))
     }
 
     fn try_fold_values<B, E>(
@@ -87,7 +82,7 @@ where
         mut fold: impl FnMut(B, T) -> Result<B, E>,
     ) -> Result<B, E> {
         let mut accumulator = init;
-        let to = to.min(self.len());
+        let to = to.min(self.visible_len());
         if from >= to {
             return Ok(accumulator);
         }
@@ -129,7 +124,7 @@ where
             name: Arc::clone(&self.name),
             base_version: self.base_version,
             source: self.source.clone(),
-            days: self.days.clone(),
+            first_heights: self.first_heights.clone(),
             start_day: self.start_day,
             compute: Arc::clone(&self.compute),
         }
@@ -142,7 +137,7 @@ where
     T: VecValue,
 {
     fn version(&self) -> Version {
-        self.base_version + self.source.version() + self.days.version()
+        self.base_version + self.source.version() + self.first_heights.version()
     }
 
     fn name(&self) -> &str {
@@ -189,7 +184,7 @@ where
     }
 
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        let to = to.min(self.len());
+        let to = to.min(self.visible_len());
         if from >= to {
             return;
         }
@@ -211,7 +206,7 @@ where
     }
 
     fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
-        let to = to.min(self.len());
+        let to = to.min(self.visible_len());
         if from >= to {
             return;
         }
@@ -272,7 +267,7 @@ where
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
-        if index >= self.len() {
+        if index >= self.visible_len() {
             return None;
         }
 
@@ -301,7 +296,7 @@ where
             _ => {}
         }
 
-        let indices = &indices[..indices.partition_point(|&index| index < self.len())];
+        let indices = &indices[..indices.partition_point(|&index| index < self.visible_len())];
         if indices.is_empty() {
             return;
         }
@@ -345,6 +340,7 @@ where
 mod tests {
     static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use brk_types::{Day1, Height, StoredU64, Version};
+    use rangeindex::SharedRangeMap;
     use tempfile::tempdir;
     use vecdb::{
         AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
@@ -352,6 +348,7 @@ mod tests {
     };
 
     use super::LazySinceDayVec;
+    use crate::RangeMapVec;
 
     #[test]
     fn sorted_reads_reuse_the_fixed_start_and_handle_boundaries() {
@@ -362,25 +359,22 @@ mod tests {
                 ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
             )
             .unwrap();
-        let mut days: EagerVec<PcoVec<Height, Day1, Budgeted>> = EagerVec::forced_import_with(
-            ImportOptions::new(&db, "days", Version::ONE).with_cache_budget(&TEST_CACHE),
-        )
-        .unwrap();
+        let first_heights = RangeMapVec::new(
+            "first_height",
+            Version::ONE,
+            SharedRangeMap::new([0usize, 2, 4].map(Height::from).to_vec()),
+        );
 
         for value in [10_u64, 30, 60, 100, 150] {
             source.push(StoredU64::from(value));
         }
-        for day in [0, 0, 1, 1, 2] {
-            days.push(Day1::from(day));
-        }
         source.write().unwrap();
-        days.write().unwrap();
 
         let since_day = LazySinceDayVec::new(
             "since_day",
             Version::ONE,
             &source,
-            &days,
+            &first_heights,
             Day1::from(1),
             |current, before| current - before,
         );

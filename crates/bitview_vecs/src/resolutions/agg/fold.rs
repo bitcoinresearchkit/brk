@@ -1,14 +1,16 @@
 use std::convert::Infallible;
 
-use crate::{ReadableVec, VecIndex, VecValue};
+use rangeindex::RangeMap;
+
+use vecdb::{ReadableVec, VecIndex, VecValue};
 
 /// Aggregation strategy for [`super::LazyAggVec`].
 ///
-/// Determines how values are produced from a source vec and a range-readable mapping.
+/// Determines how values are produced from a source vec and a range map.
 /// Implement this on a zero-sized marker type to define a custom strategy.
 ///
 /// Built-in strategy: `Sparse`.
-pub trait AggFold<O: VecValue, S1I: VecIndex, S2T: VecValue, S1T: VecValue>: 'static {
+pub trait AggFold<O: VecValue, S1I: VecIndex, S1T: VecValue>: 'static {
     fn try_fold<
         MI: VecIndex,
         S: ReadableVec<S1I, S1T> + ?Sized,
@@ -17,7 +19,7 @@ pub trait AggFold<O: VecValue, S1I: VecIndex, S2T: VecValue, S1T: VecValue>: 'st
         F: FnMut(B, O) -> Result<B, E>,
     >(
         source: &S,
-        mapping: &impl ReadableVec<MI, S2T>,
+        mapping: &RangeMap<S1I, MI>,
         from: usize,
         to: usize,
         init: B,
@@ -26,7 +28,7 @@ pub trait AggFold<O: VecValue, S1I: VecIndex, S2T: VecValue, S1T: VecValue>: 'st
 
     fn fold<MI: VecIndex, S: ReadableVec<S1I, S1T> + ?Sized, B, F: FnMut(B, O) -> B>(
         source: &S,
-        mapping: &impl ReadableVec<MI, S2T>,
+        mapping: &RangeMap<S1I, MI>,
         from: usize,
         to: usize,
         init: B,
@@ -42,7 +44,7 @@ pub trait AggFold<O: VecValue, S1I: VecIndex, S2T: VecValue, S1T: VecValue>: 'st
 
     fn collect_one<MI: VecIndex, S: ReadableVec<S1I, S1T> + ?Sized>(
         source: &S,
-        mapping: &impl ReadableVec<MI, S2T>,
+        mapping: &RangeMap<S1I, MI>,
         index: usize,
     ) -> Option<O> {
         let mut result = None;
@@ -56,7 +58,7 @@ pub trait AggFold<O: VecValue, S1I: VecIndex, S2T: VecValue, S1T: VecValue>: 'st
     /// source lookups without computing adjacent, unrequested buckets.
     fn read_sorted_into<MI: VecIndex, S: ReadableVec<S1I, S1T> + ?Sized>(
         source: &S,
-        mapping: &impl ReadableVec<MI, S2T>,
+        mapping: &RangeMap<S1I, MI>,
         indices: &[usize],
         out: &mut Vec<O>,
     ) {

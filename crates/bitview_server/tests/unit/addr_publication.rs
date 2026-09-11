@@ -2,6 +2,7 @@ use std::{
     fs::{OpenOptions, read, write},
     mem::take,
     net::{Ipv4Addr, SocketAddr},
+    panic::{AssertUnwindSafe, catch_unwind},
     path::Path,
     sync::{Arc, Mutex, mpsc},
     time::Duration,
@@ -11,7 +12,7 @@ use bitcoin::{Amount, Block, OutPoint, ScriptBuf, Transaction, consensus::encode
 use bitview_default::DefaultPlugins;
 use bitview_query::{AsyncQuery, ResolvedAddrTxs, ResolvedRbf};
 use brk_error::Error as BrkError;
-use brk_mempool::Mempool;
+use brk_mempool::{Mempool, ReadOnlyMempool};
 use brk_rpc::{Auth, Client};
 use brk_types::{Addr, Vout};
 use serde_json::{Value, from_slice, from_str, json, to_value};
@@ -20,7 +21,7 @@ use tokio::{
     net::TcpListener,
     spawn,
     sync::oneshot,
-    task::{AbortHandle, JoinSet, spawn_blocking},
+    task::{AbortHandle, JoinHandle, JoinSet, spawn_blocking},
 };
 
 use super::{
@@ -87,7 +88,8 @@ impl Node {
 /// A real RPC-driven mempool beside the populated indexer fixture.
 pub struct AddrPublication {
     query: AsyncQuery,
-    mempool: Mempool,
+    writer: Arc<Mutex<Mempool>>,
+    mempool: ReadOnlyMempool,
     node: Arc<Mutex<Node>>,
     address: SocketAddr,
     addr: Addr,
@@ -154,7 +156,9 @@ impl AddrPublication {
             }
         });
         let mempool = Mempool::new(&client);
-        let query = AsyncQuery::build(plugins, Some(mempool.clone()));
+        let query = AsyncQuery::build(plugins, Some(mempool.read_only_clone()));
+        let writer = Arc::new(Mutex::new(mempool));
+        let mempool = writer.lock().unwrap().read_only_clone();
         let server = Server::bind(
             &query,
             ServerConfig {
@@ -177,6 +181,7 @@ impl AddrPublication {
         ];
         let mut fixture = Self {
             query,
+            writer,
             mempool,
             node,
             address,
@@ -192,39 +197,17 @@ impl AddrPublication {
         };
         fixture.check_unavailable(true).await;
         fixture.tick(false).await;
-        fixture.check_unavailable(true).await;
+        fixture.check_unavailable(false).await;
+        fixture.aggregates.check_available(fixture.address).await;
 
         // Address-dependent reads reject unresolved inputs; statistics
         // continue serving the last complete membership observation.
-        let mempool = fixture.mempool.clone();
-        let resolver = fixture.query.sync(|q| q.indexer_prevout_resolver());
-        let (started, ready) = oneshot::channel();
-        let (release, resume) = mpsc::channel();
-        let mut started = Some(started);
-        let filling = spawn_blocking(move || {
-            // tick_with accepts Fn, so synchronize the one resolver invocation.
-            let signal = Mutex::new(started.take());
-            let resume = Mutex::new(resume);
-            mempool
-                .tick_with(|holes| {
-                    if let Some(started) = signal.lock().unwrap().take() {
-                        started.send(()).unwrap();
-                    }
-                    resume.lock().unwrap().recv().unwrap();
-                    resolver(holes)
-                })
-                .unwrap();
-        });
-        ready.await.unwrap();
-        fixture
-            .aggregates
-            .check_stats_available(fixture.address)
-            .await;
+        let (release, filling) = fixture.pause_resolution().await;
+        fixture.aggregates.check_available(fixture.address).await;
+        #[cfg(feature = "price")]
+        fixture.aggregates.check_live_outputs(fixture.address).await;
         let mut requests = JoinSet::new();
-        for path in fixture.paths.iter().cloned().chain([
-            "/api/mempool/recent".to_owned(),
-            "/api/mempool/txids".to_owned(),
-        ]) {
+        for path in fixture.paths.iter().cloned() {
             for method in ["GET", "HEAD"] {
                 let path = path.clone();
                 let address = fixture.address;
@@ -246,22 +229,70 @@ impl AddrPublication {
             .check_revalidation_without_chain_body(&directory.join("blocks/blk00000.dat"))
             .await;
 
-        let published_info = to_value(fixture.mempool.info().unwrap()).unwrap();
+        let pending = fixture.node.lock().unwrap().transactions.clone();
+        let mut incoming = pending[0].clone();
+        incoming.output[0].value = Amount::from_sat(incoming.output[0].value.to_sat() - 1);
+        fixture.node.lock().unwrap().transactions.push(incoming);
+        let retained = fixture.mempool.load();
+        let (release, filling) = fixture.pause_resolution().await;
+        fixture.check_available().await;
+        #[cfg(feature = "price")]
+        fixture.aggregates.check_live_outputs(fixture.address).await;
+        assert!(Arc::ptr_eq(&retained, &fixture.mempool.load()));
+        release.send(()).unwrap();
+        filling.await.unwrap();
+        assert!(!Arc::ptr_eq(&retained, &fixture.mempool.load()));
+        fixture.node.lock().unwrap().transactions = pending;
+        fixture.tick(true).await;
+        fixture.check_available().await;
+
+        // A resolver panic occurs after private membership application. The next
+        // tick must recover its indexes before it can publish another version.
+        let mut incoming = fixture.node.lock().unwrap().transactions[0].clone();
+        incoming.output[0].value = Amount::from_sat(incoming.output[0].value.to_sat() - 2);
+        fixture.node.lock().unwrap().transactions.push(incoming);
+        let before_panic = fixture.mempool.load();
+        let writer = fixture.writer.clone();
+        spawn_blocking(move || {
+            let mut writer = writer.lock().unwrap();
+            assert!(
+                catch_unwind(AssertUnwindSafe(
+                    || writer.tick_with(|_| panic!("fixture resolver panic"))
+                ))
+                .is_err()
+            );
+        })
+        .await
+        .unwrap();
+        assert!(Arc::ptr_eq(&before_panic, &fixture.mempool.load()));
+        fixture.check_available().await;
+        fixture.tick(true).await;
+        assert_eq!(fixture.mempool.load().info().unwrap().count, 2);
+        fixture.node.lock().unwrap().transactions.pop();
+        fixture.tick(true).await;
+        fixture.check_available().await;
+
+        let published_info = to_value(fixture.mempool.load().info().unwrap()).unwrap();
         fixture.node.lock().unwrap().listed = false;
         fixture.tick(true).await;
         assert_eq!(
-            to_value(fixture.mempool.info().unwrap()).unwrap(),
+            to_value(fixture.mempool.load().info().unwrap()).unwrap(),
             published_info
         );
-        fixture.check_unavailable(true).await;
+        fixture.check_available().await;
         fixture.node.lock().unwrap().listed = true;
-        fixture.node.lock().unwrap().final_tip = Some("11".repeat(32));
+        {
+            let mut node = fixture.node.lock().unwrap();
+            // The injected panic skipped a final read; begin this pair explicitly.
+            node.best_reads = 0;
+            node.final_tip = Some("11".repeat(32));
+        }
         fixture.tick(true).await;
         assert_eq!(
-            to_value(fixture.mempool.info().unwrap()).unwrap(),
+            to_value(fixture.mempool.load().info().unwrap()).unwrap(),
             published_info
         );
-        fixture.check_unavailable(true).await;
+        fixture.check_available().await;
         fixture.node.lock().unwrap().final_tip = None;
         fixture.tick(true).await;
         fixture.check_available().await;
@@ -307,9 +338,10 @@ impl AddrPublication {
             fixture.node.lock().unwrap().transactions = vec![confirmed.clone()];
             fixture.tick(true).await;
             let tip = first.block_hash().into();
-            assert!(fixture.mempool.contains_txid(&txid, &tip).unwrap());
+            assert!(fixture.mempool.load().contains_txid(&txid, &tip).unwrap());
             let stale_rbf = fixture
                 .mempool
+                .load()
                 .rbf_for_tx(&txid, &tip)
                 .unwrap()
                 .root
@@ -333,6 +365,7 @@ impl AddrPublication {
             assert!(
                 !fixture
                     .mempool
+                    .load()
                     .outspends_if_present(&txid, &tip)
                     .unwrap()
                     .unwrap()[0]
@@ -428,11 +461,37 @@ impl AddrPublication {
         fixture
     }
 
+    async fn pause_resolution(&self) -> (mpsc::Sender<()>, JoinHandle<()>) {
+        let mempool = self.writer.clone();
+        let resolver = self.query.sync(|q| q.indexer_prevout_resolver());
+        let (started, ready) = oneshot::channel();
+        let (release, resume) = mpsc::channel();
+        let mut started = Some(started);
+        let filling = spawn_blocking(move || {
+            // tick_with accepts Fn, so synchronize the one resolver invocation.
+            let signal = Mutex::new(started.take());
+            let resume = Mutex::new(resume);
+            mempool
+                .lock()
+                .unwrap()
+                .tick_with(|holes| {
+                    if let Some(started) = signal.lock().unwrap().take() {
+                        started.send(()).unwrap();
+                    }
+                    resume.lock().unwrap().recv().unwrap();
+                    resolver(holes)
+                })
+                .unwrap();
+        });
+        ready.await.unwrap();
+        (release, filling)
+    }
+
     async fn tick(&self, fill: bool) {
-        let mempool = self.mempool.clone();
+        let mempool = self.writer.clone();
         let resolver = self.query.sync(|q| q.indexer_prevout_resolver());
         spawn_blocking(move || {
-            mempool.tick_with(|holes| {
+            mempool.lock().unwrap().tick_with(|holes| {
                 if fill {
                     resolver(holes)
                 } else {
@@ -563,6 +622,10 @@ impl AddrPublication {
             Err(BrkError::StateUpdating)
         ));
         self.check_unavailable(false).await;
+        #[cfg(feature = "price")]
+        self.aggregates
+            .check_live_outputs_unavailable(self.address)
+            .await;
         {
             let mut node = self.node.lock().unwrap();
             node.tip = second.block_hash().to_string();

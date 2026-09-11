@@ -1,10 +1,8 @@
-//! Cycle-internal counters surfaced for observability and the
-//! `examples/mempool.rs` driver. Captured under a single read guard
-//! by `MempoolStats::from(&Mempool)`.
+//! Writer progress counters copied into completed read publications.
 
 use crate::Mempool;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct MempoolStats {
     pub txs: usize,
     pub unresolved: usize,
@@ -17,8 +15,8 @@ pub struct MempoolStats {
 
 impl From<&Mempool> for MempoolStats {
     fn from(mempool: &Mempool) -> Self {
-        let state = mempool.read();
-        let rebuilder = mempool.rebuilder();
+        let state = &mempool.state;
+        let rebuilder = &mempool.rebuilder;
         Self {
             txs: state.txs.len(),
             unresolved: state.txs.unresolved().len(),

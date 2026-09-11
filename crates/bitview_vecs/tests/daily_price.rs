@@ -1,5 +1,7 @@
 use bitview_cohort::UTXOAggregate;
-use bitview_vecs::{DailyMappings, LazyDailyPriceWithRatio, StoredSeries, import_stored};
+use bitview_vecs::{
+    DailyMappings, LazyDailyPriceWithRatio, RangeMapLookupVec, StoredSeries, import_stored,
+};
 use brk_types::{Cents, Day1, Height, PriceRatio, Version};
 use tempfile::tempdir;
 use vecdb::{
@@ -9,6 +11,8 @@ use vecdb::{
 
 use crate::common::CACHE_BUDGET;
 
+#[path = "daily_price/benchmark.rs"]
+mod benchmark;
 mod common;
 
 #[test]
@@ -23,7 +27,9 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
     )
     .read_only_boxed_clone();
     indexes.first_height.day1 =
-        common::stored::<Day1, _>(&db, "test_first_height", [0usize, 2, 4].map(Height::from))
+        common::first_heights("test_first_height", [0usize, 2, 4].map(Height::from));
+    indexes.height_day1 =
+        RangeMapLookupVec::new(indexes.first_height.day1.mapping(), &indexes.height_day1)
             .read_only_boxed_clone();
     let spot = common::stored::<Height, _>(
         &db,

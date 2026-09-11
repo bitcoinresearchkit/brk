@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 
 use brk_types::FromCoarserIndex;
-use vecdb::{AggFold, ReadableVec, VecIndex, VecValue};
+use rangeindex::RangeMap;
+use vecdb::{ReadableVec, VecIndex, VecValue};
+
+use crate::AggFold;
 
 /// Aggregation strategy for epoch-based indices.
 ///
@@ -9,12 +12,11 @@ use vecdb::{AggFold, ReadableVec, VecIndex, VecValue};
 /// corresponding source height.
 pub struct CoarserIndex<I>(PhantomData<I>);
 
-impl<I, O, S1I, S2T> AggFold<O, S1I, S2T, O> for CoarserIndex<I>
+impl<I, O, S1I> AggFold<O, S1I, O> for CoarserIndex<I>
 where
     I: VecIndex,
     O: VecValue,
     S1I: VecIndex + FromCoarserIndex<I>,
-    S2T: VecValue,
 {
     #[inline]
     fn try_fold<
@@ -25,7 +27,7 @@ where
         F: FnMut(B, O) -> Result<B, E>,
     >(
         source: &S,
-        mapping: &impl ReadableVec<MI, S2T>,
+        mapping: &RangeMap<S1I, MI>,
         from: usize,
         to: usize,
         init: B,
@@ -47,7 +49,7 @@ where
     #[inline]
     fn collect_one<MI: VecIndex, S: ReadableVec<S1I, O> + ?Sized>(
         source: &S,
-        _mapping: &impl ReadableVec<MI, S2T>,
+        _mapping: &RangeMap<S1I, MI>,
         index: usize,
     ) -> Option<O> {
         let target = S1I::max_from(I::from(index), source.visible_len());

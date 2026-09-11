@@ -1,78 +1,32 @@
 #![allow(clippy::type_complexity)]
 
-//! Live mempool monitor for the brk indexer.
+//! One private mempool writer and a shared immutable read publication.
 //!
-//! One pull cycle, five steps:
-//!
-//! ```text
-//!   Fetcher  ->  Preparer  ->  Applier  ->  Prevouts  ->  Rebuilder
-//!     RPC        decode &     write to       fill         build
-//!                classify     State          missing      Snapshot
-//!                                            prevouts
-//! ```
-//!
-//! 1. `steps::fetcher` - one mixed batched RPC for
-//!    `getblocktemplate` + `getrawmempool false` + `getmempoolinfo`,
-//!    then a single mixed `getmempoolentry`+`getrawtransaction` batch
-//!    on new txids only. GBT-only txs are synthesized inline from the
-//!    GBT payload so block 0 matches Core's selection exactly without
-//!    a follow-up entry fetch that could race the listing.
-//! 2. `steps::preparer` - decode and classify into
-//!    `TxsPulled { live_len, added, removed }`. Pure CPU.
-//! 3. `steps::applier` - apply the diff to `state::State` under a
-//!    single write lock.
-//! 4. `steps::prevouts::fill` - fills `prevout: None` inputs in one
-//!    pass, using same-cycle in-mempool parents directly and the
-//!    caller-supplied resolver (default: `getrawtransaction`) for
-//!    confirmed parents.
-//! 5. `snapshot::Rebuilder` - rebuilds the projected-blocks
-//!    [`Snapshot`] from the same-cycle GBT and min fee.
-//!
-//! # Locking domains
-//!
-//! Independent data-lock domains. No path holds more than one simultaneously.
-//! A separate cycle mutex excludes concurrent writers across RPC and mutation
-//! phases; readers never acquire it.
-//!
-//! - `State` (`RwLock<State>`): the live mempool. Cycle steps 3 and 4
-//!   take the write guard. Live read-side accessors take a read guard.
-//! - `info` (`RwLock<Option<MempoolInfo>>`): last complete statistics only.
-//!   Built from `State` before briefly locking to replace the publication.
-//!   Readers clone it under the lock and serialize after releasing it.
-//! - `Rebuilder.{history, snapshot}` (two `RwLock`s, written in that
-//!   order each cycle): the published projection. Readers grab one or
-//!   the other. The cycle drops its `State` guard before touching them.
-//!
-//! # Usage
-//!
-//! Drive the loop on a worker thread and read from any clone:
+//! Fetch, prepare, apply, resolve inputs, and build the graph on the writer.
+//! Readers keep the last complete state until one atomic replacement publishes
+//! its successor. Transaction bodies are shared and use copy-on-write for fills.
 //!
 //! ```no_run
 //! use brk_mempool::Mempool;
 //! # fn make_client() -> brk_rpc::Client { unimplemented!() }
 //! let client = make_client();
-//! let mempool = Mempool::new(&client);
-//! let reader = mempool.clone();
+//! let mut mempool = Mempool::new(&client);
+//! let reader = mempool.read_only_clone();
 //! std::thread::spawn(move || mempool.start());
-//! // `reader.snapshot()`, `reader.block_template()`, etc. on this thread.
-//! # let _ = reader;
+//! let state = reader.load();
+//! let info = state.info();
 //! ```
-//!
-//! A `Mempool` hosts at most one driver. Calling `start` / `start_with`
-//! a second time on the same instance panics. Spawn a separate
-//! `Mempool::new` if you need more loops. Concurrent manual ticks return
-//! `StateUpdating` before RPC or mutation.
 
-use std::sync::{Arc, atomic::AtomicBool};
+use std::sync::Arc;
 
+use arc_swap::ArcSwap;
 use brk_rpc::Client;
-use brk_types::MempoolInfo;
-use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 
 mod api;
 mod cycle;
 mod diagnostics;
 mod driver;
+mod read_only;
 mod snapshot;
 mod state;
 mod steps;
@@ -84,52 +38,48 @@ mod test_support;
 pub use api::{BlockTemplateSource, RbfForTx, RbfNode, ResolvedBlockTemplateDiff};
 pub use cycle::{AddedKind, Cycle, TxAdded, TxRemoved};
 pub use diagnostics::MempoolStats;
+pub use read_only::ReadOnlyMempool;
 pub use snapshot::Snapshot;
+pub use state::ReadOnlyState;
 pub use steps::TxRemoval;
 
 use snapshot::Rebuilder;
 use state::State;
 
-/// Cheaply cloneable: clones share one live mempool via `Arc`.
-#[derive(Clone)]
-pub struct Mempool(Arc<Inner>);
-
-struct Inner {
+/// Single owner of the mutable pool and update pipeline.
+///
+/// ```compile_fail
+/// # use brk_mempool::Mempool;
+/// fn duplicate(writer: &Mempool) -> Mempool { writer.clone() }
+/// ```
+pub struct Mempool {
     client: Client,
-    state: RwLock<State>,
-    info: RwLock<Option<MempoolInfo>>,
+    state: State,
     rebuilder: Rebuilder,
-    started: AtomicBool,
-    cycle: Mutex<()>,
+    read_only: ReadOnlyMempool,
+    needs_recovery: bool,
 }
 
 impl Mempool {
     pub fn new(client: &Client) -> Self {
-        Self(Arc::new(Inner {
+        Self {
             client: client.clone(),
-            state: RwLock::new(State::default()),
-            info: RwLock::new(None),
+            state: State::default(),
             rebuilder: Rebuilder::default(),
-            started: AtomicBool::new(false),
-            cycle: Mutex::new(()),
-        }))
+            read_only: ReadOnlyMempool {
+                current: Arc::new(ArcSwap::from_pointee(ReadOnlyState::default())),
+            },
+            needs_recovery: false,
+        }
     }
 
-    pub fn snapshot(&self) -> Arc<Snapshot> {
-        self.0.rebuilder.snapshot()
+    pub fn read_only_clone(&self) -> ReadOnlyMempool {
+        self.read_only.clone()
     }
 
-    /// One-shot diagnostic counters captured under a single read guard.
+    /// Working-cycle counters, for the update owner and CLI.
     pub fn stats(&self) -> MempoolStats {
         MempoolStats::from(self)
-    }
-
-    fn rebuilder(&self) -> &Rebuilder {
-        &self.0.rebuilder
-    }
-
-    fn read(&self) -> RwLockReadGuard<'_, State> {
-        self.0.state.read()
     }
 }
 

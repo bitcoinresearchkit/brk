@@ -6,6 +6,7 @@ use crate::state::TxEntry;
 
 /// Live transaction body and its mempool entry, kept together so one
 /// prefix lookup returns everything readers need.
+#[derive(Clone)]
 pub struct TxRecord {
     pub tx: Arc<Transaction>,
     pub entry: TxEntry,

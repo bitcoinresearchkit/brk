@@ -111,59 +111,49 @@ export function createPartialOptions() {
               };
             }),
 
-            lazyGroup("UTXO Age", () => ({
-              name: "UTXO Age",
-              tree: [
-                lazyGroup("Range", () => {
-                  const { ageRange, cohortAll } = data();
-                  return {
-                    name: "Range",
-                    tree: [
-                      lazyGroup("Compare", () =>
-                        createGroupedCohortFolderAgeRangeWithMatured({
-                          name: "Compare",
-                          title: "Age Ranges",
-                          list: ageRange,
-                          all: cohortAll,
-                        }),
-                      ),
-                      ...ageRange.map((cohort) =>
-                        lazyGroup(cohort.name, () =>
-                          createCohortFolderAgeRangeWithMatured(cohort),
-                        ),
-                      ),
-                    ],
-                  };
-                }),
-              ],
-            })),
+            lazyGroup("UTXO Age", () => {
+              const { ageRange, cohortAll } = data();
+              return {
+                name: "UTXO Age",
+                tree: [
+                  lazyGroup("Compare", () =>
+                    createGroupedCohortFolderAgeRangeWithMatured({
+                      name: "Compare",
+                      title: "Age Ranges",
+                      list: ageRange,
+                      all: cohortAll,
+                    }),
+                  ),
+                  ...ageRange.map((cohort) =>
+                    lazyGroup(cohort.name, () =>
+                      createCohortFolderAgeRangeWithMatured(cohort),
+                    ),
+                  ),
+                ],
+              };
+            }),
 
-            lazyGroup("UTXO Size", () => ({
-              name: "UTXO Size",
-              tree: [
-                lazyGroup("Range", () => {
-                  const { cohortAll, utxosAmountRange } = data();
-                  return {
-                    name: "Range",
-                    tree: [
-                      lazyGroup("Compare", () =>
-                        createGroupedCohortFolderBasicWithMarketCap({
-                          name: "Compare",
-                          title: "Amount Ranges",
-                          list: utxosAmountRange,
-                          all: cohortAll,
-                        }),
-                      ),
-                      ...utxosAmountRange.map((cohort) =>
-                        lazyGroup(cohort.name, () =>
-                          createCohortFolderBasicWithMarketCap(cohort),
-                        ),
-                      ),
-                    ],
-                  };
-                }),
-              ],
-            })),
+            lazyGroup("UTXO Size", () => {
+              const { cohortAll, utxosAmountRange } = data();
+              return {
+                name: "UTXO Size",
+                tree: [
+                  lazyGroup("Compare", () =>
+                    createGroupedCohortFolderBasicWithMarketCap({
+                      name: "Compare",
+                      title: "Amount Ranges",
+                      list: utxosAmountRange,
+                      all: cohortAll,
+                    }),
+                  ),
+                  ...utxosAmountRange.map((cohort) =>
+                    lazyGroup(cohort.name, () =>
+                      createCohortFolderBasicWithMarketCap(cohort),
+                    ),
+                  ),
+                ],
+              };
+            }),
 
             lazyGroup("UTXO Profitability", () =>
               createUtxoProfitabilitySection({
@@ -171,33 +161,28 @@ export function createPartialOptions() {
               }),
             ),
 
-            lazyGroup("Address Balance", () => ({
-              name: "Address Balance",
-              tree: [
-                lazyGroup("Range", () => {
-                  const { addressesAmountRange, cohortAll } = data();
-                  return {
-                    name: "Range",
-                    tree: [
-                      lazyGroup("Compare", () =>
-                        createGroupedAddressCohortFolder({
-                          name: "Compare",
-                          title: "Balance Ranges",
-                          list: addressesAmountRange,
-                          all: cohortAll,
-                        }),
-                      ),
-                      ...addressesAmountRange.map((cohort) =>
-                        lazyGroup(cohort.name, () =>
-                          createAddressCohortFolder(cohort),
-                        ),
-                      ),
-                    ],
-                  };
-                }),
-                createAddressBalanceGiniLeaf(),
-              ],
-            })),
+            lazyGroup("Address Balance", () => {
+              const { addressesAmountRange, cohortAll } = data();
+              return {
+                name: "Address Balance",
+                tree: [
+                  lazyGroup("Compare", () =>
+                    createGroupedAddressCohortFolder({
+                      name: "Compare",
+                      title: "Balance Ranges",
+                      list: addressesAmountRange,
+                      all: cohortAll,
+                    }),
+                  ),
+                  ...addressesAmountRange.map((cohort) =>
+                    lazyGroup(cohort.name, () =>
+                      createAddressCohortFolder(cohort),
+                    ),
+                  ),
+                  createAddressBalanceGiniLeaf(),
+                ],
+              };
+            }),
 
             lazyGroup("Script Type", () => {
               const { cohortAll, typeAddressable, typeOther } = data();

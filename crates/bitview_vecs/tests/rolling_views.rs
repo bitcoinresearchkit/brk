@@ -68,20 +68,17 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
     let mut indexes = indexes(&db);
     macro_rules! mappings {
         ($($field:ident),+ $(,)?) => {$(
-            indexes.first_height.$field = stored(
-                &db, concat!("populated_", stringify!($field)),
+            indexes.first_height.$field = common::first_heights(concat!("populated_", stringify!($field)),
                 [0usize, 2, 2, 7, 200].map(Height::from),
-            ).read_only_boxed_clone();
+            );
         )+};
     }
     mappings!(
         minute10, minute30, hour1, hour4, hour12, day1, day3, week1, month1, month3, month6, year1,
         year10
     );
-    indexes.first_height.halving =
-        stored(&db, "populated_halving", [Height::ZERO]).read_only_boxed_clone();
-    indexes.first_height.epoch =
-        stored(&db, "populated_epoch", [Height::ZERO]).read_only_boxed_clone();
+    indexes.first_height.halving = common::first_heights("populated_halving", [Height::ZERO]);
+    indexes.first_height.epoch = common::first_heights("populated_epoch", [Height::ZERO]);
 
     let timestamps = stored::<Height, _>(
         &db,

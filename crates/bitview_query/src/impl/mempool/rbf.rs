@@ -28,7 +28,7 @@ impl ResolvedRbf {
 }
 
 impl Query {
-    /// Resolve the exact owned replacement tree once under the mempool lock.
+    /// Resolve the exact owned replacement tree from one mempool publication.
     pub fn resolve_rbf(&self, txid: &Txid) -> Result<ResolvedRbf> {
         let pin = self.pin_safe_lengths()?;
         let tip = self.tip_blockhash_at(&pin)?;

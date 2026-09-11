@@ -16,21 +16,33 @@ export function latestPrice() {
 
 /** @param {BitviewClient} bitview */
 export function initPrice(bitview) {
+  let pending = false;
+  let delay = 1_000;
+  let timer = 0;
+
   async function poll() {
+    if (pending || document.hidden) return;
+    clearTimeout(timer);
+    pending = true;
     try {
-      const price = await bitview.getLivePrice();
+      const price = await bitview.getLivePrice({ memCache: false });
+      delay = 1_000;
       if (price !== _latest) {
         _latest = price;
         listeners.forEach((cb) => cb(price));
       }
     } catch (e) {
+      delay = Math.min(delay * 2, 30_000);
       console.error("price poll:", e);
+    } finally {
+      pending = false;
+      if (!document.hidden) timer = window.setTimeout(poll, delay);
     }
   }
 
   poll();
-  setInterval(poll, 1_000);
   document.addEventListener("visibilitychange", () => {
-    !document.hidden && poll();
+    if (document.hidden) clearTimeout(timer);
+    else poll();
   });
 }

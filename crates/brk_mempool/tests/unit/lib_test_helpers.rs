@@ -1,23 +1,32 @@
 use brk_rpc::Auth;
-use brk_types::{FeeRate, Txid};
+use brk_types::{BlockHash, FeeRate, Txid};
 
 use super::*;
 
 impl Mempool {
-    /// Test-only constructor that wires a Client at the default URL without
-    /// touching the network. `simple_http` only parses the URL on init.
     pub fn for_test() -> Self {
         let client = Client::new(Client::default_url(), Auth::None).unwrap();
         Self::new(&client)
     }
 
-    pub fn test_state_lock(&self) -> &RwLock<State> {
-        &self.0.state
+    pub fn test_state_mut(&mut self) -> &mut State {
+        &mut self.state
+    }
+    pub fn test_state(&self) -> &State {
+        &self.state
+    }
+    pub fn published(&self) -> Arc<ReadOnlyState> {
+        self.read_only.load()
     }
 
-    pub fn test_tick(&self, gbt_txids: &[Txid], min_fee: FeeRate) {
-        self.0
-            .rebuilder
-            .tick(&self.0.state, gbt_txids, min_fee, true);
+    pub fn test_tick(&mut self, gbt_txids: &[Txid], min_fee: FeeRate) {
+        self.rebuilder.tick(&self.state, gbt_txids, min_fee);
+        self.publish_observation(BlockHash::default(), true);
+    }
+
+    pub fn test_publish(&mut self, tip: BlockHash) {
+        let ids: Vec<_> = self.state.txs.txids().copied().collect();
+        self.rebuilder.tick(&self.state, &ids, FeeRate::new(1.0));
+        self.publish_observation(tip, true);
     }
 }

@@ -2,7 +2,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::{DerivedResolutions, Resolutions};
 use brk_types::{Height, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{Database, Ident, ReadableCloneableVec, ReadableVec};
+use vecdb::{AnyVec, Database, Ident, ReadableCloneableVec, ReadableVec};
 
 #[allow(dead_code)]
 mod common;
@@ -13,12 +13,19 @@ fn direct_transforms_preserve_sparse_epochs_and_export_metadata() {
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
     indexes.first_height.day1 =
-        common::stored(&db, "days", [0usize, 2, 2, 5, 20].map(Height::from))
-            .read_only_boxed_clone();
-    indexes.first_height.epoch =
-        common::stored(&db, "epochs", [Height::ZERO]).read_only_boxed_clone();
+        common::first_heights("days", [0usize, 2, 2, 5, 20].map(Height::from));
+    indexes.first_height.epoch = common::first_heights("epochs", [Height::ZERO]);
     let source = common::stored::<Height, _>(&db, "values", (1..=8u64).map(StoredU64::from));
+    let source_version = source.read_only_boxed_clone().version();
     let resolutions = Resolutions::from_source("values", &source, Version::ONE, &indexes);
+    assert_eq!(
+        resolutions.day1.version(),
+        Version::ONE + source_version + indexes.first_height.day1.version()
+    );
+    assert_eq!(
+        resolutions.epoch.version(),
+        Version::ONE + source_version + indexes.first_height.epoch.version()
+    );
     let transformed =
         DerivedResolutions::from_derived_computed::<Ident>("values", Version::ZERO, &resolutions);
     let chained = DerivedResolutions::from_lazy::<Ident, _>("values", Version::ZERO, &transformed);

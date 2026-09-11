@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use brk_types::{Transaction, TxidPrefix};
-use parking_lot::RwLock;
 
 use crate::{
     Snapshot, TxRemoval,
@@ -10,37 +9,29 @@ use crate::{
     steps::preparer::{TxAddition, TxsPulled},
 };
 
-/// Applies a prepared diff to in-memory mempool state under one write
-/// guard. Body proceeds: bury removed → publish added → evict. Events
-/// are pushed into the caller-supplied [`CycleDiff`] accumulator.
+/// Applies a prepared diff to private working state: bury removals, insert
+/// additions, then evict old tombstones. Events go into [`CycleDiff`].
 /// `prev_snapshot` supplies the previous cycle's snapshot. Burial
 /// reads each tomb's `chunk_rate` from it (always-fresh,
 /// package-aware via local linearization). The fallback to
 /// `entry.fee_rate()` is unreachable in steady state - every burial
 /// target was alive at the previous tick, so the snapshot has it.
-pub fn apply(
-    lock: &RwLock<State>,
-    prev_snapshot: &Snapshot,
-    pulled: TxsPulled,
-    diff: &mut CycleDiff,
-) {
+pub fn apply(state: &mut State, prev_snapshot: &Snapshot, pulled: TxsPulled, diff: &mut CycleDiff) {
     let TxsPulled {
         live_len,
         added,
         removed,
     } = pulled;
-    let mut state = lock.write();
-    state.published_tip = None;
     let additional = live_len.saturating_sub(state.txs.len());
     state.txs.reserve(additional);
     bury_removals(
-        &mut state,
+        state,
         prev_snapshot,
         &mut diff.addrs,
         &mut diff.removed,
         removed,
     );
-    publish_additions(&mut state, &mut diff.addrs, &mut diff.added, added);
+    insert_additions(state, &mut diff.addrs, &mut diff.added, added);
     state.graveyard.evict_old();
 }
 
@@ -84,7 +75,7 @@ fn bury_one(
     })
 }
 
-fn publish_additions(
+fn insert_additions(
     state: &mut State,
     transitions: &mut AddrTransitions,
     events: &mut Vec<TxAdded>,
@@ -102,7 +93,7 @@ fn publish_additions(
                 first_seen: entry.first_seen,
                 kind,
             });
-            publish_one(state, transitions, tx, entry);
+            insert_one(state, transitions, tx, entry);
         }
     }
 }
@@ -120,7 +111,7 @@ fn resolve_addition(
     }
 }
 
-fn publish_one(
+fn insert_one(
     state: &mut State,
     transitions: &mut AddrTransitions,
     tx: Arc<Transaction>,
