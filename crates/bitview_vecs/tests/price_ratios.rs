@@ -2,7 +2,9 @@ use bitview_vecs::{LazyPriceWithRatioPerBlock, PriceWithRatioPerBlock};
 use brk_types::{Cents, Height, PriceRatio, Version};
 use common::{CACHE_BUDGET, indexes, stored};
 use tempfile::tempdir;
-use vecdb::{AnySerializableVec, AnyStoredVec, CachedVec, Database, ReadableVec, WritableVec};
+use vecdb::{
+    AnySerializableVec, AnyStoredVec, Database, ReadableCloneableVec, ReadableVec, WritableVec,
+};
 
 mod common;
 
@@ -11,18 +13,14 @@ fn price_ratios_preserve_zero_nan_saturation_and_empty_days() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
-    indexes.first_height.day1 = CachedVec::wrap(stored(
-        &db,
-        "ratio_days",
-        [0usize, 1, 1, 3].map(Height::from),
-    ))
-    .read_only_boxed_clone();
-    let spot = CachedVec::wrap(stored::<Height, _>(
+    indexes.first_height.day1 =
+        stored(&db, "ratio_days", [0usize, 1, 1, 3].map(Height::from)).read_only_boxed_clone();
+    let spot = stored::<Height, _>(
         &db,
         "spot",
         [100u64, 200, 300, 400, 1_000_000, 400].map(Cents::from),
-    ))
-    .read_only_cached_boxed_clone();
+    )
+    .read_only_boxed_clone();
     let version = Version::new(3);
     let prices = [
         Cents::ZERO,

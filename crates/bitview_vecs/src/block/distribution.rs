@@ -9,8 +9,8 @@ use brk_types::{Height, StoredU64, VSize, get_percentile, get_weighted_percentil
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, CheckedSub, Database, EagerVec, PcoVec, ReadableVec, Rw,
-    StorageMode, VecIndex, VecValue, Version, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CheckedSub, Database, EagerVec, PcoVec,
+    ReadableVec, Rw, StorageMode, VecIndex, VecValue, Version, WritableVec,
 };
 
 use crate::{IndexSources, PerBlock};
@@ -76,7 +76,7 @@ impl<T: NumericValue + JsonSchema> PerBlockDistribution<T> {
 
     // Preserve the validation, truncation, and write order of the stored outputs.
     #[inline]
-    fn height_vecs_mut(&mut self) -> [&mut EagerVec<PcoVec<Height, T>>; 7] {
+    fn height_vecs_mut(&mut self) -> [&mut EagerVec<PcoVec<Height, T, Budgeted>>; 7] {
         [
             &mut self.0.min.height,
             &mut self.0.max.height,

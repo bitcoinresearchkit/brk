@@ -2,7 +2,7 @@ use bitview_cohort::{AmountRange, CohortContext, UTXOAndAddrGroups, UTXOGroups};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
+use bitview_vecs::{LazyPerBlockWithDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -30,7 +30,7 @@ impl UnspentOutputCount {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "utxo_count", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
@@ -41,7 +41,7 @@ impl UnspentOutputCount {
                 stored.get(cohort_id).expect("unspent-output cohort source"),
                 Version::TWO,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         let addr_balance = AmountSources::forced_import(
@@ -58,7 +58,7 @@ impl UnspentOutputCount {
                     source,
                     Version::TWO,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             },
         )?;

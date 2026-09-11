@@ -1,15 +1,18 @@
 use std::result::Result;
 
 use super::EagerVec;
-use crate::{ReadableVec, StoredVec, Version};
+use crate::{ReadableVec, StoredVec};
 
 impl<V> ReadableVec<V::I, V::T> for EagerVec<V>
 where
     V: StoredVec,
 {
-    #[inline(always)]
-    fn snapshot_version(&self) -> Version {
-        self.0.snapshot_version()
+    fn data_revision(&self) -> Option<u64> {
+        self.0.data_revision()
+    }
+
+    fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<V::T>) -> bool {
+        self.0.read_cached_into_at(from, to, out)
     }
 
     #[inline(always)]

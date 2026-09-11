@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, LazyPerSecondWindows};
+use bitview_vecs::{LazyPerSecondWindows, LazyWindowStartVec};
 use brk_error::Result;
 
 use super::{STORAGE, Vecs, by_type, count, spent, unspent, value};
@@ -10,7 +10,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 20_000_000)?;
         let version = STORAGE.schema_version();
@@ -21,7 +21,7 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let per_sec =
             LazyPerSecondWindows::new("outputs_per_sec", version, &count.total.rolling.sum);
@@ -31,7 +31,7 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let value = value::forced_import(context.cache_budget(), &db, version, mappings)?;
 

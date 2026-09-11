@@ -3,7 +3,7 @@ use bitview_collections::Windows;
 use bitview_vecs::{CountTotal, OutputTypeCounts, SpendableTypeCounts, import_stored};
 use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CachedVec, Database, ReadOnlyClone, ReadableVec, WritableVec};
+use vecdb::{AnyStoredVec, Database, ReadOnlyClone, ReadableVec, WritableVec};
 
 mod common;
 
@@ -20,7 +20,7 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
         _1y: &starts,
     };
     let mut totals = common::stored::<Height, _>(&db, "totals", [1_u64, 4, 8].map(StoredU64::from));
-    let cached = CachedVec::wrap(totals.read_only_clone());
+    let cached = totals.read_only_clone();
     let version = Version::new(11);
     let selected = SpendableTypeId::ALL[0].output_type();
 
@@ -124,7 +124,6 @@ fn type_domains_share_the_engine_without_sharing_the_wrong_denominator() {
     totals.truncate_if_needed_at(2).unwrap();
     totals.push(StoredU64::from(10_u64));
     totals.write().unwrap();
-    cached.invalidate();
     assert_eq!(
         input_shares
             .get(selected)

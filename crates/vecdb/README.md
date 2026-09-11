@@ -87,6 +87,43 @@ bounded rollback history. `rollback` and `rollback_before` restore prior
 states. Rollback is explicit recovery machinery, not a multi-vector
 transaction.
 
+## Range retention
+
+Stored vectors accept a cache policy as their third type parameter:
+
+- `NoCache` (the default) has no cache allocation or read-side locking.
+- `Budgeted` shares a byte limit across sources, supplied in `ImportOptions`.
+
+```rust,no_run
+use vecdb::{Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, Version};
+
+static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
+# fn example(db: &Database) -> vecdb::Result<()> {
+let values = BytesVec::<usize, u64, Budgeted>::import_with(
+    ImportOptions::new(db, "values", Version::ONE).with_cache_budget(&CACHE),
+)?;
+# Ok(())
+# }
+```
+
+Read-only and type-erased clones share the source's ranges. Use ordinary point,
+range, sorted, and fold reads; there is no shared whole-vector snapshot API.
+
+Cache retention is always evictable. Algorithms that need a working set own
+ordinary read results and pass references through their computation context.
+Those buffers remain valid after cache eviction without pinning cache entries.
+Reads retain only requested ranges; adjacent small ranges merge in place.
+Source writes invalidate changed suffixes and preserve unchanged prefixes.
+`CacheBudget::clear` evicts retained data without changing source revisions.
+A zero-byte budget disables retention.
+
+Budget charges follow buffer lifetimes, including buffers still borrowed by a
+fold after eviction. Caller-owned results and decoder scratch are outside this
+retention budget. Lazy readers use their stored sources' caches without retaining
+another copy of derived values or requiring separate cache invalidation.
+Cache protection covers an individual source operation, not a transaction across
+multiple vectors: related reads still require the application's publication guard.
+
 ## Value and index types
 
 Values are fixed width. Numeric primitives and the supported fixed byte arrays

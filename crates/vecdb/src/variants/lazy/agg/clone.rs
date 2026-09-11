@@ -16,7 +16,6 @@ where
         Self {
             name: self.name.clone(),
             version: self.version,
-            mapping_version: self.mapping_version,
             source: self.source.clone(),
             mapping: self.mapping.clone(),
             _phantom: PhantomData,

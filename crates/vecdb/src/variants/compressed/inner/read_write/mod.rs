@@ -8,7 +8,9 @@ use super::{CompressionStrategy, PAGES_PER_BLOCK, PageDecoder, Pages, ReadOnlyCo
 use crate::{
     AnyStoredVec, AnyVec, CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, Error,
     Format, ImportOptions, ReadWriteBaseVec, Result as CrateResult, VecIndex, VecValue, Version,
-    WritableVec, vec_region_name_with,
+    WritableVec,
+    cache::{CachePolicy, NoCache},
+    vec_region_name_with,
 };
 
 pub mod any_stored_vec;
@@ -26,22 +28,24 @@ const VERSION: Version = Version::new(4);
 /// Parameterized by compression strategy to support different compression algorithms.
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct ReadWriteCompressedVec<I, T, S> {
+pub struct ReadWriteCompressedVec<I, T: VecValue, S, C: CachePolicy = NoCache> {
     base: ReadWriteBaseVec<I, T>,
+    pub(super) cache: C::State<T>,
     pages: Arc<RwLock<Pages>>,
     pages_per_chunk: usize,
     _strategy: PhantomData<S>,
 }
 
-impl<I, T, S> ReadWriteCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> ReadWriteCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,
     S: CompressionStrategy<T>,
 {
-    pub fn read_only_clone(&self) -> ReadOnlyCompressedVec<I, T, S> {
+    pub fn read_only_clone(&self) -> ReadOnlyCompressedVec<I, T, S, C> {
         ReadOnlyCompressedVec {
             base: self.base.read_only_base(),
+            cache: self.cache.clone(),
             pages: Arc::clone(&self.pages),
             _strategy: PhantomData,
         }
@@ -90,6 +94,7 @@ where
         let pages_per_chunk =
             (compression_chunk_size / COMPRESSED_PAGE_SIZE).clamp(1, PAGES_PER_BLOCK);
 
+        let cache = C::create(options.cache_budget)?;
         let base = ReadWriteBaseVec::import(options, format)?;
 
         let pages = Pages::import(
@@ -107,6 +112,7 @@ where
 
         let mut this = Self {
             base,
+            cache,
             pages: Arc::new(RwLock::new(pages)),
             pages_per_chunk,
             _strategy: PhantomData,

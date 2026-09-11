@@ -14,7 +14,6 @@ where
             name: self.name.clone(),
             base_version: self.base_version,
             source: self.source.clone(),
-            window_starts_version: self.window_starts_version,
             window_starts: self.window_starts.clone(),
             _op: PhantomData,
         }

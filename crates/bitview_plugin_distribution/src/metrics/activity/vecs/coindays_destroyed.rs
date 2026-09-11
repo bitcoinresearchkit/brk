@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlockCumulativeRolling};
+use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{StoredF64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -23,7 +23,7 @@ impl CoindaysDestroyedByCohort {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = CumulativeUTXOCoreSources::forced_import(
             cache,
@@ -41,7 +41,7 @@ impl CoindaysDestroyedByCohort {
                 &name,
                 version,
                 source,
-                cached_starts,
+                window_starts,
                 mappings,
             )
         });

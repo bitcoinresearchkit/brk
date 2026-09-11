@@ -483,9 +483,16 @@ impl Query {
         let current_height: usize = read.safe_lengths().last_height().unwrap_or_default().into();
         let timestamps = &self.plugins().mappings.timestamp.monotonic;
         let len = read.bind(timestamps)?.len();
-        let snapshot = timestamps.snapshot();
-        let visible = snapshot.get(..len).ok_or(Error::NoData)?;
-        let position = visible.partition_point(|value| *value < ts);
+        let mut position = 0;
+        let mut end = len;
+        while position < end {
+            let middle = position + (end - position) / 2;
+            if timestamps.collect_one_at(middle).ok_or(Error::NoData)? < ts {
+                position = middle + 1;
+            } else {
+                end = middle;
+            }
+        }
         Ok(if position == len {
             current_height
         } else {

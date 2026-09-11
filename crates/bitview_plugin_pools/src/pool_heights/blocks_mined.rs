@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight,
+    LazyPerBlock, LazyPreviousDeltaVec, LazyRollingSumsFromHeight, LazyWindowStartVec,
 };
 use brk_types::{Height, PoolSlug, StoredU64};
 use vecdb::{Ident, Version};
@@ -27,7 +27,7 @@ impl BlocksMined {
         pool_heights: PoolHeights,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let cumulative_name = format!("{name}_cumulative");
         let cumulative_source = PoolCumulativeVec::new(&cumulative_name, slug, pool_heights);
@@ -42,7 +42,7 @@ impl BlocksMined {
             &format!("{name}_sum"),
             version,
             &cumulative.height,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

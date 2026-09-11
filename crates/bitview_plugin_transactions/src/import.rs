@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 
 use super::{
@@ -14,7 +14,7 @@ impl Vecs {
         context: ImportContext<'_>,
         indexer: &Indexer,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 10_000_000)?;
         let version = STORAGE.schema_version();
@@ -24,14 +24,14 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let features = features::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let size = size::forced_import(context.cache_budget(), &db, version, indexer, mappings)?;
         let fees = fees::forced_import(
@@ -39,42 +39,42 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let patterns = patterns::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let policy = policy::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let sigops = sigops::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let versions = versions::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let volume = volume::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             &count.total.rolling.sum,
         )?;
 

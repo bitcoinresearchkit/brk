@@ -10,9 +10,9 @@ use bitview_vecs::{
 use brk_types::{Day1, Height, StoredU16, StoredU64};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, BinaryTransform, BytesVec, CachedVec, Cursor, Database, Ident,
-    ImportableVec, LazyVec, MutableVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableVec, ReverseOperands, Version, WritableVec,
+    AnyStoredVec, AnyVec, BinaryTransform, BytesVec, Cursor, Database, Ident, ImportableVec,
+    LazyVec, MutableVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
+    ReverseOperands, Version, WritableVec,
 };
 
 #[allow(dead_code)]
@@ -41,17 +41,17 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
         "ratio_source",
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
-    let cached_source = CachedVec::wrap(source.read_only_clone());
-    let blocks = CachedVec::wrap(common::stored::<Height, _>(
+    let cached_source = source.read_only_clone();
+    let blocks = common::stored::<Height, _>(
         &db,
         "ratio_blocks",
         (0..40_000).map(|_| StoredU16::from(1u16)),
-    ));
-    let cached = CachedVec::wrap(common::stored::<Height, _>(
+    );
+    let cached = common::stored::<Height, _>(
         &db,
         "ratio_cached",
         (0..40_000u64).map(|i| StoredU64::from(i + 1)),
-    ));
+    );
     for (source_id, source) in [
         source.read_only_boxed_clone(),
         cached_source.read_only_boxed_clone(),
@@ -64,11 +64,11 @@ fn ratio_chunks_match_scalar_paths_and_do_not_reenter_source_reads() {
             visiting: Arc::new(AtomicBool::new(false)),
         };
         for window in [0, 17, 20_000, 50_000] {
-            let starts = CachedVec::wrap(common::stored::<Height, _>(
+            let starts = common::stored::<Height, _>(
                 &db,
                 &format!("ratio_starts_{source_id}_{window}"),
                 (0..35_000usize).map(|i| Height::from(i.saturating_sub(window))),
-            ));
+            );
             let denominator = CumulativeCountVec::new(&blocks);
             let ratio = LazyRollingRatioVec::<StoredU64, StoredU64, StoredU64, TestRatio>::new(
                 "ratio",
@@ -187,26 +187,23 @@ impl ReadableVec<Height, StoredU64> for NonReentrantSource {
 fn views_do_not_recursively_read_a_source_lending_chunks() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let source = CachedVec::wrap(common::stored::<Height, _>(
+    let source = common::stored::<Height, _>(
         &db,
         "source",
         (0..40_000u64).map(|i| StoredU64::from(i * 3)),
-    ));
-    source.snapshot();
+    );
+    source.collect();
     let source = NonReentrantSource {
         source: source.read_only_boxed_clone(),
         visiting: Arc::new(AtomicBool::new(false)),
     };
-    let starts = CachedVec::wrap(common::stored::<Height, _>(
+    let starts = common::stored::<Height, _>(
         &db,
         "starts",
         (0..40_000usize).map(|i| Height::from(i.saturating_sub(17))),
-    ));
-    let days = CachedVec::wrap(common::stored::<Height, _>(
-        &db,
-        "days",
-        (0..40_000usize).map(|i| Day1::from(i / 10)),
-    ));
+    );
+    let days =
+        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
     let window = LazyWindowVec::new(
         "window",
         Version::ONE,
@@ -327,18 +324,15 @@ fn views_match_scalar_results_across_cached_and_fragmented_inputs() {
         "source",
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
-    let days = CachedVec::wrap(common::stored::<Height, _>(
-        &db,
-        "days",
-        (0..40_000usize).map(|i| Day1::from(i / 10)),
-    ));
-    let starts = CachedVec::wrap(common::stored::<Height, _>(
+    let days =
+        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
+    let starts = common::stored::<Height, _>(
         &db,
         "starts",
         (0..35_000usize).map(|i| Height::from(i.saturating_sub(2016))),
-    ));
-    let cached = CachedVec::wrap(source.read_only_clone());
-    cached.snapshot();
+    );
+    let cached = source.read_only_clone();
+    cached.collect();
     for source in [
         source.read_only_boxed_clone(),
         cached.read_only_boxed_clone(),
@@ -406,17 +400,14 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
         "source",
         (0..40_000u64).map(|i| StoredU64::from((i + 1) * 3)),
     );
-    let cached = CachedVec::wrap(source.read_only_clone());
-    let days = CachedVec::wrap(common::stored::<Height, _>(
-        &db,
-        "days",
-        (0..40_000usize).map(|i| Day1::from(i / 10)),
-    ));
-    let starts = CachedVec::wrap(common::stored::<Height, _>(
+    let cached = source.read_only_clone();
+    let days =
+        common::stored::<Height, _>(&db, "days", (0..40_000usize).map(|i| Day1::from(i / 10)));
+    let starts = common::stored::<Height, _>(
         &db,
         "starts",
         (0..40_000usize).map(|i| Height::from(i.saturating_sub(10))),
-    ));
+    );
     let calls = Arc::new(AtomicUsize::new(0));
     let counter = calls.clone();
     let since = LazySinceDayVec::new(
@@ -457,8 +448,7 @@ fn captured_transforms_stop_at_first_error_and_views_follow_rewrites() {
     check_early_stop(&window, &calls);
     check_early_stop(&lookback, &calls);
     let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &cached);
-    cached.snapshot();
-    cached.invalidate();
+    cached.collect();
     source.truncate_if_needed_at(39_999).unwrap();
     source.push(StoredU64::from(120_100u64));
     source.write().unwrap();
@@ -488,16 +478,16 @@ fn sparse_sources_keep_legacy_emitted_value_alignment() {
         source.delete_at(i);
     }
     source.write().unwrap();
-    let starts = CachedVec::wrap(common::stored::<Height, _>(
+    let starts = common::stored::<Height, _>(
         &db,
         "sparse_starts",
         (0..20_000usize).map(|i| Height::from(i.saturating_sub(17))),
-    ));
-    let days = CachedVec::wrap(common::stored::<Height, _>(
+    );
+    let days = common::stored::<Height, _>(
         &db,
         "sparse_days",
         (0..20_000usize).map(|i| Day1::from(i / 10)),
-    ));
+    );
     let window = LazyWindowVec::new("window", Version::ONE, &source, &starts, true, |a, b, n| {
         a + b + n as u64
     });

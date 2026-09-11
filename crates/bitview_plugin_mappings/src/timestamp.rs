@@ -9,8 +9,8 @@ use brk_types::{
 };
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    AnyVec, CachedVec, Database, EagerVec, ImportableVec, LazyVec, PcoVec, ReadableBoxedVec,
-    ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
+    Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, LazyVec, PcoVec,
+    ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode, Version,
 };
 
 use super::{DatedResolutionVecs, ResolutionVecs};
@@ -30,7 +30,7 @@ pub struct Timestamps<M: StorageMode = Rw> {
     /// Nondecreasing Unix timestamp in seconds at each block height, computed as
     /// the maximum of the represented raw block-header timestamp and the preceding
     /// monotonic timestamp.
-    pub monotonic: CachedVec<M::Stored<EagerVec<PcoVec<Height, Timestamp>>>>,
+    pub monotonic: M::Stored<EagerVec<PcoVec<Height, Timestamp, Budgeted>>>,
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -55,20 +55,19 @@ pub struct Timestamps<M: StorageMode = Rw> {
 
 impl Timestamps {
     pub fn forced_import_monotonic(
+        cache: &'static CacheBudget,
         db: &Database,
         version: Version,
-    ) -> Result<CachedVec<EagerVec<PcoVec<Height, Timestamp>>>> {
-        Ok(CachedVec::wrap(EagerVec::forced_import(
-            db,
-            "timestamp_monotonic",
-            version,
-        )?))
+    ) -> Result<EagerVec<PcoVec<Height, Timestamp, Budgeted>>> {
+        Ok(EagerVec::forced_import_with(
+            ImportOptions::new(db, "timestamp_monotonic", version).with_cache_budget(cache),
+        )?)
     }
 
     #[allow(clippy::too_many_arguments)]
     pub fn from_locals(
         version: Version,
-        monotonic: CachedVec<EagerVec<PcoVec<Height, Timestamp>>>,
+        monotonic: EagerVec<PcoVec<Height, Timestamp, Budgeted>>,
         raw_timestamps: ReadableBoxedVec<Height, Timestamp>,
         minute10: &ResolutionVecs<Minute10>,
         minute30: &ResolutionVecs<Minute30>,
@@ -125,10 +124,9 @@ impl Timestamps {
         indexer: &Indexer,
         starting_height: Height,
         exit: &Exit,
-    ) -> Result<bool> {
-        let rewrites_existing = usize::from(starting_height) < self.monotonic.len();
+    ) -> Result<()> {
         let mut prev = None;
-        self.monotonic.inner.compute_transform(
+        self.monotonic.compute_transform(
             starting_height,
             &indexer.vecs().blocks.timestamp,
             |(h, timestamp, this)| {
@@ -143,9 +141,6 @@ impl Timestamps {
             },
             exit,
         )?;
-        if rewrites_existing {
-            self.monotonic.invalidate();
-        }
-        Ok(rewrites_existing)
+        Ok(())
     }
 }

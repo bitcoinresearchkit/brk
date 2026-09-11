@@ -2,17 +2,12 @@ use bitview_plugin_blocks::LookbackVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::CentsTimesTenths;
 use bitview_traversable::Traversable;
-use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, Price};
+use bitview_vecs::{LazyPerBlock, LazyPriceWithRatioPerBlock, LazySmaVec, Price, SmaPrefixSumVec};
 use brk_types::{Cents, Height, Version};
-use vecdb::{AnyVec, BudgetedCachedVec, CacheBudget, ReadableCloneableVec, VecIndex};
-
-use bitview_vecs::{LazySmaVec, SmaPrefixSumVec};
+use vecdb::ReadableCloneableVec;
 
 #[derive(Clone, Traversable)]
 pub struct SmaVecs {
-    /// One shared memo for the expensive prefix scan across all SMA windows.
-    #[traversable(skip)]
-    prefix_sum: BudgetedCachedVec<SmaPrefixSumVec>,
     /// Uses a trailing 7-day monotonic-time window.
     pub _1w: LazyPriceWithRatioPerBlock,
     /// Uses a trailing 8-day monotonic-time window.
@@ -62,15 +57,13 @@ const VERSION: Version = Version::ONE;
 
 impl SmaVecs {
     pub fn new(
-        cache: &'static CacheBudget,
         version: Version,
         mappings: &MappingsVecs,
         lookback: &LookbackVecs,
         spot_price: &impl ReadableCloneableVec<Height, Cents>,
     ) -> Self {
         let version = version + VERSION;
-        let prefix_sum =
-            SmaPrefixSumVec::cached(cache, "price_sma_prefix_sum", version, spot_price);
+        let prefix_sum = SmaPrefixSumVec::new("price_sma_prefix_sum", version, spot_price);
 
         macro_rules! sma {
             ($name:literal, $days:expr) => {
@@ -80,8 +73,8 @@ impl SmaVecs {
                     &LazySmaVec::new(
                         concat!("price_sma_", $name, "_cents_source"),
                         version,
-                        lookback.start_vec($days),
-                        &prefix_sum,
+                        prefix_sum.read_only_boxed_clone(),
+                        lookback.start_vec($days).read_only_boxed_clone(),
                     ),
                     mappings,
                     spot_price,
@@ -129,13 +122,6 @@ impl SmaVecs {
             _200d_x2_4,
             _200d_x0_8,
             _350d_x2,
-            prefix_sum,
-        }
-    }
-
-    pub fn clear_if_recomputed_from(&self, height: Height) {
-        if height.to_usize() < self.prefix_sum.len() {
-            self.prefix_sum.invalidate();
         }
     }
 }

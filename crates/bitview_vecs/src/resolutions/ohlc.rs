@@ -2,7 +2,7 @@ use bitview_collections::{PerResolution, with_resolution_fields};
 use bitview_traversable::Traversable;
 use brk_types::{Cents, Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::CachedBoxedVec;
+use vecdb::ReadableBoxedVec;
 
 use crate::{IndexSources, LazyOhlcVec};
 
@@ -29,7 +29,7 @@ macro_rules! define_lazy_ohlc_cents_vecs {
                 name: &str,
                 version: Version,
                 mappings: &IndexSources,
-                prices: CachedBoxedVec<Height, Cents>,
+                prices: ReadableBoxedVec<Height, Cents>,
             ) -> Self {
                 let v = version + COMPUTE_VERSION;
                 Self(PerResolution {

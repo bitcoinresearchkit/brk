@@ -1,16 +1,18 @@
+use std::thread;
+
 use bitview_cohort::{AgeRangeId, AmountRangeId};
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, LazyWindowStartVec, import_stored};
+use bitview_vecs::{LazyWindowStartVec, import_stored};
 use brk_reader::Reader;
 use brk_rpc::{Auth, Client};
 use brk_types::{Cents, CentsSats, CentsSquaredSats, Height, Sats, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, Database, ReadableVec, WritableVec};
+use vecdb::{CacheBudget, Database, ReadableCloneableVec, ReadableVec, WritableVec};
 
-use super::CohortMetrics;
+use super::{CohortMetrics, IMPORT_STACK_SIZE};
 use crate::state::{RealizedOps, UTXOStates};
 
 static CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
@@ -25,6 +27,16 @@ fn capitals(band: usize) -> (CentsSats, CentsSquaredSats) {
 
 #[test]
 fn block_writes_keep_every_raw_cap_and_include_them_in_resume_checks() {
+    // Match the stack used by production cohort imports.
+    thread::Builder::new()
+        .stack_size(IMPORT_STACK_SIZE)
+        .spawn(check_block_writes)
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+fn check_block_writes() {
     let directory = tempdir().unwrap();
     let context = ImportContext::new(directory.path(), &CACHE);
     let client = Client::new("http://127.0.0.1:1", Auth::None).unwrap();
@@ -33,12 +45,12 @@ fn block_writes_keep_every_raw_cap_and_include_them_in_resume_checks() {
     let mappings = MappingsVecs::import(context, &indexer).unwrap();
     let db = Database::open(&directory.path().join("cohorts")).unwrap();
     let spot = import_stored::<Height, Cents>(&CACHE, &db, "spot", Version::ONE).unwrap();
-    let starts = CachedWindowStartVec::wrap(LazyWindowStartVec::days(
+    let starts = LazyWindowStartVec::days(
         "test_window",
         Version::ONE,
         1,
         &mappings.timestamp.monotonic,
-    ));
+    );
     let windows = Windows {
         _24h: &starts,
         _1w: &starts,
@@ -51,7 +63,7 @@ fn block_writes_keep_every_raw_cap_and_include_them_in_resume_checks() {
         Version::ONE,
         &mappings,
         &windows,
-        &spot.read_only_cached_boxed_clone(),
+        &spot.read_only_boxed_clone(),
     )
     .unwrap();
     let mut states = UTXOStates::new(&directory.path().join("states"));

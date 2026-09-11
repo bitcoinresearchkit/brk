@@ -1,7 +1,7 @@
 use bitview_cohort::UTXOAggregate;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw};
+use vecdb::{CacheBudget, Database, ReadableBoxedVec, Rw};
 
 use crate::{AggregatePerBlock, IndexSources, LazyPriceWithRatioPerBlock, import_stored};
 
@@ -15,7 +15,7 @@ impl AggregatePriceWithRatioPerBlock {
         metric: &str,
         version: Version,
         indexes: &IndexSources,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let stored = UTXOAggregate::try_from_fn(|id| {
             import_stored(

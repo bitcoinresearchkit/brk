@@ -2,7 +2,7 @@ use bitview_cohort::{AmountRange, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
@@ -23,7 +23,7 @@ impl OutputsVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Box<Self>> {
         Ok(Box::new(Self {
             unspent_count: UnspentOutputCount::forced_import(
@@ -31,14 +31,14 @@ impl OutputsVecs {
                 db,
                 version,
                 mappings,
-                cached_starts,
+                window_starts,
             )?,
             spent_count: SpentOutputCount::forced_import(
                 cache,
                 db,
                 version,
                 mappings,
-                cached_starts,
+                window_starts,
             )?,
         }))
     }

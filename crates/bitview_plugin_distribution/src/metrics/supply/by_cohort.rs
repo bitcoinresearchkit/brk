@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::LazySpotValuePerBlock;
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode};
 
 use crate::metrics::UTXOTypedSources;
 
@@ -23,7 +23,7 @@ impl SupplyByCohort {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let stored =
             UTXOTypedSources::forced_import(cache, db, &format!("{metric}_sats"), version)?;

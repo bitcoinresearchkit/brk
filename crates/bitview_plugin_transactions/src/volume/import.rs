@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPerSecondWindows, LazyRollingSumsFromHeight,
+    LazyPerSecondWindows, LazyRollingSumsFromHeight, LazyWindowStartVec,
     ValuePerBlockCumulativeRolling,
 };
 use brk_error::Result;
@@ -15,7 +15,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
     tx_count_sums: &LazyRollingSumsFromHeight<StoredU64>,
 ) -> Result<Vecs> {
     let v = version + Version::TWO;
@@ -26,7 +26,7 @@ pub fn forced_import(
             "transfer_volume_bis",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?,
         tx_per_sec: LazyPerSecondWindows::new("tx_per_sec", v, tx_count_sums),
     })

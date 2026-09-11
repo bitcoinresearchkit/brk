@@ -107,13 +107,11 @@ impl<B: FixedRatio> LazyPercentRollingWindows<B> {
         Self(window_starts.map_with_suffix(|suffix, window_start| {
             let full_name = format!("{name}_{suffix}");
             let operand = window_start.read_only_boxed_clone();
-            let starts_version = operand.version();
             let average = LazyDeltaVec::<Height, T, B, DeltaAvg>::new(
                 &format!("{full_name}_{}_source", B::SUFFIX),
                 version,
                 cumulative_source.clone(),
-                starts_version,
-                move || operand.snapshot(),
+                operand,
             );
 
             LazyPercentPerBlock::from_height_source(&full_name, version, &average, indexes)

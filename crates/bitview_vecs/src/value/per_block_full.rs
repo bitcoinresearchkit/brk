@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableCloneableVec, ReadableVec, Rw,
+    Budgeted, CacheBudget, CachePolicy, Database, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode, VecIndex, VecValue,
 };
 
@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachedVecStrategy = Budgeted> {
+pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachePolicy = Budgeted> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -25,7 +25,7 @@ pub struct ValuePerBlockFull<M: StorageMode = Rw, S: CachedVecStrategy = Budgete
 
 const VERSION: Version = Version::TWO;
 
-impl<S: CachedVecStrategy> ValuePerBlockFull<Rw, S> {
+impl<S: CachePolicy> ValuePerBlockFull<Rw, S> {
     pub fn cumulative_sats_source(&self) -> &(impl ReadableCloneableVec<Height, Sats> + use<S>) {
         self.cumulative.sats.resolutions.height_source()
     }

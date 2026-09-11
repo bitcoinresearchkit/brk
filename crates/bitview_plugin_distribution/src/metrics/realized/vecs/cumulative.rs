@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOAndAddrGroups, UTXOGroups};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockCumulativeWithSums};
+use bitview_vecs::{LazyFiatPerBlockCumulativeWithSums, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{Cents, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -28,7 +28,7 @@ impl CumulativeRealizedByCohort {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = CumulativeUTXOSources::forced_import(
             cache,
@@ -47,7 +47,7 @@ impl CumulativeRealizedByCohort {
                 version,
                 source,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         let addr_version = version + Version::ONE;
@@ -64,7 +64,7 @@ impl CumulativeRealizedByCohort {
                     addr_version,
                     source,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             },
         )?;

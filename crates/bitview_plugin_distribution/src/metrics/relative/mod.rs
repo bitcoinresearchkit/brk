@@ -50,3 +50,4 @@ fn share_views<B: FixedRatio>(
         LazyPercentPerBlock::from_height_source(&name, version, &source, mappings)
     })
 }
+use vecdb::ReadableCloneableVec;

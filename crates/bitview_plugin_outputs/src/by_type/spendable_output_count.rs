@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyIndexedVec, LazyPerBlockCumulativeRolling};
+use bitview_vecs::{LazyIndexedVec, LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_types::{Height, StoredU64, Version};
 use derive_more::Deref;
 use vecdb::{ReadableCloneableVec, ReadableVec};
@@ -18,7 +18,7 @@ impl SpendableOutputCount {
         version: Version,
         op_return_count: &impl ReadableCloneableVec<Height, StoredU64>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let cumulative = LazyIndexedVec::new(
             "spendable_output_count_cumulative",
@@ -31,7 +31,7 @@ impl SpendableOutputCount {
             "spendable_output_count",
             version,
             &cumulative,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

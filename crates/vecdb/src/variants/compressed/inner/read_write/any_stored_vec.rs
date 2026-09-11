@@ -7,9 +7,12 @@ use super::{
     super::{CompressionStrategy, PAGES_PER_BLOCK},
     ReadWriteCompressedVec,
 };
-use crate::{AnyStoredVec, AnyVec, Error, Header, Result, Stamp, VecIndex, VecValue, WritableVec};
+use crate::{
+    AnyStoredVec, AnyVec, Error, Header, Result, Stamp, VecIndex, VecValue, WritableVec,
+    cache::CachePolicy,
+};
 
-impl<I, T, S> ReadWriteCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> ReadWriteCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,
@@ -71,7 +74,7 @@ where
     }
 }
 
-impl<I, T, S> AnyStoredVec for ReadWriteCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> AnyStoredVec for ReadWriteCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,
@@ -115,122 +118,124 @@ where
     }
 
     fn write(&mut self) -> Result<bool> {
-        self.base.write_header_if_needed()?;
+        self.with_cache_update(self.stored_len(), |this| {
+            this.base.write_header_if_needed()?;
 
-        let stored_len = self.stored_len();
-        let pushed_len = self.base.pushed().len();
+            let stored_len = this.stored_len();
+            let pushed_len = this.base.pushed().len();
 
-        let (truncate_at, starting_page_index, partial_page) = {
-            let pages = self.pages.read();
+            let (truncate_at, starting_page_index, partial_page) = {
+                let pages = this.pages.read();
 
-            let real_stored_len = pages.stored_len(Self::PER_PAGE, Self::SIZE_OF_T);
-            if stored_len > real_stored_len {
-                return Err(Error::CorruptedRegion {
-                    name: self.name().to_string(),
-                    region_len: real_stored_len,
-                });
+                let real_stored_len = pages.stored_len(Self::PER_PAGE, Self::SIZE_OF_T);
+                if stored_len > real_stored_len {
+                    return Err(Error::CorruptedRegion {
+                        name: this.name().to_string(),
+                        region_len: real_stored_len,
+                    });
+                }
+
+                if pushed_len == 0 && stored_len == real_stored_len {
+                    return Ok(false);
+                }
+
+                let starting_page_index = Self::index_to_page_index(stored_len);
+                if starting_page_index > pages.len() {
+                    return Err(Error::CorruptedRegion {
+                        name: this.name().to_string(),
+                        region_len: pages.len(),
+                    });
+                }
+
+                if starting_page_index < pages.len() {
+                    let partial_len = stored_len % Self::PER_PAGE;
+                    let page = pages
+                        .get(starting_page_index)
+                        .ok_or(Error::ExpectVecToHaveIndex)?;
+                    let rewrite_page_index = page.chunk_start_page;
+                    let rewrite_page = pages
+                        .get(rewrite_page_index)
+                        .ok_or(Error::ExpectVecToHaveIndex)?;
+                    (
+                        rewrite_page.header_start,
+                        rewrite_page_index,
+                        if partial_len != 0 {
+                            Some((page, partial_len, starting_page_index))
+                        } else {
+                            None
+                        },
+                    )
+                } else {
+                    (pages.next_start(), starting_page_index, None)
+                }
+            };
+            // Release the pages lock before accessing the data region.
+
+            // Fast path: append to existing raw page without reading it back.
+            // When the last page is raw, not truncated, and won't overflow, just
+            // write the new pushed bytes at the end of the existing page data.
+            if let Some((page, partial_len, page_index)) = partial_page
+                && page.is_raw()
+                && starting_page_index == page_index
+                && partial_len == page.values_count(Self::PER_PAGE, Self::SIZE_OF_T)
+                && partial_len + pushed_len < Self::PER_PAGE
+            {
+                let taken = mem::take(this.base.mut_pushed());
+                let raw = S::values_to_bytes(&taken);
+                let append_at = page.end() as usize;
+                this.region().truncate_write(append_at, &raw)?;
+
+                let mut pages = this.pages.write();
+                pages.truncate(starting_page_index);
+                let total_bytes = page
+                    .bytes
+                    .checked_add(u32::try_from(raw.len()).map_err(|_| Error::Overflow)?)
+                    .ok_or(Error::Overflow)?;
+                pages.push_raw(starting_page_index, total_bytes)?;
+                this.base.update_stored_len(stored_len + pushed_len);
+                pages.flush()?;
+                return Ok(true);
             }
 
-            if pushed_len == 0 && stored_len == real_stored_len {
-                return Ok(false);
-            }
-
-            let starting_page_index = Self::index_to_page_index(stored_len);
-            if starting_page_index > pages.len() {
-                return Err(Error::CorruptedRegion {
-                    name: self.name().to_string(),
-                    region_len: pages.len(),
-                });
-            }
-
-            if starting_page_index < pages.len() {
-                let partial_len = stored_len % Self::PER_PAGE;
-                let page = pages
-                    .get(starting_page_index)
-                    .ok_or(Error::ExpectVecToHaveIndex)?;
-                let rewrite_page_index = page.chunk_start_page;
-                let rewrite_page = pages
-                    .get(rewrite_page_index)
-                    .ok_or(Error::ExpectVecToHaveIndex)?;
-                (
-                    rewrite_page.header_start,
-                    rewrite_page_index,
-                    if partial_len != 0 {
-                        Some((page, partial_len, starting_page_index))
-                    } else {
-                        None
-                    },
-                )
+            // Rebuild only the bounded chunk that contains the truncation point.
+            let rewrite_from = Self::page_index_to_index(starting_page_index);
+            let mut values = if rewrite_from < stored_len {
+                this.collect_stored_range(rewrite_from, stored_len)?
             } else {
-                (pages.next_start(), starting_page_index, None)
+                vec![]
+            };
+
+            // Encode pages outside the pages lock. Full pages compress; the last
+            // partial page is stored raw (avoids recompression on every write).
+            let taken = mem::take(this.base.mut_pushed());
+            if values.is_empty() {
+                values = taken;
+            } else {
+                values.extend(taken);
             }
-        };
-        // Pages lock released — decompression happens without blocking readers
 
-        // Fast path: append to existing raw page without reading it back.
-        // When the last page is raw, not truncated, and won't overflow, just
-        // write the new pushed bytes at the end of the existing page data.
-        if let Some((page, partial_len, page_index)) = partial_page
-            && page.is_raw()
-            && starting_page_index == page_index
-            && partial_len == page.values_count(Self::PER_PAGE, Self::SIZE_OF_T)
-            && partial_len + pushed_len < Self::PER_PAGE
-        {
-            let taken = mem::take(self.base.mut_pushed());
-            let raw = S::values_to_bytes(&taken);
-            let append_at = page.end() as usize;
-            self.region().truncate_write(append_at, &raw)?;
+            let (buf, page_layouts) = this.encode_pages(&values, starting_page_index)?;
 
-            let mut pages = self.pages.write();
+            // Write the region before re-taking the pages lock to avoid deadlock.
+            this.region().truncate_write(truncate_at as usize, &buf)?;
+
+            let mut pages = this.pages.write();
             pages.truncate(starting_page_index);
-            let total_bytes = page
-                .bytes
-                .checked_add(u32::try_from(raw.len()).map_err(|_| Error::Overflow)?)
-                .ok_or(Error::Overflow)?;
-            pages.push_raw(starting_page_index, total_bytes)?;
-            self.base.update_stored_len(stored_len + pushed_len);
-            pages.flush()?;
-            return Ok(true);
-        }
 
-        // Rebuild only the bounded chunk that contains the truncation point.
-        let rewrite_from = Self::page_index_to_index(starting_page_index);
-        let mut values = if rewrite_from < stored_len {
-            self.collect_stored_range(rewrite_from, stored_len)?
-        } else {
-            vec![]
-        };
-
-        // Encode pages with no locks held. Full pages compress; the last
-        // partial page is stored raw (avoids recompression on every write).
-        let taken = mem::take(self.base.mut_pushed());
-        if values.is_empty() {
-            values = taken;
-        } else {
-            values.extend(taken);
-        }
-
-        let (buf, page_layouts) = self.encode_pages(&values, starting_page_index)?;
-
-        // Write the region before re-taking the pages lock to avoid deadlock.
-        self.region().truncate_write(truncate_at as usize, &buf)?;
-
-        let mut pages = self.pages.write();
-        pages.truncate(starting_page_index);
-
-        for (offset, &(header_bytes, body_bytes, is_raw)) in page_layouts.iter().enumerate() {
-            let page_index = starting_page_index + offset;
-            if is_raw {
-                pages.push_raw(page_index, body_bytes)?;
-            } else {
-                pages.push_compressed(page_index, header_bytes, body_bytes)?;
+            for (offset, &(header_bytes, body_bytes, is_raw)) in page_layouts.iter().enumerate() {
+                let page_index = starting_page_index + offset;
+                if is_raw {
+                    pages.push_raw(page_index, body_bytes)?;
+                } else {
+                    pages.push_compressed(page_index, header_bytes, body_bytes)?;
+                }
             }
-        }
 
-        self.base.update_stored_len(stored_len + pushed_len);
-        pages.flush()?;
+            this.base.update_stored_len(stored_len + pushed_len);
+            pages.flush()?;
 
-        Ok(true)
+            Ok(true)
+        })
     }
 
     #[inline]

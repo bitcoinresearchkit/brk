@@ -31,9 +31,8 @@ pub struct LazyDeltaVec<I: VecIndex, S: VecValue, T, Op> {
     name: Arc<str>,
     base_version: Version,
     source: ReadableBoxedVec<I, S>,
-    window_starts_version: Version,
     #[allow(clippy::type_complexity)]
-    window_starts: Arc<dyn Fn() -> Arc<Vec<I>> + Send + Sync>,
+    window_starts: ReadableBoxedVec<I, I>,
     _op: PhantomData<(Op, T)>,
 }
 
@@ -48,15 +47,13 @@ where
         name: &str,
         version: Version,
         source: ReadableBoxedVec<I, S>,
-        window_starts_version: Version,
-        window_starts: impl Fn() -> Arc<Vec<I>> + Send + Sync + 'static,
+        window_starts: ReadableBoxedVec<I, I>,
     ) -> Self {
         Self {
             name: Arc::from(name),
             base_version: version,
             source,
-            window_starts_version,
-            window_starts: Arc::new(window_starts),
+            window_starts,
             _op: PhantomData,
         }
     }
@@ -71,7 +68,6 @@ where
         starts: &[I],
         visit: impl FnOnce(&[S], usize, &[S]) -> R,
     ) -> R {
-        let starts = &starts[from..to];
         let first = starts
             .iter()
             .find_map(|start| Op::ago_index(start.to_usize()));
@@ -127,7 +123,7 @@ where
         }
 
         self.with_source_ranges(from, to, starts, |current, previous_from, previous| {
-            Self::transformed_values(from, current, &starts[from..to], previous_from, previous)
+            Self::transformed_values(from, current, starts, previous_from, previous)
                 .try_fold(init, f)
         })
     }

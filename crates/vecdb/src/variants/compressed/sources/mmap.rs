@@ -6,7 +6,7 @@ use rawdb::{Reader, Region};
 use super::super::inner::{
     COMPRESSED_PAGE_SIZE, CompressionStrategy, PageDecoder, ReadWriteCompressedVec,
 };
-use crate::{AnyStoredVec, Pages, VecIndex, VecValue, unlikely};
+use crate::{AnyStoredVec, Pages, VecIndex, VecValue, cache::CachePolicy, unlikely};
 
 /// Read-only mmap-backed source over a compressed vector.
 ///
@@ -70,7 +70,11 @@ where
         Some(&self.page_buf)
     }
 
-    pub fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
+    pub fn new<C: CachePolicy>(
+        vec: &'a ReadWriteCompressedVec<I, T, S, C>,
+        from: usize,
+        to: usize,
+    ) -> Self {
         Self::new_from_parts(vec.region(), vec.pages(), vec.stored_len(), from, to)
     }
 

@@ -3,7 +3,7 @@ use std::{marker::PhantomData, result::Result};
 use rawdb::{Reader, Region};
 
 use super::super::{RawStrategy, ReadWriteRawVec};
-use crate::{AnyStoredVec, HEADER_OFFSET, VecIndex, VecValue};
+use crate::{AnyStoredVec, HEADER_OFFSET, VecIndex, VecValue, cache::CachePolicy};
 
 /// Read-only mmap-backed source over a raw (uncompressed) vector.
 ///
@@ -34,7 +34,7 @@ where
 {
     const SIZE_OF_T: usize = size_of::<T>();
 
-    pub fn new(vec: &ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
+    pub fn new<C: CachePolicy>(vec: &ReadWriteRawVec<I, T, S, C>, from: usize, to: usize) -> Self {
         Self::new_from_parts(vec.region(), vec.stored_len(), from, to)
     }
 

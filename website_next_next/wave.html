@@ -10,7 +10,6 @@
     />
     <link rel="preconnect" href="https://bitview.space" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <title>Bitcoin HODL Wave</title>
     <style>
       @font-face {
@@ -240,6 +239,20 @@
           opacity 100ms ease;
       }
 
+      #legend li[role="button"] {
+        cursor: pointer;
+      }
+
+      #legend li[aria-pressed="false"] {
+        opacity: 0.34;
+        text-decoration: line-through;
+      }
+
+      #legend li:focus-visible {
+        outline: 1px solid var(--foreground);
+        outline-offset: -1px;
+      }
+
       #legend li[data-active="true"] {
         color: #fff;
         background: rgb(255 255 255 / 8%);
@@ -357,6 +370,7 @@
         justify-content: flex-end;
       }
 
+      #mode-controls,
       #view-controls {
         padding-left: 4px;
         border-left: 1px solid var(--rail-border);
@@ -508,6 +522,7 @@
           width: 100%;
         }
 
+        #mode-controls,
         #view-controls {
           padding-top: 3px;
           padding-left: 0;
@@ -701,6 +716,19 @@
 
         <div id="controls">
           <div
+            id="basis-controls"
+            class="control-set"
+            role="tablist"
+            aria-label="HODL Wave basis"
+          >
+            <button type="button" role="tab" data-basis="supply" aria-selected="true">
+              Supply
+            </button>
+            <button type="button" role="tab" data-basis="capital" aria-selected="false">
+              Capital
+            </button>
+          </div>
+          <div
             id="mode-controls"
             class="control-set"
             role="tablist"
@@ -715,9 +743,6 @@
             <button type="button" role="tab" data-mode="coinflow" aria-selected="false">
               Mobile
             </button>
-            <button type="button" role="tab" data-mode="capital" aria-selected="false">
-              Capital
-            </button>
             <button type="button" role="tab" data-mode="dormant" aria-selected="false">
               Dormant
             </button>
@@ -731,11 +756,11 @@
             role="tablist"
             aria-label="HODL Wave display"
           >
-            <button type="button" role="tab" data-view="share" aria-selected="true">
-              Share
-            </button>
             <button type="button" role="tab" data-view="absolute" aria-selected="false">
               Absolute
+            </button>
+            <button type="button" role="tab" data-view="share" aria-selected="true">
+              Relative
             </button>
           </div>
         </div>
@@ -748,9 +773,13 @@
       );
       const LightweightCharts = tinyViewport.matches
         ? {}
-        : await import(
-            "https://unpkg.com/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.mjs"
-          );
+        : await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://bitview.space/scripts/modules/lightweight-charts/5.2.1/dist/lightweight-charts.standalone.production.js";
+            script.onload = () => resolve(window.LightweightCharts);
+            script.onerror = () => reject(new Error("Could not load the chart library."));
+            document.head.append(script);
+          });
       tinyViewport.addEventListener("change", () => window.location.reload());
 
       function start() {
@@ -788,60 +817,63 @@
           { id: "over_15y_old", label: "15y+" },
         ];
 
-        const modes = {
-          supply: {
-            button: "Normal",
-            name: "Normal HODL Wave",
-            description: "Every live BTC counts once.",
-            totalLabel: "Live supply represented",
-            suffix: "supply",
-            unit: "btc",
-          },
+        const bases = {
+          supply: { label: "Supply", suffix: "supply", unit: "btc" },
+          capital: { label: "Capital", suffix: "realized_cap", unit: "usd" },
+        };
+        const weightings = {
+          supply: { button: "Normal" },
           cointime: {
             button: "Awake",
-            name: "Cointime weighted",
-            description: "Supply × observed wakefulness.",
-            totalLabel: "Wakefulness-weighted supply represented",
-            suffix: "awake_supply",
-            complement: { suffix: "dormant_supply", label: "Dormant" },
-            unit: "btc",
+            weight: "wakefulness",
+            description: "observed wakefulness",
+            complement: "Dormant",
           },
           coinflow: {
             button: "Mobile",
-            name: "Coinflow weighted",
-            description: "Supply × estimated lifetime mobility.",
-            totalLabel: "Mobility-weighted supply represented",
-            suffix: "mobile_supply",
-            complement: { suffix: "immobile_supply", label: "Immobile" },
-            unit: "btc",
-          },
-          capital: {
-            button: "Capital",
-            name: "Capital weighted",
-            description: "Supply × last-move price.",
-            totalLabel: "Realized capitalization represented",
-            suffix: "realized_cap",
-            unit: "usd",
+            weight: "mobility",
+            description: "estimated lifetime mobility",
+            complement: "Immobile",
           },
           dormant: {
             button: "Dormant",
-            name: "Dormancy weighted",
-            description: "Supply × (1 − observed wakefulness).",
-            totalLabel: "Dormancy-weighted supply represented",
-            suffix: "dormant_supply",
-            complement: { suffix: "awake_supply", label: "Awake" },
-            unit: "btc",
+            weight: "wakefulness",
+            description: "(1 − observed wakefulness)",
+            complement: "Awake",
+            inverted: true,
           },
           immobile: {
             button: "Immobile",
-            name: "Immobility weighted",
-            description: "Supply × (1 − estimated mobility).",
-            totalLabel: "Immobility-weighted supply represented",
-            suffix: "immobile_supply",
-            complement: { suffix: "mobile_supply", label: "Mobile" },
-            unit: "btc",
+            weight: "mobility",
+            description: "(1 − estimated lifetime mobility)",
+            complement: "Mobile",
+            inverted: true,
           },
         };
+        function modeKeyFor(basis, weighting) {
+          return basis === "supply" ? weighting
+            : weighting === "supply" ? "capital" : `capital-${weighting}`;
+        }
+        const modes = Object.fromEntries(
+          Object.entries(bases).flatMap(([basis, base]) =>
+            Object.entries(weightings).map(([weighting, weight]) => [
+              modeKeyFor(basis, weighting),
+              {
+                ...base,
+                ...weight,
+                basis,
+                weighting,
+                name: `${weight.button} ${base.label.toLowerCase()} HODL Wave`,
+                description: weight.weight
+                  ? `${base.label} × ${weight.description}.`
+                  : basis === "supply"
+                    ? "Every live BTC counts once."
+                    : "Supply × last-move price.",
+                totalLabel: `${weight.weight ? `${weight.button}-weighted ` : ""}${base.label.toLowerCase()} represented`,
+              },
+            ]),
+          ),
+        );
 
         const PALETTE = [
           "#f11325", // red
@@ -881,14 +913,17 @@
         const legendElement = document.getElementById("legend");
         const statusElement = document.getElementById("status");
         const axisUnitElement = document.getElementById("axis-unit");
+        const basisControlsElement = document.getElementById("basis-controls");
+        const basisButtons = [...basisControlsElement.querySelectorAll("button")];
         const modeControlsElement = document.getElementById("mode-controls");
         const viewControlsElement = document.getElementById("view-controls");
         const modeButtons = [...modeControlsElement.querySelectorAll("button")];
         const viewButtons = [...viewControlsElement.querySelectorAll("button")];
-        const buttons = [...modeButtons, ...viewButtons];
+        const buttons = [...basisButtons, ...modeButtons, ...viewButtons];
         const cache = new Map();
         const seriesCache = new Map();
         const legendRows = [];
+        const hiddenBands = new Set();
         const rowsByTime = new Map();
         const compactNumber = new Intl.NumberFormat("en-US", {
           notation: "compact",
@@ -938,14 +973,14 @@
           return modes[activeMode].unit === "usd" ? `$${formatted}` : formatted;
         }
 
-        function updateAxisUnit() {
+        function updateAxisUnit(rows) {
           if (activeView === "share") {
             axisDivisor = 1;
             axisUnitElement.hidden = true;
             return;
           }
 
-          const maximum = activeRows.reduce(
+          const maximum = rows.reduce(
             (current, row) =>
               Math.max(current, row.total + row.complementValue),
             0,
@@ -990,6 +1025,10 @@
             const index = ranges.length - reverseIndex - 1;
             const row = document.createElement("li");
             row.dataset.index = String(index);
+            row.dataset.band = range.id;
+            row.setAttribute("role", "button");
+            row.setAttribute("aria-pressed", "true");
+            row.tabIndex = 0;
 
             const swatch = document.createElement("i");
             swatch.className = "legend-swatch";
@@ -1009,6 +1048,9 @@
 
           const row = document.createElement("li");
           row.hidden = true;
+          row.setAttribute("role", "button");
+          row.setAttribute("aria-pressed", "true");
+          row.tabIndex = 0;
 
           const swatch = document.createElement("i");
           swatch.className = "legend-swatch";
@@ -1027,7 +1069,9 @@
           if (!row) return;
           row.shares.forEach((share, index) => {
             const absolute = row.weights[index];
-            legendRows[index].value.textContent =
+            const visible = !hiddenBands.has(ranges[index].id);
+            legendRows[index].row.setAttribute("aria-pressed", String(visible));
+            legendRows[index].value.textContent = !visible ? "—" :
               activeView === "share"
                 ? `${share.toFixed(1)}%`
                 : formatAbsolute(absolute);
@@ -1036,8 +1080,11 @@
           const hasComplement = Boolean(row.complementLabel);
           complementLegend.row.hidden = !hasComplement;
           if (hasComplement) {
+            const visible = !hiddenBands.has(row.complementLabel);
+            complementLegend.row.dataset.band = row.complementLabel;
+            complementLegend.row.setAttribute("aria-pressed", String(visible));
             complementLegend.label.textContent = row.complementLabel;
-            complementLegend.value.textContent =
+            complementLegend.value.textContent = !visible ? "—" :
               activeView === "share"
                 ? `${row.complementShare.toFixed(1)}%`
                 : formatAbsolute(row.complementValue);
@@ -1080,7 +1127,7 @@
             });
           }
           const dominant = candidates
-            .filter(({ share }) => Number.isFinite(share))
+            .filter(({ share }) => Number.isFinite(share) && share > 0)
             .sort((left, right) => right.share - left.share)[0];
           dominantWaveValueElement.textContent = dominant
             ? `${dominant.label} · ${dominant.share.toFixed(1)}%`
@@ -1092,11 +1139,12 @@
           updateLegend(row);
         }
 
-        function fetchSeries(name) {
-          if (seriesCache.has(name)) return seriesCache.get(name);
+        function fetchSeries(name, latest = false) {
+          const key = `${name}:${latest}`;
+          if (seriesCache.has(key)) return seriesCache.get(key);
 
           const request = fetch(
-            `${API}/series/${encodeURIComponent(name)}/day1`,
+            `${API}/series/${encodeURIComponent(name)}/day1${latest ? "/latest" : ""}`,
             {
               cache: "no-cache",
               signal: AbortSignal.timeout(30_000),
@@ -1105,7 +1153,8 @@
             if (!response.ok) {
               throw new Error(`${name}: Bitview returned ${response.status}`);
             }
-            const data = await response.json();
+            const json = await response.json();
+            const data = latest ? { start: 0, end: 1, data: [json] } : json;
             if (
               !Number.isFinite(data.start) ||
               !Number.isFinite(data.end) ||
@@ -1116,146 +1165,115 @@
             return data;
           });
 
-          seriesCache.set(name, request);
-          request.catch(() => seriesCache.delete(name));
+          seriesCache.set(key, request);
+          request.catch(() => seriesCache.delete(key));
           return request;
         }
 
-        async function fetchMode(modeKey, onProgress) {
-          if (cache.has(modeKey)) return cache.get(modeKey);
+        function visibleRow(row, hidden = new Set()) {
+          const weights = row.weights.map((value, index) =>
+            hidden.has(ranges[index].id) ? 0 : value,
+          );
+          const complementValue = hidden.has(row.complementLabel)
+            ? 0 : row.complementValue;
+          const total = weights.reduce((sum, value) => sum + value, 0);
+          const chartTotal = total + complementValue;
+          const shares = weights.map((value) => chartTotal > 0 ? value / chartTotal * 100 : 0);
+          const complementShare = chartTotal > 0 ? complementValue / chartTotal * 100 : 0;
+          const absoluteValues = [0];
+          weights.forEach((value) => absoluteValues.push(absoluteValues.at(-1) + value));
+          if (row.complementLabel) absoluteValues.push(chartTotal);
+          const shareValues = absoluteValues.map((value) => chartTotal > 0 ? value / chartTotal * 100 : 0);
+          return {
+            ...row, weights, total, complementValue, shares, complementShare,
+            absoluteValues, shareValues,
+          };
+        }
+
+        async function fetchMode(modeKey, onProgress, latest = false) {
+          const key = `${modeKey}:${latest}`;
+          if (cache.has(key)) return cache.get(key);
 
           const definition = modes[modeKey];
           const names = ranges.map(
             ({ id }) => `utxos_${id}_${definition.suffix}`,
           );
-          const complementNames = definition.complement
-            ? ranges.map(
-                ({ id }) =>
-                  `utxos_${id}_${definition.complement.suffix}`,
-              )
+          const weightNames = definition.weight
+            ? ranges.map(({ id }) => `utxos_${id}_${definition.weight}`)
             : [];
-          const requestCount = names.length + complementNames.length;
+          const requestCount = names.length + weightNames.length;
           let completedRequests = 0;
           const loadSeries = (name) =>
-            fetchSeries(name).then((response) => {
+            fetchSeries(name, latest).then((response) => {
               completedRequests += 1;
               onProgress?.(completedRequests, requestCount);
               return response;
             });
 
           onProgress?.(0, requestCount);
-          const [responses, complementResponses] = await Promise.all([
+          const [responses, weightResponses] = await Promise.all([
             Promise.all(names.map(loadSeries)),
-            Promise.all(complementNames.map(loadSeries)),
+            Promise.all(weightNames.map(loadSeries)),
           ]);
-          const allResponses = [...responses, ...complementResponses];
+          const allResponses = [...responses, ...weightResponses];
 
           const start = Math.max(...allResponses.map(({ start }) => start));
           const end = Math.min(...allResponses.map(({ end }) => end));
           const rows = [];
 
           for (let day = start; day < end; day += 1) {
-            const weights = responses.map((response) => {
+            const rawValues = responses.map((response) => {
               const value = Number(response.data[day - response.start]);
               return Number.isFinite(value) && value > 0 ? value : 0;
+            });
+            const factors = weightResponses.map((response) => {
+              const value = response.data[day - response.start];
+              return typeof value === "number" && Number.isFinite(value)
+                ? Math.max(0, Math.min(1, value)) : NaN;
+            });
+            // A missing weight must not become a full complement allocation.
+            if (factors.some(
+              (factor, index) => !Number.isFinite(factor) && rawValues[index] > 0,
+            )) continue;
+            const weights = rawValues.map((value, index) => {
+              if (!definition.weight) return value;
+              const factor = factors[index];
+              return value > 0
+                ? value * (definition.inverted ? 1 - factor : factor)
+                : 0;
             });
             const total = weights.reduce((sum, value) => sum + value, 0);
-            const complementWeights = complementResponses.map((response) => {
-              const value = Number(response.data[day - response.start]);
-              return Number.isFinite(value) && value > 0 ? value : 0;
-            });
-            const complementValue = complementWeights.reduce(
-              (sum, value) => sum + value,
-              0,
-            );
-            const chartTotal = total + complementValue;
+            const chartTotal = rawValues.reduce((sum, value) => sum + value, 0);
+            const complementValue = definition.weight
+              ? Math.max(0, chartTotal - total)
+              : 0;
             if (!(chartTotal > 0)) continue;
 
-            const shares = weights.map((value) => (value / chartTotal) * 100);
-            const complementShare = (complementValue / chartTotal) * 100;
-            const shareValues = [0];
-            const absoluteValues = [0];
-            let cumulativeShare = 0;
-            let cumulativeAbsolute = 0;
-            shares.forEach((share) => {
-              cumulativeShare += share;
-              shareValues.push(cumulativeShare);
-            });
-            weights.forEach((weight) => {
-              cumulativeAbsolute += weight;
-              absoluteValues.push(cumulativeAbsolute);
-            });
-            if (definition.complement) {
-              shareValues.push(cumulativeShare + complementShare);
-              absoluteValues.push(cumulativeAbsolute + complementValue);
-            }
-            shareValues[shareValues.length - 1] = 100;
-            absoluteValues[absoluteValues.length - 1] = chartTotal;
-
-            rows.push({
+            rows.push(visibleRow({
               time: dayToDate(day),
-              shareValues,
-              absoluteValues,
-              shares,
               weights,
-              total,
-              complementLabel: definition.complement?.label ?? null,
-              complementShare,
+              complementLabel: definition.complement ?? null,
               complementValue,
-            });
+            }));
           }
 
           if (!rows.length) throw new Error("No HODL Wave data is available");
-          cache.set(modeKey, rows);
+          cache.set(key, rows);
           return rows;
         }
 
         async function loadTiny() {
-          const queryMode = new URLSearchParams(location.search).get("mode");
-          let savedMode = queryMode;
-          if (!Object.hasOwn(modes, savedMode)) {
-            try {
-              savedMode = localStorage.getItem(PREFERENCE_KEY);
-            } catch (_) {}
-          }
-          const modeKey = Object.hasOwn(modes, savedMode) ? savedMode : "supply";
-          const definition = modes[modeKey];
-          const latest = async (name) => {
-            const response = await fetch(
-              `${API}/series/${encodeURIComponent(name)}/day1/latest`,
-              { cache: "no-cache", signal: AbortSignal.timeout(8_000) },
-            );
-            if (!response.ok) throw new Error(`${name}: ${response.status}`);
-            const value = Number(await response.json());
-            return Number.isFinite(value) && value > 0 ? value : 0;
-          };
-
           try {
-            const weights = await Promise.all(
-              ranges.map(({ id }) => latest(`utxos_${id}_${definition.suffix}`)),
-            );
-            const complementWeights = definition.complement
-              ? await Promise.all(
-                  ranges.map(({ id }) =>
-                    latest(`utxos_${id}_${definition.complement.suffix}`),
-                  ),
-                )
-              : [];
-            const complementValue = complementWeights.reduce(
-              (sum, value) => sum + value,
-              0,
-            );
-            const total = weights.reduce((sum, value) => sum + value, 0);
-            const chartTotal = total + complementValue;
-            const candidates = weights.map((value, index) => ({
-              share: chartTotal > 0 ? (value / chartTotal) * 100 : 0,
+            const [row] = await fetchMode(initialMode(), undefined, true);
+            const candidates = row.shares.map((share, index) => ({
+              share,
               label: ranges[index].label,
               color: colors[index],
             }));
-            if (definition.complement && complementValue > 0) {
+            if (row.complementLabel && row.complementValue > 0) {
               candidates.push({
-                share: (complementValue / chartTotal) * 100,
-                label: definition.complement.label,
+                share: row.complementShare,
+                label: row.complementLabel,
                 color: COMPLEMENT_COLOR,
               });
             }
@@ -1495,16 +1513,16 @@
         function renderActiveRows() {
           if (!activeRows.length) return;
 
-          updateAxisUnit();
           const visibleRange = fitted
             ? chart.timeScale().getVisibleLogicalRange()
             : null;
           const valueKey =
             activeView === "share" ? "shareValues" : "absoluteValues";
-          const displayRows = activeRows.map((row) => ({
-            ...row,
-            values: row[valueKey],
-          }));
+          const displayRows = activeRows.map((row) => {
+            const visible = visibleRow(row, hiddenBands);
+            return { ...visible, values: visible[valueKey] };
+          });
+          updateAxisUnit(displayRows);
 
           latestRow = displayRows.at(-1) ?? null;
           rowsByTime.clear();
@@ -1545,7 +1563,7 @@
           modeNameElement.textContent = definition.name;
           modeDescriptionElement.textContent = definition.description;
           totalLabelElement.textContent = definition.totalLabel;
-          document.title = `${definition.button} Bitcoin HODL Wave`;
+          document.title = `Bitcoin ${definition.name}`;
           chartElement.setAttribute(
             "aria-label",
             `Bitcoin ${definition.name} by UTXO age, ${activeView} view`,
@@ -1595,12 +1613,7 @@
           if (!initial && modeKey === activeMode && activeRows.length) return;
 
           const token = ++requestToken;
-          modeButtons.forEach((button) => {
-            button.setAttribute(
-              "aria-selected",
-              String(button.dataset.mode === modeKey),
-            );
-          });
+          updateControls(modeKey);
           setBusy(true);
           setStatus(`Loading ${modes[modeKey].name}…`);
 
@@ -1622,12 +1635,7 @@
               `Could not load ${modes[modeKey].button}. Check the connection and try again.`,
               true,
             );
-            modeButtons.forEach((button) => {
-              button.setAttribute(
-                "aria-selected",
-                String(button.dataset.mode === activeMode),
-              );
-            });
+            updateControls(activeMode);
           } finally {
             if (token === requestToken) setBusy(false);
           }
@@ -1652,15 +1660,51 @@
           const percent = waveSeries.coordinateToPrice(parameter.point.y);
           const index = row.values.findIndex(
             (upper, rangeIndex) =>
-              rangeIndex > 0 && percent <= upper && percent >= row.values[rangeIndex - 1],
+              rangeIndex > 0 && upper > row.values[rangeIndex - 1] &&
+              percent <= upper && percent >= row.values[rangeIndex - 1],
           );
           highlightBand(index - 1);
+        });
+
+        function toggleBand(event) {
+          const item = event.target.closest("[data-band]");
+          if (!item || !legendElement.contains(item)) return;
+          const key = item.dataset.band;
+          if (hiddenBands.has(key)) hiddenBands.delete(key);
+          else hiddenBands.add(key);
+          renderActiveRows();
+        }
+
+        legendElement.addEventListener("click", toggleBand);
+        legendElement.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          toggleBand(event);
+        });
+
+        function updateControls(modeKey) {
+          basisButtons.forEach((button) => {
+            button.setAttribute("aria-selected", String(
+              button.dataset.basis === modes[modeKey].basis,
+            ));
+          });
+          modeButtons.forEach((button) => {
+            button.setAttribute("aria-selected", String(
+              button.dataset.mode === modes[modeKey].weighting,
+            ));
+          });
+        }
+
+        basisControlsElement.addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-basis]");
+          if (!button || button.disabled) return;
+          activateMode(modeKeyFor(button.dataset.basis, modes[activeMode].weighting));
         });
 
         modeControlsElement.addEventListener("click", (event) => {
           const button = event.target.closest("button[data-mode]");
           if (!button || button.disabled) return;
-          activateMode(button.dataset.mode);
+          activateMode(modeKeyFor(modes[activeMode].basis, button.dataset.mode));
         });
 
         viewControlsElement.addEventListener("click", (event) => {

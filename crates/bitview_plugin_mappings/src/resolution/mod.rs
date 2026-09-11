@@ -6,25 +6,20 @@ use brk_types::Height;
 use vecdb::{ReadableCloneableVec, VecIndex};
 
 pub use self::dated::DatedResolutionVecs;
-pub use bitview_vecs::{CachedDateVec, CachedFirstHeightVec};
 
-/// Resolution with a pinned, storage-free first-height lookup.
+/// Resolution with a storage-free first-height lookup.
 #[derive(Clone, Traversable)]
 pub struct ResolutionVecs<I: VecIndex> {
     /// Lowest block height whose resolution index is at least the requested
     /// index. Empty indexes therefore use the first height of the next populated
     /// index; indexes preceding the first populated one resolve to height 0.
-    pub first_height: CachedFirstHeightVec<I>,
+    pub first_height: LazyFirstHeightVec<I>,
 }
 
 impl<I: VecIndex> ResolutionVecs<I> {
     pub fn new(mapping: &impl ReadableCloneableVec<Height, I>) -> Self {
         Self {
-            first_height: CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(mapping)),
+            first_height: LazyFirstHeightVec::new(mapping),
         }
-    }
-
-    pub fn invalidate_timestamp_caches(&self) {
-        self.first_height.invalidate();
     }
 }

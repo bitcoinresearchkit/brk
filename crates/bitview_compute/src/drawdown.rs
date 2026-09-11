@@ -2,7 +2,7 @@ use brk_error::Result;
 
 use brk_exit::Exit;
 use brk_types::PartsPerMillionSigned32;
-use vecdb::{EagerVec, PcoVec, ReadableVec, VecIndex, VecValue};
+use vecdb::{CachePolicy, EagerVec, PcoVec, ReadableVec, VecIndex, VecValue};
 
 pub trait ComputeDrawdown<I: VecIndex> {
     fn compute_drawdown<C, A>(
@@ -18,7 +18,7 @@ pub trait ComputeDrawdown<I: VecIndex> {
         f64: From<C> + From<A>;
 }
 
-impl<I> ComputeDrawdown<I> for EagerVec<PcoVec<I, PartsPerMillionSigned32>>
+impl<I, P: CachePolicy> ComputeDrawdown<I> for EagerVec<PcoVec<I, PartsPerMillionSigned32, P>>
 where
     I: VecIndex,
 {

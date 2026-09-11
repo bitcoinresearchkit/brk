@@ -8,8 +8,8 @@ mod tests {
     use brk_types::{Height, PartsPerMillion32, StoredU16, StoredU64};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, BinaryTransform, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadableCloneableVec, ReadableVec, ReverseOperands, Version, WritableVec,
+        AnyStoredVec, BinaryTransform, Budgeted, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableCloneableVec, ReadableVec, ReverseOperands, Version, WritableVec,
     };
 
     #[cfg(feature = "diagnostics")]
@@ -42,7 +42,7 @@ mod tests {
         denominator.write().unwrap();
         starts.write().unwrap();
 
-        let denominator = CumulativeCountVec::new(&CachedVec::wrap(denominator));
+        let denominator = CumulativeCountVec::new(&denominator);
         let cumulative = LazyIndexedVec::new(
             "cumulative",
             Version::ONE,
@@ -50,7 +50,6 @@ mod tests {
             &numerator,
             |_, count, numerator| RatioU64::<PartsPerMillion32>::apply(numerator, count),
         );
-        let starts = CachedVec::wrap(starts);
         let rolling = LazyRollingRatioVec::<
             StoredU64,
             StoredU64,
@@ -82,24 +81,25 @@ mod tests {
         {
             use crate::common::CACHE_BUDGET;
             const N: usize = 32_768;
-            let numerator = CACHE_BUDGET.wrap(common::stored::<Height, _>(
-                &db,
-                "cold_numerator",
-                (0..N).map(|i| StoredU64::from((i as u64 + 1) * 3)),
-            ));
-            let counts = CachedVec::wrap(common::stored::<Height, _>(
-                &db,
-                "cold_counts",
-                (0..N).map(|_| StoredU16::new(1)),
-            ));
-            let starts = CachedVec::wrap(common::stored::<Height, _>(
+            let mut numerator =
+                EagerVec::<PcoVec<Height, StoredU64, Budgeted>>::forced_import_with(
+                    ImportOptions::new(&db, "cold_numerator", Version::ONE)
+                        .with_cache_budget(&CACHE_BUDGET),
+                )
+                .unwrap();
+            for i in 0..N {
+                numerator.push(StoredU64::from((i as u64 + 1) * 3));
+            }
+            numerator.write().unwrap();
+            let block_counts =
+                common::stored::<Height, _>(&db, "cold_counts", (0..N).map(|_| StoredU16::new(1)));
+            let starts = common::stored::<Height, _>(
                 &db,
                 "cold_starts",
                 (0..N).map(|i| Height::from(i.saturating_sub(N / 2))),
-            ));
-            let counts = CumulativeCountVec::new(&counts);
+            );
+            let counts = CumulativeCountVec::new(&block_counts);
             counts.collect_one_at(N - 1).unwrap();
-            starts.snapshot();
             let cumulative = LazyIndexedVec::new(
                 "cold_cumulative",
                 Version::ONE,
@@ -119,7 +119,11 @@ mod tests {
                 rolling.read_only_boxed_clone(),
             ] {
                 for sorted in [false, true] {
-                    numerator.invalidate();
+                    CACHE_BUDGET.clear();
+                    // Eviction also clears metadata now; warm it before counting
+                    // only the cold numerator's selective reads.
+                    block_counts.collect();
+                    starts.collect();
                     diagnostics::take();
                     let values = if sorted {
                         view.read_sorted_at(&[N - 8, N - 3, N - 1])

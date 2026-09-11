@@ -3,9 +3,7 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::StoredU64ToStoredU32;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, LazyPerBlockCumulativeAverage, PerBlockCumulativeRolling,
-};
+use bitview_vecs::{LazyPerBlockCumulativeAverage, LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_types::{StoredU32, StoredU64, Version};
 use rayon::prelude::*;
@@ -53,7 +51,7 @@ impl AddrActivityVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
         let import = |name: &str| -> Result<_> {
@@ -64,7 +62,7 @@ impl AddrActivityVecs {
                     name,
                     cumulative_version + Version::ONE,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             };
             Ok(WithAddrTypes {
@@ -81,7 +79,7 @@ impl AddrActivityVecs {
                     version,
                     &source.all.cumulative.height,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 ),
                 by_addr_type: AddrTypeId::series(|id, type_name| {
                     LazyPerBlockCumulativeAverage::new(
@@ -89,7 +87,7 @@ impl AddrActivityVecs {
                         version,
                         &id.select(&source.by_addr_type).cumulative.height,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )
                 }),
             }

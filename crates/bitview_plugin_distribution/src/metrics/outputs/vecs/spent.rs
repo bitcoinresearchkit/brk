@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOGroups};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlockCumulativeRolling};
+use bitview_vecs::{LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{StoredU64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -23,7 +23,7 @@ impl SpentOutputCount {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = CumulativeUTXOSources::forced_import(
@@ -41,7 +41,7 @@ impl SpentOutputCount {
                     .stored
                     .get(cohort_id)
                     .expect("spent-output cohort source"),
-                cached_starts,
+                window_starts,
                 mappings,
             )
         });

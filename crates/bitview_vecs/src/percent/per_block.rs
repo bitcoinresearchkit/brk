@@ -6,8 +6,8 @@ use brk_exit::Exit;
 use brk_types::{Height, StoredF32, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{
-    BinaryTransform, CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode,
-    VecValue,
+    BinaryTransform, Budgeted, CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw,
+    StorageMode, VecValue,
 };
 
 use crate::{IndexSources, LazyPerBlock, PerBlock};
@@ -74,7 +74,7 @@ impl<B: FixedRatio> PercentPerBlock<B> {
         C: VecValue,
         A: VecValue,
         f64: From<C> + From<A>,
-        EagerVec<PcoVec<Height, B>>: ComputeDrawdown<Height>,
+        EagerVec<PcoVec<Height, B, Budgeted>>: ComputeDrawdown<Height>,
     {
         self.ppm
             .height

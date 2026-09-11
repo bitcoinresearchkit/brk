@@ -5,13 +5,14 @@ use rawdb::Region;
 use super::{RawStrategy, ReadOnlyRawVec};
 use crate::{
     HEADER_OFFSET, RawIoSource, RawMmapSource, RawRangeCursor, VecIndex, VecReader, VecValue,
+    cache::CachePolicy,
 };
 
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
 
-impl<I, T, S> ReadOnlyRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> ReadOnlyRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

@@ -14,11 +14,11 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &ByLookbackPeriod<&impl ReadableCloneableVec<Height, Height>>,
+    window_starts: &ByLookbackPeriod<&impl ReadableCloneableVec<Height, Height>>,
     prices: &PriceVecs,
 ) -> Result<Vecs> {
     let periods =
-        ByLookbackPeriod::try_from_period(cached_starts, |name, _days, window_starts| {
+        ByLookbackPeriod::try_from_period(window_starts, |name, _days, window_starts| {
             let metric_name = format!("price_return_{name}");
             let source = LazyWindowVec::<Height, Dollars, PartsPerMillionSigned64>::new(
                 &format!("{metric_name}_ppm_source"),

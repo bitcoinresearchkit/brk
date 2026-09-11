@@ -1,8 +1,9 @@
 #![cfg(feature = "serde")]
 
+mod common;
+
 use std::{
     panic::{AssertUnwindSafe, catch_unwind},
-    sync::Arc,
     thread,
 };
 
@@ -75,9 +76,8 @@ fn nested_lazy_inputs_keep_bounds_without_an_ambient_scope_and_after_thread_hand
     let last = LazyAggVec::<usize, Option<u64>, usize, usize, u64>::new(
         "last",
         Version::ONE,
-        Version::ONE,
         source.read_only_boxed_clone(),
-        || Arc::new(vec![0]),
+        common::mapping(&db, [0]),
     );
     assert_eq!(last.collect_one_at(0), Some(Some(30)));
     let mut bounds = ReadBounds::new();

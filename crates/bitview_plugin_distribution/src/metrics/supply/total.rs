@@ -8,7 +8,7 @@ use bitview_vecs::{LazyIndexedVec, LazyPerBlock, LazySpotValuePerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Ident, ReadableBoxedVec,
+    AnyStoredVec, BinaryTransform, CacheBudget, Database, Ident, ReadableBoxedVec,
     ReadableCloneableVec, Rw, StorageMode,
 };
 
@@ -33,7 +33,7 @@ impl SupplyTotal {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "supply_sats", version)?;
         let all_name = CohortContext::Utxo.metric_name(CohortId::All, "supply");

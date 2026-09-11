@@ -5,7 +5,10 @@ use std::{hint::black_box, time::Instant};
 use brk_types::{BlockSizeEntry, BlockSizesWeights, BlockWeightEntry, StoredU64, Version, Weight};
 use serde_json::to_vec;
 use tempfile::tempdir;
-use vecdb::{AnyStoredVec, CachedVec, Database, ImportableVec, PcoVec, WritableVec};
+use vecdb::{
+    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec,
+    WritableVec,
+};
 
 use super::*;
 use crate::RepresentationId;
@@ -34,11 +37,13 @@ fn benchmark_full_history_storage() {
     sizes.write().unwrap();
     weights.write().unwrap();
     // Reopen so persisted compressed sources, not pending write buffers, feed
-    // the production window reader. Timestamp wrapping matches the indexer.
+    // the production window reader. Timestamp retention matches the indexer.
     drop((times, sizes, weights));
-    let times = CachedVec::wrap(
-        PcoVec::<Height, Timestamp>::forced_import(&database, "timestamps", Version::ONE).unwrap(),
-    );
+    static CACHE: CacheBudget = CacheBudget::new(16 * 1024 * 1024);
+    let times = PcoVec::<Height, Timestamp, Budgeted>::forced_import_with(
+        ImportOptions::new(&database, "timestamps", Version::ONE).with_cache_budget(&CACHE),
+    )
+    .unwrap();
     let sizes: PcoVec<Height, StoredU64> =
         PcoVec::forced_import(&database, "sizes", Version::ONE).unwrap();
     let weights: PcoVec<Height, Weight> =
@@ -49,7 +54,7 @@ fn benchmark_full_history_storage() {
         let mut samples = Vec::new();
         for round in 0..24 {
             if !resident_times {
-                times.invalidate();
+                CACHE.clear();
             }
             let started = Instant::now();
             let timestamps = times.collect_range(Height::ZERO, Height::new(ROWS));

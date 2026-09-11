@@ -7,7 +7,7 @@ use bitview_plugin::{
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, POOL_ATTRIBUTION_VERSION, PoolSlug, Pools, TxOutIndex, pools};
@@ -63,7 +63,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let pools = pools();
@@ -88,7 +88,7 @@ impl Vecs {
                         pool_heights.clone(),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )?,
                 );
             } else {
@@ -99,7 +99,7 @@ impl Vecs {
                         pool_heights.clone(),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     ),
                 );
             }

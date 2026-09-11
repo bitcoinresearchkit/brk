@@ -6,6 +6,7 @@ mod lazy_previous_delta_vec;
 mod lazy_rolling_ratio_vec;
 mod lazy_since_day_vec;
 mod lazy_window_vec;
+mod prefix_sum_checkpoints;
 
 pub use cumulative_count_vec::CumulativeCountVec;
 pub use index::{LazyCumulativeIndexVec, LazyIndexCountVec};
@@ -17,6 +18,7 @@ pub use lazy_since_day_vec::LazySinceDayVec;
 pub use lazy_window_vec::LazyWindowVec;
 mod ohlc;
 mod sma;
+mod sma_average;
 mod sma_prefix_sum;
 pub use ohlc::LazyOhlcVec;
 pub use sma::LazySmaVec;

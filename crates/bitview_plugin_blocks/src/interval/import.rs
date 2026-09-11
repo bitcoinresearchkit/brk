@@ -1,6 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeAverage};
+use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeAverage};
 use brk_error::Result;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database};
@@ -13,7 +13,7 @@ impl Vecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let interval = PerBlockCumulativeAverage::forced_import(
             cache,
@@ -21,7 +21,7 @@ impl Vecs {
             "block_interval",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self(interval))

@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPercentCumulativeRolling, PerBlockCumulativeRolling};
+use bitview_vecs::{LazyPercentCumulativeRolling, LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_types::{Height, PartsPerMillion32, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use vecdb::{ReadableCloneableVec, Rw, StorageMode};
@@ -24,7 +24,7 @@ impl FeesSeries {
         version: Version,
         fees: PerBlockCumulativeRolling<Sats>,
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         mappings: &MappingsVecs,
     ) -> Self {
         let fee_share = LazyPercentCumulativeRolling::from_cumulative_ratio::<
@@ -36,7 +36,7 @@ impl FeesSeries {
             version,
             fees.cumulative.resolutions.height_source(),
             chain_fees,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

@@ -15,7 +15,7 @@ fn benchmark_median_time_reads() {
     let mut blocks = BlocksVecs::forced_import(&CACHE, &db, Version::ONE).unwrap();
     let end = 1_000_000;
     for height in 0..end {
-        blocks.timestamp.inner.push(Timestamp::from(
+        blocks.timestamp.push(Timestamp::from(
             1_231_006_505 + (height * 600) as u32 + ((height * 7919) % 1800) as u32,
         ));
     }
@@ -23,13 +23,14 @@ fn benchmark_median_time_reads() {
     blocks.compute_median_times().unwrap();
     eprintln!("median-time backfill {end} rows: {:?}", started.elapsed());
     let stamp = Stamp::from((end - 1) as u64);
-    blocks.timestamp.inner.stamped_write(stamp).unwrap();
+    blocks.timestamp.stamped_write(stamp).unwrap();
     blocks.median_time.stamped_write(stamp).unwrap();
     db.flush().unwrap();
 
     for warm in [false, true] {
+        CACHE.clear();
         if warm {
-            blocks.timestamp.snapshot();
+            blocks.timestamp.collect();
         }
         // Historical compressed pages as well as the raw partial tip page.
         for end in [900_000, end] {
@@ -37,10 +38,7 @@ fn benchmark_median_time_reads() {
                 let begin = end - count;
                 let read = |stored: bool| {
                     let from = if stored { begin } else { begin - 10 };
-                    let timestamps = match blocks.timestamp.cached_snapshot() {
-                        Some(values) => values[from..end].to_vec(),
-                        None => blocks.timestamp.inner.collect_range_at(from, end),
-                    };
+                    let timestamps = blocks.timestamp.collect_range_at(from, end);
                     let medians = stored.then(|| blocks.median_time.collect_range_at(begin, end));
                     let mut rows = Vec::with_capacity(count);
                     for height in (begin..end).rev() {

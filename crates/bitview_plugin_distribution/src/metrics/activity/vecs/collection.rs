@@ -3,7 +3,7 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{DaysToYears, SatsToCents};
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlock, RollingWindows};
+use bitview_vecs::{LazyPerBlock, LazyWindowStartVec, RollingWindows};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredF32, StoredF64, Version};
@@ -49,7 +49,7 @@ impl ActivityVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Box<Self>> {
         let aggregate_version = version;
         let version = version + Version::ONE;
@@ -59,17 +59,17 @@ impl ActivityVecs {
             "transfer_volume",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?);
         let coindays_destroyed =
-            CoindaysDestroyedByCohort::forced_import(cache, db, version, mappings, cached_starts)?;
+            CoindaysDestroyedByCohort::forced_import(cache, db, version, mappings, window_starts)?;
         let transfer_volume_in_profit = Box::new(CoreCumulativeValueByCohort::forced_import(
             cache,
             db,
             "transfer_volume_in_profit",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?);
         let transfer_volume_in_loss = Box::new(CoreCumulativeValueByCohort::forced_import(
             cache,
@@ -77,7 +77,7 @@ impl ActivityVecs {
             "transfer_volume_in_loss",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?);
         let coinyears_destroyed = UTXOAggregate::from_fn(|id| {
             let cohort_id = id.cohort();

@@ -7,7 +7,7 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use schemars::JsonSchema;
-use vecdb::{CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode};
+use vecdb::{Budgeted, CacheBudget, Database, EagerVec, PcoVec, ReadableVec, Rw, StorageMode};
 
 use crate::{IndexSources, RollingWindows, WindowStarts};
 
@@ -63,7 +63,7 @@ where
 
         macro_rules! window {
             ($w:ident) => {
-                DistributionStats::<&mut EagerVec<PcoVec<Height, T>>> {
+                DistributionStats::<&mut EagerVec<PcoVec<Height, T, Budgeted>>> {
                     min: &mut min.$w.height,
                     max: &mut max.$w.height,
                     pct10: &mut pct10.$w.height,

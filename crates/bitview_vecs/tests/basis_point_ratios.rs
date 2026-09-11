@@ -7,8 +7,8 @@ use brk_types::{BasisPoints32, Dollars, Height, Version};
 use common::{indexes, stored};
 use tempfile::tempdir;
 use vecdb::{
-    AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, CachedVec, Database, ReadableVec,
-    WritableVec,
+    AnySerializableVec, AnyStoredVec, AnyVec, BinaryTransform, Database, ReadableCloneableVec,
+    ReadableVec, WritableVec,
 };
 
 use crate::common::CACHE_BUDGET;
@@ -21,8 +21,7 @@ fn stored_and_lazy_views_publish_bps_not_ppm() {
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = indexes(&db);
     indexes.first_height.day1 =
-        CachedVec::wrap(stored(&db, "bps_days", [0usize, 2, 4].map(Height::from)))
-            .read_only_boxed_clone();
+        stored(&db, "bps_days", [0usize, 2, 4].map(Height::from)).read_only_boxed_clone();
     let values = [
         BasisPoints32::ZERO,
         BasisPoints32::ONE,

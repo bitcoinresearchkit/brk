@@ -2,33 +2,32 @@ use std::convert::Infallible;
 
 use brk_types::{Day1, Dollars, Height, Sats, Version};
 use vecdb::{
-    AnyVec, CachedVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec, TypedVec,
-    VecIndex, short_type_name,
+    AnyVec, PrintableIndex, ReadOnlyClone, ReadableBoxedVec, ReadableVec, TypedVec, VecIndex,
+    short_type_name,
 };
 
 use super::DCA_AMOUNT;
 
-/// Small pinned cumulative DCA cache indexed by day.
+/// Cumulative daily purchases projected onto the monotonic height-to-day mapping.
 #[derive(Clone)]
-pub struct CachedDcaSats {
-    daily: CachedVec<DcaSatsByDay>,
+pub struct DcaSats {
+    daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
     days: ReadableBoxedVec<Height, Day1>,
 }
 
-impl CachedDcaSats {
+impl DcaSats {
     pub fn new(
         daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
         days: impl ReadableVec<Height, Day1> + Clone + 'static,
     ) -> Self {
         Self {
-            daily: CachedVec::wrap(DcaSatsByDay { daily_close }),
+            daily_close,
             days: ReadableBoxedVec::new(days),
         }
     }
 
-    /// Daily closes can be rewritten without changing their length.
-    pub fn invalidate(&self) {
-        self.daily.invalidate();
+    fn sats_at_price(price: Dollars) -> Sats {
+        Sats::from_dollars_at_price(DCA_AMOUNT, price)
     }
 
     fn try_for_each_value<E>(
@@ -37,18 +36,33 @@ impl CachedDcaSats {
         to: usize,
         mut each: impl FnMut(Sats) -> Result<(), E>,
     ) -> Result<(), E> {
-        let days = self.days.snapshot();
-        let daily = self.daily.snapshot();
-        let to = to.min(days.len());
-        if from >= to {
-            return Ok(());
-        }
-
-        let last = daily.last().copied().unwrap_or_default();
-        for day in &days[from..to] {
-            each(daily.get(day.to_usize()).copied().unwrap_or(last))?;
+        let days = self.days.collect_range_dyn(from, to);
+        for value in self.daily_values(&days) {
+            each(value)?;
         }
         Ok(())
+    }
+
+    fn daily_values(&self, days: &[Day1]) -> Vec<Sats> {
+        let Some(last) = self.daily_close.len().checked_sub(1) else {
+            return vec![Sats::ZERO; days.len()];
+        };
+        let to = days.last().map_or(0, |day| day.to_usize().min(last) + 1);
+        let mut values = Vec::with_capacity(days.len());
+        let mut cumulative = Sats::ZERO;
+        let mut day = 0;
+        // One forward pass serves every requested day, including duplicates.
+        self.daily_close.for_each_range_dyn_at(0, to, &mut |price| {
+            cumulative += Self::sats_at_price(price.unwrap_or_default());
+            while days
+                .get(values.len())
+                .is_some_and(|requested| requested.to_usize().min(last) == day)
+            {
+                values.push(cumulative);
+            }
+            day += 1;
+        });
+        values
     }
 
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(Sats)) {
@@ -63,9 +77,9 @@ impl CachedDcaSats {
     }
 }
 
-impl AnyVec for CachedDcaSats {
+impl AnyVec for DcaSats {
     fn version(&self) -> Version {
-        self.days.version() + self.daily.version()
+        self.days.version() + self.daily_close.version()
     }
 
     fn name(&self) -> &str {
@@ -93,12 +107,12 @@ impl AnyVec for CachedDcaSats {
     }
 }
 
-impl TypedVec for CachedDcaSats {
+impl TypedVec for DcaSats {
     type I = Height;
     type T = Sats;
 }
 
-impl ReadableVec<Height, Sats> for CachedDcaSats {
+impl ReadableVec<Height, Sats> for DcaSats {
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Sats>) {
         buf.reserve(to.min(self.len()).saturating_sub(from));
         self.for_each_value(from, to, |value| buf.push(value));
@@ -138,157 +152,26 @@ impl ReadableVec<Height, Sats> for CachedDcaSats {
     }
 
     fn collect_one_at(&self, index: usize) -> Option<Sats> {
-        let days = self.days.snapshot();
-        let daily = self.daily.snapshot();
-        let day = days.get(index)?;
-        let last = daily.last().copied().unwrap_or_default();
-        Some(daily.get(day.to_usize()).copied().unwrap_or(last))
+        let day = self.days.collect_one_at(index)?.to_usize();
+        Some(self.daily_close.fold_range_at(
+            0,
+            day.saturating_add(1).min(self.daily_close.len()),
+            Sats::ZERO,
+            |sum, price| sum + Self::sats_at_price(price.unwrap_or_default()),
+        ))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Sats>) {
-        let days = self.days.snapshot();
-        let daily = self.daily.snapshot();
-        let last = daily.last().copied().unwrap_or_default();
-
-        out.reserve(indices.len());
-        indices
-            .iter()
-            .take_while(|&&index| index < days.len())
-            .for_each(|&index| {
-                out.push(daily.get(days[index].to_usize()).copied().unwrap_or(last));
-            });
+        let days = self.days.read_sorted_at(indices);
+        out.extend(self.daily_values(&days));
     }
 }
 
-impl ReadOnlyClone for CachedDcaSats {
+impl ReadOnlyClone for DcaSats {
     type ReadOnly = Self;
 
     fn read_only_clone(&self) -> Self {
         self.clone()
-    }
-}
-
-#[derive(Clone)]
-struct DcaSatsByDay {
-    daily_close: ReadableBoxedVec<Day1, Option<Dollars>>,
-}
-
-impl DcaSatsByDay {
-    #[inline(always)]
-    fn sats_at_price(price: Dollars) -> Sats {
-        Sats::from_dollars_at_price(DCA_AMOUNT, price)
-    }
-
-    fn try_for_each_cumulative<E>(
-        &self,
-        from: usize,
-        to: usize,
-        mut each: impl FnMut(Sats) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let to = to.min(self.len());
-        if from >= to {
-            return Ok(());
-        }
-
-        let mut cumulative = Sats::ZERO;
-        for (day, price) in self
-            .daily_close
-            .collect_range_dyn(0, to)
-            .into_iter()
-            .enumerate()
-        {
-            cumulative += Self::sats_at_price(price.unwrap_or_default());
-            if day >= from {
-                each(cumulative)?;
-            }
-        }
-        Ok(())
-    }
-
-    fn for_each_cumulative(&self, from: usize, to: usize, mut each: impl FnMut(Sats)) {
-        let result = self.try_for_each_cumulative(from, to, |value| {
-            each(value);
-            Ok::<_, Infallible>(())
-        });
-        match result {
-            Ok(()) => {}
-            Err(error) => match error {},
-        }
-    }
-}
-
-impl AnyVec for DcaSatsByDay {
-    fn version(&self) -> Version {
-        self.daily_close.version()
-    }
-
-    fn name(&self) -> &str {
-        "dca_sats_cumulative"
-    }
-
-    fn len(&self) -> usize {
-        self.daily_close.len()
-    }
-
-    fn index_type_to_string(&self) -> &'static str {
-        <Day1 as PrintableIndex>::to_string()
-    }
-
-    fn region_names(&self) -> Vec<String> {
-        Vec::new()
-    }
-
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<Sats>()
-    }
-
-    fn value_type_to_string(&self) -> &'static str {
-        short_type_name::<Sats>()
-    }
-}
-
-impl TypedVec for DcaSatsByDay {
-    type I = Day1;
-    type T = Sats;
-}
-
-impl ReadableVec<Day1, Sats> for DcaSatsByDay {
-    fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Sats>) {
-        buf.reserve(to.min(self.len()).saturating_sub(from));
-        self.for_each_cumulative(from, to, |value| buf.push(value));
-    }
-
-    fn for_each_range_dyn_at(&self, from: usize, to: usize, each: &mut dyn FnMut(Sats)) {
-        self.for_each_cumulative(from, to, each);
-    }
-
-    fn fold_range_at<B, F: FnMut(B, Sats) -> B>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        mut fold: F,
-    ) -> B {
-        let mut acc = Some(init);
-        self.for_each_cumulative(from, to, |value| {
-            acc = Some(fold(acc.take().unwrap(), value));
-        });
-        acc.unwrap()
-    }
-
-    fn try_fold_range_at<B, E, F: FnMut(B, Sats) -> Result<B, E>>(
-        &self,
-        from: usize,
-        to: usize,
-        init: B,
-        mut fold: F,
-    ) -> Result<B, E> {
-        let mut acc = Some(init);
-        self.try_for_each_cumulative(from, to, |value| {
-            acc = Some(fold(acc.take().unwrap(), value)?);
-            Ok(())
-        })?;
-        Ok(acc.unwrap())
     }
 }
 
@@ -297,7 +180,7 @@ mod tests {
     use std::{marker::PhantomData, sync::Arc};
 
     use parking_lot::RwLock;
-    use vecdb::{CachedReadableVec, VecValue, short_type_name};
+    use vecdb::{ReadableCloneableVec, VecValue, short_type_name};
 
     use super::*;
 
@@ -404,34 +287,27 @@ mod tests {
     }
 
     #[test]
-    fn daily_cache_is_cumulative_and_refreshes_same_length_rewrites() {
+    fn daily_purchases_are_cumulative_and_follow_same_length_rewrites() {
         let prices = MemoryVec::<Day1, Option<Dollars>>::new([
             Some(Dollars::mint(100.0)),
             None,
             Some(Dollars::mint(200.0)),
         ]);
-        let days = CachedVec::wrap(MemoryVec::<Height, Day1>::new([
-            Day1::from(0),
-            Day1::from(1),
-            Day1::from(2),
-        ]));
-        let cached = CachedDcaSats::new(
+        let days = MemoryVec::<Height, Day1>::new([Day1::from(0), Day1::from(1), Day1::from(2)]);
+        let cumulative = DcaSats::new(
             ReadableBoxedVec::new(prices.clone()),
-            days.cached_boxed_clone(),
+            days.read_only_boxed_clone(),
         );
 
-        let first = DcaSatsByDay::sats_at_price(Dollars::mint(100.0));
-        let third = first + DcaSatsByDay::sats_at_price(Dollars::mint(200.0));
-        assert_eq!(cached.daily.snapshot().as_slice(), &[first, first, third]);
+        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
+        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
+        assert_eq!(cumulative.collect().as_slice(), &[first, first, third]);
 
         prices.replace(0, Some(Dollars::mint(50.0)));
-        assert_eq!(cached.daily.snapshot().as_slice(), &[first, first, third]);
-
-        cached.invalidate();
-        let replaced = DcaSatsByDay::sats_at_price(Dollars::mint(50.0));
-        let third = replaced + DcaSatsByDay::sats_at_price(Dollars::mint(200.0));
+        let replaced = DcaSats::sats_at_price(Dollars::mint(50.0));
+        let third = replaced + DcaSats::sats_at_price(Dollars::mint(200.0));
         assert_eq!(
-            cached.daily.snapshot().as_slice(),
+            cumulative.collect().as_slice(),
             &[replaced, replaced, third]
         );
     }
@@ -443,22 +319,22 @@ mod tests {
             None,
             Some(Dollars::mint(200.0)),
         ]);
-        let days = CachedVec::wrap(MemoryVec::<Height, Day1>::new([
+        let days = MemoryVec::<Height, Day1>::new([
             Day1::from(0),
             Day1::from(0),
             Day1::from(1),
             Day1::from(2),
             Day1::from(3),
-        ]));
-        let cached = CachedDcaSats::new(ReadableBoxedVec::new(prices), days.cached_boxed_clone());
+        ]);
+        let cumulative = DcaSats::new(ReadableBoxedVec::new(prices), days.read_only_boxed_clone());
 
-        let first = DcaSatsByDay::sats_at_price(Dollars::mint(100.0));
-        let third = first + DcaSatsByDay::sats_at_price(Dollars::mint(200.0));
-        assert_eq!(cached.collect(), [first, first, first, third, third]);
-        assert_eq!(cached.collect_one_at(3), Some(third));
-        assert_eq!(cached.collect_one_at(5), None);
+        let first = DcaSats::sats_at_price(Dollars::mint(100.0));
+        let third = first + DcaSats::sats_at_price(Dollars::mint(200.0));
+        assert_eq!(cumulative.collect(), [first, first, first, third, third]);
+        assert_eq!(cumulative.collect_one_at(3), Some(third));
+        assert_eq!(cumulative.collect_one_at(5), None);
         assert_eq!(
-            cached.read_sorted_at(&[0, 2, 2, 4, 5]),
+            cumulative.read_sorted_at(&[0, 2, 2, 4, 5]),
             [first, first, first, third],
         );
     }

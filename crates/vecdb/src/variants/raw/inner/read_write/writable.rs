@@ -3,9 +3,10 @@ use std::{collections::BTreeMap, path::PathBuf};
 use super::{super::RawStrategy, ReadWriteRawVec};
 use crate::{
     AnyStoredVec, ChangeCursor, ReadWriteBaseVec, Result, Stamp, VecIndex, VecValue, WritableVec,
+    cache::CachePolicy,
 };
 
-impl<I, T, S> WritableVec<I, T> for ReadWriteRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> WritableVec<I, T> for ReadWriteRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,
@@ -22,20 +23,28 @@ where
     }
 
     fn truncate_if_needed_at(&mut self, index: usize) -> Result<()> {
-        if self.base.truncate_pushed(index) {
-            self.base.update_stored_len(index);
-        }
-
-        Ok(())
+        self.with_cache_update(index, |this| {
+            if this.base.truncate_pushed(index) {
+                this.base.update_stored_len(index);
+            }
+            Ok(())
+        })
     }
 
     fn reset(&mut self) -> Result<()> {
-        self.truncate_if_needed_at(0)?;
-        self.base.reset_base()
+        self.with_cache_update(0, |this| {
+            this.base.truncate_pushed(0);
+            this.base.update_stored_len(0);
+            this.base.reset_base()
+        })
     }
 
     fn reset_unsaved(&mut self) {
-        self.base.reset_unsaved_base();
+        self.with_cache_update(0, |this| {
+            this.base.reset_unsaved_base();
+            Ok(())
+        })
+        .expect("resetting unsaved state cannot fail");
     }
 
     fn is_dirty(&self) -> bool {
@@ -60,8 +69,10 @@ where
         let change =
             ReadWriteBaseVec::<I, T>::parse_change_data::<S>(&mut ChangeCursor::new(&bytes))?;
         let (stamp, stored_len, pushed) = change.into_rollback(|| self.real_stored_len());
-        self.base.apply_rollback(stamp, stored_len, pushed);
-        Ok(())
+        self.with_cache_update(stored_len, |this| {
+            this.base.apply_rollback(stamp, stored_len, pushed);
+            Ok(())
+        })
     }
 
     fn find_rollback_files(&self) -> Result<BTreeMap<Stamp, PathBuf>> {

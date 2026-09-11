@@ -5,14 +5,14 @@ use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use vecdb::{
-    BinaryTransform, Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableVec, Rw,
-    StorageMode, VecIndex, VecValue,
+    BinaryTransform, Budgeted, CacheBudget, CachePolicy, Database, ReadableVec, Rw, StorageMode,
+    VecIndex, VecValue,
 };
 
 use crate::{IndexSources, LazyValueBlock, ValuePerBlock};
 
 #[derive(Traversable)]
-pub struct ValuePerBlockCumulative<M: StorageMode = Rw, P: CachedVecStrategy = Budgeted> {
+pub struct ValuePerBlockCumulative<M: StorageMode = Rw, P: CachePolicy = Budgeted> {
     /// Value for the represented block. At time-period indexes, the value is
     /// taken from the period's final block.
     pub block: LazyValueBlock,
@@ -23,7 +23,7 @@ pub struct ValuePerBlockCumulative<M: StorageMode = Rw, P: CachedVecStrategy = B
 
 const VERSION: Version = Version::ONE;
 
-impl<P: CachedVecStrategy> ValuePerBlockCumulative<Rw, P> {
+impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,
@@ -187,7 +187,7 @@ impl<P: CachedVecStrategy> ValuePerBlockCumulative<Rw, P> {
     }
 }
 
-impl<P: CachedVecStrategy> ValuePerBlockCumulative<Rw, P> {
+impl<P: CachePolicy> ValuePerBlockCumulative<Rw, P> {
     pub fn compute_cents(
         &mut self,
         max_from: Height,

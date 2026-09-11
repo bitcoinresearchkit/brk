@@ -126,13 +126,13 @@ where
         mut fold: impl FnMut(B, T) -> Result<B, E>,
     ) -> Result<B, E> {
         let mut accumulator = init;
-        let window_starts = self.window_starts.snapshot();
-        let to = to.min(self.len()).min(window_starts.len());
+        let to = to.min(self.len());
         if from >= to {
             return Ok(accumulator);
         }
 
-        let starts = &window_starts[from..to];
+        let window_starts = self.window_starts.collect_range_dyn(from, to);
+        let starts = window_starts.as_slice();
         let current = self.source.collect_range_dyn(from, to);
 
         let first_ago = starts
@@ -171,12 +171,12 @@ where
         to: usize,
         mut each: impl FnMut(&[S], WindowInputs<I, S>),
     ) {
-        let window_starts = self.window_starts.snapshot();
-        let to = to.min(self.len()).min(window_starts.len());
+        let to = to.min(self.len());
         if from >= to {
             return;
         }
-        let starts = &window_starts[from..to];
+        let window_starts = self.window_starts.collect_range_dyn(from, to);
+        let starts = window_starts.as_slice();
         let first = starts
             .iter()
             .find_map(|start| self.ago_index(start.to_usize()));
@@ -195,7 +195,7 @@ where
                 current,
                 WindowInputs {
                     at,
-                    starts: &window_starts[at..at + current.len()],
+                    starts: &window_starts[at - from..at - from + current.len()],
                     previous: &previous,
                     previous_from,
                     inclusive: self.inclusive,
@@ -242,7 +242,7 @@ where
     }
 
     fn len(&self) -> usize {
-        self.source.len()
+        self.source.len().min(self.window_starts.len())
     }
 
     fn value_type_to_size_of(&self) -> usize {
@@ -334,8 +334,7 @@ where
     }
 
     fn collect_one_at(&self, index: usize) -> Option<T> {
-        let window_starts = self.window_starts.snapshot();
-        let start = window_starts.get(index)?.to_usize();
+        let start = self.window_starts.collect_one_at(index)?.to_usize();
         let current = self.source.collect_one_at(index)?;
         let previous = self
             .ago_index(start)
@@ -359,20 +358,21 @@ where
             _ => {}
         }
 
-        let window_starts = self.window_starts.snapshot();
-        let len = self.len().min(window_starts.len());
+        let len = self.len();
         let indices = &indices[..indices.partition_point(|&index| index < len)];
         if indices.is_empty() {
             return;
         }
 
-        let source = SparseRead::new(&*self.source, indices, |index| {
-            self.ago_index(window_starts[index].to_usize())
+        let window_starts = self.window_starts.read_sorted_at(indices);
+        let mut starts = window_starts.iter();
+        let source = SparseRead::new(&*self.source, indices, |_| {
+            self.ago_index(starts.next().unwrap().to_usize())
         });
 
         out.reserve(indices.len());
         for (output, &index) in indices.iter().enumerate() {
-            let start = window_starts[index].to_usize();
+            let start = window_starts[output].to_usize();
             let previous = source.previous(output).unwrap_or_default();
             out.push(self.compute.apply(
                 source.current(output),
@@ -400,11 +400,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use brk_types::{Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
-        WritableVec,
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableVec, WritableVec,
     };
 
     use super::LazyWindowVec;
@@ -413,10 +414,15 @@ mod tests {
     fn sorted_reads_batch_inclusive_and_exclusive_windows() {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut source: EagerVec<PcoVec<Height, StoredU64>> =
-            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
-        let mut starts: EagerVec<PcoVec<Height, Height>> =
-            EagerVec::forced_import(&db, "starts", Version::ONE).unwrap();
+        let mut source: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
+        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "starts", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
 
         for value in [10_u64, 30, 60, 100] {
             source.push(StoredU64::from(value));
@@ -427,7 +433,6 @@ mod tests {
         source.write().unwrap();
         starts.write().unwrap();
 
-        let starts = CachedVec::wrap(starts);
         let compute = |current: StoredU64, previous: StoredU64, count: usize| {
             StoredU64::from((*current - *previous) + count as u64 * 1_000)
         };

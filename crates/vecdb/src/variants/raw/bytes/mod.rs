@@ -1,5 +1,8 @@
 use super::ReadWriteRawVec;
-use crate::{Format, ReadOnlyRawVec, VecIndex};
+use crate::{
+    Format, ReadOnlyRawVec, VecIndex, VecValue,
+    cache::{CachePolicy, NoCache},
+};
 
 pub mod reader;
 pub mod strategy;
@@ -32,9 +35,11 @@ pub use value::*;
 /// - Data stays on the same architecture
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct BytesVec<I, T>(ReadWriteRawVec<I, T, BytesStrategy<T>>);
+pub struct BytesVec<I, T: VecValue, C: CachePolicy = NoCache>(
+    ReadWriteRawVec<I, T, BytesStrategy<T>, C>,
+);
 
-impl<I, T> BytesVec<I, T>
+impl<I, T, C: CachePolicy> BytesVec<I, T, C>
 where
     I: VecIndex,
     T: BytesVecValue,
@@ -46,10 +51,10 @@ where
 
 impl_vec_wrapper!(
     BytesVec,
-    ReadWriteRawVec<I, T, BytesStrategy<T>>,
+    ReadWriteRawVec<I, T, BytesStrategy<T>, C>,
     BytesVecValue,
     Format::Bytes,
-    ReadOnlyRawVec<I, T, BytesStrategy<T>>,
+    ReadOnlyRawVec<I, T, BytesStrategy<T>, C>,
     no_deref_mut
 );
 

@@ -8,11 +8,10 @@ use schemars::{JsonSchema, SchemaGenerator};
 use serde::Serialize;
 use serde_json::to_value;
 use vecdb::{
-    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachedVec, CachedVecStrategy,
-    CompressionStrategy, DeltaOp, EagerVec, Formattable, IndexVec, LazyAggVec, LazyDeltaVec,
-    LazyVec, MutableVec, OverflowVec, OverflowVecValue, RawStrategy, ReadOnlyCompressedVec,
-    ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec, ReadableVec, StoredVec, TypedVec,
-    VecIndex, VecValue,
+    AggFold, AnyExportableVec, AnyVec, BytesVec, BytesVecValue, CachePolicy, CompressionStrategy,
+    DeltaOp, EagerVec, Formattable, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec, MutableVec,
+    OverflowVec, OverflowVecValue, RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec,
+    ReadOnlyOverflowVec, ReadOnlyRawVec, ReadableVec, StoredVec, TypedVec, VecIndex, VecValue,
 };
 
 #[cfg(feature = "lz4")]
@@ -95,7 +94,7 @@ pub fn make_leaf<I: VecIndex, T: JsonSchema, V: AnyVec>(vec: &V) -> TreeNode {
 }
 
 // BytesVec implementation
-impl<I, T> Traversable for BytesVec<I, T>
+impl<I, T, C: CachePolicy> Traversable for BytesVec<I, T, C>
 where
     I: VecIndex,
     T: BytesVecValue + Formattable + Serialize + JsonSchema,
@@ -111,7 +110,7 @@ where
 
 // ZeroCopyVec implementation (only if zerocopy feature enabled)
 #[cfg(feature = "zerocopy")]
-impl<I, T> Traversable for ZeroCopyVec<I, T>
+impl<I, T, C: CachePolicy> Traversable for ZeroCopyVec<I, T, C>
 where
     I: VecIndex,
     T: ZeroCopyVecValue + Formattable + Serialize + JsonSchema,
@@ -127,7 +126,7 @@ where
 
 // PcoVec implementation (only if pco feature enabled)
 #[cfg(feature = "pco")]
-impl<I, T> Traversable for PcoVec<I, T>
+impl<I, T, C: CachePolicy> Traversable for PcoVec<I, T, C>
 where
     I: VecIndex,
     T: PcoVecValue + Formattable + Serialize + JsonSchema,
@@ -143,7 +142,7 @@ where
 
 // LZ4Vec implementation (only if lz4 feature enabled)
 #[cfg(feature = "lz4")]
-impl<I, T> Traversable for LZ4Vec<I, T>
+impl<I, T, C: CachePolicy> Traversable for LZ4Vec<I, T, C>
 where
     I: VecIndex,
     T: LZ4VecValue + Formattable + Serialize + JsonSchema,
@@ -159,7 +158,7 @@ where
 
 // ZstdVec implementation (only if zstd feature enabled)
 #[cfg(feature = "zstd")]
-impl<I, T> Traversable for ZstdVec<I, T>
+impl<I, T, C: CachePolicy> Traversable for ZstdVec<I, T, C>
 where
     I: VecIndex,
     T: ZstdVecValue + Formattable + Serialize + JsonSchema,
@@ -246,7 +245,7 @@ where
 }
 
 // Read-only compressed vec (PcoVec::ReadOnly, LZ4Vec::ReadOnly, ZstdVec::ReadOnly)
-impl<I, T, S> Traversable for ReadOnlyCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> Traversable for ReadOnlyCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue + Formattable + Serialize + JsonSchema,
@@ -262,7 +261,7 @@ where
 }
 
 // Read-only raw vec (BytesVec::ReadOnly, ZeroCopyVec::ReadOnly)
-impl<I, T, S> Traversable for ReadOnlyRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> Traversable for ReadOnlyRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue + Formattable + Serialize + JsonSchema,
@@ -339,29 +338,6 @@ where
 
     fn to_tree_node(&self) -> TreeNode {
         make_leaf::<I, T, _>(self)
-    }
-}
-
-impl<V, S: CachedVecStrategy> Traversable for CachedVec<V, S>
-where
-    V: TypedVec + Traversable + ReadableVec<V::I, V::T>,
-    V::T: Formattable + Serialize + JsonSchema,
-{
-    fn to_tree_node(&self) -> TreeNode {
-        self.inner.to_tree_node()
-    }
-
-    fn iter_any_exportable(&self) -> impl Iterator<Item = &dyn AnyExportableVec> {
-        iter::once(self as &dyn AnyExportableVec)
-    }
-
-    fn collect_series_descriptions<'a>(
-        &'a self,
-        description_fragments: &mut Vec<&'static str>,
-        descriptions: &mut BTreeMap<&'a str, Vec<&'static str>>,
-    ) {
-        self.inner
-            .collect_series_descriptions(description_fragments, descriptions);
     }
 }
 

@@ -66,12 +66,11 @@ where
     }
 
     fn start_height(&self) -> usize {
-        let days = self.days.snapshot();
         let mut left = 0;
-        let mut right = self.len().min(days.len());
+        let mut right = self.len();
         while left < right {
             let middle = left + (right - left) / 2;
-            if days[middle] < self.start_day {
+            if self.days.collect_one_at(middle).unwrap() < self.start_day {
                 left = middle + 1;
             } else {
                 right = middle;
@@ -344,11 +343,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use brk_types::{Day1, Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
-        WritableVec,
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableVec, WritableVec,
     };
 
     use super::LazySinceDayVec;
@@ -357,10 +357,15 @@ mod tests {
     fn sorted_reads_reuse_the_fixed_start_and_handle_boundaries() {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut source: EagerVec<PcoVec<Height, StoredU64>> =
-            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
-        let mut days: EagerVec<PcoVec<Height, Day1>> =
-            EagerVec::forced_import(&db, "days", Version::ONE).unwrap();
+        let mut source: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
+        let mut days: EagerVec<PcoVec<Height, Day1, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "days", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
 
         for value in [10_u64, 30, 60, 100, 150] {
             source.push(StoredU64::from(value));
@@ -371,7 +376,6 @@ mod tests {
         source.write().unwrap();
         days.write().unwrap();
 
-        let days = CachedVec::wrap(days);
         let since_day = LazySinceDayVec::new(
             "since_day",
             Version::ONE,

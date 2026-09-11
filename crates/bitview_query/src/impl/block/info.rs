@@ -119,13 +119,10 @@ impl Query {
         Ok(BlockHeader::from(raw))
     }
 
-    /// Reuse a warm snapshot, otherwise read only the requested compressed range.
+    /// Source retention is transparent to this bounded read.
     fn block_timestamps(&self, begin: usize, end: usize) -> Vec<Timestamp> {
         let timestamps = &self.indexer().vecs().blocks.timestamp;
-        match timestamps.cached_snapshot() {
-            Some(values) => values.get(begin..end).unwrap_or(&[]).to_vec(),
-            None => timestamps.inner.collect_range_at(begin, end),
-        }
+        timestamps.collect_range_at(begin, end)
     }
 
     /// Parse OCEAN DATUM protocol miner names from a coinbase scriptsig.

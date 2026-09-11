@@ -12,7 +12,7 @@ use bitview_types::SeriesName;
 use brk_types::{Index, Timestamp};
 use serde_json::{from_value, json, to_value, to_vec};
 use tokio::sync::Semaphore;
-use vecdb::{Formattable, ValueWriter};
+use vecdb::{Formattable, ReadableVec, ValueWriter};
 
 use super::chain_fixture::{
     raw_fixture_block, run as run_fixture, run_populated as run_fixture_with_first,
@@ -209,8 +209,8 @@ fn benchmark_timestamp_response() {
     run_fixture(move |state, _| async move {
         let timestamp = Timestamp::from(u32::MAX);
         let expected = state.sync(|q| {
-            q.plugins().mappings.timestamp.monotonic.snapshot();
-            q.indexer().vecs().blocks.timestamp.snapshot();
+            q.plugins().mappings.timestamp.monotonic.collect();
+            q.indexer().vecs().blocks.timestamp.collect();
             to_vec(
                 &q.resolve_block_by_timestamp(timestamp)
                     .map(|resolved| resolved.into_value())

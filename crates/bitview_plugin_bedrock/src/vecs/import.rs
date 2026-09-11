@@ -4,7 +4,7 @@ use bitview_transforms::BoundedToF64;
 use bitview_vecs::{DailyMappings, LazyDailyMetric, LazyDailyPrice, import_stored};
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database};
+use vecdb::{CacheBudget, Database, ReadableBoxedVec};
 
 use super::Vecs;
 use crate::{
@@ -60,7 +60,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        spot: &CachedBoxedVec<Height, Cents>,
+        spot: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 100_000)?;
         let states_path = STORAGE.path(context).join("states");

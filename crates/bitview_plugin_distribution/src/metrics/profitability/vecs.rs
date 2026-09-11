@@ -7,13 +7,13 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyFiatPerBlock, LazyRatioPerBlock, LazySpotValuePerBlockWithDeltas,
+    LazyFiatPerBlock, LazyRatioPerBlock, LazySpotValuePerBlockWithDeltas, LazyWindowStartVec,
     StoredSeries, import_stored,
 };
 use brk_error::Result;
 use brk_types::{Cents, CentsSats, Height, PartsPerMillionSigned32, Sats, Version};
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, Database, PcoVecValue, Rw, StorageMode,
+    AnyStoredVec, AnyVec, CacheBudget, Database, PcoVecValue, ReadableBoxedVec, Rw, StorageMode,
     WritableVec,
 };
 
@@ -77,8 +77,8 @@ impl ProfitabilityVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        window_starts: &Windows<&LazyWindowStartVec>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Box<Self>> {
         let version = version + VERSION;
         let supply_stored = Self::import_sources(cache, db, "supply_sats", version)?;
@@ -94,7 +94,7 @@ impl ProfitabilityVecs {
                 version,
                 source,
                 mappings,
-                cached_starts,
+                window_starts,
                 spot_price,
             )
         });

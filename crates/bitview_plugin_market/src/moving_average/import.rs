@@ -17,7 +17,7 @@ pub fn forced_import(
     blocks: &BlocksVecs,
     spot_price: &impl ReadableCloneableVec<Height, Cents>,
 ) -> Result<Vecs> {
-    let sma = SmaVecs::new(cache, version, mappings, &blocks.lookback, spot_price);
+    let sma = SmaVecs::new(version, mappings, &blocks.lookback, spot_price);
     let ema_version = version + EMA_VERSION;
     let ema_stored = EmaPeriodId::try_series(|period| {
         import_stored(

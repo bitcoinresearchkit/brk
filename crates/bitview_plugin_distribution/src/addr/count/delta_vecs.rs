@@ -2,7 +2,7 @@ use bitview_cohort::WithAddrTypes;
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyRollingDeltasFromHeight};
+use bitview_vecs::{LazyRollingDeltasFromHeight, LazyWindowStartVec};
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use derive_more::{Deref, DerefMut};
 
@@ -18,7 +18,7 @@ impl DeltaVecs {
     pub fn new(
         version: Version,
         addr_count: &AddrCountsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         mappings: &MappingsVecs,
     ) -> Self {
         let version = version + Version::new(3);
@@ -27,7 +27,7 @@ impl DeltaVecs {
             "addr_count",
             version,
             &addr_count.all.height,
-            cached_starts,
+            window_starts,
             mappings,
         );
 
@@ -36,7 +36,7 @@ impl DeltaVecs {
                 &format!("{name}_addr_count"),
                 version,
                 &addr.height,
-                cached_starts,
+                window_starts,
                 mappings,
             )
         });

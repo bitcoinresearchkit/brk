@@ -1,3 +1,5 @@
+mod common;
+
 use std::sync::Arc;
 
 use tempfile::tempdir;
@@ -39,41 +41,25 @@ fn delta_merge_preserves_operators_duplicates_nonmonotonic_starts_and_rewrites()
                 "sub",
                 Version::ONE,
                 source.read_only_boxed_clone(),
-                Version::ONE,
-                {
-                    let starts = starts.clone();
-                    move || starts.clone()
-                },
+                common::mapping(&db, starts.iter().copied()),
             );
             let avg = LazyDeltaVec::<usize, u32, f64, DeltaAvg>::new(
                 "avg",
                 Version::ONE,
                 source.read_only_boxed_clone(),
-                Version::ONE,
-                {
-                    let starts = starts.clone();
-                    move || starts.clone()
-                },
+                common::mapping(&db, starts.iter().copied()),
             );
             let change = LazyDeltaVec::<usize, u32, f64, DeltaChange>::new(
                 "change",
                 Version::ONE,
                 source.read_only_boxed_clone(),
-                Version::ONE,
-                {
-                    let starts = starts.clone();
-                    move || starts.clone()
-                },
+                common::mapping(&db, starts.iter().copied()),
             );
             let rate = LazyDeltaVec::<usize, u32, f64, DeltaRate>::new(
                 "rate",
                 Version::ONE,
                 source.read_only_boxed_clone(),
-                Version::ONE,
-                {
-                    let starts = starts.clone();
-                    move || starts.clone()
-                },
+                common::mapping(&db, starts.iter().copied()),
             );
             let values = source.collect_range_at(0, 5000);
             for indices in [

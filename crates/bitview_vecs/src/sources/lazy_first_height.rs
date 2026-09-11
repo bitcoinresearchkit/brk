@@ -1,4 +1,7 @@
-use std::{convert::Infallible, iter};
+use std::{
+    convert::{Infallible, identity},
+    iter,
+};
 
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Height, Version};
@@ -30,9 +33,8 @@ impl<I: VecIndex> LazyFirstHeightVec<I> {
     ) -> Result<(), E> {
         try_for_each_period(
             &self.mapping,
-            from,
-            to.min(self.len()),
-            std::convert::identity,
+            from..to.min(self.len()),
+            identity,
             |_, height, _| each(height),
         )
     }
@@ -87,6 +89,21 @@ impl<I: VecIndex> TypedVec for LazyFirstHeightVec<I> {
 }
 
 impl<I: VecIndex> ReadableVec<I, Height> for LazyFirstHeightVec<I> {
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Height>) {
+        let len = self.len();
+        let indices = &indices[..indices.partition_point(|&index| index < len)];
+        try_for_each_period(
+            &self.mapping,
+            indices.iter().copied(),
+            identity,
+            |_, height, _| {
+                out.push(height);
+                Ok::<_, Infallible>(())
+            },
+        )
+        .unwrap();
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Height>) {
         buf.reserve(to.min(self.len()).saturating_sub(from));
         self.for_each_value(from, to, |value| buf.push(value));
@@ -143,7 +160,6 @@ mod tests {
     use std::sync::Arc;
 
     use super::*;
-    use crate::CachedFirstHeightVec;
 
     #[derive(Clone)]
     struct MappingVec(Arc<RwLock<Vec<Day1>>>);
@@ -246,8 +262,7 @@ mod tests {
 
     #[test]
     fn gaps_match_the_previous_first_height_semantics() {
-        let first_height =
-            CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&MappingVec::new([0, 0, 2, 2, 5])));
+        let first_height = LazyFirstHeightVec::new(&MappingVec::new([0, 0, 2, 2, 5]));
 
         assert_eq!(
             first_height.collect(),
@@ -265,8 +280,7 @@ mod tests {
 
     #[test]
     fn periods_before_the_first_mapping_use_genesis_height() {
-        let first_height =
-            CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&MappingVec::new([2, 2, 3])));
+        let first_height = LazyFirstHeightVec::new(&MappingVec::new([2, 2, 3]));
 
         assert_eq!(first_height.collect(), [0_u32, 0, 0, 2].map(Height::from));
     }
@@ -274,7 +288,7 @@ mod tests {
     #[test]
     fn growing_to_a_new_period_refreshes_automatically() {
         let mapping = MappingVec::new([0, 0, 1, 1]);
-        let first_height = CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&mapping));
+        let first_height = LazyFirstHeightVec::new(&mapping);
 
         assert_eq!(first_height.collect(), [0_u32, 2].map(Height::from));
 
@@ -284,16 +298,13 @@ mod tests {
     }
 
     #[test]
-    fn explicit_invalidation_refreshes_same_length_rewrites() {
+    fn same_length_rewrites_are_visible_without_derived_invalidation() {
         let mapping = MappingVec::new([0, 0, 1, 1]);
-        let first_height = CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&mapping));
+        let first_height = LazyFirstHeightVec::new(&mapping);
 
         assert_eq!(first_height.collect(), [0_u32, 2].map(Height::from));
 
         mapping.replace(1, 1);
-        assert_eq!(first_height.collect(), [0_u32, 2].map(Height::from));
-
-        first_height.invalidate();
         assert_eq!(first_height.collect(), [0_u32, 1].map(Height::from));
     }
 }

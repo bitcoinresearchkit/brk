@@ -7,8 +7,8 @@ use bitview_vecs::{DailyView, LastDay, RepeatDay};
 use brk_types::{Day1, Height, StoredU64};
 use tempfile::tempdir;
 use vecdb::{
-    CachedVec, Database, LazyVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableVec, UnaryTransform, Version,
+    Database, LazyVec, ReadOnlyClone, ReadableBoxedVec, ReadableCloneableVec, ReadableVec,
+    UnaryTransform, Version,
 };
 
 struct Twice;
@@ -111,9 +111,9 @@ fn daily_chunks_match_scalar_paths_including_missing_and_duplicate_days() {
         "last",
         [0usize, 0, 1, 7, 13, 199, 200, 210].map(Day1::from),
     );
-    let cached_source = CachedVec::wrap(source.read_only_clone());
-    let cached_repeated = CachedVec::wrap(repeated.read_only_clone());
-    let cached_last = CachedVec::wrap(last.read_only_clone());
+    let cached_source = source.read_only_clone();
+    let cached_repeated = repeated.read_only_clone();
+    let cached_last = last.read_only_clone();
     for (source, repeated, last) in [
         (
             source.read_only_boxed_clone(),

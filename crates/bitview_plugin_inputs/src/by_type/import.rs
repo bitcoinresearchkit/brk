@@ -1,7 +1,7 @@
 use bitview_cohort::SpendableType;
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, CountTotal, import_stored};
+use bitview_vecs::{CountTotal, LazyWindowStartVec, import_stored};
 use brk_error::Result;
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{CacheBudget, Database};
@@ -18,7 +18,7 @@ impl Vecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let input_count_stored = SpendableType::try_new(|id| {
@@ -30,18 +30,18 @@ impl Vecs {
                 version,
                 &mappings.input_count_source(),
                 mappings,
-                cached_starts,
+                window_starts,
             ),
             |name| format!("{name}_prevout_count"),
             version,
             &input_count_stored,
             mappings,
-            cached_starts,
+            window_starts,
         );
         let input_share = input_count.lazy_shares(
             version,
             |name| format!("{name}_prevout_share"),
-            cached_starts,
+            window_starts,
             mappings,
         );
         let tx_count_stored = SpendableType::try_new(|id| {
@@ -59,18 +59,18 @@ impl Vecs {
                 &mappings.transaction_count_source(),
                 without_coinbase,
                 mappings,
-                cached_starts,
+                window_starts,
             ),
             |name| format!("tx_count_with_{name}_prevout"),
             version,
             &tx_count_stored,
             mappings,
-            cached_starts,
+            window_starts,
         );
         let tx_share = tx_count.lazy_shares(
             version,
             |name| format!("tx_share_with_{name}_prevout"),
-            cached_starts,
+            window_starts,
             mappings,
         );
 

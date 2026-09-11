@@ -42,35 +42,13 @@ impl Query {
         let len = usize::from(pin.lengths().height);
         let monotonic = &mappings.timestamp.monotonic;
         let timestamps = &indexer.vecs().blocks.timestamp;
-        // Reuse existing snapshots without filling or retaining whole histories.
-        // Cold cursors retain only their current Pco page.
-        let warm_max = monotonic.cached_snapshot();
-        let warm_raw = timestamps.cached_snapshot();
-        let mut max_cursor = monotonic.inner.cursor();
-        let mut raw_cursor = timestamps.inner.cursor();
         let (height, timestamp) = select_timestamp(
             len,
             target,
-            |h| {
-                warm_max
-                    .as_ref()
-                    .and_then(|v| v.get(h).copied())
-                    .or_else(|| max_cursor.get(h))
-                    .data()
-            },
-            |h| {
-                warm_raw
-                    .as_ref()
-                    .and_then(|v| v.get(h).copied())
-                    .or_else(|| raw_cursor.get(h))
-                    .data()
-            },
+            |h| monotonic.collect_one_at(h).data(),
+            |h| timestamps.collect_one_at(h).data(),
         )?;
-        let selected = warm_raw
-            .as_ref()
-            .and_then(|v| v.get(height).copied())
-            .or_else(|| raw_cursor.get(height))
-            .data()?;
+        let selected = timestamps.collect_one_at(height).data()?;
         if selected != timestamp {
             return Err(Error::Internal(
                 "Timestamp mapping disagrees with indexed block",

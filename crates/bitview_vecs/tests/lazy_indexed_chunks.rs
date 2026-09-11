@@ -7,8 +7,8 @@ use bitview_vecs::LazyIndexedVec;
 use brk_types::{Height, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BytesVec, CachedVec, Database, Ident, ImportableVec, LazyVec, MutableVec,
-    ReadOnlyClone, ReadableCloneableVec, ReadableVec, WritableVec,
+    AnyStoredVec, BytesVec, Database, Ident, ImportableVec, LazyVec, MutableVec, ReadOnlyClone,
+    ReadableCloneableVec, ReadableVec, WritableVec,
 };
 
 #[test]
@@ -25,7 +25,7 @@ fn indexed_chunks_preserve_captures_offsets_short_metadata_and_rewrites() {
         "metadata",
         (0..35_000u64).map(|i| StoredU64::from(i * 5)),
     );
-    let cached_metadata = CachedVec::wrap(metadata.read_only_clone());
+    let cached_metadata = metadata.read_only_clone();
     let factor = Arc::new(7u64);
     let indexed = LazyIndexedVec::new(
         "indexed",
@@ -77,7 +77,6 @@ fn indexed_chunks_preserve_captures_offsets_short_metadata_and_rewrites() {
     assert_eq!(result, Err("stop"));
     assert_eq!(calls, 3);
 
-    cached_metadata.invalidate();
     metadata.truncate_if_needed_at(34_999).unwrap();
     metadata.push(StoredU64::from(1u64));
     metadata.write().unwrap();
@@ -112,7 +111,7 @@ fn indexed_chunks_keep_metadata_aligned_with_emitted_values_across_holes() {
         "indexed",
         Version::ONE,
         &source,
-        &CachedVec::wrap(metadata.read_only_clone()),
+        &metadata.read_only_clone(),
         |index: usize, value, weight| value + weight * 7 + index as u64,
     );
     for (from, to) in [(0, 20_000), (3990, 9000), (4096, 8192), (17_000, 20_000)] {

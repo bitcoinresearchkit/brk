@@ -79,3 +79,4 @@ impl CumulativeUTXOCoreValueSources {
         vecs
     }
 }
+use vecdb::ReadableCloneableVec;

@@ -89,20 +89,20 @@ impl Query {
         publication: PublicationReadGuard,
     ) -> Result<Option<ResolvedBlocksV1>> {
         let (begin, end, _) = blocks.range();
-        let prices = if begin == end {
-            Vec::new()
-        } else {
-            let Some(prices) = self.plugins().price.spot.cents.height.cached_snapshot() else {
-                return Ok(None);
+        let prices =
+            if begin == end {
+                Vec::new()
+            } else {
+                let mut prices = Vec::with_capacity(end - begin);
+                if !self.plugins().price.spot.cents.height.read_cached_into_at(
+                    begin,
+                    end,
+                    &mut prices,
+                ) {
+                    return Ok(None);
+                }
+                prices.into_iter().map(Dollars::from).collect()
             };
-            prices
-                .get(begin..end)
-                .ok_or(Error::Internal("Incomplete block prices"))?
-                .iter()
-                .copied()
-                .map(Dollars::from)
-                .collect()
-        };
         ResolvedBlocksV1::new(blocks, prices, publication).map(Some)
     }
 
@@ -136,7 +136,6 @@ impl Query {
             .spot
             .cents
             .height
-            .inner
             .for_each_range_dyn_at(begin, end, &mut |cents| prices.push(Dollars::from(cents)));
         ResolvedBlocksV1::new(blocks, prices, publication)
     }

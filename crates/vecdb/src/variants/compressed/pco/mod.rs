@@ -1,4 +1,7 @@
-use crate::{Format, ReadOnlyCompressedVec, ReadWriteCompressedVec};
+use crate::{
+    Format, ReadOnlyCompressedVec, ReadWriteCompressedVec, VecValue, cache::CachePolicy,
+    cache::NoCache,
+};
 
 pub mod strategy;
 pub mod r#trait;
@@ -25,12 +28,14 @@ pub use value::*;
 /// - Sequential access patterns are common
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct PcoVec<I, T>(ReadWriteCompressedVec<I, T, PcodecStrategy<T>>);
+pub struct PcoVec<I, T: VecValue, C: CachePolicy = NoCache>(
+    ReadWriteCompressedVec<I, T, PcodecStrategy<T>, C>,
+);
 
 impl_vec_wrapper!(
     PcoVec,
-    ReadWriteCompressedVec<I, T, PcodecStrategy<T>>,
+    ReadWriteCompressedVec<I, T, PcodecStrategy<T>, C>,
     PcoVecValue,
     Format::Pco,
-    ReadOnlyCompressedVec<I, T, PcodecStrategy<T>>
+    ReadOnlyCompressedVec<I, T, PcodecStrategy<T>, C>
 );

@@ -3,7 +3,7 @@ use bitview_plugin::ImportContext;
 use bitview_plugin_distribution::{AllChainSources, Vecs as DistributionVecs};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
-use bitview_vecs::{CachedWindowStartVec, PerBlock};
+use bitview_vecs::{LazyWindowStartVec, PerBlock};
 use brk_error::Result;
 use brk_types::{Cents, Version};
 
@@ -16,7 +16,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         prices: &PriceVecs,
         subsidy_cents: &PerBlock<Cents>,
         all_chain: &AllChainSources,
@@ -25,20 +25,20 @@ impl Vecs {
         let db = STORAGE.open_database(context, 250_000)?;
         let version = STORAGE.schema_version();
         let v1 = version + Version::ONE;
-        let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
+        let spot_price = prices.spot.cents.height.read_only_boxed_clone();
         let activity = activity::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let age_range = age_range::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             &spot_price,
             distribution,
         )?;
@@ -59,7 +59,7 @@ impl Vecs {
             &spot_price,
             &supply.active_supply_in_loss_share.bounded,
         )?;
-        let value = value::forced_import(context.cache_budget(), &db, v1, mappings, cached_starts)?;
+        let value = value::forced_import(context.cache_budget(), &db, v1, mappings, window_starts)?;
         let cap = cap::forced_import(
             context.cache_budget(),
             &db,
@@ -96,3 +96,4 @@ impl Vecs {
         Ok(this)
     }
 }
+use vecdb::ReadableCloneableVec;

@@ -1,11 +1,11 @@
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Height, Sats};
-use vecdb::{AnyVec, EagerVec, PcoVec, ReadableVec, VecIndex, VecValue, WritableVec};
+use vecdb::{AnyVec, CachePolicy, EagerVec, PcoVec, ReadableVec, VecIndex, VecValue, WritableVec};
 
 #[allow(clippy::too_many_arguments)]
-pub fn compute_cumulative_sats_from_indexes<A, B>(
-    target: &mut EagerVec<PcoVec<Height, Sats>>,
+pub fn compute_cumulative_sats_from_indexes<A, B, P: CachePolicy>(
+    target: &mut EagerVec<PcoVec<Height, Sats, P>>,
     max_from: Height,
     first_indexes: &impl ReadableVec<Height, A>,
     indexes_count: &impl ReadableVec<Height, B>,

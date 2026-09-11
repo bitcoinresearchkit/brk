@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::BlockCountTarget;
-use bitview_vecs::{CachedWindowStartVec, ConstantVecs, LazyPerBlockCumulativeRolling};
+use bitview_vecs::{ConstantVecs, LazyPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_types::{Height, StoredU64, Version};
 use vecdb::{IndexVec, ReadOnlyClone};
 
@@ -17,7 +17,7 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let total_source = IndexVec::new(
             "block_count_cumulative_source",
@@ -53,7 +53,7 @@ impl Vecs {
                 "block_count",
                 version + Version::ONE,
                 &total_source,
-                cached_starts,
+                window_starts,
                 mappings,
             ),
         }

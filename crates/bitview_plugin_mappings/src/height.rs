@@ -183,7 +183,7 @@ mod tests {
 
     use brk_types::Date;
     use parking_lot::RwLock;
-    use vecdb::{AnyVec, CachedVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
+    use vecdb::{AnyVec, PrintableIndex, ReadableVec, TypedVec, short_type_name};
 
     use super::*;
 
@@ -346,12 +346,12 @@ mod tests {
     }
 
     #[test]
-    fn explicit_invalidation_refreshes_same_length_timestamp_changes() {
+    fn same_length_timestamp_changes_are_visible_without_derived_invalidation() {
         let first = Timestamp::from(Date::new(2009, 1, 1));
         let second = Timestamp::from(Date::new(2009, 1, 2));
         let third = Timestamp::from(Date::new(2009, 1, 3));
         let timestamps = TimestampVec::new([first, second]);
-        let cached_timestamps = CachedVec::wrap(timestamps.clone());
+        let cached_timestamps = timestamps.clone();
         let day1 = Vecs::from_timestamps(
             "day1",
             ReadableBoxedVec::new(cached_timestamps.clone()),
@@ -360,9 +360,6 @@ mod tests {
 
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(1_usize)));
         timestamps.replace(1, third);
-        assert_eq!(day1.collect_one_at(1), Some(Day1::from(1_usize)));
-
-        cached_timestamps.invalidate();
         assert_eq!(day1.collect_one_at(1), Some(Day1::from(2_usize)));
     }
 }

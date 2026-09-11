@@ -1,55 +1,75 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicU64, AtomicUsize, Ordering::Relaxed},
-};
-
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BudgetedCachedVec, BytesVec, CachedReadableVec, Database, ImportableVec, Pinned,
-    PinnedCachedVec, ReadOnlyClone, ReadableVec, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, NoCache,
+    ReadableCloneableVec, ReadableVec, Version, WritableVec,
 };
 
 #[test]
-fn aliases_preserve_policy_and_share_snapshots_through_clones() {
+fn stored_policies_share_retained_ranges_through_clones() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut source = BytesVec::<usize, u64>::forced_import(&db, "budgeted", Version::ONE).unwrap();
-    source.push(10);
-    source.push(20);
+    let budget = Box::leak(Box::new(CacheBudget::new(4096)));
+    let mut source = BytesVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "budgeted", Version::ONE).with_cache_budget(budget),
+    )
+    .unwrap();
+    for value in 10..30 {
+        source.push(value);
+    }
     source.write().unwrap();
-    let budget = Box::leak(Box::new(AtomicUsize::new(64)));
-    let resident = Arc::new(AtomicUsize::new(0));
-    let cached: BudgetedCachedVec<_> = BudgetedCachedVec::wrap_budgeted(
-        source,
-        budget,
-        Arc::new(AtomicU64::new(0)),
-        resident.clone(),
-    );
-    let read_only: BudgetedCachedVec<_> = cached.read_only_clone();
-    // Weak cache + resident-byte counter + shared budget trait object.
-    // Eviction does not need to retain the recency counter as well.
-    assert_eq!(
-        size_of_val(&cached.weak_invalidator()),
-        4 * size_of::<usize>()
-    );
-    let cloned: BudgetedCachedVec<_> = read_only.clone();
-    let boxed = cloned.cached_boxed_clone();
-    let snapshot = cached.snapshot();
-    assert!(Arc::ptr_eq(&snapshot, &read_only.snapshot()));
-    assert!(Arc::ptr_eq(&snapshot, &boxed.snapshot()));
-    assert_eq!(resident.load(Relaxed), 16);
-    assert_eq!(budget.load(Relaxed), 48);
-    cloned.invalidate();
-    assert!(read_only.cached_snapshot().is_none());
-    assert_eq!(resident.load(Relaxed), 0);
-    assert_eq!(budget.load(Relaxed), 64);
-    assert_eq!(cached.collect(), [10, 20]);
-    cached.invalidate();
+    let read_only = source.read_only_clone();
+    let boxed = read_only.read_only_boxed_clone();
+    assert!(!boxed.read_cached_into_at(2, 4, &mut Vec::new()));
+    assert_eq!(source.collect_range_at(2, 4), [12, 13]);
+    for source in [&read_only as &dyn ReadableVec<usize, u64>, &boxed] {
+        let mut out = vec![99];
+        assert!(source.read_cached_into_at(2, 4, &mut out));
+        assert_eq!(out, [99, 12, 13]);
+        assert!(!source.read_cached_into_at(1, 5, &mut out));
+        assert_eq!(
+            out,
+            [99, 12, 13],
+            "a miss leaves the caller buffer unchanged"
+        );
+    }
+    assert!(budget.used() > 0 && budget.used() <= budget.limit());
+    let revision = read_only.data_revision();
+    budget.clear();
+    assert_eq!(budget.used(), 0);
+    assert_eq!(read_only.data_revision(), revision);
+    assert!(!boxed.read_cached_into_at(2, 4, &mut Vec::new()));
+    assert_eq!(boxed.collect_range_dyn(2, 4), [12, 13]);
 
-    let source = BytesVec::<usize, u64>::forced_import(&db, "pinned", Version::ONE).unwrap();
-    let pinned: PinnedCachedVec<_> = PinnedCachedVec::wrap(source);
-    let read_only: PinnedCachedVec<_> = pinned.read_only_clone();
-    assert!(Arc::ptr_eq(&pinned.snapshot(), &read_only.snapshot()));
-    assert_eq!(size_of::<Pinned>(), 0);
-    assert!(size_of_val(&read_only) < size_of_val(&cloned));
+    // A computation owns ordinary read results. Their lifetime is independent
+    // of cache eviction, and its next source read can repopulate the cache.
+    let working_values = source.collect_range_at(2, 4);
+    budget.clear();
+    assert_eq!(budget.used(), 0);
+    assert_eq!(working_values, [12, 13]);
+    assert_eq!(source.collect_range_at(2, 4), working_values);
+    assert_eq!(size_of::<NoCache>(), 0);
+}
+
+#[test]
+fn no_cache_is_the_default_and_zero_budget_disables_retention() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut plain = BytesVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
+    plain.push(7);
+    plain.write().unwrap();
+    assert_eq!(plain.collect(), [7]);
+    assert_eq!(plain.data_revision(), None);
+    assert!(!plain.read_cached_into_at(0, 1, &mut Vec::new()));
+    assert!(BytesVec::<usize, u64, Budgeted>::import(&db, "missing_budget", Version::ONE).is_err());
+    let budget = Box::leak(Box::new(CacheBudget::new(0)));
+    let mut disabled = BytesVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "disabled", Version::ONE).with_cache_budget(budget),
+    )
+    .unwrap();
+    disabled.push(8);
+    disabled.write().unwrap();
+    assert_eq!(disabled.collect(), [8]);
+    assert_eq!(disabled.data_revision(), None);
+    assert!(!disabled.read_cached_into_at(0, 1, &mut Vec::new()));
+    assert_eq!(budget.used(), 0);
 }

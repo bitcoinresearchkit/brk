@@ -7,7 +7,7 @@ use brk_types::{Cents, Height, Sats, Version};
 use derive_more::{Deref, DerefMut};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode, WritableVec,
+    AnyStoredVec, AnyVec, CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec,
 };
 
 use super::AddrTypeToSupply;
@@ -29,7 +29,7 @@ impl AddrSupplyVecs {
         name: &str,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let name = format!("{name}_addr_supply");
         let version = version + Version::ONE;

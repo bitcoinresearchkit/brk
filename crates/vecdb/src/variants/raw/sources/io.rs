@@ -11,7 +11,9 @@ use parking_lot::RwLockReadGuard;
 use rawdb::{Region, RegionMetadata};
 
 use super::super::{RawStrategy, ReadWriteRawVec};
-use crate::{AnyStoredVec, BUFFER_SIZE, HEADER_OFFSET, VecIndex, VecValue, likely};
+use crate::{
+    AnyStoredVec, BUFFER_SIZE, HEADER_OFFSET, VecIndex, VecValue, cache::CachePolicy, likely,
+};
 
 /// Buffer size aligned to SIZE_OF_T for raw I/O reads.
 const fn aligned_buffer_size<T>() -> usize {
@@ -72,7 +74,11 @@ where
         self.buffer_pos = 0;
     }
 
-    pub fn new(vec: &'a ReadWriteRawVec<I, T, S>, from: usize, to: usize) -> Self {
+    pub fn new<C: CachePolicy>(
+        vec: &'a ReadWriteRawVec<I, T, S, C>,
+        from: usize,
+        to: usize,
+    ) -> Self {
         Self::new_from_parts(vec.region(), vec.stored_len(), from, to)
     }
 

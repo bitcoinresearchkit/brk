@@ -16,6 +16,8 @@ pub use vecdb_derive::{Bytes, Pco};
 
 mod base;
 mod bytes;
+pub mod cache;
+pub use cache::{Budgeted, CacheBudget, CachePolicy, NoCache};
 mod cursor;
 mod error;
 mod iterators;
@@ -54,14 +56,12 @@ pub use traits::{
 };
 
 pub use variants::{
-    AggFold, Budgeted, BudgetedCachedVec, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue,
-    CacheBudget, CachedBoxedVec, CachedReadableVec, CachedVec, CachedVecBudget, CachedVecStrategy,
-    CompressedRangeCursor, CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate,
-    DeltaSub, EagerVec, EncodedChunk, Halve, Ident, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec,
-    MapOption, MutableVec, NoBudget, OverflowVec, OverflowVecReader, OverflowVecReaderCursor,
-    OverflowVecValue, Pinned, PinnedCachedVec, RawRangeCursor, RawStrategy, ReadOnlyCompressedVec,
-    ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec, ReadWriteRawVec, UnaryTransform,
-    VecReader, VecReaderCursor,
+    AggFold, BytesStrategy, BytesVec, BytesVecReader, BytesVecValue, CompressedRangeCursor,
+    CompressionStrategy, DeltaAvg, DeltaChange, DeltaOp, DeltaRate, DeltaSub, EagerVec,
+    EncodedChunk, Halve, Ident, IndexVec, LazyAggVec, LazyDeltaVec, LazyVec, MapOption, MutableVec,
+    OverflowVec, OverflowVecReader, OverflowVecReaderCursor, OverflowVecValue, RawRangeCursor,
+    RawStrategy, ReadOnlyCompressedVec, ReadOnlyMutableVec, ReadOnlyOverflowVec, ReadOnlyRawVec,
+    ReadWriteRawVec, UnaryTransform, VecReader, VecReaderCursor,
 };
 #[cfg(feature = "lz4")]
 pub use variants::{LZ4Strategy, LZ4Vec, LZ4VecValue};

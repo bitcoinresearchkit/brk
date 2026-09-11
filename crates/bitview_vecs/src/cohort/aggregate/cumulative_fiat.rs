@@ -32,7 +32,7 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
         metric: &str,
         version: Version,
         indexes: &IndexSources,
-        cached_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
+        window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let stored = UTXOAggregate::try_from_fn(|id| {
             import_stored(
@@ -48,7 +48,7 @@ impl<C: FiatType> AdditiveAggregateFiatPerBlockCumulativeWithSums<C> {
                 version,
                 id.select(&stored),
                 indexes,
-                cached_starts,
+                window_starts,
             )
         });
         Ok(Self {

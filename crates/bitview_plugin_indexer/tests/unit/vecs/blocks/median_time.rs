@@ -27,7 +27,7 @@ fn batches_reorgs_and_reopen_match_window_medians() {
         for height in timestamps.len()..end {
             let value = Timestamp::from(((height * 7919) % 101) as u32);
             timestamps.push(value);
-            blocks.timestamp.inner.push(value);
+            blocks.timestamp.push(value);
         }
         blocks.compute_median_times().unwrap();
         assert_eq!(blocks.median_time.collect(), expected(&timestamps));
@@ -36,7 +36,7 @@ fn batches_reorgs_and_reopen_match_window_medians() {
         assert_eq!(blocks.median_time.len(), len);
     }
     let stamp = Stamp::from(9999_u64);
-    blocks.timestamp.inner.stamped_write(stamp).unwrap();
+    blocks.timestamp.stamped_write(stamp).unwrap();
     blocks.median_time.stamped_write(stamp).unwrap();
     db.flush().unwrap();
     drop(blocks);
@@ -51,7 +51,7 @@ fn batches_reorgs_and_reopen_match_window_medians() {
     for value in 200_u32..210 {
         let value = Timestamp::from(value);
         timestamps.push(value);
-        blocks.timestamp.inner.push(value);
+        blocks.timestamp.push(value);
     }
     blocks.compute_median_times().unwrap();
     assert_eq!(blocks.median_time.collect(), expected(&timestamps));
@@ -66,10 +66,10 @@ fn import_backfills_missing_or_mismatched_checkpoint() {
         .map(|height| Timestamp::from(((height * 7919) % 101) as u32))
         .collect::<Vec<_>>();
     for &value in &timestamps {
-        blocks.timestamp.inner.push(value);
+        blocks.timestamp.push(value);
     }
     let stamp = Stamp::from(9999_u64);
-    blocks.timestamp.inner.stamped_write(stamp).unwrap();
+    blocks.timestamp.stamped_write(stamp).unwrap();
     db.flush().unwrap();
     drop(blocks);
 

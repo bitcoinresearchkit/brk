@@ -7,10 +7,10 @@ use std::{
     thread,
     time::Duration,
 };
+use vecdb::CacheBudget;
 
 use serde_json::{Value, from_str};
 use tokio::task::{self, JoinSet};
-use vecdb::CacheBudget;
 
 use super::{
     chain_fixture::{default_first, run_genesis_with_budget},
@@ -46,7 +46,7 @@ fn chart_reads_survive_concurrent_cache_eviction_and_reorgs() {
         let evict_stop = stop.clone();
         let evictor = thread::spawn(move || {
             while !evict_stop.load(Relaxed) {
-                CACHE_BUDGET.invalidate();
+                CACHE_BUDGET.clear();
                 thread::sleep(Duration::from_millis(1));
             }
         });

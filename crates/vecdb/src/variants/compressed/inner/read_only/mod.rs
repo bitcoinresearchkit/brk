@@ -1,13 +1,16 @@
 use std::result::Result;
 
 use super::{CompressionStrategy, ReadOnlyCompressedVec, ReadWriteCompressedVec};
-use crate::{CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, VecIndex, VecValue};
+use crate::{
+    CompressedIoSource, CompressedMmapSource, CompressedRangeCursor, VecIndex, VecValue,
+    cache::CachePolicy,
+};
 
 pub mod any_vec;
 pub mod readable;
 pub mod typed;
 
-impl<I, T, S> ReadOnlyCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> ReadOnlyCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

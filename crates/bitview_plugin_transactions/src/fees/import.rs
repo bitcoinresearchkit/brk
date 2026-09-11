@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_vecs::{
-    CachedWindowStartVec, PerBlockCumulativeRolling, PerTxDistribution, import_stored,
+    LazyWindowStartVec, PerBlockCumulativeRolling, PerTxDistribution, import_stored,
 };
 use brk_error::Result;
 use brk_types::Version;
@@ -17,7 +17,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
 ) -> Result<Vecs> {
     let v = version + VERSION;
     let count = |name| {
@@ -27,7 +27,7 @@ pub fn forced_import(
             name,
             version + Version::ONE,
             mappings,
-            cached_starts,
+            window_starts,
         )
     };
     let count = CountVecs {

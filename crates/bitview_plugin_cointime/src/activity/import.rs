@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{BoundedOddsF64, BoundedToF64};
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlock, PerBlock, PerBlockCumulativeRolling};
+use bitview_vecs::{LazyPerBlock, LazyWindowStartVec, PerBlock, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database};
@@ -62,7 +62,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
 ) -> Result<Vecs> {
     Ok(Vecs {
         coinblocks_created: PerBlockCumulativeRolling::forced_import(
@@ -71,7 +71,7 @@ pub fn forced_import(
             "coinblocks_created",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?,
         coinblocks_stored: PerBlockCumulativeRolling::forced_import(
             cache,
@@ -79,7 +79,7 @@ pub fn forced_import(
             "coinblocks_stored",
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?,
         derived: DerivedVecs::forced_import_with_prefix(cache, db, "", version, mappings)?,
     })

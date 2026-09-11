@@ -3,8 +3,8 @@ use std::{convert::Infallible, iter, sync::Arc};
 use bitview_traversable::{Traversable, TreeNode, make_leaf};
 use brk_types::{Cents, Close, Height, High, Low, OHLCCents, Version};
 use vecdb::{
-    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
-    VecIndex, short_type_name,
+    AnyExportableVec, AnyVec, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, SparseRead,
+    TypedVec, VecIndex, short_type_name,
 };
 
 /// OHLC candles derived directly from spot prices and period boundaries.
@@ -37,16 +37,31 @@ impl<I: VecIndex> LazyOhlcVec<I> {
         to: usize,
         mut each: impl FnMut(OHLCCents) -> Result<(), E>,
     ) -> Result<(), E> {
-        let first_heights = self.first_heights.snapshot();
-        let to = to.min(first_heights.len());
+        let to = to.min(self.first_heights.len());
         if from >= to {
             return Ok(());
         }
-
-        let prices = self.prices.snapshot();
-        let prices = &prices[..self.prices.visible_len().min(prices.len())];
-        for index in from..to {
-            each(Self::candle_at(index, prices, &first_heights).unwrap())?;
+        let first_heights = self
+            .first_heights
+            .collect_range_dyn(from, to.saturating_add(1));
+        let price_len = self.prices.visible_len();
+        let price_from = first_heights[0].to_usize().min(price_len).saturating_sub(1);
+        let price_to = first_heights
+            .get(to - from)
+            .map_or(price_len, |height| height.to_usize().min(price_len));
+        // Batch adjacent candles so shared physical pages are decoded once.
+        // Include the preceding close for a leading empty period.
+        let prices = self.prices.collect_range_dyn(price_from, price_to);
+        for index in 0..to - from {
+            let first = first_heights[index].to_usize().min(price_len);
+            let end = first_heights
+                .get(index + 1)
+                .map_or(price_len, |height| height.to_usize().min(price_len));
+            each(Self::candle_from_prices(
+                first - price_from,
+                end - price_from,
+                &prices,
+            ))?;
         }
 
         Ok(())
@@ -63,28 +78,28 @@ impl<I: VecIndex> LazyOhlcVec<I> {
         }
     }
 
-    fn candle_at(index: usize, prices: &[Cents], first_heights: &[Height]) -> Option<OHLCCents> {
-        let first = first_heights.get(index)?.to_usize().min(prices.len());
-        let end = first_heights
-            .get(index + 1)
-            .map_or(prices.len(), |height| height.to_usize().min(prices.len()));
+    fn candle(&self, first: usize, end: usize) -> OHLCCents {
+        let from = first.saturating_sub(1);
+        let prices = self.prices.collect_range_dyn(from, end.max(first));
+        Self::candle_from_prices(first - from, end.saturating_sub(from), &prices)
+    }
 
-        if first < end {
-            let mut candle = OHLCCents::from(Close::new(prices[first]));
-            for &price in &prices[first + 1..end] {
-                candle.high = candle.high.max(High::new(price));
-                candle.low = candle.low.min(Low::new(price));
-                candle.close = Close::new(price);
-            }
-            Some(candle)
-        } else {
+    fn candle_from_prices(first: usize, end: usize, prices: &[Cents]) -> OHLCCents {
+        if first >= end {
             let close = first
                 .checked_sub(1)
                 .and_then(|height| prices.get(height))
                 .copied()
                 .unwrap_or_default();
-            Some(OHLCCents::from(Close::new(close)))
+            return OHLCCents::from(Close::new(close));
         }
+        let mut candle = OHLCCents::from(Close::new(prices[first]));
+        for &price in &prices[first + 1..end] {
+            candle.high = candle.high.max(High::new(price));
+            candle.low = candle.low.min(Low::new(price));
+            candle.close = Close::new(price);
+        }
+        candle
     }
 }
 
@@ -163,21 +178,32 @@ impl<I: VecIndex> ReadableVec<I, OHLCCents> for LazyOhlcVec<I> {
     }
 
     fn collect_one_at(&self, index: usize) -> Option<OHLCCents> {
-        let prices = self.prices.snapshot();
-        let prices = &prices[..self.prices.visible_len().min(prices.len())];
-        let first_heights = self.first_heights.snapshot();
-        Self::candle_at(index, prices, &first_heights)
+        let boundaries = self
+            .first_heights
+            .collect_range_dyn(index, index.saturating_add(2));
+        let price_len = self.prices.visible_len();
+        let first = boundaries.first()?.to_usize().min(price_len);
+        let end = boundaries
+            .get(1)
+            .map_or(price_len, |height| height.to_usize().min(price_len));
+        Some(self.candle(first, end))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<OHLCCents>) {
-        let prices = self.prices.snapshot();
-        let prices = &prices[..self.prices.visible_len().min(prices.len())];
-        let first_heights = self.first_heights.snapshot();
+        let len = self.first_heights.len();
+        let indices = &indices[..indices.partition_point(|&index| index < len)];
+        let boundaries = SparseRead::new(&self.first_heights, indices, |index| {
+            (index + 1 < len).then_some(index + 1)
+        });
+        let price_len = self.prices.visible_len();
         out.reserve(indices.len());
-        indices
-            .iter()
-            .filter_map(|&index| Self::candle_at(index, prices, &first_heights))
-            .for_each(|candle| out.push(candle));
+        for slot in 0..indices.len() {
+            let first = boundaries.current(slot).to_usize().min(price_len);
+            let end = boundaries
+                .previous(slot)
+                .map_or(price_len, |height| height.to_usize().min(price_len));
+            out.push(self.candle(first, end));
+        }
     }
 }
 
@@ -193,16 +219,20 @@ impl<I: VecIndex> Traversable for LazyOhlcVec<I> {
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use std::{
         env, fs, process,
         time::{SystemTime, UNIX_EPOCH},
     };
 
     use brk_types::Day1;
-    use vecdb::{AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, WritableVec};
+    use vecdb::{
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, WritableVec,
+    };
 
     use super::*;
-    use crate::{CachedFirstHeightVec, LazyFirstHeightVec};
+    use crate::LazyFirstHeightVec;
 
     fn values(candle: &OHLCCents) -> (u64, u64, u64, u64) {
         (**candle.open, **candle.high, **candle.low, **candle.close)
@@ -217,10 +247,14 @@ mod tests {
         let path = env::temp_dir().join(format!("brk-lazy-ohlc-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
-        let mut prices: EagerVec<PcoVec<Height, Cents>> =
-            EagerVec::forced_import(&db, "prices", Version::ONE).unwrap();
-        let mut periods: EagerVec<PcoVec<Height, Day1>> =
-            EagerVec::forced_import(&db, "periods", Version::ONE).unwrap();
+        let mut prices: EagerVec<PcoVec<Height, Cents, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "prices", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
+        let mut periods: EagerVec<PcoVec<Height, Day1, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "periods", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
 
         for value in [10, 20, 5, 7] {
             prices.push(Cents::new(value));
@@ -231,13 +265,12 @@ mod tests {
         prices.write().unwrap();
         periods.write().unwrap();
 
-        let prices = CachedVec::wrap(prices);
-        let first_heights = CachedFirstHeightVec::wrap(LazyFirstHeightVec::new(&periods));
-        let boundaries = first_heights.snapshot();
+        let first_heights = LazyFirstHeightVec::new(&periods);
+        let boundaries = first_heights.collect();
         let ohlc = LazyOhlcVec::new("ohlc", Version::ONE, &prices, &first_heights);
 
-        assert!(Arc::ptr_eq(&boundaries, &ohlc.first_heights.snapshot()));
-        assert!(Arc::ptr_eq(&prices.snapshot(), &ohlc.prices.snapshot()));
+        assert_eq!(&boundaries, &ohlc.first_heights.collect());
+        assert_eq!(&prices.collect(), &ohlc.prices.collect());
         let candles = ohlc.collect();
         assert_eq!(candles.len(), 5);
         assert_eq!(

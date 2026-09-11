@@ -2,8 +2,8 @@ use bitview_collections::DistributionStats;
 use brk_error::Result;
 use brk_exit::Exit;
 use vecdb::{
-    AnyStoredVec, AnyVec, EagerVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue,
-    WritableVec,
+    AnyStoredVec, AnyVec, CachePolicy, EagerVec, PcoVec, PcoVecValue, ReadableVec, VecIndex,
+    VecValue, WritableVec,
 };
 
 use super::window::SlidingWindowSorted;
@@ -15,11 +15,11 @@ use super::window::SlidingWindowSorted;
 /// `&mut Option<(usize, Vec<f64>)>` cache to each call — the first call reads
 /// and caches, subsequent calls reuse if their range is covered.
 /// Process the largest window first (1y) so its cache covers all smaller windows.
-pub fn compute_rolling_distribution_from_starts<I, T, A>(
+pub fn compute_rolling_distribution_from_starts<I, T, A, P: CachePolicy>(
     max_from: I,
     window_starts: &impl ReadableVec<I, I>,
     values: &impl ReadableVec<I, A>,
-    outputs: DistributionStats<&mut EagerVec<PcoVec<I, T>>>,
+    outputs: DistributionStats<&mut EagerVec<PcoVec<I, T, P>>>,
     exit: &Exit,
     values_cache: &mut Option<(usize, Vec<f64>)>,
 ) -> Result<()>

@@ -56,17 +56,23 @@ provider, calendar, percentile-selection, and period-selection policy.
 
 ## Ownership
 
-Source owners select cache retention using vecdb strategies. Constructors that
+Source owners select optional, budgeted range retention. Constructors that
 create budgeted caches receive an explicit shared `CacheBudget`; this crate
 owns neither a global budget nor its limit/invalidation lifecycle. Application
 composition passes the budget through plugin import resources.
 
 Views borrow cloneable readers at construction and retain read-only clones;
-they do not create another cache for each resolution or metric. Pinned metadata
-is shared with its owner.
+they do not create another cache for each resolution or metric. Read retention
+is always evictable; computation working data belongs to the plugin and is
+passed through its computation context, not held alive by a cache policy.
 
-`CumulativeCountVec` reconstructs cumulative `u64` counts from a shared `u16`
-snapshot and one prefix checkpoint per 256 blocks. It implements the ordinary
+Date, first-height, and lookback readers derive their results directly from
+monotonic stored sources. Period lookups seek to the requested boundary before
+scanning. SMA readers share compact prefix checkpoints, not cached result vectors;
+source revisions invalidate checkpoints after rewrites.
+
+`CumulativeCountVec` reconstructs cumulative `u64` counts through bounded reads
+of its `u16` source and one prefix checkpoint per 256 blocks. It implements the ordinary
 reader interface, so rolling and ratio views use the same composition as other
 cumulative sources. Ratio readers request only the needed ranges from both
 operands, including on a cold budgeted cache. The owning count source

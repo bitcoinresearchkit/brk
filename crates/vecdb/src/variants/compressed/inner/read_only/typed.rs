@@ -1,8 +1,8 @@
-use crate::{TypedVec, VecIndex, VecValue};
+use crate::{TypedVec, VecIndex, VecValue, cache::CachePolicy};
 
 use super::{super::CompressionStrategy, ReadOnlyCompressedVec};
 
-impl<I, T, S> TypedVec for ReadOnlyCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> TypedVec for ReadOnlyCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

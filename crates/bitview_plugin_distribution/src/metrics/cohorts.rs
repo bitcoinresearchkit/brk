@@ -8,14 +8,13 @@ use bitview_collections::Windows;
 use bitview_plugin_indexer::Lengths;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadOnlyClone, ReadableBoxedVec, Rw,
-    StorageMode,
+    AnyStoredVec, CacheBudget, Database, ReadOnlyClone, ReadableBoxedVec, Rw, StorageMode,
 };
 
 use crate::{
@@ -55,13 +54,13 @@ impl CohortMetrics<Rw> {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        window_starts: &Windows<&LazyWindowStartVec>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let v = version + VERSION;
 
         // Supply must exist before either branch can build its shared views.
-        let supply = SupplyVecs::forced_import(cache, db, v, mappings, cached_starts, spot_price)?;
+        let supply = SupplyVecs::forced_import(cache, db, v, mappings, window_starts, spot_price)?;
         let all_chain_sources =
             AllChainSources::new(supply.total.all_supply(), supply.total.all_market_cap());
 
@@ -72,9 +71,9 @@ impl CohortMetrics<Rw> {
                     .stack_size(IMPORT_STACK_SIZE)
                     .spawn_scoped(scope, || -> Result<_> {
                         let outputs =
-                            OutputsVecs::forced_import(cache, db, v, mappings, cached_starts)?;
+                            OutputsVecs::forced_import(cache, db, v, mappings, window_starts)?;
                         let activity =
-                            ActivityVecs::forced_import(cache, db, v, mappings, cached_starts)?;
+                            ActivityVecs::forced_import(cache, db, v, mappings, window_starts)?;
                         Ok((outputs, activity))
                     })?;
 
@@ -83,7 +82,7 @@ impl CohortMetrics<Rw> {
                     db,
                     v,
                     mappings,
-                    cached_starts,
+                    window_starts,
                     spot_price,
                     &all_chain_sources,
                 )?;
@@ -123,7 +122,7 @@ impl CohortMetrics<Rw> {
             })?;
         let cost_basis = CostBasisVecs::forced_import(cache, db, v, mappings)?;
         let profitability =
-            ProfitabilityVecs::forced_import(cache, db, v, mappings, cached_starts, spot_price)?;
+            ProfitabilityVecs::forced_import(cache, db, v, mappings, window_starts, spot_price)?;
 
         Ok(Self {
             supply,

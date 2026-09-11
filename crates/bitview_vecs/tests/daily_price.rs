@@ -3,8 +3,8 @@ use bitview_vecs::{DailyMappings, LazyDailyPriceWithRatio, StoredSeries, import_
 use brk_types::{Cents, Day1, Height, PriceRatio, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnySerializableVec, AnyStoredVec, AnyVec, CachedVec, Database, ReadableCloneableVec,
-    ReadableVec, WritableVec,
+    AnySerializableVec, AnyStoredVec, AnyVec, Database, ReadableCloneableVec, ReadableVec,
+    WritableVec,
 };
 
 use crate::common::CACHE_BUDGET;
@@ -22,18 +22,15 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         [0usize, 0, 1, 1, 2, 2].map(Day1::from),
     )
     .read_only_boxed_clone();
-    indexes.first_height.day1 = CachedVec::wrap(common::stored::<Day1, _>(
-        &db,
-        "test_first_height",
-        [0usize, 2, 4].map(Height::from),
-    ))
-    .read_only_boxed_clone();
-    let spot = CachedVec::wrap(common::stored::<Height, _>(
+    indexes.first_height.day1 =
+        common::stored::<Day1, _>(&db, "test_first_height", [0usize, 2, 4].map(Height::from))
+            .read_only_boxed_clone();
+    let spot = common::stored::<Height, _>(
         &db,
         "test_spot",
         [200, 300, 400, 500, 1_000_000, 1_000_000].map(Cents::new),
-    ))
-    .read_only_cached_boxed_clone();
+    )
+    .read_only_boxed_clone();
     let mappings = DailyMappings::new(&indexes);
     let import = || {
         let stored = UTXOAggregate::try_from_fn(|id| {
@@ -141,8 +138,7 @@ fn daily_price_sources_persist_and_expose_prices_ratios_and_aligned_rewrites() {
         prices.all.cents.day1.collect_one_at(0),
         Some(Cents::new(100))
     );
-    // Matches the production invalidation-before-computation sequence.
-    CACHE_BUDGET.invalidate();
+    // Stored sources invalidate their changed suffix during truncation.
     for target in stored.iter_mut() {
         target.truncate_if_needed_at(1).unwrap();
     }

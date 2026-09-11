@@ -98,3 +98,4 @@ impl<S: Clone> AmountValueSources<S> {
         vecs
     }
 }
+use vecdb::ReadableCloneableVec;

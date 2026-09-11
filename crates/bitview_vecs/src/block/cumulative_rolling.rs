@@ -12,14 +12,14 @@ use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableCloneableVec,
+    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachePolicy, Database, ReadableCloneableVec,
     ReadableVec, Rw, StorageMode, VecIndex, VecValue, WritableVec,
 };
 
 use crate::{IndexSources, LazyPreviousDeltaVec, PerBlock, RollingTotals};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachedVecStrategy = Budgeted>
+pub struct PerBlockCumulativeRolling<T, M: StorageMode = Rw, P: CachePolicy = Budgeted>
 where
     T: NumericValue + JsonSchema,
 {
@@ -34,7 +34,7 @@ where
     last_cumulative: M::WriteOnly<Option<(usize, T)>>,
 }
 
-impl<T, P: CachedVecStrategy> PerBlockCumulativeRolling<T, Rw, P>
+impl<T, P: CachePolicy> PerBlockCumulativeRolling<T, Rw, P>
 where
     T: NumericValue + JsonSchema,
 {

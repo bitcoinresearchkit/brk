@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
+use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::{Error, Result};
 use brk_types::{Bytes, Height, OpReturnKind, OpReturnPolicyId, Sats, StoredU64, VSize, Version};
 use vecdb::{AnyStoredVec, AnyVec, CacheBudget, Database, ReadableCloneableVec, Rw, VecIndex};
@@ -39,7 +39,7 @@ macro_rules! impl_breakdown {
                 series_prefix: &str,
                 version: Version,
                 mappings: &MappingsVecs,
-                cached_starts: &Windows<&CachedWindowStartVec>,
+                window_starts: &Windows<&LazyWindowStartVec>,
                 total_data: &impl ReadableCloneableVec<Height, Bytes>,
                 block_size: &impl ReadableCloneableVec<Height, StoredU64>,
                 chain_fees: &impl ReadableCloneableVec<Height, Sats>,
@@ -52,7 +52,7 @@ macro_rules! impl_breakdown {
                         &format!("{series_prefix}_{name}_output_count"),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )
                 })?;
                 let data_bytes = $group::try_new(|_, name| {
@@ -63,7 +63,7 @@ macro_rules! impl_breakdown {
                         &format!("{prefix}_data_bytes"),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )?;
                     Ok::<_, Error>(DataBytesSeries::new(
                         &prefix, version, source, total_data, block_size, mappings,
@@ -76,7 +76,7 @@ macro_rules! impl_breakdown {
                         &format!("{series_prefix}_{name}_tx_count"),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )
                 })?;
                 let tx_vsize = $group::try_new(|_, name| {
@@ -86,7 +86,7 @@ macro_rules! impl_breakdown {
                         &format!("{series_prefix}_{name}_tx_vsize"),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )
                 })?;
                 let fees = $group::try_new(|_, name| {
@@ -97,14 +97,14 @@ macro_rules! impl_breakdown {
                         &format!("{prefix}_fees"),
                         version,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )?;
                     Ok::<_, Error>(FeesSeries::new(
                         &prefix,
                         version,
                         source,
                         chain_fees,
-                        cached_starts,
+                        window_starts,
                         mappings,
                     ))
                 })?;

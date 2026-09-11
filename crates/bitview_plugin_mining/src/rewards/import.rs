@@ -3,7 +3,7 @@ use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{OneMinusPpm, RatioSats};
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPercentCumulativeRolling, LazyPercentRollingWindows,
+    LazyPercentCumulativeRolling, LazyPercentRollingWindows, LazyWindowStartVec,
     ValuePerBlockCumulative, ValuePerBlockCumulativeRolling, ValuePerBlockFull,
 };
 use brk_error::Result;
@@ -18,7 +18,7 @@ pub fn forced_import(
     version: Version,
     indexer: &Indexer,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
 ) -> Result<Vecs> {
     let coinbase_version = version
         + indexer.vecs().transactions.first_txout_index.version()
@@ -31,7 +31,7 @@ pub fn forced_import(
         "coinbase",
         coinbase_version,
         mappings,
-        cached_starts,
+        window_starts,
     )?;
     let subsidy = ValuePerBlockCumulativeRolling::forced_import(
         cache,
@@ -39,10 +39,10 @@ pub fn forced_import(
         "subsidy",
         version,
         mappings,
-        cached_starts,
+        window_starts,
     )?;
     let fees =
-        ValuePerBlockFull::forced_import(cache, db, "fees", version, mappings, cached_starts)?;
+        ValuePerBlockFull::forced_import(cache, db, "fees", version, mappings, window_starts)?;
     let fees_source = fees.cumulative_sats_source();
 
     let fee_dominance = LazyPercentCumulativeRolling::from_cumulative_ratio_with_numerator::<
@@ -54,7 +54,7 @@ pub fn forced_import(
         version,
         fees_source,
         coinbase.cumulative.sats.resolutions.height_source(),
-        cached_starts,
+        window_starts,
         mappings,
     );
     let subsidy_dominance = LazyPercentCumulativeRolling::from_lazy_source::<OneMinusPpm>(
@@ -71,7 +71,7 @@ pub fn forced_import(
         version + Version::ONE,
         fees_source,
         subsidy.cumulative.sats.resolutions.height_source(),
-        cached_starts,
+        window_starts,
         mappings,
     );
 

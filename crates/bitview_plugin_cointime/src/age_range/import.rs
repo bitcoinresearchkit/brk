@@ -4,12 +4,12 @@ use bitview_plugin_distribution::Vecs as DistributionVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{BoundedOddsF64, BoundedToF64};
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPerBlock, LazySpotValuePerBlock, PerBlockCumulativeRolling,
+    LazyPerBlock, LazySpotValuePerBlock, LazyWindowStartVec, PerBlockCumulativeRolling,
     import_stored,
 };
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database};
+use vecdb::{CacheBudget, Database, ReadableBoxedVec};
 
 use super::{ActivitySeries, SupplyVecs, Vecs};
 
@@ -20,8 +20,8 @@ pub fn forced_import(
     db: &Database,
     parent_version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
-    spot_price: &CachedBoxedVec<Height, Cents>,
+    window_starts: &Windows<&LazyWindowStartVec>,
+    spot_price: &ReadableBoxedVec<Height, Cents>,
     distribution: &DistributionVecs,
 ) -> Result<Vecs> {
     let version = parent_version + VERSION;
@@ -34,7 +34,7 @@ pub fn forced_import(
                 &name,
                 version,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         })
     };

@@ -7,169 +7,179 @@ use tempfile::tempdir;
 #[cfg(feature = "pco")]
 use vecdb::PcoVec;
 use vecdb::{
-    AnyStoredVec, BytesVec, CachedVec, Database, ImportableVec, ReadableVec, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
+    ReadableVec, Version, WritableVec,
 };
 
-#[test]
-#[ignore = "bounded 32-byte range reads; synthetic local storage, no server"]
-fn bounded_hash_ranges() {
-    for (history, count) in [
-        (0usize, 10),
-        (10, 1),
-        (10, 10),
-        (1_000_000, 1),
-        (1_000_000, 10),
-    ] {
-        let directory = tempdir().unwrap();
-        let db = Database::open(directory.path()).unwrap();
-        let mut values = BytesVec::<usize, [u8; 32]>::import(&db, "hashes", Version::ONE).unwrap();
-        for index in 0..history {
-            values.push([index as u8; 32]);
-        }
-        values.write().unwrap();
-        let cached = CachedVec::wrap(values.read_only_clone());
-        let begin = history.saturating_sub(count);
-        let expected: Vec<_> = (begin..history).map(|index| [index as u8; 32]).collect();
-        assert_eq!(cached.collect_range_at(begin, history), expected);
-        assert_eq!(cached.inner.collect_range_at(begin, history), expected);
-        let reader = cached.inner.reader();
-        assert_eq!(
-            (begin..history)
-                .map(|i| reader.try_get_at(i).unwrap())
-                .collect::<Vec<_>>(),
-            expected
-        );
-        drop(reader);
+static BUDGET: CacheBudget = CacheBudget::new(32 * 1024 * 1024);
 
-        for cold in [false, true] {
-            let mut times = [Vec::new(), Vec::new(), Vec::new()];
-            let iterations = if cold { 10 } else { 10_000 };
-            for round in 0..24 {
-                for offset in 0..3 {
-                    let variant = (round + offset) % 3;
-                    let read = || {
-                        if variant == 2 {
-                            let reader = cached.inner.reader();
-                            for i in (black_box(begin)..black_box(history)).rev() {
-                                black_box(reader.try_get_at(i).unwrap());
-                            }
-                        } else {
-                            let rows = if variant == 0 {
-                                cached.collect_range_at(black_box(begin), black_box(history))
-                            } else {
-                                cached
-                                    .inner
-                                    .collect_range_at(black_box(begin), black_box(history))
-                            };
-                            for row in rows.iter().rev() {
-                                black_box(*row);
-                            }
-                        }
-                    };
-                    let mut elapsed = Duration::ZERO;
-                    if cold {
-                        for _ in 0..iterations {
-                            cached.invalidate();
-                            let started = Instant::now();
-                            read();
-                            elapsed += started.elapsed();
-                        }
-                    } else {
-                        let started = Instant::now();
-                        for _ in 0..iterations {
-                            read();
-                        }
-                        elapsed = started.elapsed();
-                    }
-                    if round >= 4 {
-                        times[variant].push(elapsed / iterations);
-                    }
-                }
-            }
-            for samples in &mut times {
-                samples.sort_unstable();
-            }
-            eprintln!(
-                "history={history} count={count} cold={cold}: cached {:?}, bounded {:?}, reader {:?}",
-                times[0][10], times[1][10], times[2][10]
-            );
+fn median(mut read: impl FnMut(), iterations: u32) -> Duration {
+    let mut samples = Vec::with_capacity(15);
+    for _ in 0..15 {
+        let start = Instant::now();
+        for _ in 0..iterations {
+            read();
         }
+        samples.push(start.elapsed() / iterations);
+    }
+    samples.sort_unstable();
+    samples[7]
+}
+
+#[test]
+#[ignore = "synthetic local storage benchmark"]
+fn bounded_hash_ranges() {
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut values = BytesVec::<usize, [u8; 32], Budgeted>::import_with(
+        ImportOptions::new(&db, "hashes", Version::ONE).with_cache_budget(&BUDGET),
+    )
+    .unwrap();
+    for i in 0..1_000_000 {
+        values.push([i as u8; 32]);
+    }
+    values.write().unwrap();
+    for count in [1, 10] {
+        let from = 1_000_000 - count;
+        let expected: Vec<_> = (from..1_000_000).map(|i| [i as u8; 32]).collect();
+        assert_eq!(values.collect_range_at(from, 1_000_000), expected);
+        let warm = median(
+            || {
+                black_box(values.collect_range_at(black_box(from), 1_000_000));
+            },
+            10_000,
+        );
+        let reader = median(
+            || {
+                let reader = values.reader();
+                for i in from..1_000_000 {
+                    black_box(reader.try_get_at(i).unwrap());
+                }
+            },
+            10_000,
+        );
+        eprintln!("hashes count={count}: warm range {warm:?}, direct reader {reader:?}");
     }
 }
 
 #[test]
-#[ignore = "bounded compressed price reads; synthetic local storage, no server"]
+#[ignore = "synthetic local storage benchmark"]
 #[cfg(feature = "pco")]
-fn bounded_price_ranges() {
-    // u64 pages contain 1024 values: cover a tail, a full page, and a
-    // 15-value range crossing from a full page into the next tail.
-    for history in [2usize, 1_000_000, 1_000_448, 1_000_453] {
-        let directory = tempdir().unwrap();
-        let db = Database::open(directory.path()).unwrap();
-        let mut values = PcoVec::<usize, u64>::import(&db, "prices", Version::ONE).unwrap();
-        let price = |index: usize| 1_000_000 + (index as u64 * 13) % 100_000;
-        for index in 0..history {
-            values.push(price(index));
-        }
-        values.write().unwrap();
-        let cached = CachedVec::wrap(values.read_only_clone());
-        let begin = history.saturating_sub(15);
-        let expected: Vec<_> = (begin..history).map(price).collect();
-        assert_eq!(cached.collect_range_at(begin, history), expected);
-        assert_eq!(cached.inner.collect_range_at(begin, history), expected);
-        assert_eq!(
-            &cached.cached_snapshot().unwrap()[begin..history],
-            expected.as_slice()
-        );
-        for cold in [false, true] {
-            let mut times = [Vec::new(), Vec::new(), Vec::new()];
-            let iterations = if cold { 10 } else { 1000 };
-            for round in 0..24 {
-                for offset in 0..3 {
-                    let variant = (round + offset) % 3;
-                    let mut elapsed = Duration::ZERO;
-                    for _ in 0..iterations {
-                        if cold {
-                            cached.invalidate();
-                        }
-                        let started = Instant::now();
-                        let rows = if variant == 0 {
-                            cached.collect_range_at(black_box(begin), black_box(history))
-                        } else if variant == 1 {
-                            cached
-                                .inner
-                                .collect_range_at(black_box(begin), black_box(history))
-                        } else {
-                            cached.cached_snapshot().map_or_else(
-                                || {
-                                    cached
-                                        .inner
-                                        .collect_range_at(black_box(begin), black_box(history))
-                                },
-                                |values| values[black_box(begin)..black_box(history)].to_vec(),
-                            )
-                        };
-                        black_box(rows);
-                        elapsed += started.elapsed();
-                        if cold && variant == 2 {
-                            assert!(cached.cached_snapshot().is_none());
-                        }
-                    }
-                    if round >= 4 {
-                        times[variant].push(elapsed / iterations);
-                    }
-                }
-            }
-            for samples in &mut times {
-                samples.sort_unstable();
-            }
-            eprintln!(
-                "price history={history} count={} cold={cold}: cached {:?}, bounded {:?}, reuse-or-bounded {:?}",
-                expected.len(),
-                times[0][10],
-                times[1][10],
-                times[2][10]
-            );
-        }
+fn compressed_source_cache() {
+    const N: usize = 1_000_000;
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut cached = PcoVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "cached", Version::ONE).with_cache_budget(&BUDGET),
+    )
+    .unwrap();
+    let mut plain = PcoVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
+    for i in 0..N {
+        let price = 1_000_000 + (i as u64 * 13) % 100_000;
+        cached.push(price);
+        plain.push(price);
     }
+    cached.write().unwrap();
+    plain.write().unwrap();
+    for count in [1, 15, 512, 4_096, N] {
+        let from = N - count;
+        BUDGET.clear();
+        let start = Instant::now();
+        let expected = cached.collect_range_at(from, N);
+        let cold = start.elapsed();
+        assert_eq!(expected, plain.collect_range_at(from, N));
+        let iterations = if count == N { 10 } else { 1_000 };
+        let warm = median(
+            || {
+                black_box(cached.collect_range_at(black_box(from), N));
+            },
+            iterations,
+        );
+        let uncached = median(
+            || {
+                black_box(plain.collect_range_at(black_box(from), N));
+            },
+            iterations,
+        );
+        eprintln!(
+            "pco range count={count}: first read {cold:?}, warm {warm:?}, uncached {uncached:?}, retained={}",
+            BUDGET.used()
+        );
+    }
+    let expected = plain.fold(0u64, u64::wrapping_add);
+    assert_eq!(cached.fold(0u64, u64::wrapping_add), expected);
+    let warm_fold = median(
+        || {
+            black_box(cached.fold(0u64, u64::wrapping_add));
+        },
+        20,
+    );
+    let direct_fold = median(
+        || {
+            black_box(plain.fold(0u64, u64::wrapping_add));
+        },
+        20,
+    );
+    let point = median(
+        || {
+            black_box(cached.collect_one_at(black_box(N - 1)));
+        },
+        10_000,
+    );
+    eprintln!(
+        "pco million-value fold: warm {warm_fold:?}, uncached {direct_fold:?}; warm point {point:?}"
+    );
+}
+
+#[test]
+#[ignore = "synthetic local storage benchmark"]
+fn incremental_range_fills() {
+    const N: usize = 16_384;
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut values = BytesVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "values", Version::ONE).with_cache_budget(&BUDGET),
+    )
+    .unwrap();
+    for index in 0..N {
+        values.push(index as u64);
+    }
+    values.write().unwrap();
+    for reverse in [false, true] {
+        let fill = median(
+            || {
+                BUDGET.clear();
+                for offset in 0..N {
+                    let index = if reverse { N - 1 - offset } else { offset };
+                    black_box(values.collect_one_at(black_box(index)));
+                }
+            },
+            1,
+        );
+        let warm = median(
+            || {
+                black_box(values.fold(0u64, u64::wrapping_add));
+            },
+            100,
+        );
+        assert_eq!(values.collect(), (0..N as u64).collect::<Vec<_>>());
+        eprintln!(
+            "raw point fills reverse={reverse}: refill {fill:?}, warm fold {warm:?}, retained={}",
+            BUDGET.used()
+        );
+    }
+    let fill = median(
+        || {
+            BUDGET.clear();
+            for from in (0..N).step_by(128) {
+                black_box(values.collect_range_at(from, (from + 512).min(N)));
+            }
+        },
+        1,
+    );
+    assert_eq!(values.collect(), (0..N as u64).collect::<Vec<_>>());
+    eprintln!(
+        "raw overlapping ranges: refill {fill:?}, retained={}",
+        BUDGET.used()
+    );
 }

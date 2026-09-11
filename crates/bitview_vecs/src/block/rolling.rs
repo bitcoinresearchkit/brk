@@ -8,14 +8,14 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadOnlyClone, ReadableCloneableVec,
-    ReadableVec, Rw, StorageMode,
+    Budgeted, CacheBudget, CachePolicy, Database, ReadOnlyClone, ReadableCloneableVec, ReadableVec,
+    Rw, StorageMode,
 };
 
 use crate::{IndexSources, PerBlock, RollingComplete, WindowStarts};
 
 #[derive(Traversable)]
-pub struct PerBlockRolling<T, M: StorageMode = Rw, S: CachedVecStrategy = Budgeted>
+pub struct PerBlockRolling<T, M: StorageMode = Rw, S: CachePolicy = Budgeted>
 where
     T: NumericValue + JsonSchema,
 {
@@ -26,7 +26,7 @@ where
     pub rolling: RollingComplete<T, M>,
 }
 
-impl<T, S: CachedVecStrategy> PerBlockRolling<T, Rw, S>
+impl<T, S: CachePolicy> PerBlockRolling<T, Rw, S>
 where
     T: NumericValue + JsonSchema,
 {

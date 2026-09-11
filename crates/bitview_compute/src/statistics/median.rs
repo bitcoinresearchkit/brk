@@ -1,7 +1,10 @@
 use brk_error::Result;
 
 use brk_exit::Exit;
-use vecdb::{AnyVec, EagerVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec};
+use vecdb::{
+    AnyVec, CachePolicy, EagerVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue,
+    WritableVec,
+};
 
 use super::window::SlidingWindowSorted;
 
@@ -18,7 +21,7 @@ pub trait ComputeRollingMedianFromStarts<I: VecIndex, T> {
         f64: From<A>;
 }
 
-impl<I, T> ComputeRollingMedianFromStarts<I, T> for EagerVec<PcoVec<I, T>>
+impl<I, T, P: CachePolicy> ComputeRollingMedianFromStarts<I, T> for EagerVec<PcoVec<I, T, P>>
 where
     I: VecIndex,
     T: PcoVecValue + From<f64>,

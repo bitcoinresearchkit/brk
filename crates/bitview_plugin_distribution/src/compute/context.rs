@@ -3,6 +3,7 @@ use vecdb::VecIndex;
 
 use super::PriceRangeMax;
 
+/// Borrowed working data owned by the computation, independent of read-cache retention.
 pub struct ComputeContext<'a> {
     pub starting_height: Height,
     pub last_height: Height,

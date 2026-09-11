@@ -42,7 +42,7 @@ macro_rules! impl_vec_wrapper {
         );
     };
     (@with_deref_mut $wrapper:ident, $inner:ty, $value_trait:ident, $format:expr, $read_only:ty, $deref_mut:ident) => {
-        impl<I, T> ::std::ops::Deref for $wrapper<I, T> {
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> ::std::ops::Deref for $wrapper<I, T, C> {
             type Target = $inner;
 
             #[inline]
@@ -53,7 +53,7 @@ macro_rules! impl_vec_wrapper {
 
         impl_vec_wrapper!(@deref_mut $deref_mut, $wrapper, $inner);
 
-        impl<I, T> $crate::ImportableVec for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::ImportableVec for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -67,7 +67,7 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T> $crate::AnyVec for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::AnyVec for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -108,7 +108,7 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T> $crate::TypedVec for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::TypedVec for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -117,7 +117,7 @@ macro_rules! impl_vec_wrapper {
             type T = T;
         }
 
-        impl<I, T> $crate::AnyStoredVec for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::AnyStoredVec for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -197,7 +197,7 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T> $crate::WritableVec<I, T> for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::WritableVec<I, T> for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -256,7 +256,7 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T> $crate::ReadableCloneableVec<I, T> for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::ReadableCloneableVec<I, T> for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -267,20 +267,7 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T, S> $crate::ReadableCloneableVec<I, T>
-            for $crate::CachedVec<$wrapper<I, T>, S>
-        where
-            I: $crate::VecIndex,
-            T: $value_trait,
-            S: $crate::CachedVecStrategy,
-        {
-            #[inline]
-            fn read_only_boxed_clone(&self) -> $crate::ReadableBoxedVec<I, T> {
-                $crate::CachedVec::read_only_boxed_clone(self)
-            }
-        }
-
-        impl<I, T> $crate::StoredVec for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::StoredVec for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
@@ -293,11 +280,19 @@ macro_rules! impl_vec_wrapper {
             }
         }
 
-        impl<I, T> $crate::ReadableVec<I, T> for $wrapper<I, T>
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> $crate::ReadableVec<I, T> for $wrapper<I, T, C>
         where
             I: $crate::VecIndex,
             T: $value_trait,
         {
+            fn data_revision(&self) -> Option<u64> {
+                $crate::ReadableVec::<I, T>::data_revision(&self.0)
+            }
+
+            fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
+                $crate::ReadableVec::<I, T>::read_cached_into_at(&self.0, from, to, out)
+            }
+
             #[inline(always)]
             fn cursor_chunk_size(&self) -> usize {
                 $crate::ReadableVec::<I, T>::cursor_chunk_size(&self.0)
@@ -358,7 +353,7 @@ macro_rules! impl_vec_wrapper {
         }
     };
     (@deref_mut yes, $wrapper:ident, $inner:ty) => {
-        impl<I, T> ::std::ops::DerefMut for $wrapper<I, T> {
+        impl<I, T: $crate::VecValue, C: $crate::cache::CachePolicy> ::std::ops::DerefMut for $wrapper<I, T, C> {
             #[inline]
             fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.0

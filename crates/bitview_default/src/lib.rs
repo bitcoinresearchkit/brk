@@ -24,7 +24,7 @@ use bitview_plugin_supply::Vecs as Supply;
 use bitview_plugin_transactions::Vecs as Transactions;
 use bitview_runtime::PluginSet;
 use bitview_traversable::Traversable;
-use vecdb::{CacheBudget, Rw, StorageMode};
+use vecdb::{Rw, StorageMode};
 
 mod capabilities;
 mod compute;
@@ -33,9 +33,6 @@ mod timing;
 
 #[derive(PluginSet, Traversable)]
 pub struct DefaultPlugins<M: StorageMode = Rw> {
-    #[plugin_set(skip)]
-    #[traversable(skip)]
-    cache_budget: &'static CacheBudget,
     #[traversable(flatten)]
     indexer: Box<Indexer<M>>,
     blocks: Box<Blocks<M>>,

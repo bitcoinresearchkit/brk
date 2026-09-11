@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockCumulativeRolling};
+use bitview_vecs::{LazyFiatPerBlockCumulativeRolling, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{Cents, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -23,7 +23,7 @@ impl CumulativeValueDestroyedByCohort {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let metric = "value_destroyed";
         let stored = CumulativeUTXOCoreSources::forced_import(
@@ -43,7 +43,7 @@ impl CumulativeValueDestroyedByCohort {
                 version,
                 source,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         Ok(Self { cohorts, stored })

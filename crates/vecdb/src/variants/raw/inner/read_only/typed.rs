@@ -1,8 +1,8 @@
-use crate::{TypedVec, VecIndex, VecValue};
+use crate::{TypedVec, VecIndex, VecValue, cache::CachePolicy};
 
 use super::{super::RawStrategy, ReadOnlyRawVec};
 
-impl<I, T, S> TypedVec for ReadOnlyRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> TypedVec for ReadOnlyRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

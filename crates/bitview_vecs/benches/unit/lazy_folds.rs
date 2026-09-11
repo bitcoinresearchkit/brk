@@ -93,19 +93,19 @@ fn benchmark_lazy_folds() {
         "source",
         (0..len as u64).map(|i| StoredU64::from(i * (i + 1))),
     );
-    let starts = CachedVec::wrap(stored(
+    let starts = stored(
         &db,
         "starts",
         (0..len).map(|i| Height::from(i.saturating_sub(256))),
-    ));
-    let days = CachedVec::wrap(stored(&db, "days", (0..len).map(|i| Day1::from(i / 144))));
-    let counts = CachedVec::wrap(stored(&db, "counts", (0..len).map(|_| StoredU16::new(100))));
+    );
+    let days = stored(&db, "days", (0..len).map(|i| Day1::from(i / 144)));
+    let counts = stored(&db, "counts", (0..len).map(|_| StoredU16::new(100)));
     let counts = CumulativeCountVec::new(&counts);
-    let cumulative = CachedVec::wrap(stored(
+    let cumulative = stored(
         &db,
         "cumulative",
         (0..len as u64).map(|i| StoredU64::from((i + 1) * 100)),
-    ));
+    );
     let first = stored(&db, "first", (0..len).map(|i| Height::from(i / 2)));
     let count = LazyIndexCountVec::new("count", Version::ONE, &first, &source);
     let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);

@@ -6,8 +6,8 @@ use brk_exit::Exit;
 use brk_types::{Height, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachedVec, CachedVecStrategy, Database, EagerVec,
-    Ident, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
+    AnyStoredVec, AnyVec, Budgeted, CacheBudget, CachePolicy, Database, EagerVec, Ident,
+    ImportOptions, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec, Rw, StorageMode,
     UnaryTransform, VecValue, WritableVec,
 };
 
@@ -20,7 +20,7 @@ pub struct PerBlockCumulativeAverage<
     C = T,
     M: StorageMode = Rw,
     F = Ident,
-    P: CachedVecStrategy = Budgeted,
+    P: CachePolicy = Budgeted,
 > where
     T: NumericValue + JsonSchema,
     C: NumericValue + JsonSchema,
@@ -30,13 +30,13 @@ pub struct PerBlockCumulativeAverage<
     /// taken from the period's final block.
     pub block: LazyPreviousDeltaVec<Height, C, T, F>,
     #[traversable(hidden)]
-    cumulative: CachedVec<M::Stored<EagerVec<PcoVec<Height, C>>>, P>,
+    cumulative: M::Stored<EagerVec<PcoVec<Height, C, P>>>,
     #[traversable(flatten)]
     pub average: LazyRollingAvgsFromHeight<C>,
     last_cumulative: M::WriteOnly<Option<(usize, C)>>,
 }
 
-impl<T, C, F, P: CachedVecStrategy> PerBlockCumulativeAverage<T, C, Rw, F, P>
+impl<T, C, F, P: CachePolicy> PerBlockCumulativeAverage<T, C, Rw, F, P>
 where
     T: NumericValue + JsonSchema + Into<C>,
     C: NumericValue + JsonSchema,
@@ -51,14 +51,10 @@ where
         window_starts: &Windows<&impl ReadableCloneableVec<Height, Height>>,
     ) -> Result<Self> {
         let cumulative_version = version + Version::TWO;
-        let cumulative = P::wrap(
-            EagerVec::<PcoVec<Height, C>>::forced_import(
-                db,
-                &format!("{name}_cumulative"),
-                cumulative_version,
-            )?,
-            cache,
-        );
+        let cumulative = EagerVec::<PcoVec<Height, C, P>>::forced_import_with(
+            ImportOptions::new(db, &format!("{name}_cumulative"), cumulative_version)
+                .with_cache_budget(cache),
+        )?;
         let last_cumulative = cumulative
             .collect_last()
             .map(|value| (cumulative.len(), value));

@@ -7,7 +7,7 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{BoundedRatio, Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database, PcoVecValue, ReadableBoxedVec};
+use vecdb::{CacheBudget, Database, PcoVecValue, ReadableBoxedVec};
 
 use super::{AwakeVecs, CohortVecs, DormantVecs, Sources, Vecs};
 
@@ -16,7 +16,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    spot_price: &CachedBoxedVec<Height, Cents>,
+    spot_price: &ReadableBoxedVec<Height, Cents>,
     all_supply_in_loss_share: &PerBlock<BoundedRatio>,
 ) -> Result<Vecs> {
     let version = version + Version::ONE;
@@ -102,7 +102,7 @@ impl CohortVecs {
         sources: &Sources,
         supply_in_loss_share: ReadableBoxedVec<Height, BoundedRatio>,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
         let awake_supply = aggregate.select(&sources.awake_supply);
@@ -151,3 +151,4 @@ impl CohortVecs {
         }
     }
 }
+use vecdb::ReadableCloneableVec;

@@ -292,11 +292,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use brk_types::{Height, StoredU64, Version};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec, VecIndex,
-        WritableVec,
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableVec, VecIndex, WritableVec,
     };
 
     use super::LazyIndexedVec;
@@ -305,10 +306,16 @@ mod tests {
     fn folds_aligned_values_and_stops_on_error() {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut source: EagerVec<PcoVec<Height, StoredU64>> =
-            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
-        let mut metadata: EagerVec<PcoVec<Height, StoredU64>> =
-            EagerVec::forced_import(&db, "metadata", Version::ONE).unwrap();
+        let mut source: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
+        let mut metadata: EagerVec<PcoVec<Height, StoredU64, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "metadata", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
 
         for value in [10_u64, 20, 30, 40, 50] {
             source.push(StoredU64::from(value));
@@ -319,7 +326,6 @@ mod tests {
         source.write().unwrap();
         metadata.write().unwrap();
 
-        let metadata = CachedVec::wrap(metadata);
         let indexed = LazyIndexedVec::new(
             "indexed",
             Version::ONE,

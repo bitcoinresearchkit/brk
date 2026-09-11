@@ -9,8 +9,7 @@ use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{
-    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, RangeMap, Sats, StoredF64, Timestamp, TxIndex,
-    TypeIndex,
+    Cents, Date, Height, ONE_DAY_IN_SEC, OutputType, RangeMap, Sats, StoredF64, TxIndex, TypeIndex,
 };
 use rayon::{join, prelude::*};
 use tracing::{debug, info};
@@ -23,8 +22,7 @@ use super::{
         vecs::Vecs,
     },
     AddrReaders, BIP30_DUPLICATE_HEIGHT_1, BIP30_DUPLICATE_HEIGHT_2, BIP30_ORIGINAL_HEIGHT_1,
-    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, IndexToTxIndexBuf, PriceRangeMax, TxInReaders,
-    TxOutReaders,
+    BIP30_ORIGINAL_HEIGHT_2, ComputeContext, IndexToTxIndexBuf, TxInReaders, TxOutReaders,
 };
 use crate::{
     addr::{AddrMetricsState, FundedAddrCountsVecs},
@@ -64,27 +62,17 @@ pub fn process_blocks(
     inputs: &InputsVecs,
     outputs: &OutputsVecs,
     transactions: &TransactionsVecs,
-    starting_height: Height,
-    last_height: Height,
+    ctx: &ComputeContext<'_>,
     chain_state: &mut Vec<BlockState>,
     tx_index_to_height: &mut RangeMap<TxIndex, Height>,
     mut entry_anchor: Cents,
-    cached_prices: &[Cents],
-    cached_timestamps: &[Timestamp],
-    cached_price_range_max: &PriceRangeMax,
     exit: &Exit,
 ) -> Result<()> {
-    let ctx = ComputeContext {
-        starting_height,
-        last_height,
-        height_to_timestamp: cached_timestamps,
-        height_to_price: cached_prices,
-        price_range_max: cached_price_range_max,
-    };
-
     if ctx.starting_height > ctx.last_height {
         return Ok(());
     }
+    let starting_height = ctx.starting_height;
+    let last_height = ctx.last_height;
 
     let height_to_first_tx_index = &indexer.vecs().transactions.first_tx_index;
     let height_to_first_txout_index = &indexer.vecs().outputs.first_txout_index;
@@ -95,7 +83,7 @@ pub fn process_blocks(
     let tx_index_to_output_count = &mappings.tx_index.output_count;
     let tx_index_to_input_count = &mappings.tx_index.input_count;
 
-    let height_to_price_vec = cached_prices;
+    let height_to_price_vec = ctx.height_to_price;
 
     let start_usize = starting_height.to_usize();
     let end_usize = last_height.to_usize() + 1;
@@ -112,15 +100,15 @@ pub fn process_blocks(
         height_to_output_count.collect_range_at(start_usize, end_usize);
     let height_to_input_count_vec: Vec<_> =
         height_to_input_count.collect_range_at(start_usize, end_usize);
-    let height_to_timestamp_collected = &cached_timestamps[start_usize..end_usize];
-    let height_to_price_collected = &cached_prices[start_usize..end_usize];
+    let height_to_timestamp_collected = &ctx.height_to_timestamp[start_usize..end_usize];
+    let height_to_price_collected = &ctx.height_to_price[start_usize..end_usize];
 
     // Pre-compute day boundaries to avoid per-block division in the hot loop
     let is_last_of_day: Vec<bool> = (start_usize..end_usize)
         .map(|h| {
             h == end_usize - 1
-                || *cached_timestamps[h] / ONE_DAY_IN_SEC
-                    != *cached_timestamps[h + 1] / ONE_DAY_IN_SEC
+                || *ctx.height_to_timestamp[h] / ONE_DAY_IN_SEC
+                    != *ctx.height_to_timestamp[h + 1] / ONE_DAY_IN_SEC
         })
         .collect();
 

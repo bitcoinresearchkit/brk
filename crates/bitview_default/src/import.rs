@@ -58,7 +58,7 @@ impl DefaultPlugins {
             Ok(Box::new(Blocks::import(context, &indexer, &mappings)?))
         })?;
 
-        let cached_starts = blocks.lookback.cached_window_starts();
+        let window_starts = blocks.lookback.window_starts();
 
         let (inputs, outputs, mining, transactions, pools, op_return) =
             thread::scope(|scope| -> Result<_> {
@@ -67,7 +67,7 @@ impl DefaultPlugins {
                         Ok(Box::new(Inputs::import(
                             context,
                             &mappings,
-                            &cached_starts,
+                            &window_starts,
                         )?))
                     })
                 })?;
@@ -77,7 +77,7 @@ impl DefaultPlugins {
                         Ok(Box::new(Outputs::import(
                             context,
                             &mappings,
-                            &cached_starts,
+                            &window_starts,
                         )?))
                     })
                 })?;
@@ -88,7 +88,7 @@ impl DefaultPlugins {
                             context,
                             &indexer,
                             &mappings,
-                            &cached_starts,
+                            &window_starts,
                         )?))
                     })
                 })?;
@@ -99,14 +99,14 @@ impl DefaultPlugins {
                             context,
                             &indexer,
                             &mappings,
-                            &cached_starts,
+                            &window_starts,
                         )?))
                     })
                 })?;
 
                 let pools_handle = big_thread().spawn_scoped(scope, || -> Result<_> {
                     timed(Phase::Import, POOLS_ID, || {
-                        Ok(Box::new(Pools::import(context, &mappings, &cached_starts)?))
+                        Ok(Box::new(Pools::import(context, &mappings, &window_starts)?))
                     })
                 })?;
 
@@ -119,13 +119,13 @@ impl DefaultPlugins {
                     .read_only_boxed_clone();
                 let op_return_handle = {
                     let mappings = &mappings;
-                    let cached_starts = &cached_starts;
+                    let window_starts = &window_starts;
                     big_thread().spawn_scoped(scope, move || -> Result<_> {
                         timed(Phase::Import, OP_RETURN_ID, || {
                             Ok(Box::new(OpReturn::import(
                                 context,
                                 mappings,
-                                cached_starts,
+                                window_starts,
                                 block_size,
                                 &chain_fees,
                             )?))
@@ -161,7 +161,7 @@ impl DefaultPlugins {
                 Ok(Box::new(Distribution::import(
                     context,
                     &mappings,
-                    &cached_starts,
+                    &window_starts,
                     &price,
                     &inputs.by_type,
                     &outputs.by_type,
@@ -182,7 +182,7 @@ impl DefaultPlugins {
                         Ok(Box::new(Cointime::import(
                             context,
                             &mappings,
-                            &cached_starts,
+                            &window_starts,
                             &price,
                             &mining.rewards.subsidy.cumulative.cents,
                             &all_chain,
@@ -205,7 +205,7 @@ impl DefaultPlugins {
                         Ok(Box::new(Bedrock::import(
                             context,
                             &mappings,
-                            &price.spot.cents.height.read_only_cached_boxed_clone(),
+                            &price.spot.cents.height.read_only_boxed_clone(),
                         )?))
                     })
                 })?;
@@ -239,7 +239,7 @@ impl DefaultPlugins {
                     Ok(Box::new(Supply::import(
                         context,
                         &mappings,
-                        &cached_starts,
+                        &window_starts,
                         &distribution,
                         &cointime,
                         &all_chain,
@@ -264,7 +264,6 @@ impl DefaultPlugins {
         info!("Imported all plugins in {:.2?}", import_start.elapsed());
 
         Ok(Self {
-            cache_budget: context.cache_budget(),
             indexer: Box::new(indexer),
             blocks,
             mining,

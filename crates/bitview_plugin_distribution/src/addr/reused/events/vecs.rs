@@ -7,8 +7,8 @@ use bitview_plugin_outputs::ByTypeVecs;
 use bitview_transforms::RatioU64;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, CountPerBlockRollingAverage, CumulativeCountVec,
-    LazyPercentCumulativeRolling, PerBlockCumulativeRolling, PerBlockRollingAverage,
+    CountPerBlockRollingAverage, CumulativeCountVec, LazyPercentCumulativeRolling,
+    LazyWindowStartVec, PerBlockCumulativeRolling, PerBlockRollingAverage,
 };
 use brk_error::Result;
 use brk_exit::Exit;
@@ -99,7 +99,7 @@ impl AddrEventsVecs {
         name: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         all: LazyPercentCumulativeRolling<PartsPerMillion32>,
         numerators: &ByAddrType<PerBlockCumulativeRolling<StoredU64>>,
         denominators: &ByAddrType<CumulativeCountVec>,
@@ -114,7 +114,7 @@ impl AddrEventsVecs {
                 version,
                 id.select(numerators).cumulative.resolutions.height_source(),
                 id.select(denominators),
-                cached_starts,
+                window_starts,
                 mappings,
             )
         });
@@ -127,7 +127,7 @@ impl AddrEventsVecs {
         name: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         outputs_by_type: &ByTypeVecs,
         inputs_by_type: &InputsByTypeVecs,
     ) -> Result<Self> {
@@ -139,7 +139,7 @@ impl AddrEventsVecs {
                     name,
                     version + Version::ONE,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             };
             Ok(WithAddrTypes {
@@ -157,12 +157,12 @@ impl AddrEventsVecs {
             &output_share_name,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             outputs_by_type.output_count.lazy_share(
                 &output_share_name,
                 version,
                 &output_to_reused_addr_count.all.cumulative.height,
-                cached_starts,
+                window_starts,
                 mappings,
             ),
             &output_to_reused_addr_count.by_addr_type,
@@ -179,7 +179,7 @@ impl AddrEventsVecs {
                 version,
                 &output_to_reused_addr_count.all.cumulative.height,
                 outputs_by_type.spendable_output_count.cumulative_source(),
-                cached_starts,
+                window_starts,
                 mappings,
             );
         let input_from_reused_addr_count = import_count(&format!("input_from_{name}_addr_count"))?;
@@ -189,12 +189,12 @@ impl AddrEventsVecs {
             &input_share_name,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             inputs_by_type.input_count.lazy_share(
                 &input_share_name,
                 version,
                 &input_from_reused_addr_count.all.cumulative.height,
-                cached_starts,
+                window_starts,
                 mappings,
             ),
             &input_from_reused_addr_count.by_addr_type,
@@ -207,7 +207,7 @@ impl AddrEventsVecs {
             &format!("active_{name}_addr_count"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let active_reused_addr_share = PerBlockRollingAverage::forced_import(
             cache,
@@ -215,7 +215,7 @@ impl AddrEventsVecs {
             &format!("active_{name}_addr_share"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self {

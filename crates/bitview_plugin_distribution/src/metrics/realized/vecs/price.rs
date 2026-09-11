@@ -4,7 +4,7 @@ use bitview_traversable::Traversable;
 use bitview_vecs::LazyPriceWithRatioPerBlock;
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode};
 
 use crate::metrics::UTXOSources;
 
@@ -23,7 +23,7 @@ impl RealizedPriceByCohort {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let version = version + Version::ONE;
         let stored = UTXOSources::forced_import(cache, db, "realized_price_cents", version)?;

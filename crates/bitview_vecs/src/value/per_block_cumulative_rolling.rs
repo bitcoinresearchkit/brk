@@ -3,14 +3,12 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{
-    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableCloneableVec, Rw, StorageMode,
-};
+use vecdb::{Budgeted, CacheBudget, CachePolicy, Database, ReadableCloneableVec, Rw, StorageMode};
 
 use crate::{IndexSources, RollingAmountTotals, ValuePerBlockCumulative};
 
 #[derive(Deref, DerefMut, Traversable)]
-pub struct ValuePerBlockCumulativeRolling<M: StorageMode = Rw, P: CachedVecStrategy = Budgeted> {
+pub struct ValuePerBlockCumulativeRolling<M: StorageMode = Rw, P: CachePolicy = Budgeted> {
     #[deref]
     #[deref_mut]
     #[traversable(flatten)]
@@ -21,7 +19,7 @@ pub struct ValuePerBlockCumulativeRolling<M: StorageMode = Rw, P: CachedVecStrat
 
 const VERSION: Version = Version::TWO;
 
-impl<P: CachedVecStrategy> ValuePerBlockCumulativeRolling<Rw, P> {
+impl<P: CachePolicy> ValuePerBlockCumulativeRolling<Rw, P> {
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,

@@ -1,8 +1,10 @@
-use crate::{AnyVec, VecIndex, VecValue, Version, short_type_name, vec_region_name};
+use crate::{
+    AnyVec, VecIndex, VecValue, Version, cache::CachePolicy, short_type_name, vec_region_name,
+};
 
 use super::{super::CompressionStrategy, ReadOnlyCompressedVec};
 
-impl<I, T, S> AnyVec for ReadOnlyCompressedVec<I, T, S>
+impl<I, T, S, C: CachePolicy> AnyVec for ReadOnlyCompressedVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

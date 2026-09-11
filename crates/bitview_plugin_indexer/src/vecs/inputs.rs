@@ -3,7 +3,7 @@ use brk_error::Result;
 use brk_types::{Height, OutPoint, OutputType, TxInIndex, TxIndex, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BudgetedCachedVec, CacheBudget, Database, ImportableVec, PcoVec, Rw, Stamp,
+    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec, Rw, Stamp,
     StorageMode, WritableVec,
 };
 
@@ -13,7 +13,7 @@ pub struct InputsVecs<M: StorageMode = Rw> {
     /// At `height`, this is where the block begins and equals the number of
     /// inputs in preceding blocks; at `tx_index`, it identifies the
     /// transaction's first input.
-    pub first_txin_index: BudgetedCachedVec<M::Stored<PcoVec<Height, TxInIndex>>>,
+    pub first_txin_index: M::Stored<PcoVec<Height, TxInIndex, Budgeted>>,
     /// Previous-output reference encoded as the global transaction index and
     /// zero-based output position within that transaction. Coinbase inputs use
     /// `u32::MAX` for both components.
@@ -47,7 +47,7 @@ impl InputsVecs {
         version: Version,
     ) -> Result<Self> {
         let (first_txin_index, outpoint, txout_index, tx_index, output_type, type_index) = parallel_import! {
-            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
+            first_txin_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_txin_index", version).with_cache_budget(cache)),
             outpoint = PcoVec::forced_import(db, "outpoint", version),
             txout_index = PcoVec::forced_import(db, "txout_index", version),
             tx_index = PcoVec::forced_import(db, "tx_index", version),
@@ -55,7 +55,7 @@ impl InputsVecs {
             type_index = PcoVec::forced_import(db, "type_index", version),
         };
         Ok(Self {
-            first_txin_index: cache.wrap(first_txin_index),
+            first_txin_index,
             outpoint,
             txout_index,
             tx_index,

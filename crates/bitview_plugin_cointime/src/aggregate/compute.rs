@@ -8,7 +8,7 @@ use bitview_vecs::PerBlock;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{BoundedRatio, Cents, Height, Sats, Version};
-use vecdb::{AnyStoredVec, AnyVec, EagerVec, PcoVec, ReadableVec, WritableVec};
+use vecdb::{AnyStoredVec, AnyVec, CachePolicy, EagerVec, PcoVec, ReadableVec, WritableVec};
 
 use super::{super::AgeRangeVecs, Sources, Vecs};
 
@@ -60,7 +60,7 @@ impl Sources {
         loss_supplies: &AgeRange<&L>,
         realized_caps: &AgeRange<&C>,
         weights: &AgeRange<&W>,
-        all_supply_in_loss_share: &mut EagerVec<PcoVec<Height, BoundedRatio>>,
+        all_supply_in_loss_share: &mut EagerVec<PcoVec<Height, BoundedRatio, impl CachePolicy>>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -220,7 +220,12 @@ mod tests {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
         let mut sources = Sources::forced_import(cache, &db, Version::ONE).unwrap();
-        let mut loss_share = EagerVec::forced_import(&db, "loss_share", Version::ONE).unwrap();
+        let mut loss_share = EagerVec::<PcoVec<Height, BoundedRatio>>::forced_import(
+            &db,
+            "loss_share",
+            Version::ONE,
+        )
+        .unwrap();
         let mut supply =
             PcoVec::<Height, Sats>::forced_import(&db, "supply", Version::ONE).unwrap();
         let mut loss = PcoVec::<Height, Sats>::forced_import(&db, "loss", Version::ONE).unwrap();

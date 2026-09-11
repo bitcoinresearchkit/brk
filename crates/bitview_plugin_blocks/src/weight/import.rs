@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::VBytesToWeight;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlockRolling, LazyPercentVec};
+use bitview_vecs::{LazyPerBlockRolling, LazyPercentVec, LazyWindowStartVec};
 use brk_types::{Height, PartsPerMillion32, Version, Weight};
 
 use super::Vecs;
@@ -17,7 +17,7 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         size: &SizeVecs,
     ) -> Self {
         let weight = LazyPerBlockRolling::from_full_parts::<VBytesToWeight>(
@@ -25,7 +25,7 @@ impl Vecs {
             version,
             &size.vbytes.cumulative,
             &size.vbytes.rolling,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

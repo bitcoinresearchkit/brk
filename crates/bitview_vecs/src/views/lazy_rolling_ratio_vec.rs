@@ -132,15 +132,15 @@ where
         to: usize,
         mut visit: impl FnMut(usize, &RollingInput<S>, &RollingInput<C>, &[Height]),
     ) {
-        let starts = self.window_starts.snapshot();
         let to = to
             .min(self.source.len())
             .min(self.operand.len())
-            .min(starts.len());
+            .min(self.window_starts.len());
         if from >= to {
             return;
         }
-        let starts = &starts[from..to];
+        let starts = self.window_starts.collect_range_dyn(from, to);
+        let starts = starts.as_slice();
         let source = RollingInput::new(&self.source, from, to, starts);
         let operand = RollingInput::new(&self.operand, from, to, starts);
         visit(from, &source, &operand, starts);
@@ -317,8 +317,7 @@ where
             return None;
         }
 
-        let window_starts = self.window_starts.snapshot();
-        let previous = Self::previous_index(window_starts[index]);
+        let previous = Self::previous_index(self.window_starts.collect_one_at(index)?);
         Some(
             self.compute(
                 index,
@@ -352,18 +351,20 @@ where
             return;
         }
 
-        let window_starts = self.window_starts.snapshot();
-        let source = SparseRead::new(&*self.source, indices, |index| {
-            Self::previous_index(window_starts[index])
+        let window_starts = self.window_starts.read_sorted_at(indices);
+        let mut starts = window_starts.iter();
+        let source = SparseRead::new(&*self.source, indices, |_| {
+            Self::previous_index(*starts.next().unwrap())
         });
 
-        let operand = SparseRead::new(&*self.operand, indices, |index| {
-            Self::previous_index(window_starts[index])
+        let mut starts = window_starts.iter();
+        let operand = SparseRead::new(&*self.operand, indices, |_| {
+            Self::previous_index(*starts.next().unwrap())
         });
 
         out.reserve(indices.len());
         for (output, &index) in indices.iter().enumerate() {
-            let previous = Self::previous_index(window_starts[index]);
+            let previous = Self::previous_index(window_starts[output]);
             out.push(self.compute(
                 index,
                 previous,
@@ -394,12 +395,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use bitview_transforms::RatioSats;
     use brk_types::{Height, PartsPerMillion32, Sats};
     use tempfile::tempdir;
     use vecdb::{
-        AnyStoredVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec, ReadableVec,
-        WritableVec,
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableVec, WritableVec,
     };
 
     use super::*;
@@ -412,12 +414,19 @@ mod tests {
     fn derives_rolling_ratios_from_one_source_and_cached_denominator() {
         let directory = tempdir().unwrap();
         let db = Database::open(directory.path()).unwrap();
-        let mut source: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(&db, "source", Version::ONE).unwrap();
-        let mut denominator: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(&db, "denominator", Version::ONE).unwrap();
-        let mut starts: EagerVec<PcoVec<Height, Height>> =
-            EagerVec::forced_import(&db, "starts", Version::ONE).unwrap();
+        let mut source: EagerVec<PcoVec<Height, Sats, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
+        let mut denominator: EagerVec<PcoVec<Height, Sats, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "denominator", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
+        let mut starts: EagerVec<PcoVec<Height, Height, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "starts", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
 
         for value in [10, 30, 60, 100] {
             source.push(Sats::new(value));
@@ -432,8 +441,6 @@ mod tests {
         denominator.write().unwrap();
         starts.write().unwrap();
 
-        let denominator = CachedVec::wrap(denominator);
-        let starts = CachedVec::wrap(starts);
         let ratio = LazyRollingRatioVec::<
             Sats,
             Sats,

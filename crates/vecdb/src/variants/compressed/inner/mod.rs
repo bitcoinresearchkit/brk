@@ -2,8 +2,12 @@ use std::{marker::PhantomData, sync::Arc};
 
 use parking_lot::RwLock;
 
-use crate::ReadOnlyBaseVec;
+use crate::{
+    ReadOnlyBaseVec, VecValue,
+    cache::{CachePolicy, NoCache},
+};
 
+mod cached;
 pub mod decoder;
 pub mod encoded_chunk;
 pub mod page;
@@ -26,8 +30,9 @@ pub use strategy::*;
 ///
 /// Created via `ReadWriteCompressedVec::read_only_clone`.
 #[derive(Debug, Clone)]
-pub struct ReadOnlyCompressedVec<I, T, S> {
+pub struct ReadOnlyCompressedVec<I, T: VecValue, S, C: CachePolicy = NoCache> {
     base: ReadOnlyBaseVec<I, T>,
+    cache: C::State<T>,
     pages: Arc<RwLock<Pages>>,
     _strategy: PhantomData<S>,
 }

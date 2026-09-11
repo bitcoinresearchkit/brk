@@ -9,15 +9,15 @@ use bitview_transforms::{
 };
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
-    LazyValuePerBlock, LazyValuePerBlockCumulativeRolling, PerBlockCumulativeRolling, SatsCents,
+    LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight, LazyValuePerBlock,
+    LazyValuePerBlockCumulativeRolling, LazyWindowStartVec, PerBlockCumulativeRolling, SatsCents,
 };
 use brk_error::Result;
 use brk_types::{
     Cents, Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, StoredU64, Version,
 };
 use vecdb::{
-    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, CachedBoxedVec, Database, Halve, LazyVec,
+    AnyStoredVec, AnyVec, BinaryTransform, CacheBudget, Database, Halve, LazyVec, ReadableBoxedVec,
     Rw, StorageMode,
 };
 
@@ -58,8 +58,8 @@ impl SupplyVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        window_starts: &Windows<&LazyWindowStartVec>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Box<Self>> {
         let total = SupplyTotal::forced_import(cache, db, version, mappings, spot_price)?;
         let all_supply = total.all_supply();
@@ -81,7 +81,7 @@ impl SupplyVecs {
         )?;
         let utxo = total.cohorts.utxo.map_with_id(|cohort_id, total| {
             if matches!(cohort_id, CohortId::All) {
-                SupplyBase::from_all_total(version, total.clone(), mappings, cached_starts)
+                SupplyBase::from_all_total(version, total.clone(), mappings, window_starts)
             } else {
                 SupplyBase::from_total(
                     CohortContext::Utxo,
@@ -90,7 +90,7 @@ impl SupplyVecs {
                     total.clone(),
                     all_supply,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             }
         });
@@ -104,7 +104,7 @@ impl SupplyVecs {
                 total.clone(),
                 all_supply,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         let bases = UTXOAndAddrGroups { utxo, addr_balance };
@@ -135,7 +135,7 @@ impl SupplyVecs {
                     &format!("{name}_raw_sats"),
                     matured_version + Version::ONE,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )?,
                 cents: PerBlockCumulativeRolling::forced_import(
                     cache,
@@ -143,7 +143,7 @@ impl SupplyVecs {
                     &format!("{name}_raw_cents"),
                     matured_version + Version::ONE,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )?,
             })
         })?;
@@ -169,7 +169,7 @@ impl SupplyVecs {
                 &sats,
                 &cents,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
 
@@ -245,3 +245,4 @@ impl SupplyVecs {
         vecs
     }
 }
+use vecdb::ReadableCloneableVec;

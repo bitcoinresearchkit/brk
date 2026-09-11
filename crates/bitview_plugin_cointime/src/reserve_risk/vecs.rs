@@ -1,6 +1,6 @@
 use bitview_traversable::Traversable;
 use brk_types::{Height, StoredF64};
-use vecdb::{BudgetedCachedVec, EagerVec, PcoVec, Rw, StorageMode};
+use vecdb::{Budgeted, EagerVec, PcoVec, Rw, StorageMode};
 
 use bitview_vecs::LazyPerBlock;
 
@@ -21,5 +21,5 @@ pub struct Vecs<M: StorageMode = Rw> {
     /// in USD minus the trailing-365-day median supply-adjusted value of coin
     /// days destroyed. It represents the model's accumulated holder reserve and
     /// is the denominator of Reserve Risk.
-    pub hodl_bank: BudgetedCachedVec<M::Stored<EagerVec<PcoVec<Height, StoredF64>>>>,
+    pub hodl_bank: M::Stored<EagerVec<PcoVec<Height, StoredF64, Budgeted>>>,
 }

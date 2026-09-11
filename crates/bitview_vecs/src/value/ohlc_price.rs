@@ -17,7 +17,7 @@ impl OhlcPrice {
             &format!("{name}_cents"),
             version,
             indexes,
-            spot.cents.height.read_only_cached_boxed_clone(),
+            spot.cents.height.read_only_boxed_clone(),
         );
         let usd = LazyIndexes::from_ohlc_indexes::<OhlcCentsToDollars>(name, version, &cents);
         // The reciprocal candle transform swaps high and low internally.
@@ -29,3 +29,4 @@ impl OhlcPrice {
         Self { usd, cents, sats }
     }
 }
+use vecdb::ReadableCloneableVec;

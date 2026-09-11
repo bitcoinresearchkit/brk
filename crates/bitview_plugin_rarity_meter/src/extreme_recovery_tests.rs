@@ -7,12 +7,12 @@ use crate::test_common as common;
 fn check(extreme: &Extreme<StoredF32>, len: usize) {
     for threshold in extreme.thresholds.iter() {
         assert_eq!(threshold.height.len(), len);
-        assert_eq!(threshold.height.snapshot().len(), len);
+        assert_eq!(threshold.height.collect().len(), len);
     }
     assert_eq!(extreme.tail.ppm.height.len(), len);
-    assert_eq!(extreme.tail.ppm.height.snapshot().len(), len);
+    assert_eq!(extreme.tail.ppm.height.collect().len(), len);
     assert_eq!(extreme.rank.height.len(), len);
-    assert_eq!(extreme.rank.height.snapshot().len(), len);
+    assert_eq!(extreme.rank.height.collect().len(), len);
 }
 
 #[test]

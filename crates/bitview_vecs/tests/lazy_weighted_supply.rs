@@ -7,8 +7,7 @@ use bitview_vecs::{LazySpotValuePerBlock, StoredSeries, import_stored};
 use brk_types::{BoundedRatio, Cents, Day1, Height, Sats, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, CachedReadableVec, CachedVec, Database, ImportableVec, PcoVec, ReadOnlyClone,
-    ReadableVec, WritableVec,
+    AnyStoredVec, Database, ImportableVec, PcoVec, ReadableCloneableVec, ReadableVec, WritableVec,
 };
 
 #[test]
@@ -16,12 +15,9 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let mut indexes = common::indexes(&db);
-    indexes.first_height.day1 = CachedVec::wrap(common::stored::<Day1, _>(
-        &db,
-        "daily_first_height",
-        [0usize, 2, 4].map(Height::from),
-    ))
-    .read_only_boxed_clone();
+    indexes.first_height.day1 =
+        common::stored::<Day1, _>(&db, "daily_first_height", [0usize, 2, 4].map(Height::from))
+            .read_only_boxed_clone();
     let mut supply: AgeRange<StoredSeries<Height, Sats>> = AgeRange::from_fn(|id| {
         import_stored(
             &CACHE_BUDGET,
@@ -64,7 +60,7 @@ fn lazy_sides_preserve_stored_rounding_and_follow_source_rewrites() {
         v.write().unwrap();
     }
     spot.write().unwrap();
-    let spot = CachedVec::wrap(spot.read_only_clone()).cached_boxed_clone();
+    let spot = spot.read_only_boxed_clone();
     for &id in AgeRangeId::ALL {
         let raw = id.select(&supply).read_only_boxed_clone();
         let weight = id.select(&weights).read_only_boxed_clone();

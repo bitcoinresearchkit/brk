@@ -11,7 +11,9 @@ use bitview_vecs::{
 };
 use brk_types::{Cents, Height, PartsPerMillion32, StoredU64, Version};
 use tempfile::tempdir;
-use vecdb::{CacheBudget, CachedVec, Database, PcoVecValue, ReadOnlyClone, ReadableVec, Ro};
+use vecdb::{
+    CacheBudget, Database, PcoVecValue, ReadOnlyClone, ReadableCloneableVec, ReadableVec, Ro,
+};
 
 mod common;
 
@@ -48,11 +50,7 @@ fn aggregate_view_families_share_storage_and_read_only_projection() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let indexes = common::indexes(&db);
-    let spot = CachedVec::wrap(common::stored::<Height, _>(
-        &db,
-        "spot",
-        [Cents::from(100_u64)],
-    ));
+    let spot = common::stored::<Height, _>(&db, "spot", [Cents::from(100_u64)]);
     let amounts = UTXOAggregate::from_fn(|id| Cents::from(id.index() as u64 + 1));
     check(
         AggregateFiatPerBlock::forced_import(&CACHE, &db, "fiat", Version::ONE, &indexes).unwrap(),
@@ -70,7 +68,7 @@ fn aggregate_view_families_share_storage_and_read_only_projection() {
             "price",
             Version::ONE,
             &indexes,
-            &spot.read_only_cached_boxed_clone(),
+            &spot.read_only_boxed_clone(),
         )
         .unwrap(),
         amounts,

@@ -6,7 +6,7 @@ use bitview_traversable::TreeNode;
 use bitview_vecs::UTXOAgeSources;
 use brk_types::StoredF32;
 use tempfile::tempdir;
-use vecdb::{EagerVec, PcoVec};
+use vecdb::{Budgeted, EagerVec, PcoVec};
 
 use super::*;
 use crate::test_common as common;
@@ -22,7 +22,7 @@ fn compute(
     prices: &mut ReferencePrices,
     height: Height,
     caps: &UTXOAgeSources<CentsSats>,
-    supplies: &[EagerVec<PcoVec<Height, Sats>>; 4],
+    supplies: &[EagerVec<PcoVec<Height, Sats, Budgeted>>; 4],
     spot: &impl ReadableVec<Height, Cents>,
     exit: &Exit,
 ) -> Result<()> {
@@ -59,7 +59,7 @@ fn inputs(band: usize, row: usize) -> (CentsSats, Sats) {
 
 fn append(
     caps: &mut UTXOAgeSources<CentsSats>,
-    supplies: &mut [EagerVec<PcoVec<Height, Sats>>; 4],
+    supplies: &mut [EagerVec<PcoVec<Height, Sats, Budgeted>>; 4],
     rows: Range<usize>,
 ) {
     for row in rows {

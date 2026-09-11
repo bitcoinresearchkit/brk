@@ -37,3 +37,4 @@ where
         }))
     }
 }
+use vecdb::ReadableCloneableVec;

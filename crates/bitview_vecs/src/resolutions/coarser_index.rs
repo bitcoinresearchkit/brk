@@ -17,9 +17,15 @@ where
     S2T: VecValue,
 {
     #[inline]
-    fn try_fold<S: ReadableVec<S1I, O> + ?Sized, B, E, F: FnMut(B, O) -> Result<B, E>>(
+    fn try_fold<
+        MI: VecIndex,
+        S: ReadableVec<S1I, O> + ?Sized,
+        B,
+        E,
+        F: FnMut(B, O) -> Result<B, E>,
+    >(
         source: &S,
-        mapping: &[S2T],
+        mapping: &impl ReadableVec<MI, S2T>,
         from: usize,
         to: usize,
         init: B,
@@ -39,9 +45,9 @@ where
     }
 
     #[inline]
-    fn collect_one<S: ReadableVec<S1I, O> + ?Sized>(
+    fn collect_one<MI: VecIndex, S: ReadableVec<S1I, O> + ?Sized>(
         source: &S,
-        _mapping: &[S2T],
+        _mapping: &impl ReadableVec<MI, S2T>,
         index: usize,
     ) -> Option<O> {
         let target = S1I::max_from(I::from(index), source.visible_len());

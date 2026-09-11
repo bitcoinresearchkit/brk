@@ -1,5 +1,28 @@
 use crate::{ReadableVec, VecIndex, VecValue};
 
+pub(crate) fn for_each_chunk<I: VecIndex, T: VecValue>(
+    source: &(impl ReadableVec<I, T> + ?Sized),
+    from: usize,
+    to: usize,
+    each: &mut dyn FnMut(usize, &[T]),
+) {
+    let to = to.min(source.len());
+    let chunk_size = source.cursor_chunk_size().max(1);
+    let mut values = Vec::with_capacity(chunk_size.min(to.saturating_sub(from)));
+    let mut at = from;
+    let mut emitted_at = from;
+    while at < to {
+        let end = at.saturating_add(chunk_size - at % chunk_size).min(to);
+        values.clear();
+        source.read_into_at(at, end, &mut values);
+        if !values.is_empty() {
+            each(emitted_at, &values);
+            emitted_at += values.len();
+        }
+        at = end;
+    }
+}
+
 /// Folds borrowed chunks without routing each value through a trait object.
 #[inline]
 pub(crate) fn fold<I: VecIndex, T: VecValue, B>(

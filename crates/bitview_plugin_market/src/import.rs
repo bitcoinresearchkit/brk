@@ -19,16 +19,16 @@ impl Vecs {
 
         let spot_price = prices.spot.cents.resolutions.height_source();
         let ath = ath::forced_import(context.cache_budget(), &db, version, mappings, spot_price)?;
-        let cached_starts = ByLookbackPeriod::try_new(|_, days| {
-            Ok::<_, Error>(blocks.lookback.cached_start_vec(days as usize))
+        let window_starts = ByLookbackPeriod::try_new(|_, days| {
+            Ok::<_, Error>(blocks.lookback.start_vec(days as usize))
         })?;
-        let lookback = lookback::forced_import(version, mappings, &cached_starts, prices)?;
+        let lookback = lookback::forced_import(version, mappings, &window_starts, prices)?;
         let returns = returns::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            &cached_starts,
+            &window_starts,
             prices,
         )?;
         let volatility = volatility::forced_import(version, &returns)?;

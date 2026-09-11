@@ -11,8 +11,8 @@ use bitview_vecs::{
 use brk_types::{Day1, Height, PartsPerMillion32, StoredU16, StoredU64, Version};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BinaryTransform, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-    PcoVecValue, ReadBounds, ReadableVec, ReverseOperands, VecValue, WritableVec,
+    AnyStoredVec, BinaryTransform, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
+    ReadBounds, ReadableVec, ReverseOperands, VecValue, WritableVec,
 };
 
 #[path = "../benches/unit/lazy_folds.rs"]
@@ -83,23 +83,15 @@ fn folds_match_materialization_for_all_optimized_views_and_published_bounds() {
         "source",
         (0..64_u64).map(|i| StoredU64::from(i * (i + 1))),
     );
-    let starts = CachedVec::wrap(stored(
-        &db,
-        "starts",
-        (0_usize..64).map(|i| Height::from(i / 3)),
-    ));
-    let days = CachedVec::wrap(stored(&db, "days", (0..64).map(|i| Day1::from(i / 8))));
-    let denominator = CachedVec::wrap(stored(
-        &db,
-        "denominator",
-        (0..64).map(|_| StoredU16::new(10)),
-    ));
+    let starts = stored(&db, "starts", (0_usize..64).map(|i| Height::from(i / 3)));
+    let days = stored(&db, "days", (0..64).map(|i| Day1::from(i / 8)));
+    let denominator = stored(&db, "denominator", (0..64).map(|_| StoredU16::new(10)));
     let denominator = CumulativeCountVec::new(&denominator);
-    let cumulative = CachedVec::wrap(stored(
+    let cumulative = stored(
         &db,
         "cumulative",
         (0..64_u64).map(|i| StoredU64::from((i + 1) * 10)),
-    ));
+    );
     let first = stored(&db, "first", (0_usize..64).map(|i| Height::from(i / 2)));
     let count = LazyIndexCountVec::new("count", Version::ONE, &first, &source);
     let delta = LazyPreviousDeltaVec::new("delta", Version::ONE, &source);
@@ -176,7 +168,7 @@ fn fallible_fold_stops_transforming_after_the_first_error() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
     let source = stored(&db, "source", (0..64_u64).map(StoredU64::from));
-    let starts = CachedVec::wrap(stored(&db, "starts", (0..64).map(|_| Height::ZERO)));
+    let starts = stored(&db, "starts", (0..64).map(|_| Height::ZERO));
     let calls = Arc::new(AtomicUsize::new(0));
     let captured_calls = calls.clone();
     let window = LazyWindowVec::new(

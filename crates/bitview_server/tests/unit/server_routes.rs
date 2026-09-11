@@ -1,11 +1,13 @@
-#[cfg(feature = "chain")]
-#[cfg(feature = "chain")]
 use super::broadcast;
 #[cfg(feature = "chain")]
 use super::urpd;
 #[cfg(feature = "chain")]
 use brk_types::BlockHash;
+#[cfg(feature = "chain")]
+#[cfg(feature = "chain")]
+use vecdb::CacheBudget;
 
+#[cfg(feature = "chain")]
 #[cfg(feature = "chain")]
 use bitcoin::consensus::encode;
 #[cfg(any(feature = "chain", all(feature = "chain", feature = "series")))]
@@ -22,8 +24,6 @@ use tokio::fs;
 use tokio::spawn as TokioSpawn;
 #[cfg(feature = "chain")]
 use tokio::time;
-#[cfg(feature = "chain")]
-use vecdb::CacheBudget;
 
 use std::net::SocketAddr;
 
@@ -80,10 +80,6 @@ use crate::{AppState, Server, ServerConfig};
 pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     check_height_block_lists(state, address).await;
     let timestamp_path = "/api/v1/mining/blocks/timestamp/4294967295";
-    state.sync(|q| {
-        q.indexer().vecs().blocks.timestamp.invalidate();
-        q.plugins().mappings.timestamp.monotonic.invalidate();
-    });
     let timestamp_response = exchange_with_etag(address, "GET", timestamp_path, "\"old\"").await;
     assert!(
         timestamp_response.starts_with("HTTP/1.1 200"),
@@ -166,16 +162,14 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
                 .vecs()
                 .blocks
                 .timestamp
-                .cached_snapshot()
-                .is_none()
+                .read_cached_into_at(1, 2, &mut Vec::new())
         );
         assert!(
             q.plugins()
                 .mappings
                 .timestamp
                 .monotonic
-                .cached_snapshot()
-                .is_none()
+                .read_cached_into_at(1, 2, &mut Vec::new())
         );
     });
     check_block_height(state, address).await;
@@ -490,20 +484,33 @@ pub async fn check_recent_blocks(state: &AppState, address: SocketAddr) {
     let invalid =
         exchange_with_etag(address, "GET", &format!("{single_path}?x=1"), &single_tag).await;
     assert!(invalid.starts_with("HTTP/1.1 400"), "{invalid}");
-    state.sync(|q| q.plugins().price.spot.cents.height.invalidate());
+    let retained = state.sync(|q| {
+        let mut values = Vec::new();
+        let hit = q
+            .plugins()
+            .price
+            .spot
+            .cents
+            .height
+            .read_cached_into_at(0, 2, &mut values);
+        (hit, values)
+    });
     let cold = exchange_with_etag(address, "GET", "/api/v1/blocks", &v1_tag).await;
     assert!(cold.starts_with("HTTP/1.1 304"), "{cold}");
     state.sync(|q| {
-        assert!(
-            q.plugins()
-                .price
-                .spot
-                .cents
-                .height
-                .cached_snapshot()
-                .is_none(),
-            "cold V1 validation must not materialize prices"
-        )
+        let mut values = Vec::new();
+        let hit = q
+            .plugins()
+            .price
+            .spot
+            .cents
+            .height
+            .read_cached_into_at(0, 2, &mut values);
+        assert_eq!(
+            (hit, values),
+            retained,
+            "V1 validation must leave price retention unchanged"
+        );
     });
     let response = exchange_with_etag(address, "GET", "/api/blocks", "\"old\"").await;
     assert!(response.starts_with("HTTP/1.1 200"), "{response}");
@@ -829,12 +836,11 @@ fn server_routes_preserve_validation_and_errors_before_conditionals() {
         let query = AsyncQuery::build(&plugins, None);
         query.sync(|q| {
             let prices = &q.plugins().price.spot.cents.height;
-            prices.invalidate();
             let snapshot = q.try_resolve_blocks_v1(None, 15).unwrap().unwrap();
             assert!(snapshot.anchor().is_none());
             assert!(snapshot.prices().is_empty());
             assert!(snapshot.build(q).unwrap().is_empty());
-            assert!(prices.cached_snapshot().is_none());
+            assert!(!prices.read_cached_into_at(0, 1, &mut Vec::new()));
         });
         Builder::new_current_thread().max_blocking_threads(1).enable_all().build().unwrap().block_on(async {
             let node = TcpListener::from_std(node).unwrap();

@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPercentPerBlock};
+use bitview_vecs::{LazyPercentPerBlock, LazyWindowStartVec};
 use brk_types::{Height, PartsPerMillion32, PoolSlug, StoredU64};
 use vecdb::{LazyVec, ReadableCloneableVec, Version};
 
@@ -28,7 +28,7 @@ impl Vecs {
         pool_heights: PoolHeights,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let suffix = |s: &str| format!("{}_{s}", slug);
 
@@ -38,7 +38,7 @@ impl Vecs {
             pool_heights,
             version + Version::ONE,
             mappings,
-            cached_starts,
+            window_starts,
         );
 
         let dominance_name = suffix("dominance");

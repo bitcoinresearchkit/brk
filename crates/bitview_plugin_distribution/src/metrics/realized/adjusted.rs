@@ -3,7 +3,7 @@ use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::SoprRatio;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling, RollingWindows};
+use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling, RollingWindows};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, StoredF32, Version};
@@ -35,7 +35,7 @@ impl AdjustedSoprVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let source_version = version + SOURCE_VERSION;
         let ratio_version = source_version + RATIO_VERSION;
@@ -45,7 +45,7 @@ impl AdjustedSoprVecs {
             "adj_value_created",
             source_version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let value_destroyed = Self::import_cumulative(
             cache,
@@ -53,7 +53,7 @@ impl AdjustedSoprVecs {
             "adj_value_destroyed",
             source_version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let ratio = UTXOAllAndSth {
             all: RollingWindows::forced_import(
@@ -85,7 +85,7 @@ impl AdjustedSoprVecs {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<UTXOAllAndSth<PerBlockCumulativeRolling<Cents>>> {
         UTXOAllAndSth::try_from_fn(|id| {
             PerBlockCumulativeRolling::forced_import(
@@ -94,7 +94,7 @@ impl AdjustedSoprVecs {
                 &Self::cohort_metric_name(id, metric),
                 Self::cohort_version(version, id) + Version::ONE,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         })
     }

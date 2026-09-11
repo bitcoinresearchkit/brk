@@ -1,6 +1,6 @@
-use std::{ops::AddAssign, result::Result, sync::Arc};
+use std::{ops::AddAssign, result::Result};
 
-use crate::{AnyVec, ReadableBoxedVec, VecIndex, VecValue, Version, cursor::Cursor};
+use crate::{AnyVec, ReadableBoxedVec, VecIndex, VecValue, cursor::Cursor};
 
 /// Default chunk size for chunked iteration (matches PcoVec page size).
 pub const READ_CHUNK_SIZE: usize = 4096;
@@ -51,20 +51,17 @@ pub const READ_CHUNK_SIZE: usize = 4096;
 /// For maximum throughput on stored vecs, prefer `fold_range` / `for_each_range`
 /// with static dispatch (`&impl ReadableVec` or concrete type).
 pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
-    /// Materialize a stable read snapshot. Sources with shared storage can
-    /// return that storage directly; ordinary readers collect on demand.
-    fn snapshot(&self) -> Arc<Vec<T>> {
-        let len = self.len();
-        let mut values = Vec::with_capacity(len);
-        self.read_into_at(0, len, &mut values);
-        Arc::new(values)
+    /// Token for reusing derived prefixes. Changes when existing values can
+    /// change, but not on append or cache eviction. `None` disables reuse.
+    /// This is not a read guard: related reads still need publication protection.
+    fn data_revision(&self) -> Option<u64> {
+        None
     }
 
-    /// Version used to validate snapshots shared with read-only clones.
-    /// Computation wrappers may expose a different public dependency version.
-    #[inline]
-    fn snapshot_version(&self) -> Version {
-        self.version()
+    /// Append a complete retained range without source reads or cache fills.
+    /// On a miss (including unavailable bounds), leave `out` unchanged.
+    fn read_cached_into_at(&self, _from: usize, _to: usize, _out: &mut Vec<T>) -> bool {
+        false
     }
 
     // ── Required ─────────────────────────────────────────────────────
@@ -96,21 +93,7 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
     /// The default reuses one read buffer. Resident sources can lend their
     /// storage directly, avoiding copies through type-erased readers.
     fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
-        let to = to.min(self.len());
-        let chunk_size = self.cursor_chunk_size().max(1);
-        let mut values = Vec::with_capacity(chunk_size.min(to.saturating_sub(from)));
-        let mut at = from;
-        let mut emitted_at = from;
-        while at < to {
-            let end = at.saturating_add(chunk_size - at % chunk_size).min(to);
-            values.clear();
-            self.read_into_at(at, end, &mut values);
-            if !values.is_empty() {
-                f(emitted_at, &values);
-                emitted_at += values.len();
-            }
-            at = end;
-        }
+        super::chunk_folds::for_each_chunk(self, from, to, f);
     }
 
     /// Iterates over `[from, to)` by raw index, calling `f` for each value.
@@ -306,7 +289,7 @@ pub trait ReadableVec<I: VecIndex, T: VecValue>: AnyVec {
     /// Collects values in `[from, to)` into a `Vec<T>` (object-safe).
     #[inline]
     fn collect_range_dyn(&self, from: usize, to: usize) -> Vec<T> {
-        let mut buf = Vec::with_capacity(to.saturating_sub(from));
+        let mut buf = Vec::with_capacity(to.min(self.len()).saturating_sub(from));
         self.read_into_at(from, to, &mut buf);
         buf
     }

@@ -1,3 +1,5 @@
+mod common;
+
 use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
@@ -13,6 +15,7 @@ use vecdb::{
 use vecdb::PcoVec;
 
 static READS: AtomicUsize = AtomicUsize::new(0);
+static MAPPING_READS: AtomicUsize = AtomicUsize::new(0);
 
 #[test]
 fn aggregation_sorted_reads_are_selective_and_preserve_empty_buckets() {
@@ -33,17 +36,21 @@ fn aggregation_sorted_reads_are_selective_and_preserve_empty_buckets() {
         },
     );
     let mapping = Arc::new((0..10_000usize).map(|i| i * 2).collect::<Vec<_>>());
-    let mapping_reads = Arc::new(AtomicUsize::new(0));
-    let counter = mapping_reads.clone();
+    let mapping_reads = &MAPPING_READS;
+    let mapping = LazyVec::init(
+        "counted_mapping",
+        Version::ONE,
+        common::mapping(&db, mapping.iter().copied()),
+        |_, value| {
+            MAPPING_READS.fetch_add(1, Ordering::Relaxed);
+            value
+        },
+    );
     let agg = LazyAggVec::<usize, Option<u64>, usize, usize, u64>::new(
         "agg",
         Version::ONE,
-        Version::ONE,
         counted.read_only_boxed_clone(),
-        move || {
-            counter.fetch_add(1, Ordering::Relaxed);
-            mapping.clone()
-        },
+        mapping.read_only_boxed_clone(),
     );
     READS.store(0, Ordering::Relaxed);
     mapping_reads.store(0, Ordering::Relaxed);
@@ -52,7 +59,7 @@ fn aggregation_sorted_reads_are_selective_and_preserve_empty_buckets() {
         [Some(1), Some(7), Some(7), Some(19_999)]
     );
     assert_eq!(READS.load(Ordering::Relaxed), 3);
-    assert_eq!(mapping_reads.load(Ordering::Relaxed), 1);
+    assert_eq!(mapping_reads.load(Ordering::Relaxed), 5);
     mapping_reads.store(0, Ordering::Relaxed);
     let mut actual = Vec::new();
     agg.for_each_chunk_at(3, 11_000, &mut |at, values| {
@@ -68,9 +75,8 @@ fn aggregation_sorted_reads_are_selective_and_preserve_empty_buckets() {
     let agg = LazyAggVec::<usize, Option<u64>, usize, usize, u64>::new(
         "empty",
         Version::ONE,
-        Version::ONE,
         ReadableBoxedVec::new(source.read_only_clone()),
-        move || mapping.clone(),
+        common::mapping(&db, mapping.iter().copied()),
     );
     let mut bounds = ReadBounds::new();
     bounds.set("usize", 3);

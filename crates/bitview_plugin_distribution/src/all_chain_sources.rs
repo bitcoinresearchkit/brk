@@ -53,14 +53,15 @@ impl AllChainSources {
 
 #[cfg(test)]
 mod tests {
+    static TEST_CACHE: CacheBudget = CacheBudget::new(64 * 1024 * 1024);
     use std::{
         env, fs, process,
         time::{SystemTime, UNIX_EPOCH},
     };
 
     use vecdb::{
-        AnyStoredVec, CachedReadableVec, CachedVec, Database, EagerVec, ImportableVec, PcoVec,
-        ReadOnlyClone, ReadableVec, WritableVec,
+        AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec,
+        PcoVec, ReadableCloneableVec, ReadableVec, WritableVec,
     };
 
     use super::*;
@@ -75,12 +76,19 @@ mod tests {
             env::temp_dir().join(format!("brk-all-chain-sources-{}-{suffix}", process::id()));
         let db = Database::open(&path).unwrap();
 
-        let mut supply: EagerVec<PcoVec<Height, Sats>> =
-            EagerVec::forced_import(&db, "supply", Version::ONE).unwrap();
-        let mut market_cap: EagerVec<PcoVec<Height, Cents>> =
-            EagerVec::forced_import(&db, "market_cap", Version::ONE).unwrap();
-        let mut realized: EagerVec<PcoVec<Height, Cents>> =
-            EagerVec::forced_import(&db, "realized", Version::ONE).unwrap();
+        let mut supply: EagerVec<PcoVec<Height, Sats, Budgeted>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "supply", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
+        let mut market_cap: EagerVec<PcoVec<Height, Cents, Budgeted>> =
+            EagerVec::forced_import_with(
+                ImportOptions::new(&db, "market_cap", Version::ONE).with_cache_budget(&TEST_CACHE),
+            )
+            .unwrap();
+        let mut realized: EagerVec<PcoVec<Height, Cents>> = EagerVec::forced_import_with(
+            ImportOptions::new(&db, "realized", Version::ONE).with_cache_budget(&TEST_CACHE),
+        )
+        .unwrap();
 
         for value in [100_000_000, 100_000_000, 200_000_000] {
             supply.push(Sats::new(value));
@@ -95,12 +103,10 @@ mod tests {
         market_cap.write().unwrap();
         realized.write().unwrap();
 
-        let supply_cache = CachedVec::wrap(supply.read_only_clone()).cached_boxed_clone();
-        let market_cap_cache = CachedVec::wrap(market_cap);
-        let sources = AllChainSources::new(
-            &supply_cache,
-            &market_cap_cache.read_only_cached_boxed_clone(),
-        );
+        let supply_cache = supply.read_only_boxed_clone();
+        let market_cap_cache = market_cap.read_only_boxed_clone();
+        let sources =
+            AllChainSources::new(&supply_cache, &market_cap_cache.read_only_boxed_clone());
 
         let cached_supply =
             sources.with_supply("cached_supply", Version::ONE, &realized, |_, _, supply| {

@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use brk_types::PoolSlug;
 use serde_json::{Value, from_str, to_string, to_value};
+use vecdb::ReadableVec;
 
 use super::server_routes::exchange_with_etag;
 use crate::AppState;
@@ -75,7 +76,6 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
         let path = format!("/api/v1/mining/pool/unknown/blocks{suffix}");
         let expected = state.sync(|q| {
             let prices = &q.plugins().price.spot.cents.height;
-            prices.invalidate();
             let snapshot = q
                 .resolve_pool_blocks(PoolSlug::Unknown, before, 100)
                 .unwrap();
@@ -89,19 +89,15 @@ pub async fn check_pool_blocks(state: &AppState, address: SocketAddr) {
                 heights
             );
             let captured = snapshot.prices().to_vec();
-            assert!(
-                prices.cached_snapshot().is_none(),
-                "preflight must not materialize price history"
-            );
+            let retained = prices.collect_range_at(0, 2);
             let rows = q.pool_blocks_resolved(snapshot).unwrap();
             assert_eq!(
                 rows.iter().map(|row| row.extras.price).collect::<Vec<_>>(),
                 captured
             );
-            assert!(
-                prices.cached_snapshot().is_none(),
-                "body must use captured prices"
-            );
+            let mut cached = Vec::new();
+            assert!(prices.read_cached_into_at(0, 2, &mut cached));
+            assert_eq!(cached, retained);
             let body = to_string(&rows).unwrap();
             assert_eq!(
                 body,

@@ -13,8 +13,8 @@ use vecdb::{BinaryTransform, CheckedSub, ReadableCloneableVec, VecIndex};
 
 use super::Vecs;
 use crate::{
-    ByDcaClass, STORAGE, cached_dca_sats::CachedDcaSats, class_vecs::ClassVecs,
-    dca_stack::DcaStack, lump_sum_stack::LumpSumStack, period_vecs::PeriodVecs,
+    ByDcaClass, STORAGE, class_vecs::ClassVecs, dca_sats::DcaSats, dca_stack::DcaStack,
+    lump_sum_stack::LumpSumStack, period_vecs::PeriodVecs,
 };
 
 impl Vecs {
@@ -25,21 +25,21 @@ impl Vecs {
     ) -> Result<Self> {
         let version = STORAGE.schema_version();
 
-        let cached_days = mappings.height.day1_read_only_boxed_clone();
-        let cached_dca_sats = CachedDcaSats::new(
+        let height_days = mappings.height.day1_read_only_boxed_clone();
+        let dca_sats = DcaSats::new(
             prices.split.close.usd.day1.read_only_boxed_clone(),
-            cached_days.clone(),
+            height_days.clone(),
         );
-        let sats_cumulative = cached_dca_sats.read_only_boxed_clone();
+        let sats_cumulative = dca_sats.read_only_boxed_clone();
         let sats_per_day = LazyPreviousDeltaVec::new("dca_sats_per_day", version, &sats_cumulative);
 
-        let cached_starts = ByDcaPeriod::try_new(|_, days| {
-            Ok::<_, Error>(blocks.lookback.cached_start_vec(days as usize))
+        let window_starts = ByDcaPeriod::try_new(|_, days| {
+            Ok::<_, Error>(blocks.lookback.start_vec(days as usize))
         })?;
         let spot_price = prices.spot.cents.resolutions.height_source();
 
         let dca_stack =
-            ByDcaPeriod::try_from_period(&cached_starts, |name, _days, window_starts| {
+            ByDcaPeriod::try_from_period(&window_starts, |name, _days, window_starts| {
                 let metric_name = format!("dca_stack_{name}");
                 let source = LazyWindowVec::<Height, Sats, Sats>::new(
                     &format!("{metric_name}_sats_source"),
@@ -59,7 +59,7 @@ impl Vecs {
                 &format!("{metric_name}_cents_source"),
                 version,
                 &stack.sats.height,
-                &cached_days,
+                &height_days,
                 move |_, stack_sats, day| {
                     if day <= first_price_day {
                         return Cents::ZERO;
@@ -107,7 +107,7 @@ impl Vecs {
         })?;
 
         let lump_sum_stack =
-            ByDcaPeriod::try_from_period(&cached_starts, |name, days, window_starts| {
+            ByDcaPeriod::try_from_period(&window_starts, |name, days, window_starts| {
                 LumpSumStack::from_window(
                     &format!("lump_sum_stack_{name}"),
                     days,
@@ -119,7 +119,7 @@ impl Vecs {
             })?;
 
         let lump_sum_return =
-            ByDcaPeriod::try_from_period(&cached_starts, |name, _days, window_starts| {
+            ByDcaPeriod::try_from_period(&window_starts, |name, _days, window_starts| {
                 let metric_name = format!("lump_sum_return_{name}");
                 let source = LazyWindowVec::<Height, Cents, PartsPerMillionSigned64>::new(
                     &format!("{metric_name}_ppm_source"),
@@ -145,7 +145,7 @@ impl Vecs {
                 &format!("{metric_name}_sats_source"),
                 version,
                 &sats_cumulative,
-                &cached_days,
+                &height_days,
                 day,
                 |current, before| current.checked_sub(before).unwrap_or_default(),
             );
@@ -159,7 +159,7 @@ impl Vecs {
                     &format!("{metric_name}_cents_source"),
                     version,
                     &stack.sats.height,
-                    &cached_days,
+                    &height_days,
                     move |_, stack_sats, day| {
                         if day < from {
                             return Cents::ZERO;
@@ -197,7 +197,6 @@ impl Vecs {
             })?;
 
         Ok(Self {
-            cached_dca_sats,
             sats_per_day,
             period: PeriodVecs {
                 dca_stack,

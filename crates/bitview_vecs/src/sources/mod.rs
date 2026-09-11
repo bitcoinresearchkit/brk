@@ -1,6 +1,3 @@
-mod cached_date;
-mod cached_first_height;
-mod cached_window_start_vec;
 mod cumulative_state;
 mod indexes;
 mod lazy_date;
@@ -11,9 +8,6 @@ mod period_values;
 mod stored;
 mod window_starts;
 
-pub use cached_date::CachedDateVec;
-pub use cached_first_height::CachedFirstHeightVec;
-pub use cached_window_start_vec::CachedWindowStartVec;
 pub(crate) use cumulative_state::CumulativeState;
 pub use indexes::IndexSources;
 pub use lazy_date::LazyDateVec;

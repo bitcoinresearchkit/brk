@@ -5,9 +5,7 @@ use bitview_plugin_mining::Vecs as MiningVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_transforms::MaskSats;
 use bitview_traversable::Traversable;
-use bitview_vecs::{
-    CachedWindowStartVec, LazyPercentRollingWindows, ValuePerBlockCumulativeRolling,
-};
+use bitview_vecs::{LazyPercentRollingWindows, LazyWindowStartVec, ValuePerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{PartsPerMillion32, PoolSlug};
@@ -42,11 +40,11 @@ impl Vecs {
         pool_heights: PoolHeights,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let suffix = |s: &str| format!("{}_{s}", slug);
 
-        let base = minor::Vecs::forced_import(slug, pool_heights, version, mappings, cached_starts);
+        let base = minor::Vecs::forced_import(slug, pool_heights, version, mappings, window_starts);
 
         let rewards = ValuePerBlockCumulativeRolling::forced_import(
             cache,
@@ -54,14 +52,14 @@ impl Vecs {
             &suffix("rewards"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
 
         let dominance_rolling = LazyPercentRollingWindows::from_cumulative_average(
             &suffix("dominance"),
             version,
             &base.blocks_mined.cumulative.height,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

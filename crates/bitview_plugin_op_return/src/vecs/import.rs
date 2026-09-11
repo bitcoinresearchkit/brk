@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_types::{Height, Sats, StoredU64, Version};
 use vecdb::ReadableCloneableVec;
@@ -17,7 +17,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         block_size: &impl ReadableCloneableVec<Height, StoredU64>,
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
@@ -29,7 +29,7 @@ impl Vecs {
             "op_return",
             version,
             mappings,
-            cached_starts,
+            window_starts,
             block_size,
             chain_fees,
         )?;
@@ -41,7 +41,7 @@ impl Vecs {
             "op_return",
             breakdown_version,
             mappings,
-            cached_starts,
+            window_starts,
             total_data,
             block_size,
             chain_fees,
@@ -52,7 +52,7 @@ impl Vecs {
             "op_return_policy",
             breakdown_version,
             mappings,
-            cached_starts,
+            window_starts,
             total_data,
             block_size,
             chain_fees,

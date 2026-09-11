@@ -7,7 +7,9 @@ use super::{RawStrategy, ReadOnlyRawVec};
 use crate::{
     AnyStoredVec, Error, Format, HEADER_OFFSET, ImportOptions, RawIoSource, RawMmapSource,
     RawRangeCursor, ReadWriteBaseVec, Result as CrateResult, VecIndex, VecReader, VecValue,
-    Version, vec_region_name_with,
+    Version,
+    cache::{CachePolicy, NoCache},
+    vec_region_name_with,
 };
 
 pub mod any_stored_vec;
@@ -28,12 +30,13 @@ const VERSION: Version = Version::ONE;
 /// [`MutableVec`](crate::MutableVec), which wraps a raw vector when needed.
 #[derive(Debug)]
 #[must_use = "Vector should be stored to keep data accessible"]
-pub struct ReadWriteRawVec<I, T, S> {
+pub struct ReadWriteRawVec<I, T: VecValue, S, C: CachePolicy = NoCache> {
     base: ReadWriteBaseVec<I, T>,
+    pub(super) cache: C::State<T>,
     _strategy: PhantomData<S>,
 }
 
-impl<I, T, S> ReadWriteRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> ReadWriteRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,
@@ -41,9 +44,10 @@ where
 {
     pub const SIZE_OF_T: usize = size_of::<T>();
 
-    pub fn read_only_clone(&self) -> ReadOnlyRawVec<I, T, S> {
+    pub fn read_only_clone(&self) -> ReadOnlyRawVec<I, T, S, C> {
         ReadOnlyRawVec {
             base: self.base.read_only_base(),
+            cache: self.cache.clone(),
             _strategy: PhantomData,
         }
     }
@@ -73,6 +77,7 @@ where
 
         let name = options.name;
 
+        let cache = C::create(options.cache_budget)?;
         let base = ReadWriteBaseVec::import(options, format)?;
 
         // Raw format requires data to be aligned to SIZE_OF_T
@@ -88,6 +93,7 @@ where
 
         let mut this = Self {
             base,
+            cache,
             _strategy: PhantomData,
         };
 

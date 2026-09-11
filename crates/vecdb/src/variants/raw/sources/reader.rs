@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use rawdb::{Reader, Region};
 
 use super::super::{RawStrategy, ReadWriteRawVec};
-use crate::{AnyStoredVec, HEADER_OFFSET, ReadOnlyRawVec, VecIndex, VecValue};
+use crate::{AnyStoredVec, HEADER_OFFSET, ReadOnlyRawVec, VecIndex, VecValue, cache::CachePolicy};
 
 /// Read-only random-access handle into a raw vector's stored data.
 ///
@@ -100,13 +100,13 @@ where
             _marker: PhantomData,
         }
     }
-    pub fn from_read_write(vec: &ReadWriteRawVec<I, T, S>) -> Self
+    pub fn from_read_write<C: CachePolicy>(vec: &ReadWriteRawVec<I, T, S, C>) -> Self
     where
         I: VecIndex,
     {
         Self::from_region(vec.region(), vec.stored_len())
     }
-    pub fn from_read_only(vec: &ReadOnlyRawVec<I, T, S>) -> Self
+    pub fn from_read_only<C: CachePolicy>(vec: &ReadOnlyRawVec<I, T, S, C>) -> Self
     where
         I: VecIndex,
     {

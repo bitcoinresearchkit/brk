@@ -8,14 +8,14 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Timestamp, TxIndex, Version};
 use common::{indexes, stored};
 use tempfile::tempdir;
-use vecdb::{AnyVec, BinaryTransform, Database, Pinned, ReadableVec, Rw, WritableVec};
+use vecdb::{AnyVec, BinaryTransform, Budgeted, Database, ReadableVec, Rw, WritableVec};
 
 use crate::common::CACHE_BUDGET;
 
 mod common;
 
 #[test]
-fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
+fn full_value_retains_cumulative_rolling_versions_and_fiat_flows() {
     let directory = tempdir().unwrap();
     let reference_directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
@@ -33,7 +33,7 @@ fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
         _1m: &starts,
         _1y: &starts,
     });
-    let mut full = ValuePerBlockFull::<Rw, Pinned>::forced_import(
+    let mut full = ValuePerBlockFull::<Rw, Budgeted>::forced_import(
         &common::CACHE_BUDGET,
         &db,
         "value",
@@ -42,7 +42,7 @@ fn full_value_retains_pinned_cumulative_rolling_versions_and_fiat_flows() {
         &windows,
     )
     .unwrap();
-    let reference = ValuePerBlockCumulativeRolling::<Rw, Pinned>::forced_import(
+    let reference = ValuePerBlockCumulativeRolling::<Rw, Budgeted>::forced_import(
         &common::CACHE_BUDGET,
         &reference_db,
         "value",

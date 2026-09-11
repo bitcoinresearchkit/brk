@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_types::{Bitcoin, Cents, Dollars, Height, Sats, SatsSigned, Version};
 use schemars::JsonSchema;
 use vecdb::{
-    Budgeted, CacheBudget, CachedVecStrategy, Database, ReadableVec, Rw, UnaryTransform, VecIndex,
+    Budgeted, CacheBudget, CachePolicy, Database, ReadableVec, Rw, UnaryTransform, VecIndex,
     VecValue,
 };
 
@@ -32,7 +32,7 @@ pub type ValuePerBlock<M = Rw, S = Budgeted> = Value<
     LazyPerBlock<Dollars, Cents>,
 >;
 
-impl<S: CachedVecStrategy> ValuePerBlock<Rw, S> {
+impl<S: CachePolicy> ValuePerBlock<Rw, S> {
     pub fn forced_import(
         cache: &'static CacheBudget,
         db: &Database,
@@ -61,7 +61,7 @@ impl<S: CachedVecStrategy> ValuePerBlock<Rw, S> {
     }
 }
 
-impl<S: CachedVecStrategy> ValuePerBlock<Rw, S> {
+impl<S: CachePolicy> ValuePerBlock<Rw, S> {
     #[allow(clippy::too_many_arguments)]
     pub fn compute_sats_from_indexes<A, B>(
         &mut self,

@@ -1,14 +1,16 @@
-use std::{cmp::Reverse, hint::black_box, mem, time::Instant};
+use std::{cmp::Reverse, hint::black_box, time::Instant};
 
 use brk_types::Version;
 use tempfile::{TempDir, tempdir};
 use vecdb::{
-    AnyStoredVec, CachedVec, Database, ImportableVec, PcoVec, Stamp, StoredVec, WritableVec,
+    AnyStoredVec, Budgeted, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec, Stamp,
+    StoredVec, WritableVec,
 };
 
 use super::*;
 
-type Timestamps = CachedVec<<PcoVec<Height, Timestamp> as StoredVec>::ReadOnly>;
+type Timestamps = <PcoVec<Height, Timestamp, Budgeted> as StoredVec>::ReadOnly;
+static CACHE: CacheBudget = CacheBudget::new(32 * 1024 * 1024);
 
 // Exact pre-optimization control; never used by production lookup.
 fn select_with_stored_median(
@@ -103,8 +105,13 @@ fn a_valid_two_hour_spike_can_leave_a_long_scan_window() {
 fn fixture(len: usize, skewed: bool) -> (TempDir, Database, [Timestamps; 3]) {
     let dir = tempdir().unwrap();
     let db = Database::open(dir.path()).unwrap();
-    let mut columns: [CachedVec<PcoVec<Height, Timestamp>>; 3] = ["raw", "maximum", "median"]
-        .map(|name| CachedVec::wrap(PcoVec::forced_import(&db, name, Version::ONE).unwrap()));
+    let mut columns: [PcoVec<Height, Timestamp, Budgeted>; 3] =
+        ["raw", "maximum", "median"].map(|name| {
+            PcoVec::forced_import_with(
+                ImportOptions::new(&db, name, Version::ONE).with_cache_budget(&CACHE),
+            )
+            .unwrap()
+        });
     let mut maximum = Timestamp::ZERO;
     let mut window = [Timestamp::ZERO; 11];
     for h in 0..len {
@@ -126,17 +133,14 @@ fn fixture(len: usize, skewed: bool) -> (TempDir, Database, [Timestamps; 3]) {
         let count = (h + 1).min(11);
         sorted[..count].sort_unstable();
         for (column, value) in columns.iter_mut().zip([value, maximum, sorted[count / 2]]) {
-            column.inner.push(value);
+            column.push(value);
         }
     }
     for column in &mut columns {
-        column
-            .inner
-            .stamped_write(Stamp::from((len - 1) as u64))
-            .unwrap();
+        column.stamped_write(Stamp::from((len - 1) as u64)).unwrap();
     }
     db.flush().unwrap();
-    let columns = columns.map(|column| CachedVec::wrap(column.inner.read_only_clone()));
+    let columns = columns.map(|column| column.read_only_clone());
     (dir, db, columns)
 }
 
@@ -146,40 +150,21 @@ fn lookup(
     target: Timestamp,
     stored_median: bool,
 ) -> ((usize, Timestamp), usize) {
-    let raw = columns[0].cached_snapshot();
-    let maximum = columns[1].cached_snapshot();
-    let mut raw_cursor = columns[0].inner.cursor();
-    let mut max_cursor = columns[1].inner.cursor();
-    let mut median_cursor = stored_median.then(|| columns[2].inner.cursor());
     let mut scanned = 0;
-    let mut read_max = |h| {
-        maximum
-            .as_ref()
-            .and_then(|v| v.get(h).copied())
-            .or_else(|| max_cursor.get(h))
-            .data()
-    };
+    let mut read_max = |h| columns[1].collect_one_at(h).data();
     let mut read_raw = |h| {
         scanned += 1;
-        raw.as_ref()
-            .and_then(|v| v.get(h).copied())
-            .or_else(|| raw_cursor.get(h))
-            .data()
+        columns[0].collect_one_at(h).data()
     };
     let selected = if stored_median {
         select_with_stored_median(len, target, &mut read_max, &mut read_raw, |h| {
-            median_cursor.as_mut().unwrap().get(h).data()
+            columns[2].collect_one_at(h).data()
         })
     } else {
         select_timestamp(len, target, &mut read_max, &mut read_raw)
     }
     .unwrap();
-    assert_eq!(
-        raw.as_ref()
-            .and_then(|v| v.get(selected.0).copied())
-            .or_else(|| raw_cursor.get(selected.0)),
-        Some(selected.1)
-    );
+    assert_eq!(columns[0].collect_one_at(selected.0), Some(selected.1));
     (selected, scanned)
 }
 
@@ -187,7 +172,6 @@ fn lookup(
 fn persisted_timestamp_search_matches_sorted_predecessor() {
     let (_dir, _db, columns) = fixture(20_000, false);
     let mut oracle: Vec<_> = columns[0]
-        .inner
         .collect()
         .into_iter()
         .enumerate()
@@ -195,9 +179,10 @@ fn persisted_timestamp_search_matches_sorted_predecessor() {
         .collect();
     oracle.sort_unstable();
     for warm in [false, true] {
+        CACHE.clear();
         if warm {
-            columns[0].snapshot();
-            columns[1].snapshot();
+            columns[0].collect();
+            columns[1].collect();
         }
         for index in (0..20_000).step_by(137) {
             for target in [
@@ -212,9 +197,6 @@ fn persisted_timestamp_search_matches_sorted_predecessor() {
                 }
             }
         }
-        if !warm {
-            assert!(columns.iter().all(|v| v.cached_snapshot().is_none()));
-        }
     }
 }
 
@@ -226,19 +208,20 @@ fn benchmark_timestamp_selection_storage() {
         let (_dir, _db, columns) = fixture(len, skewed);
         let targets = [
             Timestamp::from(u32::MAX),
-            columns[0].inner.collect_one_at(900_000).unwrap(),
-            Timestamp::from(*columns[0].inner.collect_one_at(900_000).unwrap() + 1),
+            columns[0].collect_one_at(900_000).unwrap(),
+            Timestamp::from(*columns[0].collect_one_at(900_000).unwrap() + 1),
             Timestamp::from(1_231_006_505u32 + 7199),
         ];
         for warm in [false, true] {
+            CACHE.clear();
             if warm {
                 let started = Instant::now();
-                let raw = columns[0].snapshot();
-                let maximum = columns[1].snapshot();
+                columns[0].collect();
+                columns[1].collect();
                 eprintln!(
-                    "timestamp snapshot fill {:?}; retained capacity {} bytes",
+                    "timestamp range fill {:?}; retained {} bytes",
                     started.elapsed(),
-                    (raw.capacity() + maximum.capacity()) * mem::size_of::<Timestamp>()
+                    CACHE.used()
                 );
             }
             for target in targets {
@@ -264,9 +247,6 @@ fn benchmark_timestamp_selection_storage() {
                     "timestamp skewed={skewed} warm={warm} target={target} stored/rolling={:?}/{:?} scanned={scan}",
                     samples[0][5], samples[1][5]
                 );
-            }
-            if !warm {
-                assert!(columns.iter().all(|v| v.cached_snapshot().is_none()));
             }
         }
     }

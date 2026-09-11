@@ -14,7 +14,6 @@ use bitview_plugin_distribution::{
 use bitview_plugin_indexer::ID as INDEXER_ID;
 use bitview_plugin_indicators::{Dependencies as IndicatorsDependencies, ID as INDICATORS_ID};
 use bitview_plugin_inputs::{Dependencies as InputsDependencies, ID as INPUTS_ID};
-use bitview_plugin_investing::ID as INVESTING_ID;
 use bitview_plugin_mappings::{Dependencies as MappingsDependencies, ID as MAPPINGS_ID};
 use bitview_plugin_market::{Dependencies as MarketDependencies, ID as MARKET_ID};
 use bitview_plugin_mining::{Dependencies as MiningDependencies, ID as MINING_ID};
@@ -55,8 +54,6 @@ impl DefaultPlugins {
     }
 
     fn compute_dependents(&mut self, context: UpdateContext<'_>) -> Result<()> {
-        self.cache_budget.invalidate();
-
         let indexer = self.indexer.as_ref();
 
         timed(Phase::Compute, MAPPINGS_ID, || {
@@ -167,10 +164,6 @@ impl DefaultPlugins {
             tx_mining_op_return.join().unwrap()?;
             market.join().unwrap()?;
             Ok(())
-        })?;
-
-        timed(Phase::Compute, INVESTING_ID, || {
-            self.investing.compute((), context)
         })?;
 
         let utxo_states = thread::scope(|scope| -> Result<UTXOStates> {

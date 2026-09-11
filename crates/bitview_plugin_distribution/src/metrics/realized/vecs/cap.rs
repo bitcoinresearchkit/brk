@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOAndAddrGroups, UTXOGroups};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyFiatPerBlockWithDeltas};
+use bitview_vecs::{LazyFiatPerBlockWithDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{Cents, CentsSigned, PartsPerMillionSigned64, Version};
 use vecdb::{CacheBudget, Database, Rw, StorageMode};
@@ -30,7 +30,7 @@ impl RealizedCapByCohort {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = UTXOSources::forced_import(cache, db, "realized_cap_cents", version)?;
         let cohorts = UTXOGroups::new(|cohort_id| {
@@ -41,7 +41,7 @@ impl RealizedCapByCohort {
                 stored.get(cohort_id).expect("realized-cap cohort source"),
                 Version::TWO,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         let addr_version = version + Version::ONE;
@@ -59,7 +59,7 @@ impl RealizedCapByCohort {
                     source,
                     Version::TWO,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             },
         )?;

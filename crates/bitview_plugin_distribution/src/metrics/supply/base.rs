@@ -4,8 +4,8 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::RatioSats;
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyIndexedVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight,
-    LazySpotValuePerBlock,
+    LazyIndexedVec, LazyPercentPerBlock, LazyRollingDeltasAmountFromHeight, LazySpotValuePerBlock,
+    LazyWindowStartVec,
 };
 use brk_types::{Height, PartsPerMillion32, PartsPerMillionSigned64, Sats, SatsSigned, Version};
 use vecdb::{BinaryTransform, LazyVec, ReadableCloneableVec};
@@ -26,7 +26,7 @@ impl SupplyBase {
         total: LazySpotValuePerBlock,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let dominance_name = context.metric_name(cohort, "supply_dominance");
         let source = LazyIndexedVec::new(
@@ -46,7 +46,7 @@ impl SupplyBase {
             total,
             dominance,
             mappings,
-            cached_starts,
+            window_starts,
         )
     }
 
@@ -54,7 +54,7 @@ impl SupplyBase {
         version: Version,
         total: LazySpotValuePerBlock,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let dominance_name = CohortContext::Utxo.metric_name(CohortId::All, "supply_dominance");
         let source = LazyVec::init(
@@ -73,7 +73,7 @@ impl SupplyBase {
             total,
             dominance,
             mappings,
-            cached_starts,
+            window_starts,
         )
     }
 
@@ -84,13 +84,13 @@ impl SupplyBase {
         total: LazySpotValuePerBlock,
         dominance: LazyPercentPerBlock<PartsPerMillion32>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Self {
         let delta = LazyRollingDeltasAmountFromHeight::new(
             &context.metric_name(cohort, "supply_delta"),
             version + Version::TWO,
             &total.sats.height,
-            cached_starts,
+            window_starts,
             mappings,
         );
 

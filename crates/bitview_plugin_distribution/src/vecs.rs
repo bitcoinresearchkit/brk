@@ -8,7 +8,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_outputs::ByTypeVecs as OutputsByTypeVecs;
 use bitview_plugin_price::Vecs as PriceVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, PerBlockCumulativeRolling};
+use bitview_vecs::{LazyWindowStartVec, PerBlockCumulativeRolling};
 use brk_error::Result;
 use brk_oracle::VERSION as ORACLE_VERSION;
 use brk_types::{Cents, Height, StoredF64, SupplyState, Version};
@@ -28,7 +28,7 @@ use super::{
 };
 use crate::{
     Dependencies, STORAGE,
-    compute::{StartMode, determine_start_mode, process_blocks},
+    compute::{ComputeContext, StartMode, determine_start_mode, process_blocks},
     state::{AddrStates, BlockState},
 };
 
@@ -86,7 +86,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         prices: &PriceVecs,
         inputs_by_type: &ByTypeVecs,
         outputs_by_type: &OutputsByTypeVecs,
@@ -96,14 +96,14 @@ impl Vecs {
         let db = STORAGE.open_database(context, 20_000_000)?;
 
         let version = STORAGE.schema_version();
-        let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
+        let spot_price = prices.spot.cents.height.read_only_boxed_clone();
 
         let cohorts = CohortMetrics::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             &spot_price,
         )?;
 
@@ -114,7 +114,7 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let empty_addr_count = AddrCountsVecs::forced_import(
             context.cache_budget(),
@@ -128,7 +128,7 @@ impl Vecs {
             &db,
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
 
         // Stored total = addr_count + empty_addr_count (global + per-type, with all derived mappings)
@@ -137,7 +137,7 @@ impl Vecs {
 
         // Per-block delta of total (global + per-type)
         let new_addr_count =
-            NewAddrCountVecs::new(version, &total_addr_count, mappings, cached_starts);
+            NewAddrCountVecs::new(version, &total_addr_count, mappings, window_starts);
 
         // Reused address tracking (counts + per-block uses + percent).
         // `reused_*` uses the receive-side predicate (funded_txo_count > 1,
@@ -149,7 +149,7 @@ impl Vecs {
             "reused",
             version,
             mappings,
-            cached_starts,
+            window_starts,
             &spot_price,
             outputs_by_type,
             inputs_by_type,
@@ -161,7 +161,7 @@ impl Vecs {
             "respent",
             version,
             mappings,
-            cached_starts,
+            window_starts,
             &spot_price,
             outputs_by_type,
             inputs_by_type,
@@ -179,7 +179,7 @@ impl Vecs {
         )?;
 
         // Growth rate: delta change + rate (global + per-type)
-        let delta = DeltaVecs::new(version, &funded_addr_count.counts, cached_starts, mappings);
+        let delta = DeltaVecs::new(version, &funded_addr_count.counts, window_starts, mappings);
 
         // Average amount (supply / utxo_count, supply / funded_addr_count) for `all` and per addr type.
         let all_chain = AllChainSources::new(cohorts.all_supply(), cohorts.all_market_cap());
@@ -225,7 +225,7 @@ impl Vecs {
                     ),
                     version + COINDAYS_CREATED_VERSION + Version::ONE,
                     mappings,
-                    cached_starts,
+                    window_starts,
                 )
             })?,
 
@@ -235,7 +235,7 @@ impl Vecs {
                 "coinblocks_destroyed",
                 version + Version::TWO,
                 mappings,
-                cached_starts,
+                window_starts,
             )?,
 
             addr_state,
@@ -512,6 +512,13 @@ impl ComputePlugin for Vecs {
             let prices = mem::take(&mut self.inner.prices);
             let timestamps = mem::take(&mut self.inner.timestamps);
             let price_range_max = mem::take(&mut self.inner.price_range_max);
+            let compute = ComputeContext {
+                starting_height,
+                last_height,
+                height_to_timestamp: &timestamps,
+                height_to_price: &prices,
+                price_range_max: &price_range_max,
+            };
             let entry_anchor = starting_height
                 .decremented()
                 .and_then(|height| {
@@ -535,14 +542,10 @@ impl ComputePlugin for Vecs {
                 inputs,
                 outputs,
                 transactions,
-                starting_height,
-                last_height,
+                &compute,
                 &mut chain_state,
                 &mut tx_index_to_height,
                 entry_anchor,
-                &prices,
-                &timestamps,
-                &price_range_max,
                 exit,
             )?;
 
@@ -602,3 +605,4 @@ impl ComputePlugin for Vecs {
         Ok(utxo_states)
     }
 }
+use vecdb::ReadableCloneableVec;

@@ -23,13 +23,13 @@ use bitview_plugin_inputs::ByTypeVecs as InputsByTypeVecs;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_outputs::ByTypeVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode,
 };
 
@@ -72,8 +72,8 @@ impl ReusedAddrVecs {
         name: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        window_starts: &Windows<&LazyWindowStartVec>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
         outputs_by_type: &ByTypeVecs,
         inputs_by_type: &InputsByTypeVecs,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
@@ -85,7 +85,7 @@ impl ReusedAddrVecs {
             name,
             version,
             mappings,
-            cached_starts,
+            window_starts,
             outputs_by_type,
             inputs_by_type,
         )?;

@@ -3,7 +3,7 @@ use bitview_traversable::Traversable;
 use brk_types::{Height, Version};
 use derive_more::{Deref, DerefMut};
 use schemars::JsonSchema;
-use vecdb::{LazyAggVec, ReadOnlyClone, ReadableCloneableVec, ReadableVec, VecValue};
+use vecdb::{LazyAggVec, ReadOnlyClone, ReadableCloneableVec, VecValue};
 
 use crate::{CoarserIndex, IndexSources};
 
@@ -40,14 +40,11 @@ macro_rules! define_resolutions {
 
                 macro_rules! res {
                     ($mapping:expr) => {{
-                        let cached = $mapping.clone();
-                        let mapping_version = cached.version();
                         LazyAggVec::new(
                             name,
                             version,
-                            mapping_version,
                             height_source.clone(),
-                            move || cached.snapshot(),
+                            $mapping.clone(),
                         )
                     }};
                 }

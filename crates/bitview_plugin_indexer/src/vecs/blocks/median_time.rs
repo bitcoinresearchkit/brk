@@ -27,18 +27,16 @@ impl BlocksVecs {
         }
         let mut window = [Timestamp::ZERO; 11];
         let mut height = begin.saturating_sub(10);
-        self.timestamp
-            .inner
-            .for_each_range_at(height, end, |timestamp| {
-                window[height % 11] = timestamp;
-                if height >= begin {
-                    let len = (height + 1).min(11);
-                    let mut sorted = window;
-                    sorted[..len].sort_unstable();
-                    self.median_time.push(sorted[len / 2]);
-                }
-                height += 1;
-            });
+        self.timestamp.for_each_range_at(height, end, |timestamp| {
+            window[height % 11] = timestamp;
+            if height >= begin {
+                let len = (height + 1).min(11);
+                let mut sorted = window;
+                sorted[..len].sort_unstable();
+                self.median_time.push(sorted[len / 2]);
+            }
+            height += 1;
+        });
         if self.median_time.len() != end {
             return Err(Error::Internal("Incomplete median time source"));
         }

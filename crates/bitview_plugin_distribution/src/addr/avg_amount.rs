@@ -7,7 +7,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, StoredU64, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode, WritableVec,
 };
 
@@ -34,7 +34,7 @@ impl AvgAmountVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
         all_chain: &AllChainSources,
         utxo_count: &impl ReadableCloneableVec<Height, StoredU64>,
         funded_addr_count: &impl ReadableCloneableVec<Height, StoredU64>,

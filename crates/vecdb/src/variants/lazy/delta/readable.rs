@@ -17,8 +17,8 @@ where
 
     #[inline]
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
-        let starts = (self.window_starts)();
-        let to = to.min(self.len()).min(starts.len());
+        let to = to.min(self.len());
+        let starts = self.window_starts.collect_range_dyn(from, to);
         if from >= to {
             return;
         }
@@ -27,7 +27,7 @@ where
             buf.extend(Self::transformed_values(
                 from,
                 current,
-                &starts[from..to],
+                &starts,
                 previous_from,
                 previous,
             ));
@@ -35,8 +35,8 @@ where
     }
 
     fn for_each_chunk_at(&self, from: usize, to: usize, f: &mut dyn FnMut(usize, &[T])) {
-        let starts = (self.window_starts)();
-        let to = to.min(self.len()).min(starts.len());
+        let to = to.min(self.len());
+        let starts = self.window_starts.collect_range_dyn(from, to);
         if from >= to {
             return;
         }
@@ -49,7 +49,7 @@ where
                 output.extend(Self::transformed_values(
                     at,
                     current,
-                    &starts[at..at + current.len()],
+                    &starts[at - from..at - from + current.len()],
                     previous_from,
                     previous,
                 ));
@@ -60,8 +60,8 @@ where
 
     #[inline]
     fn for_each_range_dyn_at(&self, from: usize, to: usize, f: &mut dyn FnMut(T)) {
-        let starts = (self.window_starts)();
-        let to = to.min(self.len()).min(starts.len());
+        let to = to.min(self.len());
+        let starts = self.window_starts.collect_range_dyn(from, to);
         if from >= to {
             return;
         }
@@ -73,8 +73,8 @@ where
     where
         Self: Sized,
     {
-        let starts = (self.window_starts)();
-        let to = to.min(self.len()).min(starts.len());
+        let to = to.min(self.len());
+        let starts = self.window_starts.collect_range_dyn(from, to);
         if from >= to {
             return init;
         }
@@ -95,8 +95,8 @@ where
     where
         Self: Sized,
     {
-        let starts = (self.window_starts)();
-        let to = to.min(self.len()).min(starts.len());
+        let to = to.min(self.len());
+        let starts = self.window_starts.collect_range_dyn(from, to);
         if from >= to {
             return Ok(init);
         }
@@ -108,11 +108,7 @@ where
         if index >= self.len() {
             return None;
         }
-        let starts = (self.window_starts)();
-        if index >= starts.len() {
-            return None;
-        }
-        let start = starts[index].to_usize();
+        let start = self.window_starts.collect_one_at(index)?.to_usize();
         let current = self.source.collect_one_at(index)?;
         let ago = match Op::ago_index(start) {
             Some(idx) => self.source.collect_one_at(idx)?,
@@ -125,15 +121,16 @@ where
         if indices.is_empty() {
             return;
         }
-        let starts = (self.window_starts)();
-        let len = self.len().min(starts.len());
+        let len = self.len();
         let indices = &indices[..indices.partition_point(|&index| index < len)];
-        let values = SparseRead::new(&*self.source, indices, |index| {
-            Op::ago_index(starts[index].to_usize())
+        let starts = self.window_starts.read_sorted_at(indices);
+        let mut starts_iter = starts.iter();
+        let values = SparseRead::new(&*self.source, indices, |_| {
+            Op::ago_index(starts_iter.next().unwrap().to_usize())
         });
         out.reserve(indices.len());
         for (slot, &index) in indices.iter().enumerate() {
-            let start = starts[index].to_usize();
+            let start = starts[slot].to_usize();
             out.push(Op::combine(
                 values.current(slot),
                 values.previous(slot).unwrap_or_else(Op::ago_default),

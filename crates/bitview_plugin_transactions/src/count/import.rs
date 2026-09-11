@@ -1,6 +1,6 @@
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, PerBlockFullFromCumulative};
+use bitview_vecs::{LazyWindowStartVec, PerBlockFullFromCumulative};
 use brk_error::Result;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database};
@@ -12,7 +12,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
 ) -> Result<Vecs> {
     Ok(Vecs {
         total: PerBlockFullFromCumulative::forced_import(
@@ -22,7 +22,7 @@ pub fn forced_import(
             version,
             &mappings.transaction_count_source(),
             mappings,
-            cached_starts,
+            window_starts,
         )?,
     })
 }

@@ -1,13 +1,15 @@
+mod common;
+
 use std::sync::{
     Arc,
-    atomic::{AtomicU64, AtomicUsize, Ordering},
+    atomic::{AtomicUsize, Ordering},
 };
 
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, BytesVec, CachedReadableVec, CachedVec, Database, DeltaOp, DeltaSub, EagerVec,
-    Ident, ImportableVec, LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec, ReadableVec,
-    StoredVec, UnaryTransform, Version, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, DeltaOp, DeltaSub, EagerVec, Ident,
+    ImportOptions, ImportableVec, LazyDeltaVec, LazyVec, MutableVec, ReadableBoxedVec,
+    ReadableCloneableVec, ReadableVec, StoredVec, UnaryTransform, Version, WritableVec,
 };
 
 #[cfg(feature = "pco")]
@@ -96,13 +98,12 @@ fn delta_reads_only_needed_ranges_and_preserves_fallible_order() {
                 .map(|i| i.saturating_sub(window))
                 .collect::<Vec<_>>(),
         );
-        let metadata = starts.clone();
+        let metadata = common::mapping(&db, starts.iter().copied());
         let delta = LazyDeltaVec::<usize, u64, u64, DeltaSub>::new(
             "delta",
             Version::ONE,
             ReadableBoxedVec::new(counted.clone()),
-            Version::ONE,
-            move || metadata.clone(),
+            metadata,
         );
         for (from, to) in [
             (0usize, 45_000usize),
@@ -140,8 +141,7 @@ fn delta_reads_only_needed_ranges_and_preserves_fallible_order() {
         "fallible",
         Version::ONE,
         ReadableBoxedVec::new(counted),
-        Version::ONE,
-        move || starts.clone(),
+        common::mapping(&db, starts.iter().copied()),
     );
     DELTA_TRANSFORMS.store(0, Ordering::Relaxed);
     let mut seen = 0;
@@ -198,7 +198,7 @@ fn chunked_transforms_preserve_emitted_indices_across_holes_and_empty_pages() {
         source.delete_at(index);
     }
     source.write().unwrap();
-    // Sparse vectors remain uncached: CachedVec requires dense snapshots.
+    // Sparse vectors expose only the values actually present in each range.
     let boxed = ReadableBoxedVec::new(source.read_only_clone());
     let indexed = LazyVec::<usize, u64, usize, u64>::init(
         "indexed",
@@ -243,31 +243,27 @@ fn chunked_transforms_preserve_emitted_indices_across_holes_and_empty_pages() {
 fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     let directory = tempdir().unwrap();
     let db = Database::open(directory.path()).unwrap();
-    let mut source = EagerVec::<BytesVec<usize, u64>>::import(&db, "source", Version::ONE).unwrap();
+    let budget = Box::leak(Box::new(CacheBudget::new(256 * 1024)));
+    let mut source = EagerVec::<BytesVec<usize, u64, Budgeted>>::import_with(
+        ImportOptions::new(&db, "source", Version::ONE).with_cache_budget(budget),
+    )
+    .unwrap();
     let len = 20_000;
     for value in 0..len as u64 {
         source.push(value);
     }
     source.write().unwrap();
-    let budget = Box::leak(Box::new(AtomicUsize::new(len * size_of::<u64>())));
-    let cached = CachedVec::wrap_budgeted(
-        StoredVec::read_only_clone(&source),
-        budget,
-        Arc::new(AtomicU64::new(0)),
-        Arc::new(AtomicUsize::new(0)),
-    );
+    let cached = StoredVec::read_only_clone(&source);
     let boxed = ReadableBoxedVec::new(cached.clone());
-    let cached_boxed = cached.cached_boxed_clone();
+    let cached_boxed = cached.read_only_boxed_clone();
     let mut values = Vec::new();
     boxed.for_each_chunk_at(17, 21, &mut |at, chunk| {
         assert_eq!(at, 17);
         values.extend_from_slice(chunk);
     });
     assert_eq!(values, [17, 18, 19, 20]);
-    assert!(
-        cached.cached_snapshot().is_none(),
-        "small cold read must not admit a full cache"
-    );
+    assert!(cached.read_cached_into_at(17, 21, &mut Vec::new()));
+    assert!(!cached.read_cached_into_at(0, len, &mut Vec::new()));
 
     values.clear();
     boxed.for_each_chunk_at(0, usize::MAX, &mut |at, chunk| {
@@ -275,21 +271,26 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
         values.extend_from_slice(chunk);
     });
     assert_eq!(values, (0..len as u64).collect::<Vec<_>>());
-    let snapshot = cached.cached_snapshot().expect("full read admits cache");
+    let snapshot = values.clone();
+    assert!(cached.read_cached_into_at(0, len, &mut Vec::new()));
     assert_boxed_folds(&boxed, &snapshot);
     assert_boxed_folds(&cached_boxed, &snapshot);
-    let mut calls = 0;
+    let mut covered = 17;
     boxed.for_each_chunk_at(17, len + 50, &mut |at, chunk| {
-        calls += 1;
-        assert_eq!(at, 17);
-        assert_eq!(
-            chunk.as_ptr(),
-            snapshot[17..].as_ptr(),
-            "borrow the actual cached allocation"
-        );
-        assert_eq!(chunk.len(), len - 17);
+        assert_eq!(at, covered);
+        assert_eq!(chunk, &snapshot[at..at + chunk.len()]);
+        cached_boxed.for_each_chunk_at(at, at + chunk.len(), &mut |nested_at, nested| {
+            assert_eq!(nested_at, at);
+            assert_eq!(
+                nested.as_ptr(),
+                chunk.as_ptr(),
+                "warm callbacks borrow the retained allocation"
+            );
+            assert_eq!(nested.len(), chunk.len());
+        });
+        covered += chunk.len();
     });
-    assert_eq!(calls, 1);
+    assert_eq!(covered, len);
     for (from, to) in [
         (2, 2),
         (50, 20),
@@ -314,7 +315,6 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     doubled.read_into_at(17, 21, &mut appended);
     assert_eq!(appended, [999, 17, 18, 19, 20, 34, 36, 38, 40]);
 
-    cached.invalidate();
     source.truncate_if_needed_at(len - 1).unwrap();
     source.push(123);
     source.write().unwrap();
@@ -327,22 +327,23 @@ fn chunks_borrow_warm_caches_and_preserve_budget_admission_and_rewrites() {
     assert_eq!(
         snapshot[len - 1],
         (len - 1) as u64,
-        "old snapshot remains immutable"
+        "caller-owned results remain immutable"
     );
-    assert!(cached.cached_snapshot().is_none());
-
-    // Force budget denial even for an eligible complete read.
-    budget.store(0, Ordering::Relaxed);
-    let mut fallback = Vec::new();
-    boxed.for_each_chunk_at(0, len, &mut |at, chunk| {
-        assert_eq!(at, fallback.len());
-        fallback.extend_from_slice(chunk);
-    });
-    assert_eq!(fallback.len(), len);
-    assert_eq!(fallback[len - 1], 123);
-    assert_boxed_folds(&boxed, &expected);
-    assert_boxed_folds(&cached_boxed, &expected);
-    assert!(cached.cached_snapshot().is_none());
+    // A too-small budget preserves correctness through all the same read APIs.
+    let denied = Box::leak(Box::new(CacheBudget::new(1024)));
+    let mut tiny = BytesVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "tiny", Version::ONE).with_cache_budget(denied),
+    )
+    .unwrap();
+    for &value in &expected {
+        tiny.push(value);
+    }
+    tiny.write().unwrap();
+    let tiny = tiny.read_only_boxed_clone();
+    assert_boxed_folds(&tiny, &expected);
+    assert_eq!(tiny.collect(), expected);
+    assert!(!tiny.read_cached_into_at(0, len, &mut Vec::new()));
+    assert!(denied.used() <= denied.limit());
 }
 
 #[test]
@@ -355,7 +356,7 @@ fn bulk_lazy_reads_preserve_absolute_indices_clones_folds_and_early_exit() {
         source.push(value);
     }
     source.write().unwrap();
-    let source = ReadableBoxedVec::new(CachedVec::wrap(StoredVec::read_only_clone(&source)));
+    let source = ReadableBoxedVec::new(StoredVec::read_only_clone(&source));
     let indexed =
         LazyVec::<usize, u64, usize, u64>::init("indexed", Version::ONE, source, |index, value| {
             TRANSFORM_CALLS.fetch_add(1, Ordering::Relaxed);

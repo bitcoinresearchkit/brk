@@ -13,7 +13,9 @@ use rawdb::{Region, RegionMetadata};
 use super::super::inner::{
     COMPRESSED_PAGE_SIZE, CompressionStrategy, Page, PageDecoder, ReadWriteCompressedVec,
 };
-use crate::{AnyStoredVec, BUFFER_SIZE, Pages, VecIndex, VecValue, likely, unlikely};
+use crate::{
+    AnyStoredVec, BUFFER_SIZE, Pages, VecIndex, VecValue, cache::CachePolicy, likely, unlikely,
+};
 
 /// Buffered file I/O source for reading stored compressed data.
 ///
@@ -144,7 +146,11 @@ where
         Some(&self.decoded_values)
     }
 
-    pub fn new(vec: &'a ReadWriteCompressedVec<I, T, S>, from: usize, to: usize) -> Self {
+    pub fn new<C: CachePolicy>(
+        vec: &'a ReadWriteCompressedVec<I, T, S, C>,
+        from: usize,
+        to: usize,
+    ) -> Self {
         Self::new_from_parts(vec.region(), vec.pages(), vec.stored_len(), from, to)
     }
 

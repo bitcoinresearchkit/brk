@@ -5,7 +5,7 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{Cents, Day1, Height, Version};
-use vecdb::{AnyStoredVec, CacheBudget, CachedBoxedVec, Database, Rw, StorageMode, WritableVec};
+use vecdb::{AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, Rw, StorageMode, WritableVec};
 
 use crate::WeightedPair;
 
@@ -29,7 +29,7 @@ impl CapitalizedPriceVecs {
         version: Version,
         indexes: &IndexSources,
         mappings: &DailyMappings,
-        spot: &CachedBoxedVec<Height, Cents>,
+        spot: &ReadableBoxedVec<Height, Cents>,
     ) -> Result<Self> {
         let version = version + Version::TWO;
         let import = |weight: &str| {

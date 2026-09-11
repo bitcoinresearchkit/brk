@@ -148,7 +148,6 @@ mod tests {
 
     use brk_types::Epoch;
     use parking_lot::RwLock;
-    use vecdb::CachedVec;
 
     use super::*;
 
@@ -276,9 +275,9 @@ mod tests {
     }
 
     #[test]
-    fn reads_rewritten_source_after_its_cache_is_invalidated() {
+    fn reads_rewritten_source_without_derived_invalidation() {
         let inner = TestTimestamps::new(100..106);
-        let source = CachedVec::wrap(inner.clone());
+        let source = inner.clone();
         let timestamps =
             BoundaryTimestampVec::<Epoch>::new(ReadableBoxedVec::new(source.clone()), 3);
 
@@ -287,12 +286,6 @@ mod tests {
             Some(Timestamp::from(103_u32))
         );
         inner.replace(3, 999);
-        assert_eq!(
-            timestamps.collect_one(Epoch::from(1_usize)),
-            Some(Timestamp::from(103_u32))
-        );
-
-        source.invalidate();
         assert_eq!(
             timestamps.collect_one(Epoch::from(1_usize)),
             Some(Timestamp::from(999_u32))

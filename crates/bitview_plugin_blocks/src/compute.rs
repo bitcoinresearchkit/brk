@@ -21,10 +21,6 @@ impl ComputePlugin for Vecs {
 
         self.db.sync_bg_tasks()?;
 
-        // Cached lookbacks depend on the monotonic timestamp vec, which may
-        // have changed without changing its final length after a reorg.
-        self.lookback.invalidate_caches();
-
         // Interval and size are independent.
         let Vecs {
             lookback,

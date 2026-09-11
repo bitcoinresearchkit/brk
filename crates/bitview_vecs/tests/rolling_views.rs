@@ -8,7 +8,7 @@ use brk_types::{
 use common::{indexes, stored};
 use schemars::JsonSchema;
 use tempfile::tempdir;
-use vecdb::{AnyVec, CachedVec, Database, ReadableCloneableVec, ReadableVec, UnaryTransform};
+use vecdb::{AnyVec, Database, ReadableCloneableVec, ReadableVec, UnaryTransform};
 
 mod common;
 
@@ -68,10 +68,10 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
     let mut indexes = indexes(&db);
     macro_rules! mappings {
         ($($field:ident),+ $(,)?) => {$(
-            indexes.first_height.$field = CachedVec::wrap(stored(
+            indexes.first_height.$field = stored(
                 &db, concat!("populated_", stringify!($field)),
                 [0usize, 2, 2, 7, 200].map(Height::from),
-            )).read_only_boxed_clone();
+            ).read_only_boxed_clone();
         )+};
     }
     mappings!(
@@ -79,15 +79,15 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         year10
     );
     indexes.first_height.halving =
-        CachedVec::wrap(stored(&db, "populated_halving", [Height::ZERO])).read_only_boxed_clone();
+        stored(&db, "populated_halving", [Height::ZERO]).read_only_boxed_clone();
     indexes.first_height.epoch =
-        CachedVec::wrap(stored(&db, "populated_epoch", [Height::ZERO])).read_only_boxed_clone();
+        stored(&db, "populated_epoch", [Height::ZERO]).read_only_boxed_clone();
 
-    let timestamps = CachedVec::wrap(stored::<Height, _>(
+    let timestamps = stored::<Height, _>(
         &db,
         "timestamps",
         (0..32u32).map(|i| Timestamp::from(i * i * 43_200)),
-    ));
+    );
     let starts = Windows {
         _24h: 1,
         _1w: 7,
@@ -95,12 +95,7 @@ fn rolling_units_preserve_height_and_all_resolution_views() {
         _1y: 365,
     }
     .map_with_suffix(|suffix, &days| {
-        CachedWindowStartVec::wrap(LazyWindowStartVec::days(
-            suffix,
-            Version::new(3),
-            days,
-            &timestamps,
-        ))
+        LazyWindowStartVec::days(suffix, Version::new(3), days, &timestamps)
     });
     let starts_ref = Windows {
         _24h: &starts._24h,

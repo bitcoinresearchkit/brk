@@ -2,7 +2,7 @@ use bitview_cohort::{CohortContext, UTXOGroupsWithoutAmountOrType, UTXOValues};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyValuePerBlockCumulativeRolling, SatsCents};
+use bitview_vecs::{LazyValuePerBlockCumulativeRolling, LazyWindowStartVec, SatsCents};
 use brk_error::Result;
 use brk_types::{Cents, Sats, Version};
 use vecdb::{AnyStoredVec, CacheBudget, Database, Rw, StorageMode};
@@ -24,7 +24,7 @@ impl CoreCumulativeValueByCohort {
         metric: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let stored = CumulativeUTXOCoreValueSources::forced_import(
             cache,
@@ -43,7 +43,7 @@ impl CoreCumulativeValueByCohort {
                 &sats,
                 &cents,
                 mappings,
-                cached_starts,
+                window_starts,
             )
         });
         Ok(Self { cohorts, stored })

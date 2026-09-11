@@ -2,7 +2,7 @@ use bitview_collections::Windows;
 use bitview_plugin::ImportContext;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::CachedWindowStartVec;
+use bitview_vecs::LazyWindowStartVec;
 use brk_error::Result;
 
 use super::{STORAGE, Vecs, hashrate, rewards};
@@ -12,7 +12,7 @@ impl Vecs {
         context: ImportContext<'_>,
         indexer: &Indexer,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
@@ -23,7 +23,7 @@ impl Vecs {
             version,
             indexer,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let hashrate = hashrate::forced_import(context.cache_budget(), &db, version, mappings)?;
 

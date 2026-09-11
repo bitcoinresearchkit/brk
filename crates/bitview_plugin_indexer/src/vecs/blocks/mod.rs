@@ -7,7 +7,7 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, AnyVec, BudgetedCachedVec, BytesVec, CacheBudget, Database, ImportableVec,
+    AnyStoredVec, AnyVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
     PcoVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
@@ -25,12 +25,12 @@ pub struct BlocksVecs<M: StorageMode = Rw> {
     /// Mining difficulty encoded by the block header, calculated as Bitcoin's
     /// maximum target divided by this block's proof-of-work target.
     #[traversable(wrap = "difficulty", rename = "value")]
-    pub difficulty: BudgetedCachedVec<M::Stored<PcoVec<Height, StoredF64>>>,
+    pub difficulty: M::Stored<PcoVec<Height, StoredF64, Budgeted>>,
     /// Unix timestamp in seconds associated with the indexed block or time
     /// period. Block-header timestamps are not guaranteed to increase between
     /// consecutive heights.
     #[traversable(wrap = "time")]
-    pub timestamp: BudgetedCachedVec<M::Stored<PcoVec<Height, Timestamp>>>,
+    pub timestamp: M::Stored<PcoVec<Height, Timestamp, Budgeted>>,
     /// Median of this block's timestamp and up to ten predecessors, choosing
     /// the upper middle for early even-length windows. Compressed on disk;
     /// response builders read bounded ranges without caching the full history.
@@ -79,8 +79,8 @@ impl BlocksVecs {
         ) = parallel_import! {
             blockhash = BytesVec::forced_import(db, "blockhash", version),
             coinbase_tag = BytesVec::forced_import(db, "coinbase_tag", version),
-            difficulty = PcoVec::forced_import(db, "difficulty", version),
-            timestamp = PcoVec::forced_import(db, "timestamp", version),
+            difficulty = PcoVec::forced_import_with(ImportOptions::new(db, "difficulty", version).with_cache_budget(cache)),
+            timestamp = PcoVec::forced_import_with(ImportOptions::new(db, "timestamp", version).with_cache_budget(cache)),
             median_time = PcoVec::forced_import(db, "median_time", version),
             total_size = PcoVec::forced_import(db, "total_size", version),
             weight = PcoVec::forced_import(db, "block_weight", version),
@@ -92,8 +92,8 @@ impl BlocksVecs {
         let mut this = Self {
             blockhash,
             coinbase_tag,
-            difficulty: cache.wrap(difficulty),
-            timestamp: cache.wrap(timestamp),
+            difficulty,
+            timestamp,
             median_time,
             total,
             weight,
@@ -105,12 +105,11 @@ impl BlocksVecs {
         // Upgrade old databases from the authoritative timestamp column. A
         // mismatched checkpoint can contain another branch: rebuild, not append.
         if this.median_time.len() != this.timestamp.len()
-            || this.median_time.stamp() != this.timestamp.inner.stamp()
+            || this.median_time.stamp() != this.timestamp.stamp()
         {
             this.median_time.clear()?;
             this.compute_median_times()?;
-            this.median_time
-                .stamped_write(this.timestamp.inner.stamp())?;
+            this.median_time.stamped_write(this.timestamp.stamp())?;
         }
         Ok(this)
     }
@@ -143,7 +142,7 @@ impl BlocksVecs {
             &mut self.blockhash as &mut dyn AnyStoredVec,
             &mut self.coinbase_tag,
             &mut self.difficulty,
-            &mut self.timestamp.inner,
+            &mut self.timestamp,
             &mut self.median_time,
             &mut self.total,
             &mut self.weight,
@@ -160,7 +159,7 @@ impl BlocksVecs {
             &self.blockhash as &dyn AnyStoredVec,
             &self.coinbase_tag,
             &self.difficulty,
-            &self.timestamp.inner,
+            &self.timestamp,
             &self.median_time,
             &self.total,
             &self.weight,

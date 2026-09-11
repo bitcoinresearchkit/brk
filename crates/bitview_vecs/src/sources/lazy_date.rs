@@ -38,8 +38,7 @@ impl<I: VecIndex> LazyDateVec<I> {
     ) -> Result<(), E> {
         try_for_each_period(
             &self.timestamps,
-            from,
-            to.min(self.len()),
+            from..to.min(self.len()),
             self.period_from_timestamp,
             |period, _, timestamp| each((self.date_from_period_and_timestamp)(period, timestamp)),
         )
@@ -95,6 +94,21 @@ impl<I: VecIndex> TypedVec for LazyDateVec<I> {
 }
 
 impl<I: VecIndex> ReadableVec<I, Date> for LazyDateVec<I> {
+    fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Date>) {
+        let len = self.len();
+        let indices = &indices[..indices.partition_point(|&index| index < len)];
+        try_for_each_period(
+            &self.timestamps,
+            indices.iter().copied(),
+            self.period_from_timestamp,
+            |period, _, timestamp| {
+                out.push((self.date_from_period_and_timestamp)(period, timestamp));
+                Ok::<_, Infallible>(())
+            },
+        )
+        .unwrap();
+    }
+
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<Date>) {
         buf.reserve(to.min(self.len()).saturating_sub(from));
         self.for_each_value(from, to, |value| buf.push(value));
@@ -152,7 +166,6 @@ mod tests {
     use parking_lot::RwLock;
 
     use super::*;
-    use crate::CachedDateVec;
 
     #[derive(Clone)]
     struct TimestampVec(Arc<RwLock<Vec<Timestamp>>>);
@@ -269,14 +282,14 @@ mod tests {
 
     #[test]
     fn day1_uses_the_period_date_across_empty_days() {
-        let date = CachedDateVec::wrap(LazyDateVec::new(
+        let date = LazyDateVec::new(
             &TimestampVec::new([
                 Timestamp::from(Date::new(2009, 1, 3)),
                 Timestamp::from(Date::new(2009, 1, 9)),
             ]),
             day1,
             period_date,
-        ));
+        );
 
         assert_eq!(
             date.collect(),
@@ -296,14 +309,14 @@ mod tests {
 
     #[test]
     fn coarser_period_gaps_use_the_next_periods_first_date() {
-        let date = CachedDateVec::wrap(LazyDateVec::new(
+        let date = LazyDateVec::new(
             &TimestampVec::new([
                 Timestamp::from(Date::new(2009, 1, 3)),
                 Timestamp::from(Date::new(2009, 1, 9)),
             ]),
             day3,
             timestamp_date,
-        ));
+        );
 
         assert_eq!(
             date.collect(),
@@ -322,7 +335,7 @@ mod tests {
             Timestamp::from(Date::new(2009, 1, 3)),
             Timestamp::from(Date::new(2009, 1, 9)),
         ]);
-        let date = CachedDateVec::wrap(LazyDateVec::new(&timestamps, day3, timestamp_date));
+        let date = LazyDateVec::new(&timestamps, day3, timestamp_date);
 
         assert_eq!(date.collect_last(), Some(Date::new(2009, 1, 9)));
 
@@ -332,29 +345,26 @@ mod tests {
     }
 
     #[test]
-    fn explicit_invalidation_refreshes_same_length_rewrites() {
+    fn same_length_rewrites_are_visible_without_derived_invalidation() {
         let timestamps = TimestampVec::new([
             Timestamp::from(Date::new(2009, 1, 3)),
             Timestamp::from(Date::new(2009, 1, 9)),
         ]);
-        let date = CachedDateVec::wrap(LazyDateVec::new(&timestamps, day3, timestamp_date));
+        let date = LazyDateVec::new(&timestamps, day3, timestamp_date);
 
-        let snapshot = date.snapshot();
+        let snapshot = date.collect();
         let cloned = date.clone();
         let boxed = date.read_only_boxed_clone();
-        assert!(Arc::ptr_eq(&snapshot, &date.snapshot()));
-        assert!(Arc::ptr_eq(&snapshot, &cloned.snapshot()));
-        assert!(Arc::ptr_eq(&snapshot, &boxed.snapshot()));
+        assert_eq!(&snapshot, &date.collect());
+        assert_eq!(&snapshot, &cloned.collect());
+        assert_eq!(&snapshot, &boxed.collect());
         assert_eq!(date.collect_last(), Some(Date::new(2009, 1, 9)));
 
         timestamps.replace(1, Timestamp::from(Date::new(2009, 1, 10)));
-        assert_eq!(date.collect_last(), Some(Date::new(2009, 1, 9)));
-
-        date.invalidate();
         assert_eq!(date.collect_last(), Some(Date::new(2009, 1, 10)));
         assert_eq!(snapshot.last(), Some(&Date::new(2009, 1, 9)));
         assert_eq!(boxed.collect_last(), Some(Date::new(2009, 1, 10)));
-        assert!(Arc::ptr_eq(&date.snapshot(), &boxed.snapshot()));
-        assert!(Arc::ptr_eq(&date.snapshot(), &cloned.snapshot()));
+        assert_eq!(&date.collect(), &boxed.collect());
+        assert_eq!(&date.collect(), &cloned.collect());
     }
 }

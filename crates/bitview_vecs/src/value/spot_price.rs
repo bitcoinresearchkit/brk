@@ -3,15 +3,15 @@ use bitview_traversable::Traversable;
 use brk_error::Result;
 use brk_types::{Cents, Dollars, Sats, Version};
 use derive_more::{Deref, DerefMut};
-use vecdb::{CacheBudget, Database, Pinned, Rw, StorageMode};
+use vecdb::{CacheBudget, Database, Rw, StorageMode};
 
 use crate::{IndexSources, LazyPerBlock, PerBlock, Price};
 
-/// Pinned cents with integer sats per USD, preserving the spot-price conversion.
+/// Stored cents with integer sats per USD, preserving the spot-price conversion.
 #[derive(Deref, DerefMut, Traversable)]
 #[traversable(transparent)]
 pub struct SpotPrice<M: StorageMode = Rw>(
-    pub Price<PerBlock<Cents, M, Pinned>, LazyPerBlock<Dollars, Cents>, LazyPerBlock<Sats, Cents>>,
+    pub Price<PerBlock<Cents, M>, LazyPerBlock<Dollars, Cents>, LazyPerBlock<Sats, Cents>>,
 );
 
 impl SpotPrice {

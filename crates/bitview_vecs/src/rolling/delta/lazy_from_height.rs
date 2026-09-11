@@ -46,13 +46,7 @@ where
         indexes: &IndexSources,
     ) -> Self {
         let window_start = window_start.read_only_boxed_clone();
-        let height = LazyDeltaVec::new(
-            name,
-            version,
-            source.read_only_boxed_clone(),
-            window_start.version(),
-            move || window_start.snapshot(),
-        );
+        let height = LazyDeltaVec::new(name, version, source.read_only_boxed_clone(), window_start);
         Self::new(name, version, height, indexes)
     }
 }

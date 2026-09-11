@@ -2,16 +2,19 @@ use bitview_collections::PerResolution;
 use bitview_vecs::{IndexSources, LazyPreviousDeltaVec};
 use brk_types::Version;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedVec, Database, EagerVec, ImportableVec, PcoVec, PcoVecValue,
-    ReadableCloneableVec, VecIndex, WritableVec,
+    AnyStoredVec, Budgeted, CacheBudget, Database, EagerVec, ImportOptions, ImportableVec, PcoVec,
+    PcoVecValue, ReadableCloneableVec, VecIndex, WritableVec,
 };
 
 pub fn stored<I: VecIndex, T: PcoVecValue>(
     db: &Database,
     name: &str,
     values: impl IntoIterator<Item = T>,
-) -> EagerVec<PcoVec<I, T>> {
-    let mut vec = EagerVec::forced_import(db, name, Version::ONE).unwrap();
+) -> EagerVec<PcoVec<I, T, Budgeted>> {
+    let mut vec = EagerVec::forced_import_with(
+        ImportOptions::new(db, name, Version::ONE).with_cache_budget(&CACHE_BUDGET),
+    )
+    .unwrap();
     for value in values {
         vec.push(value);
     }
@@ -28,21 +31,21 @@ pub fn indexes(db: &Database) -> IndexSources {
     macro_rules! resolutions {
         ($prefix:literal, $method:ident) => {
             PerResolution {
-                minute10: CachedVec::wrap(empty!(concat!($prefix, "_minute10"))).$method(),
-                minute30: CachedVec::wrap(empty!(concat!($prefix, "_minute30"))).$method(),
-                hour1: CachedVec::wrap(empty!(concat!($prefix, "_hour1"))).$method(),
-                hour4: CachedVec::wrap(empty!(concat!($prefix, "_hour4"))).$method(),
-                hour12: CachedVec::wrap(empty!(concat!($prefix, "_hour12"))).$method(),
-                day1: CachedVec::wrap(empty!(concat!($prefix, "_day1"))).$method(),
-                day3: CachedVec::wrap(empty!(concat!($prefix, "_day3"))).$method(),
-                week1: CachedVec::wrap(empty!(concat!($prefix, "_week1"))).$method(),
-                month1: CachedVec::wrap(empty!(concat!($prefix, "_month1"))).$method(),
-                month3: CachedVec::wrap(empty!(concat!($prefix, "_month3"))).$method(),
-                month6: CachedVec::wrap(empty!(concat!($prefix, "_month6"))).$method(),
-                year1: CachedVec::wrap(empty!(concat!($prefix, "_year1"))).$method(),
-                year10: CachedVec::wrap(empty!(concat!($prefix, "_year10"))).$method(),
-                halving: CachedVec::wrap(empty!(concat!($prefix, "_halving"))).$method(),
-                epoch: CachedVec::wrap(empty!(concat!($prefix, "_epoch"))).$method(),
+                minute10: empty!(concat!($prefix, "_minute10")).$method(),
+                minute30: empty!(concat!($prefix, "_minute30")).$method(),
+                hour1: empty!(concat!($prefix, "_hour1")).$method(),
+                hour4: empty!(concat!($prefix, "_hour4")).$method(),
+                hour12: empty!(concat!($prefix, "_hour12")).$method(),
+                day1: empty!(concat!($prefix, "_day1")).$method(),
+                day3: empty!(concat!($prefix, "_day3")).$method(),
+                week1: empty!(concat!($prefix, "_week1")).$method(),
+                month1: empty!(concat!($prefix, "_month1")).$method(),
+                month3: empty!(concat!($prefix, "_month3")).$method(),
+                month6: empty!(concat!($prefix, "_month6")).$method(),
+                year1: empty!(concat!($prefix, "_year1")).$method(),
+                year10: empty!(concat!($prefix, "_year10")).$method(),
+                halving: empty!(concat!($prefix, "_halving")).$method(),
+                epoch: empty!(concat!($prefix, "_epoch")).$method(),
             }
         };
     }

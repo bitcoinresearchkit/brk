@@ -1,7 +1,9 @@
 use brk_error::Result;
 use brk_types::{Height, Lengths};
 use tracing::{debug, warn};
-use vecdb::{AnyStoredVec, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec};
+use vecdb::{
+    AnyStoredVec, CachePolicy, PcoVec, PcoVecValue, ReadableVec, VecIndex, VecValue, WritableVec,
+};
 
 use crate::{Stores, Vecs};
 
@@ -177,7 +179,7 @@ fn matching_height(vec_height: Height, store_height: Option<Height>) -> Option<H
 
 /// Per-type next-to-write counter at `next_height`. `None` pre-genesis.
 fn next_index<I, T>(
-    height_to_index: &PcoVec<Height, I>,
+    height_to_index: &PcoVec<Height, I, impl CachePolicy>,
     index_to_else: &impl ReadableVec<I, T>,
     next_height: Height,
 ) -> Option<I>

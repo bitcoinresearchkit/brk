@@ -2,31 +2,33 @@ use std::{convert::Infallible, sync::Arc};
 
 use brk_types::{Cents, Height, StoredU64, Version};
 use vecdb::{
-    AnyVec, BudgetedCachedVec, CacheBudget, PrintableIndex, ReadableBoxedVec, ReadableCloneableVec,
-    ReadableVec, TypedVec, short_type_name,
+    AnyVec, PrintableIndex, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, TypedVec,
+    short_type_name,
 };
+
+use super::prefix_sum_checkpoints::PrefixSumCheckpoints;
 
 #[derive(Clone)]
 pub struct SmaPrefixSumVec {
     name: Arc<str>,
     version: Version,
     spot_price: ReadableBoxedVec<Height, Cents>,
+    checkpoints: PrefixSumCheckpoints,
 }
 
 impl SmaPrefixSumVec {
-    /// Exception to stored-source-only retention: one prefix scan is shared by
-    /// every SMA window, avoiding a full price scan for each endpoint lookup.
-    pub fn cached(
-        cache: &'static CacheBudget,
+    /// One compact prefix checkpoint set is shared by every SMA window.
+    pub fn new(
         name: &str,
         version: Version,
         spot_price: &(impl ReadableCloneableVec<Height, Cents> + ?Sized),
-    ) -> BudgetedCachedVec<Self> {
-        cache.wrap(Self {
+    ) -> Self {
+        Self {
             name: Arc::from(name),
             version,
             spot_price: spot_price.read_only_boxed_clone(),
-        })
+            checkpoints: PrefixSumCheckpoints::default(),
+        }
     }
 
     fn try_for_each_value<E>(
@@ -35,22 +37,21 @@ impl SmaPrefixSumVec {
         to: usize,
         mut each: impl FnMut(StoredU64) -> Result<(), E>,
     ) -> Result<(), E> {
-        let prices = self.spot_price.snapshot();
-        let to = to.min(prices.len());
+        let to = to.min(self.spot_price.len());
         if from >= to {
             return Ok(());
         }
 
-        let mut sum = 0_u64;
-        for (index, price) in prices[..to].iter().copied().enumerate() {
-            sum = sum
-                .checked_add(price.inner())
-                .expect("price SMA prefix sum overflow");
-            if index >= from {
-                each(StoredU64::from(sum))?;
-            }
-        }
-        Ok(())
+        let mut sum = self
+            .checkpoints
+            .sum_before(&self.spot_price, from, |price| price.inner());
+        self.spot_price
+            .try_fold_range_at(from, to, (), |(), price| {
+                sum = sum
+                    .checked_add(price.inner())
+                    .expect("price SMA prefix sum overflow");
+                each(StoredU64::from(sum))
+            })
     }
 
     fn for_each_value(&self, from: usize, to: usize, mut each: impl FnMut(StoredU64)) {

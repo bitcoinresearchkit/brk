@@ -1,7 +1,7 @@
 use bitview_cohort::ByType;
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, CountTotal, import_stored};
+use bitview_vecs::{CountTotal, LazyWindowStartVec, import_stored};
 use brk_error::Result;
 use brk_types::Version;
 use vecdb::{CacheBudget, Database};
@@ -13,7 +13,7 @@ pub fn forced_import(
     db: &Database,
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &Windows<&CachedWindowStartVec>,
+    window_starts: &Windows<&LazyWindowStartVec>,
 ) -> Result<Vecs> {
     let version = version + Version::TWO;
     let output_count_stored = ByType::try_new(|id| {
@@ -25,18 +25,18 @@ pub fn forced_import(
             version,
             &mappings.output_count_source(),
             mappings,
-            cached_starts,
+            window_starts,
         ),
         |name| format!("{name}_output_count"),
         version,
         &output_count_stored,
         mappings,
-        cached_starts,
+        window_starts,
     );
     let output_share = output_count.lazy_shares(
         version,
         |name| format!("{name}_output_share"),
-        cached_starts,
+        window_starts,
         mappings,
     );
     let tx_count_stored = ByType::try_new(|id| {
@@ -53,18 +53,18 @@ pub fn forced_import(
             version,
             &mappings.transaction_count_source(),
             mappings,
-            cached_starts,
+            window_starts,
         ),
         |name| format!("tx_count_with_{name}_output"),
         version,
         &tx_count_stored,
         mappings,
-        cached_starts,
+        window_starts,
     );
     let tx_share = tx_count.lazy_shares(
         version,
         |name| format!("tx_share_with_{name}_output"),
-        cached_starts,
+        window_starts,
         mappings,
     );
 
@@ -74,7 +74,7 @@ pub fn forced_import(
         .op_return
         .cumulative_source();
     let spendable_output_count =
-        SpendableOutputCount::new(version, &op_return_count, mappings, cached_starts);
+        SpendableOutputCount::new(version, &op_return_count, mappings, window_starts);
 
     Ok(Vecs {
         output_count,

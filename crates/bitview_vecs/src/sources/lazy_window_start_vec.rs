@@ -60,9 +60,16 @@ impl LazyWindowStartVec {
         u64::from(current).saturating_sub(u64::from(older)) >= self.duration_seconds
     }
 
-    fn start_at(&self, timestamps: &[Timestamp], index: usize) -> usize {
-        let current = timestamps[index];
-        timestamps[..=index].partition_point(|&older| self.is_expired(current, older))
+    fn start_at(&self, mut begin: usize, mut end: usize, current: Timestamp) -> usize {
+        while begin < end {
+            let middle = begin + (end - begin) / 2;
+            if self.is_expired(current, self.timestamps.collect_one_at(middle).unwrap()) {
+                begin = middle + 1;
+            } else {
+                end = middle;
+            }
+        }
+        begin
     }
 
     fn try_for_each_value<E>(
@@ -71,15 +78,17 @@ impl LazyWindowStartVec {
         to: usize,
         mut each: impl FnMut(Height) -> Result<(), E>,
     ) -> Result<(), E> {
-        let timestamps = self.timestamps.snapshot();
-        let to = to.min(timestamps.len());
+        let to = to.min(self.timestamps.len());
         if from >= to {
             return Ok(());
         }
 
-        let mut start = self.start_at(&timestamps, from);
-        for current in from..to {
-            while start < current && self.is_expired(timestamps[current], timestamps[start]) {
+        let timestamps = self.timestamps.collect_range_dyn(from, to);
+        let mut start = self.start_at(0, from + 1, timestamps[0]);
+        let mut older = self.timestamps.cursor();
+        for (offset, timestamp) in timestamps.into_iter().enumerate() {
+            let current = from + offset;
+            while start < current && self.is_expired(timestamp, older.get(start).unwrap()) {
                 start += 1;
             }
             each(Height::from(start))?;
@@ -174,34 +183,33 @@ impl ReadableVec<Height, Height> for LazyWindowStartVec {
     }
 
     fn collect_one_at(&self, index: usize) -> Option<Height> {
-        let timestamps = self.timestamps.snapshot();
-        (index < timestamps.len()).then(|| Height::from(self.start_at(&timestamps, index)))
+        let current = self.timestamps.collect_one_at(index)?;
+        Some(Height::from(self.start_at(0, index + 1, current)))
     }
 
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<Height>) {
         let Some(&first) = indices.first() else {
             return;
         };
-        let timestamps = self.timestamps.snapshot();
-        if first >= timestamps.len() {
+        let len = self.timestamps.len();
+        if first >= len {
             return;
         }
 
-        let mut start = self.start_at(&timestamps, first);
+        let indices = &indices[..indices.partition_point(|&index| index < len)];
+        let timestamps = self.timestamps.read_sorted_at(indices);
+        let mut start = self.start_at(0, first + 1, timestamps[0]);
+        let mut older = self.timestamps.cursor();
         let mut previous = first;
         out.reserve(indices.len());
-        for &current in indices {
-            if current >= timestamps.len() {
-                break;
-            }
+        for (&current, timestamp) in indices.iter().zip(timestamps) {
             // For a large request gap, binary search costs fewer comparisons
             // than walking the skipped history. Nearby requests keep the
             // existing forward scan, including its cheap duplicate handling.
             if start < current && current - previous > (current - start).ilog2() as usize + 1 {
-                start += timestamps[start..current]
-                    .partition_point(|&older| self.is_expired(timestamps[current], older));
+                start = self.start_at(start, current, timestamp);
             } else {
-                while start < current && self.is_expired(timestamps[current], timestamps[start]) {
+                while start < current && self.is_expired(timestamp, older.get(start).unwrap()) {
                     start += 1;
                 }
             }
@@ -232,10 +240,9 @@ impl Traversable for LazyWindowStartVec {
 #[cfg(test)]
 mod tests {
     use parking_lot::RwLock;
-    use vecdb::{CachedVec, ReadableVec};
+    use vecdb::ReadableVec;
 
     use super::*;
-    use crate::CachedWindowStartVec;
 
     #[derive(Clone)]
     struct TimestampVec(Arc<RwLock<Vec<Timestamp>>>);
@@ -332,7 +339,7 @@ mod tests {
         }
     }
 
-    fn timestamp_fixture() -> (TimestampVec, CachedVec<TimestampVec>) {
+    fn timestamp_fixture() -> (TimestampVec, TimestampVec) {
         let timestamps = TimestampVec::new([
             0,
             12 * HOUR_SECONDS as u32,
@@ -340,14 +347,11 @@ mod tests {
             (DAY_SECONDS + 12 * HOUR_SECONDS) as u32,
             (2 * DAY_SECONDS) as u32,
         ]);
-        let cached = CachedVec::wrap(timestamps.clone());
+        let cached = timestamps.clone();
         (timestamps, cached)
     }
 
-    fn lazy_window(
-        cached_timestamps: &CachedVec<TimestampVec>,
-        duration_seconds: u64,
-    ) -> LazyWindowStartVec {
+    fn lazy_window(cached_timestamps: &TimestampVec, duration_seconds: u64) -> LazyWindowStartVec {
         LazyWindowStartVec::new(
             "lookback",
             Version::ONE,
@@ -380,12 +384,11 @@ mod tests {
             })
             .collect();
         let source = TimestampVec::new(values.iter().copied());
-        let cached = CachedVec::wrap(source.clone());
+        let cached = source.clone();
         for rewrite in [false, true] {
             if rewrite {
                 values[49_999] += 86_400;
                 source.replace(49_999, values[49_999]);
-                cached.invalidate();
             }
             for duration in [0, 1, HOUR_SECONDS, DAY_SECONDS, 14 * DAY_SECONDS, u64::MAX] {
                 let window = lazy_window(&cached, duration);
@@ -423,7 +426,7 @@ mod tests {
     #[test]
     fn range_random_and_sorted_reads_match() {
         let (_, cached_timestamps) = timestamp_fixture();
-        let window = CachedWindowStartVec::wrap(lazy_window(&cached_timestamps, DAY_SECONDS));
+        let window = lazy_window(&cached_timestamps, DAY_SECONDS);
 
         assert_eq!(
             window.collect_range_at(1, 4),
@@ -437,16 +440,13 @@ mod tests {
     }
 
     #[test]
-    fn explicit_invalidations_refresh_same_length_reorgs() {
+    fn same_length_reorgs_are_visible_without_derived_invalidation() {
         let (timestamps, cached_timestamps) = timestamp_fixture();
-        let window = CachedWindowStartVec::wrap(lazy_window(&cached_timestamps, DAY_SECONDS));
+        let window = lazy_window(&cached_timestamps, DAY_SECONDS);
 
         assert_eq!(window.collect_one_at(4), Some(Height::from(3_usize)));
         timestamps.replace(4, (DAY_SECONDS + 18 * HOUR_SECONDS) as u32);
 
-        assert_eq!(window.collect_one_at(4), Some(Height::from(3_usize)));
-        cached_timestamps.invalidate();
-        window.invalidate();
         assert_eq!(window.collect_one_at(4), Some(Height::from(2_usize)));
     }
 
@@ -461,7 +461,7 @@ mod tests {
             })
             .collect();
         let timestamps = TimestampVec::new(values.iter().copied());
-        let cached = CachedVec::wrap(timestamps);
+        let cached = timestamps;
 
         for duration_seconds in [
             HOUR_SECONDS,

@@ -3,7 +3,7 @@ use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_transforms::{RatioBytes, RatioSats};
 use bitview_traversable::Traversable;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyPercentCumulativeRolling, LazyPercentPerBlock,
+    LazyPercentCumulativeRolling, LazyPercentPerBlock, LazyWindowStartVec,
     PerBlockCumulativeRolling,
 };
 use brk_error::Result;
@@ -42,7 +42,7 @@ impl Total {
         prefix: &str,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         block_size: &impl ReadableCloneableVec<Height, StoredU64>,
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
@@ -52,7 +52,7 @@ impl Total {
             &format!("{prefix}_data_bytes"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let tx_count = PerBlockCumulativeRolling::forced_import(
             cache,
@@ -60,7 +60,7 @@ impl Total {
             &format!("{prefix}_tx_count"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let tx_vsize = PerBlockCumulativeRolling::forced_import(
             cache,
@@ -68,7 +68,7 @@ impl Total {
             &format!("{prefix}_tx_vsize"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
         let fees = PerBlockCumulativeRolling::forced_import(
             cache,
@@ -76,7 +76,7 @@ impl Total {
             &format!("{prefix}_fees"),
             version,
             mappings,
-            cached_starts,
+            window_starts,
         )?;
 
         Ok(Self {
@@ -86,7 +86,7 @@ impl Total {
                 version,
                 &fees,
                 chain_fees,
-                cached_starts,
+                window_starts,
                 mappings,
             ),
             data_bytes,
@@ -118,7 +118,7 @@ impl Total {
         version: Version,
         fees: &PerBlockCumulativeRolling<Sats>,
         chain_fees: &impl ReadableCloneableVec<Height, Sats>,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         mappings: &MappingsVecs,
     ) -> LazyPercentCumulativeRolling<PartsPerMillion32> {
         LazyPercentCumulativeRolling::from_cumulative_ratio::<
@@ -130,7 +130,7 @@ impl Total {
             version,
             &fees.cumulative.height,
             chain_fees,
-            cached_starts,
+            window_starts,
             mappings,
         )
     }

@@ -1,11 +1,7 @@
 //! One intentional cross-route publication/reorganization sequence.
 //! Setup, raw integrity, date ranges, and benchmarks have independent fixtures.
 
-use std::{
-    net::Ipv4Addr,
-    sync::{Arc, atomic::Ordering},
-    time::Duration,
-};
+use std::{net::Ipv4Addr, sync::atomic::Ordering, time::Duration};
 
 use bitcoin::{
     BlockHash as BitcoinBlockHash, Txid as BitcoinTxid,
@@ -619,34 +615,28 @@ fn reorganization_preserves_publication_and_validator_contracts() {
             .run(|q| {
                 let prices = &q.plugins().price.spot.cents.height;
                 let timestamps = &q.indexer().vecs().blocks.timestamp;
-                timestamps.invalidate();
-                prices.invalidate();
-                assert!(q.try_resolve_blocks_v1(None, 15)?.is_none());
                 let bounded = q.resolve_blocks_v1(None, 15)?;
-                assert!(
-                    prices.cached_snapshot().is_none(),
-                    "bounded resolution must not retain history"
-                );
+                assert!(prices.read_cached_into_at(0, 2, &mut Vec::new()));
                 let captured = bounded.prices().iter().rev().copied().collect::<Vec<_>>();
                 let rows = bounded.build(q)?;
                 assert!(
-                    timestamps.cached_snapshot().is_none(),
-                    "V1 body must not fill timestamp history"
+                    timestamps.read_cached_into_at(0, 2, &mut Vec::new()),
+                    "V1 body retains the timestamp range it reads"
                 );
                 assert_eq!(
                     rows.iter().map(|row| row.extras.price).collect::<Vec<_>>(),
                     captured
                 );
                 assert!(
-                    prices.cached_snapshot().is_none(),
-                    "building captured rows must not read the cached price source"
+                    prices.read_cached_into_at(0, 2, &mut Vec::new()),
+                    "building captured rows leaves the source cache reusable"
                 );
                 assert_eq!(q.resolve_blocks(None, 10)?.build(q)?.len(), rows.len());
                 assert!(
-                    timestamps.cached_snapshot().is_none(),
-                    "block bodies must not fill timestamp history"
+                    timestamps.read_cached_into_at(0, 2, &mut Vec::new()),
+                    "block bodies share the timestamp source cache"
                 );
-                let warm = timestamps.snapshot();
+                let warm = timestamps.collect();
                 assert_eq!(
                     to_vec(
                         &q.resolve_blocks_v1(None, 15)
@@ -655,11 +645,10 @@ fn reorganization_preserves_publication_and_validator_contracts() {
                     .unwrap(),
                     to_vec(&rows).unwrap()
                 );
-                assert!(
-                    Arc::ptr_eq(&warm, &timestamps.cached_snapshot().unwrap()),
-                    "body reads must reuse an existing timestamp snapshot"
-                );
-                drop(prices.snapshot());
+                let mut retained = Vec::new();
+                assert!(timestamps.read_cached_into_at(0, warm.len(), &mut retained));
+                assert_eq!(retained, warm, "body reads preserve warm timestamps");
+                drop(prices.collect());
                 q.try_resolve_blocks_v1(None, 15)?
                     .ok_or(QueryError::Internal("expected warm V1 snapshot"))
             })

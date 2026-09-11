@@ -1,7 +1,6 @@
 #[macro_use]
 mod macros;
 
-pub mod cached;
 pub mod compressed;
 pub mod eager;
 pub mod index;
@@ -10,7 +9,6 @@ pub mod mutable;
 pub mod overflow;
 pub mod raw;
 
-pub use cached::*;
 pub use compressed::*;
 pub use eager::*;
 pub use index::*;

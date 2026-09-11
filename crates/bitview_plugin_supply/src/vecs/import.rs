@@ -5,8 +5,8 @@ use bitview_plugin_distribution::{AllChainSources, Vecs as DistributionVecs};
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_plugin_transactions::Vecs as TransactionsVecs;
 use bitview_vecs::{
-    CachedWindowStartVec, LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock,
-    LazyRollingDeltasFiatFromHeight, LazySpotValuePerBlock, LazyValuePerBlock, LazyWindowVec,
+    LazyFiatPerBlock, LazyPerBlock, LazyPercentPerBlock, LazyRollingDeltasFiatFromHeight,
+    LazySpotValuePerBlock, LazyValuePerBlock, LazyWindowStartVec, LazyWindowVec,
 };
 use brk_error::Result;
 use brk_types::{Cents, Height, PartsPerMillionSigned64, Sats, Version};
@@ -20,7 +20,7 @@ impl Vecs {
     pub fn import(
         context: ImportContext<'_>,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
         distribution: &DistributionVecs,
         cointime: &CointimeVecs,
         all_chain: &AllChainSources,
@@ -40,7 +40,7 @@ impl Vecs {
             "inflation_rate_ppm_source",
             inflation_version,
             &supply_metrics.sats.height,
-            cached_starts._1y,
+            window_starts._1y,
             false,
             |current, previous, _| {
                 if previous <= Sats::FIFTY_BTC {
@@ -68,7 +68,7 @@ impl Vecs {
             "market_cap_delta",
             version + Version::new(4),
             &market_cap.cents.height,
-            cached_starts,
+            window_starts,
             mappings,
         );
 
@@ -83,7 +83,7 @@ impl Vecs {
             .cents
             .height;
         let market_minus_realized_cap_growth_rate =
-            cached_starts.map_with_suffix(|suffix, starts| {
+            window_starts.map_with_suffix(|suffix, starts| {
                 let name = format!("market_minus_realized_cap_growth_rate_{suffix}");
                 let source = Self::market_minus_realized_cap_growth(
                     all_chain,

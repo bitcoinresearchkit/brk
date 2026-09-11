@@ -12,7 +12,7 @@ where
     Strat: 'static,
 {
     fn version(&self) -> Version {
-        self.version + self.source.version() + self.mapping_version
+        self.version + self.source.version() + self.mapping.version()
     }
 
     fn name(&self) -> &str {
@@ -24,7 +24,7 @@ where
     }
 
     fn len(&self) -> usize {
-        (self.mapping)().len()
+        self.mapping.len()
     }
 
     #[inline]

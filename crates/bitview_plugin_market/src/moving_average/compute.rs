@@ -15,7 +15,6 @@ pub fn compute(
 ) -> Result<()> {
     let starting_lengths = indexer.safe_lengths();
     let close = &prices.spot.cents.height;
-    vecs.sma.clear_if_recomputed_from(starting_lengths.height);
 
     for &period in EmaPeriodId::ALL {
         period

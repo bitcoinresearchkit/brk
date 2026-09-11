@@ -66,7 +66,6 @@ impl Query {
                     .spot
                     .cents
                     .height
-                    .inner
                     .collect_one(*height)
                     .data()
                     .map(Dollars::from)

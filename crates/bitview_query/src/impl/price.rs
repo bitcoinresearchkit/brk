@@ -7,7 +7,7 @@ use vecdb::{AnyVec, ReadBounds, ReadableVec};
 
 use crate::Query;
 
-// A timestamp is u32 seconds. Reject corrupt lengths before snapshotting.
+// A timestamp is u32 seconds. Reject corrupt lengths before reading the mapping.
 const MAX_BUCKETS: usize = ((u32::MAX - INDEX_EPOCH) / HOUR4_INTERVAL) as usize + 1;
 
 impl Query {
@@ -30,7 +30,7 @@ impl Query {
                     "Historical price mapping exceeds timestamp range",
                 ));
             }
-            let mapping = first_heights.snapshot();
+            let mapping = first_heights.collect_range_dyn(0, first_heights.len());
             // Reuse one decompressed page while walking ordered closes.
             let mut cursor = prices.cursor();
             historical_prices(&mapping, source_len, timestamp, |height| {

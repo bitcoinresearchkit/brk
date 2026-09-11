@@ -3,8 +3,8 @@ use brk_error::Result;
 use brk_types::{Height, OutputType, Sats, TxOutIndex, TypeIndex, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BudgetedCachedVec, BytesVec, CacheBudget, Database, ImportableVec, OverflowVec,
-    PcoVec, Rw, Stamp, StorageMode, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
+    OverflowVec, PcoVec, Rw, Stamp, StorageMode, WritableVec,
 };
 
 #[derive(Traversable)]
@@ -13,7 +13,7 @@ pub struct OutputsVecs<M: StorageMode = Rw> {
     /// order. At `height`, this is where the block begins and equals the number
     /// of outputs in preceding blocks; at `tx_index`, it identifies the
     /// transaction's first output.
-    pub first_txout_index: BudgetedCachedVec<M::Stored<PcoVec<Height, TxOutIndex>>>,
+    pub first_txout_index: M::Stored<PcoVec<Height, TxOutIndex, Budgeted>>,
     /// Value in satoshis of the indexed transaction output. At `txout_index`,
     /// this is the output's value; at `txin_index`, it is the value of the
     /// previous output spent by the input. Coinbase inputs use `Sats::MAX`
@@ -38,13 +38,13 @@ impl OutputsVecs {
         version: Version,
     ) -> Result<Self> {
         let (first_txout_index, value, output_type, type_index) = parallel_import! {
-            first_txout_index = PcoVec::forced_import(db, "first_txout_index", version),
+            first_txout_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_txout_index", version).with_cache_budget(cache)),
             value = OverflowVec::forced_import(db, "value", version),
             output_type = BytesVec::forced_import(db, "output_type", version),
             type_index = BytesVec::forced_import(db, "type_index", version),
         };
         Ok(Self {
-            first_txout_index: cache.wrap(first_txout_index),
+            first_txout_index,
             value,
             output_type,
             type_index,

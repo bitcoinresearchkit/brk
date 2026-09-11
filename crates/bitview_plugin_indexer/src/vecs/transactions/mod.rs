@@ -6,8 +6,8 @@ use brk_types::{
 };
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, BudgetedCachedVec, BytesVec, CacheBudget, Database, ImportableVec, PcoVec, Rw,
-    Stamp, StorageMode, WritableVec,
+    AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec, PcoVec,
+    Rw, Stamp, StorageMode, WritableVec,
 };
 
 pub mod features;
@@ -21,7 +21,7 @@ pub use metadata::TxMetadataVecs;
 pub struct TransactionsVecs<M: StorageMode = Rw> {
     /// Global zero-based transaction index at which the indexed block begins,
     /// equal to the number of transactions in all preceding blocks.
-    pub first_tx_index: BudgetedCachedVec<M::Stored<PcoVec<Height, TxIndex>>>,
+    pub first_tx_index: M::Stored<PcoVec<Height, TxIndex, Budgeted>>,
     /// Transaction ID: the double-SHA256 hash of the transaction's non-witness
     /// serialization, displayed in Bitcoin's conventional hexadecimal byte
     /// order.
@@ -119,7 +119,7 @@ impl TransactionsVecs {
             first_txout_index,
             position,
         ) = parallel_import! {
-            first_tx_index = PcoVec::forced_import(db, "first_tx_index", version),
+            first_tx_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_tx_index", version).with_cache_budget(cache)),
             txid = BytesVec::forced_import(db, "txid", version),
             tx_version = PcoVec::forced_import(db, "tx_version", version),
             raw_locktime = PcoVec::forced_import(db, "raw_locktime", version),
@@ -127,12 +127,12 @@ impl TransactionsVecs {
             total_size = PcoVec::forced_import(db, "total_size", version),
             total_sigop_cost = PcoVec::forced_import(db, "total_sigop_cost", version),
             is_explicitly_rbf = PcoVec::forced_import(db, "is_explicitly_rbf", version),
-            first_txin_index = PcoVec::forced_import(db, "first_txin_index", version),
+            first_txin_index = PcoVec::forced_import_with(ImportOptions::new(db, "first_txin_index", version).with_cache_budget(cache)),
             first_txout_index = BytesVec::forced_import(db, "first_txout_index", version),
             position = PcoVec::forced_import(db, "tx_position", version),
         };
         Ok(Self {
-            first_tx_index: cache.wrap(first_tx_index),
+            first_tx_index,
             txid,
             tx_version,
             raw_locktime,

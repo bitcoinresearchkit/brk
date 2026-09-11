@@ -10,7 +10,7 @@ where
     Op: DeltaOp<S, T>,
 {
     fn version(&self) -> Version {
-        self.base_version + self.source.version() + self.window_starts_version
+        self.base_version + self.source.version() + self.window_starts.version()
     }
 
     fn name(&self) -> &str {
@@ -22,7 +22,7 @@ where
     }
 
     fn len(&self) -> usize {
-        self.source.len()
+        self.source.len().min(self.window_starts.len())
     }
 
     #[inline]

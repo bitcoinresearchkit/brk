@@ -11,11 +11,11 @@ use super::Vecs;
 pub fn forced_import(
     version: Version,
     mappings: &MappingsVecs,
-    cached_starts: &ByLookbackPeriod<&impl ReadableCloneableVec<Height, Height>>,
+    window_starts: &ByLookbackPeriod<&impl ReadableCloneableVec<Height, Height>>,
     prices: &PriceVecs,
 ) -> Result<Vecs> {
     let price_past =
-        ByLookbackPeriod::try_from_period(cached_starts, |name, _days, window_starts| {
+        ByLookbackPeriod::try_from_period(window_starts, |name, _days, window_starts| {
             let metric_name = format!("price_past_{name}");
             let source = LazyWindowVec::<Height, Cents, Cents>::new(
                 &format!("{metric_name}_cents_source"),

@@ -40,7 +40,7 @@ use vecdb::{Database, ReadableBoxedVec, ReadableCloneableVec, Rw, StorageMode};
 pub use dependencies::Dependencies;
 pub use has::HasMappings;
 
-pub use resolution::CachedFirstHeightVec;
+pub use bitview_vecs::LazyFirstHeightVec;
 
 const STORAGE: PluginStorage = PluginStorage::new(PluginId::new("mappings"), Version::new(9));
 pub const ID: PluginId = STORAGE.id();
@@ -98,9 +98,10 @@ impl Vecs {
     pub fn import(context: ImportContext<'_>, indexer: &Indexer) -> Result<Self> {
         let db = STORAGE.open_database(context, 1_000_000)?;
         let version = STORAGE.schema_version();
+        let cache = context.cache_budget();
 
         let addr = AddrVecs::forced_import(version, indexer);
-        let monotonic = Timestamps::forced_import_monotonic(&db, version)?;
+        let monotonic = Timestamps::forced_import_monotonic(cache, &db, version)?;
         let chain_counts = ChainCounts::new(version, indexer);
         let height = HeightVecs::new(
             version,
@@ -257,19 +258,6 @@ impl Vecs {
         Ok(this)
     }
 
-    fn invalidate_timestamp_dependents(&self) {
-        macro_rules! period {
-            ($($field:ident),+ $(,)?) => {
-                $(self.$field.invalidate_timestamp_caches();)+
-            };
-        }
-
-        period!(
-            minute10, minute30, hour1, hour4, hour12, day1, day3, week1, month1, month3, month6,
-            year1, year10, halving, epoch,
-        );
-    }
-
     pub fn transaction_count_source(&self) -> LazyCumulativeIndexVec<Height, TxIndex> {
         self.chain_counts.transaction_source()
     }
@@ -305,12 +293,8 @@ impl ComputePlugin for Vecs {
         self.tx_heights.update(indexer, starting_height);
 
         // timestamp_monotonic must be computed first — other mappings read it
-        let rewrote_existing = self
-            .timestamp
+        self.timestamp
             .compute_monotonic(indexer, starting_height, exit)?;
-        if rewrote_existing {
-            self.invalidate_timestamp_dependents();
-        }
 
         context.compact_database(&self.db);
         Ok(())

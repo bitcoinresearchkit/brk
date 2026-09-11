@@ -19,16 +19,16 @@ impl Vecs {
 
         let lookback = LookbackVecs::new(
             version,
-            mappings.timestamp.monotonic.read_only_cached_boxed_clone(),
+            mappings.timestamp.monotonic.read_only_boxed_clone(),
         );
-        let cached_starts = lookback.cached_window_starts();
-        let count = CountVecs::new(version, indexer, mappings, &cached_starts);
+        let window_starts = lookback.window_starts();
+        let count = CountVecs::new(version, indexer, mappings, &window_starts);
         let interval = IntervalVecs::forced_import(
             context.cache_budget(),
             &db,
             version,
             mappings,
-            &cached_starts,
+            &window_starts,
         )?;
         let size = SizeVecs::forced_import(
             context.cache_budget(),
@@ -36,9 +36,9 @@ impl Vecs {
             version,
             indexer,
             mappings,
-            &cached_starts,
+            &window_starts,
         )?;
-        let weight = WeightVecs::new(version, indexer, mappings, &cached_starts, &size);
+        let weight = WeightVecs::new(version, indexer, mappings, &window_starts, &size);
         let difficulty = DifficultyVecs::new(version, indexer, mappings);
         let halving = HalvingVecs::new(version, mappings);
 
@@ -56,3 +56,4 @@ impl Vecs {
         Ok(this)
     }
 }
+use vecdb::ReadableCloneableVec;

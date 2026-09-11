@@ -42,7 +42,6 @@ impl BlockProcessor<'_> {
         self.vecs
             .blocks
             .timestamp
-            .inner
             .debug_checked_push(height, Timestamp::from(self.block.header.time));
 
         Ok(())

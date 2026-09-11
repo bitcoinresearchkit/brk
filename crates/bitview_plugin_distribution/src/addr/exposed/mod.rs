@@ -42,7 +42,7 @@ use brk_exit::Exit;
 use brk_types::{Cents, Height, Sats, Version};
 use rayon::prelude::*;
 use vecdb::{
-    AnyStoredVec, CacheBudget, CachedBoxedVec, Database, ReadableCloneableVec, ReadableVec, Rw,
+    AnyStoredVec, CacheBudget, Database, ReadableBoxedVec, ReadableCloneableVec, ReadableVec, Rw,
     StorageMode,
 };
 
@@ -77,7 +77,7 @@ impl ExposedAddrVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
         all_supply: &impl ReadableCloneableVec<Height, Sats>,
     ) -> Result<Self> {
         let count =

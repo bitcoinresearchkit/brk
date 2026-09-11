@@ -6,7 +6,8 @@ use brk_exit::Exit;
 use brk_types::{CentsSats, PartsPerMillion32, RARITY_PERCENTILES, RARITY_PERCENTILES_LEN, Sats};
 use tempfile::tempdir;
 use vecdb::{
-    AnyStoredVec, AnyVec, BytesVec, EagerVec, ImportableVec, PcoVec, ReadableVec, WritableVec,
+    AnyStoredVec, AnyVec, Budgeted, BytesVec, EagerVec, ImportableVec, PcoVec, ReadableVec,
+    WritableVec,
 };
 
 use super::*;
@@ -14,8 +15,8 @@ use crate::test_common as common;
 
 struct Pipeline {
     caps: [BytesVec<Height, CentsSats>; 4],
-    supplies: [EagerVec<PcoVec<Height, Sats>>; 4],
-    spot: EagerVec<PcoVec<Height, Cents>>,
+    supplies: [EagerVec<PcoVec<Height, Sats, Budgeted>>; 4],
+    spot: EagerVec<PcoVec<Height, Cents, Budgeted>>,
     references: ReferencePrices,
     components: [Component; 4],
     local: RarityMeterInner,
@@ -144,7 +145,7 @@ impl Pipeline {
         for component in &self.components {
             for ratio in component.ratios.iter() {
                 assert_eq!(ratio.len(), len, "component ratios");
-                assert_eq!(ratio.snapshot().len(), len);
+                assert_eq!(ratio.collect().len(), len);
             }
             for band in component.bands.iter() {
                 assert_eq!(band.price.cents.height.len(), len, "component bands");
@@ -158,7 +159,7 @@ impl Pipeline {
             for price in meter.prices.iter() {
                 assert_eq!(price.cents.height.len(), len, "meter prices");
                 assert_eq!(
-                    price.cents.height.snapshot().as_slice(),
+                    price.cents.height.collect().as_slice(),
                     vec![Cents::ZERO; len]
                 );
             }
@@ -168,7 +169,7 @@ impl Pipeline {
                 meter
                     .index
                     .height
-                    .snapshot()
+                    .collect()
                     .iter()
                     .all(|value| **value == 5)
             );
@@ -176,7 +177,7 @@ impl Pipeline {
                 meter
                     .score
                     .height
-                    .snapshot()
+                    .collect()
                     .iter()
                     .all(|value| **value == score)
             );
@@ -264,7 +265,7 @@ fn shortened_component_rebuilds_percentile_state_before_appending() {
     .unwrap();
     let compute = |reference: &mut reference_price::ReferencePrice,
                    component: &mut Component,
-                   spot: &EagerVec<PcoVec<Height, Cents>>,
+                   spot: &EagerVec<PcoVec<Height, Cents, Budgeted>>,
                    height| {
         reference.compute_ratio(height, spot, &exit).unwrap();
         component::compute(
@@ -280,7 +281,7 @@ fn shortened_component_rebuilds_percentile_state_before_appending() {
     };
     compute(&mut reference, &mut component, &spot, Height::ZERO);
     for ratio in component.ratios.iter() {
-        ratio.snapshot();
+        ratio.collect();
     }
     spot.truncate_if_needed_at(START_HEIGHT + 3).unwrap();
     spot.write().unwrap();

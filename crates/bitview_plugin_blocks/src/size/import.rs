@@ -1,7 +1,7 @@
 use bitview_collections::Windows;
 use bitview_plugin_indexer::Indexer;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
-use bitview_vecs::{CachedWindowStartVec, PerBlockFull, PerBlockRolling};
+use bitview_vecs::{LazyWindowStartVec, PerBlockFull, PerBlockRolling};
 use brk_error::Result;
 use brk_types::{Height, StoredU64, Version, Weight};
 use vecdb::{CacheBudget, Database};
@@ -19,7 +19,7 @@ impl Vecs {
         version: Version,
         indexer: &Indexer,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
             vbytes: PerBlockFull::forced_import(
@@ -30,7 +30,7 @@ impl Vecs {
                 &indexer.vecs().blocks.weight,
                 block_vbytes,
                 mappings,
-                cached_starts,
+                window_starts,
             )?,
             size: PerBlockRolling::forced_import(
                 cache,
@@ -38,7 +38,7 @@ impl Vecs {
                 "block_size",
                 version,
                 mappings,
-                cached_starts,
+                window_starts,
             )?,
         })
     }

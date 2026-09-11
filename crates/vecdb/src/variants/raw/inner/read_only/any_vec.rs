@@ -1,8 +1,10 @@
-use crate::{AnyVec, VecIndex, VecValue, Version, short_type_name, vec_region_name};
+use crate::{
+    AnyVec, VecIndex, VecValue, Version, cache::CachePolicy, short_type_name, vec_region_name,
+};
 
 use super::{super::RawStrategy, ReadOnlyRawVec};
 
-impl<I, T, S> AnyVec for ReadOnlyRawVec<I, T, S>
+impl<I, T, S, C: CachePolicy> AnyVec for ReadOnlyRawVec<I, T, S, C>
 where
     I: VecIndex,
     T: VecValue,

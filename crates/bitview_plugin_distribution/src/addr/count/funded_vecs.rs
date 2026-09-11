@@ -2,7 +2,7 @@ use bitview_cohort::{AmountRange, CohortContext};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
-use bitview_vecs::{CachedWindowStartVec, LazyPerBlockWithDeltas};
+use bitview_vecs::{LazyPerBlockWithDeltas, LazyWindowStartVec};
 use brk_error::Result;
 use brk_types::{PartsPerMillionSigned64, StoredI64, StoredU64, Version};
 use rayon::prelude::*;
@@ -29,7 +29,7 @@ impl FundedAddrCountsVecs {
         db: &Database,
         version: Version,
         mappings: &MappingsVecs,
-        cached_starts: &Windows<&CachedWindowStartVec>,
+        window_starts: &Windows<&LazyWindowStartVec>,
     ) -> Result<Self> {
         Ok(Self {
             counts: AddrCountsVecs::forced_import(cache, db, "addr_count", version, mappings)?,
@@ -47,7 +47,7 @@ impl FundedAddrCountsVecs {
                         source,
                         Version::TWO,
                         mappings,
-                        cached_starts,
+                        window_starts,
                     )
                 },
             )?,

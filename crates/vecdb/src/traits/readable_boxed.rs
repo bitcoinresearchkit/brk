@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::ops::Deref;
 
 use crate::{AnyVec, ReadableCloneableVec, ReadableVec, TypedVec, VecIndex, VecValue, Version};
 
@@ -106,13 +106,12 @@ where
     I: VecIndex,
     T: VecValue,
 {
-    fn snapshot(&self) -> Arc<Vec<T>> {
-        self.0.snapshot()
+    fn data_revision(&self) -> Option<u64> {
+        self.0.data_revision()
     }
 
-    #[inline(always)]
-    fn snapshot_version(&self) -> Version {
-        self.0.snapshot_version()
+    fn read_cached_into_at(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
+        self.0.read_cached_into_at(from, to, out)
     }
 
     #[inline(always)]

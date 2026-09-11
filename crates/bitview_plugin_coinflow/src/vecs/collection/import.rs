@@ -10,7 +10,7 @@ use bitview_vecs::{
 };
 use brk_error::Result;
 use brk_types::{Cents, Height, Version};
-use vecdb::{CacheBudget, CachedBoxedVec, Database, PcoVecValue};
+use vecdb::{CacheBudget, Database, PcoVecValue, ReadableBoxedVec};
 
 use super::Vecs;
 use crate::{
@@ -64,7 +64,7 @@ impl AggregateVecs {
         version: Version,
         sources: &AggregateSources,
         mappings: &MappingsVecs,
-        spot_price: &CachedBoxedVec<Height, Cents>,
+        spot_price: &ReadableBoxedVec<Height, Cents>,
     ) -> Self {
         let metric_name = |metric: &str| aggregate.metric_name(metric);
         let supply = Mobility {
@@ -135,7 +135,7 @@ impl Vecs {
         let cache = context.cache_budget();
         let db = &database;
         let version = STORAGE.schema_version() + Version::ONE;
-        let spot_price = prices.spot.cents.height.read_only_cached_boxed_clone();
+        let spot_price = prices.spot.cents.height.read_only_boxed_clone();
         let spending_rate = AgeRange::try_from_fn(|id| {
             let name = format!(
                 "{}_spending_rate",
@@ -239,3 +239,4 @@ impl Vecs {
         Ok(this)
     }
 }
+use vecdb::ReadableCloneableVec;
