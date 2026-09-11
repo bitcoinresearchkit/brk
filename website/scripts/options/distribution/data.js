@@ -36,8 +36,6 @@ export function buildCohortData() {
     CLASS_NAMES,
     ENTRY_NAMES,
     PROFITABILITY_RANGE_NAMES,
-    PROFIT_NAMES,
-    LOSS_NAMES,
   } = bitview;
 
   const cohortAll = lazy(() => ({
@@ -179,28 +177,12 @@ export function buildCohortData() {
 
   const profitability = lazy(() => {
     const profitability = cohorts.profitability;
-    /** @param {keyof typeof profitability.supply.range} key */
+    /** @param {keyof typeof profitability.supply} key */
     const profitabilityRangePattern = (key) => ({
-      supply: profitability.supply.range[key],
-      realizedCap: profitability.realizedCap.range[key],
-      unrealizedPnl: profitability.unrealizedPnl.range[key],
-      nupl: profitability.nupl.range[key],
-    });
-
-    /** @param {keyof typeof profitability.supply.profit} key */
-    const profitabilityProfitPattern = (key) => ({
-      supply: profitability.supply.profit[key],
-      realizedCap: profitability.realizedCap.profit[key],
-      unrealizedPnl: profitability.unrealizedPnl.profit[key],
-      nupl: profitability.nupl.profit[key],
-    });
-
-    /** @param {keyof typeof profitability.supply.loss} key */
-    const profitabilityLossPattern = (key) => ({
-      supply: profitability.supply.loss[key],
-      realizedCap: profitability.realizedCap.loss[key],
-      unrealizedPnl: profitability.unrealizedPnl.loss[key],
-      nupl: profitability.nupl.loss[key],
+      supply: profitability.supply[key],
+      realizedCap: profitability.realizedCap[key],
+      unrealizedPnl: profitability.unrealizedPnl[key],
+      nupl: profitability.nupl[key],
     });
 
     const profitabilityRange = entries(PROFITABILITY_RANGE_NAMES).map(
@@ -211,27 +193,7 @@ export function buildCohortData() {
       }),
     );
 
-    const profitabilityProfit = entries(PROFIT_NAMES).map(
-      ([key, names], i, arr) => ({
-        name: names.short,
-        color: colors.at(i, arr.length),
-        pattern: profitabilityProfitPattern(key),
-      }),
-    );
-
-    const profitabilityLoss = entries(LOSS_NAMES).map(
-      ([key, names], i, arr) => ({
-        name: names.short,
-        color: colors.at(i, arr.length),
-        pattern: profitabilityLossPattern(key),
-      }),
-    );
-
-    return {
-      range: profitabilityRange,
-      profit: profitabilityProfit,
-      loss: profitabilityLoss,
-    };
+    return profitabilityRange;
   });
 
   return {
@@ -269,13 +231,7 @@ export function buildCohortData() {
       return entry();
     },
     get profitabilityRange() {
-      return profitability().range;
-    },
-    get profitabilityProfit() {
-      return profitability().profit;
-    },
-    get profitabilityLoss() {
-      return profitability().loss;
+      return profitability();
     },
   };
 }

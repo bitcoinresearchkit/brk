@@ -1,4 +1,5 @@
-import { createCohortSeries } from "./cohort-series.js";
+import { profitabilityRanges } from "./groups.js";
+import { createCohortSeries, createCohortSeriesFromKeys } from "./cohort-series.js";
 import { colors } from "../../utils/colors.js";
 
 export const circulatingSupplySeries = createCohortSeries([
@@ -9,17 +10,7 @@ export const circulatingSupplySeries = createCohortSeries([
   },
 ]);
 
-export const supplyProfitabilitySeries = createCohortSeries([
-  {
-    label: "In profit",
-    color: colors.green,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.supply.profit.all.all.btc,
-  },
-  {
-    label: "In loss",
-    color: colors.red,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.supply.loss.all.all.btc,
-  },
-]);
+export const supplyProfitabilitySeries = createCohortSeriesFromKeys(
+  profitabilityRanges,
+  (key) => (client) => client.series.cohorts.profitability.supply[key].all.btc,
+);

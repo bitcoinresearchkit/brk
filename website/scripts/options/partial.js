@@ -168,8 +168,6 @@ export function createPartialOptions() {
             lazyGroup("UTXO Profitability", () =>
               createUtxoProfitabilitySection({
                 range: data().profitabilityRange,
-                profit: data().profitabilityProfit,
-                loss: data().profitabilityLoss,
               }),
             ),
 

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, result::Result};
+use std::{marker::PhantomData, result::Result, slice};
 
 use rawdb::{Reader, Region};
 
@@ -58,6 +58,26 @@ where
         let byte_position = self.pos * Self::SIZE_OF_T;
         let byte_len = (self.end - self.pos) * Self::SIZE_OF_T;
         (unsafe { self.data.add(byte_position) }, byte_len)
+    }
+
+    /// Appends the stored range, copying native-layout values in bulk.
+    pub fn read_into(self, output: &mut Vec<T>) {
+        let len = self.end.saturating_sub(self.pos);
+        if len == 0 {
+            return;
+        }
+        if S::IS_NATIVE_LAYOUT {
+            // SAFETY: native-layout values have the stored representation and
+            // alignment of T. The bounded range and mmap reader remain valid
+            // until the copy completes.
+            let values = unsafe {
+                slice::from_raw_parts(self.data.add(self.pos * Self::SIZE_OF_T).cast::<T>(), len)
+            };
+            output.extend_from_slice(values);
+        } else {
+            output.reserve(len);
+            self.fold((), |(), value| output.push(value));
+        }
     }
 
     /// Fold all elements in the range — tight pointer loop.

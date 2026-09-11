@@ -2,10 +2,7 @@ use std::ops::Range;
 
 use rawdb::Region;
 
-use crate::{
-    AnyStoredVec, HEADER_OFFSET, RawIoSource, RawMmapSource, Result, VecIndex, VecValue,
-    cache::CachePolicy,
-};
+use crate::{AnyStoredVec, Result, VecIndex, VecValue, cache::CachePolicy};
 
 use super::{RawStrategy, ReadWriteRawVec};
 
@@ -36,15 +33,7 @@ where
             .iter()
             .map(|range| {
                 let mut values = Vec::with_capacity(range.len());
-                let offset = HEADER_OFFSET + range.start * size_of::<T>();
-                let bytes = range.len() * size_of::<T>();
-                if region.prefers_mmap(offset, bytes) {
-                    RawMmapSource::<I, T, S>::new_from_parts(region, len, range.start, range.end)
-                        .fold((), |(), value| values.push(value));
-                } else {
-                    RawIoSource::<I, T, S>::new_from_parts(region, len, range.start, range.end)
-                        .read_into(&mut values);
-                }
+                Self::read_stored_into(region, len, range.start, range.end, &mut values);
                 (range.start, values)
             })
             .collect()

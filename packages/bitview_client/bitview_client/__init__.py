@@ -3295,10 +3295,6 @@ class _0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern10:
         self._1sat_to_10sats: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, '1sat_to_10sats_supply_dominance'))
         self.over_100k_btc: PercentPpmRatioPattern2 = PercentPpmRatioPattern2(client, _m(acc, 'over_100k_btc_supply_dominance'))
 
-class _100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctTotalPattern2:
-    """Pattern struct for repeated tree structure."""
-    pass
-
 class AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern:
     """Pattern struct for repeated tree structure."""
 
@@ -3479,10 +3475,6 @@ class EmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern6(Generic[T]
         self.unknown: SeriesPattern1[T] = SeriesPattern1(client, _p('unknown_outputs', acc))
 
 class AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshSharePattern:
-    """Pattern struct for repeated tree structure."""
-    pass
-
-class _10pct20pct30pct40pct50pct60pct70pct80pctTotalPattern2:
     """Pattern struct for repeated tree structure."""
     pass
 
@@ -4170,10 +4162,6 @@ class FloorLevelLossPattern:
         self.floor: Pct95Pct98Pct99Pattern = Pct95Pct98Pct99Pattern(client, _m(acc, 'floor'))
         self.level: Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern = Pct10Pct20Pct30Pct40Pct50Pct60Pct70Pct80Pct90Pattern(client, _m(acc, 'level'))
         self.loss_threshold: Pct95Pct98Pct99Pattern2 = Pct95Pct98Pct99Pattern2(client, _m(acc, 'loss_threshold'))
-
-class LossProfitRangePattern2:
-    """Pattern struct for repeated tree structure."""
-    pass
 
 class PercentPpmRatioPattern2:
     """Pattern struct for repeated tree structure."""
@@ -10116,7 +10104,7 @@ class SeriesTree_Cohorts_Relative:
         self.unrealized: SeriesTree_Cohorts_Relative_Unrealized = SeriesTree_Cohorts_Relative_Unrealized(client)
         self.invested_capital: InPattern = InPattern(client, 'invested_capital_in')
 
-class SeriesTree_Cohorts_Profitability_Supply_Range:
+class SeriesTree_Cohorts_Profitability_Supply:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10146,48 +10134,7 @@ class SeriesTree_Cohorts_Profitability_Supply_Range:
         self._80pct_to_90pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_loss')
         self._90pct_to_100pct_in_loss: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_loss')
 
-class SeriesTree_Cohorts_Profitability_Supply_Profit:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_in_profit')
-        self._10pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_10pct_in_profit')
-        self._20pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_20pct_in_profit')
-        self._30pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_30pct_in_profit')
-        self._40pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_40pct_in_profit')
-        self._50pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_50pct_in_profit')
-        self._60pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_60pct_in_profit')
-        self._70pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_70pct_in_profit')
-        self._80pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_80pct_in_profit')
-        self._90pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_90pct_in_profit')
-        self._100pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_100pct_in_profit')
-        self._200pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_200pct_in_profit')
-        self._300pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_300pct_in_profit')
-        self._500pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_500pct_in_profit')
-
-class SeriesTree_Cohorts_Profitability_Supply_Loss:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_in_loss')
-        self._10pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_10pct_in_loss')
-        self._20pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_20pct_in_loss')
-        self._30pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_30pct_in_loss')
-        self._40pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_40pct_in_loss')
-        self._50pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_50pct_in_loss')
-        self._60pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_60pct_in_loss')
-        self._70pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_70pct_in_loss')
-        self._80pct: AllLthSthPattern6 = AllLthSthPattern6(client, 'utxos_over_80pct_in_loss')
-
-class SeriesTree_Cohorts_Profitability_Supply:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.range: SeriesTree_Cohorts_Profitability_Supply_Range = SeriesTree_Cohorts_Profitability_Supply_Range(client)
-        self.profit: SeriesTree_Cohorts_Profitability_Supply_Profit = SeriesTree_Cohorts_Profitability_Supply_Profit(client)
-        self.loss: SeriesTree_Cohorts_Profitability_Supply_Loss = SeriesTree_Cohorts_Profitability_Supply_Loss(client)
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_Over1000pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10195,7 +10142,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_500pctTo1000pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10203,7 +10150,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_300pctTo500pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10211,7 +10158,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_200pctTo300pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10219,7 +10166,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_100pctTo200pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10227,7 +10174,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10235,7 +10182,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10243,7 +10190,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10251,7 +10198,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10259,7 +10206,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10267,7 +10214,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10275,7 +10222,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10283,7 +10230,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10291,7 +10238,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10299,7 +10246,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit:
+class SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10307,7 +10254,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10315,7 +10262,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10323,7 +10270,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10331,7 +10278,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10339,7 +10286,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10347,7 +10294,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10355,7 +10302,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10363,7 +10310,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10371,7 +10318,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10379,7 +10326,7 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss:
+class SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10387,262 +10334,37 @@ class SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_realized_cap')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_realized_cap')
 
-class SeriesTree_Cohorts_Profitability_RealizedCap_Range:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.over_1000pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit(client)
-        self._500pct_to_1000pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit(client)
-        self._300pct_to_500pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit(client)
-        self._200pct_to_300pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit(client)
-        self._100pct_to_200pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit(client)
-        self._90pct_to_100pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit(client)
-        self._80pct_to_90pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit(client)
-        self._70pct_to_80pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit(client)
-        self._60pct_to_70pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit(client)
-        self._50pct_to_60pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit(client)
-        self._40pct_to_50pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit(client)
-        self._30pct_to_40pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit(client)
-        self._20pct_to_30pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit(client)
-        self._10pct_to_20pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit(client)
-        self._0pct_to_10pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit(client)
-        self._0pct_to_10pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss(client)
-        self._10pct_to_20pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss(client)
-        self._20pct_to_30pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss(client)
-        self._30pct_to_40pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss(client)
-        self._40pct_to_50pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss(client)
-        self._50pct_to_60pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss(client)
-        self._60pct_to_70pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss(client)
-        self._70pct_to_80pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss(client)
-        self._80pct_to_90pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss(client)
-        self._90pct_to_100pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss(client)
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Profit:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total(client)
-        self._10pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct(client)
-        self._20pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct(client)
-        self._30pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct(client)
-        self._40pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct(client)
-        self._50pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct(client)
-        self._60pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct(client)
-        self._70pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct(client)
-        self._80pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct(client)
-        self._90pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct(client)
-        self._100pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct(client)
-        self._200pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct(client)
-        self._300pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct(client)
-        self._500pct: SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct = SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct(client)
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_Total:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_10pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_20pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_30pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_40pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_50pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_60pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_70pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss_80pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_realized_cap')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_sth_realized_cap')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_lth_realized_cap')
-
-class SeriesTree_Cohorts_Profitability_RealizedCap_Loss:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_Total = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_Total(client)
-        self._10pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_10pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_10pct(client)
-        self._20pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_20pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_20pct(client)
-        self._30pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_30pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_30pct(client)
-        self._40pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_40pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_40pct(client)
-        self._50pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_50pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_50pct(client)
-        self._60pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_60pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_60pct(client)
-        self._70pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_70pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_70pct(client)
-        self._80pct: SeriesTree_Cohorts_Profitability_RealizedCap_Loss_80pct = SeriesTree_Cohorts_Profitability_RealizedCap_Loss_80pct(client)
-
 class SeriesTree_Cohorts_Profitability_RealizedCap:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.range: SeriesTree_Cohorts_Profitability_RealizedCap_Range = SeriesTree_Cohorts_Profitability_RealizedCap_Range(client)
-        self.profit: SeriesTree_Cohorts_Profitability_RealizedCap_Profit = SeriesTree_Cohorts_Profitability_RealizedCap_Profit(client)
-        self.loss: SeriesTree_Cohorts_Profitability_RealizedCap_Loss = SeriesTree_Cohorts_Profitability_RealizedCap_Loss(client)
+        self.over_1000pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_Over1000pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_Over1000pctInProfit(client)
+        self._500pct_to_1000pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_500pctTo1000pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_500pctTo1000pctInProfit(client)
+        self._300pct_to_500pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_300pctTo500pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_300pctTo500pctInProfit(client)
+        self._200pct_to_300pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_200pctTo300pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_200pctTo300pctInProfit(client)
+        self._100pct_to_200pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_100pctTo200pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_100pctTo200pctInProfit(client)
+        self._90pct_to_100pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInProfit(client)
+        self._80pct_to_90pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInProfit(client)
+        self._70pct_to_80pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInProfit(client)
+        self._60pct_to_70pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInProfit(client)
+        self._50pct_to_60pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInProfit(client)
+        self._40pct_to_50pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInProfit(client)
+        self._30pct_to_40pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInProfit(client)
+        self._20pct_to_30pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInProfit(client)
+        self._10pct_to_20pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInProfit(client)
+        self._0pct_to_10pct_in_profit: SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInProfit = SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInProfit(client)
+        self._0pct_to_10pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInLoss(client)
+        self._10pct_to_20pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInLoss(client)
+        self._20pct_to_30pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInLoss(client)
+        self._30pct_to_40pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInLoss(client)
+        self._40pct_to_50pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInLoss(client)
+        self._50pct_to_60pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInLoss(client)
+        self._60pct_to_70pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInLoss(client)
+        self._70pct_to_80pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInLoss(client)
+        self._80pct_to_90pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInLoss(client)
+        self._90pct_to_100pct_in_loss: SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInLoss = SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInLoss(client)
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Over1000pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10650,7 +10372,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_500pctTo1000pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10658,7 +10380,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProf
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_300pctTo500pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10666,7 +10388,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfi
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_200pctTo300pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10674,7 +10396,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfi
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_100pctTo200pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10682,7 +10404,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfi
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10690,7 +10412,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10698,7 +10420,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10706,7 +10428,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10714,7 +10436,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10722,7 +10444,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10730,7 +10452,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10738,7 +10460,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10746,7 +10468,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10754,7 +10476,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInProfit:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10762,7 +10484,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10770,7 +10492,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10778,7 +10500,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10786,7 +10508,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10794,7 +10516,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10802,7 +10524,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10810,7 +10532,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10818,7 +10540,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10826,7 +10548,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10834,7 +10556,7 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss:
+class SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInLoss:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -10842,262 +10564,37 @@ class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss:
         self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_unrealized_pnl')
         self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_unrealized_pnl')
 
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.over_1000pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit(client)
-        self._500pct_to_1000pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProfit(client)
-        self._300pct_to_500pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfit(client)
-        self._200pct_to_300pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfit(client)
-        self._100pct_to_200pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfit(client)
-        self._90pct_to_100pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit(client)
-        self._80pct_to_90pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit(client)
-        self._70pct_to_80pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit(client)
-        self._60pct_to_70pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit(client)
-        self._50pct_to_60pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit(client)
-        self._40pct_to_50pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit(client)
-        self._30pct_to_40pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit(client)
-        self._20pct_to_30pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit(client)
-        self._10pct_to_20pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit(client)
-        self._0pct_to_10pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit(client)
-        self._0pct_to_10pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss(client)
-        self._10pct_to_20pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss(client)
-        self._20pct_to_30pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss(client)
-        self._30pct_to_40pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss(client)
-        self._40pct_to_50pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss(client)
-        self._50pct_to_60pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss(client)
-        self._60pct_to_70pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss(client)
-        self._70pct_to_80pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss(client)
-        self._80pct_to_90pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss(client)
-        self._90pct_to_100pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss(client)
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_Total:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_10pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_20pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_30pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_40pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_50pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_60pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_70pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_80pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_90pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_90pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_100pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_100pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_200pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_200pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_300pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_300pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_500pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_500pct_in_profit_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_Total = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_Total(client)
-        self._10pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_10pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_10pct(client)
-        self._20pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_20pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_20pct(client)
-        self._30pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_30pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_30pct(client)
-        self._40pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_40pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_40pct(client)
-        self._50pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_50pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_50pct(client)
-        self._60pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_60pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_60pct(client)
-        self._70pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_70pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_70pct(client)
-        self._80pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_80pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_80pct(client)
-        self._90pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_90pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_90pct(client)
-        self._100pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_100pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_100pct(client)
-        self._200pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_200pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_200pct(client)
-        self._300pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_300pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_300pct(client)
-        self._500pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_500pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_500pct(client)
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_Total:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_10pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_10pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_20pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_20pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_30pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_30pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_40pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_40pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_50pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_50pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_60pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_60pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_70pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_70pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_80pct:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.all: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_unrealized_pnl')
-        self.sth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_sth_unrealized_pnl')
-        self.lth: CentsUsdPattern = CentsUsdPattern(client, 'utxos_over_80pct_in_loss_lth_unrealized_pnl')
-
-class SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_Total = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_Total(client)
-        self._10pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_10pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_10pct(client)
-        self._20pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_20pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_20pct(client)
-        self._30pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_30pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_30pct(client)
-        self._40pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_40pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_40pct(client)
-        self._50pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_50pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_50pct(client)
-        self._60pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_60pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_60pct(client)
-        self._70pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_70pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_70pct(client)
-        self._80pct: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_80pct = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_80pct(client)
-
 class SeriesTree_Cohorts_Profitability_UnrealizedPnl:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.range: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range(client)
-        self.profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit(client)
-        self.loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss(client)
+        self.over_1000pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_Over1000pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_Over1000pctInProfit(client)
+        self._500pct_to_1000pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_500pctTo1000pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_500pctTo1000pctInProfit(client)
+        self._300pct_to_500pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_300pctTo500pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_300pctTo500pctInProfit(client)
+        self._200pct_to_300pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_200pctTo300pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_200pctTo300pctInProfit(client)
+        self._100pct_to_200pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_100pctTo200pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_100pctTo200pctInProfit(client)
+        self._90pct_to_100pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInProfit(client)
+        self._80pct_to_90pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInProfit(client)
+        self._70pct_to_80pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInProfit(client)
+        self._60pct_to_70pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInProfit(client)
+        self._50pct_to_60pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInProfit(client)
+        self._40pct_to_50pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInProfit(client)
+        self._30pct_to_40pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInProfit(client)
+        self._20pct_to_30pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInProfit(client)
+        self._10pct_to_20pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInProfit(client)
+        self._0pct_to_10pct_in_profit: SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInProfit = SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInProfit(client)
+        self._0pct_to_10pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInLoss(client)
+        self._10pct_to_20pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInLoss(client)
+        self._20pct_to_30pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInLoss(client)
+        self._30pct_to_40pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInLoss(client)
+        self._40pct_to_50pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInLoss(client)
+        self._50pct_to_60pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInLoss(client)
+        self._60pct_to_70pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInLoss(client)
+        self._70pct_to_80pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInLoss(client)
+        self._80pct_to_90pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInLoss(client)
+        self._90pct_to_100pct_in_loss: SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInLoss = SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInLoss(client)
 
-class SeriesTree_Cohorts_Profitability_Nupl_Range:
+class SeriesTree_Cohorts_Profitability_Nupl:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
@@ -11127,68 +10624,14 @@ class SeriesTree_Cohorts_Profitability_Nupl_Range:
         self._80pct_to_90pct_in_loss: PpmRatioPattern = PpmRatioPattern(client, 'utxos_80pct_to_90pct_in_loss_nupl')
         self._90pct_to_100pct_in_loss: PpmRatioPattern = PpmRatioPattern(client, 'utxos_90pct_to_100pct_in_loss_nupl')
 
-class SeriesTree_Cohorts_Profitability_Nupl_Profit:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: PpmRatioPattern = PpmRatioPattern(client, 'utxos_in_profit_nupl')
-        self._10pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_10pct_in_profit_nupl')
-        self._20pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_20pct_in_profit_nupl')
-        self._30pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_30pct_in_profit_nupl')
-        self._40pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_40pct_in_profit_nupl')
-        self._50pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_50pct_in_profit_nupl')
-        self._60pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_60pct_in_profit_nupl')
-        self._70pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_70pct_in_profit_nupl')
-        self._80pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_80pct_in_profit_nupl')
-        self._90pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_90pct_in_profit_nupl')
-        self._100pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_100pct_in_profit_nupl')
-        self._200pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_200pct_in_profit_nupl')
-        self._300pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_300pct_in_profit_nupl')
-        self._500pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_500pct_in_profit_nupl')
-
-class SeriesTree_Cohorts_Profitability_Nupl_Loss:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.total: PpmRatioPattern = PpmRatioPattern(client, 'utxos_in_loss_nupl')
-        self._10pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_10pct_in_loss_nupl')
-        self._20pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_20pct_in_loss_nupl')
-        self._30pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_30pct_in_loss_nupl')
-        self._40pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_40pct_in_loss_nupl')
-        self._50pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_50pct_in_loss_nupl')
-        self._60pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_60pct_in_loss_nupl')
-        self._70pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_70pct_in_loss_nupl')
-        self._80pct: PpmRatioPattern = PpmRatioPattern(client, 'utxos_over_80pct_in_loss_nupl')
-
-class SeriesTree_Cohorts_Profitability_Nupl:
-    """Series tree node."""
-
-    def __init__(self, client: BitviewClient, base_path: str = ''):
-        self.range: SeriesTree_Cohorts_Profitability_Nupl_Range = SeriesTree_Cohorts_Profitability_Nupl_Range(client)
-        self.profit: SeriesTree_Cohorts_Profitability_Nupl_Profit = SeriesTree_Cohorts_Profitability_Nupl_Profit(client)
-        self.loss: SeriesTree_Cohorts_Profitability_Nupl_Loss = SeriesTree_Cohorts_Profitability_Nupl_Loss(client)
-
 class SeriesTree_Cohorts_Profitability:
     """Series tree node."""
 
     def __init__(self, client: BitviewClient, base_path: str = ''):
-        self._client = client
-
-    @cached_property
-    def supply(self) -> SeriesTree_Cohorts_Profitability_Supply:
-        return SeriesTree_Cohorts_Profitability_Supply(self._client)
-
-    @cached_property
-    def realized_cap(self) -> SeriesTree_Cohorts_Profitability_RealizedCap:
-        return SeriesTree_Cohorts_Profitability_RealizedCap(self._client)
-
-    @cached_property
-    def unrealized_pnl(self) -> SeriesTree_Cohorts_Profitability_UnrealizedPnl:
-        return SeriesTree_Cohorts_Profitability_UnrealizedPnl(self._client)
-
-    @cached_property
-    def nupl(self) -> SeriesTree_Cohorts_Profitability_Nupl:
-        return SeriesTree_Cohorts_Profitability_Nupl(self._client)
+        self.supply: SeriesTree_Cohorts_Profitability_Supply = SeriesTree_Cohorts_Profitability_Supply(client)
+        self.realized_cap: SeriesTree_Cohorts_Profitability_RealizedCap = SeriesTree_Cohorts_Profitability_RealizedCap(client)
+        self.unrealized_pnl: SeriesTree_Cohorts_Profitability_UnrealizedPnl = SeriesTree_Cohorts_Profitability_UnrealizedPnl(client)
+        self.nupl: SeriesTree_Cohorts_Profitability_Nupl = SeriesTree_Cohorts_Profitability_Nupl(client)
 
 class SeriesTree_Cohorts:
     """Series tree node."""
@@ -12109,127 +11552,6 @@ class BitviewClient(BitviewClientBase):
         "id": "utxos_90pct_to_100pct_in_loss",
         "short": "-90-100%",
         "long": "90-100% in Loss"
-      }
-    }
-
-    PROFIT_NAMES = {
-      "total": {
-        "id": "utxos_in_profit",
-        "short": "Total",
-        "long": "In Profit"
-      },
-      "_10pct": {
-        "id": "utxos_over_10pct_in_profit",
-        "short": ">10%",
-        "long": "Over 10% in Profit"
-      },
-      "_20pct": {
-        "id": "utxos_over_20pct_in_profit",
-        "short": ">20%",
-        "long": "Over 20% in Profit"
-      },
-      "_30pct": {
-        "id": "utxos_over_30pct_in_profit",
-        "short": ">30%",
-        "long": "Over 30% in Profit"
-      },
-      "_40pct": {
-        "id": "utxos_over_40pct_in_profit",
-        "short": ">40%",
-        "long": "Over 40% in Profit"
-      },
-      "_50pct": {
-        "id": "utxos_over_50pct_in_profit",
-        "short": ">50%",
-        "long": "Over 50% in Profit"
-      },
-      "_60pct": {
-        "id": "utxos_over_60pct_in_profit",
-        "short": ">60%",
-        "long": "Over 60% in Profit"
-      },
-      "_70pct": {
-        "id": "utxos_over_70pct_in_profit",
-        "short": ">70%",
-        "long": "Over 70% in Profit"
-      },
-      "_80pct": {
-        "id": "utxos_over_80pct_in_profit",
-        "short": ">80%",
-        "long": "Over 80% in Profit"
-      },
-      "_90pct": {
-        "id": "utxos_over_90pct_in_profit",
-        "short": ">90%",
-        "long": "Over 90% in Profit"
-      },
-      "_100pct": {
-        "id": "utxos_over_100pct_in_profit",
-        "short": ">100%",
-        "long": "Over 100% in Profit"
-      },
-      "_200pct": {
-        "id": "utxos_over_200pct_in_profit",
-        "short": ">200%",
-        "long": "Over 200% in Profit"
-      },
-      "_300pct": {
-        "id": "utxos_over_300pct_in_profit",
-        "short": ">300%",
-        "long": "Over 300% in Profit"
-      },
-      "_500pct": {
-        "id": "utxos_over_500pct_in_profit",
-        "short": ">500%",
-        "long": "Over 500% in Profit"
-      }
-    }
-
-    LOSS_NAMES = {
-      "total": {
-        "id": "utxos_in_loss",
-        "short": "Total",
-        "long": "In Loss"
-      },
-      "_10pct": {
-        "id": "utxos_over_10pct_in_loss",
-        "short": ">=10%",
-        "long": "Over 10% in Loss"
-      },
-      "_20pct": {
-        "id": "utxos_over_20pct_in_loss",
-        "short": ">=20%",
-        "long": "Over 20% in Loss"
-      },
-      "_30pct": {
-        "id": "utxos_over_30pct_in_loss",
-        "short": ">=30%",
-        "long": "Over 30% in Loss"
-      },
-      "_40pct": {
-        "id": "utxos_over_40pct_in_loss",
-        "short": ">=40%",
-        "long": "Over 40% in Loss"
-      },
-      "_50pct": {
-        "id": "utxos_over_50pct_in_loss",
-        "short": ">=50%",
-        "long": "Over 50% in Loss"
-      },
-      "_60pct": {
-        "id": "utxos_over_60pct_in_loss",
-        "short": ">=60%",
-        "long": "Over 60% in Loss"
-      },
-      "_70pct": {
-        "id": "utxos_over_70pct_in_loss",
-        "short": ">=70%",
-        "long": "Over 70% in Loss"
-      },
-      "_80pct": {
-        "id": "utxos_over_80pct_in_loss",
-        "short": ">=80%",
-        "long": "Over 80% in Loss"
       }
     }
 

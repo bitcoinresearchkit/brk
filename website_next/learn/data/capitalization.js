@@ -4,6 +4,7 @@ import {
 } from "./cohort-series.js";
 import {
   ageRanges,
+  profitabilityRanges,
   amountRanges,
   classes,
   epochs,
@@ -30,35 +31,15 @@ export const marketCapSeries = [marketCap];
 
 export const realizedCapSeries = [realizedCap];
 
-export const marketCapProfitabilitySeries = createCohortSeries([
-  {
-    label: "In profit",
-    color: colors.green,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.supply.profit.all.all.usd,
-  },
-  {
-    label: "In loss",
-    color: colors.red,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.supply.loss.all.all.usd,
-  },
-]);
+export const marketCapProfitabilitySeries = createCohortSeriesFromKeys(
+  profitabilityRanges,
+  (key) => (client) => client.series.cohorts.profitability.supply[key].all.usd,
+);
 
-export const realizedCapProfitabilitySeries = createCohortSeries([
-  {
-    label: "In profit",
-    color: colors.green,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.realizedCap.profit.all.all,
-  },
-  {
-    label: "In loss",
-    color: colors.red,
-    metric: (client) =>
-      client.series.cohorts.utxo.profitability.realizedCap.loss.all.all,
-  },
-]);
+export const realizedCapProfitabilitySeries = createCohortSeriesFromKeys(
+  profitabilityRanges,
+  (key) => (client) => client.series.cohorts.profitability.realizedCap[key].all.usd,
+);
 
 export const marketCapTermSeries = createCohortSeries([
   {

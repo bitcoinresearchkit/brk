@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, result::Result};
 
 use log::debug;
-use rawdb::Reader;
+use rawdb::{Reader, Region};
 
 use super::{RawStrategy, ReadOnlyRawVec};
 use crate::{
@@ -132,6 +132,28 @@ where
     #[inline]
     pub fn range_cursor_at(&self, from: usize, to: usize) -> RawRangeCursor<'_, I, T, S> {
         RawRangeCursor::new(self.region(), self.stored_len(), from, to)
+    }
+
+    #[inline]
+    pub(super) fn read_stored_into(
+        region: &Region,
+        len: usize,
+        from: usize,
+        to: usize,
+        output: &mut Vec<T>,
+    ) {
+        let from = from.min(len);
+        let to = to.min(len);
+        if from >= to {
+            return;
+        }
+        let offset = HEADER_OFFSET + from * Self::SIZE_OF_T;
+        let bytes = (to - from) * Self::SIZE_OF_T;
+        if region.prefers_mmap(offset, bytes) {
+            RawMmapSource::<I, T, S>::new_from_parts(region, len, from, to).read_into(output);
+        } else {
+            RawIoSource::<I, T, S>::new_from_parts(region, len, from, to).read_into(output);
+        }
     }
 
     #[inline]

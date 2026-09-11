@@ -1,8 +1,6 @@
-use std::ops::{Add, AddAssign};
+use std::ops::Add;
 
-use bitview_cohort::{
-    ByTerm, Profitability, ProfitabilityId, ProfitabilityRange, UTXOAggregate, UTXOAggregateId,
-};
+use bitview_cohort::{ByTerm, ProfitabilityRange, UTXOAggregate, UTXOAggregateId};
 use bitview_collections::Windows;
 use bitview_plugin_mappings::Vecs as MappingsVecs;
 use bitview_traversable::Traversable;
@@ -23,28 +21,28 @@ const VERSION: Version = Version::new(9);
 pub struct ProfitabilityVecs<M: StorageMode = Rw> {
     /// Unspent supply grouped by short- or long-term ownership and by the
     /// output's percentage profit or loss relative to spot price.
-    pub supply: Profitability<UTXOAggregate<LazySpotValuePerBlockWithDeltas>>,
+    pub supply: ProfitabilityRange<UTXOAggregate<LazySpotValuePerBlockWithDeltas>>,
     /// Creation-date value of unspent supply grouped by short- or long-term
     /// ownership and by percentage profit or loss relative to spot price.
-    pub realized_cap: Profitability<UTXOAggregate<LazyFiatPerBlock<Cents>>>,
+    pub realized_cap: ProfitabilityRange<UTXOAggregate<LazyFiatPerBlock<Cents>>>,
     /// Absolute unrealized profit or loss of unspent supply grouped by short-
     /// or long-term ownership and by percentage profit or loss relative to
     /// spot price.
-    pub unrealized_pnl: Profitability<UTXOAggregate<LazyFiatPerBlock<Cents>>>,
+    pub unrealized_pnl: ProfitabilityRange<UTXOAggregate<LazyFiatPerBlock<Cents>>>,
     /// Net unrealized profit and loss as a share of a profitability cohort's
     /// own market cap: spot price minus aggregate realized price, divided by
     /// spot price. Positive values place spot above that cohort's aggregate
     /// cost basis; negative values place it below. Returns zero when spot price
     /// or the cohort's unspent supply is zero.
-    pub nupl: Profitability<LazyRatioPerBlock<PartsPerMillionSigned32>>,
+    pub nupl: ProfitabilityRange<LazyRatioPerBlock<PartsPerMillionSigned32>>,
     #[traversable(hidden)]
-    supply_stored: Profitability<UTXOAggregate<StoredSeries<Height, Sats, M>>>,
+    supply_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Sats, M>>>,
     #[traversable(hidden)]
-    realized_cap_stored: Profitability<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
+    realized_cap_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
     #[traversable(hidden)]
-    unrealized_pnl_stored: Profitability<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
+    unrealized_pnl_stored: ProfitabilityRange<UTXOAggregate<StoredSeries<Height, Cents, M>>>,
     #[traversable(hidden)]
-    nupl_stored: Profitability<StoredSeries<Height, PartsPerMillionSigned32, M>>,
+    nupl_stored: ProfitabilityRange<StoredSeries<Height, PartsPerMillionSigned32, M>>,
 }
 
 impl<M: StorageMode> ProfitabilityVecs<M> {
@@ -85,7 +83,8 @@ impl ProfitabilityVecs {
         let realized_cap_stored = Self::import_sources(cache, db, "realized_cap_cents", version)?;
         let unrealized_pnl_stored =
             Self::import_sources(cache, db, "unrealized_pnl_cents", version)?;
-        let nupl_stored = ProfitabilityId::try_series(|_, name| {
+        let nupl_stored = ProfitabilityRange::try_from_fn(|id| {
+            let name = id.select(ProfitabilityRange::names()).id;
             import_stored(cache, db, &format!("{name}_nupl_ppm"), version)
         })?;
         let supply = Self::series(&supply_stored, "supply", |name, source| {
@@ -105,7 +104,8 @@ impl ProfitabilityVecs {
             Self::series(&unrealized_pnl_stored, "unrealized_pnl", |name, source| {
                 LazyFiatPerBlock::from_cents_source(name, version, source, mappings)
             });
-        let nupl = ProfitabilityId::series(|id, name| {
+        let nupl = ProfitabilityRange::from_fn(|id| {
+            let name = id.select(ProfitabilityRange::names()).id;
             LazyRatioPerBlock::from_height_source(
                 &format!("{name}_nupl"),
                 version,
@@ -130,8 +130,9 @@ impl ProfitabilityVecs {
         db: &Database,
         metric: &str,
         version: Version,
-    ) -> Result<Profitability<UTXOAggregate<StoredSeries<Height, T>>>> {
-        ProfitabilityId::try_series(|_, cohort| {
+    ) -> Result<ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>> {
+        ProfitabilityRange::try_from_fn(|id| {
+            let cohort = id.select(ProfitabilityRange::names()).id;
             UTXOAggregate::try_from_fn(|id| {
                 import_stored(cache, db, &Self::metric_name(cohort, id, metric), version)
             })
@@ -139,11 +140,12 @@ impl ProfitabilityVecs {
     }
 
     fn series<T: PcoVecValue, S>(
-        sources: &Profitability<UTXOAggregate<StoredSeries<Height, T>>>,
+        sources: &ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>,
         metric: &str,
         mut build: impl FnMut(&str, &StoredSeries<Height, T>) -> S,
-    ) -> Profitability<UTXOAggregate<S>> {
-        ProfitabilityId::series(|id, cohort| {
+    ) -> ProfitabilityRange<UTXOAggregate<S>> {
+        ProfitabilityRange::from_fn(|id| {
+            let cohort = id.select(ProfitabilityRange::names()).id;
             UTXOAggregate::from_fn(|aggregate| {
                 build(
                     &Self::metric_name(cohort, aggregate, metric),
@@ -182,16 +184,13 @@ impl ProfitabilityVecs {
         }
     }
 
-    fn push_sources<T: PcoVecValue + Copy + Default + AddAssign>(
-        targets: &mut Profitability<UTXOAggregate<StoredSeries<Height, T>>>,
+    fn push_sources<T: PcoVecValue + Copy + Add<Output = T>>(
+        targets: &mut ProfitabilityRange<UTXOAggregate<StoredSeries<Height, T>>>,
         values: ByTerm<ProfitabilityRange<T>>,
     ) {
-        let short = Profitability::from_ranges(values.short);
-        let long = Profitability::from_ranges(values.long);
+        let ByTerm { short, long } = values;
         for ((target, &short), &long) in targets.iter_mut().zip(short.iter()).zip(long.iter()) {
-            let mut all = short;
-            all += long;
-            target.all.push(all);
+            target.all.push(short + long);
             target.sth.push(short);
             target.lth.push(long);
         }
@@ -263,16 +262,14 @@ impl ProfitabilityVecs {
         spot: Cents,
         cap: &ProfitabilityRange<Cents>,
         supply: &ProfitabilityRange<Sats>,
-    ) -> Profitability<PartsPerMillionSigned32> {
-        let cap = Profitability::from_ranges(cap.clone());
-        let supply = Profitability::from_ranges(supply.clone());
-        ProfitabilityId::series(|id, _| {
+    ) -> ProfitabilityRange<PartsPerMillionSigned32> {
+        ProfitabilityRange::from_fn(|id| {
             let spot = spot.as_u128();
-            let supply = id.select(&supply).as_u128();
+            let supply = id.select(supply).as_u128();
             if spot == 0 || supply == 0 {
                 PartsPerMillionSigned32::ZERO
             } else {
-                let realized_price = id.select(&cap).as_u128() * Sats::ONE_BTC_U128 / supply;
+                let realized_price = id.select(cap).as_u128() * Sats::ONE_BTC_U128 / supply;
                 PartsPerMillionSigned32::from((spot as f64 - realized_price as f64) / spot as f64)
             }
         })
@@ -280,77 +277,5 @@ impl ProfitabilityVecs {
 }
 
 #[cfg(test)]
-mod tests {
-    use bitview_cohort::{
-        ByTerm, PROFIT_COUNT, Profitability, ProfitabilityId, ProfitabilityRange,
-        ProfitabilityRangeId,
-    };
-    use brk_types::{Cents, PartsPerMillionSigned32, Sats};
-
-    use super::ProfitabilityVecs;
-
-    #[test]
-    fn expanded_thresholds_match_prefix_and_suffix_sums() {
-        let ranges = ProfitabilityRange::from_fn(|id| Sats::from(id.index() as u64 + 1));
-        let values = Profitability::from_ranges(ranges.clone());
-        let sum = |values: &[Sats]| {
-            values
-                .iter()
-                .copied()
-                .fold(Sats::default(), |total, value| total + value)
-        };
-
-        let ranges: Vec<_> = ranges.iter().copied().collect();
-        for (threshold, &id) in ProfitabilityId::profit_ids().iter().enumerate() {
-            assert_eq!(
-                *id.select(&values),
-                sum(&ranges[..PROFIT_COUNT + 1 - threshold])
-            );
-        }
-        for (threshold, &id) in ProfitabilityId::loss_ids().iter().enumerate() {
-            assert_eq!(
-                *id.select(&values),
-                sum(&ranges[PROFIT_COUNT + 1 + threshold..])
-            );
-        }
-    }
-
-    #[test]
-    fn derived_values_preserve_profit_and_loss_polarity() {
-        let supply = ProfitabilityRange::from_fn(|_| Sats::ONE_BTC);
-        let cap = ProfitabilityRange::from_fn(|id| {
-            Cents::from(if id.is_profit() { 100_u64 } else { 300_u64 })
-        });
-        let spot = Cents::from(200_u64);
-
-        let cap = ByTerm {
-            short: cap.clone(),
-            long: cap,
-        };
-        let supply = ByTerm {
-            short: supply.clone(),
-            long: supply,
-        };
-        let pnl = ProfitabilityVecs::unrealized_pnl_by_term(spot, &cap, &supply);
-        let all_cap = ProfitabilityVecs::sum_terms(&cap);
-        let all_supply = ProfitabilityVecs::sum_terms(&supply);
-        let nupl = ProfitabilityVecs::nupl(spot, &all_cap, &all_supply);
-
-        for id in ProfitabilityRangeId::ALL {
-            assert_eq!(*id.select(&pnl.short), Cents::from(100_u64));
-            assert_eq!(*id.select(&pnl.long), Cents::from(100_u64));
-        }
-        for id in ProfitabilityRangeId::ALL {
-            assert_eq!(
-                *id.select(&nupl.range),
-                PartsPerMillionSigned32::from(if id.is_profit() { 0.5 } else { -0.5 })
-            );
-        }
-        for value in nupl.profit.iter() {
-            assert_eq!(*value, PartsPerMillionSigned32::from(0.5));
-        }
-        for value in nupl.loss.iter() {
-            assert_eq!(*value, PartsPerMillionSigned32::from(-0.5));
-        }
-    }
-}
+#[path = "tests.rs"]
+mod tests;

@@ -113,6 +113,9 @@ Cache retention is always evictable. Algorithms that need a working set own
 ordinary read results and pass references through their computation context.
 Those buffers remain valid after cache eviction without pinning cache entries.
 Reads retain only requested ranges; adjacent small ranges merge in place.
+When the shared budget is full, reclamation rotates through source owners and
+evicts all of each selected source's ranges. Busy sources are skipped, and a read
+stays uncached if one pass cannot free enough space.
 Source writes invalidate changed suffixes and preserve unchanged prefixes.
 `CacheBudget::clear` evicts retained data without changing source revisions.
 A zero-byte budget disables retention.

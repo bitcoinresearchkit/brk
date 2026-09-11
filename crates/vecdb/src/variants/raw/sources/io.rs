@@ -130,13 +130,19 @@ where
         self.buffer_pos = self.buffer_len;
     }
 
-    /// Reads native-layout values directly into the destination allocation.
+    /// Appends stored values, reading native layouts directly into the allocation.
     pub fn read_into(self, output: &mut Vec<T>) {
-        debug_assert!(S::IS_NATIVE_LAYOUT);
+        if self.cant_read_file() {
+            return;
+        }
         let bytes = self.remaining_file_bytes();
         debug_assert!(bytes.is_multiple_of(Self::SIZE_OF_T));
         let values = bytes / Self::SIZE_OF_T;
         output.reserve(values);
+        if !S::IS_NATIVE_LAYOUT {
+            self.fold((), |(), value| output.push(value));
+            return;
+        }
         let old_len = output.len();
         let destination = output.spare_capacity_mut().as_mut_ptr().cast::<u8>();
         let mut read = 0;

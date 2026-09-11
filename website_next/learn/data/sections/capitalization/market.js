@@ -24,7 +24,7 @@ export const marketCapSection = {
     {
       title: "Profitability",
       description:
-        "Splits market cap between coins that are currently in profit and coins that are currently in loss. This shows how much current market value sits above or below each coin's last moved price.",
+        "Groups market cap into percentage profit and loss ranges relative to the price when coins last moved on-chain.",
       chart: {
         title: "Market cap by profitability",
         unit: units.usd,

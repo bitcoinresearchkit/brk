@@ -28,7 +28,7 @@ export const supplySection = {
     {
       title: "Profitability",
       description:
-        "Shows whether coins are in profit or loss based on the price when they last moved on-chain. A coin is in profit when today's price is higher than its last moved price, and in loss when today's price is lower.",
+        "Groups supply into percentage profit and loss ranges relative to the price when coins last moved on-chain.",
       chart: {
         title: "Profitability",
         unit: units.btc,

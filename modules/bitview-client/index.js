@@ -3366,24 +3366,6 @@ function create_0sats100btc100k100sats10btc10k10m10sats1btc1k1m1satOverPattern10
 }
 
 /**
- * @typedef {Object} _100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctTotalPattern2
- * @property {AllLthSthPattern5} _100pct
- * @property {AllLthSthPattern5} _10pct
- * @property {AllLthSthPattern5} _200pct
- * @property {AllLthSthPattern5} _20pct
- * @property {AllLthSthPattern5} _300pct
- * @property {AllLthSthPattern5} _30pct
- * @property {AllLthSthPattern5} _40pct
- * @property {AllLthSthPattern5} _500pct
- * @property {AllLthSthPattern5} _50pct
- * @property {AllLthSthPattern5} _60pct
- * @property {AllLthSthPattern5} _70pct
- * @property {AllLthSthPattern5} _80pct
- * @property {AllLthSthPattern5} _90pct
- * @property {AllLthSthPattern5} total
- */
-
-/**
  * @typedef {Object} AllEmptyOpP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} all
  * @property {AverageBlockCumulativeSumPattern<StoredU64>} empty
@@ -3793,19 +3775,6 @@ function createEmptyP2aP2msP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshUnknownPattern6(c
  * @property {BtcCentsSatsUsdPattern} p2wpkh
  * @property {BtcCentsSatsUsdPattern} p2wsh
  * @property {AllP2aP2pk33P2pk65P2pkhP2shP2trP2wpkhP2wshPattern5} share
- */
-
-/**
- * @typedef {Object} _10pct20pct30pct40pct50pct60pct70pct80pctTotalPattern2
- * @property {AllLthSthPattern5} _10pct
- * @property {AllLthSthPattern5} _20pct
- * @property {AllLthSthPattern5} _30pct
- * @property {AllLthSthPattern5} _40pct
- * @property {AllLthSthPattern5} _50pct
- * @property {AllLthSthPattern5} _60pct
- * @property {AllLthSthPattern5} _70pct
- * @property {AllLthSthPattern5} _80pct
- * @property {AllLthSthPattern5} total
  */
 
 /**
@@ -5368,13 +5337,6 @@ function createFloorLevelLossPattern(client, acc) {
     lossThreshold: createPct95Pct98Pct99Pattern2(client, _m(acc, 'loss_threshold')),
   };
 }
-
-/**
- * @typedef {Object} LossProfitRangePattern2
- * @property {_10pct20pct30pct40pct50pct60pct70pct80pctTotalPattern2} loss
- * @property {_100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctTotalPattern2} profit
- * @property {_0pct100pct10pct200pct20pct300pct30pct40pct500pct50pct60pct70pct80pct90pctOverPattern2} range
- */
 
 /**
  * @typedef {Object} PercentPpmRatioPattern2
@@ -11399,13 +11361,6 @@ function createTermPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Profitability_Supply
- * @property {SeriesTree_Cohorts_Profitability_Supply_Range} range
- * @property {SeriesTree_Cohorts_Profitability_Supply_Profit} profit
- * @property {SeriesTree_Cohorts_Profitability_Supply_Loss} loss
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Supply_Range
  * @property {AllLthSthPattern6} over1000pctInProfit
  * @property {AllLthSthPattern6} _500pctTo1000pctInProfit
  * @property {AllLthSthPattern6} _300pctTo500pctInProfit
@@ -11434,434 +11389,204 @@ function createTermPattern(client, acc) {
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Supply_Profit
- * @property {AllLthSthPattern6} total
- * @property {AllLthSthPattern6} _10pct
- * @property {AllLthSthPattern6} _20pct
- * @property {AllLthSthPattern6} _30pct
- * @property {AllLthSthPattern6} _40pct
- * @property {AllLthSthPattern6} _50pct
- * @property {AllLthSthPattern6} _60pct
- * @property {AllLthSthPattern6} _70pct
- * @property {AllLthSthPattern6} _80pct
- * @property {AllLthSthPattern6} _90pct
- * @property {AllLthSthPattern6} _100pct
- * @property {AllLthSthPattern6} _200pct
- * @property {AllLthSthPattern6} _300pct
- * @property {AllLthSthPattern6} _500pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Supply_Loss
- * @property {AllLthSthPattern6} total
- * @property {AllLthSthPattern6} _10pct
- * @property {AllLthSthPattern6} _20pct
- * @property {AllLthSthPattern6} _30pct
- * @property {AllLthSthPattern6} _40pct
- * @property {AllLthSthPattern6} _50pct
- * @property {AllLthSthPattern6} _60pct
- * @property {AllLthSthPattern6} _70pct
- * @property {AllLthSthPattern6} _80pct
- */
-
-/**
  * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range} range
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit} profit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss} loss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Over1000pctInProfit} over1000pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_500pctTo1000pctInProfit} _500pctTo1000pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_300pctTo500pctInProfit} _300pctTo500pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_200pctTo300pctInProfit} _200pctTo300pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_100pctTo200pctInProfit} _100pctTo200pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInProfit} _90pctTo100pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInProfit} _80pctTo90pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInProfit} _70pctTo80pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInProfit} _60pctTo70pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInProfit} _50pctTo60pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInProfit} _40pctTo50pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInProfit} _30pctTo40pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInProfit} _20pctTo30pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInProfit} _10pctTo20pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInProfit} _0pctTo10pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInLoss} _0pctTo10pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInLoss} _10pctTo20pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInLoss} _20pctTo30pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInLoss} _30pctTo40pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInLoss} _40pctTo50pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInLoss} _50pctTo60pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInLoss} _60pctTo70pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInLoss} _70pctTo80pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInLoss} _80pctTo90pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInLoss} _90pctTo100pctInLoss
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit} over1000pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit} _500pctTo1000pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit} _300pctTo500pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit} _200pctTo300pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit} _100pctTo200pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit} _90pctTo100pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit} _80pctTo90pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit} _70pctTo80pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit} _60pctTo70pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit} _50pctTo60pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit} _40pctTo50pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit} _30pctTo40pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit} _20pctTo30pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit} _10pctTo20pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit} _0pctTo10pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss} _0pctTo10pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss} _10pctTo20pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss} _20pctTo30pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss} _30pctTo40pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss} _40pctTo50pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss} _50pctTo60pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss} _60pctTo70pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss} _70pctTo80pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss} _80pctTo90pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss} _90pctTo100pctInLoss
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_Over1000pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Over1000pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_500pctTo1000pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_500pctTo1000pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_300pctTo500pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_300pctTo500pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_200pctTo300pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_200pctTo300pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_100pctTo200pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_100pctTo200pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_0pctTo10pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_0pctTo10pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_10pctTo20pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_10pctTo20pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_20pctTo30pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_20pctTo30pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_30pctTo40pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_30pctTo40pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_40pctTo50pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_40pctTo50pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_50pctTo60pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_50pctTo60pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_60pctTo70pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_60pctTo70pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_70pctTo80pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_70pctTo80pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_80pctTo90pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_80pctTo90pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Range_90pctTo100pctInLoss
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total} total
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct} _10pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct} _20pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct} _30pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct} _40pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct} _50pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct} _60pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct} _70pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct} _80pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct} _90pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct} _100pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct} _200pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct} _300pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct} _500pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_Total
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_10pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_20pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_30pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_40pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_50pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_60pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_70pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_80pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_90pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_100pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_200pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_300pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Profit_500pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_Total} total
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_10pct} _10pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_20pct} _20pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_30pct} _30pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_40pct} _40pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_50pct} _50pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_60pct} _60pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_70pct} _70pct
- * @property {SeriesTree_Cohorts_Profitability_RealizedCap_Loss_80pct} _80pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_Total
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_10pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_20pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_30pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_40pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_50pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_60pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_70pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_Loss_80pct
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_RealizedCap_90pctTo100pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
@@ -11869,402 +11594,203 @@ function createTermPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range} range
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit} profit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss} loss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Over1000pctInProfit} over1000pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_500pctTo1000pctInProfit} _500pctTo1000pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_300pctTo500pctInProfit} _300pctTo500pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_200pctTo300pctInProfit} _200pctTo300pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_100pctTo200pctInProfit} _100pctTo200pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInProfit} _90pctTo100pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInProfit} _80pctTo90pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInProfit} _70pctTo80pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInProfit} _60pctTo70pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInProfit} _50pctTo60pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInProfit} _40pctTo50pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInProfit} _30pctTo40pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInProfit} _20pctTo30pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInProfit} _10pctTo20pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInProfit} _0pctTo10pctInProfit
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInLoss} _0pctTo10pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInLoss} _10pctTo20pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInLoss} _20pctTo30pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInLoss} _30pctTo40pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInLoss} _40pctTo50pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInLoss} _50pctTo60pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInLoss} _60pctTo70pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInLoss} _70pctTo80pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInLoss} _80pctTo90pctInLoss
+ * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInLoss} _90pctTo100pctInLoss
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit} over1000pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProfit} _500pctTo1000pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfit} _300pctTo500pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfit} _200pctTo300pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfit} _100pctTo200pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit} _90pctTo100pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit} _80pctTo90pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit} _70pctTo80pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit} _60pctTo70pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit} _50pctTo60pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit} _40pctTo50pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit} _30pctTo40pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit} _20pctTo30pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit} _10pctTo20pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit} _0pctTo10pctInProfit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss} _0pctTo10pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss} _10pctTo20pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss} _20pctTo30pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss} _30pctTo40pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss} _40pctTo50pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss} _50pctTo60pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss} _60pctTo70pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss} _70pctTo80pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss} _80pctTo90pctInLoss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss} _90pctTo100pctInLoss
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_Over1000pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Over1000pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_500pctTo1000pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_500pctTo1000pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_300pctTo500pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_300pctTo500pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_200pctTo300pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_200pctTo300pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_100pctTo200pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_100pctTo200pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInProfit
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInProfit
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_0pctTo10pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_0pctTo10pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_10pctTo20pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_10pctTo20pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_20pctTo30pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_20pctTo30pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_30pctTo40pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_30pctTo40pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_40pctTo50pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_40pctTo50pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_50pctTo60pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_50pctTo60pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_60pctTo70pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_60pctTo70pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_70pctTo80pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_70pctTo80pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_80pctTo90pctInLoss
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_80pctTo90pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
  */
 
 /**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Range_90pctTo100pctInLoss
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_Total} total
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_10pct} _10pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_20pct} _20pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_30pct} _30pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_40pct} _40pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_50pct} _50pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_60pct} _60pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_70pct} _70pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_80pct} _80pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_90pct} _90pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_100pct} _100pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_200pct} _200pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_300pct} _300pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_500pct} _500pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_Total
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_10pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_20pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_30pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_40pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_50pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_60pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_70pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_80pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_90pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_100pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_200pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_300pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Profit_500pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_Total} total
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_10pct} _10pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_20pct} _20pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_30pct} _30pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_40pct} _40pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_50pct} _50pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_60pct} _60pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_70pct} _70pct
- * @property {SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_80pct} _80pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_Total
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_10pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_20pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_30pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_40pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_50pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_60pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_70pct
- * @property {CentsUsdPattern} all
- * @property {CentsUsdPattern} sth
- * @property {CentsUsdPattern} lth
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_Loss_80pct
+ * @typedef {Object} SeriesTree_Cohorts_Profitability_UnrealizedPnl_90pctTo100pctInLoss
  * @property {CentsUsdPattern} all
  * @property {CentsUsdPattern} sth
  * @property {CentsUsdPattern} lth
@@ -12272,13 +11798,6 @@ function createTermPattern(client, acc) {
 
 /**
  * @typedef {Object} SeriesTree_Cohorts_Profitability_Nupl
- * @property {SeriesTree_Cohorts_Profitability_Nupl_Range} range
- * @property {SeriesTree_Cohorts_Profitability_Nupl_Profit} profit
- * @property {SeriesTree_Cohorts_Profitability_Nupl_Loss} loss
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Nupl_Range
  * @property {PpmRatioPattern} over1000pctInProfit
  * @property {PpmRatioPattern} _500pctTo1000pctInProfit
  * @property {PpmRatioPattern} _300pctTo500pctInProfit
@@ -12304,37 +11823,6 @@ function createTermPattern(client, acc) {
  * @property {PpmRatioPattern} _70pctTo80pctInLoss
  * @property {PpmRatioPattern} _80pctTo90pctInLoss
  * @property {PpmRatioPattern} _90pctTo100pctInLoss
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Nupl_Profit
- * @property {PpmRatioPattern} total
- * @property {PpmRatioPattern} _10pct
- * @property {PpmRatioPattern} _20pct
- * @property {PpmRatioPattern} _30pct
- * @property {PpmRatioPattern} _40pct
- * @property {PpmRatioPattern} _50pct
- * @property {PpmRatioPattern} _60pct
- * @property {PpmRatioPattern} _70pct
- * @property {PpmRatioPattern} _80pct
- * @property {PpmRatioPattern} _90pct
- * @property {PpmRatioPattern} _100pct
- * @property {PpmRatioPattern} _200pct
- * @property {PpmRatioPattern} _300pct
- * @property {PpmRatioPattern} _500pct
- */
-
-/**
- * @typedef {Object} SeriesTree_Cohorts_Profitability_Nupl_Loss
- * @property {PpmRatioPattern} total
- * @property {PpmRatioPattern} _10pct
- * @property {PpmRatioPattern} _20pct
- * @property {PpmRatioPattern} _30pct
- * @property {PpmRatioPattern} _40pct
- * @property {PpmRatioPattern} _50pct
- * @property {PpmRatioPattern} _60pct
- * @property {PpmRatioPattern} _70pct
- * @property {PpmRatioPattern} _80pct
  */
 
 /**
@@ -13118,127 +12606,6 @@ class BitviewClient extends BitviewClientBase {
       "id": "utxos_90pct_to_100pct_in_loss",
       "short": "-90-100%",
       "long": "90-100% in Loss"
-    }
-  });
-
-  PROFIT_NAMES = /** @type {const} */ ({
-    "total": {
-      "id": "utxos_in_profit",
-      "short": "Total",
-      "long": "In Profit"
-    },
-    "_10pct": {
-      "id": "utxos_over_10pct_in_profit",
-      "short": ">10%",
-      "long": "Over 10% in Profit"
-    },
-    "_20pct": {
-      "id": "utxos_over_20pct_in_profit",
-      "short": ">20%",
-      "long": "Over 20% in Profit"
-    },
-    "_30pct": {
-      "id": "utxos_over_30pct_in_profit",
-      "short": ">30%",
-      "long": "Over 30% in Profit"
-    },
-    "_40pct": {
-      "id": "utxos_over_40pct_in_profit",
-      "short": ">40%",
-      "long": "Over 40% in Profit"
-    },
-    "_50pct": {
-      "id": "utxos_over_50pct_in_profit",
-      "short": ">50%",
-      "long": "Over 50% in Profit"
-    },
-    "_60pct": {
-      "id": "utxos_over_60pct_in_profit",
-      "short": ">60%",
-      "long": "Over 60% in Profit"
-    },
-    "_70pct": {
-      "id": "utxos_over_70pct_in_profit",
-      "short": ">70%",
-      "long": "Over 70% in Profit"
-    },
-    "_80pct": {
-      "id": "utxos_over_80pct_in_profit",
-      "short": ">80%",
-      "long": "Over 80% in Profit"
-    },
-    "_90pct": {
-      "id": "utxos_over_90pct_in_profit",
-      "short": ">90%",
-      "long": "Over 90% in Profit"
-    },
-    "_100pct": {
-      "id": "utxos_over_100pct_in_profit",
-      "short": ">100%",
-      "long": "Over 100% in Profit"
-    },
-    "_200pct": {
-      "id": "utxos_over_200pct_in_profit",
-      "short": ">200%",
-      "long": "Over 200% in Profit"
-    },
-    "_300pct": {
-      "id": "utxos_over_300pct_in_profit",
-      "short": ">300%",
-      "long": "Over 300% in Profit"
-    },
-    "_500pct": {
-      "id": "utxos_over_500pct_in_profit",
-      "short": ">500%",
-      "long": "Over 500% in Profit"
-    }
-  });
-
-  LOSS_NAMES = /** @type {const} */ ({
-    "total": {
-      "id": "utxos_in_loss",
-      "short": "Total",
-      "long": "In Loss"
-    },
-    "_10pct": {
-      "id": "utxos_over_10pct_in_loss",
-      "short": ">=10%",
-      "long": "Over 10% in Loss"
-    },
-    "_20pct": {
-      "id": "utxos_over_20pct_in_loss",
-      "short": ">=20%",
-      "long": "Over 20% in Loss"
-    },
-    "_30pct": {
-      "id": "utxos_over_30pct_in_loss",
-      "short": ">=30%",
-      "long": "Over 30% in Loss"
-    },
-    "_40pct": {
-      "id": "utxos_over_40pct_in_loss",
-      "short": ">=40%",
-      "long": "Over 40% in Loss"
-    },
-    "_50pct": {
-      "id": "utxos_over_50pct_in_loss",
-      "short": ">=50%",
-      "long": "Over 50% in Loss"
-    },
-    "_60pct": {
-      "id": "utxos_over_60pct_in_loss",
-      "short": ">=60%",
-      "long": "Over 60% in Loss"
-    },
-    "_70pct": {
-      "id": "utxos_over_70pct_in_loss",
-      "short": ">=70%",
-      "long": "Over 70% in Loss"
-    },
-    "_80pct": {
-      "id": "utxos_over_80pct_in_loss",
-      "short": ">=80%",
-      "long": "Over 80% in Loss"
     }
   });
 
@@ -17177,612 +16544,312 @@ class BitviewClient extends BitviewClientBase {
         })); },
         get profitability() { return _lazy(this, 'profitability', () => ({
           get supply() { return _lazy(this, 'supply', () => ({
-            get range() { return _lazy(this, 'range', () => ({
-              over1000pctInProfit: createAllLthSthPattern6(client, 'utxos_over_1000pct_in_profit'),
-              _500pctTo1000pctInProfit: createAllLthSthPattern6(client, 'utxos_500pct_to_1000pct_in_profit'),
-              _300pctTo500pctInProfit: createAllLthSthPattern6(client, 'utxos_300pct_to_500pct_in_profit'),
-              _200pctTo300pctInProfit: createAllLthSthPattern6(client, 'utxos_200pct_to_300pct_in_profit'),
-              _100pctTo200pctInProfit: createAllLthSthPattern6(client, 'utxos_100pct_to_200pct_in_profit'),
-              _90pctTo100pctInProfit: createAllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_profit'),
-              _80pctTo90pctInProfit: createAllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_profit'),
-              _70pctTo80pctInProfit: createAllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_profit'),
-              _60pctTo70pctInProfit: createAllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_profit'),
-              _50pctTo60pctInProfit: createAllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_profit'),
-              _40pctTo50pctInProfit: createAllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_profit'),
-              _30pctTo40pctInProfit: createAllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_profit'),
-              _20pctTo30pctInProfit: createAllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_profit'),
-              _10pctTo20pctInProfit: createAllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_profit'),
-              _0pctTo10pctInProfit: createAllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_profit'),
-              _0pctTo10pctInLoss: createAllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_loss'),
-              _10pctTo20pctInLoss: createAllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_loss'),
-              _20pctTo30pctInLoss: createAllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_loss'),
-              _30pctTo40pctInLoss: createAllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_loss'),
-              _40pctTo50pctInLoss: createAllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_loss'),
-              _50pctTo60pctInLoss: createAllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_loss'),
-              _60pctTo70pctInLoss: createAllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_loss'),
-              _70pctTo80pctInLoss: createAllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_loss'),
-              _80pctTo90pctInLoss: createAllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_loss'),
-              _90pctTo100pctInLoss: createAllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_loss'),
-            })); },
-            get profit() { return _lazy(this, 'profit', () => ({
-              total: createAllLthSthPattern6(client, 'utxos_in_profit'),
-              _10pct: createAllLthSthPattern6(client, 'utxos_over_10pct_in_profit'),
-              _20pct: createAllLthSthPattern6(client, 'utxos_over_20pct_in_profit'),
-              _30pct: createAllLthSthPattern6(client, 'utxos_over_30pct_in_profit'),
-              _40pct: createAllLthSthPattern6(client, 'utxos_over_40pct_in_profit'),
-              _50pct: createAllLthSthPattern6(client, 'utxos_over_50pct_in_profit'),
-              _60pct: createAllLthSthPattern6(client, 'utxos_over_60pct_in_profit'),
-              _70pct: createAllLthSthPattern6(client, 'utxos_over_70pct_in_profit'),
-              _80pct: createAllLthSthPattern6(client, 'utxos_over_80pct_in_profit'),
-              _90pct: createAllLthSthPattern6(client, 'utxos_over_90pct_in_profit'),
-              _100pct: createAllLthSthPattern6(client, 'utxos_over_100pct_in_profit'),
-              _200pct: createAllLthSthPattern6(client, 'utxos_over_200pct_in_profit'),
-              _300pct: createAllLthSthPattern6(client, 'utxos_over_300pct_in_profit'),
-              _500pct: createAllLthSthPattern6(client, 'utxos_over_500pct_in_profit'),
-            })); },
-            get loss() { return _lazy(this, 'loss', () => ({
-              total: createAllLthSthPattern6(client, 'utxos_in_loss'),
-              _10pct: createAllLthSthPattern6(client, 'utxos_over_10pct_in_loss'),
-              _20pct: createAllLthSthPattern6(client, 'utxos_over_20pct_in_loss'),
-              _30pct: createAllLthSthPattern6(client, 'utxos_over_30pct_in_loss'),
-              _40pct: createAllLthSthPattern6(client, 'utxos_over_40pct_in_loss'),
-              _50pct: createAllLthSthPattern6(client, 'utxos_over_50pct_in_loss'),
-              _60pct: createAllLthSthPattern6(client, 'utxos_over_60pct_in_loss'),
-              _70pct: createAllLthSthPattern6(client, 'utxos_over_70pct_in_loss'),
-              _80pct: createAllLthSthPattern6(client, 'utxos_over_80pct_in_loss'),
-            })); },
+            over1000pctInProfit: createAllLthSthPattern6(client, 'utxos_over_1000pct_in_profit'),
+            _500pctTo1000pctInProfit: createAllLthSthPattern6(client, 'utxos_500pct_to_1000pct_in_profit'),
+            _300pctTo500pctInProfit: createAllLthSthPattern6(client, 'utxos_300pct_to_500pct_in_profit'),
+            _200pctTo300pctInProfit: createAllLthSthPattern6(client, 'utxos_200pct_to_300pct_in_profit'),
+            _100pctTo200pctInProfit: createAllLthSthPattern6(client, 'utxos_100pct_to_200pct_in_profit'),
+            _90pctTo100pctInProfit: createAllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_profit'),
+            _80pctTo90pctInProfit: createAllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_profit'),
+            _70pctTo80pctInProfit: createAllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_profit'),
+            _60pctTo70pctInProfit: createAllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_profit'),
+            _50pctTo60pctInProfit: createAllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_profit'),
+            _40pctTo50pctInProfit: createAllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_profit'),
+            _30pctTo40pctInProfit: createAllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_profit'),
+            _20pctTo30pctInProfit: createAllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_profit'),
+            _10pctTo20pctInProfit: createAllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_profit'),
+            _0pctTo10pctInProfit: createAllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_profit'),
+            _0pctTo10pctInLoss: createAllLthSthPattern6(client, 'utxos_0pct_to_10pct_in_loss'),
+            _10pctTo20pctInLoss: createAllLthSthPattern6(client, 'utxos_10pct_to_20pct_in_loss'),
+            _20pctTo30pctInLoss: createAllLthSthPattern6(client, 'utxos_20pct_to_30pct_in_loss'),
+            _30pctTo40pctInLoss: createAllLthSthPattern6(client, 'utxos_30pct_to_40pct_in_loss'),
+            _40pctTo50pctInLoss: createAllLthSthPattern6(client, 'utxos_40pct_to_50pct_in_loss'),
+            _50pctTo60pctInLoss: createAllLthSthPattern6(client, 'utxos_50pct_to_60pct_in_loss'),
+            _60pctTo70pctInLoss: createAllLthSthPattern6(client, 'utxos_60pct_to_70pct_in_loss'),
+            _70pctTo80pctInLoss: createAllLthSthPattern6(client, 'utxos_70pct_to_80pct_in_loss'),
+            _80pctTo90pctInLoss: createAllLthSthPattern6(client, 'utxos_80pct_to_90pct_in_loss'),
+            _90pctTo100pctInLoss: createAllLthSthPattern6(client, 'utxos_90pct_to_100pct_in_loss'),
           })); },
           get realizedCap() { return _lazy(this, 'realizedCap', () => ({
-            get range() { return _lazy(this, 'range', () => ({
-              get over1000pctInProfit() { return _lazy(this, 'over1000pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_realized_cap'),
-              })); },
-              get _500pctTo1000pctInProfit() { return _lazy(this, '_500pctTo1000pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_realized_cap'),
-              })); },
-              get _300pctTo500pctInProfit() { return _lazy(this, '_300pctTo500pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_realized_cap'),
-              })); },
-              get _200pctTo300pctInProfit() { return _lazy(this, '_200pctTo300pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_realized_cap'),
-              })); },
-              get _100pctTo200pctInProfit() { return _lazy(this, '_100pctTo200pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_realized_cap'),
-              })); },
-              get _90pctTo100pctInProfit() { return _lazy(this, '_90pctTo100pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_realized_cap'),
-              })); },
-              get _80pctTo90pctInProfit() { return _lazy(this, '_80pctTo90pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_realized_cap'),
-              })); },
-              get _70pctTo80pctInProfit() { return _lazy(this, '_70pctTo80pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_realized_cap'),
-              })); },
-              get _60pctTo70pctInProfit() { return _lazy(this, '_60pctTo70pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_realized_cap'),
-              })); },
-              get _50pctTo60pctInProfit() { return _lazy(this, '_50pctTo60pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_realized_cap'),
-              })); },
-              get _40pctTo50pctInProfit() { return _lazy(this, '_40pctTo50pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_realized_cap'),
-              })); },
-              get _30pctTo40pctInProfit() { return _lazy(this, '_30pctTo40pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_realized_cap'),
-              })); },
-              get _20pctTo30pctInProfit() { return _lazy(this, '_20pctTo30pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_realized_cap'),
-              })); },
-              get _10pctTo20pctInProfit() { return _lazy(this, '_10pctTo20pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_realized_cap'),
-              })); },
-              get _0pctTo10pctInProfit() { return _lazy(this, '_0pctTo10pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_realized_cap'),
-              })); },
-              get _0pctTo10pctInLoss() { return _lazy(this, '_0pctTo10pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_realized_cap'),
-              })); },
-              get _10pctTo20pctInLoss() { return _lazy(this, '_10pctTo20pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_realized_cap'),
-              })); },
-              get _20pctTo30pctInLoss() { return _lazy(this, '_20pctTo30pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_realized_cap'),
-              })); },
-              get _30pctTo40pctInLoss() { return _lazy(this, '_30pctTo40pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_realized_cap'),
-              })); },
-              get _40pctTo50pctInLoss() { return _lazy(this, '_40pctTo50pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_realized_cap'),
-              })); },
-              get _50pctTo60pctInLoss() { return _lazy(this, '_50pctTo60pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_realized_cap'),
-              })); },
-              get _60pctTo70pctInLoss() { return _lazy(this, '_60pctTo70pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_realized_cap'),
-              })); },
-              get _70pctTo80pctInLoss() { return _lazy(this, '_70pctTo80pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_realized_cap'),
-              })); },
-              get _80pctTo90pctInLoss() { return _lazy(this, '_80pctTo90pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_realized_cap'),
-              })); },
-              get _90pctTo100pctInLoss() { return _lazy(this, '_90pctTo100pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_realized_cap'),
-              })); },
+            get over1000pctInProfit() { return _lazy(this, 'over1000pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_realized_cap'),
             })); },
-            get profit() { return _lazy(this, 'profit', () => ({
-              get total() { return _lazy(this, 'total', () => ({
-                all: createCentsUsdPattern(client, 'utxos_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_in_profit_lth_realized_cap'),
-              })); },
-              get _10pct() { return _lazy(this, '_10pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_lth_realized_cap'),
-              })); },
-              get _20pct() { return _lazy(this, '_20pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_lth_realized_cap'),
-              })); },
-              get _30pct() { return _lazy(this, '_30pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_lth_realized_cap'),
-              })); },
-              get _40pct() { return _lazy(this, '_40pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_lth_realized_cap'),
-              })); },
-              get _50pct() { return _lazy(this, '_50pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_lth_realized_cap'),
-              })); },
-              get _60pct() { return _lazy(this, '_60pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_lth_realized_cap'),
-              })); },
-              get _70pct() { return _lazy(this, '_70pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_lth_realized_cap'),
-              })); },
-              get _80pct() { return _lazy(this, '_80pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_lth_realized_cap'),
-              })); },
-              get _90pct() { return _lazy(this, '_90pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_lth_realized_cap'),
-              })); },
-              get _100pct() { return _lazy(this, '_100pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_lth_realized_cap'),
-              })); },
-              get _200pct() { return _lazy(this, '_200pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_lth_realized_cap'),
-              })); },
-              get _300pct() { return _lazy(this, '_300pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_lth_realized_cap'),
-              })); },
-              get _500pct() { return _lazy(this, '_500pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_lth_realized_cap'),
-              })); },
+            get _500pctTo1000pctInProfit() { return _lazy(this, '_500pctTo1000pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_realized_cap'),
             })); },
-            get loss() { return _lazy(this, 'loss', () => ({
-              get total() { return _lazy(this, 'total', () => ({
-                all: createCentsUsdPattern(client, 'utxos_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_in_loss_lth_realized_cap'),
-              })); },
-              get _10pct() { return _lazy(this, '_10pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_lth_realized_cap'),
-              })); },
-              get _20pct() { return _lazy(this, '_20pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_lth_realized_cap'),
-              })); },
-              get _30pct() { return _lazy(this, '_30pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_lth_realized_cap'),
-              })); },
-              get _40pct() { return _lazy(this, '_40pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_lth_realized_cap'),
-              })); },
-              get _50pct() { return _lazy(this, '_50pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_lth_realized_cap'),
-              })); },
-              get _60pct() { return _lazy(this, '_60pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_lth_realized_cap'),
-              })); },
-              get _70pct() { return _lazy(this, '_70pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_lth_realized_cap'),
-              })); },
-              get _80pct() { return _lazy(this, '_80pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_realized_cap'),
-                sth: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_sth_realized_cap'),
-                lth: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_lth_realized_cap'),
-              })); },
+            get _300pctTo500pctInProfit() { return _lazy(this, '_300pctTo500pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_realized_cap'),
+            })); },
+            get _200pctTo300pctInProfit() { return _lazy(this, '_200pctTo300pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_realized_cap'),
+            })); },
+            get _100pctTo200pctInProfit() { return _lazy(this, '_100pctTo200pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_realized_cap'),
+            })); },
+            get _90pctTo100pctInProfit() { return _lazy(this, '_90pctTo100pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_realized_cap'),
+            })); },
+            get _80pctTo90pctInProfit() { return _lazy(this, '_80pctTo90pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_realized_cap'),
+            })); },
+            get _70pctTo80pctInProfit() { return _lazy(this, '_70pctTo80pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_realized_cap'),
+            })); },
+            get _60pctTo70pctInProfit() { return _lazy(this, '_60pctTo70pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_realized_cap'),
+            })); },
+            get _50pctTo60pctInProfit() { return _lazy(this, '_50pctTo60pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_realized_cap'),
+            })); },
+            get _40pctTo50pctInProfit() { return _lazy(this, '_40pctTo50pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_realized_cap'),
+            })); },
+            get _30pctTo40pctInProfit() { return _lazy(this, '_30pctTo40pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_realized_cap'),
+            })); },
+            get _20pctTo30pctInProfit() { return _lazy(this, '_20pctTo30pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_realized_cap'),
+            })); },
+            get _10pctTo20pctInProfit() { return _lazy(this, '_10pctTo20pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_realized_cap'),
+            })); },
+            get _0pctTo10pctInProfit() { return _lazy(this, '_0pctTo10pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_realized_cap'),
+            })); },
+            get _0pctTo10pctInLoss() { return _lazy(this, '_0pctTo10pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_realized_cap'),
+            })); },
+            get _10pctTo20pctInLoss() { return _lazy(this, '_10pctTo20pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_realized_cap'),
+            })); },
+            get _20pctTo30pctInLoss() { return _lazy(this, '_20pctTo30pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_realized_cap'),
+            })); },
+            get _30pctTo40pctInLoss() { return _lazy(this, '_30pctTo40pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_realized_cap'),
+            })); },
+            get _40pctTo50pctInLoss() { return _lazy(this, '_40pctTo50pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_realized_cap'),
+            })); },
+            get _50pctTo60pctInLoss() { return _lazy(this, '_50pctTo60pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_realized_cap'),
+            })); },
+            get _60pctTo70pctInLoss() { return _lazy(this, '_60pctTo70pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_realized_cap'),
+            })); },
+            get _70pctTo80pctInLoss() { return _lazy(this, '_70pctTo80pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_realized_cap'),
+            })); },
+            get _80pctTo90pctInLoss() { return _lazy(this, '_80pctTo90pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_realized_cap'),
+            })); },
+            get _90pctTo100pctInLoss() { return _lazy(this, '_90pctTo100pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_realized_cap'),
+              sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_realized_cap'),
+              lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_realized_cap'),
             })); },
           })); },
           get unrealizedPnl() { return _lazy(this, 'unrealizedPnl', () => ({
-            get range() { return _lazy(this, 'range', () => ({
-              get over1000pctInProfit() { return _lazy(this, 'over1000pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _500pctTo1000pctInProfit() { return _lazy(this, '_500pctTo1000pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _300pctTo500pctInProfit() { return _lazy(this, '_300pctTo500pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _200pctTo300pctInProfit() { return _lazy(this, '_200pctTo300pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _100pctTo200pctInProfit() { return _lazy(this, '_100pctTo200pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _90pctTo100pctInProfit() { return _lazy(this, '_90pctTo100pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _80pctTo90pctInProfit() { return _lazy(this, '_80pctTo90pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _70pctTo80pctInProfit() { return _lazy(this, '_70pctTo80pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _60pctTo70pctInProfit() { return _lazy(this, '_60pctTo70pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _50pctTo60pctInProfit() { return _lazy(this, '_50pctTo60pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _40pctTo50pctInProfit() { return _lazy(this, '_40pctTo50pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _30pctTo40pctInProfit() { return _lazy(this, '_30pctTo40pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _20pctTo30pctInProfit() { return _lazy(this, '_20pctTo30pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _10pctTo20pctInProfit() { return _lazy(this, '_10pctTo20pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _0pctTo10pctInProfit() { return _lazy(this, '_0pctTo10pctInProfit', () => ({
-                all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _0pctTo10pctInLoss() { return _lazy(this, '_0pctTo10pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _10pctTo20pctInLoss() { return _lazy(this, '_10pctTo20pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _20pctTo30pctInLoss() { return _lazy(this, '_20pctTo30pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _30pctTo40pctInLoss() { return _lazy(this, '_30pctTo40pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _40pctTo50pctInLoss() { return _lazy(this, '_40pctTo50pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _50pctTo60pctInLoss() { return _lazy(this, '_50pctTo60pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _60pctTo70pctInLoss() { return _lazy(this, '_60pctTo70pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _70pctTo80pctInLoss() { return _lazy(this, '_70pctTo80pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _80pctTo90pctInLoss() { return _lazy(this, '_80pctTo90pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _90pctTo100pctInLoss() { return _lazy(this, '_90pctTo100pctInLoss', () => ({
-                all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_unrealized_pnl'),
-              })); },
+            get over1000pctInProfit() { return _lazy(this, 'over1000pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_over_1000pct_in_profit_lth_unrealized_pnl'),
             })); },
-            get profit() { return _lazy(this, 'profit', () => ({
-              get total() { return _lazy(this, 'total', () => ({
-                all: createCentsUsdPattern(client, 'utxos_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _10pct() { return _lazy(this, '_10pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_10pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _20pct() { return _lazy(this, '_20pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_20pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _30pct() { return _lazy(this, '_30pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_30pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _40pct() { return _lazy(this, '_40pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_40pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _50pct() { return _lazy(this, '_50pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_50pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _60pct() { return _lazy(this, '_60pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_60pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _70pct() { return _lazy(this, '_70pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_70pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _80pct() { return _lazy(this, '_80pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_80pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _90pct() { return _lazy(this, '_90pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_90pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _100pct() { return _lazy(this, '_100pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_100pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _200pct() { return _lazy(this, '_200pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_200pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _300pct() { return _lazy(this, '_300pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_300pct_in_profit_lth_unrealized_pnl'),
-              })); },
-              get _500pct() { return _lazy(this, '_500pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_500pct_in_profit_lth_unrealized_pnl'),
-              })); },
+            get _500pctTo1000pctInProfit() { return _lazy(this, '_500pctTo1000pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_500pct_to_1000pct_in_profit_lth_unrealized_pnl'),
             })); },
-            get loss() { return _lazy(this, 'loss', () => ({
-              get total() { return _lazy(this, 'total', () => ({
-                all: createCentsUsdPattern(client, 'utxos_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _10pct() { return _lazy(this, '_10pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_10pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _20pct() { return _lazy(this, '_20pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_20pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _30pct() { return _lazy(this, '_30pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_30pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _40pct() { return _lazy(this, '_40pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_40pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _50pct() { return _lazy(this, '_50pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_50pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _60pct() { return _lazy(this, '_60pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_60pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _70pct() { return _lazy(this, '_70pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_70pct_in_loss_lth_unrealized_pnl'),
-              })); },
-              get _80pct() { return _lazy(this, '_80pct', () => ({
-                all: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_unrealized_pnl'),
-                sth: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_sth_unrealized_pnl'),
-                lth: createCentsUsdPattern(client, 'utxos_over_80pct_in_loss_lth_unrealized_pnl'),
-              })); },
+            get _300pctTo500pctInProfit() { return _lazy(this, '_300pctTo500pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_300pct_to_500pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _200pctTo300pctInProfit() { return _lazy(this, '_200pctTo300pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_200pct_to_300pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _100pctTo200pctInProfit() { return _lazy(this, '_100pctTo200pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_100pct_to_200pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _90pctTo100pctInProfit() { return _lazy(this, '_90pctTo100pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _80pctTo90pctInProfit() { return _lazy(this, '_80pctTo90pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _70pctTo80pctInProfit() { return _lazy(this, '_70pctTo80pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _60pctTo70pctInProfit() { return _lazy(this, '_60pctTo70pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _50pctTo60pctInProfit() { return _lazy(this, '_50pctTo60pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _40pctTo50pctInProfit() { return _lazy(this, '_40pctTo50pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _30pctTo40pctInProfit() { return _lazy(this, '_30pctTo40pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _20pctTo30pctInProfit() { return _lazy(this, '_20pctTo30pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _10pctTo20pctInProfit() { return _lazy(this, '_10pctTo20pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _0pctTo10pctInProfit() { return _lazy(this, '_0pctTo10pctInProfit', () => ({
+              all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_profit_lth_unrealized_pnl'),
+            })); },
+            get _0pctTo10pctInLoss() { return _lazy(this, '_0pctTo10pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_0pct_to_10pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _10pctTo20pctInLoss() { return _lazy(this, '_10pctTo20pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_10pct_to_20pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _20pctTo30pctInLoss() { return _lazy(this, '_20pctTo30pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_20pct_to_30pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _30pctTo40pctInLoss() { return _lazy(this, '_30pctTo40pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_30pct_to_40pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _40pctTo50pctInLoss() { return _lazy(this, '_40pctTo50pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_40pct_to_50pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _50pctTo60pctInLoss() { return _lazy(this, '_50pctTo60pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_50pct_to_60pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _60pctTo70pctInLoss() { return _lazy(this, '_60pctTo70pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_60pct_to_70pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _70pctTo80pctInLoss() { return _lazy(this, '_70pctTo80pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_70pct_to_80pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _80pctTo90pctInLoss() { return _lazy(this, '_80pctTo90pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_80pct_to_90pct_in_loss_lth_unrealized_pnl'),
+            })); },
+            get _90pctTo100pctInLoss() { return _lazy(this, '_90pctTo100pctInLoss', () => ({
+              all: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_unrealized_pnl'),
+              sth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_sth_unrealized_pnl'),
+              lth: createCentsUsdPattern(client, 'utxos_90pct_to_100pct_in_loss_lth_unrealized_pnl'),
             })); },
           })); },
           get nupl() { return _lazy(this, 'nupl', () => ({
-            get range() { return _lazy(this, 'range', () => ({
-              over1000pctInProfit: createPpmRatioPattern(client, 'utxos_over_1000pct_in_profit_nupl'),
-              _500pctTo1000pctInProfit: createPpmRatioPattern(client, 'utxos_500pct_to_1000pct_in_profit_nupl'),
-              _300pctTo500pctInProfit: createPpmRatioPattern(client, 'utxos_300pct_to_500pct_in_profit_nupl'),
-              _200pctTo300pctInProfit: createPpmRatioPattern(client, 'utxos_200pct_to_300pct_in_profit_nupl'),
-              _100pctTo200pctInProfit: createPpmRatioPattern(client, 'utxos_100pct_to_200pct_in_profit_nupl'),
-              _90pctTo100pctInProfit: createPpmRatioPattern(client, 'utxos_90pct_to_100pct_in_profit_nupl'),
-              _80pctTo90pctInProfit: createPpmRatioPattern(client, 'utxos_80pct_to_90pct_in_profit_nupl'),
-              _70pctTo80pctInProfit: createPpmRatioPattern(client, 'utxos_70pct_to_80pct_in_profit_nupl'),
-              _60pctTo70pctInProfit: createPpmRatioPattern(client, 'utxos_60pct_to_70pct_in_profit_nupl'),
-              _50pctTo60pctInProfit: createPpmRatioPattern(client, 'utxos_50pct_to_60pct_in_profit_nupl'),
-              _40pctTo50pctInProfit: createPpmRatioPattern(client, 'utxos_40pct_to_50pct_in_profit_nupl'),
-              _30pctTo40pctInProfit: createPpmRatioPattern(client, 'utxos_30pct_to_40pct_in_profit_nupl'),
-              _20pctTo30pctInProfit: createPpmRatioPattern(client, 'utxos_20pct_to_30pct_in_profit_nupl'),
-              _10pctTo20pctInProfit: createPpmRatioPattern(client, 'utxos_10pct_to_20pct_in_profit_nupl'),
-              _0pctTo10pctInProfit: createPpmRatioPattern(client, 'utxos_0pct_to_10pct_in_profit_nupl'),
-              _0pctTo10pctInLoss: createPpmRatioPattern(client, 'utxos_0pct_to_10pct_in_loss_nupl'),
-              _10pctTo20pctInLoss: createPpmRatioPattern(client, 'utxos_10pct_to_20pct_in_loss_nupl'),
-              _20pctTo30pctInLoss: createPpmRatioPattern(client, 'utxos_20pct_to_30pct_in_loss_nupl'),
-              _30pctTo40pctInLoss: createPpmRatioPattern(client, 'utxos_30pct_to_40pct_in_loss_nupl'),
-              _40pctTo50pctInLoss: createPpmRatioPattern(client, 'utxos_40pct_to_50pct_in_loss_nupl'),
-              _50pctTo60pctInLoss: createPpmRatioPattern(client, 'utxos_50pct_to_60pct_in_loss_nupl'),
-              _60pctTo70pctInLoss: createPpmRatioPattern(client, 'utxos_60pct_to_70pct_in_loss_nupl'),
-              _70pctTo80pctInLoss: createPpmRatioPattern(client, 'utxos_70pct_to_80pct_in_loss_nupl'),
-              _80pctTo90pctInLoss: createPpmRatioPattern(client, 'utxos_80pct_to_90pct_in_loss_nupl'),
-              _90pctTo100pctInLoss: createPpmRatioPattern(client, 'utxos_90pct_to_100pct_in_loss_nupl'),
-            })); },
-            get profit() { return _lazy(this, 'profit', () => ({
-              total: createPpmRatioPattern(client, 'utxos_in_profit_nupl'),
-              _10pct: createPpmRatioPattern(client, 'utxos_over_10pct_in_profit_nupl'),
-              _20pct: createPpmRatioPattern(client, 'utxos_over_20pct_in_profit_nupl'),
-              _30pct: createPpmRatioPattern(client, 'utxos_over_30pct_in_profit_nupl'),
-              _40pct: createPpmRatioPattern(client, 'utxos_over_40pct_in_profit_nupl'),
-              _50pct: createPpmRatioPattern(client, 'utxos_over_50pct_in_profit_nupl'),
-              _60pct: createPpmRatioPattern(client, 'utxos_over_60pct_in_profit_nupl'),
-              _70pct: createPpmRatioPattern(client, 'utxos_over_70pct_in_profit_nupl'),
-              _80pct: createPpmRatioPattern(client, 'utxos_over_80pct_in_profit_nupl'),
-              _90pct: createPpmRatioPattern(client, 'utxos_over_90pct_in_profit_nupl'),
-              _100pct: createPpmRatioPattern(client, 'utxos_over_100pct_in_profit_nupl'),
-              _200pct: createPpmRatioPattern(client, 'utxos_over_200pct_in_profit_nupl'),
-              _300pct: createPpmRatioPattern(client, 'utxos_over_300pct_in_profit_nupl'),
-              _500pct: createPpmRatioPattern(client, 'utxos_over_500pct_in_profit_nupl'),
-            })); },
-            get loss() { return _lazy(this, 'loss', () => ({
-              total: createPpmRatioPattern(client, 'utxos_in_loss_nupl'),
-              _10pct: createPpmRatioPattern(client, 'utxos_over_10pct_in_loss_nupl'),
-              _20pct: createPpmRatioPattern(client, 'utxos_over_20pct_in_loss_nupl'),
-              _30pct: createPpmRatioPattern(client, 'utxos_over_30pct_in_loss_nupl'),
-              _40pct: createPpmRatioPattern(client, 'utxos_over_40pct_in_loss_nupl'),
-              _50pct: createPpmRatioPattern(client, 'utxos_over_50pct_in_loss_nupl'),
-              _60pct: createPpmRatioPattern(client, 'utxos_over_60pct_in_loss_nupl'),
-              _70pct: createPpmRatioPattern(client, 'utxos_over_70pct_in_loss_nupl'),
-              _80pct: createPpmRatioPattern(client, 'utxos_over_80pct_in_loss_nupl'),
-            })); },
+            over1000pctInProfit: createPpmRatioPattern(client, 'utxos_over_1000pct_in_profit_nupl'),
+            _500pctTo1000pctInProfit: createPpmRatioPattern(client, 'utxos_500pct_to_1000pct_in_profit_nupl'),
+            _300pctTo500pctInProfit: createPpmRatioPattern(client, 'utxos_300pct_to_500pct_in_profit_nupl'),
+            _200pctTo300pctInProfit: createPpmRatioPattern(client, 'utxos_200pct_to_300pct_in_profit_nupl'),
+            _100pctTo200pctInProfit: createPpmRatioPattern(client, 'utxos_100pct_to_200pct_in_profit_nupl'),
+            _90pctTo100pctInProfit: createPpmRatioPattern(client, 'utxos_90pct_to_100pct_in_profit_nupl'),
+            _80pctTo90pctInProfit: createPpmRatioPattern(client, 'utxos_80pct_to_90pct_in_profit_nupl'),
+            _70pctTo80pctInProfit: createPpmRatioPattern(client, 'utxos_70pct_to_80pct_in_profit_nupl'),
+            _60pctTo70pctInProfit: createPpmRatioPattern(client, 'utxos_60pct_to_70pct_in_profit_nupl'),
+            _50pctTo60pctInProfit: createPpmRatioPattern(client, 'utxos_50pct_to_60pct_in_profit_nupl'),
+            _40pctTo50pctInProfit: createPpmRatioPattern(client, 'utxos_40pct_to_50pct_in_profit_nupl'),
+            _30pctTo40pctInProfit: createPpmRatioPattern(client, 'utxos_30pct_to_40pct_in_profit_nupl'),
+            _20pctTo30pctInProfit: createPpmRatioPattern(client, 'utxos_20pct_to_30pct_in_profit_nupl'),
+            _10pctTo20pctInProfit: createPpmRatioPattern(client, 'utxos_10pct_to_20pct_in_profit_nupl'),
+            _0pctTo10pctInProfit: createPpmRatioPattern(client, 'utxos_0pct_to_10pct_in_profit_nupl'),
+            _0pctTo10pctInLoss: createPpmRatioPattern(client, 'utxos_0pct_to_10pct_in_loss_nupl'),
+            _10pctTo20pctInLoss: createPpmRatioPattern(client, 'utxos_10pct_to_20pct_in_loss_nupl'),
+            _20pctTo30pctInLoss: createPpmRatioPattern(client, 'utxos_20pct_to_30pct_in_loss_nupl'),
+            _30pctTo40pctInLoss: createPpmRatioPattern(client, 'utxos_30pct_to_40pct_in_loss_nupl'),
+            _40pctTo50pctInLoss: createPpmRatioPattern(client, 'utxos_40pct_to_50pct_in_loss_nupl'),
+            _50pctTo60pctInLoss: createPpmRatioPattern(client, 'utxos_50pct_to_60pct_in_loss_nupl'),
+            _60pctTo70pctInLoss: createPpmRatioPattern(client, 'utxos_60pct_to_70pct_in_loss_nupl'),
+            _70pctTo80pctInLoss: createPpmRatioPattern(client, 'utxos_70pct_to_80pct_in_loss_nupl'),
+            _80pctTo90pctInLoss: createPpmRatioPattern(client, 'utxos_80pct_to_90pct_in_loss_nupl'),
+            _90pctTo100pctInLoss: createPpmRatioPattern(client, 'utxos_90pct_to_100pct_in_loss_nupl'),
           })); },
         })); },
       })); },

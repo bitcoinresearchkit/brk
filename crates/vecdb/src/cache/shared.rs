@@ -29,33 +29,19 @@ impl<T> Shared<T> {
             revision: AtomicU64::new(0),
         }
     }
-
-    fn clear_entries(&self) {
-        let old = mem::replace(&mut *self.table.write(), Table::new());
-        drop(old);
-    }
 }
 
 impl<T: VecValue> Reclaim for Shared<T> {
-    fn evict_one(&self) -> bool {
-        let Some(mut table) = self.table.try_write() else {
-            return false;
-        };
-        let key = table
-            .range(table.hand..)
-            .next()
-            .or_else(|| table.first_key_value())
-            .map(|(&key, _)| key);
-        let Some(key) = key else { return false };
-        let removed = table.remove(&key);
-        table.hand = key.checked_add(1).unwrap_or(0);
-        table.shrink_charge();
-        drop(table);
-        drop(removed);
-        true
+    fn try_clear(&self) {
+        let old = self
+            .table
+            .try_write()
+            .map(|mut table| mem::replace(&mut *table, Table::new()));
+        drop(old);
     }
 
     fn clear(&self) {
-        self.clear_entries();
+        let old = mem::replace(&mut *self.table.write(), Table::new());
+        drop(old);
     }
 }

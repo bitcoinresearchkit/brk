@@ -9,7 +9,6 @@ use super::{Charge, Value};
 pub(super) struct Table<T> {
     entries: BTreeMap<usize, Value<T>>,
     pub(super) charge: Option<Charge>,
-    pub(super) hand: usize,
 }
 
 impl<T> Table<T> {
@@ -17,7 +16,6 @@ impl<T> Table<T> {
         Self {
             entries: BTreeMap::new(),
             charge: None,
-            hand: 0,
         }
     }
 
@@ -49,7 +47,6 @@ impl<T> Table<T> {
         if self.entries.is_empty() {
             self.entries = BTreeMap::new();
             self.charge = None;
-            self.hand = 0;
         } else if let Some(charge) = &mut self.charge {
             charge.shrink_to(Self::charge_for(self.entries.len()));
         }

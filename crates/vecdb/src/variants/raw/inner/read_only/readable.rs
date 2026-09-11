@@ -1,9 +1,9 @@
 use std::convert::Infallible;
-use std::{result::Result, slice};
+use std::result::Result;
 
 use super::{super::RawStrategy, ReadOnlyRawVec};
 use crate::{
-    HEADER_OFFSET, RawIoSource, ReadWriteRawVec, ReadableVec, VecIndex, VecValue,
+    HEADER_OFFSET, ReadWriteRawVec, ReadableVec, VecIndex, VecValue,
     cache::{CachePolicy, Request},
     traits::chunk_folds::for_each_chunk,
 };
@@ -53,59 +53,34 @@ where
     fn read_into_at(&self, from: usize, to: usize, buf: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
             return cache.read_scope(|| {
-                let stored = self.base.len();
-                let to = to.min(self.base.len());
-                cache.read(Request::Range(from, to).clamp(stored), buf, |ranges| {
+                let len = self.base.len();
+                cache.read(Request::Range(from, to).clamp(len), buf, |ranges| {
                     ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
-                        stored,
+                        len,
                         ranges,
                     )
                 });
             });
         }
-        let len = self.base.len();
-        let from = from.min(len);
-        let to = to.min(len);
-        if from >= to {
-            return;
-        }
-        buf.reserve(to - from);
-        if S::IS_NATIVE_LAYOUT {
-            let offset = HEADER_OFFSET + from * size_of::<T>();
-            let bytes = (to - from) * size_of::<T>();
-            if self.base.region().prefers_mmap(offset, bytes) {
-                let reader = self.base.region().create_reader();
-                let src = unsafe {
-                    slice::from_raw_parts(
-                        reader
-                            .prefixed(HEADER_OFFSET)
-                            .as_ptr()
-                            .add(from * size_of::<T>()) as *const T,
-                        to - from,
-                    )
-                };
-                buf.extend_from_slice(src);
-            } else {
-                RawIoSource::<I, T, S>::new_from_parts(self.base.region(), len, from, to)
-                    .read_into(buf);
-            }
-        } else {
-            self.fold_source(from, to, len, (), |(), v| buf.push(v));
-        }
+        ReadWriteRawVec::<I, T, S, C>::read_stored_into(
+            self.base.region(),
+            self.base.len(),
+            from,
+            to,
+            buf,
+        );
     }
 
     #[inline]
     fn read_sorted_into_at(&self, indices: &[usize], out: &mut Vec<T>) {
         if let Some(cache) = C::cache(&self.cache) {
             return cache.read_scope(|| {
-                let stored = self.base.len();
-                let indices = &indices[..indices.partition_point(|&i| i < self.base.len())];
-                let split = indices.partition_point(|&i| i < stored);
-                cache.read(Request::Sorted(&indices[..split]), out, |ranges| {
+                let len = self.base.len();
+                cache.read(Request::Sorted(indices).clamp(len), out, |ranges| {
                     ReadWriteRawVec::<I, T, S, C>::load_cache_ranges(
                         self.base.region(),
-                        stored,
+                        len,
                         ranges,
                     )
                 });

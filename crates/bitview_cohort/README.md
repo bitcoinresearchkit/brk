@@ -49,6 +49,39 @@ threshold metrics from their disjoint inputs before applying ratios or window
 transforms. Exact realized prices require summed raw realized cap and supply;
 capitalized prices require summed raw capitalized cap and raw realized cap.
 
+## Reconstructing profitability thresholds
+
+Profitability exposes only the 25 disjoint `ProfitabilityRange` buckets, ordered
+from most profitable to most in loss. Each range retains supply in sats, realized
+cap in cents, and absolute unrealized P&L in cents for all/STH/LTH; range NUPL is
+also available for all holders. The former 14 profit and 9 loss groups are no
+longer stored or exposed.
+
+Using zero-based, half-open range indices:
+
+- Total in profit: `[0, 15)`; over 10%, 20%, ..., 100%, 200%, 300%, 500%
+  profit: prefixes ending at 14, 13, ..., 5, 4, 3, 2 respectively.
+- Total loss side (including break-even): `[15, 25)`; at least 10%, 20%, ...,
+  80% loss: suffixes starting at 16, 17, ..., 23 respectively.
+
+Sum the selected ranges at the same block and for the same holder term. Supply,
+realized cap, and absolute unrealized P&L reproduce the former aggregate values.
+For exact former P&L rounding, sum retained range P&L; recomputing P&L from the
+combined cap and supply can differ because the stored ranges round separately.
+
+For NUPL, let `S` be summed supply in sats, `C` summed realized cap in cents, and
+`P` the block spot price in cents. Reconstruct the former calculation as
+`R = floor(C * 100_000_000 / S)`, then `NUPL = (P - R) / P`, rounded to signed
+parts per million. Return zero when `P` or `S` is zero. Do not sum or average
+range NUPLs. Convert units and apply window transforms after reconstructing the
+base metric, preserving the original transform's rounding.
+
+Range series names and stored versions are unchanged. Generated client tree
+paths now select ranges directly (for example,
+`cohorts.profitability.supply._0pctTo10pctInProfit.all.sats`), without a `range`
+wrapper. Old threshold series are absent from the catalog; existing database
+files for them are not deleted by this change.
+
 ## Example
 
 ```rust,ignore

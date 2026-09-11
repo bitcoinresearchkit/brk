@@ -22,8 +22,6 @@ fn iteration_and_mutation_follow_cohort_order() {
     check!(ByEntry, EntryPrice);
     check!(ByEpoch, EpochId);
     check!(Class, ClassId);
-    check!(Profit, ProfitId);
-    check!(Loss, LossId);
     check!(ProfitabilityRange, ProfitabilityRangeId);
     check!(UTXOAggregate, UTXOAggregateId);
     check!(UTXOAllAndSth, UTXOAllAndSthId);

@@ -4,7 +4,7 @@ use brk_types::Cents;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{CohortName, PROFIT_COUNT};
+use super::CohortName;
 
 /// Number of profitability range boundaries (24 boundaries → 25 buckets).
 pub const PROFITABILITY_BOUNDARY_COUNT: usize = 24;
@@ -333,7 +333,7 @@ define_cohort_id!(
 
 impl ProfitabilityRangeId {
     pub const fn is_profit(self) -> bool {
-        (self as usize) < PROFIT_COUNT + 1
+        (self as usize) < Self::From0PctTo10PctInLoss as usize
     }
 }
 

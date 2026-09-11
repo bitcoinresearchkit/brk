@@ -24,7 +24,7 @@ export const realizedCapSection = {
     {
       title: "Profitability",
       description:
-        "Splits realized cap between coins that are currently in profit and coins that are currently in loss. This shows how the market's cost basis is distributed across coins above or below their last moved price.",
+        "Groups realized cap into percentage profit and loss ranges, showing how cost basis is distributed across those ranges.",
       chart: {
         title: "Realized cap by profitability",
         unit: units.usd,

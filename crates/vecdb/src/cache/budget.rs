@@ -1,4 +1,5 @@
 use std::{
+    collections::VecDeque,
     fmt,
     sync::{
         Weak,
@@ -11,14 +12,8 @@ use parking_lot::Mutex;
 use super::Charge;
 
 pub(super) trait Reclaim: Send + Sync {
-    fn evict_one(&self) -> bool;
+    fn try_clear(&self);
     fn clear(&self);
-}
-
-#[derive(Default)]
-struct Registry {
-    caches: Vec<Weak<dyn Reclaim>>,
-    next: usize,
 }
 
 /// Shared limit for retained buffers and a conservative range-directory allowance.
@@ -28,7 +23,7 @@ struct Registry {
 pub struct CacheBudget {
     limit: usize,
     used: AtomicUsize,
-    registry: Mutex<Registry>,
+    registry: Mutex<VecDeque<Weak<dyn Reclaim>>>,
 }
 
 impl CacheBudget {
@@ -36,10 +31,7 @@ impl CacheBudget {
         Self {
             limit,
             used: AtomicUsize::new(0),
-            registry: Mutex::new(Registry {
-                caches: Vec::new(),
-                next: 0,
-            }),
+            registry: Mutex::new(VecDeque::new()),
         }
     }
 
@@ -55,10 +47,10 @@ impl CacheBudget {
         let mut registry = self.registry.lock();
         // Prune before growing, not on every import: registering many live
         // sources stays amortized linear instead of repeatedly scanning them.
-        if registry.caches.len() == registry.caches.capacity() {
-            registry.caches.retain(|cache| cache.strong_count() != 0);
+        if registry.len() == registry.capacity() {
+            registry.retain(|cache| cache.strong_count() != 0);
         }
-        registry.caches.push(cache);
+        registry.push_back(cache);
     }
 
     /// Evicts retained data without invalidating the underlying source generation.
@@ -66,7 +58,6 @@ impl CacheBudget {
         let caches: Vec<_> = self
             .registry
             .lock()
-            .caches
             .iter()
             .filter_map(Weak::upgrade)
             .collect();
@@ -91,31 +82,26 @@ impl CacheBudget {
             return Some(charge);
         }
 
-        // Rotate across owners and their ranges. Never take a source/fill lock,
-        // and never call a cache while holding the shared registry lock.
-        let count = self.registry.lock().caches.len();
-        let attempts = bytes.div_ceil(64).saturating_add(count).saturating_mul(4);
-        let mut empty = 0;
-        for _ in 0..attempts {
+        // Make one bounded pass over owners, clearing whole source caches.
+        // Never wait on a busy cache or call it while holding the registry lock.
+        let count = self.registry.lock().len();
+        for _ in 0..count {
             let cache = {
                 let mut registry = self.registry.lock();
-                if registry.caches.is_empty() {
+                let Some(owner) = registry.pop_front() else {
                     break;
+                };
+                let cache = owner.upgrade();
+                if cache.is_some() {
+                    registry.push_back(owner);
                 }
-                let at = registry.next % registry.caches.len();
-                registry.next = at + 1;
-                registry.caches[at].upgrade()
+                cache
             };
-            if cache.is_some_and(|cache| cache.evict_one()) {
-                empty = 0;
-            } else {
-                empty += 1;
+            if let Some(cache) = cache {
+                cache.try_clear();
             }
             if let Some(charge) = claim() {
                 return Some(charge);
-            }
-            if empty >= count {
-                break;
             }
         }
         None

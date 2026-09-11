@@ -814,10 +814,10 @@ function groupedBucketCharts(list, groupTitle) {
 }
 
 /**
- * @param {{ range: { name: string, color: Color, pattern: RealizedSupplyPattern }[], profit: { name: string, color: Color, pattern: RealizedSupplyPattern }[], loss: { name: string, color: Color, pattern: RealizedSupplyPattern }[] }} args
+ * @param {{ range: { name: string, color: Color, pattern: RealizedSupplyPattern }[] }} args
  * @returns {PartialOptionsGroup}
  */
-export function createUtxoProfitabilitySection({ range, profit, loss }) {
+export function createUtxoProfitabilitySection({ range }) {
   return {
     name: "UTXO Profitability",
     tree: [
@@ -829,20 +829,6 @@ export function createUtxoProfitabilitySection({ range, profit, loss }) {
             tree: groupedBucketCharts(range, "Profitability Range"),
           },
           ...range.map((bucket) => singleBucketFolder(bucket)),
-        ],
-      },
-      {
-        name: "In Profit",
-        tree: [
-          { name: "Compare", tree: groupedBucketCharts(profit, "In Profit") },
-          ...profit.map((bucket) => singleBucketFolder(bucket, "In Profit")),
-        ],
-      },
-      {
-        name: "In Loss",
-        tree: [
-          { name: "Compare", tree: groupedBucketCharts(loss, "In Loss") },
-          ...loss.map((bucket) => singleBucketFolder(bucket, "In Loss")),
         ],
       },
     ],

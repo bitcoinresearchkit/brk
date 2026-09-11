@@ -149,45 +149,82 @@ impl<T: VecValue> Shared<T> {
         }
     }
 
-    pub(super) fn copy(&self, request: Request<'_>, out: &mut Vec<T>) -> bool {
-        let saved = out.len();
+    /// An all-or-nothing probe: a miss does not clone values or change output.
+    pub(super) fn copy_range(&self, from: usize, to: usize, out: &mut Vec<T>) -> bool {
+        if from >= to {
+            return true;
+        }
         let table = self.table.read();
-        let hit = match request {
+        let first = table.range(..=from).next_back().map_or(from, |(&at, _)| at);
+        let ranges = table.range(first..to);
+        let mut at = from;
+        for (&start, values) in ranges.clone() {
+            if start > at {
+                return false;
+            }
+            at = at.max(start + values.len());
+        }
+        if at < to {
+            return false;
+        }
+        out.reserve(to - from);
+        for (&start, values) in ranges {
+            let end = (to - start).min(values.len());
+            out.extend_from_slice(&values.slice()[from.saturating_sub(start)..end]);
+        }
+        true
+    }
+
+    /// Copies the retained prefix once and returns only the unfulfilled request.
+    pub(super) fn copy_prefix<'a>(
+        &self,
+        request: Request<'a>,
+        out: &mut Vec<T>,
+    ) -> Option<Request<'a>> {
+        let table = self.table.read();
+        match request {
             Request::Range(from, to) => {
+                if from >= to {
+                    return None;
+                }
+                let first = table
+                    .range(..=from)
+                    .next_back()
+                    .map_or(from, |(&start, _)| start);
                 let mut at = from;
-                if from < to {
-                    let first = table
-                        .range(..=from)
-                        .next_back()
-                        .map_or(from, |(&start, _)| start);
-                    for (&start, values) in table.range(first..to) {
-                        if start > at {
-                            break;
-                        }
-                        let end = (start + values.len()).min(to);
-                        if at < end {
-                            out.extend_from_slice(&values.slice()[at - start..end - start]);
-                            at = end;
-                        }
-                        if at == to {
-                            break;
-                        }
+                for (&start, values) in table.range(first..to) {
+                    if start > at {
+                        break;
+                    }
+                    let end = (start + values.len()).min(to);
+                    if at < end {
+                        out.extend_from_slice(&values.slice()[at - start..end - start]);
+                        at = end;
+                    }
+                    if at == to {
+                        break;
                     }
                 }
-                at >= to
+                (at < to).then_some(Request::Range(at, to))
             }
             Request::Sorted(indices) => {
                 if indices.is_empty() {
-                    return true;
+                    return None;
                 }
-                let first = table
-                    .range(..=indices[0])
-                    .next_back()
-                    .map_or(indices[0], |(&at, _)| at);
+                let first = table.range(..=indices[0]).next_back();
+                // One retained range proves coverage for the entire sorted request.
+                if let Some((&at, value)) = first
+                    && indices[indices.len() - 1] - at < value.len()
+                {
+                    let values = value.slice();
+                    out.extend(indices.iter().map(|&index| values[index - at].clone()));
+                    return None;
+                }
+                let first = first.map_or(indices[0], |(&at, _)| at);
                 let mut iter = table.range(first..);
                 let mut current = iter.next();
-                let mut hit = true;
-                for &index in indices {
+                let mut remaining = indices;
+                while let Some((&index, rest)) = remaining.split_first() {
                     if current.is_some_and(|(&at, value)| at + value.len() <= index) {
                         current = iter.next();
                         if current.is_some_and(|(&at, value)| at + value.len() <= index) {
@@ -196,21 +233,16 @@ impl<T: VecValue> Shared<T> {
                             current = iter.next();
                         }
                     }
-                    if let Some(value) = current.and_then(|(&at, value)| {
+                    let Some(value) = current.and_then(|(&at, value)| {
                         index.checked_sub(at).and_then(|offset| value.get(offset))
-                    }) {
-                        out.push(value);
-                    } else {
-                        hit = false;
+                    }) else {
                         break;
-                    }
+                    };
+                    out.push(value);
+                    remaining = rest;
                 }
-                hit
+                (!remaining.is_empty()).then_some(Request::Sorted(remaining))
             }
-        };
-        if !hit {
-            out.truncate(saved)
         }
-        hit
     }
 }

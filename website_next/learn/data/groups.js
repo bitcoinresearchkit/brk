@@ -1,3 +1,12 @@
+import { bitview } from "../../utils/client.js";
+
+export const profitabilityRanges = Object.entries(
+  bitview.PROFITABILITY_RANGE_NAMES,
+).map(([key, names]) => /** @type {const} */ ([
+  names.short,
+  /** @type {keyof typeof bitview.PROFITABILITY_RANGE_NAMES} */ (key),
+]));
+
 export const ageRanges = /** @type {const} */ ([
   ["0-1h", "under1h"],
   ["1h to 1d", "_1hTo1d"],

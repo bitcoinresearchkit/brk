@@ -6,6 +6,8 @@ use std::{
 use tempfile::tempdir;
 #[cfg(feature = "pco")]
 use vecdb::PcoVec;
+#[cfg(all(feature = "pco", feature = "diagnostics"))]
+use vecdb::diagnostics;
 use vecdb::{
     AnyStoredVec, Budgeted, BytesVec, CacheBudget, Database, ImportOptions, ImportableVec,
     ReadableVec, Version, WritableVec,
@@ -182,4 +184,119 @@ fn incremental_range_fills() {
         "raw overlapping ranges: refill {fill:?}, retained={}",
         BUDGET.used()
     );
+}
+
+#[test]
+#[ignore = "synthetic local storage benchmark"]
+fn partial_hits_and_raw_fills() {
+    const N: usize = 1_000_001;
+    let directory = tempdir().unwrap();
+    let db = Database::open(directory.path()).unwrap();
+    let mut cached = BytesVec::<usize, u64, Budgeted>::import_with(
+        ImportOptions::new(&db, "cached", Version::ONE).with_cache_budget(&BUDGET),
+    )
+    .unwrap();
+    let mut plain = BytesVec::<usize, u64>::import(&db, "plain", Version::ONE).unwrap();
+    for index in 0..N as u64 {
+        cached.push(index);
+        plain.push(index);
+    }
+    cached.write().unwrap();
+    plain.write().unwrap();
+    let mut out = Vec::with_capacity(N);
+    for (name, source, warm) in [
+        ("warm", &cached as &dyn ReadableVec<usize, u64>, Some(0..N)),
+        ("tail miss", &cached, Some(0..N - 1)),
+        ("head miss", &cached, Some(1..N)),
+        ("cache cold", &cached, None),
+        ("uncached", &plain, None),
+    ] {
+        // Keep file residency out of this comparison of cache/read overhead.
+        out.clear();
+        source.read_into_at(0, N, &mut out);
+        let mut times = Vec::new();
+        for _ in 0..15 {
+            BUDGET.clear();
+            out.clear();
+            if let Some(range) = &warm {
+                source.read_into_at(range.start, range.end, &mut out);
+                out.clear();
+            }
+            let start = Instant::now();
+            source.read_into_at(black_box(0), black_box(N), &mut out);
+            times.push(start.elapsed());
+            assert_eq!(out.len(), N);
+            assert!(out.iter().enumerate().all(|(i, &value)| value == i as u64));
+            assert!(BUDGET.used() <= BUDGET.limit());
+        }
+        times.sort_unstable();
+        eprintln!(
+            "raw million-value {name}: {:?}, retained={}",
+            times[7],
+            BUDGET.used()
+        );
+    }
+}
+
+#[test]
+#[ignore = "synthetic local storage benchmark"]
+#[cfg(all(feature = "pco", feature = "diagnostics"))]
+fn mixed_source_reclamation() {
+    static PRESSURE: CacheBudget = CacheBudget::new(256 * 1024);
+    static SERVER: CacheBudget = CacheBudget::new(2 * 1024 * 1024 * 1024);
+    const REQUESTS: usize = 4096;
+
+    for budget in [&PRESSURE, &SERVER] {
+        let directory = tempdir().unwrap();
+        let db = Database::open(directory.path()).unwrap();
+        let sources: Vec<_> = (0..8)
+            .map(|source| {
+                let mut values = PcoVec::<usize, u64, Budgeted>::import_with(
+                    ImportOptions::new(&db, &format!("source_{source}"), Version::ONE)
+                        .with_cache_budget(budget),
+                )
+                .unwrap();
+                for index in 0..16_384 {
+                    values.push(1_000_000 + (index as u64 * 13 + source * 31) % 100_000);
+                }
+                values.write().unwrap();
+                values
+            })
+            .collect();
+        let read = |turn: usize| {
+            // One frequently read range mixed with changing, disjoint ranges
+            // across the other sources. All requested data fits the server budget.
+            let (source, from) = if turn % 3 == 0 {
+                (0, 0)
+            } else {
+                (1 + turn % 7, (turn / 7 % 16) * 1024)
+            };
+            black_box(sources[source].collect_range_at(from, from + 512));
+        };
+        let mut times = Vec::new();
+        let mut decodes = Vec::new();
+        for _ in 0..15 {
+            budget.clear();
+            for turn in 0..REQUESTS {
+                read(turn);
+            }
+            diagnostics::take();
+            let start = Instant::now();
+            for turn in REQUESTS..2 * REQUESTS {
+                read(turn);
+            }
+            times.push(start.elapsed());
+            decodes.push(diagnostics::take());
+            assert!(budget.used() <= budget.limit());
+        }
+        times.sort_unstable();
+        decodes.sort_unstable();
+        eprintln!(
+            "mixed source budget={}: {REQUESTS} reads {:?}, decoded={}, retained={}",
+            budget.limit(),
+            times[7],
+            decodes[7],
+            budget.used()
+        );
+    }
 }

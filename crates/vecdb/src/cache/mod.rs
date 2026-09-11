@@ -72,7 +72,7 @@ impl<T: VecValue> Cache<T> {
         self.shared.healthy.load(Relaxed)
             && from <= to
             && to <= len()
-            && self.shared.copy(Request::Range(from, to), out)
+            && self.shared.copy_range(from, to, out)
     }
 
     pub(crate) fn read_scope<R>(&self, read: impl FnOnce() -> R) -> R {
@@ -171,15 +171,16 @@ impl<T: VecValue> Cache<T> {
         mut load: impl FnMut(&[Range<usize>]) -> Vec<(usize, Vec<T>)>,
         retain: bool,
     ) {
-        if self.shared.copy(request, out) {
+        let Some(request) = self.shared.copy_prefix(request, out) else {
             return;
-        }
+        };
         let _fill = self.shared.fill.lock();
-        if self.shared.copy(request, out) {
-            return;
-        }
         let cached = self.shared.borrowed(request);
         let missing = plan::missing(request, &cached);
+        if missing.is_empty() {
+            plan::copy(request, &cached, &[], out);
+            return;
+        }
         let loaded: Vec<_> = load(&missing)
             .into_iter()
             .filter(|(_, values)| !values.is_empty())
